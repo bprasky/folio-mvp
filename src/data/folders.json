@@ -1,0 +1,66 @@
+[
+  {
+    "id": "folder-1",
+    "name": "Sustainable Living",
+    "designerId": "designer-1",
+    "products": ["product-1", "product-3", "product-4", "product-8"],
+    "createdAt": "2024-03-15T10:00:00Z",
+    "updatedAt": "2024-03-20T15:30:00Z"
+  },
+  {
+    "id": "folder-2",
+    "name": "Modern Office",
+    "designerId": "designer-1",
+    "products": ["product-1", "product-2", "product-10", "product-16"],
+    "createdAt": "2024-03-16T09:00:00Z",
+    "updatedAt": "2024-03-21T11:20:00Z"
+  },
+  {
+    "id": "folder-3",
+    "name": "Minimalist Home",
+    "designerId": "designer-2",
+    "products": ["product-2", "product-12", "product-13", "product-19"],
+    "createdAt": "2024-03-14T14:00:00Z",
+    "updatedAt": "2024-03-19T16:45:00Z"
+  },
+  {
+    "id": "folder-4",
+    "name": "Textile Collection",
+    "designerId": "designer-2",
+    "products": ["product-8", "product-15", "product-17", "product-18"],
+    "createdAt": "2024-03-17T11:00:00Z",
+    "updatedAt": "2024-03-22T10:15:00Z"
+  },
+  {
+    "id": "folder-5",
+    "name": "Biophilic Design",
+    "designerId": "designer-3",
+    "products": ["product-3", "product-5", "product-6", "product-9"],
+    "createdAt": "2024-03-13T13:00:00Z",
+    "updatedAt": "2024-03-18T14:30:00Z"
+  },
+  {
+    "id": "folder-6",
+    "name": "Lighting Solutions",
+    "designerId": "designer-3",
+    "products": ["product-2", "product-13"],
+    "createdAt": "2024-03-18T15:00:00Z",
+    "updatedAt": "2024-03-23T09:45:00Z"
+  },
+  {
+    "id": "folder-7",
+    "name": "Commercial Spaces",
+    "designerId": "designer-4",
+    "products": ["product-1", "product-10", "product-12", "product-16"],
+    "createdAt": "2024-03-12T16:00:00Z",
+    "updatedAt": "2024-03-17T13:20:00Z"
+  },
+  {
+    "id": "folder-8",
+    "name": "Event Planning",
+    "designerId": "designer-4",
+    "products": ["product-4", "product-7", "product-11", "product-20"],
+    "createdAt": "2024-03-19T10:00:00Z",
+    "updatedAt": "2024-03-24T11:30:00Z"
+  }
+] 

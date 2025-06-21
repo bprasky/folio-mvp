@@ -1,0 +1,136 @@
+{
+  "posts": [
+    {
+      "id": "1",
+      "imageUrl": "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=800&h=600&fit=crop",
+      "title": "Modern Minimalist Living Room",
+      "author": "Sarah Chen",
+      "authorImage": "https://randomuser.me/api/portraits/women/44.jpg",
+      "likes": 12400,
+      "saves": 3200,
+      "type": "featured",
+      "aspectRatio": 1.618
+    },
+    {
+      "id": "2",
+      "imageUrl": "https://images.unsplash.com/photo-1556911220-bff31c812dba?w=800&h=600&fit=crop",
+      "title": "Coastal Kitchen Design",
+      "author": "Nu Projects",
+      "authorImage": "https://source.unsplash.com/random/100x100?architecture,logo,company",
+      "likes": 8500,
+      "saves": 2100,
+      "type": "boosted",
+      "aspectRatio": 0.8
+    },
+    {
+      "id": "3",
+      "imageUrl": "https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=800&h=600&fit=crop",
+      "title": "Urban Garden Oasis",
+      "author": "Emma Wilson",
+      "authorImage": "https://randomuser.me/api/portraits/women/48.jpg",
+      "likes": 25600,
+      "saves": 7800,
+      "type": "viral",
+      "aspectRatio": 1.2
+    },
+    {
+      "id": "4",
+      "imageUrl": "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&h=600&fit=crop",
+      "title": "Industrial Loft Transformation",
+      "author": "David Kim",
+      "authorImage": "https://randomuser.me/api/portraits/men/54.jpg",
+      "likes": 4200,
+      "saves": 980,
+      "type": "regular",
+      "aspectRatio": 0.9
+    },
+    {
+      "id": "5",
+      "imageUrl": "https://images.unsplash.com/photo-1616594039964-ae9021a400a0?w=800&h=600&fit=crop",
+      "title": "Scandinavian Bedroom",
+      "author": "Lisa Anderson",
+      "authorImage": "https://randomuser.me/api/portraits/women/52.jpg",
+      "likes": 6800,
+      "saves": 1500,
+      "type": "regular",
+      "aspectRatio": 1.3
+    },
+    {
+      "id": "6",
+      "imageUrl": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&h=600&fit=crop",
+      "title": "Mediterranean Patio",
+      "author": "Carlos Rodriguez",
+      "authorImage": "https://randomuser.me/api/portraits/men/36.jpg",
+      "likes": 9200,
+      "saves": 2400,
+      "type": "boosted",
+      "aspectRatio": 1.6
+    },
+    {
+      "id": "7",
+      "imageUrl": "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=800&h=600&fit=crop",
+      "title": "Art Deco Bathroom",
+      "author": "Sophie Martin",
+      "authorImage": "https://randomuser.me/api/portraits/women/46.jpg",
+      "likes": 15000,
+      "saves": 4200,
+      "type": "featured",
+      "aspectRatio": 0.9
+    },
+    {
+      "id": "8",
+      "imageUrl": "https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=800&h=600&fit=crop",
+      "title": "Japanese Zen Garden",
+      "author": "Yuki Tanaka",
+      "authorImage": "https://randomuser.me/api/portraits/women/42.jpg",
+      "likes": 32000,
+      "saves": 8900,
+      "type": "viral",
+      "aspectRatio": 1.4
+    },
+    {
+      "id": "9",
+      "imageUrl": "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=800&h=600&fit=crop",
+      "title": "Cozy Reading Nook",
+      "author": "Liam O'Connell",
+      "authorImage": "https://randomuser.me/api/portraits/men/38.jpg",
+      "likes": 7500,
+      "saves": 1800,
+      "type": "regular",
+      "aspectRatio": 1.1
+    },
+    {
+      "id": "10",
+      "imageUrl": "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&h=600&fit=crop",
+      "title": "Contemporary Office Space",
+      "author": "Olivia Brown",
+      "authorImage": "https://randomuser.me/api/portraits/women/50.jpg",
+      "likes": 11000,
+      "saves": 3000,
+      "type": "boosted",
+      "aspectRatio": 1.7
+    },
+    {
+      "id": "11",
+      "imageUrl": "https://images.unsplash.com/photo-1616594039964-ae9021a400a0?w=800&h=600&fit=crop",
+      "title": "Minimalist Dining Area",
+      "author": "Noah Miller",
+      "authorImage": "https://randomuser.me/api/portraits/men/40.jpg",
+      "likes": 9800,
+      "saves": 2500,
+      "type": "regular",
+      "aspectRatio": 0.7
+    },
+    {
+      "id": "12",
+      "imageUrl": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&h=600&fit=crop",
+      "title": "Bohemian Loft",
+      "author": "Sophia Lee",
+      "authorImage": "https://randomuser.me/api/portraits/women/54.jpg",
+      "likes": 18000,
+      "saves": 5000,
+      "type": "viral",
+      "aspectRatio": 1.9
+    }
+  ]
+} 

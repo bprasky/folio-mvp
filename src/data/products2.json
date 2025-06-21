@@ -1,0 +1,183 @@
+[
+    {
+      "id": "product-1",
+      "name": "Ergonomic Office Chair",
+      "brand": "Studio Verde",
+      "price": "$450",
+      "image": "https://source.unsplash.com/random/800x600?office,chair,ergonomic",
+      "tags": ["ergonomic", "office", "chair"],
+      "vendorId": "vendor-3"
+    },
+    {
+      "id": "product-2",
+      "name": "Minimalist Desk Lamp",
+      "brand": "Studio Verde",
+      "price": "$120",
+      "image": "https://source.unsplash.com/random/800x600?desk,lamp,minimalist",
+      "tags": ["lighting", "minimalist", "desk"],
+      "vendorId": "vendor-3"
+    },
+    {
+      "id": "product-3",
+      "name": "Indoor Plant Assortment",
+      "brand": "Studio Verde",
+      "price": "$60+",
+      "image": "https://source.unsplash.com/random/800x600?indoor,plants,assortment",
+      "tags": ["plants", "decor", "biophilic"],
+      "vendorId": "vendor-3"
+    },
+    {
+      "id": "product-4",
+      "name": "Velvet Sofa",
+      "brand": "Leaf & Co.",
+      "price": "$1800",
+      "image": "https://source.unsplash.com/random/800x600?sofa,velvet,furniture",
+      "tags": ["furniture", "sofa", "velvet"],
+      "vendorId": "vendor-1",
+      "eventId": "event-1"
+    },
+    {
+      "id": "product-5",
+      "name": "Abstract Area Rug",
+      "brand": "Leaf & Co.",
+      "price": "$350",
+      "image": "https://source.unsplash.com/random/800x600?rug,abstract,decor",
+      "tags": ["rug", "decor", "abstract"],
+      "vendorId": "vendor-1"
+    },
+    {
+      "id": "product-6",
+      "name": "Ceramic Vase Set",
+      "brand": "Leaf & Co.",
+      "price": "$95",
+      "image": "https://source.unsplash.com/random/800x600?vase,ceramic,decor",
+      "tags": ["decor", "ceramic", "vase"],
+      "vendorId": "vendor-1"
+    },
+    {
+      "id": "product-7",
+      "name": "Oak Wood Coffee Table",
+      "brand": "Leaf & Co.",
+      "price": "$600",
+      "image": "https://source.unsplash.com/random/800x600?coffee,table,oak",
+      "tags": ["furniture", "table", "oak"],
+      "vendorId": "vendor-1"
+    },
+    {
+      "id": "product-8",
+      "name": "Linen Bedding Set",
+      "brand": "Leaf & Co.",
+      "price": "$220",
+      "image": "https://source.unsplash.com/random/800x600?bedding,linen,textile",
+      "tags": ["bedding", "linen", "textile"],
+      "vendorId": "vendor-1"
+    },
+    {
+      "id": "product-9",
+      "name": "Geometric Throw Pillow",
+      "brand": "Leaf & Co.",
+      "price": "$55",
+      "image": "https://source.unsplash.com/random/800x600?pillow,geometric,decor",
+      "tags": ["decor", "pillow", "geometric"],
+      "vendorId": "vendor-1"
+    },
+    {
+      "id": "product-10",
+      "name": "Industrial Bookshelf",
+      "brand": "Leaf & Co.",
+      "price": "$750",
+      "image": "https://source.unsplash.com/random/800x600?bookshelf,industrial,furniture",
+      "tags": ["furniture", "shelf", "industrial"],
+      "vendorId": "vendor-1"
+    },
+    {
+      "id": "product-11",
+      "name": "Leather Armchair",
+      "brand": "Leaf & Co.",
+      "price": "$950",
+      "image": "https://source.unsplash.com/random/800x600?armchair,leather,furniture",
+      "tags": ["furniture", "chair", "leather"],
+      "vendorId": "vendor-1"
+    },
+    {
+      "id": "product-12",
+      "name": "Harmony Sofa",
+      "brand": "West Elm",
+      "price": "$1,329.30",
+      "image": "https://source.unsplash.com/random/800x600?sofa,harmony,furniture",
+      "tags": ["furniture", "sofa"],
+      "vendorId": "vendor-2"
+    },
+    {
+      "id": "product-13",
+      "name": "Flower Table Lamp",
+      "brand": "West Elm",
+      "price": "$159.20",
+      "image": "https://source.unsplash.com/random/800x600?lamp,flower,lighting",
+      "tags": ["lighting", "lamp"],
+      "vendorId": "vendor-2"
+    },
+    {
+      "id": "product-14",
+      "name": "Belle Nightstand",
+      "brand": "West Elm",
+      "price": "$199",
+      "image": "https://source.unsplash.com/random/800x600?nightstand,belle,furniture",
+      "tags": ["furniture", "nightstand"],
+      "vendorId": "vendor-2"
+    },
+    {
+      "id": "product-15",
+      "name": "Lumini Easy Care Rug, 5' x 8'",
+      "brand": "West Elm",
+      "price": "$399",
+      "image": "https://source.unsplash.com/random/800x600?rug,lumini,textile",
+      "tags": ["rug", "textile"],
+      "vendorId": "vendor-2"
+    },
+    {
+      "id": "product-16",
+      "name": "Penn Chair",
+      "brand": "West Elm",
+      "price": "$399",
+      "image": "https://source.unsplash.com/random/800x600?chair,penn,furniture",
+      "tags": ["furniture", "chair"],
+      "vendorId": "vendor-2"
+    },
+    {
+      "id": "product-17",
+      "name": "Silky Tencel Modal Sheet Set",
+      "brand": "West Elm",
+      "price": "$119.20",
+      "image": "https://source.unsplash.com/random/800x600?sheets,tencel,bedding",
+      "tags": ["bedding", "textile"],
+      "vendorId": "vendor-2"
+    },
+    {
+      "id": "product-18",
+      "name": "Worn Velvet Blackout Curtains, 48\" x 84\" (Set of 2)",
+      "brand": "West Elm",
+      "price": "$298",
+      "image": "https://source.unsplash.com/random/800x600?curtains,velvet,blackout",
+      "tags": ["curtains", "textile"],
+      "vendorId": "vendor-2"
+    },
+    {
+      "id": "product-19",
+      "name": "Mella Sofa",
+      "brand": "West Elm",
+      "price": "$799",
+      "image": "https://source.unsplash.com/random/800x600?sofa,mella,furniture",
+      "tags": ["furniture", "sofa"],
+      "vendorId": "vendor-2"
+    },
+    {
+      "id": "product-20",
+      "name": "Marble Coffee Table",
+      "brand": "Studio Marble",
+      "price": "$1100",
+      "image": "https://source.unsplash.com/random/800x600?coffee,table,marble",
+      "tags": ["furniture", "table", "marble"],
+      "vendorId": "vendor-3"
+    }
+]

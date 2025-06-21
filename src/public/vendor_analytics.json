@@ -1,0 +1,95 @@
+{
+  "vendor_name": "Leaf & Co.",
+  "new_designers_30d": 12,
+  "product_list": [
+    {
+      "product_id": "LC001",
+      "product_name": "Eco Modular Sofa",
+      "views_total": 2450,
+      "saves_total": 187,
+      "saves_last_7_days": 40,
+      "designers_saved": 45,
+      "events_featured": ["Spring Product Launch", "Miami Design Week"],
+      "outbound_clicks": 320,
+      "save_velocity_7d": [5, 8, 7, 6, 4, 5, 5],
+      "saved_together": ["Biophilic Table Lamp", "Ceramic Dinnerware Set"]
+    },
+    {
+      "product_id": "LC002",
+      "product_name": "Biophilic Table Lamp",
+      "views_total": 1890,
+      "saves_total": 156,
+      "saves_last_7_days": 25,
+      "designers_saved": 38,
+      "events_featured": ["Spring Product Launch"],
+      "outbound_clicks": 245,
+      "save_velocity_7d": [3, 4, 3, 5, 4, 3, 3],
+      "saved_together": ["Eco Modular Sofa", "Minimalist Wall Art"]
+    },
+    {
+      "product_id": "LC003",
+      "product_name": "Textured Area Rug",
+      "views_total": 2100,
+      "saves_total": 143,
+      "saves_last_7_days": 15,
+      "designers_saved": 42,
+      "events_featured": ["Miami Design Week"],
+      "outbound_clicks": 278,
+      "save_velocity_7d": [2, 3, 2, 3, 2, 3, 3],
+      "saved_together": ["Lounge Chair", "Ceramic Vase"]
+    }
+  ],
+  "detailed_products": [
+    {
+      "product_id": "LC001",
+      "product_name": "Eco Modular Sofa",
+      "views_total": 523,
+      "saves_total": 198,
+      "designers_saved": 12,
+      "events_featured": ["Spring Product Launch", "NYC Modern Showhome"],
+      "outbound_clicks": 47,
+      "save_velocity_7d": [5, 8, 12, 15, 9, 6, 11],
+      "saved_together": ["Monaco Marble Coffee Table", "Cascade Floor Lamp", "Textured Wool Area Rug"],
+      "new_designers_30d": 3,
+      "designers_engagement": [
+        {
+          "designer_name": "Studio Nouveau",
+          "profile_image": "https://randomuser.me/api/portraits/men/34.jpg",
+          "total_saves": 37,
+          "total_views": 82,
+          "featured_in_events": ["Spring Product Launch"]
+        },
+        {
+          "designer_name": "Moderne Interiors",
+          "profile_image": "https://randomuser.me/api/portraits/women/44.jpg",
+          "total_saves": 29,
+          "total_views": 56,
+          "featured_in_events": ["NYC Modern Showhome"]
+        },
+        {
+          "designer_name": "Coastal Spaces Co.",
+          "profile_image": "https://randomuser.me/api/portraits/men/54.jpg",
+          "total_saves": 18,
+          "total_views": 40,
+          "featured_in_events": []
+        }
+      ]
+    }
+  ],
+  "event_metrics": [
+    {
+      "event_name": "Spring Product Launch",
+      "views_during_event": 1250,
+      "saves_during_event": 98,
+      "qr_scans": 45,
+      "designers_engaged": 32
+    },
+    {
+      "event_name": "Miami Design Week",
+      "views_during_event": 980,
+      "saves_during_event": 76,
+      "qr_scans": 38,
+      "designers_engaged": 28
+    }
+  ]
+} 

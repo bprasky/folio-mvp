@@ -1,0 +1,54 @@
+[
+  {
+    "id": "designer-1",
+    "name": "Sarah Chen",
+    "bio": "Interior designer specializing in sustainable spaces",
+    "profileImage": "https://randomuser.me/api/portraits/women/44.jpg",
+    "folders": ["folder-1", "folder-2"],
+    "events": ["event-1"],
+    "metrics": {
+      "savedProducts": 24,
+      "events": 1,
+      "followers": 1560
+    }
+  },
+  {
+    "id": "designer-2",
+    "name": "Marcus Rodriguez",
+    "bio": "Modern minimalist design expert",
+    "profileImage": "https://randomuser.me/api/portraits/men/32.jpg",
+    "folders": ["folder-3", "folder-4"],
+    "events": ["event-2"],
+    "metrics": {
+      "savedProducts": 18,
+      "events": 1,
+      "followers": 2340
+    }
+  },
+  {
+    "id": "designer-3",
+    "name": "Emma Thompson",
+    "bio": "Biophilic design specialist",
+    "profileImage": "https://randomuser.me/api/portraits/women/45.jpg",
+    "folders": ["folder-5", "folder-6"],
+    "events": ["event-1"],
+    "metrics": {
+      "savedProducts": 32,
+      "events": 1,
+      "followers": 1890
+    }
+  },
+  {
+    "id": "designer-4",
+    "name": "James Wilson",
+    "bio": "Commercial space designer",
+    "profileImage": "https://randomuser.me/api/portraits/men/33.jpg",
+    "folders": ["folder-7", "folder-8"],
+    "events": ["event-2"],
+    "metrics": {
+      "savedProducts": 15,
+      "events": 1,
+      "followers": 1120
+    }
+  }
+] 

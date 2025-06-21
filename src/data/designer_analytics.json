@@ -1,0 +1,51 @@
+{
+  "designer_name": "Studio Nouveau",
+  "profile_image": "https://randomuser.me/api/portraits/men/75.jpg",
+  "profile_views_total": 1423,
+  "followers_total": 198,
+  "projects_saved_total": 64,
+  "products_tagged_total": 27,
+  "earnings_pending": "$1,245.00",
+  "top_tagged_products": [
+    {
+      "product_name": "Eco Modular Sofa",
+      "product_image": "https://images.unsplash.com/photo-1583845112208-5eb7b0e24b0b?auto=format&fit=crop&w=400&q=80",
+      "views_from_designer": 284,
+      "saves_from_designer": 102,
+      "outbound_clicks_from_designer": 34,
+      "events_featured_in": ["Spring Product Launch"]
+    },
+    {
+      "product_name": "Cascade Floor Lamp",
+      "product_image": "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=400&q=80",
+      "views_from_designer": 187,
+      "saves_from_designer": 77,
+      "outbound_clicks_from_designer": 21,
+      "events_featured_in": []
+    },
+    {
+      "product_name": "Monaco Marble Coffee Table",
+      "product_image": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=400&q=80",
+      "views_from_designer": 163,
+      "saves_from_designer": 65,
+      "outbound_clicks_from_designer": 19,
+      "events_featured_in": ["NYC Modern Showhome"]
+    },
+    {
+      "product_name": "Velvet Armchair 'Plush'",
+      "product_image": "https://images.unsplash.com/photo-1617806118233-18e1de247200?auto=format&fit=crop&w=400&q=80",
+      "views_from_designer": 120,
+      "saves_from_designer": 45,
+      "outbound_clicks_from_designer": 10,
+      "events_featured_in": []
+    },
+    {
+      "product_name": "Terracotta Planter Set",
+      "product_image": "https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=crop&w=400&q=80",
+      "views_from_designer": 95,
+      "saves_from_designer": 30,
+      "outbound_clicks_from_designer": 8,
+      "events_featured_in": []
+    }
+  ]
+} 
