@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { FaHome, FaLightbulb, FaNewspaper, FaStore, FaUsers, FaUser, FaPlus, FaSearch, FaEdit, FaTrash, FaChartLine, FaShoppingCart } from 'react-icons/fa';
+import { FaPlus, FaSearch, FaEdit, FaTrash, FaChartLine, FaShoppingCart, FaStore } from 'react-icons/fa';
 import VendorDashboard from '@/app/vendor/dashboard/page';
 import ProductUploader from '@/components/vendor/ProductUploader';
+import Navigation from '@/components/Navigation';
 
 const mockProducts = [
     {
@@ -36,6 +37,33 @@ export default function VendorProfile() {
   const [showUploader, setShowUploader] = useState(false);
   const [products, setProducts] = useState(mockProducts);
 
+  // Listen for the custom event from the navigation button
+  useEffect(() => {
+    const handleOpenProductUploader = () => {
+      console.log('Product uploader event received'); // Debug log
+      setShowUploader(true);
+    };
+
+    // Add event listener
+    window.addEventListener('openProductUploader', handleOpenProductUploader);
+
+    // Also check for any pending events on mount (in case event was triggered during navigation)
+    const checkForPendingEvent = () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('openUploader') === 'true') {
+        setShowUploader(true);
+        // Clean up URL
+        window.history.replaceState({}, '', '/vendor');
+      }
+    };
+    
+    checkForPendingEvent();
+
+    return () => {
+      window.removeEventListener('openProductUploader', handleOpenProductUploader);
+    };
+  }, []);
+
   const handleProductAdded = (newProduct: any) => {
     setProducts(prev => [...prev, newProduct]);
     setShowUploader(false);
@@ -43,36 +71,8 @@ export default function VendorProfile() {
 
   return (
     <div className="flex min-h-screen bg-white">
-      {/* Sidebar */}
-      <div className="glass-panel w-20 lg:w-56 p-4 lg:p-6 fixed h-full z-20 flex flex-col items-center lg:items-start">
-        <div className="w-10 h-10 rounded bg-gradient-to-br from-amber-500 to-pink-500 flex items-center justify-center text-white font-bold text-xl mb-8">F</div>
-        <nav className="flex-1 flex flex-col items-center lg:items-start space-y-4">
-          <Link href="/" className="p-3 rounded hover:bg-gray-800 flex flex-col items-center lg:flex-row lg:items-center w-full">
-            <FaHome className="text-lg" />
-            <span className="hidden lg:inline ml-3">Home</span>
-          </Link>
-          <Link href="/inspire" className="p-3 rounded hover:bg-gray-800 flex flex-col items-center lg:flex-row lg:items-center w-full">
-            <FaLightbulb className="text-lg" />
-            <span className="hidden lg:inline ml-3">Inspire</span>
-          </Link>
-          <Link href="/editorials" className="p-3 rounded hover:bg-gray-800 flex flex-col items-center lg:flex-row lg:items-center w-full">
-            <FaNewspaper className="text-lg" />
-            <span className="hidden lg:inline ml-3">Editorials</span>
-          </Link>
-          <Link href="/shop" className="p-3 rounded hover:bg-gray-800 flex flex-col items-center lg:flex-row lg:items-center w-full">
-            <FaStore className="text-lg" />
-            <span className="hidden lg:inline ml-3">Shop</span>
-          </Link>
-          <Link href="/community" className="p-3 rounded hover:bg-gray-800 flex flex-col items-center lg:flex-row lg:items-center w-full">
-            <FaUsers className="text-lg" />
-            <span className="hidden lg:inline ml-3">Community</span>
-          </Link>
-          <Link href="/select-role" className="p-3 rounded bg-gray-800 flex flex-col items-center lg:flex-row lg:items-center w-full">
-            <FaUser className="text-lg" />
-            <span className="hidden lg:inline ml-3">Profile</span>
-          </Link>
-        </nav>
-      </div>
+      {/* Navigation */}
+      <Navigation />
 
       {/* Main Content */}
       <div className="flex-1 lg:ml-20 xl:ml-56 text-gray-900 p-6 overflow-y-auto">

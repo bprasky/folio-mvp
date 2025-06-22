@@ -35,12 +35,54 @@ const Navigation = () => {
     { href: '/select-role', icon: FaUser, label: 'Profile' },
   ];
 
+  // Role-based design button configuration
+  const getDesignButtonConfig = () => {
+    switch (role) {
+      case 'vendor':
+        return {
+          href: '/vendor',
+          label: 'Add Product',
+          action: 'product-upload' // We'll use this to trigger the modal
+        };
+      case 'designer':
+        return {
+          href: '/designer',
+          label: 'Create'
+        };
+      case 'student':
+        return {
+          href: '/student/portfolio',
+          label: 'Create'
+        };
+      default: // homeowner or no role
+        return {
+          href: '/homeowner-demo',
+          label: 'Design'
+        };
+    }
+  };
+
+  const designButtonConfig = getDesignButtonConfig();
+
   const isActive = (href: string) => {
     if (!pathname) return false;
     if (href === '/') {
       return pathname === '/';
     }
     return pathname.startsWith(href);
+  };
+
+  const handleDesignButtonClick = (e: React.MouseEvent) => {
+    if (role === 'vendor') {
+      if (pathname !== '/vendor') {
+        // Navigate to vendor page with a parameter to trigger the modal
+        window.location.href = '/vendor?openUploader=true';
+      } else {
+        // If already on vendor page, just trigger the modal
+        console.log('Triggering product uploader event'); // Debug log
+        window.dispatchEvent(new CustomEvent('openProductUploader'));
+      }
+    }
   };
 
   return (
@@ -79,29 +121,58 @@ const Navigation = () => {
       </nav>
 
       {/* Design Button */}
-      <Link
-        href="/homeowner-demo"
-        className="hidden lg:flex w-full py-3 rounded font-medium items-center justify-center mt-auto transition-all duration-200 hover:shadow-lg"
-        style={{ 
-          background: `linear-gradient(135deg, var(--secondary-color) 0%, var(--accent-color) 100%)`,
-          color: 'var(--primary-color)'
-        }}
-      >
-        <FaPlus className="mr-2" /> Design
-      </Link>
+      {role === 'vendor' ? (
+        <button
+          onClick={handleDesignButtonClick}
+          className="hidden lg:flex w-full py-3 rounded font-medium items-center justify-center mt-auto transition-all duration-200 hover:shadow-lg"
+          style={{ 
+            background: `linear-gradient(135deg, var(--secondary-color) 0%, var(--accent-color) 100%)`,
+            color: 'var(--primary-color)'
+          }}
+        >
+          <FaPlus className="mr-2" /> {designButtonConfig.label}
+        </button>
+      ) : (
+        <Link
+          href={designButtonConfig.href}
+          onClick={handleDesignButtonClick}
+          className="hidden lg:flex w-full py-3 rounded font-medium items-center justify-center mt-auto transition-all duration-200 hover:shadow-lg"
+          style={{ 
+            background: `linear-gradient(135deg, var(--secondary-color) 0%, var(--accent-color) 100%)`,
+            color: 'var(--primary-color)'
+          }}
+        >
+          <FaPlus className="mr-2" /> {designButtonConfig.label}
+        </Link>
+      )}
       
       {/* Mobile Design Button */}
-      <Link
-        href="/homeowner-demo"
-        className="lg:hidden w-12 h-12 rounded-full flex items-center justify-center mt-auto transition-all duration-200 hover:shadow-lg"
-        style={{ 
-          background: `linear-gradient(135deg, var(--secondary-color) 0%, var(--accent-color) 100%)`,
-          color: 'var(--primary-color)'
-        }}
-      >
-        <FaPlus />
-        <span className="sr-only">Design</span>
-      </Link>
+      {role === 'vendor' ? (
+        <button
+          onClick={handleDesignButtonClick}
+          className="lg:hidden w-12 h-12 rounded-full flex items-center justify-center mt-auto transition-all duration-200 hover:shadow-lg"
+          style={{ 
+            background: `linear-gradient(135deg, var(--secondary-color) 0%, var(--accent-color) 100%)`,
+            color: 'var(--primary-color)'
+          }}
+        >
+          <FaPlus />
+          <span className="sr-only">{designButtonConfig.label}</span>
+        </button>
+      ) : (
+        <Link
+          href={designButtonConfig.href}
+          onClick={handleDesignButtonClick}
+          className="lg:hidden w-12 h-12 rounded-full flex items-center justify-center mt-auto transition-all duration-200 hover:shadow-lg"
+          style={{ 
+            background: `linear-gradient(135deg, var(--secondary-color) 0%, var(--accent-color) 100%)`,
+            color: 'var(--primary-color)'
+          }}
+        >
+          <FaPlus />
+          <span className="sr-only">{designButtonConfig.label}</span>
+        </Link>
+      )}
     </div>
   );
 };
