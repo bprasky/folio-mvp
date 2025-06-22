@@ -11,6 +11,7 @@
     "start": "next start",
     "lint": "next lint"
   },
+  "buildTimestamp": "2025-01-18T19:30:00Z",
   "dependencies": {
     "@types/node": "^20.11.0",
     "@types/react": "^18.2.0",
