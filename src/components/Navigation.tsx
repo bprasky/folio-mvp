@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { FaHome, FaLightbulb, FaNewspaper, FaStore, FaUsers, FaUser, FaPlus, FaBriefcase } from 'react-icons/fa';
+import { FaHome, FaLightbulb, FaNewspaper, FaStore, FaUsers, FaUser, FaPlus, FaBriefcase, FaGraduationCap, FaChalkboardTeacher, FaUserGraduate, FaStar } from 'react-icons/fa';
 import { useRole } from '../contexts/RoleContext';
 
 const Navigation = () => {
@@ -21,9 +21,17 @@ const Navigation = () => {
     { href: '/jobs', icon: FaBriefcase, label: 'Jobs' },
   ] : [];
 
+  const studentItems = role === 'student' ? [
+    { href: '/student/explore', icon: FaGraduationCap, label: 'Explore' },
+    { href: '/student/classes', icon: FaChalkboardTeacher, label: 'Classes' },
+    { href: '/student/mentorship', icon: FaUserGraduate, label: 'Mentorship' },
+    { href: '/student/portfolio', icon: FaStar, label: 'Portfolio' },
+  ] : [];
+
   const navItems = [
     ...baseNavItems,
     ...designerItems,
+    ...studentItems,
     { href: '/select-role', icon: FaUser, label: 'Profile' },
   ];
 
