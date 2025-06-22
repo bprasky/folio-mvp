@@ -1,0 +1,9 @@
+{
+  "buildCommand": "cd src && npm run build",
+  "outputDirectory": "src/.next",
+  "framework": "nextjs",
+  "regions": ["iad1"],
+  "env": {
+    "PREVIEW_PASSWORD": "@preview-password"
+  }
+} 

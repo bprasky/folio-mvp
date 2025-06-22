@@ -69,11 +69,13 @@ export default function EventPage() {
   const [savedMoodboard, setSavedMoodboard] = useState<string[]>([]);
 
   useEffect(() => {
-    const foundEvent = events.find(e => e.slug === params.slug);
-    if (foundEvent) {
-      setEvent(foundEvent);
+    if (params?.slug) {
+      const foundEvent = events.find(e => e.slug === params.slug);
+      if (foundEvent) {
+        setEvent(foundEvent);
+      }
     }
-  }, [params.slug]);
+  }, [params?.slug]);
 
   if (!event) {
     return <div className="min-h-screen bg-gray-900 text-white p-8">Event not found</div>;
