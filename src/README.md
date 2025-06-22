@@ -1,5 +1,7 @@
 # Folio MVP - Interior Design Platform
 
+<!-- Build trigger: Force new deployment with TypeScript fixes -->
+
 A comprehensive platform connecting homeowners, designers, and vendors in the interior design ecosystem.
 
 ## 🎯 Features
