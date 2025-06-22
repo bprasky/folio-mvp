@@ -70,7 +70,8 @@ export default function EventPage() {
 
   useEffect(() => {
     if (params?.slug) {
-      const foundEvent = events.find(e => e.slug === params.slug);
+      const slug = params.slug;
+      const foundEvent = events.find(e => e.slug === slug);
       if (foundEvent) {
         setEvent(foundEvent);
       }
@@ -100,7 +101,7 @@ export default function EventPage() {
     if (new Date() > eventDate) return;
     setCurrentUser(prev => ({ ...prev, rsvp: true }));
     if (!event.attendees.find((a: any) => a.name === currentUser.name)) {
-      setEvent(prev => ({
+      setEvent((prev: any) => ({
         ...prev,
         attendees: [
           ...prev.attendees,
