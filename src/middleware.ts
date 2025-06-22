@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 export function middleware(request: NextRequest) {
+  // TEMPORARILY DISABLED - Password protection removed for testing
+  // Will re-enable when Vercel deployment is working
+  
+  /*
   // Skip middleware for static files and API routes
   if (
     request.nextUrl.pathname.startsWith('/_next') ||
@@ -22,6 +26,7 @@ export function middleware(request: NextRequest) {
     // Redirect to auth page
     return NextResponse.redirect(new URL('/auth', request.url));
   }
+  */
 
   return NextResponse.next();
 }
