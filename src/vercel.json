@@ -3,6 +3,11 @@
   "outputDirectory": "src/.next",
   "framework": "nextjs",
   "regions": ["iad1"],
+  "functions": {
+    "src/app/**/*.{js,ts,tsx}": {
+      "runtime": "nodejs18.x"
+    }
+  },
   "env": {
     "PREVIEW_PASSWORD": "@preview-password"
   }
