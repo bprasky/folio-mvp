@@ -192,7 +192,7 @@ export default function StudentExplore() {
                   <div className="p-6">
                     <div className="flex items-center gap-3 mb-4">
                       <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                        {item.author[0]}
+                        {item.author?.[0] || 'S'}
                       </div>
                       <div className="flex-1">
                         <div className="font-semibold text-gray-900">{item.author}</div>
@@ -219,7 +219,7 @@ export default function StudentExplore() {
                     </div>
                     
                     <div className="flex flex-wrap gap-2 mb-4">
-                      {item.tags.map((tag) => (
+                      {item.tags?.map((tag) => (
                         <span key={tag} className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm">
                           #{tag}
                         </span>
@@ -316,7 +316,7 @@ export default function StudentExplore() {
                   <div className="p-6">
                     <div className="flex items-center gap-3 mb-4">
                       <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-teal-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                        {item.author[0]}
+                        {item.author?.[0] || 'C'}
                       </div>
                       <div className="flex-1">
                         <div className="font-semibold text-gray-900">{item.author}</div>
@@ -333,7 +333,7 @@ export default function StudentExplore() {
                     <div className="mb-4">
                       <div className="text-sm font-medium text-gray-700 mb-2">Skills needed:</div>
                       <div className="flex flex-wrap gap-2">
-                        {item.skills.map((skill) => (
+                        {item.skills?.map((skill) => (
                           <span key={skill} className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm">
                             {skill}
                           </span>
@@ -374,7 +374,7 @@ export default function StudentExplore() {
                     <div className="mb-4">
                       <div className="text-sm font-medium text-gray-700 mb-2">Requirements:</div>
                       <div className="flex flex-wrap gap-2">
-                        {item.requirements.map((req) => (
+                        {item.requirements?.map((req) => (
                           <span key={req} className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm">
                             {req}
                           </span>

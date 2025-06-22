@@ -1,143 +1,139 @@
-# Folio MVP
+# Folio MVP - Interior Design Platform
 
-A comprehensive design platform connecting homeowners, designers, and vendors with AI-powered project matching and portfolio management.
+A comprehensive platform connecting homeowners, designers, and vendors in the interior design ecosystem.
 
-## ✨ Features
+## 🎯 Features
 
-### 🏠 For Homeowners
-- **AI-Guided Project Creation** - 6-step onboarding process for design projects
-- **Basic Folder Management** - Save and organize design inspiration
-- **Upgrade Path** - Convert basic folders to AI-assisted projects after 5+ saves
-- **Project Dashboard** - Track progress and manage multiple projects
+### For Homeowners
+- **Discover Inspiration**: Browse curated design posts and trends
+- **Find Professionals**: Connect with verified interior designers
+- **Shop Products**: Access vendor catalogs with designer recommendations
+- **Project Management**: Track design projects and collaborate with professionals
 
-### 🎨 For Designers  
-- **Jobs Marketplace** - Find homeowner projects that match your expertise
-- **Lead Preferences Quiz** - Set your ideal project criteria (budget, type, style, etc.)
-- **Smart Matching Engine** - Get scored project matches (0-100%) based on your preferences
-- **Portfolio Management** - Showcase your work and expertise
-- **Direct Messaging** - Connect with potential clients
+### For Designers
+- **Portfolio Showcase**: Display projects and build professional presence
+- **Client Management**: Tools for project collaboration and communication
+- **Product Discovery**: Access to vendor catalogs and product specifications
+- **Analytics Dashboard**: Track engagement and project metrics
+- **Jobs Marketplace**: Smart matching system for homeowner projects with lead preferences and project matching engine
 
-### 🏪 For Vendors
-- **Product Analytics** - Track saves, engagement, and performance metrics
-- **Event Participation** - Showcase products at design events
-- **Designer Engagement** - See which designers interact with your products
+### For Vendors
+- **Product Catalog**: Showcase products to designers and homeowners
+- **Analytics Dashboard**: Track product performance and designer engagement
+- **Event Management**: Promote products through design events
+- **Designer Outreach**: Connect with designers who save/view products
+- **🆕 Smart Product Uploader**: Paste any product URL to automatically extract and populate product information
 
-### 🌟 Platform Features
-- **Role-Based Navigation** - Dynamic UI based on user type
-- **Global Role Selector** - Switch between homeowner/designer/vendor views
-- **Event Management** - Create and participate in design events
-- **Community Features** - Connect with other platform users
-- **Mobile-Responsive Design** - Works seamlessly across all devices
+### For Students
+- **Explore Feed**: Discover design inspiration, tutorials, and industry insights
+- **Muscle Classes**: Learn through real project case studies and tutorials
+- **Mentorship Portal**: Connect with industry professionals for guidance
+- **Portfolio Builder**: Showcase work and receive feedback from professionals
 
-## 🚀 Tech Stack
+## 🚀 Recent Updates
+
+### Smart Product Uploader (NEW!)
+Vendors can now add products effortlessly:
+1. **Paste URL**: Simply paste any product URL from major retailers
+2. **Auto-Extract**: System automatically pulls product name, price, images, description, and specifications
+3. **Edit & Review**: Fine-tune details before publishing
+4. **One-Click Add**: Product is instantly added to your catalog
+
+**Supported Sites**: West Elm, CB2, Wayfair, IKEA, Target, Amazon, and more
+
+### Jobs Marketplace for Designers
+- Lead preferences diagnostic quiz
+- Smart project matching (0-100% compatibility scores)
+- Pre-drafted message templates for homeowner outreach
+- Budget and location filtering
+
+### Student Ecosystem
+- Complete learning platform with tutorials and mentorship
+- Real-world project case studies
+- Professional development tools
+- Industry networking opportunities
+
+## 🛠 Tech Stack
 
 - **Frontend**: Next.js 14, React, TypeScript
-- **Styling**: Tailwind CSS
-- **Animations**: Framer Motion
-- **Icons**: React Icons (Font Awesome)
-- **State Management**: React Context API
-- **Data**: Mock JSON files for demo
+- **Styling**: Tailwind CSS, Framer Motion
+- **Authentication**: Next.js middleware with cookie-based sessions
+- **Deployment**: Vercel with password protection
+- **Data**: JSON-based mock data (ready for database integration)
 
-## 🏃‍♂️ Getting Started
+## 🎮 Demo Flow
 
-1. **Install dependencies:**
-   ```bash
-   npm install
-   ```
+### Vendor Product Upload Demo
+1. Navigate to `/vendor` (select Vendor role first)
+2. Click "Add Product" button
+3. Paste any product URL (try: `https://www.westelm.com/products/harmony-sofa/`)
+4. Watch as product data is automatically extracted
+5. Edit details as needed and submit
 
-2. **Run the development server:**
-   ```bash
-   npm run dev
-   ```
+### Designer Jobs Demo
+1. Select Designer role from `/select-role`
+2. Navigate to Jobs tab in sidebar
+3. Complete lead preferences quiz
+4. Browse matched homeowner projects
+5. View compatibility scores and project details
 
-3. **Open your browser:**
-   - Navigate to [http://localhost:3000](http://localhost:3000)
-   - Use the role selector (top-right) to switch between user types
-   - Explore different features based on your selected role
+### Student Learning Demo
+1. Select Student role
+2. Explore all 4 tabs: Explore, Classes, Mentorship, Portfolio
+3. Interact with tutorials, mentor profiles, and portfolio tools
+
+## 🔐 Authentication
+
+The site is password-protected with a beautiful coming soon page:
+- **Password**: `folio2024`
+- **Session**: 24-hour duration
+- **Access**: `/auth` for login page
 
 ## 📁 Project Structure
 
 ```
-/
-├── app/                    # Next.js 13+ app directory
-│   ├── jobs/              # Designer job matching
-│   ├── homeowner-demo/    # Homeowner project creation demo
-│   ├── designer/          # Designer portfolio pages
-│   ├── vendor/            # Vendor analytics and management
+src/
+├── app/                    # Next.js app router pages
+│   ├── vendor/            # Vendor dashboard and product management
+│   ├── jobs/              # Designer jobs marketplace
+│   ├── student/           # Student learning platform
+│   └── auth/              # Authentication pages
+├── components/            # Reusable React components
+│   ├── vendor/            # Vendor-specific components
+│   │   └── ProductUploader.tsx  # Smart URL-based product uploader
+│   ├── inspire/           # Content discovery components
 │   └── ...
-├── components/            # Reusable UI components
-│   ├── AIOnboardingFlow.tsx    # 6-step project setup
-│   ├── ProjectDashboard.tsx    # Project management
-│   ├── LeadPreferencesCard.tsx # Designer preferences
-│   ├── ProjectMatchingEngine.tsx # Job matching logic
-│   └── ...
-├── contexts/              # React Context providers
-├── data/                  # Mock JSON data
-├── public/               # Static assets
-└── styles/               # Global styles
+├── data/                  # Mock data and JSON files
+└── middleware.ts          # Authentication middleware
 ```
 
-## 🎯 Key Demo Flows
+## 🌟 Key Innovations
 
-### Homeowner Flow
-1. Select "Homeowner" role
-2. Visit `/homeowner-demo`
-3. Click "+Design" to create a project
-4. Choose AI-guided setup
-5. Complete 6-step onboarding
-6. View project dashboard
+1. **Smart URL Parsing**: Automatically extract product data from any retailer URL
+2. **Role-Based Experience**: Completely different interfaces for each user type
+3. **AI-Powered Matching**: Intelligent project-designer compatibility scoring
+4. **Real-Time Collaboration**: Student-mentor and designer-client interactions
+5. **Cross-Platform Integration**: Seamless connections between all user types
 
-### Designer Flow
-1. Select "Designer" role  
-2. Visit `/jobs` from sidebar
-3. Complete lead preferences quiz
-4. Browse matched homeowner projects
-5. Send messages to potential clients
+## 🚀 Getting Started
 
-### Vendor Flow
-1. Select "Vendor" role
-2. Visit `/vendor/dashboard`
-3. View product analytics
-4. Track designer engagement
-5. Manage event participation
+1. Clone the repository
+2. Install dependencies: `npm install`
+3. Start development server: `npm run dev`
+4. Visit `http://localhost:3000`
+5. Enter password: `folio2024`
+6. Select your role and explore!
 
-## 🛠 Available Scripts
+## 🔄 Development Workflow
 
-- `npm run dev` - Start development server
-- `npm run build` - Build for production  
-- `npm start` - Start production server
-- `npm run lint` - Run ESLint
-
-## 📊 Mock Data
-
-The application includes realistic mock data for:
-- **Homeowner Projects** - AI-guided and basic folder projects
-- **Designer Profiles** - Portfolios, preferences, and expertise
-- **Product Catalog** - Furniture, lighting, and decor items
-- **Events** - Design shows, product launches, and workshops
-- **Analytics** - Engagement metrics and performance data
-
-## 🔄 Recent Updates
-
-- ✅ Added Jobs marketplace for designers
-- ✅ Implemented AI-guided homeowner onboarding
-- ✅ Built project matching algorithm (0-100% scoring)
-- ✅ Created role-based navigation system
-- ✅ Added upgrade path from basic to AI projects
-- ✅ Implemented comprehensive project dashboard
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📝 License
-
-This project is for demonstration purposes.
+- **Multi-workstation ready**: Full Git version control
+- **Hot reload**: Instant updates during development
+- **TypeScript**: Full type safety and IntelliSense
+- **Responsive**: Mobile-first design approach
 
 ---
 
-**Built with ❤️ for the design community** 
+**Live Demo**: [Your Vercel URL]
+**Repository**: https://github.com/bprasky/folio-mvp
+
+Built with ❤️ for the interior design community 

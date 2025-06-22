@@ -179,7 +179,7 @@ export default function StudentDashboard() {
               <div className="p-6">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-bold">
-                    {item.author[0]}
+                    {item.author?.[0] || 'S'}
                   </div>
                   <div>
                     <div className="font-semibold text-gray-900">{item.author}</div>
@@ -200,7 +200,7 @@ export default function StudentDashboard() {
                 </div>
                 
                 <div className="flex flex-wrap gap-2 mb-4">
-                  {item.tags.map((tag) => (
+                  {item.tags?.map((tag) => (
                     <span key={tag} className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm">
                       {tag}
                     </span>
@@ -270,7 +270,7 @@ export default function StudentDashboard() {
               <div className="p-6">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-teal-500 rounded-full flex items-center justify-center text-white font-bold">
-                    {item.author[0]}
+                    {item.author?.[0] || 'C'}
                   </div>
                   <div>
                     <div className="font-semibold text-gray-900">{item.author}</div>
@@ -299,7 +299,7 @@ export default function StudentDashboard() {
               <div className="p-6">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold">
-                    {item.company[0]}
+                    {item.company?.[0] || 'I'}
                   </div>
                   <div>
                     <div className="font-semibold text-gray-900">{item.company}</div>

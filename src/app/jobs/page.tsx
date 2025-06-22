@@ -5,12 +5,12 @@ import { motion } from 'framer-motion';
 import { FaBriefcase, FaFilter, FaSort } from 'react-icons/fa';
 import { useRole } from '../../contexts/RoleContext';
 import Navigation from '../../components/Navigation';
-import LeadPreferencesCard from '../../components/LeadPreferencesCard';
+import LeadPreferencesCard, { LeadPreferences } from '../../components/LeadPreferencesCard';
 import ProjectMatchingEngine from '../../components/ProjectMatchingEngine';
 
 export default function JobsPage() {
   const { role } = useRole();
-  const [leadPreferences, setLeadPreferences] = useState(null);
+  const [leadPreferences, setLeadPreferences] = useState<LeadPreferences | null>(null);
 
   // Redirect if not designer
   if (role !== 'designer') {

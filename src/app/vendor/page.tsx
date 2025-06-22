@@ -5,11 +5,9 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { FaHome, FaLightbulb, FaNewspaper, FaStore, FaUsers, FaUser, FaPlus, FaSearch, FaEdit, FaTrash, FaChartLine, FaShoppingCart } from 'react-icons/fa';
 import VendorDashboard from '@/app/vendor/dashboard/page';
+import ProductUploader from '@/components/vendor/ProductUploader';
 
-export default function VendorProfile() {
-  const [activeTab, setActiveTab] = useState<'products' | 'analytics' | 'orders'>('products');
-
-  const mockProducts = [
+const mockProducts = [
     {
       id: 1,
       name: 'Modern Sofa',
@@ -32,6 +30,16 @@ export default function VendorProfile() {
     },
     // Add more mock products as needed
   ];
+
+export default function VendorProfile() {
+  const [activeTab, setActiveTab] = useState<'products' | 'analytics' | 'orders'>('products');
+  const [showUploader, setShowUploader] = useState(false);
+  const [products, setProducts] = useState(mockProducts);
+
+  const handleProductAdded = (newProduct: any) => {
+    setProducts(prev => [...prev, newProduct]);
+    setShowUploader(false);
+  };
 
   return (
     <div className="flex min-h-screen bg-white">
@@ -74,7 +82,10 @@ export default function VendorProfile() {
             <h1 className="text-2xl font-bold text-gray-900">Vendor Dashboard</h1>
             <p className="text-gray-600">Manage your products and track performance</p>
           </div>
-          <button className="bg-gradient-to-r from-amber-500 to-pink-500 text-white px-6 py-2 rounded-md flex items-center">
+          <button 
+            onClick={() => setShowUploader(true)}
+            className="bg-gradient-to-r from-amber-500 to-pink-500 text-white px-6 py-2 rounded-md flex items-center hover:from-amber-600 hover:to-pink-600 transition-all duration-300"
+          >
             <FaPlus className="mr-2" /> Add Product
           </button>
         </div>
@@ -110,7 +121,7 @@ export default function VendorProfile() {
         {/* Content */}
         {activeTab === 'products' && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {mockProducts.map((product) => (
+            {products.map((product) => (
               <div key={product.id} className="glass-panel rounded-lg overflow-hidden">
                 <div className="relative h-48">
                   <Image
@@ -160,6 +171,14 @@ export default function VendorProfile() {
           </div>
         )}
       </div>
+
+      {/* Product Uploader Modal */}
+      {showUploader && (
+        <ProductUploader
+          onProductAdded={handleProductAdded}
+          onClose={() => setShowUploader(false)}
+        />
+      )}
     </div>
   );
 } 

@@ -103,6 +103,33 @@ const roleFeatures: Record<UserRole, { title: string; subtitle: string; features
         onClick: () => console.log('Promote Products clicked')
       }
     ]
+  },
+  student: {
+    title: 'Student Hub',
+    subtitle: 'Learn, grow, and build your design career',
+    features: [
+      {
+        icon: FaSearch,
+        label: 'Explore Feed',
+        description: 'Discover student work and opportunities',
+        color: 'bg-purple-500 hover:bg-purple-600',
+        onClick: () => console.log('Explore Feed clicked')
+      },
+      {
+        icon: FaFolder,
+        label: 'My Portfolio',
+        description: 'Showcase your design projects',
+        color: 'bg-blue-500 hover:bg-blue-600',
+        onClick: () => console.log('My Portfolio clicked')
+      },
+      {
+        icon: FaUsers,
+        label: 'Find Mentors',
+        description: 'Connect with industry professionals',
+        color: 'bg-teal-500 hover:bg-teal-600',
+        onClick: () => console.log('Find Mentors clicked')
+      }
+    ]
   }
 };
 
