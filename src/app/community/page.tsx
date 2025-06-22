@@ -89,15 +89,30 @@ const allUsers: User[] = [
   { name: 'West Elm', photo: 'https://randomuser.me/api/portraits/men/38.jpg', location: 'Miami', accountAge: 120 }
 ];
 
+// Add student users to allUsers array
+const studentUsers: User[] = [
+  { name: 'Alex Chen', photo: 'https://randomuser.me/api/portraits/men/50.jpg', location: 'New York', accountAge: 45 },
+  { name: 'Emma Rodriguez', photo: 'https://randomuser.me/api/portraits/women/51.jpg', location: 'Austin', accountAge: 30 },
+  { name: 'Maya Patel', photo: 'https://randomuser.me/api/portraits/women/52.jpg', location: 'San Francisco', accountAge: 60 },
+  { name: 'James Wilson', photo: 'https://randomuser.me/api/portraits/men/53.jpg', location: 'Boston', accountAge: 25 }
+];
+
+// Add student users to main users array
+allUsers.push(...studentUsers);
+
 const communityFeed: CommunityFeedGroup[] = [
   {
     group: 'Today',
     items: [
+      // Student Spotlight - Featured first
+      { user: studentUsers[0], action: 'featured in Student Spotlight', preview: { type: 'project', title: 'Eco-Friendly Studio Apartment', image: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=600&q=80', location: 'New York', engagement: 156, tags: ['Student Spotlight', 'Sustainable', 'Small Space'] }, time: '1 hour ago', engagement: 156 },
       { user: allUsers[0], action: 'posted a new project', preview: { type: 'project', title: 'Modern Loft', image: 'https://images.unsplash.com/photo-1618220179428-22790b461013?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=600&q=80', location: 'Miami', engagement: 80, tags: ['Minimalism'] }, time: '2 hours ago', engagement: 80 },
       { user: allUsers[1], action: "RSVP'd to an event", preview: { type: 'event', title: 'Designers Meetup', date: 'Today, 6:00 PM', location: 'New York', image: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=600&q=80', engagement: 60, tags: ['Networking'] }, time: '3 hours ago', engagement: 60 },
       { user: allUsers[2], action: 'published a new product', preview: { type: 'product', title: 'Velvet Sofa', image: 'https://images.unsplash.com/photo-1583845112208-5eb7b0e24b0b?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=600&q=80', location: 'Miami', engagement: 120, tags: ['Luxury'] }, time: '5 hours ago', engagement: 120 },
       { user: allUsers[3], action: 'posted a new moodboard', preview: { type: 'moodboard', title: 'Urban Jungle', image: 'https://images.unsplash.com/photo-1617806118233-18e1de247200?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=600&q=80', location: 'Miami', engagement: 30, tags: ['Biophilic'] }, time: '6 hours ago', engagement: 30 },
       { user: allUsers[4], action: "RSVP'd to an event", preview: { type: 'event', title: 'Spring Product Launch', date: 'Friday, 7:00 PM', location: 'Miami', image: 'https://images.unsplash.com/photo-1519710164239-da123dc03ef4?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=600&q=80', engagement: 90, tags: ['Product Launch'] }, time: '7 hours ago', engagement: 90 },
+      // Student collaboration post
+      { user: studentUsers[1], action: 'looking for collaboration partner', preview: { type: 'project', title: 'Modern Kitchen Design Challenge', image: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=600&q=80', location: 'Austin', engagement: 45, tags: ['Collaboration', 'Kitchen Design', 'Student Project'] }, time: '6.5 hours ago', engagement: 45 },
       { user: allUsers[5], action: 'published a new product', preview: { type: 'product', title: 'Eco Table', image: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=600&q=80', location: 'Miami', engagement: 110, tags: ['Sustainable'] }, time: '8 hours ago', engagement: 110 },
       { user: allUsers[6], action: 'posted a new project', preview: { type: 'project', title: 'LA Modern', image: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=600&q=80', location: 'Los Angeles', engagement: 70, tags: ['Modern'] }, time: '9 hours ago', engagement: 70 },
       { user: allUsers[7], action: 'published a new product', preview: { type: 'product', title: 'Smart Lamp', image: 'https://images.unsplash.com/photo-1583845112229-2b9fc29b5d9f?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=600&q=80', location: 'Miami', engagement: 95, tags: ['Smart Lighting'] }, time: '10 hours ago', engagement: 95 },
@@ -111,6 +126,8 @@ const communityFeed: CommunityFeedGroup[] = [
   {
     group: 'This Week',
     items: [
+      // Student mentorship success story
+      { user: studentUsers[2], action: 'completed mentorship milestone', preview: { type: 'project', title: 'Portfolio Website Launch', image: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=600&q=80', location: 'San Francisco', engagement: 78, tags: ['Student Achievement', 'Portfolio', 'Web Design'] }, time: '1 day ago', engagement: 78 },
       { user: allUsers[0], action: 'posted a new project', preview: { type: 'project', title: 'Minimalist Kitchen', image: 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=600&q=80', location: 'Miami', engagement: 85, tags: ['Minimalism'] }, time: '2 days ago', engagement: 85 },
       { user: allUsers[1], action: 'published a new product', preview: { type: 'product', title: 'Flower Table Lamp', image: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=600&q=80', location: 'New York', engagement: 65, tags: ['Lighting'] }, time: '3 days ago', engagement: 65 },
       { user: allUsers[2], action: 'posted a new moodboard', preview: { type: 'moodboard', title: 'Luxury Living', image: 'https://images.unsplash.com/photo-1583845112208-5eb7b0e24b0b?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=600&q=80', location: 'Miami', engagement: 90, tags: ['Luxury'] }, time: '4 days ago', engagement: 90 },
@@ -138,6 +155,7 @@ const allEventInvitees: EventInvitee[] = [
 
 const events: EventData[] = [
   { id: 1, title: 'Designers Meetup', host: { name: 'Lars Jensen', type: 'designer' }, date: '2024-06-10T18:00:00', location: 'New York', image: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=600&q=80', attendees: [allUsers[0], allUsers[1]], status: 'attending', isAdmin: true, inviteRules: ['Designer Pro', 'Local'], invited: [], gallery: [], priorityWave: ['You', 'Ava Martinez'] },
+  { id: 7, title: 'Student Portfolio Review & Networking', host: { name: 'Sarah Martinez', type: 'mentor' }, date: '2024-06-12T16:00:00', location: 'New York', image: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=600&q=80', attendees: [studentUsers[0], studentUsers[1]], status: 'attending', isAdmin: false, inviteRules: ['Students', 'Mentors'], invited: [], gallery: [], priorityWave: ['Alex Chen', 'Emma Rodriguez'] },
   { id: 2, title: 'Spring Product Launch', host: { name: 'Leaf & Co.', type: 'vendor' }, date: '2024-06-14T19:00:00', location: 'Miami', image: 'https://images.unsplash.com/photo-1519710164239-da123dc03ef4?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=600&q=80', attendees: [allUsers[2]], status: 'noresponse', isAdmin: false, inviteRules: ['Top Clients', 'Local'], invited: [], gallery: [], priorityWave: ['Kelly Wearstler'] },
   { id: 3, title: 'VIP Client Preview', host: { name: 'Kelly Wearstler', type: 'designer' }, date: '2024-06-17T17:00:00', location: 'Miami', image: 'https://images.unsplash.com/photo-1583845112208-5eb7b0e24b0b?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=600&q=80', attendees: [allUsers[0]], status: 'declined', isAdmin: false, inviteRules: ['Designer Pro'], invited: [], gallery: [], priorityWave: ['You'] },
   { id: 4, title: 'Miami Design Week', host: { name: 'Sofia Lee', type: 'designer' }, date: '2024-06-20T10:00:00', location: 'Miami', image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=600&q=80', attendees: [allUsers[5], allUsers[7]], status: 'noresponse', isAdmin: false, inviteRules: ['Designer Pro', 'Local'], invited: [], gallery: [], priorityWave: ['Sofia Lee', 'Emily Chen'] },
