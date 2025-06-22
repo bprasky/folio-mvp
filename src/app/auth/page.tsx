@@ -1,12 +1,14 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { FaLock } from 'react-icons/fa';
 
 export default function AuthPage() {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const router = useRouter();
 
   console.log('AuthPage render - password:', password, 'isLoading:', isLoading);
 
@@ -31,10 +33,11 @@ export default function AuthPage() {
 
       if (response.ok) {
         console.log('Authentication successful, redirecting...');
-        // Try multiple redirect methods
+        // Wait a moment for the cookie to be set, then redirect
         setTimeout(() => {
-          window.location.replace('/');
-        }, 100);
+          router.push('/');
+          router.refresh(); // Force a refresh to ensure middleware picks up the cookie
+        }, 200);
       } else {
         const errorData = await response.json();
         console.log('Auth error:', errorData);
@@ -96,7 +99,7 @@ export default function AuthPage() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 px-6 rounded-xl transition-all duration-200"
+            className="w-full bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300 text-white font-medium py-3 px-6 rounded-xl transition-all duration-200"
           >
             {isLoading ? 'Authenticating...' : 'Enter Preview'}
           </button>
