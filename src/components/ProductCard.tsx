@@ -22,7 +22,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   isSaved = false,
 }) => {
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
+    <div className="bg-white rounded-xl shadow-sm border border-folio-border overflow-hidden hover:shadow-md transition-all duration-300 hover:-translate-y-1">
       <div className="relative h-48 w-full">
         <Image
           src={image}
@@ -32,14 +32,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         />
       </div>
       <div className="p-4">
-        <h3 className="text-lg font-semibold text-gray-800">{name}</h3>
-        <p className="text-sm text-gray-600">{brand}</p>
-        <p className="text-lg font-bold text-gray-900 mt-2">{price}</p>
+        <h3 className="text-lg font-semibold text-folio-text">{name}</h3>
+        <p className="text-sm text-folio-border">{brand}</p>
+        <p className="text-lg font-bold text-folio-accent mt-2">{price}</p>
         <div className="flex flex-wrap gap-2 mt-3">
           {tags.map((tag) => (
             <span
               key={tag}
-              className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-full"
+              className="px-3 py-1 text-xs bg-folio-muted text-folio-text rounded-full border border-folio-border"
             >
               {tag}
             </span>
@@ -48,10 +48,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         {onSave && (
           <button
             onClick={onSave}
-            className={`mt-4 w-full py-2 px-4 rounded-md transition-colors duration-200 ${
+            className={`mt-4 w-full py-2 px-4 rounded-lg font-medium transition-all duration-200 ${
               isSaved
-                ? 'bg-green-500 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                ? 'bg-folio-accent text-white'
+                : 'bg-folio-muted text-folio-text hover:bg-folio-card border border-folio-border'
             }`}
           >
             {isSaved ? 'Saved' : 'Save to Folder'}

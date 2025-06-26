@@ -1,0 +1,173 @@
+[
+  {
+    "id": "waterfront-retreat-editorial",
+    "slug": "waterfront-retreat-balinese-luxury",
+    "title": "Waterfront Retreat: Contemporary Balinese Luxury",
+    "subtitle": "A 12,000 SF custom home that captures the essence of modern tropical living",
+    "excerpt": "Inspired by its location on Sunset Lake, this spectacular waterfront home resonates with calming energy through natural materials, warm color palettes, and modern organic furnishings.",
+    "intro": "Inspired by its location on Sunset Lake, a yacht basin boasting the calmest body of water on the beach, this spectacular custom waterfront home resonates with calming energy. The interior design captures the contemporary Balinese essence of its architecture through natural materials, warm color palettes, modern organic furnishings, and carefully curated art throughout this luxury resort-style residence. The foyer is clad with wood and artwork on each side: a piece by Christopher Wool with a marble console underneath and opposite a piece by Mark Rothko. Tying in the home's exterior facade, the interior walls are clad in high textured slabs of stone.",
+    "heroImage": "https://cdn.prod.website-files.com/66f42e113b610c9213331fbc/6706e5e91623c8ee4599a93b_img-1.jpg",
+    "designerName": "Sarah Chen",
+    "designerImage": "https://images.unsplash.com/photo-1494790108755-2616b612b5c5?auto=format&fit=crop&w=150&q=80",
+    "designerTagline": "Creating timeless spaces that blend luxury with natural harmony",
+    "designerBio": "With over 15 years of experience in high-end residential design, Sarah specializes in creating sophisticated spaces that honor their natural surroundings while delivering uncompromising luxury.",
+    "category": "Residential",
+    "readTime": "8 min read",
+    "views": 2847,
+    "publishedAt": "2024-01-15",
+    "featured": true,
+    "tags": ["Luxury", "Waterfront", "Contemporary", "Tropical"],
+    "quoteBlocks": [
+      {
+        "image": "https://cdn.prod.website-files.com/66f42e113b610c9213331fbc/66f704047ab99f998836ce7c_img-3.avif",
+        "quote": "The grand room is designed with multiple entertainment areas where sinuous sofas and sculptural armchairs surround round coffee tables in various styles from wood to glass.",
+        "attribution": "Sarah Chen, Lead Designer"
+      },
+      {
+        "image": "https://cdn.prod.website-files.com/66f42e113b610c9213331fbc/66f70404ba30530f5439427c_img-4.avif",
+        "quote": "Natural colors like sand and woods showcase the styling of each piece, from the open cane seat backs in the armchairs to the drum style coffee table in wood.",
+        "attribution": "Design Philosophy"
+      }
+    ],
+    "products": [
+      {
+        "name": "Teak Dining Table",
+        "vendor": "West Elm",
+        "price": "$2,499",
+        "image": "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=300&q=80",
+        "url": "https://westelm.com",
+        "room": "Dining Room"
+      },
+      {
+        "name": "Rattan Lounge Chair", 
+        "vendor": "CB2",
+        "price": "$899",
+        "image": "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=300&q=80",
+        "url": "https://cb2.com",
+        "room": "Living Room"
+      },
+      {
+        "name": "Natural Stone Vase",
+        "vendor": "Pottery Barn", 
+        "price": "$149",
+        "image": "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=300&q=80",
+        "url": "https://potterybarn.com",
+        "room": "Entryway"
+      },
+      {
+        "name": "Organic Cotton Throw",
+        "vendor": "Parachute",
+        "price": "$199", 
+        "image": "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=300&q=80",
+        "url": "https://parachutehome.com",
+        "room": "Living Room"
+      }
+    ],
+    "videoUrl": null,
+    "socialLinks": {
+      "instagram": "https://instagram.com/sarahchendesign",
+      "linkedin": "https://linkedin.com/in/sarahchendesign", 
+      "website": "https://sarahchendesign.com"
+    }
+  },
+  {
+    "id": "urban-loft-editorial",
+    "slug": "urban-loft-industrial-elegance",
+    "title": "Urban Loft: Industrial Elegance Redefined",
+    "subtitle": "Converting a 1920s warehouse into a sophisticated urban sanctuary",
+    "excerpt": "This stunning loft transformation showcases how industrial heritage can be seamlessly blended with contemporary luxury to create a truly unique living space.",
+    "intro": "Located in the heart of downtown, this 1920s warehouse conversion represents the perfect marriage of industrial heritage and contemporary sophistication. The design celebrates the building's raw architectural elements while introducing refined materials and modern amenities that elevate the space into a luxury urban sanctuary.",
+    "heroImage": "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=800&q=80",
+    "designerName": "Marcus Rodriguez",
+    "designerImage": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=150&q=80",
+    "designerTagline": "Transforming industrial spaces into contemporary sanctuaries",
+    "designerBio": "Marcus specializes in adaptive reuse projects, breathing new life into historic industrial buildings while preserving their authentic character and architectural integrity.",
+    "category": "Commercial",
+    "readTime": "6 min read", 
+    "views": 1923,
+    "publishedAt": "2024-01-12",
+    "featured": false,
+    "tags": ["Industrial", "Loft", "Urban", "Contemporary"],
+    "quoteBlocks": [
+      {
+        "image": "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=600&q=80",
+        "quote": "We preserved the original brick walls and steel beams while introducing warm woods and soft textiles to create a perfect balance between industrial and residential comfort.",
+        "attribution": "Marcus Rodriguez, Principal Designer"
+      }
+    ],
+    "products": [
+      {
+        "name": "Industrial Steel Dining Table",
+        "vendor": "Restoration Hardware",
+        "price": "$3,200",
+        "image": "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=300&q=80",
+        "url": "https://rh.com",
+        "room": "Dining Area"
+      },
+      {
+        "name": "Leather Chesterfield Sofa",
+        "vendor": "Article",
+        "price": "$1,899",
+        "image": "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=300&q=80", 
+        "url": "https://article.com",
+        "room": "Living Room"
+      }
+    ],
+    "videoUrl": null,
+    "socialLinks": {
+      "instagram": "https://instagram.com/marcusrodriguezdesign",
+      "linkedin": "https://linkedin.com/in/marcusrodriguezdesign",
+      "website": "https://marcusrodriguezdesign.com"
+    }
+  },
+  {
+    "id": "minimalist-sanctuary-editorial",
+    "slug": "minimalist-sanctuary-japanese-influence", 
+    "title": "Minimalist Sanctuary: Japanese-Influenced Serenity",
+    "subtitle": "Finding peace through purposeful design and natural materials",
+    "excerpt": "This minimalist home draws inspiration from Japanese design principles, creating a serene environment that promotes mindfulness and connection with nature.",
+    "intro": "Drawing from centuries-old Japanese design philosophy, this minimalist sanctuary demonstrates how intentional reduction can lead to profound beauty and tranquility. Every element has been carefully considered, from the play of light and shadow to the tactile quality of natural materials, creating a space that encourages contemplation and inner peace.",
+    "heroImage": "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=800&q=80",
+    "designerName": "Yuki Tanaka",
+    "designerImage": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80",
+    "designerTagline": "Designing spaces for mindful living and natural harmony",
+    "designerBio": "Yuki brings authentic Japanese design principles to contemporary living, creating spaces that embody the essence of wabi-sabi and the beauty found in simplicity.",
+    "category": "Residential",
+    "readTime": "5 min read",
+    "views": 3156,
+    "publishedAt": "2024-01-10", 
+    "featured": true,
+    "tags": ["Minimalist", "Japanese", "Natural", "Zen"],
+    "quoteBlocks": [
+      {
+        "image": "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=600&q=80",
+        "quote": "In Japanese design, empty space is not vacant but full of possibility. Each void allows the mind to rest and the spirit to breathe.",
+        "attribution": "Yuki Tanaka, Design Philosophy"
+      }
+    ],
+    "products": [
+      {
+        "name": "Japanese Tatami Mat",
+        "vendor": "Muji",
+        "price": "$299",
+        "image": "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=300&q=80",
+        "url": "https://muji.com",
+        "room": "Meditation Space"
+      },
+      {
+        "name": "Bamboo Floor Lamp",
+        "vendor": "Design Within Reach",
+        "price": "$450",
+        "image": "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=300&q=80",
+        "url": "https://dwr.com", 
+        "room": "Living Room"
+      }
+    ],
+    "videoUrl": null,
+    "socialLinks": {
+      "instagram": "https://instagram.com/yukitanakadesign",
+      "linkedin": "https://linkedin.com/in/yukitanakadesign",
+      "website": "https://yukitanakadesign.com"
+    }
+  }
+] 

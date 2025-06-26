@@ -1,0 +1,178 @@
+[
+  {
+    "id": "homeowner-1",
+    "name": "Sarah Thompson",
+    "location": "Brooklyn, NY",
+    "budgetRange": "$50k–$100k",
+    "desiredRooms": ["Kitchen", "Dining Room"],
+    "serviceLevel": "Full service",
+    "projectStatus": "ready-to-start",
+    "memberSince": "2024-01-15",
+    "bio": "Looking to completely renovate our 1920s brownstone kitchen and dining area. We love modern functionality with vintage charm.",
+    "projectType": "full-renovation",
+    "timeline": "3-6 months",
+    "stylePreferences": ["Modern", "Vintage", "Industrial"],
+    "specialRequirements": ["Pet-friendly materials", "Open concept"],
+    "avatar": "https://randomuser.me/api/portraits/women/32.jpg",
+    "savedPosts": 47,
+    "metrics": {
+      "projectsCreated": 2,
+      "itemsSaved": 47,
+      "designersFollowed": 8
+    }
+  },
+  {
+    "id": "homeowner-2",
+    "name": "David & Mia Chen",
+    "location": "Austin, TX",
+    "budgetRange": "$10k–$30k",
+    "desiredRooms": ["Nursery", "Living Room"],
+    "serviceLevel": "Designer guidance",
+    "projectStatus": "planning",
+    "memberSince": "2024-02-20",
+    "bio": "First-time parents preparing our home for baby. Need help with nursery design and making our living room more family-friendly.",
+    "projectType": "decor-refresh",
+    "timeline": "2-4 months",
+    "stylePreferences": ["Scandinavian", "Minimalist", "Natural"],
+    "specialRequirements": ["Baby-safe materials", "Storage solutions"],
+    "avatar": "https://randomuser.me/api/portraits/men/45.jpg",
+    "savedPosts": 23,
+    "metrics": {
+      "projectsCreated": 1,
+      "itemsSaved": 23,
+      "designersFollowed": 3
+    }
+  },
+  {
+    "id": "homeowner-3",
+    "name": "Laura Martinez",
+    "location": "Scottsdale, AZ",
+    "budgetRange": "Under $15k",
+    "desiredRooms": ["Bedroom"],
+    "serviceLevel": "DIY help",
+    "projectStatus": "planning",
+    "memberSince": "2024-03-10",
+    "bio": "Recent college grad looking to transform my bedroom into a cozy, productive space. Love bohemian style and need budget-friendly solutions.",
+    "projectType": "decor-only",
+    "timeline": "1-2 months",
+    "stylePreferences": ["Bohemian", "Eclectic", "Colorful"],
+    "specialRequirements": ["Budget-friendly", "Rental-friendly"],
+    "avatar": "https://randomuser.me/api/portraits/women/28.jpg",
+    "savedPosts": 89,
+    "metrics": {
+      "projectsCreated": 1,
+      "itemsSaved": 89,
+      "designersFollowed": 12
+    }
+  },
+  {
+    "id": "homeowner-4",
+    "name": "Michael Rodriguez",
+    "location": "San Francisco, CA",
+    "budgetRange": "$200k–$500k",
+    "desiredRooms": ["Living Room", "Kitchen", "Master Bedroom", "Home Office"],
+    "serviceLevel": "Full service",
+    "projectStatus": "interviewing",
+    "memberSince": "2023-11-05",
+    "bio": "Tech executive with a new penthouse that needs complete interior design. Looking for contemporary luxury with smart home integration.",
+    "projectType": "new-build",
+    "timeline": "6-12 months",
+    "stylePreferences": ["Contemporary", "Luxury", "Tech-forward"],
+    "specialRequirements": ["Smart home integration", "Entertaining spaces"],
+    "avatar": "https://randomuser.me/api/portraits/men/35.jpg",
+    "savedPosts": 156,
+    "metrics": {
+      "projectsCreated": 3,
+      "itemsSaved": 156,
+      "designersFollowed": 15
+    }
+  },
+  {
+    "id": "homeowner-5",
+    "name": "Jennifer & Tom Wilson",
+    "location": "Denver, CO",
+    "budgetRange": "$75k–$150k",
+    "desiredRooms": ["Kitchen", "Living Room", "Basement"],
+    "serviceLevel": "Designer guidance",
+    "projectStatus": "ready-to-start",
+    "memberSince": "2024-01-30",
+    "bio": "Empty nesters ready to renovate our family home. Want to create a modern entertaining space and convert basement to guest suite.",
+    "projectType": "full-renovation",
+    "timeline": "4-8 months",
+    "stylePreferences": ["Transitional", "Warm Modern", "Classic"],
+    "specialRequirements": ["Aging in place features", "Guest accommodation"],
+    "avatar": "https://randomuser.me/api/portraits/women/52.jpg",
+    "savedPosts": 78,
+    "metrics": {
+      "projectsCreated": 2,
+      "itemsSaved": 78,
+      "designersFollowed": 6
+    }
+  },
+  {
+    "id": "homeowner-6",
+    "name": "Alex Kim",
+    "location": "Seattle, WA",
+    "budgetRange": "$25k–$50k",
+    "desiredRooms": ["Home Office", "Living Room"],
+    "serviceLevel": "Designer guidance",
+    "projectStatus": "planning",
+    "memberSince": "2024-02-14",
+    "bio": "Remote worker needing help to create a productive home office and refresh the living space. Love clean, minimal aesthetics.",
+    "projectType": "decor-refresh",
+    "timeline": "2-3 months",
+    "stylePreferences": ["Minimalist", "Japanese", "Clean"],
+    "specialRequirements": ["Ergonomic workspace", "Natural lighting"],
+    "avatar": "https://randomuser.me/api/portraits/men/29.jpg",
+    "savedPosts": 34,
+    "metrics": {
+      "projectsCreated": 1,
+      "itemsSaved": 34,
+      "designersFollowed": 4
+    }
+  },
+  {
+    "id": "homeowner-7",
+    "name": "Maria Santos",
+    "location": "Miami, FL",
+    "budgetRange": "$30k–$75k",
+    "desiredRooms": ["Living Room", "Dining Room", "Patio"],
+    "serviceLevel": "Full service",
+    "projectStatus": "planning",
+    "memberSince": "2024-03-01",
+    "bio": "Love entertaining and want to create a vibrant, tropical-modern space that flows from indoor to outdoor living.",
+    "projectType": "decor-refresh",
+    "timeline": "3-5 months",
+    "stylePreferences": ["Tropical", "Modern", "Colorful"],
+    "specialRequirements": ["Indoor-outdoor flow", "Entertaining spaces"],
+    "avatar": "https://randomuser.me/api/portraits/women/38.jpg",
+    "savedPosts": 92,
+    "metrics": {
+      "projectsCreated": 1,
+      "itemsSaved": 92,
+      "designersFollowed": 9
+    }
+  },
+  {
+    "id": "homeowner-8",
+    "name": "Robert & Linda Johnson",
+    "location": "Nashville, TN",
+    "budgetRange": "$40k–$80k",
+    "desiredRooms": ["Master Bedroom", "Bathroom"],
+    "serviceLevel": "Designer guidance",
+    "projectStatus": "ready-to-start",
+    "memberSince": "2023-12-18",
+    "bio": "Celebrating our 25th anniversary by creating a luxurious master suite retreat. Want it to feel like a boutique hotel.",
+    "projectType": "full-renovation",
+    "timeline": "3-4 months",
+    "stylePreferences": ["Boutique Hotel", "Luxurious", "Romantic"],
+    "specialRequirements": ["Spa-like bathroom", "Luxury finishes"],
+    "avatar": "https://randomuser.me/api/portraits/women/48.jpg",
+    "savedPosts": 67,
+    "metrics": {
+      "projectsCreated": 1,
+      "itemsSaved": 67,
+      "designersFollowed": 5
+    }
+  }
+] 

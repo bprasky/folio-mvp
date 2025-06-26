@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
+import SafeImage from '@/components/SafeImage';
 import designerAnalyticsData from '@/data/designer_analytics.json';
 import designerProjectsData from '@/data/designer_projects.json';
 import { FaEye, FaUsers, FaFolder, FaTag, FaDollarSign, FaRocket, FaTimes, FaComment, FaNewspaper, FaPrint, FaRegNewspaper } from 'react-icons/fa';
@@ -95,7 +95,7 @@ export default function DesignerAnalyticsPage() {
         {/* Designer Overview Header */}
         <div className="bg-zinc-900 rounded-lg shadow-xl p-6 mb-10 flex flex-col md:flex-row items-center md:justify-between">
           <div className="flex items-center mb-6 md:mb-0">
-            <Image
+            <SafeImage
               src={productData.profile_image}
               alt={productData.designer_name}
               width={96}
@@ -190,7 +190,7 @@ export default function DesignerAnalyticsPage() {
                   {productData.top_tagged_products.map((product, index) => (
                     <tr key={index} className="border-t border-zinc-700 hover:bg-zinc-850">
                       <td className="px-4 py-4 flex items-center">
-                        <Image
+                        <SafeImage
                           src={product.product_image}
                           alt={product.product_name}
                           width={48}
@@ -260,7 +260,7 @@ export default function DesignerAnalyticsPage() {
                           >
                             {expandedProjects[project.project_name] ? '▼' : '▶'}
                           </button>
-                          <Image
+                          <SafeImage
                             src={project.project_image}
                             alt={project.project_name}
                             width={48}
@@ -305,7 +305,7 @@ export default function DesignerAnalyticsPage() {
                                 <div className="space-y-3">
                                   {project.products_tagged.map((product, i) => (
                                     <div key={i} className="flex items-center bg-zinc-800 p-3 rounded-lg">
-                                      <Image
+                                      <SafeImage
                                         src={product.product_image}
                                         alt={product.product_name}
                                         width={40}
@@ -373,7 +373,7 @@ export default function DesignerAnalyticsPage() {
                   {projectsData.map((project, index) => (
                     <tr key={index} className="border-t border-zinc-700 hover:bg-zinc-850">
                       <td className="px-4 py-4 flex items-center">
-                        <Image
+                        <SafeImage
                           src={project.project_image}
                           alt={project.project_name}
                           width={48}

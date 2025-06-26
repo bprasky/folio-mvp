@@ -2,12 +2,14 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
-export type UserRole = 'homeowner' | 'designer' | 'vendor' | 'student';
+export type UserRole = 'homeowner' | 'designer' | 'vendor' | 'student' | 'admin';
 
 interface RoleContextType {
   role: UserRole;
   setRole: (role: UserRole) => void;
   isLoading: boolean;
+  activeProfileId?: string;
+  setActiveProfileId: (id: string) => void;
 }
 
 const RoleContext = createContext<RoleContextType | undefined>(undefined);
@@ -19,13 +21,16 @@ interface RoleProviderProps {
 export function RoleProvider({ children }: RoleProviderProps) {
   const [role, setRoleState] = useState<UserRole>('homeowner');
   const [isLoading, setIsLoading] = useState(true);
+  const [activeProfileId, setActiveProfileIdState] = useState<string>('');
 
   // Load role from localStorage on mount
   useEffect(() => {
     const savedRole = localStorage.getItem('userRole') as UserRole;
-    if (savedRole && ['homeowner', 'designer', 'vendor'].includes(savedRole)) {
+    const savedProfileId = localStorage.getItem('activeProfileId') || '';
+    if (savedRole && ['homeowner', 'designer', 'vendor', 'student', 'admin'].includes(savedRole)) {
       setRoleState(savedRole);
     }
+    setActiveProfileIdState(savedProfileId);
     setIsLoading(false);
   }, []);
 
@@ -41,10 +46,17 @@ export function RoleProvider({ children }: RoleProviderProps) {
     }, 300);
   };
 
+  const setActiveProfileId = (id: string) => {
+    localStorage.setItem('activeProfileId', id);
+    setActiveProfileIdState(id);
+  };
+
   const value = {
     role,
     setRole,
-    isLoading
+    isLoading,
+    activeProfileId,
+    setActiveProfileId
   };
 
   return (

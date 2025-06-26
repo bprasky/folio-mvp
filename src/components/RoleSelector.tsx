@@ -2,10 +2,10 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaChevronDown, FaHome, FaPalette, FaStore, FaSpinner, FaGraduationCap } from 'react-icons/fa';
+import { FaChevronDown, FaHome, FaPalette, FaStore, FaSpinner, FaGraduationCap, FaCrown } from 'react-icons/fa';
 import { useRole } from '../contexts/RoleContext';
 
-export type UserRole = 'homeowner' | 'designer' | 'vendor' | 'student';
+export type UserRole = 'homeowner' | 'designer' | 'vendor' | 'student' | 'admin';
 
 interface RoleOption {
   value: UserRole;
@@ -43,6 +43,13 @@ const roleOptions: RoleOption[] = [
     icon: FaGraduationCap,
     color: 'bg-cyan-500',
     description: 'Learning and building portfolio'
+  },
+  {
+    value: 'admin',
+    label: 'Admin',
+    icon: FaCrown,
+    color: 'bg-amber-500',
+    description: 'Managing platform content'
   }
 ];
 

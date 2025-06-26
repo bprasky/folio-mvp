@@ -1,102 +1,86 @@
-/** @type {import('next').NextConfig} */
+﻿/** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // Disable automatic file watching that might revert changes
+  experimental: {
+    turbo: {
+      watchOptions: {
+        ignored: ['**/node_modules/**', '**/.git/**', '**/.next/**']
+      }
+    }
+  },
+  // Disable automatic static optimization to prevent file overwrites
+  staticPageGenerationTimeout: 60,
+  // Configure webpack to not watch certain files
+  webpack: (config, { dev, isServer }) => {
+    if (dev) {
+      // Disable watching for backup files and prevent auto-restoration
+      config.watchOptions = {
+        ...config.watchOptions,
+        ignored: [
+          '**/node_modules/**',
+          '**/.git/**',
+          '**/.next/**',
+          '**/*.backup',
+          '**/page.tsx.backup',
+          '**/page_backup_.tsx'
+        ]
+      };
+    }
+    return config;
+  },
   images: {
+    domains: [
+      'source.unsplash.com',
+      'images.unsplash.com',
+      'randomuser.me',
+      'cdn.prod.website-files.com',
+      'images.squarespace-cdn.com',
+      'static1.squarespace.com',
+      'assets.squarespace.com',
+      'www.mesonart.com',
+      'mesonart.com',
+      's3.img-b.com',
+      'cb.scene7.com',
+      'cdn.roveconcepts.com',
+      'res.cloudinary.com',
+      'build.com',
+      'cdn.shopify.com',
+      'i.imgur.com',
+      'via.placeholder.com',
+      's3.amazonaws.com'
+    ],
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'source.unsplash.com',
-        port: '',
-        pathname: '/random/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'images.unsplash.com',
-        port: '',
+        hostname: '*.squarespace-cdn.com',
         pathname: '/**',
       },
       {
         protocol: 'https',
-        hostname: 'randomuser.me',
-        port: '',
-        pathname: '/api/portraits/**',
-      },
-      // Product image domains for the product uploader
-      {
-        protocol: 'https',
-        hostname: 'cdn.roveconcepts.com',
-        port: '',
+        hostname: '*.squarespace.com',
         pathname: '/**',
       },
       {
         protocol: 'https',
-        hostname: 'assets.weimgs.com',
-        port: '',
+        hostname: '*.shopify.com',
         pathname: '/**',
       },
       {
         protocol: 'https',
-        hostname: 'cb2.scene7.com',
-        port: '',
+        hostname: '*.amazonaws.com',
         pathname: '/**',
       },
       {
         protocol: 'https',
-        hostname: 'secure.img1-cg.wfcdn.com',
-        port: '',
+        hostname: '*.cloudfront.net',
         pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'secure.img1-fg.wfcdn.com',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'm.media-amazon.com',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'images-na.ssl-images-amazon.com',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'target.scene7.com',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'assets.pbimgs.com',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'images.crateandbarrel.com',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'media.restorationhardware.com',
-        port: '',
-        pathname: '/**',
-      },
-      // Catch-all for other product image domains
-      {
-        protocol: 'https',
-        hostname: '**',
-        port: '',
-        pathname: '/**',
-      },
+      }
     ],
+    dangerouslyAllowSVG: true,
+    minimumCacheTTL: 60,
+    unoptimized: false,
   },
 };
 
-module.exports = nextConfig; 
+module.exports = nextConfig;

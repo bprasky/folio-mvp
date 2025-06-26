@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { FaHome, FaLightbulb, FaNewspaper, FaStore, FaUsers, FaUser, FaPlus, FaSearch, FaEyeSlash, FaEye, FaUserFriends, FaStar, FaMapPin, FaBolt, FaCalendarAlt, FaMapMarkerAlt, FaCalendarPlus, FaHeart } from 'react-icons/fa';
+import { useRole } from '../../contexts/RoleContext';
 
 // --- Interfaces ---
 interface User {
@@ -323,12 +324,28 @@ const EventCardComponent = ({ event, onRSVP, isInline = false }: { event: EventD
 };
 
 export default function CommunityPage() {
+  const { role } = useRole();
   const [feedFilter, setFeedFilter] = useState<'following' | 'forYou' | 'local' | 'rising'>('following');
   const [eventTypeFilter, setEventTypeFilter] = useState<'all' | 'open' | 'invite' | 'attending'>('all');
   const [eventsData, setEventsData] = useState<EventData[]>(events);
   const [eventsVisible, setEventsVisible] = useState(true);
   const [currentPanel, setCurrentPanel] = useState<'all' | 'feed' | 'events'>('all');
   const [likedItems, setLikedItems] = useState<{ [key: string]: boolean }>({});
+
+  // Role-based profile link configuration
+  const getProfileLink = () => {
+    switch (role) {
+      case 'designer':
+        return '/designer';
+      case 'vendor':
+        return '/vendor';
+      case 'student':
+        return '/student';
+      case 'homeowner':
+      default:
+        return '/homeowner';
+    }
+  };
 
   const handleLike = (itemId: string) => {
     setLikedItems(prev => ({
@@ -463,7 +480,7 @@ export default function CommunityPage() {
             <FaStore className="text-lg" />
             <span className="hidden lg:inline ml-3">Shop</span>
           </Link>
-          <Link href="/select-role" className="p-3 rounded hover:bg-gray-800 flex flex-col items-center lg:flex-row lg:items-center w-full">
+          <Link href={getProfileLink()} className="p-3 rounded hover:bg-gray-800 flex flex-col items-center lg:flex-row lg:items-center w-full">
             <FaUser className="text-lg" />
             <span className="hidden lg:inline ml-3">Profile</span>
           </Link>

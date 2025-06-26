@@ -9,9 +9,10 @@ import {
   FaUserPlus, FaBookmark, FaAward, FaMedal, FaStar, FaTrophy,
   FaPlay, FaImages, FaVideo, FaNewspaper, FaLayerGroup, FaSms,
   FaArrowRight, FaQuoteLeft, FaExternalLinkAlt, FaUser, FaUsers,
-  FaFileAlt, FaChevronLeft, FaChevronRight, FaTh
+  FaFileAlt, FaChevronLeft, FaChevronRight, FaTh, FaPlus
 } from 'react-icons/fa';
 import Navigation from '../../../components/Navigation';
+import VideoUploader from '../../../components/VideoUploader';
 
 // Enhanced mock data with Fibonacci-inspired content organization
 const designerData = {
@@ -366,79 +367,153 @@ const FibonacciProjectGrid = () => (
   </div>
 );
 
-// Videos in Asymmetric Layout
-const VideoSection = () => (
-  <div className="grid grid-cols-12 gap-6">
-    {/* Featured Video - Large */}
-    <motion.div 
-      className="col-span-8"
-      variants={spiralVariants}
-      initial="hidden"
-      whileInView="visible"
-      custom={0}
-    >
-      {designerData.designFilms.filter(v => v.featured)[0] && (
-        <div className="relative aspect-video group cursor-pointer rounded-xl overflow-hidden">
-          <Image
-            src={designerData.designFilms.filter(v => v.featured)[0].thumbnail}
-            alt={designerData.designFilms.filter(v => v.featured)[0].title}
-            fill
-            className="object-cover group-hover:scale-105 transition-transform duration-500"
-          />
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-20 h-20 bg-white bg-opacity-90 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-              <FaPlay className="w-8 h-8 text-gray-800 ml-2" />
-            </div>
-          </div>
-          <div className="absolute bottom-4 left-4 right-4">
-            <h3 className="text-white text-xl font-bold mb-2">
-              {designerData.designFilms.filter(v => v.featured)[0].title}
-            </h3>
-            <div className="flex justify-between items-center">
-              <span className="text-white/80">{designerData.designFilms.filter(v => v.featured)[0].views} views</span>
-              <span className="text-white/80">{designerData.designFilms.filter(v => v.featured)[0].duration}</span>
-            </div>
+// Enhanced Videos Section with Channel Features
+const VideoSection = () => {
+  const [videos, setVideos] = useState([]);
+  const [showUploader, setShowUploader] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadDesignerVideos();
+  }, []);
+
+  const loadDesignerVideos = async () => {
+    try {
+      const response = await fetch('/api/videos/upload?creatorId=designer-1&creatorType=designer');
+      const data = await response.json();
+      
+      if (data.success) {
+        setVideos(data.videos);
+      }
+    } catch (error) {
+      console.error('Error loading videos:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVideoUpload = (newVideo: any) => {
+    setVideos([newVideo, ...videos]);
+    setShowUploader(false);
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-16">
+        <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Channel Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">Channel</h2>
+          <p className="text-gray-600">Share your design process and insights</p>
+        </div>
+        <button
+          onClick={() => setShowUploader(true)}
+          className="bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 transition-colors flex items-center gap-2"
+        >
+          <FaPlus className="w-4 h-4" />
+          Upload Video
+        </button>
+      </div>
+
+      {videos.length === 0 ? (
+        <div className="text-center py-16 bg-gray-50 rounded-xl">
+          <FaVideo className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">No videos yet</h3>
+          <p className="text-gray-600 mb-4">Start building your channel by uploading your first video</p>
+          <button
+            onClick={() => setShowUploader(true)}
+            className="bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 transition-colors"
+          >
+            Upload First Video
+          </button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-12 gap-6">
+          {/* Featured Video - Large */}
+          <motion.div 
+            className="col-span-8"
+            variants={spiralVariants}
+            initial="hidden"
+            whileInView="visible"
+            custom={0}
+          >
+            {videos[0] && (
+              <Link href={`/watch/${videos[0].id}`}>
+                <div className="relative aspect-video group cursor-pointer rounded-xl overflow-hidden">
+                  <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                    <FaPlay className="w-12 h-12 text-white opacity-80" />
+                  </div>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-20 h-20 bg-white bg-opacity-90 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                      <FaPlay className="w-8 h-8 text-gray-800 ml-2" />
+                    </div>
+                  </div>
+                  <div className="absolute bottom-4 left-4 right-4">
+                    <h3 className="text-white text-xl font-bold mb-2">
+                      {videos[0].title}
+                    </h3>
+                    <div className="flex justify-between items-center">
+                      <span className="text-white/80">{videos[0].views} views</span>
+                      <span className="text-white/80">{new Date(videos[0].createdAt).toLocaleDateString()}</span>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            )}
+          </motion.div>
+
+          {/* Smaller Videos - Stacked */}
+          <div className="col-span-4 space-y-3">
+            {videos.slice(1, 4).map((video, index) => (
+              <motion.div
+                key={video.id}
+                variants={spiralVariants}
+                initial="hidden"
+                whileInView="visible"
+                custom={index + 1}
+              >
+                <Link href={`/watch/${video.id}`}>
+                  <div className="flex gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors cursor-pointer group">
+                    <div className="relative w-24 h-16 flex-shrink-0 rounded-lg overflow-hidden">
+                      <div className="w-full h-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center">
+                        <FaPlay className="w-4 h-4 text-white" />
+                      </div>
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-gray-900 text-sm group-hover:text-blue-600 transition-colors line-clamp-2">
+                        {video.title}
+                      </h4>
+                      <p className="text-xs text-gray-500">{video.views} views</p>
+                      <p className="text-xs text-gray-400">{new Date(video.createdAt).toLocaleDateString()}</p>
+                    </div>
+                  </div>
+                </Link>
+              </motion.div>
+            ))}
           </div>
         </div>
       )}
-    </motion.div>
 
-    {/* Smaller Videos - Stacked */}
-    <div className="col-span-4 space-y-4">
-      {designerData.designFilms.filter(v => !v.featured).map((video, index) => (
-        <motion.div
-          key={video.id}
-          variants={spiralVariants}
-          initial="hidden"
-          whileInView="visible"
-          custom={index + 1}
-          className="flex gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors cursor-pointer group"
-        >
-          <div className="relative w-24 h-16 flex-shrink-0 rounded-lg overflow-hidden">
-            <Image
-              src={video.thumbnail}
-              alt={video.title}
-              fill
-              className="object-cover"
-            />
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-6 h-6 bg-white bg-opacity-90 rounded-full flex items-center justify-center">
-                <FaPlay className="w-2 h-2 text-gray-800 ml-0.5" />
-              </div>
-            </div>
-          </div>
-          <div className="flex-1">
-            <h4 className="font-semibold text-gray-900 text-sm group-hover:text-blue-600 transition-colors">
-              {video.title}
-            </h4>
-            <p className="text-xs text-gray-500">{video.views} views</p>
-            <p className="text-xs text-gray-400">{video.duration}</p>
-          </div>
-        </motion.div>
-      ))}
+      {/* Video Upload Modal */}
+      {showUploader && (
+        <VideoUploader
+          creatorId="designer-1"
+          creatorType="designer"
+          onUploadComplete={handleVideoUpload}
+          onClose={() => setShowUploader(false)}
+          projects={designerData.featuredProjects}
+        />
+      )}
     </div>
-  </div>
-);
+  );
+};
 
 // About Section with Floating Elements
 const AboutSection = () => (
@@ -632,7 +707,7 @@ export default function DesignerProfile() {
 
   const tabs = [
     { id: 'projects' as TabType, label: 'Projects', icon: FaTh },
-    { id: 'videos' as TabType, label: 'Videos', icon: FaVideo },
+    { id: 'videos' as TabType, label: 'Channel', icon: FaVideo },
     { id: 'about' as TabType, label: 'About', icon: FaUser },
     { id: 'team' as TabType, label: 'Team', icon: FaUsers },
     { id: 'press' as TabType, label: 'Press', icon: FaNewspaper },

@@ -18,10 +18,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body className={`${inter.className} bg-folio-background text-folio-text min-h-screen`}>
         <RoleProvider>
           <GlobalHeader />
-          {children}
+          <main className="bg-folio-background">
+            {children}
+          </main>
         </RoleProvider>
       </body>
     </html>

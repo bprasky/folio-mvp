@@ -73,7 +73,7 @@ Vendors can now add products effortlessly:
 5. Edit details as needed and submit
 
 ### Designer Jobs Demo
-1. Select Designer role from `/select-role`
+1. Select Designer role from the role selector (Profile navigation will automatically link to role-specific pages)
 2. Navigate to Jobs tab in sidebar
 3. Complete lead preferences quiz
 4. Browse matched homeowner projects

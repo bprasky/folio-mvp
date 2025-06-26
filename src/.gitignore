@@ -58,4 +58,14 @@ pids
 .eslintcache
 
 # Prisma
-prisma/migrations/ 
+prisma/migrations/
+
+# Backup files that might cause reversions
+*.backup
+*_backup_*
+page.tsx.backup
+page_backup_.tsx
+
+# Temporary files
+*.tmp
+*.temp 
