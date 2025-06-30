@@ -394,10 +394,11 @@ const ProfilePhotoUpload = ({ currentImage, onImageChange, isEditing }: {
 };
 
 // User Switcher Dropdown Component
-const UserSwitcher = ({ currentUser, onUserChange, currentData }: { 
+const UserSwitcher = ({ currentUser, onUserChange, currentData, allDesigners }: { 
   currentUser: string, 
   onUserChange: (userId: string) => void,
-  currentData: any
+  currentData: any,
+  allDesigners: any[]
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -415,15 +416,19 @@ const UserSwitcher = ({ currentUser, onUserChange, currentData }: {
     };
   }, []);
 
-  // Use current data for the active user, fallback to static data for others
+  // Use current data for the active user, fallback to allDesigners data for others
   const getCurrentProfile = (userId: string) => {
     if (userId === currentUser) {
       return currentData;
     }
-    return designerProfiles[userId as keyof typeof designerProfiles];
+    return allDesigners.find(designer => designer.id === userId) || currentData;
   };
 
   const currentProfile = getCurrentProfile(currentUser);
+
+  if (!currentProfile) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className="relative mb-6" ref={dropdownRef}>
@@ -433,7 +438,7 @@ const UserSwitcher = ({ currentUser, onUserChange, currentData }: {
       >
         <div className="flex items-center gap-3">
           <Image
-            src={currentProfile.profileImage}
+            src={currentProfile.profileImage || '/images/default-avatar.jpg'}
             alt={currentProfile.name}
             width={32}
             height={32}
@@ -441,7 +446,7 @@ const UserSwitcher = ({ currentUser, onUserChange, currentData }: {
           />
           <div className="text-left">
             <p className="font-medium text-gray-900">{currentProfile.name}</p>
-            <p className="text-sm text-gray-500">{currentProfile.title}</p>
+            <p className="text-sm text-gray-500">{currentProfile.bio || 'Designer'}</p>
           </div>
         </div>
         <FaChevronDown className={`w-4 h-4 text-gray-500 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
@@ -449,33 +454,30 @@ const UserSwitcher = ({ currentUser, onUserChange, currentData }: {
 
       {isOpen && (
         <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto">
-          {Object.entries(designerProfiles).map(([key, profile]) => {
-            const displayProfile = getCurrentProfile(key);
-            return (
-              <button
-                key={key}
-                onClick={() => {
-                  onUserChange(key);
-                  setIsOpen(false);
-                }}
-                className={`w-full px-4 py-3 flex items-center gap-3 hover:bg-gray-50 transition-colors ${
-                  key === currentUser ? 'bg-blue-50 border-l-4 border-blue-500' : ''
-                }`}
-              >
-                <Image
-                  src={displayProfile.profileImage}
-                  alt={displayProfile.name}
-                  width={32}
-                  height={32}
-                  className="rounded-full object-cover"
-                />
-                <div className="text-left">
-                  <p className="font-medium text-gray-900">{displayProfile.name}</p>
-                  <p className="text-sm text-gray-500">{displayProfile.title}</p>
-                </div>
-              </button>
-            );
-          })}
+          {allDesigners.map((designer) => (
+            <button
+              key={designer.id}
+              onClick={() => {
+                onUserChange(designer.id);
+                setIsOpen(false);
+              }}
+              className={`w-full px-4 py-3 flex items-center gap-3 hover:bg-gray-50 transition-colors ${
+                designer.id === currentUser ? 'bg-blue-50 border-l-4 border-blue-500' : ''
+              }`}
+            >
+              <Image
+                src={designer.profileImage || '/images/default-avatar.jpg'}
+                alt={designer.name}
+                width={32}
+                height={32}
+                className="rounded-full object-cover"
+              />
+              <div className="text-left">
+                <p className="font-medium text-gray-900">{designer.name}</p>
+                <p className="text-sm text-gray-500">{designer.bio || 'Designer'}</p>
+              </div>
+            </button>
+          ))}
         </div>
       )}
     </div>
@@ -1183,8 +1185,9 @@ export default function DesignerProfile() {
   const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
   const [direction, setDirection] = useState(0);
   const [isEditing, setIsEditing] = useState(false);
-  const [currentUserId, setCurrentUserId] = useState<string>('sarah-chen');
-  const [designerData, setDesignerData] = useState(designerProfiles['sarah-chen']);
+  const [currentUserId, setCurrentUserId] = useState<string>('');
+  const [designerData, setDesignerData] = useState<any>(null);
+  const [allDesigners, setAllDesigners] = useState<any[]>([]);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
   
   // Project creation modal state
@@ -1193,40 +1196,38 @@ export default function DesignerProfile() {
   const { scrollY } = useScroll();
   const sidebarY = useTransform(scrollY, [0, 1000], [0, -100]);
 
-  // Load saved data from localStorage on component mount
+  // Load designers from database API
   useEffect(() => {
-    const loadUserData = () => {
-      const savedUserId = localStorage.getItem('currentDesignerProfile') || 'sarah-chen';
-      const savedDataKey = `designerProfile_${savedUserId}`;
-      const savedData = localStorage.getItem(savedDataKey);
-      
-      console.log('Loading data for user:', savedUserId);
-      console.log('Saved data exists:', !!savedData);
-      
-      setCurrentUserId(savedUserId);
-      
-      if (savedData) {
-        try {
-          const parsedData = JSON.parse(savedData);
-          console.log('Parsed saved data:', parsedData);
-          setDesignerData(parsedData);
-        } catch (error) {
-          console.error('Error parsing saved data:', error);
-          const fallbackData = designerProfiles[savedUserId as keyof typeof designerProfiles] || designerProfiles['sarah-chen'];
-          setDesignerData(fallbackData);
-          localStorage.setItem(savedDataKey, JSON.stringify(fallbackData));
+    const loadDesignersFromAPI = async () => {
+      try {
+        const response = await fetch('/api/designers');
+        const designers = await response.json();
+        
+        console.log('Loaded designers from API:', designers);
+        setAllDesigners(designers);
+        
+        // Set the first designer as default if no saved preference
+        const savedUserId = localStorage.getItem('currentDesignerProfile') || designers[0]?.id;
+        const currentDesigner = designers.find((d: any) => d.id === savedUserId) || designers[0];
+        
+        if (currentDesigner) {
+          setCurrentUserId(currentDesigner.id);
+          setDesignerData(currentDesigner);
+          localStorage.setItem('currentDesignerProfile', currentDesigner.id);
         }
-      } else {
-        const defaultData = designerProfiles[savedUserId as keyof typeof designerProfiles] || designerProfiles['sarah-chen'];
-        setDesignerData(defaultData);
-        localStorage.setItem(savedDataKey, JSON.stringify(defaultData));
-        console.log('No saved data, using default:', defaultData);
+        
+        setIsDataLoaded(true);
+      } catch (error) {
+        console.error('Error loading designers:', error);
+        // Fallback to hardcoded data if API fails
+        const fallbackData = designerProfiles['sarah-chen'];
+        setDesignerData(fallbackData);
+        setCurrentUserId('sarah-chen');
+        setIsDataLoaded(true);
       }
-      
-      setIsDataLoaded(true);
     };
 
-    loadUserData();
+    loadDesignersFromAPI();
   }, []);
 
   // Save data whenever it changes (but only after initial load)
@@ -1364,7 +1365,7 @@ export default function DesignerProfile() {
   };
 
   // Don't render until data is loaded
-  if (!isDataLoaded) {
+  if (!isDataLoaded || !designerData || allDesigners.length === 0) {
     return (
       <div className="min-h-screen bg-primary flex items-center justify-center">
         <div className="text-center">
@@ -1430,6 +1431,7 @@ export default function DesignerProfile() {
                   currentUser={currentUserId} 
                   onUserChange={handleUserChange} 
                   currentData={designerData}
+                  allDesigners={allDesigners}
                 />
 
                 {/* Profile Image */}
