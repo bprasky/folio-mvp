@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { readFile } from 'fs/promises';
-import { join } from 'path';
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
 
 export async function GET(request: NextRequest) {
   try {
@@ -10,47 +11,67 @@ export async function GET(request: NextRequest) {
     const vendor = searchParams.get('vendor');
     const limit = searchParams.get('limit');
 
-    // Load products from JSON file
-    const productsPath = join(process.cwd(), 'data', 'products2.json');
-    const productsContent = await readFile(productsPath, 'utf-8');
-    const productsData = JSON.parse(productsContent);
-
-    let filteredProducts = productsData;
+    // Build where clause for database query
+    const whereClause: any = {};
 
     // Apply search filter
     if (search) {
-      filteredProducts = filteredProducts.filter((product: any) =>
-        product.name.toLowerCase().includes(search) ||
-        product.description.toLowerCase().includes(search) ||
-        product.vendor.toLowerCase().includes(search) ||
-        product.category.toLowerCase().includes(search)
-      );
+      whereClause.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } },
+        { brand: { contains: search, mode: 'insensitive' } },
+        { category: { contains: search, mode: 'insensitive' } }
+      ];
     }
 
     // Apply category filter
     if (category) {
-      filteredProducts = filteredProducts.filter((product: any) =>
-        product.category.toLowerCase() === category.toLowerCase()
-      );
+      whereClause.category = { equals: category, mode: 'insensitive' };
     }
 
     // Apply vendor filter
     if (vendor) {
-      filteredProducts = filteredProducts.filter((product: any) =>
-        product.vendor.toLowerCase() === vendor.toLowerCase()
-      );
+      whereClause.vendor = {
+        name: { contains: vendor, mode: 'insensitive' }
+      };
     }
 
-    // Apply limit
-    if (limit) {
-      const limitNum = parseInt(limit, 10);
-      filteredProducts = filteredProducts.slice(0, limitNum);
-    }
+    // Load products from database
+    const products = await prisma.product.findMany({
+      where: whereClause,
+      include: {
+        vendor: {
+          select: {
+            id: true,
+            name: true,
+            companyName: true
+          }
+        }
+      },
+      take: limit ? parseInt(limit, 10) : undefined,
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+
+    // Transform data to match expected format
+    const formattedProducts = products.map(product => ({
+      id: product.id,
+      name: product.name,
+      description: product.description,
+      price: product.price,
+      image: product.imageUrl,
+      category: product.category,
+      brand: product.brand,
+      vendor: product.vendor?.name || product.vendor?.companyName || product.brand,
+      url: product.url,
+      isPending: product.isPending
+    }));
 
     return NextResponse.json({
       success: true,
-      products: filteredProducts,
-      total: filteredProducts.length
+      products: formattedProducts,
+      total: formattedProducts.length
     });
   } catch (error) {
     console.error('Error fetching products:', error);
