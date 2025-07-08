@@ -16,7 +16,7 @@ model User {
   name          String
   bio           String?
   profileImage  String?
-  profileType   String    // "designer", "vendor", "homeowner", "student", "admin"
+  profileType   String    // "designer", "vendor", "homeowner", "student", "admin", "lender"
   location      String?
   
   // Designer-specific fields
@@ -218,13 +218,24 @@ model Event {
   status        String    @default("draft") // "draft", "published", "cancelled"
   
   // Host information
-  hostType      String    // "designer", "vendor", "admin"
+  hostType      String    // "designer", "vendor", "admin", "lender"
   hostId        String?   // Optional reference to User (for designer/vendor hosts)
   hostName      String    // Name of the host (could be company name for vendors)
   
   // Event details
   maxAttendees  Int?
   isPublic      Boolean   @default(true)
+  
+  // Event hierarchy and type
+  eventType     String    @default("event") // "festival", "event", "showcase", etc.
+  parentEventId String?
+  parentEvent   Event?    @relation("EventHierarchy", fields: [parentEventId], references: [id])
+  childEvents   Event[]   @relation("EventHierarchy")
+  
+  // Approval system
+  approvalStatus String   @default("pending") // "pending", "approved", "rejected"
+  approvedBy    String?
+  approvedAt    DateTime?
   
   // Featured content
   featuredDesignerId String?
