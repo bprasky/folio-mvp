@@ -1,13 +1,21 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useRole } from '../../../contexts/RoleContext';
 import Navigation from '../../../components/Navigation';
-import { FaCalendarAlt, FaArrowLeft, FaPlus, FaTrash } from 'react-icons/fa';
+import { FaCalendarAlt, FaArrowLeft, FaPlus, FaClock, FaExclamationTriangle } from 'react-icons/fa';
 import Link from 'next/link';
 
-export default function CreateEventPage() {
+interface Festival {
+  id: string;
+  title: string;
+  slug: string;
+  date: string;
+  location: string;
+}
+
+export default function VendorCreateEventPage() {
   const { role } = useRole();
   const router = useRouter();
   
@@ -19,33 +27,56 @@ export default function CreateEventPage() {
     time: '',
     location: '',
     coverImage: '',
-    hostType: 'admin',
     hostName: '',
     maxAttendees: '',
     isPublic: true,
-    featuredDesignerId: '',
-    productIds: [] as string[],
-    eventType: 'festival'
+    parentEventId: ''
   });
 
+  const [festivals, setFestivals] = useState<Festival[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadingFestivals, setLoadingFestivals] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  // Redirect if not admin
-  if (role !== 'admin') {
+  // Redirect if not vendor
+  if (role !== 'vendor') {
     return (
       <div className="min-h-screen bg-folio-background flex">
         <Navigation />
         <div className="flex-1 lg:ml-20 xl:ml-56 flex items-center justify-center p-6">
           <div className="text-center">
-            <h2 className="text-2xl font-bold text-folio-text mb-2">Admin Only</h2>
-            <p className="text-folio-border">Access denied. Admin privileges required.</p>
+            <h2 className="text-2xl font-bold text-folio-text mb-2">Vendor Only</h2>
+            <p className="text-folio-border">Access denied. Vendor privileges required.</p>
           </div>
         </div>
       </div>
     );
   }
+
+  // Load available festivals
+  useEffect(() => {
+    loadFestivals();
+  }, []);
+
+  const loadFestivals = async () => {
+    try {
+      const response = await fetch('/api/events?type=festival&includeApproved=true');
+      const data = await response.json();
+      
+      // Only show future festivals
+      const futureFestivals = data.filter((festival: any) => {
+        return new Date(festival.date) > new Date();
+      });
+      
+      setFestivals(futureFestivals);
+    } catch (error) {
+      console.error('Error loading festivals:', error);
+      setError('Failed to load available festivals');
+    } finally {
+      setLoadingFestivals(false);
+    }
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
@@ -87,10 +118,12 @@ export default function CreateEventPage() {
         ...formData,
         date: dateTime.toISOString(),
         maxAttendees: formData.maxAttendees ? parseInt(formData.maxAttendees) : null,
-        createdById: 'admin-user-id', // In a real app, this would be the current user's ID
-        createdByRole: 'admin',
-        hostId: role === 'admin' ? 'admin-user-id' : null,
-        hostName: formData.hostName || 'Admin'
+        createdById: 'vendor-user-id', // In a real app, this would be the current user's ID
+        createdByRole: 'vendor',
+        hostType: 'vendor',
+        hostId: 'vendor-user-id',
+        hostName: formData.hostName || 'Vendor',
+        eventType: 'event'
       };
 
       const response = await fetch('/api/events', {
@@ -107,10 +140,10 @@ export default function CreateEventPage() {
         throw new Error(result.error || 'Failed to create event');
       }
 
-      setSuccess('Event created successfully!');
+      setSuccess('Event submitted for approval! You will be notified once it has been reviewed by the festival organizers.');
       setTimeout(() => {
-        router.push('/admin?tab=events');
-      }, 2000);
+        router.push('/vendor');
+      }, 3000);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create event');
     } finally {
@@ -127,14 +160,28 @@ export default function CreateEventPage() {
           {/* Header */}
           <div className="mb-8">
             <Link
-              href="/admin"
+              href="/vendor"
               className="inline-flex items-center gap-2 text-folio-accent hover:text-folio-accent-hover mb-4"
             >
               <FaArrowLeft className="w-4 h-4" />
-              Back to Admin Dashboard
+              Back to Vendor Dashboard
             </Link>
-            <h1 className="text-3xl font-bold text-folio-text mb-2">Create New Event</h1>
-            <p className="text-folio-border">Create events like design festivals, vendor showcases, and community meetups</p>
+            <h1 className="text-3xl font-bold text-folio-text mb-2">Create Event</h1>
+            <p className="text-folio-border">Create an event within a design festival or showcase</p>
+          </div>
+
+          {/* Approval Notice */}
+          <div className="mb-8 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+            <div className="flex items-start gap-3">
+              <FaExclamationTriangle className="w-5 h-5 text-amber-600 mt-0.5" />
+              <div>
+                <h3 className="font-medium text-amber-800 mb-1">Approval Required</h3>
+                <p className="text-sm text-amber-700">
+                  Events created by vendors are subject to approval by festival organizers. 
+                  You will be notified once your event has been reviewed.
+                </p>
+              </div>
+            </div>
           </div>
 
           {/* Form */}
@@ -148,11 +195,46 @@ export default function CreateEventPage() {
 
               {success && (
                 <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-                  <p className="text-green-600">{success}</p>
+                  <div className="flex items-start gap-3">
+                    <FaClock className="w-5 h-5 text-green-600 mt-0.5" />
+                    <p className="text-green-600">{success}</p>
+                  </div>
                 </div>
               )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Festival Selection */}
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-folio-text mb-2">
+                    Festival *
+                  </label>
+                  {loadingFestivals ? (
+                    <div className="w-full px-4 py-2 border border-folio-border rounded-lg bg-gray-50">
+                      Loading festivals...
+                    </div>
+                  ) : (
+                    <select
+                      name="parentEventId"
+                      value={formData.parentEventId}
+                      onChange={handleInputChange}
+                      required
+                      className="w-full px-4 py-2 border border-folio-border rounded-lg focus:ring-2 focus:ring-folio-accent focus:border-folio-accent"
+                    >
+                      <option value="">Select a festival</option>
+                      {festivals.map((festival) => (
+                        <option key={festival.id} value={festival.id}>
+                          {festival.title} - {new Date(festival.date).toLocaleDateString()} - {festival.location}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                  {festivals.length === 0 && !loadingFestivals && (
+                    <p className="text-sm text-folio-border mt-1">
+                      No upcoming festivals available. Events can only be created within existing festivals.
+                    </p>
+                  )}
+                </div>
+
                 {/* Event Title */}
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-folio-text mb-2">
@@ -165,7 +247,7 @@ export default function CreateEventPage() {
                     onChange={handleTitleChange}
                     required
                     className="w-full px-4 py-2 border border-folio-border rounded-lg focus:ring-2 focus:ring-folio-accent focus:border-folio-accent"
-                    placeholder="e.g., Design Festival 2024"
+                    placeholder="e.g., Product Showcase at Design Festival"
                   />
                 </div>
 
@@ -181,7 +263,7 @@ export default function CreateEventPage() {
                     onChange={handleInputChange}
                     required
                     className="w-full px-4 py-2 border border-folio-border rounded-lg focus:ring-2 focus:ring-folio-accent focus:border-folio-accent"
-                    placeholder="design-festival-2024"
+                    placeholder="product-showcase-design-festival"
                   />
                   <p className="text-sm text-folio-border mt-1">
                     URL will be: /events/{formData.slug}
@@ -245,7 +327,7 @@ export default function CreateEventPage() {
                     onChange={handleInputChange}
                     required
                     className="w-full px-4 py-2 border border-folio-border rounded-lg focus:ring-2 focus:ring-folio-accent focus:border-folio-accent"
-                    placeholder="e.g., New York, NY"
+                    placeholder="e.g., Booth #12, Main Hall"
                   />
                 </div>
 
@@ -265,46 +347,10 @@ export default function CreateEventPage() {
                   />
                 </div>
 
-                {/* Event Type */}
-                <div>
-                  <label className="block text-sm font-medium text-folio-text mb-2">
-                    Event Type
-                  </label>
-                  <select
-                    name="eventType"
-                    value={formData.eventType}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-folio-border rounded-lg focus:ring-2 focus:ring-folio-accent focus:border-folio-accent"
-                  >
-                    <option value="festival">Design Festival</option>
-                    <option value="event">Regular Event</option>
-                    <option value="showcase">Showcase</option>
-                    <option value="workshop">Workshop</option>
-                  </select>
-                </div>
-
-                {/* Host Type */}
-                <div>
-                  <label className="block text-sm font-medium text-folio-text mb-2">
-                    Host Type
-                  </label>
-                  <select
-                    name="hostType"
-                    value={formData.hostType}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-folio-border rounded-lg focus:ring-2 focus:ring-folio-accent focus:border-folio-accent"
-                  >
-                    <option value="admin">Admin</option>
-                    <option value="designer">Designer</option>
-                    <option value="vendor">Vendor</option>
-                    <option value="lender">Lender</option>
-                  </select>
-                </div>
-
                 {/* Host Name */}
                 <div>
                   <label className="block text-sm font-medium text-folio-text mb-2">
-                    Host Name
+                    Host/Company Name
                   </label>
                   <input
                     type="text"
@@ -312,7 +358,7 @@ export default function CreateEventPage() {
                     value={formData.hostName}
                     onChange={handleInputChange}
                     className="w-full px-4 py-2 border border-folio-border rounded-lg focus:ring-2 focus:ring-folio-accent focus:border-folio-accent"
-                    placeholder="e.g., Design Festival Team"
+                    placeholder="e.g., Your Company Name"
                   />
                 </div>
 
@@ -351,25 +397,25 @@ export default function CreateEventPage() {
               {/* Submit Button */}
               <div className="mt-8 flex justify-end gap-4">
                 <Link
-                  href="/admin"
+                  href="/vendor"
                   className="px-6 py-3 border border-folio-border text-folio-text rounded-lg hover:bg-folio-muted transition-colors"
                 >
                   Cancel
                 </Link>
                 <button
                   type="submit"
-                  disabled={loading}
+                  disabled={loading || festivals.length === 0}
                   className="px-6 py-3 bg-folio-accent text-white rounded-lg hover:bg-folio-accent-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
                   {loading ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                      Creating...
+                      Submitting for Approval...
                     </>
                   ) : (
                     <>
                       <FaPlus className="w-4 h-4" />
-                      Create Event
+                      Submit Event for Approval
                     </>
                   )}
                 </button>

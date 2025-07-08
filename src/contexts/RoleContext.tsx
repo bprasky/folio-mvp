@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
-export type UserRole = 'homeowner' | 'designer' | 'vendor' | 'student' | 'admin';
+export type UserRole = 'homeowner' | 'designer' | 'vendor' | 'student' | 'admin' | 'lender';
 
 interface RoleContextType {
   role: UserRole;
@@ -27,7 +27,7 @@ export function RoleProvider({ children }: RoleProviderProps) {
   useEffect(() => {
     const savedRole = localStorage.getItem('userRole') as UserRole;
     const savedProfileId = localStorage.getItem('activeProfileId') || '';
-    if (savedRole && ['homeowner', 'designer', 'vendor', 'student', 'admin'].includes(savedRole)) {
+    if (savedRole && ['homeowner', 'designer', 'vendor', 'student', 'admin', 'lender'].includes(savedRole)) {
       setRoleState(savedRole);
     }
     setActiveProfileIdState(savedProfileId);

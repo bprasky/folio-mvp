@@ -6,16 +6,41 @@ const prisma = new PrismaClient();
 // GET /api/events - Get all events
 export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url);
+    const eventType = searchParams.get('type');
+    const parentEventId = searchParams.get('parentEventId');
+    const includeApproved = searchParams.get('includeApproved') === 'true';
+
+    const whereClause: any = {
+      AND: [
+        {
+          OR: [
+            { status: 'published' },
+            ...(includeApproved ? [{ approvalStatus: 'approved' }] : [])
+          ]
+        }
+      ]
+    };
+
+    if (eventType) {
+      whereClause.AND.push({ eventType });
+    }
+
+    if (parentEventId) {
+      whereClause.AND.push({ parentEventId });
+    } else if (eventType === 'festival') {
+      whereClause.AND.push({ parentEventId: null });
+    }
+
     const events = await prisma.event.findMany({
-      where: {
-        status: 'published'
-      },
+      where: whereClause,
       include: {
         createdBy: {
           select: {
             id: true,
             name: true,
-            profileImage: true
+            profileImage: true,
+            profileType: true
           }
         },
         featuredDesigner: {
@@ -23,6 +48,28 @@ export async function GET(request: NextRequest) {
             id: true,
             name: true,
             profileImage: true
+          }
+        },
+        parentEvent: {
+          select: {
+            id: true,
+            title: true,
+            slug: true
+          }
+        },
+        childEvents: {
+          where: {
+            approvalStatus: 'approved'
+          },
+          select: {
+            id: true,
+            title: true,
+            slug: true,
+            date: true,
+            location: true,
+            coverImage: true,
+            hostType: true,
+            hostName: true
           }
         },
         products: {
@@ -37,7 +84,7 @@ export async function GET(request: NextRequest) {
               }
             }
           },
-          take: 4 // Limit to 4 preview products
+          take: 4
         },
         _count: {
           select: {
@@ -79,7 +126,10 @@ export async function POST(request: NextRequest) {
       isPublic,
       featuredDesignerId,
       createdById,
-      productIds = []
+      createdByRole,
+      productIds = [],
+      eventType = 'event',
+      parentEventId
     } = body;
 
     // Validate required fields
@@ -102,6 +152,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Determine status and approval based on creator role
+    let status = 'draft';
+    let approvalStatus = 'pending';
+    
+    if (createdByRole === 'admin') {
+      status = 'published';
+      approvalStatus = 'approved';
+    } else if (createdByRole === 'vendor' || createdByRole === 'lender') {
+      // Vendors and lenders need approval
+      status = 'draft';
+      approvalStatus = 'pending';
+    }
+
     // Create the event
     const event = await prisma.event.create({
       data: {
@@ -118,14 +181,18 @@ export async function POST(request: NextRequest) {
         isPublic: isPublic ?? true,
         featuredDesignerId,
         createdById,
-        status: 'published'
+        status,
+        eventType,
+        parentEventId,
+        approvalStatus
       },
       include: {
         createdBy: {
           select: {
             id: true,
             name: true,
-            profileImage: true
+            profileImage: true,
+            profileType: true
           }
         },
         featuredDesigner: {
@@ -133,6 +200,13 @@ export async function POST(request: NextRequest) {
             id: true,
             name: true,
             profileImage: true
+          }
+        },
+        parentEvent: {
+          select: {
+            id: true,
+            title: true,
+            slug: true
           }
         }
       }

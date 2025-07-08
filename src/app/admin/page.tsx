@@ -601,11 +601,11 @@ export default function AdminDashboard() {
                   </Link>
                   
                   <Link
-                    href="/admin/events/manage"
+                    href="/admin/events/approve"
                     className="bg-folio-border text-folio-text py-4 px-6 rounded-lg hover:bg-folio-accent hover:text-white transition-colors flex items-center justify-center gap-2 font-medium"
                   >
                     <FaCalendarAlt className="w-5 h-5" />
-                    Manage Events
+                    Review Event Approvals
                   </Link>
                 </div>
               </div>
