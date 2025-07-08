@@ -48,6 +48,11 @@ model User {
   vendorStories Story[]   @relation("StoryToVendor")
   products      Product[] @relation("VendorProducts")
   folders       Folder[]
+  createdEvents Event[]   @relation("EventCreator")
+  featuredEvents Event[]  @relation("EventFeaturedDesigner")
+  eventAttendees EventAttendee[] @relation("EventAttendees")
+  eventImages   EventImage[]    @relation("EventImages")
+  eventComments EventComment[]  @relation("EventComments")
   
   @@map("users")
 }
@@ -113,6 +118,7 @@ model Product {
   vendor      User?     @relation("VendorProducts", fields: [vendorId], references: [id])
   tags        ProductTag[]
   folderProducts FolderProduct[]
+  eventProducts EventProduct[]
   
   @@map("products")
 }
@@ -199,4 +205,110 @@ model Category {
   stories     Story[]   @relation("StoryToCategory")
   
   @@map("categories")
+}
+
+model Event {
+  id            String    @id @default(uuid())
+  title         String
+  slug          String    @unique
+  description   String?
+  date          DateTime
+  location      String
+  coverImage    String
+  status        String    @default("draft") // "draft", "published", "cancelled"
+  
+  // Host information
+  hostType      String    // "designer", "vendor", "admin"
+  hostId        String?   // Optional reference to User (for designer/vendor hosts)
+  hostName      String    // Name of the host (could be company name for vendors)
+  
+  // Event details
+  maxAttendees  Int?
+  isPublic      Boolean   @default(true)
+  
+  // Featured content
+  featuredDesignerId String?
+  featuredDesigner   User?   @relation("EventFeaturedDesigner", fields: [featuredDesignerId], references: [id])
+  
+  // Metrics
+  views         Int       @default(0)
+  attendeeCount Int       @default(0)
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relationships
+  createdById   String
+  createdBy     User      @relation("EventCreator", fields: [createdById], references: [id])
+  attendees     EventAttendee[]
+  products      EventProduct[]
+  gallery       EventImage[]
+  comments      EventComment[]
+  
+  @@map("events")
+}
+
+model EventAttendee {
+  id        String    @id @default(uuid())
+  status    String    @default("attending") // "attending", "declined", "maybe"
+  
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  // Relationships
+  eventId   String
+  event     Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User      @relation("EventAttendees", fields: [userId], references: [id])
+  
+  @@unique([eventId, userId])
+  @@map("event_attendees")
+}
+
+model EventProduct {
+  id        String    @id @default(uuid())
+  
+  createdAt DateTime  @default(now())
+
+  // Relationships
+  eventId   String
+  event     Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product   @relation(fields: [productId], references: [id])
+  
+  @@unique([eventId, productId])
+  @@map("event_products")
+}
+
+model EventImage {
+  id        String    @id @default(uuid())
+  url       String
+  caption   String?
+  
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  // Relationships
+  eventId   String
+  event     Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User      @relation("EventImages", fields: [userId], references: [id])
+  
+  @@map("event_images")
+}
+
+model EventComment {
+  id        String    @id @default(uuid())
+  content   String
+  
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  // Relationships
+  eventId   String
+  event     Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User      @relation("EventComments", fields: [userId], references: [id])
+  
+  @@map("event_comments")
 } 
