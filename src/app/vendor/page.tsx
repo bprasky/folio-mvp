@@ -52,9 +52,14 @@ export default function VendorProfile() {
 
   const loadVendors = async () => {
     try {
-      const response = await fetch('/vendors.json');
+      const response = await fetch('/api/admin/vendors');
       const data = await response.json();
-      setVendors(data);
+      // The API returns { success: true, vendors: [] } format
+      if (data.success) {
+        setVendors(data.vendors);
+      } else {
+        console.error('Failed to load vendors:', data.error);
+      }
     } catch (error) {
       console.error('Error loading vendors:', error);
     }

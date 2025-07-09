@@ -48,8 +48,31 @@ model User {
   vendorStories Story[]   @relation("StoryToVendor")
   products      Product[] @relation("VendorProducts")
   folders       Folder[]
+  events        Event[]   @relation("EventCreator")
   
   @@map("users")
+}
+
+model Event {
+  id                String   @id @default(cuid())
+  title             String
+  description       String
+  location          String
+  startDate         DateTime
+  endDate           DateTime
+  isFestival        Boolean  @default(false)
+  parentFestivalId  String?  // null for standalone events
+  isApproved        Boolean  @default(false)
+  requiresApproval  Boolean  @default(false)
+  rejectionNotes    String?
+  createdById       String
+  createdBy         User     @relation("EventCreator", fields: [createdById], references: [id])
+  parentFestival    Event?   @relation("FestivalSubEvents", fields: [parentFestivalId], references: [id])
+  subEvents         Event[]  @relation("FestivalSubEvents")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  @@map("events")
 }
 
 model Project {
