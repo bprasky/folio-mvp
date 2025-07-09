@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { FaBriefcase, FaFilter, FaSort } from 'react-icons/fa';
 import { useRole } from '../../contexts/RoleContext';
-import Navigation from '../../components/Navigation';
 import LeadPreferencesCard, { LeadPreferences } from '../../components/LeadPreferencesCard';
 import ProjectMatchingEngine from '../../components/ProjectMatchingEngine';
 
@@ -16,8 +15,7 @@ export default function JobsPage() {
   if (role !== 'designer') {
     return (
       <div className="min-h-screen bg-primary flex">
-        <Navigation />
-        <div className="flex-1 lg:ml-20 xl:ml-56 flex items-center justify-center p-6">
+        <div className="flex-1   flex items-center justify-center p-6">
           <div className="text-center">
             <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <FaBriefcase className="w-8 h-8 text-orange-600" />
@@ -34,9 +32,7 @@ export default function JobsPage() {
 
   return (
     <div className="min-h-screen bg-primary flex">
-      <Navigation />
-      
-      <div className="flex-1 lg:ml-20 xl:ml-56">
+      <div className="flex-1  ">
         <div className="max-w-7xl mx-auto px-6 py-12">
           {/* Header */}
           <motion.div

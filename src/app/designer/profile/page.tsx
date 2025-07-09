@@ -13,12 +13,12 @@ import {
   FaTimes, FaPlus, FaTrash, FaBriefcase, FaCog, FaCamera, FaUpload,
   FaChevronDown
 } from 'react-icons/fa';
-import Navigation from '../../../components/Navigation';
 import { useRole } from '../../../contexts/RoleContext';
 import VideoUploader from '../../../components/VideoUploader';
 import ProjectCreationModal from '../../../components/ProjectCreationModal';
 
-// Multiple designer profiles
+// Database-driven profile system - no more hardcoded data!
+/*
 const designerProfiles = {
   'sarah-chen': {
     name: 'Sarah Chen',
@@ -298,6 +298,7 @@ const designerProfiles = {
     ]
   }
 };
+*/
 
 // Tab types
 type TabType = 'feed' | 'projects' | 'videos' | 'team' | 'about';
@@ -994,7 +995,7 @@ const TestimonialsSection = ({ testimonials }: { testimonials: any[] }) => (
 );
 
 // Enhanced Video Section with Channel Features
-const VideoSection = () => {
+const VideoSection = ({ currentUserId }: { currentUserId: string }) => {
   const [videos, setVideos] = useState([]);
   const [showUploader, setShowUploader] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -1005,7 +1006,7 @@ const VideoSection = () => {
 
   const loadDesignerVideos = async () => {
     try {
-      const response = await fetch('/api/videos/upload?creatorId=designer-1&creatorType=designer');
+              const response = await fetch(`/api/videos/upload?creatorId=${currentUserId}&creatorType=designer`);
       const data = await response.json();
       
       if (data.success) {
@@ -1130,11 +1131,11 @@ const VideoSection = () => {
       {/* Video Upload Modal */}
       {showUploader && (
         <VideoUploader
-          creatorId="designer-1"
+          creatorId={currentUserId}
           creatorType="designer"
           onUploadComplete={handleVideoUpload}
           onClose={() => setShowUploader(false)}
-          projects={designerProfiles['sarah-chen'].featuredProjects || []}
+          projects={designerData.featuredProjects || []}
         />
       )}
     </div>
@@ -1186,7 +1187,10 @@ export default function DesignerProfile() {
   const [direction, setDirection] = useState(0);
   const [isEditing, setIsEditing] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string>('');
-  const [designerData, setDesignerData] = useState<any>(null);
+  const [designerData, setDesignerData] = useState<any>({
+    featuredProjects: [],
+    team: []
+  });
   const [allDesigners, setAllDesigners] = useState<any[]>([]);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
   
@@ -1212,70 +1216,88 @@ export default function DesignerProfile() {
         
         if (currentDesigner) {
           setCurrentUserId(currentDesigner.id);
-          setDesignerData(currentDesigner);
+          // Transform database data to match expected component structure
+          const transformedData = {
+            ...currentDesigner,
+            title: currentDesigner.bio || 'Interior Designer',
+            experience: 5, // Default value
+            followers: currentDesigner.metrics?.followers || currentDesigner.followers || '0',
+            following: currentDesigner.metrics?.following || currentDesigner.following || '0', 
+            projects: currentDesigner.metrics?.projects || '0',
+            contact: {
+              email: currentDesigner.email || 'contact@designer.com',
+              phone: currentDesigner.phone || '+1 (555) 000-0000'
+            },
+            social: {
+              instagram: currentDesigner.instagram || '',
+              website: currentDesigner.website || ''
+            },
+            badges: currentDesigner.badges || [],
+            specialties: currentDesigner.specialties || ['Interior Design'],
+            services: currentDesigner.services || [],
+            featuredProjects: currentDesigner.featuredProjects || [],
+            designProcess: currentDesigner.designProcess || [],
+            testimonials: currentDesigner.testimonials || [],
+            team: currentDesigner.team || []
+          };
+          setDesignerData(transformedData);
           localStorage.setItem('currentDesignerProfile', currentDesigner.id);
         }
         
         setIsDataLoaded(true);
       } catch (error) {
         console.error('Error loading designers:', error);
-        // Fallback to hardcoded data if API fails
-        const fallbackData = designerProfiles['sarah-chen'];
-        setDesignerData(fallbackData);
-        setCurrentUserId('sarah-chen');
+        // Set error state and let user know
         setIsDataLoaded(true);
+        alert('Failed to load designer data. Please refresh the page and try again.');
       }
     };
 
     loadDesignersFromAPI();
   }, []);
 
-  // Save data whenever it changes (but only after initial load)
-  useEffect(() => {
-    if (isDataLoaded && currentUserId) {
-      const dataKey = `designerProfile_${currentUserId}`;
-      localStorage.setItem(dataKey, JSON.stringify(designerData));
-      console.log('Data auto-saved for:', currentUserId, designerData);
-    }
-  }, [designerData, currentUserId, isDataLoaded]);
-
   const handleUserChange = (userId: string) => {
     console.log('Switching user from', currentUserId, 'to', userId);
-    
-    // Save current user data before switching
-    if (currentUserId) {
-      const currentDataKey = `designerProfile_${currentUserId}`;
-      localStorage.setItem(currentDataKey, JSON.stringify(designerData));
-      console.log('Saved current user data before switch:', designerData);
-    }
     
     // Update the current user preference
     localStorage.setItem('currentDesignerProfile', userId);
     
-    // Load new user data
-    const newDataKey = `designerProfile_${userId}`;
-    const savedData = localStorage.getItem(newDataKey);
+    // Find the new designer in the allDesigners array
+    const newDesigner = allDesigners.find(designer => designer.id === userId);
     
-    if (savedData) {
-      try {
-        const parsedData = JSON.parse(savedData);
-        setDesignerData(parsedData);
-        console.log('Loaded existing data for new user:', parsedData);
-      } catch (error) {
-        console.error('Error parsing saved data for new user:', error);
-        const fallbackData = designerProfiles[userId as keyof typeof designerProfiles];
-        setDesignerData(fallbackData);
-        localStorage.setItem(newDataKey, JSON.stringify(fallbackData));
-      }
+    if (newDesigner) {
+      // Transform database data to match expected component structure
+      const transformedData = {
+        ...newDesigner,
+        title: newDesigner.bio || 'Interior Designer',
+        experience: 5, // Default value
+        followers: newDesigner.metrics?.followers || newDesigner.followers || '0',
+        following: newDesigner.metrics?.following || newDesigner.following || '0', 
+        projects: newDesigner.metrics?.projects || '0',
+        contact: {
+          email: newDesigner.email || 'contact@designer.com',
+          phone: newDesigner.phone || '+1 (555) 000-0000'
+        },
+        social: {
+          instagram: newDesigner.instagram || '',
+          website: newDesigner.website || ''
+        },
+        badges: newDesigner.badges || [],
+        specialties: newDesigner.specialties || ['Interior Design'],
+        services: newDesigner.services || [],
+        featuredProjects: newDesigner.featuredProjects || [],
+        designProcess: newDesigner.designProcess || [],
+        testimonials: newDesigner.testimonials || [],
+        team: newDesigner.team || []
+      };
+      
+      setDesignerData(transformedData);
+      setCurrentUserId(userId);
+      setIsEditing(false);
+      console.log('Switched to user:', userId, transformedData);
     } else {
-      const defaultData = designerProfiles[userId as keyof typeof designerProfiles];
-      setDesignerData(defaultData);
-      localStorage.setItem(newDataKey, JSON.stringify(defaultData));
-      console.log('No existing data for new user, using default:', defaultData);
+      console.error('Designer not found:', userId);
     }
-    
-    setCurrentUserId(userId);
-    setIsEditing(false);
   };
 
   const tabs = [
@@ -1293,15 +1315,65 @@ export default function DesignerProfile() {
     setActiveTab(newTab);
   };
 
-  const handleSave = () => {
-    // Force save the current data
-    const dataKey = `designerProfile_${currentUserId}`;
-    localStorage.setItem(dataKey, JSON.stringify(designerData));
-    setIsEditing(false);
-    console.log('Manual save completed for:', currentUserId, designerData);
-    
-    // Show a brief success message
-    alert('Profile saved successfully!');
+  const handleSave = async () => {
+    try {
+      // Save to database
+      const response = await fetch('/api/update-designer-profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: currentUserId,
+          ...designerData
+        }),
+      });
+
+      if (response.ok) {
+        setIsEditing(false);
+        console.log('Profile saved to database successfully');
+        alert('Profile saved successfully!');
+        
+        // Refresh the designer data from the database
+        const designersResponse = await fetch('/api/designers');
+        const designers = await designersResponse.json();
+        setAllDesigners(designers);
+        
+        // Update the current designer data
+        const updatedDesigner = designers.find((d: any) => d.id === currentUserId);
+        if (updatedDesigner) {
+          const transformedData = {
+            ...updatedDesigner,
+            title: updatedDesigner.bio || 'Interior Designer',
+            experience: 5,
+            followers: updatedDesigner.metrics?.followers || updatedDesigner.followers || '0',
+            following: updatedDesigner.metrics?.following || updatedDesigner.following || '0', 
+            projects: updatedDesigner.metrics?.projects || '0',
+            contact: {
+              email: updatedDesigner.email || 'contact@designer.com',
+              phone: updatedDesigner.phone || '+1 (555) 000-0000'
+            },
+            social: {
+              instagram: updatedDesigner.instagram || '',
+              website: updatedDesigner.website || ''
+            },
+            badges: updatedDesigner.badges || [],
+            specialties: updatedDesigner.specialties || ['Interior Design'],
+            services: updatedDesigner.services || [],
+            featuredProjects: updatedDesigner.featuredProjects || [],
+            designProcess: updatedDesigner.designProcess || [],
+            testimonials: updatedDesigner.testimonials || [],
+            team: updatedDesigner.team || []
+          };
+          setDesignerData(transformedData);
+        }
+      } else {
+        throw new Error('Failed to save profile');
+      }
+    } catch (error) {
+      console.error('Error saving profile:', error);
+      alert('Failed to save profile. Please try again.');
+    }
   };
 
   const renderTabContent = () => {
@@ -1321,6 +1393,7 @@ export default function DesignerProfile() {
             <ProjectCreationModal
               isOpen={isProjectModalOpen}
               onClose={() => setIsProjectModalOpen(false)}
+              currentUserId={currentUserId}
               onProjectCreated={(newProject) => {
                 // Convert the project data to match the featuredProjects format
                 const projectForGrid = {
@@ -1348,7 +1421,7 @@ export default function DesignerProfile() {
           </>
         );
       case 'videos':
-        return <VideoSection />;
+        return <VideoSection currentUserId={currentUserId} />;
       case 'team':
         return <TeamSection data={designerData} isEditing={isEditing} onEdit={setDesignerData} />;
       case 'about':
@@ -1379,10 +1452,8 @@ export default function DesignerProfile() {
   return (
     <div className="min-h-screen bg-primary flex">
       {/* Navigation */}
-      <Navigation />
-      
       {/* Main Content */}
-      <div className="flex-1 lg:ml-20 xl:ml-56">
+      <div className="flex-1  ">
         {/* Main Fibonacci Grid Layout */}
         <div className="max-w-7xl mx-auto px-6 py-12">
           <div className="grid grid-cols-12 gap-8">

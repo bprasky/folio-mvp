@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaArrowLeft, FaArrowRight, FaPlus, FaTrash, FaCheck, FaUser, FaImage, FaTag } from 'react-icons/fa';
 import { useRole } from '../../../contexts/RoleContext';
-import Navigation from '../../../components/Navigation';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
@@ -77,8 +76,7 @@ export default function CreateProjectPage() {
   if (role !== 'admin') {
     return (
       <div className="min-h-screen bg-primary flex">
-        <Navigation />
-        <div className="flex-1 lg:ml-20 xl:ml-56 flex items-center justify-center p-6">
+        <div className="flex-1   flex items-center justify-center p-6">
           <div className="text-center">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Admin Only</h2>
             <p className="text-gray-600">Access denied. Admin role required.</p>
@@ -308,9 +306,7 @@ export default function CreateProjectPage() {
 
   return (
     <div className="min-h-screen bg-primary flex">
-      <Navigation />
-      
-      <div className="flex-1 lg:ml-20 xl:ml-56">
+      <div className="flex-1  ">
         <div className="max-w-4xl mx-auto px-6 py-8">
           {/* Header */}
           <div className="flex items-center gap-4 mb-8">

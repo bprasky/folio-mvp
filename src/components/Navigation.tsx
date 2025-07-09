@@ -13,9 +13,10 @@ const Navigation = () => {
   const [isProfileExpanded, setIsProfileExpanded] = useState(false);
 
   const baseNavItems = [
-    { href: '/', icon: FaHome, label: 'Home' },
+    { href: '/feed', icon: FaHome, label: 'Home' },
     { href: '/editorials', icon: FaNewspaper, label: 'Editorials' },
     { href: '/inspire', icon: FaLightbulb, label: 'Inspire' },
+    { href: '/events', icon: FaCalendarAlt, label: 'Events' },
     { href: '/vendor', icon: FaStore, label: 'Shop' },
     { href: '/watch', icon: FaVideo, label: 'Watch' },
   ];
@@ -44,6 +45,7 @@ const Navigation = () => {
       case 'vendor':
         return [
           { name: 'Dashboard', href: '/vendor', icon: FaStore },
+          { name: 'View Profile', href: '/vendor/profile', icon: FaUser },
           { name: 'Analytics', href: '/vendor/analytics', icon: FaChartLine },
           ...baseProfileItems,
         ];
@@ -61,25 +63,25 @@ const Navigation = () => {
   };
 
   // Navigation items for different roles (excluding dashboard, analytics, messages)
-  const homeownerItems = [];
+  const homeownerItems: Array<{ name: string; href: string; icon: any }> = [];
 
-  const designerItems = [
+  const designerItems: Array<{ name: string; href: string; icon: any }> = [
     { name: 'Projects', href: '/designer/projects', icon: FaBriefcase },
   ];
 
-  const vendorItems = [
+  const vendorItems: Array<{ name: string; href: string; icon: any }> = [
     { name: 'Products', href: '/vendor/products', icon: FaBox },
     { name: 'Orders', href: '/vendor/orders', icon: FaShoppingCart },
   ];
 
-  const studentItems = [
+  const studentItems: Array<{ name: string; href: string; icon: any }> = [
     { name: 'Explore', href: '/student', icon: FaGraduationCap },
     { name: 'Classes', href: '/student/classes', icon: FaBook },
     { name: 'Mentorship', href: '/student/mentorship', icon: FaUsers },
     { name: 'Portfolio', href: '/student/portfolio', icon: FaBriefcase },
   ];
 
-  const adminItems = [
+  const adminItems: Array<{ name: string; href: string; icon: any }> = [
     { name: 'Users', href: '/admin/users', icon: FaUsers },
     { name: 'Content', href: '/admin/content', icon: FaFileAlt },
   ];
@@ -90,7 +92,7 @@ const Navigation = () => {
       case 'designer':
         return '/designer/profile';
       case 'vendor':
-        return '/vendor';
+        return '/vendor/profile';
       case 'student':
         return '/student';
       case 'admin':
@@ -162,8 +164,8 @@ const Navigation = () => {
 
   const isActive = (href: string) => {
     if (!pathname) return false;
-    if (href === '/') {
-      return pathname === '/';
+    if (href === '/feed') {
+      return pathname === '/feed' || pathname === '/';
     }
     return pathname.startsWith(href);
   };

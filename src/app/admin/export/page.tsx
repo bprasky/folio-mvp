@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { useRole } from '@/contexts/RoleContext';
-import Navigation from '@/components/Navigation';
 import { FaDownload, FaFilePdf, FaFileExcel, FaFilter, FaSearch } from 'react-icons/fa';
 
 export default function AdminExportDashboard() {
@@ -134,8 +133,7 @@ export default function AdminExportDashboard() {
   if (loading) {
     return (
       <div className="flex h-screen">
-        <Navigation />
-        <div className="flex-1 lg:ml-20 xl:ml-56 flex items-center justify-center">
+        <div className="flex-1   flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-amber-500 mx-auto mb-4"></div>
             <p className="text-gray-600">Loading export data...</p>
@@ -147,9 +145,7 @@ export default function AdminExportDashboard() {
 
   return (
     <div className="flex h-screen overflow-hidden">
-      <Navigation />
-      
-      <div className="flex-1 lg:ml-20 xl:ml-56 overflow-y-auto">
+      <div className="flex-1   overflow-y-auto">
         <div className="p-6">
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Export Dashboard</h1>

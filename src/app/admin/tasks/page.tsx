@@ -12,8 +12,6 @@ import {
   FaArrowLeft,
   FaPlus
 } from 'react-icons/fa';
-import Navigation from '../../../components/Navigation';
-
 const taskCategories = [
   {
     title: 'Content Creation',
@@ -77,9 +75,7 @@ const taskCategories = [
 export default function AdminTasks() {
   return (
     <div className="min-h-screen bg-primary flex">
-      <Navigation />
-      
-      <div className="flex-1 lg:ml-20 xl:ml-56">
+      <div className="flex-1  ">
         <div className="max-w-6xl mx-auto px-6 py-12">
           {/* Back Button */}
           <motion.div

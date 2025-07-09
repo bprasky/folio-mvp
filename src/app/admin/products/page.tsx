@@ -2,8 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { FaDownload, FaFilter, FaSort, FaCheck, FaTimes, FaEye, FaExternalLinkAlt } from 'react-icons/fa';
-import Navigation from '../../../components/Navigation';
-
 interface PendingProduct {
   id: string;
   name: string;
@@ -288,8 +286,7 @@ export default function AdminProductsPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-primary flex">
-        <Navigation />
-        <div className="flex-1 lg:ml-20 xl:ml-56 flex items-center justify-center">
+        <div className="flex-1   flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-amber-500 mx-auto mb-4"></div>
             <p className="text-gray-400">Loading products...</p>
@@ -301,9 +298,7 @@ export default function AdminProductsPage() {
 
   return (
     <div className="min-h-screen bg-primary flex">
-      <Navigation />
-      
-      <div className="flex-1 lg:ml-20 xl:ml-56 p-6">
+      <div className="flex-1   p-6">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>

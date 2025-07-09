@@ -41,13 +41,15 @@ interface ProjectCreationModalProps {
   onClose: () => void;
   onProjectCreated: (project: any) => void;
   editingProject?: any;
+  currentUserId?: string;
 }
 
 const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
   isOpen,
   onClose,
   onProjectCreated,
-  editingProject
+  editingProject,
+  currentUserId
 }) => {
   const [currentStep, setCurrentStep] = useState<'details' | 'images' | 'tagging'>('details');
   const [projectName, setProjectName] = useState('');
@@ -279,7 +281,7 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
     
     // Validate that the image actually loads
     const img = new Image();
-    const imageValid = await new Promise<boolean>((resolve) => {
+    const imageValid = await new Promise((resolve: (value: boolean) => void) => {
       img.onload = () => resolve(true);
       img.onerror = () => resolve(false);
       img.src = imageUrl;
@@ -388,7 +390,7 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
         description: projectDescription,
         client: projectClient,
         category: projectCategory,
-        designerId: selectedDesigner || 'current-designer',
+        designerId: currentUserId || selectedDesigner,
         images: validImages,
         status: 'published',
         isDraft: false
@@ -617,10 +619,21 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
       updatedImages[selectedImageIndex].tags.push(newTag);
       setImages(updatedImages);
 
-      // Save draft to API after tagging a product
+      // Save draft locally after tagging a product
       if (projectName.trim()) {
         try {
-          await saveDraftToAPI();
+          const draft = {
+            projectName,
+            description: projectDescription,
+            client: projectClient,
+            category: projectCategory,
+            images: images.map(img => ({
+              ...img,
+              url: imageLoadErrors.has(img.id) ? '' : img.url
+            })),
+            timestamp: new Date().toISOString()
+          };
+          localStorage.setItem('project_draft', JSON.stringify(draft));
         } catch (error) {
           console.error('Error saving draft after tagging:', error);
           // Don't show error for draft save failure - the tag was successful

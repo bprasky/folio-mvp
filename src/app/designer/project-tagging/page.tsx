@@ -1,71 +1,161 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FaArrowLeft, FaTag, FaImage, FaUpload, FaCheck } from 'react-icons/fa';
+import { FaArrowLeft, FaTag, FaImage, FaUpload, FaCheck, FaInfoCircle } from 'react-icons/fa';
 import Link from 'next/link';
-import Navigation from '@/components/Navigation';
 import AdvancedTagProducts from '@/components/AdvancedTagProducts';
 
-const demoImages = [
-  {
-    id: 'project-1',
-    name: 'Modern Living Room',
-    url: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800&h=600&fit=crop',
-    description: 'Contemporary living space with clean lines and natural lighting'
-  },
-  {
-    id: 'project-2', 
-    name: 'Scandinavian Kitchen',
-    url: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&h=600&fit=crop',
-    description: 'Minimalist kitchen design with wooden accents'
-  },
-  {
-    id: 'project-3',
-    name: 'Industrial Bedroom',
-    url: 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800&h=600&fit=crop',
-    description: 'Modern bedroom with industrial elements and urban views'
-  },
-  {
-    id: 'project-4',
-    name: 'Luxury Bathroom',
-    url: 'https://images.unsplash.com/photo-1620626011761-996317b8d101?w=800&h=600&fit=crop',
-    description: 'Spa-like bathroom with marble finishes and elegant fixtures'
-  }
-];
+interface Project {
+  id: string;
+  name: string;
+  description?: string;
+  images: Array<{
+    id: string;
+    url: string;
+  }>;
+}
 
-export default function ProjectTaggingDemo() {
-  const [selectedImage, setSelectedImage] = useState(demoImages[0]);
+export default function ProjectTaggingPage() {
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [selectedImage, setSelectedImage] = useState<{ id: string; url: string; name: string } | null>(null);
   const [tags, setTags] = useState<any[]>([]);
-  const [customImageUrl, setCustomImageUrl] = useState('');
-  const [showCustomInput, setShowCustomInput] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch user's imported projects
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        setIsLoading(true);
+        const res = await fetch('/api/projects?includeDrafts=true');
+        if (res.ok) {
+          const data = await res.json();
+          const userProjects = Array.isArray(data) ? data : [];
+          setProjects(userProjects);
+          
+          // Auto-select first project if available
+          if (userProjects.length > 0) {
+            setSelectedProject(userProjects[0]);
+            if (userProjects[0].images.length > 0) {
+              setSelectedImage({
+                id: userProjects[0].images[0].id,
+                url: userProjects[0].images[0].url,
+                name: userProjects[0].name
+              });
+            }
+          }
+        } else {
+          setError('Failed to load your projects');
+        }
+      } catch (error) {
+        console.error('Error fetching projects:', error);
+        setError('Failed to load your projects');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProjects();
+  }, []);
 
   const handleTagsUpdate = (updatedTags: any[]) => {
     setTags(updatedTags);
   };
 
-  const handleCustomImageSubmit = () => {
-    if (customImageUrl.trim()) {
-      const customImage = {
-        id: 'custom-' + Date.now(),
-        name: 'Custom Project Image',
-        url: customImageUrl.trim(),
-        description: 'Custom uploaded project image'
-      };
-      setSelectedImage(customImage);
-      setTags([]);
-      setShowCustomInput(false);
-      setCustomImageUrl('');
+  const handleProjectSelect = (project: Project) => {
+    setSelectedProject(project);
+    if (project.images.length > 0) {
+      setSelectedImage({
+        id: project.images[0].id,
+        url: project.images[0].url,
+        name: project.name
+      });
+    } else {
+      setSelectedImage(null);
     }
+    setTags([]);
   };
+
+  const handleImageSelect = (image: { id: string; url: string }) => {
+    setSelectedImage({
+      id: image.id,
+      url: image.url,
+      name: selectedProject?.name || 'Project Image'
+    });
+    setTags([]);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading your projects...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto p-6">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <FaInfoCircle className="w-8 h-8 text-red-600" />
+          </div>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Unable to Load Projects</h2>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <Link 
+            href="/designer" 
+            className="inline-flex items-center text-blue-600 hover:text-blue-700 transition-colors"
+          >
+            <FaArrowLeft className="w-4 h-4 mr-2" />
+            Back to Designer Dashboard
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (projects.length === 0) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto p-6">
+          <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <FaImage className="w-8 h-8 text-blue-600" />
+          </div>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">No Projects Found</h2>
+          <p className="text-gray-600 mb-4">
+            You need to have imported projects from your website to start tagging products.
+          </p>
+          <div className="space-y-3">
+            <Link 
+              href="/designer" 
+              className="inline-flex items-center text-blue-600 hover:text-blue-700 transition-colors"
+            >
+              <FaArrowLeft className="w-4 h-4 mr-2" />
+              Back to Designer Dashboard
+            </Link>
+            <div className="text-sm text-gray-500">
+              <p>If you haven't imported your portfolio yet, please:</p>
+              <ol className="list-decimal list-inside mt-2 space-y-1">
+                <li>Complete the onboarding process</li>
+                <li>Import your website portfolio</li>
+                <li>Return here to start tagging</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      {/* Navigation */}
-      <Navigation />
-      
       {/* Main Content */}
-      <div className="flex-1 lg:ml-20 xl:ml-56">
+      <div className="flex-1">
         <div className="max-w-7xl mx-auto px-6 py-8">
           {/* Header */}
           <div className="mb-8">
@@ -80,10 +170,10 @@ export default function ProjectTaggingDemo() {
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                  Advanced Product Tagging
+                  Tag Products in Your Portfolio
                 </h1>
                 <p className="text-gray-600 text-lg">
-                  Click on any part of your project images to tag products from our vendor catalog
+                  Click on any part of your project images to tag products and start earning commissions
                 </p>
               </div>
               
@@ -99,77 +189,48 @@ export default function ProjectTaggingDemo() {
             </div>
           </div>
 
-          {/* Image Selection */}
-          <div className="mb-8">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold text-gray-900">Select Project Image</h2>
-              <button
-                onClick={() => setShowCustomInput(!showCustomInput)}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                <FaUpload className="w-4 h-4" />
-                Use Custom Image
-              </button>
-            </div>
-
-            {/* Custom Image Input */}
-            {showCustomInput && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                className="mb-4 p-4 bg-white rounded-lg border border-gray-200"
-              >
-                <div className="flex gap-3">
-                  <input
-                    type="url"
-                    placeholder="Enter image URL (e.g., https://example.com/image.jpg)"
-                    value={customImageUrl}
-                    onChange={(e) => setCustomImageUrl(e.target.value)}
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                  <button
-                    onClick={handleCustomImageSubmit}
-                    disabled={!customImageUrl.trim()}
-                    className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
-                  >
-                    <FaCheck className="w-4 h-4" />
-                    Use Image
-                  </button>
-                </div>
-              </motion.div>
-            )}
-
-            {/* Demo Images Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {demoImages.map((image) => (
+          {/* Project Selection */}
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 mb-6">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Select Your Project</h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {projects.map((project) => (
                 <motion.div
-                  key={image.id}
+                  key={project.id}
                   className={`relative rounded-lg overflow-hidden cursor-pointer border-2 transition-all duration-200 ${
-                    selectedImage.id === image.id
+                    selectedProject?.id === project.id
                       ? 'border-blue-500 shadow-lg'
                       : 'border-gray-200 hover:border-gray-300'
                   }`}
-                  onClick={() => {
-                    setSelectedImage(image);
-                    setTags([]);
-                  }}
+                  onClick={() => handleProjectSelect(project)}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
-                  <div className="aspect-video bg-gray-100">
-                    <img
-                      src={image.url}
-                      alt={image.name}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
+                  {project.images.length > 0 ? (
+                    <div className="aspect-video bg-gray-100">
+                      <img
+                        src={project.images[0].url}
+                        alt={project.name}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  ) : (
+                    <div className="aspect-video bg-gray-100 flex items-center justify-center">
+                      <FaImage className="w-8 h-8 text-gray-400" />
+                    </div>
+                  )}
+                  
                   <div className="p-3">
-                    <h3 className="font-semibold text-gray-900 text-sm mb-1">{image.name}</h3>
-                    <p className="text-gray-600 text-xs">{image.description}</p>
+                    <h3 className="font-semibold text-gray-900 text-sm mb-1">{project.name}</h3>
+                    <p className="text-gray-600 text-xs mb-2">
+                      {project.images.length} image{project.images.length !== 1 ? 's' : ''}
+                    </p>
+                    {project.description && (
+                      <p className="text-gray-600 text-xs line-clamp-2">{project.description}</p>
+                    )}
                   </div>
                   
-                  {selectedImage.id === image.id && (
+                  {selectedProject?.id === project.id && (
                     <div className="absolute top-2 right-2 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center">
                       <FaCheck className="w-3 h-3" />
                     </div>
@@ -179,26 +240,63 @@ export default function ProjectTaggingDemo() {
             </div>
           </div>
 
-          {/* Main Tagging Interface */}
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <div className="mb-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-2">
-                Tag Products in: {selectedImage.name}
-              </h2>
-              <p className="text-gray-600">
-                Click anywhere on the image below to tag products from our vendor catalog. 
-                Hover over existing tags to see product details.
-              </p>
+          {/* Image Selection */}
+          {selectedProject && selectedProject.images.length > 0 && (
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 mb-6">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">Select Image to Tag</h2>
+              
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {selectedProject.images.map((image) => (
+                  <motion.div
+                    key={image.id}
+                    className={`relative aspect-square rounded-lg overflow-hidden cursor-pointer border-2 transition-all duration-200 ${
+                      selectedImage?.id === image.id
+                        ? 'border-blue-500 shadow-lg'
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                    onClick={() => handleImageSelect(image)}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <img
+                      src={image.url}
+                      alt={`${selectedProject.name} - Image`}
+                      className="w-full h-full object-cover"
+                    />
+                    
+                    {selectedImage?.id === image.id && (
+                      <div className="absolute top-2 right-2 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center">
+                        <FaCheck className="w-3 h-3" />
+                      </div>
+                    )}
+                  </motion.div>
+                ))}
+              </div>
             </div>
+          )}
 
-            {/* Advanced Tagging Component */}
-            <AdvancedTagProducts
-              imageUrl={selectedImage.url}
-              projectId={selectedImage.id}
-              onTagsUpdate={handleTagsUpdate}
-              isEditable={true}
-            />
-          </div>
+          {/* Main Tagging Interface */}
+          {selectedImage && (
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+              <div className="mb-6">
+                <h2 className="text-xl font-semibold text-gray-900 mb-2">
+                  Tag Products in: {selectedImage.name}
+                </h2>
+                <p className="text-gray-600">
+                  Click anywhere on the image below to tag products from our vendor catalog. 
+                  Hover over existing tags to see product details.
+                </p>
+              </div>
+
+              {/* Advanced Tagging Component */}
+              <AdvancedTagProducts
+                imageUrl={selectedImage.url}
+                projectId={selectedProject?.id || 'unknown'}
+                onTagsUpdate={handleTagsUpdate}
+                isEditable={true}
+              />
+            </div>
+          )}
 
           {/* Instructions */}
           <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -206,9 +304,9 @@ export default function ProjectTaggingDemo() {
               <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
                 <FaImage className="w-6 h-6 text-blue-600" />
               </div>
-              <h3 className="font-semibold text-gray-900 mb-2">1. Select Image</h3>
+              <h3 className="font-semibold text-gray-900 mb-2">1. Select Your Project</h3>
               <p className="text-gray-600 text-sm">
-                Choose from our demo images or upload your own project image using a URL.
+                Choose from your imported portfolio projects to start tagging products.
               </p>
             </div>
 
@@ -218,7 +316,7 @@ export default function ProjectTaggingDemo() {
               </div>
               <h3 className="font-semibold text-gray-900 mb-2">2. Click to Tag</h3>
               <p className="text-gray-600 text-sm">
-                Click on any furniture, decor, or fixture in the image to tag it with a product from our catalog.
+                Click on any furniture, decor, or fixture in your project images to tag it with a product.
               </p>
             </div>
 
@@ -226,39 +324,39 @@ export default function ProjectTaggingDemo() {
               <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
                 <FaCheck className="w-6 h-6 text-purple-600" />
               </div>
-              <h3 className="font-semibold text-gray-900 mb-2">3. Save & Share</h3>
+              <h3 className="font-semibold text-gray-900 mb-2">3. Earn Commissions</h3>
               <p className="text-gray-600 text-sm">
-                Tagged products are automatically saved and can be shared with clients or used for analytics.
+                Tagged products are automatically saved and you'll earn commissions on sales.
               </p>
             </div>
           </div>
 
           {/* Features Highlight */}
           <div className="mt-8 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">✨ Advanced Features</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">✨ Why Tag Your Portfolio?</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
               <div className="flex items-start gap-3">
                 <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
                 <div>
-                  <strong>Smart Product Search:</strong> Find products by name, brand, category, or tags
+                  <strong>Earn Commissions:</strong> Get paid for every product sale from your tagged images
                 </div>
               </div>
               <div className="flex items-start gap-3">
                 <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
                 <div>
-                  <strong>Precise Positioning:</strong> Percentage-based coordinates for responsive tagging
+                  <strong>Client Engagement:</strong> Turn your portfolio into a shoppable experience
                 </div>
               </div>
               <div className="flex items-start gap-3">
                 <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
                 <div>
-                  <strong>Interactive Tooltips:</strong> Hover over tags to see product details instantly
+                  <strong>Professional Credibility:</strong> Show clients exactly what products you used
                 </div>
               </div>
               <div className="flex items-start gap-3">
                 <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
                 <div>
-                  <strong>Tag Management:</strong> Easy deletion and editing of existing tags
+                  <strong>Analytics & Insights:</strong> Track which products perform best in your projects
                 </div>
               </div>
             </div>

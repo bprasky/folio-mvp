@@ -12,6 +12,18 @@ export interface Card {
   image: string;
   price?: string;
   cta?: string;
+  // Navigation properties
+  projectId?: string;
+  productId?: string;
+  designerId?: string;
+  // Subevent post properties
+  eventTitle?: string;
+  subEventTitle?: string;
+  mediaId?: string;
+  subEventId?: string;
+  eventId?: string;
+  tags?: string[];
+  createdAt?: string;
 }
 
 export const allCards: Card[] = [

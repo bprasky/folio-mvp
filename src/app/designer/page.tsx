@@ -3,9 +3,8 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import SafeImage from '../../components/SafeImage';
-import { FaPlus, FaEdit, FaTrash, FaChartLine, FaBriefcase, FaUser, FaToggleOn, FaToggleOff, FaDownload, FaEye, FaEyeSlash, FaExternalLinkAlt } from 'react-icons/fa';
+import { FaPlus, FaEdit, FaTrash, FaChartLine, FaBriefcase, FaUser, FaToggleOn, FaToggleOff, FaDownload, FaEye, FaEyeSlash, FaExternalLinkAlt, FaSync } from 'react-icons/fa';
 import ProjectCreationModal from '../../components/ProjectCreationModal';
-import Navigation from '../../components/Navigation';
 import ProfileSwitcher from '../../components/ProfileSwitcher';
 import { useRole } from '../../contexts/RoleContext';
 
@@ -18,6 +17,7 @@ export default function DesignerProfile() {
   const [selectedDesignerId, setSelectedDesignerId] = useState<string>('');
   const [editingProject, setEditingProject] = useState<any>(null);
   const [deletingProject, setDeletingProject] = useState<string | null>(null);
+  const [reimporting, setReimporting] = useState(false);
 
   const mockProjects = [
     {
@@ -172,6 +172,51 @@ export default function DesignerProfile() {
       }
     } catch (error) {
       console.error('Error updating project visibility:', error);
+    }
+  };
+
+  const handleReimport = async () => {
+    if (!confirm('This will reimport your website portfolio. Any existing projects may be updated or replaced. Continue?')) {
+      return;
+    }
+
+    setReimporting(true);
+    try {
+      // Get current user's website
+      const currentUser = designers.find(d => d.id === selectedDesignerId) || 
+                         (role === 'designer' ? { website: '' } : null);
+      
+      if (!currentUser?.website) {
+        alert('No website found for reimport. Please update your profile with your website URL first.');
+        return;
+      }
+
+      // Call the reimport API
+      const response = await fetch('/api/reimport-portfolio', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: selectedDesignerId,
+          website: currentUser.website
+        }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        alert(`Reimport completed! ${result.projectsCreated} projects created/updated.`);
+        // Refresh projects
+        loadProjects(selectedDesignerId);
+      } else {
+        const error = await response.json();
+        alert(`Reimport failed: ${error.error}`);
+      }
+    } catch (error) {
+      console.error('Error during reimport:', error);
+      alert('Reimport failed. Please try again.');
+    } finally {
+      setReimporting(false);
     }
   };
 
@@ -389,10 +434,8 @@ export default function DesignerProfile() {
   return (
     <div className="flex h-screen overflow-hidden">
       {/* Navigation */}
-      <Navigation />
-
       {/* Main Content */}
-      <div className="flex-1 lg:ml-20 xl:ml-56 overflow-y-auto p-6">
+      <div className="flex-1   overflow-y-auto p-6">
         {/* Profile Switcher for Designers */}
         {role === 'designer' && (
           <ProfileSwitcher onProfileChange={handleProfileChange} />
@@ -452,6 +495,15 @@ export default function DesignerProfile() {
             </p>
           </div>
           <div className="flex gap-3">
+            <button 
+              onClick={handleReimport}
+              disabled={reimporting || (role === 'admin' && !selectedDesignerId)}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center transition-colors"
+              title="Reimport portfolio from website"
+            >
+              <FaSync className={`mr-2 ${reimporting ? 'animate-spin' : ''}`} />
+              {reimporting ? 'Reimporting...' : 'Reimport Portfolio'}
+            </button>
             <button 
               onClick={handleExportAllMaterials}
               className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md flex items-center transition-colors"

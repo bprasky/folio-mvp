@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { readFile, writeFile } from 'fs/promises';
 import { join } from 'path';
+import { SmartImageSearch } from '@/lib/imageSearch';
 
 export async function GET() {
   try {
@@ -25,13 +26,38 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, description, website, contactEmail, specialties } = body;
+    const { name, description, website, contactEmail, specialties, logo, banner } = body;
 
     if (!name) {
       return NextResponse.json(
         { success: false, error: 'Vendor name is required' },
         { status: 400 }
       );
+    }
+
+    // Smart image auto-population
+    let vendorData = { name, description, website, contactEmail, specialties, logo, banner };
+    
+    // If no logo or banner provided, try to auto-populate
+    if (!logo || !banner) {
+      console.log('🖼️ Auto-populating images for vendor:', name);
+      
+      try {
+        const autoImages = await SmartImageSearch.autoPopulateImages(vendorData, 'vendor');
+        
+        if (autoImages.logo && !logo) {
+          vendorData.logo = autoImages.logo;
+          console.log('✅ Auto-populated logo image');
+        }
+        
+        if (autoImages.banner && !banner) {
+          vendorData.banner = autoImages.banner;
+          console.log('✅ Auto-populated banner image');
+        }
+      } catch (imageError) {
+        console.warn('⚠️ Image auto-population failed:', imageError);
+        // Continue with vendor creation even if image search fails
+      }
     }
 
     // Load existing vendors
@@ -51,11 +77,7 @@ export async function POST(request: NextRequest) {
     // Create new vendor
     const newVendor = {
       id: vendorId,
-      name,
-      description: description || '',
-      website: website || '',
-      contactEmail: contactEmail || '',
-      specialties: specialties || [],
+      ...vendorData,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };

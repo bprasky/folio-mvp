@@ -6,11 +6,10 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { 
   FaPlay, FaHeart, FaShare, FaEye, FaFilter, FaSearch,
-  FaUser, FaTag, FaClock, FaTrendingUp, FaFire,
-  FaDesktop, FaPalette, FaBuilding, FaVideo
+  FaUser, FaTag, FaClock, FaFire,
+  FaDesktop, FaPalette, FaBuilding, FaVideo,
+  FaChartLine
 } from 'react-icons/fa';
-import Navigation from '../../components/Navigation';
-
 interface Video {
   id: string;
   title: string;
@@ -44,7 +43,7 @@ export default function VideoFeed() {
 
   const filters = [
     { id: 'all', label: 'All Videos', icon: FaVideo },
-    { id: 'trending', label: 'Trending', icon: FaTrendingUp },
+    { id: 'trending', label: 'Trending', icon: FaChartLine },
     { id: 'recent', label: 'Recent', icon: FaClock },
     { id: 'designers', label: 'Designers', icon: FaPalette },
     { id: 'vendors', label: 'Vendors', icon: FaBuilding },
@@ -196,8 +195,7 @@ export default function VideoFeed() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex">
-        <Navigation />
-        <div className="flex-1 lg:ml-20 xl:ml-56 flex items-center justify-center">
+        <div className="flex-1   flex items-center justify-center">
           <div className="text-center">
             <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
             <p className="text-gray-600">Loading videos...</p>
@@ -212,9 +210,7 @@ export default function VideoFeed() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      <Navigation />
-      
-      <div className="flex-1 lg:ml-20 xl:ml-56">
+      <div className="flex-1  ">
         <div className="max-w-7xl mx-auto px-6 py-8">
           {/* Header */}
           <div className="mb-8">

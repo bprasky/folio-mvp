@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { FaArrowLeft } from 'react-icons/fa';
-import Navigation from '../../../components/Navigation';
 import ProjectCreationModal from '../../../components/ProjectCreationModal';
 
 export default function DesignerCreateProject() {
@@ -26,9 +25,7 @@ export default function DesignerCreateProject() {
 
   return (
     <div className="min-h-screen bg-primary flex">
-      <Navigation />
-      
-      <div className="flex-1 lg:ml-20 xl:ml-56">
+      <div className="flex-1  ">
         <div className="max-w-4xl mx-auto px-6 py-12">
           {/* Back Button */}
           <motion.div

@@ -1,11 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import InspireCard from '@/components/inspire/InspireCard';
 import { motion, AnimatePresence } from 'framer-motion';
-import inspireData from '@/data/inspire_posts.json';
-import Navigation from '../../components/Navigation';
-
 interface InspirePost {
   id: string;
   imageUrl: string;
@@ -25,29 +22,35 @@ export default function InspirePage() {
   const [posts, setPosts] = useState<InspirePost[]>([]);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
 
-  // Simulate fetching posts
-  const fetchPosts = async () => {
+  // Fetch posts from API
+  const fetchPosts = useCallback(async (pageNum: number) => {
+    if (loading || !hasMore) return;
+    
     setLoading(true);
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    const newPosts = inspireData.posts.map(post => ({
-      ...post,
-      id: `${post.id}_${page}`,
-      projectLink: (post.id === '1') ? '/project/modern-living-room' : undefined,
-      productLink: (post.id === '1') ? '/product/eco-modular-sofa' : undefined,
-      designerLink: (post.id === '1') ? '/designer/diana-matta' : (post.id === '2') ? '/designer/nu-projects' : undefined,
-    })) as InspirePost[];
-    
-    setPosts(prev => [...prev, ...newPosts]);
-    setPage(prev => prev + 1);
-    setLoading(false);
-  };
+    try {
+      const response = await fetch(`/api/inspire?page=${pageNum}`);
+      const data = await response.json();
+      
+      if (data.posts && data.posts.length > 0) {
+        setPosts(prev => [...prev, ...data.posts]);
+        setPage(prev => prev + 1);
+        setHasMore(data.hasMore);
+      } else {
+        setHasMore(false);
+      }
+    } catch (error) {
+      console.error('Failed to fetch inspire posts:', error);
+      setHasMore(false);
+    } finally {
+      setLoading(false);
+    }
+  }, [loading, hasMore]);
 
   // Initial load
   useEffect(() => {
-    fetchPosts();
+    fetchPosts(1);
   }, []);
 
   // Infinite scroll
@@ -55,23 +58,23 @@ export default function InspirePage() {
     const handleScroll = () => {
       if (
         window.innerHeight + document.documentElement.scrollTop
-        >= document.documentElement.offsetHeight - 100 // Load more 100px before reaching bottom
+        >= document.documentElement.offsetHeight - 100 && // Load more 100px before reaching bottom
+        !loading &&
+        hasMore
       ) {
-        fetchPosts();
+        fetchPosts(page);
       }
     };
 
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, [loading, hasMore, page, fetchPosts]);
 
   return (
     <div className="min-h-screen bg-primary flex">
       {/* Navigation */}
-      <Navigation />
-
       {/* Main Content */}
-      <div className="flex-1 lg:ml-20 xl:ml-56 p-8">
+      <div className="flex-1   p-8">
         <div className="max-w-7xl mx-auto">
           <h1 className="text-4xl font-bold mb-8 text-secondary">Inspire</h1>
           
@@ -104,10 +107,17 @@ export default function InspirePage() {
             </div>
           )}
 
-          {/* Placeholder for when no more posts are available (optional) */}
-          {!loading && posts.length > 0 && page > 3 && (
+          {/* Placeholder for when no more posts are available */}
+          {!loading && !hasMore && posts.length > 0 && (
             <div className="text-center text-light mt-8">
               You've reached the end of the feed!
+            </div>
+          )}
+          
+          {/* No posts message */}
+          {!loading && posts.length === 0 && (
+            <div className="text-center text-light mt-8">
+              No posts found. Start creating projects to see them here!
             </div>
           )}
         </div>

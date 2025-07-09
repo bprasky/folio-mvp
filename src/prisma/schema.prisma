@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,192 +8,446 @@ datasource db {
 }
 
 model User {
-  id            String    @id @default(uuid())
-  email         String?   @unique
-  name          String
-  bio           String?
-  profileImage  String?
-  profileType   String    // "designer", "vendor", "homeowner", "student", "admin"
-  location      String?
-  
-  // Designer-specific fields
-  specialties   String[]
-  website       String?
-  instagram     String?
-  linkedin      String?
-  
-  // Vendor-specific fields
-  companyName   String?
-  
-  // Homeowner-specific fields
-  budgetRange   String?
-  desiredRooms  String[]
-  serviceLevel  String?
-  projectStatus String?
-  
-  // Metrics
-  followers     Int       @default(0)
-  following     Int       @default(0)
-  views         Int       @default(0)
-  
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id                    String                 @id @default(uuid())
+  email                 String?                @unique
+  name                  String
+  bio                   String?
+  profileImage          String?
+  profileType           String
+  location              String?
+  specialties           String[]
+  website               String?
+  instagram             String?
+  linkedin              String?
+  companyName           String?
+  budgetRange           String?
+  desiredRooms          String[]
+  serviceLevel          String?
+  projectStatus         String?
+  eventSignupId         String?
+  signupSource          String?
+  signupDate            DateTime?
+  followers             Int                    @default(0)
+  following             Int                    @default(0)
+  views                 Int                    @default(0)
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  designerProfile       DesignerProfile?
+  eventMedia            EventMedia[]           @relation("EventMedia")
+  eventRSVPs            EventRSVP[]            @relation("EventRSVPs")
+  eventSignups          EventSignup[]
+  createdEvents         Event[]                @relation("EventCreator")
+  organizedEvents       Event[]                @relation("EventOrganizer")
+  folders               Folder[]
+  onboardingCompletions OnboardingCompletion[]
+  products              Product[]              @relation("VendorProducts")
+  designerProjects      Project[]              @relation("DesignerProjects")
+  stories               Story[]
+  subEventInvitesSent   SubEventInvite[]       @relation("SubEventInvitesSent")
+  subEventInvites       SubEventInvite[]       @relation("SubEventInvites")
+  subEventMedia         SubEventMedia[]        @relation("SubEventMedia")
+  subEventRSVPs         SubEventRSVP[]         @relation("SubEventRSVPs")
+  vendorSubEvents       SubEvent[]             @relation("VendorSubEvents")
+  vendorStories         Story[]                @relation("StoryToVendor")
 
-  // Relationships
-  designerProjects Project[] @relation("DesignerProjects")
-  stories       Story[]
-  vendorStories Story[]   @relation("StoryToVendor")
-  products      Product[] @relation("VendorProducts")
-  folders       Folder[]
-  
   @@map("users")
 }
 
 model Project {
-  id          String    @id @default(uuid())
+  id          String         @id @default(uuid())
   name        String
   description String?
-  category    String?   // "residential", "commercial", etc.
+  category    String?
   client      String?
-  status      String    @default("draft") // "draft", "published", "archived"
-  
-  // Metrics
-  views       Int       @default(0)
-  saves       Int       @default(0)
-  shares      Int       @default(0)
-  
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  // Relationships
+  status      String         @default("draft")
+  views       Int            @default(0)
+  saves       Int            @default(0)
+  shares      Int            @default(0)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
   designerId  String
-  designer    User      @relation("DesignerProjects", fields: [designerId], references: [id])
   images      ProjectImage[]
+  designer    User           @relation("DesignerProjects", fields: [designerId], references: [id])
   stories     Story[]
-  
+
   @@map("projects")
 }
 
 model ProjectImage {
-  id        String    @id @default(uuid())
+  id        String       @id @default(uuid())
   url       String
   name      String?
   room      String?
-  
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-
-  // Relationships
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
   projectId String
-  project   Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
   tags      ProductTag[]
-  
+  project   Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
   @@map("project_images")
 }
 
 model Product {
-  id          String    @id @default(uuid())
-  name        String
-  description String?
-  price       Float?
-  imageUrl    String?
-  category    String?
-  brand       String?
-  url         String?   // Product page URL
-  isPending   Boolean   @default(false)
-  
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id                        String                     @id @default(uuid())
+  name                      String
+  description               String?
+  price                     Float?
+  imageUrl                  String?
+  category                  String?
+  brand                     String?
+  url                       String?
+  isPending                 Boolean                    @default(false)
+  scanCount                 Int                        @default(0)
+  likeCount                 Int                        @default(0)
+  saveCount                 Int                        @default(0)
+  mediaUploadCount          Int                        @default(0)
+  viewCount                 Int                        @default(0)
+  qrCode                    String?                    @unique
+  createdAt                 DateTime                   @default(now())
+  updatedAt                 DateTime                   @updatedAt
+  vendorId                  String?
+  eventProducts             EventProduct[]             @relation("EventProducts")
+  folderProducts            FolderProduct[]
+  tags                      ProductTag[]
+  vendor                    User?                      @relation("VendorProducts", fields: [vendorId], references: [id])
+  subEventProducts          SubEventProduct[]          @relation("SubEventProducts")
+  subEventSpotlightProducts SubEventSpotlightProduct[] @relation("SubEventSpotlightProducts")
 
-  // Relationships
-  vendorId    String?
-  vendor      User?     @relation("VendorProducts", fields: [vendorId], references: [id])
-  tags        ProductTag[]
-  folderProducts FolderProduct[]
-  
   @@map("products")
 }
 
 model ProductTag {
-  id          String    @id @default(uuid())
-  x           Float     // X coordinate percentage
-  y           Float     // Y coordinate percentage
-  
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id        String       @id @default(uuid())
+  x         Float
+  y         Float
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  productId String
+  imageId   String
+  image     ProjectImage @relation(fields: [imageId], references: [id], onDelete: Cascade)
+  product   Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
 
-  // Relationships
-  productId   String
-  product     Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
-  imageId     String
-  image       ProjectImage @relation(fields: [imageId], references: [id], onDelete: Cascade)
-  
   @@map("product_tags")
 }
 
 model Folder {
-  id          String    @id @default(uuid())
-  name        String
-  
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id         String          @id @default(uuid())
+  name       String
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+  designerId String
+  products   FolderProduct[]
+  designer   User            @relation(fields: [designerId], references: [id])
 
-  // Relationships
-  designerId  String
-  designer    User      @relation(fields: [designerId], references: [id])
-  products    FolderProduct[]
-  
   @@map("folders")
 }
 
 model FolderProduct {
-  id        String    @id @default(uuid())
-  
-  createdAt DateTime  @default(now())
-
-  // Relationships
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
   folderId  String
-  folder    Folder    @relation(fields: [folderId], references: [id], onDelete: Cascade)
   productId String
-  product   Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
-  
+  folder    Folder   @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
   @@unique([folderId, productId])
   @@map("folder_products")
 }
 
 model Story {
-  id          String    @id @default(uuid())
-  videoUrl    String
+  id           String     @id @default(uuid())
+  videoUrl     String
   thumbnailUrl String?
-  duration    Int       // in seconds, max 60
-  
-  // Lifecycle
-  createdAt   DateTime  @default(now())
-  expiresAt   DateTime? // Null if pinned to project
-  isPinned    Boolean   @default(false)
+  duration     Int
+  createdAt    DateTime   @default(now())
+  expiresAt    DateTime?
+  isPinned     Boolean    @default(false)
+  views        Int        @default(0)
+  likes        Int        @default(0)
+  designerId   String
+  projectId    String?
+  designer     User       @relation(fields: [designerId], references: [id])
+  project      Project?   @relation(fields: [projectId], references: [id])
+  categories   Category[] @relation("StoryToCategory")
+  vendors      User[]     @relation("StoryToVendor")
 
-  // Engagement Metrics
-  views       Int       @default(0)
-  likes       Int       @default(0)
-
-  // Relationships
-  designerId  String
-  designer    User      @relation(fields: [designerId], references: [id])
-
-  projectId   String?
-  project     Project?  @relation(fields: [projectId], references: [id])
-
-  // Optional Tagging
-  categories  Category[] @relation("StoryToCategory")
-  vendors     User[]    @relation("StoryToVendor")
-  
   @@map("stories")
 }
 
 model Category {
-  id          String    @id @default(uuid())
-  name        String    @unique
-  stories     Story[]   @relation("StoryToCategory")
-  
+  id      String  @id @default(uuid())
+  name    String  @unique
+  stories Story[] @relation("StoryToCategory")
+
   @@map("categories")
-} 
+}
+
+model Event {
+  id               String          @id @default(uuid())
+  title            String
+  description      String?
+  startDate        DateTime
+  endDate          DateTime
+  location         String
+  address          String?
+  city             String?
+  state            String?
+  country          String?
+  coordinates      String?
+  thumbnail        String?
+  banner           String?
+  website          String?
+  type             String          @default("general")
+  status           String          @default("upcoming")
+  isSignature      Boolean         @default(false)
+  isPinned         Boolean         @default(false)
+  capacity         Int?
+  isPublic         Boolean         @default(true)
+  createdById      String
+  isApproved       Boolean?        @default(false)
+  rejectionNotes   String?
+  parentFestivalId String?
+  requiresApproval Boolean         @default(false)
+  views            Int             @default(0)
+  rsvps            Int             @default(0)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  organizerId      String?
+  media            EventMedia[]
+  products         EventProduct[]
+  eventRSVPs       EventRSVP[]
+  signups          EventSignup[]
+  createdBy        User            @relation("EventCreator", fields: [createdById], references: [id])
+  organizer        User?           @relation("EventOrganizer", fields: [organizerId], references: [id])
+  subEvents        SubEvent[]
+  websiteScrapes   WebsiteScrape[]
+
+  @@map("events")
+}
+
+model SubEvent {
+  id                String                     @id @default(uuid())
+  title             String
+  description       String?
+  startTime         DateTime
+  endTime           DateTime
+  location          String?
+  type              String                     @default("talk")
+  visibility        String                     @default("public")
+  ticketingType     String                     @default("open")
+  maxAttendees      Int?
+  isPrivate         Boolean                    @default(false)
+  isInviteOnly      Boolean                    @default(false)
+  isBoosted         Boolean                    @default(false)
+  boostExpiresAt    DateTime?
+  trendingScore     Int                        @default(0)
+  viewCount         Int                        @default(0)
+  mediaCount        Int                        @default(0)
+  productScanCount  Int                        @default(0)
+  speakerName       String?
+  speakerBio        String?
+  speakerImage      String?
+  companyName       String?
+  companyLogo       String?
+  vendorId          String?
+  qrCode            String?                    @unique
+  capacity          Int?
+  maxRSVPs          Int?
+  isFeatured        Boolean                    @default(false)
+  featuredReason    String?
+  createdAt         DateTime                   @default(now())
+  updatedAt         DateTime                   @updatedAt
+  eventId           String
+  invites           SubEventInvite[]
+  media             SubEventMedia[]
+  products          SubEventProduct[]
+  rsvps             SubEventRSVP[]
+  spotlightProducts SubEventSpotlightProduct[]
+  event             Event                      @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  vendor            User?                      @relation("VendorSubEvents", fields: [vendorId], references: [id])
+
+  @@map("sub_events")
+}
+
+model EventRSVP {
+  id        String   @id @default(uuid())
+  status    String   @default("going")
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  eventId   String
+  userId    String
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user      User     @relation("EventRSVPs", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, userId])
+  @@map("event_rsvps")
+}
+
+model SubEventRSVP {
+  id         String   @id @default(uuid())
+  status     String   @default("going")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  subEventId String
+  userId     String
+  subEvent   SubEvent @relation(fields: [subEventId], references: [id], onDelete: Cascade)
+  user       User     @relation("SubEventRSVPs", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([subEventId, userId])
+  @@map("sub_event_rsvps")
+}
+
+model EventMedia {
+  id        String   @id @default(uuid())
+  type      String   @default("image")
+  url       String
+  thumbnail String?
+  caption   String?
+  tags      String[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  eventId   String
+  userId    String
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user      User     @relation("EventMedia", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("event_media")
+}
+
+model SubEventMedia {
+  id         String   @id @default(uuid())
+  type       String   @default("image")
+  url        String
+  thumbnail  String?
+  caption    String?
+  tags       String[]
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  subEventId String
+  userId     String
+  subEvent   SubEvent @relation(fields: [subEventId], references: [id], onDelete: Cascade)
+  user       User     @relation("SubEventMedia", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sub_event_media")
+}
+
+model EventProduct {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  eventId   String
+  productId String
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  product   Product  @relation("EventProducts", fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, productId])
+  @@map("event_products")
+}
+
+model SubEventProduct {
+  id         String   @id @default(uuid())
+  createdAt  DateTime @default(now())
+  subEventId String
+  productId  String
+  product    Product  @relation("SubEventProducts", fields: [productId], references: [id], onDelete: Cascade)
+  subEvent   SubEvent @relation(fields: [subEventId], references: [id], onDelete: Cascade)
+
+  @@unique([subEventId, productId])
+  @@map("sub_event_products")
+}
+
+model SubEventSpotlightProduct {
+  id              String   @id @default(uuid())
+  featured        Boolean  @default(false)
+  spotlightReason String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  subEventId      String
+  productId       String
+  product         Product  @relation("SubEventSpotlightProducts", fields: [productId], references: [id], onDelete: Cascade)
+  subEvent        SubEvent @relation(fields: [subEventId], references: [id], onDelete: Cascade)
+
+  @@unique([subEventId, productId])
+  @@map("sub_event_spotlight_products")
+}
+
+model SubEventInvite {
+  id            String   @id @default(uuid())
+  email         String
+  status        String   @default("pending")
+  message       String?
+  inviteToken   String   @unique @default(cuid())
+  expiresAt     DateTime @default(dbgenerated("(now() + '7 days'::interval)"))
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  subEventId    String
+  userId        String?
+  invitedBy     String
+  invitedByUser User     @relation("SubEventInvitesSent", fields: [invitedBy], references: [id], onDelete: Cascade)
+  subEvent      SubEvent @relation(fields: [subEventId], references: [id], onDelete: Cascade)
+  user          User?    @relation("SubEventInvites", fields: [userId], references: [id])
+
+  @@unique([subEventId, email])
+  @@map("sub_event_invites")
+}
+
+model DesignerProfile {
+  id          String   @id @default(uuid())
+  about       String?
+  logo        String?
+  team        String?
+  specialties String[]
+  website     String?
+  instagram   String?
+  linkedin    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("designer_profiles")
+}
+
+model OnboardingCompletion {
+  id          String   @id @default(uuid())
+  step        String
+  completedAt DateTime @default(now())
+  eventId     String?
+  source      String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("onboarding_completions")
+}
+
+model EventSignup {
+  id           String   @id @default(uuid())
+  signupMethod String
+  signupDate   DateTime @default(now())
+  source       String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  eventId      String
+  userId       String
+  event        Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, userId])
+  @@map("event_signups")
+}
+
+model WebsiteScrape {
+  id        String   @id @default(uuid())
+  url       String
+  eventId   String?
+  scrapedAt DateTime @default(now())
+  success   Boolean  @default(true)
+  data      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  event     Event?   @relation(fields: [eventId], references: [id])
+
+  @@map("website_scrapes")
+}

@@ -111,7 +111,7 @@ export async function POST(request: NextRequest) {
     if (isDraft || status === 'draft') {
       const recentDraft = await prisma.project.findFirst({
         where: {
-          designerId: designerId || 'designer-1',
+          designerId: designerId,
           status: 'draft',
           name: name.trim(),
           updatedAt: {
@@ -211,6 +211,26 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Validate that the designerId exists in the database
+    if (!designerId) {
+      return NextResponse.json(
+        { error: 'Designer ID is required' },
+        { status: 400 }
+      );
+    }
+
+    // Check if the designer exists
+    const designer = await prisma.user.findUnique({
+      where: { id: designerId },
+    });
+
+    if (!designer) {
+      return NextResponse.json(
+        { error: 'Designer not found in database' },
+        { status: 400 }
+      );
+    }
+
     // Create new project
     const newProject = await prisma.project.create({
       data: {
@@ -218,7 +238,7 @@ export async function POST(request: NextRequest) {
         description: description || '',
         category: category.trim(),
         client: client || '',
-        designerId: designerId || 'designer-1',
+        designerId: designerId,
         status: status || (isDraft ? 'draft' : 'published'),
         views: status === 'draft' ? 0 : Math.floor(Math.random() * 1000) + 100,
         saves: status === 'draft' ? 0 : Math.floor(Math.random() * 200) + 20,

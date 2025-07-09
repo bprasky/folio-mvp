@@ -1,8 +1,9 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
-import { RoleProvider } from '../contexts/RoleContext';
+import Providers from '../components/Providers';
 import GlobalHeader from '../components/GlobalHeader';
+import Navigation from '../components/Navigation';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -19,12 +20,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.className} bg-folio-background text-folio-text min-h-screen`}>
-        <RoleProvider>
+        <Providers>
+          <Navigation />
           <GlobalHeader />
-          <main className="bg-folio-background">
+          <main className="bg-folio-background ml-20 lg:ml-56">
             {children}
           </main>
-        </RoleProvider>
+        </Providers>
       </body>
     </html>
   );

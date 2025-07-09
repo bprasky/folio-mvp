@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { FaUser, FaStore, FaHome, FaToggleOn, FaToggleOff, FaChevronDown } from 'react-icons/fa';
+import { useRouter } from 'next/navigation';
+import { FaUser, FaStore, FaHome, FaToggleOn, FaToggleOff, FaChevronDown, FaSignOutAlt } from 'react-icons/fa';
 import { useRole } from '../contexts/RoleContext';
 
 interface Profile {
@@ -23,13 +24,14 @@ interface ProfileSwitcherProps {
 }
 
 export default function ProfileSwitcher({ onProfileChange }: ProfileSwitcherProps) {
-  const { role, activeProfileId, setActiveProfileId } = useRole();
+  const { role, activeProfileId, setActiveProfileId, setRole } = useRole();
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
-  // Only show for switchable roles
-  if (!['designer', 'vendor', 'homeowner'].includes(role)) return null;
+  // Available roles for switching
+  const availableRoles = ['designer', 'vendor', 'homeowner', 'admin'];
 
   useEffect(() => {
     fetchProfiles();
@@ -76,6 +78,35 @@ export default function ProfileSwitcher({ onProfileChange }: ProfileSwitcherProp
     }
   };
 
+  const handleRoleSwitch = async (newRole: string) => {
+    try {
+      // Update role in context
+      setRole(newRole);
+      setActiveProfileId(null);
+      setIsOpen(false);
+      
+      // Redirect to appropriate dashboard
+      switch (newRole) {
+        case 'designer':
+          router.push('/designer');
+          break;
+        case 'vendor':
+          router.push('/vendor');
+          break;
+        case 'homeowner':
+          router.push('/homeowner');
+          break;
+        case 'admin':
+          router.push('/admin');
+          break;
+        default:
+          router.push('/');
+      }
+    } catch (error) {
+      console.error('Error switching role:', error);
+    }
+  };
+
   const getActiveProfile = () => {
     return profiles.find(p => p.id === activeProfileId) || profiles[0];
   };
@@ -88,6 +119,8 @@ export default function ProfileSwitcher({ onProfileChange }: ProfileSwitcherProp
         return FaStore;
       case 'homeowner':
         return FaHome;
+      case 'admin':
+        return FaUser;
       default:
         return FaUser;
     }
@@ -105,9 +138,46 @@ export default function ProfileSwitcher({ onProfileChange }: ProfileSwitcherProp
     if (role === 'homeowner') {
       return profile.location || '';
     } else if (role === 'vendor') {
-      return profile.description || '';
+      return profile.description || profile.bio || 'Vendor Profile';
     } else {
       return profile.bio || '';
+    }
+  };
+
+  const getProfileDisplayName = (profile: Profile) => {
+    if (role === 'vendor') {
+      return profile.brandName || profile.name || 'Vendor Profile';
+    }
+    return profile.name || profile.brandName || `${role} Profile`;
+  };
+
+  const getRoleDisplayName = (role: string) => {
+    switch (role) {
+      case 'designer':
+        return 'Designer';
+      case 'vendor':
+        return 'Vendor';
+      case 'homeowner':
+        return 'Homeowner';
+      case 'admin':
+        return 'Admin';
+      default:
+        return role;
+    }
+  };
+
+  const getRoleIcon = (role: string) => {
+    switch (role) {
+      case 'designer':
+        return FaUser;
+      case 'vendor':
+        return FaStore;
+      case 'homeowner':
+        return FaHome;
+      case 'admin':
+        return FaUser;
+      default:
+        return FaUser;
     }
   };
 
@@ -123,17 +193,6 @@ export default function ProfileSwitcher({ onProfileChange }: ProfileSwitcherProp
             <div className="h-4 bg-folio-muted rounded w-24 mb-1"></div>
             <div className="h-3 bg-folio-muted rounded w-32"></div>
           </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (profiles.length === 0) {
-    return (
-      <div className="bg-folio-card rounded-xl p-4 mb-6 border border-folio-border">
-        <div className="text-center">
-          <Icon className="w-8 h-8 text-folio-border mx-auto mb-2" />
-          <p className="text-folio-text text-sm">No {role} profiles found</p>
         </div>
       </div>
     );
@@ -185,63 +244,102 @@ export default function ProfileSwitcher({ onProfileChange }: ProfileSwitcherProp
         </button>
 
         {isOpen && (
-          <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-lg border border-folio-border z-50 max-h-64 overflow-y-auto">
-            {profiles.map((profile) => (
-              <button
-                key={profile.id}
-                onClick={() => handleProfileSwitch(profile.id)}
-                className={`w-full flex items-center gap-3 p-3 hover:bg-folio-background transition-colors ${
-                  profile.id === activeProfileId ? 'bg-folio-background' : ''
-                }`}
-              >
-                {getProfileImage(profile) ? (
-                  <div className="relative w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
-                    <Image
-                      src={getProfileImage(profile)!}
-                      alt={getProfileName(profile)}
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
-                ) : (
-                  <div className="w-8 h-8 bg-folio-accent rounded-full flex items-center justify-center flex-shrink-0">
-                    <Icon className="w-4 h-4 text-white" />
-                  </div>
-                )}
-                
-                <div className="flex-1 text-left min-w-0">
-                  <h4 className="font-medium text-folio-text text-sm truncate">
-                    {getProfileName(profile)}
-                  </h4>
-                  <p className="text-folio-border text-xs truncate">
-                    {getProfileSubtext(profile)}
-                  </p>
-                  {profile.metrics && (
-                    <div className="flex gap-2 mt-1">
-                      {role === 'designer' && (
-                        <span className="text-xs text-folio-accent">
-                          {profile.metrics.followers || 0} followers
-                        </span>
-                      )}
-                      {role === 'vendor' && (
-                        <span className="text-xs text-folio-accent">
-                          {profile.metrics.products || 0} products
-                        </span>
-                      )}
-                      {role === 'homeowner' && (
-                        <span className="text-xs text-folio-accent">
-                          {profile.metrics?.itemsSaved || 0} saved items
-                        </span>
-                      )}
-                    </div>
+          <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-lg border border-folio-border z-50 max-h-96 overflow-y-auto">
+            {/* Role Switching Section */}
+            <div className="p-3 border-b border-folio-border">
+              <h4 className="text-xs font-medium text-folio-border mb-2">Switch Role</h4>
+              <div className="space-y-1">
+                {availableRoles.map((availableRole) => {
+                  const RoleIcon = getRoleIcon(availableRole);
+                  return (
+                    <button
+                      key={availableRole}
+                      onClick={() => handleRoleSwitch(availableRole)}
+                      className={`w-full flex items-center gap-2 p-2 rounded text-sm transition-colors ${
+                        availableRole === role 
+                          ? 'bg-folio-accent text-white' 
+                          : 'hover:bg-folio-background text-folio-text'
+                      }`}
+                    >
+                      <RoleIcon className="w-4 h-4" />
+                      <span>{getRoleDisplayName(availableRole)}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Profile Switching Section */}
+            {profiles.length > 0 && (
+              <div className="p-3">
+                <h4 className="text-xs font-medium text-folio-border mb-2">
+                  {role === 'vendor' ? 'Select Vendor Account' : `${getRoleDisplayName(role)} Profiles`}
+                  {role === 'vendor' && profiles.length > 1 && (
+                    <span className="ml-2 text-xs text-folio-accent font-medium">
+                      ({profiles.length} available)
+                    </span>
                   )}
+                </h4>
+                <div className="space-y-1">
+                  {profiles.map((profile) => (
+                    <button
+                      key={profile.id}
+                      onClick={() => handleProfileSwitch(profile.id)}
+                      className={`w-full flex items-center gap-3 p-2 rounded text-sm transition-colors ${
+                        profile.id === activeProfileId 
+                          ? 'bg-folio-accent text-white' 
+                          : 'hover:bg-folio-background text-folio-text'
+                      }`}
+                    >
+                      {getProfileImage(profile) ? (
+                        <div className="relative w-6 h-6 rounded-full overflow-hidden flex-shrink-0">
+                          <Image
+                            src={getProfileImage(profile)!}
+                            alt={getProfileName(profile)}
+                            fill
+                            className="object-cover"
+                          />
+                        </div>
+                      ) : (
+                        <div className="w-6 h-6 bg-folio-accent rounded-full flex items-center justify-center flex-shrink-0">
+                          <Icon className="w-3 h-3 text-white" />
+                        </div>
+                      )}
+                      
+                      <div className="flex-1 text-left">
+                        <p className={`font-medium text-sm ${
+                          profile.id === activeProfileId ? 'text-white' : 'text-folio-text'
+                        }`}>
+                          {role === 'vendor' ? (profile.brandName || profile.name) : getProfileName(profile)}
+                          {profile.id === activeProfileId && (
+                            <span className="ml-2 text-xs opacity-75">(Active)</span>
+                          )}
+                        </p>
+                        <p className={`text-xs truncate ${
+                          profile.id === activeProfileId ? 'text-white opacity-75' : 'text-folio-border'
+                        }`}>
+                          {getProfileSubtext(profile)}
+                        </p>
+                      </div>
+                    </button>
+                  ))}
                 </div>
-                
-                {profile.id === activeProfileId && (
-                  <FaToggleOn className="w-5 h-5 text-folio-accent flex-shrink-0" />
-                )}
+              </div>
+            )}
+
+            {/* Sign Out Section */}
+            <div className="p-3 border-t border-folio-border">
+              <button
+                onClick={() => {
+                  // Handle sign out
+                  router.push('/auth');
+                }}
+                className="w-full flex items-center gap-2 p-2 rounded text-sm text-red-600 hover:bg-red-50 transition-colors"
+              >
+                <FaSignOutAlt className="w-4 h-4" />
+                <span>Sign Out</span>
               </button>
-            ))}
+            </div>
           </div>
         )}
       </div>

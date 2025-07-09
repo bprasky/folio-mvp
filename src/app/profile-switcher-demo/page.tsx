@@ -5,7 +5,6 @@ import { motion } from 'framer-motion';
 import Image from 'next/image';
 import Link from 'next/link';
 import { FaUser, FaStore, FaHome, FaToggleOn, FaToggleOff, FaCrown, FaEye, FaHeart, FaShare, FaPlus } from 'react-icons/fa';
-import Navigation from '../../components/Navigation';
 import ProfileSwitcher from '../../components/ProfileSwitcher';
 import { useRole } from '../../contexts/RoleContext';
 
@@ -284,9 +283,7 @@ export default function ProfileSwitcherDemo() {
 
   return (
     <div className="min-h-screen bg-folio-background">
-      <Navigation />
-      
-      <div className="flex-1 lg:ml-20 xl:ml-56 p-6">
+      <div className="flex-1   p-6">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
           <motion.div 

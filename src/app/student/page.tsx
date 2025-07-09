@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { FaGraduationCap, FaChalkboardTeacher, FaUserGraduate, FaStar, FaPlus, FaHeart, FaComment, FaShare, FaBookmark, FaTrophy, FaClock } from 'react-icons/fa';
-import Navigation from '../../components/Navigation';
 import { useRole } from '../../contexts/RoleContext';
 
 // Mock student profile data
@@ -332,9 +331,7 @@ export default function StudentDashboard() {
 
   return (
     <div className="min-h-screen bg-primary flex">
-      <Navigation />
-      
-      <div className="flex-1 lg:ml-20 xl:ml-56">
+      <div className="flex-1  ">
         <div className="max-w-4xl mx-auto px-6 py-12">
           {/* Header */}
           <motion.div

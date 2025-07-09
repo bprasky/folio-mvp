@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import SafeImage from '../../components/SafeImage';
-import Navigation from '../../components/Navigation';
 import { FaClock, FaUser, FaEye, FaFilter, FaSearch } from 'react-icons/fa';
 
 // Sample editorial data - in production this would come from an API
@@ -90,9 +89,7 @@ export default function EditorialsPage() {
 
   return (
     <div className="flex h-screen overflow-hidden">
-      <Navigation />
-      
-      <div className="flex-1 lg:ml-20 xl:ml-56 overflow-y-auto">
+      <div className="flex-1   overflow-y-auto">
         <div className="max-w-7xl mx-auto p-6 space-y-8">
           {/* Header */}
           <div className="text-center space-y-4">
