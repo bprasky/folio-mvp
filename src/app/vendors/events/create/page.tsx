@@ -2,7 +2,6 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { FaCalendarAlt, FaMapMarkerAlt, FaUsers, FaCheck, FaExclamationCircle } from 'react-icons/fa';
 
 interface Festival {
   id: string;
@@ -18,20 +17,12 @@ interface Festival {
   };
 }
 
-interface ToastMessage {
-  type: 'success' | 'error' | 'info';
-  message: string;
-  show: boolean;
-}
-
 export default function CreateEventPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [festivals, setFestivals] = useState<Festival[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [associateWithFestival, setAssociateWithFestival] = useState(false);
-  const [toast, setToast] = useState<ToastMessage>({ type: 'success', message: '', show: false });
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -47,7 +38,7 @@ export default function CreateEventPage() {
       return;
     }
 
-    if ((session?.user as any)?.role !== 'vendor') {
+    if (session?.user?.role !== 'vendor') {
       router.push('/');
       return;
     }
@@ -66,17 +57,10 @@ export default function CreateEventPage() {
       setFestivals(data);
     } catch (error) {
       console.error('Error fetching festivals:', error);
-      showToast('error', 'Failed to load festivals. Please try again.');
+      alert('Failed to load festivals. Please try again.');
     } finally {
       setLoading(false);
     }
-  };
-
-  const showToast = (type: 'success' | 'error' | 'info', message: string) => {
-    setToast({ type, message, show: true });
-    setTimeout(() => {
-      setToast(prev => ({ ...prev, show: false }));
-    }, 5000);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -98,38 +82,25 @@ export default function CreateEventPage() {
     }
   };
 
-  const handleFestivalToggle = (value: boolean) => {
-    setAssociateWithFestival(value);
-    if (!value) {
-      setFormData(prev => ({
-        ...prev,
-        parentFestivalId: '',
-        location: ''
-      }));
-    }
-  };
-
   const validateDates = () => {
+    if (!formData.parentFestivalId) return true;
+
+    const selectedFestival = festivals.find(f => f.id === formData.parentFestivalId);
+    if (!selectedFestival) return false;
+
     const eventStart = new Date(formData.startDate);
     const eventEnd = new Date(formData.endDate);
+    const festivalStart = new Date(selectedFestival.startDate);
+    const festivalEnd = new Date(selectedFestival.endDate);
 
-    if (eventStart >= eventEnd) {
-      showToast('error', 'End date must be after start date');
+    if (eventStart < festivalStart || eventEnd > festivalEnd) {
+      alert('Event dates must be within the festival period');
       return false;
     }
 
-    // If associated with festival, validate dates are within festival bounds
-    if (associateWithFestival && formData.parentFestivalId) {
-      const selectedFestival = festivals.find(f => f.id === formData.parentFestivalId);
-      if (!selectedFestival) return false;
-
-      const festivalStart = new Date(selectedFestival.startDate);
-      const festivalEnd = new Date(selectedFestival.endDate);
-
-      if (eventStart < festivalStart || eventEnd > festivalEnd) {
-        showToast('error', `Event dates must be within the festival period (${new Date(selectedFestival.startDate).toLocaleDateString()} - ${new Date(selectedFestival.endDate).toLocaleDateString()})`);
-        return false;
-      }
+    if (eventStart >= eventEnd) {
+      alert('End date must be after start date');
+      return false;
     }
 
     return true;
@@ -143,17 +114,12 @@ export default function CreateEventPage() {
     try {
       setSubmitting(true);
       
-      const submitData = {
-        ...formData,
-        parentFestivalId: associateWithFestival ? formData.parentFestivalId : null
-      };
-      
       const response = await fetch('/api/vendors/events/create', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(submitData),
+        body: JSON.stringify(formData),
       });
 
       if (!response.ok) {
@@ -162,13 +128,7 @@ export default function CreateEventPage() {
       }
 
       const result = await response.json();
-      
-      if (associateWithFestival && formData.parentFestivalId) {
-        const selectedFestival = festivals.find(f => f.id === formData.parentFestivalId);
-        showToast('success', `Your event has been submitted for approval to ${selectedFestival?.title || 'the festival organizer'}.`);
-      } else {
-        showToast('success', 'Event submitted successfully!');
-      }
+      alert(result.message || 'Event submitted for approval successfully!');
       
       // Reset form
       setFormData({
@@ -179,21 +139,20 @@ export default function CreateEventPage() {
         endDate: '',
         parentFestivalId: '',
       });
-      setAssociateWithFestival(false);
       
-      // Redirect to vendor dashboard after delay
-      setTimeout(() => {
-        router.push('/vendor/dashboard');
-      }, 2000);
+      // Redirect to vendor dashboard
+      router.push('/vendor/dashboard');
     } catch (error) {
       console.error('Error creating event:', error);
-      showToast('error', error instanceof Error ? error.message : 'Failed to create event. Please try again.');
+      alert(error instanceof Error ? error.message : 'Failed to create event. Please try again.');
     } finally {
       setSubmitting(false);
     }
   };
 
-  const selectedFestival = festivals.find(f => f.id === formData.parentFestivalId);
+  const formatDateForInput = (dateString: string) => {
+    return new Date(dateString).toISOString().slice(0, 16);
+  };
 
   if (loading) {
     return (
@@ -205,105 +164,36 @@ export default function CreateEventPage() {
 
   return (
     <div className="max-w-4xl mx-auto p-6">
-      {/* Toast Notification */}
-      {toast.show && (
-        <div className={`fixed top-4 right-4 z-50 flex items-center p-4 rounded-lg shadow-lg ${
-          toast.type === 'success' ? 'bg-green-50 text-green-800 border border-green-200' :
-          toast.type === 'error' ? 'bg-red-50 text-red-800 border border-red-200' :
-          'bg-blue-50 text-blue-800 border border-blue-200'
-        }`}>
-          {toast.type === 'success' && <FaCheck className="w-5 h-5 mr-2" />}
-          {toast.type === 'error' && <FaExclamationCircle className="w-5 h-5 mr-2" />}
-          {toast.type === 'info' && <FaExclamationCircle className="w-5 h-5 mr-2" />}
-          {toast.message}
-        </div>
-      )}
-
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Create New Event</h1>
-        <p className="text-gray-600">Create a standalone event or submit to a Design Festival</p>
+        <p className="text-gray-600">Submit your event for admin approval</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Festival Association Toggle */}
-        <div className="bg-gray-50 p-6 rounded-lg">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Festival Association</h3>
-          <div className="space-y-4">
-            <label className="flex items-start cursor-pointer">
-              <input
-                type="radio"
-                name="eventType"
-                value="standalone"
-                checked={!associateWithFestival}
-                onChange={() => handleFestivalToggle(false)}
-                className="mt-1 mr-3 text-blue-600"
-              />
-              <div>
-                <span className="font-medium text-gray-900">No - Create Standalone Event</span>
-                <p className="text-sm text-gray-500 mt-1">Your event will be live immediately and visible to all users</p>
-              </div>
-            </label>
-            <label className="flex items-start cursor-pointer">
-              <input
-                type="radio"
-                name="eventType"
-                value="festival"
-                checked={associateWithFestival}
-                onChange={() => handleFestivalToggle(true)}
-                className="mt-1 mr-3 text-blue-600"
-              />
-              <div>
-                <span className="font-medium text-gray-900">Yes - Submit to Design Festival</span>
-                <p className="text-sm text-gray-500 mt-1">Submit your event to an active Design Festival (requires approval)</p>
-              </div>
-            </label>
-          </div>
+        {/* Festival Selection */}
+        <div>
+          <label htmlFor="parentFestivalId" className="block text-sm font-medium text-gray-700 mb-2">
+            Select Festival *
+          </label>
+          <select
+            id="parentFestivalId"
+            name="parentFestivalId"
+            value={formData.parentFestivalId}
+            onChange={handleInputChange}
+            required
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          >
+            <option value="">Choose a festival...</option>
+            {festivals.map((festival) => (
+              <option key={festival.id} value={festival.id}>
+                {festival.title} - {festival.location} ({new Date(festival.startDate).toLocaleDateString()} - {new Date(festival.endDate).toLocaleDateString()})
+              </option>
+            ))}
+          </select>
+          {festivals.length === 0 && (
+            <p className="text-sm text-gray-500 mt-1">No active festivals available</p>
+          )}
         </div>
-
-        {/* Festival Selection - Only show if associating with festival */}
-        {associateWithFestival && (
-          <div className="bg-blue-50 p-6 rounded-lg border border-blue-200">
-            <label htmlFor="parentFestivalId" className="block text-sm font-medium text-gray-700 mb-2">
-              <FaUsers className="inline mr-2" />
-              Select Design Festival *
-            </label>
-            <select
-              id="parentFestivalId"
-              name="parentFestivalId"
-              value={formData.parentFestivalId}
-              onChange={handleInputChange}
-              required={!!associateWithFestival}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="">Choose a festival...</option>
-              {festivals.map((festival) => (
-                <option key={festival.id} value={festival.id}>
-                  {festival.title} ({new Date(festival.startDate).toLocaleDateString()} - {new Date(festival.endDate).toLocaleDateString()})
-                </option>
-              ))}
-            </select>
-            {festivals.length === 0 && (
-              <p className="text-sm text-red-600 mt-2">No active festivals available for submissions</p>
-            )}
-            {selectedFestival && (
-              <div className="mt-4 p-4 bg-white rounded-lg border border-blue-200">
-                <div className="flex items-center mb-2">
-                  <FaCalendarAlt className="text-blue-600 mr-2" />
-                  <span className="font-medium text-gray-900">Summary</span>
-                </div>
-                <p className="text-sm text-gray-700 mb-2">
-                  <strong>This event will be submitted to {selectedFestival.title} for approval.</strong>
-                </p>
-                <div className="text-sm text-gray-600 space-y-1">
-                  <p><FaMapMarkerAlt className="inline mr-1" /> Location: {selectedFestival.location}</p>
-                  <p><FaCalendarAlt className="inline mr-1" /> Festival Period: {new Date(selectedFestival.startDate).toLocaleDateString()} - {new Date(selectedFestival.endDate).toLocaleDateString()}</p>
-                  <p className="text-blue-600 font-medium">• Event dates must fall within the festival period</p>
-                  <p className="text-blue-600 font-medium">• Location will be auto-populated from festival</p>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
 
         {/* Event Title */}
         <div>
@@ -335,11 +225,11 @@ export default function CreateEventPage() {
             required
             rows={4}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="Describe your event..."
+            placeholder="Describe your event"
           />
         </div>
 
-        {/* Event Location */}
+        {/* Location */}
         <div>
           <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-2">
             Location *
@@ -352,22 +242,15 @@ export default function CreateEventPage() {
             onChange={handleInputChange}
             required
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="Enter event location"
-            disabled={!!(associateWithFestival && formData.parentFestivalId)}
+            placeholder="Event location"
           />
-          {associateWithFestival && formData.parentFestivalId && (
-            <p className="text-sm text-gray-500 mt-1">
-              <FaMapMarkerAlt className="inline mr-1" />
-              Location automatically set from selected festival
-            </p>
-          )}
         </div>
 
-        {/* Event Dates */}
+        {/* Date Range */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label htmlFor="startDate" className="block text-sm font-medium text-gray-700 mb-2">
-              Start Date *
+              Start Date & Time *
             </label>
             <input
               type="datetime-local"
@@ -376,12 +259,14 @@ export default function CreateEventPage() {
               value={formData.startDate}
               onChange={handleInputChange}
               required
+              min={formData.parentFestivalId ? formatDateForInput(festivals.find(f => f.id === formData.parentFestivalId)?.startDate || '') : ''}
+              max={formData.parentFestivalId ? formatDateForInput(festivals.find(f => f.id === formData.parentFestivalId)?.endDate || '') : ''}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
           <div>
             <label htmlFor="endDate" className="block text-sm font-medium text-gray-700 mb-2">
-              End Date *
+              End Date & Time *
             </label>
             <input
               type="datetime-local"
@@ -390,28 +275,50 @@ export default function CreateEventPage() {
               value={formData.endDate}
               onChange={handleInputChange}
               required
+              min={formData.startDate || (formData.parentFestivalId ? formatDateForInput(festivals.find(f => f.id === formData.parentFestivalId)?.startDate || '') : '')}
+              max={formData.parentFestivalId ? formatDateForInput(festivals.find(f => f.id === formData.parentFestivalId)?.endDate || '') : ''}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
         </div>
 
+        {/* Festival Date Info */}
+        {formData.parentFestivalId && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <h3 className="font-medium text-blue-900 mb-2">Festival Information</h3>
+            {festivals.find(f => f.id === formData.parentFestivalId) && (
+              <div className="text-sm text-blue-800">
+                <p><strong>Festival:</strong> {festivals.find(f => f.id === formData.parentFestivalId)?.title}</p>
+                <p><strong>Period:</strong> {new Date(festivals.find(f => f.id === formData.parentFestivalId)?.startDate || '').toLocaleDateString()} - {new Date(festivals.find(f => f.id === formData.parentFestivalId)?.endDate || '').toLocaleDateString()}</p>
+                <p><strong>Location:</strong> {festivals.find(f => f.id === formData.parentFestivalId)?.location}</p>
+                <p className="mt-2 text-xs">Your event dates must be within this festival period.</p>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Submit Button */}
-        <div className="pt-4">
+        <div className="flex justify-end space-x-4">
+          <button
+            type="button"
+            onClick={() => router.push('/vendor/dashboard')}
+            className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+          >
+            Cancel
+          </button>
           <button
             type="submit"
-            disabled={submitting || (associateWithFestival && festivals.length === 0)}
-            className={`w-full py-3 px-6 rounded-lg font-medium text-white transition-colors ${
-              submitting || (associateWithFestival && festivals.length === 0)
-                ? 'bg-gray-400 cursor-not-allowed'
-                : 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800'
-            }`}
+            disabled={submitting || festivals.length === 0}
+            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
-            {submitting 
-              ? 'Creating Event...' 
-              : associateWithFestival 
-                ? 'Submit for Approval' 
-                : 'Create Event'
-            }
+            {submitting ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                Submitting...
+              </>
+            ) : (
+              'Submit for Approval'
+            )}
           </button>
         </div>
       </form>

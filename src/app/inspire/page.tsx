@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import InspireCard from '@/components/inspire/InspireCard';
 import { motion, AnimatePresence } from 'framer-motion';
+import inspireData from '@/data/inspire_posts.json';
 import Navigation from '../../components/Navigation';
 
 interface InspirePost {
@@ -13,15 +14,11 @@ interface InspirePost {
   authorImage: string;
   likes: number;
   saves: number;
-  views: number;
   type: 'regular' | 'featured' | 'boosted' | 'viral';
   aspectRatio: number;
   projectLink?: string;
   productLink?: string;
   designerLink?: string;
-  room?: string;
-  category?: string;
-  createdAt?: string;
 }
 
 export default function InspirePage() {
@@ -29,26 +26,23 @@ export default function InspirePage() {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
 
-  // Fetch posts from API
+  // Simulate fetching posts
   const fetchPosts = async () => {
     setLoading(true);
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
     
-    try {
-      const response = await fetch(`/api/inspire?page=${page}&limit=20`);
-      const data = await response.json();
-      
-      if (data.success) {
-        const newPosts = data.posts as InspirePost[];
-        setPosts(prev => [...prev, ...newPosts]);
-        setPage(prev => prev + 1);
-      } else {
-        console.error('Failed to fetch inspire posts:', data.error);
-      }
-    } catch (error) {
-      console.error('Error fetching inspire posts:', error);
-    } finally {
-      setLoading(false);
-    }
+    const newPosts = inspireData.posts.map(post => ({
+      ...post,
+      id: `${post.id}_${page}`,
+      projectLink: (post.id === '1') ? '/project/modern-living-room' : undefined,
+      productLink: (post.id === '1') ? '/product/eco-modular-sofa' : undefined,
+      designerLink: (post.id === '1') ? '/designer/diana-matta' : (post.id === '2') ? '/designer/nu-projects' : undefined,
+    })) as InspirePost[];
+    
+    setPosts(prev => [...prev, ...newPosts]);
+    setPage(prev => prev + 1);
+    setLoading(false);
   };
 
   // Initial load

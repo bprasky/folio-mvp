@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '../../../auth/[...nextauth]/route';
+import { authOptions } from '../../../auth/[...nextauth]/options';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
   try {
     // Check authentication and admin role
     const session = await getServerSession(authOptions);
-    if (!session || (session.user as any).role !== 'admin') {
+    if (!session || session.user.role !== 'admin') {
       return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 });
     }
 
@@ -64,14 +64,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (existingEvent.isApproved !== false) {
+    if (existingEvent.isApproved !== null) {
       return NextResponse.json(
         { error: 'This event has already been processed' },
         { status: 400 }
       );
     }
-
-    console.log(`Admin ${(session.user as any).id} processing ${action} for event ${eventId}`);
 
     // Update the event status
     const updatedEvent = await prisma.event.update({
@@ -98,12 +96,10 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // Log the approval action
+    // Optional: Send notification to vendor
     if (action === 'reject' && rejectionNotes) {
       console.log(`Event ${eventId} rejected with notes: ${rejectionNotes}`);
       // TODO: Implement email notification to vendor
-    } else if (action === 'approve') {
-      console.log(`Event ${eventId} approved successfully`);
     }
 
     return NextResponse.json({

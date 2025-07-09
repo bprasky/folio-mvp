@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '../../auth/[...nextauth]/route';
+import { authOptions } from '../../auth/[...nextauth]/options';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
@@ -13,14 +13,12 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    console.log(`User ${(session.user as any).id} fetching active festivals`);
-    
     const now = new Date();
     
-    // Fetch active festivals (admin-created events with isFestival: true)
+    // Fetch active festivals (admin-created events of type 'festival')
     const festivals = await prisma.event.findMany({
       where: {
-        isFestival: true,
+        type: 'festival',
         isApproved: true,
         endDate: { gte: now }, // Only future or ongoing festivals
       },
@@ -43,8 +41,6 @@ export async function GET(req: NextRequest) {
         },
       },
     });
-
-    console.log(`Found ${festivals.length} active festivals`);
 
     return NextResponse.json(festivals);
   } catch (error) {

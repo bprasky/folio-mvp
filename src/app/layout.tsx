@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
-import { Providers } from './providers';
+import { RoleProvider } from '../contexts/RoleContext';
 import GlobalHeader from '../components/GlobalHeader';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -19,12 +19,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.className} bg-folio-background text-folio-text min-h-screen`}>
-        <Providers>
+        <RoleProvider>
           <GlobalHeader />
           <main className="bg-folio-background">
             {children}
           </main>
-        </Providers>
+        </RoleProvider>
       </body>
     </html>
   );

@@ -21,21 +21,10 @@ const Navigation = () => {
   ];
 
   // Community section with collapsible events
-  const getEventsHref = () => {
-    switch (role) {
-      case 'admin':
-        return '/admin/events/approvals';
-      case 'vendor':
-        return '/vendors/events/create';
-      default:
-        return '/events';
-    }
-  };
-
   const communitySection = {
     main: { href: '/community', icon: FaUsers, label: 'Community' },
     submenu: [
-      { href: getEventsHref(), icon: FaCalendarAlt, label: 'Events' },
+      { href: '/events', icon: FaCalendarAlt, label: 'Events' },
     ]
   };
 
@@ -72,7 +61,7 @@ const Navigation = () => {
   };
 
   // Navigation items for different roles (excluding dashboard, analytics, messages)
-  const homeownerItems: { name: string; href: string; icon: any }[] = [];
+  const homeownerItems = [];
 
   const designerItems = [
     { name: 'Projects', href: '/designer/projects', icon: FaBriefcase },

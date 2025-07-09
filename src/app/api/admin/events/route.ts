@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '../../auth/[...nextauth]/route';
+import { authOptions } from '../../auth/[...nextauth]/options';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
@@ -9,12 +9,12 @@ export async function POST(req: NextRequest) {
   try {
     // Check authentication and admin role
     const session = await getServerSession(authOptions);
-    if (!session || (session.user as any).role !== 'admin') {
+    if (!session || session.user.role !== 'admin') {
       return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 });
     }
 
     const body = await req.json();
-    const { title, description, location, startDate, endDate, isPublic = true, type = 'festival' } = body;
+    const { title, description, location, startDate, endDate, type = 'festival' } = body;
     
     if (!title || !description || !location || !startDate || !endDate) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -28,8 +28,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'End date must be after start date' }, { status: 400 });
     }
 
-    console.log(`Admin ${(session.user as any).id} creating festival: ${title}`);
-
     const event = await prisma.event.create({
       data: {
         title,
@@ -37,10 +35,11 @@ export async function POST(req: NextRequest) {
         location,
         startDate: start,
         endDate: end,
-        isFestival: true, // Admin-created events are festivals
+        type: 'festival', // Admin-created events are always festivals
+        isPublic: true,
         isApproved: true, // Admin-created events are auto-approved
-        requiresApproval: false, // Admin events don't need approval
-        createdById: (session.user as any).id,
+        requiresApproval: false,
+        createdById: session.user.id,
       },
       include: {
         createdBy: {
@@ -53,15 +52,13 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    console.log(`Festival ${event.id} created successfully`);
-
     return NextResponse.json({ 
       event, 
       message: 'Festival created successfully' 
     }, { status: 201 });
   } catch (error) {
-    console.error('Error creating admin festival:', error);
-    return NextResponse.json({ error: 'Failed to create festival' }, { status: 500 });
+    console.error('Error creating admin event:', error);
+    return NextResponse.json({ error: 'Failed to create event' }, { status: 500 });
   }
 }
 
@@ -69,11 +66,9 @@ export async function GET(req: NextRequest) {
   try {
     // Check authentication and admin role
     const session = await getServerSession(authOptions);
-    if (!session || (session.user as any).role !== 'admin') {
+    if (!session || session.user.role !== 'admin') {
       return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 });
     }
-
-    console.log(`Admin ${(session.user as any).id} fetching all events`);
 
     const events = await prisma.event.findMany({
       orderBy: {
@@ -100,8 +95,6 @@ export async function GET(req: NextRequest) {
         },
       },
     });
-
-    console.log(`Found ${events.length} events`);
 
     return NextResponse.json(events);
   } catch (error) {
