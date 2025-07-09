@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '../../../auth/[...nextauth]/route';
+import { authOptions } from '../../../auth/[...nextauth]/options';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
@@ -9,11 +9,9 @@ export async function GET(req: NextRequest) {
   try {
     // Check authentication and admin role
     const session = await getServerSession(authOptions);
-    if (!session || (session.user as any).role !== 'admin') {
+    if (!session || session.user.role !== 'admin') {
       return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 });
     }
-
-    console.log(`Admin ${(session.user as any).id} fetching events requiring approval`);
 
     // Fetch events that require approval (vendor-created events)
     const events = await prisma.event.findMany({
@@ -21,7 +19,7 @@ export async function GET(req: NextRequest) {
         requiresApproval: true,
       },
       orderBy: [
-        { isApproved: 'asc' }, // Pending first (false values)
+        { isApproved: 'asc' }, // Pending first (null values)
         { createdAt: 'desc' },
       ],
       include: {
@@ -43,8 +41,6 @@ export async function GET(req: NextRequest) {
         },
       },
     });
-
-    console.log(`Found ${events.length} events requiring approval`);
 
     return NextResponse.json(events);
   } catch (error) {

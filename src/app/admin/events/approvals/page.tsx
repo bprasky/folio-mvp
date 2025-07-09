@@ -47,7 +47,7 @@ export default function EventApprovalsPage() {
       return;
     }
 
-    if ((session?.user as any)?.role !== 'admin') {
+    if (session?.user?.role !== 'admin') {
       router.push('/');
       return;
     }
@@ -189,8 +189,8 @@ export default function EventApprovalsPage() {
   return (
     <div className="max-w-6xl mx-auto p-6">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Festival Sub-Event Approvals</h1>
-        <p className="text-gray-600">Review and approve vendor event submissions to Design Festivals</p>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Event Approvals</h1>
+        <p className="text-gray-600">Review and approve vendor event submissions</p>
       </div>
 
       {/* Search and Filter Controls */}

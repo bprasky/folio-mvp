@@ -60,15 +60,16 @@ model Event {
   location          String
   startDate         DateTime
   endDate           DateTime
-  isFestival        Boolean  @default(false)
-  parentFestivalId  String?  // null for standalone events
-  isApproved        Boolean  @default(false)
+  type              String   @default("general") // "festival" for admin-created events
+  isPublic          Boolean  @default(true)
+  isApproved        Boolean? @default(false)
   requiresApproval  Boolean  @default(false)
   rejectionNotes    String?
   createdById       String
   createdBy         User     @relation("EventCreator", fields: [createdById], references: [id])
-  parentFestival    Event?   @relation("FestivalSubEvents", fields: [parentFestivalId], references: [id])
-  subEvents         Event[]  @relation("FestivalSubEvents")
+  parentFestivalId  String?  
+  parentFestival    Event?   @relation("FestivalSubevents", fields: [parentFestivalId], references: [id])
+  subevents         Event[]  @relation("FestivalSubevents")
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
   

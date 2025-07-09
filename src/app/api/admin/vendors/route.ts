@@ -1,59 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '../../auth/[...nextauth]/route';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { readFile, writeFile } from 'fs/promises';
+import { join } from 'path';
 
 export async function GET() {
   try {
-    // Check authentication
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
-    console.log(`User ${(session.user as any).id} fetching vendors`);
-
-    // Fetch vendors from database
-    const vendors = await prisma.user.findMany({
-      where: {
-        profileType: 'vendor'
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        companyName: true,
-        profileType: true,
-        followers: true,
-        following: true,
-        views: true,
-        createdAt: true,
-        updatedAt: true,
-        products: {
-          select: {
-            id: true,
-            name: true,
-            category: true,
-            price: true,
-            imageUrl: true,
-          }
-        }
-      },
-      orderBy: {
-        createdAt: 'desc'
-      }
-    });
-
-    console.log(`Found ${vendors.length} vendors`);
+    // Load vendors from JSON file
+    const vendorsPath = join(process.cwd(), 'data', 'vendors.json');
+    const vendorsContent = await readFile(vendorsPath, 'utf-8');
+    const vendorsData = JSON.parse(vendorsContent);
 
     return NextResponse.json({
       success: true,
-      vendors: vendors
+      vendors: vendorsData
     });
   } catch (error) {
     console.error('Error fetching vendors:', error);
@@ -66,65 +24,47 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    // Check authentication and admin role
-    const session = await getServerSession(authOptions);
-    if (!session || (session.user as any).role !== 'admin') {
-      return NextResponse.json(
-        { success: false, error: 'Forbidden - Admin access required' },
-        { status: 403 }
-      );
-    }
-
     const body = await request.json();
-    const { name, email, companyName, profileType = 'vendor' } = body;
+    const { name, description, website, contactEmail, specialties } = body;
 
-    if (!name || !email) {
+    if (!name) {
       return NextResponse.json(
-        { success: false, error: 'Name and email are required' },
+        { success: false, error: 'Vendor name is required' },
         { status: 400 }
       );
     }
 
-    console.log(`Admin ${(session.user as any).id} creating vendor: ${name}`);
-
-    // Check if user with this email already exists
-    const existingUser = await prisma.user.findUnique({
-      where: { email }
-    });
-
-    if (existingUser) {
-      return NextResponse.json(
-        { success: false, error: 'User with this email already exists' },
-        { status: 400 }
-      );
+    // Load existing vendors
+    const vendorsPath = join(process.cwd(), 'data', 'vendors.json');
+    let vendors = [];
+    try {
+      const vendorsContent = await readFile(vendorsPath, 'utf-8');
+      vendors = JSON.parse(vendorsContent);
+    } catch (error) {
+      // File doesn't exist yet, start with empty array
+      vendors = [];
     }
 
-    // Create new vendor user
-    const newVendor = await prisma.user.create({
-      data: {
-        name,
-        email,
-        companyName,
-        profileType: 'vendor',
-        followers: 0,
-        following: 0,
-        views: 0,
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        companyName: true,
-        profileType: true,
-        followers: true,
-        following: true,
-        views: true,
-        createdAt: true,
-        updatedAt: true,
-      }
-    });
+    // Generate vendor ID
+    const vendorId = `vendor-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-    console.log(`Vendor ${newVendor.id} created successfully`);
+    // Create new vendor
+    const newVendor = {
+      id: vendorId,
+      name,
+      description: description || '',
+      website: website || '',
+      contactEmail: contactEmail || '',
+      specialties: specialties || [],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    // Add to vendors array
+    vendors.push(newVendor);
+
+    // Save updated vendors
+    await writeFile(vendorsPath, JSON.stringify(vendors, null, 2));
 
     return NextResponse.json({
       success: true,

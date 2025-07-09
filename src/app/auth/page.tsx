@@ -127,16 +127,8 @@ export default function AuthPage() {
           </div>
         </div>
 
-        <div className="text-center mt-6">
-          <button
-            onClick={() => router.push('/auth/signin')}
-            className="text-sm text-blue-600 hover:text-blue-800 mb-4"
-          >
-            Need admin/vendor access? Sign in here →
-          </button>
-          <div className="text-sm text-gray-500">
-            Built with ❤️ for the design community
-          </div>
+        <div className="text-center mt-6 text-sm text-gray-500">
+          Built with ❤️ for the design community
         </div>
       </div>
     </div>
