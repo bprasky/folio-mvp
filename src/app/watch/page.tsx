@@ -9,7 +9,6 @@ import {
   FaUser, FaTag, FaClock, FaTrendingUp, FaFire,
   FaDesktop, FaPalette, FaBuilding, FaVideo
 } from 'react-icons/fa';
-import Navigation from '../../components/Navigation';
 
 interface Video {
   id: string;
@@ -196,8 +195,9 @@ export default function VideoFeed() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex">
-        <Navigation />
-        <div className="flex-1 lg:ml-20 xl:ml-56 flex items-center justify-center">
+        
+        <div className="p-6">
+        <div className="max-w-7xl mx-auto">
           <div className="text-center">
             <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
             <p className="text-gray-600">Loading videos...</p>
@@ -212,9 +212,10 @@ export default function VideoFeed() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      <Navigation />
       
-      <div className="flex-1 lg:ml-20 xl:ml-56">
+      
+      <div className="p-6">
+        <div className="max-w-7xl mx-auto">
         <div className="max-w-7xl mx-auto px-6 py-8">
           {/* Header */}
           <div className="mb-8">
@@ -435,6 +436,8 @@ export default function VideoFeed() {
           )}
         </div>
       </div>
-    </div>
+    
+      </div>
+      </div></div>
   );
 } 

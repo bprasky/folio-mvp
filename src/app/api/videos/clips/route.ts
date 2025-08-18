@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Load videos from JSON file
-    const videosPath = join(process.cwd(), 'data', 'videos.json');
+    const videosPath = join(process.cwd(), 'src', 'data', 'videos.json');
     const videosContent = await readFile(videosPath, 'utf-8');
     const videos = JSON.parse(videosContent);
 
@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
     const videoId = searchParams.get('videoId');
 
     // Load videos from JSON file
-    const videosPath = join(process.cwd(), 'data', 'videos.json');
+    const videosPath = join(process.cwd(), 'src', 'data', 'videos.json');
     let videos = [];
     try {
       const videosContent = await readFile(videosPath, 'utf-8');

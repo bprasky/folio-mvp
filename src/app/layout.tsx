@@ -1,13 +1,15 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
-import { RoleProvider } from '../contexts/RoleContext';
-import GlobalHeader from '../components/GlobalHeader';
+import Providers from './providers';
+import SessionRoleSync from '../components/SessionRoleSync';
+import RoleBasedLayout from '../components/layouts/RoleBasedLayout';
+import { Toaster } from 'react-hot-toast';
 
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Folio | Next-Gen Interior Design Platform',
+  title: 'FOLIO | Next-Gen Interior Design Platform',
   description: 'A curated design platform for interior designers and vendors',
 };
 
@@ -19,12 +21,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.className} bg-folio-background text-folio-text min-h-screen`}>
-        <RoleProvider>
-          <GlobalHeader />
-          <main className="bg-folio-background">
+        <Providers>
+          <SessionRoleSync />
+          <RoleBasedLayout>
             {children}
-          </main>
-        </RoleProvider>
+          </RoleBasedLayout>
+          <Toaster position="top-right" />
+        </Providers>
       </body>
     </html>
   );

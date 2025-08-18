@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
       const buffer = Buffer.from(bytes);
 
       // Create uploads directory if it doesn't exist
-      const uploadsDir = join(process.cwd(), 'public', 'uploads', 'videos');
+      const uploadsDir = join(process.cwd(), 'src', 'public', 'uploads', 'videos');
       if (!existsSync(uploadsDir)) {
         await mkdir(uploadsDir, { recursive: true });
       }
@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
     transcribeVideoAsync(videoId, finalVideoUrl);
 
     // Save video to JSON file (in production, use database)
-    const videosPath = join(process.cwd(), 'data', 'videos.json');
+    const videosPath = join(process.cwd(), 'src', 'data', 'videos.json');
     let videos = [];
     
     try {
@@ -129,7 +129,7 @@ async function transcribeVideoAsync(videoId: string, videoUrl: string) {
     const transcriptionResult = await mockTranscribeVideo(videoUrl);
 
     // Update video with transcription results
-    const videosPath = join(process.cwd(), 'data', 'videos.json');
+    const videosPath = join(process.cwd(), 'src', 'data', 'videos.json');
     let videos = [];
     
     try {
@@ -163,7 +163,7 @@ async function transcribeVideoAsync(videoId: string, videoUrl: string) {
     
     // Mark transcription as failed
     try {
-      const videosPath = join(process.cwd(), 'data', 'videos.json');
+      const videosPath = join(process.cwd(), 'src', 'data', 'videos.json');
       const videosContent = await readFile(videosPath, 'utf-8');
       const videos = JSON.parse(videosContent);
       

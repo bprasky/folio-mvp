@@ -13,7 +13,6 @@ import {
   FaTimes, FaPlus, FaTrash, FaBriefcase, FaCog, FaCamera, FaUpload,
   FaChevronDown
 } from 'react-icons/fa';
-import Navigation from '../../../components/Navigation';
 import { useRole } from '../../../contexts/RoleContext';
 import VideoUploader from '../../../components/VideoUploader';
 import ProjectCreationModal from '../../../components/ProjectCreationModal';
@@ -1379,10 +1378,11 @@ export default function DesignerProfile() {
   return (
     <div className="min-h-screen bg-primary flex">
       {/* Navigation */}
-      <Navigation />
+      
       
       {/* Main Content */}
-      <div className="flex-1 lg:ml-20 xl:ml-56">
+      <div className="p-6">
+        <div className="max-w-7xl mx-auto">
         {/* Main Fibonacci Grid Layout */}
         <div className="max-w-7xl mx-auto px-6 py-12">
           <div className="grid grid-cols-12 gap-8">
@@ -1656,10 +1656,11 @@ export default function DesignerProfile() {
             </main>
           </div>
         </div>
+        </div>
       </div>
 
       {/* Enhanced SMS Modal */}
       <SMSModal isOpen={isMessageModalOpen} onClose={() => setIsMessageModalOpen(false)} />
     </div>
   );
-} 
+}

@@ -1,57 +1,122 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '../../../auth/[...nextauth]/options';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-export async function POST(req: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
-    // Check authentication and vendor role
-    const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== 'vendor') {
-      return NextResponse.json({ error: 'Forbidden - Vendor access required' }, { status: 403 });
-    }
-
-    const body = await req.json();
-    const { title, description, location, startDate, endDate, parentFestivalId } = body;
+    // Debug: Log the content type and try to parse the body
+    const contentType = request.headers.get('content-type');
+    console.log('Content-Type:', contentType);
     
-    if (!title || !description || !location || !startDate || !endDate || !parentFestivalId) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    let body: any;
+    if (contentType?.includes('application/json')) {
+      body = await request.json();
+    } else if (contentType?.includes('multipart/form-data')) {
+      const formData = await request.formData();
+      body = Object.fromEntries(formData.entries());
+      // Parse JSON strings back to objects
+      Object.keys(body).forEach((key: string) => {
+        if (typeof body[key] === 'string' && (body[key].startsWith('[') || body[key].startsWith('{'))) {
+          try {
+            body[key] = JSON.parse(body[key]);
+          } catch (e) {
+            // Keep as string if parsing fails
+          }
+        }
+      });
+    } else {
+      // Try JSON as fallback
+      try {
+        body = await request.json();
+      } catch (e) {
+        console.error('Failed to parse request body:', e);
+        return NextResponse.json(
+          { error: 'Invalid request format' },
+          { status: 400 }
+        );
+      }
+    }
+    
+    console.log('Parsed body:', body);
+    const { title, description, location, startDate, endDate, createdById, parentFestivalId, eventType } = body;
+
+    // Validate required fields
+    if (!title || !description || !location || !startDate || !endDate || !createdById) {
+      return NextResponse.json(
+        { error: 'Missing required fields' },
+        { status: 400 }
+      );
     }
 
-    // Validate date range
+    // Validate dates
     const start = new Date(startDate);
     const end = new Date(endDate);
     
     if (start >= end) {
-      return NextResponse.json({ error: 'End date must be after start date' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'End date must be after start date' },
+        { status: 400 }
+      );
     }
 
-    // Validate that the parent festival exists and is active
-    const parentFestival = await prisma.event.findFirst({
-      where: {
-        id: parentFestivalId,
-        type: 'festival',
-        isApproved: true,
-        startDate: { lte: end },
-        endDate: { gte: start },
-      },
+    // If parentFestivalId is provided, validate it exists and dates are within festival range
+    if (parentFestivalId) {
+      const parentFestival = await prisma.event.findFirst({
+        where: { 
+          id: parentFestivalId,
+          eventTypes: {
+            has: 'FESTIVAL'
+          },
+          isApproved: true,
+        },
+      });
+
+      if (!parentFestival) {
+        return NextResponse.json(
+          { error: 'Parent festival not found or not approved' },
+          { status: 404 }
+        );
+      }
+
+      // Check if event dates are within festival range
+      if (start < parentFestival.startDate || end > parentFestival.endDate) {
+        return NextResponse.json(
+          { error: 'Event dates must be within the festival period' },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Validate that createdById exists and is a valid user
+    let userId = createdById;
+    if (!createdById) {
+      return NextResponse.json(
+        { error: 'createdById is required' },
+        { status: 400 }
+      );
+    }
+    
+    // Verify the user exists
+    const user = await prisma.user.findUnique({
+      where: { id: createdById }
     });
-
-    if (!parentFestival) {
-      return NextResponse.json({ 
-        error: 'Invalid festival selection or event dates outside festival period' 
-      }, { status: 400 });
+    
+    if (!user) {
+      return NextResponse.json(
+        { error: 'User not found' },
+        { status: 404 }
+      );
+    }
+    
+    if (user.role !== 'VENDOR') {
+      return NextResponse.json(
+        { error: 'Only vendors can create vendor events' },
+        { status: 403 }
+      );
     }
 
-    // Validate that the event dates are within the festival period
-    if (start < parentFestival.startDate || end > parentFestival.endDate) {
-      return NextResponse.json({ 
-        error: 'Event dates must be within the festival period' 
-      }, { status: 400 });
-    }
-
+    // Create the event (vendor events require approval)
     const event = await prisma.event.create({
       data: {
         title,
@@ -59,38 +124,67 @@ export async function POST(req: NextRequest) {
         location,
         startDate: start,
         endDate: end,
-        type: 'event',
+        eventTypes: eventType ? [eventType.toUpperCase()] : ['OTHER'],
         isPublic: true,
-        isApproved: null, // Pending approval
-        requiresApproval: true,
-        parentFestivalId,
-        createdById: session.user.id,
+        isApproved: true, // Vendor events auto-approved for now
+        requiresApproval: false,
+        createdById: userId,
+        parentFestivalId: parentFestivalId || null,
+        // Add default values for new fields
+        isVirtual: false,
+        timezone: null,
+        mapLink: null,
+        capacity: null,
+        inviteType: 'open',
+        targetUserRoles: [],
+        isSponsored: false,
+        promotionTier: 0,
+        displayBoostUntil: null,
+        eventTags: [],
+        designStyles: [],
+        rsvpDeadline: null,
+        waitlistEnabled: false,
+        allowReshare: true,
+        eventHashtag: null,
+        createdByReputationScore: null,
+        mediaGallery: [],
+        linkedProducts: [],
+        allowChat: false,
+        chatGroupLink: null,
+        postEventMessage: null,
+        includesFood: false,
+        rejectionNotes: null,
+        imageUrl: null,
       },
       include: {
         createdBy: {
           select: {
             id: true,
             name: true,
-            companyName: true,
+            role: true,
           },
         },
-        parentFestival: {
+        parentFestival: parentFestivalId ? {
           select: {
             id: true,
             title: true,
             startDate: true,
             endDate: true,
           },
-        },
+        } : undefined,
       },
     });
 
-    return NextResponse.json({ 
-      event, 
-      message: 'Event submitted for approval successfully' 
+    return NextResponse.json({
+      event,
+      message: 'Event created successfully!'
     }, { status: 201 });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error creating vendor event:', error);
-    return NextResponse.json({ error: 'Failed to create event' }, { status: 500 });
+    const errorMsg = error instanceof Error ? error.message : 'Failed to create event';
+    return NextResponse.json(
+      { error: errorMsg },
+      { status: 500 }
+    );
   }
 } 

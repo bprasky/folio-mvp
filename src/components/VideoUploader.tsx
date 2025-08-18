@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   FaUpload, FaVideo, FaLink, FaTimes, FaCheck, 
   FaSpinner, FaPlay, FaTag, FaGlobe, FaLock,
-  FaProject, FaYoutube, FaVimeo
+  FaFolder, FaYoutube, FaVimeo
 } from 'react-icons/fa';
 
 interface VideoUploaderProps {
@@ -365,7 +365,7 @@ export default function VideoUploader({
                   Related Project (Optional)
                 </label>
                 <div className="relative">
-                  <FaProject className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                  <FaFolder className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                   <select
                     value={relatedProjectId}
                     onChange={(e) => setRelatedProjectId(e.target.value)}

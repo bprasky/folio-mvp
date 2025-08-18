@@ -5,13 +5,11 @@ import Link from 'next/link';
 import SafeImage from '../../components/SafeImage';
 import { FaPlus, FaEdit, FaTrash, FaChartLine, FaBriefcase, FaUser, FaToggleOn, FaToggleOff, FaDownload, FaEye, FaEyeSlash, FaExternalLinkAlt } from 'react-icons/fa';
 import ProjectCreationModal from '../../components/ProjectCreationModal';
-import Navigation from '../../components/Navigation';
-import ProfileSwitcher from '../../components/ProfileSwitcher';
 import { useRole } from '../../contexts/RoleContext';
 
 export default function DesignerProfile() {
   const { role, activeProfileId, setActiveProfileId } = useRole();
-  const [activeTab, setActiveTab] = useState<'portfolio' | 'projects'>('portfolio');
+  const [activeTab, setActiveTab] = useState<'portfolio' | 'projects'>('projects');
   const [showProjectModal, setShowProjectModal] = useState(false);
   const [projects, setProjects] = useState<any[]>([]);
   const [designers, setDesigners] = useState<any[]>([]);
@@ -387,19 +385,10 @@ export default function DesignerProfile() {
   );
 
   return (
-    <div className="flex h-screen overflow-hidden">
-      {/* Navigation */}
-      <Navigation />
-
-      {/* Main Content */}
-      <div className="flex-1 lg:ml-20 xl:ml-56 overflow-y-auto p-6">
+    <div className="p-6">
+      <div className="max-w-7xl mx-auto">
         {/* Profile Switcher for Designers */}
         {role === 'designer' && (
-          <ProfileSwitcher onProfileChange={handleProfileChange} />
-        )}
-        
-        {/* Admin Designer Selection */}
-        {role === 'admin' && (
           <div className="mb-6">
             <h2 className="text-lg font-semibold text-white mb-4">Select Designer Profile</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -510,9 +499,135 @@ export default function DesignerProfile() {
         )}
 
         {activeTab === 'projects' && (
-          <div className="glass-panel p-6 rounded-lg">
-            <h2 className="text-xl font-semibold text-white mb-4">Active Projects</h2>
-            <p className="text-gray-400">Project management content coming soon...</p>
+          <div className="space-y-6">
+            {/* Quick Actions */}
+            <div className="glass-panel p-6 rounded-lg">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold text-white">Project Lifecycle</h2>
+                <Link
+                  href="/designer/create" // canonical create path → /designer/create
+                  className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all flex items-center gap-2"
+                >
+                  <FaPlus className="w-4 h-4" />
+                  Create New
+                </Link>
+              </div>
+              <p className="text-gray-400 mb-4">
+                Manage your design projects with room organization, product selections, and spec sheets.
+              </p>
+              
+              {/* Project Stats */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="bg-gray-800/50 p-4 rounded-lg">
+                  <div className="text-2xl font-bold text-white">{getFilteredProjects().length}</div>
+                  <div className="text-sm text-gray-400">Total Projects</div>
+                </div>
+                <div className="bg-gray-800/50 p-4 rounded-lg">
+                  <div className="text-2xl font-bold text-white">
+                    {getFilteredProjects().filter(p => p.status === 'published').length}
+                  </div>
+                  <div className="text-sm text-gray-400">Published</div>
+                </div>
+                <div className="bg-gray-800/50 p-4 rounded-lg">
+                  <div className="text-2xl font-bold text-white">
+                    {getFilteredProjects().filter(p => p.status === 'draft').length}
+                  </div>
+                  <div className="text-sm text-gray-400">Drafts</div>
+                </div>
+                <div className="bg-gray-800/50 p-4 rounded-lg">
+                  <div className="text-2xl font-bold text-white">
+                    {getFilteredProjects().reduce((total, p) => total + (p.rooms?.length || 0), 0)}
+                  </div>
+                  <div className="text-sm text-gray-400">Total Rooms</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Projects Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {getFilteredProjects().map((project) => (
+                <div key={project.id} className="glass-panel rounded-lg overflow-hidden hover:shadow-xl transition-shadow">
+                  <div className="aspect-video bg-gray-700 relative">
+                    {project.imageUrl ? (
+                      <SafeImage
+                        src={project.imageUrl}
+                        alt={project.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <FaBriefcase className="w-12 h-12 text-gray-500" />
+                      </div>
+                    )}
+                    <div className="absolute top-2 right-2 flex gap-1">
+                      <Link
+                        href={`/designer/projects/${project.id}`}
+                        className="p-2 bg-white bg-opacity-90 rounded-lg hover:bg-opacity-100 transition-all"
+                        title="Manage Project"
+                      >
+                        <FaEdit className="w-4 h-4 text-gray-600" />
+                      </Link>
+                    </div>
+                  </div>
+                  
+                  <div className="p-4">
+                    <div className="flex justify-between items-start mb-2">
+                      <Link 
+                        href={`/designer/projects/${project.id}`}
+                        className="text-lg font-semibold text-white hover:text-blue-400 transition-colors"
+                      >
+                        {project.name}
+                      </Link>
+                      <div className="flex items-center gap-2">
+                        <span className={`px-2 py-1 text-xs rounded-full ${
+                          project.status === 'published' 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-yellow-100 text-yellow-800'
+                        }`}>
+                          {project.status === 'published' ? 'Published' : 'Draft'}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <p className="text-gray-400 text-sm mb-3 line-clamp-2">
+                      {project.description}
+                    </p>
+                    
+                    <div className="flex justify-between items-center text-sm text-gray-500">
+                      <span>{project.category}</span>
+                      <span>{project.rooms?.length || 0} rooms</span>
+                    </div>
+                    
+                    <div className="mt-3 pt-3 border-t border-gray-700">
+                      <Link
+                        href={`/designer/projects/${project.id}`}
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg transition-colors text-center block"
+                      >
+                        Manage Project
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Empty State */}
+            {getFilteredProjects().length === 0 && (
+              <div className="glass-panel p-8 rounded-lg text-center">
+                <FaBriefcase className="w-16 h-16 text-gray-500 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-white mb-2">No Projects Yet</h3>
+                <p className="text-gray-400 mb-6">
+                  Start creating your first design project to organize rooms and selections
+                </p>
+                <Link
+                  href="/designer/create" // canonical create path → /designer/create
+                  className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-6 py-3 rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all inline-flex items-center gap-2"
+                >
+                  <FaPlus className="w-4 h-4" />
+                  Create Your First Project
+                </Link>
+              </div>
+            )}
           </div>
         )}
       </div>

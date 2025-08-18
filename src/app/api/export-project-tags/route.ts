@@ -26,7 +26,7 @@ interface TaggedProduct {
 // Load projects from file
 const loadProjects = (): any[] => {
   try {
-    const PROJECTS_FILE = path.join(process.cwd(), 'data', 'projects.json');
+    const PROJECTS_FILE = path.join(process.cwd(), 'src', 'data', 'projects.json');
     if (fs.existsSync(PROJECTS_FILE)) {
       const data = fs.readFileSync(PROJECTS_FILE, 'utf8');
       return JSON.parse(data);

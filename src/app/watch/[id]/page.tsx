@@ -11,7 +11,6 @@ import {
   FaBuilding, FaClock, FaVolumeUp, FaVolumeMute,
   FaExpand, FaCompress, FaDownload, FaBookmark
 } from 'react-icons/fa';
-import Navigation from '../../../components/Navigation';
 
 interface Video {
   id: string;
@@ -236,8 +235,9 @@ export default function VideoViewer() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex">
-        <Navigation />
-        <div className="flex-1 lg:ml-20 xl:ml-56 flex items-center justify-center">
+        
+        <div className="p-6">
+        <div className="max-w-7xl mx-auto">
           <div className="text-center">
             <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
             <p className="text-gray-600">Loading video...</p>
@@ -250,8 +250,9 @@ export default function VideoViewer() {
   if (!video) {
     return (
       <div className="min-h-screen bg-gray-50 flex">
-        <Navigation />
-        <div className="flex-1 lg:ml-20 xl:ml-56 flex items-center justify-center">
+        
+        <div className="p-6">
+        <div className="max-w-7xl mx-auto">
           <div className="text-center">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Video not found</h2>
             <p className="text-gray-600 mb-4">The video you're looking for doesn't exist.</p>
@@ -269,9 +270,10 @@ export default function VideoViewer() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      <Navigation />
       
-      <div className="flex-1 lg:ml-20 xl:ml-56">
+      
+      <div className="p-6">
+        <div className="max-w-7xl mx-auto">
         <div className="max-w-7xl mx-auto px-6 py-8">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Main Video Column */}
@@ -703,3 +705,7 @@ export default function VideoViewer() {
     </div>
   );
 } 
+      
+      </div>
+      </div>
+      </div></div>

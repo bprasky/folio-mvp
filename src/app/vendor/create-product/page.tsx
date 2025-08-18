@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { FaArrowLeft } from 'react-icons/fa';
-import Navigation from '../../../components/Navigation';
 import ProductUploader from '../../../components/vendor/ProductUploader';
 
 export default function VendorCreateProduct() {
@@ -36,7 +35,7 @@ export default function VendorCreateProduct() {
 
   return (
     <div className="min-h-screen bg-primary flex">
-      <Navigation />
+      
       
       <div className="flex-1 lg:ml-20 xl:ml-56">
         <div className="max-w-4xl mx-auto px-6 py-12">

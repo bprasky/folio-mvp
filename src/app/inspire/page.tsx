@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import InspireCard from '@/components/inspire/InspireCard';
 import { motion, AnimatePresence } from 'framer-motion';
 import inspireData from '@/data/inspire_posts.json';
-import Navigation from '../../components/Navigation';
 
 interface InspirePost {
   id: string;
@@ -68,10 +67,11 @@ export default function InspirePage() {
   return (
     <div className="min-h-screen bg-primary flex">
       {/* Navigation */}
-      <Navigation />
+      
 
       {/* Main Content */}
-      <div className="flex-1 lg:ml-20 xl:ml-56 p-8">
+      <div className="p-6">
+        <div className="max-w-7xl mx-auto">
         <div className="max-w-7xl mx-auto">
           <h1 className="text-4xl font-bold mb-8 text-secondary">Inspire</h1>
           
@@ -112,6 +112,7 @@ export default function InspirePage() {
           )}
         </div>
       </div>
-    </div>
+    
+      </div></div>
   );
 } 

@@ -1,23 +1,26 @@
 'use client';
 
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState } from 'react';
-import { FaHome, FaLightbulb, FaNewspaper, FaStore, FaUsers, FaUser, FaPlus, FaBriefcase, FaGraduationCap, FaChalkboardTeacher, FaUserGraduate, FaStar, FaVideo, FaCompass, FaChartLine, FaChartBar, FaFolder, FaHeart, FaEnvelope, FaShoppingCart, FaBook, FaCog, FaFileAlt, FaBox, FaChevronDown, FaChevronRight, FaCalendarAlt } from 'react-icons/fa';
-import { useRole } from '../contexts/RoleContext';
-
+import { useSession, signOut } from 'next-auth/react';
+import { FaHome, FaLightbulb, FaNewspaper, FaStore, FaUsers, FaUser, FaPlus, FaBriefcase, FaGraduationCap, FaChalkboardTeacher, FaUserGraduate, FaStar, FaVideo, FaCompass, FaChartLine, FaChartBar, FaFolder, FaHeart, FaEnvelope, FaShoppingCart, FaBook, FaCog, FaFileAlt, FaBox, FaChevronDown, FaChevronRight, FaCalendarAlt, FaCamera, FaSignOutAlt } from 'react-icons/fa';
+import FolioLogo from './FolioLogo';
 const Navigation = () => {
   const pathname = usePathname();
-  const { role } = useRole();
+  const { data: session, status } = useSession();
   const [isCommunityExpanded, setIsCommunityExpanded] = useState(false);
   const [isProfileExpanded, setIsProfileExpanded] = useState(false);
+
+  // Get role directly from session, ensure it's lowercase for consistency
+  const role = session?.user?.role?.toLowerCase() || 'guest';
 
   const baseNavItems = [
     { href: '/', icon: FaHome, label: 'Home' },
     { href: '/editorials', icon: FaNewspaper, label: 'Editorials' },
-    { href: '/inspire', icon: FaLightbulb, label: 'Inspire' },
-    { href: '/vendor', icon: FaStore, label: 'Shop' },
-    { href: '/watch', icon: FaVideo, label: 'Watch' },
+    // Temporarily hidden: { href: '/inspire', icon: FaLightbulb, label: 'Inspire' },
+    // Temporarily hidden: { href: '/vendor', icon: FaStore, label: 'Shop' },
+    // Temporarily hidden: { href: '/watch', icon: FaVideo, label: 'Watch' },
   ];
 
   // Community section with collapsible events
@@ -30,44 +33,60 @@ const Navigation = () => {
 
   // Profile section items based on role
   const getProfileItems = () => {
+    if (!session?.user) {
+      // Show sign in option when not logged in
+      return [
+        { name: 'Sign In', href: '/auth/signin', icon: FaUser },
+      ];
+    }
+
+    // Defensive coding: if role is undefined, don't show role-specific items
+    if (!session?.user?.role) {
+      return [
+        { name: 'My Profile', href: '/profile', icon: FaUser },
+        { name: 'Sign Out', href: '#', icon: FaSignOutAlt, isLogout: true },
+      ];
+    }
+
+    // Show profile options when logged in
     const baseProfileItems = [
+      { name: 'My Profile', href: '/profile', icon: FaUser },
       { name: 'Messages', href: '/messages', icon: FaEnvelope },
+      { name: 'Sign Out', href: '#', icon: FaSignOutAlt, isLogout: true },
     ];
 
+    // Only add Dashboard for specific roles
+    const role = session.user.role.toLowerCase();
+    if (['admin', 'vendor', 'designer', 'student'].includes(role)) {
+      baseProfileItems.splice(1, 0, { name: 'Dashboard', href: getDashboardLink(), icon: FaChartLine });
+    }
+
+    return baseProfileItems;
+  };
+
+  // Get dashboard link based on user role
+  const getDashboardLink = () => {
     switch (role) {
       case 'designer':
-        return [
-          { name: 'Dashboard', href: '/designer', icon: FaChartLine },
-          { name: 'Analytics', href: '/designer/analytics', icon: FaChartBar },
-          ...baseProfileItems,
-        ];
+        return '/designer/dashboard';
       case 'vendor':
-        return [
-          { name: 'Dashboard', href: '/vendor', icon: FaStore },
-          { name: 'Analytics', href: '/vendor/analytics', icon: FaChartLine },
-          ...baseProfileItems,
-        ];
+        return '/vendor/dashboard';
       case 'admin':
-        return [
-          { name: 'Dashboard', href: '/admin', icon: FaCog },
-          { name: 'Analytics', href: '/admin/analytics', icon: FaChartBar },
-          ...baseProfileItems,
-        ];
-      case 'homeowner':
-      case 'student':
+        return '/admin/dashboard';
       default:
-        return baseProfileItems;
+        return '/'; // Fallback to homepage
     }
   };
 
   // Navigation items for different roles (excluding dashboard, analytics, messages)
-  const homeownerItems = [];
+  const homeownerItems: Array<{name: string; href: string; icon: any}> = [];
 
   const designerItems = [
     { name: 'Projects', href: '/designer/projects', icon: FaBriefcase },
   ];
 
   const vendorItems = [
+    { name: 'Projects', href: '/vendor/dashboard', icon: FaBriefcase },
     { name: 'Products', href: '/vendor/products', icon: FaBox },
     { name: 'Orders', href: '/vendor/orders', icon: FaShoppingCart },
   ];
@@ -79,9 +98,10 @@ const Navigation = () => {
     { name: 'Portfolio', href: '/student/portfolio', icon: FaBriefcase },
   ];
 
-  const adminItems = [
-    { name: 'Users', href: '/admin/users', icon: FaUsers },
-    { name: 'Content', href: '/admin/content', icon: FaFileAlt },
+  const adminItems: Array<{name: string; href: string; icon: any}> = [
+    // Temporarily hidden: { name: 'Users', href: '/admin/users', icon: FaUsers },
+    // Temporarily hidden: { name: 'Content', href: '/admin/content', icon: FaFileAlt },
+    // Temporarily hidden: { name: 'Vendor Analytics', href: '/admin/vendor-analytics', icon: FaChartBar },
   ];
 
   // Role-based profile link configuration
@@ -103,7 +123,14 @@ const Navigation = () => {
 
   // Get role-specific items
   const getRoleItems = () => {
-    switch (role) {
+    // Defensive coding: if no session or no role, return empty array
+    if (!session?.user?.role) {
+      return [];
+    }
+
+    const userRole = session.user.role.toLowerCase();
+    
+    switch (userRole) {
       case 'homeowner':
         return homeownerItems;
       case 'designer':
@@ -115,7 +142,8 @@ const Navigation = () => {
       case 'admin':
         return adminItems;
       default:
-        return homeownerItems;
+        // Don't fallback to homeownerItems for undefined roles
+        return [];
     }
   };
 
@@ -124,7 +152,14 @@ const Navigation = () => {
 
   // Role-based design button configuration
   const getDesignButtonConfig = () => {
-    switch (role) {
+    // Defensive coding: if no session or no role, return null
+    if (!session?.user?.role) {
+      return null;
+    }
+
+    const userRole = session.user.role.toLowerCase();
+    
+    switch (userRole) {
       case 'homeowner':
         return {
           href: '/homeowner/folders',
@@ -137,13 +172,13 @@ const Navigation = () => {
         };
       case 'designer':
         return {
-          href: '/designer/create-project',
-          label: 'Create Project'
+          href: '/designer/create', // canonical create path → /designer/create
+          label: 'Create'
         };
       case 'vendor':
         return {
-          href: '/vendor/create-product',
-          label: 'Add Product'
+          href: '/vendor/create-project',
+          label: '+ Create'
         };
       case 'admin':
         return {
@@ -151,14 +186,27 @@ const Navigation = () => {
           label: 'Admin Tasks'
         };
       default:
-        return {
-          href: '/homeowner/folders',
-          label: 'Create Folder'
-        };
+        // Don't show button for undefined roles
+        return null;
     }
   };
 
   const designButtonConfig = getDesignButtonConfig();
+
+  // Debug logging - after all variables are declared
+  console.log('Navigation Debug:', {
+    sessionStatus: status,
+    sessionRole: session?.user?.role,
+    finalRole: role,
+    user: session?.user?.name || session?.user?.email,
+    isAuthenticated: !!session?.user,
+    roleItems: roleItems.length,
+    designButtonLabel: designButtonConfig?.label,
+    roleItemsArray: roleItems.map(item => item.name)
+  });
+  
+  // Additional debug logging for session role
+  console.log('SESSION ROLE:', session?.user?.role);
 
   const isActive = (href: string) => {
     if (!pathname) return false;
@@ -176,15 +224,45 @@ const Navigation = () => {
     return profileItems.some(item => isActive(item.href)) || isActive(getProfileLink());
   };
 
+  const handleLogout = async () => {
+    try {
+      console.log('DEBUG: Starting logout process');
+      // Sign out from NextAuth with complete session cleanup
+      await signOut({ 
+        callbackUrl: '/auth/signin',
+        redirect: true 
+      });
+      console.log('DEBUG: Logout completed successfully');
+    } catch (error) {
+      console.error('DEBUG: Logout error:', error);
+      // Fallback: redirect to sign-in page
+      window.location.href = '/auth/signin';
+    }
+  };
+
+  // Show loading state while session is being determined
+  if (status === 'loading') {
+    return (
+      <div className="bg-white border-r border-folio-border w-64 p-6 h-screen flex flex-col shadow-sm">
+        <div className="mb-8">
+          <FolioLogo size="md" variant="combined" />
+        </div>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="bg-white border-r border-folio-border w-20 lg:w-56 p-4 lg:p-6 fixed h-full z-20 flex flex-col items-center lg:items-start shadow-sm">
+    <div className="bg-white border-r border-folio-border w-full h-full p-6 flex flex-col shadow-sm nav-scrollbar">
       {/* Logo */}
-      <div className="w-10 h-10 rounded-lg bg-folio-text text-white font-bold text-xl mb-8 flex items-center justify-center shadow-sm">
-        F
+      <div className="mb-8">
+        <FolioLogo size="md" variant="combined" />
       </div>
 
       {/* Navigation Links */}
-      <nav className="flex-1 flex flex-col items-center lg:items-start space-y-2">
+      <nav className="flex-1 flex flex-col space-y-2">
         {/* Base Navigation Items */}
         {baseNavItems.map((item) => {
           const Icon = item.icon;
@@ -194,14 +272,14 @@ const Navigation = () => {
             <Link
               key={item.href}
               href={item.href}
-              className={`p-3 rounded-lg flex flex-col items-center lg:flex-row lg:items-center w-full transition-all duration-200 ${
+              className={`p-3 rounded-lg flex items-center w-full transition-all duration-200 nav-focus-visible ${
                 active
                   ? 'bg-folio-accent text-white shadow-sm'
                   : 'text-folio-text hover:bg-folio-muted hover:text-folio-text'
               }`}
             >
               <Icon className="text-lg" />
-              <span className="hidden lg:inline ml-3 font-medium">{item.label}</span>
+              <span className="ml-3 font-medium">{item.label}</span>
             </Link>
           );
         })}
@@ -210,22 +288,22 @@ const Navigation = () => {
         <div className="w-full">
           <button
             onClick={() => setIsCommunityExpanded(!isCommunityExpanded)}
-            className={`p-3 rounded-lg flex flex-col items-center lg:flex-row lg:items-center w-full transition-all duration-200 ${
+            className={`p-3 rounded-lg flex items-center w-full transition-all duration-200 nav-focus-visible ${
               isCommunityActive()
                 ? 'bg-folio-accent text-white shadow-sm'
                 : 'text-folio-text hover:bg-folio-muted hover:text-folio-text'
             }`}
           >
             <FaUsers className="text-lg" />
-            <span className="hidden lg:inline ml-3 font-medium flex-1 text-left">Community</span>
-            <span className="hidden lg:inline ml-2">
+            <span className="ml-3 font-medium flex-1 text-left">Community</span>
+            <span className="ml-2">
               {isCommunityExpanded ? <FaChevronDown className="text-sm" /> : <FaChevronRight className="text-sm" />}
             </span>
           </button>
           
           {/* Submenu */}
           {isCommunityExpanded && (
-            <div className="mt-1 ml-0 lg:ml-6 space-y-1">
+            <div className="mt-1 ml-6 space-y-1">
               {communitySection.submenu.map((subItem) => {
                 const SubIcon = subItem.icon;
                 const active = isActive(subItem.href);
@@ -234,14 +312,14 @@ const Navigation = () => {
                   <Link
                     key={subItem.href}
                     href={subItem.href}
-                    className={`p-2 rounded-lg flex flex-col items-center lg:flex-row lg:items-center w-full transition-all duration-200 text-sm ${
+                    className={`p-2 rounded-lg flex items-center w-full transition-all duration-200 text-sm ${
                       active
                         ? 'bg-folio-accent text-white shadow-sm'
                         : 'text-folio-text hover:bg-folio-muted hover:text-folio-text'
                     }`}
                   >
                     <SubIcon className="text-base" />
-                    <span className="hidden lg:inline ml-3 font-medium">{subItem.label}</span>
+                    <span className="ml-3 font-medium">{subItem.label}</span>
                   </Link>
                 );
               })}
@@ -249,8 +327,8 @@ const Navigation = () => {
           )}
         </div>
 
-        {/* Role-specific Items */}
-        {roleItems.map((item) => {
+        {/* Role-specific Items - Only show for authenticated users */}
+        {session?.user && roleItems.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.href);
           
@@ -258,14 +336,14 @@ const Navigation = () => {
             <Link
               key={item.href}
               href={item.href}
-              className={`p-3 rounded-lg flex flex-col items-center lg:flex-row lg:items-center w-full transition-all duration-200 ${
+              className={`p-3 rounded-lg flex items-center w-full transition-all duration-200 nav-focus-visible ${
                 active
                   ? 'bg-folio-accent text-white shadow-sm'
                   : 'text-folio-text hover:bg-folio-muted hover:text-folio-text'
               }`}
             >
               <Icon className="text-lg" />
-              <span className="hidden lg:inline ml-3 font-medium">{item.name}</span>
+              <span className="ml-3 font-medium">{item.name}</span>
             </Link>
           );
         })}
@@ -273,7 +351,7 @@ const Navigation = () => {
         {/* Profile Section with Collapsible Items */}
         <div className="w-full">
           <div
-            className={`p-3 rounded-lg flex flex-col items-center lg:flex-row lg:items-center w-full transition-all duration-200 ${
+            className={`p-3 rounded-lg flex items-center w-full transition-all duration-200 ${
               isProfileActive()
                 ? 'bg-folio-accent text-white shadow-sm'
                 : 'text-folio-text hover:bg-folio-muted hover:text-folio-text'
@@ -281,14 +359,14 @@ const Navigation = () => {
           >
             <Link
               href={getProfileLink()}
-              className="flex flex-col items-center lg:flex-row lg:items-center flex-1"
+              className="flex items-center flex-1"
             >
               <FaUser className="text-lg" />
-              <span className="hidden lg:inline ml-3 font-medium text-left">Profile</span>
+              <span className="ml-3 font-medium text-left">Profile</span>
             </Link>
             <button
               onClick={() => setIsProfileExpanded(!isProfileExpanded)}
-              className="hidden lg:inline ml-2 p-1 hover:bg-black hover:bg-opacity-10 rounded"
+              className="ml-2 p-1 hover:bg-black hover:bg-opacity-10 rounded"
             >
               {isProfileExpanded ? <FaChevronDown className="text-sm" /> : <FaChevronRight className="text-sm" />}
             </button>
@@ -296,60 +374,77 @@ const Navigation = () => {
           
           {/* Profile Submenu */}
           {isProfileExpanded && (
-            <div className="mt-1 ml-0 lg:ml-6 space-y-1">
+            <div className="mt-1 ml-6 space-y-1">
               {profileItems.map((item) => {
                 const SubIcon = item.icon;
                 const active = isActive(item.href);
+                
+                if (item.isLogout) {
+                  return (
+                    <button
+                      key={item.href}
+                      onClick={handleLogout}
+                      className="p-2 rounded-lg flex items-center w-full transition-all duration-200 text-sm text-red-600 hover:bg-red-50 hover:text-red-700"
+                    >
+                      <SubIcon className="text-base" />
+                      <span className="ml-3 font-medium">{item.name}</span>
+                    </button>
+                  );
+                }
                 
                 return (
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`p-2 rounded-lg flex flex-col items-center lg:flex-row lg:items-center w-full transition-all duration-200 text-sm ${
+                    className={`p-2 rounded-lg flex items-center w-full transition-all duration-200 text-sm ${
                       active
                         ? 'bg-folio-accent text-white shadow-sm'
                         : 'text-folio-text hover:bg-folio-muted hover:text-folio-text'
                     }`}
                   >
                     <SubIcon className="text-base" />
-                    <span className="hidden lg:inline ml-3 font-medium">{item.name}</span>
+                    <span className="ml-3 font-medium">{item.name}</span>
                   </Link>
                 );
               })}
-              
-              {/* Profile Settings Link */}
-              <Link
-                href={getProfileLink()}
-                className={`p-2 rounded-lg flex flex-col items-center lg:flex-row lg:items-center w-full transition-all duration-200 text-sm ${
-                  isActive(getProfileLink())
-                    ? 'bg-folio-accent text-white shadow-sm'
-                    : 'text-folio-text hover:bg-folio-muted hover:text-folio-text'
-                }`}
-              >
-                <FaCog className="text-base" />
-                <span className="hidden lg:inline ml-3 font-medium">Settings</span>
-              </Link>
             </div>
           )}
         </div>
       </nav>
 
-      {/* Design Button */}
-      <Link
-        href={designButtonConfig.href}
-        className="hidden lg:flex w-full py-3 px-4 rounded-lg font-medium items-center justify-center mt-6 transition-all duration-200 hover:shadow-md bg-folio-text text-white hover:bg-opacity-90"
-      >
-        <FaPlus className="mr-2" /> {designButtonConfig.label}
-      </Link>
-      
-      {/* Mobile Design Button */}
-      <Link
-        href={designButtonConfig.href}
-        className="lg:hidden w-12 h-12 rounded-full flex items-center justify-center mt-6 transition-all duration-200 hover:shadow-md bg-folio-text text-white hover:bg-opacity-90"
-      >
-        <FaPlus />
-        <span className="sr-only">{designButtonConfig.label}</span>
-      </Link>
+      {/* Role-specific Design Button - Only show for authenticated users */}
+      {session?.user && designButtonConfig && (
+        <Link
+          href={designButtonConfig.href}
+          className="w-full py-3 px-4 rounded-lg font-medium items-center justify-center mt-6 transition-all duration-200 hover:shadow-md bg-folio-text text-white hover:bg-opacity-90 nav-focus-visible"
+        >
+          <FaPlus className="mr-2" /> {designButtonConfig.label}
+        </Link>
+      )}
+
+      {/* User Logout Section */}
+      {session?.user && (
+        <div className="mt-6 pt-6 border-t border-folio-border">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-8 h-8 gradient-to-r from-folio-accent to-folio-system rounded-full flex items-center justify-center">
+              <FaUser className="w-4 h-4 text-white" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-folio-text truncate">{session.user.name || session.user.email}</p>
+              <p className="text-xs text-folio-system capitalize">{session.user.role}</p>
+              {/* Debug role indicator */}
+              <p className="text-xs text-gray-400">Detected: {role}</p>
+            </div>
+          </div>
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-3 p-3 rounded-lg text-left hover:bg-red-50 transition-colors nav-focus-visible"
+          >
+            <FaSignOutAlt className="w-4 h-4 text-red-500" />
+            <span className="text-sm text-red-600 font-medium">Sign Out</span>
+          </button>
+        </div>
+      )}
     </div>
   );
 };

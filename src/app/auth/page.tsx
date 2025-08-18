@@ -58,7 +58,7 @@ export default function AuthPage() {
           <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <FaLock className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Folio</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">FOLIO</h1>
           <p className="text-lg text-gray-600 mb-4">Design Platform</p>
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-100 to-purple-100 rounded-full">
             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />

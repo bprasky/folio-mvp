@@ -8,7 +8,7 @@ export async function GET() {
     // Load designers from database
     const designers = await prisma.user.findMany({
       where: {
-        profileType: 'designer'
+        role: 'DESIGNER'
       },
       select: {
         id: true,

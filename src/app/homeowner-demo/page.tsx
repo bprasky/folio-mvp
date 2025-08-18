@@ -142,7 +142,7 @@ export default function HomeownerDemo() {
           </div>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Homeowner Features</h2>
           <p className="text-gray-600 mb-4">
-            Switch to "Homeowner" role using the dropdown in the top-right to see the project creation flow.
+            This feature is only available for homeowners. Please sign in with a homeowner account.
           </p>
         </div>
       </div>

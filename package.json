@@ -1,5 +1,75 @@
 {
+  "name": "folio-mvp",
+  "version": "0.2.0",
+  "private": true,
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "dev:clean": "rm -rf .next && next dev",
+    "dev:safe": "powershell -Command \"Remove-Item -Recurse -Force .next -ErrorAction SilentlyContinue; next dev\"",
+    "dev:protected": "node src/protect-changes.js && npm run clear-cache && next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "clear-cache": "powershell -Command \"Remove-Item -Recurse -Force .next -ErrorAction SilentlyContinue\"",
+    "reset-files": "powershell -Command \"Get-ChildItem -Recurse -Filter '*.backup' | Remove-Item -Force\"",
+    "protect": "node src/protect-changes.js",
+    "restore": "node src/protect-changes.js restore",
+    "setup-db": "node src/scripts/setup-database.js",
+    "migrate-data": "node src/scripts/migrate-data.js",
+    "test-roles": "node src/scripts/test-role-assignment.js",
+    "setup-nextauth": "node src/scripts/setup-nextauth-env.js",
+    "copy-env": "node src/scripts/copy-env.js",
+    "clean-layout": "node src/scripts/remove-navigation-imports.js",
+    "verify-layout": "node src/scripts/verify-layout-cleanup.js",
+    "final-cleanup": "node src/scripts/final-layout-cleanup.js",
+    "comprehensive-cleanup": "node src/scripts/comprehensive-layout-cleanup.js",
+    "targeted-cleanup": "node src/scripts/targeted-layout-cleanup.js",
+    "manual-fix": "node src/scripts/manual-layout-fix.js",
+    "prisma:seed:nycx": "ts-node --compiler-options \"{\\\"module\\\":\\\"CommonJS\\\"}\" prisma/seed-nycx.ts",
+    "auth:detect": "tsx scripts/auth-detect.ts",
+    "auth:detect:simple": "node scripts/auth-detect-simple.js",
+    "db:check": "tsx scripts/db-check.ts",
+    "test:auth": "node scripts/test-auth-endpoints.js"
+  },
+  "buildTimestamp": "2025-01-18T20:15:00Z",
+  "prisma": {
+    "schema": "prisma/schema.prisma"
+  },
   "dependencies": {
-    "next-auth": "^4.24.11"
+    "@hookform/resolvers": "^5.2.1",
+    "@prisma/client": "^6.11.1",
+    "@supabase/ssr": "^0.6.1",
+    "@supabase/supabase-js": "^2.55.0",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node": "^20.11.0",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "autoprefixer": "^10.4.17",
+    "bcryptjs": "^3.0.2",
+    "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
+    "dotenv": "^17.2.0",
+    "framer-motion": "^12.17.0",
+    "lucide-react": "^0.539.0",
+    "next": "^14.1.0",
+    "next-auth": "^4.24.11",
+    "postcss": "^8.4.35",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-hook-form": "^7.62.0",
+    "react-hot-toast": "^2.5.2",
+    "react-icons": "^5.5.0",
+    "tailwind-merge": "^3.3.1",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5.3.3",
+    "zod": "^4.0.17"
+  },
+  "devDependencies": {
+    "prisma": "^6.9.0",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.19.2"
   }
 }
