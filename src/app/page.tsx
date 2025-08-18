@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { FaSearch, FaChevronLeft, FaChevronRight, FaTimes } from 'react-icons/fa';
 import { Card, allCards } from './data/mockData';
-import Navigation from '../components/Navigation';
+
 
 // Components
 const EditorialCard = ({ image, title, author, cta }: { image: string; title: string; author: string; cta: string }) => (
@@ -94,12 +94,7 @@ export default function Home() {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-folio-background">
-      {/* Sidebar */}
-      <Navigation />
-
-      {/* Main Content */}
-      <div className="flex-1 lg:ml-20 xl:ml-56 overflow-y-auto bg-folio-background">
+    <div className="flex-1 overflow-y-auto bg-folio-background">
         {/* Top Bar with Search */}
         <div className="w-full flex items-center justify-end mt-4 px-4">
           <div className="relative w-full max-w-xs">
@@ -159,7 +154,6 @@ export default function Home() {
             </div>
           ))}
         </div>
-      </div>
 
       {/* Modal */}
       {showModal && selectedCard && (

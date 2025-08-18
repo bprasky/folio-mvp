@@ -1,118 +1,533 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import VendorOverviewCard from '@/components/vendor/VendorOverviewCard';
-import ProductAnalyticsTable from '@/components/vendor/ProductAnalyticsTable';
-import EventMetricsPanel from '@/components/vendor/EventMetricsPanel';
-import TopSavedProductsLeaderboard from '@/components/vendor/TopSavedProductsLeaderboard';
-import NewDesignersEngagedCard from '@/components/vendor/NewDesignersEngagedCard';
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { 
+  FaPlus, 
+  FaEye, 
+  FaEdit, 
+  FaClock, 
+  FaCheckCircle, 
+  FaExclamationTriangle,
+  FaChartLine,
+  FaUsers,
+  FaCalendarAlt,
+  FaArrowRight,
+  FaBell,
+  FaSearch
+} from 'react-icons/fa';
 
-interface VendorAnalytics {
-  vendor_name: string;
-  new_designers_30d: number;
-  product_list: {
-    product_id: string;
-    product_name: string;
-    views_total: number;
-    saves_total: number;
-    saves_last_7_days: number;
-    designers_saved: number;
-    events_featured: string[];
-    outbound_clicks: number;
-    save_velocity_7d: number[];
-    saved_together: string[];
-  }[];
-  event_metrics: {
-    event_name: string;
-    views_during_event: number;
-    saves_during_event: number;
-    qr_scans: number;
-    designers_engaged: number;
-  }[];
+interface Project {
+  id: string;
+  name: string;
+  description?: string;
+  status: string;
+  createdAt: string;
+  lastActivity?: string;
+  designerOrgName?: string;
+  designerEmail?: string;
+  vendorOrgName?: string;
+  isHandoffReady: boolean;
+  handoffInvitedAt?: string;
+  handoffClaimedAt?: string;
+  rooms: Room[];
+  aiSummary?: string;
+  nextAction?: string;
+  followUpDue?: string;
+}
+
+interface Room {
+  id: string;
+  name: string;
+  selections: Selection[];
+}
+
+interface Selection {
+  id: string;
+  productName?: string;
+  vendorName?: string;
+  unitPrice?: number;
+  quantity?: number;
+  notes?: string;
+}
+
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+}
+
+interface DashboardStats {
+  activeProjects: number;
+  projectsSentToDesigners: number;
+  projectsClaimedByDesigners: number;
+  openFollowUps: number;
+  recentWins: number;
 }
 
 export default function VendorDashboard() {
-  console.log('VendorDashboard component is rendering');
-  const [analytics, setAnalytics] = useState<VendorAnalytics | null>(null);
+  const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [stats, setStats] = useState<DashboardStats>({
+    activeProjects: 0,
+    projectsSentToDesigners: 0,
+    projectsClaimedByDesigners: 0,
+    openFollowUps: 0,
+    recentWins: 0
+  });
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterStatus, setFilterStatus] = useState('all');
 
   useEffect(() => {
-    // In a real application, this would be an API call
-    const fetchAnalytics = async () => {
-      try {
-        console.log('Attempting to fetch /vendor_analytics.json from public directory');
-        const response = await fetch('/vendor_analytics.json');
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        console.log('Fetched data:', data);
-        setAnalytics(data);
-      } catch (error) {
-        console.error('Error fetching vendor analytics:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAnalytics();
+    fetchDashboardData();
   }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      // Fetch current user
+      const userResponse = await fetch('/api/auth/me');
+      if (userResponse.ok) {
+        const userData = await userResponse.json();
+        setUser(userData);
+
+        // Fetch vendor's projects
+        const projectsResponse = await fetch(`/api/vendor/projects?userId=${userData.id}`);
+        if (projectsResponse.ok) {
+          const projectsData = await projectsResponse.json();
+          setProjects(projectsData);
+          
+          // Calculate stats
+          const activeProjects = projectsData.length;
+          const projectsSentToDesigners = projectsData.filter((p: Project) => p.isHandoffReady).length;
+          const projectsClaimedByDesigners = projectsData.filter((p: Project) => p.handoffClaimedAt).length;
+          const openFollowUps = projectsData.filter((p: Project) => p.followUpDue).length;
+          
+          setStats({
+            activeProjects,
+            projectsSentToDesigners,
+            projectsClaimedByDesigners,
+            openFollowUps,
+            recentWins: Math.floor(projectsClaimedByDesigners * 0.3) // Mock calculation
+          });
+        } else {
+          // If API not ready, show empty state
+          setProjects([]);
+          setStats({
+            activeProjects: 0,
+            projectsSentToDesigners: 0,
+            projectsClaimedByDesigners: 0,
+            openFollowUps: 0,
+            recentWins: 0
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const generateAISummary = (project: Project): string => {
+    if (project.aiSummary) return project.aiSummary;
+    
+    const roomCount = project.rooms.length;
+    const totalSelections = project.rooms.reduce((acc, room) => acc + room.selections.length, 0);
+    
+    if (totalSelections === 0) {
+      return `${roomCount} room${roomCount > 1 ? 's' : ''} defined. Ready for product selections.`;
+    }
+    
+    const mainRooms = project.rooms.slice(0, 2).map(r => r.name).join(', ');
+    const status = project.isHandoffReady ? 'Ready for designer handoff' : 'In progress';
+    
+    return `${mainRooms} with ${totalSelections} selections. ${status}.`;
+  };
+
+  const getNextAction = (project: Project): string => {
+    if (project.nextAction) return project.nextAction;
+    
+    if (!project.isHandoffReady) {
+      return 'Complete product selections';
+    }
+    
+    if (project.isHandoffReady && !project.handoffClaimedAt) {
+      return 'Send follow-up to designer';
+    }
+    
+    return 'Monitor designer progress';
+  };
+
+  const getStatusBadge = (project: Project) => {
+    if (project.handoffClaimedAt) {
+      return <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">Claimed</span>;
+    }
+    if (project.isHandoffReady) {
+      return <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">Ready</span>;
+    }
+    return <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full">Draft</span>;
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  };
+
+  const filteredProjects = projects.filter(project => {
+    const matchesSearch = project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         project.designerOrgName?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesFilter = filterStatus === 'all' || 
+                         (filterStatus === 'draft' && !project.isHandoffReady) ||
+                         (filterStatus === 'ready' && project.isHandoffReady && !project.handoffClaimedAt) ||
+                         (filterStatus === 'claimed' && project.handoffClaimedAt);
+    
+    return matchesSearch && matchesFilter;
+  });
+
+  const followUpProjects = projects.filter(p => p.followUpDue && new Date(p.followUpDue) <= new Date());
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-8">
-        <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/4 mb-8"></div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="h-32 bg-gray-200 rounded"></div>
-            ))}
-          </div>
-          <div className="h-96 bg-gray-200 rounded mb-8"></div>
-          <div className="h-64 bg-gray-200 rounded"></div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!analytics) {
-    return (
-      <div className="min-h-screen bg-gray-50 p-8">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-semibold text-gray-900">Error loading dashboard</h1>
-          <p className="mt-2 text-gray-600">Please try refreshing the page</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading your command center...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="">
-      <h1 className="text-3xl font-bold text-gray-900 mb-8">{analytics.vendor_name} Dashboard</h1>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-        <VendorOverviewCard
-          totalViews={analytics.product_list.reduce((sum, p) => sum + p.views_total, 0)}
-          totalSaves={analytics.product_list.reduce((sum, p) => sum + p.saves_total, 0)}
-          eventsFeatured={analytics.event_metrics.length}
-          topProducts={analytics.product_list
-            .sort((a, b) => b.saves_total - a.saves_total)
-            .slice(0, 3)}
-        />
-        <NewDesignersEngagedCard newDesigners={analytics.new_designers_30d} />
-        <TopSavedProductsLeaderboard products={analytics.product_list} />
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">
+                Welcome back, {user?.name}
+              </h1>
+              <p className="text-gray-600 mt-1">
+                Here's your current pipeline at a glance
+              </p>
+            </div>
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={() => router.push('/vendor/create-project')}
+                className="flex items-center bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                <FaPlus className="mr-2" />
+                New Project
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div className="mb-8">
-        <h2 className="text-2xl font-semibold text-gray-900 mb-4">Product Analytics</h2>
-        <ProductAnalyticsTable products={analytics.product_list} />
-      </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Analytics Snapshot */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+          <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="flex items-center">
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <FaChartLine className="text-blue-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Active Projects</p>
+                <p className="text-2xl font-bold text-gray-900">{stats.activeProjects}</p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="flex items-center">
+              <div className="p-2 bg-green-100 rounded-lg">
+                <FaUsers className="text-green-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Sent to Designers</p>
+                <p className="text-2xl font-bold text-gray-900">{stats.projectsSentToDesigners}</p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="flex items-center">
+              <div className="p-2 bg-purple-100 rounded-lg">
+                <FaCheckCircle className="text-purple-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Claimed by Designers</p>
+                <p className="text-2xl font-bold text-gray-900">{stats.projectsClaimedByDesigners}</p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="flex items-center">
+              <div className="p-2 bg-yellow-100 rounded-lg">
+                <FaBell className="text-yellow-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Open Follow-ups</p>
+                <p className="text-2xl font-bold text-gray-900">{stats.openFollowUps}</p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="flex items-center">
+              <div className="p-2 bg-emerald-100 rounded-lg">
+                <FaCalendarAlt className="text-emerald-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Recent Wins</p>
+                <p className="text-2xl font-bold text-gray-900">{stats.recentWins}</p>
+              </div>
+            </div>
+          </div>
+        </div>
 
-      <div>
-        <h2 className="text-2xl font-semibold text-gray-900 mb-4">Event Performance</h2>
-        <EventMetricsPanel events={analytics.event_metrics} />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Main Projects Table */}
+          <div className="lg:col-span-2">
+            <div className="bg-white rounded-lg shadow-sm">
+              <div className="p-6 border-b border-gray-200">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-lg font-semibold text-gray-900">Active Projects</h2>
+                  <div className="flex items-center space-x-4">
+                    <div className="relative">
+                      <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                      <input
+                        type="text"
+                        placeholder="Search projects..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <select
+                      value={filterStatus}
+                      onChange={(e) => setFilterStatus(e.target.value)}
+                      className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="all">All Status</option>
+                      <option value="draft">Draft</option>
+                      <option value="ready">Ready</option>
+                      <option value="claimed">Claimed</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Project
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Designer
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Created
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Status
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        AI Summary
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {filteredProjects.map((project) => (
+                      <tr key={project.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div>
+                            <div className="text-sm font-medium text-gray-900">
+                              {project.name}
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              {project.description}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-900">
+                            {project.designerOrgName || project.designerEmail || 'Not assigned'}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {formatDate(project.createdAt)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {getStatusBadge(project)}
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="text-sm text-gray-900 max-w-xs">
+                            {generateAISummary(project)}
+                          </div>
+                          <div className="text-sm text-gray-500 mt-1">
+                            Next: {getNextAction(project)}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          <div className="flex space-x-2">
+                            <button
+                              onClick={() => router.push(`/vendor/project/${project.id}`)}
+                              className="text-blue-600 hover:text-blue-900"
+                            >
+                              <FaEye className="inline mr-1" />
+                              View
+                            </button>
+                            {project.isHandoffReady && !project.handoffClaimedAt && (
+                              <button
+                                onClick={() => router.push(`/vendor/project/${project.id}?action=followup`)}
+                                className="text-green-600 hover:text-green-900"
+                              >
+                                <FaEdit className="inline mr-1" />
+                                Follow-up
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                
+                {filteredProjects.length === 0 && (
+                  <div className="text-center py-12">
+                    <div className="text-gray-400 text-6xl mb-4">📋</div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">No projects found</h3>
+                    <p className="text-gray-500 mb-4">
+                      {searchTerm || filterStatus !== 'all' 
+                        ? 'Try adjusting your search or filters'
+                        : 'Get started by creating your first project'
+                      }
+                    </p>
+                    {!searchTerm && filterStatus === 'all' && (
+                      <button
+                        onClick={() => router.push('/vendor/create-project')}
+                        className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+                      >
+                        Create Your First Project
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Sidebar */}
+          <div className="space-y-6">
+            {/* Follow-up Queue */}
+            {followUpProjects.length > 0 && (
+              <div className="bg-white rounded-lg shadow-sm p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                  <FaExclamationTriangle className="text-yellow-500 mr-2" />
+                  To-Do This Week
+                </h3>
+                <div className="space-y-4">
+                  {followUpProjects.slice(0, 3).map((project) => (
+                    <div key={project.id} className="border-l-4 border-yellow-400 pl-4">
+                      <div className="text-sm font-medium text-gray-900">
+                        {project.name}
+                      </div>
+                      <div className="text-sm text-gray-600 mt-1">
+                        {getNextAction(project)}
+                      </div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        Due: {project.followUpDue && formatDate(project.followUpDue)}
+                      </div>
+                      <button
+                        onClick={() => router.push(`/vendor/project/${project.id}?action=followup`)}
+                        className="mt-2 text-sm text-blue-600 hover:text-blue-800 flex items-center"
+                      >
+                        Send Follow-up Now
+                        <FaArrowRight className="ml-1" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Quick Actions */}
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+              <div className="space-y-3">
+                <button
+                  onClick={() => router.push('/vendor/create-project')}
+                  className="w-full flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  <div className="flex items-center">
+                    <FaPlus className="text-blue-600 mr-3" />
+                    <span className="text-sm font-medium text-gray-900">Create New Project</span>
+                  </div>
+                  <FaArrowRight className="text-gray-400" />
+                </button>
+                
+                <button
+                  onClick={() => router.push('/vendor/analytics')}
+                  className="w-full flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  <div className="flex items-center">
+                    <FaChartLine className="text-green-600 mr-3" />
+                    <span className="text-sm font-medium text-gray-900">View Analytics</span>
+                  </div>
+                  <FaArrowRight className="text-gray-400" />
+                </button>
+                
+                <button
+                  onClick={() => router.push('/vendor/organization')}
+                  className="w-full flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  <div className="flex items-center">
+                    <FaUsers className="text-purple-600 mr-3" />
+                    <span className="text-sm font-medium text-gray-900">Manage Team</span>
+                  </div>
+                  <FaArrowRight className="text-gray-400" />
+                </button>
+              </div>
+            </div>
+
+            {/* Recent Activity */}
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h3>
+              <div className="space-y-3">
+                {projects.slice(0, 3).map((project) => (
+                  <div key={project.id} className="flex items-start space-x-3">
+                    <div className="flex-shrink-0">
+                      <div className="w-2 h-2 bg-blue-600 rounded-full mt-2"></div>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-gray-900 truncate">
+                        {project.name}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {project.lastActivity ? formatDate(project.lastActivity) : formatDate(project.createdAt)}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

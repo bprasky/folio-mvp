@@ -20,7 +20,7 @@ async function loadProjects() {
     try {
       const fs = require('fs');
       const path = require('path');
-      const projectsPath = path.join(process.cwd(), 'data', 'projects.json');
+      const projectsPath = path.join(process.cwd(), 'src', 'data', 'projects.json');
       
       if (fs.existsSync(projectsPath)) {
         const projectsData = fs.readFileSync(projectsPath, 'utf8');
@@ -38,7 +38,7 @@ async function saveProjects() {
   try {
     const fs = require('fs');
     const path = require('path');
-    const projectsPath = path.join(process.cwd(), 'data', 'projects.json');
+    const projectsPath = path.join(process.cwd(), 'src', 'data', 'projects.json');
     
     fs.writeFileSync(projectsPath, JSON.stringify(projects, null, 2));
   } catch (error) {

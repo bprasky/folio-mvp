@@ -5,7 +5,7 @@ import { join } from 'path';
 export async function GET() {
   try {
     // Load vendors from JSON file
-    const vendorsPath = join(process.cwd(), 'data', 'vendors.json');
+    const vendorsPath = join(process.cwd(), 'src', 'data', 'vendors.json');
     const vendorsContent = await readFile(vendorsPath, 'utf-8');
     const vendorsData = JSON.parse(vendorsContent);
 
@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Load existing vendors
-    const vendorsPath = join(process.cwd(), 'data', 'vendors.json');
+    const vendorsPath = join(process.cwd(), 'src', 'data', 'vendors.json');
     let vendors = [];
     try {
       const vendorsContent = await readFile(vendorsPath, 'utf-8');

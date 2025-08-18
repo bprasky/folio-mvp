@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import Navigation from '../../../components/Navigation';
 import { FaCheck, FaTimes, FaEye, FaCalendarAlt, FaUser, FaArrowLeft, FaNewspaper, FaClock } from 'react-icons/fa';
 
 interface EditorialSubmission {
@@ -150,7 +149,7 @@ export default function EditorialReviewPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navigation />
+      
       
       <div className="container mx-auto px-6 py-8">
         {/* Header */}

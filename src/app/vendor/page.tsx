@@ -6,8 +6,7 @@ import Link from 'next/link';
 import { FaPlus, FaSearch, FaEdit, FaTrash, FaChartLine, FaShoppingCart, FaStore, FaUser, FaToggleOn, FaToggleOff } from 'react-icons/fa';
 import VendorDashboard from '@/app/vendor/dashboard/page';
 import ProductUploader from '@/components/vendor/ProductUploader';
-import Navigation from '@/components/Navigation';
-import ProfileSwitcher from '@/components/ProfileSwitcher';
+
 import { useRole } from '../../contexts/RoleContext';
 
 const mockProducts = [
@@ -121,12 +120,8 @@ export default function VendorProfile() {
   };
 
   return (
-    <div className="flex min-h-screen bg-white">
-      {/* Navigation */}
-      <Navigation />
-
-      {/* Main Content */}
-      <div className="flex-1 lg:ml-20 xl:ml-56 text-gray-900 p-6 overflow-y-auto">
+    <div className="p-6">
+      <div className="max-w-7xl mx-auto">
         {/* Admin Vendor Selection */}
         {role === 'admin' && (
           <div className="mb-6">

@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { FaArrowLeft, FaTag, FaImage, FaUpload, FaCheck } from 'react-icons/fa';
 import Link from 'next/link';
-import Navigation from '@/components/Navigation';
 import AdvancedTagProducts from '@/components/AdvancedTagProducts';
 
 const demoImages = [
@@ -62,10 +61,11 @@ export default function ProjectTaggingDemo() {
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* Navigation */}
-      <Navigation />
+      
       
       {/* Main Content */}
-      <div className="flex-1 lg:ml-20 xl:ml-56">
+      <div className="p-6">
+        <div className="max-w-7xl mx-auto">
         <div className="max-w-7xl mx-auto px-6 py-8">
           {/* Header */}
           <div className="mb-8">
@@ -265,6 +265,7 @@ export default function ProjectTaggingDemo() {
           </div>
         </div>
       </div>
-    </div>
+    
+      </div></div>
   );
 } 

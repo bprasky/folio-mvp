@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
 
-const PROJECTS_FILE = path.join(process.cwd(), 'data', 'projects.json');
-const DESIGNERS_FILE = path.join(process.cwd(), 'data', 'designers.json');
+const PROJECTS_FILE = path.join(process.cwd(), 'src', 'data', 'projects.json');
+const DESIGNERS_FILE = path.join(process.cwd(), 'src', 'data', 'designers.json');
 
 // Load projects from file
 const loadProjects = (): any[] => {

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { supabaseServer } from '@/lib/supabaseServer';
+import { prisma } from '@/lib/prisma';
+import { logPassiveEvent } from '@/lib/analytics';
 
 export async function GET(request: NextRequest) {
   try {
@@ -56,249 +56,93 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(req: Request) {
+  const supabase = supabaseServer();
+
+  // 1) Supabase via cookies
+  let { data: { user } } = await supabase.auth.getUser();
+
+  // 2) Optional: Bearer fallback strictly when allowed
+  if (!user && process.env.NEXT_PUBLIC_ALLOW_BEARER_FALLBACK === 'true') {
+    const auth = req.headers.get('authorization');
+    if (auth?.startsWith('Bearer ')) {
+      const token = auth.slice(7);
+      const res = await supabase.auth.getUser(token);
+      user = res.data?.user ?? null;
+    }
+  }
+
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized', hint: 'No Supabase cookie; enable NEXT_PUBLIC_ALLOW_BEARER_FALLBACK or use dev Supabase sign-in.' }, { status: 401 });
+  }
+
+  const profile = await prisma.user.findUnique({ where: { id: user.id } });
+  if (!profile || profile.role !== 'DESIGNER') {
+    return NextResponse.json({ error: 'Forbidden: designer only' }, { status: 403 });
+  }
+
   try {
-    const projectData = await request.json();
-    
-    const {
-      name,
-      description,
-      category,
-      client,
-      designerId,
-      images,
-      status,
-      isDraft
-    } = projectData;
-    
-    if (!name?.trim()) {
-      return NextResponse.json(
-        { error: 'Project name is required' },
-        { status: 400 }
-      );
+    const { name, description, detailsCore } = await req.json().catch(() => ({}));
+    if (!name || typeof name !== 'string' || name.trim().length < 2) {
+      return NextResponse.json({ error: 'Name is required' }, { status: 400 });
     }
 
-    if (!category?.trim()) {
-      return NextResponse.json(
-        { error: 'Project category is required' },
-        { status: 400 }
-      );
-    }
+    const core = detailsCore ?? null;
+    const hasCore = !!(core && core.projectType && core.stage && core.clientType && core.location && core.budgetBand);
 
-    // Validate images if provided
-    if (images && images.length > 0) {
-      for (const image of images) {
-        if (!image.url || !image.url.trim()) {
-          return NextResponse.json(
-            { error: 'All images must have valid URLs' },
-            { status: 400 }
-          );
-        }
-        
-        // Basic URL validation
-        try {
-          new URL(image.url);
-        } catch {
-          return NextResponse.json(
-            { error: `Invalid image URL: ${image.url}` },
-            { status: 400 }
-          );
-        }
+    const baseData: any = {
+      name: name.trim(),
+      description: (description ?? '').trim() || null,
+      designerId: profile.id,
+      ownerId: profile.id,
+    };
+
+    const createWithJsonField = async (jsonField: 'details'|'meta') => {
+      const data = { ...baseData, [jsonField]: hasCore ? { core } : undefined };
+      return prisma.project.create({ data, select: { id: true } });
+    };
+
+    let project;
+    try {
+      // Try "details" first
+      project = await createWithJsonField('details');
+    } catch (e1: any) {
+      const msg = String(e1?.message || '');
+      if (!/Unknown argument `details`/i.test(msg)) throw e1; // not a schema issue → rethrow
+
+      // Try "meta"
+      try {
+        project = await createWithJsonField('meta');
+      } catch (e2: any) {
+        const msg2 = String(e2?.message || '');
+        if (!/Unknown argument `meta`/i.test(msg2)) throw e2;
+
+        // Fallback: encode JSON in description front-matter (no schema change)
+        const jsonLine = hasCore ? `---JSON---${JSON.stringify({ core })}\n` : '';
+        const desc = (baseData.description ?? '');
+        project = await prisma.project.create({
+          data: { ...baseData, description: `${jsonLine}${desc}`.trim() || null },
+          select: { id: true },
+        });
       }
     }
 
-    // If this is a draft, check if we already have a recent draft for this user
-    if (isDraft || status === 'draft') {
-      const recentDraft = await prisma.project.findFirst({
-        where: {
-          designerId: designerId || 'designer-1',
-          status: 'draft',
-          name: name.trim(),
-          updatedAt: {
-            gte: new Date(Date.now() - 10000), // Within 10 seconds
-          },
-        },
+    // Log analytics event
+    try {
+      await logPassiveEvent({
+        projectId: project.id,
+        type: 'project_create',
+        actorId: user.id,
+        payload: { source: 'designer_create_page' }
       });
-      
-      if (recentDraft) {
-        // Update existing draft instead of creating a new one
-        const updatedProject = await prisma.project.update({
-          where: { id: recentDraft.id },
-          data: {
-            description: description || '',
-            client: client || '',
-            category: category.trim(),
-            updatedAt: new Date(),
-          },
-          include: {
-            images: {
-              include: {
-                tags: {
-                  include: {
-                    product: true,
-                  },
-                },
-              },
-            },
-          },
-        });
-
-        // Update images if provided
-        if (images && images.length > 0) {
-          for (const image of images) {
-            await prisma.projectImage.upsert({
-              where: { id: image.id },
-              update: {
-                url: image.url,
-                name: image.name,
-                room: image.room,
-              },
-              create: {
-                id: image.id,
-                url: image.url,
-                name: image.name,
-                room: image.room,
-                projectId: recentDraft.id,
-              },
-            });
-
-            // Update tags if provided
-            if (image.tags && image.tags.length > 0) {
-              for (const tag of image.tags) {
-                // Create pending product if needed
-                let productId = tag.productId;
-                if (tag.isPending && tag.productId.startsWith('pending-')) {
-                  await prisma.product.upsert({
-                    where: { id: tag.productId },
-                    update: {
-                      name: tag.productName,
-                      imageUrl: tag.productImage,
-                      price: tag.productPrice,
-                      brand: tag.productBrand,
-                      isPending: true,
-                    },
-                    create: {
-                      id: tag.productId,
-                      name: tag.productName,
-                      imageUrl: tag.productImage,
-                      price: tag.productPrice,
-                      brand: tag.productBrand,
-                      isPending: true,
-                    },
-                  });
-                }
-
-                await prisma.productTag.upsert({
-                  where: { id: tag.id },
-                  update: {
-                    x: tag.x,
-                    y: tag.y,
-                  },
-                  create: {
-                    id: tag.id,
-                    x: tag.x,
-                    y: tag.y,
-                    productId: productId,
-                    imageId: image.id,
-                  },
-                });
-              }
-            }
-          }
-        }
-        
-        return NextResponse.json(updatedProject, { status: 200 });
-      }
+    } catch (analyticsError) {
+      console.warn('Analytics logging failed:', analyticsError);
+      // Don't fail the request for analytics errors
     }
 
-    // Create new project
-    const newProject = await prisma.project.create({
-      data: {
-        name: name.trim(),
-        description: description || '',
-        category: category.trim(),
-        client: client || '',
-        designerId: designerId || 'designer-1',
-        status: status || (isDraft ? 'draft' : 'published'),
-        views: status === 'draft' ? 0 : Math.floor(Math.random() * 1000) + 100,
-        saves: status === 'draft' ? 0 : Math.floor(Math.random() * 200) + 20,
-        shares: status === 'draft' ? 0 : Math.floor(Math.random() * 50) + 5,
-      },
-      include: {
-        images: {
-          include: {
-            tags: {
-              include: {
-                product: true,
-              },
-            },
-          },
-        },
-      },
-    });
-
-    // Create images if provided
-    if (images && images.length > 0) {
-      for (const image of images) {
-        await prisma.projectImage.create({
-          data: {
-            id: image.id,
-            url: image.url,
-            name: image.name,
-            room: image.room,
-            projectId: newProject.id,
-          },
-        });
-
-        // Create tags if provided
-        if (image.tags && image.tags.length > 0) {
-          for (const tag of image.tags) {
-            // Create pending product if needed
-            let productId = tag.productId;
-            if (tag.isPending && tag.productId.startsWith('pending-')) {
-              await prisma.product.upsert({
-                where: { id: tag.productId },
-                update: {
-                  name: tag.productName,
-                  imageUrl: tag.productImage,
-                  price: tag.productPrice,
-                  brand: tag.productBrand,
-                  isPending: true,
-                },
-                create: {
-                  id: tag.productId,
-                  name: tag.productName,
-                  imageUrl: tag.productImage,
-                  price: tag.productPrice,
-                  brand: tag.productBrand,
-                  isPending: true,
-                },
-              });
-            }
-
-            await prisma.productTag.create({
-              data: {
-                id: tag.id,
-                x: tag.x,
-                y: tag.y,
-                productId: productId,
-                imageId: image.id,
-              },
-            });
-          }
-        }
-      }
-    }
-    
-    console.log('Project created successfully:', newProject);
-    
-    return NextResponse.json(newProject, { status: 201 });
-  } catch (error) {
-    console.error('Error creating project:', error);
-    return NextResponse.json(
-      { error: 'Failed to create project: ' + (error instanceof Error ? error.message : 'Unknown error') },
-      { status: 500 }
-    );
+    return NextResponse.json({ id: project.id }, { status: 201 });
+  } catch (e: any) {
+    return NextResponse.json({ error: e?.message || 'Server error' }, { status: 500 });
   }
 }
 

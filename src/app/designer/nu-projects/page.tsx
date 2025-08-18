@@ -20,7 +20,6 @@ import {
   FaExternalLinkAlt,
   FaAward
 } from 'react-icons/fa';
-import Navigation from '../../../components/Navigation';
 
 // Mock data for Nu Projects
 const designerData = {
@@ -405,10 +404,11 @@ export default function NuProjectsProfile() {
   return (
     <div className="min-h-screen bg-primary flex">
       {/* Navigation */}
-      <Navigation />
+      
       
       {/* Main Content */}
-      <div className="flex-1 lg:ml-20 xl:ml-56">
+      <div className="p-6">
+        <div className="max-w-7xl mx-auto">
         {/* Main Layout */}
         <div className="max-w-6xl mx-auto px-6 py-12">
           <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-8">
@@ -572,6 +572,8 @@ export default function NuProjectsProfile() {
 
       {/* SMS Modal */}
       <SMSModal isOpen={isMessageModalOpen} onClose={() => setIsMessageModalOpen(false)} />
-    </div>
+    
+      </div>
+      </div></div>
   );
 } 

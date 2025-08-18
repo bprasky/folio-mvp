@@ -21,7 +21,7 @@ async function migrateData() {
 
     // 1. Migrate Users (Designers, Vendors, etc.)
     console.log('📁 Migrating users/designers...');
-    const designersPath = path.join(process.cwd(), 'data', 'designers.json');
+    const designersPath = path.join(process.cwd(), 'src', 'data', 'designers.json');
     if (fs.existsSync(designersPath)) {
       const designers = JSON.parse(fs.readFileSync(designersPath, 'utf8'));
       
@@ -32,7 +32,7 @@ async function migrateData() {
             name: designer.name,
             bio: designer.bio,
             profileImage: designer.profileImage,
-            profileType: 'designer',
+            role: 'DESIGNER',
             location: designer.location,
             specialties: designer.specialties || [],
             website: designer.website,
@@ -46,7 +46,7 @@ async function migrateData() {
             name: designer.name,
             bio: designer.bio,
             profileImage: designer.profileImage,
-            profileType: 'designer',
+            role: 'DESIGNER',
             location: designer.location,
             specialties: designer.specialties || [],
             website: designer.website,
@@ -62,7 +62,7 @@ async function migrateData() {
 
     // 2. Migrate Homeowners
     console.log('📁 Migrating homeowners...');
-    const homeownersPath = path.join(process.cwd(), 'data', 'homeowners.json');
+    const homeownersPath = path.join(process.cwd(), 'src', 'data', 'homeowners.json');
     if (fs.existsSync(homeownersPath)) {
       const homeowners = JSON.parse(fs.readFileSync(homeownersPath, 'utf8'));
       
@@ -73,7 +73,7 @@ async function migrateData() {
             name: homeowner.name,
             bio: homeowner.bio,
             profileImage: homeowner.avatar,
-            profileType: 'homeowner',
+            role: 'HOMEOWNER',
             location: homeowner.location,
             budgetRange: homeowner.budgetRange,
             desiredRooms: homeowner.desiredRooms || [],
@@ -86,7 +86,7 @@ async function migrateData() {
             name: homeowner.name,
             bio: homeowner.bio,
             profileImage: homeowner.avatar,
-            profileType: 'homeowner',
+            role: 'HOMEOWNER',
             location: homeowner.location,
             budgetRange: homeowner.budgetRange,
             desiredRooms: homeowner.desiredRooms || [],
@@ -101,7 +101,7 @@ async function migrateData() {
 
     // 3. Migrate Products
     console.log('📁 Migrating products...');
-    const productsPath = path.join(process.cwd(), 'data', 'products2.json');
+    const productsPath = path.join(process.cwd(), 'src', 'data', 'products2.json');
     if (fs.existsSync(productsPath)) {
       const products = JSON.parse(fs.readFileSync(productsPath, 'utf8'));
       
@@ -134,7 +134,7 @@ async function migrateData() {
 
     // 4. Migrate Projects with Images and Tags
     console.log('📁 Migrating projects...');
-    const projectsPath = path.join(process.cwd(), 'data', 'projects.json');
+    const projectsPath = path.join(process.cwd(), 'src', 'data', 'projects.json');
     if (fs.existsSync(projectsPath)) {
       const projects = JSON.parse(fs.readFileSync(projectsPath, 'utf8'));
       
@@ -151,7 +151,7 @@ async function migrateData() {
             name: project.name,
             description: project.description,
             category: project.category,
-            client: project.client,
+            ownerId: validDesignerId, // Use designer as owner
             designerId: validDesignerId,
             status: project.status || 'draft',
             views: project.metrics?.views || 0,
@@ -163,7 +163,7 @@ async function migrateData() {
             name: project.name,
             description: project.description,
             category: project.category,
-            client: project.client,
+            ownerId: validDesignerId, // Use designer as owner
             designerId: validDesignerId,
             status: project.status || 'draft',
             views: project.metrics?.views || 0,
@@ -242,7 +242,7 @@ async function migrateData() {
 
     // 5. Migrate Folders
     console.log('📁 Migrating folders...');
-    const foldersPath = path.join(process.cwd(), 'data', 'folders.json');
+    const foldersPath = path.join(process.cwd(), 'src', 'data', 'folders.json');
     if (fs.existsSync(foldersPath)) {
       const folders = JSON.parse(fs.readFileSync(foldersPath, 'utf8'));
       

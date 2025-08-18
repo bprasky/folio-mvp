@@ -15,7 +15,6 @@ import {
   FaShare,
   FaDownload
 } from 'react-icons/fa';
-import Navigation from '../../../components/Navigation';
 
 // Mock data for folders
 const mockFolders = [
@@ -78,10 +77,8 @@ export default function HomeownerFolders() {
   };
 
   return (
-    <div className="min-h-screen bg-primary flex">
-      <Navigation />
-      
-      <div className="flex-1 lg:ml-20 xl:ml-56">
+    <div className="p-6">
+        <div className="max-w-7xl mx-auto">
         <div className="max-w-7xl mx-auto px-6 py-12">
           {/* Header */}
           <motion.div
@@ -284,3 +281,4 @@ export default function HomeownerFolders() {
     </div>
   );
 } 
+      </div>

@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { FaBriefcase, FaFilter, FaSort } from 'react-icons/fa';
 import { useRole } from '../../contexts/RoleContext';
-import Navigation from '../../components/Navigation';
 import LeadPreferencesCard, { LeadPreferences } from '../../components/LeadPreferencesCard';
 import ProjectMatchingEngine from '../../components/ProjectMatchingEngine';
 
@@ -15,16 +14,15 @@ export default function JobsPage() {
   // Redirect if not designer
   if (role !== 'designer') {
     return (
-      <div className="min-h-screen bg-primary flex">
-        <Navigation />
-        <div className="flex-1 lg:ml-20 xl:ml-56 flex items-center justify-center p-6">
+      <div className="p-6">
+        <div className="max-w-7xl mx-auto">
           <div className="text-center">
             <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <FaBriefcase className="w-8 h-8 text-orange-600" />
             </div>
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Designer Only Feature</h2>
             <p className="text-gray-600">
-              Switch to "Designer" role using the dropdown in the top-right to access job matching.
+              This feature is only available for designers. Please sign in with a designer account.
             </p>
           </div>
         </div>
@@ -33,10 +31,8 @@ export default function JobsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-primary flex">
-      <Navigation />
-      
-      <div className="flex-1 lg:ml-20 xl:ml-56">
+    <div className="p-6">
+        <div className="max-w-7xl mx-auto">
         <div className="max-w-7xl mx-auto px-6 py-12">
           {/* Header */}
           <motion.div

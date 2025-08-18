@@ -289,8 +289,7 @@ const EventCardComponent = ({ event, onRSVP, isInline = false }: { event: EventD
     inviteTypeJsx = <>{inviteTypeJsx}<span className="event-invite-type attending">Attending</span></>;
   }
 
-  const eventSlug = event.title.toLowerCase().replace(/\s+/g, '-');
-  const eventPath = `/events/${eventSlug}`;
+  const eventPath = `/events/${event.id}`;
 
   const cardContent = (
     <div className={`event-card ${statusClass} ${isInline ? 'event-card-inline' : ''}`}>
@@ -495,7 +494,8 @@ export default function CommunityPage() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 lg:ml-20 xl:ml-56 overflow-y-auto bg-zinc-950">
+      <div className="p-6">
+        <div className="max-w-7xl mx-auto">
         <div className="w-full flex flex-col sm:flex-row items-center justify-between mt-4 px-4">
           <h1 className="text-2xl font-bold text-white mb-2 sm:mb-0">Community</h1>
         </div>
@@ -585,6 +585,7 @@ export default function CommunityPage() {
           </div>
         )}
       </div>
-    </div>
+    
+      </div></div>
   );
 } 

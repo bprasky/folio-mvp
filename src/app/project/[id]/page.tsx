@@ -5,7 +5,6 @@ import { useParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { FaArrowLeft, FaTag, FaShareAlt, FaHeart, FaBookmark, FaTimes, FaDownload, FaEdit, FaSave, FaPlus, FaTrash, FaFilePdf, FaPrint, FaPencilAlt, FaEye, FaUser, FaCalendarAlt, FaBuilding } from 'react-icons/fa';
-import Navigation from '../../../components/Navigation';
 import { useRole } from '../../../contexts/RoleContext';
 
 interface ProjectImage {

@@ -10,7 +10,7 @@ export async function GET(
     const videoId = params.id;
 
     // Load videos from JSON file
-    const videosPath = join(process.cwd(), 'data', 'videos.json');
+    const videosPath = join(process.cwd(), 'src', 'data', 'videos.json');
     const videosContent = await readFile(videosPath, 'utf-8');
     const videos = JSON.parse(videosContent);
 
@@ -54,7 +54,7 @@ export async function PUT(
     const updates = await request.json();
 
     // Load videos from JSON file
-    const videosPath = join(process.cwd(), 'data', 'videos.json');
+    const videosPath = join(process.cwd(), 'src', 'data', 'videos.json');
     const videosContent = await readFile(videosPath, 'utf-8');
     const videos = JSON.parse(videosContent);
 
@@ -100,7 +100,7 @@ export async function DELETE(
     const videoId = params.id;
 
     // Load videos from JSON file
-    const videosPath = join(process.cwd(), 'data', 'videos.json');
+    const videosPath = join(process.cwd(), 'src', 'data', 'videos.json');
     const videosContent = await readFile(videosPath, 'utf-8');
     const videos = JSON.parse(videosContent);
 

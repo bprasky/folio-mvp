@@ -10,7 +10,9 @@ import {
   FaUsers, 
   FaBox, 
   FaChartLine, 
-  FaBullhorn 
+  FaBullhorn,
+  FaChartBar,
+  FaCog
 } from 'react-icons/fa';
 import { useRole, UserRole } from '../contexts/RoleContext';
 
@@ -130,6 +132,33 @@ const roleFeatures: Record<UserRole, { title: string; subtitle: string; features
         onClick: () => console.log('Find Mentors clicked')
       }
     ]
+  },
+  admin: {
+    title: 'Admin Dashboard',
+    subtitle: 'Manage platform content and users',
+    features: [
+      {
+        icon: FaUsers,
+        label: 'User Management',
+        description: 'Manage user accounts and roles',
+        color: 'bg-red-500 hover:bg-red-600',
+        onClick: () => console.log('User Management clicked')
+      },
+      {
+        icon: FaChartBar,
+        label: 'Analytics',
+        description: 'View platform statistics',
+        color: 'bg-blue-500 hover:bg-blue-600',
+        onClick: () => console.log('Analytics clicked')
+      },
+      {
+        icon: FaCog,
+        label: 'Settings',
+        description: 'Configure platform settings',
+        color: 'bg-gray-500 hover:bg-gray-600',
+        onClick: () => console.log('Settings clicked')
+      }
+    ]
   }
 };
 
@@ -230,7 +259,7 @@ export default function RolePanel() {
         className="mt-8 pt-6 border-t border-gray-200 text-center"
       >
         <p className="text-sm text-gray-500">
-          Switch roles anytime using the dropdown in the top-right corner
+          Your role is determined by your account type. Contact support to change your role.
         </p>
       </motion.div>
     </motion.div>

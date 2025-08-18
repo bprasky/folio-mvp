@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { FaStar, FaPlus, FaEdit, FaEye, FaHeart, FaComment, FaShare, FaDownload, FaGlobe, FaLock, FaImage, FaVideo, FaFileAlt } from 'react-icons/fa';
-import Navigation from '../../../components/Navigation';
 import { useRole } from '../../../contexts/RoleContext';
 
 // Mock portfolio data
@@ -482,7 +481,7 @@ export default function StudentPortfolio() {
 
   return (
     <div className="min-h-screen bg-primary flex">
-      <Navigation />
+      
       
       <div className="flex-1 lg:ml-20 xl:ml-56">
         <div className="max-w-6xl mx-auto px-6 py-12">

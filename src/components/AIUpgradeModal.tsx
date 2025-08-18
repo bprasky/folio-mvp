@@ -41,8 +41,12 @@ export default function AIUpgradeModal({
                 <FaRobot className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">Want smarter suggestions?</h2>
-                <p className="text-sm text-gray-600">You've saved {savedItemsCount} items!</p>
+                <h2 className="text-2xl font-bold text-folio-text mb-2">
+                  Unlock FOLIO AI
+                </h2>
+                <p className="text-folio-system">
+                  Turn on FOLIO AI to unlock personalized guidance and designer matches.
+                </p>
               </div>
             </div>
             <button
@@ -114,11 +118,9 @@ export default function AIUpgradeModal({
             </button>
             <motion.button
               onClick={onUpgrade}
-              className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white rounded-xl font-medium transition-all"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+              className="w-full bg-folio-accent text-white py-3-6ounded-lg font-semibold hover:bg-folio-accent/90 transition-colors"
             >
-              Turn on Folio AI
+              Turn on FOLIO AI
             </motion.button>
           </div>
         </motion.div>

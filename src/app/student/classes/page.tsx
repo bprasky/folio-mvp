@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { FaChalkboardTeacher, FaClock, FaUsers, FaStar, FaPlay, FaCheck, FaLock, FaBookmark, FaFilter, FaSearch } from 'react-icons/fa';
-import Navigation from '../../../components/Navigation';
 import { useRole } from '../../../contexts/RoleContext';
 
 // Mock muscle classes data
@@ -257,10 +256,8 @@ export default function StudentClasses() {
   };
 
   return (
-    <div className="min-h-screen bg-primary flex">
-      <Navigation />
-      
-      <div className="flex-1 lg:ml-20 xl:ml-56">
+    <div className="p-6">
+        <div className="max-w-7xl mx-auto">
         <div className="max-w-6xl mx-auto px-6 py-12">
           {/* Header */}
           <motion.div
@@ -492,6 +489,7 @@ export default function StudentClasses() {
           )}
         </div>
       </div>
-    </div>
+    
+      </div></div>
   );
 } 
