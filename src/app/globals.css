@@ -10,7 +10,8 @@ html[data-compact="true"] .TopBar { display: none; }
 /* Remove layout's default top padding if it uses a wrapper */
 html[data-compact="true"] main { padding-top: 0 !important; }
 
-/* Import Canela font - you'll need to add the actual font files or use a web font service */
+/* temp: disable broken custom font to kill 404 spam */
+/*
 @font-face {
   font-family: 'Canela';
   src: url('/fonts/Canela-Regular.woff2') format('woff2'),
@@ -19,6 +20,8 @@ html[data-compact="true"] main { padding-top: 0 !important; }
   font-style: normal;
   font-display: swap;
 }
+*/
+:root { --brand-font: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif; }
 
 :root {
   /* Navigation Layout */
@@ -55,7 +58,7 @@ body {
 
 /* FOLIO Brand Typography */
 .folio-brand {
-  font-family: 'Canela', Georgia, serif;
+  font-family: var(--brand-font);
   font-weight: normal;
   letter-spacing: 2px;
   text-transform: uppercase;
@@ -63,7 +66,7 @@ body {
 
 /* FOLIO Logo Component */
 .folio-logo {
-  font-family: 'Canela', Georgia, serif;
+  font-family: var(--brand-font);
   font-weight: normal;
   letter-spacing: 2px;
   text-transform: uppercase;
@@ -94,6 +97,14 @@ body {
 .tile:hover {
   transform: scale(1.02);
   box-shadow: 0 10px 25px rgba(30, 30, 30, 0.15);
+}
+
+/* Allow selecting text inside events page even if a parent sets select-none */
+.select-text {
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
 }
 
 .trending-tile {

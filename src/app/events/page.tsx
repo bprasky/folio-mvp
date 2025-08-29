@@ -1,104 +1,70 @@
 import { getServerSession } from 'next-auth';
-import { authOptions } from '../api/auth/[...nextauth]/options';
-import FestivalCarousel from '../../components/FestivalCarousel';
-import EditorialFeed from '../../components/feed/EditorialFeed';
-import RoleBasedActions from '../../components/RoleBasedActions';
-import { fetchEvents, fetchUserRSVPs } from '../../lib/fetchEvents';
-import { fetchFestivals } from '../../lib/fetchFestivals';
-import { mapEventsToFeedItems } from '../../lib/feedUtils';
-import { getRole } from '../../lib/getRole';
-import prisma from '@/lib/prisma';
+import { authOptions } from '@/app/api/auth/[...nextauth]/options';
+
+// keep your existing imports:
+import FestivalCarousel from '@/components/FestivalCarousel';
+import EventMosaic from '@/components/events/EventMosaic';
+
+// add (or keep) your data helpers:
+import { fetchEvents, fetchUserRSVPs } from '@/lib/fetchEvents';
+import { fetchFestivals } from '@/lib/fetchFestivals';
 
 export default async function EventsPage() {
-  let session = null;
+  // session / role
+  let session = null as any;
   let userRole = 'guest';
-
   try {
     session = await getServerSession(authOptions);
     userRole = session?.user?.role || 'guest';
-    // DEBUG: Log session and userRole
-    console.log('SESSION:', JSON.stringify(session));
-    console.log('userRole:', userRole);
-  } catch (error) {
-    console.log('Session error:', error);
-    console.log('No session found, proceeding as guest');
-  }
+  } catch {}
 
-  // Get role for admin checks
-  const role = await getRole();
-  const canEdit = role === 'ADMIN';
+  const userId = session?.user?.id;
+  const isAdmin = userRole === 'ADMIN';
 
-  try {
-    console.log('Fetching events data...');
-    // Fetch data using the new API functions
-    const [events, festivals, userRSVPs] = await Promise.all([
-      fetchEvents(userRole, session?.user?.id),
-      fetchFestivals(),
-      session?.user?.id ? fetchUserRSVPs(session.user.id) : Promise.resolve([])
-    ]);
+  // fetch in parallel
+  const [eventsRaw, festivalsRaw] = await Promise.all([
+    fetchEvents(userRole, userId),
+    fetchFestivals(),
+  ]);
 
-    console.log(`Fetched ${events.length} events, ${festivals.length} festivals`);
-    // Map events to feed format
-    const feedItems = mapEventsToFeedItems(events);
-    console.log(`Mapped ${feedItems.length} feed items`);
+  // PUBLIC GATING for non-admins:
+  // fetchEvents already includes isPublic OR createdById,
+  // but it doesn't gate by isApproved. Enforce here for guests.
+  const events = isAdmin
+    ? eventsRaw
+    : eventsRaw.filter((e: any) => e?.isPublic === true && e?.isApproved === true);
 
-    return (
-      <div className="min-h-screen bg-gray-50 overflow-x-hidden">
-        <div className="p-6">
-          {/* Header with Role-Based Actions */}
-          <div className="bg-white border-b border-gray-100">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
-                <div className="mb-4 lg:mb-0">
-                  <h1 className="text-3xl font-bold text-gray-900">Events</h1>
-                  <p className="mt-2 text-gray-600">
-                    Discover and participate in the latest design events and festivals
-                  </p>
-                </div>
-                <RoleBasedActions userRole={userRole} />
-              </div>
-            </div>
+  // festivals already come approved+future/ongoing from fetchFestivals.
+  // If you ever need top-level only, keep this filter (safe either way):
+  const festivals = (festivalsRaw ?? []).filter((f: any) => (f?.parentFestivalId ?? null) === null || true);
+
+  // events from fetchEvents are already NON-FESTIVAL; feed straight to mosaic
+  const mosaicEvents = events;
+
+  return (
+    <main className="bg-gray-50">
+      <div className="select-text mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
+        {/* header (keep whatever you already render here) */}
+        <header className="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold text-gray-900">Events</h1>
+            <p className="mt-1 text-gray-600">Discover festivals and events across the design community.</p>
           </div>
+          {/* keep your role-based actions if present */}
+        </header>
 
-          {/* Festival Carousel */}
-          <div className="bg-white border-b border-gray-100">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-              <FestivalCarousel festivals={festivals} canEdit={canEdit} />
-            </div>
-          </div>
+        {/* FESTIVALS — carousel near the top */}
+        {festivals.length > 0 && (
+          <section aria-label="Featured festivals" className="mb-8">
+            <FestivalCarousel festivals={festivals} canEdit={isAdmin} />
+          </section>
+        )}
 
-          {/* Editorial Event Feed */}
-          <div className="bg-white">
-            <div className="py-8">
-              <EditorialFeed items={feedItems} />
-            </div>
-          </div>
-        </div>
+        {/* EVENTS — dense mosaic below */}
+        <section aria-label="Explore events">
+          <EventMosaic events={mosaicEvents} />
+        </section>
       </div>
-    );
-  } catch (error) {
-    console.error('Error loading events page:', error);
-    console.error('Error details:', {
-      message: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined,
-      name: error instanceof Error ? error.name : 'Unknown'
-    });
-    return (
-      <div className="min-h-screen bg-gray-50 overflow-x-hidden">
-        <div className="p-6 flex items-center justify-center">
-          <div className="text-center">
-            <div className="text-6xl mb-4">😔</div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Something went wrong</h2>
-            <p className="text-gray-600 mb-4">We're having trouble loading the events right now.</p>
-            <a 
-              href="/events"
-              className="inline-block bg-folio-accent text-white px-6 py-3 rounded-lg hover:bg-folio-accent-dark transition-colors"
-            >
-              Try Again
-            </a>
-          </div>
-        </div>
-      </div>
-    );
-  }
+    </main>
+  );
 } 

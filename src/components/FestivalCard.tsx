@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { FaCalendarAlt, FaMapMarkerAlt, FaUsers, FaExpand, FaEdit } from 'react-icons/fa';
 // Define types locally to avoid import issues
 interface Event {
@@ -192,10 +193,12 @@ export default function FestivalCard({
       {/* Image Section */}
       <div className="relative h-48 overflow-hidden">
         {festival.imageUrl && !imageError ? (
-          <img
+          <Image
             src={festival.imageUrl}
             alt={festival.title}
-            className="w-full h-full object-cover"
+            fill
+            className="object-cover"
+            sizes="(max-width: 768px) 80vw, 320px"
             onError={() => setImageError(true)}
           />
         ) : (
