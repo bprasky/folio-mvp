@@ -42,12 +42,16 @@ export default function FestivalCarousel({ festivals, className = '', canEdit = 
       </div>
       
       {/* Responsive Festival Carousel */}
-      <div className="flex overflow-x-auto space-x-6 pb-4 scrollbar-hide">
+      <div 
+        className="flex overflow-x-auto space-x-4 pb-4 scrollbar-hide snap-x snap-mandatory"
+        role="list"
+        aria-label="Featured festivals"
+      >
         {festivals.map((festival) => {
           const isExpanded = expandedFestival === festival.id;
           
           return (
-            <div key={festival.id} className="flex-shrink-0 w-80">
+            <div key={festival.id} className="flex-shrink-0 w-80 snap-start" role="listitem">
               <FestivalCard
                 festival={festival}
                 isExpanded={isExpanded}
