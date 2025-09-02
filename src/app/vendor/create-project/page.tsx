@@ -138,7 +138,7 @@ export default function VendorCreateProjectPage() {
     try {
       const requestBody = {
         ...formData,
-        vendorId: session.user.id
+        // Remove vendorId - it will be set from session on the server
       };
       
       console.log('DEBUG: Sending request with body:', requestBody);
@@ -148,6 +148,7 @@ export default function VendorCreateProjectPage() {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'same-origin',
         body: JSON.stringify(requestBody),
       });
 
@@ -156,9 +157,14 @@ export default function VendorCreateProjectPage() {
         console.log('Vendor project created successfully:', project);
         router.push(`/vendor/project/${project.id}`);
       } else {
-        const error = await response.json();
-        console.error('Error creating vendor project:', error);
-        alert(`Error: ${error.error}`);
+        const errorData = await response.json().catch(() => ({}));
+        if (response.status === 401) {
+          alert('You must be signed in as VENDOR or ADMIN.');
+        } else if (response.status === 403) {
+          alert('Your role is not permitted to create vendor projects.');
+        } else {
+          alert(`Error: ${errorData.error || 'Failed to create project'}`);
+        }
       }
     } catch (error) {
       console.error('Error creating vendor project:', error);

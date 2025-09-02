@@ -5,6 +5,9 @@ import { usePathname } from "next/navigation";
 import MainLayout from "./MainLayout";
 import SimpleLayout from "./SimpleLayout";
 
+// Ensure this layout is always dynamic to avoid stale header state
+export const dynamic = 'force-dynamic';
+
 interface RoleBasedLayoutProps {
   children: ReactNode;
 }

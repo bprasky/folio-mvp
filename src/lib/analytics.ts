@@ -10,6 +10,14 @@ export async function logPassiveEvent(params: {
 
   // Try database first
   try {
+    // Defensive guard: check if analytics model exists
+    if (!(prisma as any)?.analyticsEvent?.create) {
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('Analytics disabled: prisma.analyticsEvent.create unavailable');
+      }
+      return; // Exit early if model doesn't exist
+    }
+
     await prisma.analyticsEvent.create({
       data: {
         projectId,

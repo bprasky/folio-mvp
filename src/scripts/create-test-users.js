@@ -57,7 +57,7 @@ async function createTestUsers() {
         const hashedPassword = await bcrypt.hash(userData.password, 10);
         await prisma.user.update({
           where: { email: userData.email },
-          data: { password: hashedPassword }
+          data: { passwordHash: hashedPassword }
         });
       } else {
         console.log(`Creating user ${userData.email}...`);
@@ -66,7 +66,7 @@ async function createTestUsers() {
           data: {
             email: userData.email,
             name: userData.name,
-            password: hashedPassword,
+            passwordHash: hashedPassword,
             role: userData.role
           }
         });

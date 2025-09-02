@@ -1,13 +1,47 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/app/api/auth/[...nextauth]/options';
+import { normalizeRole, canAccessVendor } from '@/lib/permissions';
+import { z } from 'zod';
 
 const prisma = new PrismaClient();
 
 export async function POST(request: NextRequest) {
+  const session = await getServerSession(authOptions);
+  const role = normalizeRole(session?.user?.role);
+  const userId = (session?.user as any)?.id as string | undefined;
+
+  if (process.env.NODE_ENV === 'development') {
+    console.log('[create-vendor-project]', { 
+      hasCookie: !!request.headers.get('cookie'), 
+      email: session?.user?.email, 
+      role, 
+      userId 
+    });
+  }
+
+  if (!userId) {
+    return NextResponse.json({ error: 'You must be signed in' }, { status: 401 });
+  }
+
+  if (!canAccessVendor(role)) {
+    return NextResponse.json({ error: 'Your role is not permitted to create vendor projects' }, { status: 403 });
+  }
+
   try {
-    const body = await request.json();
-    const { title, type, location, description, styleTags, vendorId: originalVendorId } = body;
-    let vendorId = originalVendorId;
+    // Validate payload with zod
+    const vendorProjectSchema = z.object({
+      title: z.string().min(1, 'Title is required'),
+      type: z.string().min(1, 'Type is required'),
+      location: z.string().min(1, 'Location is required'),
+      description: z.string().min(1, 'Description is required'),
+      styleTags: z.array(z.string()).min(1, 'At least one style tag is required'),
+      vendorId: z.string().optional(), // Will use session user ID instead
+    });
+
+    const validatedPayload = vendorProjectSchema.parse(await request.json());
+    const { title, type, location, description, styleTags } = validatedPayload;
 
     console.log('DEBUG: Received vendor project creation request:', {
       title,
@@ -15,58 +49,16 @@ export async function POST(request: NextRequest) {
       location,
       description,
       styleTags,
-      vendorId
+      userId
     });
 
-    // Validate required fields
-    if (!title || !type || !location || !description || !styleTags || !vendorId) {
-      console.log('DEBUG: Missing required fields:', { title, type, location, description, styleTags, vendorId });
-      return NextResponse.json(
-        { error: 'Missing required fields: title, type, location, description, styleTags, vendorId' },
-        { status: 400 }
-      );
-    }
-
-    // Verify the vendor user exists before creating the project
-    let vendorUser = await prisma.user.findUnique({
-      where: { id: vendorId },
-      select: { id: true, name: true, email: true, role: true }
-    });
-
-    if (!vendorUser) {
-      console.log('DEBUG: Vendor user not found with ID:', vendorId);
-      
-      // Try to find a vendor user with the same email (fallback)
-      const vendorByEmail = await prisma.user.findFirst({
-        where: { 
-          email: 'Vendor@folio.com',
-          role: 'VENDOR'
-        },
-        select: { id: true, name: true, email: true, role: true }
-      });
-      
-      if (vendorByEmail) {
-        console.log('DEBUG: Found vendor by email, using that user:', vendorByEmail);
-        vendorUser = vendorByEmail;
-        // Update the vendorId to use the correct user ID
-        vendorId = vendorByEmail.id;
-      } else {
-        return NextResponse.json(
-          { error: 'Vendor user not found and no fallback available', vendorId },
-          { status: 404 }
-        );
-      }
-    }
-
-    console.log('DEBUG: Found vendor user:', vendorUser);
-
-    // Create the project - simplified for now
+    // Create the project using session user ID
     const project = await prisma.project.create({
       data: {
         name: title,
         category: type,
         description,
-        ownerId: vendorId,
+        ownerId: userId,
         status: 'draft'
       },
       include: {
@@ -82,10 +74,16 @@ export async function POST(request: NextRequest) {
 
     console.log('Vendor project created successfully:', project);
     return NextResponse.json(project, { status: 201 });
-  } catch (error) {
-    console.error('Error creating vendor project:', error);
+  } catch (e: any) {
+    if (e instanceof z.ZodError) {
+      return NextResponse.json({ 
+        error: 'Validation failed', 
+        details: e.issues.map((err: any) => ({ field: err.path.join('.'), message: err.message }))
+      }, { status: 400 });
+    }
+    console.error('Error creating vendor project:', e);
     return NextResponse.json(
-      { error: 'Failed to create project', details: error instanceof Error ? error.message : 'Unknown error' },
+      { error: 'Failed to create project', details: e instanceof Error ? e.message : 'Unknown error' },
       { status: 500 }
     );
   }

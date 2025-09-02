@@ -77,40 +77,40 @@ export default function AdminTasks() {
   return (
     <div className="p-6">
       <div className="max-w-7xl mx-auto">
-          {/* Back Button */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="mb-8"
+        {/* Back Button */}
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="mb-8"
+        >
+          <Link
+            href="/admin"
+            className="inline-flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
           >
-            <Link
-              href="/admin"
-              className="inline-flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
-            >
-              <FaArrowLeft />
-              <span>Back to Admin Dashboard</span>
-            </Link>
-          </motion.div>
+            <FaArrowLeft />
+            <span>Back to Admin Dashboard</span>
+          </Link>
+        </motion.div>
 
-          {/* Header */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center mb-12"
-          >
-            <div className="flex items-center justify-center mb-4">
-              <div className="w-16 h-16 bg-gradient-to-br from-amber-500 to-orange-600 rounded-full flex items-center justify-center">
-                <FaCrown className="text-white text-2xl" />
-              </div>
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center mb-12"
+        >
+          <div className="flex items-center justify-center mb-4">
+            <div className="w-16 h-16 bg-gradient-to-br from-amber-500 to-orange-600 rounded-full flex items-center justify-center">
+              <FaCrown className="text-white text-2xl" />
             </div>
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">Admin Tasks</h1>
-            <p className="text-gray-600 text-lg">
-              Choose from all available creation and management tasks
-            </p>
-          </motion.div>
+          </div>
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">Admin Tasks</h1>
+          <p className="text-gray-600 text-lg">
+            Choose from all available creation and management tasks
+          </p>
+        </motion.div>
 
-          {/* Task Categories */}
-          <div className="space-y-12">
+        {/* Task Categories */}
+        <div className="space-y-12">
             {taskCategories.map((category, categoryIndex) => (
               <motion.div
                 key={category.title}
@@ -203,7 +203,6 @@ export default function AdminTasks() {
           </motion.div>
         </div>
       </div>
-    </div>
     </div>
   );
 } 

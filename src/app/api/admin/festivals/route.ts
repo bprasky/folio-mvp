@@ -1,214 +1,136 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-import { createClient } from '@supabase/supabase-js';
+import { NextResponse } from 'next/server';
+import { PrismaClient, EventType } from '@prisma/client';
+import { uploadDataUrlToSupabase, buildObjectPath } from '@/lib/uploadToSupabase';
+import { time } from '@/lib/telemetry';
+import { requireAdmin } from '@/lib/requireAdmin';
+import { rateLimit } from '@/lib/rateLimit';
+import { FestivalInput } from '@/lib/validators';
 
-const prisma = new PrismaClient();
-
-export async function GET() {
-  try {
-    // First test the database connection
-    await prisma.$connect();
-    
-    const festivals = await prisma.event.findMany({
-      where: {
-        type: 'festival',
-        parentFestivalId: null // Only top-level festivals
-      },
-      include: {
-        subevents: true,
-        createdBy: {
-          select: {
-            id: true,
-            name: true,
-            role: true
-          }
-        },
-        rsvps: true
-      },
-      orderBy: {
-        startDate: 'desc'
-      }
-    });
-
-    return NextResponse.json(festivals);
-  } catch (error) {
-    console.error('Error fetching festivals:', error);
-    
-    // Check if it's a table doesn't exist error
-    if (error instanceof Error && error.message.includes('relation') && error.message.includes('does not exist')) {
-      return NextResponse.json(
-        { error: 'Database tables not created yet. Please run: npx prisma db push' },
-        { status: 500 }
-      );
-    }
-    
-    return NextResponse.json(
-      { error: 'Failed to fetch festivals', details: error instanceof Error ? error.message : 'Unknown error' },
-      { status: 500 }
-    );
-  }
+function coerceBool(v: unknown) {
+  if (typeof v === 'boolean') return v;
+  const s = String(v ?? '').toLowerCase().trim();
+  return s === 'true' || s === '1' || s === 'on' || s === 'yes';
 }
 
-export async function POST(request: NextRequest) {
+// helper to normalize empty strings to undefined
+const opt = (v: unknown) => {
+  if (typeof v !== 'string') return undefined;
+  const s = v.trim();
+  return s.length ? s : undefined;
+};
+
+async function parseFestivalRequest(req: Request) {
+  const ct = req.headers.get('content-type') || '';
+  if (ct.includes('application/json')) return await req.json();
+  if (ct.includes('multipart/form-data') || ct.includes('application/x-www-form-urlencoded')) {
+    const form = await req.formData();
+    const title = form.get('title')?.toString() ?? form.get('name')?.toString() ?? '';
+    const description = form.get('description')?.toString() ?? '';
+    const location = form.get('location')?.toString() ?? '';
+    const startDate = form.get('startDate')?.toString() ?? '';
+    const endDate = form.get('endDate')?.toString() ?? '';
+    const imageDataUrl = opt(form.get('imageDataUrl')?.toString() ?? '');
+    const imageUrl = opt(form.get('imageUrl')?.toString() ?? '');
+    let imageFile: File | undefined;
+    const f = (form.get('image') ?? form.get('file') ?? form.get('photo'));
+    if (f instanceof File) imageFile = f;
+    return { title, description, location, startDate, endDate, imageDataUrl, imageUrl, imageFile };
+  }
+  try { return await req.json(); }
+  catch { throw new Error(`Unsupported Content-Type: ${ct}`); }
+}
+
+const prisma = new PrismaClient();
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
+const MAX_BYTES = 10 * 1024 * 1024;
+function estimateBytesFromDataUrl(d: string) {
+  const i = d.indexOf(','); const b64 = i >= 0 ? d.slice(i+1) : d;
+  return Math.floor((b64.length * 3) / 4) - (b64.endsWith('==') ? 2 : b64.endsWith('=') ? 1 : 0);
+}
+
+export async function POST(req: Request) {
   try {
-    console.log('🎪 Festival creation request received');
-    
-    const formData = await request.formData();
-    const title = formData.get('title') as string;
-    const description = formData.get('description') as string;
-    const location = formData.get('location') as string;
-    const startDate = formData.get('startDate') as string;
-    const endDate = formData.get('endDate') as string;
-    const image = formData.get('image') as File | null;
-    let createdById = formData.get('createdById') as string | null;
+    rateLimit('admin:' + (req.headers.get('x-forwarded-for') ?? 'local'));
+    const admin = await requireAdmin();
 
-    console.log('📝 Form data received:', { title, description, location, startDate, endDate, createdById });
+    const payload = await parseFestivalRequest(req);
+    // normalize name/title to title (schema uses `title`)
+    const normalized = { 
+      title: (payload.title ?? payload.name ?? '').toString().trim(),
+      description: payload.description,
+      location: payload.location,
+      startDate: payload.startDate,
+      endDate: payload.endDate,
+      imageDataUrl: opt(payload.imageDataUrl),
+      imageUrl: opt(payload.imageUrl),
+      imageFile: (payload as any).imageFile instanceof File ? (payload as any).imageFile : undefined,
+    };
 
-    // Validate required fields
-    if (!title || !description || !location || !startDate || !endDate) {
-      console.log('❌ Missing required fields');
-      return NextResponse.json(
-        { error: 'Missing required fields: title, description, location, startDate, endDate' },
-        { status: 400 }
-      );
-    }
+    const input = FestivalInput.parse(normalized);
 
-    // Handle image upload if provided
-    let imageUrl: string | undefined = undefined;
-    if (image) {
-      const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
-      const fileName = `festival_${Date.now()}.${image.type.split('/')[1]}`;
-      const { data, error } = await supabase.storage.from('festival-images').upload(fileName, image);
-      if (error) {
-        throw new Error(`Image upload failed: ${error.message}`);
+    // idempotency: same title + same startDate + is FESTIVAL, top-level
+    const existing = await prisma.event.findFirst({
+      where: {
+        title: input.title ?? (normalized as any).title,
+        startDate: input.startDate,
+        parentFestivalId: null,
+        eventTypes: { has: 'FESTIVAL' }
       }
-      const { data: urlData } = supabase.storage.from('festival-images').getPublicUrl(fileName);
-      imageUrl = urlData.publicUrl;
+    });
+    if (existing) {
+      return NextResponse.json({ id: existing.id, message: 'Festival already exists' }, { status: 409 });
     }
 
-    // First check if tables exist
-    try {
-      console.log('🔌 Testing database connection...');
-      await prisma.$connect();
-      const userCount = await prisma.user.count(); // This will fail if tables don't exist
-      console.log('✅ Database connected, user count:', userCount);
-    } catch (tableError) {
-      console.log('❌ Database connection failed:', tableError);
-      return NextResponse.json(
-        { 
-          error: 'Database tables not created yet. Please visit: http://localhost:3001/api/init-db to initialize the database',
-          details: 'Tables need to be created before creating festivals'
-        },
-        { status: 500 }
-      );
-    }
+    // image handling (file -> dataURL -> URL)
+    let imageUrl: string | null = null;
+    const label = input.title ?? (normalized as any).title ?? null;
 
-    // If no createdById provided, use an existing user
-    if (!createdById) {
-      console.log('👤 No createdById provided, finding existing user');
-      try {
-        // Try to find the admin user first
-        const adminUser = await prisma.user.findFirst({
-          where: { 
-            OR: [
-              { email: 'admin@folio.com' },
-              { role: 'ADMIN' }
-            ]
-          }
-        });
-        if (adminUser) {
-          createdById = adminUser.id;
-          console.log('✅ Using admin user ID:', createdById);
-        } else {
-          // Fallback to any existing user
-          const existingUser = await prisma.user.findFirst();
-          if (existingUser) {
-            createdById = existingUser.id;
-            console.log('✅ Using existing user ID:', createdById);
-          } else {
-            // Create a default admin user if none exists
-            console.log('👤 No users exist, creating default admin user');
-            const defaultUser = await prisma.user.create({
-              data: {
-                email: 'admin@folio.com',
-                name: 'Admin User',
-                role: 'ADMIN'
-              }
-            });
-            createdById = defaultUser.id;
-            console.log('✅ Created and using default admin user ID:', createdById);
-          }
-        }
-      } catch (userError) {
-        console.log('❌ Error finding/creating user:', userError);
-        throw new Error('Could not find or create a valid user for festival creation');
-      }
+    if (normalized.imageFile instanceof File) {
+      const buf = Buffer.from(await normalized.imageFile.arrayBuffer());
+      const mime = normalized.imageFile.type || 'image/jpeg';
+      const approx = buf.length;
+      if (approx > MAX_BYTES) throw new Error(`Image too large (~${approx} bytes)`);
+      const ext = mime.split('/')[1] ?? 'jpg';
+      const path = buildObjectPath('festivals', label, ext);
+      const dataUrl = `data:${mime};base64,${buf.toString('base64')}`;
+      imageUrl = await time('storage.upload', () => uploadDataUrlToSupabase(dataUrl, path));
+    } else if (input.imageDataUrl) {
+      const approx = estimateBytesFromDataUrl(input.imageDataUrl);
+      if (approx > MAX_BYTES) throw new Error(`Image too large (~${approx} bytes)`);
+      const ext = input.imageDataUrl.split(';')[0].split('/')[1] ?? 'jpg';
+      const path = buildObjectPath('festivals', label, ext);
+      imageUrl = await time('storage.upload', () => uploadDataUrlToSupabase(input.imageDataUrl!, path));
+    } else if (input.imageUrl) {
+      imageUrl = input.imageUrl;
+    } else if (process.env.FOLIO_ALLOW_CREATE_WITHOUT_IMAGE === 'true') {
+      imageUrl = null;
     } else {
-      // Verify the provided createdById exists
-      console.log('👤 Verifying provided createdById:', createdById);
-      const userExists = await prisma.user.findUnique({
-        where: { id: createdById }
-      });
-      if (!userExists) {
-        console.log('❌ Provided createdById does not exist:', createdById);
-        // Use an existing user instead
-        const existingUser = await prisma.user.findFirst();
-        if (existingUser) {
-          createdById = existingUser.id;
-          console.log('✅ Using existing user ID instead:', createdById);
-        } else {
-          throw new Error('No valid users exist in database');
-        }
-      }
+      throw new Error('image required');
     }
 
-    console.log('🎪 Creating festival in database...');
+    // CREATE the festival (Event row with type FESTIVAL)
     const festival = await prisma.event.create({
       data: {
-        title,
-        description,
-        location,
-        startDate: new Date(startDate),
-        endDate: new Date(endDate),
-        type: 'festival',
+        title: input.title ?? (normalized as any).title,
+        description: input.description,
+        location: input.location,
+        startDate: input.startDate,
+        endDate: input.endDate,
+        createdById: (admin as any).id,
+        parentFestivalId: null,
+        imageUrl,
+        eventTypes: { set: [EventType.FESTIVAL] },
+        isApproved: true,
         isPublic: true,
-        isApproved: true, // Admin-created festivals are auto-approved
-        requiresApproval: false,
-        createdById,
-        imageUrl // Add imageUrl if uploaded
-      },
-      include: {
-        createdBy: {
-          select: {
-            id: true,
-            name: true,
-            role: true
-          }
-        }
       }
     });
 
-    console.log('✅ Festival created successfully:', festival.id);
-    return NextResponse.json(festival, { status: 201 });
-  } catch (error) {
-    console.error('❌ Error creating festival:', error);
-    
-    // Check if it's a table doesn't exist error
-    if (error instanceof Error && error.message.includes('relation') && error.message.includes('does not exist')) {
-      console.log('❌ Database tables do not exist');
-      return NextResponse.json(
-        { 
-          error: 'Database tables not created yet. Please visit: http://localhost:3001/api/init-db to initialize the database',
-          details: 'Tables need to be created before creating festivals'
-        },
-        { status: 500 }
-      );
-    }
-    
-    console.log('❌ Unknown error occurred');
-    return NextResponse.json(
-      { error: 'Failed to create festival', details: error instanceof Error ? error.message : 'Unknown error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ ok: true, id: festival.id, title: festival.title, imageUrl }, { status: 201 });
+  } catch (err: any) {
+    const status = err.status ?? (err.name === 'ZodError' ? 400 : 500);
+    console.error('[upload failed]', { error: err?.message });
+    return NextResponse.json({ error: err.message, issues: err.issues ?? undefined }, { status });
   }
 } 

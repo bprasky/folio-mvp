@@ -47,13 +47,30 @@ export const authOptions: NextAuthOptions = {
         }
 
         try {
-          // Check database for user
-          const user = await prisma.user.findUnique({
-            where: { email: credentials.email }
+          // Check database for user with case-insensitive email lookup
+          const user = await prisma.user.findFirst({
+            where: { 
+              email: { 
+                equals: credentials.email.trim().toLowerCase(),
+                mode: 'insensitive'
+              }
+            },
+            select: { 
+              id: true, 
+              email: true, 
+              role: true, 
+              passwordHash: true,
+              name: true
+            }
           });
 
           if (!user) {
-            console.log('User not found:', credentials.email);
+            console.error('User not found:', credentials.email);
+            return null;
+          }
+
+          if (!user.passwordHash) {
+            console.error('User found but no passwordHash:', credentials.email);
             return null;
           }
 
@@ -64,24 +81,16 @@ export const authOptions: NextAuthOptions = {
             name: user.name
           });
 
-          // For now, we'll use a simple password check
-          // In production, you should store hashed passwords in the database
-          let isValidPassword = false;
+          // Compare password against passwordHash
+          const isValidPassword = await bcrypt.compare(credentials.password, user.passwordHash);
           
-          if (user.password) {
-            isValidPassword = await bcrypt.compare(credentials.password, user.password);
-          }
-          
-          // Fallback for development: check against common passwords
-          const commonPasswords = ['password123', 'admin123', 'test123'];
-          const isCommonPassword = commonPasswords.includes(credentials.password);
-          
-          if (isValidPassword || isCommonPassword) {
+          if (isValidPassword) {
             console.log('DEBUG authorize - User authenticated:', {
               id: user.id,
               email: user.email,
               role: user.role
             });
+            // RETURN ID! - This is critical for session.user.id
             return {
               id: user.id,
               email: user.email,
@@ -103,9 +112,10 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user, trigger }) {
       console.log("DEBUG: Entering JWT callback");
 
-      // Preserve id set by provider/adapter on first sign-in
-      if (user && !token.sub) {
-        token.sub = (user as any).id ?? token.sub;
+      // Persist id on initial sign-in
+      if (user?.id) {
+        token.id = user.id;
+        console.log("DEBUG: JWT callback - Setting token.id:", user.id);
       }
 
       // Always hydrate role from DB to avoid stale tokens
@@ -130,9 +140,12 @@ export const authOptions: NextAuthOptions = {
     },
 
     async session({ session, token }) {
-      console.log("DEBUG: Session callback — token.role:", token.role);
+      console.log("DEBUG: Session callback — token.role:", token.role, "token.id:", token.id);
       session.user = session.user || ({} as any);
-      (session.user as any).id = token.sub as string | undefined;
+      if (token?.id && session?.user) {
+        (session.user as any).id = token.id as string;
+        console.log("DEBUG: Session callback - Setting session.user.id:", token.id);
+      }
       (session.user as any).role = (token as any).role || 'GUEST';
       return session;
     },

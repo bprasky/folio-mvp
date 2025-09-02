@@ -15,16 +15,23 @@ const nextConfig = {
       }
     }
   },
-  // Disable automatic file watching that might revert changes
-  experimental: {
-    turbo: {
-      watchOptions: {
-        ignored: ['**/node_modules/**', '**/.git/**', '**/.next/**']
-      }
-    }
-  },
   // Disable automatic static optimization to prevent file overwrites
   staticPageGenerationTimeout: 60,
+  // Route rewrites for designer project aliases
+  async rewrites() {
+    return [
+      {
+        source: '/designer/:handle/projects/:projectId',
+        destination: '/project/:projectId',
+      },
+    ];
+  },
+  // Redirects for route consolidation
+  async redirects() {
+    return [
+      { source: '/designer', destination: '/projects', permanent: true },
+    ];
+  },
   // Configure webpack to not watch certain files
   webpack: (config, { dev, isServer }) => {
     if (dev) {
@@ -62,6 +69,7 @@ const nextConfig = {
       { protocol: "https", hostname: "images.unsplash.com", pathname: "/**" },
       { protocol: "https", hostname: "res.cloudinary.com", pathname: "/**" },
       { protocol: "https", hostname: "www.thisiscolossal.com", pathname: "/**" },
+      // Note: Removed via.placeholder.com dependency - now using local fallbacks
 
       // Existing patterns
       { protocol: 'https', hostname: 'ik.imgkit.net' },

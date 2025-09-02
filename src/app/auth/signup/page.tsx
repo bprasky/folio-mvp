@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { supabaseBrowser } from '@/lib/supabaseBrowser';
+import { signIn } from 'next-auth/react';
 
 type UserRole = 'DESIGNER' | 'VENDOR' | 'HOMEOWNER';
 type AccountType = 'PERSONAL' | 'ORGANIZATION';
@@ -64,59 +64,46 @@ export default function SignupPage() {
     }
 
     try {
-      console.log('Creating Supabase account...');
-      const supabase = supabaseBrowser();
-      
-      // First, create the Supabase auth user
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-        options: {
-          data: {
-            name: formData.name,
-            role: selectedRole,
-            accountType: accountType.toLowerCase(),
-            organizationName: accountType === 'ORGANIZATION' ? formData.companyName : undefined,
-          }
-        }
+      // First, create the user via API route
+      const response = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+          role: selectedRole,
+          accountType: accountType.toLowerCase(),
+          organizationName: accountType === 'ORGANIZATION' ? formData.companyName : undefined,
+          organizationDescription: accountType === 'ORGANIZATION' ? `${formData.companyName} - ${selectedRole} organization` : undefined,
+        }),
       });
 
-      if (authError) {
-        setMessage(authError.message || 'Failed to create account');
-        return;
-      }
+      const data = await response.json();
 
-      if (authData.user) {
-        // Now create the Prisma user record
-        const response = await fetch('/api/auth/create-prisma-user', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            userId: authData.user.id,
-            name: formData.name,
-            email: formData.email,
-            role: selectedRole,
-            accountType: accountType.toLowerCase(),
-            organizationName: accountType === 'ORGANIZATION' ? formData.companyName : undefined,
-            organizationDescription: accountType === 'ORGANIZATION' ? `${formData.companyName} - ${selectedRole} organization` : undefined,
-          }),
+      if (response.ok) {
+        setMessage('Account created successfully! Signing you in...');
+        
+        // Immediately sign in with the new credentials
+        const signInResult = await signIn('credentials', {
+          redirect: false,
+          email: formData.email,
+          password: formData.password,
         });
 
-        const data = await response.json();
-
-        if (response.ok) {
-          setMessage('Account created successfully! Redirecting...');
-          setTimeout(() => {
-            // Redirect all users to homepage after signup
-            router.push('/');
-          }, 2000);
+        if (signInResult?.error) {
+          setMessage('Account created but sign-in failed. Please sign in manually.');
         } else {
-          setMessage(data.error || 'Failed to create account');
+          setMessage('Account created and signed in successfully! Redirecting...');
+          setTimeout(() => {
+            router.replace('/');
+            router.refresh();
+          }, 2000);
         }
       } else {
-        setMessage('Account creation failed');
+        setMessage(data.error || 'Failed to create account');
       }
     } catch (error) {
       console.error('Signup error:', error);

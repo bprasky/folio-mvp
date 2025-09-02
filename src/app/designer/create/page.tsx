@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { supabaseBrowser } from '@/lib/supabaseBrowser';
+import { useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { createProjectAction } from '@/app/actions/projects';
+import DevDebugPanel from './DevDebugPanel';
 
 type DetailsCore = {
   projectType: string;
@@ -12,7 +13,8 @@ type DetailsCore = {
   budgetBand: string;
 };
 
-export default function CreateDesignerProjectPage() {
+// Long form create UI (existing functionality)
+function LongFormCreateUI() {
   const router = useRouter();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -24,51 +26,6 @@ export default function CreateDesignerProjectPage() {
   const [budgetBand, setBudgetBand] = useState('');
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [whoami, setWhoami] = useState<any>(null);
-  const [serverLogin, setServerLogin] = useState<any>(null);
-
-  // fetch what the server sees
-  useEffect(() => {
-    fetch('/api/dev/whoami', { cache: 'no-store', credentials: 'same-origin' })
-      .then(r => r.json()).then(setWhoami).catch(() => setWhoami(null));
-  }, []);
-
-  // DEV-ONLY: if the server doesn't see a Supabase session, auto-login via server route
-  useEffect(() => {
-    if (
-      process.env.NODE_ENV !== 'production' &&
-      process.env.NEXT_PUBLIC_AUTO_DEV_SUPABASE_LOGIN === 'true' &&
-      whoami && !whoami.supabaseUserId
-    ) {
-      (async () => {
-        const res = await fetch('/api/dev/supabase-login', {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          credentials: 'same-origin',
-          body: JSON.stringify({ email: 'designer.demo@folioad.com', password: 'FolioDemo!2025' }),
-        });
-        const j = await res.json().catch(() => ({}));
-        setServerLogin({ status: res.status, ...j });
-        // refresh whoami after attempting login
-        const r = await fetch('/api/dev/whoami', { cache: 'no-store', credentials: 'same-origin' });
-        setWhoami(await r.json());
-      })();
-    }
-  }, [whoami]);
-
-  async function devSupabaseLogin() {
-    // manual fallback button (still available)
-    const res = await fetch('/api/dev/supabase-login', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      credentials: 'same-origin',
-      body: JSON.stringify({ email: 'designer.demo@folioad.com', password: 'FolioDemo!2025' }),
-    });
-    const j = await res.json().catch(() => ({}));
-    setServerLogin({ status: res.status, ...j });
-    const r = await fetch('/api/dev/whoami', { cache: 'no-store', credentials: 'same-origin' });
-    setWhoami(await r.json());
-  }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -84,26 +41,32 @@ export default function CreateDesignerProjectPage() {
     };
     
     try {
-      const sb = supabaseBrowser();
-      const { data: sess } = await sb.auth.getSession();
-      const token = sess?.session?.access_token;
-
       const r = await fetch('/api/projects', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...(process.env.NEXT_PUBLIC_ALLOW_BEARER_FALLBACK === 'true' && token
-            ? { Authorization: `Bearer ${token}` } : {}),
         },
         credentials: 'same-origin',
         body: JSON.stringify({ name, description, detailsCore }),
       });
-      if (!r.ok) {
-        const t: any = await r.json().catch(() => ({}));
-        throw new Error(t.error || 'Failed to create project');
+      
+      if (r.status === 401) {
+        setErr('You must be signed in as DESIGNER or ADMIN.');
+      } else if (r.status === 403) {
+        setErr('Your role is not permitted to create projects.');
+      } else if (!r.ok) {
+        const errorData = await r.json().catch(() => ({}));
+        setErr(errorData.error || 'Failed to create project.');
+      } else {
+        const json = await r.json();
+        // API now returns { id: "..." } — just read id:
+        const id = json?.id;
+        if (!id) {
+          setErr('Create API did not return an id.');
+          return;
+        }
+        router.replace(`/project/${id}`);
       }
-      const { id } = await r.json();
-      router.replace(`/projects/${id}`);
     } catch (e: any) {
       setErr(e.message || 'Failed to create project');
     } finally {
@@ -114,32 +77,6 @@ export default function CreateDesignerProjectPage() {
   return (
     <div className="p-6">
       <div className="max-w-3xl mx-auto">
-        {process.env.NODE_ENV !== 'production' && (
-          <div className="mb-4 rounded border border-yellow-300 bg-yellow-50 p-3 text-sm space-y-2">
-            <div className="font-medium">Auth Debug</div>
-            <div>Client origin: <code>{typeof window !== 'undefined' ? window.location.origin : ''}</code></div>
-            <div>Server sees cookies: <code>{(whoami?.cookieNames || []).join(', ') || 'none'}</code></div>
-            <div>Supabase user (server): <code>{whoami?.supabaseUserId || 'null'}</code></div>
-
-            {serverLogin && (
-              <div className="rounded bg-white p-2 border">
-                <div>Server login status: <code>{serverLogin.status}</code></div>
-                <div>ok: <code>{String(serverLogin.ok)}</code></div>
-                <div>userId: <code>{serverLogin.userId || 'null'}</code></div>
-                <div>error: <code>{serverLogin.error || 'none'}</code></div>
-                <div>cookiesBefore: <code>{(serverLogin.cookiesBefore||[]).join(', ') || '[]'}</code></div>
-                <div>cookiesAfter: <code>{(serverLogin.cookiesAfter||[]).join(', ') || '[]'}</code></div>
-              </div>
-            )}
-
-            {!whoami?.supabaseUserId && (
-              <button type="button" onClick={devSupabaseLogin} className="rounded border px-3 py-1">
-                Dev: Sign in to Supabase as demo designer
-              </button>
-            )}
-          </div>
-        )}
-        
         <h1 className="text-2xl font-semibold mb-6">Create Project</h1>
 
         <form onSubmit={onSubmit} className="space-y-5">
@@ -288,7 +225,127 @@ export default function CreateDesignerProjectPage() {
             {loading ? 'Creating…' : 'Create project'}
           </button>
         </form>
+        
+        <DevDebugPanel />
       </div>
     </div>
   );
+}
+
+// Publish Now flow (minimal create + tagging)
+function PublishNowFlow() {
+  const router = useRouter();
+  const [step, setStep] = useState<'meta' | 'tag'>('meta');
+  const [projectId, setProjectId] = useState<string | null>(null);
+  const [name, setName] = useState('');
+  const [desc, setDesc] = useState('');
+  const [err, setErr] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  async function handleCreate(e: React.FormEvent) {
+    e.preventDefault();
+    setErr(null);
+    setLoading(true);
+
+    try {
+      const res = await createProjectAction({ 
+        name, 
+        description: desc, 
+        intent: 'publish_now' 
+      });
+      
+      if (res?.ok && res.projectId) {
+        setProjectId(res.projectId);
+        setStep('tag');
+      } else {
+        setErr('Failed to create project');
+      }
+    } catch (e: any) {
+      setErr(e.message || 'Failed to create project');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (step === 'meta') {
+    return (
+      <div className="p-6">
+        <div className="max-w-xl mx-auto">
+          <h1 className="text-2xl font-semibold mb-6">Publish a Project</h1>
+          
+          <form onSubmit={handleCreate} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Project Title *</label>
+              <input
+                className="w-full border rounded-lg px-3 py-2"
+                placeholder="Enter project title"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium mb-1">Description</label>
+              <textarea
+                className="w-full border rounded-lg px-3 py-2"
+                placeholder="Describe your project (optional)"
+                value={desc}
+                onChange={(e) => setDesc(e.target.value)}
+                rows={3}
+              />
+            </div>
+
+            {err && <p className="text-red-600 text-sm">{err}</p>}
+
+            <button 
+              type="submit" 
+              className="w-full rounded-lg border px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+              disabled={loading}
+            >
+              {loading ? 'Creating...' : 'Continue to Upload & Tag'}
+            </button>
+          </form>
+          
+          <DevDebugPanel />
+        </div>
+      </div>
+    );
+  }
+
+  // step === 'tag' - redirect to project page for now
+  // TODO: Integrate with ProjectCreationModal when available
+  if (projectId) {
+            router.replace(`/project/${projectId}`);
+    return (
+      <div className="p-6">
+        <div className="max-w-xl mx-auto text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p>Redirecting to project...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return null;
+}
+
+// Main page component
+export default function CreateDesignerProjectPage({ 
+  searchParams 
+}: { 
+  searchParams?: { intent?: string } 
+}) {
+  const intent = (searchParams?.intent ?? 'folder').toLowerCase();
+
+  if (intent === 'folder') {
+    return <LongFormCreateUI />;
+  }
+
+  if (intent === 'publish_now') {
+    return <PublishNowFlow />;
+  }
+
+  // fallback: default to folder
+  return <LongFormCreateUI />;
 } 

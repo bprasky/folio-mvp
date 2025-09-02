@@ -39,12 +39,12 @@ export async function POST(request: NextRequest) {
     const user = await prisma.user.upsert({
       where: { email },
       update: {
-        password: hashedPassword,
+        passwordHash: hashedPassword,
         role: 'ADMIN',
       },
       create: {
         email,
-        password: hashedPassword,
+        passwordHash: hashedPassword,
         role: 'ADMIN',
         name: email.split('@')[0], // Use email prefix as name
       },

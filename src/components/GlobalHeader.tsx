@@ -1,16 +1,34 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import Link from 'next/link';
 import { useRole } from '../contexts/RoleContext';
 import { useSession, signOut } from 'next-auth/react';
 import { useState, useRef, useEffect } from 'react';
-import { FaUser, FaSignOutAlt, FaCog, FaChevronDown } from 'react-icons/fa';
+import { FaUser, FaSignOutAlt, FaCog, FaChevronDown, FaPlus } from 'react-icons/fa';
+import { LogoutButton } from './LogoutButton';
+import { getCreateTarget, canCreateProject as canCreate, normalizeRole } from '@/lib/permissions';
 
 export default function GlobalHeader() {
   const { role } = useRole();
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Get normalized role and create config for mobile controls
+  const normalizedRole = normalizeRole(session?.user?.role);
+  const createCfg = getCreateTarget(normalizedRole);
+
+  // Function to handle Sign In with session cleanup (same as Navigation)
+  async function goToSigninFresh() {
+    try {
+      // end any current/stale session (idempotent)
+      await signOut({ redirect: false });
+      await fetch('/auth/logout', { method: 'POST' });
+    } catch {}
+    // hard redirect to the signin page
+    window.location.replace('/auth/signin');
+  }
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -57,6 +75,31 @@ export default function GlobalHeader() {
             {role}
           </span>
         </motion.div>
+
+        {/* Mobile Controls - Sign In, Logout, +Create */}
+        <div className="flex items-center gap-2 ml-auto sm:hidden">
+          {status !== 'authenticated' ? (
+            <button
+              onClick={goToSigninFresh}
+              className="px-3 py-1 rounded-md border border-folio-border bg-white text-folio-text text-sm hover:bg-folio-muted transition-colors"
+            >
+              Sign In
+            </button>
+          ) : (
+            <>
+              {createCfg && canCreate(normalizedRole) && (
+                <Link
+                  href={createCfg.href}
+                  className="px-3 py-1 rounded-md border border-folio-border bg-folio-text text-white text-sm hover:bg-opacity-90 transition-colors flex items-center gap-1"
+                >
+                  <FaPlus className="w-3 h-3" />
+                  {createCfg.label}
+                </Link>
+              )}
+              <LogoutButton />
+            </>
+          )}
+        </div>
 
         {/* Profile Dropdown */}
         {session?.user && (

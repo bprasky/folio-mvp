@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { email, name, profileType } = body;
+    const { email, name, role } = body;
 
     // Simple user creation/authentication for testing
     const user = await prisma.user.upsert({
@@ -15,7 +15,8 @@ export async function POST(request: NextRequest) {
       create: {
         email: email || 'test@example.com',
         name: name || 'Test User',
-        profileType: profileType || 'designer',
+        role: role || 'DESIGNER',
+        passwordHash: 'temp-password-hash', // Required field
         location: 'New York, NY'
       }
     });
@@ -25,7 +26,7 @@ export async function POST(request: NextRequest) {
         id: user.id,
         email: user.email,
         name: user.name,
-        profileType: user.profileType
+        role: user.role
       },
       message: 'Authentication successful'
     });
@@ -46,7 +47,7 @@ export async function GET() {
         id: 'test-user-id',
         email: 'test@example.com',
         name: 'Test User',
-        profileType: 'admin'
+        role: 'ADMIN'
       }
     });
   } catch (error) {

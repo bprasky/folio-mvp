@@ -516,7 +516,7 @@ const EventsPageClient: React.FC<EventsPageClientProps> = ({
             </p>
             
             {/* Call to Action based on role */}
-            {userRole === 'admin' && (
+            {userRole === 'ADMIN' && (
               <div className="space-y-4">
                 <Link
                   href="/events/create"
@@ -531,7 +531,7 @@ const EventsPageClient: React.FC<EventsPageClientProps> = ({
               </div>
             )}
             
-            {userRole === 'vendor' && (
+            {userRole === 'VENDOR' && (
               <div className="space-y-4">
                 <Link
                   href="/events/create"
@@ -546,7 +546,7 @@ const EventsPageClient: React.FC<EventsPageClientProps> = ({
               </div>
             )}
             
-            {userRole === 'designer' && (
+            {userRole === 'DESIGNER' && (
               <div className="space-y-4">
                 <Link
                   href="/inspire"

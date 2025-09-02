@@ -32,11 +32,26 @@
     "auth:detect": "tsx scripts/auth-detect.ts",
     "auth:detect:simple": "node scripts/auth-detect-simple.js",
     "db:check": "tsx scripts/db-check.ts",
-    "test:auth": "node scripts/test-auth-endpoints.js"
+    "test:auth": "node scripts/test-auth-endpoints.js",
+    "db:guard": "tsx scripts/guard-migrations.ts",
+    "db:backup": "tsx scripts/backup-db.ts",
+    "migrate:safe": "npm run db:guard && npm run db:backup && prisma migrate dev",
+    "migrate:create-only": "npm run db:guard && prisma migrate dev --create-only",
+    "migrate:deploy": "npm run db:guard && prisma migrate deploy",
+    "seed:min": "tsx scripts/seed-minimal.ts",
+    "check-env": "tsx scripts/check-env.ts",
+    "test:service-key": "node scripts/test-supabase-service-key.mjs",
+    "guard:client-imports": "node scripts/guard-client-imports.js",
+    "diag": "node scripts/diag.mjs",
+    "audit:events": "node scripts/audit-events.mjs",
+    "bucket:list": "node scripts/list-buckets.mjs",
+    "bucket:create": "node scripts/create-storage-bucket.mjs",
+    "seed": "prisma db seed"
   },
   "buildTimestamp": "2025-01-18T20:15:00Z",
   "prisma": {
-    "schema": "prisma/schema.prisma"
+    "schema": "prisma/schema.prisma",
+    "seed": "node prisma/seed.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.1",

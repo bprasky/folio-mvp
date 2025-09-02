@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
       await prisma.user.update({
         where: { email: adminData.email },
         data: { 
-          password: hashedPassword,
+          passwordHash: hashedPassword,
           role: 'ADMIN'
         }
       });
@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
         data: {
           email: adminData.email,
           name: adminData.name,
-          password: hashedPassword,
+          passwordHash: hashedPassword,
           role: adminData.role
         }
       });

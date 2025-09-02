@@ -293,7 +293,7 @@ export default function EventDetailClient({ event, canEdit = false, featuredProd
                 </div>
               </div>
               {/* RSVP Coming Soon */}
-              {userRole === 'designer' && (
+              {userRole === 'DESIGNER' && (
                 <div className="text-center mb-6">
                   <p className="text-folio-text-muted mb-2">Want to RSVP to this event?</p>
                   <p className="text-sm text-folio-text-muted">

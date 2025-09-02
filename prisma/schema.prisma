@@ -9,8 +9,7 @@ datasource db {
 
 model User {
   id                String             @id @default(uuid())
-  email             String?            @unique
-  password          String?
+  email             String             @unique
   name              String
   bio               String?
   profileImage      String?
@@ -30,11 +29,13 @@ model User {
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
   role              Role               @default(DESIGNER)
+  passwordHash      String
   engagementEvents  EngagementEvent[]
   rsvps             EventRSVP[]        @relation("UserRSVPs")
   events            Event[]            @relation("EventCreator")
   folders           Folder[]
   organizationUsers OrganizationUser[]
+  posts             posts[]
   products          Product[]          @relation("VendorProducts")
   designerProjects  Project[]          @relation("DesignerProjects")
   ownedProjects     Project[]          @relation("OwnedProjects")
@@ -85,12 +86,19 @@ model Event {
   targetUserRoles          String[]           @default([])
   timezone                 String?
   waitlistEnabled          Boolean            @default(false)
+  isFestival               Boolean            @default(false)
+  bookings                 bookings[]
+  clicks                   clicks[]
   engagementEvents         EngagementEvent[]
+  event_metrics            event_metrics?
   productStats             EventProductStat[]
+  event_products           event_products[]
   rsvps                    EventRSVP[]
   createdBy                User               @relation("EventCreator", fields: [createdById], references: [id])
   parentFestival           Event?             @relation("FestivalSubevents", fields: [parentFestivalId], references: [id])
   subevents                Event[]            @relation("FestivalSubevents")
+  impressions              impressions[]
+  placements               placements[]
 
   @@map("events")
 }
@@ -112,10 +120,10 @@ model EventRSVP {
 
 model Project {
   id               String         @id @default(uuid())
-  name             String
   description      String?
   category         String?
   status           String         @default("active")
+  stage            ProjectStage   @default(concept)
   isPublic         Boolean        @default(false)
   isAIEnabled      Boolean        @default(false)
   views            Int            @default(0)
@@ -130,6 +138,12 @@ model Project {
   isHandoffReady   Boolean        @default(false)
   handoffInvitedAt DateTime?
   handoffClaimedAt DateTime?
+  title            String         @default("")
+  projectType      ProjectType    @default(UNSPECIFIED)
+  clientType       ClientType     @default(RESIDENTIAL)
+  budgetBand       BudgetBand     @default(UNSPECIFIED)
+  city             String?
+  regionState      String?
   files            ProjectFile[]
   images           ProjectImage[]
   designer         User?          @relation("DesignerProjects", fields: [designerId], references: [id])
@@ -202,6 +216,7 @@ model Folder {
   designerId String
   products   FolderProduct[]
   designer   User            @relation(fields: [designerId], references: [id])
+  posts      posts[]
 
   @@map("folders")
 }
@@ -384,6 +399,98 @@ model EventProductStat {
   @@map("event_product_stats")
 }
 
+model bookings {
+  id             String        @id
+  eventId        String
+  designerId     String
+  requestedAt    DateTime      @default(now())
+  requestedStart DateTime?
+  requestedEnd   DateTime?
+  status         BookingStatus @default(REQUESTED)
+  notes          String?
+  events         Event         @relation(fields: [eventId], references: [id])
+}
+
+model clicks {
+  id         String   @id
+  eventId    String
+  designerId String?
+  target     String
+  at         DateTime @default(now())
+  meta       Json?
+  events     Event    @relation(fields: [eventId], references: [id])
+}
+
+model event_metrics {
+  id          String @id
+  eventId     String @unique
+  views       Int    @default(0)
+  impressions Int    @default(0)
+  clicks      Int    @default(0)
+  saves       Int    @default(0)
+  rsvps       Int    @default(0)
+  bookings    Int    @default(0)
+  ctr         Float  @default(0)
+  quality     Float  @default(0)
+  events      Event  @relation(fields: [eventId], references: [id])
+}
+
+model event_products {
+  id        String   @id
+  eventId   String
+  productId String
+  position  Int      @default(0)
+  name      String?
+  imageUrl  String?
+  price     Decimal? @db.Decimal(10, 2)
+  url       String?
+  events    Event    @relation(fields: [eventId], references: [id])
+}
+
+model impressions {
+  id         String   @id
+  eventId    String
+  designerId String?
+  at         DateTime @default(now())
+  sessionId  String?
+  events     Event    @relation(fields: [eventId], references: [id])
+}
+
+model placements {
+  id        String   @id
+  eventId   String
+  page      Int
+  slot      Int
+  sizeToken String
+  validFrom DateTime
+  validTo   DateTime
+  events    Event    @relation(fields: [eventId], references: [id])
+}
+
+model post_items {
+  id           String   @id
+  postId       String
+  productName  String
+  imageUrl     String?
+  affiliateUrl String?
+  section      String?
+  createdAt    DateTime @default(now())
+  posts        posts    @relation(fields: [postId], references: [id], onDelete: Cascade)
+}
+
+model posts {
+  id         String       @id
+  title      String
+  designerId String
+  folderId   String?
+  content    String?
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime
+  post_items post_items[]
+  users      User         @relation(fields: [designerId], references: [id], onDelete: Cascade)
+  folders    Folder?      @relation(fields: [folderId], references: [id])
+}
+
 enum Role {
   ADMIN
   VENDOR
@@ -424,4 +531,69 @@ enum EventType {
   KEYNOTE
   OTHER
   FESTIVAL
+  LAUNCH
+  CEU
+  LUNCH_LEARN
+  PRODUCT_KNOWLEDGE
+}
+
+enum ProjectType {
+  UNSPECIFIED
+  RESIDENTIAL
+  COMMERCIAL
+  HOSPITALITY
+  HEALTHCARE
+  EDUCATION
+  OFFICE
+  RETAIL
+  INDUSTRIAL
+  OTHER
+}
+
+enum BudgetBand {
+  UNSPECIFIED
+  LOW
+  MID
+  HIGH
+  LUXURY
+}
+
+enum BookingStatus {
+  REQUESTED
+  CONFIRMED
+  DECLINED
+  CANCELLED
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum EventWeight {
+  ANCHOR
+  FLEX
+  BACKFILL
+}
+
+enum SponsorshipTier {
+  FREE
+  SPONSORED
+  PREMIUM
+}
+
+enum ProjectStage {
+  concept
+  schematic
+  design_development
+  cd_pre_spec
+  spec_locked
+  in_procurement
+  install
+}
+
+enum ClientType {
+  RESIDENTIAL
+  COMMERCIAL
 }

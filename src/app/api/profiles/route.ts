@@ -15,10 +15,17 @@ export async function GET(request: NextRequest) {
       );
     }
     
+    // Map role parameter to enum values
+    const roleMap: { [key: string]: 'DESIGNER' | 'VENDOR' | 'HOMEOWNER' } = {
+      'designer': 'DESIGNER',
+      'vendor': 'VENDOR', 
+      'homeowner': 'HOMEOWNER'
+    };
+    
     // Load profiles from database
     const profiles = await prisma.user.findMany({
       where: {
-        profileType: role
+        role: roleMap[role]
       },
       select: {
         id: true,
@@ -42,8 +49,8 @@ export async function GET(request: NextRequest) {
         updatedAt: true,
         _count: {
           select: {
-            designerProjects: role === 'designer',
-            products: role === 'vendor'
+            designerProjects: role === 'DESIGNER',
+            products: role === 'VENDOR'
           }
         }
       },
@@ -64,7 +71,7 @@ export async function GET(request: NextRequest) {
         updatedAt: profile.updatedAt
       };
 
-      if (role === 'designer') {
+      if (role === 'DESIGNER') {
         return {
           ...base,
           specialties: profile.specialties,
@@ -78,7 +85,7 @@ export async function GET(request: NextRequest) {
             projects: profile._count?.designerProjects || 0
           }
         };
-      } else if (role === 'vendor') {
+      } else if (role === 'VENDOR') {
         return {
           ...base,
           companyName: profile.companyName,
@@ -90,7 +97,7 @@ export async function GET(request: NextRequest) {
             followers: profile.followers
           }
         };
-      } else if (role === 'homeowner') {
+      } else if (role === 'HOMEOWNER') {
         return {
           ...base,
           budgetRange: profile.budgetRange,
@@ -125,9 +132,16 @@ export async function POST(request: NextRequest) {
       );
     }
     
+    // Map role parameter to enum values
+    const roleMap: { [key: string]: 'DESIGNER' | 'VENDOR' | 'HOMEOWNER' } = {
+      'designer': 'DESIGNER',
+      'vendor': 'VENDOR', 
+      'homeowner': 'HOMEOWNER'
+    };
+    
     // Prepare base profile data
     let newProfileData: any = {
-      profileType: role,
+      role: roleMap[role],
       name: profileData.name || `New ${role.charAt(0).toUpperCase() + role.slice(1)}`,
       bio: profileData.bio || `${role.charAt(0).toUpperCase() + role.slice(1)} profile`,
       profileImage: profileData.profileImage || null,
@@ -173,7 +187,6 @@ export async function POST(request: NextRequest) {
         name: true,
         bio: true,
         profileImage: true,
-        profileType: true,
         location: true,
         specialties: true,
         website: true,

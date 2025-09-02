@@ -3,17 +3,34 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useSession, signOut } from 'next-auth/react';
+import { useSession } from 'next-auth/react';
 import { FaHome, FaLightbulb, FaNewspaper, FaStore, FaUsers, FaUser, FaPlus, FaBriefcase, FaGraduationCap, FaChalkboardTeacher, FaUserGraduate, FaStar, FaVideo, FaCompass, FaChartLine, FaChartBar, FaFolder, FaHeart, FaEnvelope, FaShoppingCart, FaBook, FaCog, FaFileAlt, FaBox, FaChevronDown, FaChevronRight, FaCalendarAlt, FaCamera, FaSignOutAlt } from 'react-icons/fa';
 import FolioLogo from './FolioLogo';
+import { LogoutButton } from './LogoutButton';
+import { getCreateTarget, canCreateProject, normalizeRole } from '@/lib/permissions';
+import { signOut } from 'next-auth/react';
+import CreateProjectChooser from './CreateProjectChooser';
+
 const Navigation = () => {
   const pathname = usePathname();
   const { data: session, status } = useSession();
   const [isCommunityExpanded, setIsCommunityExpanded] = useState(false);
   const [isProfileExpanded, setIsProfileExpanded] = useState(false);
+  const [showCreateChooser, setShowCreateChooser] = useState(false);
 
-  // Get role directly from session, ensure it's lowercase for consistency
-  const role = session?.user?.role?.toLowerCase() || 'guest';
+  // Get normalized role from session using centralized logic
+  const role = normalizeRole(session?.user?.role);
+
+  // Function to handle Sign In with session cleanup
+  async function goToSigninFresh() {
+    try {
+      // end any current/stale session (idempotent)
+      await signOut({ redirect: false });
+      await fetch('/auth/logout', { method: 'POST' });
+    } catch {}
+    // hard redirect to the signin page
+    window.location.replace('/auth/signin');
+  }
 
   const baseNavItems = [
     { href: '/', icon: FaHome, label: 'Home' },
@@ -36,29 +53,29 @@ const Navigation = () => {
     if (!session?.user) {
       // Show sign in option when not logged in
       return [
-        { name: 'Sign In', href: '/auth/signin', icon: FaUser },
+        { name: 'Sign In', href: '#', icon: FaUser, isSignIn: true, isLogout: false },
       ];
     }
 
     // Defensive coding: if role is undefined, don't show role-specific items
     if (!session?.user?.role) {
       return [
-        { name: 'My Profile', href: '/profile', icon: FaUser },
-        { name: 'Sign Out', href: '#', icon: FaSignOutAlt, isLogout: true },
+        { name: 'My Profile', href: '/profile', icon: FaUser, isSignIn: false, isLogout: false },
+        { name: 'Sign Out', href: '#', icon: FaSignOutAlt, isSignIn: false, isLogout: true },
       ];
     }
 
     // Show profile options when logged in
     const baseProfileItems = [
-      { name: 'My Profile', href: '/profile', icon: FaUser },
-      { name: 'Messages', href: '/messages', icon: FaEnvelope },
-      { name: 'Sign Out', href: '#', icon: FaSignOutAlt, isLogout: true },
+      { name: 'My Profile', href: '/profile', icon: FaUser, isSignIn: false, isLogout: false },
+      { name: 'Messages', href: '/messages', icon: FaEnvelope, isSignIn: false, isLogout: false },
+      { name: 'Sign Out', href: '#', icon: FaSignOutAlt, isSignIn: false, isLogout: true },
     ];
 
     // Only add Dashboard for specific roles
-    const role = session.user.role.toLowerCase();
-    if (['admin', 'vendor', 'designer', 'student'].includes(role)) {
-      baseProfileItems.splice(1, 0, { name: 'Dashboard', href: getDashboardLink(), icon: FaChartLine });
+    const userRole = normalizeRole(session.user.role);
+    if (['ADMIN', 'VENDOR', 'DESIGNER', 'STUDENT'].includes(userRole || '')) {
+      baseProfileItems.splice(1, 0, { name: 'Dashboard', href: getDashboardLink(), icon: FaChartLine, isSignIn: false, isLogout: false });
     }
 
     return baseProfileItems;
@@ -67,11 +84,11 @@ const Navigation = () => {
   // Get dashboard link based on user role
   const getDashboardLink = () => {
     switch (role) {
-      case 'designer':
+      case 'DESIGNER':
         return '/designer/dashboard';
-      case 'vendor':
+      case 'VENDOR':
         return '/vendor/dashboard';
-      case 'admin':
+      case 'ADMIN':
         return '/admin/dashboard';
       default:
         return '/'; // Fallback to homepage
@@ -82,7 +99,7 @@ const Navigation = () => {
   const homeownerItems: Array<{name: string; href: string; icon: any}> = [];
 
   const designerItems = [
-    { name: 'Projects', href: '/designer/projects', icon: FaBriefcase },
+    { name: 'Projects', href: '/projects', icon: FaBriefcase },
   ];
 
   const vendorItems = [
@@ -107,15 +124,15 @@ const Navigation = () => {
   // Role-based profile link configuration
   const getProfileLink = () => {
     switch (role) {
-      case 'designer':
+      case 'DESIGNER':
         return '/designer/profile';
-      case 'vendor':
+      case 'VENDOR':
         return '/vendor';
-      case 'student':
+      case 'STUDENT':
         return '/student';
-      case 'admin':
+      case 'ADMIN':
         return '/admin';
-      case 'homeowner':
+      case 'HOMEOWNER':
       default:
         return '/homeowner';
     }
@@ -128,18 +145,18 @@ const Navigation = () => {
       return [];
     }
 
-    const userRole = session.user.role.toLowerCase();
+    const userRole = normalizeRole(session.user.role);
     
     switch (userRole) {
-      case 'homeowner':
+      case 'HOMEOWNER':
         return homeownerItems;
-      case 'designer':
+      case 'DESIGNER':
         return designerItems;
-      case 'vendor':
+      case 'VENDOR':
         return vendorItems;
-      case 'student':
+      case 'STUDENT':
         return studentItems;
-      case 'admin':
+      case 'ADMIN':
         return adminItems;
       default:
         // Don't fallback to homeownerItems for undefined roles
@@ -150,48 +167,8 @@ const Navigation = () => {
   const roleItems = getRoleItems();
   const profileItems = getProfileItems();
 
-  // Role-based design button configuration
-  const getDesignButtonConfig = () => {
-    // Defensive coding: if no session or no role, return null
-    if (!session?.user?.role) {
-      return null;
-    }
-
-    const userRole = session.user.role.toLowerCase();
-    
-    switch (userRole) {
-      case 'homeowner':
-        return {
-          href: '/homeowner/folders',
-          label: 'Create Folder'
-        };
-      case 'student':
-        return {
-          href: '/student/create',
-          label: 'Create'
-        };
-      case 'designer':
-        return {
-          href: '/designer/create', // canonical create path → /designer/create
-          label: 'Create'
-        };
-      case 'vendor':
-        return {
-          href: '/vendor/create-project',
-          label: '+ Create'
-        };
-      case 'admin':
-        return {
-          href: '/admin/tasks',
-          label: 'Admin Tasks'
-        };
-      default:
-        // Don't show button for undefined roles
-        return null;
-    }
-  };
-
-  const designButtonConfig = getDesignButtonConfig();
+  // Get create button configuration using centralized logic
+  const createCfg = getCreateTarget(role);
 
   // Debug logging - after all variables are declared
   console.log('Navigation Debug:', {
@@ -201,7 +178,7 @@ const Navigation = () => {
     user: session?.user?.name || session?.user?.email,
     isAuthenticated: !!session?.user,
     roleItems: roleItems.length,
-    designButtonLabel: designButtonConfig?.label,
+    createButtonLabel: createCfg?.label,
     roleItemsArray: roleItems.map(item => item.name)
   });
   
@@ -224,22 +201,6 @@ const Navigation = () => {
     return profileItems.some(item => isActive(item.href)) || isActive(getProfileLink());
   };
 
-  const handleLogout = async () => {
-    try {
-      console.log('DEBUG: Starting logout process');
-      // Sign out from NextAuth with complete session cleanup
-      await signOut({ 
-        callbackUrl: '/auth/signin',
-        redirect: true 
-      });
-      console.log('DEBUG: Logout completed successfully');
-    } catch (error) {
-      console.error('DEBUG: Logout error:', error);
-      // Fallback: redirect to sign-in page
-      window.location.href = '/auth/signin';
-    }
-  };
-
   // Show loading state while session is being determined
   if (status === 'loading') {
     return (
@@ -249,6 +210,12 @@ const Navigation = () => {
         </div>
         <div className="flex-1 flex items-center justify-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        </div>
+        {/* Placeholder for Sign In button slot to avoid layout jump */}
+        <div className="mt-6 pt-6 border-t border-folio-border">
+          <div className="p-3 rounded-lg bg-gray-100 animate-pulse">
+            <div className="h-4 bg-gray-200 rounded w-24"></div>
+          </div>
         </div>
       </div>
     );
@@ -375,16 +342,24 @@ const Navigation = () => {
           {/* Profile Submenu */}
           {isProfileExpanded && (
             <div className="mt-1 ml-6 space-y-1">
-              {profileItems.map((item) => {
+                            {profileItems.map((item) => {
                 const SubIcon = item.icon;
                 const active = isActive(item.href);
                 
                 if (item.isLogout) {
                   return (
+                    <div key={item.href}>
+                      <LogoutButton />
+                    </div>
+                  );
+                }
+                
+                if (item.isSignIn) {
+                  return (
                     <button
                       key={item.href}
-                      onClick={handleLogout}
-                      className="p-2 rounded-lg flex items-center w-full transition-all duration-200 text-sm text-red-600 hover:bg-red-50 hover:text-red-700"
+                      onClick={goToSigninFresh}
+                      className="p-2 rounded-lg flex items-center w-full transition-all duration-200 text-sm text-folio-text hover:bg-folio-muted hover:text-folio-text"
                     >
                       <SubIcon className="text-base" />
                       <span className="ml-3 font-medium">{item.name}</span>
@@ -412,14 +387,30 @@ const Navigation = () => {
         </div>
       </nav>
 
-      {/* Role-specific Design Button - Only show for authenticated users */}
-      {session?.user && designButtonConfig && (
-        <Link
-          href={designButtonConfig.href}
-          className="w-full py-3 px-4 rounded-lg font-medium items-center justify-center mt-6 transition-all duration-200 hover:shadow-md bg-folio-text text-white hover:bg-opacity-90 nav-focus-visible"
-        >
-          <FaPlus className="mr-2" /> {designButtonConfig.label}
-        </Link>
+      {/* Role-specific Create Button - Only show for authenticated users with create permissions */}
+      {session?.user && createCfg && canCreateProject(role) && (
+        <>
+          {role === 'DESIGNER' ? (
+            <button
+              onClick={() => setShowCreateChooser(true)}
+              className="w-full py-3 px-4 rounded-lg font-medium items-center justify-center mt-6 transition-all duration-200 hover:shadow-md bg-folio-text text-white hover:bg-opacity-90 nav-focus-visible"
+            >
+              <FaPlus className="mr-2" /> {createCfg.label}
+            </button>
+          ) : (
+            <Link
+              href={createCfg.href}
+              className="w-full py-3 px-4 rounded-lg font-medium items-center justify-center mt-6 transition-all duration-200 hover:shadow-md bg-folio-text text-white hover:bg-opacity-90 nav-focus-visible"
+            >
+              <FaPlus className="mr-2" /> {createCfg.label}
+            </Link>
+          )}
+        </>
+      )}
+
+      {/* Create Project Chooser Modal */}
+      {showCreateChooser && (
+        <CreateProjectChooser onClose={() => setShowCreateChooser(false)} />
       )}
 
       {/* User Logout Section */}
@@ -436,13 +427,7 @@ const Navigation = () => {
               <p className="text-xs text-gray-400">Detected: {role}</p>
             </div>
           </div>
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center gap-3 p-3 rounded-lg text-left hover:bg-red-50 transition-colors nav-focus-visible"
-          >
-            <FaSignOutAlt className="w-4 h-4 text-red-500" />
-            <span className="text-sm text-red-600 font-medium">Sign Out</span>
-          </button>
+          <LogoutButton />
         </div>
       )}
     </div>

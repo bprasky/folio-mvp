@@ -190,3 +190,4 @@ findings.push(`${passfail(!hasRefs || (fontW2Exists||fontWExists))} Font refs re
 
 findings.forEach(f => console.log(`- ${f}`));
 
+

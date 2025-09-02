@@ -42,7 +42,7 @@ module.exports = {
       },
       fontFamily: {
         sans: ["Inter", "system-ui", "sans-serif"],
-        canela: ["Canela", "Georgia", "serif"],
+        canela: ["ui-serif", "Georgia", "Cambria", "Times New Roman", "Times", "serif"],
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',

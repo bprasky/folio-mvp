@@ -1,215 +1,132 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-import { createClient } from '@supabase/supabase-js';
+import { NextResponse } from 'next/server';
+import { PrismaClient, EventType } from '@prisma/client';
+import { uploadDataUrlToSupabase, buildObjectPath } from '@/lib/uploadToSupabase';
+import { time } from '@/lib/telemetry';
+import { requireAdmin } from '@/lib/requireAdmin';
+import { rateLimit } from '@/lib/rateLimit';
+import { EventInput } from '@/lib/validators';
 
-const prisma = new PrismaClient();
+// helper to normalize empty strings to undefined
+const opt = (v: unknown) => {
+  if (typeof v !== 'string') return undefined;
+  const s = v.trim();
+  return s.length ? s : undefined;
+};
 
-export async function GET() {
-  try {
-    const events = await prisma.event.findMany({
-      where: {
-        type: 'general',
-        parentFestivalId: null // Only standalone events
-      },
-      include: {
-        createdBy: {
-          select: {
-            id: true,
-            name: true,
-            role: true
-          }
-        },
-        rsvps: true
-      },
-      orderBy: {
-        startDate: 'desc'
-      }
-    });
-
-    return NextResponse.json(events);
-  } catch (error) {
-    console.error('Error fetching events:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch events' },
-      { status: 500 }
-    );
+async function parseEventRequest(req: Request) {
+  const ct = req.headers.get('content-type') || '';
+  if (ct.includes('application/json')) return await req.json();
+  if (ct.includes('multipart/form-data') || ct.includes('application/x-www-form-urlencoded')) {
+    const form = await req.formData();
+    const title = form.get('title')?.toString() ?? form.get('name')?.toString() ?? '';
+    const description = form.get('description')?.toString() ?? '';
+    const location = form.get('location')?.toString() ?? '';
+    const startDate = form.get('startDate')?.toString() ?? '';
+    const endDate = form.get('endDate')?.toString() ?? '';
+    const eventType = form.get('eventType')?.toString() ?? 'OTHER';
+    const parentFestivalId = form.get('parentFestivalId')?.toString() ?? null;
+    const imageDataUrl = opt(form.get('imageDataUrl')?.toString() ?? '');
+    const imageUrl = opt(form.get('imageUrl')?.toString() ?? '');
+    let imageFile: File | undefined;
+    const f = (form.get('image') ?? form.get('file') ?? form.get('photo'));
+    if (f instanceof File) imageFile = f;
+    return { title, description, location, startDate, endDate, eventType, parentFestivalId, imageDataUrl, imageUrl, imageFile };
   }
+  try { return await req.json(); }
+  catch { throw new Error(`Unsupported Content-Type: ${ct}`); }
 }
 
-export async function POST(request: NextRequest) {
+const prisma = new PrismaClient();
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
+const MAX_BYTES = 10 * 1024 * 1024;
+function estimateBytesFromDataUrl(d: string) {
+  const i = d.indexOf(','); const b64 = i >= 0 ? d.slice(i+1) : d;
+  return Math.floor((b64.length * 3) / 4) - (b64.endsWith('==') ? 2 : b64.endsWith('=') ? 1 : 0);
+}
+
+export async function POST(req: Request) {
   try {
-    console.log('🎯 Admin events API called');
-    
-    // Debug: Check if we can get session info
-    console.log('🔍 Request headers:', Object.fromEntries(request.headers.entries()));
-    
-    let title: string, description: string, location: string, startDate: string, endDate: string;
-    let image: File | null = null;
-    let createdById: string, parentFestivalId: string | null, eventType: string;
+    rateLimit('admin:' + (req.headers.get('x-forwarded-for') ?? 'local'));
+    const admin = await requireAdmin();
 
-    // Check if the request is JSON or FormData
-    const contentType = request.headers.get('content-type');
-    console.log('📝 Content-Type:', contentType);
-    
-    if (contentType?.includes('application/json')) {
-      // Handle JSON request
-      const body = await request.json();
-      console.log('📦 JSON body received:', body);
-      title = body.title;
-      description = body.description;
-      location = body.location;
-      startDate = body.startDate;
-      endDate = body.endDate;
-      createdById = body.createdById;
-      parentFestivalId = body.parentFestivalId || null;
-      eventType = body.type || 'general';
-      console.log('🔍 Parsed values:', { title, description, location, startDate, endDate, createdById, parentFestivalId, eventType });
+    const payload = await parseEventRequest(req);
+    const normalized = {
+      title: (payload.title ?? payload.name ?? '').toString().trim(),
+      description: payload.description,
+      location: payload.location,
+      startDate: payload.startDate,
+      endDate: payload.endDate,
+      eventType: payload.eventType ?? 'OTHER',
+      parentFestivalId: payload.parentFestivalId ?? null,
+      imageDataUrl: opt(payload.imageDataUrl),
+      imageUrl: opt(payload.imageUrl),
+      imageFile: (payload as any).imageFile instanceof File ? (payload as any).imageFile : undefined,
+    };
+
+    const input = EventInput.parse(normalized);
+
+    // idempotency: same title + startDate
+    const existing = await prisma.event.findFirst({
+      where: { title: input.title ?? (normalized as any).title, startDate: input.startDate }
+    });
+    if (existing) {
+      return NextResponse.json({ id: existing.id, message: 'Event already exists' }, { status: 409 });
+    }
+
+    // map string → enum, default OTHER
+    const eType = (Object.keys(EventType) as (keyof typeof EventType)[])
+      .includes((input.eventType ?? 'OTHER').toUpperCase() as any)
+      ? (input.eventType ?? 'OTHER').toUpperCase()
+      : 'OTHER';
+
+    let imageUrl: string | null = null;
+    const label = input.title ?? (normalized as any).title ?? null;
+
+    if (normalized.imageFile instanceof File) {
+      const buf = Buffer.from(await normalized.imageFile.arrayBuffer());
+      const mime = normalized.imageFile.type || 'image/jpeg';
+      const approx = buf.length;
+      if (approx > MAX_BYTES) throw new Error(`Image too large (~${approx} bytes)`);
+      const ext = mime.split('/')[1] ?? 'jpg';
+      const path = buildObjectPath('events', label, ext);
+      const dataUrl = `data:${mime};base64,${buf.toString('base64')}`;
+      imageUrl = await time('storage.upload', () => uploadDataUrlToSupabase(dataUrl, path));
+    } else if (input.imageDataUrl) {
+      const approx = estimateBytesFromDataUrl(input.imageDataUrl);
+      if (approx > MAX_BYTES) throw new Error(`Image too large (~${approx} bytes)`);
+      const ext = input.imageDataUrl.split(';')[0].split('/')[1] ?? 'jpg';
+      const path = buildObjectPath('events', label, ext);
+      imageUrl = await time('storage.upload', () => uploadDataUrlToSupabase(input.imageDataUrl!, path));
+    } else if (input.imageUrl) {
+      imageUrl = input.imageUrl;
+    } else if (process.env.FOLIO_ALLOW_CREATE_WITHOUT_IMAGE === 'true') {
+      imageUrl = null;
     } else {
-      // Handle FormData request
-      const formData = await request.formData();
-      console.log('📦 FormData received');
-      
-      title = formData.get('title') as string;
-      description = formData.get('description') as string;
-      location = formData.get('location') as string;
-      startDate = formData.get('startDate') as string;
-      endDate = formData.get('endDate') as string;
-      image = formData.get('image') as File | null;
-      createdById = formData.get('createdById') as string;
-      parentFestivalId = formData.get('parentFestivalId') as string | null;
-      eventType = formData.get('eventType') as string;
-      
-      console.log('🔍 FormData parsed values:', { 
-        title, 
-        description, 
-        location, 
-        startDate, 
-        endDate, 
-        createdById, 
-        parentFestivalId, 
-        eventType 
-      });
+      throw new Error('image required');
     }
-
-    // Validate required fields
-    console.log('✅ Validating required fields...');
-    if (!title || !description || !location || !startDate || !endDate) {
-      console.log('❌ Missing required fields:', { title, description, location, startDate, endDate });
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
-    }
-    console.log('✅ All required fields present');
-
-    // Validate that createdById exists and is a valid user
-    let userId = createdById;
-    console.log('👤 Validating user with createdById:', createdById);
-    
-    if (!createdById) {
-      console.log('❌ createdById is missing');
-      return NextResponse.json(
-        { error: 'createdById is required' },
-        { status: 400 }
-      );
-    }
-    
-    // Verify the user exists
-    console.log('🔍 Looking for user with ID:', createdById);
-    const user = await prisma.user.findUnique({
-      where: { id: createdById }
-    });
-    
-    if (!user) {
-      console.log('❌ User not found with ID:', createdById);
-      console.log('🔄 Attempting to find admin user as fallback...');
-      
-      // Try to find an admin user as fallback
-      const adminUser = await prisma.user.findFirst({
-        where: { role: 'ADMIN' }
-      });
-      
-      if (adminUser) {
-        console.log('✅ Using admin user as fallback:', adminUser.id);
-        createdById = adminUser.id;
-        userId = adminUser.id;
-      } else {
-        console.log('❌ No admin user found in database');
-        return NextResponse.json(
-          { error: 'User not found and no admin user available' },
-          { status: 404 }
-        );
-      }
-    }
-    
-    if (user) {
-      console.log('✅ User found:', { id: user.id, name: user.name, role: user.role });
-      
-      if (user.role !== 'ADMIN') {
-        return NextResponse.json(
-          { error: 'Only admins can create admin events' },
-          { status: 403 }
-        );
-      }
-    }
-
-    // Handle image upload if provided
-    let imageUrl: string | undefined = undefined;
-    if (image) {
-      const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
-      const fileName = `event_${Date.now()}.${image.type.split('/')[1]}`;
-      const { data, error } = await supabase.storage.from('event-images').upload(fileName, image);
-      if (error) {
-        throw new Error(`Image upload failed: ${error.message}`);
-      }
-      const { data: urlData } = supabase.storage.from('event-images').getPublicUrl(fileName);
-      imageUrl = urlData.publicUrl;
-    }
-
-    console.log('🎪 Creating event with data:', {
-      title,
-      description,
-      location,
-      startDate: new Date(startDate),
-      endDate: new Date(endDate),
-      type: eventType || 'general',
-      createdById: userId,
-      parentFestivalId: parentFestivalId || null
-    });
 
     const event = await prisma.event.create({
       data: {
-        title,
-        description,
-        location,
-        startDate: new Date(startDate),
-        endDate: new Date(endDate),
-        type: eventType || 'general',
-        isPublic: true,
+        title: input.title ?? (normalized as any).title,
+        description: input.description,
+        location: input.location,
+        startDate: input.startDate,
+        endDate: input.endDate,
+        createdById: (admin as any).id,
+        parentFestivalId: normalized.parentFestivalId,
+        imageUrl,
+        eventTypes: { set: [EventType[eType as keyof typeof EventType]] },
         isApproved: true,
-        requiresApproval: false,
-        createdById: userId,
-        parentFestivalId: parentFestivalId || null,
-        imageUrl
-      },
-      include: {
-        createdBy: {
-          select: {
-            id: true,
-            name: true,
-            role: true
-          }
-        },
-        parentFestival: parentFestivalId ? {
-          select: {
-            id: true,
-            title: true
-          }
-        } : undefined
+        isPublic: true,
       }
     });
 
-    console.log('✅ Event created successfully:', event.id);
-    return NextResponse.json(event, { status: 201 });
-  } catch (error) {
-    console.error('❌ Error creating event:', error);
-    return NextResponse.json({ error: 'Failed to create event' }, { status: 500 });
+    return NextResponse.json({ ok: true, id: event.id, title: event.title, imageUrl }, { status: 201 });
+  } catch (err: any) {
+    const status = err.status ?? (err.name === 'ZodError' ? 400 : 500);
+    console.error('[upload failed]', { error: err?.message });
+    return NextResponse.json({ error: err.message, issues: err.issues ?? undefined }, { status });
   }
 } 

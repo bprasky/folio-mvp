@@ -16,6 +16,7 @@ import {
 import { useRole } from '../../../contexts/RoleContext';
 import VideoUploader from '../../../components/VideoUploader';
 import ProjectCreationModal from '../../../components/ProjectCreationModal';
+import CreateProjectChooser from '../../../components/CreateProjectChooser';
 
 // Multiple designer profiles
 const designerProfiles = {
@@ -1191,6 +1192,7 @@ export default function DesignerProfile() {
   
   // Project creation modal state
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
+  const [showCreateChooser, setShowCreateChooser] = useState(false);
 
   const { scrollY } = useScroll();
   const sidebarY = useTransform(scrollY, [0, 1000], [0, -100]);
@@ -1314,7 +1316,7 @@ export default function DesignerProfile() {
               projects={designerData.featuredProjects}
               isEditing={isEditing}
               onEdit={(projects) => setDesignerData({ ...designerData, featuredProjects: projects })}
-              onAddProject={() => setIsProjectModalOpen(true)}
+              onAddProject={() => setShowCreateChooser(true)}
             />
             {/* Project Creation Modal */}
             <ProjectCreationModal
@@ -1344,6 +1346,11 @@ export default function DesignerProfile() {
                 alert('Project created successfully!');
               }}
             />
+
+            {/* Create Project Chooser Modal */}
+            {showCreateChooser && (
+              <CreateProjectChooser onClose={() => setShowCreateChooser(false)} />
+            )}
           </>
         );
       case 'videos':

@@ -6,19 +6,19 @@ import { useRouter } from 'next/navigation';
 const CreateProjectPage = () => {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    type: '',
-    budget: '',
-    timeline: '',
-    location: '',
-    requirements: '',
+    category: '',
+    client: '',
+    designerId: '',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError(null);
 
     try {
       const response = await fetch('/api/admin/projects', {
@@ -26,16 +26,25 @@ const CreateProjectPage = () => {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'same-origin',
         body: JSON.stringify(formData),
       });
 
       if (response.ok) {
         router.push('/admin/projects');
       } else {
-        console.error('Failed to create project');
+        const errorData = await response.json().catch(() => ({}));
+        if (response.status === 401) {
+          setError('You must be signed in as ADMIN.');
+        } else if (response.status === 403) {
+          setError('Your role is not permitted to create admin projects.');
+        } else {
+          setError(errorData.error || 'Failed to create project');
+        }
       }
     } catch (error) {
       console.error('Error creating project:', error);
+      setError('Failed to create project');
     } finally {
       setLoading(false);
     }
@@ -78,14 +87,13 @@ const CreateProjectPage = () => {
 
               <div>
                 <label htmlFor="description" className="block text-sm font-medium text-folio-text mb-2">
-                  Description *
+                  Description
                 </label>
                 <textarea
                   id="description"
                   name="description"
                   value={formData.description}
                   onChange={handleInputChange}
-                  required
                   rows={4}
                   className="w-full px-3 py-2 border border-folio-border rounded-lg focus:outline-none focus:ring-2 focus:ring-folio-accent"
                   placeholder="Describe the project"
@@ -93,18 +101,18 @@ const CreateProjectPage = () => {
               </div>
 
               <div>
-                <label htmlFor="type" className="block text-sm font-medium text-folio-text mb-2">
-                  Project Type *
+                <label htmlFor="category" className="block text-sm font-medium text-folio-text mb-2">
+                  Project Category *
                 </label>
                 <select
-                  id="type"
-                  name="type"
-                  value={formData.type}
+                  id="category"
+                  name="category"
+                  value={formData.category}
                   onChange={handleInputChange}
                   required
                   className="w-full px-3 py-2 border border-folio-border rounded-lg focus:outline-none focus:ring-2 focus:ring-folio-accent"
                 >
-                  <option value="">Select type</option>
+                  <option value="">Select category</option>
                   <option value="residential">Residential</option>
                   <option value="commercial">Commercial</option>
                   <option value="hospitality">Hospitality</option>
@@ -113,65 +121,42 @@ const CreateProjectPage = () => {
               </div>
 
               <div>
-                <label htmlFor="budget" className="block text-sm font-medium text-folio-text mb-2">
-                  Budget
+                <label htmlFor="client" className="block text-sm font-medium text-folio-text mb-2">
+                  Client
                 </label>
                 <input
                   type="text"
-                  id="budget"
-                  name="budget"
-                  value={formData.budget}
+                  id="client"
+                  name="client"
+                  value={formData.client}
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-folio-border rounded-lg focus:outline-none focus:ring-2 focus:ring-folio-accent"
-                  placeholder="e.g., $50,000 - $100,000"
+                  placeholder="Client name"
                 />
               </div>
 
               <div>
-                <label htmlFor="timeline" className="block text-sm font-medium text-folio-text mb-2">
-                  Timeline
+                <label htmlFor="designerId" className="block text-sm font-medium text-folio-text mb-2">
+                  Designer ID *
                 </label>
                 <input
                   type="text"
-                  id="timeline"
-                  name="timeline"
-                  value={formData.timeline}
+                  id="designerId"
+                  name="designerId"
+                  value={formData.designerId}
                   onChange={handleInputChange}
+                  required
                   className="w-full px-3 py-2 border border-folio-border rounded-lg focus:outline-none focus:ring-2 focus:ring-folio-accent"
-                  placeholder="e.g., 3-6 months"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="location" className="block text-sm font-medium text-folio-text mb-2">
-                  Location
-                </label>
-                <input
-                  type="text"
-                  id="location"
-                  name="location"
-                  value={formData.location}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-folio-border rounded-lg focus:outline-none focus:ring-2 focus:ring-folio-accent"
-                  placeholder="Project location"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="requirements" className="block text-sm font-medium text-folio-text mb-2">
-                  Requirements
-                </label>
-                <textarea
-                  id="requirements"
-                  name="requirements"
-                  value={formData.requirements}
-                  onChange={handleInputChange}
-                  rows={3}
-                  className="w-full px-3 py-2 border border-folio-border rounded-lg focus:outline-none focus:ring-2 focus:ring-folio-accent"
-                  placeholder="Special requirements or notes"
+                  placeholder="Designer user ID"
                 />
               </div>
             </div>
+
+            {error && (
+              <div className="mt-6 p-3 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-red-600 text-sm">{error}</p>
+              </div>
+            )}
 
             <div className="mt-8 flex justify-end">
               <button

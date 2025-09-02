@@ -2,6 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabaseServer';
 import { prisma } from '@/lib/prisma';
 import { logPassiveEvent } from '@/lib/analytics';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/app/api/auth/[...nextauth]/options';
+import { normalizeRole, canCreateProject } from '@/lib/permissions';
+import { normalizeCreatePayload } from './normalizeCreatePayload';
+import { logDbEnv } from '@/lib/dbEnv';
+
+const isDev = process.env.NODE_ENV !== 'production';
 
 export async function GET(request: NextRequest) {
   try {
@@ -57,82 +64,79 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(req: Request) {
-  const supabase = supabaseServer();
+  logDbEnv('create-project'); // shows which DB this code is writing to
+  
+  if (isDev) {
+    console.log('[create-project] cookie?', !!req.headers.get('cookie'));
+  }
+  
+  const session = await getServerSession(authOptions);
+  const role = normalizeRole(session?.user?.role);
+  const userId = (session?.user as any)?.id as string | undefined;
 
-  // 1) Supabase via cookies
-  let { data: { user } } = await supabase.auth.getUser();
-
-  // 2) Optional: Bearer fallback strictly when allowed
-  if (!user && process.env.NEXT_PUBLIC_ALLOW_BEARER_FALLBACK === 'true') {
-    const auth = req.headers.get('authorization');
-    if (auth?.startsWith('Bearer ')) {
-      const token = auth.slice(7);
-      const res = await supabase.auth.getUser(token);
-      user = res.data?.user ?? null;
-    }
+  if (isDev) {
+    console.log('[create-project] session', { email: session?.user?.email, role, userId });
   }
 
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized', hint: 'No Supabase cookie; enable NEXT_PUBLIC_ALLOW_BEARER_FALLBACK or use dev Supabase sign-in.' }, { status: 401 });
+  if (isDev) {
+    console.log('[create-project]', { 
+      hasCookie: !!req.headers.get('cookie'), 
+      email: session?.user?.email, 
+      role, 
+      userId 
+    });
   }
 
-  const profile = await prisma.user.findUnique({ where: { id: user.id } });
-  if (!profile || profile.role !== 'DESIGNER') {
-    return NextResponse.json({ error: 'Forbidden: designer only' }, { status: 403 });
+  if (!userId) {
+    return NextResponse.json({ error: 'You must be signed in' }, { status: 401 });
+  }
+
+  if (!canCreateProject(role)) {
+    return NextResponse.json({ error: 'Your role is not permitted to create projects' }, { status: 403 });
+  }
+
+  let json: unknown;
+  try { 
+    json = await req.json(); 
+  } catch { 
+    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 }); 
   }
 
   try {
-    const { name, description, detailsCore } = await req.json().catch(() => ({}));
-    if (!name || typeof name !== 'string' || name.trim().length < 2) {
-      return NextResponse.json({ error: 'Name is required' }, { status: 400 });
+    const data = normalizeCreatePayload(json); // accepts both shapes, returns canonical
+    
+    if (isDev) {
+      console.log('[create-project] normalized data:', data);
     }
 
-    const core = detailsCore ?? null;
-    const hasCore = !!(core && core.projectType && core.stage && core.clientType && core.location && core.budgetBand);
-
-    const baseData: any = {
-      name: name.trim(),
-      description: (description ?? '').trim() || null,
-      designerId: profile.id,
-      ownerId: profile.id,
-    };
-
-    const createWithJsonField = async (jsonField: 'details'|'meta') => {
-      const data = { ...baseData, [jsonField]: hasCore ? { core } : undefined };
-      return prisma.project.create({ data, select: { id: true } });
-    };
-
-    let project;
-    try {
-      // Try "details" first
-      project = await createWithJsonField('details');
-    } catch (e1: any) {
-      const msg = String(e1?.message || '');
-      if (!/Unknown argument `details`/i.test(msg)) throw e1; // not a schema issue → rethrow
-
-      // Try "meta"
-      try {
-        project = await createWithJsonField('meta');
-      } catch (e2: any) {
-        const msg2 = String(e2?.message || '');
-        if (!/Unknown argument `meta`/i.test(msg2)) throw e2;
-
-        // Fallback: encode JSON in description front-matter (no schema change)
-        const jsonLine = hasCore ? `---JSON---${JSON.stringify({ core })}\n` : '';
-        const desc = (baseData.description ?? '');
-        project = await prisma.project.create({
-          data: { ...baseData, description: `${jsonLine}${desc}`.trim() || null },
-          select: { id: true },
-        });
-      }
-    }
+    const project = await prisma.project.create({
+      data: {
+        title: data.title,
+        stage: data.stage,
+        projectType: data.projectType,
+        clientType: data.clientType,
+        budgetBand: data.budgetBand,
+        city: data.city ?? null,
+        regionState: data.regionState ?? null,
+        description: data.description ?? null,
+        designerId: userId,
+        ownerId: userId,
+        status: 'draft',
+        isPublic: false,
+        isAIEnabled: false,
+        views: 0,
+        saves: 0,
+        shares: 0,
+      },
+      select: { id: true },
+    });
 
     // Log analytics event
     try {
       await logPassiveEvent({
         projectId: project.id,
         type: 'project_create',
-        actorId: user.id,
+        actorId: userId,
         payload: { source: 'designer_create_page' }
       });
     } catch (analyticsError) {
@@ -142,7 +146,30 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ id: project.id }, { status: 201 });
   } catch (e: any) {
-    return NextResponse.json({ error: e?.message || 'Server error' }, { status: 500 });
+    // ZodError → 422
+    if (e?.name === 'ZodError') {
+      if (isDev) {
+        console.warn('[create-project] Zod issues:', e.issues ?? e);
+      }
+      return NextResponse.json({ 
+        error: 'ValidationError', 
+        issues: e.flatten?.() ?? e,
+        message: 'Invalid project data'
+      }, { status: 422 });
+    }
+    
+    // Prisma or unknown → 400 with details
+    if (isDev) console.error('[create-project] Error:', e);
+    return NextResponse.json(
+      { 
+        error: 'CreateFailed', 
+        code: e?.code ?? null, 
+        meta: e?.meta ?? null, 
+        message: e?.message ?? 'Unknown error',
+        detail: 'Database operation failed'
+      },
+      { status: 400 }
+    );
   }
 }
 

@@ -25,7 +25,8 @@ export async function POST() {
       create: {
         email: 'admin@test.com',
         name: 'Admin User',
-        profileType: 'admin',
+        role: 'ADMIN',
+        passwordHash: 'temp-password-hash', // Required field
         location: 'New York, NY'
       }
     });
@@ -39,7 +40,8 @@ export async function POST() {
       create: {
         email: 'vendor@test.com',
         name: 'Test Vendor',
-        profileType: 'vendor',
+        role: 'VENDOR',
+        passwordHash: 'temp-password-hash', // Required field
         companyName: 'Test Company',
         location: 'Los Angeles, CA'
       }
@@ -54,7 +56,8 @@ export async function POST() {
       create: {
         email: 'designer@test.com',
         name: 'Test Designer',
-        profileType: 'designer',
+        role: 'DESIGNER',
+        passwordHash: 'temp-password-hash', // Required field
         specialties: ['Interior Design', 'Furniture'],
         location: 'Miami, FL'
       }
