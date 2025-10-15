@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { assertSelectionView } from "@/lib/authz/access";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 const prisma = new PrismaClient();
 
@@ -9,6 +12,12 @@ export async function PUT(
 ) {
   try {
     const { id: projectId, roomId, selectionId } = params;
+    
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const { access, selection } = await assertSelectionView(session.user.id, selectionId);
     const body = await request.json();
     const { 
       productName, 
@@ -73,6 +82,12 @@ export async function DELETE(
 ) {
   try {
     const { selectionId } = params;
+    
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const { access, selection } = await assertSelectionView(session.user.id, selectionId);
 
     // Verify selection exists
     const existingSelection = await prisma.selection.findUnique({

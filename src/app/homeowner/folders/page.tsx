@@ -280,5 +280,4 @@ export default function HomeownerFolders() {
       </div>
     </div>
   );
-} 
-      </div>
+}

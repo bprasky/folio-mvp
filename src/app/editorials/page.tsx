@@ -261,5 +261,4 @@ export default function EditorialsPage() {
       </div>
     </div>
   );
-} 
-      </div>
+}

@@ -1,0 +1,47 @@
+{
+  "projects": [
+    {
+      "id": "proj_001",
+      "title": "Modern Luxury Penthouse",
+      "client": "Luxury Homes Inc",
+      "status": "active",
+      "budget": 75000,
+      "startDate": "2024-01-15",
+      "endDate": "2024-06-15",
+      "progress": 65,
+      "rooms": ["living", "kitchen", "master_bedroom", "bathroom"],
+      "style": "modern",
+      "location": "Manhattan, NY"
+    },
+    {
+      "id": "proj_002", 
+      "title": "Corporate Office Redesign",
+      "client": "Corporate Spaces LLC",
+      "status": "completed",
+      "budget": 45000,
+      "startDate": "2023-10-01",
+      "endDate": "2024-01-15",
+      "progress": 100,
+      "rooms": ["reception", "conference_room", "open_office", "break_room"],
+      "style": "contemporary",
+      "location": "Brooklyn, NY"
+    },
+    {
+      "id": "proj_003",
+      "title": "Boutique Hotel Lobby",
+      "client": "Boutique Hotels",
+      "status": "planning",
+      "budget": 85000,
+      "startDate": "2024-03-01",
+      "endDate": "2024-08-01",
+      "progress": 15,
+      "rooms": ["lobby", "reception", "lounge", "restaurant"],
+      "style": "luxury",
+      "location": "Miami, FL"
+    }
+  ]
+}
+
+
+
+

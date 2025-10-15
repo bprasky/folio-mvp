@@ -27,12 +27,64 @@ html[data-compact="true"] main { padding-top: 0 !important; }
   /* Navigation Layout */
   --nav-w: 272px;
   
-  /* FOLIO Brand Colors - Updated System */
-  --folio-background: #F4F2F0; /* Background */
-  --folio-text: #1E1E1E;        /* Primary text */
-  --folio-accent: #7C1E3D;       /* Action Buttons (Deep Raspberry Jam) */
-  --folio-system: #4A2C3B;       /* System / Data Layers (Plum/Aubergine) */
-  --folio-success: #A47B62;      /* Success / Progress States (Muted Bronze) */
+  /* NEW FOLIO DESIGN SYSTEM - Core Neutrals (Light Theme) */
+  --folio-bg: #FCFBF7;
+  --folio-surface: #F8F5F1;
+  --folio-stone-100: #DBDBD9;
+  --folio-stone-300: #B4B4B1;
+  --folio-stone-500: #8B8B88;
+  --folio-stone-700: #5C5C57;
+  --folio-ink: #161614;
+  
+  /* Accents (editorial warmth) */
+  --folio-accent-200: #D6CBBC;
+  --folio-accent-400: #A09485;
+  --folio-accent-700: #724A31;
+  
+  /* Borders & overlays */
+  --folio-border: color-mix(in srgb, var(--folio-stone-100) 60%, #000 0%);
+  --folio-overlay: rgba(22,22,20,0.5);
+  
+  /* Typography */
+  --font-serif: "Ethic Serif", "Cormorant Garamond", "Times New Roman", serif;
+  --font-sans: "Montserrat", "Helvetica Neue", Arial, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  
+  /* Radius / elevation / motion */
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --shadow-1: 0 1px 2px rgba(22,22,20,0.06);
+  --shadow-2: 0 6px 24px rgba(22,22,20,0.08);
+  --shadow-3: 0 12px 48px rgba(22,22,20,0.10);
+  --ease: cubic-bezier(.2,.8,.2,1);
+  --dur-fast: 150ms;
+  --dur-med: 220ms;
+  
+  /* shadcn/ui theme mapping */
+  --background: var(--folio-bg);
+  --foreground: var(--folio-ink);
+  --card: var(--folio-surface);
+  --card-foreground: var(--folio-ink);
+  --popover: var(--folio-surface);
+  --popover-foreground: var(--folio-ink);
+  --primary: var(--folio-ink);
+  --primary-foreground: var(--folio-bg);
+  --secondary: var(--folio-stone-100);
+  --secondary-foreground: var(--folio-ink);
+  --muted: var(--folio-stone-100);
+  --muted-foreground: var(--folio-stone-700);
+  --accent: var(--folio-accent-200);
+  --accent-foreground: var(--folio-ink);
+  --input: var(--folio-border);
+  --ring: var(--folio-stone-300);
+  --radius: var(--radius-md);
+  
+  /* LEGACY FOLIO Brand Colors - Updated System (backward compatibility) */
+  --folio-background: #F4F2F0;
+  --folio-text: #1E1E1E;
+  --folio-accent: #7C1E3D;
+  --folio-system: #4A2C3B;
+  --folio-success: #A47B62;
   
   /* Legacy support - mapped to new theme */
   --foreground-rgb: 30, 30, 30;
@@ -43,10 +95,82 @@ html[data-compact="true"] main { padding-top: 0 !important; }
   --text-secondary: #4A2C3B;
   --text-light: #A47B62;
   
-  /* Additional utility colors */
-  --folio-border: #E50000;
+  /* Additional utility colors (legacy) */
   --folio-muted: #F8F6F4;
   --folio-card: #FFFFFF;
+}
+
+/* Dark Mode (optional) */
+[data-theme="dark"] {
+  --folio-bg: #1B1B19;
+  --folio-surface: #22221F;
+  --folio-stone-100: #2E2E2B;
+  --folio-stone-300: #3A3A36;
+  --folio-stone-500: #5D5D58;
+  --folio-stone-700: #8B8B88;
+  --folio-ink: #F5F5F3;
+  
+  --folio-accent-200: #3C352C;
+  --folio-accent-400: #5F5433;
+  --folio-accent-700: #9B8874;
+  
+  --folio-border: color-mix(in srgb, var(--folio-stone-100) 35%, #fff 0%);
+  --folio-overlay: rgba(245,245,243,0.06);
+  
+  /* shadcn/ui dark mode mapping */
+  --background: var(--folio-bg);
+  --foreground: var(--folio-ink);
+  --card: var(--folio-surface);
+  --card-foreground: var(--folio-ink);
+  --popover: var(--folio-surface);
+  --popover-foreground: var(--folio-ink);
+  --primary: var(--folio-ink);
+  --primary-foreground: var(--folio-bg);
+  --secondary: var(--folio-stone-100);
+  --secondary-foreground: var(--folio-ink);
+  --muted: var(--folio-stone-100);
+  --muted-foreground: var(--folio-stone-700);
+  --accent: var(--folio-accent-200);
+  --accent-foreground: var(--folio-ink);
+  --input: var(--folio-border);
+  --ring: var(--folio-stone-300);
+}
+
+@layer base {
+  html, body {
+    background: var(--folio-bg);
+    color: var(--folio-ink);
+  }
+  
+  * {
+    border-color: var(--folio-border);
+  }
+  
+  h1, h2, h3, h4 {
+    font-family: var(--font-serif);
+    letter-spacing: -0.01em;
+  }
+  
+  p, li, small, button, input, textarea {
+    font-family: var(--font-sans);
+  }
+  
+  .card {
+    background: var(--folio-surface);
+    box-shadow: var(--shadow-1);
+    border-radius: var(--radius-md);
+  }
+  
+  /* Focus rings for accessibility (WCAG AA compliant) */
+  *:focus-visible {
+    outline: 2px solid var(--folio-stone-300);
+    outline-offset: 2px;
+  }
+  
+  button:focus-visible, a:focus-visible {
+    outline: 2px solid var(--folio-stone-300);
+    outline-offset: 2px;
+  }
 }
 
 body {

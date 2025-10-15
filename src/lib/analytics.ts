@@ -1,8 +1,13 @@
 import { prisma } from './prisma';
 
 export async function logPassiveEvent(params: {
-  projectId: string;
-  type: 'project_create' | 'save' | 'sample_request' | 'tag_add' | 'spec_lock';
+  projectId?: string;
+  type: 'project_create' | 'save' | 'sample_request' | 'tag_add' | 'spec_lock' | 
+        'vendor.visit.created' | 'vendor.visit.opened' | 'vendor.quote.created' | 
+        'vendor.quote.superseded' | 'vendor.quote.status_changed' | 'vendor.action.promote_project' |
+        'vendor.action.invite_event' | 'vendor.action.priority_support' | 'vendor.action.confirm_spec' |
+        'vendor.handoff.created' | 'visit.email.sent' | 'designer.handoff.opened' | 
+        'designer.handoff.destination_selected';
   actorId?: string;
   payload?: Record<string, any>;
 }): Promise<void> {
@@ -20,7 +25,7 @@ export async function logPassiveEvent(params: {
 
     await prisma.analyticsEvent.create({
       data: {
-        projectId,
+        projectId: projectId || '',
         type,
         actorId,
         payload: payload ? JSON.stringify(payload) : null,
@@ -55,7 +60,7 @@ export async function logPassiveEvent(params: {
       }
     }
 
-    const filePath = `project-${projectId}.jsonl`;
+    const filePath = `project-${projectId || 'global'}.jsonl`;
     const eventLine = JSON.stringify({
       ts: new Date().toISOString(),
       type,
@@ -102,4 +107,43 @@ export const Analytics = {
     logPassiveEvent({ ...args, type: 'tag_add' }),
   specLock: (args: Omit<Parameters<typeof logPassiveEvent>[0], 'type'>) => 
     logPassiveEvent({ ...args, type: 'spec_lock' }),
-}; 
+};
+
+// Vendor-specific analytics helpers
+export const VendorAnalytics = {
+  visitCreated: (args: Omit<Parameters<typeof logPassiveEvent>[0], 'type'>) =>
+    logPassiveEvent({ ...args, type: 'vendor.visit.created' }),
+  visitOpened: (args: Omit<Parameters<typeof logPassiveEvent>[0], 'type'>) =>
+    logPassiveEvent({ ...args, type: 'vendor.visit.opened' }),
+  quoteCreated: (args: Omit<Parameters<typeof logPassiveEvent>[0], 'type'>) =>
+    logPassiveEvent({ ...args, type: 'vendor.quote.created' }),
+  quoteSuperseded: (args: Omit<Parameters<typeof logPassiveEvent>[0], 'type'>) =>
+    logPassiveEvent({ ...args, type: 'vendor.quote.superseded' }),
+  quoteStatusChanged: (args: Omit<Parameters<typeof logPassiveEvent>[0], 'type'>) =>
+    logPassiveEvent({ ...args, type: 'vendor.quote.status_changed' }),
+  promoteProject: (args: Omit<Parameters<typeof logPassiveEvent>[0], 'type'>) =>
+    logPassiveEvent({ ...args, type: 'vendor.action.promote_project' }),
+  inviteEvent: (args: Omit<Parameters<typeof logPassiveEvent>[0], 'type'>) =>
+    logPassiveEvent({ ...args, type: 'vendor.action.invite_event' }),
+  prioritySupport: (args: Omit<Parameters<typeof logPassiveEvent>[0], 'type'>) =>
+    logPassiveEvent({ ...args, type: 'vendor.action.priority_support' }),
+  confirmSpec: (args: Omit<Parameters<typeof logPassiveEvent>[0], 'type'>) =>
+    logPassiveEvent({ ...args, type: 'vendor.action.confirm_spec' }),
+  handoffCreated: (args: Omit<Parameters<typeof logPassiveEvent>[0], 'type'>) =>
+    logPassiveEvent({ ...args, type: 'vendor.handoff.created' }),
+  emailSent: (args: Omit<Parameters<typeof logPassiveEvent>[0], 'type'>) =>
+    logPassiveEvent({ ...args, type: 'visit.email.sent' }),
+  handoffOpened: (args: Omit<Parameters<typeof logPassiveEvent>[0], 'type'>) =>
+    logPassiveEvent({ ...args, type: 'designer.handoff.opened' }),
+  destinationSelected: (args: Omit<Parameters<typeof logPassiveEvent>[0], 'type'>) =>
+    logPassiveEvent({ ...args, type: 'designer.handoff.destination_selected' }),
+};
+
+// Simple track function for handoff events
+export function track(userOrNull: any, event: string, payload?: Record<string, any>) {
+  return logPassiveEvent({
+    actorId: userOrNull?.id,
+    type: event as any,
+    payload,
+  });
+} 

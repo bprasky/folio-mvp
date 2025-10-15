@@ -1,55 +1,16 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { NextResponse } from 'next/server';
+import { getToken } from 'next-auth/jwt';
+import { getServerSession } from 'next-auth';
 
-const prisma = new PrismaClient();
+async function getUserId(req: Request) {
+  const s = await getServerSession();
+  if (s?.user?.id) return s.user.id;
+  const t = await getToken({ req: req as any, secret: process.env.NEXTAUTH_SECRET }).catch(() => null);
+  return (t?.sub as string) ?? null;
+}
 
-export async function GET(request: NextRequest) {
-  try {
-    // Get session from cookie
-    const sessionId = request.cookies.get('folio-session')?.value;
-
-    if (!sessionId) {
-      return NextResponse.json(
-        { error: 'Not authenticated' },
-        { status: 401 }
-      );
-    }
-
-    // Query the database for the user
-    const user = await prisma.user.findUnique({
-      where: { id: sessionId },
-      include: {
-        organizationUsers: {
-          include: {
-            organization: true,
-          },
-        },
-      },
-    });
-
-    if (!user) {
-      return NextResponse.json(
-        { error: 'User not found' },
-        { status: 404 }
-      );
-    }
-
-    // Get the primary organization (first one or the one marked as primary)
-    const primaryOrg = user.organizationUsers.find(org => org.role === 'OWNER') || user.organizationUsers[0];
-
-    return NextResponse.json({
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      companyName: primaryOrg?.organization.name,
-      organizationId: primaryOrg?.organizationId,
-    });
-  } catch (error) {
-    console.error('Error fetching user:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch user' },
-      { status: 500 }
-    );
-  }
-} 
+export async function GET(req: Request) {
+  const id = await getUserId(req);
+  if (!id) return NextResponse.json({ ok: false }, { status: 401 });
+  return NextResponse.json({ ok: true, id });
+}

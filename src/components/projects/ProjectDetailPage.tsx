@@ -3,7 +3,42 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { FaArrowLeft, FaEdit, FaSave, FaTimes, FaTag, FaPlus, FaDownload, FaFilePdf, FaPencilAlt, FaEye, FaPrint, FaShareAlt, FaTrash } from 'react-icons/fa';
+import { FaArrowLeft, FaEdit, FaSave, FaTimes, FaTag, FaPlus, FaDownload, FaFilePdf, FaPencilAlt, FaEye, FaPrint, FaShareAlt, FaTrash, FaThLarge } from 'react-icons/fa';
+import DesignerBoard from '@/app/project/[id]/DesignerBoard';
+
+interface Selection {
+  id: string;
+  photo?: string | null;
+  vendorName?: string | null;
+  productName?: string | null;
+  colorFinish?: string | null;
+  notes?: string | null;
+  phaseOfUse?: string | null;
+  gpsLocation?: string | null;
+  source: string;
+  timestamp: Date;
+  createdAt: Date;
+  updatedAt: Date;
+  roomId?: string | null;
+  projectId: string;
+  quantity?: number | null;
+  specSheetFileName?: string | null;
+  specSheetUrl?: string | null;
+  unitPrice?: number | null;
+  vendorProductId?: string | null;
+  vendorRepId?: string | null;
+  productUrl?: string | null;
+  tags: string[];
+}
+
+interface Room {
+  id: string;
+  name: string;
+  projectId: string;
+  createdAt: Date;
+  updatedAt: Date;
+  selections: Selection[];
+}
 
 interface Project {
   id: string;
@@ -23,6 +58,7 @@ interface Project {
   views: number;
   saves: number;
   shares: number;
+  rooms: Room[];
 }
 
 interface ProjectDetailPageProps {
@@ -33,6 +69,7 @@ interface ProjectDetailPageProps {
 export function ProjectDetailPage({ project, isOwner }: ProjectDetailPageProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedProject, setEditedProject] = useState<Project>(project);
+  const [activeTab, setActiveTab] = useState<'overview' | 'boards'>('overview');
 
   const formatDate = (date: Date) => {
     return new Date(date).toLocaleDateString('en-US', {
@@ -106,6 +143,33 @@ export function ProjectDetailPage({ project, isOwner }: ProjectDetailPageProps) 
     // TODO: Implement save functionality
     setIsEditing(false);
     setEditedProject(project);
+  };
+
+  const handleExportHTML = async () => {
+    try {
+      const response = await fetch('/api/export/spec-html', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projectId: project.id }),
+      });
+      
+      if (response.ok) {
+        const html = await response.text();
+        const newWindow = window.open('', '_blank');
+        if (newWindow) {
+          newWindow.document.write(html);
+          newWindow.document.close();
+          // Trigger print dialog
+          setTimeout(() => {
+            newWindow.print();
+          }, 500);
+        }
+      } else {
+        console.error('Export failed');
+      }
+    } catch (error) {
+      console.error('Export error:', error);
+    }
   };
 
   const currentProject = isEditing ? editedProject : project;
@@ -201,11 +265,46 @@ export function ProjectDetailPage({ project, isOwner }: ProjectDetailPageProps) 
         </div>
       </section>
 
+      {/* Tab Navigation */}
+      <div className="container mx-auto px-8">
+        <div className="border-b border-gray-200">
+          <nav className="-mb-px flex space-x-8">
+            <button
+              onClick={() => setActiveTab('overview')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'overview'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              Overview
+            </button>
+            <button
+              onClick={() => setActiveTab('boards')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center ${
+                activeTab === 'boards'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <FaThLarge className="mr-2" />
+              Designer Boards
+              {project.rooms.length > 0 && (
+                <span className="ml-2 bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full">
+                  {project.rooms.reduce((sum, room) => sum + room.selections.length, 0)}
+                </span>
+              )}
+            </button>
+          </nav>
+        </div>
+      </div>
+
       <main className="container mx-auto p-8 grid grid-cols-1 lg:grid-cols-4 gap-12">
         {/* Main Content Column */}
         <div className="lg:col-span-3 space-y-10">
-
-          {/* Overview Section */}
+          {activeTab === 'overview' ? (
+            <>
+              {/* Overview Section */}
           <section className="bg-white p-8 rounded-lg shadow-md">
             <h2 className="text-3xl font-bold mb-4">Overview</h2>
             {isEditing ? (
@@ -308,6 +407,17 @@ export function ProjectDetailPage({ project, isOwner }: ProjectDetailPageProps) 
               )}
             </div>
           </section>
+            </>
+          ) : (
+            /* Designer Boards Tab */
+            <div className="bg-white p-8 rounded-lg shadow-md">
+              <DesignerBoard 
+                projectId={project.id} 
+                project={project} 
+                accessoryCap={10} 
+              />
+            </div>
+          )}
         </div>
 
         {/* Sidebar Column */}
@@ -319,8 +429,11 @@ export function ProjectDetailPage({ project, isOwner }: ProjectDetailPageProps) 
               <button className="flex items-center w-full bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition">
                 <FaEdit className="mr-2" /> Edit Project
               </button>
-              <button className="flex items-center w-full bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700 transition">
-                <FaDownload className="mr-2" /> Export Data
+              <button 
+                onClick={handleExportHTML}
+                className="flex items-center w-full bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700 transition"
+              >
+                <FaPrint className="mr-2" /> Export Spec (HTML)
               </button>
               <button className="flex items-center w-full bg-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-purple-700 transition">
                 <FaShareAlt className="mr-2" /> Share Project

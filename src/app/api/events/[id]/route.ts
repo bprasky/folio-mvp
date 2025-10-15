@@ -11,16 +11,16 @@ export const dynamic = "force-dynamic";
 
 // Zod schema for PATCH validation
 const updateEventSchema = z.object({
-  title: z.string().min(1, "Title is required"),
+  title: z.string().min(1, "Title is required").optional(),
   description: z.string().optional(),
-  startsAt: z.string().min(1, "Start date is required"),
-  endsAt: z.string().min(1, "End date is required"),
+  startsAt: z.string().min(1, "Start date is required").optional(),
+  endsAt: z.string().min(1, "End date is required").optional(),
   city: z.string().optional(),
   venue: z.string().optional(),
   festivalId: z.string().optional(),
   eventTypes: z.array(z.string()).optional(),
-  heroImageUrl: z.string().url().optional(),
-  coverImageUrl: z.string().url().optional(),
+  heroImageUrl: z.string().url().optional().or(z.literal('')),
+  coverImageUrl: z.string().url().optional().or(z.literal('')),
   linkedProducts: z.array(z.string()).optional(),
 });
 
@@ -44,10 +44,23 @@ function mapToEventTypes(types: string[]): EventType[] {
 async function requireAdmin() {
   const session = await getServerSession(authOptions);
   
+  console.log('🔍 [events API] Session check:', {
+    hasSession: !!session,
+    userId: session?.user?.id,
+    userRole: session?.user?.role,
+    userEmail: session?.user?.email
+  });
+  
   if (!session?.user?.role || session.user.role !== 'ADMIN') {
+    console.log('❌ [events API] Admin check failed:', {
+      hasRole: !!session?.user?.role,
+      role: session?.user?.role,
+      expected: 'ADMIN'
+    });
     return false;
   }
   
+  console.log('✅ [events API] Admin check passed');
   return true;
 }
 
@@ -227,6 +240,12 @@ export async function PATCH(
     return NextResponse.json(response);
   } catch (error) {
     console.error('PATCH /api/events/[id] error:', error);
+    console.error('Error details:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      eventId: params.id,
+      body: body
+    });
     
     if (error instanceof z.ZodError) {
       return NextResponse.json(
@@ -236,7 +255,7 @@ export async function PATCH(
     }
     
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Internal server error', message: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }

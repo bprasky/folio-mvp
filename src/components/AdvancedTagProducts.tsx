@@ -25,6 +25,7 @@ interface ProductTag {
 
 interface AdvancedTagProductsProps {
   imageUrl: string;
+  imageId?: string;  // For database persistence
   projectId: string;
   existingTags?: ProductTag[];
   onTagsUpdate?: (tags: ProductTag[]) => void;
@@ -33,6 +34,7 @@ interface AdvancedTagProductsProps {
 
 export default function AdvancedTagProducts({ 
   imageUrl, 
+  imageId,
   projectId, 
   existingTags = [],
   onTagsUpdate,
@@ -112,16 +114,15 @@ export default function AdvancedTagProducts({
     setIsLoading(true);
 
     try {
+      // Use imageId if available (database mode), otherwise imageUrl (legacy/demo mode)
+      const payload = imageId 
+        ? { x: selected.x, y: selected.y, imageId, projectId, productId: selectedProductId }
+        : { x: selected.x, y: selected.y, imageUrl, projectId, productId: selectedProductId };
+
       const res = await fetch("/api/tag-product-to-image", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          x: selected.x,
-          y: selected.y,
-          imageUrl,
-          projectId,
-          productId: selectedProductId,
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (res.ok) {

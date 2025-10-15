@@ -6,6 +6,11 @@ import { createServerClient } from '@supabase/ssr';
 export async function middleware(req: NextRequest) {
   const res = NextResponse.next();
 
+  // Skip Supabase auth for API routes to avoid conflicts with NextAuth
+  if (req.nextUrl.pathname.startsWith('/api/')) {
+    return res;
+  }
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -31,6 +36,6 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  // run on all app paths, skip static assets
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\..*).*)'],
+  // Temporarily disable middleware to test NextAuth
+  matcher: [],
 }; 

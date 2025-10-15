@@ -99,6 +99,7 @@ export default function EventForm({
   }, [mode, defaultValues?.linkedProducts]);
 
   const handleFormSubmit = async (values: FormValues) => {
+    console.log('🎯 FORM SUBMIT CALLED - handleFormSubmit started');
     setIsSubmitting(true);
     try {
       // Include featured products in the submission
@@ -109,6 +110,7 @@ export default function EventForm({
       
       // For debugging: log the values being sent
       console.log('📤 Submitting form values:', valuesWithProducts);
+      console.log('📤 About to call onSubmit with:', valuesWithProducts);
       
       await onSubmit(valuesWithProducts);
       toast.success(mode === "edit" ? "Event updated successfully!" : "Event created successfully!");

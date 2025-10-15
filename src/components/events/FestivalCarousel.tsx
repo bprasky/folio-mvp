@@ -44,3 +44,9 @@ export default function FestivalCarousel({ festivals }: { festivals: any[] }) {
 
 
 
+
+
+
+
+
+

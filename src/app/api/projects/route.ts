@@ -7,6 +7,7 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { normalizeRole, canCreateProject } from '@/lib/permissions';
 import { normalizeCreatePayload } from './normalizeCreatePayload';
 import { logDbEnv } from '@/lib/dbEnv';
+import { assertProjectView } from "@/lib/authz/access";
 
 const isDev = process.env.NODE_ENV !== 'production';
 
@@ -175,6 +176,11 @@ export async function POST(req: Request) {
 
 export async function PUT(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    
     const projectData = await request.json();
     
     const { id, ...updateData } = projectData;
@@ -185,6 +191,8 @@ export async function PUT(request: NextRequest) {
         { status: 400 }
       );
     }
+    
+    const access = await assertProjectView(session.user.id, id);
 
     const updatedProject = await prisma.project.update({
       where: { id },
@@ -219,6 +227,11 @@ export async function PUT(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    
     const url = new URL(request.url);
     const id = url.searchParams.get('id');
     
@@ -228,6 +241,8 @@ export async function DELETE(request: NextRequest) {
         { status: 400 }
       );
     }
+    
+    const access = await assertProjectView(session.user.id, id);
 
     await prisma.project.delete({
       where: { id },

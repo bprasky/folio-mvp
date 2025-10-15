@@ -78,9 +78,18 @@ export default async function AdminEventPage({ searchParams }: PageProps) {
     const handleUpdate = async (values: any) => {
       'use server';
       
+      console.log('🚀 SERVER ACTION CALLED - handleUpdate started');
+      
       try {
         console.log('🔄 Server action: Starting update for event', editId);
         console.log('📤 Server action: Values received:', values);
+        console.log('🖼️ Server action: Image URL being sent:', values.imageUrl);
+        console.log('🔍 Server action: Event data:', {
+          id: event.id,
+          title: event.title,
+          parentFestivalId: event.parentFestivalId,
+          currentImageUrl: event.imageUrl
+        });
         
         // Get current event data to ensure we have fallback dates
         const currentStartsAt = event.startDate ? new Date(event.startDate).toISOString() : null;
@@ -110,6 +119,7 @@ export default async function AdminEventPage({ searchParams }: PageProps) {
         const endpoint = `${base}/api/events/${editId}`;
         
         console.log('🌐 Server action: Making request to:', endpoint);
+        console.log('🍪 Server action: Cookie header length:', cookies().toString().length);
         
         // Forward auth cookies so NextAuth sees your ADMIN session
         const cookieHeader = cookies().toString();
@@ -132,19 +142,25 @@ export default async function AdminEventPage({ searchParams }: PageProps) {
         if (!response.ok) {
           const txt = await response.text();
           console.error('❌ Server action: Update failed:', response.status, txt);
+          console.error('❌ Server action: Response body:', txt);
           throw new Error(`Update failed (${response.status}): ${txt}`);
         }
 
         const result = await response.json();
         console.log('✅ Server action: Update successful:', result);
+        console.log('🔄 Server action: Update data saved to database');
 
-        // Smart redirect based on event type
+        // Add a small delay to allow UI to update before redirect
+        console.log('⏳ Server action: Waiting 1 second before redirect...');
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Smart redirect based on event type with cache busting
         if (event.parentFestivalId) {
           console.log('🔄 Server action: Redirecting to festival:', event.parentFestivalId);
-          redirect(`/events/${event.parentFestivalId}`);
+          redirect(`/events/${event.parentFestivalId}?t=${Date.now()}`);
         } else {
           console.log('🔄 Server action: Redirecting to events list');
-          redirect('/events');
+          redirect(`/events?t=${Date.now()}`);
         }
       } catch (error) {
         console.error('❌ Server action error:', error);

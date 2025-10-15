@@ -46,9 +46,25 @@ export async function PUT(request: NextRequest, { params }: { params: { festival
   try {
     // Check authentication and admin role
     const session = await getServerSession(authOptions);
+    
+    console.log('🔍 [festivals API] Session check:', {
+      hasSession: !!session,
+      userId: session?.user?.id,
+      userRole: session?.user?.role,
+      userEmail: session?.user?.email
+    });
+    
     if (!session || session.user?.role !== 'ADMIN') {
+      console.log('❌ [festivals API] Admin check failed:', {
+        hasSession: !!session,
+        hasUser: !!session?.user,
+        role: session?.user?.role,
+        expected: 'ADMIN'
+      });
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    
+    console.log('✅ [festivals API] Admin check passed');
 
     const body = await request.json();
     const { title, description, location, startDate, endDate, imageUrl } = body;

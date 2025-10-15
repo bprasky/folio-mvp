@@ -8,6 +8,7 @@ import {
   FaUpload, FaHome, FaTag, FaFileAlt, FaCamera 
 } from 'react-icons/fa';
 import CameraCapture from '../../../../components/CameraCapture';
+import { ROOM_TEMPLATES } from '../../../project/[id]/roomTemplates';
 
 interface Project {
   id: string;
@@ -44,6 +45,7 @@ export default function ProjectDashboard() {
   const [isPublic, setIsPublic] = useState(false);
   const [showAddRoom, setShowAddRoom] = useState(false);
   const [newRoomName, setNewRoomName] = useState('');
+  const [newRoomType, setNewRoomType] = useState<string>('LIVING');
   
   // New state for project-level selection workflow
   const [showCameraCapture, setShowCameraCapture] = useState(false);
@@ -95,11 +97,15 @@ export default function ProjectDashboard() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ name: newRoomName }),
+        body: JSON.stringify({ 
+          name: newRoomName,
+          type: newRoomType 
+        }),
       });
 
       if (response.ok) {
         setNewRoomName('');
+        setNewRoomType('LIVING');
         setShowAddRoom(false);
         fetchProject(); // Refresh project data
       } else {
@@ -310,6 +316,39 @@ export default function ProjectDashboard() {
                 className="bg-white rounded-2xl p-6 w-full max-w-md mx-4"
               >
                 <h3 className="text-xl font-bold text-gray-900 mb-4">Add New Room</h3>
+                
+                <div className="mb-4">
+                  <label htmlFor="room-type" className="block text-sm font-medium text-gray-700 mb-2">
+                    Room Type
+                  </label>
+                  <select
+                    id="room-type"
+                    value={newRoomType}
+                    onChange={(e) => setNewRoomType(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    {Object.entries(ROOM_TEMPLATES).map(([key, template]) => (
+                      <option key={key} value={key}>
+                        {template.type.charAt(0) + template.type.slice(1).toLowerCase()}
+                      </option>
+                    ))}
+                  </select>
+                  
+                  {/* Preview of expected slots */}
+                  {newRoomType && (
+                    <div className="mt-2 p-3 bg-blue-50 rounded-lg">
+                      <div className="text-xs font-medium text-blue-800 mb-1">
+                        Expected items ({ROOM_TEMPLATES[newRoomType as keyof typeof ROOM_TEMPLATES].slots.length}):
+                      </div>
+                      <div className="text-xs text-blue-600">
+                        {ROOM_TEMPLATES[newRoomType as keyof typeof ROOM_TEMPLATES].slots
+                          .map(slot => slot.label)
+                          .join(', ')}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
                 <input
                   type="text"
                   value={newRoomName}
@@ -422,7 +461,6 @@ export default function ProjectDashboard() {
           )}
         </div>
       </div>
-    </div>
 
       {/* Camera Capture Modal for Project-Level Selections */}
       <CameraCapture

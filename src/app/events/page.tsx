@@ -3,7 +3,7 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 
 // keep your existing imports:
 import FestivalCarousel from '@/components/FestivalCarousel';
-import EventMosaic from '@/components/events/EventMosaic';
+import FlowMosaic from '@/components/feed/FlowMosaic';
 
 // add (or keep) your data helpers:
 import { fetchEvents, fetchUserRSVPs } from '@/lib/fetchEvents';
@@ -38,8 +38,21 @@ export default async function EventsPage() {
   // If you ever need top-level only, keep this filter (safe either way):
   const festivals = (festivalsRaw ?? []).filter((f: any) => (f?.parentFestivalId ?? null) === null || true);
 
-  // events from fetchEvents are already NON-FESTIVAL; feed straight to mosaic
-  const mosaicEvents = events;
+  // Transform events to FlowMosaic format
+  const mosaicEvents = events.map(event => ({
+    id: event.id,
+    title: event.title,
+    imageUrl: event.imageUrl,
+    heroImageUrl: event.imageUrl,
+    coverImageUrl: event.imageUrl,
+    rsvpCount: event._count?.rsvps || 0,
+    viewCount: 0, // Not available in current data structure
+    isSponsored: false, // Not available in current data structure
+    eventTypes: event.eventTypes || [],
+    startsAt: event.startDate.toISOString(),
+    startDate: event.startDate.toISOString(),
+    href: `/events/${event.id}`,
+  }));
 
   return (
     <main className="bg-gray-50">
@@ -62,7 +75,7 @@ export default async function EventsPage() {
 
         {/* EVENTS — dense mosaic below */}
         <section aria-label="Explore events">
-          <EventMosaic events={mosaicEvents} />
+          <FlowMosaic events={mosaicEvents} canEdit={isAdmin} />
         </section>
       </div>
     </main>

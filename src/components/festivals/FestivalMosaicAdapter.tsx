@@ -13,9 +13,11 @@ type Subevent = {
 export default function FestivalMosaicAdapter({
   subevents,
   festivalId,
+  canEdit = false,
 }: {
   subevents: Subevent[];
   festivalId: string;
+  canEdit?: boolean;
 }) {
   const items = (subevents || []).map((s) => ({
     id: s.id,
@@ -35,5 +37,5 @@ export default function FestivalMosaicAdapter({
   }));
 
   // Render your existing FlowMosaic component with these items
-  return <FlowMosaic events={items} canEdit={false} />;
+  return <FlowMosaic events={items} canEdit={canEdit} />;
 }

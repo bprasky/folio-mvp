@@ -290,7 +290,7 @@ const EventsPageClient: React.FC<EventsPageClientProps> = ({
           
           {/* Admin Edit Icon */}
           {userRole === 'ADMIN' && (
-            <Link href={`/admin/events/new?edit=${event.id}`} onClick={(e) => e.stopPropagation()}>
+            <Link href={`/admin/events/${event.id}`} onClick={(e) => e.stopPropagation()}>
               <div className="absolute top-2 right-2 bg-blue-500 text-white p-1 rounded-full shadow-sm hover:bg-blue-600 transition-colors z-20">
                 <FaEdit className="w-3 h-3" />
               </div>

@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import FestivalMosaicAdapter from "@/components/festivals/FestivalMosaicAdapter";
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 
 export const runtime = "nodejs";
 
@@ -10,6 +12,11 @@ const isFestival = (row: any) =>
 
 export default async function FestivalPage({ params }: { params: { festivalId: string } }) {
   const { festivalId } = params;
+  
+  // Get session to check admin status
+  const session = await getServerSession(authOptions);
+  const isAdmin = session?.user?.role === 'ADMIN';
+  
   const festival = await prisma.event.findFirst({
     where: { id: festivalId },
     include: {
@@ -23,7 +30,11 @@ export default async function FestivalPage({ params }: { params: { festivalId: s
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
-      <FestivalMosaicAdapter subevents={festival.subevents || []} festivalId={festival.id} />
+      <FestivalMosaicAdapter 
+        subevents={festival.subevents || []} 
+        festivalId={festival.id} 
+        canEdit={isAdmin}
+      />
     </div>
   );
 }

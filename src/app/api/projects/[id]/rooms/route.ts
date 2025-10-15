@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { assertProjectView } from "@/lib/authz/access";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 const prisma = new PrismaClient();
 
@@ -9,6 +12,12 @@ export async function POST(
 ) {
   try {
     const { id: projectId } = params;
+    
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const access = await assertProjectView(session.user.id, projectId);
     const body = await request.json();
     const { name } = body;
 
@@ -45,6 +54,12 @@ export async function GET(
 ) {
   try {
     const projectId = params.id;
+    
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const access = await assertProjectView(session.user.id, projectId);
 
     const rooms = await prisma.room.findMany({
       where: { projectId },

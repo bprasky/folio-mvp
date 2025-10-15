@@ -10,6 +10,7 @@ import { LogoutButton } from './LogoutButton';
 import { getCreateTarget, canCreateProject, normalizeRole } from '@/lib/permissions';
 import { signOut } from 'next-auth/react';
 import CreateProjectChooser from './CreateProjectChooser';
+import DesignerInbox from './DesignerInbox';
 
 const Navigation = () => {
   const pathname = usePathname();
@@ -178,7 +179,7 @@ const Navigation = () => {
     user: session?.user?.name || session?.user?.email,
     isAuthenticated: !!session?.user,
     roleItems: roleItems.length,
-    createButtonLabel: createCfg?.label,
+    createButtonLabel: typeof createCfg === 'object' && createCfg !== null ? (createCfg as any)?.label : createCfg,
     roleItemsArray: roleItems.map(item => item.name)
   });
   
@@ -395,14 +396,14 @@ const Navigation = () => {
               onClick={() => setShowCreateChooser(true)}
               className="w-full py-3 px-4 rounded-lg font-medium items-center justify-center mt-6 transition-all duration-200 hover:shadow-md bg-folio-text text-white hover:bg-opacity-90 nav-focus-visible"
             >
-              <FaPlus className="mr-2" /> {createCfg.label}
+              <FaPlus className="mr-2" /> {typeof createCfg === 'object' && createCfg !== null ? (createCfg as any).label : createCfg}
             </button>
           ) : (
             <Link
-              href={createCfg.href}
+              href={typeof createCfg === 'object' && createCfg !== null ? (createCfg as any).href : '#'}
               className="w-full py-3 px-4 rounded-lg font-medium items-center justify-center mt-6 transition-all duration-200 hover:shadow-md bg-folio-text text-white hover:bg-opacity-90 nav-focus-visible"
             >
-              <FaPlus className="mr-2" /> {createCfg.label}
+              <FaPlus className="mr-2" /> {typeof createCfg === 'object' && createCfg !== null ? (createCfg as any).label : createCfg}
             </Link>
           )}
         </>
@@ -427,6 +428,14 @@ const Navigation = () => {
               <p className="text-xs text-gray-400">Detected: {role}</p>
             </div>
           </div>
+          
+          {/* Designer Inbox - Show for designers */}
+          {session?.user?.role === "DESIGNER" && (
+            <div className="mb-3">
+              <DesignerInbox />
+            </div>
+          )}
+          
           <LogoutButton />
         </div>
       )}

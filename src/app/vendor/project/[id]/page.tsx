@@ -4,10 +4,13 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { 
-  FaArrowLeft, FaPlus, FaEye, FaEyeSlash, FaDownload, 
+  FaArrowLeft, FaArrowRight, FaPlus, FaEye, FaEyeSlash, FaDownload, 
   FaUpload, FaHome, FaTag, FaFileAlt, FaCamera, FaShare
 } from 'react-icons/fa';
 import CameraCapture from '../../../../components/CameraCapture';
+import QuickAddJSON from '../../../../components/QuickAddJSON';
+import SendToDesigner from '../../../../components/SendToDesigner';
+import VendorOutbox from "@/components/VendorOutbox";
 
 interface Project {
   id: string;
@@ -279,6 +282,9 @@ export default function VendorProjectDetailPage() {
               <FaPlus className="w-4 h-4" />
               Add Room
             </button>
+
+            <QuickAddJSON projectId={project.id} />
+            <SendToDesigner projectId={project.id} />
             
             <button
               onClick={handleTogglePublic}
@@ -309,6 +315,11 @@ export default function VendorProjectDetailPage() {
             </button>
           </div>
         </motion.div>
+
+        {/* Sent Handoffs Outbox */}
+        <section className="mt-8">
+          <VendorOutbox projectId={project.id} />
+        </section>
 
         {/* Rooms Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

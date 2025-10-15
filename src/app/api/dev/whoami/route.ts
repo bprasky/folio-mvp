@@ -1,17 +1,18 @@
 import { NextResponse } from 'next/server';
-import { supabaseServer } from '@/lib/supabaseServer';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '../../auth/[...nextauth]/options';
 import { cookies } from 'next/headers';
 
 export async function GET() {
   const jar = cookies();
   const cookieNames = (jar.getAll?.() ?? []).map(c => c.name);
 
-  const supabase = supabaseServer();
-  const { data: { user }, error } = await supabase.auth.getUser();
+  const session = await getServerSession(authOptions);
 
   return NextResponse.json({
-    supabaseUserId: user?.id ?? null,
-    supabaseError: error?.message ?? null,
+    nextAuthUserId: session?.user?.id ?? null,
+    nextAuthUserRole: session?.user?.role ?? null,
+    nextAuthUserEmail: session?.user?.email ?? null,
     cookieNames,
   });
 } 

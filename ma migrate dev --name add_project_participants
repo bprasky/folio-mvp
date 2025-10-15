@@ -1,0 +1,39 @@
+[1mdiff --git a/src/app/vendor/create-project/page.tsx b/src/app/vendor/create-project/page.tsx[m
+[1mindex 7a8e6708..88aae419 100644[m
+[1m--- a/src/app/vendor/create-project/page.tsx[m
+[1m+++ b/src/app/vendor/create-project/page.tsx[m
+[36m@@ -138,7 +138,7 @@[m [mexport default function VendorCreateProjectPage() {[m
+     try {[m
+       const requestBody = {[m
+         ...formData,[m
+[31m-        vendorId: session.user.id[m
+[32m+[m[32m        // Remove vendorId - it will be set from session on the server[m
+       };[m
+       [m
+       console.log('DEBUG: Sending request with body:', requestBody);[m
+[36m@@ -148,6 +148,7 @@[m [mexport default function VendorCreateProjectPage() {[m
+         headers: {[m
+           'Content-Type': 'application/json',[m
+         },[m
+[32m+[m[32m        credentials: 'same-origin',[m
+         body: JSON.stringify(requestBody),[m
+       });[m
+ [m
+[36m@@ -156,9 +157,14 @@[m [mexport default function VendorCreateProjectPage() {[m
+         console.log('Vendor project created successfully:', project);[m
+         router.push(`/vendor/project/${project.id}`);[m
+       } else {[m
+[31m-        const error = await response.json();[m
+[31m-        console.error('Error creating vendor project:', error);[m
+[31m-        alert(`Error: ${error.error}`);[m
+[32m+[m[32m        const errorData = await response.json().catch(() => ({}));[m
+[32m+[m[32m        if (response.status === 401) {[m
+[32m+[m[32m          alert('You must be signed in as VENDOR or ADMIN.');[m
+[32m+[m[32m        } else if (response.status === 403) {[m
+[32m+[m[32m          alert('Your role is not permitted to create vendor projects.');[m
+[32m+[m[32m        } else {[m
+[32m+[m[32m          alert(`Error: ${errorData.error || 'Failed to create project'}`);[m
+[32m+[m[32m        }[m
+       }[m
+     } catch (error) {[m
+       console.error('Error creating vendor project:', error);[m

@@ -1,0 +1,30 @@
+{
+  "analytics": {
+    "totalProjects": 12,
+    "activeProjects": 8,
+    "completedProjects": 4,
+    "totalRevenue": 125000,
+    "averageProjectValue": 10416.67,
+    "clientSatisfaction": 4.8,
+    "responseTime": "2.3 hours",
+    "projectTypes": {
+      "residential": 8,
+      "commercial": 3,
+      "hospitality": 1
+    },
+    "monthlyTrends": [
+      { "month": "Jan", "projects": 2, "revenue": 25000 },
+      { "month": "Feb", "projects": 3, "revenue": 35000 },
+      { "month": "Mar", "projects": 4, "revenue": 40000 },
+      { "month": "Apr", "projects": 3, "revenue": 25000 }
+    ],
+    "topClients": [
+      { "name": "Luxury Homes Inc", "projects": 3, "revenue": 45000 },
+      { "name": "Corporate Spaces LLC", "projects": 2, "revenue": 30000 },
+      { "name": "Boutique Hotels", "projects": 1, "revenue": 25000 }
+    ]
+  }
+}
+
+
+

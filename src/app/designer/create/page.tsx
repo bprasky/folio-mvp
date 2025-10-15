@@ -65,7 +65,8 @@ function LongFormCreateUI() {
           setErr('Create API did not return an id.');
           return;
         }
-        router.replace(`/project/${id}`);
+        // Route to setup page for image upload + product tagging
+        router.replace(`/project/${id}/setup`);
       }
     } catch (e: any) {
       setErr(e.message || 'Failed to create project');
@@ -232,11 +233,10 @@ function LongFormCreateUI() {
   );
 }
 
-// Publish Now flow (minimal create + tagging)
+// Canonical Quick Create flow (simple title → media/tagging)
 function PublishNowFlow() {
   const router = useRouter();
-  const [step, setStep] = useState<'meta' | 'tag'>('meta');
-  const [projectId, setProjectId] = useState<string | null>(null);
+  const searchParams = useSearchParams();
   const [name, setName] = useState('');
   const [desc, setDesc] = useState('');
   const [err, setErr] = useState<string | null>(null);
@@ -255,8 +255,9 @@ function PublishNowFlow() {
       });
       
       if (res?.ok && res.projectId) {
-        setProjectId(res.projectId);
-        setStep('tag');
+        // Route straight to media/tagging (use replace to prevent back button issues)
+        const onboard = searchParams?.get('onboard') ?? '1';
+        router.replace(`/project/${res.projectId}/setup?onboard=${onboard}`);
       } else {
         setErr('Failed to create project');
       }
@@ -267,67 +268,66 @@ function PublishNowFlow() {
     }
   }
 
-  if (step === 'meta') {
-    return (
-      <div className="p-6">
-        <div className="max-w-xl mx-auto">
-          <h1 className="text-2xl font-semibold mb-6">Publish a Project</h1>
+  return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+      <div className="max-w-xl w-full bg-white rounded-2xl shadow-lg p-8">
+        <h1 className="text-3xl font-bold mb-2">Create a Project</h1>
+        <p className="text-gray-600 mb-6">Give your project a title to get started</p>
+        
+        <form onSubmit={handleCreate} className="space-y-5">
+          <div>
+            <label className="block text-sm font-medium mb-2">Project Title *</label>
+            <input
+              className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              placeholder="e.g., Modern Coastal Living Room"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+              autoFocus
+            />
+          </div>
           
-          <form onSubmit={handleCreate} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">Project Title *</label>
-              <input
-                className="w-full border rounded-lg px-3 py-2"
-                placeholder="Enter project title"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-              />
+          <div>
+            <label className="block text-sm font-medium mb-2">Description (optional)</label>
+            <textarea
+              className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              placeholder="Brief description of your project..."
+              value={desc}
+              onChange={(e) => setDesc(e.target.value)}
+              rows={3}
+            />
+          </div>
+
+          {err && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+              {err}
             </div>
-            
-            <div>
-              <label className="block text-sm font-medium mb-1">Description</label>
-              <textarea
-                className="w-full border rounded-lg px-3 py-2"
-                placeholder="Describe your project (optional)"
-                value={desc}
-                onChange={(e) => setDesc(e.target.value)}
-                rows={3}
-              />
-            </div>
+          )}
 
-            {err && <p className="text-red-600 text-sm">{err}</p>}
-
-            <button 
-              type="submit" 
-              className="w-full rounded-lg border px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
-              disabled={loading}
-            >
-              {loading ? 'Creating...' : 'Continue to Upload & Tag'}
-            </button>
-          </form>
-          
-          <DevDebugPanel />
-        </div>
+          <button 
+            type="submit" 
+            className="w-full rounded-lg px-6 py-3 bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            disabled={loading}
+          >
+            {loading ? (
+              <span className="flex items-center justify-center gap-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                Creating...
+              </span>
+            ) : (
+              'Continue to Upload Images'
+            )}
+          </button>
+        </form>
+        
+        <p className="text-xs text-gray-500 mt-6 text-center">
+          Next: Upload images and tag products
+        </p>
+        
+        <DevDebugPanel />
       </div>
-    );
-  }
-
-  // step === 'tag' - redirect to project page for now
-  // TODO: Integrate with ProjectCreationModal when available
-  if (projectId) {
-            router.replace(`/project/${projectId}`);
-    return (
-      <div className="p-6">
-        <div className="max-w-xl mx-auto text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p>Redirecting to project...</p>
-        </div>
-      </div>
-    );
-  }
-
-  return null;
+    </div>
+  );
 }
 
 // Main page component

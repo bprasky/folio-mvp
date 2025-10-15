@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { supabaseServer } from '@/lib/supabaseServer';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '../../../auth/[...nextauth]/options';
 
 export const runtime = "nodejs";
 
@@ -12,10 +13,9 @@ export async function GET(
     const eventId = params.id;
 
     // Get current user
-    const supabase = supabaseServer();
-    const { data: { user } } = await supabase.auth.getUser();
+    const session = await getServerSession(authOptions);
 
-    if (!user) {
+    if (!session?.user?.id) {
       return NextResponse.json({ recaps: [] });
     }
 

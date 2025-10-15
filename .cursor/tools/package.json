@@ -1,0 +1,19 @@
+{
+  "name": "materialbank-importer-tools",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Material Bank board importer tools for Folio",
+  "scripts": {
+    "import": "tsx run-import.ts"
+  },
+  "dependencies": {
+    "puppeteer-core": "^21.0.0",
+    "papaparse": "^5.4.1",
+    "dotenv": "^17.2.0"
+  },
+  "devDependencies": {
+    "@types/papaparse": "^5.3.14"
+  }
+}
+

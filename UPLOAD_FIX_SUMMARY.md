@@ -91,3 +91,9 @@ $env:FOLIO_ALLOW_CREATE_WITHOUT_IMAGE='true'; npm run dev
 The "Invalid Compact JWS" error should now be resolved. All admin uploads use service-role authentication with bucket fallback, ensuring reliable image uploads.
 
 
+
+
+
+
+
+

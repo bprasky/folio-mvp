@@ -617,15 +617,8 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
       updatedImages[selectedImageIndex].tags.push(newTag);
       setImages(updatedImages);
 
-      // Save draft to API after tagging a product
-      if (projectName.trim()) {
-        try {
-          await saveDraftToAPI();
-        } catch (error) {
-          console.error('Error saving draft after tagging:', error);
-          // Don't show error for draft save failure - the tag was successful
-        }
-      }
+      // Note: Draft auto-save removed - tags are saved to DB immediately via API
+      // The tag was successfully saved above, no need for additional draft save
 
       // Reset states
       setShowProductModal(false);

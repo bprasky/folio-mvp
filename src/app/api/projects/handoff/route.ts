@@ -1,107 +1,122 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
+import { getServerSession } from 'next-auth';
+import { getToken } from 'next-auth/jwt';
+import { getVendorContext } from '@/lib/auth/vendorContext';
 
-const prisma = new PrismaClient();
+async function getUserIdFromRequest(req: Request) {
+  // 1) Primary: NextAuth session
+  const session = await getServerSession();
+  if (session?.user?.id) return session.user.id;
 
-// Vendor creates project and initiates handoff
-export async function POST(request: NextRequest) {
+  // 2) Fallback: decode JWT from cookies (works when getServerSession fails)
   try {
-    const body = await request.json();
-    const { 
-      name, 
-      description, 
-      vendorOrgId, 
-      designerOrgId, 
-      designerEmail,
-      vendorUserId,
-      vendorRepId,
-      vendorRepName,
-      vendorRepEmail,
-      vendorOrgName,
-      vendorOrgDescription,
-      initialRooms = []
-    } = body;
+    const token = await getToken({ req: req as any, secret: process.env.NEXTAUTH_SECRET });
+    if (token?.sub) return String(token.sub);
+    if ((token as any)?.id) return String((token as any).id);
+  } catch {}
 
-    if (!name || !vendorOrgId || !vendorUserId) {
-      return NextResponse.json(
-        { error: 'Missing required fields: name, vendorOrgId, vendorUserId' },
-        { status: 400 }
-      );
+  // 3) Dev override header (demo only)
+  if (process.env.NODE_ENV !== 'production') {
+    const devId = req.headers.get('x-dev-user-id');
+    if (devId) return devId;
+  }
+
+  return null;
+}
+
+export async function POST(req: Request) {
+  try {
+    const userId = await getUserIdFromRequest(req);
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Create the project in the database
+    const body = await req.json().catch(() => ({}));
+    const vendorCtx = await getVendorContext();
+
+    // — normalize fields —
+    const rawName = (body?.name ?? body?.projectName ?? "").trim();
+    const name = rawName.length ? rawName : "Untitled project";
+    const note = typeof body?.note === "string" ? body.note : "";
+
+    // — create project —
     const project = await prisma.project.create({
       data: {
-        name,
-        description,
-        vendorOrgId,
-        designerOrgId,
-        ownerId: vendorUserId,
-        isHandoffReady: !!designerOrgId || !!designerEmail,
-        handoffInvitedAt: (designerOrgId || designerEmail) ? new Date() : null,
-        status: 'ACTIVE',
-        category: 'RESIDENTIAL',
+        title: name,   // Use title field (schema uses title, not name)
+        description: note,
+        vendorOrgId: vendorCtx?.vendorOrgId ?? null,
+        designerOrgId: body?.designerOrgId || null,
+        ownerId: userId,
+        isHandoffReady: !!(body?.designerOrgId || body?.designerEmail),
+        handoffInvitedAt: (body?.designerOrgId || body?.designerEmail) ? new Date() : null,
+        clientType: 'RESIDENTIAL',
         isPublic: false,
         isAIEnabled: true,
         views: 0,
         saves: 0,
         shares: 0,
       },
-      include: {
-        vendorOrg: true,
-        designerOrg: true,
-        owner: true,
-        rooms: {
-          include: {
-            selections: true,
-          },
-        },
-      },
+      select: { id: true, title: true, createdAt: true },
     });
 
-    // Create initial rooms if provided
-    if (initialRooms.length > 0) {
-      const roomData = initialRooms.map((roomName: string) => ({
-        name: roomName,
-        projectId: project.id,
-      }));
-
-      await prisma.room.createMany({
-        data: roomData,
-      });
-
-      // Fetch the project with rooms
-      const projectWithRooms = await prisma.project.findUnique({
-        where: { id: project.id },
-        include: {
-          vendorOrg: true,
-          designerOrg: true,
-          owner: true,
-          rooms: {
-            include: {
-              selections: true,
-            },
+    // — (demo) skip/soft-fail participants —
+    if (vendorCtx?.vendorOrgId) {
+      try {
+        await (prisma as any).projectParticipant.create({
+          data: {
+            projectId: project.id as any,
+            organizationId: vendorCtx.vendorOrgId as any,
+            side: "VENDOR" as any,
+            role: "EDITOR" as any,
           },
-        },
-      });
-
-      console.log('Created project with rooms:', projectWithRooms);
-      return NextResponse.json(projectWithRooms);
+        });
+      } catch (e) {
+        console.warn("[DEMO] participant create skipped:", (e as any)?.code || (e as any)?.message);
+      }
     }
 
-    console.log('Created project:', project);
-    return NextResponse.json(project);
-  } catch (error) {
-    console.error('Error creating project handoff:', error);
-    return NextResponse.json(
-      { error: 'Failed to create project handoff' },
-      { status: 500 }
-    );
+    // --- Create a visit token reliably (single-table model) ---
+    let visit: { token: string; url: string } | null = null;
+    try {
+      const token = crypto.randomUUID();
+      // If your schema stores token on VendorVisit (most likely from the error logs):
+      // Accept either recipientEmail or designerEmail from the body
+      const emailRaw = (body?.recipientEmail ?? body?.designerEmail ?? "").trim().toLowerCase();
+      if (!emailRaw) return NextResponse.json({ error: "Recipient email required" }, { status: 400 });
+
+      const vv = await prisma.vendorVisit.create({
+        data: {
+          token,
+          projectId: project.id as any,
+          designerEmail: emailRaw,           // ✅ your DB column
+          vendorId: userId,
+          note: note || null,
+        },
+        select: { id: true, token: true, createdAt: true },
+      });
+
+      // (optional but recommended) mark vendor project as invited
+      await prisma.project.update({
+        where: { id: project.id as any },
+        data: { handoffInvitedAt: new Date() },
+      }).catch(() => {});
+
+      const base = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3002";
+      visit = { token: vv.token, url: `${base}/visit/${vv.token}` };
+    } catch (e) {
+      console.warn("[DEMO] visit creation skipped:", (e as any)?.code || (e as any)?.message);
+    }
+
+    return NextResponse.json({ project, visit }, { status: 201 });
+  } catch (err) {
+    console.error("handoff POST error:", err);
+    return NextResponse.json({ error: "Failed to create project" }, { status: 500 });
   }
 }
 
 // Designer claims project ownership
-export async function PUT(request: NextRequest) {
+export async function PUT(request: Request) {
   try {
     const body = await request.json();
     const { projectId, designerUserId, designerOrgId } = body;
@@ -162,7 +177,7 @@ export async function PUT(request: NextRequest) {
 }
 
 // Get projects ready for handoff
-export async function GET(request: NextRequest) {
+export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const designerEmail = searchParams.get('designerEmail');

@@ -11,21 +11,36 @@ module.exports = {
     extend: {
       colors: {
         folio: {
-          background: "#F4F2F0",   // Background
-          text: "#1E1E1E",         // Primary text
-          accent: "#7C1E3D",     // Action Buttons (Deep Raspberry Jam)
-          system: "#4A2C3B",       // System / Data Layers (Plum/Aubergine)
-          success: "#A47B62",      // Success / Progress States (Muted Bronze)
-          border: "#E5E5E5",       // Borders
-          muted: "#F8F6F4",        // Muted backgrounds
-          card: "#FFFFFF",         // Card backgrounds
+          // New design system tokens
+          bg: "var(--folio-bg)",
+          surface: "var(--folio-surface)",
+          ink: "var(--folio-ink)",
+          stone: {
+            100: "var(--folio-stone-100)",
+            300: "var(--folio-stone-300)",
+            500: "var(--folio-stone-500)",
+            700: "var(--folio-stone-700)",
+          },
+          accent: {
+            200: "var(--folio-accent-200)",
+            400: "var(--folio-accent-400)",
+            700: "var(--folio-accent-700)",
+          },
+          border: "var(--folio-border)",
+          // Legacy tokens (backward compatibility)
+          background: "#F4F2F0",
+          text: "#1E1E1E",
+          system: "#4A2C3B",
+          success: "#A47B62",
+          muted: "#F8F6F4",
+          card: "#FFFFFF",
         },
         folioDark: {
           background: "#28",
           card: "#34",
           text: "#F4F2F0",
           border: "#Infinity",
-          accent: "#7C1E3D", // keep consistent
+          accent: "#7C1E3D",
         },
         primary: {
           50: '#f0f9ff',
@@ -40,9 +55,27 @@ module.exports = {
           900: '#0c4a6e',
         },
       },
+      borderRadius: {
+        sm: "var(--radius-sm)",
+        md: "var(--radius-md)",
+        lg: "var(--radius-lg)",
+      },
+      boxShadow: {
+        folio1: "var(--shadow-1)",
+        folio2: "var(--shadow-2)",
+        folio3: "var(--shadow-3)",
+      },
       fontFamily: {
-        sans: ["Inter", "system-ui", "sans-serif"],
+        serif: "var(--font-serif)",
+        sans: "var(--font-sans)",
         canela: ["ui-serif", "Georgia", "Cambria", "Times New Roman", "Times", "serif"],
+      },
+      transitionTimingFunction: {
+        folio: "var(--ease)",
+      },
+      transitionDuration: {
+        fast: "var(--dur-fast)",
+        med: "var(--dur-med)",
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',

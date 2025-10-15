@@ -9,7 +9,7 @@ export async function POST(
 ) {
   try {
     const body = await request.json();
-    const { name } = body;
+    const { name, type } = body;
 
     if (!name || !name.trim()) {
       return NextResponse.json(
@@ -34,6 +34,7 @@ export async function POST(
     const room = await prisma.room.create({
       data: {
         name: name.trim(),
+        type: type || null,
         projectId: params.id
       },
       include: {

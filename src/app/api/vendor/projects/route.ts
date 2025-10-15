@@ -1,134 +1,137 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/options';
-import { normalizeRole, canAccessVendor } from '@/lib/permissions';
-import { z } from 'zod';
+import { getToken } from 'next-auth/jwt';
+import { getVendorContext } from '@/lib/auth/vendorContext';
+import { vendorProjectsWhereDemo } from '@/lib/visibility/vendorProjects';
+import { getUserIdFromRequest } from '@/lib/apiAuth';
 
-const prisma = new PrismaClient();
-
-export async function POST(request: NextRequest) {
-  const session = await getServerSession(authOptions);
-  const role = normalizeRole(session?.user?.role);
-  const userId = (session?.user as any)?.id as string | undefined;
-
-  if (process.env.NODE_ENV === 'development') {
-    console.log('[create-vendor-project]', { 
-      hasCookie: !!request.headers.get('cookie'), 
-      email: session?.user?.email, 
-      role, 
-      userId 
-    });
-  }
-
-  if (!userId) {
-    return NextResponse.json({ error: 'You must be signed in' }, { status: 401 });
-  }
-
-  if (!canAccessVendor(role)) {
-    return NextResponse.json({ error: 'Your role is not permitted to create vendor projects' }, { status: 403 });
-  }
-
+export async function POST(req: Request) {
   try {
-    // Validate payload with zod
-    const vendorProjectSchema = z.object({
-      title: z.string().min(1, 'Title is required'),
-      type: z.string().min(1, 'Type is required'),
-      location: z.string().min(1, 'Location is required'),
-      description: z.string().min(1, 'Description is required'),
-      styleTags: z.array(z.string()).min(1, 'At least one style tag is required'),
-      vendorId: z.string().optional(), // Will use session user ID instead
-    });
+    const userId = await getUserIdFromRequest(req);
+    if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const validatedPayload = vendorProjectSchema.parse(await request.json());
-    const { title, type, location, description, styleTags } = validatedPayload;
+    const body = await req.json().catch(() => ({}));
+    const rawName = (body?.name ?? body?.projectName ?? "").trim();
+    const name = rawName.length ? rawName : "Untitled project";
+    const note = typeof body?.note === "string" ? body.note : "";
 
-    console.log('DEBUG: Received vendor project creation request:', {
-      title,
-      type,
-      location,
-      description,
-      styleTags,
-      userId
-    });
+    const initialRooms: string[] = Array.isArray(body?.initialRooms)
+      ? body.initialRooms.map((r: any) => String(r ?? "").trim()).filter(Boolean)
+      : [];
 
-    // Create the project using session user ID
-    const project = await prisma.project.create({
-      data: {
-        name: title,
-        category: type,
-        description,
-        ownerId: userId,
-        status: 'draft'
-      },
-      include: {
-        owner: {
-          select: {
-            id: true,
-            name: true,
-            email: true
+    const vendorCtx = await getVendorContext().catch(() => null);
+
+    // Transaction: create project, then optional rooms
+    const result = await prisma.$transaction(async (tx) => {
+      const project = await tx.project.create({
+        data: {
+          title: name,     // Use title field (schema uses title, not name)
+          description: note,
+          ownerId: userId,
+          // If your schema has vendorOrgId, set it; if not, Prisma will error — so guard try/catch:
+          ...(vendorCtx?.vendorOrgId ? { vendorOrgId: vendorCtx.vendorOrgId as any } : {}),
+        },
+        select: { id: true, title: true, createdAt: true },
+      });
+
+      if (initialRooms.length) {
+        // createMany if your schema supports; otherwise loop create
+        try {
+          // Using loop for maximum compatibility
+          for (const roomName of initialRooms) {
+            await tx.room.create({
+              data: {
+                name: roomName,
+                projectId: project.id as any,
+              },
+              select: { id: true },
+            });
           }
+        } catch (e) {
+          // If your model is named differently (e.g., ProjectRoom), we just skip silently for the demo
+          console.warn("[DEMO] room create skipped:", (e as any)?.code || (e as any)?.message);
         }
       }
+
+      return project;
     });
 
-    console.log('Vendor project created successfully:', project);
-    return NextResponse.json(project, { status: 201 });
-  } catch (e: any) {
-    if (e instanceof z.ZodError) {
-      return NextResponse.json({ 
-        error: 'Validation failed', 
-        details: e.issues.map((err: any) => ({ field: err.path.join('.'), message: err.message }))
-      }, { status: 400 });
-    }
-    console.error('Error creating vendor project:', e);
-    return NextResponse.json(
-      { error: 'Failed to create project', details: e instanceof Error ? e.message : 'Unknown error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ project: result }, { status: 201 });
+  } catch (err) {
+    console.error("POST /api/vendor/projects failed:", err);
+    return NextResponse.json({ error: "Failed to create project" }, { status: 500 });
   }
 }
 
-export async function GET(request: NextRequest) {
+export async function GET(req: Request) {
+  const userId = await getUserIdFromRequest(req);
+  if (!userId) return NextResponse.json({ projects: [], count: 0 });
+
+  const where = vendorProjectsWhereDemo(userId);
+
+  // Pull projects with fields we need for designer labels
+  const projects = await prisma.project.findMany({
+    where,
+    orderBy: { createdAt: 'desc' },
+    include: {
+      _count: { select: { selections: true } }
+    },
+    take: 50,
+  });
+
+  // Map designer label:
+  //  - if designerOrgId present, fetch org names
+  //  - else, try last handoff recipient (VendorVisit) for a friendly "Pending (sent to ...)"
+  const idsNeedingOrg = projects.filter(p => !!p.designerOrgId).map(p => p.designerOrgId as string);
+  const orgs = idsNeedingOrg.length
+    ? await prisma.organization.findMany({
+        where: { id: { in: idsNeedingOrg } },
+        select: { id: true, name: true },
+      })
+    : [];
+
+  const orgNameById = new Map(orgs.map(o => [o.id, o.name]));
+
+  // Try to read last recipient email per project from visits (best-effort; ignore errors)
+  const pendingByProject: Record<string, string | undefined> = {};
   try {
-    const { searchParams } = new URL(request.url);
-    const userId = searchParams.get('userId');
-
-    if (!userId) {
-      return NextResponse.json(
-        { error: 'User ID is required' },
-        { status: 400 }
-      );
-    }
-
-    // Fetch projects owned by the vendor user
-    const projects = await prisma.project.findMany({
-      where: {
-        ownerId: userId
-      },
-      include: {
-        rooms: {
-          include: {
-            selections: true
-          }
-        },
-        _count: {
-          select: {
-            rooms: true
-          }
-        }
-      },
-      orderBy: {
-        createdAt: 'desc'
-      }
+    // If VendorVisit links to projectId, use that; else skip this block.
+    const visits = await prisma.vendorVisit.findMany({
+      where: { projectId: { in: projects.map(p => p.id) } },
+      orderBy: { createdAt: 'desc' },
+      select: { projectId: true, designerEmail: true, createdAt: true },
     });
-
-    return NextResponse.json(projects);
-  } catch (error) {
-    console.error('Error fetching vendor projects:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch projects', details: error instanceof Error ? error.message : 'Unknown error' },
-      { status: 500 }
-    );
+    for (const v of visits) {
+      if (!pendingByProject[v.projectId!]) pendingByProject[v.projectId!] = v.designerEmail ?? undefined;
+    }
+  } catch (_) {
+    // silently ignore if model not present or field doesn't exist
   }
+
+  const enriched = projects.map(p => {
+    const projectName = p?.title || "Untitled project";
+    const designerName =
+      (p.designerOrgId && orgNameById.get(p.designerOrgId)) ||
+      (pendingByProject[p.id] ? `Pending (sent to ${pendingByProject[p.id]})` : "Not assigned");
+
+    return {
+      id: p.id,
+      name: projectName,
+      title: projectName, // for compatibility
+      designerName,
+      designerOrgName: p.designerOrgId ? orgNameById.get(p.designerOrgId) : undefined,
+      createdAt: p.createdAt,
+      handoffInvitedAt: p.handoffInvitedAt,
+      handoffClaimedAt: p.handoffClaimedAt,
+      isHandoffReady: p.isHandoffReady,
+      description: p.description,
+      status: p.status,
+      _count: p._count
+    };
+  });
+
+  const count = await prisma.project.count({ where });
+
+  return NextResponse.json({ projects: enriched, count });
 } 

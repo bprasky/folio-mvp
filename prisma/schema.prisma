@@ -14,6 +14,9 @@ model User {
   bio               String?
   profileImage      String?
   location          String?
+  title             String?
+  phone             String?
+  studio            String?
   specialties       String[]
   website           String?
   instagram         String?
@@ -43,6 +46,7 @@ model User {
   vendorSelections  Selection[]        @relation("VendorSelections")
   stories           Story[]
   vendorStories     Story[]            @relation("StoryToVendor")
+  projectParticipants ProjectParticipant[]
 
   @@map("users")
 }
@@ -125,6 +129,7 @@ model Project {
   status           String         @default("active")
   stage            ProjectStage   @default(concept)
   isPublic         Boolean        @default(false)
+  publishedAt      DateTime?
   isAIEnabled      Boolean        @default(false)
   views            Int            @default(0)
   saves            Int            @default(0)
@@ -154,6 +159,7 @@ model Project {
   rooms            Room[]
   selections       Selection[]
   stories          Story[]
+  participants     ProjectParticipant[]
 
   @@map("projects")
 }
@@ -264,6 +270,7 @@ model Category {
 model Room {
   id         String      @id @default(uuid())
   name       String
+  type       String?     // Optional room type: KITCHEN, BATH, LIVING, BEDROOM, DINING, OFFICE, ENTRY
   projectId  String
   createdAt  DateTime    @default(now())
   updatedAt  DateTime    @updatedAt
@@ -297,6 +304,8 @@ model Selection {
   vendorRepId       String?
   productUrl        String?
   tags              String[] @default([])
+  slotKey           String?  // Optional slot key for room template tracking (e.g., 'countertop', 'sofa')
+  uiMeta            Json?    // UI metadata: displaySize, featured, dimensions, etc.
   quotes            Quote[]
   project           Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
   room              Room?    @relation(fields: [roomId], references: [id], onDelete: Cascade)
@@ -330,6 +339,7 @@ model Organization {
   users            OrganizationUser[]
   designerProjects Project[]          @relation("DesignerProjects")
   vendorProjects   Project[]          @relation("VendorProjects")
+  projectParticipants ProjectParticipant[]
 
   @@map("organizations")
 }
@@ -596,4 +606,93 @@ enum ProjectStage {
 enum ClientType {
   RESIDENTIAL
   COMMERCIAL
+}
+
+enum QuoteStatus {
+  DRAFT
+  SENT
+  ACCEPTED
+  REJECTED
+  EXPIRED
+}
+
+model VendorVisit {
+  id             String   @id @default(cuid())
+  token          String   @unique
+  vendorId       String
+  designerEmail  String
+  projectId      String?  // will be set once designer chooses destination (existing/new/specsheet)
+  note           String?  // agenda, context
+  expiresAt      DateTime?
+  createdAt      DateTime @default(now())
+
+  @@index([vendorId])
+  @@index([projectId])
+  @@index([designerEmail])
+  @@index([projectId, createdAt])
+}
+
+model QuoteAttachment {
+  id            String      @id @default(cuid())
+  vendorId      String
+  projectId     String?     // becomes non-null after destination chosen
+  roomId        String?
+  selectionId   String?
+  fileUrl       String?
+  fileName      String?
+  totalCents    Int?
+  currency      String?     @default("USD")
+  leadTimeDays  Int?
+  termsShort    String?
+  version       Int         @default(1)
+  supersedesId  String?     @unique
+  supersededBy  QuoteAttachment? @relation("QuoteSupersede", fields: [supersedesId], references: [id])
+  supersedes    QuoteAttachment? @relation("QuoteSupersede")
+  status        QuoteStatus @default(DRAFT)
+  expiresAt     DateTime?
+  jsonPayload   Json?
+  createdAt     DateTime    @default(now())
+
+  @@index([vendorId])
+  @@index([projectId])
+  @@index([status])
+}
+
+/// Lightweight staging container until designer chooses a destination
+model HandoffPackage {
+  id                  String   @id @default(cuid())
+  visitId             String   @unique
+  vendorId            String
+  designerEmail       String
+  itemsJson           Json     // [{productId, sku, finish, qty, note, imageUrl?}]
+  quoteAttachmentId   String?  // optional, if vendor attached quote at handoff time
+  createdAt           DateTime @default(now())
+}
+
+model ProjectParticipant {
+  id        String   @id @default(uuid())
+  projectId String
+  orgId     String?  // nullable for direct user participation
+  userId    String?  // nullable for org-level participation
+  side      ParticipantSide
+  role      ParticipantRole @default(VIEWER)
+  createdAt DateTime @default(now())
+  
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  org       Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user      User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([projectId, orgId, userId])
+  @@map("project_participants")
+}
+
+enum ParticipantSide {
+  DESIGNER
+  VENDOR
+}
+
+enum ParticipantRole {
+  OWNER
+  EDITOR
+  VIEWER
 }

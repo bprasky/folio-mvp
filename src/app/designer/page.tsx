@@ -3,9 +3,10 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import SafeImage from '../../components/SafeImage';
-import { FaPlus, FaEdit, FaTrash, FaChartLine, FaBriefcase, FaUser, FaToggleOn, FaToggleOff, FaDownload, FaEye, FaEyeSlash, FaExternalLinkAlt } from 'react-icons/fa';
+import { FaPlus, FaEdit, FaTrash, FaChartLine, FaBriefcase, FaUser, FaToggleOn, FaToggleOff, FaDownload, FaEye, FaEyeSlash, FaExternalLinkAlt, FaUpload } from 'react-icons/fa';
 import ProjectCreationModal from '../../components/ProjectCreationModal';
 import { useRole } from '../../contexts/RoleContext';
+import { PublishButton } from './PublishButton';
 
 export default function DesignerProfile() {
   const { role, activeProfileId, setActiveProfileId } = useRole();
@@ -324,6 +325,14 @@ export default function DesignerProfile() {
             <FaEdit className="w-4 h-4" />
           </button>
           
+          {/* Publish Button - Only show for draft projects */}
+          {(project.status === 'draft' || !project.isPublic) && (
+            <PublishButton 
+              projectId={project.id} 
+              onPublished={() => loadProjects(selectedDesignerId)} 
+            />
+          )}
+          
           {/* Delete Button */}
           <button
             onClick={() => handleDeleteProject(project.id)}
@@ -343,8 +352,20 @@ export default function DesignerProfile() {
           >
             {project.name}
           </Link>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col gap-2">
+            {/* Action Buttons for Draft Projects */}
+            {(project.status === 'draft' || !project.isPublic) && !project.images?.length && (
+              <Link
+                href={`/project/${project.id}/setup`}
+                className="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium bg-blue-50 text-blue-700 rounded-full hover:bg-blue-100 transition-colors"
+              >
+                <FaUpload className="w-3 h-3" />
+                Continue Setup
+              </Link>
+            )}
+            
             {/* Status Badge */}
+            <div className="flex items-center gap-2">
             <span className={`px-2 py-1 text-xs rounded-full ${
               project.status === 'published' 
                 ? 'bg-green-100 text-green-800' 
@@ -361,6 +382,7 @@ export default function DesignerProfile() {
             }`}>
               {project.visibility === 'public' ? 'Public' : 'Private'}
             </span>
+            </div>
           </div>
         </div>
         
@@ -598,7 +620,16 @@ export default function DesignerProfile() {
                       <span>{project.rooms?.length || 0} rooms</span>
                     </div>
                     
-                    <div className="mt-3 pt-3 border-t border-gray-700">
+                    <div className="mt-3 pt-3 border-t border-gray-700 space-y-2">
+                      {project.status !== 'published' && (
+                        <Link
+                          href={`/project/${project.id}/setup?onboard=1`}
+                          className="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg transition-colors text-center block font-medium"
+                        >
+                          <FaUpload className="inline mr-2" />
+                          Continue Setup
+                        </Link>
+                      )}
                       <Link
                         href={`/designer/projects/${project.id}`}
                         className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg transition-colors text-center block"

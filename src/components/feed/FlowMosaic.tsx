@@ -199,7 +199,7 @@ export default function FlowMosaic({ events, canEdit = false }: FlowMosaicProps)
               {canEdit && (
                 <div className="absolute top-2 right-2 z-40 pointer-events-auto">
                   <Link
-                    href={`/admin/events/new?edit=${item.id}`}
+                    href={`/admin/events/${item.id}`}
                     className="pointer-events-auto rounded bg-black/60 text-white text-[11px] px-2 py-1 hover:bg-black/80"
                     onClick={(e)=>e.stopPropagation()}
                   >

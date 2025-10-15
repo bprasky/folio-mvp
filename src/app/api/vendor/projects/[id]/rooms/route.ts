@@ -3,6 +3,20 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
+export async function GET(_req: Request, { params }: { params: { id: string }}) {
+  try {
+    const rooms = await prisma.room.findMany({
+      where: { projectId: params.id as any },
+      orderBy: { createdAt: "asc" },
+      select: { id: true, name: true },
+    });
+    return NextResponse.json({ rooms });
+  } catch (e) {
+    console.warn("[Rooms GET] failed:", (e as any)?.message);
+    return NextResponse.json({ rooms: [] });
+  }
+}
+
 export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
