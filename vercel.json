@@ -1,0 +1,19 @@
+{
+  "framework": "nextjs",
+  "buildCommand": "next build",
+  "devCommand": "next dev",
+  "installCommand": "npm install",
+  "regions": ["iad1"],
+  "env": {
+    "PRISMA_GENERATE_DATASOURCE": "1"
+  },
+  "build": {
+    "env": {
+      "PRISMA_GENERATE_DATASOURCE": "1"
+    }
+  }
+}
+
+
+
+
