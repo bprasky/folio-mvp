@@ -1,0 +1,90 @@
+"use client";
+import { useState } from "react";
+import { AestheticProfile } from "@/lib/aesthetic/types";
+
+type ExplanationOverlayProps = {
+  aesthetic: AestheticProfile;
+  onClose?: () => void;
+};
+
+export default function ExplanationOverlay({ aesthetic, onClose }: ExplanationOverlayProps) {
+  const [isOpen, setIsOpen] = useState(true);
+
+  const handleClose = () => {
+    setIsOpen(false);
+    onClose?.();
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div className="relative bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-8">
+        <button
+          onClick={handleClose}
+          className="absolute top-4 right-4 p-2 hover:bg-gray-100 rounded-full transition-colors"
+          aria-label="Close"
+        >
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M6 18L18 6M6 6l12 12"
+            />
+          </svg>
+        </button>
+
+        <div className="pr-8">
+          <h2 className="text-3xl font-bold mb-4">Your Aesthetic Profile</h2>
+          <div className="mb-6">
+            <span className="inline-block px-4 py-2 bg-gray-100 rounded-full text-sm font-semibold text-gray-800 capitalize">
+              {aesthetic.theme}
+            </span>
+            <span className="ml-3 text-sm text-gray-600">
+              {Math.round(aesthetic.confidence * 100)}% confidence
+            </span>
+          </div>
+
+          <p className="text-lg text-gray-700 leading-relaxed mb-6">
+            {aesthetic.explanation}
+          </p>
+
+          {aesthetic.alternativeThemes.length > 0 && (
+            <div className="mb-6">
+              <p className="text-sm font-semibold text-gray-600 mb-2">Also considered:</p>
+              <div className="flex flex-wrap gap-2">
+                {aesthetic.alternativeThemes.map((theme) => (
+                  <span
+                    key={theme}
+                    className="px-3 py-1 bg-gray-50 rounded-full text-xs text-gray-600 capitalize"
+                  >
+                    {theme}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="pt-6 border-t border-gray-200">
+            <p className="text-sm text-gray-600 mb-4">
+              We automatically detected your aesthetic from your uploaded projects. Your profile layout and project grid have been customized to match your style.
+            </p>
+            <button
+              onClick={handleClose}
+              className="px-6 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors font-medium"
+            >
+              Got it
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+

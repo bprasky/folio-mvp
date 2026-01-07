@@ -1,0 +1,117 @@
+{
+  "fest_001": {
+    "rsvpStats": {
+      "total": 128,
+      "attendees": [
+        {
+          "id": "u1",
+          "name": "Cynthia Lee",
+          "avatarUrl": "/_mocks/avatars/cynthia.jpg"
+        },
+        {
+          "id": "u2",
+          "name": "Studio Forma",
+          "avatarUrl": "/_mocks/avatars/forma.jpg"
+        },
+        {
+          "id": "u3",
+          "name": "Marco D",
+          "avatarUrl": null
+        }
+      ]
+    },
+    "friendsGoing": {
+      "count": 2,
+      "sample": [
+        {
+          "id": "u8",
+          "name": "Ana G",
+          "avatarUrl": "/_mocks/avatars/ana.jpg",
+          "isFollowedByCurrentUser": true
+        },
+        {
+          "id": "u9",
+          "name": "R. Patel",
+          "avatarUrl": null,
+          "isFollowedByCurrentUser": true
+        }
+      ]
+    }
+  },
+  "nycx2026": {
+    "rsvpStats": {
+      "total": 247,
+      "attendees": [
+        {
+          "id": "u10",
+          "name": "Jane Koh",
+          "avatarUrl": null
+        },
+        {
+          "id": "u11",
+          "name": "Design Studio NY",
+          "avatarUrl": "/_mocks/avatars/dsny.jpg"
+        },
+        {
+          "id": "u12",
+          "name": "Sarah Chen",
+          "avatarUrl": "/_mocks/avatars/sarah.jpg"
+        }
+      ]
+    },
+    "friendsGoing": {
+      "count": 3,
+      "sample": [
+        {
+          "id": "u11",
+          "name": "Design Studio NY",
+          "avatarUrl": "/_mocks/avatars/dsny.jpg",
+          "isFollowedByCurrentUser": true
+        },
+        {
+          "id": "u12",
+          "name": "Sarah Chen",
+          "avatarUrl": "/_mocks/avatars/sarah.jpg",
+          "isFollowedByCurrentUser": true
+        }
+      ]
+    }
+  },
+  "mdw2026": {
+    "rsvpStats": {
+      "total": 189,
+      "attendees": [
+        {
+          "id": "u4",
+          "name": "Marco Rossi",
+          "avatarUrl": "/_mocks/avatars/marco.jpg"
+        },
+        {
+          "id": "u5",
+          "name": "Sofia Bianchi",
+          "avatarUrl": null
+        },
+        {
+          "id": "u6",
+          "name": "Luca Ferrari",
+          "avatarUrl": "/_mocks/avatars/luca.jpg"
+        }
+      ]
+    },
+    "friendsGoing": {
+      "count": 1,
+      "sample": [
+        {
+          "id": "u6",
+          "name": "Luca Ferrari",
+          "avatarUrl": "/_mocks/avatars/luca.jpg",
+          "isFollowedByCurrentUser": true
+        }
+      ]
+    }
+  }
+}
+
+
+
+

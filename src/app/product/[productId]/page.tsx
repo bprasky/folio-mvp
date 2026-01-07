@@ -1,0 +1,325 @@
+import { prisma } from "@/lib/prisma";
+import { notFound } from "next/navigation";
+import Image from "next/image";
+import Link from "next/link";
+
+interface ProductPageProps {
+  params: { productId: string };
+}
+
+export default async function ProductPage({ params }: ProductPageProps) {
+  const product = await prisma.product.findUnique({
+    where: { 
+      OR: [
+        { id: params.productId },
+        { slug: params.productId }
+      ]
+    },
+    include: {
+      projectTags: {
+        include: {
+          project: {
+            select: {
+              id: true,
+              title: true,
+              description: true,
+              images: {
+                take: 1,
+                select: {
+                  url: true,
+                },
+              },
+              designer: {
+                select: {
+                  id: true,
+                  name: true,
+                  profileImage: true,
+                },
+              },
+            },
+          },
+          projectImage: {
+            select: {
+              id: true,
+              url: true,
+              room: true,
+            },
+          },
+        },
+      },
+      vendor: {
+        select: {
+          id: true,
+          name: true,
+          profileImage: true,
+          companyName: true,
+        },
+      },
+      vendorRecord: {
+        select: {
+          id: true,
+          name: true,
+          website: true,
+          logoUrl: true,
+        },
+      },
+    },
+  });
+
+  if (!product) {
+    notFound();
+  }
+
+  // Get all images for the product
+  const productImages = product.imageUrls && product.imageUrls.length > 0
+    ? product.imageUrls
+    : product.primaryImageUrl
+      ? [product.primaryImageUrl]
+      : product.imageUrl
+        ? [product.imageUrl]
+        : [];
+
+  // Parse specs from JSON
+  const specs = product.specsJson as any || {};
+
+  // Get unique projects
+  const uniqueProjects = Array.from(
+    new Map(
+      product.projectTags
+        .filter(tag => tag.project)
+        .map(tag => [tag.project!.id, tag.project!])
+    ).values()
+  );
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-white border-b">
+        <div className="container mx-auto px-4 py-4">
+          <Link 
+            href="/inspire" 
+            className="text-blue-600 hover:underline inline-flex items-center gap-2"
+          >
+            ← Back to Inspire
+          </Link>
+        </div>
+      </div>
+
+      <div className="container mx-auto px-4 py-8">
+        {/* Product Header */}
+        <div className="mb-8">
+          <div className="flex items-start justify-between mb-4">
+            <div>
+              <h1 className="text-4xl font-bold text-gray-900 mb-2">
+                {product.name}
+              </h1>
+              <div className="flex items-center gap-4 text-gray-600">
+                {product.brand && (
+                  <span className="font-medium">{product.brand}</span>
+                )}
+                {product.category && (
+                  <span>• {product.category}</span>
+                )}
+                {product.status === "draft" && (
+                  <span className="px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded">
+                    Draft
+                  </span>
+                )}
+              </div>
+            </div>
+            {product.vendorRecord && (
+              <div className="text-right">
+                <p className="text-sm text-gray-500">Vendor</p>
+                <p className="font-medium">{product.vendorRecord.name}</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Main Content */}
+          <div className="lg:col-span-2 space-y-8">
+            {/* Image Gallery */}
+            {productImages.length > 0 && (
+              <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+                <div className="relative aspect-video w-full">
+                  <Image
+                    src={productImages[0]}
+                    alt={product.name}
+                    fill
+                    className="object-cover"
+                    priority
+                  />
+                </div>
+                {productImages.length > 1 && (
+                  <div className="grid grid-cols-4 gap-2 p-4">
+                    {productImages.slice(1, 5).map((img, idx) => (
+                      <div key={idx} className="relative aspect-square">
+                        <Image
+                          src={img}
+                          alt={`${product.name} ${idx + 2}`}
+                          fill
+                          className="object-cover rounded"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Description */}
+            {product.description && (
+              <div className="bg-white rounded-lg shadow-sm p-6">
+                <h2 className="text-2xl font-semibold mb-4">Description</h2>
+                <p className="text-gray-700 leading-relaxed">{product.description}</p>
+              </div>
+            )}
+
+            {/* Specifications */}
+            {(Object.keys(specs).length > 0 || product.price) && (
+              <div className="bg-white rounded-lg shadow-sm p-6">
+                <h2 className="text-2xl font-semibold mb-4">Specifications</h2>
+                <dl className="space-y-3">
+                  {product.price && (
+                    <div>
+                      <dt className="text-sm font-medium text-gray-500">Price</dt>
+                      <dd className="text-lg font-semibold">
+                        {product.priceCurrency || "$"}
+                        {product.price.toLocaleString()}
+                        {product.priceRangeText && ` (${product.priceRangeText})`}
+                      </dd>
+                    </div>
+                  )}
+                  {specs.dimensions && (
+                    <div>
+                      <dt className="text-sm font-medium text-gray-500">Dimensions</dt>
+                      <dd className="text-gray-900">{specs.dimensions}</dd>
+                    </div>
+                  )}
+                  {specs.materials && Array.isArray(specs.materials) && (
+                    <div>
+                      <dt className="text-sm font-medium text-gray-500">Materials</dt>
+                      <dd className="text-gray-900">{specs.materials.join(", ")}</dd>
+                    </div>
+                  )}
+                  {specs.colors && Array.isArray(specs.colors) && (
+                    <div>
+                      <dt className="text-sm font-medium text-gray-500">Colors</dt>
+                      <dd className="text-gray-900">{specs.colors.join(", ")}</dd>
+                    </div>
+                  )}
+                </dl>
+              </div>
+            )}
+
+            {/* Used in Projects */}
+            {uniqueProjects.length > 0 && (
+              <div className="bg-white rounded-lg shadow-sm p-6">
+                <h2 className="text-2xl font-semibold mb-4">
+                  Used in {uniqueProjects.length} {uniqueProjects.length === 1 ? "Project" : "Projects"}
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {uniqueProjects.map((project) => (
+                    <Link
+                      key={project.id}
+                      href={`/project/${project.id}`}
+                      className="block border rounded-lg overflow-hidden hover:shadow-md transition"
+                    >
+                      {project.images && project.images.length > 0 && (
+                        <div className="relative aspect-video w-full">
+                          <Image
+                            src={project.images[0].url}
+                            alt={project.title || "Project"}
+                            fill
+                            className="object-cover"
+                          />
+                        </div>
+                      )}
+                      <div className="p-4">
+                        <h3 className="font-semibold text-lg mb-1">
+                          {project.title || "Untitled Project"}
+                        </h3>
+                        {project.designer && (
+                          <p className="text-sm text-gray-600">
+                            by {project.designer.name}
+                          </p>
+                        )}
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Sidebar */}
+          <aside className="space-y-6">
+            {/* Vendor Info */}
+            {(product.vendorRecord || product.vendor) && (
+              <div className="bg-white rounded-lg shadow-sm p-6">
+                <h3 className="font-semibold mb-4">Vendor Information</h3>
+                {product.vendorRecord ? (
+                  <div>
+                    <p className="font-medium">{product.vendorRecord.name}</p>
+                    {product.vendorRecord.website && (
+                      <a
+                        href={product.vendorRecord.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline text-sm"
+                      >
+                        Visit Website
+                      </a>
+                    )}
+                  </div>
+                ) : product.vendor && (
+                  <div>
+                    <p className="font-medium">{product.vendor.name || product.vendor.companyName}</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Source Info */}
+            {product.sourceUrl && (
+              <div className="bg-white rounded-lg shadow-sm p-6">
+                <h3 className="font-semibold mb-4">Source</h3>
+                <p className="text-sm text-gray-600 mb-2">
+                  {product.sourceType || "Unknown source"}
+                </p>
+                <a
+                  href={product.sourceUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:underline text-sm break-all"
+                >
+                  View Original
+                </a>
+              </div>
+            )}
+
+            {/* Stats */}
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <h3 className="font-semibold mb-4">Statistics</h3>
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Projects</span>
+                  <span className="font-medium">{uniqueProjects.length}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Tags</span>
+                  <span className="font-medium">{product.projectTags.length}</span>
+                </div>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+
+

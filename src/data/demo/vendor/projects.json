@@ -1,0 +1,36 @@
+{
+  "kpi": {
+    "saves": 2700,
+    "tags": 1340,
+    "influenceValueUsd": 20000000,
+    "conversionPct": 18.2
+  },
+  "topDesigners": [
+    {
+      "id": "d1",
+      "name": "Bea Interiors",
+      "influenceScore": 92
+    },
+    {
+      "id": "d2",
+      "name": "Atelier North",
+      "influenceScore": 88
+    }
+  ],
+  "taggedProjects": [
+    {
+      "id": "p1",
+      "title": "Bryn Mawr Residence",
+      "tags": 12,
+      "valueUsd": 1200000
+    },
+    {
+      "id": "p2",
+      "title": "Lakehouse Modern",
+      "tags": 8,
+      "valueUsd": 800000
+    }
+  ]
+}
+
+

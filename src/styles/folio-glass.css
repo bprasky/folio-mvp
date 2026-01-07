@@ -1,0 +1,35 @@
+/**
+ * Folio Cinematic Glass Token (Namespaced)
+ * 
+ * Uses .folio-glass prefix to avoid conflicts with legacy .glass/.card-glass
+ * Light, airy 10% white glass with !important to win cascade
+ */
+
+:root {
+  --folio-glass-alpha: 0.10;
+  --folio-glass-ring: 0.12;
+  --folio-glass-shadow: 0.08;
+  --folio-glass-blur: 12px;
+}
+
+.folio-glass {
+  /* !important to override any conflicting .glass rules */
+  background: rgba(255, 255, 255, var(--folio-glass-alpha)) !important;
+  backdrop-filter: blur(var(--folio-glass-blur)) !important;
+  -webkit-backdrop-filter: blur(var(--folio-glass-blur)) !important;
+  border: 1px solid rgba(255, 255, 255, var(--folio-glass-ring)) !important;
+  
+  /* Shape & shadows */
+  border-radius: 1rem;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, var(--folio-glass-shadow));
+}
+
+.folio-glass--highlight {
+  box-shadow:
+    inset 0 1px rgba(255, 255, 255, 0.15),
+    0 8px 30px rgba(0, 0, 0, var(--folio-glass-shadow));
+}
+
+
+
+

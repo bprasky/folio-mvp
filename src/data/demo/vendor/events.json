@@ -1,0 +1,73 @@
+{
+  "portfolioTotals": {
+    "totalRsvps": 7400,
+    "productsSaved": 2700,
+    "estProjectValueUsd": 20000000,
+    "activeDesigners": 1200,
+    "deltas": {
+      "rsvps": 12.3,
+      "saves": -2.1,
+      "value": 8.7,
+      "designers": 15.2
+    }
+  },
+  "summaries": [
+    {
+      "id": "nycx2026",
+      "name": "NYCxDesign 2026",
+      "city": "New York",
+      "dateRange": "May 15–20",
+      "rsvps": 2300,
+      "saves": 842,
+      "estValueUsd": 57000000,
+      "status": "upcoming"
+    },
+    {
+      "id": "mdw2026",
+      "name": "Miami Design Week 2026",
+      "city": "Miami",
+      "dateRange": "Jan 15–19",
+      "rsvps": 1900,
+      "saves": 623,
+      "estValueUsd": 44000000,
+      "status": "upcoming"
+    },
+    {
+      "id": "icff2025",
+      "name": "ICFF 2025",
+      "city": "New York",
+      "dateRange": "May 19–22",
+      "rsvps": 3200,
+      "saves": 1200,
+      "estValueUsd": 58000000,
+      "status": "completed"
+    }
+  ],
+  "bridge": {
+    "conversionPct": 23.0,
+    "avgDays": 45
+  },
+  "series": {
+    "eventPerformance": [
+      { "event": "NYCxDesign", "avgRsvps": 2400 },
+      { "event": "Miami Design Week", "avgRsvps": 1800 },
+      { "event": "ICFF", "avgRsvps": 3400 }
+    ],
+    "portfolioMomentum": [
+      { "month": "2024-01", "value": 140 },
+      { "month": "2024-02", "value": 160 },
+      { "month": "2024-03", "value": 150 },
+      { "month": "2024-04", "value": 210 },
+      { "month": "2024-05", "value": 260 },
+      { "month": "2024-06", "value": 300 },
+      { "month": "2024-07", "value": 330 },
+      { "month": "2024-08", "value": 360 },
+      { "month": "2024-09", "value": 420 },
+      { "month": "2024-10", "value": 410 },
+      { "month": "2024-11", "value": 450 },
+      { "month": "2024-12", "value": 430 }
+    ]
+  }
+}
+
+

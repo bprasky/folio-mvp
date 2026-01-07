@@ -1,0 +1,675 @@
+"use client";
+
+import { useState, useMemo, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ExternalLink, X } from "lucide-react";
+
+type QA = { 
+  q?: string; 
+  a?: string; 
+  question?: string;
+  answer?: string;
+  questionId?: string; 
+  id?: string;
+};
+
+type InterviewPayload = {
+  answers?: QA[];
+  followups?: QA[];
+  imageOrder?: string[];
+  selectedQuestionIds?: string[];
+};
+
+type Interview = {
+  id: string;
+  status?: string;
+  answers?: QA[];
+  followUps?: QA[];
+  payload?: InterviewPayload;
+  updatedAt?: string;
+};
+
+type DraftVersion = {
+  id: string;
+  createdAt: string;
+  status: string; // DRAFT | PUBLISHED
+  slug?: string;
+  lead?: { kicker?: string; title?: string; deck?: string };
+  sections?: any[];
+};
+
+export default function DraftsPanel({ projectId }: { projectId: string }) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [data, setData] = useState<{
+    interview: Interview;
+    drafts: DraftVersion[];
+  } | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [answers, setAnswers] = useState<QA[]>([]);
+  const [followups, setFollowups] = useState<QA[]>([]);
+  const [saving, setSaving] = useState(false);
+  const [regenBusy, setRegenBusy] = useState(false);
+  const [saveTimeout, setSaveTimeout] = useState<NodeJS.Timeout | null>(null);
+  const debugMode = searchParams.get('debug') === '1';
+  const [debugOpen, setDebugOpen] = useState(false);
+  const [debugPayload, setDebugPayload] = useState<any>(null);
+
+  // Deduplicate answers by question and answer content (normalized)
+  const dedupeAnswers = (answers: QA[]): QA[] => {
+    const seen = new Map<string, QA>();
+    for (const qa of answers) {
+      // Dedupe by answer content (normalized) since question IDs are unreliable
+      const answerKey = (qa.a || qa.answer || "").toLowerCase().trim().slice(0, 50);
+      const questionKey = (qa.q || qa.question || "").toLowerCase().trim();
+      const key = `${questionKey}::${answerKey}`;
+      
+      if (key && key !== "::" && !seen.has(key)) {
+        seen.set(key, qa);
+      }
+    }
+    return Array.from(seen.values());
+  };
+
+  // Fetch data
+  const fetchData = async () => {
+    try {
+      setIsLoading(true);
+      console.log('[DraftsPanel] Fetching data from /api/posting/project/${projectId}/drafts');
+      const res = await fetch(`/api/posting/project/${projectId}/drafts`);
+      if (res.ok) {
+        const result = await res.json();
+        setData(result);
+        
+        console.log('[DraftsPanel] Fetched data:', {
+          hasInterview: !!result.interview,
+          answerCount: result.interview?.answers?.length || 0,
+          followUpsCount: result.interview?.followUps?.length || 0,
+        });
+        
+        // Sync answers and followups with auto-dedupe
+        if (result.interview?.answers && result.interview.answers.length > 0) {
+          const mappedAnswers = result.interview.answers.map((a: any) => ({
+            q: a.question || a.q || '',
+            a: a.answer || a.a || '',
+            question: a.question || a.q || '',
+            answer: a.answer || a.a || '',
+            questionId: a.questionId || a.id,
+          }));
+          
+          // Log data structure for debugging
+          console.log("Answer data:", mappedAnswers.map(a => ({ 
+            questionId: a.questionId, 
+            q: a.q, 
+            question: a.question,
+            a: a.a,
+            answer: a.answer 
+          })));
+          
+          setAnswers(dedupeAnswers(mappedAnswers));
+        } else {
+          console.log('[DraftsPanel] No answers found in fetched data - clearing local state');
+          setAnswers([]);
+        }
+        if (result.interview?.followUps && result.interview.followUps.length > 0) {
+          setFollowups(result.interview.followUps.map((f: any) => ({
+            q: f.question || f.q || f.prompt || '',
+            a: f.answer || f.a || '',
+            question: f.question || f.q || f.prompt || '',
+            answer: f.answer || f.a || '',
+          })));
+        } else {
+          console.log('[DraftsPanel] No followUps found in fetched data - clearing local state');
+          setFollowups([]);
+        }
+      } else {
+        console.error('[DraftsPanel] Fetch failed with status:', res.status);
+      }
+    } catch (error) {
+      console.error("[DraftsPanel] Fetch failed", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, [projectId]);
+
+  const filteredAnswers = answers.filter((qa) => (qa.q || qa.question || "").trim() || (qa.a || qa.answer || "").trim());
+  const filteredFollowups = followups.filter((qa) => (qa.q || qa.question || "").trim() || (qa.a || qa.answer || "").trim());
+
+  const currentPost = useMemo(() => data?.drafts?.[0], [data]);
+  const currentLead = useMemo(() => currentPost?.lead, [currentPost]);
+  const currentSections = useMemo(() => {
+    const sections = currentPost?.sections ?? [];
+    return Array.isArray(sections) ? sections : [];
+  }, [currentPost]);
+
+  async function saveAnswers() {
+    try {
+      setSaving(true);
+      const res = await fetch(`/api/posting/project/${projectId}/interview`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          answers: filteredAnswers.map((qa) => ({
+            questionId: qa.questionId || qa.q || qa.question,
+            answer: qa.a || qa.answer || '',
+            question: qa.q || qa.question || '',
+          })),
+          followUps: filteredFollowups.map((qa) => ({
+            question: qa.q || qa.question || '',
+            answer: qa.a || qa.answer || '',
+          })),
+        }),
+      });
+
+      if (!res.ok) {
+        const error = await res.json().catch(() => ({}));
+        alert(error.error || "Failed to save answers");
+        return;
+      }
+
+      await fetchData();
+    } catch (error: any) {
+      console.error("[DraftsPanel] Save failed", error);
+      alert("Failed to save answers");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  // Debounced autosave (disabled for now - use manual save button)
+  // Uncomment to enable autosave on keystroke
+  // useEffect(() => {
+  //   if (saveTimeout) {
+  //     clearTimeout(saveTimeout);
+  //   }
+
+  //   const timer = setTimeout(() => {
+  //     if (filteredAnswers.length > 0 || filteredFollowups.length > 0) {
+  //       saveAnswers();
+  //     }
+  //   }, 800);
+
+  //   setSaveTimeout(timer);
+
+  //   return () => {
+  //     if (timer) clearTimeout(timer);
+  //   };
+  // }, [answers, followups]);
+
+  async function regenerate(opts: { overwrite: boolean }) {
+    try {
+      setRegenBusy(true);
+      
+      // Save answers first (don't show error if this fails, just proceed)
+      if (!debugMode) {
+        try {
+          await saveAnswers();
+        } catch (saveError) {
+          console.warn("[DraftsPanel] Save before regenerate failed, continuing anyway", saveError);
+        }
+      }
+
+      const url = `/api/posting/project/${projectId}/interview/generate?forceOverwriteDraft=true&mode=recomposition`;
+      
+      const payload: any = {
+        source: "drafts_tab",
+        forceOverwriteDraft: true, // also in body, redundant on purpose
+        mode: 'recomposition', // Default to recomposition mode
+      };
+      
+      if (debugMode) {
+        payload.debugEcho = true;
+        payload.answersOverride = filteredAnswers.map((qa) => ({
+          questionId: qa.questionId || qa.q,
+          answer: qa.a,
+          question: qa.q,
+        }));
+        payload.followupsOverride = filteredFollowups.map((qa) => ({
+          question: qa.q,
+          answer: qa.a,
+        }));
+        // Remove forceOverwriteDraft in debug mode (dry-run)
+        delete payload.forceOverwriteDraft;
+      }
+      
+      console.log("[DraftsPanel] Regenerating draft", { url, overwrite: opts.overwrite, debugMode });
+      
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          "X-Debug-Client": "drafts",
+        },
+        cache: 'no-store',
+        body: JSON.stringify(payload),
+      });
+
+      if (res.status === 202) {
+        console.warn('[UI] Regenerate short-circuited: 202 draft exists');
+        const data = await res.json().catch(() => ({}));
+        alert(data.message || 'Draft already exists (server returned 202).');
+        return;
+      }
+
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}));
+        const errorCode = json?.code || 'COMPOSE_ERROR';
+        const errorMessage = json?.error || json?.message || `Editorial generation failed (${res.status})`;
+        const errorDetails = json?.issues ? `\n\nValidation errors:\n${JSON.stringify(json.issues, null, 2)}` : '';
+        console.error("[DraftsPanel] Regenerate failed", { 
+          status: res.status, 
+          code: errorCode, 
+          message: errorMessage,
+          issues: json?.issues 
+        });
+        
+        // Show user-friendly error message with validation details
+        alert(`Editorial generation failed\n\nThe AI didn't return a valid magazine article. Nothing was saved.\n\nError code: ${errorCode}\nError: ${errorMessage}${errorDetails}\n\nTry Regenerate.`);
+        return;
+      }
+
+      const result = await res.json().catch(() => ({}));
+      console.log("[DraftsPanel] Regenerate successful", result);
+
+      // Debug mode: show JSON in modal
+      if (debugMode) {
+        setDebugPayload(result);
+        setDebugOpen(true);
+        alert("Dry-run complete. Inspect JSON in the modal.");
+        return;
+      }
+
+      // IMPORTANT: bust app-router cache
+      router.refresh();
+      
+      // Refresh data to show updated draft (don't wait for it)
+      fetchData().catch(console.error);
+      
+      // Navigate to preview page to see the regenerated article
+      router.push(`/designer/projects/${projectId}/preview`);
+    } catch (error: any) {
+      console.error("[DraftsPanel] Regenerate failed", error);
+      alert(`Failed to regenerate draft: ${error.message || 'Unknown error'}`);
+    } finally {
+      setRegenBusy(false);
+    }
+  }
+
+  async function reAskFollowups() {
+    try {
+      const res = await fetch(`/api/posting/project/${projectId}/interview/followups`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          answers: filteredAnswers.map(qa => ({
+            questionId: qa.questionId || qa.q || `fallback-${Math.random()}`,
+            answer: qa.a
+          }))
+        })
+      });
+      
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Failed to generate follow-ups");
+      }
+      
+      const result = await res.json();
+      // Note: API returns "followups" not "followUps"
+      const newFollowups = result.followups?.map((f: any) => ({
+        q: f.text || f.question || f.prompt || '',
+        a: f.answer || "",
+        questionId: f.questionId
+      })) ?? [];
+      
+      setFollowups(prev => [...prev, ...newFollowups]);
+      await fetchData();
+    } catch (err) {
+      console.error("Follow-ups error:", err);
+      alert(err instanceof Error ? err.message : "Failed to generate follow-ups");
+    }
+  }
+
+  function setAnswer(i: number, key: "q" | "a", value: string) {
+    const next = [...answers];
+    next[i] = { 
+      ...next[i], 
+      [key]: value,
+      // Sync both field names
+      ...(key === "a" ? { answer: value } : {}),
+      ...(key === "q" ? { question: value } : {}),
+    };
+    setAnswers(next);
+  }
+
+  function addAnswer() {
+    setAnswers([...answers, { q: "", a: "" }]);
+  }
+
+  function removeAnswer(i: number) {
+    const next = answers.filter((_, idx) => idx !== i);
+    setAnswers(next);
+  }
+
+  function setFollowup(i: number, key: "q" | "a", value: string) {
+    const next = [...followups];
+    next[i] = { 
+      ...next[i], 
+      [key]: value,
+      // Sync both field names
+      ...(key === "a" ? { answer: value } : {}),
+      ...(key === "q" ? { question: value } : {}),
+    };
+    setFollowups(next);
+  }
+
+  function addFollowup() {
+    setFollowups([...followups, { q: "", a: "" }]);
+  }
+
+  function removeFollowup(i: number) {
+    const next = followups.filter((_, idx) => idx !== i);
+    setFollowups(next);
+  }
+
+  const handleStartOver = async () => {
+    const confirmed = window.confirm(
+      "This will clear your current reflections and begin a new interview. Continue?"
+    );
+    
+    if (!confirmed) return;
+    
+    try {
+      console.log('[StartOver] Step 1: Clearing local state...');
+      // Clear answers from state
+      setAnswers([]);
+      setFollowups([]);
+      
+      console.log('[StartOver] Step 2: Clearing localStorage...');
+      // Clear localStorage draft (check both possible key formats)
+      if (typeof window !== "undefined") {
+        localStorage.removeItem(`interviewDraft:${projectId}`);
+        localStorage.removeItem(`interview-draft-${projectId}`);
+        console.log('[StartOver] Cleared localStorage drafts');
+      }
+      
+      console.log('[StartOver] Step 3: Calling API to clear database...');
+      // Clear from database - POST empty answers AND empty selectedQuestionIds
+      const clearRes = await fetch(`/api/posting/project/${projectId}/interview`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          answers: [], 
+          followUps: [],
+          selectedQuestionIds: [] // Explicitly clear selected questions
+        })
+      });
+      
+      console.log('[StartOver] API response status:', clearRes.status);
+      const responseData = await clearRes.json().catch(() => ({}));
+      console.log('[StartOver] API response data:', responseData);
+      
+      if (!clearRes.ok) {
+        const error = responseData.error || "Failed to clear answers";
+        console.error('[StartOver] API error:', error);
+        throw new Error(error);
+      }
+      
+      console.log('[StartOver] Step 4: Successfully cleared interview data');
+      
+      // Refresh current page data first to ensure UI reflects cleared state
+      console.log('[StartOver] Step 5: Refreshing current page data...');
+      await fetchData();
+      
+      console.log('[StartOver] Step 6: Navigating to preview page...');
+      // Navigate to preview page with query param to auto-open interview modal
+      const targetUrl = `/designer/projects/${projectId}/preview?startInterview=true`;
+      console.log('[StartOver] Target URL:', targetUrl);
+      router.push(targetUrl);
+      
+    } catch (err) {
+      console.error("[StartOver] Error:", err);
+      alert("Failed to reset interview: " + (err instanceof Error ? err.message : "Unknown error"));
+    }
+  };
+
+
+  if (isLoading) {
+    return (
+      <div className="p-8 text-center text-gray-500">Loading drafts...</div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-12 gap-6">
+      <div className="col-span-8 space-y-8">
+        {/* Your Story Section */}
+        <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-gray-900">Your Story</h2>
+            <div className="flex gap-2">
+              <button
+                className="px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+                onClick={addAnswer}
+              >
+                + Add
+              </button>
+            </div>
+          </div>
+          <div className="space-y-3 max-h-[420px] overflow-y-auto pr-2">
+            {filteredAnswers.length === 0 && (
+              <p className="text-sm text-gray-500 italic">
+                No answers yet. Add your first answer above.
+              </p>
+            )}
+            {filteredAnswers.map((qa, i) => (
+              <div
+                key={i}
+                className="border rounded-lg p-4 mb-3"
+              >
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  {qa.q || qa.question || "Your reflection"}
+                </label>
+                <textarea
+                  value={qa.a || qa.answer || ""}
+                  onChange={(e) => setAnswer(i, "a", e.target.value)}
+                  className="w-full min-h-[80px] p-2 border rounded text-sm resize-y"
+                  placeholder="Share your thoughts..."
+                />
+                <div className="flex justify-end mt-2">
+                  <button 
+                    onClick={() => removeAnswer(i)} 
+                    className="text-gray-400 hover:text-red-500"
+                    aria-label="Remove"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Follow-up Questions Section */}
+        <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-gray-900">Follow-up Questions</h2>
+            <div className="flex gap-2">
+              <button
+                className="px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+                onClick={addFollowup}
+              >
+                + Add
+              </button>
+              <button
+                className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-lg hover:bg-gray-200 transition-colors"
+                onClick={reAskFollowups}
+              >
+                Ask
+              </button>
+            </div>
+          </div>
+          <div className="space-y-3 max-h-[280px] overflow-y-auto pr-2">
+            {filteredFollowups.length === 0 && (
+              <p className="text-sm text-gray-500 italic">
+                Deeper questions based on your reflections. Click Ask to generate.
+              </p>
+            )}
+            {filteredFollowups.map((qa, i) => (
+              <div
+                key={i}
+                className="grid grid-cols-12 gap-3 items-start p-3 rounded-lg border border-gray-100 hover:border-gray-200 transition-colors"
+              >
+                <input
+                  className="col-span-5 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-w-0"
+                  value={qa.q || qa.question || ""}
+                  placeholder="Follow-up Question"
+                  onChange={(e) => setFollowup(i, "q", e.target.value)}
+                />
+                <textarea
+                  className="col-span-6 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                  value={qa.a || qa.answer || ""}
+                  placeholder="Answer"
+                  rows={2}
+                  onChange={(e) => setFollowup(i, "a", e.target.value)}
+                />
+                <button
+                  className="col-span-1 px-2 py-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition-colors"
+                  onClick={() => removeFollowup(i)}
+                  aria-label="Remove"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex gap-3 flex-wrap">
+          <button
+            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            disabled={saving}
+            onClick={saveAnswers}
+          >
+            {saving ? "Saving..." : "Save"}
+          </button>
+          <button
+            className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            disabled={regenBusy}
+            onClick={() => regenerate({ overwrite: true })}
+          >
+            {regenBusy ? "Updating..." : "Update Post"}
+          </button>
+        </div>
+        <div className="mt-6 text-center">
+          <button
+            onClick={handleStartOver}
+            className="text-sm text-gray-500 hover:text-gray-700 underline"
+          >
+            Start Over
+          </button>
+        </div>
+      </div>
+
+      {/* Sidebar */}
+      <div className="col-span-4 space-y-6">
+        {/* Current Draft Preview */}
+        <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+          <h3 className="font-semibold text-lg text-gray-900 mb-4">
+            Current Draft Preview
+          </h3>
+          {currentLead?.kicker || currentLead?.title ? (
+            <div className="space-y-3">
+              {/* Status */}
+              {currentPost?.status && (
+                <div className="mb-3">
+                  <span
+                    className={`px-2 py-1 rounded text-xs font-medium ${
+                      currentPost.status === "PUBLISHED"
+                        ? "bg-green-100 text-green-800"
+                        : "bg-gray-100 text-gray-700"
+                    }`}
+                  >
+                    {currentPost.status}
+                  </span>
+                </div>
+              )}
+              <p className="text-base font-medium text-gray-900">
+                {currentLead.kicker || currentLead.title}
+              </p>
+              {(currentLead.deck || (currentLead as any).dek) && (
+                <p className="text-sm text-gray-600 leading-relaxed">
+                  {currentLead.deck || (currentLead as any).dek}
+                </p>
+              )}
+              <div className="mt-4 space-y-2 text-sm text-gray-700">
+                {currentSections
+                  .filter((s: any) => s.type === "narrative" && s.body)
+                  .slice(0, 3)
+                  .map((s: any, i: number) => (
+                    <p key={i} className="leading-relaxed opacity-90">
+                      {s.body}
+                    </p>
+                  ))}
+              </div>
+              {currentSections.filter(
+                (s: any) => s.type === "narrative" && s.body
+              ).length === 0 && (
+                <p className="text-sm text-gray-500 italic">
+                  No narrative sections yet. Generate a draft to see preview.
+                </p>
+              )}
+              {/* Published post link */}
+              {currentPost?.status === 'PUBLISHED' && currentPost?.slug && (
+                <div className="mt-4 pt-4 border-t">
+                  <a 
+                    href={`/p/${currentPost.slug}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                  >
+                    View Post <ExternalLink className="w-3 h-3" />
+                  </a>
+                </div>
+              )}
+            </div>
+          ) : (
+            <p className="text-sm text-gray-500 italic">
+              No draft yet. Save answers and click "Update Post" to create one.
+            </p>
+          )}
+          {data?.drafts && data.drafts.length > 0 && (
+            <div className="mt-4 pt-4 border-t">
+              <button
+                className="w-full px-4 py-2 text-sm font-medium text-purple-700 bg-purple-50 border border-purple-200 rounded-lg hover:bg-purple-100 transition-colors"
+                onClick={() => router.push(`/designer/projects/${projectId}/preview`)}
+              >
+                View Full Preview
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Debug Modal */}
+      <Dialog open={debugOpen} onOpenChange={setDebugOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh]">
+          <DialogHeader>
+            <DialogTitle>Generate Debug (Dry-Run)</DialogTitle>
+          </DialogHeader>
+          <div className="mt-4">
+            <pre className="text-xs whitespace-pre-wrap overflow-auto max-h-[70vh] p-4 rounded bg-gray-100 border border-gray-300 font-mono">
+              {JSON.stringify(debugPayload, null, 2)}
+            </pre>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+

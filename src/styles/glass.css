@@ -1,0 +1,30 @@
+/**
+ * Folio Glassmorphism Token System
+ * Light, airy, balanced — 10% white for elegant transparency
+ */
+
+:root {
+  /* Balanced glass for Folio */
+  --glass-alpha: 0.10;      /* 10% white — airy, not murky */
+  --glass-ring: 0.12;       /* 12% white ring */
+  --glass-shadow: 0.08;     /* 8% dark shadow */
+  --glass-blur: 12px;       /* consistent blur */
+}
+
+/* Shared glass token */
+.glass {
+  background: rgba(255, 255, 255, var(--glass-alpha));
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid rgba(255, 255, 255, var(--glass-ring));
+  border-radius: 1rem; /* ~ rounded-2xl */
+  box-shadow: 0 8px 30px rgba(0, 0, 0, var(--glass-shadow));
+}
+
+/* Optional subtle inner highlight (keeps it light) */
+.glass--highlight {
+  box-shadow:
+    inset 0 1px rgba(255, 255, 255, 0.15),
+    0 8px 30px rgba(0, 0, 0, var(--glass-shadow));
+}
+

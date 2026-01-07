@@ -1,0 +1,780 @@
+export type Room = "Kitchen" | "Bath" | "Living" | "Bedroom" | "Outdoor" | "Other";
+export type Phase = "Concept" | "Schematic" | "FF&E" | "Procurement";
+
+export interface SankeyNode { 
+  id: 'event'|'saves'|'boards'|'tags'|'value'; 
+  label: string; 
+  value: number; 
+}
+
+export interface SankeyLink { 
+  source: SankeyNode['id']; 
+  target: SankeyNode['id']; 
+  value: number; 
+  leakNote?: string; 
+  fix?: 'specs'|'renders'|'samples'|'promo'; 
+  expectedLiftPct?: number; 
+}
+
+export interface PlayItem {
+  id: string;
+  title: string; // "Run 5% Close in NYC"
+  target: { type: 'segment'|'market'|'room'|'firm'|'product'; key: string; count?: number; valueUsd?: number };
+  expectedLiftUsd: number;
+  effortHrs: number;
+  decayPctByDay: number; // e.g., 10 => -10% lift per day
+  confidence: 'High'|'Medium'|'Test';
+  guardrails?: { inventory: 'tight'|'ok'|'unknown'; margin: 'low'|'medium'|'high' };
+  actionType: 'promo'|'specPack'|'sampleKit'|'localizeAssets'|'inviteLookalikes'|'scheduleReview';
+}
+
+export interface OpportunityPoint {
+  name: string; // city or room
+  potentialUsd: number; // modeled
+  sharePct: number; // current share
+  quadrant: 'Most Underserved'|'Build'|'Maintain'|'Watch';
+}
+
+export interface ProductFunnel {
+  productId: string;
+  name: string;
+  saves: number;
+  tags: number;
+  projects: number;
+  saveToTagRatePct: number;
+  assetGaps: Array<'images'|'renders'|'specs'|'samples'>;
+}
+
+export interface DesignerJourney {
+  firm: string;
+  valueUsd: number;
+  steps: Array<{ t: string; label: string; type: 'touch'|'action'|'outcome' }>;
+  nextTouch: { suggestion: string; bestDow: string; bestHour: number };
+}
+
+export interface TimeToSpecDist {
+  medianHours: number;
+  p90Hours: number;
+  bins: Array<{ bucket: string; count: number }>;
+  bestHours: Array<{ dow: string; hour: number }>;
+}
+
+export interface CohortBenchmarks {
+  saveToTag: { you: number; prev3: number; cohort: number };
+  tagToSpec?: { you: number; prev3: number; cohort: number };
+  value: { you: number; prev3: number; cohort: number };
+}
+
+export interface Outcome {
+  attendedDesigners: number;
+  uniqueFirms: number;
+  productsSaved: number;
+  boards: number;
+  tags: number;
+  estPipelineUsd: number;
+  deltas: { vsPriorPct: number; vsPortfolioPct: number };
+  headline: string; // one-line so-what
+}
+
+export interface IntentDesigner {
+  id: string;
+  name: string;
+  firm: string;
+  city?: string;
+  saves: number;
+  tags: number;
+  priorPurchases?: number;
+  reopenedBoards: number;
+  movedPhase?: Phase;
+  lastEngagedAt: string; // ISO
+  intentScore: number; // computed
+  valueEstimateUsd: number;
+}
+
+export interface IntentSegments {
+  readyToClose: IntentDesigner[];
+  warmEvaluators: IntentDesigner[];
+  earlyExplorers: IntentDesigner[];
+}
+
+export interface RoomPhaseCell {
+  room: Room;
+  phase: Phase;
+  saves: number;
+  tags: number;
+  saveToTagRatePct: number;
+  assetGap?: "images" | "renders" | "specs" | "samples";
+}
+
+export interface MarketRow {
+  city: string;
+  saves: number;
+  sharePct: number;
+  trendDeltaPct: number;
+  badge?: "Hot" | "Underserved";
+}
+
+export interface FirmInfluence {
+  firm: string;
+  valueUsd: number;
+  projects: number;
+  contacts: string[];
+  isNew?: boolean;
+  reactivated?: boolean;
+}
+
+export interface ProductPost {
+  id: string;
+  name: string;
+  vendor: string;
+  thumbUrl?: string;
+  saves: number;
+  tags: number;
+  saveToTagRatePct: number;
+  ctaUrl?: string;
+}
+
+export interface Attribution {
+  touchpoints: Array<{ channel: "Booth QR" | "Session" | "Folio Post" | "Email Invite"; pct: number }>;
+  bestHours: Array<{ dow: string; hour: number }>; // top 2 hours per week
+}
+
+export interface Benchmarks {
+  vsPrior: { savesPct: number; saveToTagPct: number; valuePct: number };
+  vsCohort: { percentileSaveToTag: number; note: string };
+}
+
+export interface BenchmarksMini {
+  saveToTag: { you: number; prev3: number; cohort: number };
+  value: { you: number; prev3: number; cohort: number };
+  tagToSpec?: { you: number; prev3: number; cohort: number };
+}
+
+export interface FirmMini {
+  id: string;
+  name: string;
+  valueUsd: number;
+  bestDow: string;
+  bestHour: number;
+}
+
+export interface FlowMetrics {
+  saves: number;
+  boards: number;
+  tags: number;
+  value: number;
+  conv: {
+    savesBoards: number;
+    boardsTags: number;
+    tagsValue: number;
+  };
+}
+
+export interface LeakDriver {
+  driver: string;
+  impactPts: number;
+  why: string;
+  action?: { label: string };
+}
+
+export interface EventPostReport {
+  eventId: string;
+  name: string;
+  dates: { start: string; end: string };
+  location: { city: string; country?: string };
+  outcome: Outcome;
+  intents: IntentSegments;
+  roomPhase: RoomPhaseCell[];
+  markets: MarketRow[];
+  firms: FirmInfluence[];
+  products: ProductPost[];
+  attribution: Attribution;
+  benchmarks: Benchmarks;
+  benchmarksMini: BenchmarksMini;
+  topFirmsMini: FirmMini[];
+  aiInsights?: any[]; // Will be generated by insightEngine
+  flowMetrics: FlowMetrics;
+  leakDrivers: LeakDriver[];
+  // New breakdown → action data
+  sankeyFlow: { nodes: SankeyNode[]; links: SankeyLink[] };
+  playItems: PlayItem[];
+  opportunities: OpportunityPoint[];
+  productFunnels: ProductFunnel[];
+  designerJourneys: DesignerJourney[];
+  timeToSpec: TimeToSpecDist;
+  cohortBenchmarks: CohortBenchmarks;
+}
+
+// Mock data generation
+export function getEventPostReport(eventId: string): EventPostReport {
+  const baseEvent = eventId === "event-1" ? {
+    name: "NYCxDesign 2026",
+    city: "New York",
+    dates: { start: "2026-05-15T09:00:00Z", end: "2026-05-20T18:00:00Z" }
+  } : eventId === "event-2" ? {
+    name: "Miami Design Week 2026", 
+    city: "Miami",
+    dates: { start: "2026-01-15T10:00:00Z", end: "2026-01-19T17:00:00Z" }
+  } : {
+    name: "ICFF 2025",
+    city: "New York", 
+    dates: { start: "2025-05-19T08:00:00Z", end: "2025-05-22T18:00:00Z" }
+  };
+
+  return {
+    eventId,
+    name: baseEvent.name,
+    dates: baseEvent.dates,
+    location: { city: baseEvent.city, country: "US" },
+    
+    outcome: {
+      attendedDesigners: eventId === "event-1" ? 324 : eventId === "event-2" ? 267 : 445,
+      uniqueFirms: eventId === "event-1" ? 124 : eventId === "event-2" ? 98 : 156,
+      productsSaved: eventId === "event-1" ? 842 : eventId === "event-2" ? 623 : 1203,
+      boards: eventId === "event-1" ? 234 : eventId === "event-2" ? 187 : 445,
+      tags: eventId === "event-1" ? 156 : eventId === "event-2" ? 124 : 289,
+      estPipelineUsd: eventId === "event-1" ? 6800000 : eventId === "event-2" ? 4200000 : 9200000,
+      deltas: {
+        vsPriorPct: eventId === "event-1" ? 18 : eventId === "event-2" ? -8 : 12,
+        vsPortfolioPct: eventId === "event-1" ? 15 : eventId === "event-2" ? -12 : 22
+      },
+      headline: `${baseEvent.name} generated $${Math.round((eventId === "event-1" ? 6800000 : eventId === "event-2" ? 4200000 : 9200000) / 1000000)}M influenced pipeline (${eventId === "event-1" ? "+18" : eventId === "event-2" ? "-8" : "+12"}% vs ICFF'25).`
+    },
+
+    intents: generateIntentSegments(eventId),
+    roomPhase: generateRoomPhaseData(),
+    markets: generateMarketData(),
+    firms: generateFirmData(),
+    products: generateProductData(eventId),
+    attribution: generateAttributionData(),
+    benchmarks: generateBenchmarks(eventId),
+    benchmarksMini: generateBenchmarksMini(eventId),
+    topFirmsMini: generateTopFirmsMini(eventId),
+    aiInsights: [], // Will be populated by insightEngine
+    flowMetrics: generateFlowMetrics(eventId),
+    leakDrivers: generateLeakDrivers(eventId),
+    // New breakdown → action data
+    sankeyFlow: generateSankeyFlow(eventId),
+    playItems: generatePlayItems(eventId),
+    opportunities: generateOpportunities(),
+    productFunnels: generateProductFunnels(),
+    designerJourneys: generateDesignerJourneys(),
+    timeToSpec: generateTimeToSpec(),
+    cohortBenchmarks: generateCohortBenchmarks(eventId)
+  };
+}
+
+function generateIntentSegments(eventId: string): IntentSegments {
+  const designers: IntentDesigner[] = [
+    {
+      id: "d1",
+      name: "Sarah Chen",
+      firm: "Studio Linares",
+      city: "New York",
+      saves: 47,
+      tags: 23,
+      priorPurchases: 2,
+      reopenedBoards: 3,
+      movedPhase: "Procurement",
+      lastEngagedAt: new Date().toISOString(),
+      intentScore: 87,
+      valueEstimateUsd: 450000
+    },
+    {
+      id: "d2", 
+      name: "Marcus Rodriguez",
+      firm: "Rodriguez & Associates",
+      city: "Miami",
+      saves: 32,
+      tags: 18,
+      reopenedBoards: 2,
+      lastEngagedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+      intentScore: 72,
+      valueEstimateUsd: 320000
+    },
+    {
+      id: "d3",
+      name: "Jennifer Kim",
+      firm: "Kim Design Studio",
+      city: "Los Angeles", 
+      saves: 28,
+      tags: 12,
+      reopenedBoards: 1,
+      lastEngagedAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
+      intentScore: 65,
+      valueEstimateUsd: 280000
+    }
+  ];
+
+  return {
+    readyToClose: designers.filter(d => d.intentScore >= 80),
+    warmEvaluators: designers.filter(d => d.intentScore >= 60 && d.intentScore < 80),
+    earlyExplorers: designers.filter(d => d.intentScore >= 40 && d.intentScore < 60)
+  };
+}
+
+function generateRoomPhaseData(): RoomPhaseCell[] {
+  const rooms: Room[] = ["Kitchen", "Bath", "Living", "Bedroom", "Outdoor", "Other"];
+  const phases: Phase[] = ["Concept", "Schematic", "FF&E", "Procurement"];
+  const data: RoomPhaseCell[] = [];
+
+  rooms.forEach(room => {
+    phases.forEach(phase => {
+      const saves = Math.floor(Math.random() * 50) + 5;
+      const tags = Math.floor(saves * (Math.random() * 0.6 + 0.2)); // 20-80% tag rate
+      const saveToTagRate = (tags / saves) * 100;
+      
+      data.push({
+        room,
+        phase,
+        saves,
+        tags,
+        saveToTagRatePct: Math.round(saveToTagRate * 10) / 10,
+        assetGap: Math.random() > 0.7 ? 
+          (["images", "renders", "specs", "samples"] as const)[Math.floor(Math.random() * 4)] : undefined
+      });
+    });
+  });
+
+  return data;
+}
+
+function generateMarketData(): MarketRow[] {
+  return [
+    { city: "New York", saves: 320, sharePct: 38.2, trendDeltaPct: 12.5, badge: "Hot" },
+    { city: "Miami", saves: 180, sharePct: 21.5, trendDeltaPct: 8.3, badge: "Hot" },
+    { city: "Los Angeles", saves: 140, sharePct: 16.7, trendDeltaPct: 3.1 },
+    { city: "Chicago", saves: 95, sharePct: 11.3, trendDeltaPct: 15.2, badge: "Underserved" },
+    { city: "Milan", saves: 70, sharePct: 8.4, trendDeltaPct: -2.1 },
+    { city: "Toronto", saves: 45, sharePct: 5.4, trendDeltaPct: 22.8, badge: "Underserved" }
+  ];
+}
+
+function generateFirmData(): FirmInfluence[] {
+  return [
+    {
+      firm: "Studio Linares",
+      valueUsd: 1200000,
+      projects: 4,
+      contacts: ["Sarah Chen", "Michael Linares"],
+      isNew: false
+    },
+    {
+      firm: "Rodriguez & Associates", 
+      valueUsd: 920000,
+      projects: 3,
+      contacts: ["Marcus Rodriguez"],
+      reactivated: true
+    },
+    {
+      firm: "Kim Design Studio",
+      valueUsd: 680000,
+      projects: 2,
+      contacts: ["Jennifer Kim"],
+      isNew: true
+    },
+    {
+      firm: "Architectural Vision",
+      valueUsd: 540000,
+      projects: 2,
+      contacts: ["David Park", "Lisa Wong"],
+      isNew: true
+    }
+  ];
+}
+
+function generateProductData(eventId: string): ProductPost[] {
+  const products = [
+    { name: "Terra Travertine Tiles", vendor: "Material Bank" },
+    { name: "Smoked Oak Flooring", vendor: "Your Company" },
+    { name: "Brushed Brass Hardware", vendor: "Your Company" },
+    { name: "Concrete Finish Table", vendor: "Material Bank" },
+    { name: "Velvet Sectional", vendor: "Your Company" }
+  ];
+
+  return products.map((product, index) => {
+    const saves = Math.floor(Math.random() * 80) + 20;
+    const tags = Math.floor(saves * (Math.random() * 0.8 + 0.1));
+    const rate = (tags / saves) * 100;
+    
+    return {
+      id: `product-${index + 1}`,
+      name: product.name,
+      vendor: product.vendor,
+      saves,
+      tags,
+      saveToTagRatePct: Math.round(rate * 10) / 10,
+      ctaUrl: `/products/${product.name.toLowerCase().replace(/\s+/g, '-')}`
+    };
+  });
+}
+
+function generateAttributionData(): Attribution {
+  return {
+    touchpoints: [
+      { channel: "Booth QR", pct: 35 },
+      { channel: "Session", pct: 28 },
+      { channel: "Folio Post", pct: 22 },
+      { channel: "Email Invite", pct: 15 }
+    ],
+    bestHours: [
+      { dow: "Tuesday", hour: 14 },
+      { dow: "Thursday", hour: 10 },
+      { dow: "Wednesday", hour: 16 },
+      { dow: "Friday", hour: 11 }
+    ]
+  };
+}
+
+function generateBenchmarks(eventId: string): Benchmarks {
+  return {
+    vsPrior: {
+      savesPct: eventId === "event-1" ? 18 : eventId === "event-2" ? -8 : 12,
+      saveToTagPct: eventId === "event-1" ? 22 : eventId === "event-2" ? -5 : 15,
+      valuePct: eventId === "event-1" ? 31 : eventId === "event-2" ? -12 : 24
+    },
+    vsCohort: {
+      percentileSaveToTag: eventId === "event-1" ? 85 : eventId === "event-2" ? 45 : 78,
+      note: eventId === "event-1" ? "Top 15% among lighting vendors" : 
+            eventId === "event-2" ? "Bottom 55% among lighting vendors" : 
+            "Top 22% among lighting vendors"
+    }
+  };
+}
+
+// New breakdown → action data generators
+function generateSankeyFlow(eventId: string): { nodes: SankeyNode[]; links: SankeyLink[] } {
+  const attendees = eventId === "event-1" ? 324 : eventId === "event-2" ? 267 : 445;
+  const saves = eventId === "event-1" ? 842 : eventId === "event-2" ? 623 : 1203;
+  const boards = eventId === "event-1" ? 234 : eventId === "event-2" ? 187 : 445;
+  const tags = eventId === "event-1" ? 156 : eventId === "event-2" ? 124 : 289;
+  const valueUsd = eventId === "event-1" ? 6800000 : eventId === "event-2" ? 4200000 : 9200000;
+
+  return {
+    nodes: [
+      { id: 'event', label: 'Event', value: attendees },
+      { id: 'saves', label: 'Saves', value: saves },
+      { id: 'boards', label: 'Boards', value: boards },
+      { id: 'tags', label: 'Tags', value: tags },
+      { id: 'value', label: 'Value', value: Math.round(valueUsd / 1000000) }
+    ],
+    links: [
+      { 
+        source: 'event', 
+        target: 'saves', 
+        value: saves,
+        leakNote: saves / attendees < 2.5 ? 'Low engagement' : undefined,
+        fix: 'promo'
+      },
+      { 
+        source: 'saves', 
+        target: 'boards', 
+        value: boards,
+        leakNote: boards / saves < 0.3 ? 'Share moodboard images' : undefined,
+        fix: 'renders',
+        expectedLiftPct: 15
+      },
+      { 
+        source: 'boards', 
+        target: 'tags', 
+        value: tags,
+        leakNote: tags / boards < 0.7 ? 'Add spec sheets' : undefined,
+        fix: 'specs',
+        expectedLiftPct: 12
+      },
+      { 
+        source: 'tags', 
+        target: 'value', 
+        value: Math.round(valueUsd / 1000000),
+        leakNote: (valueUsd / 1000000) / tags < 3 ? 'Run close offer' : undefined,
+        fix: 'promo',
+        expectedLiftPct: 18
+      }
+    ]
+  };
+}
+
+function generatePlayItems(eventId: string): PlayItem[] {
+  return [
+    {
+      id: 'close-nyc',
+      title: 'Run 5% Close in NYC',
+      target: { type: 'market', key: 'New York', count: 47, valueUsd: 2400000 },
+      expectedLiftUsd: 180000,
+      effortHrs: 2,
+      decayPctByDay: 8,
+      confidence: 'High',
+      guardrails: { inventory: 'ok', margin: 'medium' },
+      actionType: 'promo'
+    },
+    {
+      id: 'spec-pack-warm',
+      title: 'Send Spec Pack to Warm Evaluators',
+      target: { type: 'segment', key: 'warmEvaluators', count: 32, valueUsd: 1200000 },
+      expectedLiftUsd: 96000,
+      effortHrs: 4,
+      decayPctByDay: 5,
+      confidence: 'High',
+      guardrails: { inventory: 'ok', margin: 'high' },
+      actionType: 'specPack'
+    },
+    {
+      id: 'samples-kitchen',
+      title: 'Enable Sample Kit for Kitchen',
+      target: { type: 'room', key: 'Kitchen', count: 89, valueUsd: 2100000 },
+      expectedLiftUsd: 84000,
+      effortHrs: 6,
+      decayPctByDay: 3,
+      confidence: 'Medium',
+      guardrails: { inventory: 'ok', margin: 'medium' },
+      actionType: 'sampleKit'
+    },
+    {
+      id: 'localize-chicago',
+      title: 'Localize Assets for Chicago',
+      target: { type: 'market', key: 'Chicago', count: 23, valueUsd: 680000 },
+      expectedLiftUsd: 41000,
+      effortHrs: 8,
+      decayPctByDay: 2,
+      confidence: 'Medium',
+      guardrails: { inventory: 'unknown', margin: 'medium' },
+      actionType: 'localizeAssets'
+    }
+  ];
+}
+
+function generateOpportunities(): OpportunityPoint[] {
+  return [
+    { name: 'New York', potentialUsd: 3200000, sharePct: 38.2, quadrant: 'Build' },
+    { name: 'Miami', potentialUsd: 2100000, sharePct: 21.5, quadrant: 'Build' },
+    { name: 'Los Angeles', potentialUsd: 1800000, sharePct: 16.7, quadrant: 'Most Underserved' },
+    { name: 'Chicago', potentialUsd: 1400000, sharePct: 11.3, quadrant: 'Most Underserved' },
+    { name: 'Milan', potentialUsd: 900000, sharePct: 8.4, quadrant: 'Watch' },
+    { name: 'Toronto', potentialUsd: 750000, sharePct: 5.4, quadrant: 'Most Underserved' }
+  ];
+}
+
+function generateProductFunnels(): ProductFunnel[] {
+  return [
+    {
+      productId: 'p1',
+      name: 'Terra Travertine Tiles',
+      saves: 67,
+      tags: 34,
+      projects: 12,
+      saveToTagRatePct: 50.7,
+      assetGaps: ['renders', 'specs']
+    },
+    {
+      productId: 'p2', 
+      name: 'Smoked Oak Flooring',
+      saves: 45,
+      tags: 38,
+      projects: 15,
+      saveToTagRatePct: 84.4,
+      assetGaps: []
+    },
+    {
+      productId: 'p3',
+      name: 'Brushed Brass Hardware',
+      saves: 52,
+      tags: 29,
+      projects: 9,
+      saveToTagRatePct: 55.8,
+      assetGaps: ['samples']
+    },
+    {
+      productId: 'p4',
+      name: 'Concrete Finish Table',
+      saves: 38,
+      tags: 18,
+      projects: 6,
+      saveToTagRatePct: 47.4,
+      assetGaps: ['renders', 'specs', 'images']
+    },
+    {
+      productId: 'p5',
+      name: 'Velvet Sectional',
+      saves: 41,
+      tags: 33,
+      projects: 11,
+      saveToTagRatePct: 80.5,
+      assetGaps: []
+    },
+    {
+      productId: 'p6',
+      name: 'Pendant Light Collection',
+      saves: 29,
+      tags: 16,
+      projects: 5,
+      saveToTagRatePct: 55.2,
+      assetGaps: ['specs']
+    }
+  ];
+}
+
+function generateDesignerJourneys(): DesignerJourney[] {
+  return [
+    {
+      firm: 'Studio Linares',
+      valueUsd: 1200000,
+      steps: [
+        { t: '2026-05-15T09:30:00Z', label: 'Booth QR scan', type: 'touch' },
+        { t: '2026-05-15T10:15:00Z', label: 'Session attendance', type: 'touch' },
+        { t: '2026-05-15T14:20:00Z', label: 'Saved 12 products', type: 'action' },
+        { t: '2026-05-16T09:45:00Z', label: 'Created board', type: 'action' },
+        { t: '2026-05-17T11:30:00Z', label: 'Tagged 8 products', type: 'action' },
+        { t: '2026-05-18T16:15:00Z', label: 'Project phase: Procurement', type: 'outcome' }
+      ],
+      nextTouch: {
+        suggestion: 'Schedule review call',
+        bestDow: 'Tuesday',
+        bestHour: 14
+      }
+    },
+    {
+      firm: 'Rodriguez & Associates',
+      valueUsd: 920000,
+      steps: [
+        { t: '2026-05-15T11:00:00Z', label: 'Folio post click', type: 'touch' },
+        { t: '2026-05-15T15:30:00Z', label: 'Saved 8 products', type: 'action' },
+        { t: '2026-05-16T10:20:00Z', label: 'Reopened existing board', type: 'action' },
+        { t: '2026-05-17T14:45:00Z', label: 'Tagged 6 products', type: 'action' }
+      ],
+      nextTouch: {
+        suggestion: 'Send spec pack',
+        bestDow: 'Thursday',
+        bestHour: 10
+      }
+    }
+  ];
+}
+
+function generateTimeToSpec(): TimeToSpecDist {
+  return {
+    medianHours: 18,
+    p90Hours: 72,
+    bins: [
+      { bucket: '0-6h', count: 45 },
+      { bucket: '6-12h', count: 67 },
+      { bucket: '12-24h', count: 89 },
+      { bucket: '24-48h', count: 56 },
+      { bucket: '48-72h', count: 34 },
+      { bucket: '72h+', count: 23 }
+    ],
+    bestHours: [
+      { dow: 'Tuesday', hour: 14 },
+      { dow: 'Thursday', hour: 10 }
+    ]
+  };
+}
+
+function generateCohortBenchmarks(eventId: string): CohortBenchmarks {
+  return {
+    saveToTag: {
+      you: eventId === "event-1" ? 52.3 : 47.8,
+      prev3: 45.1,
+      cohort: 41.7
+    },
+    tagToSpec: {
+      you: eventId === "event-1" ? 28.4 : 24.1,
+      prev3: 22.6,
+      cohort: 19.3
+    },
+    value: {
+      you: eventId === "event-1" ? 6.8 : 4.2,
+      prev3: 5.1,
+      cohort: 4.7
+    }
+  };
+}
+
+function generateBenchmarksMini(eventId: string): BenchmarksMini {
+  return {
+    saveToTag: {
+      you: eventId === "event-1" ? 52 : eventId === "event-2" ? 48 : 58,
+      prev3: 45,
+      cohort: 42
+    },
+    value: {
+      you: eventId === "event-1" ? 68 : eventId === "event-2" ? 42 : 92,
+      prev3: 51,
+      cohort: 47
+    },
+    tagToSpec: {
+      you: eventId === "event-1" ? 28 : eventId === "event-2" ? 24 : 32,
+      prev3: 23,
+      cohort: 19
+    }
+  };
+}
+
+function generateTopFirmsMini(eventId: string): FirmMini[] {
+  const baseFirms = [
+    {
+      id: "f1",
+      name: "Studio Linares",
+      valueUsd: eventId === "event-1" ? 2400000 : eventId === "event-2" ? 1800000 : 3200000,
+      bestDow: "Tue",
+      bestHour: 14
+    },
+    {
+      id: "f2", 
+      name: "Design Collective",
+      valueUsd: eventId === "event-1" ? 1800000 : eventId === "event-2" ? 1200000 : 2400000,
+      bestDow: "Wed",
+      bestHour: 10
+    },
+    {
+      id: "f3",
+      name: "Modern Spaces",
+      valueUsd: eventId === "event-1" ? 1600000 : eventId === "event-2" ? 900000 : 2100000,
+      bestDow: "Thu",
+      bestHour: 16
+    }
+  ];
+  
+  return baseFirms;
+}
+
+function generateFlowMetrics(eventId: string): FlowMetrics {
+  const saves = eventId === "event-1" ? 842 : eventId === "event-2" ? 623 : 1203;
+  const boards = eventId === "event-1" ? 234 : eventId === "event-2" ? 187 : 445;
+  const tags = eventId === "event-1" ? 156 : eventId === "event-2" ? 124 : 289;
+  const value = eventId === "event-1" ? 196 : eventId === "event-2" ? 98 : 267;
+
+  return {
+    saves,
+    boards,
+    tags,
+    value,
+    conv: {
+      savesBoards: boards / saves,   // e.g., 0.278
+      boardsTags: tags / boards,     // e.g., 0.667
+      tagsValue: value / tags        // e.g., 1.256
+    }
+  };
+}
+
+function generateLeakDrivers(eventId: string): LeakDriver[] {
+  return [
+    {
+      driver: "Bath procurement spec sheets missing",
+      impactPts: -12,
+      why: "Below-median spec assets in Bath stalled procurement phase",
+      action: { label: "Add bath spec pack" }
+    },
+    {
+      driver: "Kitchen FF&E asset quality",
+      impactPts: 12,
+      why: "High-quality renders and CAD files drove exceptional Kitchen conversion",
+      action: { label: "Replicate for other rooms" }
+    },
+    {
+      driver: "Miami low share",
+      impactPts: -4,
+      why: "Underrepresented market with growth momentum but limited local assets",
+      action: { label: "Localize Miami assets" }
+    }
+  ];
+}

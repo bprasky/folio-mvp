@@ -1,0 +1,79 @@
+/**
+ * Quote selector with checkboxes for Instagram carousel
+ */
+
+'use client';
+
+import { useState, useEffect } from 'react';
+
+interface QuoteSelectorProps {
+  quotes: string[];
+  selectedQuotes: string[];
+  onSelectionChange: (selected: string[]) => void;
+}
+
+export default function QuoteSelector({
+  quotes,
+  selectedQuotes: initialSelected,
+  onSelectionChange,
+}: QuoteSelectorProps) {
+  const [selectedQuotes, setSelectedQuotes] = useState<string[]>(initialSelected);
+
+  useEffect(() => {
+    // Auto-select all quotes by default
+    if (quotes.length > 0 && selectedQuotes.length === 0) {
+      const autoSelected = quotes.slice(0, 4); // Max 4 quotes
+      setSelectedQuotes(autoSelected);
+      onSelectionChange(autoSelected);
+    }
+  }, [quotes, selectedQuotes.length, onSelectionChange]);
+
+  const handleToggle = (quote: string) => {
+    const newSelected = selectedQuotes.includes(quote)
+      ? selectedQuotes.filter((q) => q !== quote)
+      : [...selectedQuotes, quote].slice(0, 4); // Max 4 quotes
+
+    setSelectedQuotes(newSelected);
+    onSelectionChange(newSelected);
+  };
+
+  if (quotes.length === 0) {
+    return (
+      <div className="text-sm text-gray-500 italic">
+        No quotes available from this project's article.
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      <p className="text-sm text-gray-600 mb-4">
+        Select quotes to include in your carousel (max 4):
+      </p>
+      <div className="space-y-2 max-h-64 overflow-y-auto">
+        {quotes.map((quote, index) => (
+          <label
+            key={index}
+            className="flex items-start gap-3 p-3 rounded-lg border border-gray-200 hover:border-blue-300 cursor-pointer transition-colors"
+          >
+            <input
+              type="checkbox"
+              checked={selectedQuotes.includes(quote)}
+              onChange={() => handleToggle(quote)}
+              className="mt-1 h-4 w-4 text-blue-600 rounded focus:ring-blue-500"
+            />
+            <span className="flex-1 text-sm text-gray-700 italic leading-relaxed">
+              "{quote}"
+            </span>
+          </label>
+        ))}
+      </div>
+      {selectedQuotes.length > 0 && (
+        <p className="text-xs text-gray-500 mt-2">
+          {selectedQuotes.length} quote{selectedQuotes.length !== 1 ? 's' : ''} selected
+        </p>
+      )}
+    </div>
+  );
+}
+

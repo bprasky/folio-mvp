@@ -1,0 +1,135 @@
+import { z } from "zod";
+
+// [AUDIT] Log schema configuration
+console.log("[AUDIT] schema: BlocksSchema configured", {
+  strict: true, // .strict() is applied
+  hasLead: true,
+  hasGalleryChapters: true,
+  hasCredits: true,
+});
+
+// Recomposition mode schema
+export const RecompositionModeSchema = z.enum(['recomposition', 'verbatim']).default('recomposition');
+
+// Section schema for compose stage (strict for validation) - NO QA type for recomposition mode
+export const SectionSchema = z.object({
+  type: z.enum(['narrative', 'pullquote']),
+  heading: z.string().optional(),
+  body: z.string().optional(),
+  quote: z.string().optional(),
+}).strict();
+
+// Composed draft schema for LLM output (accepts sections at compose time)
+export const ComposedDraftSchema = z.object({
+  lead: z.object({
+    title: z.string().min(3).max(80).optional(), // Support title field
+    kicker: z.string().min(3).max(80),
+    deck: z.string().min(10).max(400), // Increased from implicit limit to 400
+  }).strict(),
+  sections: z.array(SectionSchema).min(3).max(7), // REQUIRED at compose time
+  galleryChapters: z.array(z.object({
+    title: z.string().optional(),
+    imageIds: z.array(z.string()).min(1),
+    body: z.array(z.string()).optional(),
+  })).min(1),
+  pullQuotes: z.array(z.string()).optional(),
+  credits: z.array(z.object({ role: z.string(), name: z.string().nullable().optional() })).optional(),
+  materialsLedger: z.object({ 
+    items: z.array(z.object({
+      name: z.string(),
+      productId: z.string().uuid().nullable().optional(),
+    }))
+  }).optional(),
+  mode: RecompositionModeSchema.optional(),
+}).strict();
+
+// Tolerant schema for LLM payload (accepts sections & materials temporarily) - for backward compatibility
+const SectionSchemaLoose = z.object({
+  type: z.enum(["narrative", "pullquote", "qa"]).optional(), // writer sometimes omits
+  heading: z.string().optional(),
+  body: z.string().optional(),
+  quote: z.string().optional(),
+  qa: z.array(z.object({ q: z.string(), a: z.string().optional() })).optional(),
+}).passthrough();
+
+// Loose schema for LLM output - tolerates sections & materials that we'll repair/strip later
+export const LlmComposedLooseSchema = z.object({
+  lead: z.object({
+    title: z.string().max(80).optional(), // Support title field with limit
+    kicker: z.string().max(80).optional(), // Increased limit
+    deck: z.string().max(400).optional(), // Increased limit
+    dek: z.string().max(400).optional(), // Alias for deck, same limit
+  }).optional(),
+
+  // tolerate these keys; we'll repair/strip them later
+  sections: z.array(SectionSchemaLoose).optional(),
+  materials: z.array(z.string()).optional(),
+  mode: RecompositionModeSchema.optional(),
+
+  galleryChapters: z.array(z.object({
+    title: z.string().optional(),
+    imageIds: z.array(z.string()).optional(),
+    body: z.array(z.string()).optional(),
+  })).optional(),
+
+  qa: z.array(z.object({ q: z.string(), a: z.string().optional() })).optional(),
+  credits: z.array(z.object({ role: z.string(), name: z.string().nullable().optional() })).optional(),
+
+  materialsLedger: z.object({
+    items: z.array(z.object({
+      name: z.string(),
+      productId: z.string().nullable().optional(),
+    }))
+  }).optional(),
+
+  pullQuotes: z.array(z.string()).optional(),
+  method: z.array(z.string()).optional(),
+}).passthrough();
+
+export const PostMetaSchema = z.object({
+  heroAssetId: z.string().uuid().optional(),
+  excerpt: z.string().max(220).optional(),
+  keywords: z.array(z.string().min(1)).max(16).optional(),
+  variant: z.enum([
+    "PROJECT_FEATURE","MATERIAL_STUDY","METHOD","DESIGNER_PROFILE","EVENT_ESSAY"
+  ]).optional(),
+});
+
+export const BlocksSchema = z.object({
+  lead: z.object({
+    title: z.string().max(80).optional(), // Support title field (LLM sometimes generates this)
+    kicker: z.string().max(80).optional(), // Increased from 48 to 80 for natural headlines
+    deck: z.string().max(400).optional(), // Increased from 240 to 400 for proper magazine-style descriptions
+  }).optional(),
+  galleryChapters: z.array(z.object({
+    title: z.string().max(80).optional(),
+    body: z.array(z.string().max(5000)).optional(), // Allow very long paragraphs for recomposition (600-900 words = ~3000-4500 chars total, sections may be 1000-2000 chars each)
+    imageIds: z.array(z.string().uuid()).min(1).max(8),
+    pullQuote: z.string().max(300).optional(), // Increased from 200 to 300 for longer quotes
+  })).optional(),
+  pullQuotes: z.array(z.string().max(300)).max(5).optional(), // Increased from 200 to 300 for longer quotes
+  materialsLedger: z.object({
+    items: z.array(z.object({
+      productId: z.string().uuid().nullable().optional(),
+      name: z.string(),
+      finish: z.string().nullish(),
+      vendorId: z.string().uuid().optional(),
+      note: z.string().max(140).optional(),
+    })).optional(),
+  }).optional(),
+  method: z.array(z.string().max(200)).max(10).optional(),
+  qa: z.array(z.object({
+    q: z.string().max(140),
+    a: z.string().max(800),
+    role: z.enum(["DESIGNER","VENDOR"]).default("DESIGNER"),
+  })).max(8).optional(),
+  data: z.record(z.string(), z.any()).optional(),
+  credits: z.array(z.object({
+    role: z.string().max(60),
+    name: z.string().max(100).nullable().optional(),
+    url: z.string().url().optional(),
+  })).optional(),
+  mode: RecompositionModeSchema.optional(), // Store mode for rendering logic
+}).strict();
+
+export type Blocks = z.infer<typeof BlocksSchema>;

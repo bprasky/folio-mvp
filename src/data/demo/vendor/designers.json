@@ -1,0 +1,26 @@
+{
+  "affinityCandidates": [
+    {
+      "designerId": "d1",
+      "name": "Bea Interiors",
+      "match": 0.92
+    },
+    {
+      "designerId": "d3",
+      "name": "Studio Halcyon",
+      "match": 0.86
+    },
+    {
+      "designerId": "d4",
+      "name": "Linea & Co.",
+      "match": 0.83
+    }
+  ],
+  "styleVectors": [
+    "organic-modern",
+    "warm-minimal",
+    "textural-neutrals"
+  ]
+}
+
+

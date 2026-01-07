@@ -1,0 +1,41 @@
+{
+  "posts": [
+    {
+      "id": "post_001",
+      "title": "Minimalist Living Room Design",
+      "author": "Sarah Chen",
+      "date": "2024-01-20",
+      "likes": 1247,
+      "saves": 89,
+      "imageUrl": "/images/inspire/minimalist-living.jpg",
+      "tags": ["minimalist", "living-room", "modern"],
+      "description": "Clean lines and neutral tones create a serene living space"
+    },
+    {
+      "id": "post_002",
+      "title": "Industrial Kitchen Transformation",
+      "author": "Mike Rodriguez",
+      "date": "2024-01-18",
+      "likes": 892,
+      "saves": 156,
+      "imageUrl": "/images/inspire/industrial-kitchen.jpg",
+      "tags": ["industrial", "kitchen", "renovation"],
+      "description": "Exposed brick and steel accents bring urban charm to this kitchen"
+    },
+    {
+      "id": "post_003",
+      "title": "Scandinavian Bedroom Retreat",
+      "author": "Emma Thompson",
+      "date": "2024-01-15",
+      "likes": 2156,
+      "saves": 234,
+      "imageUrl": "/images/inspire/scandinavian-bedroom.jpg",
+      "tags": ["scandinavian", "bedroom", "cozy"],
+      "description": "Hygge-inspired design with natural materials and soft textures"
+    }
+  ]
+}
+
+
+
+

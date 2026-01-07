@@ -1,0 +1,1240 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id                             String                @id @default(uuid())
+  email                          String                @unique
+  name                           String
+  bio                            String?
+  profileImage                   String?
+  location                       String?
+  title                          String?
+  phone                          String?
+  studio                         String?
+  specialties                    String[]
+  website                        String?
+  instagram                      String?
+  linkedin                       String?
+  companyName                    String?
+  budgetRange                    String?
+  desiredRooms                   String[]
+  serviceLevel                   String?
+  projectStatus                  String?
+  followers                      Int                   @default(0)
+  following                      Int                   @default(0)
+  views                          Int                   @default(0)
+  createdAt                      DateTime              @default(now())
+  updatedAt                      DateTime              @updatedAt
+  role                           Role                  @default(DESIGNER)
+  passwordHash                   String
+  // Designer onboarding tracking
+  onboardingBrandStepCompletedAt DateTime?
+  // Brand profile relation (for designers)
+  brandProfile                   DesignerBrandProfile?
+  // Aesthetic detection
+  aestheticProfile               Json?     // Stores AestheticProfile
+  aestheticDetectedAt            DateTime?
+  profileState                   String    @default("empty") // ProfileState enum as string
+  brandAssets                    DesignerBrandAssets?
+  engagementEvents               EngagementEvent[]
+  rsvps                          EventRSVP[]           @relation("UserRSVPs")
+  events                         Event[]               @relation("EventCreator")
+  folders                        Folder[]
+  organizationUsers              OrganizationUser[]
+  posts                          posts[]
+  products                       Product[]             @relation("VendorProducts")
+  designerProjects               Project[]             @relation("DesignerProjects")
+  ownedProjects                  Project[]             @relation("OwnedProjects")
+  vendorQuotes                   Quote[]               @relation("VendorQuotes")
+  vendorSelections               Selection[]           @relation("VendorSelections")
+  stories                        Story[]
+  vendorStories                  Story[]               @relation("StoryToVendor")
+  projectParticipants            ProjectParticipant[]
+  projectModules                 ProjectModule[]
+  // Removed - AttributeVerification doesn't have designerId field
+  designerDecisions              DesignerDecision[]
+  voiceProfile                   DesignerVoiceProfile?
+
+  @@map("users")
+}
+
+model Event {
+  id                       String             @id @default(cuid())
+  title                    String
+  description              String
+  location                 String
+  // Location fields (from database)
+  city                     String?
+  state                    String?
+  country                  String?
+  startDate                DateTime
+  endDate                  DateTime
+  isPublic                 Boolean            @default(true)
+  isApproved               Boolean?           @default(false)
+  requiresApproval         Boolean            @default(false)
+  rejectionNotes           String?
+  createdById              String
+  parentFestivalId         String?
+  createdAt                DateTime           @default(now())
+  updatedAt                DateTime           @updatedAt
+  imageUrl                 String?
+  allowChat                Boolean            @default(false)
+  allowReshare             Boolean            @default(true)
+  capacity                 Int?
+  chatGroupLink            String?
+  createdByReputationScore Float?
+  designStyles             String[]           @default([])
+  displayBoostUntil        DateTime?
+  eventHashtag             String?
+  eventTags                String[]           @default([])
+  eventTypes               EventType[]
+  includesFood             Boolean            @default(false)
+  inviteType               String             @default("open")
+  isSponsored              Boolean            @default(false)
+  isVirtual                Boolean            @default(false)
+  linkedProducts           String[]           @default([])
+  mapLink                  String?
+  mediaGallery             String[]           @default([])
+  postEventMessage         String?
+  promotionTier            Int                @default(0)
+  rsvpDeadline             DateTime?
+  targetUserRoles          String[]           @default([])
+  timezone                 String?
+  waitlistEnabled          Boolean            @default(false)
+  isFestival               Boolean            @default(false)
+  bookings                 bookings[]
+  clicks                   clicks[]
+  engagementEvents         EngagementEvent[]
+  event_metrics            event_metrics?
+  productStats             EventProductStat[]
+  event_products           event_products[]
+  rsvps                    EventRSVP[]
+  createdBy                User               @relation("EventCreator", fields: [createdById], references: [id])
+  parentFestival           Event?             @relation("FestivalSubevents", fields: [parentFestivalId], references: [id])
+  subevents                Event[]            @relation("FestivalSubevents")
+  impressions              impressions[]
+  placements               placements[]
+
+  @@index([parentFestivalId])
+  @@index([city])
+  @@index([startDate])
+  @@map("events")
+}
+
+model EventRSVP {
+  id        String   @id @default(cuid())
+  status    String   @default("attending")
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userId    String
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user      User     @relation("UserRSVPs", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, eventId])
+  @@map("event_rsvps")
+}
+
+model Project {
+  id                   String                @id @default(uuid())
+  description          String?
+  category             String?
+  status               String                @default("active")
+  stage                ProjectStage          @default(concept)
+  isPublic             Boolean               @default(false)
+  publishedAt          DateTime?
+  isAIEnabled          Boolean               @default(false)
+  views                Int                   @default(0)
+  saves                Int                   @default(0)
+  shares               Int                   @default(0)
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  designerId           String?
+  ownerId              String
+  vendorOrgId          String?
+  designerOrgId        String?
+  isHandoffReady       Boolean               @default(false)
+  handoffInvitedAt     DateTime?
+  handoffClaimedAt     DateTime?
+  title                String                @default("")
+  projectType          ProjectType           @default(UNSPECIFIED)
+  clientType           ClientType            @default(RESIDENTIAL)
+  budgetBand           BudgetBand            @default(UNSPECIFIED)
+  city                 String?
+  regionState          String?
+  files                ProjectFile[]
+  images               ProjectImage[]
+  designer             User?                 @relation("DesignerProjects", fields: [designerId], references: [id])
+  designerOrg          Organization?         @relation("DesignerProjects", fields: [designerOrgId], references: [id])
+  owner                User                  @relation("OwnedProjects", fields: [ownerId], references: [id])
+  vendorOrg            Organization?         @relation("VendorProjects", fields: [vendorOrgId], references: [id])
+  quotes               Quote[]
+  rooms                Room[]
+  selections           Selection[]
+  stories              Story[]
+  participants         ProjectParticipant[]
+  post                 ProjectPost?
+  editorialAssignments EditorialAssignment[]
+  editorialInterviews  EditorialInterview[]
+  modules              ProjectModule[]
+  attributeVerifications AttributeVerification[] @relation("ProjectAttributeVerifications")
+  designerDecisions    DesignerDecision[]
+
+  @@map("projects")
+}
+
+model ProjectImage {
+  id           String       @id @default(uuid())
+  url          String
+  name         String?
+  room         String?
+  displayOrder Int?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  projectId    String
+  tags         ProductTag[]
+  project      Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  // Search indexing fields
+  searchVector      String?   // Full-text search vector
+  aiTags            String[]  @default([]) // AI-detected objects, materials, colors
+  aiColors          Json?     // Dominant color palette extracted
+  aiMaterials       String[]  @default([]) // AI-detected materials (marble, brass, wood, etc.)
+  aiSpaces          String[]  @default([]) // AI-detected space types (kitchen, bathroom, pool, etc.)
+  indexedAt         DateTime? // Last indexing timestamp
+  
+  // AI classification for interview questions
+  aiClassification  Json?     @map("ai_classification") // Stores full ImageClassification result
+  aiClassifiedAt    DateTime? @map("ai_classified_at") // When classification ran
+  verifiedAttributes Json?    @map("verified_attributes") // Designer-confirmed attributes
+  verifiedAt        DateTime? @map("verified_at") // When attributes were verified
+  
+  // Engagement (for ranking)
+  momentViews       Int       @default(0)
+  momentSaves       Int       @default(0)
+  momentShares      Int       @default(0)
+  
+  // Relation to search index
+  momentIndex       MomentIndex?
+  
+  // Relation to attribute verifications
+  attributeVerifications AttributeVerification[] @relation("ImageAttributeVerifications")
+  designerDecisions      DesignerDecision[]
+
+  @@map("project_images")
+}
+
+model MomentIndex {
+  id              String   @id @default(cuid())
+  projectImageId  String   @unique
+  projectImage    ProjectImage @relation(fields: [projectImageId], references: [id], onDelete: Cascade)
+  
+  // Denormalized for fast search
+  projectId       String
+  designerId      String
+  designerName    String
+  projectTitle    String
+  isPublic        Boolean  // From parent project
+  publishedAt     DateTime?
+  
+  // Search fields
+  combinedTags    String[] @default([]) // Merge of explicit tags + AI tags
+  searchText      String   @default("") // Concatenated searchable text
+  
+  // NEW: Dedicated searchable fields
+  room            String?           // e.g., "living room", "kitchen", "bathroom"
+  roomNormalized  String?           // Lowercase, no spaces: "livingroom" for fuzzy matching
+  vendors         String[]          @default([]) // Array of vendor names from tagged products
+  vendorIds       String[]          @default([]) // Array of vendor IDs for exact filtering
+  categories      String[]          @default([]) // e.g., ["furniture", "lighting", "textiles"]
+  colors          String[]          @default([]) // e.g., ["white", "oak", "brass", "marble"]
+  materials       String[]          @default([]) // e.g., ["wood", "stone", "metal", "fabric"]
+  styles          String[]          @default([]) // e.g., ["modern", "coastal", "mediterranean"]
+  mood            String[]          @default([]) // e.g., ["airy", "moody", "warm", "dramatic"]
+  elements        String[]          @default([]) // e.g., ["pendant lighting", "kitchen island", "built-ins"]
+  
+  // Scoring
+  engagementScore Float    @default(0)
+  editorialScore  Float    @default(0)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([isPublic, publishedAt])
+  @@index([designerId])
+  @@index([combinedTags])
+  @@index([room])
+  @@index([roomNormalized])
+  @@index([vendors])
+  @@index([vendorIds])
+  @@index([categories])
+  @@index([colors])
+  @@index([materials])
+  @@index([styles])
+  @@index([mood])
+  @@index([elements])
+  @@index([room, vendors])
+  @@map("moment_index")
+}
+
+model Product {
+  id               String             @id @default(uuid())
+  name             String
+  description      String?
+  price            Float?
+  imageUrl         String?
+  cutoutImageUrl   String?
+  category         String?
+  brand            String?
+  url              String?
+  isPending        Boolean            @default(false)
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  vendorId         String?
+  engagementEvents EngagementEvent[]
+  productStats     EventProductStat[]
+  folderProducts   FolderProduct[]
+  tags             ProductTag[]
+  vendor           User?              @relation("VendorProducts", fields: [vendorId], references: [id])
+
+  @@map("products")
+}
+
+model ProductTag {
+  id        String       @id @default(uuid())
+  x         Float
+  y         Float
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  productId String
+  imageId   String
+  image     ProjectImage @relation(fields: [imageId], references: [id], onDelete: Cascade)
+  product   Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  selection Selection?   // Selection created from this tag
+
+  @@map("product_tags")
+}
+
+model Folder {
+  id         String          @id @default(uuid())
+  name       String
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+  designerId String
+  products   FolderProduct[]
+  designer   User            @relation(fields: [designerId], references: [id])
+  posts      posts[]
+
+  @@map("folders")
+}
+
+model FolderProduct {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  folderId  String
+  productId String
+  folder    Folder   @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([folderId, productId])
+  @@map("folder_products")
+}
+
+model Story {
+  id           String     @id @default(uuid())
+  videoUrl     String
+  thumbnailUrl String?
+  duration     Int
+  createdAt    DateTime   @default(now())
+  expiresAt    DateTime?
+  isPinned     Boolean    @default(false)
+  views        Int        @default(0)
+  likes        Int        @default(0)
+  designerId   String
+  projectId    String?
+  designer     User       @relation(fields: [designerId], references: [id])
+  project      Project?   @relation(fields: [projectId], references: [id])
+  categories   Category[] @relation("StoryToCategory")
+  vendors      User[]     @relation("StoryToVendor")
+
+  @@map("stories")
+}
+
+model Category {
+  id      String  @id @default(uuid())
+  name    String  @unique
+  stories Story[] @relation("StoryToCategory")
+
+  @@map("categories")
+}
+
+model Room {
+  id         String      @id @default(uuid())
+  name       String
+  type       String? // Optional room type: KITCHEN, BATH, LIVING, BEDROOM, DINING, OFFICE, ENTRY
+  projectId  String
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  quotes     Quote[]
+  project    Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  selections Selection[]
+
+  @@map("rooms")
+}
+
+model Selection {
+  id                String   @id @default(uuid())
+  photo             String?
+  vendorName        String?
+  productName       String?
+  colorFinish       String?
+  notes             String?
+  phaseOfUse        String?
+  gpsLocation       String?
+  source            String   @default("upload")
+  timestamp         DateTime @default(now())
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  roomId            String?
+  projectId         String
+  quantity          Int?
+  specSheetFileName String?
+  specSheetUrl      String?
+  unitPrice         Decimal? @db.Decimal(10, 2)
+  vendorProductId   String?
+  vendorRepId       String?
+  productUrl        String?
+  tags              String[] @default([])
+  slotKey           String? // Optional slot key for room template tracking (e.g., 'countertop', 'sofa')
+  uiMeta            Json? // UI metadata: displaySize, featured, dimensions, etc.
+  productTagId      String?  @unique // Link back to source ProductTag
+  quotes            Quote[]
+  project           Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  room              Room?    @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  vendorRep         User?    @relation("VendorSelections", fields: [vendorRepId], references: [id])
+  productTag        ProductTag? @relation(fields: [productTagId], references: [id], onDelete: SetNull)
+
+  @@map("selections")
+}
+
+model ProjectFile {
+  id           String   @id @default(uuid())
+  fileName     String
+  fileType     String
+  fileUrl      String
+  uploadedBy   String
+  dateUploaded DateTime @default(now())
+  projectId    String
+  project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("project_files")
+}
+
+model Organization {
+  id                  String               @id @default(uuid())
+  name                String
+  type                OrgType              @default(DESIGN_FIRM)
+  description         String?
+  website             String?
+  logo                String?
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  users               OrganizationUser[]
+  designerProjects    Project[]            @relation("DesignerProjects")
+  vendorProjects      Project[]            @relation("VendorProjects")
+  projectParticipants ProjectParticipant[]
+
+  @@map("organizations")
+}
+
+model OrganizationUser {
+  id             String       @id @default(uuid())
+  userId         String
+  organizationId String
+  role           OrgUserRole  @default(MEMBER)
+  isActive       Boolean      @default(true)
+  joinedAt       DateTime     @default(now())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, organizationId])
+  @@map("organization_users")
+}
+
+model Quote {
+  id            String     @id @default(uuid())
+  projectId     String
+  roomId        String?
+  selectionId   String?
+  quoteUrl      String
+  quoteFileName String?
+  totalAmount   Decimal?   @db.Decimal(10, 2)
+  notes         String?
+  vendorRepId   String
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  project       Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  room          Room?      @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  selection     Selection? @relation(fields: [selectionId], references: [id], onDelete: Cascade)
+  vendorRep     User       @relation("VendorQuotes", fields: [vendorRepId], references: [id])
+
+  @@map("quotes")
+}
+
+model EngagementEvent {
+  id        String   @id @default(uuid())
+  userId    String
+  eventId   String
+  productId String?
+  verb      String
+  meta      Json?
+  createdAt DateTime @default(now())
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  product   Product? @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("engagement_events")
+}
+
+model EventProductStat {
+  id          String    @id @default(uuid())
+  eventId     String
+  productId   String
+  views       Int       @default(0)
+  saves       Int       @default(0)
+  lastSpikeAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  event       Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  product     Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, productId])
+  @@map("event_product_stats")
+}
+
+model bookings {
+  id             String        @id
+  eventId        String
+  designerId     String
+  requestedAt    DateTime      @default(now())
+  requestedStart DateTime?
+  requestedEnd   DateTime?
+  status         BookingStatus @default(REQUESTED)
+  notes          String?
+  events         Event         @relation(fields: [eventId], references: [id])
+}
+
+model clicks {
+  id         String   @id
+  eventId    String
+  designerId String?
+  target     String
+  at         DateTime @default(now())
+  meta       Json?
+  events     Event    @relation(fields: [eventId], references: [id])
+}
+
+model event_metrics {
+  id          String @id
+  eventId     String @unique
+  views       Int    @default(0)
+  impressions Int    @default(0)
+  clicks      Int    @default(0)
+  saves       Int    @default(0)
+  rsvps       Int    @default(0)
+  bookings    Int    @default(0)
+  ctr         Float  @default(0)
+  quality     Float  @default(0)
+  events      Event  @relation(fields: [eventId], references: [id])
+}
+
+model event_products {
+  id        String   @id
+  eventId   String
+  productId String
+  position  Int      @default(0)
+  name      String?
+  imageUrl  String?
+  price     Decimal? @db.Decimal(10, 2)
+  url       String?
+  events    Event    @relation(fields: [eventId], references: [id])
+}
+
+model impressions {
+  id         String   @id
+  eventId    String
+  designerId String?
+  at         DateTime @default(now())
+  sessionId  String?
+  events     Event    @relation(fields: [eventId], references: [id])
+}
+
+model placements {
+  id        String   @id
+  eventId   String
+  page      Int
+  slot      Int
+  sizeToken String
+  validFrom DateTime
+  validTo   DateTime
+  events    Event    @relation(fields: [eventId], references: [id])
+}
+
+model post_items {
+  id           String   @id
+  postId       String
+  productName  String
+  imageUrl     String?
+  affiliateUrl String?
+  section      String?
+  createdAt    DateTime @default(now())
+  posts        posts    @relation(fields: [postId], references: [id], onDelete: Cascade)
+}
+
+model posts {
+  id         String       @id
+  title      String
+  designerId String
+  folderId   String?
+  content    String?
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime
+  post_items post_items[]
+  users      User         @relation(fields: [designerId], references: [id], onDelete: Cascade)
+  folders    Folder?      @relation(fields: [folderId], references: [id])
+}
+
+enum Role {
+  ADMIN
+  VENDOR
+  DESIGNER
+  HOMEOWNER
+  GUEST
+}
+
+enum OrgType {
+  VENDOR
+  DESIGN_FIRM
+  MANUFACTURER
+  SHOWROOM
+  CONTRACTOR
+}
+
+enum OrgUserRole {
+  OWNER
+  ADMIN
+  MANAGER
+  MEMBER
+  VIEWER
+}
+
+enum EventType {
+  PANEL
+  PRODUCT_REVEAL
+  HAPPY_HOUR
+  LUNCH_AND_LEARN
+  INSTALLATION
+  EXHIBITION
+  BOOTH
+  PARTY
+  MEAL
+  TOUR
+  AWARDS
+  WORKSHOP
+  KEYNOTE
+  OTHER
+  FESTIVAL
+  LAUNCH
+  CEU
+  LUNCH_LEARN
+  PRODUCT_KNOWLEDGE
+}
+
+enum ProjectType {
+  UNSPECIFIED
+  RESIDENTIAL
+  COMMERCIAL
+  HOSPITALITY
+  HEALTHCARE
+  EDUCATION
+  OFFICE
+  RETAIL
+  INDUSTRIAL
+  OTHER
+}
+
+enum BudgetBand {
+  UNSPECIFIED
+  LOW
+  MID
+  HIGH
+  LUXURY
+}
+
+enum BookingStatus {
+  REQUESTED
+  CONFIRMED
+  DECLINED
+  CANCELLED
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum EventWeight {
+  ANCHOR
+  FLEX
+  BACKFILL
+}
+
+enum SponsorshipTier {
+  FREE
+  SPONSORED
+  PREMIUM
+}
+
+enum ProjectStage {
+  concept
+  schematic
+  design_development
+  cd_pre_spec
+  spec_locked
+  in_procurement
+  install
+}
+
+enum ClientType {
+  RESIDENTIAL
+  COMMERCIAL
+}
+
+enum QuoteStatus {
+  DRAFT
+  SENT
+  ACCEPTED
+  REJECTED
+  EXPIRED
+}
+
+model VendorVisit {
+  id            String    @id @default(cuid())
+  token         String    @unique
+  vendorId      String
+  designerEmail String
+  projectId     String? // will be set once designer chooses destination (existing/new/specsheet)
+  note          String? // agenda, context
+  expiresAt     DateTime?
+  createdAt     DateTime  @default(now())
+
+  @@index([vendorId])
+  @@index([projectId])
+  @@index([designerEmail])
+  @@index([projectId, createdAt])
+  @@map("VendorVisit")
+}
+
+model QuoteAttachment {
+  id           String           @id @default(cuid())
+  vendorId     String
+  projectId    String? // becomes non-null after destination chosen
+  roomId       String?
+  selectionId  String?
+  fileUrl      String?
+  fileName     String?
+  totalCents   Int?
+  currency     String?          @default("USD")
+  leadTimeDays Int?
+  termsShort   String?
+  version      Int              @default(1)
+  supersedesId String?          @unique
+  supersededBy QuoteAttachment? @relation("QuoteSupersede", fields: [supersedesId], references: [id])
+  supersedes   QuoteAttachment? @relation("QuoteSupersede")
+  status       QuoteStatus      @default(DRAFT)
+  expiresAt    DateTime?
+  jsonPayload  Json?
+  createdAt    DateTime         @default(now())
+
+  @@index([vendorId])
+  @@index([projectId])
+  @@index([status])
+  @@map("QuoteAttachment")
+}
+
+/// Lightweight staging container until designer chooses a destination
+model HandoffPackage {
+  id                String   @id @default(cuid())
+  visitId           String   @unique
+  vendorId          String
+  designerEmail     String
+  itemsJson         Json // [{productId, sku, finish, qty, note, imageUrl?}]
+  quoteAttachmentId String? // optional, if vendor attached quote at handoff time
+  createdAt         DateTime @default(now())
+
+  @@map("HandoffPackage")
+}
+
+model ProjectParticipant {
+  id        String          @id @default(uuid())
+  projectId String
+  orgId     String? // nullable for direct user participation
+  userId    String? // nullable for org-level participation
+  side      ParticipantSide
+  role      ParticipantRole @default(VIEWER)
+  createdAt DateTime        @default(now())
+
+  project Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  org     Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user    User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, orgId, userId])
+  @@map("project_participants")
+}
+
+enum ParticipantSide {
+  DESIGNER
+  VENDOR
+}
+
+enum ParticipantRole {
+  OWNER
+  EDITOR
+  VIEWER
+}
+
+enum PostStatus {
+  DRAFT
+  REVIEW
+  PUBLISHED
+  ARCHIVED
+}
+
+enum PostVariant {
+  PROJECT_FEATURE
+  MATERIAL_STUDY
+  METHOD
+  DESIGNER_PROFILE
+  EVENT_ESSAY
+}
+
+model ProjectPost {
+  id        String  @id @default(cuid())
+  projectId String  @unique
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  status      PostStatus  @default(DRAFT)
+  variant     PostVariant @default(PROJECT_FEATURE)
+  slug        String      @unique
+  heroAssetId String?
+  excerpt     String?
+  keywords    String[]    @default([])
+
+  expandedBlocks Json?
+  provenance     Json?
+  credits        Json?
+
+  publishedAt          DateTime?
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  editorialAssignments EditorialAssignment[]
+
+  @@map("project_posts")
+}
+
+enum ProjectModuleType {
+  ARTICLE
+  STORY
+  SHORT_VIDEO
+  LONG_VIDEO
+  GALLERY
+  BOARD
+  TIMELINE
+}
+
+model ProjectModule {
+  id          String  @id @default(cuid())
+  project     Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId   String
+  createdBy   User?   @relation(fields: [createdById], references: [id])
+  createdById String?
+
+  type        ProjectModuleType
+  title       String?
+  description String?
+
+  // Media is intentionally flexible; we can store file ids, URLs, or embeds.
+  media Json? // e.g. [{ kind: "video", url, provider }, { kind: "image", url, caption }]
+
+  pinned       Boolean @default(false) // surface at top of project page
+  isPrimary    Boolean @default(false) // e.g. the canonical long-form film
+  isAiCompiled Boolean @default(false) // future: AI-compiled film vs manual upload
+
+  publishedAt DateTime? // null = draft
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([projectId, type, publishedAt])
+  @@index([createdById])
+  @@map("project_modules")
+}
+
+model EditorialCategory {
+  id          String                 @id @default(cuid())
+  type        String
+  label       String
+  centroid    Unsupported("vector")?
+  createdAt   DateTime               @default(now())
+  assignments EditorialAssignment[]
+
+  @@unique([type, label])
+  @@index([type])
+  @@map("editorial_category")
+}
+
+model EditorialAssignment {
+  id             String            @id @default(cuid())
+  projectId      String
+  editorialId    String
+  categoryId     String
+  editorialScore Float
+  createdAt      DateTime          @default(now())
+  project        Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  editorial      ProjectPost       @relation(fields: [editorialId], references: [id], onDelete: Cascade)
+  category       EditorialCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, categoryId])
+  @@index([categoryId])
+  @@index([editorialId])
+  @@map("editorial_assignment")
+}
+
+model EditorialEdition {
+  id          String    @id @default(cuid())
+  slug        String    @unique
+  title       String
+  intro       String
+  categoryIds String[]
+  projectIds  String[]
+  publishedAt DateTime?
+  metrics     Json
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("editorial_edition")
+}
+
+enum EditorialInterviewStatus {
+  IN_PROGRESS
+  COMPLETED
+  PUBLISHED
+}
+
+model EditorialInterview {
+  id        String  @id @default(cuid())
+  projectId String  @unique
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  status EditorialInterviewStatus @default(IN_PROGRESS)
+
+  selectedQuestionIds String[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  answers EditorialInterviewAnswer[]
+
+  @@map("editorial_interviews")
+}
+
+model EditorialInterviewAnswer {
+  id          String             @id @default(cuid())
+  interviewId String
+  interview   EditorialInterview @relation(fields: [interviewId], references: [id], onDelete: Cascade)
+
+  questionId     String
+  isFollowUp     Boolean @default(false)
+  parentAnswerId String? // For follow-ups, links to Layer 1 answer
+
+  answerText    String
+  audioUrl      String? // Optional: retained audio
+  inputModality String  @default("text") // "text" | "voice" | "mixed"
+
+  // AI-extracted metadata (optional)
+  confidenceScore    Float?
+  inferredPriorities String[]
+  softConstraints    String[]
+
+  // NEW: Contextual question linking
+  linkedImageId              String?
+  linkedProductId            String?
+  questionSource             String? // 'base_question' | 'ai_classification' | 'follow_up'
+  aiClassificationAttribute  String? // e.g., "color:sage green"
+
+  createdAt DateTime @default(now())
+
+  // Relations
+  // Removed - AttributeVerification doesn't have interviewAnswerId field
+
+  @@index([interviewId])
+  @@index([questionId])
+  @@index([linkedImageId])
+  @@map("editorial_interview_answers")
+}
+
+// ============================================================
+// PREDICTIVE MARKET LAYER - Context Graph & Signals
+// ============================================================
+
+model ContextSignal {
+  id         String   @id @default(cuid())
+  userId     String?
+  vendorId   String?
+  productId  String?
+  materialId String?
+  projectId  String?
+  eventId    String?
+  action     String // "view" | "save" | "add_to_project" | "rsvp" | "feature_click" | "search"
+  tags       String[] // ["brass","emerald","mid-century",...]
+  meta       Json?
+  createdAt  DateTime @default(now())
+
+  @@index([userId, action, createdAt])
+  @@index([productId, projectId, action])
+  @@index([eventId, action])
+  @@map("context_signals")
+}
+
+model Embedding {
+  id        String   @id @default(cuid())
+  nodeType  String
+  nodeId    String
+  vector    Bytes
+  updatedAt DateTime @default(now())
+
+  @@unique([nodeType, nodeId])
+  @@index([nodeType])
+  @@map("embeddings")
+}
+
+model GraphEdge {
+  id        String   @id @default(cuid())
+  srcType   String
+  srcId     String
+  dstType   String
+  dstId     String
+  kind      String // "uses" | "saves" | "includes" | "attends" | "hosts" | "associated_with" | "affinity"
+  weight    Float
+  decayAt   DateTime
+  updatedAt DateTime @default(now())
+
+  @@index([srcType, srcId])
+  @@index([dstType, dstId])
+  @@index([kind])
+  @@index([updatedAt])
+  @@map("graph_edges")
+}
+
+model MarketSignal {
+  id         String   @id @default(cuid())
+  nodeType   String
+  nodeId     String
+  liquidity  Float
+  momentum   Float
+  confidence Float
+  window     String
+  updatedAt  DateTime @default(now())
+
+  @@index([nodeType, nodeId])
+  @@index([updatedAt])
+  @@map("market_signals")
+}
+
+model SpendRecommendation {
+  id             String   @id @default(cuid())
+  vendorId       String
+  scopeType      String // "event" | "product" | "category"
+  scopeId        String
+  recommendedUsd Float
+  rationale      Json
+  updatedAt      DateTime @default(now())
+
+  @@index([vendorId, scopeType, scopeId])
+  @@map("spend_recommendations")
+}
+
+// NOTE (designer onboarding):
+// This model stores designer brand identity information (logo, colors, fonts).
+// Created automatically when a designer account is first created.
+model DesignerBrandProfile {
+  id         String @id @default(cuid())
+  designerId String @unique
+  designer   User   @relation(fields: [designerId], references: [id], onDelete: Cascade)
+
+  logoImageUrl   String? // URL to uploaded logo
+  primaryColor   String? // hex color
+  secondaryColor String? // hex color
+  accentColor    String? // hex color
+  fontHeading    String? // e.g. "Suisse Intl"
+  fontBody       String? // e.g. "Inter"
+
+  websiteUrl String? // used later for AI brand scan
+
+  setupCompletedAt DateTime?
+  setupSkippedAt   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("designer_brand_profiles")
+}
+
+model DesignerBrandAssets {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Visual identity
+  logoLightUrl      String?  // Logo for light backgrounds
+  logoDarkUrl       String?  // Logo for dark backgrounds
+  logomarkUrl       String?  // Icon/mark only version
+  
+  // Color palette (hex values)
+  primaryColor      String?  // Main brand color
+  secondaryColor    String?  // Supporting color
+  accentColor       String?  // Highlight/CTA color
+  backgroundColor   String?  // Preferred background
+  
+  // Typography preferences
+  headingFont       String?  // e.g., "Orpheus Pro", "Helvetica Neue"
+  bodyFont          String?  // e.g., "Inter", "Georgia"
+  
+  // Mood/inspiration (even before projects exist)
+  moodImageUrls     String[] // Up to 6 mood images
+  inspirationNotes  String?  // Free text about their aesthetic
+  
+  // References
+  inspiredByDesigners String[] // Names or handles
+  inspiredByPublications String[] // e.g., "Architectural Digest", "Kinfolk"
+  
+  // Brand voice
+  tagline           String?  // One-liner
+  brandAdjectives   String[] // e.g., ["warm", "minimal", "collected"]
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  @@map("designer_brand_assets")
+}
+
+model AttributeVerification {
+  id               String       @id @default(cuid())
+  projectId        String
+  imageId          String?
+  attributeType    String
+  aiValue          String
+  verified         Boolean?
+  correctedValue   String?
+  questionAsked    String
+  designerResponse String?
+  createdAt        DateTime     @default(now())
+  
+  project          Project      @relation("ProjectAttributeVerifications", fields: [projectId], references: [id], onDelete: Cascade)
+  image            ProjectImage? @relation("ImageAttributeVerifications", fields: [imageId], references: [id], onDelete: SetNull)
+  
+  @@index([attributeType, verified])
+  @@index([projectId])
+  @@index([imageId])
+  @@map("attribute_verifications")
+}
+
+model DesignerDecision {
+  id                String   @id @default(cuid())
+  designerId        String
+  projectId         String?
+  decisionType      String
+  choice            String
+  choiceId          String?
+  choiceType        String?
+  roomType          String?
+  imageId           String?
+  productTagId      String?
+  selectionId       String?
+  reasoning         String?
+  alternatives      Json?    @default("[]")
+  tradeoffs         String?
+  convictionLevel   Float?
+  isClientDriven    Boolean  @default(false)
+  clientContext     String?
+  clientBriefExcerpt String?
+  pairedWith        Json?    @default("[]")
+  influences        String[]
+  clientReaction    String?
+  outcomeNotes      String?
+  captureSource     String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  designer          User     @relation(fields: [designerId], references: [id], onDelete: Cascade)
+  project           Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  image             ProjectImage? @relation(fields: [imageId], references: [id], onDelete: SetNull)
+
+  @@index([designerId])
+  @@index([designerId, decisionType])
+  @@index([designerId, roomType])
+  @@index([projectId])
+  @@map("designer_decision")
+}
+
+model DesignerVoiceProfile {
+  id                      String   @id @default(cuid())
+  designerId              String   @unique
+  vocabularyFrequency     Json?    @default("{}")
+  signaturePhrases        String[]
+  terminologyPreferences  Json?    @default("{}")
+  avgSentenceLength       Float?
+  sentenceStructures      Json?    @default("[]")
+  formalityLevel          Float?
+  enthusiasmLevel         Float?
+  technicalDepth          Float?
+  reasoningStyle          String?
+  commonJustifications    String[]
+  voiceEmbedding          Bytes?
+  interviewAnswerCount    Int      @default(0)
+  decisionReasoningCount  Int      @default(0)
+  lastAnalyzedAt          DateTime?
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  designer                User     @relation(fields: [designerId], references: [id], onDelete: Cascade)
+
+  @@map("designer_voice_profile")
+}
+
+model OrbQuestion {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  investorToken String? // optional, will be useful later for investor portal
+  nodeId        String? // NodeId as string (e.g. "editorials", "atelier")
+  edgeFrom      String? // optional: from-node id
+  edgeTo        String? // optional: to-node id
+
+  question String
+  answer   String
+
+  // simple categorization tags if needed
+  tags String? // comma-separated tags for now
+
+  @@map("orb_questions")
+}
