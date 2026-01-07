@@ -125,6 +125,7 @@ export default function DesignerEventsSchedule() {
           </div>
         </div>
       </div>
+      </div>
     </div>
   );
 } 
