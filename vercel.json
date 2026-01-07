@@ -1,16 +1,3 @@
 {
-  "framework": "nextjs",
-  "buildCommand": "prisma generate && next build",
-  "installCommand": "npm install --legacy-peer-deps",
-  "regions": ["iad1"],
-  "env": {
-    "PRISMA_GENERATE_DATASOURCE": "1"
-  },
-  "build": {
-    "env": {
-      "PRISMA_GENERATE_DATASOURCE": "1"
-    }
-  }
+  "regions": ["iad1"]
 }
-```
-
