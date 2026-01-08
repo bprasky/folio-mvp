@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 // src/app/api/projects/[id]/generate-2d-cutouts/route.ts
 //
 // Generate 2D Product Cutouts API Route

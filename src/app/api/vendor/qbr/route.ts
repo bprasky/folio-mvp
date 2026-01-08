@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { NextResponse } from 'next/server';
 import { computeAIBundle } from '@/lib/vendor-data/ai/engine';
 import { getInitialDemoState } from '@/lib/vendor-data/demoStore';

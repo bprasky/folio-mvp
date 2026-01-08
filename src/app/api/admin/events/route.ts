@@ -1,6 +1,18 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient, EventType } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import { uploadDataUrlToSupabase, buildObjectPath } from '@/lib/uploadToSupabase';
+
+// Define EventType locally since it may not be in Prisma schema yet
+const EventType = {
+  FESTIVAL: 'FESTIVAL',
+  SHOWROOM: 'SHOWROOM',
+  EXHIBITION: 'EXHIBITION',
+  TALK: 'TALK',
+  WORKSHOP: 'WORKSHOP',
+  NETWORKING: 'NETWORKING',
+  OTHER: 'OTHER',
+} as const;
+type EventType = (typeof EventType)[keyof typeof EventType];
 import { time } from '@/lib/telemetry';
 import { requireAdmin } from '@/lib/requireAdmin';
 import { rateLimit } from '@/lib/rateLimit';
@@ -48,7 +60,12 @@ function estimateBytesFromDataUrl(d: string) {
 
 export async function POST(req: Request) {
   try {
-    rateLimit('admin:' + (req.headers.get('x-forwarded-for') ?? 'local'));
+    rateLimit({
+      userId: req.headers.get('x-forwarded-for') ?? 'local',
+      scope: 'admin:events',
+      limit: 100,
+      windowMs: 60000
+    });
     const admin = await requireAdmin();
 
     const payload = await parseEventRequest(req);

@@ -150,26 +150,22 @@ export async function getDesignerVendorDirectory(designerId: string): Promise<Di
         
         // Use Prisma.$queryRaw with proper parameterization
         const placeholders = normalizedVendorNames.map((_, i) => `$${i + 1}`).join(',');
-        const candidates = await prisma.$queryRawUnsafe<Array<{
-          id: string;
-          normalizedKey: string;
-          vendorName: string;
-        }>>(
+        const candidates = await prisma.$queryRawUnsafe(
           `SELECT id, "normalizedKey", "vendorName"
            FROM vendor_invite_candidates
            WHERE "normalizedKey" = ANY(ARRAY[${placeholders}])`,
           ...normalizedVendorNames
-        );
+        ) as Array<{
+          id: string;
+          normalizedKey: string;
+          vendorName: string;
+        }>;
 
         if (candidates.length > 0) {
           const candidateIds = candidates.map(c => c.id);
           
           const contactPlaceholders = candidateIds.map((_, i) => `$${i + 1}`).join(',');
-          const contacts = await prisma.$queryRawUnsafe<Array<{
-            candidateId: string;
-            email: string;
-            name: string | null;
-          }>>(
+          const contacts = await prisma.$queryRawUnsafe(
             `SELECT "candidateId", email, name
              FROM vendor_invite_contacts
              WHERE "candidateId" = ANY(ARRAY[${contactPlaceholders}])
@@ -177,7 +173,11 @@ export async function getDesignerVendorDirectory(designerId: string): Promise<Di
              ORDER BY "createdAt" DESC`,
             ...candidateIds,
             designerId
-          );
+          ) as Array<{
+            candidateId: string;
+            email: string;
+            name: string | null;
+          }>;
 
           // Map vendor name to rep email (use first contact found)
           contacts.forEach(contact => {

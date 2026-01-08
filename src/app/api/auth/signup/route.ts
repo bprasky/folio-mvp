@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 // NOTE (designer onboarding):
 // This file contains the logic that creates a Designer account for the first time.
 // New designers are created with PENDING status and redirected to /pending-approval.

@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 /**
  * API route to re-upload external images (e.g., Facebook CDN) to Supabase
  * POST /api/projects/[id]/images/reupload

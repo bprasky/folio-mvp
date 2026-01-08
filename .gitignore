@@ -6,7 +6,7 @@ node_modules/
 out/
 
 # Build
-*.tsbuildinfo
+tsconfig.tsbuildinfo
 
 # Environment
 .env

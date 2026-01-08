@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '../../auth/[...nextauth]/options';
@@ -48,8 +50,8 @@ export async function POST(request: NextRequest) {
     // Create post items with affiliate URLs
     const postItems = await Promise.all(
       items.map(async (item: any) => {
-        let affiliateUrl = null;
-        
+        let affiliateUrl: string | null = null;
+
         if (affiliate && item.baseUrl) {
           affiliateUrl = generateAffiliateUrl(item.baseUrl, userId, title);
         }
