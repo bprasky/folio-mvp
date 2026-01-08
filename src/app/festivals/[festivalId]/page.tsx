@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import FestivalMosaicAdapter from "@/components/festivals/FestivalMosaicAdapter";
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
-import { EventType } from "@prisma/client";
+import { EventType } from "@/lib/eventTypes";
 
 export const runtime = "nodejs";
 

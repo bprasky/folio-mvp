@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { EVENT_SELECT_FEED } from "@/lib/db/selects";
-import { EventType } from '@prisma/client';
+import { EventType } from '@/lib/eventTypes';
 
 export interface Event {
   id: string;

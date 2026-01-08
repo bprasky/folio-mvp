@@ -2,8 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
-import { PendingRepInviteStatus } from '@prisma/client';
 import { autoFollowDesignersForRep } from '@/lib/server/repAutoFollow';
+
+// Define PendingRepInviteStatus locally since it may not be in Prisma schema yet
+const PendingRepInviteStatus = {
+  PENDING: 'PENDING',
+  CLAIMED: 'CLAIMED',
+  EXPIRED: 'EXPIRED',
+} as const;
 
 export async function POST(request: NextRequest) {
   try {

@@ -38,8 +38,8 @@ export async function getLocalEvents({ city, radius }: { city: string; radius: n
   try {
     // Simple city name matching - no coordinate-based queries
     // Fixed: Filter by startDate instead of endDate, and include isApproved filter
-    const rows = await prisma.$queryRawUnsafe<any[]>(`
-      SELECT e.*, 
+    const rows = await prisma.$queryRawUnsafe(`
+      SELECT e.*,
              COALESCE(e."city", f."city") as effective_city
       FROM "events" e
       LEFT JOIN "events" f ON f."id" = e."parentFestivalId"
@@ -53,7 +53,7 @@ export async function getLocalEvents({ city, radius }: { city: string; radius: n
           OR LOWER(COALESCE(e."city", f."city")) LIKE LOWER($4)
         )
       ORDER BY e."startDate" ASC
-    `, start, end, city.trim(), `%${city.trim()}%`);
+    `, start, end, city.trim(), `%${city.trim()}%`) as any[];
 
     // Transform events to match FlowMosaic format
     return rows.map(event => ({

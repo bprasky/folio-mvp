@@ -396,7 +396,7 @@ export async function POST(
         );
         const newGroup = {
           questionId: validated.questionId,
-          followUps: followUpsWithKeys.map((fu) => ({
+          followUps: followupsWithKeys.map((fu) => ({
             id: fu.id,
             prompt: fu.text,
           })),

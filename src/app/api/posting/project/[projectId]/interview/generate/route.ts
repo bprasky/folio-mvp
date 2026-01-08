@@ -824,8 +824,16 @@ async function composeEditorialHard({
     lead: composed.lead || { kicker: project.title, deck: '' },
     galleryChapters: finalChapters,
     pullQuotes: pulls.slice(0, 2),
-    credits: composed.credits ?? [],
-    materialsLedger: composed.materialsLedger,
+    credits: (composed.credits ?? []).map((c: { role: string; name?: string | null }) => ({
+      role: c.role,
+      name: c.name ?? '',
+    })),
+    materialsLedger: composed.materialsLedger ? {
+      items: composed.materialsLedger.items.map((item: { name: string; productId?: string | null }) => ({
+        name: item.name,
+        productId: item.productId ?? undefined,
+      })),
+    } : undefined,
     mode: "recomposition" as const,
   };
 }

@@ -80,7 +80,8 @@ export async function GET(request: NextRequest) {
     });
 
     // Compute aggregates
-    const candidatesWithAggregates = candidates.map((candidate) => {
+    type CandidateWithRelations = (typeof candidates)[number];
+    const candidatesWithAggregates = candidates.map((candidate: CandidateWithRelations) => {
       const uniqueDesigners = new Set(candidate.signals.map((s) => s.designerId));
       const uniqueProjects = new Set(
         candidate.signals.map((s) => s.projectId).filter((id): id is string => !!id)

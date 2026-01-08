@@ -254,7 +254,8 @@ Return JSON array:
       );
 
       if (!extractionResult.ok) {
-        throw new Error(`Extraction failed: ${extractionResult.code} - ${extractionResult.message}`);
+        const errorResult = extractionResult as { ok: false; code: string; message: string };
+        throw new Error(`Extraction failed: ${errorResult.code} - ${errorResult.message}`);
       }
 
       // Parse extraction response

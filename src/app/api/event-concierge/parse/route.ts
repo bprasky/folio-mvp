@@ -60,7 +60,7 @@ async function parseEventInput(input: string) {
   }
   
   // Determine event type
-  const eventTypes = [];
+  const eventTypes: string[] = [];
   if (lowerInput.includes('party') || lowerInput.includes('celebration')) {
     eventTypes.push('PARTY');
   }
@@ -104,7 +104,7 @@ async function parseEventInput(input: string) {
   }
   
   // Generate follow-up questions for missing required fields
-  const followUpQuestions = [];
+  const followUpQuestions: string[] = [];
   
   if (!extractedData.title) {
     followUpQuestions.push("What's the name of your event?");

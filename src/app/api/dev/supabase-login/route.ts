@@ -12,7 +12,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: 'email and password required' }, { status: 400 });
   }
 
-  const jar = cookies();
+  const jar = await cookies();
   const cookieBefore = (jar.getAll?.() ?? []).map(c => c.name);
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -28,9 +28,18 @@ export async function POST(req: Request) {
 
   const supabase = createServerClient(url, anon, {
     cookies: {
-      get: (n) => jar.get(n)?.value,
-      set: (n, v, o) => jar.set({ name: n, value: v, ...o }),
-      remove: (n, o) => jar.set({ name: n, value: '', ...o, maxAge: 0 }),
+      getAll() {
+        return jar.getAll();
+      },
+      setAll(cookiesToSet) {
+        try {
+          cookiesToSet.forEach(({ name, value, options }) =>
+            jar.set(name, value, options)
+          );
+        } catch {
+          // Server Component context
+        }
+      },
     },
   });
 

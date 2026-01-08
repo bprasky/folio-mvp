@@ -34,7 +34,7 @@ export async function GET(
     }
 
     // Generate CSV content
-    const csvRows = [];
+    const csvRows: string[][] = [];
     
     // Header row
     csvRows.push([

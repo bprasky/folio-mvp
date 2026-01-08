@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/options";
 import { prisma } from "@/lib/prisma";
-import { EventType } from "@prisma/client";
+import { EventType } from "@/lib/eventTypes";
 import { fetchEventForModal } from "@/lib/fetchEventForModal";
 import { resolveFeaturedProducts } from "@/lib/events/fetchFeaturedProducts";
 

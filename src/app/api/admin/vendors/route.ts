@@ -36,11 +36,11 @@ export async function POST(request: NextRequest) {
 
     // Load existing vendors
     const vendorsPath = join(process.cwd(), 'src', 'data', 'vendors.json');
-    let vendors = [];
+    let vendors: Array<Record<string, unknown>> = [];
     try {
       const vendorsContent = await readFile(vendorsPath, 'utf-8');
       vendors = JSON.parse(vendorsContent);
-    } catch (error) {
+    } catch {
       // File doesn't exist yet, start with empty array
       vendors = [];
     }

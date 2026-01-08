@@ -187,7 +187,7 @@ export async function GET(
             img.tags.map(tag => [tag.product.id, tag.product])
           )
         ).values()
-      ).map(p => ({
+      ).map((p: any) => ({
         id: p.id,
         name: p.name,
         description: p.description,

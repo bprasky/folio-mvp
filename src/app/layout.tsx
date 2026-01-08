@@ -1,28 +1,12 @@
 import type { Metadata } from 'next';
-import { Inter, Cormorant_Garamond, Montserrat } from 'next/font/google';
 import './globals.css';
 import Providers from './providers';
 import SessionRoleSync from '../components/SessionRoleSync';
 import RoleBasedLayout from '../components/layouts/RoleBasedLayout';
 import { Toaster } from 'react-hot-toast';
 
-// Legacy font (backward compatibility)
-const inter = Inter({ subsets: ['latin'] });
-
-// New Folio design system fonts
-const cormorantGaramond = Cormorant_Garamond({
-  weight: ['300', '400', '500', '600', '700'],
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-serif',
-});
-
-const montserrat = Montserrat({
-  weight: ['300', '400', '500', '600', '700'],
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-sans',
-});
+// Use CSS custom properties for fonts instead of next/font/google
+// This avoids network dependency during build while allowing fonts to be loaded via CSS
 
 export const metadata: Metadata = {
   title: 'FOLIO | Next-Gen Interior Design Platform',
@@ -35,8 +19,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${cormorantGaramond.variable} ${montserrat.variable}`}>
-      <body className={`${inter.className} text-folio-ink min-h-screen antialiased`}>
+    <html lang="en">
+      <body className="text-folio-ink min-h-screen antialiased font-sans">
         <Providers>
           <SessionRoleSync />
           <RoleBasedLayout>

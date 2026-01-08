@@ -375,7 +375,7 @@ async function detectAndSaveAesthetic(designerId: string) {
       if (projects.length < 2) return;
 
       // Fetch product tags
-      const projectIds = projects.map((p) => p.id);
+      const projectIds = projects.map((p: { id: string }) => p.id);
       const productTags = await prisma.productTag.findMany({
         where: {
           image: {
@@ -421,8 +421,8 @@ async function detectAndSaveAesthetic(designerId: string) {
             precomputedSignals: img.imageSignals as any,
           })),
           productTags: productTags
-            .filter((tag) => tag.image.projectId === project.id)
-            .map((tag) => ({
+            .filter((tag: { image: { projectId: string }; product: { category: string | null } }) => tag.image.projectId === project.id)
+            .map((tag: { image: { projectId: string }; product: { category: string | null } }) => ({
               product: {
                 category: tag.product.category || undefined,
                 materials: [],
@@ -434,7 +434,7 @@ async function detectAndSaveAesthetic(designerId: string) {
           })),
           description: project.description || undefined,
         })),
-        interviews: interviews.map((interview) => ({
+        interviews: interviews.map((interview: { answers: Array<{ answerText: string }> }) => ({
           transcript: interview.answers.map((a: { answerText: string }) => a.answerText).join(' '),
         })),
       };
