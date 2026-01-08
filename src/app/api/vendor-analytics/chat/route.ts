@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 // Grok-4 powered – Folio voice locked in – Nov 21 2025
 
 import { NextRequest, NextResponse } from "next/server";

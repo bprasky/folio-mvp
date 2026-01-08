@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 // src/app/api/living/skeleton/dismiss/route.ts
 //
 // Dismiss a skeleton item

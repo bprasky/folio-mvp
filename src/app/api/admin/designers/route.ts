@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 // NOTE (designer onboarding):
 // Admin route for creating designers.
 // Brand profiles are created but onboarding redirect is skipped (admin-created designers).
@@ -172,5 +174,4 @@ export async function PUT(request: NextRequest) {
       { status: 500 }
     );
   }
-} 
 } 

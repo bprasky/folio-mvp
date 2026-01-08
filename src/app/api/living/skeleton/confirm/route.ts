@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 // src/app/api/living/skeleton/confirm/route.ts
 //
 // Confirm a skeleton item as a product or label

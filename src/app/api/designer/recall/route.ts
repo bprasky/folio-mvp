@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
@@ -114,6 +116,10 @@ export async function GET(request: NextRequest) {
       room: string | null;
       product: { id?: string; name: string | null; brand?: string | null; imageUrl?: string | null };
       vendorName?: string | null;
+      tagId?: string;
+      imageId?: string;
+      x?: number;
+      y?: number;
       at: string;
       deepLink: string;
     }>();

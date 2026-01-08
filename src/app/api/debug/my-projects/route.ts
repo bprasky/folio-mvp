@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getMyProjects } from '@/server/queries/getMyProjects';
 import { getServerSession } from 'next-auth';

@@ -1,6 +1,16 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
-const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
+// Lazy initialization to avoid build-time errors when env vars aren't available
+let _supabase: SupabaseClient | null = null;
+function getSupabase() {
+  if (!_supabase) {
+    _supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+  }
+  return _supabase;
+}
 
 // Pick ONE bucket name and stick to it. You're currently using "event-images".
 const BUCKET = process.env.SB_BUCKET_NAME || "event-images";
@@ -30,6 +40,7 @@ export async function saveBufferToProjectStorage({
   const path = `${projectId}/${roomId}/generated/${id}.${ext}`;
 
   // Try with anon client first (faster if RLS allows it)
+  const supabase = getSupabase();
   let up = await supabase.storage.from(BUCKET).upload(path, buffer, {
     contentType: mime,
     upsert: false,
@@ -79,7 +90,7 @@ export async function deleteProjectImage(path: string): Promise<void> {
 
     // Import Supabase admin client
     const { supabaseAdmin } = await import('./supabaseAdmin');
-    
+
     const { error } = await supabaseAdmin.storage
       .from(bucket)
       .remove([objectPath]);
@@ -92,4 +103,72 @@ export async function deleteProjectImage(path: string): Promise<void> {
     console.error('Storage deletion error:', error);
     throw new Error(`Failed to delete image: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
+}
+
+/**
+ * Upload a generated 2D cutout image to storage
+ */
+export async function uploadGeneratedCutout({
+  projectId,
+  productId,
+  buffer,
+  mime = 'image/png',
+}: {
+  projectId: string;
+  productId: string;
+  buffer: Buffer;
+  mime?: string;
+}): Promise<StorageResult> {
+  const { ulid } = await import("ulid");
+  const id = ulid();
+  const ext = mime === "image/png" ? "png" : "jpg";
+  const path = `${projectId}/cutouts/${productId}/${id}.${ext}`;
+
+  const { supabaseAdmin } = await import('./supabaseAdmin');
+  const { error } = await supabaseAdmin.storage.from(BUCKET).upload(path, buffer, {
+    contentType: mime,
+    upsert: false,
+  });
+
+  if (error) {
+    console.error('[uploadGeneratedCutout] Upload failed:', error);
+    throw error;
+  }
+
+  const { data: pub } = supabaseAdmin.storage.from(BUCKET).getPublicUrl(path);
+  return { bucket: BUCKET, path, publicUrl: pub.publicUrl };
+}
+
+/**
+ * Upload a generated 3D mesh file to storage
+ */
+export async function uploadGeneratedMesh({
+  projectId,
+  productId,
+  buffer,
+  mime = 'model/gltf-binary',
+}: {
+  projectId: string;
+  productId: string;
+  buffer: Buffer;
+  mime?: string;
+}): Promise<StorageResult> {
+  const { ulid } = await import("ulid");
+  const id = ulid();
+  const ext = mime.includes('gltf') ? 'glb' : 'obj';
+  const path = `${projectId}/meshes/${productId}/${id}.${ext}`;
+
+  const { supabaseAdmin } = await import('./supabaseAdmin');
+  const { error } = await supabaseAdmin.storage.from(BUCKET).upload(path, buffer, {
+    contentType: mime,
+    upsert: false,
+  });
+
+  if (error) {
+    console.error('[uploadGeneratedMesh] Upload failed:', error);
+    throw error;
+  }
+
+  const { data: pub } = supabaseAdmin.storage.from(BUCKET).getPublicUrl(path);
+  return { bucket: BUCKET, path, publicUrl: pub.publicUrl };
 }

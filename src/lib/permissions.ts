@@ -165,3 +165,11 @@ export function canDesignerClaimVisit(user: any, visit: any): boolean {
   // Allow if user.email === visit.designerEmail (case-insensitive) or user is invited to that email
   return !!user && user.email?.toLowerCase() === visit.designerEmail.toLowerCase();
 }
+
+/**
+ * Check if a user role can access admin features
+ */
+export function canAccessAdmin(role?: string | null): boolean {
+  const normalizedRole = normalizeRole(role);
+  return normalizedRole === 'ADMIN';
+}

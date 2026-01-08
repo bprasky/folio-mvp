@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 /**
  * API route to export Instagram carousel
  * POST /api/instagram/export

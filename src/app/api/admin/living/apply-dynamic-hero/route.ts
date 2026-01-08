@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 // src/app/api/admin/living/apply-dynamic-hero/route.ts
 //
 // Admin endpoint to apply dynamic hero asset for a project

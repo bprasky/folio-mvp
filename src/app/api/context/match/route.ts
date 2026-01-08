@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { NextResponse, NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
@@ -47,7 +49,7 @@ export async function GET(req: NextRequest) {
 
     // Query for similar embeddings using pgvector
     // Using cosine distance operator (<=>)
-    const rows = await prisma.$queryRawUnsafe<any[]>(
+    const rows = await prisma.$queryRawUnsafe(
       `
       SELECT "nodeType", "nodeId",
         1 - ("vector" <=> $1::vector) AS similarity
@@ -61,7 +63,7 @@ export async function GET(req: NextRequest) {
       input.targetType,
       input.nodeId, // Exclude self
       input.limit
-    );
+    ) as any[];
 
     return NextResponse.json({
       results: rows.map(row => ({
@@ -119,7 +121,7 @@ export async function POST(req: NextRequest) {
       }, { status: 404 });
     }
 
-    const rows = await prisma.$queryRawUnsafe<any[]>(
+    const rows = await prisma.$queryRawUnsafe(
       `
       SELECT "nodeType", "nodeId",
         1 - ("vector" <=> $1::vector) AS similarity
@@ -133,7 +135,7 @@ export async function POST(req: NextRequest) {
       input.targetType,
       input.nodeId,
       input.limit
-    );
+    ) as any[];
 
     return NextResponse.json({
       results: rows.map(row => ({
@@ -153,7 +155,7 @@ export async function POST(req: NextRequest) {
     
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Invalid request parameters", details: error.errors },
+        { error: "Invalid request parameters", details: error.issues },
         { status: 400 }
       );
     }

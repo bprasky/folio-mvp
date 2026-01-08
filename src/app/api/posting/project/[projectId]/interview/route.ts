@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/options";
@@ -150,13 +152,18 @@ export async function GET(
     const { getInterviewQuestions } = await import('@/lib/editorial/getInterviewQuestions');
     const questions = await getInterviewQuestions(params.projectId);
     contextualQuestions = questions
-      .filter(q => q.type === 'contextual')
+      .filter(q => q.questionType === 'contextual')
       .map(q => ({
         id: q.id,
-        prompt: q.question,
+        prompt: q.questionText,
         section: 'what', // Contextual questions are about "what" they chose
         role: 'DESIGNER' as const,
-        contextual: q.contextual, // Include metadata for verification
+        contextual: {
+          linkedImageId: q.linkedImageId,
+          linkedProductId: q.linkedProductId,
+          attributeType: q.attributeType,
+          attributeValue: q.attributeValue,
+        },
       }));
   } catch (error) {
     console.error('[interview/GET] Failed to load contextual questions:', error);

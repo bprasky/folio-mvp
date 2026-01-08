@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getRelatedProjects } from "@/lib/article/getRelatedProjects";
@@ -187,7 +189,7 @@ export async function GET(
             img.tags.map(tag => [tag.product.id, tag.product])
           )
         ).values()
-      ).map(p => ({
+      ).map((p: any) => ({
         id: p.id,
         name: p.name,
         description: p.description,
