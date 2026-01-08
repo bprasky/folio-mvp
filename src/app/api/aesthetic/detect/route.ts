@@ -48,8 +48,6 @@ export async function POST(request: NextRequest) {
             select: {
               id: true,
               url: true,
-              // Include precomputed signals if available
-              imageSignals: true,
             },
           },
           rooms: {
@@ -76,7 +74,6 @@ export async function POST(request: NextRequest) {
             select: {
               id: true,
               url: true,
-              imageSignals: true,
             },
           },
           rooms: {
@@ -149,7 +146,7 @@ export async function POST(request: NextRequest) {
         id: project.id,
         images: project.images.map((img) => ({
           url: img.url,
-          precomputedSignals: img.imageSignals as any,
+          precomputedSignals: undefined,
         })),
         productTags: productTags
           .filter((tag) => tag.image.projectId === project.id)

@@ -241,7 +241,6 @@ async function detectAndSaveAesthetic(designerId: string) {
             select: {
               id: true,
               url: true,
-              imageSignals: true,
             },
           },
           rooms: {
@@ -298,7 +297,7 @@ async function detectAndSaveAesthetic(designerId: string) {
           id: project.id,
           images: project.images.map((img) => ({
             url: img.url,
-            precomputedSignals: img.imageSignals as any,
+            precomputedSignals: undefined,
           })),
           productTags: productTags
             .filter((tag) => tag.image.projectId === project.id)
