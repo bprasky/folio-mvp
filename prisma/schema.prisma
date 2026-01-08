@@ -34,6 +34,13 @@ model User {
   updatedAt                      DateTime              @updatedAt
   role                           Role                  @default(DESIGNER)
   passwordHash                   String
+  // Account approval system
+  accountStatus                  AccountStatus         @default(APPROVED)
+  approvedAt                     DateTime?
+  approvedBy                     String?
+  rejectionReason                String?
+  applicationNote                String?
+  onboardingCompletedAt          DateTime?
   // Designer onboarding tracking
   onboardingBrandStepCompletedAt DateTime?
   // Brand profile relation (for designers)
@@ -61,6 +68,9 @@ model User {
   // Removed - AttributeVerification doesn't have designerId field
   designerDecisions              DesignerDecision[]
   voiceProfile                   DesignerVoiceProfile?
+  // Impersonation relations
+  adminImpersonations            ImpersonationLog[]    @relation("AdminImpersonations")
+  userImpersonations             ImpersonationLog[]    @relation("UserImpersonations")
 
   @@map("users")
 }
@@ -618,6 +628,12 @@ enum Role {
   DESIGNER
   HOMEOWNER
   GUEST
+}
+
+enum AccountStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 enum OrgType {
@@ -1239,6 +1255,18 @@ model OrbQuestion {
   @@map("orb_questions")
 }
 
+model ImpersonationLog {
+  id           String    @id @default(cuid())
+  adminId      String
+  targetUserId String
+  startedAt    DateTime  @default(now())
+  endedAt      DateTime?
+  admin        User      @relation("AdminImpersonations", fields: [adminId], references: [id])
+  targetUser   User      @relation("UserImpersonations", fields: [targetUserId], references: [id])
+
+  @@index([adminId])
+  @@index([targetUserId])
+  @@map("impersonation_logs")
 // ============================================================
 // IMPORT AGENT - AI-powered project import from presentations
 // ============================================================

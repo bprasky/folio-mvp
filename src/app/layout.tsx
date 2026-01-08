@@ -4,6 +4,7 @@ import Providers from './providers';
 import SessionRoleSync from '../components/SessionRoleSync';
 import RoleBasedLayout from '../components/layouts/RoleBasedLayout';
 import { Toaster } from 'react-hot-toast';
+import { ImpersonationBanner } from '../components/admin/ImpersonationBanner';
 
 // Use CSS custom properties for fonts instead of next/font/google
 // This avoids network dependency during build while allowing fonts to be loaded via CSS
@@ -23,6 +24,7 @@ export default function RootLayout({
       <body className="text-folio-ink min-h-screen antialiased font-sans">
         <Providers>
           <SessionRoleSync />
+          <ImpersonationBanner />
           <RoleBasedLayout>
             {children}
           </RoleBasedLayout>
