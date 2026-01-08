@@ -257,8 +257,7 @@ export default function StudentClasses() {
 
   return (
     <div className="p-6">
-        <div className="max-w-7xl mx-auto">
-        <div className="max-w-6xl mx-auto px-6 py-12">
+      <div className="max-w-6xl mx-auto px-6 py-12">
           {/* Header */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -487,9 +486,7 @@ export default function StudentClasses() {
               </button>
             </motion.div>
           )}
-        </div>
       </div>
-    
-      </div></div>
+    </div>
   );
 } 

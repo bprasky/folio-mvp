@@ -234,14 +234,10 @@ export default function VideoViewer() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex">
-        
-        <div className="p-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center">
-            <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading video...</p>
-          </div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading video...</p>
         </div>
       </div>
     );
@@ -249,32 +245,24 @@ export default function VideoViewer() {
 
   if (!video) {
     return (
-      <div className="min-h-screen bg-gray-50 flex">
-        
-        <div className="p-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Video not found</h2>
-            <p className="text-gray-600 mb-4">The video you're looking for doesn't exist.</p>
-            <Link
-              href="/watch"
-              className="bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 transition-colors"
-            >
-              Browse Videos
-            </Link>
-          </div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Video not found</h2>
+          <p className="text-gray-600 mb-4">The video you're looking for doesn't exist.</p>
+          <Link
+            href="/watch"
+            className="bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 transition-colors"
+          >
+            Browse Videos
+          </Link>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      
-      
-      <div className="p-6">
-        <div className="max-w-7xl mx-auto">
-        <div className="max-w-7xl mx-auto px-6 py-8">
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-6 py-8">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Main Video Column */}
             <div className="lg:col-span-2 space-y-6">
@@ -605,7 +593,6 @@ export default function VideoViewer() {
             </div>
           </div>
         </div>
-      </div>
 
       {/* Clip Creation Modal */}
       <AnimatePresence>
@@ -704,8 +691,4 @@ export default function VideoViewer() {
       </AnimatePresence>
     </div>
   );
-} 
-      
-      </div>
-      </div>
-      </div></div>
+}

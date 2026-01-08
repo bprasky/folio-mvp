@@ -457,7 +457,6 @@ export default function ProjectDashboard() {
               </div>
             </motion.div>
           )}
-        </div>
       </div>
 
       {/* Camera Capture Modal for Project-Level Selections */}

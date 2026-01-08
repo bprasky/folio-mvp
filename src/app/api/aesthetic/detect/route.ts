@@ -104,11 +104,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Fetch product tags for material analysis
-    const projectIds = projects.map((p) => p.id);
+    const analyzedProjectIds = projects.map((p) => p.id);
     const productTags = await prisma.productTag.findMany({
       where: {
         image: {
-          projectId: { in: projectIds },
+          projectId: { in: analyzedProjectIds },
         },
       },
       include: {

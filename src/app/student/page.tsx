@@ -367,7 +367,6 @@ export default function StudentDashboard() {
 
           {/* Main Content */}
           {renderExploreTab()}
-        </div>
       </div>
     </div>
   );

@@ -194,14 +194,10 @@ export default function VideoFeed() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex">
-        
-        <div className="p-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center">
-            <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading videos...</p>
-          </div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading videos...</p>
         </div>
       </div>
     );
@@ -212,10 +208,7 @@ export default function VideoFeed() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      
-      
-      <div className="p-6">
-        <div className="max-w-7xl mx-auto">
+      <div className="flex-1 p-6">
         <div className="max-w-7xl mx-auto px-6 py-8">
           {/* Header */}
           <div className="mb-8">
@@ -436,8 +429,6 @@ export default function VideoFeed() {
           )}
         </div>
       </div>
-    
-      </div>
-      </div></div>
+    </div>
   );
 } 

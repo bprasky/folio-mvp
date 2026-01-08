@@ -171,7 +171,6 @@ export default function AdminTasks() {
                 </div>
               </motion.div>
             ))}
-          </div>
 
           {/* Quick Actions */}
           <motion.div
