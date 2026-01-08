@@ -1238,3 +1238,108 @@ model OrbQuestion {
 
   @@map("orb_questions")
 }
+
+// ============================================================
+// IMPORT AGENT - AI-powered project import from presentations
+// ============================================================
+
+model ImportSession {
+  id            String   @id @default(uuid())
+  userId        String
+
+  sourceType    ImportSourceType  // PRESENTATION, WEBSITE, BULK_IMAGES
+  sourceUrl     String?           // Original URL if website import
+  fileName      String?           // Original filename if upload
+
+  status        ImportSessionStatus @default(PROCESSING)
+  // PROCESSING → ANALYZED → READY_FOR_REVIEW → COMPLETED → FAILED
+
+  projectId     String?           // Created/target project
+
+  // Metrics
+  totalImages   Int      @default(0)
+  totalProducts Int      @default(0)
+  verifiedTags  Int      @default(0)
+
+  // Processing metadata
+  processingMeta Json?   // Agent state, partial results
+  errorMessage   String?
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  completedAt   DateTime?
+
+  pendingTags   PendingProductTag[]
+
+  @@index([userId])
+  @@index([status])
+  @@map("import_sessions")
+}
+
+model PendingProductTag {
+  id              String   @id @default(uuid())
+  importSessionId String
+  importSession   ImportSession @relation(fields: [importSessionId], references: [id], onDelete: Cascade)
+
+  // Image reference
+  projectImageId  String?
+  tempImageUrl    String?      // Before project image is created
+
+  // Position on image
+  x               Float
+  y               Float
+
+  // Agent's detection
+  description     String       // "Navy velvet sofa with brass legs"
+  category        String       // FURNITURE, LIGHTING, etc.
+  searchQuery     String       // Query used for attribution
+
+  // Agent's attribution suggestions
+  suggestions     Json         // Array of ProductAttribution objects
+  topSuggestion   Json?        // Best match for quick display
+
+  // Confidence
+  detectionConfidence   String  // high, medium, low
+  attributionConfidence String? // high, medium, low (after search)
+
+  // Verification status
+  status          PendingTagStatus @default(UNREVIEWED)
+  // UNREVIEWED → CONFIRMED → CORRECTED → DISMISSED
+
+  // If confirmed/corrected, link to actual product
+  confirmedProductId String?
+
+  // If corrected, what did designer change?
+  correctionNote     String?
+
+  // Resulting ProductTag (after confirmation)
+  resultingTagId     String?   @unique
+
+  createdAt       DateTime @default(now())
+  reviewedAt      DateTime?
+
+  @@index([importSessionId, status])
+  @@index([status])
+  @@map("pending_product_tags")
+}
+
+enum ImportSourceType {
+  PRESENTATION
+  WEBSITE
+  BULK_IMAGES
+}
+
+enum ImportSessionStatus {
+  PROCESSING
+  ANALYZED
+  READY_FOR_REVIEW
+  COMPLETED
+  FAILED
+}
+
+enum PendingTagStatus {
+  UNREVIEWED
+  CONFIRMED
+  CORRECTED
+  DISMISSED
+}
