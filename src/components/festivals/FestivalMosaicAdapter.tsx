@@ -64,40 +64,45 @@ export default function FestivalMosaicAdapter({
 
   return (
     <div className="space-y-4">
-      {/* Event Type Filter Dropdown */}
-      <header className="flex justify-between items-end w-full px-2 sm:px-3 mb-2">
-        <div>
+      {/* Festival Title Treatment - Centered below FOLIO masthead, matching search results style */}
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-4 pb-8">
+        <div className="text-center">
+          {/* Festival Title - Italic serif, centered, elegant spacing */}
           {festivalTitle && (
-            <h1 className="text-2xl font-serif text-neutral-800 tracking-tight">
+            <h1 className="font-serif italic text-3xl md:text-4xl lg:text-5xl text-neutral-900 mb-6">
               {festivalTitle}
             </h1>
           )}
-          <p className="text-sm text-neutral-600 mt-1">
-            {selectedEventType 
-              ? `Showing ${subevents.length} ${selectedEventType.replace(/_/g, ' ').toLowerCase()} events`
-              : `Showing all ${subevents.length} events`
-            }
-          </p>
+
+          {/* Metadata Line - Event count and filter, muted styling */}
+          <div className="flex items-center justify-center gap-3 text-sm text-neutral-500 flex-wrap">
+            <span className="font-sans">
+              {selectedEventType
+                ? `${subevents.length} ${selectedEventType.replace(/_/g, ' ').toLowerCase()} ${subevents.length === 1 ? 'event' : 'events'}`
+                : `${subevents.length} ${subevents.length === 1 ? 'event' : 'events'}`
+              }
+            </span>
+            <div className="flex items-center gap-2">
+              <label htmlFor="event-type-filter" className="text-sm text-neutral-500">
+                Filter by type:
+              </label>
+              <select
+                id="event-type-filter"
+                value={selectedEventType || ""}
+                onChange={(e) => handleEventTypeChange(e.target.value)}
+                className="px-3 py-1.5 border border-neutral-200 rounded-md bg-white text-sm text-neutral-700 focus:outline-none focus:ring-2 focus:ring-neutral-500 focus:border-transparent"
+              >
+                <option value="">All Events</option>
+                {allEventTypes.map((type) => (
+                  <option key={type} value={type}>
+                    {type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
         </div>
-        <div className="flex items-center gap-3">
-          <label htmlFor="event-type-filter" className="text-sm font-medium text-neutral-700">
-            Filter by type:
-          </label>
-          <select
-            id="event-type-filter"
-            value={selectedEventType || ""}
-            onChange={(e) => handleEventTypeChange(e.target.value)}
-            className="px-3 py-2 border border-neutral-300 rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-neutral-500 focus:border-transparent"
-          >
-            <option value="">All Events</option>
-            {allEventTypes.map((type) => (
-              <option key={type} value={type}>
-                {type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-              </option>
-            ))}
-          </select>
-        </div>
-      </header>
+      </div>
 
       {/* FlowMosaic Component */}
       <FlowMosaic events={items} canEdit={canEdit} />
