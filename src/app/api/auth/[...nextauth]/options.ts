@@ -6,15 +6,23 @@ import { prisma } from '@/lib/prisma';
 declare module 'next-auth' {
   interface User {
     role?: string;
+    accountStatus?: string;
+    onboardingCompletedAt?: Date | null;
   }
-  
+
   interface Session {
     user: {
       id: string;
       role: string;
+      accountStatus: string;
+      onboardingCompletedAt: Date | null;
       name?: string | null;
       email?: string | null;
       image?: string | null;
+    };
+    impersonating?: {
+      originalAdminId: string;
+      originalAdminEmail: string;
     };
   }
 }
@@ -22,6 +30,12 @@ declare module 'next-auth' {
 declare module 'next-auth/jwt' {
   interface JWT {
     role?: string;
+    accountStatus?: string;
+    onboardingCompletedAt?: Date | null;
+    impersonating?: {
+      originalAdminId: string;
+      originalAdminEmail: string;
+    };
   }
 }
 
@@ -118,35 +132,49 @@ export const authOptions: NextAuthOptions = {
         console.log("DEBUG: JWT callback - Setting token.id:", user.id);
       }
 
-      // Always hydrate role from DB to avoid stale tokens
+      // Always hydrate role, accountStatus, and onboardingCompletedAt from DB to avoid stale tokens
       if (token.sub) {
         try {
           const u = await prisma.user.findUnique({
             where: { id: token.sub as string },
-            select: { role: true },
+            select: { role: true, accountStatus: true, onboardingCompletedAt: true },
           });
           token.role = u?.role ?? "GUEST";
-          console.log("Hydrated role from DB:", token.role);
+          token.accountStatus = u?.accountStatus ?? "APPROVED";
+          token.onboardingCompletedAt = u?.onboardingCompletedAt ?? null;
+          console.log("Hydrated from DB - role:", token.role, "accountStatus:", token.accountStatus);
         } catch (e) {
-          // On DB hiccup, keep previous token.role rather than blowing up auth
-          console.error("Error hydrating role from DB:", e);
+          // On DB hiccup, keep previous token values rather than blowing up auth
+          console.error("Error hydrating from DB:", e);
           token.role = (token as any).role ?? "GUEST";
+          token.accountStatus = (token as any).accountStatus ?? "APPROVED";
+          token.onboardingCompletedAt = (token as any).onboardingCompletedAt ?? null;
         }
       } else {
         token.role = (token as any).role ?? "GUEST";
+        token.accountStatus = (token as any).accountStatus ?? "APPROVED";
+        token.onboardingCompletedAt = (token as any).onboardingCompletedAt ?? null;
       }
 
       return token;
     },
 
     async session({ session, token }) {
-      console.log("DEBUG: Session callback — token.role:", token.role, "token.id:", token.id);
+      console.log("DEBUG: Session callback — token.role:", token.role, "token.id:", token.id, "token.accountStatus:", token.accountStatus);
       session.user = session.user || ({} as any);
       if (token?.id && session?.user) {
         (session.user as any).id = token.id as string;
         console.log("DEBUG: Session callback - Setting session.user.id:", token.id);
       }
       (session.user as any).role = (token as any).role || 'GUEST';
+      (session.user as any).accountStatus = (token as any).accountStatus || 'APPROVED';
+      (session.user as any).onboardingCompletedAt = (token as any).onboardingCompletedAt || null;
+
+      // Include impersonation info if present
+      if ((token as any).impersonating) {
+        (session as any).impersonating = (token as any).impersonating;
+      }
+
       return session;
     },
     async redirect({ url, baseUrl }) {

@@ -5,6 +5,7 @@ import Providers from './providers';
 import SessionRoleSync from '../components/SessionRoleSync';
 import RoleBasedLayout from '../components/layouts/RoleBasedLayout';
 import { Toaster } from 'react-hot-toast';
+import { ImpersonationBanner } from '../components/admin/ImpersonationBanner';
 
 // Legacy font (backward compatibility)
 const inter = Inter({ subsets: ['latin'] });
@@ -39,6 +40,7 @@ export default function RootLayout({
       <body className={`${inter.className} text-folio-ink min-h-screen antialiased`}>
         <Providers>
           <SessionRoleSync />
+          <ImpersonationBanner />
           <RoleBasedLayout>
             {children}
           </RoleBasedLayout>
