@@ -1238,3 +1238,111 @@ model OrbQuestion {
 
   @@map("orb_questions")
 }
+
+// ============================================================
+// ATELIER - Designer/Vendor Fingerprint System
+// ============================================================
+
+enum AtelierOwnerType {
+  DESIGNER
+  VENDOR
+}
+
+enum AtelierNodeType {
+  STYLE
+  ROOM_TYPE
+  MATERIAL
+  VENDOR
+  PRODUCT_CATEGORY
+  COLOR_CLUSTER
+  BEHAVIOR
+}
+
+enum AtelierRelationType {
+  PROJECT_ROOM_FOCUS
+  FREQUENT_VENDOR
+  PREFERS
+  STYLE_MATERIAL
+  STYLE_COLOR
+}
+
+enum AtelierSignalSourceType {
+  PROJECT
+  SELECTION
+  SAVE
+  TAG
+  INTERVIEW
+  BEHAVIOR
+}
+
+model AtelierFingerprint {
+  id             String           @id @default(cuid())
+  ownerType      AtelierOwnerType
+  designerId     String?
+  vendorId       String?
+  completeness   Float            @default(0)
+  lastComputedAt DateTime?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  nodes AtelierNode[]
+  edges AtelierEdge[]
+
+  @@index([ownerType, designerId])
+  @@index([ownerType, vendorId])
+  @@map("atelier_fingerprints")
+}
+
+model AtelierNode {
+  id            String            @id @default(cuid())
+  fingerprintId String
+  nodeType      AtelierNodeType
+  label         String
+  weight        Float             @default(0)
+  metadata      Json?
+  createdAt     DateTime          @default(now())
+
+  fingerprint   AtelierFingerprint @relation(fields: [fingerprintId], references: [id], onDelete: Cascade)
+  sourceEdges   AtelierEdge[]      @relation("SourceNode")
+  targetEdges   AtelierEdge[]      @relation("TargetNode")
+
+  @@index([fingerprintId, nodeType])
+  @@map("atelier_nodes")
+}
+
+model AtelierEdge {
+  id            String              @id @default(cuid())
+  fingerprintId String
+  sourceNodeId  String
+  targetNodeId  String
+  relationType  AtelierRelationType
+  weight        Float               @default(0)
+  createdAt     DateTime            @default(now())
+
+  fingerprint AtelierFingerprint @relation(fields: [fingerprintId], references: [id], onDelete: Cascade)
+  sourceNode  AtelierNode        @relation("SourceNode", fields: [sourceNodeId], references: [id], onDelete: Cascade)
+  targetNode  AtelierNode        @relation("TargetNode", fields: [targetNodeId], references: [id], onDelete: Cascade)
+
+  @@index([fingerprintId])
+  @@index([sourceNodeId])
+  @@index([targetNodeId])
+  @@map("atelier_edges")
+}
+
+model AtelierSignal {
+  id         String                  @id @default(cuid())
+  ownerType  AtelierOwnerType
+  designerId String?
+  vendorId   String?
+  sourceType AtelierSignalSourceType
+  sourceId   String?
+  key        String
+  weight     Float                   @default(1)
+  metadata   Json?
+  createdAt  DateTime                @default(now())
+
+  @@index([ownerType, designerId])
+  @@index([ownerType, vendorId])
+  @@index([key])
+  @@map("atelier_signals")
+}
