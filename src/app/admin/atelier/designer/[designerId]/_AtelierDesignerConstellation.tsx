@@ -1,7 +1,35 @@
 "use client";
 
 import * as React from "react";
-import type { AtelierFingerprint, AtelierNode, AtelierEdge, AtelierNodeType } from "@prisma/client";
+
+// Local type definitions (Atelier models not in Prisma schema)
+type AtelierNodeType =
+  | "STYLE"
+  | "ROOM_TYPE"
+  | "MATERIAL"
+  | "VENDOR"
+  | "PRODUCT_CATEGORY"
+  | "COLOR_CLUSTER"
+  | "BEHAVIOR";
+
+type AtelierNode = {
+  id: string;
+  type: AtelierNodeType;
+  label: string;
+  weight: number;
+};
+
+type AtelierEdge = {
+  id: string;
+  sourceNodeId: string;
+  targetNodeId: string;
+  weight: number;
+};
+
+type AtelierFingerprint = {
+  id: string;
+  designerId: string;
+};
 
 type FingerprintWithGraph = AtelierFingerprint & {
   nodes: AtelierNode[];
