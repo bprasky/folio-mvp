@@ -10,6 +10,9 @@ import MetricsCard from '@/components/metrics/MetricsCard';
 import KpiNumber from '@/components/metrics/KpiNumber';
 import ActionPill from '@/components/metrics/ActionPill';
 
+// Force dynamic rendering to avoid build-time timeout
+export const dynamic = 'force-dynamic';
+
 export default function VendorAnalytics() {
   return (
     <ErrorBoundary>

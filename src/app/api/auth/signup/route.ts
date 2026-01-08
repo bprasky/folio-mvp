@@ -1,9 +1,12 @@
+export const dynamic = 'force-dynamic';
+
 // NOTE (designer onboarding):
 // This file contains the logic that creates a Designer account for the first time.
-// We hook the Brand Identity onboarding flow here after successful designer creation.
+// New designers are created with PENDING status and redirected to /pending-approval.
+// After admin approval and onboarding completion, they can access the designer dashboard.
 
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, AccountStatus } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import { createEmptyDesignerBrandProfile } from '@/lib/server/designerBrandProfile';
 
@@ -44,6 +47,9 @@ export async function POST(request: NextRequest) {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 12);
 
+    // Determine account status: PENDING for designers, APPROVED for others
+    const accountStatus = role === 'DESIGNER' ? AccountStatus.PENDING : AccountStatus.APPROVED;
+
     // Create user
     const user = await prisma.user.create({
       data: {
@@ -51,6 +57,9 @@ export async function POST(request: NextRequest) {
         email,
         passwordHash: hashedPassword,
         role,
+        accountStatus,
+        // Set approvedAt for non-designers since they're auto-approved
+        ...(role !== 'DESIGNER' && { approvedAt: new Date() }),
       },
     });
 
@@ -82,15 +91,18 @@ export async function POST(request: NextRequest) {
       console.log('Not creating organization. accountType:', accountType, 'organizationName:', organizationName);
     }
 
-    // For designers: create brand profile and set redirect to onboarding
+    // For designers: create brand profile and redirect to pending-approval
+    // The actual onboarding will happen after admin approval
     let redirectUrl: string | undefined;
     if (role === 'DESIGNER') {
       try {
         await createEmptyDesignerBrandProfile(user.id);
-        redirectUrl = '/designer/onboarding/brand';
+        // Redirect to pending approval page - they need admin approval first
+        redirectUrl = '/pending-approval';
       } catch (error) {
         console.error('Error creating brand profile:', error);
         // Continue even if brand profile creation fails
+        redirectUrl = '/pending-approval';
       }
     }
 
@@ -101,9 +113,10 @@ export async function POST(request: NextRequest) {
         name: user.name,
         email: user.email,
         role: user.role,
+        accountStatus: user.accountStatus,
       },
       message: 'Account created successfully',
-      redirectUrl, // Include redirect URL for designers
+      redirectUrl, // Include redirect URL for designers (pending-approval)
     });
 
     response.cookies.set('folio-session', user.id, {

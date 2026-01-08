@@ -1,6 +1,14 @@
+# Dependencies
+node_modules/
+
+# Next.js
 .next/
-node_modules
-.next
+out/
+
+# Build
+tsconfig.tsbuildinfo
+
+# Environment
 .env
 .env.local
 .env.development.local
@@ -17,3 +25,13 @@ node_modules
 exports/
 *.csv
 import-report-*.json
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db

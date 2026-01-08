@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/options";
@@ -396,7 +398,7 @@ export async function POST(
         );
         const newGroup = {
           questionId: validated.questionId,
-          followUps: followUpsWithKeys.map((fu) => ({
+          followUps: followupsWithKeys.map((fu) => ({
             id: fu.id,
             prompt: fu.text,
           })),

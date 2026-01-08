@@ -1,5 +1,5 @@
 // no "use client" here
-import { EventType } from "@prisma/client";
+import { EventType } from "@/lib/eventTypes";
 import EventForm from "./EventForm";
 
 export default function EventFormServer(props: any) {

@@ -204,6 +204,5 @@ export default function AdminTasks() {
           </motion.div>
         </div>
       </div>
-    </div>
   );
 } 

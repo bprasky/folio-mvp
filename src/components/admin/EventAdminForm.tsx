@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
-import { EventType } from "@prisma/client";
+import { EventType } from "@/lib/eventTypes";
 import FeaturedProductsPicker from './FeaturedProductsPicker';
 
 // Get all event types from Prisma enum

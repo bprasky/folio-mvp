@@ -2,7 +2,7 @@
 
 import React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { EventType } from "@prisma/client";
+import { EventType } from "@/lib/eventTypes";
 import FlowMosaic from "@/components/feed/FlowMosaic";
 
 type Subevent = {

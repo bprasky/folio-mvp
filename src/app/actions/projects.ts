@@ -7,6 +7,126 @@ import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
+// Type definitions for project-related data
+interface ProjectWithImages {
+  id: string;
+  images: Array<{
+    id: string;
+    url: string;
+    imageSignals: unknown;
+  }>;
+  rooms: Array<{
+    type: string | null;
+  }>;
+  description: string | null;
+}
+
+/**
+ * Creates an editorial draft for a project
+ * Does NOT publish - just creates the draft for review
+ */
+export async function createEditorialDraft({ projectId }: { projectId: string }) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return { ok: false, message: 'Unauthorized' };
+  }
+
+  try {
+    // Check project exists and user has access
+    const project = await prisma.project.findFirst({
+      where: {
+        id: projectId,
+        OR: [
+          { ownerId: session.user.id },
+          { designerId: session.user.id },
+        ],
+      },
+    });
+
+    if (!project) {
+      return { ok: false, message: 'Project not found or access denied' };
+    }
+
+    // Check if draft already exists
+    const existingPost = await prisma.projectPost.findFirst({
+      where: { projectId, status: 'DRAFT' },
+    });
+
+    if (existingPost) {
+      return { ok: true, message: 'Draft already exists', projectPostId: existingPost.id };
+    }
+
+    // Create new draft
+    const post = await prisma.projectPost.create({
+      data: {
+        projectId,
+        status: 'DRAFT',
+        createdById: session.user.id,
+      },
+    });
+
+    return { ok: true, message: 'Draft created', projectPostId: post.id };
+  } catch (error) {
+    console.error('[createEditorialDraft] Error:', error);
+    return { ok: false, message: 'Failed to create draft' };
+  }
+}
+
+/**
+ * Publishes an existing editorial draft
+ */
+export async function publishEditorial({ projectId }: { projectId: string }) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return { ok: false, message: 'Unauthorized' };
+  }
+
+  try {
+    // Find the draft
+    const post = await prisma.projectPost.findFirst({
+      where: {
+        projectId,
+        status: 'DRAFT',
+      },
+      include: {
+        project: {
+          select: {
+            ownerId: true,
+            designerId: true,
+          },
+        },
+      },
+    });
+
+    if (!post) {
+      return { ok: false, message: 'No draft found to publish' };
+    }
+
+    // Check user has access
+    if (post.project.ownerId !== session.user.id && post.project.designerId !== session.user.id) {
+      return { ok: false, message: 'Access denied' };
+    }
+
+    // Publish the draft
+    const updated = await prisma.projectPost.update({
+      where: { id: post.id },
+      data: {
+        status: 'PUBLISHED',
+        publishedAt: new Date(),
+      },
+    });
+
+    // Revalidate paths
+    revalidatePath(`/project/${projectId}`);
+    revalidatePath('/editorial');
+
+    return { ok: true, message: 'Editorial published', projectPostId: updated.id };
+  } catch (error) {
+    console.error('[publishEditorial] Error:', error);
+    return { ok: false, message: 'Failed to publish editorial' };
+  }
+}
+
 /**
  * @deprecated Use POST /api/projects instead. This action is kept for backward compatibility.
  * Always creates projects as draft and redirects to Media tab.
@@ -255,7 +375,7 @@ async function detectAndSaveAesthetic(designerId: string) {
       if (projects.length < 2) return;
 
       // Fetch product tags
-      const projectIds = projects.map((p) => p.id);
+      const projectIds = projects.map((p: { id: string }) => p.id);
       const productTags = await prisma.productTag.findMany({
         where: {
           image: {
@@ -294,28 +414,28 @@ async function detectAndSaveAesthetic(designerId: string) {
 
       // Build detection input
       const detectionInput = {
-        projects: projects.map((project) => ({
+        projects: projects.map((project: ProjectWithImages) => ({
           id: project.id,
-          images: project.images.map((img) => ({
+          images: project.images.map((img: { url: string; imageSignals: unknown }) => ({
             url: img.url,
             precomputedSignals: img.imageSignals as any,
           })),
           productTags: productTags
-            .filter((tag) => tag.image.projectId === project.id)
-            .map((tag) => ({
+            .filter((tag: { image: { projectId: string }; product: { category: string | null } }) => tag.image.projectId === project.id)
+            .map((tag: { image: { projectId: string }; product: { category: string | null } }) => ({
               product: {
                 category: tag.product.category || undefined,
                 materials: [],
               },
             })),
-          rooms: project.rooms.map((room) => ({
+          rooms: project.rooms.map((room: { type: string | null }) => ({
             type: room.type || '',
             materials: [],
           })),
           description: project.description || undefined,
         })),
-        interviews: interviews.map((interview) => ({
-          transcript: interview.answers.map((a) => a.answerText).join(' '),
+        interviews: interviews.map((interview: { answers: Array<{ answerText: string }> }) => ({
+          transcript: interview.answers.map((a: { answerText: string }) => a.answerText).join(' '),
         })),
       };
 

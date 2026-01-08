@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 // src/app/api/3d-assets/route.ts
 //
 // 3D Assets API Route

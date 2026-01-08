@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/options";
@@ -254,7 +256,8 @@ Return JSON array:
       );
 
       if (!extractionResult.ok) {
-        throw new Error(`Extraction failed: ${extractionResult.code} - ${extractionResult.message}`);
+        const errorResult = extractionResult as { ok: false; code: string; message: string };
+        throw new Error(`Extraction failed: ${errorResult.code} - ${errorResult.message}`);
       }
 
       // Parse extraction response

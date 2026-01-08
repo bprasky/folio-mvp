@@ -163,10 +163,10 @@ export function UserMenu() {
               </MenuLink>
             )}
 
-            {/* Dashboard link for authenticated users */}
-            {['ADMIN', 'VENDOR', 'DESIGNER', 'STUDENT'].includes(role) && (
-              <MenuLink 
-                href={getDashboardLink(role)} 
+            {/* Dashboard link for authenticated users (except designers) */}
+            {['ADMIN', 'VENDOR', 'STUDENT'].includes(role) && (
+              <MenuLink
+                href={getDashboardLink(role)}
                 icon={<Layout className="h-4 w-4" />}
                 onClick={() => setIsOpen(false)}
               >
@@ -177,27 +177,31 @@ export function UserMenu() {
 
           {/* Common links */}
           <div className="border-t border-neutral-100 py-2">
-            <MenuLink 
-              href={getProfileLink()} 
+            <MenuLink
+              href={getProfileLink()}
               icon={<UserIcon className="h-4 w-4" />}
               onClick={() => setIsOpen(false)}
             >
               My Profile
             </MenuLink>
-            <MenuLink 
-              href="/messages" 
-              icon={<Mail className="h-4 w-4" />}
-              onClick={() => setIsOpen(false)}
-            >
-              Messages
-            </MenuLink>
-            <MenuLink 
-              href="/settings" 
-              icon={<Settings className="h-4 w-4" />}
-              onClick={() => setIsOpen(false)}
-            >
-              Settings
-            </MenuLink>
+            {!isDesigner && (
+              <>
+                <MenuLink
+                  href="/messages"
+                  icon={<Mail className="h-4 w-4" />}
+                  onClick={() => setIsOpen(false)}
+                >
+                  Messages
+                </MenuLink>
+                <MenuLink
+                  href="/settings"
+                  icon={<Settings className="h-4 w-4" />}
+                  onClick={() => setIsOpen(false)}
+                >
+                  Settings
+                </MenuLink>
+              </>
+            )}
             <button
               onClick={() => {
                 setIsOpen(false);

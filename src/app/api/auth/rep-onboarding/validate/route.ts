@@ -1,6 +1,14 @@
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { PendingRepInviteStatus } from '@prisma/client';
+
+// Define PendingRepInviteStatus locally since it may not be in Prisma schema yet
+const PendingRepInviteStatus = {
+  PENDING: 'PENDING',
+  CLAIMED: 'CLAIMED',
+  EXPIRED: 'EXPIRED',
+} as const;
 
 export async function GET(request: NextRequest) {
   try {
