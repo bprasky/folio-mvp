@@ -57,7 +57,35 @@ psql $DATABASE_URL -f prisma/migrations/add_moment_search_indexing.sql
 \i prisma/migrations/create_search_functions.sql
 ```
 
-### 4. `update_engagement_metrics.sql` (Maintenance)
+### 4. `add_searchable_fields_to_moment_index.sql`
+**Purpose**: Adds dedicated searchable columns for filtering
+
+**What it does**:
+- Adds `room`, `roomNormalized`, `vendors`, `vendorIds`, `categories`, `colors`, `materials`, `styles`, `mood`, `elements` columns
+- Creates GIN indexes for array fields
+- Enables multi-field search and filter pills
+
+**Run with**:
+```sql
+\i prisma/migrations/add_searchable_fields_to_moment_index.sql
+```
+
+### 5. `add_missing_mood_elements_columns.sql` (Fix Migration)
+**Purpose**: Adds missing `mood` and `elements` columns if you ran an older version of the searchable fields migration
+
+**Run if you see this error**:
+> Invalid `prisma.momentIndex.findMany()` invocation: The column `moment_index.mood` does not exist in the current database.
+
+**What it does**:
+- Adds `mood` and `elements` columns (if not present)
+- Creates GIN indexes for these columns
+
+**Run with**:
+```sql
+\i prisma/migrations/add_missing_mood_elements_columns.sql
+```
+
+### 6. `update_engagement_metrics.sql` (Maintenance)
 **Purpose**: Sync engagement metrics from project to moments
 
 **What it does**:
