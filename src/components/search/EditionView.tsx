@@ -192,9 +192,9 @@ export default function EditionView({
   }, [filterOptions]);
   
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white w-full max-w-[100vw] overflow-hidden">
       {/* Edition Title Treatment - Below FOLIO masthead, tight spacing */}
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-4 pb-8">
+      <div className="w-full px-2 sm:px-3 pt-4 pb-8">
         <div className="text-center">
           {/* Edition Title - Italic serif, centered, elegant spacing */}
           <h1 className="font-serif italic text-3xl md:text-4xl lg:text-5xl text-neutral-900 mb-6">
@@ -253,7 +253,7 @@ export default function EditionView({
       
       {/* Filter Chips - Editorial curation, subtle and minimal */}
       {filterOptions && onFilterChange && (
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-4">
+        <div className="w-full px-2 sm:px-3 pb-4">
           <FilterChips
             facets={filterOptions.facets}
             activeFilters={filterOptions.activeFilters}
@@ -262,9 +262,9 @@ export default function EditionView({
           />
         </div>
       )}
-      
+
       {/* Search Mosaic - Editorial Grid */}
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-16">
+      <div className="w-full px-0 pb-16">
         <SearchMosaic
           moments={moments}
           scope={scope}
