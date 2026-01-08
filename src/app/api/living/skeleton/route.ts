@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 // src/app/api/living/skeleton/route.ts
 //
 // Get skeleton items for an image (owner/admin only)

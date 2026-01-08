@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 // NOTE (designer onboarding):
 // This file contains the logic that creates a Designer account for the first time (via Supabase auth).
 // We hook the Brand Identity onboarding flow here after successful designer creation.

@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 /**
  * Proxy endpoint to fetch images from external CDNs
  * Bypasses CORS and hotlink protection by fetching server-side

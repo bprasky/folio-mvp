@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 // POST /api/vendor/visits
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";

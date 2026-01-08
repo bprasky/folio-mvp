@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 /**
  * API route to reorder project images
  * PATCH /api/projects/[id]/images/reorder
