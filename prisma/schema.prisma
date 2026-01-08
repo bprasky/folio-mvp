@@ -1267,6 +1267,8 @@ model ImpersonationLog {
   @@index([adminId])
   @@index([targetUserId])
   @@map("impersonation_logs")
+}
+
 // ============================================================
 // IMPORT AGENT - AI-powered project import from presentations
 // ============================================================
