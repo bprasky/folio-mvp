@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { logDbEnv } from '@/lib/dbEnv';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   logDbEnv('db-sanity');
 
