@@ -12,19 +12,28 @@ const prisma = new PrismaClient();
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { 
-      name, 
-      email, 
-      password, 
-      role, 
-      accountType, 
-      organizationName, 
-      organizationDescription 
+    const {
+      name,
+      email,
+      password,
+      role,
+      accountType,
+      organizationName,
+      organizationDescription,
+      website
     } = body;
 
     if (!name || !email || !password || !role) {
       return NextResponse.json(
         { error: 'Missing required fields: name, email, password, role' },
+        { status: 400 }
+      );
+    }
+
+    // Website is required for designers (for admin approval)
+    if (role === 'DESIGNER' && !website) {
+      return NextResponse.json(
+        { error: 'Website URL is required for designer accounts' },
         { status: 400 }
       );
     }
@@ -51,6 +60,7 @@ export async function POST(request: NextRequest) {
         email,
         passwordHash: hashedPassword,
         role,
+        website: role === 'DESIGNER' ? website : undefined,
       },
     });
 
@@ -82,12 +92,10 @@ export async function POST(request: NextRequest) {
       console.log('Not creating organization. accountType:', accountType, 'organizationName:', organizationName);
     }
 
-    // For designers: create brand profile and set redirect to onboarding
-    let redirectUrl: string | undefined;
+    // For designers: create empty brand profile (can be configured later in profile settings)
     if (role === 'DESIGNER') {
       try {
         await createEmptyDesignerBrandProfile(user.id);
-        redirectUrl = '/designer/onboarding/brand';
       } catch (error) {
         console.error('Error creating brand profile:', error);
         // Continue even if brand profile creation fails
@@ -103,7 +111,6 @@ export async function POST(request: NextRequest) {
         role: user.role,
       },
       message: 'Account created successfully',
-      redirectUrl, // Include redirect URL for designers
     });
 
     response.cookies.set('folio-session', user.id, {

@@ -20,10 +20,11 @@ import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { motion, useScroll, useTransform } from 'framer-motion';
-import { 
+import {
   FaInstagram, FaGlobe, FaEnvelope, FaPhone,
-  FaEdit, FaSave, FaTimes, FaCheckCircle
+  FaEdit, FaSave, FaTimes, FaCheckCircle, FaChevronDown, FaChevronUp
 } from 'react-icons/fa';
+import { BrandSetupWizard } from '@/components/designer/BrandSetupWizard';
 import EditorialBio from '@/components/atelier/EditorialBio';
 import InfluenceMetrics from '@/components/atelier/InfluenceMetrics';
 import FolioFingerprint from '@/components/atelier/FolioFingerprint';
@@ -62,6 +63,7 @@ export default function DesignerProfile() {
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [showBrandSetup, setShowBrandSetup] = useState(false);
 
   const { scrollY } = useScroll();
   const sidebarY = useTransform(scrollY, [0, 1000], [0, -100]);
@@ -85,6 +87,7 @@ export default function DesignerProfile() {
             metrics: data.metrics || defaultDesignerData.metrics,
             topProducts: data.topProducts || [],
             styleDescriptors: data.styleDescriptors || [],
+            brandProfile: data.designerBrandProfile || null,
           });
           
           if (process.env.NODE_ENV === 'development') {
@@ -144,6 +147,7 @@ export default function DesignerProfile() {
               metrics: data.metrics || defaultDesignerData.metrics,
               topProducts: data.topProducts || [],
               styleDescriptors: data.styleDescriptors || [],
+              brandProfile: data.designerBrandProfile || null,
             });
           }
         };
@@ -371,6 +375,48 @@ export default function DesignerProfile() {
 
           {/* Main Content Area */}
           <main className="lg:col-span-8 space-y-12">
+            {/* Studio Identity / Brand Setup */}
+            <motion.div
+              className="bg-white/70 backdrop-blur-md border border-folio-stone-100 rounded-2xl overflow-hidden shadow-folio1"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              <button
+                onClick={() => setShowBrandSetup(!showBrandSetup)}
+                className="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-folio-stone-50 transition-colors"
+              >
+                <div>
+                  <h2 className="text-xl font-serif text-folio-ink">Studio Identity</h2>
+                  <p className="text-sm text-folio-stone-500 mt-1">
+                    {designerData.brandProfile?.setupCompletedAt
+                      ? 'Your brand colors, fonts, and logo are configured'
+                      : 'Set up your logo, colors, and fonts to personalize your projects'}
+                  </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  {designerData.brandProfile?.setupCompletedAt && (
+                    <span className="px-2 py-1 bg-green-100 text-green-700 text-xs font-medium rounded-full">
+                      Configured
+                    </span>
+                  )}
+                  {showBrandSetup ? (
+                    <FaChevronUp className="w-4 h-4 text-folio-stone-400" />
+                  ) : (
+                    <FaChevronDown className="w-4 h-4 text-folio-stone-400" />
+                  )}
+                </div>
+              </button>
+              {showBrandSetup && (
+                <div className="px-6 pb-6">
+                  <BrandSetupWizard
+                    brandProfile={designerData.brandProfile}
+                    isEditMode={true}
+                  />
+                </div>
+              )}
+            </motion.div>
+
             {/* Editorial Bio */}
             <EditorialBio
               name={designerData.name || 'Designer'}

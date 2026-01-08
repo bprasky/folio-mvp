@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
     const userId = session.user.id;
     console.log('[API] /api/designer/profile – userId:', userId);
 
-    // Fetch designer profile data
+    // Fetch designer profile data with brand profile
     console.log('[API] /api/designer/profile – fetching designer profile...');
     const designer = await prisma.user.findUnique({
       where: { id: userId },
@@ -64,6 +64,20 @@ export async function GET(request: NextRequest) {
         following: true,
         views: true,
         createdAt: true,
+        designerBrandProfile: {
+          select: {
+            id: true,
+            logoImageUrl: true,
+            primaryColor: true,
+            secondaryColor: true,
+            accentColor: true,
+            fontHeading: true,
+            fontBody: true,
+            websiteUrl: true,
+            setupCompletedAt: true,
+            setupSkippedAt: true,
+          },
+        },
       },
     });
 

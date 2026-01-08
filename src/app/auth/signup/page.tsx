@@ -27,6 +27,7 @@ export default function SignupPage() {
     confirmPassword: '',
     companyName: '',
     organizationType: 'DESIGN_FIRM',
+    website: '',
   });
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
@@ -70,6 +71,13 @@ export default function SignupPage() {
       return;
     }
 
+    // Website is required for designers (for admin approval)
+    if (selectedRole === 'DESIGNER' && !formData.website.trim()) {
+      setMessage('Website URL is required for designer accounts');
+      setIsLoading(false);
+      return;
+    }
+
     try {
       // First, create the user via API route
       const response = await fetch('/api/auth/signup', {
@@ -85,6 +93,7 @@ export default function SignupPage() {
           accountType: accountType.toLowerCase(),
           organizationName: accountType === 'ORGANIZATION' ? formData.companyName : undefined,
           organizationDescription: accountType === 'ORGANIZATION' ? `${formData.companyName} - ${selectedRole} organization` : undefined,
+          website: selectedRole === 'DESIGNER' ? formData.website : undefined,
         }),
       });
 
@@ -333,6 +342,27 @@ export default function SignupPage() {
           error={formData.password !== formData.confirmPassword && formData.confirmPassword.length > 0}
         />
       </div>
+
+      {selectedRole === 'DESIGNER' && (
+        <div>
+          <label htmlFor="website" className="block text-sm font-medium text-gray-700 mb-1.5">
+            Portfolio Website *
+          </label>
+          <GlassInput
+            id="website"
+            name="website"
+            type="url"
+            required
+            value={formData.website}
+            onChange={handleChange}
+            placeholder="https://yourportfolio.com"
+            autoComplete="url"
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            Required for account verification
+          </p>
+        </div>
+      )}
 
       {message && (
         <div className={`p-3 rounded-md border ${
