@@ -14,7 +14,7 @@ type AtelierNodeType =
 
 type AtelierNode = {
   id: string;
-  type: AtelierNodeType;
+  nodeType: AtelierNodeType;
   label: string;
   weight: number;
 };
