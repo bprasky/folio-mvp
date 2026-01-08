@@ -20,7 +20,9 @@ ADD COLUMN IF NOT EXISTS "vendorIds" TEXT[] DEFAULT ARRAY[]::TEXT[],
 ADD COLUMN IF NOT EXISTS "categories" TEXT[] DEFAULT ARRAY[]::TEXT[],
 ADD COLUMN IF NOT EXISTS "colors" TEXT[] DEFAULT ARRAY[]::TEXT[],
 ADD COLUMN IF NOT EXISTS "materials" TEXT[] DEFAULT ARRAY[]::TEXT[],
-ADD COLUMN IF NOT EXISTS "styles" TEXT[] DEFAULT ARRAY[]::TEXT[];
+ADD COLUMN IF NOT EXISTS "styles" TEXT[] DEFAULT ARRAY[]::TEXT[],
+ADD COLUMN IF NOT EXISTS "mood" TEXT[] DEFAULT ARRAY[]::TEXT[],
+ADD COLUMN IF NOT EXISTS "elements" TEXT[] DEFAULT ARRAY[]::TEXT[];
 
 -- ============================================================
 -- 2. Create indexes for performance
@@ -51,8 +53,14 @@ ON "moment_index" USING GIN ("colors");
 CREATE INDEX IF NOT EXISTS "moment_index_materials_idx" 
 ON "moment_index" USING GIN ("materials");
 
-CREATE INDEX IF NOT EXISTS "moment_index_styles_idx" 
+CREATE INDEX IF NOT EXISTS "moment_index_styles_idx"
 ON "moment_index" USING GIN ("styles");
+
+CREATE INDEX IF NOT EXISTS "moment_index_mood_idx"
+ON "moment_index" USING GIN ("mood");
+
+CREATE INDEX IF NOT EXISTS "moment_index_elements_idx"
+ON "moment_index" USING GIN ("elements");
 
 -- Composite index for common filter combinations (room + vendor)
 CREATE INDEX IF NOT EXISTS "moment_index_room_vendors_idx" 
@@ -70,6 +78,8 @@ COMMENT ON COLUMN "moment_index"."categories" IS 'Array of product categories (e
 COMMENT ON COLUMN "moment_index"."colors" IS 'Array of detected colors (e.g., ["white", "oak", "brass", "marble"])';
 COMMENT ON COLUMN "moment_index"."materials" IS 'Array of detected materials (e.g., ["wood", "stone", "metal", "fabric"])';
 COMMENT ON COLUMN "moment_index"."styles" IS 'Array of detected styles (e.g., ["modern", "coastal", "mediterranean"])';
+COMMENT ON COLUMN "moment_index"."mood" IS 'Array of detected moods (e.g., ["airy", "moody", "warm", "dramatic"])';
+COMMENT ON COLUMN "moment_index"."elements" IS 'Array of detected design elements (e.g., ["pendant lighting", "kitchen island", "built-ins"])';
 
 -- ============================================================
 -- 4. Backfill existing records (optional - can be run separately)
