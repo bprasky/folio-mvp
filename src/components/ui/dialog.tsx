@@ -158,3 +158,27 @@ export function DialogTitle({ className, children }: DialogTitleProps) {
   );
 }
 
+interface DialogDescriptionProps {
+  className?: string;
+  children: React.ReactNode;
+}
+
+export function DialogDescription({ className, children }: DialogDescriptionProps) {
+  return (
+    <p className={cn("text-sm text-neutral-500", className)}>
+      {children}
+    </p>
+  );
+}
+
+interface DialogTriggerProps {
+  children: React.ReactNode;
+  asChild?: boolean;
+}
+
+export function DialogTrigger({ children }: DialogTriggerProps) {
+  // This is a pass-through component for compatibility
+  // The actual trigger logic should be handled by the parent
+  return <>{children}</>;
+}
+

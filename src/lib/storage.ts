@@ -79,7 +79,7 @@ export async function deleteProjectImage(path: string): Promise<void> {
 
     // Import Supabase admin client
     const { supabaseAdmin } = await import('./supabaseAdmin');
-    
+
     const { error } = await supabaseAdmin.storage
       .from(bucket)
       .remove([objectPath]);
@@ -92,4 +92,72 @@ export async function deleteProjectImage(path: string): Promise<void> {
     console.error('Storage deletion error:', error);
     throw new Error(`Failed to delete image: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
+}
+
+/**
+ * Upload a generated 2D cutout image to storage
+ */
+export async function uploadGeneratedCutout({
+  projectId,
+  productId,
+  buffer,
+  mime = 'image/png',
+}: {
+  projectId: string;
+  productId: string;
+  buffer: Buffer;
+  mime?: string;
+}): Promise<StorageResult> {
+  const { ulid } = await import("ulid");
+  const id = ulid();
+  const ext = mime === "image/png" ? "png" : "jpg";
+  const path = `${projectId}/cutouts/${productId}/${id}.${ext}`;
+
+  const { supabaseAdmin } = await import('./supabaseAdmin');
+  const { error } = await supabaseAdmin.storage.from(BUCKET).upload(path, buffer, {
+    contentType: mime,
+    upsert: false,
+  });
+
+  if (error) {
+    console.error('[uploadGeneratedCutout] Upload failed:', error);
+    throw error;
+  }
+
+  const { data: pub } = supabaseAdmin.storage.from(BUCKET).getPublicUrl(path);
+  return { bucket: BUCKET, path, publicUrl: pub.publicUrl };
+}
+
+/**
+ * Upload a generated 3D mesh file to storage
+ */
+export async function uploadGeneratedMesh({
+  projectId,
+  productId,
+  buffer,
+  mime = 'model/gltf-binary',
+}: {
+  projectId: string;
+  productId: string;
+  buffer: Buffer;
+  mime?: string;
+}): Promise<StorageResult> {
+  const { ulid } = await import("ulid");
+  const id = ulid();
+  const ext = mime.includes('gltf') ? 'glb' : 'obj';
+  const path = `${projectId}/meshes/${productId}/${id}.${ext}`;
+
+  const { supabaseAdmin } = await import('./supabaseAdmin');
+  const { error } = await supabaseAdmin.storage.from(BUCKET).upload(path, buffer, {
+    contentType: mime,
+    upsert: false,
+  });
+
+  if (error) {
+    console.error('[uploadGeneratedMesh] Upload failed:', error);
+    throw error;
+  }
+
+  const { data: pub } = supabaseAdmin.storage.from(BUCKET).getPublicUrl(path);
+  return { bucket: BUCKET, path, publicUrl: pub.publicUrl };
 }

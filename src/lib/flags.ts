@@ -8,3 +8,14 @@ export const flags = {
   /** Enable demo data for investor runs - fills all panels with realistic values */
   vendorDemoData: process.env.NEXT_PUBLIC_FLAG_VENDOR_DEMO_DATA === '1',
 } as const;
+
+/**
+ * Get a feature flag value from environment variables
+ * @param key - The environment variable name (e.g., 'FEATURE_VENDOR_HANDOFF')
+ * @param defaultValue - Default value if not set
+ */
+export function getFeatureFlag(key: string, defaultValue: boolean = false): boolean {
+  const value = process.env[key] || process.env[`NEXT_PUBLIC_${key}`];
+  if (value === undefined) return defaultValue;
+  return value === '1' || value === 'true';
+}
