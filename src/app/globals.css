@@ -1232,10 +1232,10 @@ body { font-family: 'Inter', sans-serif; background: #0a0a0a; color: #f5f5f5; }
 }
 
 /* Focus management for navigation */  
- 
- / *   P r i n t   s t y l e s   f o r   A I   R e p o r t   E x p o r t   * / 
- 
- 
+
+/* Print styles for AI Report Export */
+
+
 @media print {
   nav, .DemoButton, .AnalyticsDrawer, .sticky { display: none !important; }
   body { background: #fff; }
