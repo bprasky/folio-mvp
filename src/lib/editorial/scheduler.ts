@@ -6,6 +6,12 @@ import {
   EDITORIAL_CURATOR_THRESHOLDS,
   EDITORIAL_SCHEDULER_PROMPT,
 } from "./constants";
+import {
+  generateWeeklyEdition,
+  generateMonthlyEdition,
+  generateQuarterlyEdition,
+  generateAnnualEdition,
+} from "./editions";
 
 // [Editorial Curator Integration] Edition publishing orchestrator
 
@@ -267,4 +273,196 @@ export async function runDailyEditorialScheduler() {
   return runEditorialEditionScheduler();
 }
 
+// ============================================================
+// Edition System - Cadenced Edition Generation
+// ============================================================
 
+type EditionGenerationResult = {
+  editionId: string;
+  slug: string;
+  contentCount: number;
+} | null;
+
+/**
+ * Weekly edition job - runs every Monday
+ * Generates edition for the previous week's top performers
+ */
+export async function runWeeklyEditionJob(): Promise<EditionGenerationResult> {
+  console.log("[EditionScheduler] Running weekly edition job");
+  try {
+    const result = await generateWeeklyEdition();
+    if (result) {
+      console.log(`[EditionScheduler] Weekly edition created: ${result.slug}`);
+      // Auto-publish weekly editions
+      await publishEdition(result.editionId);
+    }
+    return result;
+  } catch (error) {
+    console.error("[EditionScheduler] Weekly edition job failed:", error);
+    return null;
+  }
+}
+
+/**
+ * Monthly edition job - runs on 1st of each month
+ * Generates edition from the previous month's best weekly performers
+ */
+export async function runMonthlyEditionJob(): Promise<EditionGenerationResult> {
+  console.log("[EditionScheduler] Running monthly edition job");
+  try {
+    const result = await generateMonthlyEdition();
+    if (result) {
+      console.log(`[EditionScheduler] Monthly edition created: ${result.slug}`);
+      // Auto-publish monthly editions
+      await publishEdition(result.editionId);
+    }
+    return result;
+  } catch (error) {
+    console.error("[EditionScheduler] Monthly edition job failed:", error);
+    return null;
+  }
+}
+
+/**
+ * Quarterly edition job - runs at start of each quarter
+ * Generates edition from the previous quarter's best monthly performers
+ */
+export async function runQuarterlyEditionJob(): Promise<EditionGenerationResult> {
+  console.log("[EditionScheduler] Running quarterly edition job");
+  try {
+    const result = await generateQuarterlyEdition();
+    if (result) {
+      console.log(`[EditionScheduler] Quarterly edition created: ${result.slug}`);
+      // Auto-publish quarterly editions
+      await publishEdition(result.editionId);
+    }
+    return result;
+  } catch (error) {
+    console.error("[EditionScheduler] Quarterly edition job failed:", error);
+    return null;
+  }
+}
+
+/**
+ * Annual edition job - runs in January
+ * Generates draft edition for review (highest prestige, requires manual approval)
+ */
+export async function runAnnualEditionJob(): Promise<EditionGenerationResult> {
+  console.log("[EditionScheduler] Running annual edition job");
+  try {
+    const result = await generateAnnualEdition();
+    if (result) {
+      console.log(`[EditionScheduler] Annual edition draft created: ${result.slug} (pending review)`);
+      // Annual editions are created in REVIEW status, not auto-published
+    }
+    return result;
+  } catch (error) {
+    console.error("[EditionScheduler] Annual edition job failed:", error);
+    return null;
+  }
+}
+
+/**
+ * Publish an edition and notify stakeholders
+ */
+async function publishEdition(editionId: string): Promise<void> {
+  const edition = await prismaAny.editorialEdition.update({
+    where: { id: editionId },
+    data: {
+      status: "PUBLISHED",
+      publishedAt: new Date(),
+    },
+  });
+
+  // Notify stakeholders for included content
+  const projectIds = edition.projectPostIds ?? [];
+  if (projectIds.length > 0) {
+    await notifyStakeholders(editionId, projectIds);
+  }
+}
+
+/**
+ * Check which edition jobs should run based on current date
+ * Returns functions to execute
+ */
+export function getScheduledEditionJobs(date: Date = new Date()): (() => Promise<EditionGenerationResult>)[] {
+  const jobs: (() => Promise<EditionGenerationResult>)[] = [];
+
+  const dayOfWeek = date.getDay();
+  const dayOfMonth = date.getDate();
+  const month = date.getMonth();
+
+  // Weekly: Run on Monday (day 1)
+  if (dayOfWeek === 1) {
+    jobs.push(runWeeklyEditionJob);
+  }
+
+  // Monthly: Run on 1st of month
+  if (dayOfMonth === 1) {
+    jobs.push(runMonthlyEditionJob);
+  }
+
+  // Quarterly: Run on 1st of Jan, Apr, Jul, Oct (months 0, 3, 6, 9)
+  if (dayOfMonth === 1 && [0, 3, 6, 9].includes(month)) {
+    jobs.push(runQuarterlyEditionJob);
+  }
+
+  // Annual: Run on January 15 (give time to finalize quarterly)
+  if (month === 0 && dayOfMonth === 15) {
+    jobs.push(runAnnualEditionJob);
+  }
+
+  return jobs;
+}
+
+/**
+ * Run all scheduled edition jobs for today
+ */
+export async function runScheduledEditionJobs(): Promise<{
+  weekly: EditionGenerationResult;
+  monthly: EditionGenerationResult;
+  quarterly: EditionGenerationResult;
+  annual: EditionGenerationResult;
+}> {
+  const jobs = getScheduledEditionJobs();
+
+  const results = {
+    weekly: null as EditionGenerationResult,
+    monthly: null as EditionGenerationResult,
+    quarterly: null as EditionGenerationResult,
+    annual: null as EditionGenerationResult,
+  };
+
+  for (const job of jobs) {
+    const result = await job();
+
+    // Determine which result slot to fill based on the job
+    if (job === runWeeklyEditionJob) results.weekly = result;
+    else if (job === runMonthlyEditionJob) results.monthly = result;
+    else if (job === runQuarterlyEditionJob) results.quarterly = result;
+    else if (job === runAnnualEditionJob) results.annual = result;
+  }
+
+  return results;
+}
+
+/**
+ * Force generate all edition types (for backfilling or testing)
+ */
+export async function forceGenerateAllEditions(referenceDate: Date = new Date()): Promise<{
+  weekly: EditionGenerationResult;
+  monthly: EditionGenerationResult;
+  quarterly: EditionGenerationResult;
+  annual: EditionGenerationResult;
+}> {
+  console.log("[EditionScheduler] Force generating all editions");
+
+  const [weekly, monthly, quarterly, annual] = await Promise.all([
+    generateWeeklyEdition(referenceDate).catch(() => null),
+    generateMonthlyEdition(referenceDate).catch(() => null),
+    generateQuarterlyEdition(referenceDate).catch(() => null),
+    generateAnnualEdition(referenceDate).catch(() => null),
+  ]);
+
+  return { weekly, monthly, quarterly, annual };
+}

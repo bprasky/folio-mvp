@@ -859,10 +859,15 @@ model ProjectPost {
   provenance     Json?
   credits        Json?
 
+  // Above-fold tracking for edition qualification
+  aboveFoldAt   DateTime? // When content was featured above the fold
+  aboveFoldEnd  DateTime? // When above-fold period ended
+
   publishedAt          DateTime?
   createdAt            DateTime              @default(now())
   updatedAt            DateTime              @updatedAt
   editorialAssignments EditorialAssignment[]
+  editionInclusions    ContentEditionInclusion[]
 
   @@map("project_posts")
 }
@@ -937,14 +942,40 @@ model EditorialAssignment {
 model EditorialEdition {
   id          String    @id @default(cuid())
   slug        String    @unique
-  title       String
-  intro       String
-  categoryIds String[]
-  projectIds  String[]
-  publishedAt DateTime?
-  metrics     Json
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+
+  // Edition identity
+  cadence             EditionCadence?
+  periodStart         DateTime?
+  periodEnd           DateTime?
+
+  // Content
+  title               String
+  intro               String
+  coverImageUrl       String?
+
+  // Legacy fields (kept for backwards compatibility)
+  categoryIds         String[]
+  projectIds          String[]
+
+  // Included content (new)
+  projectPostIds      String[]        @default([])
+  featureIds          String[]        @default([])
+
+  // For quarterly/annual - child editions
+  includedEditionIds  String[]        @default([])
+
+  // Metrics
+  metrics             Json
+
+  // Status
+  status              EditionStatus   @default(DRAFT)
+  publishedAt         DateTime?
+
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+
+  // Relations
+  contentInclusions   ContentEditionInclusion[]
 
   @@map("editorial_edition")
 }
@@ -1497,4 +1528,88 @@ model WaitlistSignup {
 enum WaitlistType {
   VENDOR
   INDIVIDUAL
+}
+
+// ============================================================
+// EDITION SYSTEM - Cadenced content aggregation
+// ============================================================
+
+enum EditionCadence {
+  WEEKLY
+  MONTHLY
+  QUARTERLY
+  ANNUAL
+}
+
+enum EditionStatus {
+  DRAFT
+  REVIEW
+  PUBLISHED
+  ARCHIVED
+}
+
+// Feature - standalone editorial content (e.g., material studies, designer profiles)
+model Feature {
+  id            String    @id @default(cuid())
+  slug          String    @unique
+  title         String
+  excerpt       String?
+  content       Json?     // Rich content blocks
+  coverImageUrl String?
+  authorId      String?
+
+  // Feature type
+  featureType   String    @default("general") // material_study, designer_profile, event_essay, etc.
+
+  // Editorial metrics
+  views         Int       @default(0)
+  saves         Int       @default(0)
+  shares        Int       @default(0)
+
+  // Status
+  status        PostStatus @default(DRAFT)
+  publishedAt   DateTime?
+
+  // Above-fold tracking for edition qualification
+  aboveFoldAt   DateTime? // When content was featured above the fold
+  aboveFoldEnd  DateTime? // When above-fold period ended
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  editionInclusions ContentEditionInclusion[]
+
+  @@index([status, publishedAt])
+  @@index([featureType])
+  @@map("features")
+}
+
+model ContentEditionInclusion {
+  id              String    @id @default(cuid())
+
+  // Content (one of these)
+  projectPostId   String?
+  featureId       String?
+
+  // Edition
+  editionId       String
+
+  // Position
+  rank            Int?
+
+  // Badge metadata
+  badgeLabel      String?   // e.g., "September 2025", "Q3 2025"
+  earnedAt        DateTime  @default(now())
+
+  createdAt       DateTime  @default(now())
+
+  projectPost     ProjectPost? @relation(fields: [projectPostId], references: [id], onDelete: Cascade)
+  feature         Feature?     @relation(fields: [featureId], references: [id], onDelete: Cascade)
+  edition         EditorialEdition @relation(fields: [editionId], references: [id], onDelete: Cascade)
+
+  @@unique([projectPostId, editionId])
+  @@unique([featureId, editionId])
+  @@index([editionId])
+  @@map("content_edition_inclusions")
 }
