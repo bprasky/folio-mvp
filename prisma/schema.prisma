@@ -1479,3 +1479,22 @@ enum PendingTagStatus {
   CORRECTED
   DISMISSED
 }
+
+// ============================================================
+// WAITLIST - Email capture for Vendor/Individual signups
+// ============================================================
+
+model WaitlistSignup {
+  id        String       @id @default(cuid())
+  email     String
+  type      WaitlistType
+  createdAt DateTime     @default(now())
+
+  @@unique([email, type])
+  @@map("waitlist_signups")
+}
+
+enum WaitlistType {
+  VENDOR
+  INDIVIDUAL
+}
