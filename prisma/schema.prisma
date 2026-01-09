@@ -457,12 +457,35 @@ model Organization {
   logo                String?
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt
+
+  // Vendor tier fields (only applicable when type = VENDOR)
+  vendorTier          VendorTier           @default(STANDARD)
+  vendorTierStartedAt DateTime?
+  vendorTierExpiresAt DateTime?
+
   users               OrganizationUser[]
   designerProjects    Project[]            @relation("DesignerProjects")
   vendorProjects      Project[]            @relation("VendorProjects")
   projectParticipants ProjectParticipant[]
+  vendorSubscriptions VendorSubscription[]
 
   @@map("organizations")
+}
+
+model VendorSubscription {
+  id                   String       @id @default(cuid())
+  organizationId       String
+  tier                 VendorTier
+  startedAt            DateTime     @default(now())
+  expiresAt            DateTime?
+  cancelledAt          DateTime?
+  stripeSubscriptionId String?      // For future Stripe integration
+  createdAt            DateTime     @default(now())
+
+  organization         Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@map("vendor_subscriptions")
 }
 
 model OrganizationUser {
@@ -1497,4 +1520,10 @@ model WaitlistSignup {
 enum WaitlistType {
   VENDOR
   INDIVIDUAL
+}
+
+enum VendorTier {
+  STANDARD
+  PRO
+  ENTERPRISE
 }
