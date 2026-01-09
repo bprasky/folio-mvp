@@ -2,15 +2,24 @@ export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { assertCanCreate } from '@/lib/authz/createGuard';
 
 const prisma = new PrismaClient();
 
 export async function POST(request: NextRequest) {
   try {
+    // Check create permission using the new permission system
+    const guardResult = await assertCanCreate('event');
+    if (!guardResult.allowed || !guardResult.user) {
+      return guardResult.error!;
+    }
+
+    const userId = guardResult.user.id;
+
     // Debug: Log the content type and try to parse the body
     const contentType = request.headers.get('content-type');
     console.log('Content-Type:', contentType);
-    
+
     let body: any;
     if (contentType?.includes('application/json')) {
       body = await request.json();
@@ -39,12 +48,12 @@ export async function POST(request: NextRequest) {
         );
       }
     }
-    
+
     console.log('Parsed body:', body);
-    const { title, description, location, startDate, endDate, createdById, parentFestivalId, eventType } = body;
+    const { title, description, location, startDate, endDate, parentFestivalId, eventType } = body;
 
     // Validate required fields
-    if (!title || !description || !location || !startDate || !endDate || !createdById) {
+    if (!title || !description || !location || !startDate || !endDate) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
@@ -54,7 +63,7 @@ export async function POST(request: NextRequest) {
     // Validate dates
     const start = new Date(startDate);
     const end = new Date(endDate);
-    
+
     if (start >= end) {
       return NextResponse.json(
         { error: 'End date must be after start date' },
@@ -65,7 +74,7 @@ export async function POST(request: NextRequest) {
     // If parentFestivalId is provided, validate it exists and dates are within festival range
     if (parentFestivalId) {
       const parentFestival = await prisma.event.findFirst({
-        where: { 
+        where: {
           id: parentFestivalId,
           eventTypes: {
             has: 'FESTIVAL'
@@ -88,34 +97,6 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         );
       }
-    }
-
-    // Validate that createdById exists and is a valid user
-    let userId = createdById;
-    if (!createdById) {
-      return NextResponse.json(
-        { error: 'createdById is required' },
-        { status: 400 }
-      );
-    }
-    
-    // Verify the user exists
-    const user = await prisma.user.findUnique({
-      where: { id: createdById }
-    });
-    
-    if (!user) {
-      return NextResponse.json(
-        { error: 'User not found' },
-        { status: 404 }
-      );
-    }
-    
-    if (user.role !== 'VENDOR') {
-      return NextResponse.json(
-        { error: 'Only vendors can create vendor events' },
-        { status: 403 }
-      );
     }
 
     // Create the event (vendor events require approval)

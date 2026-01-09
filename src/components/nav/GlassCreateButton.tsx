@@ -1,58 +1,108 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import clsx from 'clsx';
 import { useSession } from 'next-auth/react';
 import { normalizeRole } from '@/lib/permissions';
+import {
+  getCreateActions,
+  needsUpgradeForContent,
+  getUpgradePrompt,
+  type ContentType,
+  type VendorTier,
+} from '@/lib/authz/createPermissions';
 
 /**
  * Role-aware Create button for the Glass Landing Rail.
  *
- * Vendor:
- *  - Create Project (/projects/new)  [reuses existing flow if present]
- *  - Create Product (/vendor/products/new)
- *  - Create Event (/events/new)            (NOT festivals)
+ * Shows different options based on user role and vendor tier:
+ * - Designer: New Project, New Article
+ * - Vendor Standard: New Event
+ * - Vendor Pro+: New Event, New Collaboration Story
+ * - Admin: All content types
  *
- * Designer:
- *  - Create Project (routes to your project chooser or /projects/new)
- *  - Create Concept/Schematic/etc. — if your chooser exists, we just route to it
- *
- * Admin:
- *  - Create Event (/events/new)
- *  - Create Festival (/festivals/new)
+ * Tier-gated options show upgrade prompt.
  */
 export default function GlassCreateButton() {
   const { data: session } = useSession();
   const role = normalizeRole(session?.user?.role);
+  const vendorTier = (session?.user as any)?.vendorTier as VendorTier | undefined;
   const [open, setOpen] = useState(false);
   const router = useRouter();
+  const menuRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
-  const actions =
-    role === 'VENDOR'
-      ? [
-          { label: 'Project', href: '/projects/new' },
-          { label: 'Product', href: '/vendor/products/new' },
-          { label: 'Event', href: '/events/new' },
-        ]
-      : role === 'DESIGNER'
-      ? [
-          // If you use a modal chooser, you can dispatch it here instead of routing
-          { label: 'Project', href: '/projects/new' },
-          { label: 'Client Project', href: '/projects/new?type=client' },
-        ]
-      : role === 'ADMIN'
-      ? [
-          { label: 'Event', href: '/events/new' },
-          { label: 'Festival', href: '/festivals/new' },
-        ]
-      : [];
+  // Get available create actions based on role and tier
+  const actions = getCreateActions(role, vendorTier);
 
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        menuRef.current &&
+        buttonRef.current &&
+        !menuRef.current.contains(event.target as Node) &&
+        !buttonRef.current.contains(event.target as Node)
+      ) {
+        setOpen(false);
+      }
+    };
+
+    if (open) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [open]);
+
+  // Close menu on escape key
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setOpen(false);
+        buttonRef.current?.focus();
+      }
+    };
+
+    if (open) {
+      document.addEventListener('keydown', handleEscape);
+    }
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [open]);
+
+  // Don't render if no actions available
   if (actions.length === 0) return null;
+
+  const handleActionClick = (action: {
+    href: string;
+    contentType: ContentType;
+    label: string;
+  }) => {
+    // Check if this action needs an upgrade
+    const needsUpgrade = needsUpgradeForContent(role, action.contentType, vendorTier);
+
+    if (needsUpgrade) {
+      // Show upgrade prompt or redirect to pricing page
+      const upgradeMessage = getUpgradePrompt(action.contentType);
+      if (typeof window !== 'undefined') {
+        alert(upgradeMessage || 'Upgrade required for this feature');
+      }
+      setOpen(false);
+      return;
+    }
+
+    setOpen(false);
+    router.push(action.href);
+  };
 
   return (
     <div className="relative">
       <button
+        ref={buttonRef}
         onClick={() => setOpen((v) => !v)}
         className={clsx(
           'rounded-xl px-3 py-1.5 text-sm font-medium',
@@ -61,31 +111,55 @@ export default function GlassCreateButton() {
         )}
         aria-haspopup="menu"
         aria-expanded={open}
+        aria-label="Create new content"
       >
         + Create
       </button>
 
       {open && (
         <div
+          ref={menuRef}
           role="menu"
-          aria-label="Create items"
-          className="absolute right-0 mt-2 w-48 overflow-hidden rounded-xl border border-black/5 bg-white/90 backdrop-blur-md shadow-lg"
+          aria-label="Create content options"
+          className="absolute right-0 mt-2 min-w-[200px] overflow-hidden rounded-xl border border-black/5 bg-white/95 backdrop-blur-md shadow-lg z-50"
         >
-          {actions.map((a, i) => (
-            <button
-              key={a.label + i}
-              onClick={() => {
-                setOpen(false);
-                router.push(a.href);
-              }}
-              role="menuitem"
-              className={clsx(
-                'block w-full px-4 py-2 text-left text-sm text-neutral-900 hover:bg-black/5'
-              )}
-            >
-              {a.label}
-            </button>
-          ))}
+          {actions.map((action) => {
+            const needsUpgrade = needsUpgradeForContent(
+              role,
+              action.contentType,
+              vendorTier
+            );
+            const upgradePrompt = needsUpgrade
+              ? getUpgradePrompt(action.contentType)
+              : null;
+
+            return (
+              <button
+                key={action.contentType}
+                onClick={() => handleActionClick(action)}
+                role="menuitem"
+                className={clsx(
+                  'block w-full px-4 py-2.5 text-left transition-colors',
+                  'hover:bg-black/5',
+                  needsUpgrade
+                    ? 'opacity-60 cursor-not-allowed'
+                    : 'text-neutral-900'
+                )}
+              >
+                <span className="block text-sm font-medium">{action.label}</span>
+                {action.description && !needsUpgrade && (
+                  <span className="block text-xs text-neutral-500 mt-0.5">
+                    {action.description}
+                  </span>
+                )}
+                {needsUpgrade && upgradePrompt && (
+                  <span className="block text-xs text-amber-600 mt-0.5">
+                    {upgradePrompt}
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </div>
       )}
     </div>

@@ -6,6 +6,7 @@ import { useRole } from '../../../contexts/RoleContext';
 import { FaTimes, FaSearch, FaUserPlus, FaMapMarkerAlt, FaGlobe, FaUsers, FaRocket, FaUtensils, FaTags, FaCalendarAlt, FaImage, FaComments, FaRobot, FaFlag, FaCog } from 'react-icons/fa';
 import ConciergeEventCreate from '../../../components/ConciergeEventCreate';
 import ConciergeRecommendation from '../../../components/ConciergeRecommendation';
+import { canCreate } from '@/lib/authz/createPermissions';
 
 interface User {
   id: string;
@@ -131,8 +132,16 @@ export default function CreateEvent() {
   }, [searchQuery]);
 
   if (status === 'loading') return <div className="p-6">Loading...</div>;
-  if (!role || !['admin', 'vendor'].includes(role)) {
-    return <div className="p-6">Access Denied</div>;
+
+  // Use the centralized permission system to check if user can create events
+  const userRole = session?.user?.role || role || '';
+  if (!canCreate(userRole, 'event')) {
+    return (
+      <div className="p-6">
+        <h2 className="text-xl font-semibold text-gray-900 mb-2">Access Denied</h2>
+        <p className="text-gray-600">You do not have permission to create events.</p>
+      </div>
+    );
   }
 
   const validateForm = () => {
