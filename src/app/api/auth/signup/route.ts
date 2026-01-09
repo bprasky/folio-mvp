@@ -36,14 +36,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Website is required for designers (for admin approval)
-    if (role === 'DESIGNER' && !website) {
-      return NextResponse.json(
-        { error: 'Website URL is required for designer accounts' },
     // Phase 1: Only allow DESIGNER signups
     if (role !== 'DESIGNER') {
       return NextResponse.json(
         { error: 'Only designer accounts are currently available. Please join the waitlist for other account types.' },
+        { status: 400 }
+      );
+    }
+
+    // Website is required for designers (for admin approval)
+    if (role === 'DESIGNER' && !website) {
+      return NextResponse.json(
+        { error: 'Website URL is required for designer accounts' },
         { status: 400 }
       );
     }
@@ -73,6 +77,7 @@ export async function POST(request: NextRequest) {
         email,
         passwordHash: hashedPassword,
         role,
+        accountStatus,
         website: role === 'DESIGNER' ? website : undefined,
       },
     });
@@ -106,12 +111,16 @@ export async function POST(request: NextRequest) {
     }
 
     // For designers: create empty brand profile (can be configured later in profile settings)
+    // Redirect to pending-approval page after signup
+    let redirectUrl: string | undefined;
     if (role === 'DESIGNER') {
       try {
         await createEmptyDesignerBrandProfile(user.id);
+        redirectUrl = '/pending-approval';
       } catch (error) {
         console.error('Error creating brand profile:', error);
         // Continue even if brand profile creation fails
+        redirectUrl = '/pending-approval';
       }
     }
 

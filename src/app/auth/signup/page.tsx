@@ -25,6 +25,7 @@ export default function SignupPage() {
     email: '',
     password: '',
     confirmPassword: '',
+    website: '',
   });
   const [waitlistEmail, setWaitlistEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -117,6 +118,7 @@ export default function SignupPage() {
           password: formData.password,
           role: 'DESIGNER',
           accountType: 'personal',
+          website: formData.website,
         }),
       });
 
