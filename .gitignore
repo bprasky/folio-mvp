@@ -1,14 +1,35 @@
+# ===========================================
+# FOLIO MVP - .gitignore
+# ===========================================
+# This file specifies which files and directories
+# should NOT be tracked by Git. Add entries here
+# for generated files, secrets, and local configs.
+# ===========================================
+
+# -------------------------------------------
 # Dependencies
+# -------------------------------------------
+# Node.js packages installed via npm/yarn/pnpm
 node_modules/
 
+# -------------------------------------------
 # Next.js
+# -------------------------------------------
+# Build output and cache directories
 .next/
 out/
 
-# Build
+# -------------------------------------------
+# Build artifacts
+# -------------------------------------------
+# TypeScript incremental compilation info
 tsconfig.tsbuildinfo
 
-# Environment
+# -------------------------------------------
+# Environment Variables (IMPORTANT!)
+# -------------------------------------------
+# NEVER commit .env files - they contain secrets
+# Copy .env.example to .env.local for local dev
 .env
 .env.local
 .env.development.local
@@ -18,20 +39,35 @@ tsconfig.tsbuildinfo
 .env.backup
 .env.bak
 
+# -------------------------------------------
 # Vercel
+# -------------------------------------------
+# Local Vercel config and cache
 .vercel/
 
+# -------------------------------------------
 # Material Bank Importer
+# -------------------------------------------
+# Export files and import reports
 exports/
 *.csv
 import-report-*.json
 
-# IDE
+# -------------------------------------------
+# IDE / Editor
+# -------------------------------------------
+# JetBrains (WebStorm, IntelliJ)
 .idea/
+# VS Code (uncomment if team shares settings)
 .vscode/
+# Vim swap files
 *.swp
 *.swo
 
-# OS
+# -------------------------------------------
+# Operating System
+# -------------------------------------------
+# macOS
 .DS_Store
+# Windows
 Thumbs.db
