@@ -1415,6 +1415,8 @@ model AtelierSignal {
   @@index([ownerType, vendorId])
   @@index([key])
   @@map("atelier_signals")
+}
+
 model ImpersonationLog {
   id           String    @id @default(cuid())
   adminId      String
