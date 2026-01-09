@@ -1,9 +1,15 @@
+export const dynamic = 'force-dynamic';
+
 // NOTE (designer onboarding):
 // This file contains the logic that creates a Designer account for the first time.
-// We hook the Brand Identity onboarding flow here after successful designer creation.
+// New designers are created with PENDING status and redirected to /pending-approval.
+// After admin approval and onboarding completion, they can access the designer dashboard.
+//
+// Phase 1 (Designer Publishing Wedge): Only designers can sign up through this endpoint.
+// Vendors and Individuals are directed to the waitlist instead.
 
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, AccountStatus } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import { createEmptyDesignerBrandProfile } from '@/lib/server/designerBrandProfile';
 
@@ -34,6 +40,10 @@ export async function POST(request: NextRequest) {
     if (role === 'DESIGNER' && !website) {
       return NextResponse.json(
         { error: 'Website URL is required for designer accounts' },
+    // Phase 1: Only allow DESIGNER signups
+    if (role !== 'DESIGNER') {
+      return NextResponse.json(
+        { error: 'Only designer accounts are currently available. Please join the waitlist for other account types.' },
         { status: 400 }
       );
     }
@@ -53,7 +63,10 @@ export async function POST(request: NextRequest) {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    // Create user
+    // Designers start with PENDING status and need admin approval
+    const accountStatus = AccountStatus.PENDING;
+
+    // Create user (always personal account in Phase 1)
     const user = await prisma.user.create({
       data: {
         name,
@@ -102,25 +115,18 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Set session cookie
-    const response = NextResponse.json({
+    // Return success response (no folio-session cookie - only NextAuth session is used)
+    return NextResponse.json({
       user: {
         id: user.id,
         name: user.name,
         email: user.email,
         role: user.role,
+        accountStatus: user.accountStatus,
       },
       message: 'Account created successfully',
+      redirectUrl,
     });
-
-    response.cookies.set('folio-session', user.id, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7, // 7 days
-    });
-
-    return response;
   } catch (error) {
     console.error('Error signing up:', error);
     return NextResponse.json(
@@ -128,4 +134,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-} 
+}

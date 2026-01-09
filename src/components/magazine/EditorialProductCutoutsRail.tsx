@@ -2,8 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import clsx from "clsx";
 import { type MagazineProduct } from "@/lib/magazine/getMagazineData";
+import { getProductDisplayImage } from "@/lib/products/getProductDisplayImage";
 
 interface Props {
   products: MagazineProduct[];
@@ -18,12 +18,15 @@ interface Props {
  * Horizontal scroll or 4-column grid.
  */
 export default function EditorialProductCutoutsRail({ products }: Props) {
-  // Show products with cutouts first, then fallback to regular images
-  const prioritizedProducts = [...products].sort((a, b) => {
-    if (a.cutoutImageUrl && !b.cutoutImageUrl) return -1;
-    if (!a.cutoutImageUrl && b.cutoutImageUrl) return 1;
-    return 0;
-  });
+  // NOTE: Previously prioritized products with cutouts first, but 2D cutout pipeline
+  // produced corrupted purple images. Now we just display all products in order.
+  // When pipeline is fixed, re-enable cutout prioritization by uncommenting below:
+  // const prioritizedProducts = [...products].sort((a, b) => {
+  //   if (hasProductCutout(a) && !hasProductCutout(b)) return -1;
+  //   if (!hasProductCutout(a) && hasProductCutout(b)) return 1;
+  //   return 0;
+  // });
+  const prioritizedProducts = products;
 
   // Limit to 4 products max for clean presentation
   const displayProducts = prioritizedProducts.slice(0, 4);
@@ -46,8 +49,12 @@ export default function EditorialProductCutoutsRail({ products }: Props) {
         >
           {displayProducts.map((product) => {
             const productHref = `/products/${product.id}`;
-            const hasCutout = !!product.cutoutImageUrl;
-            const imageUrl = product.cutoutImageUrl || product.imageUrl;
+            // NOTE: 2D cutouts disabled due to corrupted purple images from SAM3 pipeline
+            // When pipeline is fixed, set use2DCutout: true to re-enable cutout display
+            const imageUrl = getProductDisplayImage(product, {
+              use2DCutout: false,
+              placeholder: '', // Return empty string so fallback gradient shows
+            });
 
             return (
               <Link
@@ -65,12 +72,7 @@ export default function EditorialProductCutoutsRail({ products }: Props) {
                       alt={product.name}
                       fill
                       sizes="(max-width: 768px) 140px, 180px"
-                      className={clsx(
-                        "object-contain p-2",
-                        hasCutout 
-                          ? "filter contrast-110 saturate-95 drop-shadow-[0_4px_12px_rgba(0,0,0,0.22)]"
-                          : "object-cover"
-                      )}
+                      className="object-contain p-2"
                     />
                   ) : (
                     <div className="w-full h-full bg-gradient-to-br from-neutral-100 to-neutral-200" />

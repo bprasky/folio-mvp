@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import FestivalCarouselClient from "./FestivalCarouselClient";
-import { EventType } from "@prisma/client";
+import { EventType } from "@/lib/eventTypes";
 
 function toISODate(d: Date | string) {
   const dt = new Date(d);

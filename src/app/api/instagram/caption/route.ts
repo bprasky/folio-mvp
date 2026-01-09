@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 /**
  * API route to generate Instagram caption
  * POST /api/instagram/caption

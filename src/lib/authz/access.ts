@@ -93,10 +93,10 @@ export async function assertSelectionEdit(userId: string, selectionId: string) {
 }
 
 export async function createProjectParticipant(
-  projectId: string, 
-  orgId: string | null, 
-  userId: string | null, 
-  side: keyof typeof ParticipantSide, 
+  projectId: string,
+  orgId: string | null,
+  userId: string | null,
+  side: keyof typeof ParticipantSide,
   role: keyof typeof ParticipantRole
 ) {
   return prisma.projectParticipant.upsert({
@@ -116,4 +116,20 @@ export async function createProjectParticipant(
       role,
     },
   });
+}
+
+/**
+ * Assert user has edit access to a project
+ * Throws if access is denied
+ */
+export async function assertProjectEdit(userId: string, projectId: string) {
+  const access = await getProjectAccess(userId, projectId);
+  if (!access) {
+    throw new Error("Forbidden: No access to project");
+  }
+  // Check for edit-level permissions
+  if (![ParticipantRole.OWNER, ParticipantRole.EDITOR].includes(access.role)) {
+    throw new Error("Forbidden: Insufficient permissions");
+  }
+  return access;
 }

@@ -13,45 +13,71 @@ import {
 } from "@/components/ui/glass";
 
 type UserRole = 'DESIGNER' | 'VENDOR' | 'HOMEOWNER';
-type AccountType = 'PERSONAL' | 'ORGANIZATION';
+type WaitlistType = 'VENDOR' | 'INDIVIDUAL';
 
 export default function SignupPage() {
   const router = useRouter();
-  const [step, setStep] = useState<'role' | 'account-type' | 'details'>('role');
+  const [step, setStep] = useState<'role' | 'details' | 'waitlist'>('role');
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
-  const [accountType, setAccountType] = useState<AccountType | null>(null);
+  const [waitlistType, setWaitlistType] = useState<WaitlistType | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
     confirmPassword: '',
-    companyName: '',
-    organizationType: 'DESIGN_FIRM',
-    website: '',
   });
+  const [waitlistEmail, setWaitlistEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
 
   const handleRoleSelect = (role: UserRole) => {
     setSelectedRole(role);
-    if (role === 'HOMEOWNER') {
-      setAccountType('PERSONAL');
+    if (role === 'DESIGNER') {
       setStep('details');
     } else {
-      setStep('account-type');
+      // Vendor or Homeowner -> show waitlist
+      setWaitlistType(role === 'VENDOR' ? 'VENDOR' : 'INDIVIDUAL');
+      setStep('waitlist');
     }
   };
 
-  const handleAccountTypeSelect = (type: AccountType) => {
-    setAccountType(type);
-    setStep('details');
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
     });
+  };
+
+  const handleWaitlistSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setMessage('');
+
+    try {
+      const response = await fetch('/api/waitlist', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: waitlistEmail,
+          type: waitlistType,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setMessage(data.message);
+      } else {
+        setMessage(data.error || 'Failed to join waitlist');
+      }
+    } catch (error) {
+      console.error('Waitlist error:', error);
+      setMessage('Error joining waitlist. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -65,8 +91,8 @@ export default function SignupPage() {
       return;
     }
 
-    if (!selectedRole || !accountType) {
-      setMessage('Please complete all steps');
+    if (formData.password.length < 8) {
+      setMessage('Password must be at least 8 characters');
       setIsLoading(false);
       return;
     }
@@ -79,7 +105,7 @@ export default function SignupPage() {
     }
 
     try {
-      // First, create the user via API route
+      // Create the user via API route (hardcoded as PERSONAL account type)
       const response = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: {
@@ -89,11 +115,8 @@ export default function SignupPage() {
           name: formData.name,
           email: formData.email,
           password: formData.password,
-          role: selectedRole,
-          accountType: accountType.toLowerCase(),
-          organizationName: accountType === 'ORGANIZATION' ? formData.companyName : undefined,
-          organizationDescription: accountType === 'ORGANIZATION' ? `${formData.companyName} - ${selectedRole} organization` : undefined,
-          website: selectedRole === 'DESIGNER' ? formData.website : undefined,
+          role: 'DESIGNER',
+          accountType: 'personal',
         }),
       });
 
@@ -101,7 +124,7 @@ export default function SignupPage() {
 
       if (response.ok) {
         setMessage('Account created successfully! Signing you in...');
-        
+
         // Immediately sign in with the new credentials
         const signInResult = await signIn('credentials', {
           redirect: false,
@@ -134,7 +157,7 @@ export default function SignupPage() {
   const renderRoleSelection = () => (
     <div className="space-y-4">
       <h3 className="text-lg font-medium text-gray-900 mb-6">I am a...</h3>
-      
+
       <button
         type="button"
         onClick={() => handleRoleSelect('DESIGNER')}
@@ -174,10 +197,10 @@ export default function SignupPage() {
       >
         <div className="flex items-center space-x-3">
           <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-            <span className="text-purple-600 font-semibold">H</span>
+            <span className="text-purple-600 font-semibold">I</span>
           </div>
           <div>
-            <h4 className="font-medium text-gray-900">Homeowner</h4>
+            <h4 className="font-medium text-gray-900">Individual</h4>
             <p className="text-sm text-gray-600">Browse products, save favorites, connect with professionals</p>
           </div>
         </div>
@@ -185,45 +208,81 @@ export default function SignupPage() {
     </div>
   );
 
-  const renderAccountTypeSelection = () => (
-    <div className="space-y-4">
-      <h3 className="text-lg font-medium text-gray-900 mb-6">
-        How would you like to use Folio?
-      </h3>
-      
-      <button
-        type="button"
-        onClick={() => handleAccountTypeSelect('PERSONAL')}
-        className="w-full p-4 bg-white/50 backdrop-blur-sm border border-gray-200/70 rounded-xl hover:border-blue-400 hover:bg-white/70 transition-all text-left shadow-sm"
-      >
-        <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
-            <span className="text-orange-600 font-semibold">👤</span>
-          </div>
-          <div>
-            <h4 className="font-medium text-gray-900">Personal Account</h4>
-            <p className="text-sm text-gray-600">Individual use, perfect for freelancers and personal projects</p>
-          </div>
-        </div>
-      </button>
+  const renderWaitlist = () => {
+    const accountTypeLabel = waitlistType === 'VENDOR' ? 'vendor accounts' : 'individual accounts';
+    const hasSubmitted = message && !message.includes('Error') && !message.includes('Failed');
 
-      <button
-        type="button"
-        onClick={() => handleAccountTypeSelect('ORGANIZATION')}
-        className="w-full p-4 bg-white/50 backdrop-blur-sm border border-gray-200/70 rounded-xl hover:border-blue-400 hover:bg-white/70 transition-all text-left shadow-sm"
-      >
-        <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
-            <span className="text-indigo-600 font-semibold">🏢</span>
-          </div>
-          <div>
-            <h4 className="font-medium text-gray-900">Organization Account</h4>
-            <p className="text-sm text-gray-600">Team collaboration, multiple users, company branding</p>
-          </div>
+    return (
+      <div className="space-y-6">
+        <div className="text-center">
+          <h3 className="text-xl font-medium text-gray-900 mb-3">
+            We're not quite ready for you yet.
+          </h3>
+          <p className="text-gray-600">
+            Folio is launching with designers first. Leave your email and we'll notify you when {accountTypeLabel} are available.
+          </p>
         </div>
-      </button>
-    </div>
-  );
+
+        {hasSubmitted ? (
+          <div className="p-4 bg-green-50 border border-green-200 rounded-xl text-center">
+            <p className="text-green-700 font-medium">{message}</p>
+          </div>
+        ) : (
+          <form onSubmit={handleWaitlistSubmit} className="space-y-4">
+            <div>
+              <label htmlFor="waitlistEmail" className="block text-sm font-medium text-gray-700 mb-1.5">
+                Email Address
+              </label>
+              <GlassInput
+                id="waitlistEmail"
+                name="waitlistEmail"
+                type="email"
+                required
+                value={waitlistEmail}
+                onChange={(e) => setWaitlistEmail(e.target.value)}
+                placeholder="you@example.com"
+                autoComplete="email"
+              />
+            </div>
+
+            {message && (
+              <div className={`p-3 rounded-md border ${
+                message.includes('Error') || message.includes('Failed')
+                  ? 'bg-red-50 border-red-200 text-red-700'
+                  : 'bg-green-50 border-green-200 text-green-700'
+              }`}>
+                {message}
+              </div>
+            )}
+
+            <GlassButton
+              type="submit"
+              variant="primary"
+              size="lg"
+              className="w-full"
+              disabled={isLoading}
+            >
+              {isLoading ? 'Submitting...' : 'Notify Me'}
+            </GlassButton>
+          </form>
+        )}
+
+        <div className="text-center">
+          <button
+            type="button"
+            onClick={() => {
+              setStep('role');
+              setMessage('');
+              setWaitlistEmail('');
+            }}
+            className="text-gray-500 hover:text-gray-700 text-sm"
+          >
+            &larr; Back to role selection
+          </button>
+        </div>
+      </div>
+    );
+  };
 
   const renderDetailsForm = () => (
     <form onSubmit={handleSubmit} className="space-y-5">
@@ -259,54 +318,6 @@ export default function SignupPage() {
         />
       </div>
 
-      {accountType === 'ORGANIZATION' && (
-        <>
-          <div>
-            <label htmlFor="companyName" className="block text-sm font-medium text-gray-700 mb-1.5">
-              Organization Name *
-            </label>
-            <GlassInput
-              id="companyName"
-              name="companyName"
-              type="text"
-              required
-              value={formData.companyName}
-              onChange={handleChange}
-              placeholder="Your Company Name"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="organizationType" className="block text-sm font-medium text-gray-700 mb-1.5">
-              Organization Type *
-            </label>
-            <select
-              id="organizationType"
-              name="organizationType"
-              required
-              value={formData.organizationType}
-              onChange={handleChange}
-              className="w-full px-4 py-3 bg-gray-50/50 border border-gray-200/70 rounded-xl text-base text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 transition-colors"
-            >
-              {selectedRole === 'DESIGNER' ? (
-                <>
-                  <option value="DESIGN_FIRM">Design Firm</option>
-                  <option value="ARCHITECTURE_FIRM">Architecture Firm</option>
-                  <option value="INTERIOR_DESIGN_STUDIO">Interior Design Studio</option>
-                </>
-              ) : (
-                <>
-                  <option value="VENDOR">Vendor/Manufacturer</option>
-                  <option value="SHOWROOM">Showroom</option>
-                  <option value="DISTRIBUTOR">Distributor</option>
-                  <option value="CONTRACTOR">Contractor</option>
-                </>
-              )}
-            </select>
-          </div>
-        </>
-      )}
-
       <div>
         <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1.5">
           Password *
@@ -318,7 +329,7 @@ export default function SignupPage() {
           required
           value={formData.password}
           onChange={handleChange}
-          placeholder="••••••••"
+          placeholder="********"
           autoComplete="new-password"
         />
         <p className="text-xs text-gray-500 mt-1">
@@ -337,7 +348,7 @@ export default function SignupPage() {
           required
           value={formData.confirmPassword}
           onChange={handleChange}
-          placeholder="••••••••"
+          placeholder="********"
           autoComplete="new-password"
           error={formData.password !== formData.confirmPassword && formData.confirmPassword.length > 0}
         />
@@ -366,8 +377,8 @@ export default function SignupPage() {
 
       {message && (
         <div className={`p-3 rounded-md border ${
-          message.includes('Error') || message.includes('Failed') 
-            ? 'bg-red-50 border-red-200 text-red-700' 
+          message.includes('Error') || message.includes('Failed') || message.includes('do not match')
+            ? 'bg-red-50 border-red-200 text-red-700'
             : 'bg-green-50 border-green-200 text-green-700'
         }`}>
           {message}
@@ -375,17 +386,18 @@ export default function SignupPage() {
       )}
 
       <div className="flex space-x-3">
-        {step !== 'role' && (
-          <GlassButton
-            type="button"
-            onClick={() => setStep(step === 'details' ? 'account-type' : 'role')}
-            variant="secondary"
-            size="lg"
-            className="flex-1"
-          >
-            Back
-          </GlassButton>
-        )}
+        <GlassButton
+          type="button"
+          onClick={() => {
+            setStep('role');
+            setMessage('');
+          }}
+          variant="secondary"
+          size="lg"
+          className="flex-1"
+        >
+          Back
+        </GlassButton>
         <GlassButton
           type="submit"
           variant="primary"
@@ -406,23 +418,25 @@ export default function SignupPage() {
         <div className="text-center mb-8">
           <span className="text-2xl font-semibold text-gray-900">Folio</span>
         </div>
-        
+
         <GlassCard variant="strong" padding="xl" rounded="3xl">
           <div className="text-center mb-8">
             <EditorialHeadline size="lg" className="mb-2">
-              Join Folio
+              {step === 'waitlist' ? 'Coming Soon' : 'Join Folio'}
             </EditorialHeadline>
-            <p className="text-gray-600">
-              Create your account to get started
-            </p>
+            {step !== 'waitlist' && (
+              <p className="text-gray-600">
+                Create your account to get started
+              </p>
+            )}
           </div>
-          
+
           <div className="space-y-6">
             {step === 'role' && renderRoleSelection()}
-            {step === 'account-type' && renderAccountTypeSelection()}
             {step === 'details' && renderDetailsForm()}
+            {step === 'waitlist' && renderWaitlist()}
           </div>
-          
+
           {step === 'role' && (
             <>
               <GlassDivider className="my-6" />
@@ -435,7 +449,7 @@ export default function SignupPage() {
             </>
           )}
         </GlassCard>
-        
+
         <p className="text-center text-sm text-gray-500 mt-8">
           By creating an account, you agree to our{" "}
           <a href="/terms" className="underline hover:text-gray-700">Terms</a>
@@ -445,4 +459,4 @@ export default function SignupPage() {
       </div>
     </div>
   );
-} 
+}

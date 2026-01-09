@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 /**
  * API route to re-upload images from client-side (browser can access Facebook CDN)
  * POST /api/projects/[id]/images/reupload-client

@@ -1,6 +1,17 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient, EventType } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import { uploadDataUrlToSupabase, buildObjectPath } from '@/lib/uploadToSupabase';
+
+// Define EventType locally since it may not be in Prisma schema yet
+const EventType = {
+  FESTIVAL: 'FESTIVAL',
+  SHOWROOM: 'SHOWROOM',
+  EXHIBITION: 'EXHIBITION',
+  TALK: 'TALK',
+  WORKSHOP: 'WORKSHOP',
+  NETWORKING: 'NETWORKING',
+  OTHER: 'OTHER',
+} as const;
 import { requireAdmin } from '@/lib/requireAdmin';
 import { rateLimit } from '@/lib/rateLimit';
 import { FestivalInput } from '@/lib/validators';
@@ -87,12 +98,12 @@ const MAX_BYTES = 10 * 1024 * 1024;
 // Helper to get columns that actually exist in the events table
 async function getExistingEventColumns(): Promise<Set<string>> {
   try {
-    const columns = await prisma.$queryRawUnsafe<Array<{ column_name: string }>>(`
-      SELECT column_name 
-      FROM information_schema.columns 
-      WHERE table_name = 'events' 
+    const columns = await prisma.$queryRawUnsafe(`
+      SELECT column_name
+      FROM information_schema.columns
+      WHERE table_name = 'events'
       ORDER BY column_name;
-    `);
+    `) as Array<{ column_name: string }>;
     return new Set(columns.map(col => col.column_name));
   } catch (error) {
     console.error('Failed to query database schema:', error);
@@ -156,7 +167,12 @@ function estimateBytesFromDataUrl(d: string) {
 
 export async function POST(req: Request) {
   try {
-    rateLimit('admin:' + (req.headers.get('x-forwarded-for') ?? 'local'));
+    rateLimit({
+      userId: req.headers.get('x-forwarded-for') ?? 'local',
+      scope: 'admin:festivals',
+      limit: 100,
+      windowMs: 60000
+    });
     const admin = await requireAdmin();
 
     const payload = await parseFestivalRequest(req);
@@ -284,7 +300,7 @@ export async function POST(req: Request) {
       ) RETURNING id, title, "imageUrl"
     `;
     
-    const festival = await prisma.$queryRawUnsafe<Array<{ id: string; title: string; imageUrl: string | null }>>(
+    const festival = await prisma.$queryRawUnsafe(
       insertQuery,
       id,
       filteredData.title,
@@ -298,8 +314,8 @@ export async function POST(req: Request) {
       eventTypesArray,
       filteredData.isApproved,
       filteredData.isPublic
-    );
-    
+    ) as Array<{ id: string; title: string; imageUrl: string | null }>;
+
     const createdFestival = festival[0];
 
     return NextResponse.json({ ok: true, id: createdFestival.id, title: createdFestival.title, imageUrl: createdFestival.imageUrl }, { status: 201 });
