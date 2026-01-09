@@ -402,7 +402,7 @@ export default function DesignerBoardRoom({
                     alt={selection.productName || "Product"}
                     fill
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
-                    className="object-cover"
+                    className="object-contain bg-neutral-100"
                     loading="lazy"
                   />
                   <div className="absolute inset-0 z-10 pointer-events-none bg-gradient-to-t from-black/60 via-black/10 to-transparent" />

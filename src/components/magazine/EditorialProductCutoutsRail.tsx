@@ -2,9 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import clsx from "clsx";
 import { type MagazineProduct } from "@/lib/magazine/getMagazineData";
-import { getProductDisplayImage, hasProductCutout } from "@/lib/products/getProductDisplayImage";
+import { getProductDisplayImage } from "@/lib/products/getProductDisplayImage";
 
 interface Props {
   products: MagazineProduct[];
@@ -51,8 +50,7 @@ export default function EditorialProductCutoutsRail({ products }: Props) {
           {displayProducts.map((product) => {
             const productHref = `/products/${product.id}`;
             // NOTE: 2D cutouts disabled due to corrupted purple images from SAM3 pipeline
-            // When pipeline is fixed, set use2DCutout: true to re-enable
-            const hasCutout = false; // hasProductCutout(product) - disabled
+            // When pipeline is fixed, set use2DCutout: true to re-enable cutout display
             const imageUrl = getProductDisplayImage(product, {
               use2DCutout: false,
               placeholder: '', // Return empty string so fallback gradient shows
@@ -74,12 +72,7 @@ export default function EditorialProductCutoutsRail({ products }: Props) {
                       alt={product.name}
                       fill
                       sizes="(max-width: 768px) 140px, 180px"
-                      className={clsx(
-                        "object-contain p-2",
-                        hasCutout 
-                          ? "filter contrast-110 saturate-95 drop-shadow-[0_4px_12px_rgba(0,0,0,0.22)]"
-                          : "object-cover"
-                      )}
+                      className="object-contain p-2"
                     />
                   ) : (
                     <div className="w-full h-full bg-gradient-to-br from-neutral-100 to-neutral-200" />
