@@ -46,6 +46,13 @@ export interface MagazineMosaicItem {
   isEditorial?: boolean; // true for Editor's Picks, false for For You
   projectTitle?: string; // Project title for routing decisions
   postSlug?: string | null; // Post slug for routing to published articles
+  // Badge information (from editorial placement)
+  badge?: {
+    type: string; // BadgeType enum value
+    earnedAt?: Date | null;
+  } | null;
+  // Engagement weight for sorting
+  weight?: number;
   // add fields as needed for mosaic layout
 }
 
@@ -75,6 +82,18 @@ export async function getMagazineData(
       heroAssetId: true,
       excerpt: true,
       expandedBlocks: true,
+      // Include editorial placement for badge display
+      editorialPlacement: {
+        select: {
+          id: true,
+          badgeEarned: true,
+          badgeType: true,
+          rotatedToFeedAt: true,
+          windowViews: true,
+          windowSaves: true,
+          windowEngagementScore: true,
+        },
+      },
       project: {
         select: {
           id: true,
@@ -286,6 +305,20 @@ export async function getMagazineData(
       const title =
         blocks?.lead?.title ?? blocks?.lead?.kicker ?? post.project?.title ?? "Untitled Project";
 
+      // Extract badge info from placement if available
+      const placement = post.editorialPlacement;
+      const badge = placement?.badgeEarned && placement?.badgeType
+        ? {
+            type: placement.badgeType,
+            earnedAt: placement.rotatedToFeedAt ?? null,
+          }
+        : null;
+
+      // Calculate weight based on engagement (if available)
+      const engagementScore = placement?.windowEngagementScore ?? 0;
+      const baseWeight = badge ? 20 : 10; // Badge bonus
+      const weight = baseWeight + engagementScore * 0.1;
+
       return {
         id: post.project!.id, // Use project ID for linking
         type: "project" as const,
@@ -295,9 +328,12 @@ export async function getMagazineData(
         isEditorial: true, // TODO: Determine based on editorial scoring/curation
         projectTitle: post.project?.title ?? undefined,
         postSlug: post.slug ?? null,
+        badge,
+        weight,
       };
     })
-    .filter((item) => item.imageUrl); // Only include items with images
+    .filter((item) => item.imageUrl) // Only include items with images
+    .sort((a, b) => (b.weight ?? 0) - (a.weight ?? 0)); // Sort by weight
 
   return {
     edition,

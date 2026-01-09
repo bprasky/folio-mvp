@@ -9,12 +9,14 @@
 // - Glass card styling (rounded-2xl, bg-white/80 backdrop-blur-lg)
 // - Fills left-to-right naturally
 // - Tight spacing matching festivals page
+// - Badge display for content with earned badges
 
 import Image from "next/image";
 import Link from "next/link";
 import { useMemo } from "react";
 import clsx from "clsx";
 import { type MagazineMosaicItem } from "@/lib/magazine/getMagazineData";
+import { BadgeIcon, type BadgeType } from "./BadgeStack";
 
 interface Props {
   items: MagazineMosaicItem[];
@@ -24,9 +26,15 @@ type Size = "L" | "M" | "S";
 
 // Score items for size assignment (editorial items get priority)
 function score(item: MagazineMosaicItem): number {
+  // Use weight from getMagazineData if available
+  if (item.weight) {
+    return item.weight;
+  }
+  // Fallback to basic scoring
   const editorial = item.isEditorial ? 50 : 0;
   const recent = item.publishedAt ? 20 : 0;
-  return editorial + recent;
+  const badge = item.badge ? 30 : 0;
+  return editorial + recent + badge;
 }
 
 // Assign sizes to items (similar to FlowMosaic)
@@ -149,6 +157,15 @@ export default function MagazineMosaicGrid({ items }: Props) {
                 )}
                 <div className="absolute inset-0 z-10 pointer-events-none bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
               </div>
+
+              {/* Badge display - top left */}
+              {item.badge && (
+                <div className="absolute top-2 left-2 z-20 pointer-events-none">
+                  <div className="inline-flex items-center gap-1 rounded-full bg-white/90 backdrop-blur-sm px-2 py-1 shadow-sm">
+                    <BadgeIcon type={item.badge.type as BadgeType} size="sm" />
+                  </div>
+                </div>
+              )}
 
               {/* Content overlay */}
               <div className="relative z-20 pointer-events-none flex h-full items-end p-3">

@@ -19,20 +19,31 @@
 // - Navigation: Currently /feed in Navigation.tsx line 48, label "Home"
 
 import MagazinePage from "@/components/magazine/MagazinePage";
+import type { MagazineFilter } from "@/components/magazine/FilterTabs";
 
 // Force dynamic rendering to prevent caching of product data
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
+const VALID_FILTERS: MagazineFilter[] = ["all", "projects", "features"];
+
 interface MagazinePageProps {
-  searchParams?: {
+  searchParams?: Promise<{
     edition?: string;
-  };
+    filter?: string;
+  }>;
 }
 
 export default async function Page({ searchParams }: MagazinePageProps) {
-  const edition = searchParams?.edition || "for-you";
+  const params = await searchParams;
+  const edition = params?.edition || "for-you";
 
-  return <MagazinePage editionSlug={edition} />;
+  // Validate and parse filter
+  const filterParam = params?.filter ?? "all";
+  const filter: MagazineFilter = VALID_FILTERS.includes(filterParam as MagazineFilter)
+    ? (filterParam as MagazineFilter)
+    : "all";
+
+  return <MagazinePage editionSlug={edition} filter={filter} />;
 }
 

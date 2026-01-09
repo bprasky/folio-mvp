@@ -863,8 +863,62 @@ model ProjectPost {
   createdAt            DateTime              @default(now())
   updatedAt            DateTime              @updatedAt
   editorialAssignments EditorialAssignment[]
+  editorialPlacement   EditorialPlacement?
 
   @@map("project_posts")
+}
+
+// ============================================================
+// EDITORIAL PLACEMENT - Above the Fold Management
+// ============================================================
+
+enum BadgeType {
+  EDITORS_PICK
+  TRENDING
+  FEATURED
+  RISING_STAR
+  STAFF_FAVORITE
+}
+
+model EditorialPlacement {
+  id                  String    @id @default(cuid())
+
+  // What's being placed (one of these - for now just projectPost)
+  projectPostId       String?   @unique
+  // featureId is reserved for future Feature content type
+  // featureId         String?   @unique
+
+  // Above fold window timing
+  aboveFoldStartAt    DateTime
+  aboveFoldEndAt      DateTime
+
+  // Engagement tracked during above-fold window
+  windowViews         Int       @default(0)
+  windowSaves         Int       @default(0)
+  windowShares        Int       @default(0)
+  windowEngagementScore Float?
+
+  // Badge earned after rotation out of above fold
+  badgeEarned         Boolean   @default(false)
+  badgeType           BadgeType?
+
+  // Track if content is currently above fold or has rotated to feed
+  isAboveFold         Boolean   @default(true)
+  rotatedToFeedAt     DateTime?
+
+  // High performers get flagged for potential edition inclusion
+  qualifiesForEdition Boolean   @default(false)
+
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  projectPost         ProjectPost? @relation(fields: [projectPostId], references: [id], onDelete: Cascade)
+  // feature           Feature?    @relation(fields: [featureId], references: [id])
+
+  @@index([isAboveFold])
+  @@index([aboveFoldEndAt])
+  @@index([badgeEarned])
+  @@map("editorial_placements")
 }
 
 enum ProjectModuleType {
