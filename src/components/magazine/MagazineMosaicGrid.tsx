@@ -115,11 +115,19 @@ export default function MagazineMosaicGrid({ items }: Props) {
     >
       {sized.map(({ item, size }) => {
         const { colSpan, rowSpan } = spanFor(size, cols);
-        
-        // CRITICAL: Always route published projects to public editorial view (/p/[slug])
-        const href = item.postSlug
-          ? `/p/${item.postSlug}`
-          : `/project/${item.id}`;
+
+        // Route based on content type
+        // Collaborations go to /magazine/collaborations/[slug]
+        // Published projects go to public editorial view (/p/[slug])
+        // Unpublished projects go to /project/[id]
+        let href: string;
+        if (item.type === "collaboration" && item.collaborationSlug) {
+          href = `/magazine/collaborations/${item.collaborationSlug}`;
+        } else if (item.postSlug) {
+          href = `/p/${item.postSlug}`;
+        } else {
+          href = `/project/${item.id}`;
+        }
 
         const timeDisplay = item.publishedAt ? formatTimeAgo(item.publishedAt) : null;
 
@@ -150,6 +158,18 @@ export default function MagazineMosaicGrid({ items }: Props) {
                 <div className="absolute inset-0 z-10 pointer-events-none bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
               </div>
 
+              {/* Collaboration Badge */}
+              {item.isCollaboration && (
+                <div className="absolute top-3 left-3 z-20 pointer-events-none">
+                  <span className="inline-flex items-center gap-1 bg-gradient-to-r from-blue-500 to-purple-500 text-white text-[10px] font-semibold px-2 py-1 rounded-full shadow-sm">
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    Collaboration
+                  </span>
+                </div>
+              )}
+
               {/* Content overlay */}
               <div className="relative z-20 pointer-events-none flex h-full items-end p-3">
                 <div className="text-white w-full">
@@ -160,13 +180,18 @@ export default function MagazineMosaicGrid({ items }: Props) {
                     {item.title}
                   </div>
                   {/* Meta row */}
-                  {timeDisplay && (
-                    <div className="mt-1.5 flex items-center gap-2 text-white/85 text-[11px]">
+                  <div className="mt-1.5 flex items-center gap-2 text-white/85 text-[11px]">
+                    {item.isCollaboration && item.vendorName && item.designerName && (
+                      <span className="inline-flex items-center gap-1 rounded bg-black/45 px-1.5 py-0.5 backdrop-blur-sm">
+                        {item.vendorName} × {item.designerName}
+                      </span>
+                    )}
+                    {timeDisplay && !item.isCollaboration && (
                       <span className="inline-flex items-center gap-1 rounded bg-black/45 px-1.5 py-0.5 backdrop-blur-sm">
                         {timeDisplay}
                       </span>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

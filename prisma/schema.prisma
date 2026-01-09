@@ -71,6 +71,8 @@ model User {
   // Impersonation relations
   adminImpersonations            ImpersonationLog[]    @relation("AdminImpersonations")
   userImpersonations             ImpersonationLog[]    @relation("UserImpersonations")
+  // Collaboration stories (as designer)
+  collaborationStories           CollaborationStory[]  @relation("CollaborationStoryDesigner")
 
   @@map("users")
 }
@@ -455,12 +457,14 @@ model Organization {
   description         String?
   website             String?
   logo                String?
+  vendorTier          VendorTier?          // Subscription tier for vendor organizations
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt
   users               OrganizationUser[]
   designerProjects    Project[]            @relation("DesignerProjects")
   vendorProjects      Project[]            @relation("VendorProjects")
   projectParticipants ProjectParticipant[]
+  collaborationStories CollaborationStory[] @relation("CollaborationStoryVendor")
 
   @@map("organizations")
 }
@@ -1497,4 +1501,87 @@ model WaitlistSignup {
 enum WaitlistType {
   VENDOR
   INDIVIDUAL
+}
+
+// ============================================================
+// COLLABORATION STORIES - Dual-interview content type
+// ============================================================
+
+enum CollaborationStoryStatus {
+  INVITED
+  DECLINED
+  ACCEPTED
+  ROUND1_VENDOR
+  ROUND1_DESIGNER
+  ROUND1_COMPLETE
+  ROUND2_VENDOR
+  ROUND2_DESIGNER
+  ROUND2_COMPLETE
+  ROUND3_VENDOR
+  ROUND3_DESIGNER
+  ROUND3_COMPLETE
+  GENERATING
+  REVIEW
+  VENDOR_APPROVED
+  DESIGNER_APPROVED
+  PUBLISHED
+  ARCHIVED
+}
+
+enum VendorTier {
+  FREE
+  PLUS
+  PRO
+}
+
+model CollaborationStory {
+  id                  String   @id @default(cuid())
+  slug                String   @unique
+
+  // Participants
+  vendorOrgId         String
+  designerUserId      String
+
+  // Status
+  status              CollaborationStoryStatus @default(INVITED)
+
+  // Interview data (JSON for flexibility)
+  vendorRound1        Json?
+  vendorRound2        Json?
+  vendorRound3        Json?
+  designerRound1      Json?
+  designerRound2      Json?
+  designerRound3      Json?
+
+  // Generated content
+  generatedNarrative  Json?
+  finalContent        Json?    // expandedBlocks format
+
+  // Metadata
+  title               String?
+  excerpt             String?
+  heroImageUrl        String?
+
+  // Tagged content
+  taggedProductIds    String[]
+  taggedProjectId     String?  // Optional reference project
+
+  // Timestamps
+  invitedAt           DateTime @default(now())
+  acceptedAt          DateTime?
+  vendorCompletedAt   DateTime?
+  designerCompletedAt DateTime?
+  publishedAt         DateTime?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  // Relations
+  vendorOrg           Organization @relation("CollaborationStoryVendor", fields: [vendorOrgId], references: [id])
+  designer            User @relation("CollaborationStoryDesigner", fields: [designerUserId], references: [id])
+
+  @@index([vendorOrgId])
+  @@index([designerUserId])
+  @@index([status])
+  @@index([publishedAt])
+  @@map("collaboration_stories")
 }
