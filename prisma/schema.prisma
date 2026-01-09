@@ -71,6 +71,8 @@ model User {
   // Impersonation relations
   adminImpersonations            ImpersonationLog[]    @relation("AdminImpersonations")
   userImpersonations             ImpersonationLog[]    @relation("UserImpersonations")
+  // Feature relations
+  authoredFeatures               Feature[]             @relation("FeatureAuthor")
 
   @@map("users")
 }
@@ -131,6 +133,8 @@ model Event {
   subevents                Event[]            @relation("FestivalSubevents")
   impressions              impressions[]
   placements               placements[]
+  // Feature relations
+  features                 Feature[]          @relation("EventFeatures")
 
   @@index([parentFestivalId])
   @@index([city])
@@ -197,6 +201,8 @@ model Project {
   modules              ProjectModule[]
   attributeVerifications AttributeVerification[] @relation("ProjectAttributeVerifications")
   designerDecisions    DesignerDecision[]
+  // Feature relations
+  features               Feature[]          @relation("ProjectFeatures")
 
   @@map("projects")
 }
@@ -461,6 +467,8 @@ model Organization {
   designerProjects    Project[]            @relation("DesignerProjects")
   vendorProjects      Project[]            @relation("VendorProjects")
   projectParticipants ProjectParticipant[]
+  // Feature relations
+  featureContributions FeatureVendorContribution[] @relation("OrgFeatureContributions")
 
   @@map("organizations")
 }
@@ -945,6 +953,8 @@ model EditorialEdition {
   metrics     Json
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+  // Feature relations
+  featureInclusions ContentEditionInclusion[] @relation("EditionFeatures")
 
   @@map("editorial_edition")
 }
@@ -1497,4 +1507,150 @@ model WaitlistSignup {
 enum WaitlistType {
   VENDOR
   INDIVIDUAL
+}
+
+// ============================================================
+// FEATURES - Editorial content from legitimate sources
+// ============================================================
+
+enum FeatureType {
+  FOLIO_FEATURE      // Folio editorial selection
+  EVENT_FEATURE      // From past event
+  COLLABORATION      // From collaboration story
+  PRODUCT_SPOTLIGHT  // Product with traction
+}
+
+enum FeatureBadge {
+  FOLIO_FEATURE      // Highest weight
+  EVENT_FEATURE      // High weight
+  COLLABORATION      // Medium-high weight
+  PRODUCT_SPOTLIGHT  // Medium weight
+}
+
+enum FeatureStatus {
+  DRAFT
+  PENDING_CONTRIBUTIONS
+  REVIEW
+  APPROVED
+  PUBLISHED
+  ABOVE_FOLD
+  ARCHIVED
+}
+
+enum VendorContributionMode {
+  ALL_TAGGED         // All tagged vendors can contribute
+  SELECTED           // Only selected vendors
+  SPONSORS_BOOSTERS  // Only sponsors and boosters
+}
+
+enum VendorContributionQualification {
+  TAGGED             // Products appear, basic attribution
+  SPONSOR            // Financial sponsor - gets mini-interview
+  BOOSTER            // Paying to amplify - same as sponsor
+}
+
+enum ContributionStatus {
+  INVITED
+  DECLINED
+  SUBMITTED
+  APPROVED
+  REJECTED
+}
+
+model Feature {
+  id                      String        @id @default(cuid())
+  slug                    String        @unique
+
+  // Type and source
+  type                    FeatureType
+  sourceEventId           String?
+  sourceProjectId         String?
+  collaborationStoryId    String?       // Future: link to CollaborationStory
+
+  // Ownership
+  primaryAuthorId         String        // Designer or event host
+
+  // Vendor contribution settings (designer controls)
+  allowVendorContributions Boolean      @default(false)
+  vendorContributionMode  VendorContributionMode?
+  allowedVendorIds        String[]      @default([])
+
+  // Content
+  title                   String
+  subtitle                String?
+  excerpt                 String?
+  heroImageUrl            String?
+  content                 Json?         // expandedBlocks format
+
+  // Status
+  status                  FeatureStatus @default(DRAFT)
+  badgeType               FeatureBadge?
+
+  // Above the fold tracking
+  aboveFoldAt             DateTime?
+  aboveFoldExpiresAt      DateTime?
+  aboveFoldViews          Int           @default(0)
+  aboveFoldSaves          Int           @default(0)
+  aboveFoldShares         Int           @default(0)
+
+  // Timestamps
+  publishedAt             DateTime?
+  createdAt               DateTime      @default(now())
+  updatedAt               DateTime      @updatedAt
+
+  // Relations
+  primaryAuthor           User          @relation("FeatureAuthor", fields: [primaryAuthorId], references: [id])
+  sourceEvent             Event?        @relation("EventFeatures", fields: [sourceEventId], references: [id])
+  sourceProject           Project?      @relation("ProjectFeatures", fields: [sourceProjectId], references: [id])
+  vendorContributions     FeatureVendorContribution[]
+  editionInclusions       ContentEditionInclusion[]
+
+  @@index([primaryAuthorId])
+  @@index([sourceEventId])
+  @@index([sourceProjectId])
+  @@index([status])
+  @@index([type])
+  @@map("features")
+}
+
+model FeatureVendorContribution {
+  id                  String        @id @default(cuid())
+  featureId           String
+  vendorOrgId         String
+
+  qualificationType   VendorContributionQualification
+  interviewAnswers    Json?         // Vendor responses to mini-interview
+  status              ContributionStatus @default(INVITED)
+
+  approvedAt          DateTime?
+  rejectedAt          DateTime?
+  rejectionReason     String?
+
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  feature             Feature       @relation(fields: [featureId], references: [id], onDelete: Cascade)
+  vendorOrg           Organization  @relation("OrgFeatureContributions", fields: [vendorOrgId], references: [id])
+
+  @@unique([featureId, vendorOrgId])
+  @@index([featureId])
+  @@index([vendorOrgId])
+  @@index([status])
+  @@map("feature_vendor_contributions")
+}
+
+model ContentEditionInclusion {
+  id                  String        @id @default(cuid())
+  featureId           String
+  editionId           String
+  position            Int           @default(0)
+
+  createdAt           DateTime      @default(now())
+
+  feature             Feature       @relation(fields: [featureId], references: [id], onDelete: Cascade)
+  edition             EditorialEdition @relation("EditionFeatures", fields: [editionId], references: [id], onDelete: Cascade)
+
+  @@unique([featureId, editionId])
+  @@index([editionId])
+  @@map("content_edition_inclusions")
 }
