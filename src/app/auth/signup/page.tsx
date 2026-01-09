@@ -202,63 +202,90 @@ export default function SignupPage() {
   );
 
   const renderWaitlist = () => {
-    const accountTypeLabel = waitlistType === 'VENDOR' ? 'vendor accounts' : 'individual accounts';
+    const isVendor = waitlistType === 'VENDOR';
+    const accountTypeLabel = isVendor ? 'vendor accounts' : 'individual accounts';
     const hasSubmitted = message && !message.includes('Error') && !message.includes('Failed');
+
+    // Type-specific copy
+    const headline = isVendor
+      ? 'Vendor accounts are coming soon.'
+      : "We're building something for you.";
+    const subhead = isVendor
+      ? "Folio is launching with designers first. We're building powerful attribution and analytics tools for vendors—leave your email and we'll notify you when it's ready."
+      : "Folio is starting with designers, but we're creating a way for you to discover great design and connect with professionals. Leave your email and we'll let you know when it's ready.";
+
+    if (hasSubmitted) {
+      return (
+        <div className="space-y-6">
+          <div className="text-center">
+            <h3 className="text-xl font-medium text-gray-900 mb-3">
+              You're on the list.
+            </h3>
+            <p className="text-gray-600">
+              We'll be in touch when {accountTypeLabel} are available.
+            </p>
+          </div>
+
+          <div className="text-center pt-4">
+            <a
+              href="/"
+              className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+            >
+              Back to Folio
+            </a>
+          </div>
+        </div>
+      );
+    }
 
     return (
       <div className="space-y-6">
         <div className="text-center">
           <h3 className="text-xl font-medium text-gray-900 mb-3">
-            We're not quite ready for you yet.
+            {headline}
           </h3>
           <p className="text-gray-600">
-            Folio is launching with designers first. Leave your email and we'll notify you when {accountTypeLabel} are available.
+            {subhead}
           </p>
         </div>
 
-        {hasSubmitted ? (
-          <div className="p-4 bg-green-50 border border-green-200 rounded-xl text-center">
-            <p className="text-green-700 font-medium">{message}</p>
+        <form onSubmit={handleWaitlistSubmit} className="space-y-4">
+          <div>
+            <label htmlFor="waitlistEmail" className="block text-sm font-medium text-gray-700 mb-1.5">
+              Email Address
+            </label>
+            <GlassInput
+              id="waitlistEmail"
+              name="waitlistEmail"
+              type="email"
+              required
+              value={waitlistEmail}
+              onChange={(e) => setWaitlistEmail(e.target.value)}
+              placeholder="you@example.com"
+              autoComplete="email"
+            />
           </div>
-        ) : (
-          <form onSubmit={handleWaitlistSubmit} className="space-y-4">
-            <div>
-              <label htmlFor="waitlistEmail" className="block text-sm font-medium text-gray-700 mb-1.5">
-                Email Address
-              </label>
-              <GlassInput
-                id="waitlistEmail"
-                name="waitlistEmail"
-                type="email"
-                required
-                value={waitlistEmail}
-                onChange={(e) => setWaitlistEmail(e.target.value)}
-                placeholder="you@example.com"
-                autoComplete="email"
-              />
+
+          {message && (
+            <div className={`p-3 rounded-md border ${
+              message.includes('Error') || message.includes('Failed')
+                ? 'bg-red-50 border-red-200 text-red-700'
+                : 'bg-green-50 border-green-200 text-green-700'
+            }`}>
+              {message}
             </div>
+          )}
 
-            {message && (
-              <div className={`p-3 rounded-md border ${
-                message.includes('Error') || message.includes('Failed')
-                  ? 'bg-red-50 border-red-200 text-red-700'
-                  : 'bg-green-50 border-green-200 text-green-700'
-              }`}>
-                {message}
-              </div>
-            )}
-
-            <GlassButton
-              type="submit"
-              variant="primary"
-              size="lg"
-              className="w-full"
-              disabled={isLoading}
-            >
-              {isLoading ? 'Submitting...' : 'Notify Me'}
-            </GlassButton>
-          </form>
-        )}
+          <GlassButton
+            type="submit"
+            variant="primary"
+            size="lg"
+            className="w-full"
+            disabled={isLoading}
+          >
+            {isLoading ? 'Submitting...' : 'Notify Me'}
+          </GlassButton>
+        </form>
 
         <div className="text-center">
           <button
@@ -268,9 +295,9 @@ export default function SignupPage() {
               setMessage('');
               setWaitlistEmail('');
             }}
-            className="text-gray-500 hover:text-gray-700 text-sm"
+            className="text-blue-600 hover:text-blue-700 text-sm"
           >
-            &larr; Back to role selection
+            Actually, I'm a designer
           </button>
         </div>
       </div>
