@@ -4,6 +4,9 @@ export const dynamic = 'force-dynamic';
 // This file contains the logic that creates a Designer account for the first time.
 // New designers are created with PENDING status and redirected to /pending-approval.
 // After admin approval and onboarding completion, they can access the designer dashboard.
+//
+// Phase 1 (Designer Publishing Wedge): Only designers can sign up through this endpoint.
+// Vendors and Individuals are directed to the waitlist instead.
 
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient, AccountStatus } from '@prisma/client';
@@ -15,19 +18,24 @@ const prisma = new PrismaClient();
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { 
-      name, 
-      email, 
-      password, 
-      role, 
-      accountType, 
-      organizationName, 
-      organizationDescription 
+    const {
+      name,
+      email,
+      password,
+      role,
     } = body;
 
     if (!name || !email || !password || !role) {
       return NextResponse.json(
         { error: 'Missing required fields: name, email, password, role' },
+        { status: 400 }
+      );
+    }
+
+    // Phase 1: Only allow DESIGNER signups
+    if (role !== 'DESIGNER') {
+      return NextResponse.json(
+        { error: 'Only designer accounts are currently available. Please join the waitlist for other account types.' },
         { status: 400 }
       );
     }
@@ -47,67 +55,31 @@ export async function POST(request: NextRequest) {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    // Determine account status: PENDING for designers, APPROVED for others
-    const accountStatus = role === 'DESIGNER' ? AccountStatus.PENDING : AccountStatus.APPROVED;
+    // Designers start with PENDING status and need admin approval
+    const accountStatus = AccountStatus.PENDING;
 
-    // Create user
+    // Create user (always personal account in Phase 1)
     const user = await prisma.user.create({
       data: {
         name,
         email,
         passwordHash: hashedPassword,
-        role,
+        role: 'DESIGNER',
         accountStatus,
-        // Set approvedAt for non-designers since they're auto-approved
-        ...(role !== 'DESIGNER' && { approvedAt: new Date() }),
       },
     });
 
-    // If organization account, create organization and link user
-    if (accountType === 'organization' && organizationName) {
-      console.log('Creating organization with:', {
-        name: organizationName,
-        description: organizationDescription,
-        type: role === 'VENDOR' ? 'VENDOR' : 'DESIGN_FIRM',
-        userId: user.id
-      });
-      
-      const organization = await prisma.organization.create({
-        data: {
-          name: organizationName,
-          description: organizationDescription,
-          type: role === 'VENDOR' ? 'VENDOR' : 'DESIGN_FIRM',
-          users: {
-            create: {
-              userId: user.id,
-              role: 'OWNER',
-            },
-          },
-        },
-      });
-      
-      console.log('Created organization:', organization);
-    } else {
-      console.log('Not creating organization. accountType:', accountType, 'organizationName:', organizationName);
+    // Create brand profile and redirect to pending-approval
+    let redirectUrl: string = '/pending-approval';
+    try {
+      await createEmptyDesignerBrandProfile(user.id);
+    } catch (error) {
+      console.error('Error creating brand profile:', error);
+      // Continue even if brand profile creation fails
     }
 
-    // For designers: create brand profile and redirect to pending-approval
-    // The actual onboarding will happen after admin approval
-    let redirectUrl: string | undefined;
-    if (role === 'DESIGNER') {
-      try {
-        await createEmptyDesignerBrandProfile(user.id);
-        // Redirect to pending approval page - they need admin approval first
-        redirectUrl = '/pending-approval';
-      } catch (error) {
-        console.error('Error creating brand profile:', error);
-        // Continue even if brand profile creation fails
-        redirectUrl = '/pending-approval';
-      }
-    }
-
-    // Set session cookie
-    const response = NextResponse.json({
+    // Return success response (no folio-session cookie - only NextAuth session is used)
+    return NextResponse.json({
       user: {
         id: user.id,
         name: user.name,
@@ -116,17 +88,8 @@ export async function POST(request: NextRequest) {
         accountStatus: user.accountStatus,
       },
       message: 'Account created successfully',
-      redirectUrl, // Include redirect URL for designers (pending-approval)
+      redirectUrl,
     });
-
-    response.cookies.set('folio-session', user.id, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7, // 7 days
-    });
-
-    return response;
   } catch (error) {
     console.error('Error signing up:', error);
     return NextResponse.json(
@@ -134,4 +97,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-} 
+}
