@@ -72,6 +72,14 @@ model User {
   adminImpersonations            ImpersonationLog[]    @relation("AdminImpersonations")
   userImpersonations             ImpersonationLog[]    @relation("UserImpersonations")
 
+  // Commerce relations
+  creditAccount                  CreditAccount?
+  purchasedOrders                Order[]               @relation("OrderPurchaser")
+  attributedOrders               Order[]               @relation("OrderAttributedDesigner")
+  repAttributedOrders            Order[]               @relation("OrderAttributedRep")
+  defaultRepForAccounts          VendorTradeAccount[]
+  attributedProductTags          ProductTag[]
+
   @@map("users")
 }
 
@@ -315,6 +323,9 @@ model Product {
   tags             ProductTag[]
   vendor           User?              @relation("VendorProducts", fields: [vendorId], references: [id])
 
+  // Commerce relations
+  orderItems       OrderItem[]
+
   @@map("products")
 }
 
@@ -329,6 +340,11 @@ model ProductTag {
   image     ProjectImage @relation(fields: [imageId], references: [id], onDelete: Cascade)
   product   Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
   selection Selection?   // Selection created from this tag
+
+  // Commerce relations
+  orderItems        OrderItem[]
+  attributedRepId   String?
+  attributedRep     User?           @relation(fields: [attributedRepId], references: [id])
 
   @@map("product_tags")
 }
@@ -461,6 +477,10 @@ model Organization {
   designerProjects    Project[]            @relation("DesignerProjects")
   vendorProjects      Project[]            @relation("VendorProjects")
   projectParticipants ProjectParticipant[]
+
+  // Commerce relations
+  orders              Order[]
+  tradeAccount        VendorTradeAccount?
 
   @@map("organizations")
 }
@@ -1497,4 +1517,204 @@ model WaitlistSignup {
 enum WaitlistType {
   VENDOR
   INDIVIDUAL
+}
+
+// ============================================================
+// COMMERCE & CREDIT SYSTEM - Phase 1B
+// ============================================================
+
+enum CreditTransactionType {
+  EARN
+  REDEEM
+  EXPIRE
+  ADJUSTMENT
+}
+
+enum CreditSourceType {
+  DESIGNER_COMMISSION
+  REP_ATTRIBUTION
+  BONUS
+  ADJUSTMENT
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  COMPLETED
+  CANCELLED
+  RETURNED
+}
+
+enum FulfillmentMethod {
+  TRADE_LOGIN
+  QUOTE
+  REP_MEDIATED
+  API
+  MANUAL
+}
+
+enum TradeAccountType {
+  TRADE_LOGIN
+  QUOTE
+  REP_MEDIATED
+  API
+}
+
+model CreditAccount {
+  id                String    @id @default(cuid())
+  userId            String    @unique
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  availableBalance  Decimal   @default(0) @db.Decimal(12, 2)
+  pendingBalance    Decimal   @default(0) @db.Decimal(12, 2)
+  lifetimeEarned    Decimal   @default(0) @db.Decimal(12, 2)
+  lifetimeRedeemed  Decimal   @default(0) @db.Decimal(12, 2)
+
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  transactions      CreditTransaction[]
+
+  @@map("credit_accounts")
+}
+
+model CreditTransaction {
+  id              String                @id @default(cuid())
+  accountId       String
+  account         CreditAccount         @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  type            CreditTransactionType
+  amount          Decimal               @db.Decimal(12, 2)
+
+  // Source tracking for EARN
+  sourceType      CreditSourceType?
+  sourceOrderId   String?
+  sourceOrder     Order?                @relation("EarnedFromOrder", fields: [sourceOrderId], references: [id])
+
+  // Redemption tracking for REDEEM
+  redemptionOrderId String?
+  redemptionOrder   Order?              @relation("RedeemedOnOrder", fields: [redemptionOrderId], references: [id])
+
+  // Hold period management
+  availableAt     DateTime              @default(now())
+
+  description     String?
+  createdAt       DateTime              @default(now())
+
+  @@index([accountId, createdAt])
+  @@index([availableAt])
+  @@map("credit_transactions")
+}
+
+model Order {
+  id                    String      @id @default(cuid())
+  orderNumber           String      @unique @default(cuid())
+
+  // Purchaser
+  purchaserUserId       String
+  purchaserUser         User        @relation("OrderPurchaser", fields: [purchaserUserId], references: [id])
+
+  // Attribution
+  attributedDesignerId  String?
+  attributedDesigner    User?       @relation("OrderAttributedDesigner", fields: [attributedDesignerId], references: [id])
+  attributedRepId       String?
+  attributedRep         User?       @relation("OrderAttributedRep", fields: [attributedRepId], references: [id])
+
+  // Vendor
+  vendorId              String
+  vendor                Organization @relation(fields: [vendorId], references: [id])
+
+  // Financial (all in USD cents to avoid decimal issues)
+  retailAmountCents     Int
+  tradeAmountCents      Int
+  marginAmountCents     Int
+
+  // Split allocation (cents)
+  folioAmountCents          Int
+  designerCreditAmountCents Int
+  repCreditAmountCents      Int
+  consumerDiscountCents     Int
+
+  // Credit application
+  creditAppliedCents    Int         @default(0)
+  cashPaidCents         Int
+
+  // Fulfillment
+  fulfillmentMethod     FulfillmentMethod
+  vendorOrderRef        String?
+  fulfillmentNotes      String?
+
+  status                OrderStatus @default(PENDING)
+
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+
+  items                 OrderItem[]
+  earnedCredits         CreditTransaction[] @relation("EarnedFromOrder")
+  redeemedCredits       CreditTransaction[] @relation("RedeemedOnOrder")
+
+  @@index([purchaserUserId])
+  @@index([attributedDesignerId])
+  @@index([vendorId])
+  @@index([status])
+  @@map("orders")
+}
+
+model OrderItem {
+  id              String    @id @default(cuid())
+  orderId         String
+  order           Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  productId       String
+  product         Product   @relation(fields: [productId], references: [id])
+
+  quantity        Int       @default(1)
+  retailPriceCents Int
+  tradePriceCents  Int
+
+  // Attribution source
+  productTagId    String?
+  productTag      ProductTag? @relation(fields: [productTagId], references: [id])
+
+  createdAt       DateTime  @default(now())
+
+  @@index([orderId])
+  @@index([productId])
+  @@map("order_items")
+}
+
+model VendorTradeAccount {
+  id                String          @id @default(cuid())
+  vendorId          String          @unique
+  vendor            Organization    @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+
+  accountType       TradeAccountType
+
+  // Trade terms
+  discountPercent   Decimal         @db.Decimal(5, 2) // e.g., 20.00 for 20%
+  paymentTerms      String?         // "Net 30", etc.
+
+  // Credentials (store encrypted or use secrets manager)
+  loginUrl          String?
+  credentialsJson   String?         // Encrypted JSON
+
+  // Contact for quote/rep methods
+  contactEmail      String?
+  contactPhone      String?
+  defaultRepId      String?
+  defaultRep        User?           @relation(fields: [defaultRepId], references: [id])
+
+  // Status
+  isActive          Boolean         @default(true)
+  lastVerifiedAt    DateTime?
+
+  notes             String?
+
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@map("vendor_trade_accounts")
 }
