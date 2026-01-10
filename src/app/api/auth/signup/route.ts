@@ -19,10 +19,12 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const {
       name,
-      email,
       password,
       role,
     } = body;
+
+    // Normalize email to lowercase for consistent handling
+    const email = body.email?.trim().toLowerCase();
 
     if (!name || !email || !password || !role) {
       return NextResponse.json(
@@ -39,9 +41,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if user already exists
-    const existingUser = await prisma.user.findUnique({
-      where: { email },
+    // Check if user already exists (case-insensitive)
+    const existingUser = await prisma.user.findFirst({
+      where: {
+        email: {
+          equals: email,
+          mode: 'insensitive'
+        }
+      },
     });
 
     if (existingUser) {
@@ -90,7 +97,13 @@ export async function POST(request: NextRequest) {
       redirectUrl,
     });
   } catch (error) {
-    console.error('Error signing up:', error);
+    // Log full error details for debugging
+    console.error('Error signing up:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      code: (error as any)?.code,
+      meta: (error as any)?.meta,
+      stack: error instanceof Error ? error.stack : undefined,
+    });
 
     // Handle specific Prisma errors
     if (error && typeof error === 'object' && 'code' in error) {
@@ -109,6 +122,14 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(
           { error: 'Unable to connect to database. Please try again later.' },
           { status: 503 }
+        );
+      }
+
+      // Return Prisma error code in development for debugging
+      if (process.env.NODE_ENV === 'development') {
+        return NextResponse.json(
+          { error: `Database error: ${prismaError.code}` },
+          { status: 500 }
         );
       }
     }
