@@ -33,6 +33,7 @@ model User {
   createdAt                      DateTime              @default(now())
   updatedAt                      DateTime              @updatedAt
   role                           Role                  @default(DESIGNER)
+  adminRole                      AdminRole?            // Only set for users with admin privileges
   passwordHash                   String
   // Account approval system
   accountStatus                  AccountStatus         @default(APPROVED)
@@ -628,6 +629,18 @@ enum Role {
   DESIGNER
   HOMEOWNER
   GUEST
+}
+
+// Admin role hierarchy: SUPER_ADMIN > ADMIN > SUPPORT > CURATOR
+// - CURATOR: content management only (feature projects, assign badges, editorial picks)
+// - SUPPORT: read-only access to user data for troubleshooting
+// - ADMIN: curator + support + moderate users, manage site settings
+// - SUPER_ADMIN: full access including managing admin roles, database, billing, security
+enum AdminRole {
+  SUPER_ADMIN
+  ADMIN
+  SUPPORT
+  CURATOR
 }
 
 enum AccountStatus {

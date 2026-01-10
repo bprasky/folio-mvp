@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { hasAdminRole } from '@/lib/adminRoles';
 
 export async function GET(request: NextRequest) {
   try {
@@ -11,13 +12,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Verify user is admin
+    // Verify user has an admin role
     const adminUser = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { role: true },
+      select: { role: true, adminRole: true },
     });
 
-    if (adminUser?.role !== 'ADMIN') {
+    if (!hasAdminRole(adminUser?.adminRole)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -59,6 +60,7 @@ export async function GET(request: NextRequest) {
         email: true,
         profileImage: true,
         role: true,
+        adminRole: true,
         accountStatus: true,
         createdAt: true,
         updatedAt: true,

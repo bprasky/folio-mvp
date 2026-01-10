@@ -168,8 +168,20 @@ export function canDesignerClaimVisit(user: any, visit: any): boolean {
 
 /**
  * Check if a user role can access admin features
+ * @deprecated Use canAccessAdminPanel from @/lib/adminRoles instead for more granular control
  */
 export function canAccessAdmin(role?: string | null): boolean {
   const normalizedRole = normalizeRole(role);
   return normalizedRole === 'ADMIN';
 }
+
+// Re-export admin role utilities for convenience
+export {
+  hasAdminRole,
+  hasMinimumAdminRole,
+  canManageAdminRoles,
+  canAccessAdminPanel,
+  AdminPermissions,
+  getAdminRoleLabel,
+  type AdminRole,
+} from './adminRoles';

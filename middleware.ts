@@ -5,6 +5,9 @@ import { getToken } from 'next-auth/jwt';
 // Routes that require designer approval
 const DESIGNER_ROUTES = ['/designer'];
 
+// Routes that require any admin role
+const ADMIN_ROUTES = ['/admin'];
+
 // Routes that should not be redirected (even for pending/rejected users)
 const EXEMPT_ROUTES = [
   '/pending-approval',
@@ -16,11 +19,47 @@ const EXEMPT_ROUTES = [
   '/favicon.ico',
 ];
 
+// Valid admin roles (must match AdminRole enum in Prisma schema)
+const VALID_ADMIN_ROLES = ['SUPER_ADMIN', 'ADMIN', 'SUPPORT', 'CURATOR'];
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Skip exempt routes
   if (EXEMPT_ROUTES.some((route) => pathname.startsWith(route))) {
+    return NextResponse.next();
+  }
+
+  // Check if this is an admin route
+  const isAdminRoute = ADMIN_ROUTES.some((route) =>
+    pathname.startsWith(route)
+  );
+
+  if (isAdminRoute) {
+    // Get the token/session
+    const token = await getToken({
+      req: request,
+      secret: process.env.NEXTAUTH_SECRET,
+    });
+
+    // If not authenticated, redirect to sign in
+    if (!token) {
+      const signInUrl = new URL('/auth/signin', request.url);
+      signInUrl.searchParams.set('callbackUrl', pathname);
+      return NextResponse.redirect(signInUrl);
+    }
+
+    // Check for admin role - user must have a valid adminRole
+    const adminRole = token.adminRole as string | undefined;
+    const hasAdminAccess = adminRole && VALID_ADMIN_ROLES.includes(adminRole);
+
+    if (!hasAdminAccess) {
+      // Redirect non-admin users to homepage with error
+      const homeUrl = new URL('/', request.url);
+      homeUrl.searchParams.set('error', 'admin_access_required');
+      return NextResponse.redirect(homeUrl);
+    }
+
     return NextResponse.next();
   }
 
