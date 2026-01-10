@@ -72,6 +72,12 @@ model User {
   adminImpersonations            ImpersonationLog[]    @relation("AdminImpersonations")
   userImpersonations             ImpersonationLog[]    @relation("UserImpersonations")
 
+  // Commerce & Credit relations
+  creditAccount                  CreditAccount?
+  purchaserOrders                Order[]               @relation("PurchaserOrders")
+  attributedDesignerOrders       Order[]               @relation("AttributedDesignerOrders")
+  attributedRepOrders            Order[]               @relation("AttributedRepOrders")
+
   @@map("users")
 }
 
@@ -198,6 +204,9 @@ model Project {
   attributeVerifications AttributeVerification[] @relation("ProjectAttributeVerifications")
   designerDecisions    DesignerDecision[]
 
+  // Commerce relations
+  orders               Order[]
+
   @@map("projects")
 }
 
@@ -314,6 +323,9 @@ model Product {
   folderProducts   FolderProduct[]
   tags             ProductTag[]
   vendor           User?              @relation("VendorProducts", fields: [vendorId], references: [id])
+
+  // Commerce relations
+  orderItems       OrderItem[]
 
   @@map("products")
 }
@@ -461,6 +473,10 @@ model Organization {
   designerProjects    Project[]            @relation("DesignerProjects")
   vendorProjects      Project[]            @relation("VendorProjects")
   projectParticipants ProjectParticipant[]
+
+  // Commerce & Credit relations
+  vendorOrders        Order[]              @relation("VendorOrders")
+  tradeAccounts       VendorTradeAccount[]
 
   @@map("organizations")
 }
@@ -1497,4 +1513,245 @@ model WaitlistSignup {
 enum WaitlistType {
   VENDOR
   INDIVIDUAL
+}
+
+// ============================================================
+// COMMERCE & CREDIT SYSTEM
+// Trade discount arbitrage and platform credit economy
+// ============================================================
+
+enum CreditTransactionType {
+  EARN          // Credit earned from commissions
+  REDEEM        // Credit spent on purchases
+  EXPIRE        // Credit expired (if applicable)
+  ADJUSTMENT    // Manual adjustment by admin
+}
+
+enum OrderStatus {
+  PENDING       // Order created, awaiting processing
+  CONFIRMED     // Order confirmed by vendor
+  PROCESSING    // Order being fulfilled
+  SHIPPED       // Order shipped
+  DELIVERED     // Order delivered
+  CANCELLED     // Order cancelled
+  RETURNED      // Order returned
+}
+
+enum FulfillmentMethod {
+  TRADE_LOGIN   // Folio logs into vendor trade portal
+  QUOTE         // Quote generation flow
+  REP_MEDIATED  // Rep-mediated orders
+  API           // Direct API integration
+}
+
+enum TradeAccountType {
+  LOGIN         // Folio logs into trade portal
+  QUOTE         // Quote generation flow
+  REP           // Rep-mediated orders
+  API           // Direct API integration
+}
+
+// Credit balance tracking for users (designers and reps)
+model CreditAccount {
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  availableBalance Decimal  @default(0) @db.Decimal(12, 2) // Spendable now
+  pendingBalance   Decimal  @default(0) @db.Decimal(12, 2) // In hold period
+  lifetimeEarned   Decimal  @default(0) @db.Decimal(12, 2) // Total ever earned
+  lifetimeRedeemed Decimal  @default(0) @db.Decimal(12, 2) // Total ever spent
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  transactions     CreditTransaction[]
+
+  @@index([userId])
+  @@map("credit_accounts")
+}
+
+// Individual credit transactions (earn, spend, expire, adjust)
+model CreditTransaction {
+  id          String                @id @default(cuid())
+  accountId   String
+  account     CreditAccount         @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  type        CreditTransactionType
+  amount      Decimal               @db.Decimal(12, 2) // Positive for earn, negative for redeem
+
+  // Source tracking for EARN transactions
+  sourceType  String?               // DESIGNER_COMMISSION, REP_ATTRIBUTION, BONUS, YIELD
+  sourceOrderId String?             // Link to originating order
+  sourceOrder Order?                @relation("SourceCreditTransactions", fields: [sourceOrderId], references: [id], onDelete: SetNull)
+
+  // Redemption tracking for REDEEM transactions
+  redemptionOrderId String?         // Link to order where credit was spent
+  redemptionOrder   Order?          @relation("RedemptionCreditTransactions", fields: [redemptionOrderId], references: [id], onDelete: SetNull)
+
+  // Hold period management (30-day window)
+  availableAt DateTime              // When this becomes spendable
+  processedAt DateTime?             // When credit was released or expired
+
+  description String?
+  metadata    Json?                 // Additional context
+
+  createdAt   DateTime              @default(now())
+
+  @@index([accountId])
+  @@index([type])
+  @@index([availableAt])
+  @@index([sourceOrderId])
+  @@index([redemptionOrderId])
+  @@map("credit_transactions")
+}
+
+// Commerce order tracking
+model Order {
+  id                    String            @id @default(cuid())
+
+  // Parties
+  purchaserUserId       String            // Designer or Individual placing order
+  purchaserUser         User              @relation("PurchaserOrders", fields: [purchaserUserId], references: [id])
+
+  // Vendor
+  vendorOrgId           String?           // Vendor organization
+  vendorOrg             Organization?     @relation("VendorOrders", fields: [vendorOrgId], references: [id])
+
+  // Attribution - who gets credit
+  attributedDesignerId  String?           // Designer whose tag led to purchase
+  attributedDesigner    User?             @relation("AttributedDesignerOrders", fields: [attributedDesignerId], references: [id])
+  attributedRepId       String?           // Rep credited on the tag
+  attributedRep         User?             @relation("AttributedRepOrders", fields: [attributedRepId], references: [id])
+  attributedProductTagId String?          // The specific tag that drove this
+
+  // Financial (all in cents for precision)
+  retailAmountCents     Int               // What consumer/client would pay retail
+  tradeAmountCents      Int               // What Folio pays vendor
+  marginAmountCents     Int               // retailAmountCents - tradeAmountCents
+
+  // Split allocation (in cents)
+  folioAmountCents      Int               // Folio's portion
+  designerCreditCents   Int               @default(0) // Designer's credit earned
+  repCreditCents        Int               @default(0) // Rep's credit earned
+  consumerDiscountCents Int               @default(0) // Savings passed to consumer
+
+  // Credit application
+  creditAppliedCents    Int               @default(0) // Credit redeemed on this order
+  cashPaidCents         Int               // Actual cash collected
+
+  // Trade account used
+  tradeAccountId        String?
+  tradeAccount          VendorTradeAccount? @relation(fields: [tradeAccountId], references: [id])
+
+  // Fulfillment
+  fulfillmentMethod     FulfillmentMethod
+  vendorOrderRef        String?           // Vendor's order reference
+  trackingNumber        String?
+  trackingUrl           String?
+
+  // Status
+  status                OrderStatus       @default(PENDING)
+
+  // Project context (optional)
+  projectId             String?
+  project               Project?          @relation(fields: [projectId], references: [id])
+
+  // Notes
+  notes                 String?
+  internalNotes         String?           // Admin-only notes
+
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+  confirmedAt           DateTime?
+  shippedAt             DateTime?
+  deliveredAt           DateTime?
+  cancelledAt           DateTime?
+
+  // Relations
+  items                 OrderItem[]
+  sourceCreditTxns      CreditTransaction[] @relation("SourceCreditTransactions")
+  redemptionCreditTxns  CreditTransaction[] @relation("RedemptionCreditTransactions")
+
+  @@index([purchaserUserId])
+  @@index([attributedDesignerId])
+  @@index([attributedRepId])
+  @@index([vendorOrgId])
+  @@index([status])
+  @@index([projectId])
+  @@index([createdAt])
+  @@map("orders")
+}
+
+// Individual items within an order
+model OrderItem {
+  id              String   @id @default(cuid())
+  orderId         String
+  order           Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  productId       String
+  product         Product  @relation(fields: [productId], references: [id])
+
+  quantity        Int
+  retailPriceCents Int     // Per unit retail price
+  tradePriceCents  Int     // Per unit trade price
+
+  // Product details snapshot (in case product changes)
+  productName     String
+  productSku      String?
+  colorFinish     String?
+
+  // Attribution inheritance
+  productTagId    String?  // Tag that sourced this item
+
+  createdAt       DateTime @default(now())
+
+  @@index([orderId])
+  @@index([productId])
+  @@map("order_items")
+}
+
+// Vendor trade account configuration (admin-managed)
+model VendorTradeAccount {
+  id              String           @id @default(cuid())
+  vendorOrgId     String
+  vendorOrg       Organization     @relation(fields: [vendorOrgId], references: [id], onDelete: Cascade)
+
+  // Account identification
+  accountName     String           // Display name for this account
+  accountType     TradeAccountType
+
+  // Credentials (encrypted in practice via application layer)
+  loginUrl        String?
+  username        String?          // Encrypted
+  password        String?          // Encrypted
+  apiKey          String?          // Encrypted
+  apiEndpoint     String?
+
+  // Terms
+  discountPercent Decimal          @db.Decimal(5, 2) // e.g., 20.00 for 20%
+  paymentTerms    String?          // Net 30, etc.
+  minOrderCents   Int?             // Minimum order value
+  maxOrderCents   Int?             // Maximum order value
+
+  // Rep contact (for REP type accounts)
+  repName         String?
+  repEmail        String?
+  repPhone        String?
+
+  // Status
+  isActive        Boolean          @default(true)
+  lastVerifiedAt  DateTime?
+  verificationStatus String?       // VERIFIED, PENDING, FAILED
+  verificationNotes  String?
+
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  orders          Order[]
+
+  @@unique([vendorOrgId, accountName])
+  @@index([vendorOrgId])
+  @@index([isActive])
+  @@map("vendor_trade_accounts")
 }
