@@ -9,11 +9,10 @@ export const dynamic = 'force-dynamic';
 // Vendors and Individuals are directed to the waitlist instead.
 
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient, AccountStatus } from '@prisma/client';
+import { AccountStatus } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import { createEmptyDesignerBrandProfile } from '@/lib/server/designerBrandProfile';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/prisma';
 
 export async function POST(request: NextRequest) {
   try {
@@ -92,8 +91,30 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error signing up:', error);
+
+    // Handle specific Prisma errors
+    if (error && typeof error === 'object' && 'code' in error) {
+      const prismaError = error as { code: string; meta?: { target?: string[] } };
+
+      // Unique constraint violation (e.g., email already exists)
+      if (prismaError.code === 'P2002') {
+        return NextResponse.json(
+          { error: 'An account with this email already exists' },
+          { status: 409 }
+        );
+      }
+
+      // Database connection error
+      if (prismaError.code === 'P1001' || prismaError.code === 'P1002') {
+        return NextResponse.json(
+          { error: 'Unable to connect to database. Please try again later.' },
+          { status: 503 }
+        );
+      }
+    }
+
     return NextResponse.json(
-      { error: 'Failed to create account' },
+      { error: 'Failed to create account. Please try again.' },
       { status: 500 }
     );
   }
