@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { FaUser, FaEnvelope, FaMapMarkerAlt, FaGlobe, FaInstagram, FaLinkedin, FaSave, FaArrowLeft } from 'react-icons/fa';
 import Link from 'next/link';
+import OrgMemberships from '@/components/profile/OrgMemberships';
 
 interface UserProfile {
   id: string;
@@ -346,6 +347,13 @@ export default function ProfilePage() {
             )}
           </div>
         </div>
+
+        {/* Organizations Section */}
+        {profile?.id && (
+          <div className="bg-white rounded-lg shadow-sm mt-6 p-6">
+            <OrgMemberships userId={profile.id} />
+          </div>
+        )}
       </div>
     </div>
   );

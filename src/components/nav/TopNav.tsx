@@ -21,6 +21,7 @@ export default function TopNav() {
           <Link href="/discover">Discover</Link>
           <Link href="/editorials">Editorials</Link>
           <Link href="/designers">Designers</Link>
+          <Link href="/professionals" className="text-neutral-500 hover:text-neutral-700">Professionals</Link>
         </nav>
       </div>
       <div className="flex items-center gap-3">
