@@ -2,7 +2,9 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
-export type UserRole = 'homeowner' | 'designer' | 'vendor' | 'student' | 'admin';
+// Individual-First Architecture: 'individual' is the base user type
+// 'homeowner' is deprecated but kept for backwards compatibility
+export type UserRole = 'individual' | 'homeowner' | 'designer' | 'vendor' | 'student' | 'admin';
 
 interface RoleContextType {
   role: UserRole;
@@ -19,7 +21,7 @@ interface RoleProviderProps {
 }
 
 export function RoleProvider({ children }: RoleProviderProps) {
-  const [role, setRoleState] = useState<UserRole>('homeowner');
+  const [role, setRoleState] = useState<UserRole>('individual');
   const [isLoading, setIsLoading] = useState(true);
   const [activeProfileId, setActiveProfileIdState] = useState<string>('');
 
@@ -27,8 +29,10 @@ export function RoleProvider({ children }: RoleProviderProps) {
   useEffect(() => {
     const savedRole = localStorage.getItem('userRole') as UserRole;
     const savedProfileId = localStorage.getItem('activeProfileId') || '';
-    if (savedRole && ['homeowner', 'designer', 'vendor', 'student', 'admin'].includes(savedRole)) {
-      setRoleState(savedRole);
+    if (savedRole && ['individual', 'homeowner', 'designer', 'vendor', 'student', 'admin'].includes(savedRole)) {
+      // Migrate 'homeowner' to 'individual' for existing users
+      const normalizedRole = savedRole === 'homeowner' ? 'individual' : savedRole;
+      setRoleState(normalizedRole as UserRole);
     }
     setActiveProfileIdState(savedProfileId);
     setIsLoading(false);

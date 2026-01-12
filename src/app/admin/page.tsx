@@ -163,6 +163,13 @@ export default function AdminDashboard() {
               color="hover:bg-red-50"
             />
             <QuickActionCard
+              title="Organizations"
+              description="Manage orgs, verification status, and sales notes"
+              href="/admin/organizations"
+              icon="🏢"
+              color="hover:bg-teal-50"
+            />
+            <QuickActionCard
               title="Export Data"
               description="Export events, users, and analytics data"
               href="/admin/export"

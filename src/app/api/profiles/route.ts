@@ -10,18 +10,21 @@ export async function GET(request: NextRequest) {
     const url = new URL(request.url);
     const role = url.searchParams.get('role');
     
-    if (!role || !['designer', 'vendor', 'homeowner'].includes(role)) {
+    // Individual-First Architecture: Accept both 'individual' and deprecated 'homeowner'
+    if (!role || !['designer', 'vendor', 'individual', 'homeowner'].includes(role)) {
       return NextResponse.json(
-        { error: 'Valid role parameter is required (designer, vendor, homeowner)' },
+        { error: 'Valid role parameter is required (designer, vendor, individual)' },
         { status: 400 }
       );
     }
-    
+
     // Map role parameter to enum values
-    const roleMap: { [key: string]: 'DESIGNER' | 'VENDOR' | 'HOMEOWNER' } = {
+    // Note: 'homeowner' is deprecated, use 'individual' instead
+    const roleMap: { [key: string]: 'DESIGNER' | 'VENDOR' | 'INDIVIDUAL' } = {
       'designer': 'DESIGNER',
-      'vendor': 'VENDOR', 
-      'homeowner': 'HOMEOWNER'
+      'vendor': 'VENDOR',
+      'individual': 'INDIVIDUAL',
+      'homeowner': 'INDIVIDUAL'  // Deprecated, maps to INDIVIDUAL
     };
     
     // Load profiles from database
@@ -99,7 +102,8 @@ export async function GET(request: NextRequest) {
             followers: profile.followers
           }
         };
-      } else if (role === 'HOMEOWNER') {
+      } else if (role === 'individual' || role === 'homeowner') {
+        // Individual-First Architecture: INDIVIDUAL is the base user type
         return {
           ...base,
           budgetRange: profile.budgetRange,
@@ -127,18 +131,21 @@ export async function POST(request: NextRequest) {
   try {
     const { role, ...profileData } = await request.json();
     
-    if (!role || !['designer', 'vendor', 'homeowner'].includes(role)) {
+    // Individual-First Architecture: Accept both 'individual' and deprecated 'homeowner'
+    if (!role || !['designer', 'vendor', 'individual', 'homeowner'].includes(role)) {
       return NextResponse.json(
-        { error: 'Valid role is required (designer, vendor, homeowner)' },
+        { error: 'Valid role is required (designer, vendor, individual)' },
         { status: 400 }
       );
     }
-    
+
     // Map role parameter to enum values
-    const roleMap: { [key: string]: 'DESIGNER' | 'VENDOR' | 'HOMEOWNER' } = {
+    // Note: 'homeowner' is deprecated, use 'individual' instead
+    const roleMap: { [key: string]: 'DESIGNER' | 'VENDOR' | 'INDIVIDUAL' } = {
       'designer': 'DESIGNER',
-      'vendor': 'VENDOR', 
-      'homeowner': 'HOMEOWNER'
+      'vendor': 'VENDOR',
+      'individual': 'INDIVIDUAL',
+      'homeowner': 'INDIVIDUAL'  // Deprecated, maps to INDIVIDUAL
     };
     
     // Prepare base profile data
@@ -170,7 +177,8 @@ export async function POST(request: NextRequest) {
         profileImage: profileData.logo || profileData.profileImage || `https://source.unsplash.com/random/200x200?company,logo`,
         followers: Math.floor(Math.random() * 500) + 50
       };
-    } else if (role === 'homeowner') {
+    } else if (role === 'individual' || role === 'homeowner') {
+      // Individual-First Architecture: INDIVIDUAL is the base user type
       newProfileData = {
         ...newProfileData,
         location: profileData.location || 'City, State',

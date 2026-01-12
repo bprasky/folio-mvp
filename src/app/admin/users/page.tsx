@@ -52,11 +52,13 @@ const statusColors: Record<string, 'warning' | 'success' | 'error' | 'default'> 
   REJECTED: 'error',
 };
 
+// Individual-First Architecture: INDIVIDUAL is the base user type
 const roleColors: Record<string, 'info' | 'success' | 'default' | 'warning'> = {
   ADMIN: 'warning',
   DESIGNER: 'info',
   VENDOR: 'success',
-  HOMEOWNER: 'default',
+  INDIVIDUAL: 'default',
+  HOMEOWNER: 'default',  // Deprecated, kept for backwards compatibility
   GUEST: 'default',
 };
 
