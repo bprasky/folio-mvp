@@ -68,3 +68,13 @@ export function navItemsForRole(rawRole?: string): NavLink[] {
   ];
 }
 
+/**
+ * Secondary navigation items (shown in footer or secondary nav)
+ * Includes Professionals link for all users
+ */
+export function secondaryNavItems(): NavLink[] {
+  return [
+    { href: '/professionals', label: 'For Professionals' },
+  ];
+}
+

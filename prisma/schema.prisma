@@ -71,6 +71,8 @@ model User {
   // Impersonation relations
   adminImpersonations            ImpersonationLog[]    @relation("AdminImpersonations")
   userImpersonations             ImpersonationLog[]    @relation("UserImpersonations")
+  // Phase 2: Org join requests
+  orgJoinRequests                OrgJoinRequest[]
 
   @@map("users")
 }
@@ -457,11 +459,33 @@ model Organization {
   logo                String?
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt
+
+  // Phase 2: Organization tier and verification
+  status              OrgStatus            @default(UNCLAIMED)
+  address             String?              // Required for creation in Phase 2
+  phone               String?              // Required for creation in Phase 2
+
+  // Verification fields (populated during claim/upgrade)
+  businessLicense     String?              // URL to uploaded license
+  bankAccountInfo     Json?                // Encrypted payout info for Professional tier
+  verifiedAt          DateTime?
+  verifiedBy          String?              // Admin user ID who verified
+
+  // Sales tracking (for outreach to unclaimed orgs)
+  createdById         String?              // User who created the org
+  salesNotes          String?
+  salesContactedAt    DateTime?
+
+  // Relations
   users               OrganizationUser[]
   designerProjects    Project[]            @relation("DesignerProjects")
   vendorProjects      Project[]            @relation("VendorProjects")
   projectParticipants ProjectParticipant[]
+  joinRequests        OrgJoinRequest[]
 
+  @@index([status])
+  @@index([type])
+  @@index([createdById])
   @@map("organizations")
 }
 
@@ -472,11 +496,36 @@ model OrganizationUser {
   role           OrgUserRole  @default(MEMBER)
   isActive       Boolean      @default(true)
   joinedAt       DateTime     @default(now())
+
+  // Phase 2: Display preferences
+  showOnProfile  Boolean      @default(true)  // Whether to show this org on user's profile
+
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, organizationId])
+  @@index([userId])
+  @@index([organizationId])
   @@map("organization_users")
+}
+
+// Phase 2: Join requests for organizations
+model OrgJoinRequest {
+  id             String              @id @default(uuid())
+  userId         String
+  organizationId String
+  status         OrgJoinRequestStatus @default(PENDING)
+  message        String?             // Optional message from requester
+  reviewedBy     String?             // Admin/owner who reviewed
+  reviewedAt     DateTime?
+  createdAt      DateTime            @default(now())
+
+  user           User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization   Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, organizationId])
+  @@index([organizationId, status])
+  @@map("org_join_requests")
 }
 
 model Quote {
@@ -644,12 +693,26 @@ enum OrgType {
   CONTRACTOR
 }
 
+// Phase 2: Organization tier status for feature gating
+enum OrgStatus {
+  UNCLAIMED     // Created but not verified - directory only
+  CLAIMED       // Basic verification done - free tier
+  PROFESSIONAL  // Paid tier - full features (affiliate, image gen, client connect)
+}
+
 enum OrgUserRole {
   OWNER
   ADMIN
   MANAGER
   MEMBER
   VIEWER
+}
+
+// Phase 2: Status for org join requests
+enum OrgJoinRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 enum EventType {
