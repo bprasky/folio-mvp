@@ -99,21 +99,26 @@ export default function SignupPage() {
 
     try {
       // Create the user via API route (hardcoded as PERSONAL account type)
+      const requestBody = {
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        role: 'DESIGNER',
+        accountType: 'personal',
+      };
+      console.log('[Signup] Sending request with body:', { ...requestBody, password: '[REDACTED]' });
+
       const response = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          name: formData.name,
-          email: formData.email,
-          password: formData.password,
-          role: 'DESIGNER',
-          accountType: 'personal',
-        }),
+        body: JSON.stringify(requestBody),
       });
 
+      console.log('[Signup] Response status:', response.status);
       const data = await response.json();
+      console.log('[Signup] Response data:', data);
 
       if (response.ok) {
         setMessage('Account created successfully! Signing you in...');

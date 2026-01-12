@@ -16,8 +16,10 @@ import { createEmptyDesignerBrandProfile } from '@/lib/server/designerBrandProfi
 const prisma = new PrismaClient();
 
 export async function POST(request: NextRequest) {
+  console.log('[Signup API] Request received');
   try {
     const body = await request.json();
+    console.log('[Signup API] Request body:', { ...body, password: '[REDACTED]' });
     const {
       name,
       email,
@@ -41,11 +43,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if user already exists
+    console.log('[Signup API] Checking for existing user with email:', email);
     const existingUser = await prisma.user.findUnique({
       where: { email },
     });
 
     if (existingUser) {
+      console.log('[Signup API] User already exists with email:', email);
       return NextResponse.json(
         { error: 'User with this email already exists' },
         { status: 409 }
@@ -53,10 +57,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Hash password
+    console.log('[Signup API] Hashing password...');
     const hashedPassword = await bcrypt.hash(password, 12);
 
     // Designers start with PENDING status and need admin approval
     const accountStatus = AccountStatus.PENDING;
+    console.log('[Signup API] Creating user with status:', accountStatus);
 
     // Create user (always personal account in Phase 1)
     const user = await prisma.user.create({
@@ -68,6 +74,7 @@ export async function POST(request: NextRequest) {
         accountStatus,
       },
     });
+    console.log('[Signup API] User created successfully with ID:', user.id);
 
     // Create brand profile and redirect to pending-approval
     let redirectUrl: string = '/pending-approval';
@@ -91,9 +98,18 @@ export async function POST(request: NextRequest) {
       redirectUrl,
     });
   } catch (error) {
-    console.error('Error signing up:', error);
+    console.error('[Signup API] Error signing up:', error);
+    console.error('[Signup API] Error name:', error instanceof Error ? error.name : 'Unknown');
+    console.error('[Signup API] Error message:', error instanceof Error ? error.message : String(error));
+    console.error('[Signup API] Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+
+    // Return more detailed error in development
+    const errorMessage = process.env.NODE_ENV === 'development' && error instanceof Error
+      ? `Failed to create account: ${error.message}`
+      : 'Failed to create account';
+
     return NextResponse.json(
-      { error: 'Failed to create account' },
+      { error: errorMessage },
       { status: 500 }
     );
   }
