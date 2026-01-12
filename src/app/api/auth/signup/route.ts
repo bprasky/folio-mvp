@@ -1,48 +1,47 @@
 export const dynamic = 'force-dynamic';
 
-// NOTE (designer onboarding):
-// This file contains the logic that creates a Designer account for the first time.
-// New designers are created with PENDING status and redirected to /pending-approval.
-// After admin approval and onboarding completion, they can access the designer dashboard.
+// NOTE (Individual-First Architecture):
+// All users sign up as INDIVIDUAL with APPROVED status.
+// They can browse, save products, and follow designers immediately.
+// Designer/vendor capabilities are unlocked through org membership (Phase 2).
 //
-// Phase 1 (Designer Publishing Wedge): Only designers can sign up through this endpoint.
-// Vendors and Individuals are directed to the waitlist instead.
+// Individual capabilities:
+// - Create and manage personal boards
+// - Save products/projects from tags
+// - Browse and follow designers/orgs
+// - Toggle board visibility on profile
+//
+// Individual restrictions:
+// - Cannot upload projects
+// - Cannot access designer tools
+// - No org-level features until org membership exists
 
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient, AccountStatus } from '@prisma/client';
 import bcrypt from 'bcryptjs';
-import { createEmptyDesignerBrandProfile } from '@/lib/server/designerBrandProfile';
 
 const prisma = new PrismaClient();
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const {
-      name,
-      email,
-      password,
-      role,
-    } = body;
+    const { name, email, password } = body;
 
-    if (!name || !email || !password || !role) {
+    if (!name || !email || !password) {
       return NextResponse.json(
-        { error: 'Missing required fields: name, email, password, role' },
+        { error: 'Missing required fields: name, email, password' },
         { status: 400 }
       );
     }
 
-    // Phase 1: Only allow DESIGNER signups
-    if (role !== 'DESIGNER') {
-      return NextResponse.json(
-        { error: 'Only designer accounts are currently available. Please join the waitlist for other account types.' },
-        { status: 400 }
-      );
-    }
-
-    // Check if user already exists
-    const existingUser = await prisma.user.findUnique({
-      where: { email },
+    // Check if user already exists (case-insensitive)
+    const existingUser = await prisma.user.findFirst({
+      where: {
+        email: {
+          equals: email.toLowerCase().trim(),
+          mode: 'insensitive'
+        }
+      },
     });
 
     if (existingUser) {
@@ -55,30 +54,22 @@ export async function POST(request: NextRequest) {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    // Designers start with PENDING status and need admin approval
-    const accountStatus = AccountStatus.PENDING;
-
-    // Create user (always personal account in Phase 1)
+    // Individual-First: All users start as INDIVIDUAL with APPROVED status
+    // No admin approval needed - they can browse immediately
     const user = await prisma.user.create({
       data: {
-        name,
-        email,
+        name: name.trim(),
+        email: email.toLowerCase().trim(),
         passwordHash: hashedPassword,
-        role: 'DESIGNER',
-        accountStatus,
+        role: 'INDIVIDUAL',
+        accountStatus: AccountStatus.APPROVED,
       },
     });
 
-    // Create brand profile and redirect to pending-approval
-    let redirectUrl: string = '/pending-approval';
-    try {
-      await createEmptyDesignerBrandProfile(user.id);
-    } catch (error) {
-      console.error('Error creating brand profile:', error);
-      // Continue even if brand profile creation fails
-    }
+    // Redirect to home - individuals can browse immediately
+    const redirectUrl = '/';
 
-    // Return success response (no folio-session cookie - only NextAuth session is used)
+    // Return success response
     return NextResponse.json({
       user: {
         id: user.id,

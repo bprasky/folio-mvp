@@ -32,7 +32,7 @@ model User {
   views                          Int                   @default(0)
   createdAt                      DateTime              @default(now())
   updatedAt                      DateTime              @updatedAt
-  role                           Role                  @default(DESIGNER)
+  role                           Role                  @default(INDIVIDUAL)
   passwordHash                   String
   // Account approval system
   accountStatus                  AccountStatus         @default(APPROVED)
@@ -626,7 +626,7 @@ enum Role {
   ADMIN
   VENDOR
   DESIGNER
-  HOMEOWNER
+  INDIVIDUAL  // Base user type - all new signups start here (Individual-First Architecture)
   GUEST
 }
 

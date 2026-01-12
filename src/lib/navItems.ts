@@ -3,12 +3,17 @@ import { normalizeRole } from '@/lib/permissions';
 export type NavLink = { href: string; label: string };
 
 /**
- * Phase 1 role navigation mapping
+ * Individual-First Architecture - Role Navigation Mapping
+ *
+ * Individual (base user type):
+ *  - Discover          -> /discover  (browse designers, projects)
+ *  - Events            -> /events
+ *  - Boards            -> /boards    (personal inspiration boards)
  *
  * Vendor:
  *  - Events (landing)  -> /events
  *  - Products          -> /vendor/products
- *  - Dashboard         -> /vendor/dashboard   (unified dashboard with Events & Projects tabs)
+ *  - Dashboard         -> /vendor/dashboard
  *
  * Designer:
  *  - Events (landing)  -> /events
@@ -47,8 +52,18 @@ export function navItemsForRole(rawRole?: string): NavLink[] {
     ];
   }
 
-  // Fallback for other roles (Homeowner/Student): keep it minimal or mirror Designer's top-levels
+  // Individual (and deprecated HOMEOWNER): browse-focused navigation
+  if (role === 'INDIVIDUAL' || role === 'HOMEOWNER') {
+    return [
+      { href: '/discover', label: 'Discover' },
+      { href: '/events', label: 'Events' },
+      { href: '/boards', label: 'Boards' },
+    ];
+  }
+
+  // Fallback for guests: minimal navigation
   return [
+    { href: '/discover', label: 'Discover' },
     { href: '/events', label: 'Events' },
   ];
 }

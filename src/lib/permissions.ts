@@ -40,27 +40,66 @@ export function normalizeRole(role?: string | null): string {
 }
 
 // Create target determination
-export function getCreateTarget(role?: string): { href: string; label: string } | string {
+// Individual-First Architecture: Individuals cannot create projects (that requires org membership)
+export function getCreateTarget(role?: string): { href: string; label: string } | null {
   const normalizedRole = normalizeRole(role);
-  
+
   switch (normalizedRole) {
-    case 'HOMEOWNER':
-      return { href: '/projects/new', label: 'Create' };
     case 'DESIGNER':
       return { href: '/designer/create', label: 'Create' };
     case 'VENDOR':
       return { href: '/products/new', label: 'Add Product' };
     case 'ADMIN':
       return { href: '/admin', label: 'Admin' };
+    case 'INDIVIDUAL':
+    case 'HOMEOWNER':  // Deprecated, but handle for backwards compatibility
+      // Individuals can create boards, but not projects
+      return { href: '/boards/new', label: 'Create Board' };
     default:
-      return { href: '/projects/new', label: 'Create' };
+      return null;  // Guests cannot create anything
   }
 }
 
 // Project creation permission check
+// Individual-First Architecture: Only designers and vendors can create projects
+// Individuals need org membership to unlock project creation
 export function canCreateProject(role?: string): boolean {
   const normalizedRole = normalizeRole(role);
-  return ['HOMEOWNER', 'DESIGNER', 'VENDOR', 'ADMIN'].includes(normalizedRole);
+  return ['DESIGNER', 'VENDOR', 'ADMIN'].includes(normalizedRole);
+}
+
+// Board creation permission check
+// Individual-First Architecture: All authenticated users can create boards
+export function canCreateBoard(role?: string): boolean {
+  const normalizedRole = normalizeRole(role);
+  return ['INDIVIDUAL', 'HOMEOWNER', 'DESIGNER', 'VENDOR', 'ADMIN'].includes(normalizedRole);
+}
+
+// Check if user can browse and save products
+// Individual-First Architecture: All authenticated users can browse and save
+export function canBrowseAndSave(role?: string): boolean {
+  const normalizedRole = normalizeRole(role);
+  return normalizedRole !== 'GUEST';
+}
+
+// Check if user can follow designers/orgs
+// Individual-First Architecture: All authenticated users can follow
+export function canFollow(role?: string): boolean {
+  const normalizedRole = normalizeRole(role);
+  return normalizedRole !== 'GUEST';
+}
+
+// Check if user can access designer tools (meeting notes, selections, etc.)
+// Individual-First Architecture: Only designers (via org membership) can access these
+export function canAccessDesignerTools(role?: string): boolean {
+  const normalizedRole = normalizeRole(role);
+  return ['DESIGNER', 'ADMIN'].includes(normalizedRole);
+}
+
+// Check if user is an individual (base user type)
+export function isIndividual(role?: string): boolean {
+  const normalizedRole = normalizeRole(role);
+  return normalizedRole === 'INDIVIDUAL' || normalizedRole === 'HOMEOWNER';
 }
 
 // Vendor-specific permission helpers
