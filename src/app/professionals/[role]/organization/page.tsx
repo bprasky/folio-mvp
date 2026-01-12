@@ -84,11 +84,6 @@ export default function OrganizationPage() {
   // Debounced search query
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
-  // Map role to org type
-  const getOrgTypeFilter = () => {
-    return role === 'designer' ? 'DESIGN_FIRM' : 'VENDOR';
-  };
-
   // Get org type options based on role
   const getOrgTypeOptions = () => {
     if (role === 'designer') {
@@ -105,16 +100,6 @@ export default function OrganizationPage() {
     role === 'designer' ? 'DESIGN_FIRM' : 'VENDOR'
   );
 
-  // Auto-search as user types
-  useEffect(() => {
-    if (debouncedSearchQuery.trim().length >= 2) {
-      handleSearch();
-    } else if (debouncedSearchQuery.trim().length === 0) {
-      setSearchResults([]);
-      setHasSearched(false);
-    }
-  }, [debouncedSearchQuery]);
-
   // Redirect if not authenticated
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -129,30 +114,41 @@ export default function OrganizationPage() {
     }
   }, [isValidRole, router, status]);
 
-  const handleSearch = async () => {
-    if (!debouncedSearchQuery.trim()) return;
+  // Auto-search as user types
+  useEffect(() => {
+    const performSearch = async () => {
+      if (!debouncedSearchQuery.trim() || debouncedSearchQuery.trim().length < 2) {
+        if (debouncedSearchQuery.trim().length === 0) {
+          setSearchResults([]);
+          setHasSearched(false);
+        }
+        return;
+      }
 
-    setIsSearching(true);
-    setError('');
-    setHasSearched(true);
+      setIsSearching(true);
+      setError('');
+      setHasSearched(true);
 
-    try {
-      const typeFilter = getOrgTypeFilter();
-      const response = await fetch(
-        `/api/orgs?q=${encodeURIComponent(debouncedSearchQuery)}&type=${typeFilter}`
-      );
+      try {
+        const typeFilter = role === 'designer' ? 'DESIGN_FIRM' : 'VENDOR';
+        const response = await fetch(
+          `/api/orgs?q=${encodeURIComponent(debouncedSearchQuery)}&type=${typeFilter}`
+        );
 
-      if (!response.ok) throw new Error('Search failed');
+        if (!response.ok) throw new Error('Search failed');
 
-      const data = await response.json();
-      setSearchResults(data.orgs || []);
-    } catch (err) {
-      setError('Failed to search organizations');
-      setSearchResults([]);
-    } finally {
-      setIsSearching(false);
-    }
-  };
+        const data = await response.json();
+        setSearchResults(data.orgs || []);
+      } catch (err) {
+        setError('Failed to search organizations');
+        setSearchResults([]);
+      } finally {
+        setIsSearching(false);
+      }
+    };
+
+    performSearch();
+  }, [debouncedSearchQuery, role]);
 
   const handleJoinRequest = async (orgId: string) => {
     setIsSubmitting(true);
