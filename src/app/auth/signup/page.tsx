@@ -52,19 +52,24 @@ export default function SignupPage() {
 
     try {
       // Individual-First: All users created as INDIVIDUAL role
+      const requestBody = {
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+      };
+      console.log('[Signup] Sending request with body:', { ...requestBody, password: '[REDACTED]' });
+
       const response = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          name: formData.name,
-          email: formData.email,
-          password: formData.password,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
+      console.log('[Signup] Response status:', response.status);
       const data = await response.json();
+      console.log('[Signup] Response data:', data);
 
       if (response.ok) {
         setMessage('Account created successfully! Signing you in...');
