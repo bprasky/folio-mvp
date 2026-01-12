@@ -9,11 +9,10 @@ export const dynamic = 'force-dynamic';
 // Vendors and Individuals are directed to the waitlist instead.
 
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient, AccountStatus } from '@prisma/client';
+import { AccountStatus } from '@prisma/client';
 import bcrypt from 'bcryptjs';
+import { prisma } from '@/lib/prisma';
 import { createEmptyDesignerBrandProfile } from '@/lib/server/designerBrandProfile';
-
-const prisma = new PrismaClient();
 
 export async function POST(request: NextRequest) {
   console.log('[Signup API] Request received');
@@ -44,9 +43,16 @@ export async function POST(request: NextRequest) {
 
     // Check if user already exists
     console.log('[Signup API] Checking for existing user with email:', email);
-    const existingUser = await prisma.user.findUnique({
-      where: { email },
-    });
+    let existingUser;
+    try {
+      existingUser = await prisma.user.findUnique({
+        where: { email },
+      });
+      console.log('[Signup API] findUnique completed, existingUser:', existingUser ? 'found' : 'not found');
+    } catch (dbError) {
+      console.error('[Signup API] Database error checking existing user:', dbError);
+      throw new Error(`Database error checking existing user: ${dbError instanceof Error ? dbError.message : String(dbError)}`);
+    }
 
     if (existingUser) {
       console.log('[Signup API] User already exists with email:', email);
@@ -58,23 +64,36 @@ export async function POST(request: NextRequest) {
 
     // Hash password
     console.log('[Signup API] Hashing password...');
-    const hashedPassword = await bcrypt.hash(password, 12);
+    let hashedPassword;
+    try {
+      hashedPassword = await bcrypt.hash(password, 12);
+      console.log('[Signup API] Password hashed successfully');
+    } catch (hashError) {
+      console.error('[Signup API] Error hashing password:', hashError);
+      throw new Error(`Password hashing failed: ${hashError instanceof Error ? hashError.message : String(hashError)}`);
+    }
 
     // Designers start with PENDING status and need admin approval
     const accountStatus = AccountStatus.PENDING;
     console.log('[Signup API] Creating user with status:', accountStatus);
 
     // Create user (always personal account in Phase 1)
-    const user = await prisma.user.create({
-      data: {
-        name,
-        email,
-        passwordHash: hashedPassword,
-        role: 'DESIGNER',
-        accountStatus,
-      },
-    });
-    console.log('[Signup API] User created successfully with ID:', user.id);
+    let user;
+    try {
+      user = await prisma.user.create({
+        data: {
+          name,
+          email,
+          passwordHash: hashedPassword,
+          role: 'DESIGNER',
+          accountStatus,
+        },
+      });
+      console.log('[Signup API] User created successfully with ID:', user.id);
+    } catch (createError) {
+      console.error('[Signup API] Database error creating user:', createError);
+      throw new Error(`Database error creating user: ${createError instanceof Error ? createError.message : String(createError)}`);
+    }
 
     // Create brand profile and redirect to pending-approval
     let redirectUrl: string = '/pending-approval';
