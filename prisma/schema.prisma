@@ -452,9 +452,26 @@ model Organization {
   id                  String               @id @default(uuid())
   name                String
   type                OrgType              @default(DESIGN_FIRM)
+  status              OrgStatus            @default(UNCLAIMED)
   description         String?
   website             String?
   logo                String?
+
+  // Required for creation
+  address             String?
+  phone               String?
+
+  // Verification fields (populated during claim)
+  businessLicense     String?
+  bankAccount         Json?                // Encrypted payout info
+  verifiedAt          DateTime?
+  verifiedBy          String?              // Admin who verified
+
+  // Sales tracking
+  createdBy           String?              // User ID of creator
+  salesNotes          String?
+  salesContactedAt    DateTime?
+
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt
   users               OrganizationUser[]
@@ -462,6 +479,9 @@ model Organization {
   vendorProjects      Project[]            @relation("VendorProjects")
   projectParticipants ProjectParticipant[]
 
+  @@index([status])
+  @@index([type])
+  @@index([createdBy])
   @@map("organizations")
 }
 
@@ -472,11 +492,65 @@ model OrganizationUser {
   role           OrgUserRole  @default(MEMBER)
   isActive       Boolean      @default(true)
   joinedAt       DateTime     @default(now())
+
+  // Display preferences
+  showOnProfile  Boolean      @default(true)
+
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, organizationId])
+  @@index([userId])
+  @@index([organizationId])
   @@map("organization_users")
+}
+
+enum JoinRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model OrgJoinRequest {
+  id             String            @id @default(uuid())
+  userId         String
+  organizationId String
+  status         JoinRequestStatus @default(PENDING)
+  message        String?           // Optional message from requester
+  rejectionNote  String?           // Why request was rejected
+  reviewedBy     String?           // User ID of reviewer
+  createdAt      DateTime          @default(now())
+  reviewedAt     DateTime?
+
+  @@unique([userId, organizationId])
+  @@index([organizationId, status])
+  @@index([userId])
+  @@map("org_join_requests")
+}
+
+enum InviteStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  EXPIRED
+}
+
+model OrgInvite {
+  id             String       @id @default(uuid())
+  organizationId String
+  email          String       // Email of invitee (may not have account yet)
+  role           OrgUserRole  @default(MEMBER)
+  status         InviteStatus @default(PENDING)
+  token          String       @unique @default(uuid())
+  invitedBy      String       // User ID of inviter
+  expiresAt      DateTime
+  createdAt      DateTime     @default(now())
+  acceptedAt     DateTime?
+
+  @@index([organizationId, status])
+  @@index([email])
+  @@index([token])
+  @@map("org_invites")
 }
 
 model Quote {
@@ -642,6 +716,13 @@ enum OrgType {
   MANUFACTURER
   SHOWROOM
   CONTRACTOR
+  DESIGNER  // Maps to spec's DESIGNER type
+}
+
+enum OrgStatus {
+  UNCLAIMED    // Created but not verified
+  CLAIMED      // Basic verification done (free tier)
+  PROFESSIONAL // Paid tier, full features
 }
 
 enum OrgUserRole {

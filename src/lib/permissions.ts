@@ -1,4 +1,160 @@
 import { prisma } from "@/lib/prisma";
+import type { OrgStatus, OrgUserRole, Organization, OrganizationUser } from "@prisma/client";
+
+// ============================================================
+// ORG-BASED PERMISSIONS (Phase 2)
+// These functions derive permissions from org membership
+// ============================================================
+
+export type OrgMembershipWithOrg = OrganizationUser & {
+  organization: Organization;
+};
+
+/**
+ * Get user's org memberships with org details
+ */
+export async function getUserOrgMemberships(userId: string): Promise<OrgMembershipWithOrg[]> {
+  return prisma.organizationUser.findMany({
+    where: { userId, isActive: true },
+    include: { organization: true },
+  });
+}
+
+/**
+ * Check if user has any org membership
+ */
+export function hasOrgMembership(memberships: OrgMembershipWithOrg[]): boolean {
+  return memberships.length > 0;
+}
+
+/**
+ * Check if user belongs to any professional (paid) org
+ */
+export function hasProfessionalOrg(memberships: OrgMembershipWithOrg[]): boolean {
+  return memberships.some(m => m.organization.status === 'PROFESSIONAL');
+}
+
+/**
+ * Check if user belongs to any claimed or professional org
+ */
+export function hasClaimedOrProfessionalOrg(memberships: OrgMembershipWithOrg[]): boolean {
+  return memberships.some(
+    m => m.organization.status === 'CLAIMED' || m.organization.status === 'PROFESSIONAL'
+  );
+}
+
+/**
+ * Check if user can create projects (requires any org membership)
+ */
+export function canCreateProjectWithOrg(memberships: OrgMembershipWithOrg[]): boolean {
+  return hasOrgMembership(memberships);
+}
+
+/**
+ * Check if user can access premium features (professional org only)
+ */
+export function canAccessPremiumFeatures(memberships: OrgMembershipWithOrg[]): boolean {
+  return hasProfessionalOrg(memberships);
+}
+
+/**
+ * Check if user can generate images (professional org only)
+ */
+export function canGenerateImages(memberships: OrgMembershipWithOrg[]): boolean {
+  return hasProfessionalOrg(memberships);
+}
+
+/**
+ * Check if user can connect with clients (professional org only)
+ */
+export function canConnectWithClients(memberships: OrgMembershipWithOrg[]): boolean {
+  return hasProfessionalOrg(memberships);
+}
+
+/**
+ * Check if user can earn affiliate revenue (professional org only)
+ */
+export function canEarnAffiliate(memberships: OrgMembershipWithOrg[]): boolean {
+  return hasProfessionalOrg(memberships);
+}
+
+/**
+ * Check if user is an owner or admin of a specific org
+ */
+export function isOrgAdmin(memberships: OrgMembershipWithOrg[], orgId: string): boolean {
+  const membership = memberships.find(m => m.organizationId === orgId);
+  return membership?.role === 'OWNER' || membership?.role === 'ADMIN';
+}
+
+/**
+ * Check if user is an owner of a specific org
+ */
+export function isOrgOwner(memberships: OrgMembershipWithOrg[], orgId: string): boolean {
+  const membership = memberships.find(m => m.organizationId === orgId);
+  return membership?.role === 'OWNER';
+}
+
+/**
+ * Check if user can manage org members (owner or admin)
+ */
+export function canManageOrgMembers(memberships: OrgMembershipWithOrg[], orgId: string): boolean {
+  return isOrgAdmin(memberships, orgId);
+}
+
+/**
+ * Check if user can update org settings (owner or admin)
+ */
+export function canUpdateOrgSettings(memberships: OrgMembershipWithOrg[], orgId: string): boolean {
+  return isOrgAdmin(memberships, orgId);
+}
+
+/**
+ * Check if user can verify/upgrade org (owner only)
+ */
+export function canVerifyOrg(memberships: OrgMembershipWithOrg[], orgId: string): boolean {
+  return isOrgOwner(memberships, orgId);
+}
+
+/**
+ * Check if user can delete org (owner only, and org must be unclaimed)
+ */
+export function canDeleteOrg(memberships: OrgMembershipWithOrg[], orgId: string): boolean {
+  const membership = memberships.find(m => m.organizationId === orgId);
+  if (membership?.role !== 'OWNER') return false;
+  return membership.organization.status === 'UNCLAIMED';
+}
+
+/**
+ * Get user's highest role across all their orgs
+ */
+export function getHighestOrgRole(memberships: OrgMembershipWithOrg[]): OrgUserRole | null {
+  const roleOrder: OrgUserRole[] = ['OWNER', 'ADMIN', 'MANAGER', 'MEMBER', 'VIEWER'];
+  for (const role of roleOrder) {
+    if (memberships.some(m => m.role === role)) {
+      return role;
+    }
+  }
+  return null;
+}
+
+/**
+ * Get user's professional orgs
+ */
+export function getProfessionalOrgs(memberships: OrgMembershipWithOrg[]): OrgMembershipWithOrg[] {
+  return memberships.filter(m => m.organization.status === 'PROFESSIONAL');
+}
+
+/**
+ * Get orgs where user can perform admin actions
+ */
+export function getAdminOrgs(memberships: OrgMembershipWithOrg[]): OrgMembershipWithOrg[] {
+  return memberships.filter(m => m.role === 'OWNER' || m.role === 'ADMIN');
+}
+
+// ============================================================
+// LEGACY ROLE-BASED PERMISSIONS
+// Keep for backwards compatibility but prefer org-based checks
+// ============================================================
 
 export async function assertProjectAccess(params: {
   projectId: string;
