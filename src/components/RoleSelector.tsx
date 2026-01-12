@@ -2,10 +2,11 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaChevronDown, FaHome, FaPalette, FaStore, FaSpinner, FaGraduationCap, FaCrown } from 'react-icons/fa';
+import { FaChevronDown, FaUser, FaPalette, FaStore, FaSpinner, FaGraduationCap, FaCrown } from 'react-icons/fa';
 import { useRole } from '../contexts/RoleContext';
 
-export type UserRole = 'homeowner' | 'designer' | 'vendor' | 'student' | 'admin';
+// Individual-First Architecture: 'individual' is the base user type
+export type UserRole = 'individual' | 'homeowner' | 'designer' | 'vendor' | 'student' | 'admin';
 
 interface RoleOption {
   value: UserRole;
@@ -17,11 +18,11 @@ interface RoleOption {
 
 const roleOptions: RoleOption[] = [
   {
-    value: 'homeowner',
-    label: 'Homeowner',
-    icon: FaHome,
+    value: 'individual',
+    label: 'Individual',
+    icon: FaUser,
     color: 'bg-blue-500',
-    description: 'Looking for design inspiration'
+    description: 'Browse, save, and follow designers'
   },
   {
     value: 'designer',
