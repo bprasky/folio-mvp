@@ -2,14 +2,12 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getToken } from 'next-auth/jwt';
 
-// Routes that require designer approval
-const DESIGNER_ROUTES = ['/designer'];
-
-// Routes that should not be redirected (even for pending/rejected users)
+// Routes that should not be redirected
 const EXEMPT_ROUTES = [
   '/pending-approval',
   '/application-rejected',
   '/onboarding',
+  '/magazine',
   '/auth',
   '/api',
   '/_next',
@@ -24,15 +22,6 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Check if this is a designer route
-  const isDesignerRoute = DESIGNER_ROUTES.some((route) =>
-    pathname.startsWith(route)
-  );
-
-  if (!isDesignerRoute) {
-    return NextResponse.next();
-  }
-
   // Get the token/session
   const token = await getToken({
     req: request,
@@ -44,26 +33,26 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Only apply these rules to designers
-  if (token.role !== 'DESIGNER') {
-    return NextResponse.next();
-  }
-
-  const accountStatus = token.accountStatus as string;
   const onboardingCompletedAt = token.onboardingCompletedAt;
 
-  // Redirect based on account status
-  if (accountStatus === 'PENDING') {
-    return NextResponse.redirect(new URL('/pending-approval', request.url));
-  }
-
-  if (accountStatus === 'REJECTED') {
-    return NextResponse.redirect(new URL('/application-rejected', request.url));
-  }
-
-  // If approved but hasn't completed onboarding, redirect to onboarding
-  if (accountStatus === 'APPROVED' && !onboardingCompletedAt) {
+  // If user hasn't completed onboarding, redirect to onboarding
+  if (!onboardingCompletedAt && pathname !== '/onboarding') {
     return NextResponse.redirect(new URL('/onboarding', request.url));
+  }
+
+  // Legacy: Only apply PENDING/REJECTED rules to designers
+  // This allows designers from phase 1 to still go through approval
+  if (token.role === 'DESIGNER') {
+    const accountStatus = token.accountStatus as string;
+
+    // Redirect based on account status
+    if (accountStatus === 'PENDING') {
+      return NextResponse.redirect(new URL('/pending-approval', request.url));
+    }
+
+    if (accountStatus === 'REJECTED') {
+      return NextResponse.redirect(new URL('/application-rejected', request.url));
+    }
   }
 
   return NextResponse.next();

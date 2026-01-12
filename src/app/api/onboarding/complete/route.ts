@@ -11,28 +11,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Verify user is a designer and approved
+    // Check if user exists and if onboarding already completed
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { role: true, accountStatus: true, onboardingCompletedAt: true },
+      select: { onboardingCompletedAt: true },
     });
 
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
-    }
-
-    if (user.role !== 'DESIGNER') {
-      return NextResponse.json(
-        { error: 'Only designers need to complete onboarding' },
-        { status: 400 }
-      );
-    }
-
-    if (user.accountStatus !== 'APPROVED') {
-      return NextResponse.json(
-        { error: 'Account must be approved before completing onboarding' },
-        { status: 400 }
-      );
     }
 
     // If already completed, return success

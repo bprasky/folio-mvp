@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { GlassButton } from '@/components/ui/glass';
 import { cn } from '@/lib/utils';
 
-const TOTAL_SCREENS = 5;
+const TOTAL_SCREENS = 2;
 
 // Screen content definitions
 const screens = [
@@ -15,142 +15,46 @@ const screens = [
     headline: 'Welcome to Folio.',
     body: (
       <p className="text-stone-600 leading-relaxed text-lg">
-        You're joining a small group of designers building something new—a
-        professional home for interior design that rewards merit, not marketing
-        budgets.
+        A platform for interior design that connects designers, vendors, and
+        design enthusiasts around the work that matters.
       </p>
     ),
     cta: "Let's go",
   },
   {
     id: 2,
-    headline: 'Publish your best work.',
+    headline: 'Discover. Save. Explore.',
     body: (
       <div className="space-y-4 text-stone-600 leading-relaxed">
         <ul className="space-y-3 text-left">
           <li className="flex items-start gap-3">
             <span className="text-green-600 mt-0.5">&#10003;</span>
             <span>
-              Upload project images — we generate editorial-quality layouts that
-              rival top design publications, in minutes
+              Browse projects from top interior designers
             </span>
           </li>
           <li className="flex items-start gap-3">
             <span className="text-green-600 mt-0.5">&#10003;</span>
             <span>
-              Tag the products you specified — even if the vendor isn't here yet
+              Save products to personal boards
             </span>
           </li>
           <li className="flex items-start gap-3">
             <span className="text-green-600 mt-0.5">&#10003;</span>
             <span>
-              Product saves and likes from other designers elevate your work
-              naturally—merit, not algorithms
+              Follow designers and vendors you love
             </span>
           </li>
           <li className="flex items-start gap-3">
             <span className="text-green-600 mt-0.5">&#10003;</span>
             <span>
-              Build a portfolio that shows your real aesthetic, not just client
-              compromises
+              Get notified about new collections and sales
             </span>
-          </li>
-        </ul>
-        <p className="text-sm text-stone-400 pt-2">
-          Instagram sharing is coming soon—one click, Folio attribution built in.
-        </p>
-      </div>
-    ),
-    cta: 'Next',
-  },
-  {
-    id: 3,
-    headline: "This is just the beginning.",
-    body: (
-      <div className="space-y-4 text-stone-600 leading-relaxed">
-        <ul className="space-y-4 text-left">
-          <li className="flex items-start gap-3">
-            <span className="text-stone-400">&#8594;</span>
-            <span>
-              Your designer fingerprint—Atelier is learning your aesthetic from
-              how you work, not what you fill in
-            </span>
-          </li>
-          <li className="flex items-start gap-3">
-            <span className="text-stone-400">&#8594;</span>
-            <span>
-              Vendor attribution—when brands join, they'll see you've been
-              specifying their products all along
-            </span>
-          </li>
-          <li className="flex items-start gap-3">
-            <span className="text-stone-400">&#8594;</span>
-            <span>AI that drafts moodboards in your style</span>
-          </li>
-          <li className="flex items-start gap-3">
-            <span className="text-stone-400">&#8594;</span>
-            <span>
-              Income from influence you already have but never captured
-            </span>
-          </li>
-        </ul>
-        <p className="text-sm text-stone-400 pt-2">
-          We're building this with you, not for you.
-        </p>
-      </div>
-    ),
-    cta: 'Next',
-  },
-  {
-    id: 4,
-    headline: "Here's the ask.",
-    body: (
-      <div className="space-y-4 text-stone-600 leading-relaxed">
-        <ul className="space-y-3 text-left">
-          <li className="flex items-start gap-3">
-            <span className="text-stone-400">&#8226;</span>
-            <span>Publish 1-2 completed projects</span>
-          </li>
-          <li className="flex items-start gap-3">
-            <span className="text-stone-400">&#8226;</span>
-            <span>
-              Share to Instagram with Folio attribution (when it launches)
-            </span>
-          </li>
-          <li className="flex items-start gap-3">
-            <span className="text-stone-400">&#8226;</span>
-            <span>Tell us what's working and what isn't</span>
-          </li>
-        </ul>
-        <p className="text-stone-500 pt-4 italic">
-          Your feedback shapes what this becomes.
-        </p>
-      </div>
-    ),
-    cta: 'Next',
-  },
-  {
-    id: 5,
-    headline: "You're a founding designer.",
-    body: (
-      <div className="space-y-4 text-stone-600 leading-relaxed">
-        <ul className="space-y-3 text-left">
-          <li className="flex items-start gap-3">
-            <span className="text-stone-400">&#8226;</span>
-            <span>Free premium features during beta and beyond</span>
-          </li>
-          <li className="flex items-start gap-3">
-            <span className="text-stone-400">&#8226;</span>
-            <span>Direct line to product decisions</span>
-          </li>
-          <li className="flex items-start gap-3">
-            <span className="text-stone-400">&#8226;</span>
-            <span>Recognition that lasts—you helped build this</span>
           </li>
         </ul>
       </div>
     ),
-    cta: 'Start creating',
+    cta: 'Start exploring',
   },
 ];
 
@@ -163,21 +67,9 @@ export default function OnboardingPage() {
   useEffect(() => {
     // Check auth and redirect if needed
     if (status === 'authenticated' && session?.user) {
-      if (session.user.role !== 'DESIGNER') {
-        router.replace('/');
-        return;
-      }
-      if (session.user.accountStatus === 'PENDING') {
-        router.replace('/pending-approval');
-        return;
-      }
-      if (session.user.accountStatus === 'REJECTED') {
-        router.replace('/application-rejected');
-        return;
-      }
-      // If already completed onboarding, redirect to designer dashboard
+      // If already completed onboarding, redirect to magazine
       if (session.user.onboardingCompletedAt) {
-        router.replace('/designer');
+        router.replace('/magazine');
         return;
       }
     }
@@ -209,8 +101,8 @@ export default function OnboardingPage() {
           method: 'POST',
         });
         if (response.ok) {
-          // Redirect to create project page with intent
-          router.replace('/designer/create?intent=publish_now&onboard=1');
+          // Redirect to magazine to start exploring
+          router.replace('/magazine');
         } else {
           console.error('Failed to complete onboarding');
           setIsCompleting(false);
