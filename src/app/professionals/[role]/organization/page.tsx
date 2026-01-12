@@ -353,6 +353,7 @@ export default function OrganizationPage() {
                       if (searchQuery.trim()) {
                         setFormData((prev) => ({ ...prev, name: searchQuery.trim() }));
                       }
+                      setError(''); // Clear any search errors
                       setView('create');
                     }}
                     className="w-full flex items-center justify-center gap-3 p-4 text-folio-stone-600 hover:text-folio-ink font-sans border-2 border-dashed border-folio-stone-200 rounded-xl hover:border-folio-stone-300 transition-colors"
@@ -439,12 +440,12 @@ export default function OrganizationPage() {
                         <FaGlobe className="w-4 h-4 text-folio-stone-400" />
                       </div>
                       <input
-                        type="url"
+                        type="text"
                         value={formData.website}
                         onChange={(e) =>
                           setFormData({ ...formData, website: e.target.value })
                         }
-                        placeholder="https://yourwebsite.com"
+                        placeholder="yourwebsite.com"
                         className="w-full pl-11 pr-4 py-3 font-sans bg-folio-stone-100/50 border border-folio-stone-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-folio-stone-300 focus:border-transparent placeholder:text-folio-stone-400"
                       />
                     </div>
