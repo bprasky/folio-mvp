@@ -626,7 +626,7 @@ enum Role {
   ADMIN
   VENDOR
   DESIGNER
-  HOMEOWNER
+  INDIVIDUAL
   GUEST
 }
 
