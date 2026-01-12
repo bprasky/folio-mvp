@@ -18,6 +18,9 @@ import {
   FaShieldAlt,
   FaStar,
   FaCheck,
+  FaRocket,
+  FaPalette,
+  FaStore,
 } from 'react-icons/fa';
 import Link from 'next/link';
 
@@ -402,6 +405,49 @@ export default function ProfilePage() {
             )}
           </div>
         </div>
+
+        {/* Upgrade to Professional CTA - Only for INDIVIDUAL users without orgs */}
+        {profile.role === 'INDIVIDUAL' && orgMemberships.length === 0 && (
+          <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg shadow-lg mt-6 overflow-hidden">
+            <div className="px-6 py-8 sm:px-8 sm:py-10">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
+                <div className="flex-shrink-0">
+                  <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center">
+                    <FaRocket className="w-8 h-8 text-white" />
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-xl font-bold text-white mb-2">
+                    Unlock Professional Features
+                  </h3>
+                  <p className="text-white/90 text-sm mb-4">
+                    Are you a designer or vendor? Join or create an organization to unlock project creation,
+                    image generation, client management, and affiliate earnings.
+                  </p>
+                  <div className="flex flex-wrap gap-4 mb-4">
+                    <div className="flex items-center gap-2 text-white/80 text-sm">
+                      <FaPalette className="w-4 h-4" />
+                      <span>Design Firms</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-white/80 text-sm">
+                      <FaStore className="w-4 h-4" />
+                      <span>Vendors & Manufacturers</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex-shrink-0 w-full sm:w-auto">
+                  <Link
+                    href="/professionals/join"
+                    className="inline-flex items-center justify-center w-full sm:w-auto px-6 py-3 bg-white text-purple-700 font-semibold rounded-lg hover:bg-purple-50 transition-colors shadow-md"
+                  >
+                    Get Started
+                    <FaRocket className="ml-2 w-4 h-4" />
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Organization Memberships */}
         <div className="bg-white rounded-lg shadow-sm mt-6">

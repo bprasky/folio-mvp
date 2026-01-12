@@ -53,11 +53,13 @@ export function navItemsForRole(rawRole?: string): NavLink[] {
   }
 
   // Individual (and deprecated HOMEOWNER): browse-focused navigation
+  // Includes "For Professionals" to help users discover org membership path
   if (role === 'INDIVIDUAL' || role === 'HOMEOWNER') {
     return [
       { href: '/discover', label: 'Discover' },
       { href: '/events', label: 'Events' },
       { href: '/boards', label: 'Boards' },
+      { href: '/professionals', label: 'For Professionals' },
     ];
   }
 
