@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
         logo: true,
         _count: {
           select: {
-            users: { where: { isActive: true } },
+            users: true,
           },
         },
       },
@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ organizations });
   } catch (error) {
-    console.error('Error searching organizations:', error);
+    console.error('[GET /api/orgs/search] Error:', error);
     return NextResponse.json(
       { error: 'Failed to search organizations' },
       { status: 500 }
