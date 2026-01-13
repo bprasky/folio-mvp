@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
     const db = await getPrisma();
     debugInfo.push('5. Prisma client obtained');
 
-    // Simple query first - no orderBy, no _count
+    // Simple query - status column doesn't exist in production DB yet
     debugInfo.push('6. Running simple findMany...');
     const organizations = await db.organization.findMany({
       where,
@@ -68,7 +68,6 @@ export async function GET(request: NextRequest) {
         id: true,
         name: true,
         type: true,
-        status: true,
         website: true,
         address: true,
         logo: true,
@@ -77,9 +76,10 @@ export async function GET(request: NextRequest) {
     });
     debugInfo.push(`7. Query complete, found ${organizations.length} orgs`);
 
-    // Add member count manually to avoid _count issues
+    // Add member count and status (status column missing in prod DB)
     const orgsWithCount = organizations.map((org: any) => ({
       ...org,
+      status: 'UNCLAIMED', // Default until migration is run
       _count: { users: 0 }, // Placeholder for now
     }));
 
