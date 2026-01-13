@@ -14,7 +14,6 @@ import {
   FaSpinner,
   FaPlus,
   FaGlobe,
-  FaMapMarkerAlt,
 } from 'react-icons/fa';
 import { EditorialHeadline } from '@/components/ui/glass';
 
@@ -78,7 +77,6 @@ export default function OrganizationPage() {
   const [formData, setFormData] = useState({
     name: '',
     website: '',
-    city: '',
   });
 
   // Debounced search query
@@ -191,18 +189,17 @@ export default function OrganizationPage() {
           name: formData.name,
           type: selectedOrgType,
           website: formData.website || undefined,
-          address: formData.city || undefined,
         }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to create organization');
+        throw new Error(data.error || data.debug || 'Failed to create organization');
       }
 
-      setCreatedOrg(data.org);
-      setView('success');
+      // Redirect to projects after successful creation
+      router.push('/projects');
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -448,28 +445,6 @@ export default function OrganizationPage() {
                           setFormData({ ...formData, website: e.target.value })
                         }
                         placeholder="yourwebsite.com"
-                        className="w-full pl-11 pr-4 py-3 font-sans bg-folio-stone-100/50 border border-folio-stone-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-folio-stone-300 focus:border-transparent placeholder:text-folio-stone-400"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Location/City (optional) */}
-                  <div>
-                    <label className="block text-sm font-sans font-medium text-folio-stone-700 mb-2">
-                      Location
-                      <span className="text-folio-stone-400 font-normal ml-1">(optional)</span>
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-                        <FaMapMarkerAlt className="w-4 h-4 text-folio-stone-400" />
-                      </div>
-                      <input
-                        type="text"
-                        value={formData.city}
-                        onChange={(e) =>
-                          setFormData({ ...formData, city: e.target.value })
-                        }
-                        placeholder="City, State"
                         className="w-full pl-11 pr-4 py-3 font-sans bg-folio-stone-100/50 border border-folio-stone-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-folio-stone-300 focus:border-transparent placeholder:text-folio-stone-400"
                       />
                     </div>

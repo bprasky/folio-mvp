@@ -83,9 +83,9 @@ export async function GET(request: NextRequest) {
 
 /**
  * POST /api/orgs - Create a new organization
- * Body: { name, type, address, website?, phone, description? }
+ * Body: { name, type, website? }
  *
- * Creates an UNCLAIMED org and makes the creator the OWNER
+ * Creates org with minimal data, adds creator as member
  */
 export async function POST(request: NextRequest) {
   try {
@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { name, type, address, website, phone, description } = body;
+    const { name, type, website } = body;
 
     // Validate required fields - only name is truly required
     if (!name || !name.trim()) {
@@ -116,30 +116,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create org and add creator as OWNER in a transaction
+    // Create org with minimal columns (production DB may be missing columns)
     const org = await prisma.$transaction(async (tx) => {
-      // Create the organization
+      // Create the organization - minimal fields only
       const newOrg = await tx.organization.create({
         data: {
           name: name.trim(),
           type: orgType,
-          status: 'UNCLAIMED',
-          address: address?.trim() || null,
           website: website?.trim() || null,
-          phone: phone?.trim() || null,
-          description: description?.trim() || null,
-          createdById: session.user.id,
         },
       });
 
-      // Add creator as OWNER
+      // Add creator as member - minimal fields only
       await tx.organizationUser.create({
         data: {
           userId: session.user.id,
           organizationId: newOrg.id,
           role: 'OWNER',
-          isActive: true,
-          showOnProfile: true,
         },
       });
 
@@ -161,7 +154,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(
-      { error: 'Failed to create organization' },
+      { error: 'Failed to create organization', debug: error?.message },
       { status: 500 }
     );
   }
