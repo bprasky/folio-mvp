@@ -98,10 +98,10 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { name, type, address, website, phone, description } = body;
 
-    // Validate required fields
-    if (!name || !address || !phone) {
+    // Validate required fields - only name is truly required
+    if (!name || !name.trim()) {
       return NextResponse.json(
-        { error: 'Missing required fields: name, address, phone' },
+        { error: 'Organization name is required' },
         { status: 400 }
       );
     }
@@ -124,9 +124,9 @@ export async function POST(request: NextRequest) {
           name: name.trim(),
           type: orgType,
           status: 'UNCLAIMED',
-          address: address.trim(),
+          address: address?.trim() || null,
           website: website?.trim() || null,
-          phone: phone.trim(),
+          phone: phone?.trim() || null,
           description: description?.trim() || null,
           createdById: session.user.id,
         },
