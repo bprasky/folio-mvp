@@ -4,21 +4,24 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { signOut, useSession } from "next-auth/react";
 import { UserAvatar } from "./UserAvatar";
-import { 
-  ChevronDown, 
+import {
+  ChevronDown,
   Folder,
-  Users, 
-  Settings, 
+  Users,
+  Settings,
   LogOut,
   Layout,
   User as UserIcon,
-  Mail
+  Mail,
+  Headphones
 } from "lucide-react";
+import SupportModal from "../SupportModal";
 import { normalizeRole } from "@/lib/permissions";
 
 export function UserMenu() {
   const { data: session, status } = useSession();
   const [isOpen, setIsOpen] = useState(false);
+  const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Close menu when clicking outside
@@ -205,6 +208,16 @@ export function UserMenu() {
             <button
               onClick={() => {
                 setIsOpen(false);
+                setIsSupportModalOpen(true);
+              }}
+              className="flex w-full items-center gap-3 px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors"
+            >
+              <Headphones className="h-4 w-4" />
+              Support
+            </button>
+            <button
+              onClick={() => {
+                setIsOpen(false);
                 signOut({ redirect: false }).then(() => {
                   window.location.replace("/auth/signin");
                 });
@@ -217,6 +230,12 @@ export function UserMenu() {
           </div>
         </div>
       )}
+
+      {/* Support Modal */}
+      <SupportModal
+        open={isSupportModalOpen}
+        onOpenChange={setIsSupportModalOpen}
+      />
     </div>
   );
 }
