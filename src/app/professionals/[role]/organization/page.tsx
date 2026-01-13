@@ -96,9 +96,12 @@ export default function OrganizationPage() {
     ];
   };
 
-  const [selectedOrgType, setSelectedOrgType] = useState(
-    role === 'designer' ? 'DESIGN_FIRM' : 'VENDOR'
-  );
+  const [selectedOrgType, setSelectedOrgType] = useState('DESIGN_FIRM');
+
+  // Sync org type with role when it becomes available
+  useEffect(() => {
+    setSelectedOrgType(role === 'designer' ? 'DESIGN_FIRM' : 'VENDOR');
+  }, [role]);
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -188,8 +191,7 @@ export default function OrganizationPage() {
           name: formData.name,
           type: selectedOrgType,
           website: formData.website || undefined,
-          address: formData.city || 'To be updated', // API requires this field
-          phone: 'To be updated', // API requires this field
+          address: formData.city || undefined,
         }),
       });
 
