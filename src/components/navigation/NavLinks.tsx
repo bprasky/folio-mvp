@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 const links = [
   { href: "/magazine", label: "Magazine" },
   { href: "/events", label: "Events" },
+  { href: "/professionals", label: "For Professionals" },
 ];
 
 export function NavLinks() {
