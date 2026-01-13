@@ -27,6 +27,10 @@ export type ProjectWithStats = {
   savesByOthers: number;
   phase?: string; // Optional, will be computed client-side
   isEditorialCandidate?: boolean; // Optional, will be computed client-side
+  // Ownership context
+  ownershipContext: 'personal' | 'organization';
+  organizationId?: string | null;
+  organizationName?: string | null;
 };
 
 export async function getMyProjectsWithStats() {
@@ -74,7 +78,7 @@ export async function getMyProjectsWithStats() {
     console.warn('[getMyProjectsWithStats] Participant query failed:', error);
   }
 
-  // Fetch projects first (without nested relations to avoid query issues)
+  // Fetch projects first (with org info for ownership context)
   const projects = await prisma.project.findMany({
     where: {
       OR: orFilters.length > 0 ? orFilters : [{ ownerId: userId }]
@@ -91,6 +95,15 @@ export async function getMyProjectsWithStats() {
       views: true,
       createdAt: true,
       updatedAt: true,
+      designerId: true,
+      ownerId: true,
+      designerOrgId: true,
+      designerOrg: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
     },
     orderBy: [{ updatedAt: 'desc' }],
   });
@@ -182,6 +195,9 @@ export async function getMyProjectsWithStats() {
     const coverImage = projectImages[0];
     const coverUrl = coverImage?.url || null;
 
+    // Determine ownership context
+    const ownershipContext: 'personal' | 'organization' = project.designerOrgId ? 'organization' : 'personal';
+
     return {
       id: project.id,
       title: project.title || 'Untitled Project',
@@ -198,6 +214,9 @@ export async function getMyProjectsWithStats() {
       taggedCount,
       influenceValueUsd,
       savesByOthers: project.saves, // Using saves field as savesByOthers
+      ownershipContext,
+      organizationId: project.designerOrgId,
+      organizationName: project.designerOrg?.name || null,
     };
   });
 
