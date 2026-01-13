@@ -293,13 +293,22 @@ export function UserMenu() {
           {/* Secondary links */}
           <div className="py-2">
             {isDesigner && (
-              <MenuLink
-                href="/designer/directory"
-                icon={<Users className="h-4 w-4" />}
-                onClick={() => setIsOpen(false)}
-              >
-                Directory
-              </MenuLink>
+              <>
+                <MenuLink
+                  href="/projects"
+                  icon={<Folder className="h-4 w-4" />}
+                  onClick={() => setIsOpen(false)}
+                >
+                  My Projects
+                </MenuLink>
+                <MenuLink 
+                  href="/designer/directory" 
+                  icon={<Users className="h-4 w-4" />}
+                  onClick={() => setIsOpen(false)}
+                >
+                  Directory
+                </MenuLink>
+              </>
             )}
 
             {isVendor && (

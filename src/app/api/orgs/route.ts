@@ -6,21 +6,61 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
 
 /**
- * GET /api/orgs - Search organizations
+ * GET /api/orgs - Search organizations or get user's organizations
  * Query params:
+ *   - userId: get organizations for specific user
  *   - q: search query (name)
  *   - type: filter by org type (VENDOR, DESIGN_FIRM, etc.)
- *   - status: filter by status (UNCLAIMED, CLAIMED, PROFESSIONAL)
  */
 export async function GET(request: NextRequest) {
   try {
     const url = new URL(request.url);
+    const userId = url.searchParams.get('userId');
     const query = url.searchParams.get('q');
     const type = url.searchParams.get('type');
-    const status = url.searchParams.get('status');
     const limit = parseInt(url.searchParams.get('limit') || '20');
     const offset = parseInt(url.searchParams.get('offset') || '0');
 
+    // If userId is provided, get user's organizations via membership
+    if (userId) {
+      // Use raw SQL to avoid missing column issues
+      const memberships = await prisma.$queryRaw<any[]>`
+        SELECT
+          ou.id as "membershipId",
+          ou."userId",
+          ou."organizationId",
+          ou.role,
+          ou."joinedAt",
+          o.id,
+          o.name,
+          o.type,
+          o.website
+        FROM organization_users ou
+        JOIN organizations o ON ou."organizationId" = o.id
+        WHERE ou."userId" = ${userId}
+        ORDER BY ou."joinedAt" DESC
+        LIMIT ${limit}
+      `;
+
+      // Transform to expected format
+      const organizations = memberships.map((m: any) => ({
+        id: m.id,
+        name: m.name,
+        type: m.type,
+        status: 'UNCLAIMED', // Default since column may not exist
+        website: m.website,
+        users: [{
+          id: m.membershipId,
+          userId: m.userId,
+          role: m.role,
+          showOnProfile: true, // Default since column may not exist
+        }]
+      }));
+
+      return NextResponse.json({ organizations });
+    }
+
+    // Regular search - use minimal columns
     const where: any = {};
 
     if (query) {
@@ -34,40 +74,31 @@ export async function GET(request: NextRequest) {
       where.type = type.toUpperCase();
     }
 
-    if (status) {
-      where.status = status.toUpperCase();
-    }
+    // Only select columns that exist in prod
+    const orgs = await prisma.organization.findMany({
+      where,
+      select: {
+        id: true,
+        name: true,
+        type: true,
+        website: true,
+      },
+      orderBy: { name: 'asc' },
+      take: limit,
+      skip: offset,
+    });
 
-    const [orgs, total] = await Promise.all([
-      prisma.organization.findMany({
-        where,
-        select: {
-          id: true,
-          name: true,
-          type: true,
-          status: true,
-          description: true,
-          website: true,
-          logo: true,
-          address: true,
-          phone: true,
-          createdAt: true,
-          _count: {
-            select: {
-              users: true,
-              designerProjects: true,
-            }
-          }
-        },
-        orderBy: { name: 'asc' },
-        take: limit,
-        skip: offset,
-      }),
-      prisma.organization.count({ where })
-    ]);
+    // Add defaults for missing columns
+    const orgsWithDefaults = orgs.map((org: any) => ({
+      ...org,
+      status: 'UNCLAIMED',
+      _count: { users: 0, designerProjects: 0 },
+    }));
+
+    const total = await prisma.organization.count({ where });
 
     return NextResponse.json({
-      orgs,
+      orgs: orgsWithDefaults,
       total,
       limit,
       offset,
