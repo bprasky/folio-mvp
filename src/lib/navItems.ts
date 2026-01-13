@@ -63,10 +63,11 @@ export function navItemsForRole(rawRole?: string): NavLink[] {
     ];
   }
 
-  // Fallback for guests: minimal navigation
+  // Fallback for guests: minimal navigation with professionals link for discoverability
   return [
     { href: '/discover', label: 'Discover' },
     { href: '/events', label: 'Events' },
+    { href: '/professionals', label: 'For Professionals' },
   ];
 }
 
