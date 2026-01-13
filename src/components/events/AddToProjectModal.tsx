@@ -1,12 +1,27 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import {
+  X,
+  Clock,
+  User,
+  Building2,
+  ChevronDown,
+  ChevronRight,
+  Check,
+  FolderPlus,
+  Loader2
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface Project {
   id: string;
   title: string;
+  ownershipContext?: 'personal' | 'organization';
+  organizationName?: string | null;
+  updatedAt?: string;
 }
 
 interface AddToProjectModalProps {
@@ -17,6 +32,10 @@ interface AddToProjectModalProps {
   eventTitle?: string;
   onSuccess?: (projectId: string) => void;
 }
+
+// Local storage key for recent projects
+const RECENT_PROJECTS_KEY = 'folio-recent-projects';
+const MAX_RECENT_PROJECTS = 5;
 
 export default function AddToProjectModal({
   isOpen,
@@ -30,11 +49,61 @@ export default function AddToProjectModal({
   const router = useRouter();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(false);
-  const [selectedProjectId, setSelectedProjectId] = useState<string>('');
+  const [saving, setSaving] = useState(false);
+  const [selectedProjectIds, setSelectedProjectIds] = useState<Set<string>>(new Set());
+  const [multiSelect, setMultiSelect] = useState(false);
   const [createNew, setCreateNew] = useState(false);
   const [newProjectTitle, setNewProjectTitle] = useState(
-    eventTitle ? `Demo – ${eventTitle} Project` : 'Demo – Moody Living Room Project'
+    eventTitle ? `Project from ${eventTitle}` : 'New Project'
   );
+
+  // Collapsible sections state
+  const [expandedSections, setExpandedSections] = useState({
+    recent: true,
+    personal: true,
+    organization: true,
+  });
+
+  // Get recent projects from localStorage
+  const recentProjectIds = useMemo(() => {
+    if (typeof window === 'undefined') return [];
+    try {
+      const stored = localStorage.getItem(RECENT_PROJECTS_KEY);
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  }, [isOpen]);
+
+  // Group projects by context
+  const groupedProjects = useMemo(() => {
+    const recent: Project[] = [];
+    const personal: Project[] = [];
+    const organization: Project[] = [];
+
+    // Get recent projects first
+    recentProjectIds.forEach((id: string) => {
+      const project = projects.find(p => p.id === id);
+      if (project) recent.push(project);
+    });
+
+    // Group remaining by context
+    projects.forEach(project => {
+      if (project.ownershipContext === 'organization') {
+        organization.push(project);
+      } else {
+        personal.push(project);
+      }
+    });
+
+    return { recent, personal, organization };
+  }, [projects, recentProjectIds]);
+
+  // Get org name for display
+  const orgName = useMemo(() => {
+    const orgProject = projects.find(p => p.organizationName);
+    return orgProject?.organizationName || session?.user?.operatingAsOrg?.name || 'My Firm';
+  }, [projects, session]);
 
   useEffect(() => {
     if (isOpen && session?.user?.id) {
@@ -43,31 +112,69 @@ export default function AddToProjectModal({
   }, [isOpen, session]);
 
   const fetchProjects = async () => {
+    setLoading(true);
     try {
       const response = await fetch('/api/projects');
       if (response.ok) {
         const data = await response.json();
         setProjects(data);
-        // Auto-select demo project if it exists
-        const demoProject = data.find((p: Project) =>
-          p.title.toLowerCase().includes('demo')
-        );
-        if (demoProject) {
-          setSelectedProjectId(demoProject.id);
-        }
       }
     } catch (error) {
       console.error('Error fetching projects:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const toggleSection = (section: 'recent' | 'personal' | 'organization') => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [section]: !prev[section],
+    }));
+  };
+
+  const handleProjectSelect = (projectId: string) => {
+    if (multiSelect) {
+      setSelectedProjectIds(prev => {
+        const newSet = new Set(prev);
+        if (newSet.has(projectId)) {
+          newSet.delete(projectId);
+        } else {
+          newSet.add(projectId);
+        }
+        return newSet;
+      });
+    } else {
+      setSelectedProjectIds(new Set([projectId]));
+    }
+    setCreateNew(false);
+  };
+
+  const saveRecentProject = (projectId: string) => {
+    try {
+      const stored = localStorage.getItem(RECENT_PROJECTS_KEY);
+      let recent: string[] = stored ? JSON.parse(stored) : [];
+
+      // Remove if already exists, add to front
+      recent = recent.filter(id => id !== projectId);
+      recent.unshift(projectId);
+
+      // Keep only max recent
+      recent = recent.slice(0, MAX_RECENT_PROJECTS);
+
+      localStorage.setItem(RECENT_PROJECTS_KEY, JSON.stringify(recent));
+    } catch {
+      // Ignore localStorage errors
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedProjectId && !createNew) return;
+    if (selectedProjectIds.size === 0 && !createNew) return;
 
-    setLoading(true);
+    setSaving(true);
     try {
-      let projectId = selectedProjectId;
+      let projectIdsToSave: string[] = [];
 
       // Create new project if needed
       if (createNew) {
@@ -86,121 +193,199 @@ export default function AddToProjectModal({
 
         if (createResponse.ok) {
           const newProject = await createResponse.json();
-          projectId = newProject.id;
+          projectIdsToSave.push(newProject.id);
         } else {
           const errorData = await createResponse.json().catch(() => ({}));
           throw new Error(errorData.error || 'Failed to create project');
         }
-      }
-
-      // Add product to project
-      const saveResponse = await fetch(
-        `/api/products/${productId}/save-to-project`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            projectId,
-            sourceEventId: eventId,
-          }),
-        }
-      );
-
-      if (saveResponse.ok) {
-        onSuccess?.(projectId);
-        // Redirect to project with demo tour parameter
-        router.push(`/project/${projectId}?demoTour=events-to-project-1`);
-        onClose();
       } else {
-        throw new Error('Failed to save product to project');
+        projectIdsToSave = Array.from(selectedProjectIds);
       }
+
+      // Save product to each selected project
+      for (const projectId of projectIdsToSave) {
+        const saveResponse = await fetch(
+          `/api/products/${productId}/save-to-project`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              projectId,
+              sourceEventId: eventId,
+            }),
+          }
+        );
+
+        if (!saveResponse.ok) {
+          throw new Error(`Failed to save product to project ${projectId}`);
+        }
+
+        // Save to recent
+        saveRecentProject(projectId);
+      }
+
+      // Call success callback with first project
+      onSuccess?.(projectIdsToSave[0]);
+
+      // Redirect to first project with demo tour parameter
+      router.push(`/project/${projectIdsToSave[0]}?demoTour=events-to-project-1`);
+      onClose();
     } catch (error) {
       console.error('Error adding product to project:', error);
       alert('Failed to add product to project. Please try again.');
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">
-          Add to Project
-        </h2>
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl shadow-xl max-w-md w-full max-h-[80vh] flex flex-col">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-100">
+          <h2 className="text-lg font-semibold text-neutral-900">
+            Save to Project
+          </h2>
+          <button
+            onClick={onClose}
+            className="p-1 hover:bg-neutral-100 rounded-lg transition-colors"
+          >
+            <X className="h-5 w-5 text-neutral-500" />
+          </button>
+        </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Select Project
-            </label>
-            <div className="space-y-2">
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  name="projectOption"
-                  checked={!createNew}
-                  onChange={() => setCreateNew(false)}
-                  className="mr-2"
-                />
-                <span className="text-sm">Existing project</span>
-              </label>
-              {!createNew && (
-                <select
-                  value={selectedProjectId}
-                  onChange={(e) => setSelectedProjectId(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required={!createNew}
-                >
-                  <option value="">Select a project...</option>
-                  {projects.map((project) => (
-                    <option key={project.id} value={project.id}>
-                      {project.title}
-                    </option>
-                  ))}
-                </select>
-              )}
+        {/* Content */}
+        <form onSubmit={handleSubmit} className="flex-1 overflow-hidden flex flex-col">
+          <div className="flex-1 overflow-y-auto px-6 py-4">
+            {loading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-neutral-400" />
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {/* Recent Projects */}
+                {groupedProjects.recent.length > 0 && (
+                  <ProjectSection
+                    title="Recent"
+                    icon={<Clock className="h-4 w-4" />}
+                    projects={groupedProjects.recent}
+                    expanded={expandedSections.recent}
+                    onToggle={() => toggleSection('recent')}
+                    selectedIds={selectedProjectIds}
+                    onSelect={handleProjectSelect}
+                    multiSelect={multiSelect}
+                  />
+                )}
 
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  name="projectOption"
-                  checked={createNew}
-                  onChange={() => setCreateNew(true)}
-                  className="mr-2"
-                />
-                <span className="text-sm">Create new project</span>
-              </label>
-              {createNew && (
-                <input
-                  type="text"
-                  value={newProjectTitle}
-                  onChange={(e) => setNewProjectTitle(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required={createNew}
-                  placeholder="Project title"
-                />
-              )}
-            </div>
+                {/* Personal Projects */}
+                {groupedProjects.personal.length > 0 && (
+                  <ProjectSection
+                    title="Personal Projects"
+                    icon={<User className="h-4 w-4" />}
+                    projects={groupedProjects.personal}
+                    expanded={expandedSections.personal}
+                    onToggle={() => toggleSection('personal')}
+                    selectedIds={selectedProjectIds}
+                    onSelect={handleProjectSelect}
+                    multiSelect={multiSelect}
+                  />
+                )}
+
+                {/* Organization Projects */}
+                {groupedProjects.organization.length > 0 && (
+                  <ProjectSection
+                    title={orgName}
+                    icon={<Building2 className="h-4 w-4" />}
+                    projects={groupedProjects.organization}
+                    expanded={expandedSections.organization}
+                    onToggle={() => toggleSection('organization')}
+                    selectedIds={selectedProjectIds}
+                    onSelect={handleProjectSelect}
+                    multiSelect={multiSelect}
+                  />
+                )}
+
+                {/* Create New Project */}
+                <div className="border-t border-neutral-100 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCreateNew(true);
+                      setSelectedProjectIds(new Set());
+                    }}
+                    className={cn(
+                      "w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-left",
+                      createNew
+                        ? "bg-neutral-900 text-white"
+                        : "hover:bg-neutral-50 text-neutral-700"
+                    )}
+                  >
+                    <FolderPlus className="h-4 w-4" />
+                    <span className="text-sm font-medium">Create new project</span>
+                  </button>
+
+                  {createNew && (
+                    <div className="mt-3 px-3">
+                      <input
+                        type="text"
+                        value={newProjectTitle}
+                        onChange={(e) => setNewProjectTitle(e.target.value)}
+                        className="w-full px-3 py-2 border border-neutral-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900/20"
+                        placeholder="Project name"
+                        autoFocus
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
-          <div className="flex gap-3 pt-4">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={loading || (!selectedProjectId && !createNew)}
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              {loading ? 'Adding...' : 'Add to Project'}
-            </button>
+          {/* Footer */}
+          <div className="px-6 py-4 border-t border-neutral-100 bg-neutral-50">
+            {/* Multi-select toggle */}
+            <label className="flex items-center gap-2 mb-4 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={multiSelect}
+                onChange={(e) => {
+                  setMultiSelect(e.target.checked);
+                  if (!e.target.checked && selectedProjectIds.size > 1) {
+                    // Keep only first selection
+                    const first = Array.from(selectedProjectIds)[0];
+                    setSelectedProjectIds(first ? new Set([first]) : new Set());
+                  }
+                }}
+                className="rounded border-neutral-300 text-neutral-900 focus:ring-neutral-500"
+              />
+              <span className="text-sm text-neutral-600">Select multiple projects</span>
+            </label>
+
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex-1 px-4 py-2 border border-neutral-200 rounded-lg text-neutral-700 hover:bg-neutral-100 transition-colors text-sm font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={saving || (selectedProjectIds.size === 0 && !createNew)}
+                className="flex-1 px-4 py-2 bg-neutral-900 text-white rounded-lg hover:bg-neutral-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium"
+              >
+                {saving ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Saving...
+                  </span>
+                ) : (
+                  `Save${multiSelect && selectedProjectIds.size > 1 ? ` to ${selectedProjectIds.size} projects` : ''}`
+                )}
+              </button>
+            </div>
           </div>
         </form>
       </div>
@@ -208,3 +393,75 @@ export default function AddToProjectModal({
   );
 }
 
+interface ProjectSectionProps {
+  title: string;
+  icon: React.ReactNode;
+  projects: Project[];
+  expanded: boolean;
+  onToggle: () => void;
+  selectedIds: Set<string>;
+  onSelect: (id: string) => void;
+  multiSelect: boolean;
+}
+
+function ProjectSection({
+  title,
+  icon,
+  projects,
+  expanded,
+  onToggle,
+  selectedIds,
+  onSelect,
+  multiSelect,
+}: ProjectSectionProps) {
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={onToggle}
+        className="w-full flex items-center gap-2 px-2 py-1.5 text-sm font-medium text-neutral-500 hover:text-neutral-700 transition-colors"
+      >
+        {expanded ? (
+          <ChevronDown className="h-4 w-4" />
+        ) : (
+          <ChevronRight className="h-4 w-4" />
+        )}
+        {icon}
+        <span>{title}</span>
+        <span className="text-neutral-400">({projects.length})</span>
+      </button>
+
+      {expanded && (
+        <div className="mt-1 space-y-1">
+          {projects.map((project) => (
+            <button
+              key={project.id}
+              type="button"
+              onClick={() => onSelect(project.id)}
+              className={cn(
+                "w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-left",
+                selectedIds.has(project.id)
+                  ? "bg-neutral-100 ring-1 ring-neutral-900"
+                  : "hover:bg-neutral-50"
+              )}
+            >
+              <div className={cn(
+                "w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0",
+                selectedIds.has(project.id)
+                  ? "border-neutral-900 bg-neutral-900"
+                  : "border-neutral-300"
+              )}>
+                {selectedIds.has(project.id) && (
+                  <Check className="h-3 w-3 text-white" />
+                )}
+              </div>
+              <span className="text-sm text-neutral-900 truncate flex-1">
+                {project.title}
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

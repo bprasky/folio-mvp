@@ -74,6 +74,10 @@ model User {
   // Phase 2: Org join requests
   orgJoinRequests                OrgJoinRequest[]
 
+  // Workspace context: null = operating as individual, orgId = operating as that org
+  operatingAsOrgId               String?
+  operatingAsOrg                 Organization?         @relation("UserOperatingAs", fields: [operatingAsOrgId], references: [id])
+
   // Commerce & Credit relations
   creditAccount                  CreditAccount?
   purchaserOrders                Order[]               @relation("PurchaserOrders")
@@ -494,6 +498,7 @@ model Organization {
   vendorProjects      Project[]            @relation("VendorProjects")
   projectParticipants ProjectParticipant[]
   joinRequests        OrgJoinRequest[]
+  usersOperatingAs    User[]               @relation("UserOperatingAs")
 
   // Commerce & Credit relations
   vendorOrders        Order[]              @relation("VendorOrders")

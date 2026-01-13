@@ -3,14 +3,15 @@
 import { useMemo, useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { 
-  Sparkles, 
-  TrendingUp, 
-  BadgeCheck, 
-  FolderKanban, 
-  BookOpenText, 
-  Newspaper, 
-  Filter, 
+import { useSession } from 'next-auth/react';
+import {
+  Sparkles,
+  TrendingUp,
+  BadgeCheck,
+  FolderKanban,
+  BookOpenText,
+  Newspaper,
+  Filter,
   Layers,
   MoreVertical,
   Edit,
@@ -19,7 +20,10 @@ import {
   Eye,
   EyeOff,
   Search,
-  ExternalLink
+  ExternalLink,
+  ChevronDown,
+  User,
+  Building2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -80,6 +84,10 @@ export type ProjectLite = {
   lifecycle?: Lifecycle;
   overlays?: Overlays;
   uiSection?: UISection;
+  // Ownership context
+  ownershipContext?: 'personal' | 'organization';
+  organizationId?: string | null;
+  organizationName?: string | null;
 };
 
 interface ProjectsPageClientProps {
@@ -87,24 +95,63 @@ interface ProjectsPageClientProps {
 }
 
 export default function ProjectsPageClient({ projectsRaw }: ProjectsPageClientProps) {
+  const { data: session } = useSession();
   const [projectsState, setProjectsState] = useState<ProjectLite[]>(projectsRaw);
   const [searchQuery, setSearchQuery] = useState('');
-  
-  const projects: ProjectLite[] = useMemo(() => 
-    (projectsState ?? []).map(mapToProjectLite), 
+  const [activeContextTab, setActiveContextTab] = useState<'all' | 'personal' | 'organization'>('all');
+
+  const projects: ProjectLite[] = useMemo(() =>
+    (projectsState ?? []).map(mapToProjectLite),
     [projectsState]
   );
 
-  // Filter projects by search query
+  // Filter projects by search query and context tab
   const filteredProjects = useMemo(() => {
-    if (!searchQuery.trim()) return projects;
-    const query = searchQuery.toLowerCase();
-    return projects.filter(p => 
-      p.title?.toLowerCase().includes(query)
-    );
-  }, [projects, searchQuery]);
+    let filtered = projects;
+
+    // Filter by context tab
+    if (activeContextTab === 'personal') {
+      filtered = filtered.filter(p => p.ownershipContext !== 'organization');
+    } else if (activeContextTab === 'organization') {
+      filtered = filtered.filter(p => p.ownershipContext === 'organization');
+    }
+
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(p =>
+        p.title?.toLowerCase().includes(query)
+      );
+    }
+
+    return filtered;
+  }, [projects, searchQuery, activeContextTab]);
 
   const grouped = useMemo(() => groupBySection(filteredProjects), [filteredProjects]);
+
+  // Group projects by ownership context for counts
+  const contextCounts = useMemo(() => {
+    const personal = projects.filter(p => p.ownershipContext !== 'organization').length;
+    const organization = projects.filter(p => p.ownershipContext === 'organization').length;
+    return { personal, organization, total: projects.length };
+  }, [projects]);
+
+  // Get unique org names for display
+  const orgName = useMemo(() => {
+    const orgProject = projects.find(p => p.organizationName);
+    return orgProject?.organizationName || session?.user?.operatingAsOrg?.name || 'My Firm';
+  }, [projects, session]);
+
+  // Determine page title based on operating context
+  const pageTitle = useMemo(() => {
+    const userName = session?.user?.name || 'My';
+    const operatingAsOrg = session?.user?.operatingAsOrg;
+
+    if (operatingAsOrg) {
+      return `${operatingAsOrg.name} Projects`;
+    }
+    return `${userName}'s Projects`;
+  }, [session]);
 
   // Handler for renaming projects
   const handleRename = async (projectId: string, newTitle: string) => {
@@ -192,6 +239,56 @@ export default function ProjectsPageClient({ projectsRaw }: ProjectsPageClientPr
   return (
     <div className="min-h-screen w-full bg-[#F6F4F1] -mx-6">
       <div className="relative z-10 w-full">
+        {/* Page Header with Context */}
+        <div className="bg-white border-b border-[#e0e0e0]">
+          <div className="max-w-7xl mx-auto px-4 md:px-8 py-6">
+            <h1 className="text-2xl md:text-3xl font-semibold text-[#1a1a1a] mb-4">
+              {pageTitle}
+            </h1>
+
+            {/* Context Tabs - only show if user has org projects */}
+            {contextCounts.organization > 0 && (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setActiveContextTab('all')}
+                  className={cn(
+                    "px-4 py-2 text-sm font-medium rounded-full transition-colors",
+                    activeContextTab === 'all'
+                      ? "bg-[#1a1a1a] text-white"
+                      : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
+                  )}
+                >
+                  All ({contextCounts.total})
+                </button>
+                <button
+                  onClick={() => setActiveContextTab('personal')}
+                  className={cn(
+                    "px-4 py-2 text-sm font-medium rounded-full transition-colors flex items-center gap-2",
+                    activeContextTab === 'personal'
+                      ? "bg-[#1a1a1a] text-white"
+                      : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
+                  )}
+                >
+                  <User className="h-4 w-4" />
+                  Personal ({contextCounts.personal})
+                </button>
+                <button
+                  onClick={() => setActiveContextTab('organization')}
+                  className={cn(
+                    "px-4 py-2 text-sm font-medium rounded-full transition-colors flex items-center gap-2",
+                    activeContextTab === 'organization'
+                      ? "bg-[#1a1a1a] text-white"
+                      : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
+                  )}
+                >
+                  <Building2 className="h-4 w-4" />
+                  {orgName} ({contextCounts.organization})
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* Top Designer Impact Bar */}
         <TopImpactBar totals={totals} />
 
