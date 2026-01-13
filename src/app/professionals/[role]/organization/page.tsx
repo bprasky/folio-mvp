@@ -201,8 +201,8 @@ export default function OrganizationPage() {
         throw new Error(data.error || data.debug || 'Failed to create organization');
       }
 
-      // Redirect to projects after successful creation
-      router.push('/projects');
+      // Hard redirect to projects - forces full session refresh with updated role
+      window.location.href = '/projects';
     } catch (err: any) {
       setError(err.message);
     } finally {
