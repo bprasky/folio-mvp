@@ -1,7 +1,13 @@
 'use client';
 
+import { useState, useRef, useEffect } from 'react';
 import { GlassModal, GlassModalBody, GlassModalHeader } from '@/components/ui/glass-modal';
-import { FaHeadset, FaTimes } from 'react-icons/fa';
+import { Headphones, X, Send, Loader2 } from 'lucide-react';
+
+interface Message {
+  role: 'user' | 'assistant';
+  content: string;
+}
 
 interface SupportModalProps {
   open: boolean;
@@ -9,65 +15,147 @@ interface SupportModalProps {
 }
 
 export default function SupportModal({ open, onOpenChange }: SupportModalProps) {
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  // Auto-scroll to bottom when messages change
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  // Focus input when modal opens
+  useEffect(() => {
+    if (open) {
+      setTimeout(() => inputRef.current?.focus(), 100);
+    }
+  }, [open]);
+
+  // Reset chat when modal closes
+  useEffect(() => {
+    if (!open) {
+      setMessages([]);
+      setInput('');
+    }
+  }, [open]);
+
+  const handleSubmit = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    if (!input.trim() || isLoading) return;
+
+    const userMessage = input.trim();
+    setInput('');
+    setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
+    setIsLoading(true);
+
+    try {
+      const response = await fetch('/api/support/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [...messages, { role: 'user', content: userMessage }],
+        }),
+      });
+
+      if (!response.ok) throw new Error('Failed to send message');
+
+      const data = await response.json();
+      setMessages(prev => [...prev, { role: 'assistant', content: data.message }]);
+    } catch (error) {
+      console.error('Support chat error:', error);
+      setMessages(prev => [
+        ...prev,
+        { role: 'assistant', content: 'Sorry, something went wrong. Please try again.' },
+      ]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit();
+    }
+  };
+
   return (
-    <GlassModal open={open} onOpenChange={onOpenChange} size="md">
-      <GlassModalHeader className="relative">
+    <GlassModal open={open} onOpenChange={onOpenChange} size="lg">
+      <GlassModalHeader className="relative border-b border-neutral-100">
         <button
           onClick={() => onOpenChange(false)}
           className="absolute right-4 top-4 p-2 rounded-full hover:bg-gray-100 transition-colors"
           aria-label="Close"
         >
-          <FaTimes className="w-4 h-4 text-gray-500" />
+          <X className="w-4 h-4 text-gray-500" />
         </button>
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-r from-folio-accent to-folio-system rounded-full flex items-center justify-center">
-            <FaHeadset className="w-5 h-5 text-white" />
+          <div className="w-9 h-9 bg-neutral-900 rounded-full flex items-center justify-center">
+            <Headphones className="w-4 h-4 text-white" />
           </div>
           <div>
-            <h2 className="text-xl font-semibold text-folio-text">Support</h2>
-            <p className="text-sm text-folio-system">We're here to help</p>
+            <h2 className="text-lg font-semibold text-neutral-900">Support</h2>
+            <p className="text-xs text-neutral-500">Trained on why, not just what</p>
           </div>
         </div>
       </GlassModalHeader>
 
-      <GlassModalBody>
-        <div className="space-y-6">
-          <p className="text-folio-text leading-relaxed">
-            At Folio we are reinventing support. This chat is trained on <em>why</em>, not just on <em>what</em>, and can effectively help you find an answer to your issue, tell you why we do it that way, and pass along good suggestions to our team!
-          </p>
-
-          <div className="bg-folio-muted/50 rounded-xl p-6 space-y-4">
-            <h3 className="font-medium text-folio-text">What makes our support different:</h3>
-            <ul className="space-y-3 text-sm text-folio-system">
-              <li className="flex items-start gap-3">
-                <span className="w-1.5 h-1.5 rounded-full bg-folio-accent mt-2 flex-shrink-0" />
-                <span>Understands the thinking behind Folio's design decisions</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <span className="w-1.5 h-1.5 rounded-full bg-folio-accent mt-2 flex-shrink-0" />
-                <span>Helps you accomplish your goals, not just answer questions</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <span className="w-1.5 h-1.5 rounded-full bg-folio-accent mt-2 flex-shrink-0" />
-                <span>Your feedback directly shapes our product roadmap</span>
-              </li>
-            </ul>
-          </div>
-
-          <div className="pt-4 border-t border-gray-200">
-            <button
-              className="w-full py-3 px-6 bg-folio-text text-white rounded-xl font-medium hover:bg-opacity-90 transition-all"
-              onClick={() => {
-                // TODO: Open support chat
-                onOpenChange(false);
-              }}
-            >
-              Start a Conversation
-            </button>
-            <p className="text-xs text-folio-system text-center mt-3">
-              Your conversations help us improve Folio for everyone.
+      <GlassModalBody className="p-0 flex flex-col h-[60vh]">
+        {/* Messages area */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          {messages.length === 0 && (
+            <p className="text-sm text-neutral-500 text-center py-8">
+              Ask anything about Folio. We'll help you find an answer and explain why we do it that way.
             </p>
-          </div>
+          )}
+          {messages.map((message, i) => (
+            <div
+              key={i}
+              className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+            >
+              <div
+                className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm ${
+                  message.role === 'user'
+                    ? 'bg-neutral-900 text-white'
+                    : 'bg-neutral-100 text-neutral-900'
+                }`}
+              >
+                <p className="whitespace-pre-wrap">{message.content}</p>
+              </div>
+            </div>
+          ))}
+          {isLoading && (
+            <div className="flex justify-start">
+              <div className="bg-neutral-100 rounded-2xl px-4 py-2.5">
+                <Loader2 className="w-4 h-4 animate-spin text-neutral-500" />
+              </div>
+            </div>
+          )}
+          <div ref={messagesEndRef} />
+        </div>
+
+        {/* Input area */}
+        <div className="border-t border-neutral-100 p-4">
+          <form onSubmit={handleSubmit} className="flex gap-2">
+            <textarea
+              ref={inputRef}
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Type your question..."
+              rows={1}
+              className="flex-1 resize-none rounded-xl border border-neutral-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent"
+            />
+            <button
+              type="submit"
+              disabled={!input.trim() || isLoading}
+              className="px-4 py-2.5 bg-neutral-900 text-white rounded-xl hover:bg-neutral-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              <Send className="w-4 h-4" />
+            </button>
+          </form>
         </div>
       </GlassModalBody>
     </GlassModal>
