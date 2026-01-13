@@ -151,6 +151,14 @@ export async function POST(request: NextRequest) {
       `;
     }
 
+    // Update user's role based on org type
+    // DESIGN_FIRM -> DESIGNER, all others -> VENDOR
+    const userRole = orgType === 'DESIGN_FIRM' ? 'DESIGNER' : 'VENDOR';
+    await prisma.$executeRaw`
+      UPDATE users SET role = ${userRole}::"Role", "updatedAt" = NOW()
+      WHERE id = ${session.user.id}
+    `;
+
     return NextResponse.json({
       org: { id: orgId, name: trimmedName, type: orgType },
       message: 'Organization created successfully',
