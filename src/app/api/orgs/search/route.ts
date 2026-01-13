@@ -1,30 +1,44 @@
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+
+// Lazy load Prisma to catch import errors
+let prisma: any = null;
+
+async function getPrisma() {
+  if (!prisma) {
+    try {
+      const module = await import('@/lib/prisma');
+      prisma = module.prisma;
+    } catch (e: any) {
+      throw new Error(`Prisma import failed: ${e.message}`);
+    }
+  }
+  return prisma;
+}
 
 /**
  * GET /api/orgs/search - Search organizations by name
  * Used in the professionals join flow to find existing orgs
  */
 export async function GET(request: NextRequest) {
-  console.log('[GET /api/orgs/search] Starting request');
+  const debugInfo: string[] = [];
+  debugInfo.push('1. Route handler started');
 
   try {
     const { searchParams } = new URL(request.url);
     const q = searchParams.get('q');
-    const type = searchParams.get('type'); // DESIGNER or VENDOR
-
-    console.log('[GET /api/orgs/search] Params:', { q, type });
+    const type = searchParams.get('type');
+    debugInfo.push(`2. Params: q="${q}", type="${type}"`);
 
     if (!q || q.length < 2) {
-      console.log('[GET /api/orgs/search] Query too short');
       return NextResponse.json(
-        { error: 'Search query must be at least 2 characters' },
+        { error: 'Search query must be at least 2 characters', debug: debugInfo },
         { status: 400 }
       );
     }
 
+    // Build where clause
     const where: any = {
       name: {
         contains: q,
@@ -32,32 +46,23 @@ export async function GET(request: NextRequest) {
       },
     };
 
-    if (type) {
-      // Map DESIGNER/VENDOR to org types
-      if (type === 'DESIGNER') {
-        where.type = 'DESIGN_FIRM';
-      } else if (type === 'VENDOR') {
-        where.type = { in: ['VENDOR', 'MANUFACTURER', 'SHOWROOM'] };
-      } else {
-        where.type = type;
-      }
+    if (type === 'DESIGNER') {
+      where.type = 'DESIGN_FIRM';
+    } else if (type === 'VENDOR') {
+      where.type = { in: ['VENDOR', 'MANUFACTURER', 'SHOWROOM'] };
+    } else if (type) {
+      where.type = type;
     }
+    debugInfo.push(`3. Where clause built: ${JSON.stringify(where)}`);
 
-    console.log('[GET /api/orgs/search] Where clause:', JSON.stringify(where));
+    // Get Prisma client
+    debugInfo.push('4. Getting Prisma client...');
+    const db = await getPrisma();
+    debugInfo.push('5. Prisma client obtained');
 
-    // First, test basic database connectivity
-    console.log('[GET /api/orgs/search] Testing database connection...');
-    const dbTest = await prisma.$queryRaw`SELECT 1 as test`;
-    console.log('[GET /api/orgs/search] Database connected:', dbTest);
-
-    // Now try a simple count query first
-    console.log('[GET /api/orgs/search] Running count query...');
-    const count = await prisma.organization.count({ where });
-    console.log('[GET /api/orgs/search] Count result:', count);
-
-    // Now try the full query
-    console.log('[GET /api/orgs/search] Running findMany query...');
-    const organizations = await prisma.organization.findMany({
+    // Simple query first - no orderBy, no _count
+    debugInfo.push('6. Running simple findMany...');
+    const organizations = await db.organization.findMany({
       where,
       select: {
         id: true,
@@ -67,29 +72,35 @@ export async function GET(request: NextRequest) {
         website: true,
         address: true,
         logo: true,
-        _count: {
-          select: {
-            users: true,
-          },
-        },
       },
-      orderBy: [
-        { status: 'desc' },
-        { name: 'asc' },
-      ],
       take: 20,
     });
+    debugInfo.push(`7. Query complete, found ${organizations.length} orgs`);
 
-    console.log('[GET /api/orgs/search] Found', organizations.length, 'organizations');
+    // Add member count manually to avoid _count issues
+    const orgsWithCount = organizations.map((org: any) => ({
+      ...org,
+      _count: { users: 0 }, // Placeholder for now
+    }));
 
-    return NextResponse.json({ organizations });
+    return NextResponse.json({
+      organizations: orgsWithCount,
+      debug: debugInfo
+    });
   } catch (error: any) {
-    console.error('[GET /api/orgs/search] Error type:', error?.constructor?.name);
-    console.error('[GET /api/orgs/search] Error message:', error?.message);
-    console.error('[GET /api/orgs/search] Error code:', error?.code);
-    console.error('[GET /api/orgs/search] Full error:', error);
+    debugInfo.push(`ERROR: ${error?.message || 'Unknown error'}`);
+    debugInfo.push(`ERROR stack: ${error?.stack?.substring(0, 500) || 'No stack'}`);
+
+    console.error('[GET /api/orgs/search] Debug:', debugInfo);
+    console.error('[GET /api/orgs/search] Error:', error);
+
     return NextResponse.json(
-      { error: 'Failed to search organizations', debug: error?.message },
+      {
+        error: 'Failed to search organizations',
+        debug: debugInfo,
+        errorMessage: error?.message,
+        errorCode: error?.code,
+      },
       { status: 500 }
     );
   }
