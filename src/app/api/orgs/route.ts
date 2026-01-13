@@ -96,12 +96,19 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { name, type, website } = body;
+    const { name, type, website, workEmail } = body;
 
-    // Validate required fields - only name is truly required
+    // Validate required fields
     if (!name || !name.trim()) {
       return NextResponse.json(
         { error: 'Organization name is required' },
+        { status: 400 }
+      );
+    }
+
+    if (!workEmail || !workEmail.trim()) {
+      return NextResponse.json(
+        { error: 'Work email is required' },
         { status: 400 }
       );
     }
@@ -118,19 +125,31 @@ export async function POST(request: NextRequest) {
 
     // Use raw SQL to avoid Prisma trying to set default values for missing columns
     const orgId = crypto.randomUUID();
+    const orgUserId = crypto.randomUUID();
     const trimmedName = name.trim();
     const trimmedWebsite = website?.trim() || null;
+    const trimmedWorkEmail = workEmail.trim();
 
     await prisma.$executeRaw`
       INSERT INTO organizations (id, name, type, website, "createdAt", "updatedAt")
       VALUES (${orgId}, ${trimmedName}, ${orgType}::"OrgType", ${trimmedWebsite}, NOW(), NOW())
     `;
 
-    // Add creator as member
-    await prisma.$executeRaw`
-      INSERT INTO organization_users (id, "userId", "organizationId", role, "joinedAt")
-      VALUES (${crypto.randomUUID()}, ${session.user.id}, ${orgId}, 'OWNER'::"OrgUserRole", NOW())
-    `;
+    // Add creator as member with work email
+    // Note: workEmail column may not exist in prod yet - try with it, fall back without
+    try {
+      await prisma.$executeRaw`
+        INSERT INTO organization_users (id, "userId", "organizationId", role, "joinedAt", "workEmail")
+        VALUES (${orgUserId}, ${session.user.id}, ${orgId}, 'OWNER'::"OrgUserRole", NOW(), ${trimmedWorkEmail})
+      `;
+    } catch (emailError: any) {
+      // workEmail column doesn't exist yet, insert without it
+      console.log('[POST /api/orgs] workEmail column not available, inserting without:', trimmedWorkEmail);
+      await prisma.$executeRaw`
+        INSERT INTO organization_users (id, "userId", "organizationId", role, "joinedAt")
+        VALUES (${orgUserId}, ${session.user.id}, ${orgId}, 'OWNER'::"OrgUserRole", NOW())
+      `;
+    }
 
     return NextResponse.json({
       org: { id: orgId, name: trimmedName, type: orgType },
