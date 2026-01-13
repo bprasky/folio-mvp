@@ -59,6 +59,10 @@ Keep responses concise and helpful. You're here to solve problems, not to lectur
 
 export async function POST(request: Request) {
   try {
+    if (!process.env.ANTHROPIC_API_KEY) {
+      return Response.json({ error: 'Support chat is not configured' }, { status: 503 });
+    }
+
     const { messages } = await request.json();
 
     if (!messages || !Array.isArray(messages)) {
