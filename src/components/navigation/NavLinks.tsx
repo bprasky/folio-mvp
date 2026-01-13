@@ -4,10 +4,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
+// Main Nav = Discovery (everyone else's content)
 const links = [
   { href: "/magazine", label: "Magazine" },
   { href: "/events", label: "Events" },
-  { href: "/professionals", label: "For Professionals" },
 ];
 
 export function NavLinks() {
