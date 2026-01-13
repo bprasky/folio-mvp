@@ -60,32 +60,28 @@ export async function GET(request: NextRequest) {
     const db = await getPrisma();
     debugInfo.push('5. Prisma client obtained');
 
-    // Simple query - status column doesn't exist in production DB yet
-    debugInfo.push('6. Running simple findMany...');
+    // Minimal query - only columns guaranteed to exist in prod DB
+    debugInfo.push('6. Running findMany...');
     const organizations = await db.organization.findMany({
       where,
       select: {
         id: true,
         name: true,
         type: true,
-        website: true,
-        address: true,
-        logo: true,
       },
       take: 20,
     });
     debugInfo.push(`7. Query complete, found ${organizations.length} orgs`);
 
-    // Add member count and status (status column missing in prod DB)
-    const orgsWithCount = organizations.map((org: any) => ({
+    // Add defaults for missing columns until migrations are run
+    const orgsWithDefaults = organizations.map((org: any) => ({
       ...org,
-      status: 'UNCLAIMED', // Default until migration is run
-      _count: { users: 0 }, // Placeholder for now
+      status: 'UNCLAIMED',
+      _count: { users: 0 },
     }));
 
     return NextResponse.json({
-      organizations: orgsWithCount,
-      debug: debugInfo
+      organizations: orgsWithDefaults,
     });
   } catch (error: any) {
     debugInfo.push(`ERROR: ${error?.message || 'Unknown error'}`);
