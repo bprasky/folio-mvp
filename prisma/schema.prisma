@@ -517,6 +517,7 @@ model OrganizationUser {
   role           OrgUserRole  @default(MEMBER)
   isActive       Boolean      @default(true)
   joinedAt       DateTime     @default(now())
+  workEmail      String?      // Work email associated with this org membership
 
   // Phase 2: Display preferences
   showOnProfile  Boolean      @default(true)  // Whether to show this org on user's profile

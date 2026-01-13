@@ -96,12 +96,19 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { name, type, website } = body;
+    const { name, type, website, workEmail } = body;
 
-    // Validate required fields - only name is truly required
+    // Validate required fields
     if (!name || !name.trim()) {
       return NextResponse.json(
         { error: 'Organization name is required' },
+        { status: 400 }
+      );
+    }
+
+    if (!workEmail || !workEmail.trim()) {
+      return NextResponse.json(
+        { error: 'Work email is required' },
         { status: 400 }
       );
     }
@@ -116,37 +123,42 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create org with minimal columns (production DB may be missing columns)
-    const org = await prisma.$transaction(async (tx) => {
-      // Create the organization - minimal fields only
-      const newOrg = await tx.organization.create({
-        data: {
-          name: name.trim(),
-          type: orgType,
-          website: website?.trim() || null,
-        },
-      });
+    // Use raw SQL to avoid Prisma trying to set default values for missing columns
+    const orgId = crypto.randomUUID();
+    const orgUserId = crypto.randomUUID();
+    const trimmedName = name.trim();
+    const trimmedWebsite = website?.trim() || null;
+    const trimmedWorkEmail = workEmail.trim();
 
-      // Add creator as member - minimal fields only
-      await tx.organizationUser.create({
-        data: {
-          userId: session.user.id,
-          organizationId: newOrg.id,
-          role: 'OWNER',
-        },
-      });
+    await prisma.$executeRaw`
+      INSERT INTO organizations (id, name, type, website, "createdAt", "updatedAt")
+      VALUES (${orgId}, ${trimmedName}, ${orgType}::"OrgType", ${trimmedWebsite}, NOW(), NOW())
+    `;
 
-      return newOrg;
-    });
+    // Add creator as member with work email
+    // Note: workEmail column may not exist in prod yet - try with it, fall back without
+    try {
+      await prisma.$executeRaw`
+        INSERT INTO organization_users (id, "userId", "organizationId", role, "joinedAt", "workEmail")
+        VALUES (${orgUserId}, ${session.user.id}, ${orgId}, 'OWNER'::"OrgUserRole", NOW(), ${trimmedWorkEmail})
+      `;
+    } catch (emailError: any) {
+      // workEmail column doesn't exist yet, insert without it
+      console.log('[POST /api/orgs] workEmail column not available, inserting without:', trimmedWorkEmail);
+      await prisma.$executeRaw`
+        INSERT INTO organization_users (id, "userId", "organizationId", role, "joinedAt")
+        VALUES (${orgUserId}, ${session.user.id}, ${orgId}, 'OWNER'::"OrgUserRole", NOW())
+      `;
+    }
 
     return NextResponse.json({
-      org,
+      org: { id: orgId, name: trimmedName, type: orgType },
       message: 'Organization created successfully',
     }, { status: 201 });
   } catch (error: any) {
     console.error('[POST /api/orgs] Error:', error);
 
-    if (error.code === 'P2002') {
+    if (error.code === 'P2002' || error.message?.includes('unique')) {
       return NextResponse.json(
         { error: 'An organization with this name already exists' },
         { status: 409 }

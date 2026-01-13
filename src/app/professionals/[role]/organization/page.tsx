@@ -14,6 +14,7 @@ import {
   FaSpinner,
   FaPlus,
   FaGlobe,
+  FaEnvelope,
 } from 'react-icons/fa';
 import { EditorialHeadline } from '@/components/ui/glass';
 
@@ -77,6 +78,7 @@ export default function OrganizationPage() {
   const [formData, setFormData] = useState({
     name: '',
     website: '',
+    workEmail: '',
   });
 
   // Debounced search query
@@ -189,6 +191,7 @@ export default function OrganizationPage() {
           name: formData.name,
           type: selectedOrgType,
           website: formData.website || undefined,
+          workEmail: formData.workEmail || undefined,
         }),
       });
 
@@ -408,6 +411,31 @@ export default function OrganizationPage() {
                     />
                   </div>
 
+                  {/* Work Email */}
+                  <div>
+                    <label className="block text-sm font-sans font-medium text-folio-stone-700 mb-2">
+                      Your Work Email <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                        <FaEnvelope className="w-4 h-4 text-folio-stone-400" />
+                      </div>
+                      <input
+                        type="email"
+                        required
+                        value={formData.workEmail}
+                        onChange={(e) =>
+                          setFormData({ ...formData, workEmail: e.target.value })
+                        }
+                        placeholder="you@company.com"
+                        className="w-full pl-11 pr-4 py-3 font-sans bg-folio-stone-100/50 border border-folio-stone-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-folio-stone-300 focus:border-transparent placeholder:text-folio-stone-400"
+                      />
+                    </div>
+                    <p className="mt-1.5 text-xs font-sans text-folio-stone-500">
+                      This email will be associated with your organization membership
+                    </p>
+                  </div>
+
                   {/* Organization Type (for vendors) */}
                   {role === 'vendor' && (
                     <div>
@@ -460,7 +488,7 @@ export default function OrganizationPage() {
                   {/* Submit Button */}
                   <button
                     type="submit"
-                    disabled={isSubmitting || !formData.name.trim()}
+                    disabled={isSubmitting || !formData.name.trim() || !formData.workEmail.trim()}
                     className="w-full py-4 px-6 rounded-full bg-folio-ink text-white font-sans font-medium flex items-center justify-center gap-2 hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isSubmitting ? (
