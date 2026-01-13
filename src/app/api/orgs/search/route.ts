@@ -8,12 +8,17 @@ import { prisma } from '@/lib/prisma';
  * Used in the professionals join flow to find existing orgs
  */
 export async function GET(request: NextRequest) {
+  console.log('[GET /api/orgs/search] Starting request');
+
   try {
     const { searchParams } = new URL(request.url);
     const q = searchParams.get('q');
     const type = searchParams.get('type'); // DESIGNER or VENDOR
 
+    console.log('[GET /api/orgs/search] Params:', { q, type });
+
     if (!q || q.length < 2) {
+      console.log('[GET /api/orgs/search] Query too short');
       return NextResponse.json(
         { error: 'Search query must be at least 2 characters' },
         { status: 400 }
@@ -38,6 +43,20 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    console.log('[GET /api/orgs/search] Where clause:', JSON.stringify(where));
+
+    // First, test basic database connectivity
+    console.log('[GET /api/orgs/search] Testing database connection...');
+    const dbTest = await prisma.$queryRaw`SELECT 1 as test`;
+    console.log('[GET /api/orgs/search] Database connected:', dbTest);
+
+    // Now try a simple count query first
+    console.log('[GET /api/orgs/search] Running count query...');
+    const count = await prisma.organization.count({ where });
+    console.log('[GET /api/orgs/search] Count result:', count);
+
+    // Now try the full query
+    console.log('[GET /api/orgs/search] Running findMany query...');
     const organizations = await prisma.organization.findMany({
       where,
       select: {
@@ -55,18 +74,22 @@ export async function GET(request: NextRequest) {
         },
       },
       orderBy: [
-        // Prioritize claimed/professional orgs
         { status: 'desc' },
         { name: 'asc' },
       ],
       take: 20,
     });
 
+    console.log('[GET /api/orgs/search] Found', organizations.length, 'organizations');
+
     return NextResponse.json({ organizations });
-  } catch (error) {
-    console.error('[GET /api/orgs/search] Error:', error);
+  } catch (error: any) {
+    console.error('[GET /api/orgs/search] Error type:', error?.constructor?.name);
+    console.error('[GET /api/orgs/search] Error message:', error?.message);
+    console.error('[GET /api/orgs/search] Error code:', error?.code);
+    console.error('[GET /api/orgs/search] Full error:', error);
     return NextResponse.json(
-      { error: 'Failed to search organizations' },
+      { error: 'Failed to search organizations', debug: error?.message },
       { status: 500 }
     );
   }
