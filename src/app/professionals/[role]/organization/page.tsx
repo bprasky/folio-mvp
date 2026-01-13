@@ -130,15 +130,15 @@ export default function OrganizationPage() {
       setHasSearched(true);
 
       try {
-        const typeFilter = role === 'designer' ? 'DESIGN_FIRM' : 'VENDOR';
+        const typeFilter = role === 'designer' ? 'DESIGNER' : 'VENDOR';
         const response = await fetch(
-          `/api/orgs?q=${encodeURIComponent(debouncedSearchQuery)}&type=${typeFilter}`
+          `/api/orgs/search?q=${encodeURIComponent(debouncedSearchQuery)}&type=${typeFilter}`
         );
 
         if (!response.ok) throw new Error('Search failed');
 
         const data = await response.json();
-        setSearchResults(data.orgs || []);
+        setSearchResults(data.organizations || []);
       } catch (err) {
         setError('Failed to search organizations');
         setSearchResults([]);
@@ -339,7 +339,7 @@ export default function OrganizationPage() {
                 )}
 
                 {/* No Results Message */}
-                {hasSearched && searchResults.length === 0 && !isSearching && searchQuery.trim() && (
+                {hasSearched && searchResults.length === 0 && !isSearching && searchQuery.trim() && !error && (
                   <p className="mt-6 text-center font-sans text-folio-stone-500">
                     No organizations found matching "{searchQuery}"
                   </p>
