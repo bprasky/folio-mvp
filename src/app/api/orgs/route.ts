@@ -116,37 +116,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create org with minimal columns (production DB may be missing columns)
-    const org = await prisma.$transaction(async (tx) => {
-      // Create the organization - minimal fields only
-      const newOrg = await tx.organization.create({
-        data: {
-          name: name.trim(),
-          type: orgType,
-          website: website?.trim() || null,
-        },
-      });
+    // Use raw SQL to avoid Prisma trying to set default values for missing columns
+    const orgId = crypto.randomUUID();
+    const trimmedName = name.trim();
+    const trimmedWebsite = website?.trim() || null;
 
-      // Add creator as member - minimal fields only
-      await tx.organizationUser.create({
-        data: {
-          userId: session.user.id,
-          organizationId: newOrg.id,
-          role: 'OWNER',
-        },
-      });
+    await prisma.$executeRaw`
+      INSERT INTO organizations (id, name, type, website, "createdAt", "updatedAt")
+      VALUES (${orgId}, ${trimmedName}, ${orgType}::"OrgType", ${trimmedWebsite}, NOW(), NOW())
+    `;
 
-      return newOrg;
-    });
+    // Add creator as member
+    await prisma.$executeRaw`
+      INSERT INTO organization_users (id, "userId", "organizationId", role, "joinedAt")
+      VALUES (${crypto.randomUUID()}, ${session.user.id}, ${orgId}, 'OWNER'::"OrgUserRole", NOW())
+    `;
 
     return NextResponse.json({
-      org,
+      org: { id: orgId, name: trimmedName, type: orgType },
       message: 'Organization created successfully',
     }, { status: 201 });
   } catch (error: any) {
     console.error('[POST /api/orgs] Error:', error);
 
-    if (error.code === 'P2002') {
+    if (error.code === 'P2002' || error.message?.includes('unique')) {
       return NextResponse.json(
         { error: 'An organization with this name already exists' },
         { status: 409 }
