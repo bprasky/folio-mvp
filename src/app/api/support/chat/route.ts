@@ -1,6 +1,8 @@
 import Anthropic from '@anthropic-ai/sdk';
 
-const anthropic = new Anthropic();
+const anthropic = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
+});
 
 const SUPPORT_SYSTEM_PROMPT = `# FOLIO SUPPORT ASSISTANT
 
