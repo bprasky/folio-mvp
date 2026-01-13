@@ -59,15 +59,19 @@ export default function SupportModal({ open, onOpenChange }: SupportModalProps) 
         }),
       });
 
-      if (!response.ok) throw new Error('Failed to send message');
-
       const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to send message');
+      }
+
       setMessages(prev => [...prev, { role: 'assistant', content: data.message }]);
     } catch (error) {
       console.error('Support chat error:', error);
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
       setMessages(prev => [
         ...prev,
-        { role: 'assistant', content: 'Sorry, something went wrong. Please try again.' },
+        { role: 'assistant', content: `Sorry, I couldn't connect: ${errorMsg}` },
       ]);
     } finally {
       setIsLoading(false);

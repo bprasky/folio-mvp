@@ -1,6 +1,6 @@
-import { anthropic } from '@/lib/import-agent/config';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import Anthropic from '@anthropic-ai/sdk';
+
+const anthropic = new Anthropic();
 
 const SUPPORT_SYSTEM_PROMPT = `# FOLIO SUPPORT ASSISTANT
 
@@ -57,15 +57,10 @@ Keep responses concise and helpful. You're here to solve problems, not to lectur
 
 export async function POST(request: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return new Response('Unauthorized', { status: 401 });
-    }
-
     const { messages } = await request.json();
 
     if (!messages || !Array.isArray(messages)) {
-      return new Response('Invalid messages format', { status: 400 });
+      return Response.json({ error: 'Invalid messages format' }, { status: 400 });
     }
 
     const response = await anthropic.messages.create({
@@ -84,6 +79,7 @@ export async function POST(request: Request) {
     return Response.json({ message: assistantMessage });
   } catch (error) {
     console.error('Support chat error:', error);
-    return new Response('Internal server error', { status: 500 });
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    return Response.json({ error: message }, { status: 500 });
   }
 }
