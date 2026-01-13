@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
     if (type) {
       // Map DESIGNER/VENDOR to org types
       if (type === 'DESIGNER') {
-        where.type = { in: ['DESIGN_FIRM', 'DESIGNER'] };
+        where.type = 'DESIGN_FIRM';
       } else if (type === 'VENDOR') {
         where.type = { in: ['VENDOR', 'MANUFACTURER', 'SHOWROOM'] };
       } else {
