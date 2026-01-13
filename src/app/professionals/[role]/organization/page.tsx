@@ -121,6 +121,7 @@ export default function OrganizationPage() {
         if (debouncedSearchQuery.trim().length === 0) {
           setSearchResults([]);
           setHasSearched(false);
+          setError('');
         }
         return;
       }
@@ -135,12 +136,22 @@ export default function OrganizationPage() {
           `/api/orgs?q=${encodeURIComponent(debouncedSearchQuery)}&type=${typeFilter}`
         );
 
-        if (!response.ok) throw new Error('Search failed');
-
         const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || `Search failed with status ${response.status}`);
+        }
+
         setSearchResults(data.orgs || []);
-      } catch (err) {
-        setError('Failed to search organizations');
+        setError(''); // Clear any previous errors on success
+      } catch (err: any) {
+        console.error('Organization search error:', err);
+        // Don't show error for empty results, only for actual failures
+        if (err.message && !err.message.includes('Failed to fetch')) {
+          setError(err.message);
+        } else {
+          setError('Unable to connect to server. Please try again.');
+        }
         setSearchResults([]);
       } finally {
         setIsSearching(false);
