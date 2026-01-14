@@ -242,10 +242,17 @@ export default function ProjectsPageClient({ projectsRaw }: ProjectsPageClientPr
   }, [projects]);
 
   return (
-    <div className="min-h-screen w-full bg-[#F6F4F1] -mx-6">
-      <div className="relative z-10 w-full">
+    <div className="min-h-screen w-full liquid-page-bg -mx-6">
+      {/* Ambient orbs for liquid glass blur effect */}
+      <div className="liquid-ambient-container">
+        <div className="liquid-orb liquid-orb-1" />
+        <div className="liquid-orb liquid-orb-2" />
+        <div className="liquid-orb liquid-orb-3" />
+      </div>
+
+      <div className="relative liquid-z-content w-full">
         {/* Page Header with Context */}
-        <div className="bg-white border-b border-[#e0e0e0]">
+        <div className="liquid-glass-sticky">
           <div className="max-w-7xl mx-auto px-4 md:px-8 py-6">
             <h1 className="text-2xl md:text-3xl font-semibold text-[#1a1a1a] mb-4">
               {pageTitle}
@@ -307,7 +314,7 @@ export default function ProjectsPageClient({ projectsRaw }: ProjectsPageClientPr
                 placeholder="Search projects by name..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 warm-glass-pill text-[#1a1a1a] placeholder:text-[#999] focus:outline-none focus:ring-2 focus:ring-[#1a1a1a]/20"
+                className="w-full pl-10 pr-4 py-3 liquid-glass-inset text-[#1a1a1a] placeholder:text-[#888] focus:outline-none focus:ring-2 focus:ring-[#1a1a1a]/20"
               />
             </div>
           </div>
@@ -575,7 +582,7 @@ function TopImpactBar({ totals, capabilities }: TopImpactBarProps) {
   // Individual users see Collections and Saved Products only
   if (isIndividual) {
     return (
-      <div className="sticky top-0 z-20 warm-glass-sticky">
+      <div className="sticky top-0 liquid-z-sticky liquid-glass-sticky">
         <div className="max-w-7xl mx-auto px-4 md:px-8 py-4 grid grid-cols-2 gap-3">
           <MetricPill icon={Layers} label="COLLECTIONS" value={formatNumber(totals.collectionsCount ?? 0)} />
           <MetricPill icon={BookOpenText} label="SAVED PRODUCTS" value={formatNumber(totals.savedProductsCount ?? 0)} />
@@ -584,9 +591,9 @@ function TopImpactBar({ totals, capabilities }: TopImpactBarProps) {
     );
   }
 
-  // Designers see the full stats bar with warm glass treatment
+  // Designers see the full stats bar with liquid glass treatment
   return (
-    <div className="sticky top-0 z-20 warm-glass-sticky">
+    <div className="sticky top-0 liquid-z-sticky liquid-glass-sticky">
       <div className="max-w-7xl mx-auto px-4 md:px-8 py-4">
         <div className={cn(
           "grid gap-3",
@@ -640,7 +647,7 @@ function MetricPill({
 }) {
   return (
     <div className={cn(
-      "warm-glass-pill px-4 py-3 flex items-center gap-3",
+      "liquid-glass-pill px-4 py-3 flex items-center gap-3",
       muted && "opacity-60"
     )}>
       <Icon className={cn(
@@ -700,11 +707,11 @@ function SectionBand({
   const config = SECTION_CONFIG[section];
 
   return (
-    <section className="warm-glass-section p-4 md:p-6">
+    <section className="liquid-glass-section p-4 md:p-6">
       <header className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-white/60 border border-white/40">
-            <config.icon className="h-5 w-5 text-[#666]" />
+          <div className="p-2 liquid-icon">
+            <config.icon className="h-5 w-5 text-[#5C5C57]" />
           </div>
           <h2 className="text-xl md:text-2xl font-semibold tracking-tight text-[#1a1a1a]">
             {config.title}
@@ -773,16 +780,16 @@ function CollapsibleSectionBand({
 
   return (
     <section className={cn(
-      "warm-glass--muted overflow-hidden transition-all rounded-2xl",
-      isExpanded && "warm-glass-section"
+      "liquid-glass-muted overflow-hidden transition-all",
+      isExpanded && "liquid-glass-section"
     )}>
       <button
         onClick={() => setIsExpanded(!isExpanded)}
         className="w-full px-4 py-3 flex items-center justify-between hover:bg-white/40 transition-colors rounded-t-2xl"
       >
         <div className="flex items-center gap-3">
-          <div className="p-1.5 rounded-md bg-white/50 border border-white/30">
-            <config.icon className="h-4 w-4 text-[#666]" />
+          <div className="p-1.5 liquid-icon">
+            <config.icon className="h-4 w-4 text-[#5C5C57]" />
           </div>
           <h3 className="text-base font-medium text-[#1a1a1a]">
             {config.title}
@@ -965,7 +972,7 @@ function ProjectCard({ p, onRename, onDelete, onForceDelete }: {
   
   return (
     <div className="group relative">
-      <article className="relative overflow-hidden rounded-2xl bg-white hover:shadow-lg transition-all shadow-sm">
+      <article className="relative overflow-hidden rounded-2xl bg-white shadow-sm transition-all duration-300 hover:shadow-[0_20px_45px_-12px_rgba(120,100,80,0.15),0_10px_22px_-8px_rgba(120,100,80,0.1)]">
         <Link href={`/project/${p.id}`} className="block">
           <div className="relative aspect-[4/3]">
             {p.coverUrl ? (

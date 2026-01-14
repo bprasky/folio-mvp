@@ -28,6 +28,8 @@ interface GuideCardProps {
  *
  * Shows the four-step workflow: Upload -> Tag -> Interview -> Publish
  * Steps show completion state based on user's progress
+ *
+ * Uses liquid glass muted styling with liquid step cards.
  */
 export function GuideCard({
   projectCount = 0,
@@ -67,7 +69,7 @@ export function GuideCard({
   const allCompleted = completedSteps === steps.length;
 
   return (
-    <div className={cn("warm-glass--muted p-6 rounded-2xl", className)}>
+    <div className={cn("liquid-glass-muted p-6", className)}>
       {/* Header */}
       <div className="flex items-center justify-between mb-5">
         <div>
@@ -86,8 +88,10 @@ export function GuideCard({
             <div
               key={i}
               className={cn(
-                "w-2 h-2 rounded-full transition-colors",
-                step.completed ? "bg-[#1a1a1a]" : "bg-[#e0e0e0]"
+                "w-2.5 h-2.5 rounded-full transition-all duration-300",
+                step.completed
+                  ? "bg-[#1a1a1a] shadow-[0_0_8px_rgba(26,26,26,0.3)]"
+                  : "bg-[#ddd]"
               )}
             />
           ))}
@@ -102,42 +106,43 @@ export function GuideCard({
             <div
               key={i}
               className={cn(
-                "relative p-4 rounded-xl transition-all",
-                "bg-white/60 border border-white/40",
-                step.completed && "bg-white/80"
+                "relative p-4 liquid-step",
+                step.completed && "completed"
               )}
             >
               {/* Completion badge */}
               {step.completed && (
-                <div className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-[#1a1a1a] flex items-center justify-center">
+                <div className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-[#1a1a1a] flex items-center justify-center shadow-[0_2px_8px_rgba(26,26,26,0.3)]">
                   <Check className="h-3 w-3 text-white" />
                 </div>
               )}
 
               {/* Step number */}
-              <div className="text-xs text-[#999] font-medium mb-2">
+              <div className="text-xs text-[#888] font-medium mb-2">
                 Step {i + 1}
               </div>
 
               {/* Icon */}
               <div className={cn(
-                "w-8 h-8 rounded-lg flex items-center justify-center mb-2",
-                step.completed ? "bg-[#1a1a1a]" : "bg-[#f5f5f5]"
+                "w-8 h-8 rounded-lg flex items-center justify-center mb-2 transition-all duration-300",
+                step.completed
+                  ? "bg-[#1a1a1a] shadow-[0_4px_12px_rgba(26,26,26,0.2)]"
+                  : "bg-white/70"
               )}>
                 <StepIcon className={cn(
                   "h-4 w-4",
-                  step.completed ? "text-white" : "text-[#666]"
+                  step.completed ? "text-white" : "text-[#5C5C57]"
                 )} />
               </div>
 
               {/* Title & description */}
               <h4 className={cn(
-                "text-sm font-medium mb-0.5",
+                "text-sm font-medium mb-0.5 transition-colors",
                 step.completed ? "text-[#1a1a1a]" : "text-[#666]"
               )}>
                 {step.title}
               </h4>
-              <p className="text-xs text-[#999] leading-snug">
+              <p className="text-xs text-[#888] leading-snug">
                 {step.description}
               </p>
             </div>
