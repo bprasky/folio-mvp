@@ -59,6 +59,9 @@ body:has([data-testid="cinematic-bg"]) {
 /* Folio Cinematic Glass (namespaced - wins cascade) */
 @import '../styles/folio-glass.css';
 
+/* Folio Warm Glassmorphism (for My Projects and similar pages) */
+@import '../styles/warm-glass.css';
+
 /* Folio Cinematic Gradient (MUST load last to win cascade) */
 @import '../styles/folio-gradient.css';
 

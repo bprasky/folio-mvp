@@ -1,0 +1,132 @@
+/**
+ * Folio Warm Glassmorphism Token System
+ *
+ * Warm, inviting glass that adds depth without stealing the show.
+ * Think frosted cream, soft ivory - not cold blue glass.
+ *
+ * Design principles:
+ * - Subtle depth, not statement pieces
+ * - Natural light shadows (soft, warm undertones)
+ * - Cards should feel like they float above a warm background
+ */
+
+:root {
+  /* Warm glass base colors - cream/ivory tints */
+  --warm-glass-bg: rgba(255, 252, 248, 0.75);
+  --warm-glass-bg-hover: rgba(255, 252, 248, 0.85);
+  --warm-glass-bg-muted: rgba(255, 252, 248, 0.6);
+
+  /* Warm borders - soft white with warmth */
+  --warm-glass-border: rgba(255, 255, 255, 0.5);
+  --warm-glass-border-subtle: rgba(255, 255, 255, 0.35);
+
+  /* Blur levels */
+  --warm-glass-blur: 12px;
+  --warm-glass-blur-heavy: 20px;
+  --warm-glass-blur-light: 8px;
+
+  /* Warm shadows - natural light feel, not harsh */
+  --warm-glass-shadow: 0 4px 24px rgba(180, 160, 140, 0.12);
+  --warm-glass-shadow-lg: 0 8px 32px rgba(180, 160, 140, 0.15);
+  --warm-glass-shadow-subtle: 0 2px 12px rgba(180, 160, 140, 0.08);
+
+  /* Inner glow for that floating effect */
+  --warm-glass-inner-glow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+
+  /* Background for pages using warm glass */
+  --warm-page-bg: #F6F4F1;
+}
+
+/* Base warm glass card */
+.warm-glass {
+  background: var(--warm-glass-bg);
+  backdrop-filter: blur(var(--warm-glass-blur));
+  -webkit-backdrop-filter: blur(var(--warm-glass-blur));
+  border: 1px solid var(--warm-glass-border);
+  border-radius: 1rem;
+  box-shadow: var(--warm-glass-shadow), var(--warm-glass-inner-glow);
+  transition: all 0.2s ease;
+}
+
+.warm-glass:hover {
+  background: var(--warm-glass-bg-hover);
+  box-shadow: var(--warm-glass-shadow-lg), var(--warm-glass-inner-glow);
+}
+
+/* Muted variant - less prominent */
+.warm-glass--muted {
+  background: var(--warm-glass-bg-muted);
+  border-color: var(--warm-glass-border-subtle);
+  box-shadow: var(--warm-glass-shadow-subtle);
+}
+
+/* Large shadow variant - for hero sections */
+.warm-glass--elevated {
+  box-shadow: var(--warm-glass-shadow-lg), var(--warm-glass-inner-glow);
+}
+
+/* Metric pill - smaller, tighter glass for stats */
+.warm-glass-pill {
+  background: var(--warm-glass-bg);
+  backdrop-filter: blur(var(--warm-glass-blur-light));
+  -webkit-backdrop-filter: blur(var(--warm-glass-blur-light));
+  border: 1px solid var(--warm-glass-border);
+  border-radius: 1rem;
+  box-shadow: var(--warm-glass-shadow-subtle), var(--warm-glass-inner-glow);
+}
+
+/* Section card - for content sections */
+.warm-glass-section {
+  background: var(--warm-glass-bg);
+  backdrop-filter: blur(var(--warm-glass-blur));
+  -webkit-backdrop-filter: blur(var(--warm-glass-blur));
+  border: 1px solid var(--warm-glass-border);
+  border-radius: 1.5rem;
+  box-shadow: var(--warm-glass-shadow), var(--warm-glass-inner-glow);
+}
+
+/* Hero card - prominent, for empty states and CTAs */
+.warm-glass-hero {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 252, 248, 0.85) 0%,
+    rgba(255, 250, 245, 0.75) 100%
+  );
+  backdrop-filter: blur(var(--warm-glass-blur-heavy));
+  -webkit-backdrop-filter: blur(var(--warm-glass-blur-heavy));
+  border: 1px solid var(--warm-glass-border);
+  border-radius: 1.5rem;
+  box-shadow:
+    var(--warm-glass-shadow-lg),
+    var(--warm-glass-inner-glow),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.02);
+}
+
+/* Sticky header variant */
+.warm-glass-sticky {
+  background: rgba(246, 244, 241, 0.9);
+  backdrop-filter: blur(var(--warm-glass-blur));
+  -webkit-backdrop-filter: blur(var(--warm-glass-blur));
+  border-bottom: 1px solid rgba(224, 224, 224, 0.5);
+}
+
+/* Tailwind utility classes for warm glass */
+@layer utilities {
+  .bg-warm-glass {
+    background: var(--warm-glass-bg);
+    backdrop-filter: blur(var(--warm-glass-blur));
+    -webkit-backdrop-filter: blur(var(--warm-glass-blur));
+  }
+
+  .border-warm-glass {
+    border-color: var(--warm-glass-border);
+  }
+
+  .shadow-warm-glass {
+    box-shadow: var(--warm-glass-shadow);
+  }
+
+  .shadow-warm-glass-lg {
+    box-shadow: var(--warm-glass-shadow-lg);
+  }
+}

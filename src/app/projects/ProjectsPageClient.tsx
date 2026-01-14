@@ -23,9 +23,13 @@ import {
   ExternalLink,
   ChevronDown,
   User,
-  Building2
+  Building2,
+  MousePointerClick,
+  Users
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useUserCapabilities } from '@/hooks/useUserCapabilities';
+import { EmptyStateHero, GuideCard, UpgradePrompt } from '@/components/projects';
 
 // ============================================================================
 // TYPE DEFINITIONS — Lifecycle + Overlays Model
@@ -96,6 +100,7 @@ interface ProjectsPageClientProps {
 
 export default function ProjectsPageClient({ projectsRaw }: ProjectsPageClientProps) {
   const { data: session } = useSession();
+  const capabilities = useUserCapabilities();
   const [projectsState, setProjectsState] = useState<ProjectLite[]>(projectsRaw);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeContextTab, setActiveContextTab] = useState<'all' | 'personal' | 'organization'>('all');
@@ -290,7 +295,7 @@ export default function ProjectsPageClient({ projectsRaw }: ProjectsPageClientPr
         </div>
 
         {/* Top Designer Impact Bar */}
-        <TopImpactBar totals={totals} />
+        <TopImpactBar totals={totals} capabilities={capabilities} />
 
         {/* Search/Filter Bar */}
         <div className="px-4 md:px-8 pt-6 pb-4">
@@ -302,56 +307,111 @@ export default function ProjectsPageClient({ projectsRaw }: ProjectsPageClientPr
                 placeholder="Search projects by name..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 bg-white border border-[#e0e0e0] rounded-lg text-[#1a1a1a] placeholder:text-[#999] focus:outline-none focus:ring-2 focus:ring-[#1a1a1a]/20 focus:border-[#1a1a1a]/30"
+                className="w-full pl-10 pr-4 py-2.5 warm-glass-pill text-[#1a1a1a] placeholder:text-[#999] focus:outline-none focus:ring-2 focus:ring-[#1a1a1a]/20"
               />
             </div>
           </div>
         </div>
 
+        {/* Empty State - Show when user has no projects */}
+        {projects.length === 0 && (
+          <div className="px-4 md:px-8 pb-8 pt-4 space-y-6">
+            <div className="max-w-7xl mx-auto">
+              <EmptyStateHero
+                userType={capabilities.userType}
+                userName={session?.user?.name ?? undefined}
+              />
+              {/* Guide card for designers */}
+              {capabilities.isDesigner && (
+                <div className="mt-6">
+                  <GuideCard
+                    projectCount={0}
+                    taggedCount={0}
+                    hasInterviewed={false}
+                    publishedCount={0}
+                  />
+                </div>
+              )}
+              {/* Subtle upgrade prompt for free designers */}
+              {capabilities.isFreeDesigner && (
+                <div className="mt-6">
+                  <UpgradePrompt variant="subtle" />
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Sections: Drafts first (inbox behavior), then In Progress, Published, Archived */}
-        <div className="space-y-6 px-4 md:px-8 pb-8 pt-4">
-          {/* Drafts section - appears first, expands if has projects */}
-          <CollapsibleSectionBand 
-            section="DRAFTS" 
-            projects={grouped.DRAFTS} 
-            defaultExpanded={grouped.DRAFTS.length > 0}
-            onRename={handleRename}
-            onDelete={handleDelete}
-            onForceDelete={handleForceDelete}
-          />
-        </div>
+        {projects.length > 0 && (
+          <>
+            <div className="space-y-6 px-4 md:px-8 pb-8 pt-4">
+              {/* Drafts section - appears first, expands if has projects */}
+              <CollapsibleSectionBand
+                section="DRAFTS"
+                projects={grouped.DRAFTS}
+                defaultExpanded={grouped.DRAFTS.length > 0}
+                onRename={handleRename}
+                onDelete={handleDelete}
+                onForceDelete={handleForceDelete}
+              />
 
-        {/* Primary Sections: In Progress + Published */}
-        <div className="space-y-10 px-4 md:px-8 pb-8">
-          <SectionBand 
-            section="IN_PROGRESS" 
-            projects={grouped.IN_PROGRESS} 
-            defaultExpanded={grouped.IN_PROGRESS.length > 0 || grouped.PUBLISHED.length === 0}
-            onRename={handleRename}
-            onDelete={handleDelete}
-            onForceDelete={handleForceDelete}
-          />
-          <SectionBand 
-            section="PUBLISHED" 
-            projects={grouped.PUBLISHED} 
-            defaultExpanded={grouped.PUBLISHED.length > 0 || grouped.IN_PROGRESS.length === 0}
-            onRename={handleRename}
-            onDelete={handleDelete}
-            onForceDelete={handleForceDelete}
-          />
-        </div>
+              {/* Guide card for designers with some projects but incomplete workflow */}
+              {capabilities.isDesigner && totals.totalProjects > 0 && totals.totalPublished === 0 && (
+                <GuideCard
+                  projectCount={totals.totalProjects}
+                  taggedCount={totals.totalTagged}
+                  hasInterviewed={false}
+                  publishedCount={totals.totalPublished}
+                />
+              )}
+            </div>
 
-        {/* Secondary Section: Archived (collapsible) */}
-        <div className="space-y-6 px-4 md:px-8 pb-20">
-          <CollapsibleSectionBand 
-            section="ARCHIVED" 
-            projects={grouped.ARCHIVED} 
-            defaultExpanded={false}
-            onRename={handleRename}
-            onDelete={handleDelete}
-            onForceDelete={handleForceDelete}
-          />
-        </div>
+            {/* Primary Sections: In Progress + Published */}
+            <div className="space-y-10 px-4 md:px-8 pb-8">
+              <SectionBand
+                section="IN_PROGRESS"
+                projects={grouped.IN_PROGRESS}
+                defaultExpanded={grouped.IN_PROGRESS.length > 0 || grouped.PUBLISHED.length === 0}
+                onRename={handleRename}
+                onDelete={handleDelete}
+                onForceDelete={handleForceDelete}
+              />
+              <SectionBand
+                section="PUBLISHED"
+                projects={grouped.PUBLISHED}
+                defaultExpanded={grouped.PUBLISHED.length > 0 || grouped.IN_PROGRESS.length === 0}
+                onRename={handleRename}
+                onDelete={handleDelete}
+                onForceDelete={handleForceDelete}
+              />
+            </div>
+
+            {/* Secondary Section: Archived (collapsible) */}
+            <div className="space-y-6 px-4 md:px-8 pb-8">
+              <CollapsibleSectionBand
+                section="ARCHIVED"
+                projects={grouped.ARCHIVED}
+                defaultExpanded={false}
+                onRename={handleRename}
+                onDelete={handleDelete}
+                onForceDelete={handleForceDelete}
+              />
+            </div>
+
+            {/* Upgrade prompt for free designers at bottom */}
+            {capabilities.isFreeDesigner && totals.totalProjects > 0 && (
+              <div className="px-4 md:px-8 pb-20">
+                <div className="max-w-7xl mx-auto">
+                  <UpgradePrompt variant="prominent" />
+                </div>
+              </div>
+            )}
+
+            {/* Spacer for non-free designers */}
+            {!capabilities.isFreeDesigner && <div className="pb-12" />}
+          </>
+        )}
 
         {/* Folio Index Drawer trigger (right rail) */}
         <FolioIndexDrawer projects={projects} />
@@ -490,51 +550,109 @@ function groupBySection(projects: ProjectLite[]) {
   });
 }
 
-function TopImpactBar({ totals }: { 
-  totals: { 
-    totalProjects: number; 
+interface TopImpactBarProps {
+  totals: {
+    totalProjects: number;
     totalPublished: number;
-    totalTagged: number; 
+    totalTagged: number;
     totalViews: number;
+    affiliateClicks?: number;
+    collectionsCount?: number;
+    savedProductsCount?: number;
+  };
+  capabilities: ReturnType<typeof useUserCapabilities>;
+}
+
+function TopImpactBar({ totals, capabilities }: TopImpactBarProps) {
+  const {
+    isIndividual,
+    showPublishedStat,
+    showProductsTaggedStat,
+    showAffiliateClicks,
+    showDirectoryLink
+  } = capabilities;
+
+  // Individual users see Collections and Saved Products only
+  if (isIndividual) {
+    return (
+      <div className="sticky top-0 z-20 warm-glass-sticky">
+        <div className="max-w-7xl mx-auto px-4 md:px-8 py-4 grid grid-cols-2 gap-3">
+          <MetricPill icon={Layers} label="COLLECTIONS" value={formatNumber(totals.collectionsCount ?? 0)} />
+          <MetricPill icon={BookOpenText} label="SAVED PRODUCTS" value={formatNumber(totals.savedProductsCount ?? 0)} />
+        </div>
+      </div>
+    );
   }
-}) {
+
+  // Designers see the full stats bar with warm glass treatment
   return (
-    <div className="sticky top-0 z-20 bg-[#F6F4F1]/95 backdrop-blur-sm border-b border-[#e0e0e0]">
-      <div className="max-w-7xl mx-auto px-4 md:px-8 py-4 grid grid-cols-2 md:grid-cols-4 gap-3">
-        <MetricPill icon={FolderKanban} label="PROJECTS" value={formatNumber(totals.totalProjects)} />
-        <MetricPill icon={BadgeCheck} label="PUBLISHED" value={formatNumber(totals.totalPublished)} />
-        <MetricPill icon={Layers} label="PRODUCTS TAGGED" value={formatNumber(totals.totalTagged)} />
-        <MetricPill icon={Eye} label="TOTAL VIEWS" value={formatNumber(totals.totalViews)} />
+    <div className="sticky top-0 z-20 warm-glass-sticky">
+      <div className="max-w-7xl mx-auto px-4 md:px-8 py-4">
+        <div className={cn(
+          "grid gap-3",
+          showAffiliateClicks ? "grid-cols-2 md:grid-cols-5" : "grid-cols-2 md:grid-cols-4"
+        )}>
+          <MetricPill icon={FolderKanban} label="PROJECTS" value={formatNumber(totals.totalProjects)} />
+          {showPublishedStat && (
+            <MetricPill icon={BadgeCheck} label="PUBLISHED" value={formatNumber(totals.totalPublished)} />
+          )}
+          {showProductsTaggedStat && (
+            <MetricPill icon={Layers} label="PRODUCTS TAGGED" value={formatNumber(totals.totalTagged)} />
+          )}
+          <MetricPill icon={Eye} label="TOTAL VIEWS" value={formatNumber(totals.totalViews)} />
+          {showAffiliateClicks && (
+            <MetricPill
+              icon={MousePointerClick}
+              label="AFFILIATE CLICKS"
+              value={formatNumber(totals.affiliateClicks ?? 0)}
+              emphasis={true}
+            />
+          )}
+        </div>
+        {showDirectoryLink && (
+          <div className="mt-3 flex justify-end">
+            <Link
+              href="/designer/profile"
+              className="inline-flex items-center gap-1.5 text-xs text-[#666] hover:text-[#1a1a1a] transition-colors"
+            >
+              <Users className="h-3.5 w-3.5" />
+              View your directory listing
+            </Link>
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
-function MetricPill({ 
-  icon: Icon, 
-  label, 
-  value, 
+function MetricPill({
+  icon: Icon,
+  label,
+  value,
   emphasis = false,
   muted = false
 }: {
-  icon: any; 
-  label: string; 
-  value: any; 
+  icon: any;
+  label: string;
+  value: any;
   emphasis?: boolean;
   muted?: boolean;
 }) {
   return (
     <div className={cn(
-      "rounded-2xl px-4 py-3 flex items-center gap-3 border",
-      "bg-white border-[#e0e0e0] shadow-sm",
+      "warm-glass-pill px-4 py-3 flex items-center gap-3",
       muted && "opacity-60"
     )}>
-      <Icon className={cn("h-5 w-5 text-[#666]", emphasis ? "animate-pulse" : "")} />
+      <Icon className={cn(
+        "h-5 w-5 text-[#666]",
+        emphasis && "text-[#8B7355]"
+      )} />
       <div className="flex flex-col leading-tight">
         <span className="text-xs uppercase tracking-wider text-[#666]">{label}</span>
         <span className={cn(
           "text-base md:text-lg font-semibold",
-          muted ? "text-[#999]" : "text-[#1a1a1a]"
+          muted ? "text-[#999]" : "text-[#1a1a1a]",
+          emphasis && "text-[#8B7355]"
         )}>{value}</span>
       </div>
     </div>
@@ -582,10 +700,12 @@ function SectionBand({
   const config = SECTION_CONFIG[section];
 
   return (
-    <section className="rounded-3xl bg-white p-4 md:p-6 shadow-sm">
+    <section className="warm-glass-section p-4 md:p-6">
       <header className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
-          <config.icon className="h-5 w-5 text-[#666]" />
+          <div className="p-2 rounded-lg bg-white/60 border border-white/40">
+            <config.icon className="h-5 w-5 text-[#666]" />
+          </div>
           <h2 className="text-xl md:text-2xl font-semibold tracking-tight text-[#1a1a1a]">
             {config.title}
           </h2>
@@ -596,13 +716,13 @@ function SectionBand({
       </header>
 
       {projects.length === 0 ? (
-        <div className="text-sm text-[#666] italic py-8">{config.emptyMessage}</div>
+        <div className="text-sm text-[#666] italic py-8 px-2">{config.emptyMessage}</div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {projects.map(p => (
-            <ProjectCard 
-              key={p.id} 
-              p={p} 
+            <ProjectCard
+              key={p.id}
+              p={p}
               onRename={onRename}
               onDelete={onDelete}
               onForceDelete={onForceDelete}
@@ -653,15 +773,17 @@ function CollapsibleSectionBand({
 
   return (
     <section className={cn(
-      "rounded-2xl bg-white overflow-hidden transition-all",
-      isExpanded ? "shadow-sm" : ""
+      "warm-glass--muted overflow-hidden transition-all rounded-2xl",
+      isExpanded && "warm-glass-section"
     )}>
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full px-4 py-3 flex items-center justify-between hover:bg-[#f5f5f5] transition-colors"
+        className="w-full px-4 py-3 flex items-center justify-between hover:bg-white/40 transition-colors rounded-t-2xl"
       >
         <div className="flex items-center gap-3">
-          <config.icon className="h-4 w-4 text-[#666]" />
+          <div className="p-1.5 rounded-md bg-white/50 border border-white/30">
+            <config.icon className="h-4 w-4 text-[#666]" />
+          </div>
           <h3 className="text-base font-medium text-[#1a1a1a]">
             {config.title}
           </h3>
@@ -686,9 +808,9 @@ function CollapsibleSectionBand({
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {projects.map(p => (
-                <ProjectCard 
-                  key={p.id} 
-                  p={p} 
+                <ProjectCard
+                  key={p.id}
+                  p={p}
                   onRename={onRename}
                   onDelete={onDelete}
                   onForceDelete={onForceDelete}
