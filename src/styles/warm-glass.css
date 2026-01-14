@@ -110,23 +110,21 @@
   border-bottom: 1px solid rgba(224, 224, 224, 0.5);
 }
 
-/* Tailwind utility classes for warm glass */
-@layer utilities {
-  .bg-warm-glass {
-    background: var(--warm-glass-bg);
-    backdrop-filter: blur(var(--warm-glass-blur));
-    -webkit-backdrop-filter: blur(var(--warm-glass-blur));
-  }
+/* Utility classes for warm glass (standalone, no @layer) */
+.bg-warm-glass {
+  background: var(--warm-glass-bg);
+  backdrop-filter: blur(var(--warm-glass-blur));
+  -webkit-backdrop-filter: blur(var(--warm-glass-blur));
+}
 
-  .border-warm-glass {
-    border-color: var(--warm-glass-border);
-  }
+.border-warm-glass {
+  border-color: var(--warm-glass-border);
+}
 
-  .shadow-warm-glass {
-    box-shadow: var(--warm-glass-shadow);
-  }
+.shadow-warm-glass {
+  box-shadow: var(--warm-glass-shadow);
+}
 
-  .shadow-warm-glass-lg {
-    box-shadow: var(--warm-glass-shadow-lg);
-  }
+.shadow-warm-glass-lg {
+  box-shadow: var(--warm-glass-shadow-lg);
 }
