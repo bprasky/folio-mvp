@@ -62,6 +62,9 @@ body:has([data-testid="cinematic-bg"]) {
 /* Folio Warm Glassmorphism (for My Projects and similar pages) */
 @import '../styles/warm-glass.css';
 
+/* Folio Liquid Glass (dramatic glassmorphism for redesigned pages) */
+@import '../styles/liquid-glass.css';
+
 /* Folio Cinematic Gradient (MUST load last to win cascade) */
 @import '../styles/folio-gradient.css';
 
