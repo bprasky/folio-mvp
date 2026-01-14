@@ -33,10 +33,13 @@ export default async function ProjectsPage({ searchParams }: ProjectsPageProps) 
     // All authenticated users can access projects
     // (permissions/capabilities within projects are handled separately)
 
-    // Fetch projects with computed stats (read-only, no writes)
-    const projects = await getMyProjectsWithStats();
+    // Get the operating context from session
+    const operatingAsOrgId = (session.user as any)?.operatingAsOrgId as string | null | undefined;
 
-    return <ProjectsPageClient projectsRaw={projects} />;
+    // Fetch projects with computed stats, filtered by operating context
+    const projects = await getMyProjectsWithStats(operatingAsOrgId);
+
+    return <ProjectsPageClient projectsRaw={projects} operatingAsOrgId={operatingAsOrgId} />;
   } catch (error) {
     console.error('[ProjectsPage] Error:', error);
     // Re-throw to show error page instead of 404
