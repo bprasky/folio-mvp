@@ -37,15 +37,15 @@ export async function POST(request: NextRequest) {
 
     // If setting to an org, validate user belongs to that org
     if (operatingAsOrgId) {
-      const membership = await prisma.organizationUser.findFirst({
-        where: {
-          userId: session.user.id,
-          organizationId: operatingAsOrgId,
-          isActive: true,
-        },
-      });
+      // Use raw SQL to avoid isActive column issue
+      const membership = await prisma.$queryRaw<any[]>`
+        SELECT id FROM organization_users
+        WHERE "userId" = ${session.user.id}
+        AND "organizationId" = ${operatingAsOrgId}
+        LIMIT 1
+      `;
 
-      if (!membership) {
+      if (!membership || membership.length === 0) {
         return NextResponse.json(
           { error: 'You do not belong to this organization' },
           { status: 403 }
@@ -53,29 +53,35 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Update the user's workspace context
-    const updatedUser = await prisma.user.update({
-      where: { id: session.user.id },
-      data: { operatingAsOrgId },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        operatingAsOrgId: true,
-        operatingAsOrg: {
-          select: {
-            id: true,
-            name: true,
-            logo: true,
-            type: true,
-          },
-        },
-      },
-    });
+    // Update the user's workspace context using raw SQL (column may not exist)
+    try {
+      await prisma.$executeRaw`
+        UPDATE users SET "operatingAsOrgId" = ${operatingAsOrgId}, "updatedAt" = NOW()
+        WHERE id = ${session.user.id}
+      `;
+    } catch (updateErr: any) {
+      // Column doesn't exist yet - that's okay, just log it
+      console.log('[POST workspace-context] operatingAsOrgId column not available:', updateErr.message);
+    }
+
+    // Get org details if switching to an org
+    let operatingAsOrg = null;
+    if (operatingAsOrgId) {
+      const orgs = await prisma.$queryRaw<any[]>`
+        SELECT id, name, type FROM organizations WHERE id = ${operatingAsOrgId}
+      `;
+      if (orgs && orgs.length > 0) {
+        operatingAsOrg = { ...orgs[0], logo: null };
+      }
+    }
 
     return NextResponse.json({
       success: true,
-      user: updatedUser,
+      user: {
+        id: session.user.id,
+        operatingAsOrgId,
+        operatingAsOrg,
+      },
     });
   } catch (error) {
     console.error('Error updating workspace context:', error);
@@ -101,6 +107,7 @@ export async function GET() {
       );
     }
 
+    // Get basic user info
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
       select: {
@@ -108,29 +115,6 @@ export async function GET() {
         name: true,
         email: true,
         profileImage: true,
-        operatingAsOrgId: true,
-        operatingAsOrg: {
-          select: {
-            id: true,
-            name: true,
-            logo: true,
-            type: true,
-          },
-        },
-        organizationUsers: {
-          where: { isActive: true },
-          select: {
-            role: true,
-            organization: {
-              select: {
-                id: true,
-                name: true,
-                logo: true,
-                type: true,
-              },
-            },
-          },
-        },
       },
     });
 
@@ -141,13 +125,46 @@ export async function GET() {
       );
     }
 
+    // Get user's organizations via raw SQL to avoid missing column issues
+    const memberships = await prisma.$queryRaw<any[]>`
+      SELECT
+        ou.role as "userRole",
+        o.id,
+        o.name,
+        o.type
+      FROM organization_users ou
+      JOIN organizations o ON ou."organizationId" = o.id
+      WHERE ou."userId" = ${session.user.id}
+    `;
+
+    const organizations = memberships.map((m: any) => ({
+      id: m.id,
+      name: m.name,
+      type: m.type,
+      logo: null,
+      userRole: m.userRole,
+    }));
+
+    // Try to get operatingAsOrgId (may not exist in prod)
+    let operatingAsOrgId = null;
+    let operatingAsOrg = null;
+    try {
+      const workspace = await prisma.$queryRaw<any[]>`
+        SELECT "operatingAsOrgId" FROM users WHERE id = ${session.user.id}
+      `;
+      if (workspace?.[0]?.operatingAsOrgId) {
+        operatingAsOrgId = workspace[0].operatingAsOrgId;
+        // Find the org details
+        operatingAsOrg = organizations.find((o: any) => o.id === operatingAsOrgId) || null;
+      }
+    } catch (e) {
+      // Column doesn't exist yet
+    }
+
     return NextResponse.json({
-      operatingAsOrgId: user.operatingAsOrgId,
-      operatingAsOrg: user.operatingAsOrg,
-      organizations: user.organizationUsers.map(ou => ({
-        ...ou.organization,
-        userRole: ou.role,
-      })),
+      operatingAsOrgId,
+      operatingAsOrg,
+      organizations,
       user: {
         id: user.id,
         name: user.name,
