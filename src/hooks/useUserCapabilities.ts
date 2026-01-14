@@ -71,24 +71,33 @@ export function useUserCapabilities(): UserCapabilities {
     // Determine user type based on role and org membership
     let userType: UserType = 'INDIVIDUAL';
 
-    if (role === 'ADMIN') {
+    // PRIORITY 1: If operating as an organization, use org-based capabilities
+    // This takes precedence over personal role
+    if (user.operatingAsOrgId || user.operatingAsOrg) {
+      const isProfessional = user.operatingAsOrg?.status === 'PROFESSIONAL';
+      userType = isProfessional ? 'PAID_DESIGNER' : 'FREE_DESIGNER';
+    }
+    // PRIORITY 2: Check personal role
+    else if (role === 'ADMIN') {
       userType = 'ADMIN';
     } else if (role === 'VENDOR') {
       userType = 'VENDOR';
     } else if (role === 'DESIGNER') {
       // Check if they have a professional (paid) org
-      // This is determined by operatingAsOrg status or explicit flag
-      const isProfessional = user.operatingAsOrg?.status === 'PROFESSIONAL' ||
-                            user.isProfessional === true ||
+      const isProfessional = user.isProfessional === true ||
                             user.hasProfessionalOrg === true;
       userType = isProfessional ? 'PAID_DESIGNER' : 'FREE_DESIGNER';
     } else if (role === 'INDIVIDUAL' || role === 'HOMEOWNER') {
-      userType = 'INDIVIDUAL';
-    } else {
       // Check if user has any org membership (makes them a designer)
-      if (user.operatingAsOrg || user.organizationId) {
-        const isProfessional = user.operatingAsOrg?.status === 'PROFESSIONAL';
-        userType = isProfessional ? 'PAID_DESIGNER' : 'FREE_DESIGNER';
+      if (user.organizationId) {
+        userType = 'FREE_DESIGNER';
+      } else {
+        userType = 'INDIVIDUAL';
+      }
+    } else {
+      // Fallback: Check if user has any org membership
+      if (user.organizationId) {
+        userType = 'FREE_DESIGNER';
       }
     }
 
