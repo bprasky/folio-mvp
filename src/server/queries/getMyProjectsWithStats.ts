@@ -33,49 +33,54 @@ export type ProjectWithStats = {
   organizationName?: string | null;
 };
 
-export async function getMyProjectsWithStats() {
+export async function getMyProjectsWithStats(operatingAsOrgId?: string | null) {
   const session = await getServerSession(authOptions);
-  
+
   if (!session?.user?.id) {
     throw new Error('Unauthorized: No session found');
   }
 
   const userId = session.user.id;
 
-  // Build OR filters to check all ownership paths
-  const orFilters: any[] = [
-    { designerId: userId },
-    { ownerId: userId },
-  ];
+  // Build OR filters based on operating context
+  const orFilters: any[] = [];
 
-  // Organization ownership (if user belongs to an org)
-  try {
-    const userOrgs = await prisma.organizationUser.findMany({
-      where: { userId, isActive: true },
-      select: { organizationId: true },
+  if (operatingAsOrgId) {
+    // Operating as an organization: only show projects for that specific org
+    // Verify user belongs to this org before querying
+    const membership = await prisma.organizationUser.findFirst({
+      where: { userId, organizationId: operatingAsOrgId, isActive: true },
     });
 
-    if (userOrgs.length > 0) {
-      const orgIds = userOrgs.map(ou => ou.organizationId);
-      orFilters.push({ designerOrgId: { in: orgIds } });
+    if (!membership) {
+      console.warn('[getMyProjectsWithStats] User not member of operating org:', operatingAsOrgId);
+      return [];
     }
-  } catch (error) {
-    console.warn('[getMyProjectsWithStats] Org query failed:', error);
-  }
 
-  // Participant membership - fetch separately to avoid query complexity
-  let participantProjectIds: string[] = [];
-  try {
-    const participantProjects = await prisma.projectParticipant.findMany({
-      where: { userId },
-      select: { projectId: true },
-    });
-    participantProjectIds = participantProjects.map(p => p.projectId);
-    if (participantProjectIds.length > 0) {
-      orFilters.push({ id: { in: participantProjectIds } });
+    // Only return projects owned by this organization
+    orFilters.push({ designerOrgId: operatingAsOrgId });
+  } else {
+    // Operating as individual: show personal projects only
+    // (projects where user is designer/owner but NOT org-owned)
+    orFilters.push(
+      { designerId: userId, designerOrgId: null },
+      { ownerId: userId, designerOrgId: null },
+    );
+
+    // Also include projects where user is a participant (regardless of org)
+    let participantProjectIds: string[] = [];
+    try {
+      const participantProjects = await prisma.projectParticipant.findMany({
+        where: { userId },
+        select: { projectId: true },
+      });
+      participantProjectIds = participantProjects.map(p => p.projectId);
+      if (participantProjectIds.length > 0) {
+        orFilters.push({ id: { in: participantProjectIds } });
+      }
+    } catch (error) {
+      console.warn('[getMyProjectsWithStats] Participant query failed:', error);
     }
-  } catch (error) {
-    console.warn('[getMyProjectsWithStats] Participant query failed:', error);
   }
 
   // Fetch projects first (with org info for ownership context)

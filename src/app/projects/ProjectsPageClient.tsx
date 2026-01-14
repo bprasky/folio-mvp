@@ -96,9 +96,10 @@ export type ProjectLite = {
 
 interface ProjectsPageClientProps {
   projectsRaw: ProjectLite[];
+  operatingAsOrgId?: string | null;
 }
 
-export default function ProjectsPageClient({ projectsRaw }: ProjectsPageClientProps) {
+export default function ProjectsPageClient({ projectsRaw, operatingAsOrgId }: ProjectsPageClientProps) {
   const { data: session } = useSession();
   const capabilities = useUserCapabilities();
   const [projectsState, setProjectsState] = useState<ProjectLite[]>(projectsRaw);
@@ -251,8 +252,8 @@ export default function ProjectsPageClient({ projectsRaw }: ProjectsPageClientPr
               {pageTitle}
             </h1>
 
-            {/* Context Tabs - only show if user has org projects */}
-            {contextCounts.organization > 0 && (
+            {/* Context Tabs - only show if user has mixed contexts (not filtered by operatingAsOrgId) */}
+            {!operatingAsOrgId && contextCounts.organization > 0 && (
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setActiveContextTab('all')}
