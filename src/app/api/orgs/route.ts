@@ -182,13 +182,14 @@ export async function POST(request: NextRequest) {
       `;
     }
 
-    // Update user's role based on org type
+    // Update user's role based on org type using Prisma ORM
+    // (role column exists in prod, only need raw SQL for tables with missing columns)
     // DESIGN_FIRM -> DESIGNER, all others -> VENDOR
     const userRole = orgType === 'DESIGN_FIRM' ? 'DESIGNER' : 'VENDOR';
-    await prisma.$executeRaw`
-      UPDATE users SET role = ${userRole}::"Role", "updatedAt" = NOW()
-      WHERE id = ${session.user.id}
-    `;
+    await prisma.user.update({
+      where: { id: session.user.id },
+      data: { role: userRole as any },
+    });
 
     return NextResponse.json({
       org: { id: orgId, name: trimmedName, type: orgType },

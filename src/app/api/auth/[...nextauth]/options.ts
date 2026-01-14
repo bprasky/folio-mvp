@@ -150,31 +150,46 @@ export const authOptions: NextAuthOptions = {
         console.log("DEBUG: JWT callback - Setting token.id:", user.id);
       }
 
-      // Always hydrate role, accountStatus, onboardingCompletedAt, and workspace context from DB to avoid stale tokens
+      // Always hydrate role, accountStatus, onboardingCompletedAt from DB to avoid stale tokens
+      // Note: Query only core columns that exist in prod, workspace context is optional
       if (token.sub) {
         try {
+          // Core query - these columns definitely exist
           const u = await prisma.user.findUnique({
             where: { id: token.sub as string },
             select: {
               role: true,
               accountStatus: true,
               onboardingCompletedAt: true,
-              operatingAsOrgId: true,
-              operatingAsOrg: {
-                select: {
-                  id: true,
-                  name: true,
-                  logo: true,
-                },
-              },
             },
           });
           token.role = u?.role ?? "GUEST";
           token.accountStatus = u?.accountStatus ?? "APPROVED";
           token.onboardingCompletedAt = u?.onboardingCompletedAt ?? null;
-          token.operatingAsOrgId = u?.operatingAsOrgId ?? null;
-          token.operatingAsOrg = u?.operatingAsOrg ?? null;
-          console.log("Hydrated from DB - role:", token.role, "accountStatus:", token.accountStatus, "operatingAsOrgId:", token.operatingAsOrgId);
+          console.log("Hydrated from DB - role:", token.role, "accountStatus:", token.accountStatus);
+
+          // Try to get workspace context (operatingAsOrgId may not exist in prod yet)
+          try {
+            const workspace = await prisma.$queryRaw<any[]>`
+              SELECT "operatingAsOrgId" FROM users WHERE id = ${token.sub}
+            `;
+            if (workspace?.[0]?.operatingAsOrgId) {
+              token.operatingAsOrgId = workspace[0].operatingAsOrgId;
+              // Get org details
+              const org = await prisma.organization.findUnique({
+                where: { id: workspace[0].operatingAsOrgId },
+                select: { id: true, name: true },
+              });
+              token.operatingAsOrg = org ? { ...org, logo: null } : null;
+            } else {
+              token.operatingAsOrgId = null;
+              token.operatingAsOrg = null;
+            }
+          } catch (workspaceErr) {
+            // operatingAsOrgId column doesn't exist yet, that's fine
+            token.operatingAsOrgId = null;
+            token.operatingAsOrg = null;
+          }
         } catch (e) {
           // On DB hiccup, keep previous token values rather than blowing up auth
           console.error("Error hydrating from DB:", e);
