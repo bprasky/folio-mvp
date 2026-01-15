@@ -50,9 +50,9 @@ export default function FestivalCarousel({ events }: { events: Festival[] }) {
   if (!sorted.length) {
     return (
       <section aria-label="Design Festivals" className="relative">
-        <h1 className="mb-4 font-serif text-2xl sm:text-[28px] text-neutral-800 tracking-tight">Design Festivals</h1>
-        <div className="relative h-[240px] sm:h-[300px] lg:h-[340px] rounded-2xl bg-neutral-100 flex items-center justify-center">
-          <p className="text-neutral-500">No festivals available</p>
+        <h1 className="mb-4 font-serif text-2xl sm:text-[28px] text-[var(--text-primary)] tracking-tight">Design Festivals</h1>
+        <div className="relative h-[240px] sm:h-[300px] lg:h-[340px] rounded-2xl bg-[var(--bg-elevated)] flex items-center justify-center">
+          <p className="text-[var(--text-secondary)]">No festivals available</p>
         </div>
       </section>
     );
@@ -60,7 +60,7 @@ export default function FestivalCarousel({ events }: { events: Festival[] }) {
 
   return (
     <section aria-label="Design Festivals" className="relative">
-      <h1 className="mb-4 font-serif text-2xl sm:text-[28px] text-neutral-800 tracking-tight">Design Festivals</h1>
+      <h1 className="mb-4 font-serif text-2xl sm:text-[28px] text-[var(--text-primary)] tracking-tight">Design Festivals</h1>
 
       <div className="relative h-[240px] sm:h-[300px] lg:h-[340px]">
         <div className="relative h-full w-full overflow-hidden rounded-2xl">
@@ -102,7 +102,7 @@ export default function FestivalCarousel({ events }: { events: Festival[] }) {
               key={i}
               aria-label={`Go to festival ${i + 1}`}
               onClick={() => setIndex(i)}
-              className={cn("h-1.5 w-6 rounded-full transition-all", i === index ? "bg-neutral-800/70" : "bg-neutral-400/40")}
+              className={cn("h-1.5 w-6 rounded-full transition-all", i === index ? "bg-[var(--text-primary)]/70" : "bg-[var(--text-tertiary)]/40")}
             />
           ))}
         </div>
@@ -155,7 +155,7 @@ function MainCard({
             {isPast && festival.editorialSlug && (
               <Link
                 href={`/editorial/${festival.editorialSlug}`}
-                className="rounded-full bg-neutral-100 text-neutral-900 px-3 py-1.5 text-xs shadow-sm hover:bg-white transition"
+                className="rounded-full bg-[var(--bg-elevated)] text-[var(--text-primary)] px-3 py-1.5 text-xs shadow-sm hover:bg-[var(--bg-base)] transition"
                 onClick={(e) => e.stopPropagation()}
               >
                 View editorial
@@ -164,7 +164,7 @@ function MainCard({
             {isUpcoming && (festival.addToCalendarUrl || festival.rsvpUrl) && (
               <Link
                 href={festival.addToCalendarUrl || festival.rsvpUrl || '#'}
-                className="rounded-full bg-white/90 text-neutral-900 px-3 py-1.5 text-xs shadow-sm hover:bg-white transition"
+                className="rounded-full bg-[var(--bg-base)]/90 text-[var(--text-primary)] px-3 py-1.5 text-xs shadow-sm hover:bg-[var(--bg-base)] transition"
                 onClick={(e) => e.stopPropagation()}
               >
                 Add to calendar
@@ -194,7 +194,7 @@ function PeekCard({ festival, side, muted = false, ctaLabel, href, onClick }: {
         <div className="absolute bottom-3 left-3 right-3 text-neutral-50">
           <p className="text-[11px] opacity-90 line-clamp-1">{festival.title}</p>
           {ctaLabel && href && (
-            <Link href={href} className="mt-1.5 inline-block rounded-full bg-white/85 text-neutral-900 px-2.5 py-1 text-[11px] shadow hover:bg-white transition" onClick={(e)=> e.stopPropagation()}>
+            <Link href={href} className="mt-1.5 inline-block rounded-full bg-[var(--bg-base)]/85 text-[var(--text-primary)] px-2.5 py-1 text-[11px] shadow hover:bg-[var(--bg-base)] transition" onClick={(e)=> e.stopPropagation()}>
               {ctaLabel}
             </Link>
           )}

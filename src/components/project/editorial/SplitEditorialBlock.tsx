@@ -85,26 +85,26 @@ export function SplitEditorialBlock({
         <div className="w-full md:w-1/2 space-y-4">
           {/* Room Label - Section Header Style */}
           {roomName && (
-            <div className="text-sm font-medium uppercase tracking-wider text-neutral-600 mb-2">
+            <div className="folio-ui uppercase tracking-wider text-[var(--text-secondary)] mb-2">
               {roomName}
             </div>
           )}
-          
+
           {/* Editorial Text - Readable Paragraph Style */}
           <div className="prose prose-neutral max-w-none">
             {text.split('\n\n').map((paragraph, idx) => (
-              <p key={idx} className="text-base md:text-lg leading-relaxed text-neutral-800 font-normal mb-4 last:mb-0">
+              <p key={idx} className="text-base md:text-lg leading-relaxed text-[var(--text-primary)] font-normal mb-4 last:mb-0">
                 {paragraph.trim()}
               </p>
             ))}
           </div>
-          
+
           {/* Tagged Products (Inline References) */}
           {productNames.length > 0 && (
-            <div className="pt-4 border-t border-neutral-200">
-              <div className="text-sm text-neutral-600">
+            <div className="pt-4 border-t border-[var(--ridge-outer)]">
+              <div className="folio-ui text-[var(--text-secondary)]">
                 <span className="font-medium">Selections: </span>
-                <span className="text-neutral-500">
+                <span className="text-[var(--text-secondary)]">
                   {productNames.join(' • ')}
                 </span>
               </div>

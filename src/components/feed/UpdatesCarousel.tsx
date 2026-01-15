@@ -13,8 +13,8 @@ function CarouselSkeleton() {
           key={idx}
           className="relative flex flex-1 min-w-0 flex-col items-center gap-2"
         >
-          <div className="block h-[120px] w-full aspect-square overflow-hidden rounded-lg ring-2 ring-neutral-200 bg-neutral-100 animate-pulse" />
-          <div className="h-3 w-full max-w-[100px] bg-neutral-100 rounded animate-pulse" />
+          <div className="block h-[120px] w-full aspect-square overflow-hidden rounded-lg ring-2 ring-[var(--ridge-outer)] bg-[var(--bg-elevated)] animate-pulse" />
+          <div className="h-3 w-full max-w-[100px] bg-[var(--bg-elevated)] rounded animate-pulse" />
         </div>
       ))}
     </div>
@@ -39,15 +39,15 @@ export function UpdatesCarousel({ groups }: { groups: UpdatesCarouselItem[] }) {
             className="group relative flex flex-1 min-w-0 flex-col items-center gap-2"
             aria-label={`Open updates: ${(g.designer.studioName || g.designer.name || "Designer")} — ${g.project.title || "Project"}`}
           >
-            <span className="block h-[120px] w-full aspect-square overflow-hidden rounded-lg ring-2 ring-neutral-900/60 ring-offset-2 ring-offset-white shadow-sm">
+            <span className="block h-[120px] w-full aspect-square overflow-hidden rounded-lg ring-2 ring-[var(--text-primary)]/60 ring-offset-2 ring-offset-[var(--bg-base)] shadow-sm">
               {g.cover ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={g.cover} alt="" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]" />
               ) : (
-                <span className="h-full w-full bg-neutral-100 block" />
+                <span className="h-full w-full bg-[var(--bg-elevated)] block" />
               )}
             </span>
-            <span className="text-[11px] text-neutral-700 line-clamp-2 text-center w-full max-w-[120px]">
+            <span className="text-[11px] text-[var(--text-secondary)] line-clamp-2 text-center w-full max-w-[120px]">
               {g.designer.studioName || g.designer.name || "Designer"}
             </span>
           </button>

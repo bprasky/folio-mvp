@@ -78,7 +78,7 @@ function SideBySideSpread({
 
         {/* TEXT COLUMN */}
         <div className={clsx(hasImage && flip && "md:order-1")}>
-          <GlassTextBlock chapter={chapter} variant="narrative" />
+          <RidgeTextBlock chapter={chapter} variant="narrative" />
         </div>
       </div>
     </section>
@@ -92,7 +92,7 @@ function SideBySideSpread({
 function TextOverImageSpread({ chapter }: { chapter: EditorialChapter }) {
   return (
     <section className="mx-auto max-w-5xl px-3 md:px-0 flex flex-col gap-6">
-      <GlassTextBlock chapter={chapter} variant="full" />
+      <RidgeTextBlock chapter={chapter} variant="full" />
       {chapter.primaryImage?.url && (
         <div>
           <FigureImage image={chapter.primaryImage} title={chapter.title} />
@@ -111,7 +111,7 @@ function CinemaSpread({ chapter }: { chapter: EditorialChapter }) {
   return (
     <section className="w-full">
       {chapter.primaryImage?.url && (
-        <div className="relative h-[55vh] min-h-[360px] max-h-[640px]">
+        <div className="relative h-[55vh] min-h-[360px] max-h-[640px] ridge-card ridge-card-lg overflow-hidden">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={chapter.primaryImage.url}
@@ -120,11 +120,11 @@ function CinemaSpread({ chapter }: { chapter: EditorialChapter }) {
           />
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-black/5 to-transparent" />
           <div className="absolute bottom-6 left-6 right-6 flex flex-wrap items-end justify-between gap-3">
-            <div className="rounded-full bg-black/60 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-white/80">
+            <div className="rounded-full bg-[var(--bg-base)]/90 backdrop-blur-sm px-3 py-1 folio-meta uppercase tracking-[0.18em] text-[var(--text-secondary)]">
               {chapter.title || "Project Chapter"}
             </div>
             {chapter.pullQuote && (
-              <div className="max-w-md rounded-2xl bg-black/55 px-4 py-3 text-[13px] text-white/90">
+              <div className="max-w-md ridge-card px-4 py-3 folio-body">
                 "{chapter.pullQuote}"
               </div>
             )}
@@ -133,7 +133,7 @@ function CinemaSpread({ chapter }: { chapter: EditorialChapter }) {
       )}
       {chapter.body && (
         <div className="mx-auto mt-6 max-w-4xl px-3 md:px-0">
-          <GlassTextBlock chapter={chapter} variant="intro" />
+          <RidgeTextBlock chapter={chapter} variant="intro" />
         </div>
       )}
       <div className="mx-auto mt-4 max-w-4xl px-3 md:px-0">
@@ -160,7 +160,7 @@ function DetailGridSpread({ chapter }: { chapter: EditorialChapter }) {
           <div
             key={img.id ?? idx}
             className={clsx(
-              "overflow-hidden rounded-2xl bg-neutral-100",
+              "overflow-hidden ridge-card",
               idx === 0 && "col-span-2"
             )}
           >
@@ -174,13 +174,13 @@ function DetailGridSpread({ chapter }: { chapter: EditorialChapter }) {
         ))}
       </div>
       <div className="space-y-4">
-        <GlassTextBlock chapter={chapter} variant="narrative" />
-        <div className="rounded-3xl bg-white/75 backdrop-blur-2xl ring-1 ring-black/5 p-4 space-y-3">
+        <RidgeTextBlock chapter={chapter} variant="narrative" />
+        <div className="ridge-card p-4 space-y-3">
           <div className="flex items-center justify-between gap-2">
-            <h3 className="text-xs font-semibold uppercase tracking-[0.18em] text-neutral-600">
+            <h3 className="folio-meta uppercase tracking-[0.18em] text-[var(--text-secondary)]">
               In the Details
             </h3>
-            <span className="text-[11px] text-neutral-400">
+            <span className="folio-meta text-[var(--text-tertiary)]">
               Shop the space
             </span>
           </div>
@@ -199,7 +199,7 @@ function FigureImage({ image, title }: { image: any; title?: string | null }) {
   if (!image?.url) return null;
 
   return (
-    <figure className="overflow-hidden rounded-3xl bg-neutral-100 shadow-[0_18px_60px_rgba(15,14,10,0.18)]">
+    <figure className="overflow-hidden ridge-card ridge-card-lg">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={image.url}
@@ -210,7 +210,7 @@ function FigureImage({ image, title }: { image: any; title?: string | null }) {
   );
 }
 
-function GlassTextBlock({
+function RidgeTextBlock({
   chapter,
   variant,
 }: {
@@ -220,23 +220,22 @@ function GlassTextBlock({
   if (!chapter.body && !chapter.title) return null;
 
   return (
-    <div className="rounded-[28px] bg-white/75 backdrop-blur-2xl ring-1 ring-black/5 px-5 py-4 md:px-6 md:py-5 space-y-3">
+    <div className="ridge-card px-5 py-4 md:px-6 md:py-5 space-y-3">
       {chapter.title && (
-        <h2 className="text-[13px] font-semibold tracking-[0.16em] uppercase text-neutral-500">
+        <h2 className="folio-meta uppercase tracking-[0.16em] text-[var(--text-secondary)]">
           {chapter.title}
         </h2>
       )}
       {chapter.body && (
-        <p className="text-[13px] leading-relaxed text-neutral-800 whitespace-pre-line">
+        <p className="folio-body whitespace-pre-line">
           {chapter.body}
         </p>
       )}
       {chapter.pullQuote && variant !== "intro" && (
-        <div className="mt-1 border-l border-neutral-200 pl-3 text-[12px] italic text-neutral-600">
+        <div className="mt-1 border-l-2 border-[var(--accent)] pl-3 folio-quote text-[var(--text-secondary)]">
           "{chapter.pullQuote}"
         </div>
       )}
     </div>
   );
 }
-

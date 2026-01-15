@@ -100,12 +100,12 @@ export default function FeaturedProducts({
         {Array.from({ length: 4 }).map((_, index) => (
           <div
             key={index}
-            className="rounded-xl bg-white/60 backdrop-blur-md border border-white/20 shadow-sm animate-pulse"
+            className="rounded-xl bg-[var(--bg-base)]/60 backdrop-blur-md border border-[var(--ridge-outer)] shadow-sm animate-pulse"
           >
-            <div className="h-32 bg-gray-200 rounded-t-xl"></div>
+            <div className="h-32 bg-[var(--bg-elevated)] rounded-t-xl"></div>
             <div className="p-3">
-              <div className="h-4 bg-gray-200 rounded mb-2"></div>
-              <div className="h-3 bg-gray-200 rounded w-2/3"></div>
+              <div className="h-4 bg-[var(--bg-elevated)] rounded mb-2"></div>
+              <div className="h-3 bg-[var(--bg-elevated)] rounded w-2/3"></div>
             </div>
           </div>
         ))}
@@ -117,7 +117,7 @@ export default function FeaturedProducts({
   if (!products || products.length === 0) {
     return (
       <div className="text-center py-8">
-        <p className="text-sm text-neutral-500">No featured products yet.</p>
+        <p className="text-sm text-[var(--text-secondary)]">No featured products yet.</p>
       </div>
     );
   }

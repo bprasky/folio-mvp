@@ -155,18 +155,18 @@ export function VendorEventsTab({ vendorId }: { vendorId?: string | null }) {
           subtitle="Cross-event analytics and performance benchmarks across your portfolio."
         >
           {/* KPI Strip */}
-          <div className="rounded-2xl p-4 bg-white border border-neutral-200 shadow-sm">
+          <div className="rounded-2xl p-4 ridge-card">
             <PortfolioKpis data={portfolioKpis} />
           </div>
 
           {/* Comparative Charts */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <div className="rounded-2xl p-4 bg-white border border-neutral-200 shadow-sm">
+            <div className="rounded-2xl p-4 ridge-card">
               <div className="flex items-center justify-between mb-4">
-                <h4 className="font-semibold text-neutral-800">Event Performance vs Average</h4>
+                <h4 className="font-semibold text-[var(--text-primary)]">Event Performance vs Average</h4>
                 <button 
                   onClick={handleExportCSV}
-                  className="text-xs px-3 py-1 rounded-lg border border-neutral-300 hover:bg-neutral-100 text-neutral-700 transition"
+                  className="text-xs px-3 py-1 rounded-lg border border-[var(--ridge-outer)] hover:bg-[var(--bg-elevated)] text-[var(--text-primary)] transition"
                 >
                   Compare events
                 </button>
@@ -177,31 +177,31 @@ export function VendorEventsTab({ vendorId }: { vendorId?: string | null }) {
                 onEventClick={handleEventClick}
                 onHover={setHoveredEventId}
               />
-              <p className="text-xs text-neutral-600 mt-2">How each event compares to portfolio average</p>
+              <p className="text-xs text-[var(--text-secondary)] mt-2">How each event compares to portfolio average</p>
             </div>
 
-            <div className="rounded-2xl p-4 bg-white border border-neutral-200 shadow-sm">
+            <div className="rounded-2xl p-4 ridge-card">
               <div className="flex items-center justify-between mb-4">
-                <h4 className="font-semibold text-neutral-800">Portfolio Momentum</h4>
+                <h4 className="font-semibold text-[var(--text-primary)]">Portfolio Momentum</h4>
                 <button 
                   onClick={handleExportCSV}
-                  className="text-xs px-3 py-1 rounded-lg border border-neutral-300 hover:bg-neutral-100 text-neutral-700 transition"
+                  className="text-xs px-3 py-1 rounded-lg border border-[var(--ridge-outer)] hover:bg-[var(--bg-elevated)] text-[var(--text-primary)] transition"
                 >
                   Export growth data
                 </button>
               </div>
               <PortfolioGrowthLine data={growthData} />
-              <p className="text-xs text-neutral-600 mt-2">Growth over time across all events</p>
+              <p className="text-xs text-[var(--text-secondary)] mt-2">Growth over time across all events</p>
             </div>
           </div>
 
           {/* Benchmarks */}
-          <div className="rounded-2xl p-4 bg-white border border-neutral-200 shadow-sm">
+          <div className="rounded-2xl p-4 ridge-card">
             <div className="flex items-center justify-between mb-4">
-              <h4 className="font-semibold text-neutral-800">Benchmarks</h4>
+              <h4 className="font-semibold text-[var(--text-primary)]">Benchmarks</h4>
               <button 
                 onClick={handleExportCSV}
-                className="text-xs px-3 py-1 rounded-lg border border-neutral-300 hover:bg-neutral-100 text-neutral-700 transition"
+                className="text-xs px-3 py-1 rounded-lg border border-[var(--ridge-outer)] hover:bg-[var(--bg-elevated)] text-[var(--text-primary)] transition"
               >
                 Document tactics
               </button>
@@ -210,7 +210,7 @@ export function VendorEventsTab({ vendorId }: { vendorId?: string | null }) {
               benchmarks={benchmarks} 
               events={eventSummaries} 
             />
-            <p className="text-xs text-neutral-600 mt-2">Key performance highlights and standouts</p>
+            <p className="text-xs text-[var(--text-secondary)] mt-2">Key performance highlights and standouts</p>
             {/* Inline AI Pane for Events Portfolio Insights */}
             <AIInlinePane sectionId="events" />
           </div>
@@ -223,9 +223,9 @@ export function VendorEventsTab({ vendorId }: { vendorId?: string | null }) {
 
 function PlaceholderCard({ label }: { label: string }) {
   return (
-    <div className="rounded-2xl p-4 bg-white border border-neutral-200 shadow-sm">
-      <div className="text-sm text-neutral-600">{label}</div>
-      <div className="text-2xl font-semibold text-neutral-800">—</div>
+    <div className="rounded-2xl p-4 ridge-card">
+      <div className="text-sm text-[var(--text-secondary)]">{label}</div>
+      <div className="text-2xl font-semibold text-[var(--text-primary)]">—</div>
     </div>
   );
 }
@@ -245,22 +245,22 @@ function EventCard({ event, isHovered = false, onHover }: EventCardProps) {
 
   return (
     <div 
-      className={`rounded-2xl bg-white border border-neutral-200 shadow-sm p-4 transition-all duration-200 ${
+      className={`rounded-2xl ridge-card p-4 transition-all duration-200 ${
         isHovered 
-          ? 'ring-2 ring-neutral-400/40 shadow-md' 
+          ? 'ring-2 ring-[var(--ridge-outer)] shadow-md' 
           : 'hover:shadow-md'
       }`}
       onMouseEnter={() => onHover?.(event.id)}
       onMouseLeave={() => onHover?.(null)}
     >
       <div className="flex items-start justify-between mb-3">
-        <h4 className="text-lg font-semibold line-clamp-2 flex-1 text-neutral-800">{event.name}</h4>
+        <h4 className="text-lg font-semibold line-clamp-2 flex-1 text-[var(--text-primary)]">{event.name}</h4>
         <Badge className={`${statusColors[event.status]} border text-xs`}>
           {event.status}
         </Badge>
       </div>
       
-      <div className="flex items-center space-x-4 text-sm text-neutral-600 mb-4">
+      <div className="flex items-center space-x-4 text-sm text-[var(--text-secondary)] mb-4">
         <div className="flex items-center space-x-1">
           <CalendarDays className="w-4 h-4" />
           <span>
@@ -279,27 +279,27 @@ function EventCard({ event, isHovered = false, onHover }: EventCardProps) {
       {/* Mini KPIs */}
       <div className="grid grid-cols-3 gap-3 mb-4">
         <div className="text-center">
-          <div className="flex items-center justify-center w-8 h-8 bg-neutral-100 rounded-full mb-1 mx-auto">
-            <Users className="w-4 h-4 text-neutral-700" />
+          <div className="flex items-center justify-center w-8 h-8 bg-[var(--bg-elevated)] rounded-full mb-1 mx-auto">
+            <Users className="w-4 h-4 text-[var(--text-primary)]" />
           </div>
-          <p className="text-xs text-neutral-600 mb-1">RSVPs</p>
-          <p className="text-sm font-semibold text-neutral-800">{formatCompactNumber(event.rsvps)}</p>
+          <p className="text-xs text-[var(--text-secondary)] mb-1">RSVPs</p>
+          <p className="text-sm font-semibold text-[var(--text-primary)]">{formatCompactNumber(event.rsvps)}</p>
         </div>
         
         <div className="text-center">
-          <div className="flex items-center justify-center w-8 h-8 bg-neutral-100 rounded-full mb-1 mx-auto">
-            <TrendingUp className="w-4 h-4 text-neutral-700" />
+          <div className="flex items-center justify-center w-8 h-8 bg-[var(--bg-elevated)] rounded-full mb-1 mx-auto">
+            <TrendingUp className="w-4 h-4 text-[var(--text-primary)]" />
           </div>
-          <p className="text-xs text-neutral-600 mb-1">Products</p>
-          <p className="text-sm font-semibold text-neutral-800">{formatCompactNumber(event.productsSaved)}</p>
+          <p className="text-xs text-[var(--text-secondary)] mb-1">Products</p>
+          <p className="text-sm font-semibold text-[var(--text-primary)]">{formatCompactNumber(event.productsSaved)}</p>
         </div>
         
         <div className="text-center">
-          <div className="flex items-center justify-center w-8 h-8 bg-neutral-100 rounded-full mb-1 mx-auto">
-            <span className="text-xs font-semibold text-neutral-700">$</span>
+          <div className="flex items-center justify-center w-8 h-8 bg-[var(--bg-elevated)] rounded-full mb-1 mx-auto">
+            <span className="text-xs font-semibold text-[var(--text-primary)]">$</span>
           </div>
-          <p className="text-xs text-neutral-600 mb-1">Est. Value</p>
-          <p className="text-sm font-semibold text-neutral-800">
+          <p className="text-xs text-[var(--text-secondary)] mb-1">Est. Value</p>
+          <p className="text-sm font-semibold text-[var(--text-primary)]">
             {formatCurrency(event.estProjectValueUsd, 'USD', true)}
           </p>
         </div>
@@ -307,7 +307,7 @@ function EventCard({ event, isHovered = false, onHover }: EventCardProps) {
 
       {/* Action Button */}
       <Link href={`/vendor/my-events/${event.id}`}>
-        <Button className="w-full bg-white border border-neutral-300 hover:bg-neutral-50 text-neutral-800 transition">
+        <Button className="w-full bg-[var(--bg-base)] border border-[var(--ridge-outer)] hover:bg-[var(--bg-elevated)] text-[var(--text-primary)] transition">
           View Analytics
           <ExternalLink className="w-4 h-4 ml-2" />
         </Button>

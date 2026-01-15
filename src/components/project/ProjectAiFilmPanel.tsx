@@ -19,8 +19,8 @@ type FilmProps = {
 export function ProjectAiFilmPanel({ module, project }: FilmProps) {
   if (!module) {
     return (
-      <section className="rounded-2xl border border-white/60 bg-white/40 px-4 py-3 md:px-5 md:py-4 text-[12px] text-neutral-700 space-y-1">
-        <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
+      <section className="ridge-card px-4 py-3 md:px-5 md:py-4 folio-meta text-[var(--text-primary)] space-y-1">
+        <div className="folio-meta font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
           Project Film (AI-Compiled)
         </div>
         <p>
@@ -28,10 +28,10 @@ export function ProjectAiFilmPanel({ module, project }: FilmProps) {
           <span className="font-medium">{project?.title}</span> will appear — a cinematic edit
           generated from the designer's short-form stories and clips throughout the project.
         </p>
-        <p className="text-[11px] text-neutral-500">
+        <p className="folio-meta text-[var(--text-secondary)]">
           Until the AI editor is live, you can upload a long-form reveal or walkthrough from the{" "}
           <span className="font-medium">Media</span> tab on the project dashboard (saved as a{" "}
-          <code className="rounded bg-neutral-100 px-1">LONG_VIDEO</code> module) and it will
+          <code className="rounded bg-[var(--bg-elevated)] px-1">LONG_VIDEO</code> module) and it will
           render here.
         </p>
       </section>
@@ -46,10 +46,10 @@ export function ProjectAiFilmPanel({ module, project }: FilmProps) {
   return (
     <section className="space-y-2">
       <div className="flex items-center justify-between">
-        <h3 className="text-xs font-semibold tracking-[0.18em] uppercase text-neutral-500">
+        <h3 className="folio-ui tracking-[0.18em] uppercase text-[var(--text-secondary)]">
           Project Film {module.isAiCompiled ? "(AI-Compiled)" : ""}
         </h3>
-        <span className="text-[11px] text-neutral-400">
+        <span className="folio-meta text-[var(--text-tertiary)]">
           Long-form video • {label}
         </span>
       </div>
@@ -64,7 +64,7 @@ export function ProjectAiFilmPanel({ module, project }: FilmProps) {
         </div>
       </div>
       {module.description && (
-        <p className="text-[12px] text-neutral-600">
+        <p className="folio-meta text-[var(--text-secondary)]">
           {module.description}
         </p>
       )}

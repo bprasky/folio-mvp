@@ -35,23 +35,23 @@ export function QBRExportButton() {
         type="button"
         onClick={handleClick}
         disabled={!aiUnlocked || loading}
-        className="rounded-xl px-4 py-2 bg-black text-white hover:bg-neutral-800 transition text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+        className="rounded-xl px-4 py-2 bg-[var(--text-primary)] text-[var(--bg-base)] hover:opacity-90 transition text-sm disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {loading ? 'Preparing…' : 'Export AI Report'}
       </button>
       {preview && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/30 backdrop-blur-sm">
-          <div className="w-full max-w-xl rounded-2xl bg-white/95 backdrop-blur-xl border border-neutral-300 shadow-2xl p-5 space-y-3 text-sm">
+          <div className="w-full max-w-xl rounded-2xl bg-[var(--bg-base)]/95 backdrop-blur-xl border border-[var(--ridge-outer)] shadow-2xl p-5 space-y-3 text-sm">
             <div className="flex items-center justify-between">
-              <h4 className="font-semibold text-neutral-800">AI QBR Overview (Preview)</h4>
-              <button 
-                onClick={() => setPreview(null)} 
-                className="text-xs text-neutral-600 hover:text-neutral-800 transition"
+              <h4 className="font-semibold text-[var(--text-primary)]">AI QBR Overview (Preview)</h4>
+              <button
+                onClick={() => setPreview(null)}
+                className="folio-meta text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition"
               >
                 Close
               </button>
             </div>
-            <p className="text-xs text-neutral-600">{preview.period}</p>
+            <p className="folio-meta text-[var(--text-secondary)]">{preview.period}</p>
             <div className="grid grid-cols-2 gap-2 text-xs">
               <Stat label="RSVPs" value={preview.totals.rsvps} />
               <Stat label="Saves" value={preview.totals.saves} />
@@ -62,14 +62,14 @@ export function QBRExportButton() {
               />
             </div>
             <div className="space-y-1">
-              <div className="text-xs uppercase tracking-wide text-neutral-600">Key Insights</div>
-              <ul className="list-disc list-inside text-xs text-neutral-600 space-y-0.5">
+              <div className="folio-meta uppercase tracking-wide text-[var(--text-secondary)]">Key Insights</div>
+              <ul className="list-disc list-inside folio-meta text-[var(--text-secondary)] space-y-0.5">
                 {preview.topInsights.map((t: string, i: number) => (
                   <li key={i}>{t}</li>
                 ))}
               </ul>
             </div>
-            <p className="text-[11px] text-neutral-500 italic">
+            <p className="text-[11px] text-[var(--text-secondary)] italic">
               In the full product this will export as a branded PDF for your internal reporting.
             </p>
           </div>
@@ -81,9 +81,9 @@ export function QBRExportButton() {
 
 function Stat({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2">
-      <div className="text-[11px] uppercase tracking-wide text-neutral-600">{label}</div>
-      <div className="text-sm font-semibold text-neutral-800">
+    <div className="rounded-xl border border-[var(--ridge-outer)] bg-[var(--bg-elevated)] px-3 py-2">
+      <div className="text-[11px] uppercase tracking-wide text-[var(--text-secondary)]">{label}</div>
+      <div className="folio-ui font-semibold text-[var(--text-primary)]">
         {typeof value === 'number' ? value.toLocaleString() : value}
       </div>
     </div>

@@ -35,12 +35,12 @@ export function ShopTheSpaceSection({ post }: ShopTheSpaceSectionProps) {
 
   return (
     <section className="mx-auto max-w-6xl px-3 md:px-0">
-      <div className="rounded-[28px] bg-white/75 backdrop-blur-2xl ring-1 ring-black/5 px-6 py-5 md:px-8 md:py-6 space-y-4">
+      <div className="ridge-card px-6 py-5 md:px-8 md:py-6 space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-[13px] font-semibold tracking-[0.16em] uppercase text-neutral-500">
+          <h2 className="folio-ui tracking-[0.16em] uppercase text-[var(--text-secondary)]">
             Shop the Space
           </h2>
-          <span className="text-[11px] text-neutral-400">
+          <span className="folio-meta text-[var(--text-tertiary)]">
             {allProducts.length} {allProducts.length === 1 ? "product" : "products"}
           </span>
         </div>

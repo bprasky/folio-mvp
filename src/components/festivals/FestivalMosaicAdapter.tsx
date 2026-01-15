@@ -68,11 +68,11 @@ export default function FestivalMosaicAdapter({
       <header className="flex justify-between items-end w-full px-2 sm:px-3 mb-2">
         <div>
           {festivalTitle && (
-            <h1 className="text-2xl font-serif text-neutral-800 tracking-tight">
+            <h1 className="text-2xl font-serif text-[var(--text-primary)] tracking-tight">
               {festivalTitle}
             </h1>
           )}
-          <p className="text-sm text-neutral-600 mt-1">
+          <p className="text-sm text-[var(--text-secondary)] mt-1">
             {selectedEventType 
               ? `Showing ${subevents.length} ${selectedEventType.replace(/_/g, ' ').toLowerCase()} events`
               : `Showing all ${subevents.length} events`
@@ -80,14 +80,14 @@ export default function FestivalMosaicAdapter({
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <label htmlFor="event-type-filter" className="text-sm font-medium text-neutral-700">
+          <label htmlFor="event-type-filter" className="text-sm font-medium text-[var(--text-primary)]">
             Filter by type:
           </label>
           <select
             id="event-type-filter"
             value={selectedEventType || ""}
             onChange={(e) => handleEventTypeChange(e.target.value)}
-            className="px-3 py-2 border border-neutral-300 rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-neutral-500 focus:border-transparent"
+            className="px-3 py-2 border border-[var(--ridge-outer)] rounded-md bg-[var(--bg-base)] text-sm focus:outline-none focus:ring-2 focus:ring-neutral-500 focus:border-transparent"
           >
             <option value="">All Events</option>
             {allEventTypes.map((type) => (

@@ -9,9 +9,9 @@ export const Badge = React.forwardRef<HTMLDivElement, BadgeProps>(
   ({ className, variant = 'default', ...props }, ref) => {
     const variants = {
       default: 'bg-blue-100 text-blue-800',
-      secondary: 'bg-neutral-100 text-neutral-800',
+      secondary: 'bg-[var(--bg-elevated)] text-[var(--text-primary)]',
       destructive: 'bg-red-100 text-red-800',
-      outline: 'border border-neutral-300 text-neutral-800',
+      outline: 'border border-[var(--ridge-outer)] text-[var(--text-primary)]',
     };
 
     return (

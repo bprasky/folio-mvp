@@ -27,7 +27,7 @@ export function ForecastPreviewButton({ className }: Props) {
       <button
         type="button"
         onClick={open}
-        className={className ?? 'rounded-xl px-4 py-2 border border-neutral-300 hover:bg-neutral-100 text-neutral-700 transition'}
+        className={className ?? 'rounded-xl px-4 py-2 border border-[var(--ridge-outer)] hover:bg-[var(--bg-elevated)] text-[var(--text-primary)] transition'}
       >
         Preview
       </button>
@@ -45,21 +45,21 @@ export function ForecastPreviewModal({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/30 backdrop-blur-sm">
-      <div className="w-full max-w-3xl rounded-2xl bg-white/95 backdrop-blur-xl border border-neutral-300 shadow-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+      <div className="w-full max-w-3xl rounded-2xl bg-[var(--bg-base)]/95 backdrop-blur-xl border border-[var(--ridge-outer)] shadow-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="text-lg font-semibold text-neutral-800">AI Forecast Preview</h3>
+              <h3 className="text-lg font-semibold text-[var(--text-primary)]">AI Forecast Preview</h3>
               <AIBadge />
             </div>
-            <p className="text-sm text-neutral-600 mt-1">
+            <p className="folio-ui text-[var(--text-secondary)] mt-1">
               Example of the insights and actions available with the AI Analytics membership.
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="text-sm text-neutral-600 hover:text-neutral-800 transition"
+            className="folio-ui text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition"
           >
             Close
           </button>
@@ -67,20 +67,20 @@ export function ForecastPreviewModal({ onClose }: { onClose: () => void }) {
 
         {/* Standard vs AI comparison */}
         <div className="grid md:grid-cols-2 gap-4">
-          <div className="rounded-2xl border border-neutral-200 bg-neutral-50/50 p-4 space-y-2">
-            <div className="text-xs uppercase tracking-wide text-neutral-600">Current (Standard)</div>
-            <ul className="text-sm list-disc list-inside space-y-1 text-neutral-700">
+          <div className="rounded-2xl border border-[var(--ridge-outer)] bg-[var(--bg-elevated)]/50 p-4 space-y-2">
+            <div className="folio-meta uppercase tracking-wide text-[var(--text-secondary)]">Current (Standard)</div>
+            <ul className="folio-ui list-disc list-inside space-y-1 text-[var(--text-primary)]">
               <li>Past performance metrics (RSVPs, saves, tags)</li>
               <li>Event- and portfolio-level totals</li>
               <li>Basic charts and exportable CSV report</li>
             </ul>
           </div>
-          <div className="rounded-2xl border border-neutral-300 bg-white/60 backdrop-blur-xl p-4 space-y-2">
+          <div className="ridge-card p-4 space-y-2">
             <div className="flex items-center gap-2">
-              <div className="text-xs uppercase tracking-wide text-neutral-600">With AI Forecast</div>
+              <div className="folio-meta uppercase tracking-wide text-[var(--text-secondary)]">With AI Forecast</div>
               <AIBadge />
             </div>
-            <ul className="text-sm list-disc list-inside space-y-1 text-neutral-700">
+            <ul className="folio-ui list-disc list-inside space-y-1 text-[var(--text-primary)]">
               <li>Predictive demand for key SKUs by event and quarter</li>
               <li>Designer affinity targeting based on real usage data</li>
               <li>Budget optimization suggestions for events and editorial</li>
@@ -91,7 +91,7 @@ export function ForecastPreviewModal({ onClose }: { onClose: () => void }) {
 
         {/* Sample insights */}
         <div className="space-y-2">
-          <div className="text-xs uppercase tracking-wide text-neutral-600">Sample Forecast</div>
+          <div className="folio-meta uppercase tracking-wide text-[var(--text-secondary)]">Sample Forecast</div>
           <div className="grid gap-3 md:grid-cols-3">
             {bundle.insights.slice(0, 3).map((insight) => {
               const impactColors = {
@@ -103,32 +103,32 @@ export function ForecastPreviewModal({ onClose }: { onClose: () => void }) {
               return (
                 <div
                   key={insight.id}
-                  className="rounded-2xl border border-neutral-200 bg-neutral-50/50 p-3 space-y-1"
+                  className="rounded-2xl border border-[var(--ridge-outer)] bg-[var(--bg-elevated)]/50 p-3 space-y-1"
                 >
                   <div className={`text-[11px] uppercase tracking-wide px-2 py-0.5 rounded-full border inline-block ${impactColors[insight.impact]}`}>
                     Impact: {insight.impact}
                   </div>
-                  <div className="text-sm font-semibold text-neutral-800">{insight.title}</div>
-                  <p className="text-xs text-neutral-600 line-clamp-3">{insight.summary}</p>
-                  <div className="text-[10px] font-mono text-neutral-500 mt-1">
+                  <div className="folio-ui font-semibold text-[var(--text-primary)]">{insight.title}</div>
+                  <p className="folio-meta text-[var(--text-secondary)] line-clamp-3">{insight.summary}</p>
+                  <div className="text-[10px] font-mono text-[var(--text-secondary)] mt-1">
                     {Object.entries(insight.metrics)
                       .slice(0, 2)
                       .map(([k, v]) => `${k}: ${v}`)
-                      .join(' · ')}
+                      .join(' . ')}
                   </div>
                 </div>
               );
             })}
           </div>
-          <p className="text-[11px] text-neutral-500 italic">
+          <p className="text-[11px] text-[var(--text-secondary)] italic">
             Numbers shown are examples based on your demo data. Live forecasts will update continuously as
             designers interact with your products.
           </p>
         </div>
 
         {/* CTA row */}
-        <div className="flex flex-col md:flex-row items-center justify-between gap-3 pt-2 border-t border-neutral-200">
-          <p className="text-xs md:text-sm text-neutral-600">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-3 pt-2 border-t border-[var(--ridge-outer)]">
+          <p className="folio-meta md:folio-ui text-[var(--text-secondary)]">
             Upgrade to AI Analytics to enable this forecast panel, exportable AI reports, and action buttons
             directly from your dashboard.
           </p>
@@ -136,13 +136,13 @@ export function ForecastPreviewModal({ onClose }: { onClose: () => void }) {
             <button
               type="button"
               onClick={onClose}
-              className="rounded-xl px-4 py-2 border border-neutral-300 hover:bg-neutral-100 text-neutral-700 transition text-sm"
+              className="rounded-xl px-4 py-2 border border-[var(--ridge-outer)] hover:bg-[var(--bg-elevated)] text-[var(--text-primary)] transition text-sm"
             >
               Maybe later
             </button>
             <button
               type="button"
-              className="rounded-xl px-4 py-2 bg-black text-white hover:bg-neutral-800 transition text-sm"
+              className="rounded-xl px-4 py-2 bg-[var(--text-primary)] text-[var(--bg-base)] hover:opacity-90 transition text-sm"
               onClick={() => {
                 // TODO: Wire to upgrade/payment flow
                 console.log('[AI PREVIEW] Unlock AI clicked');

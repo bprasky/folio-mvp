@@ -13,7 +13,7 @@ export function ProductGrid({ items }: { items: Product[] }) {
 
   return (
     <section className="mt-10">
-      <h3 className="text-[15px] font-semibold tracking-tight text-neutral-900">
+      <h3 className="text-[15px] font-semibold tracking-tight text-[var(--text-primary)]">
         Shop the Space
       </h3>
       <div className="mt-4 grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -21,7 +21,7 @@ export function ProductGrid({ items }: { items: Product[] }) {
           <a
             key={p.id}
             href={p.href || "#"}
-            className="group rounded-2xl ring-1 ring-black/5 overflow-hidden bg-neutral-50 hover:bg-neutral-100 transition"
+            className="group rounded-2xl ring-1 ring-black/5 overflow-hidden bg-[var(--bg-elevated)] hover:bg-[var(--bg-elevated)] transition"
           >
             <div className="relative">
               {p.imageUrl ? (
@@ -34,19 +34,19 @@ export function ProductGrid({ items }: { items: Product[] }) {
                   decoding="async"
                 />
               ) : (
-                <div className="h-40 w-full flex items-center justify-center bg-neutral-100 text-[12px] text-neutral-500">
+                <div className="h-40 w-full flex items-center justify-center bg-[var(--bg-elevated)] folio-meta text-[var(--text-secondary)]">
                   Image unavailable
                 </div>
               )}
-              <div className="absolute right-2 top-2 rounded-xl bg-white/70 backdrop-blur-md px-2 py-1 text-[11px] text-neutral-700 shadow-sm">
+              <div className="absolute right-2 top-2 rounded-xl bg-[var(--bg-base)]/70 backdrop-blur-md px-2 py-1 folio-meta text-[var(--text-primary)] shadow-sm">
                 {p.vendorName || "Vendor"}
               </div>
             </div>
             <div className="p-3">
-              <p className="line-clamp-2 text-[13px] text-neutral-800">
+              <p className="line-clamp-2 folio-meta text-[var(--text-primary)]">
                 {p.name}
               </p>
-              <div className="mt-2 text-[12px] text-neutral-500">View →</div>
+              <div className="mt-2 folio-meta text-[var(--text-secondary)]">View →</div>
             </div>
           </a>
         ))}

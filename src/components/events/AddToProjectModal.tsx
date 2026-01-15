@@ -242,17 +242,17 @@ export default function AddToProjectModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-xl max-w-md w-full max-h-[80vh] flex flex-col">
+      <div className="bg-[var(--bg-base)] rounded-xl shadow-xl max-w-md w-full max-h-[80vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-100">
-          <h2 className="text-lg font-semibold text-neutral-900">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--ridge-outer)]">
+          <h2 className="text-lg font-semibold text-[var(--text-primary)]">
             Save to Project
           </h2>
           <button
             onClick={onClose}
-            className="p-1 hover:bg-neutral-100 rounded-lg transition-colors"
+            className="p-1 hover:bg-[var(--bg-elevated)] rounded-lg transition-colors"
           >
-            <X className="h-5 w-5 text-neutral-500" />
+            <X className="h-5 w-5 text-[var(--text-secondary)]" />
           </button>
         </div>
 
@@ -261,7 +261,7 @@ export default function AddToProjectModal({
           <div className="flex-1 overflow-y-auto px-6 py-4">
             {loading ? (
               <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin text-neutral-400" />
+                <Loader2 className="h-6 w-6 animate-spin text-[var(--text-tertiary)]" />
               </div>
             ) : (
               <div className="space-y-4">
@@ -308,7 +308,7 @@ export default function AddToProjectModal({
                 )}
 
                 {/* Create New Project */}
-                <div className="border-t border-neutral-100 pt-4">
+                <div className="border-t border-[var(--ridge-outer)] pt-4">
                   <button
                     type="button"
                     onClick={() => {
@@ -318,8 +318,8 @@ export default function AddToProjectModal({
                     className={cn(
                       "w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-left",
                       createNew
-                        ? "bg-neutral-900 text-white"
-                        : "hover:bg-neutral-50 text-neutral-700"
+                        ? "bg-[var(--text-primary)] text-[var(--bg-base)]"
+                        : "hover:bg-[var(--bg-elevated)] text-[var(--text-primary)]"
                     )}
                   >
                     <FolderPlus className="h-4 w-4" />
@@ -332,7 +332,7 @@ export default function AddToProjectModal({
                         type="text"
                         value={newProjectTitle}
                         onChange={(e) => setNewProjectTitle(e.target.value)}
-                        className="w-full px-3 py-2 border border-neutral-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900/20"
+                        className="w-full px-3 py-2 border border-[var(--ridge-outer)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--text-primary)]/20 bg-[var(--bg-base)]"
                         placeholder="Project name"
                         autoFocus
                       />
@@ -344,7 +344,7 @@ export default function AddToProjectModal({
           </div>
 
           {/* Footer */}
-          <div className="px-6 py-4 border-t border-neutral-100 bg-neutral-50">
+          <div className="px-6 py-4 border-t border-[var(--ridge-outer)] bg-[var(--bg-elevated)]">
             {/* Multi-select toggle */}
             <label className="flex items-center gap-2 mb-4 cursor-pointer">
               <input
@@ -358,23 +358,23 @@ export default function AddToProjectModal({
                     setSelectedProjectIds(first ? new Set([first]) : new Set());
                   }
                 }}
-                className="rounded border-neutral-300 text-neutral-900 focus:ring-neutral-500"
+                className="rounded border-[var(--ridge-outer)] text-[var(--text-primary)] focus:ring-[var(--text-secondary)]"
               />
-              <span className="text-sm text-neutral-600">Select multiple projects</span>
+              <span className="text-sm text-[var(--text-secondary)]">Select multiple projects</span>
             </label>
 
             <div className="flex gap-3">
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 px-4 py-2 border border-neutral-200 rounded-lg text-neutral-700 hover:bg-neutral-100 transition-colors text-sm font-medium"
+                className="flex-1 px-4 py-2 border border-[var(--ridge-outer)] rounded-lg text-[var(--text-primary)] hover:bg-[var(--bg-elevated)] transition-colors text-sm font-medium"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={saving || (selectedProjectIds.size === 0 && !createNew)}
-                className="flex-1 px-4 py-2 bg-neutral-900 text-white rounded-lg hover:bg-neutral-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium"
+                className="flex-1 px-4 py-2 bg-[var(--text-primary)] text-[var(--bg-base)] rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium"
               >
                 {saving ? (
                   <span className="flex items-center justify-center gap-2">
@@ -419,7 +419,7 @@ function ProjectSection({
       <button
         type="button"
         onClick={onToggle}
-        className="w-full flex items-center gap-2 px-2 py-1.5 text-sm font-medium text-neutral-500 hover:text-neutral-700 transition-colors"
+        className="w-full flex items-center gap-2 px-2 py-1.5 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
       >
         {expanded ? (
           <ChevronDown className="h-4 w-4" />
@@ -428,7 +428,7 @@ function ProjectSection({
         )}
         {icon}
         <span>{title}</span>
-        <span className="text-neutral-400">({projects.length})</span>
+        <span className="text-[var(--text-tertiary)]">({projects.length})</span>
       </button>
 
       {expanded && (
@@ -441,21 +441,21 @@ function ProjectSection({
               className={cn(
                 "w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-left",
                 selectedIds.has(project.id)
-                  ? "bg-neutral-100 ring-1 ring-neutral-900"
-                  : "hover:bg-neutral-50"
+                  ? "bg-[var(--bg-elevated)] ring-1 ring-[var(--text-primary)]"
+                  : "hover:bg-[var(--bg-elevated)]"
               )}
             >
               <div className={cn(
                 "w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0",
                 selectedIds.has(project.id)
-                  ? "border-neutral-900 bg-neutral-900"
-                  : "border-neutral-300"
+                  ? "border-[var(--text-primary)] bg-[var(--text-primary)]"
+                  : "border-[var(--text-tertiary)]"
               )}>
                 {selectedIds.has(project.id) && (
-                  <Check className="h-3 w-3 text-white" />
+                  <Check className="h-3 w-3 text-[var(--bg-base)]" />
                 )}
               </div>
-              <span className="text-sm text-neutral-900 truncate flex-1">
+              <span className="text-sm text-[var(--text-primary)] truncate flex-1">
                 {project.title}
               </span>
             </button>

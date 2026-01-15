@@ -133,7 +133,7 @@ export function DialogContent({ className, children }: DialogContentProps) {
     <div
       ref={contentRef}
       className={cn(
-        "bg-white rounded-2xl shadow-xl border border-neutral-200 max-w-lg w-full max-h-[90vh] overflow-y-auto",
+        "bg-[var(--bg-base)] rounded-2xl shadow-xl border border-[var(--ridge-outer)] max-w-lg w-full max-h-[90vh] overflow-y-auto",
         className
       )}
     >
@@ -152,7 +152,7 @@ export function DialogHeader({ className, children }: DialogHeaderProps) {
 
 export function DialogTitle({ className, children }: DialogTitleProps) {
   return (
-    <h2 className={cn("text-lg font-semibold text-neutral-900", className)}>
+    <h2 className={cn("text-lg font-semibold text-[var(--text-primary)]", className)}>
       {children}
     </h2>
   );
@@ -165,7 +165,7 @@ interface DialogDescriptionProps {
 
 export function DialogDescription({ className, children }: DialogDescriptionProps) {
   return (
-    <p className={cn("text-sm text-neutral-500", className)}>
+    <p className={cn("text-sm text-[var(--text-secondary)]", className)}>
       {children}
     </p>
   );

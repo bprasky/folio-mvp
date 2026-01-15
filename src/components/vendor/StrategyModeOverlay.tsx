@@ -24,19 +24,19 @@ export const StrategyModeOverlay: React.FC<StrategyModeOverlayProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-black/70">
-      <header className="flex items-center justify-between border-b border-neutral-800 bg-neutral-950/70 px-6 py-4">
+      <header className="flex items-center justify-between border-b border-[var(--ridge-outer)] bg-[var(--bg-base)]/70 px-6 py-4">
         <div>
-          <p className="text-xs uppercase tracking-wide text-neutral-500">
+          <p className="folio-meta uppercase tracking-wide text-[var(--text-secondary)]">
             Folio AI — strategy mode
           </p>
-          <h2 className="text-sm font-semibold text-neutral-50">
+          <h2 className="folio-ui font-semibold text-[var(--text-primary)]">
             Ask Folio anything about your business
           </h2>
         </div>
         <button
           type="button"
           onClick={onClose}
-          className="rounded-full border border-neutral-700 bg-neutral-900 px-3 py-1 text-xs text-neutral-200 hover:bg-neutral-800"
+          className="rounded-full border border-[var(--ridge-outer)] bg-[var(--bg-elevated)] px-3 py-1 folio-meta text-[var(--text-secondary)] hover:bg-[var(--bg-base)]"
         >
           Close
         </button>
@@ -57,11 +57,11 @@ export const StrategyModeOverlay: React.FC<StrategyModeOverlayProps> = ({
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="For example: 'Walk me through my Q4 strategy' or 'Where should I focus next quarter?'"
-              className="flex-1 rounded-full border border-neutral-700 bg-neutral-900/80 px-4 py-2 text-sm text-neutral-50 placeholder:text-neutral-500 focus:border-neutral-500 focus:outline-none"
+              className="flex-1 rounded-full border border-[var(--ridge-outer)] bg-[var(--bg-elevated)]/80 px-4 py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] focus:border-[var(--ridge-outer)] focus:outline-none"
             />
             <button
               type="submit"
-              className="rounded-full bg-neutral-50 px-4 py-2 text-xs font-medium text-neutral-900 hover:bg-white"
+              className="rounded-full bg-[var(--bg-base)] px-4 py-2 folio-meta font-medium text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]"
             >
               Ask
             </button>

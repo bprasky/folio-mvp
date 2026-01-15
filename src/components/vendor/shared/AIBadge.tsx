@@ -4,7 +4,7 @@
  */
 export function AIBadge() {
   return (
-    <span className="text-[10px] uppercase tracking-wide px-2 py-1 rounded-full bg-neutral-900/80 text-white border border-neutral-700/50 shadow-sm">
+    <span className="text-[10px] uppercase tracking-wide px-2 py-1 rounded-full bg-[var(--text-primary)]/80 text-[var(--bg-base)] border border-[var(--ridge-outer)] shadow-sm">
       AI
     </span>
   );

@@ -15,11 +15,11 @@ export function GalleryGrid({ modules }: { modules: any[] }) {
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
       {images.map((im, i) => (
-        <figure key={i} className="rounded-2xl overflow-hidden ring-1 ring-black/5 bg-neutral-50">
+        <figure key={i} className="ridge-card overflow-hidden">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={im.url} alt={im.caption || ""} className="h-[200px] w-full object-cover" />
           {im.caption && (
-            <figcaption className="p-2 text-[12px] text-neutral-600">
+            <figcaption className="p-2 folio-meta text-[var(--text-secondary)]">
               {im.caption}
             </figcaption>
           )}

@@ -15,7 +15,7 @@ export default function LoginCard({ children }: LoginCardProps) {
           <h1 className="text-4xl font-serif text-white mb-2 tracking-wider">
             FOLIO
           </h1>
-          <p className="text-sm text-neutral-300 tracking-widest uppercase">
+          <p className="text-sm text-[var(--text-tertiary)] tracking-widest uppercase">
             The professional hub where the design world connects.
           </p>
         </div>

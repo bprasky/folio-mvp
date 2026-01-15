@@ -14,16 +14,16 @@ export function MaterialsSection({ post }: MaterialsSectionProps) {
 
   return (
     <section className="mx-auto max-w-4xl px-3 md:px-0">
-      <div className="rounded-[28px] bg-white/75 backdrop-blur-2xl ring-1 ring-black/5 px-6 py-5 md:px-8 md:py-6 space-y-4">
-        <h2 className="text-[13px] font-semibold tracking-[0.16em] uppercase text-neutral-500">
+      <div className="ridge-card px-6 py-5 md:px-8 md:py-6 space-y-4">
+        <h2 className="folio-ui tracking-[0.16em] uppercase text-[var(--text-secondary)]">
           Materials
         </h2>
         <ul className="space-y-2">
           {items.map((item: any, idx: number) => (
-            <li key={idx} className="text-[13px] text-neutral-800">
+            <li key={idx} className="folio-meta text-[var(--text-primary)]">
               <span className="font-medium">{item.name}</span>
-              {item.finish && <span className="text-neutral-500"> • {item.finish}</span>}
-              {item.note && <span className="text-neutral-500 text-[12px]"> • {item.note}</span>}
+              {item.finish && <span className="text-[var(--text-secondary)]"> • {item.finish}</span>}
+              {item.note && <span className="text-[var(--text-secondary)] folio-meta"> • {item.note}</span>}
             </li>
           ))}
         </ul>

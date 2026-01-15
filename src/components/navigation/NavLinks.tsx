@@ -22,10 +22,10 @@ export function NavLinks() {
             key={link.href}
             href={link.href}
             className={cn(
-              "px-4 py-2 text-sm font-medium rounded-full transition-colors",
+              "px-4 py-2 folio-ui rounded-full transition-colors",
               isActive
-                ? "bg-neutral-100 text-neutral-900"
-                : "text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50"
+                ? "bg-[var(--bg-elevated)] text-[var(--text-primary)]"
+                : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]"
             )}
           >
             {link.label}

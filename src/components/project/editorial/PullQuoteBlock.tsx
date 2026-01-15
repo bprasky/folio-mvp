@@ -120,13 +120,13 @@ export function PullQuoteBlock({ projectId, index = 0 }: PullQuoteBlockProps) {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="relative">
           {/* Quote Icon */}
-          <div className="absolute -top-4 -left-4 text-gray-200">
+          <div className="absolute -top-4 -left-4 text-[var(--text-tertiary)]">
             <Quote className="h-16 w-16 md:h-24 md:w-24" />
           </div>
 
           {/* Quote Text */}
           <div className="relative pl-8 md:pl-12">
-            <blockquote className="text-2xl md:text-3xl lg:text-4xl font-light text-gray-900 leading-relaxed italic">
+            <blockquote className="text-2xl md:text-3xl lg:text-4xl font-light text-[var(--text-primary)] leading-relaxed italic">
               "{quote.quoteText}"
             </blockquote>
 
@@ -141,25 +141,25 @@ export function PullQuoteBlock({ projectId, index = 0 }: PullQuoteBlockProps) {
                   />
                 )}
                 <div>
-                  <div className="text-sm font-medium text-gray-900">
+                  <div className="folio-ui font-medium text-[var(--text-primary)]">
                     {quote.designer.name}
                   </div>
-                  <div className="text-xs text-gray-500">Designer</div>
+                  <div className="folio-ui text-[var(--text-secondary)]">Designer</div>
                 </div>
               </div>
 
               {/* Play Button */}
               <button
                 onClick={() => playSegment(quote)}
-                className="flex items-center space-x-2 px-4 py-2 rounded-full border border-gray-300 hover:bg-gray-50 transition-colors"
+                className="flex items-center space-x-2 px-4 py-2 rounded-full border border-[var(--ridge-outer)] hover:bg-[var(--bg-elevated)] transition-colors"
                 title="Play audio segment"
               >
                 <Play
                   className={`h-4 w-4 ${
-                    playingId === quote.id ? "text-blue-600" : "text-gray-600"
+                    playingId === quote.id ? "text-blue-600" : "text-[var(--text-secondary)]"
                   }`}
                 />
-                <span className="text-sm text-gray-600">Listen</span>
+                <span className="folio-ui text-[var(--text-secondary)]">Listen</span>
               </button>
             </div>
           </div>

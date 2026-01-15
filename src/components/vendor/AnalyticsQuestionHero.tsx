@@ -63,10 +63,10 @@ export default function AnalyticsQuestionHero({ onAskQuestion }: AnalyticsQuesti
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             placeholder="Ask anything about your data…"
-            className="w-full px-6 py-5 text-lg bg-white/80 backdrop-blur rounded-2xl border border-neutral-200/50 shadow-sm focus:outline-none focus:ring-2 focus:ring-neutral-300/50 focus:border-neutral-300 text-neutral-900 placeholder:text-neutral-400"
+            className="w-full px-6 py-5 text-lg bg-[var(--bg-base)]/80 backdrop-blur rounded-2xl border border-[var(--ridge-outer)] shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--ridge-outer)] focus:border-[var(--ridge-outer)] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)]"
           />
         </div>
-        <p className="mt-3 text-sm text-neutral-500 text-center">
+        <p className="mt-3 folio-ui text-[var(--text-secondary)] text-center">
           Tell me what you want to know about events, products, designers, or projects.
         </p>
       </form>
@@ -81,7 +81,7 @@ export default function AnalyticsQuestionHero({ onAskQuestion }: AnalyticsQuesti
             <button
               key={index}
               onClick={() => handleQuestionClick(question)}
-              className="flex-shrink-0 px-4 py-2 text-sm rounded-full border border-neutral-200 bg-white/60 backdrop-blur text-neutral-700 hover:bg-white/80 hover:border-neutral-300 hover:shadow-sm transition-all duration-200 whitespace-nowrap"
+              className="flex-shrink-0 px-4 py-2 text-sm rounded-full border border-[var(--ridge-outer)] bg-[var(--bg-base)]/60 backdrop-blur text-[var(--text-primary)] hover:bg-[var(--bg-base)]/80 hover:border-[var(--ridge-outer)] hover:shadow-sm transition-all duration-200 whitespace-nowrap"
             >
               {question}
             </button>
@@ -91,7 +91,7 @@ export default function AnalyticsQuestionHero({ onAskQuestion }: AnalyticsQuesti
             <button
               key={`duplicate-${index}`}
               onClick={() => handleQuestionClick(question)}
-              className="flex-shrink-0 px-4 py-2 text-sm rounded-full border border-neutral-200 bg-white/60 backdrop-blur text-neutral-700 hover:bg-white/80 hover:border-neutral-300 hover:shadow-sm transition-all duration-200 whitespace-nowrap"
+              className="flex-shrink-0 px-4 py-2 text-sm rounded-full border border-[var(--ridge-outer)] bg-[var(--bg-base)]/60 backdrop-blur text-[var(--text-primary)] hover:bg-[var(--bg-base)]/80 hover:border-[var(--ridge-outer)] hover:shadow-sm transition-all duration-200 whitespace-nowrap"
             >
               {question}
             </button>

@@ -75,20 +75,20 @@ export function HeroSpreadBlock({ image, project, roomName, showTitle = true }: 
               <div className="space-y-2">
                 {/* Room Label */}
                 {roomName && (
-                  <div className="text-xs font-medium uppercase tracking-wider text-neutral-600 mb-2">
+                  <div className="folio-ui uppercase tracking-wider text-[var(--text-secondary)] mb-2">
                     {roomName}
                   </div>
                 )}
-                
+
                 {/* Project Title - Only on first hero */}
                 {showTitle && (
                   <>
-                    <h1 className="text-3xl md:text-4xl lg:text-5xl font-serif font-light tracking-tight text-neutral-900">
+                    <h1 className="text-3xl md:text-4xl lg:text-5xl font-serif font-light tracking-tight text-[var(--text-primary)]">
                       {project.title}
                     </h1>
-                    
+
                     {/* Project Meta */}
-                    <div className="flex flex-wrap items-center gap-4 text-sm text-neutral-600 mt-3">
+                    <div className="flex flex-wrap items-center gap-4 folio-ui text-[var(--text-secondary)] mt-3">
                       {project.category && (
                         <span>{project.category}</span>
                       )}

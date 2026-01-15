@@ -21,7 +21,7 @@ export default function QuickInsightsGrid({ data, onSelectInsight }: QuickInsigh
           {[80, 45, 65].map((height, i) => (
             <div
               key={i}
-              className="flex-1 bg-neutral-300 rounded-t"
+              className="flex-1 bg-[var(--text-tertiary)] rounded-t"
               style={{ height: `${(height / maxValue) * barHeight}px` }}
             />
           ))}
@@ -38,7 +38,7 @@ export default function QuickInsightsGrid({ data, onSelectInsight }: QuickInsigh
           {trendData.map((value, i) => (
             <div
               key={i}
-              className="flex-1 bg-neutral-400 rounded-t"
+              className="flex-1 bg-[var(--text-secondary)] rounded-t"
               style={{ height: `${(value / maxTrend) * 40}px` }}
             />
           ))}
@@ -50,9 +50,9 @@ export default function QuickInsightsGrid({ data, onSelectInsight }: QuickInsigh
       // Simple number with delta
       return (
         <div className="mt-2 flex items-baseline gap-2">
-          <span className="text-2xl font-semibold text-neutral-900">{insight.metricValue}</span>
+          <span className="text-2xl font-semibold text-[var(--text-primary)]">{insight.metricValue}</span>
           {insight.metricDelta !== undefined && (
-            <span className="text-sm text-neutral-600">
+            <span className="text-sm text-[var(--text-secondary)]">
               {insight.metricDelta > 0 ? "↑" : "↓"} {Math.abs(insight.metricDelta)}%
             </span>
           )}
@@ -63,9 +63,9 @@ export default function QuickInsightsGrid({ data, onSelectInsight }: QuickInsigh
     // Default: simple metric display
     return (
       <div className="mt-2">
-        <div className="text-2xl font-semibold text-neutral-900">{insight.metricValue}</div>
+        <div className="text-2xl font-semibold text-[var(--text-primary)]">{insight.metricValue}</div>
         {insight.metricDelta !== undefined && (
-          <div className="text-sm text-neutral-600 mt-1">
+          <div className="text-sm text-[var(--text-secondary)] mt-1">
             {insight.metricDelta > 0 ? "↑" : "↓"} {Math.abs(insight.metricDelta)}
           </div>
         )}
@@ -79,12 +79,12 @@ export default function QuickInsightsGrid({ data, onSelectInsight }: QuickInsigh
         <button
           key={insight.id}
           onClick={() => onSelectInsight?.(insight.id)}
-          className="text-left rounded-2xl bg-white/80 backdrop-blur border border-neutral-200 p-6 shadow-sm hover:shadow-md hover:border-neutral-300 transition-all duration-200"
+          className="text-left ridge-card p-6 hover:shadow-md transition-all duration-200"
         >
-          <h3 className="text-sm font-semibold text-neutral-900 mb-2 line-clamp-2">
+          <h3 className="folio-ui font-semibold text-[var(--text-primary)] mb-2 line-clamp-2">
             {insight.question}
           </h3>
-          <p className="text-sm text-neutral-600 mb-4 line-clamp-2">
+          <p className="folio-ui text-[var(--text-secondary)] mb-4 line-clamp-2">
             {insight.summary}
           </p>
           {renderMiniVisual(insight)}

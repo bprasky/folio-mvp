@@ -100,10 +100,10 @@ export default function BreakoutPanel({
         {Array.from({ length: 4 }).map((_, index) => (
           <div key={index} className="animate-pulse">
             <div className="flex items-center space-x-3 p-3">
-              <div className="w-16 h-16 bg-gray-200 rounded-lg"></div>
+              <div className="w-16 h-16 bg-[var(--bg-elevated)] rounded-lg"></div>
               <div className="flex-1">
-                <div className="h-4 bg-gray-200 rounded mb-2"></div>
-                <div className="h-3 bg-gray-200 rounded w-2/3"></div>
+                <div className="h-4 bg-[var(--bg-elevated)] rounded mb-2"></div>
+                <div className="h-3 bg-[var(--bg-elevated)] rounded w-2/3"></div>
               </div>
             </div>
           </div>
@@ -116,7 +116,7 @@ export default function BreakoutPanel({
   if (!products || products.length === 0) {
     return (
       <div className="text-center py-8">
-        <p className="text-sm text-neutral-500">No trending products yet.</p>
+        <p className="text-sm text-[var(--text-secondary)]">No trending products yet.</p>
       </div>
     );
   }
@@ -128,11 +128,11 @@ export default function BreakoutPanel({
       {products.slice(0, 4).map((product) => (
         <div
           key={product.id}
-          className="group flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
+          className="group flex items-center space-x-3 p-3 rounded-lg hover:bg-[var(--bg-elevated)] transition-colors cursor-pointer"
           onClick={() => handleProductClick(product.id)}
         >
           {/* Product Image */}
-          <div className="relative flex-shrink-0 w-16 h-16 bg-gray-100 rounded-lg overflow-hidden">
+          <div className="relative flex-shrink-0 w-16 h-16 bg-[var(--bg-elevated)] rounded-lg overflow-hidden">
             <SafeImage
               src={product.imageUrl || "/images/product-placeholder.jpg"}
               alt={product.name}
@@ -153,17 +153,17 @@ export default function BreakoutPanel({
 
           {/* Product Info */}
           <div className="flex-1 min-w-0">
-            <h4 className="font-medium text-gray-900 mb-1 line-clamp-1">
+            <h4 className="font-medium text-[var(--text-primary)] mb-1 line-clamp-1">
               {product.name}
             </h4>
-            
+
             {product.vendor?.name && (
-              <p className="text-xs text-gray-500 mb-1 line-clamp-1">
+              <p className="text-xs text-[var(--text-secondary)] mb-1 line-clamp-1">
                 {product.vendor.name}
               </p>
             )}
 
-            <div className="flex items-center space-x-2 text-xs text-gray-500">
+            <div className="flex items-center space-x-2 text-xs text-[var(--text-secondary)]">
               <span>{product.views} views</span>
               <span>•</span>
               <span>{product.saves} saves</span>
@@ -177,7 +177,7 @@ export default function BreakoutPanel({
               handleSaveToProject(product.id);
             }}
             disabled={savingProduct === product.id}
-            className="flex-shrink-0 p-2 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white transition-colors disabled:opacity-50"
+            className="flex-shrink-0 p-2 rounded-full bg-[var(--bg-elevated)] text-[var(--text-secondary)] hover:bg-blue-600 hover:text-white transition-colors disabled:opacity-50"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />

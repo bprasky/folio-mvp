@@ -82,7 +82,7 @@ export default function EventModalBodyClient({
         {data.imageUrl ? (
           <Image src={data.imageUrl} alt={data.title} fill className="object-cover" priority />
         ) : (
-          <div className="h-full w-full bg-neutral-800" />
+          <div className="h-full w-full bg-[var(--bg-elevated)]" />
         )}
         <div className="absolute inset-0 bg-black/40" />
         <div className="pointer-events-none absolute inset-x-0 top-0 h-44 bg-gradient-to-b from-black/50 to-transparent" />

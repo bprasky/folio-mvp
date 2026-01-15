@@ -51,10 +51,10 @@ export function AIPane({ sectionId, title }: AIPaneProps) {
 
   return (
     <>
-      <section className="mt-4 rounded-2xl border border-neutral-200 bg-white/80 backdrop-blur-xl p-4 space-y-3 shadow-sm">
+      <section className="mt-4 ridge-card p-4 space-y-3">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold uppercase tracking-wide text-neutral-600">
+            <span className="folio-meta font-semibold uppercase tracking-wide text-[var(--text-secondary)]">
               AI Insights
             </span>
             <AIBadge />
@@ -67,8 +67,8 @@ export function AIPane({ sectionId, title }: AIPaneProps) {
                 onClick={() => onTabClick(tab)}
                 className={`px-2.5 py-1 rounded-full capitalize text-[11px] transition ${
                   activeTab === tab && aiUnlocked
-                    ? 'bg-black text-white'
-                    : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+                    ? 'bg-[var(--text-primary)] text-[var(--bg-base)]'
+                    : 'bg-[var(--bg-elevated)] text-[var(--text-primary)] hover:bg-[var(--ridge-inner)]'
                 }`}
               >
                 {tab}
@@ -78,14 +78,14 @@ export function AIPane({ sectionId, title }: AIPaneProps) {
         </div>
 
         {!aiUnlocked ? (
-          <div className="text-xs text-neutral-600 flex items-center justify-between py-2">
+          <div className="folio-meta text-[var(--text-secondary)] flex items-center justify-between py-2">
             <span>
               With Folio AI, you'll see what this data means, how you compare, and the best actions
-              to take — all in one click.
+              to take - all in one click.
             </span>
             <button
               type="button"
-              className="ml-3 rounded-xl px-3 py-1.5 bg-black text-white text-[11px] hover:bg-neutral-800 transition whitespace-nowrap"
+              className="ml-3 rounded-xl px-3 py-1.5 bg-[var(--text-primary)] text-[var(--bg-base)] text-[11px] hover:opacity-90 transition whitespace-nowrap"
               onClick={() => setUpsellOpen(true)}
             >
               Unlock AI
@@ -93,17 +93,17 @@ export function AIPane({ sectionId, title }: AIPaneProps) {
           </div>
         ) : (
           <>
-            <div className="text-xs leading-relaxed text-neutral-700 min-h-[40px] py-1">
+            <div className="folio-meta leading-relaxed text-[var(--text-primary)] min-h-[40px] py-1">
               {activeTab === 'explain' && content.explain}
               {activeTab === 'compare' && content.compare}
               {activeTab === 'recommend' && content.recommend}
               {activeTab === 'act' && content.act}
             </div>
-            <div className="flex items-center justify-between text-[11px] text-neutral-500 pt-2 border-t border-neutral-200">
+            <div className="flex items-center justify-between text-[11px] text-[var(--text-secondary)] pt-2 border-t border-[var(--ridge-outer)]">
               <button
                 type="button"
                 onClick={onWhyClick}
-                className="underline underline-offset-4 hover:text-neutral-700 transition"
+                className="underline underline-offset-4 hover:text-[var(--text-primary)] transition"
               >
                 Why this?
               </button>
@@ -135,17 +135,17 @@ function buildAIContent(sectionId: AIPaneProps['sectionId'], bundle: AIBundle): 
         explain: (
           <>
             Your current event portfolio is driving approximately{' '}
-            <strong className="text-neutral-900">${Math.round(rev.projectedInfluenceUsd / 1_000_000)}M</strong> in influenced
+            <strong className="text-[var(--text-primary)]">${Math.round(rev.projectedInfluenceUsd / 1_000_000)}M</strong> in influenced
             project value next quarter.{' '}
             {topEvent ? (
-              <>Most of this is concentrated around <strong className="text-neutral-900">{topEvent.label}</strong>.</>
+              <>Most of this is concentrated around <strong className="text-[var(--text-primary)]">{topEvent.label}</strong>.</>
             ) : null}
           </>
         ),
         compare: (
           <>
             Based on similar vendors, your event performance appears{' '}
-            <strong className="text-neutral-900">above average</strong>, with stronger conversion from RSVP → tagged project than
+            <strong className="text-[var(--text-primary)]">above average</strong>, with stronger conversion from RSVP → tagged project than
             many peers.
           </>
         ),
@@ -170,13 +170,13 @@ function buildAIContent(sectionId: AIPaneProps['sectionId'], bundle: AIBundle): 
         explain: (
           <>
             Projects tagged with your products currently represent about{' '}
-            <strong className="text-neutral-900">${Math.round(kpi.influenceUsd / 1_000_000)}M</strong> in influenced value, driven
+            <strong className="text-[var(--text-primary)]">${Math.round(kpi.influenceUsd / 1_000_000)}M</strong> in influenced value, driven
             by saves and tags across active designer portfolios.
           </>
         ),
         compare: (
           <>
-            Your saves and tags put you in the <strong className="text-neutral-900">top cohort</strong> of vendors on Folio, with
+            Your saves and tags put you in the <strong className="text-[var(--text-primary)]">top cohort</strong> of vendors on Folio, with
             room to grow via deeper collaboration with your highest-affinity studios.
           </>
         ),
@@ -200,14 +200,14 @@ function buildAIContent(sectionId: AIPaneProps['sectionId'], bundle: AIBundle): 
       return {
         explain: (
           <>
-            You currently have <strong className="text-neutral-900">{f.total.toLocaleString()}</strong> designers in your orbit. A meaningful portion
+            You currently have <strong className="text-[var(--text-primary)]">{f.total.toLocaleString()}</strong> designers in your orbit. A meaningful portion
             are warming or high intent, which is where most of your future revenue will come from.
           </>
         ),
         compare: (
           <>
             Relative to your total designer base, your high-intent segment is{' '}
-            <strong className="text-neutral-900">{f.highIntent.toLocaleString()}</strong> designers. Growing this group even slightly can have an
+            <strong className="text-[var(--text-primary)]">{f.highIntent.toLocaleString()}</strong> designers. Growing this group even slightly can have an
             outsized impact on your influenced value.
           </>
         ),
@@ -233,14 +233,14 @@ function buildAIContent(sectionId: AIPaneProps['sectionId'], bundle: AIBundle): 
         explain: (
           <>
             Based on current activity, your next quarter is projected at{' '}
-            <strong className="text-neutral-900">${Math.round(rev.projectedInfluenceUsd / 1_000_000)}M</strong> in influenced
-            value, a change of <strong className="text-neutral-900">{rev.changePct > 0 ? '+' : ''}{rev.changePct}%</strong> vs prior period.
+            <strong className="text-[var(--text-primary)]">${Math.round(rev.projectedInfluenceUsd / 1_000_000)}M</strong> in influenced
+            value, a change of <strong className="text-[var(--text-primary)]">{rev.changePct > 0 ? '+' : ''}{rev.changePct}%</strong> vs prior period.
           </>
         ),
         compare: (
           <>
             Vendors with similar profiles typically fall in the ±10% band around this projection. Your
-            current trajectory places you <strong className="text-neutral-900">slightly ahead</strong> of that curve.
+            current trajectory places you <strong className="text-[var(--text-primary)]">slightly ahead</strong> of that curve.
           </>
         ),
         recommend: (

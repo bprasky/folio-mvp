@@ -20,7 +20,7 @@ export default function AnalyticsDemoControls({
     return (
       <button
         onClick={() => setIsOpen(true)}
-        className="text-xs text-neutral-500 hover:text-neutral-700 underline"
+        className="folio-meta text-[var(--text-secondary)] hover:text-[var(--text-primary)] underline"
       >
         Show Demo Controls
       </button>
@@ -35,15 +35,15 @@ export default function AnalyticsDemoControls({
   };
 
   return (
-    <div className="rounded-2xl bg-white/80 backdrop-blur border border-neutral-200 p-6 shadow-sm">
+    <div className="ridge-card p-6">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-semibold text-neutral-900 uppercase tracking-wide">
+        <h3 className="folio-ui text-[var(--text-primary)] uppercase tracking-wide">
           Demo Controls
         </h3>
         {!isDev && (
           <button
             onClick={() => setIsOpen(false)}
-            className="text-xs text-neutral-500 hover:text-neutral-700"
+            className="folio-meta text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
           >
             Hide
           </button>
@@ -54,10 +54,10 @@ export default function AnalyticsDemoControls({
         {/* Event Impact Multiplier */}
         <div>
           <div className="flex items-center justify-between mb-2">
-            <label className="text-sm text-neutral-700">
+            <label className="text-sm text-[var(--text-primary)]">
               Event Impact Multiplier
             </label>
-            <span className="text-sm font-mono text-neutral-600">
+            <span className="text-sm font-mono text-[var(--text-secondary)]">
               {controls.eventImpactMultiplier.toFixed(2)}x
             </span>
           </div>
@@ -77,10 +77,10 @@ export default function AnalyticsDemoControls({
         {/* Product Momentum Multiplier */}
         <div>
           <div className="flex items-center justify-between mb-2">
-            <label className="text-sm text-neutral-700">
+            <label className="text-sm text-[var(--text-primary)]">
               Product Momentum Multiplier
             </label>
-            <span className="text-sm font-mono text-neutral-600">
+            <span className="text-sm font-mono text-[var(--text-secondary)]">
               {controls.productMomentumMultiplier.toFixed(2)}x
             </span>
           </div>
@@ -100,10 +100,10 @@ export default function AnalyticsDemoControls({
         {/* Pipeline Multiplier */}
         <div>
           <div className="flex items-center justify-between mb-2">
-            <label className="text-sm text-neutral-700">
+            <label className="text-sm text-[var(--text-primary)]">
               Pipeline Multiplier
             </label>
-            <span className="text-sm font-mono text-neutral-600">
+            <span className="text-sm font-mono text-[var(--text-secondary)]">
               {controls.pipelineMultiplier.toFixed(2)}x
             </span>
           </div>
@@ -123,10 +123,10 @@ export default function AnalyticsDemoControls({
         {/* Save to Tag Conversion Boost */}
         <div>
           <div className="flex items-center justify-between mb-2">
-            <label className="text-sm text-neutral-700">
+            <label className="text-sm text-[var(--text-primary)]">
               Save→Tag Conversion Boost
             </label>
-            <span className="text-sm font-mono text-neutral-600">
+            <span className="text-sm font-mono text-[var(--text-secondary)]">
               +{(controls.saveToTagConversionBoost * 100).toFixed(0)}%
             </span>
           </div>

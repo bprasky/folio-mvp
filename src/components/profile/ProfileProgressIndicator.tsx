@@ -41,17 +41,17 @@ export default function ProfileProgressIndicator({
 
   return (
     <div className="fixed bottom-6 right-6 z-50">
-      <div className="bg-white rounded-2xl shadow-xl border border-neutral-200 p-4 w-72">
+      <div className="bg-[var(--bg-base)] rounded-2xl shadow-xl border border-[var(--ridge-outer)] p-4 w-72">
         <div className="flex items-center justify-between mb-3">
-          <span className="text-sm font-medium text-neutral-900">
+          <span className="text-sm font-medium text-[var(--text-primary)]">
             Profile Completion
           </span>
-          <span className="text-sm text-neutral-500">{Math.round(progress)}%</span>
+          <span className="text-sm text-[var(--text-secondary)]">{Math.round(progress)}%</span>
         </div>
 
-        <div className="h-1.5 bg-neutral-100 rounded-full overflow-hidden mb-4">
+        <div className="h-1.5 bg-[var(--bg-elevated)] rounded-full overflow-hidden mb-4">
           <div
-            className="h-full bg-neutral-900 rounded-full transition-all duration-500"
+            className="h-full bg-[var(--text-primary)] rounded-full transition-all duration-500"
             style={{ width: `${progress}%` }}
           />
         </div>
@@ -66,7 +66,7 @@ export default function ProfileProgressIndicator({
                     ? "bg-green-500 text-white"
                     : step.partial
                     ? "bg-amber-500 text-white"
-                    : "bg-neutral-100 text-neutral-400"
+                    : "bg-[var(--bg-elevated)] text-[var(--text-tertiary)]"
                 )}
               >
                 {step.done ? "✓" : step.partial ? "½" : i + 1}
@@ -75,12 +75,12 @@ export default function ProfileProgressIndicator({
                 <p
                   className={clsx(
                     "text-sm",
-                    step.done ? "text-neutral-900" : "text-neutral-500"
+                    step.done ? "text-[var(--text-primary)]" : "text-[var(--text-secondary)]"
                   )}
                 >
                   {step.label}
                 </p>
-                <p className="text-xs text-neutral-400">{step.detail}</p>
+                <p className="text-xs text-[var(--text-tertiary)]">{step.detail}</p>
               </div>
             </div>
           ))}

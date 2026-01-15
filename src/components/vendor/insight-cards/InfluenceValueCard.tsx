@@ -9,8 +9,8 @@ interface InsightCardProps {
 
 function InsightCard({ title, children }: InsightCardProps) {
   return (
-    <div className="rounded-2xl border border-neutral-200 bg-white/80 p-6 shadow-sm">
-      <h3 className="text-sm font-semibold text-neutral-900 mb-4">{title}</h3>
+    <div className="ridge-card p-6">
+      <h3 className="folio-ui font-semibold text-[var(--text-primary)] mb-4">{title}</h3>
       {children}
     </div>
   );
@@ -26,11 +26,11 @@ function ActionButton({
   children: React.ReactNode;
 }) {
   const baseClasses =
-    "rounded-full px-3 py-1.5 text-xs font-medium transition-colors";
+    "rounded-full px-3 py-1.5 folio-meta font-medium transition-colors";
   const classes =
     variant === "outline"
-      ? `${baseClasses} border border-neutral-200 bg-white text-neutral-800 hover:bg-neutral-50`
-      : `${baseClasses} bg-neutral-900 text-white hover:bg-neutral-800`;
+      ? `${baseClasses} border border-[var(--ridge-outer)] bg-[var(--bg-base)] text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]`
+      : `${baseClasses} bg-[var(--text-primary)] text-[var(--bg-base)] hover:opacity-90`;
 
   return (
     <button type="button" onClick={onClick} className={classes}>
@@ -85,12 +85,12 @@ export function InfluenceValueCard({
 
   return (
     <InsightCard title="What is my current influence value across active projects?">
-      <div className="text-5xl font-light text-neutral-900">
+      <div className="text-5xl font-light text-[var(--text-primary)]">
         ${(totalInfluence / 1000000).toFixed(2)}M
       </div>
-      <div className="text-sm text-green-600 mt-1">↑{change}% vs last 30 days</div>
-      <div className="text-sm text-neutral-600 mt-2">
-        across {activeProjects.length} active projects · {influencePercentage.toFixed(1)}% of total budget
+      <div className="folio-ui text-green-600 mt-1">↑{change}% vs last 30 days</div>
+      <div className="folio-ui text-[var(--text-secondary)] mt-2">
+        across {activeProjects.length} active projects . {influencePercentage.toFixed(1)}% of total budget
       </div>
 
       <div className="mt-6 flex flex-wrap gap-2">
@@ -107,7 +107,7 @@ export function InfluenceValueCard({
 
       <button
         onClick={handleClick}
-        className="mt-4 text-sm text-neutral-600 underline underline-offset-4 hover:text-neutral-900"
+        className="mt-4 folio-ui text-[var(--text-secondary)] underline underline-offset-4 hover:text-[var(--text-primary)]"
       >
         Dive deeper →
       </button>

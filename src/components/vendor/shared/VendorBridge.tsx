@@ -26,7 +26,7 @@ export function VendorBridge({ activeTab, bridgeData, loading = false }: VendorB
       subtitle="Shows how exposure at events turns into live project tags."
     >
       {loading ? (
-        <div className="rounded-2xl p-4 md:p-6 bg-white border border-neutral-200 shadow-sm">
+        <div className="ridge-card p-4 md:p-6">
           <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
             <Skeleton className="h-4 w-24" />
             <Skeleton className="h-10 w-32" />
@@ -40,22 +40,22 @@ export function VendorBridge({ activeTab, bridgeData, loading = false }: VendorB
           subtitle="Once you have events with project tags, we'll show your conversion funnel."
         />
       ) : (
-        <div className="rounded-2xl bg-white border border-neutral-200 shadow-sm p-4 md:p-6">
+        <div className="ridge-card p-4 md:p-6">
           <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-            <div className="text-sm text-neutral-600">Conversion Rate</div>
-            <div className="text-3xl font-semibold text-neutral-800">{fmtPct(conversion)}</div>
-            <div className="text-sm text-neutral-600">
+            <div className="folio-ui text-[var(--text-secondary)]">Conversion Rate</div>
+            <div className="text-3xl font-semibold text-[var(--text-primary)]">{fmtPct(conversion)}</div>
+            <div className="folio-ui text-[var(--text-secondary)]">
               Avg. Time: {avgDays == null ? '—' : `${avgDays} days`}
             </div>
           </div>
           {/* Flow line with actual conversion percentage */}
-          <div className="mt-4 h-1 rounded-full bg-neutral-200/60">
-            <div 
-              className={`h-1 rounded-full bg-neutral-800 transition-all`} 
-              style={{ width: conversion != null ? `${Math.min(conversion, 100)}%` : '0%' }} 
+          <div className="mt-4 h-1 rounded-full bg-[var(--ridge-inner)]">
+            <div
+              className={`h-1 rounded-full bg-[var(--text-primary)] transition-all`}
+              style={{ width: conversion != null ? `${Math.min(conversion, 100)}%` : '0%' }}
             />
           </div>
-          <div className="mt-2 text-xs text-neutral-600">
+          <div className="mt-2 folio-meta text-[var(--text-secondary)]">
             Events → Saves → Project Tags → Editorial Mentions
           </div>
           {/* Inline AI Pane for Events Section */}
