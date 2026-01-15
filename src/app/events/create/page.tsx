@@ -807,7 +807,7 @@ export default function CreateEvent() {
                     
                     {/* Search Results */}
                     {searchResults.length > 0 && (
-                      <div className="absolute z-10 w-full mt-1 bg-white border border-[var(--border)] rounded-md shadow-lg max-h-60 overflow-y-auto">
+                      <div className="absolute z-10 w-full mt-1 bg-[var(--bg-base)] border border-[var(--border)] rounded-md shadow-lg max-h-60 overflow-y-auto">
                         {searchResults.map((user) => (
                           <button
                             key={user.id}

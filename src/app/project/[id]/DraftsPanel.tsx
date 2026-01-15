@@ -663,7 +663,7 @@ export default function DraftsPanel({ projectId }: { projectId: string }) {
             <DialogTitle>Generate Debug (Dry-Run)</DialogTitle>
           </DialogHeader>
           <div className="mt-4">
-            <pre className="text-xs whitespace-pre-wrap overflow-auto max-h-[70vh] p-4 rounded bg-gray-100 border border-gray-300 font-mono">
+            <pre className="text-xs whitespace-pre-wrap overflow-auto max-h-[70vh] p-4 rounded bg-[var(--bg-elevated)] border border-[var(--ridge-outer)] font-mono">
               {JSON.stringify(debugPayload, null, 2)}
             </pre>
           </div>

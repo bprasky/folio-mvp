@@ -38,10 +38,10 @@ export default function MagazineEditionCarousel({ editions, activeSlug }: Props)
             key={edition.slug}
             onClick={() => handleSelect(edition.slug)}
             className={clsx(
-              "px-4 py-1.5 md:py-2 text-xs md:text-sm font-medium transition-all duration-200 whitespace-nowrap rounded-full",
+              "folio-ui px-4 py-1.5 md:py-2 text-xs md:text-sm font-medium transition-all duration-200 whitespace-nowrap rounded-full",
               isActive
-                ? "text-neutral-900 bg-white/90 shadow-sm border border-neutral-200/60"
-                : "text-neutral-600 hover:text-neutral-900 hover:bg-white/50 border border-transparent"
+                ? "ridge-btn text-[var(--text-primary)] bg-[var(--bg-elevated)]"
+                : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]/50 border border-transparent"
             )}
           >
             {edition.label}

@@ -294,7 +294,7 @@ export default function MediaSection({ project, isOwner, images, projectPost }: 
                         className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                           isCover
                             ? 'bg-green-600 text-white'
-                            : 'bg-white text-gray-900 hover:bg-gray-100'
+                            : 'bg-[var(--bg-base)] text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]'
                         }`}
                       >
                         {isCover ? 'Cover Selected' : 'Set as Cover'}

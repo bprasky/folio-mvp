@@ -5,7 +5,6 @@ import clsx from 'clsx';
 import DesignerBoardRoom from './DesignerBoardRoom';
 import { getRoomTemplate, RoomTemplate } from './roomTemplates';
 import { computeTileSize as dimensionComputeTileSize } from './tileSizing';
-import { Button } from '@/components/ui/button';
 import { FaImage, FaSpinner } from 'react-icons/fa';
 import GenerateDialog from '@/components/boards/GenerateDialog';
 import GeneratedGrid from '@/components/boards/GeneratedGrid';
@@ -213,7 +212,7 @@ export default function DesignerBoard({
   return (
     <div className="w-full space-y-6">
       {/* Controls Bar */}
-      <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-elevated)] shadow-sm p-4 flex items-center justify-between">
+      <div className="ridge-card p-4 flex items-center justify-between">
         <div className="flex items-center space-x-4">
           <label htmlFor="room-filter" className="folio-ui font-medium text-[var(--text-primary)]">
             Filter by room:
@@ -222,7 +221,7 @@ export default function DesignerBoard({
             id="room-filter"
             value={selectedRoomId || ''}
             onChange={(e) => setSelectedRoomId(e.target.value || null)}
-            className="border border-[var(--border-default)] rounded-md px-3 py-1 folio-ui focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-[var(--bg-base)]"
+            className="ridge-input px-3 py-1.5 folio-ui"
           >
             <option value="">All Rooms</option>
             {project.rooms.map(room => (
@@ -241,20 +240,20 @@ export default function DesignerBoard({
           {/* Export Spec Button */}
           <button
             onClick={() => setExportModalOpen(true)}
-            className="px-4 py-2 folio-ui font-medium rounded-lg border border-[var(--border-default)] bg-[var(--bg-base)] hover:bg-[var(--bg-elevated)] transition-colors"
+            className="ridge-btn px-4 py-2"
           >
             Export Spec
           </button>
 
           {/* Generate Images Button */}
           {selectedRoomId && (
-            <Button
+            <button
               onClick={handleGenerateImages}
-              className="inline-flex items-center gap-2"
+              className="accent-btn px-4 py-2 inline-flex items-center gap-2"
             >
               <FaImage className="w-4 h-4" />
               Generate Images
-            </Button>
+            </button>
           )}
         </div>
       </div>

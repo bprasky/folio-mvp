@@ -127,7 +127,7 @@ export default function MagazineMosaicGrid({ items }: Props) {
           <article
             key={item.id}
             className={clsx(
-              "group relative rounded-2xl border border-neutral-200/60 shadow-sm bg-white/80 backdrop-blur-lg overflow-hidden transition-all duration-300 hover:shadow-md hover:scale-[1.01]",
+              "ridge-card group relative rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-md hover:scale-[1.01]",
               `col-span-${colSpan}`
             )}
             style={{ gridRowEnd: `span ${rowSpan}` }}
@@ -145,7 +145,7 @@ export default function MagazineMosaicGrid({ items }: Props) {
                     className="object-cover"
                   />
                 ) : (
-                  <div className="absolute inset-0 bg-gradient-to-br from-neutral-100 to-neutral-200" />
+                  <div className="absolute inset-0 bg-[var(--bg-elevated)]" />
                 )}
                 <div className="absolute inset-0 z-10 pointer-events-none bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
               </div>
@@ -154,7 +154,7 @@ export default function MagazineMosaicGrid({ items }: Props) {
               <div className="relative z-20 pointer-events-none flex h-full items-end p-3">
                 <div className="text-white w-full">
                   <div className={clsx(
-                    "font-semibold leading-tight line-clamp-2",
+                    "folio-h3 font-semibold leading-tight line-clamp-2",
                     size === "L" ? "text-xl" : size === "M" ? "text-lg" : "text-sm"
                   )}>
                     {item.title}
@@ -162,7 +162,7 @@ export default function MagazineMosaicGrid({ items }: Props) {
                   {/* Meta row */}
                   {timeDisplay && (
                     <div className="mt-1.5 flex items-center gap-2 text-white/85 text-[11px]">
-                      <span className="inline-flex items-center gap-1 rounded bg-black/45 px-1.5 py-0.5 backdrop-blur-sm">
+                      <span className="folio-meta inline-flex items-center gap-1 rounded bg-black/45 px-1.5 py-0.5 backdrop-blur-sm">
                         {timeDisplay}
                       </span>
                     </div>

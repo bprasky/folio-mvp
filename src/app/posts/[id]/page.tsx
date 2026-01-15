@@ -87,14 +87,14 @@ export default function PostViewPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6">
+      <div className="min-h-screen bg-[var(--bg-base)] p-6">
         <div className="max-w-4xl mx-auto">
           <div className="animate-pulse">
-            <div className="h-12 bg-gray-200 rounded-lg w-2/3 mb-6"></div>
-            <div className="h-6 bg-gray-200 rounded w-1/2 mb-8"></div>
+            <div className="h-12 bg-[var(--bg-elevated)] rounded-lg w-2/3 mb-6"></div>
+            <div className="h-6 bg-[var(--bg-elevated)] rounded w-1/2 mb-8"></div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="bg-gray-200 rounded-xl h-64"></div>
+                <div key={i} className="bg-[var(--bg-elevated)] rounded-xl h-64"></div>
               ))}
             </div>
           </div>
@@ -105,32 +105,32 @@ export default function PostViewPage() {
 
   if (!post) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6">
+      <div className="min-h-screen bg-[var(--bg-base)] p-6">
         <div className="max-w-4xl mx-auto text-center py-12">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Post not found</h1>
-          <p className="text-gray-500">The post you're looking for doesn't exist or has been removed.</p>
+          <h1 className="folio-h2 mb-4">Post not found</h1>
+          <p className="folio-body">The post you're looking for doesn't exist or has been removed.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[var(--bg-base)]">
       {/* Hero Section */}
-      <div className="bg-white border-b border-gray-200">
+      <div className="ridge-card mx-4 mt-4">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="text-center">
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">{post.title}</h1>
-            
+            <h1 className="folio-h1 mb-4">{post.title}</h1>
+
             {post.content && (
-              <p className="text-lg text-gray-600 mb-6 max-w-2xl mx-auto">
+              <p className="folio-body text-lg mb-6 max-w-2xl mx-auto">
                 {post.content}
               </p>
             )}
 
             {/* Designer Info */}
             <div className="flex items-center justify-center gap-3 mb-6">
-              <div className="w-12 h-12 rounded-full bg-gray-200 overflow-hidden">
+              <div className="w-12 h-12 rounded-full bg-[var(--bg-elevated)] overflow-hidden">
                 {post.designer.profileImage ? (
                   <SafeImage
                     src={post.designer.profileImage}
@@ -139,16 +139,16 @@ export default function PostViewPage() {
                     className="object-cover"
                   />
                 ) : (
-                  <div className="w-full h-full bg-gray-300 flex items-center justify-center">
-                    <span className="text-gray-600 font-medium text-lg">
+                  <div className="w-full h-full bg-[var(--bg-elevated)] flex items-center justify-center">
+                    <span className="text-[var(--text-secondary)] font-medium text-lg">
                       {post.designer.name.charAt(0).toUpperCase()}
                     </span>
                   </div>
                 )}
               </div>
               <div className="text-left">
-                <p className="font-medium text-gray-900">{post.designer.name}</p>
-                <p className="text-sm text-gray-500">
+                <p className="folio-ui text-[var(--text-primary)]">{post.designer.name}</p>
+                <p className="folio-meta">
                   {new Date(post.createdAt).toLocaleDateString('en-US', {
                     year: 'numeric',
                     month: 'long',
@@ -162,10 +162,10 @@ export default function PostViewPage() {
             <div className="flex items-center justify-center gap-4">
               <button
                 onClick={handleLike}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-colors ${
-                  liked 
-                    ? "bg-red-100 text-red-600" 
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                className={`ridge-btn flex items-center gap-2 px-4 py-2 transition-colors ${
+                  liked
+                    ? "bg-red-100 text-red-600"
+                    : ""
                 }`}
               >
                 <Heart className={`w-4 h-4 ${liked ? "fill-current" : ""}`} />
@@ -174,13 +174,13 @@ export default function PostViewPage() {
 
               <button
                 onClick={handleShare}
-                className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200 transition-colors"
+                className="ridge-btn flex items-center gap-2 px-4 py-2"
               >
                 <Share2 className="w-4 h-4" />
                 Share
               </button>
 
-              <button className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200 transition-colors">
+              <button className="ridge-btn flex items-center gap-2 px-4 py-2">
                 <MessageCircle className="w-4 h-4" />
                 Comment
               </button>
@@ -191,7 +191,7 @@ export default function PostViewPage() {
 
       {/* Products Grid */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <h2 className="text-2xl font-bold text-gray-900 mb-8 text-center">
+        <h2 className="folio-h2 mb-8 text-center">
           Featured Products ({post.items.length})
         </h2>
 
@@ -199,22 +199,22 @@ export default function PostViewPage() {
           {post.items.map((item) => (
             <div
               key={item.id}
-              className="group bg-white rounded-2xl shadow-sm hover:shadow-lg transition-all duration-200 hover:-translate-y-1 cursor-pointer overflow-hidden"
+              className="group ridge-card hover:shadow-lg transition-all duration-200 hover:-translate-y-1 cursor-pointer overflow-hidden"
               onClick={() => handleProductClick(item)}
             >
               {/* Product Image */}
-              <div className="relative h-48 bg-gray-100 overflow-hidden">
+              <div className="relative h-48 bg-[var(--bg-elevated)] overflow-hidden">
                 <SafeImage
                   src={item.imageUrl || "/images/product-placeholder.jpg"}
                   alt={item.productName}
                   fill
                   className="object-cover group-hover:scale-105 transition-transform duration-300"
                 />
-                
+
                 {/* Section Badge */}
                 {item.section && (
                   <div className="absolute top-3 left-3">
-                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-white/90 backdrop-blur-sm text-xs font-medium text-gray-700">
+                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-[var(--bg-base)]/90 backdrop-blur-sm folio-meta text-[var(--text-secondary)]">
                       <Tag className="w-3 h-3" />
                       {item.section}
                     </span>
@@ -224,7 +224,7 @@ export default function PostViewPage() {
                 {/* External Link Indicator */}
                 {item.affiliateUrl && (
                   <div className="absolute top-3 right-3">
-                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-blue-600 text-white text-xs font-medium">
+                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-[var(--accent)] text-white folio-meta font-medium">
                       <ExternalLink className="w-3 h-3" />
                       Shop Now
                     </span>
@@ -234,16 +234,16 @@ export default function PostViewPage() {
 
               {/* Product Info */}
               <div className="p-4">
-                <h3 className="font-medium text-gray-900 mb-2 line-clamp-2">
+                <h3 className="folio-ui text-[var(--text-primary)] mb-2 line-clamp-2">
                   {item.productName}
                 </h3>
-                
+
                 {item.affiliateUrl && (
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-blue-600 font-medium">
+                    <span className="folio-meta text-[var(--accent)] font-medium">
                       Click to shop
                     </span>
-                    <ExternalLink className="w-4 h-4 text-gray-400" />
+                    <ExternalLink className="w-4 h-4 text-[var(--text-tertiary)]" />
                   </div>
                 )}
               </div>
@@ -254,11 +254,11 @@ export default function PostViewPage() {
         {/* Empty State */}
         {post.items.length === 0 && (
           <div className="text-center py-12">
-            <div className="w-16 h-16 bg-gray-200 rounded-full mx-auto mb-4 flex items-center justify-center">
-              <Tag className="w-8 h-8 text-gray-400" />
+            <div className="w-16 h-16 bg-[var(--bg-elevated)] rounded-full mx-auto mb-4 flex items-center justify-center">
+              <Tag className="w-8 h-8 text-[var(--text-tertiary)]" />
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No products yet</h3>
-            <p className="text-gray-500">This post doesn't have any products yet.</p>
+            <h3 className="folio-h3 mb-2">No products yet</h3>
+            <p className="folio-body">This post doesn't have any products yet.</p>
           </div>
         )}
       </div>

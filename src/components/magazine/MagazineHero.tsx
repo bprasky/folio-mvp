@@ -30,7 +30,7 @@ export default function MagazineHero({ hero, edition }: Props) {
     <article className="group w-full">
       <Link href={href} className="block">
         {/* Hero card with rounded corners and glass styling */}
-        <div className="relative w-full h-[50vh] md:h-[65vh] bg-neutral-100 rounded-2xl overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.12)]">
+        <div className="relative w-full h-[50vh] md:h-[65vh] bg-[var(--bg-base)] rounded-2xl overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.12)]">
           {hero.imageUrl && hero.imageUrl.length > 0 ? (
             <Image
               src={hero.imageUrl}
@@ -40,7 +40,7 @@ export default function MagazineHero({ hero, edition }: Props) {
               priority
             />
           ) : (
-            <div className="absolute inset-0 bg-gradient-to-br from-neutral-100 to-neutral-200" />
+            <div className="absolute inset-0 bg-[var(--bg-elevated)]" />
           )}
           
           {/* Gradient overlay for text contrast */}
@@ -48,7 +48,7 @@ export default function MagazineHero({ hero, edition }: Props) {
 
           {/* Subtle EDITORIAL badge - top left */}
           <div className="absolute left-4 md:left-6 top-4 md:top-6 z-10">
-            <span className="inline-flex items-center rounded-full bg-white/90 backdrop-blur-sm px-3 py-1 text-[10px] font-medium uppercase tracking-[0.12em] text-neutral-700 shadow-sm border border-white/50">
+            <span className="folio-meta inline-flex items-center rounded-full bg-[var(--bg-elevated)]/90 backdrop-blur-sm px-3 py-1 text-[10px] font-medium uppercase tracking-[0.12em] text-[var(--text-secondary)] shadow-sm border border-[var(--ridge-outer)]">
               Editorial
             </span>
           </div>
@@ -60,20 +60,20 @@ export default function MagazineHero({ hero, edition }: Props) {
             
             <div className="relative">
               {/* Serif italic headline - editorial magazine style */}
-              <h2 
-                className="text-2xl md:text-4xl lg:text-5xl xl:text-6xl text-white leading-[1.15] mb-2 md:mb-3 drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]"
-                style={{ 
-                  fontFamily: 'var(--brand-font), ui-serif, Georgia, "Times New Roman", serif', 
+              <h2
+                className="folio-h1 text-2xl md:text-4xl lg:text-5xl xl:text-6xl text-white leading-[1.15] mb-2 md:mb-3 drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]"
+                style={{
+                  fontFamily: 'var(--brand-font), ui-serif, Georgia, "Times New Roman", serif',
                   fontStyle: 'italic',
                   fontWeight: 400,
-                  letterSpacing: '-0.01em' 
+                  letterSpacing: '-0.01em'
                 }}
               >
                 {hero.title}
               </h2>
               {/* Designer attribution */}
               {(hero.designerName || hero.locationLabel) && (
-                <p className="text-sm md:text-base lg:text-lg text-white/90 font-medium drop-shadow-[0_1px_4px_rgba(0,0,0,0.4)] tracking-wide">
+                <p className="folio-body text-sm md:text-base lg:text-lg text-white/90 font-medium drop-shadow-[0_1px_4px_rgba(0,0,0,0.4)] tracking-wide">
                   {hero.designerName && <span>{hero.designerName}</span>}
                   {hero.designerName && hero.locationLabel && <span className="mx-2">·</span>}
                   {hero.locationLabel && <span>{hero.locationLabel}</span>}

@@ -58,9 +58,9 @@ export default function ProjectTabs({ project, currentView }: ProjectTabsProps) 
   ];
 
   return (
-    <div className="border-b border-[var(--border-default)] bg-[var(--bg-elevated)]">
+    <div className="bg-[var(--bg-elevated)] py-4">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <nav className="-mb-px flex space-x-8" role="tablist">
+        <nav className="ridge-toggle-group" role="tablist">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = currentView === tab.id;
@@ -73,20 +73,12 @@ export default function ProjectTabs({ project, currentView }: ProjectTabsProps) 
                 aria-selected={isActive}
                 aria-controls={`tabpanel-${tab.id}`}
                 id={`tab-${tab.id}`}
-                className={`
-                  py-2 px-4 folio-ui font-medium flex items-center gap-2
-                  transition-colors duration-200
-                  focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30 focus:ring-offset-2
-                  ${isActive
-                    ? 'border-b-2 border-[var(--accent)] text-[var(--text-primary)]'
-                    : 'border-b-2 border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border-default)]'
-                  }
-                `}
+                className={`ridge-toggle-item ${isActive ? 'active' : ''}`}
               >
                 {Icon && <Icon className="w-4 h-4" />}
                 <span>{tab.label}</span>
                 {tab.badge !== undefined && tab.badge > 0 && (
-                  <span className="ml-2 bg-[var(--bg-base)] text-[var(--text-secondary)] text-xs px-2 py-0.5 rounded-full">
+                  <span className="ml-2 bg-[var(--bg-base)] text-[var(--text-secondary)] text-xs px-2 py-0.5 rounded-full border border-[var(--ridge-outer)]">
                     ({tab.badge})
                   </span>
                 )}
