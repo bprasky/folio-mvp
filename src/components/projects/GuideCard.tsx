@@ -69,14 +69,14 @@ export function GuideCard({
   const allCompleted = completedSteps === steps.length;
 
   return (
-    <div className={cn("liquid-glass-muted p-6", className)}>
+    <div className={cn("ridge-card p-6", className)}>
       {/* Header */}
       <div className="flex items-center justify-between mb-5">
         <div>
-          <h3 className="text-base font-semibold text-[#1a1a1a]">
+          <h3 className="folio-h3 text-[var(--text-primary)]">
             Getting Started
           </h3>
-          <p className="text-sm text-[#666] mt-0.5">
+          <p className="folio-meta mt-0.5">
             {allCompleted
               ? 'You have completed all steps'
               : `${completedSteps} of ${steps.length} steps complete`}
@@ -90,8 +90,8 @@ export function GuideCard({
               className={cn(
                 "w-2.5 h-2.5 rounded-full transition-all duration-300",
                 step.completed
-                  ? "bg-[#1a1a1a] shadow-[0_0_8px_rgba(26,26,26,0.3)]"
-                  : "bg-[#ddd]"
+                  ? "bg-[var(--text-primary)] shadow-[0_0_8px_rgba(26,26,26,0.3)]"
+                  : "bg-[var(--ridge-outer)]"
               )}
             />
           ))}
@@ -106,19 +106,19 @@ export function GuideCard({
             <div
               key={i}
               className={cn(
-                "relative p-4 liquid-step",
-                step.completed && "completed"
+                "relative p-4 ridge-card ridge-card-sm",
+                step.completed && "ring-2 ring-[var(--accent)]/20"
               )}
             >
               {/* Completion badge */}
               {step.completed && (
-                <div className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-[#1a1a1a] flex items-center justify-center shadow-[0_2px_8px_rgba(26,26,26,0.3)]">
+                <div className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-[var(--accent)] flex items-center justify-center shadow-[0_2px_8px_rgba(184,132,92,0.3)]">
                   <Check className="h-3 w-3 text-white" />
                 </div>
               )}
 
               {/* Step number */}
-              <div className="text-xs text-[#888] font-medium mb-2">
+              <div className="folio-meta mb-2">
                 Step {i + 1}
               </div>
 
@@ -126,23 +126,23 @@ export function GuideCard({
               <div className={cn(
                 "w-8 h-8 rounded-lg flex items-center justify-center mb-2 transition-all duration-300",
                 step.completed
-                  ? "bg-[#1a1a1a] shadow-[0_4px_12px_rgba(26,26,26,0.2)]"
-                  : "bg-white/70"
+                  ? "bg-[var(--accent)] shadow-[0_4px_12px_rgba(184,132,92,0.2)]"
+                  : "bg-[var(--bg-elevated)]"
               )}>
                 <StepIcon className={cn(
                   "h-4 w-4",
-                  step.completed ? "text-white" : "text-[#5C5C57]"
+                  step.completed ? "text-white" : "text-[var(--text-secondary)]"
                 )} />
               </div>
 
               {/* Title & description */}
               <h4 className={cn(
-                "text-sm font-medium mb-0.5 transition-colors",
-                step.completed ? "text-[#1a1a1a]" : "text-[#666]"
+                "folio-ui font-medium mb-0.5 transition-colors",
+                step.completed ? "text-[var(--text-primary)]" : "text-[var(--text-secondary)]"
               )}>
                 {step.title}
               </h4>
-              <p className="text-xs text-[#888] leading-snug">
+              <p className="folio-meta leading-snug">
                 {step.description}
               </p>
             </div>
