@@ -68,51 +68,42 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(req: Request) {
-  logDbEnv('create-project'); // shows which DB this code is writing to
-  
-  if (isDev) {
-    console.log('[create-project] cookie?', !!req.headers.get('cookie'));
-  }
-  
-  const session = await getServerSession(authOptions);
-  const role = normalizeRole(session?.user?.role);
-  const userId = (session?.user as any)?.id as string | undefined;
-
-  if (isDev) {
-    console.log('[create-project] session', { email: session?.user?.email, role, userId });
-  }
-
-  if (isDev) {
-    console.log('[create-project]', { 
-      hasCookie: !!req.headers.get('cookie'), 
-      email: session?.user?.email, 
-      role, 
-      userId 
-    });
-  }
-
-  if (!userId) {
-    return NextResponse.json({ error: 'You must be signed in' }, { status: 401 });
-  }
-
-  // Check org-based permission (user must be operating as a design firm)
-  const canCreate = await canPerformAction(userId, 'create_project');
-  if (!canCreate) {
-    return NextResponse.json({
-      error: 'You must be operating as a design firm to create projects'
-    }, { status: 403 });
-  }
-
-  let json: unknown;
-  try { 
-    json = await req.json(); 
-  } catch { 
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 }); 
-  }
-
   try {
+    logDbEnv('create-project'); // shows which DB this code is writing to
+
+    if (isDev) {
+      console.log('[create-project] cookie?', !!req.headers.get('cookie'));
+    }
+
+    const session = await getServerSession(authOptions);
+    const role = normalizeRole(session?.user?.role);
+    const userId = (session?.user as any)?.id as string | undefined;
+
+    if (isDev) {
+      console.log('[create-project] session', { email: session?.user?.email, role, userId });
+    }
+
+    if (!userId) {
+      return NextResponse.json({ error: 'You must be signed in' }, { status: 401 });
+    }
+
+    // Check org-based permission (user must be operating as a design firm)
+    const canCreate = await canPerformAction(userId, 'create_project');
+    if (!canCreate) {
+      return NextResponse.json({
+        error: 'You must be operating as a design firm to create projects'
+      }, { status: 403 });
+    }
+
+    let json: unknown;
+    try {
+      json = await req.json();
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
+    }
+
     const data = normalizeCreatePayload(json); // accepts both shapes, returns canonical
-    
+
     if (isDev) {
       console.log('[create-project] normalized data:', data);
     }
@@ -135,8 +126,8 @@ export async function POST(req: Request) {
         designerId: userId,
         ownerId: userId,
         status: dbStatus,
-        isPublic: false, // Explicitly set
-        publishedAt: null, // Explicitly set
+        isPublic: false,
+        publishedAt: null,
         isAIEnabled: false,
         views: 0,
         saves: 0,
@@ -155,7 +146,6 @@ export async function POST(req: Request) {
       });
     } catch (analyticsError) {
       console.warn('Analytics logging failed:', analyticsError);
-      // Don't fail the request for analytics errors
     }
 
     return NextResponse.json({ id: project.id }, { status: 201 });
@@ -165,24 +155,23 @@ export async function POST(req: Request) {
       if (isDev) {
         console.warn('[create-project] Zod issues:', e.issues ?? e);
       }
-      return NextResponse.json({ 
-        error: 'ValidationError', 
+      return NextResponse.json({
+        error: 'ValidationError',
         issues: e.flatten?.() ?? e,
         message: 'Invalid project data'
       }, { status: 422 });
     }
-    
-    // Prisma or unknown → 400 with details
-    if (isDev) console.error('[create-project] Error:', e);
+
+    // Prisma or unknown → 500 with details
+    console.error('[create-project] Error:', e);
     return NextResponse.json(
-      { 
-        error: 'CreateFailed', 
-        code: e?.code ?? null, 
-        meta: e?.meta ?? null, 
+      {
+        error: 'CreateFailed',
+        code: e?.code ?? null,
+        meta: e?.meta ?? null,
         message: e?.message ?? 'Unknown error',
-        detail: 'Database operation failed'
       },
-      { status: 400 }
+      { status: 500 }
     );
   }
 }
