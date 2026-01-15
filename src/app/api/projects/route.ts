@@ -6,7 +6,7 @@ import { prisma } from '@/lib/prisma';
 import { logPassiveEvent } from '@/lib/analytics';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
-import { normalizeRole, canCreateProject } from '@/lib/permissions';
+import { normalizeRole, canPerformAction } from '@/lib/permissions';
 import { normalizeCreatePayload } from './normalizeCreatePayload';
 import { logDbEnv } from '@/lib/dbEnv';
 import { assertProjectView } from "@/lib/authz/access";
@@ -95,8 +95,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'You must be signed in' }, { status: 401 });
   }
 
-  if (!canCreateProject(role)) {
-    return NextResponse.json({ error: 'Your role is not permitted to create projects' }, { status: 403 });
+  // Check org-based permission (user must be member of a design firm)
+  const canCreate = await canPerformAction(userId, 'create_project');
+  if (!canCreate) {
+    return NextResponse.json({ error: 'You must be a member of a design firm to create projects' }, { status: 403 });
   }
 
   let json: unknown;
@@ -113,7 +115,11 @@ export async function POST(req: Request) {
       console.log('[create-project] normalized data:', data);
     }
 
-    // Force draft defaults - never rely on schema defaults
+    // Map projectStatus to database status
+    // new_project -> draft (work in progress)
+    // completed_project -> active (ready to showcase)
+    const dbStatus = data.projectStatus === 'completed_project' ? 'active' : 'draft';
+
     const project = await prisma.project.create({
       data: {
         title: data.title,
@@ -126,7 +132,7 @@ export async function POST(req: Request) {
         description: data.description ?? null,
         designerId: userId,
         ownerId: userId,
-        status: 'draft', // Explicitly set - do not rely on schema default
+        status: dbStatus,
         isPublic: false, // Explicitly set
         publishedAt: null, // Explicitly set
         isAIEnabled: false,

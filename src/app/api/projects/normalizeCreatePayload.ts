@@ -9,9 +9,13 @@ type ClientType = 'RESIDENTIAL' | 'COMMERCIAL';
 type ProjectType = 'UNSPECIFIED' | 'RESIDENTIAL' | 'COMMERCIAL' | 'HOSPITALITY' | 'HEALTHCARE' | 'EDUCATION' | 'OFFICE' | 'RETAIL' | 'INDUSTRIAL' | 'OTHER';
 type BudgetBand = 'UNSPECIFIED' | 'LOW' | 'MID' | 'HIGH' | 'LUXURY';
 
+// Project status: new_project (in progress) or completed_project (ready to showcase)
+type ProjectStatus = 'new_project' | 'completed_project';
+
 // Canonical API shape we persist
 export const CanonicalCreateSchema = z.object({
   title: z.string().min(1),
+  projectStatus: z.enum(['new_project', 'completed_project']),
   stage: z.enum(['concept', 'schematic', 'design_development', 'cd_pre_spec', 'spec_locked', 'in_procurement', 'install']).default(DEFAULTS.stage),
   projectType: z.enum(['UNSPECIFIED', 'RESIDENTIAL', 'COMMERCIAL', 'HOSPITALITY', 'HEALTHCARE', 'EDUCATION', 'OFFICE', 'RETAIL', 'INDUSTRIAL', 'OTHER']).default(DEFAULTS.projectType),
   clientType: z.enum(['RESIDENTIAL', 'COMMERCIAL']).default(DEFAULTS.clientType),
@@ -21,14 +25,15 @@ export const CanonicalCreateSchema = z.object({
   description: z.string().optional().nullable(),
 });
 
-// Legacy UI shape (current form)
+// Legacy UI shape (current form) - now includes projectStatus
 const LegacySchema = z.object({
   name: z.string().min(1),
+  projectStatus: z.enum(['new_project', 'completed_project']),
   description: z.string().optional().nullable(),
   client: z.string().optional().nullable(),   // 'Residential' | 'Commercial'
   category: z.string().optional().nullable(), // label for projectType
   images: z.any().optional(),                 // ignored by create API
-  // no stage/budget/city/region in legacy
+  detailsCore: z.any().optional(),            // advanced details from form
 });
 
 // Canonical incoming passthrough (for future form)
@@ -43,29 +48,41 @@ export function normalizeCreatePayload(raw: unknown) {
   const asLegacy = LegacySchema.safeParse(raw);
   if (asLegacy.success) {
     const l = asLegacy.data;
+    const details = l.detailsCore ?? {};
 
     // clientType (label → enum) with safe default
     const clientType =
-      (l.client && CLIENT_BY_LABEL.get(l.client.toLowerCase())) ?? DEFAULTS.clientType;
+      (l.client && CLIENT_BY_LABEL.get(l.client.toLowerCase())) ??
+      (details.clientType && CLIENT_BY_LABEL.get(details.clientType.toLowerCase())) ??
+      DEFAULTS.clientType;
 
     // projectType (label → enum) with safe default
     const projectType =
-      (l.category && PROJECT_TYPE_BY_LABEL.get(l.category.toLowerCase())) ?? DEFAULTS.projectType;
+      (l.category && PROJECT_TYPE_BY_LABEL.get(l.category.toLowerCase())) ??
+      (details.projectType && PROJECT_TYPE_BY_LABEL.get(details.projectType.toLowerCase())) ??
+      DEFAULTS.projectType;
 
-    // budget fallback
+    // budget - always default to UNSPECIFIED (budget band removed from form)
     const budgetBand = DEFAULTS.budgetBand;
 
-    // stage default
-    const stage = DEFAULTS.stage;
+    // stage from detailsCore or default
+    const stage =
+      (details.stage && STAGE_BY_LABEL.get(details.stage.toLowerCase())) ??
+      DEFAULTS.stage;
+
+    // Location from detailsCore
+    const city = details.location?.city ?? null;
+    const regionState = details.location?.region ?? null;
 
     const candidate = {
       title: l.name,
+      projectStatus: l.projectStatus,
       description: l.description ?? null,
       clientType,
       projectType,
       budgetBand,
-      city: null,
-      regionState: null,
+      city,
+      regionState,
       stage,
     };
 
