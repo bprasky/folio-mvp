@@ -394,7 +394,6 @@ export async function canPerformAction(
           id: true,
           name: true,
           type: true,
-          status: true,
         }
       }
     }
@@ -403,7 +402,6 @@ export async function canPerformAction(
   // If user is operating as an org, check that org's type
   if (user?.operatingAsOrg) {
     const orgType = user.operatingAsOrg.type;
-    const orgStatus = user.operatingAsOrg.status;
 
     switch (action) {
       case 'create_project':
@@ -413,8 +411,8 @@ export async function canPerformAction(
       case 'generate_images':
       case 'connect_clients':
       case 'earn_affiliate':
-        // Must be operating as a professional org
-        return orgStatus === 'PROFESSIONAL';
+        // For now, allow if operating as any org (status column not yet in DB)
+        return true;
       default:
         return false;
     }
