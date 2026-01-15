@@ -8,6 +8,8 @@ import BlurContainer from "@/components/ui/BlurContainer";
  * Blur ONLY when the URL matches:
  *   /festivals/:festivalId/subevents/:eventId
  * Works regardless of parallel route internals.
+ *
+ * Folio Design System: Uses bg-[var(--bg-base)] for base background
  */
 export default function FestivalLayoutClient({
   children,
@@ -23,7 +25,7 @@ export default function FestivalLayoutClient({
   const hasModal = /\/festivals\/[^/]+\/subevents\/[^/]+$/.test(pathname || "");
 
   return (
-    <div className="relative">
+    <div className="relative bg-[var(--bg-base)]">
       <BlurContainer blurred={hasModal}>{children}</BlurContainer>
       {hasModal ? modal : null}
     </div>

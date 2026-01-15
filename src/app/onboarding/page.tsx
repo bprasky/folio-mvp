@@ -3,7 +3,7 @@
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { GlassButton } from '@/components/ui/glass';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 const TOTAL_SCREENS = 5;
@@ -231,7 +231,7 @@ export default function OnboardingPage() {
   const screen = screens[currentScreen - 1];
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-stone-50 via-white to-stone-100">
+    <div className="min-h-screen flex flex-col bg-[var(--bg-base)]">
       {/* Main content */}
       <div className="flex-1 flex items-center justify-center px-6 py-12">
         <div className="w-full max-w-xl">
@@ -241,34 +241,34 @@ export default function OnboardingPage() {
             className="text-center space-y-8 animate-in fade-in duration-300"
           >
             {/* Headline - Editorial style */}
-            <h1 className="font-serif text-4xl md:text-5xl text-stone-900 italic leading-tight">
+            <h1 className="folio-quote text-4xl md:text-5xl">
               {screen.headline}
             </h1>
 
             {/* Body content */}
-            <div className="mx-auto max-w-md">{screen.body}</div>
+            <div className="mx-auto max-w-md folio-body">{screen.body}</div>
 
             {/* Navigation buttons */}
             <div className="flex items-center justify-center gap-4 pt-8">
               {currentScreen > 1 && (
-                <GlassButton
+                <Button
                   variant="ghost"
                   size="lg"
                   onClick={handleBack}
                   className="min-w-[100px]"
                 >
                   Back
-                </GlassButton>
+                </Button>
               )}
-              <GlassButton
-                variant="primary"
+              <Button
+                variant="accent"
                 size="lg"
                 onClick={handleNext}
                 disabled={isCompleting}
                 className="min-w-[160px]"
               >
                 {isCompleting ? 'Setting up...' : `${screen.cta} \u2192`}
-              </GlassButton>
+              </Button>
             </div>
           </div>
         </div>
@@ -283,10 +283,10 @@ export default function OnboardingPage() {
               className={cn(
                 'w-2 h-2 rounded-full transition-all duration-300',
                 num === currentScreen
-                  ? 'w-8 bg-stone-800'
+                  ? 'w-8 bg-[var(--accent)]'
                   : num < currentScreen
-                  ? 'bg-stone-400'
-                  : 'bg-stone-300'
+                  ? 'bg-[var(--text-tertiary)]'
+                  : 'bg-[var(--ridge-outer)]'
               )}
             />
           ))}
@@ -295,7 +295,7 @@ export default function OnboardingPage() {
 
       {/* Folio wordmark */}
       <div className="absolute top-6 left-6">
-        <span className="text-lg font-semibold text-stone-400">Folio</span>
+        <span className="folio-logo-text text-[var(--text-tertiary)]">Folio</span>
       </div>
     </div>
   );

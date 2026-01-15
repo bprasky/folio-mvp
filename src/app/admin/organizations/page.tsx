@@ -5,10 +5,7 @@ import Link from 'next/link';
 import {
   FaBuilding,
   FaSearch,
-  FaFilter,
   FaCheck,
-  FaCrown,
-  FaShieldAlt,
   FaStar,
   FaUsers,
   FaSpinner,
@@ -16,9 +13,11 @@ import {
   FaEdit,
   FaSave,
   FaTimes,
-  FaPhone,
   FaNotes,
 } from 'react-icons/fa';
+import { RidgeCard, StatsCard } from '@/components/ui/ridge-card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 interface Organization {
   id: string;
@@ -54,7 +53,7 @@ const typeOptions = [
 ];
 
 const statusColors: Record<string, string> = {
-  UNCLAIMED: 'bg-gray-100 text-gray-700',
+  UNCLAIMED: 'bg-[var(--bg-elevated)] text-[var(--text-secondary)]',
   CLAIMED: 'bg-blue-100 text-blue-700',
   PROFESSIONAL: 'bg-purple-100 text-purple-700',
 };
@@ -170,17 +169,17 @@ export default function AdminOrganizationsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-[var(--bg-base)] py-8">
       <div className="max-w-7xl mx-auto px-4">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Organizations</h1>
-            <p className="text-gray-600">Manage organizations, verification, and sales outreach</p>
+            <h1 className="folio-h1 mb-2">Organizations</h1>
+            <p className="folio-body">Manage organizations, verification, and sales outreach</p>
           </div>
           <Link
             href="/admin"
-            className="text-blue-600 hover:text-blue-800"
+            className="text-[var(--accent)] hover:text-[var(--accent-hover)]"
           >
             Back to Admin
           </Link>
@@ -188,36 +187,24 @@ export default function AdminOrganizationsPage() {
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-white rounded-lg shadow-sm p-4 border-l-4 border-gray-400">
-            <p className="text-sm text-gray-600">Total Organizations</p>
-            <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
-          </div>
-          <div className="bg-white rounded-lg shadow-sm p-4 border-l-4 border-gray-400">
-            <p className="text-sm text-gray-600">Unclaimed</p>
-            <p className="text-2xl font-bold text-gray-900">{stats.unclaimed}</p>
-          </div>
-          <div className="bg-white rounded-lg shadow-sm p-4 border-l-4 border-blue-400">
-            <p className="text-sm text-gray-600">Claimed (Free)</p>
-            <p className="text-2xl font-bold text-gray-900">{stats.claimed}</p>
-          </div>
-          <div className="bg-white rounded-lg shadow-sm p-4 border-l-4 border-purple-400">
-            <p className="text-sm text-gray-600">Professional (Paid)</p>
-            <p className="text-2xl font-bold text-gray-900">{stats.professional}</p>
-          </div>
+          <StatsCard label="Total Organizations" value={stats.total} />
+          <StatsCard label="Unclaimed" value={stats.unclaimed} />
+          <StatsCard label="Claimed (Free)" value={stats.claimed} />
+          <StatsCard label="Professional (Paid)" value={stats.professional} />
         </div>
 
         {/* Filters */}
-        <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
+        <RidgeCard padding="md" className="mb-6">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1">
               <div className="relative">
-                <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                <input
+                <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[var(--text-tertiary)]" />
+                <Input
                   type="text"
                   placeholder="Search organizations..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="pl-10"
                 />
               </div>
             </div>
@@ -225,7 +212,7 @@ export default function AdminOrganizationsPage() {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="ridge-input px-4 py-2"
               >
                 {statusOptions.map((opt) => (
                   <option key={opt.value} value={opt.value}>
@@ -236,7 +223,7 @@ export default function AdminOrganizationsPage() {
               <select
                 value={typeFilter}
                 onChange={(e) => setTypeFilter(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="ridge-input px-4 py-2"
               >
                 {typeOptions.map((opt) => (
                   <option key={opt.value} value={opt.value}>
@@ -246,33 +233,30 @@ export default function AdminOrganizationsPage() {
               </select>
             </div>
           </div>
-        </div>
+        </RidgeCard>
 
         {/* Organizations List */}
         {loading ? (
-          <div className="bg-white rounded-lg shadow-sm p-12 text-center">
-            <FaSpinner className="w-8 h-8 animate-spin text-gray-400 mx-auto" />
-            <p className="text-gray-500 mt-4">Loading organizations...</p>
-          </div>
+          <RidgeCard padding="xl" className="text-center">
+            <FaSpinner className="w-8 h-8 animate-spin text-[var(--text-tertiary)] mx-auto" />
+            <p className="text-[var(--text-secondary)] mt-4">Loading organizations...</p>
+          </RidgeCard>
         ) : error ? (
-          <div className="bg-white rounded-lg shadow-sm p-12 text-center">
+          <RidgeCard padding="xl" className="text-center">
             <p className="text-red-500">{error}</p>
-          </div>
+          </RidgeCard>
         ) : organizations.length === 0 ? (
-          <div className="bg-white rounded-lg shadow-sm p-12 text-center">
-            <FaBuilding className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500">No organizations found</p>
-          </div>
+          <RidgeCard padding="xl" className="text-center">
+            <FaBuilding className="w-12 h-12 text-[var(--text-tertiary)] mx-auto mb-4" />
+            <p className="text-[var(--text-secondary)]">No organizations found</p>
+          </RidgeCard>
         ) : (
           <div className="space-y-4">
             {organizations.map((org) => (
-              <div
-                key={org.id}
-                className="bg-white rounded-lg shadow-sm p-6"
-              >
+              <RidgeCard key={org.id} padding="lg">
                 <div className="flex items-start justify-between">
                   <div className="flex items-start gap-4">
-                    <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <div className="w-16 h-16 bg-[var(--bg-elevated)] rounded-lg flex items-center justify-center flex-shrink-0">
                       {org.logo ? (
                         <img
                           src={org.logo}
@@ -280,14 +264,14 @@ export default function AdminOrganizationsPage() {
                           className="w-full h-full object-cover rounded-lg"
                         />
                       ) : (
-                        <FaBuilding className="w-8 h-8 text-gray-400" />
+                        <FaBuilding className="w-8 h-8 text-[var(--text-tertiary)]" />
                       )}
                     </div>
                     <div>
                       <div className="flex items-center gap-3 mb-1">
                         <Link
                           href={`/org/${org.id}`}
-                          className="text-lg font-semibold text-gray-900 hover:text-blue-600"
+                          className="folio-h3 text-[var(--text-primary)] hover:text-[var(--accent)]"
                         >
                           {org.name}
                         </Link>
@@ -300,23 +284,23 @@ export default function AdminOrganizationsPage() {
                           {org.status.toLowerCase()}
                         </span>
                       </div>
-                      <p className="text-sm text-gray-500 mb-2">
+                      <p className="folio-meta mb-2">
                         {org.type.replace('_', ' ')}
                         {org.website && (
                           <>
-                            <span className="mx-2">•</span>
+                            <span className="mx-2">-</span>
                             <a
                               href={org.website}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-blue-600 hover:text-blue-800 inline-flex items-center gap-1"
+                              className="text-[var(--accent)] hover:text-[var(--accent-hover)] inline-flex items-center gap-1"
                             >
                               Website <FaExternalLinkAlt className="w-3 h-3" />
                             </a>
                           </>
                         )}
                       </p>
-                      <div className="flex items-center gap-4 text-sm text-gray-600">
+                      <div className="flex items-center gap-4 folio-meta">
                         <span className="flex items-center gap-1">
                           <FaUsers className="w-4 h-4" />
                           {org.memberCount} members
@@ -335,29 +319,28 @@ export default function AdminOrganizationsPage() {
                     <select
                       value={org.status}
                       onChange={(e) => handleStatusChange(org.id, e.target.value)}
-                      className="px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="ridge-input px-3 py-1.5 text-sm"
                     >
                       <option value="UNCLAIMED">Unclaimed</option>
                       <option value="CLAIMED">Claimed</option>
                       <option value="PROFESSIONAL">Professional</option>
                     </select>
-                    <Link
-                      href={`/org/${org.id}`}
-                      className="px-3 py-1.5 bg-blue-100 text-blue-700 rounded-md text-sm hover:bg-blue-200"
-                    >
-                      View
+                    <Link href={`/org/${org.id}`}>
+                      <Button variant="ridge" size="sm">
+                        View
+                      </Button>
                     </Link>
                   </div>
                 </div>
 
                 {/* Sales Notes Section */}
-                <div className="mt-4 pt-4 border-t border-gray-100">
+                <div className="mt-4 pt-4 border-t border-[var(--border-subtle)]">
                   <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
+                    <div className="flex items-center gap-2 folio-meta mb-2">
                       <FaNotes className="w-4 h-4" />
                       <span className="font-medium">Sales Notes</span>
                       {org.salesContactedAt && (
-                        <span className="text-gray-400">
+                        <span className="text-[var(--text-tertiary)]">
                           (Last contacted: {new Date(org.salesContactedAt).toLocaleDateString()})
                         </span>
                       )}
@@ -368,7 +351,7 @@ export default function AdminOrganizationsPage() {
                           setEditingNotesId(org.id);
                           setEditingNotesValue(org.salesNotes || '');
                         }}
-                        className="text-gray-400 hover:text-gray-600"
+                        className="text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
                       >
                         <FaEdit className="w-4 h-4" />
                       </button>
@@ -381,41 +364,43 @@ export default function AdminOrganizationsPage() {
                         value={editingNotesValue}
                         onChange={(e) => setEditingNotesValue(e.target.value)}
                         placeholder="Add sales notes, outreach history, contact info..."
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="ridge-input w-full px-3 py-2 text-sm"
                         rows={3}
                       />
                       <div className="flex items-center gap-2">
-                        <button
+                        <Button
+                          variant="accent"
+                          size="sm"
                           onClick={() => handleSaveNotes(org.id)}
                           disabled={savingNotes}
-                          className="px-3 py-1.5 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 flex items-center gap-1 disabled:opacity-50"
                         >
                           {savingNotes ? (
-                            <FaSpinner className="w-3 h-3 animate-spin" />
+                            <FaSpinner className="w-3 h-3 animate-spin mr-1" />
                           ) : (
-                            <FaSave className="w-3 h-3" />
+                            <FaSave className="w-3 h-3 mr-1" />
                           )}
                           Save
-                        </button>
-                        <button
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           onClick={() => {
                             setEditingNotesId(null);
                             setEditingNotesValue('');
                           }}
-                          className="px-3 py-1.5 text-gray-600 hover:text-gray-800 text-sm flex items-center gap-1"
                         >
-                          <FaTimes className="w-3 h-3" />
+                          <FaTimes className="w-3 h-3 mr-1" />
                           Cancel
-                        </button>
+                        </Button>
                       </div>
                     </div>
                   ) : (
-                    <p className="text-sm text-gray-500">
+                    <p className="folio-meta text-[var(--text-secondary)]">
                       {org.salesNotes || 'No notes yet. Click edit to add notes.'}
                     </p>
                   )}
                 </div>
-              </div>
+              </RidgeCard>
             ))}
           </div>
         )}

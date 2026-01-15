@@ -6,6 +6,8 @@ import Link from 'next/link';
 import { FaPlus, FaSearch, FaEdit, FaTrash, FaChartLine, FaShoppingCart, FaStore, FaUser, FaToggleOn, FaToggleOff } from 'react-icons/fa';
 import VendorDashboard from '@/app/vendor/dashboard/page';
 import ProductUploader from '@/components/vendor/ProductUploader';
+import { RidgeCard } from '@/components/ui/ridge-card';
+import { Button } from '@/components/ui/button';
 
 import { useRole } from '../../contexts/RoleContext';
 
@@ -120,40 +122,41 @@ export default function VendorProfile() {
   };
 
   return (
-    <div className="p-6">
+    <div className="p-6 bg-[var(--bg-base)] min-h-screen">
       <div className="max-w-7xl mx-auto">
         {/* Admin Vendor Selection */}
         {role === 'admin' && (
           <div className="mb-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Select Vendor Profile</h2>
+            <h2 className="folio-h3 mb-4">Select Vendor Profile</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {vendors.map((vendor) => (
-                <div
+                <RidgeCard
                   key={vendor.id}
-                  className={`p-4 rounded-lg border-2 transition-all cursor-pointer ${
+                  padding="md"
+                  className={`cursor-pointer transition-all ${
                     selectedVendorId === vendor.id
-                      ? 'border-green-500 bg-green-50'
-                      : 'border-gray-200 bg-white hover:border-gray-300'
+                      ? 'ring-2 ring-[var(--accent)]'
+                      : 'hover:shadow-lg'
                   }`}
                   onClick={() => toggleVendorProfile(vendor.id)}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                        <FaStore className="w-5 h-5 text-green-600" />
+                      <div className="w-10 h-10 bg-[var(--accent)]/10 rounded-full flex items-center justify-center">
+                        <FaStore className="w-5 h-5 text-[var(--accent)]" />
                       </div>
                       <div>
-                        <h3 className="font-medium text-gray-900">{vendor.name}</h3>
-                        <p className="text-sm text-gray-600">{vendor.products?.length || 0} products</p>
+                        <h3 className="font-medium text-[var(--text-primary)]">{vendor.name}</h3>
+                        <p className="folio-meta">{vendor.products?.length || 0} products</p>
                       </div>
                     </div>
                     {selectedVendorId === vendor.id ? (
-                      <FaToggleOn className="w-6 h-6 text-green-500" />
+                      <FaToggleOn className="w-6 h-6 text-[var(--accent)]" />
                     ) : (
-                      <FaToggleOff className="w-6 h-6 text-gray-400" />
+                      <FaToggleOff className="w-6 h-6 text-[var(--text-tertiary)]" />
                     )}
                   </div>
-                </div>
+                </RidgeCard>
               ))}
             </div>
           </div>
@@ -162,61 +165,55 @@ export default function VendorProfile() {
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              {role === 'admin' && getCurrentVendor() 
-                ? `${getCurrentVendor()?.name} Dashboard` 
+            <h1 className="folio-h1">
+              {role === 'admin' && getCurrentVendor()
+                ? `${getCurrentVendor()?.name} Dashboard`
                 : 'Vendor Dashboard'
               }
             </h1>
-            <p className="text-gray-600">
-              {role === 'admin' && !selectedVendorId 
+            <p className="folio-body text-[var(--text-secondary)]">
+              {role === 'admin' && !selectedVendorId
                 ? 'Select a vendor profile above to view their dashboard'
                 : 'Manage your products and track performance'
               }
             </p>
           </div>
-          <button 
+          <Button
+            variant="accent"
             onClick={() => setShowUploader(true)}
-            className="bg-gradient-to-r from-amber-500 to-pink-500 text-white px-6 py-2 rounded-md flex items-center hover:from-amber-600 hover:to-pink-600 transition-all duration-300"
             disabled={role === 'admin' && !selectedVendorId}
           >
             <FaPlus className="mr-2" /> Add Product
-          </button>
+          </Button>
         </div>
 
         {/* Tabs */}
-        <div className="flex space-x-4 mb-6">
-          <button
-            className={`px-4 py-2 rounded-md flex items-center ${
-              activeTab === 'products' ? 'bg-gray-800 text-white' : 'text-gray-400 hover:text-white'
-            }`}
+        <div className="flex space-x-2 mb-6">
+          <Button
+            variant={activeTab === 'products' ? 'accent' : 'ridge'}
             onClick={() => setActiveTab('products')}
           >
             <FaStore className="mr-2" /> Products
-          </button>
-          <button
-            className={`px-4 py-2 rounded-md flex items-center ${
-              activeTab === 'analytics' ? 'bg-gray-800 text-white' : 'text-gray-400 hover:text-white'
-            }`}
+          </Button>
+          <Button
+            variant={activeTab === 'analytics' ? 'accent' : 'ridge'}
             onClick={() => setActiveTab('analytics')}
           >
             <FaChartLine className="mr-2" /> Analytics
-          </button>
-          <button
-            className={`px-4 py-2 rounded-md flex items-center ${
-              activeTab === 'orders' ? 'bg-gray-800 text-white' : 'text-gray-400 hover:text-white'
-            }`}
+          </Button>
+          <Button
+            variant={activeTab === 'orders' ? 'accent' : 'ridge'}
             onClick={() => setActiveTab('orders')}
           >
             <FaShoppingCart className="mr-2" /> Orders
-          </button>
+          </Button>
         </div>
 
         {/* Content */}
         {activeTab === 'products' && (role !== 'admin' || selectedVendorId) && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {getFilteredProducts().map((product) => (
-              <div key={product.id} className="glass-panel rounded-lg overflow-hidden">
+              <RidgeCard key={product.id} padding="none" className="overflow-hidden">
                 <div className="relative h-48">
                   <Image
                     src={product.image}
@@ -230,26 +227,26 @@ export default function VendorProfile() {
                 <div className="p-4">
                   <div className="flex justify-between items-start mb-2">
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900">{product.name}</h3>
-                      <p className="text-gray-600 text-sm">{product.category}</p>
+                      <h3 className="folio-h3">{product.name}</h3>
+                      <p className="folio-meta">{product.category}</p>
                     </div>
-                    <span className="text-amber-500 font-semibold">{product.price}</span>
+                    <span className="text-[var(--accent)] font-semibold">{product.price}</span>
                   </div>
-                  <div className="flex justify-between items-center text-sm text-gray-600 mb-4">
+                  <div className="flex justify-between items-center folio-meta mb-4">
                     <span>Stock: {product.stock}</span>
                     <span>Views: {product.views}</span>
                     <span>Orders: {product.orders}</span>
                   </div>
                   <div className="flex space-x-2">
-                    <button className="flex-1 bg-gray-800 text-white py-2 rounded-md flex items-center justify-center">
+                    <Button variant="ridge" className="flex-1">
                       <FaEdit className="mr-2" /> Edit
-                    </button>
-                    <button className="flex-1 bg-red-500 text-white py-2 rounded-md flex items-center justify-center">
+                    </Button>
+                    <Button variant="destructive" className="flex-1">
                       <FaTrash className="mr-2" /> Delete
-                    </button>
+                    </Button>
                   </div>
                 </div>
-              </div>
+              </RidgeCard>
             ))}
           </div>
         )}
@@ -259,20 +256,20 @@ export default function VendorProfile() {
         )}
 
         {activeTab === 'orders' && (role !== 'admin' || selectedVendorId) && (
-          <div className="glass-panel p-6 rounded-lg">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Order Management</h2>
-            <p className="text-gray-600">Order management content coming soon...</p>
-          </div>
+          <RidgeCard padding="lg">
+            <h2 className="folio-h2 mb-4">Order Management</h2>
+            <p className="folio-body text-[var(--text-secondary)]">Order management content coming soon...</p>
+          </RidgeCard>
         )}
 
         {/* Show message when admin hasn't selected a profile */}
         {role === 'admin' && !selectedVendorId && (
           <div className="text-center py-12">
-            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <FaStore className="w-8 h-8 text-gray-400" />
+            <div className="w-16 h-16 bg-[var(--bg-elevated)] rounded-full flex items-center justify-center mx-auto mb-4">
+              <FaStore className="w-8 h-8 text-[var(--text-tertiary)]" />
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No Vendor Selected</h3>
-            <p className="text-gray-600">Select a vendor profile above to view their dashboard and manage their products.</p>
+            <h3 className="folio-h3 mb-2">No Vendor Selected</h3>
+            <p className="folio-body text-[var(--text-secondary)]">Select a vendor profile above to view their dashboard and manage their products.</p>
           </div>
         )}
       </div>

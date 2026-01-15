@@ -16,6 +16,7 @@ export const dynamic = 'force-dynamic';
 export default function VendorAnalytics() {
   return (
     <ErrorBoundary>
+      <div className="bg-[var(--bg-base)] min-h-screen">
       <MetricsLayout title="Folio Metrics — Vendor Analytics">
           {/* Summary Strip */}
           <section className="mb-6">
@@ -88,6 +89,7 @@ export default function VendorAnalytics() {
             </div>
           </section>
       </MetricsLayout>
+      </div>
     </ErrorBoundary>
   );
 }

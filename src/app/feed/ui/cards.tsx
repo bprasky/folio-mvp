@@ -3,7 +3,7 @@
 "use client";
 
 import Link from "next/link";
-import { GlassCard } from "@/components/ui/glass";
+import { RidgeCard } from "@/components/ui/ridge-card";
 
 type Post = {
   id: string;
@@ -32,7 +32,7 @@ function DesignerLogoChip({
   if (!url) return null; // no logo? no chip.
 
   return (
-    <div className="absolute right-3 top-3 rounded-xl bg-white/80 backdrop-blur-lg shadow-md ring-1 ring-white/30 p-1.5">
+    <div className="absolute right-3 top-3 rounded-xl bg-[var(--bg-base)] shadow-[var(--neu-raised)] ring-1 ring-[var(--ridge-outer)] p-1.5">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={url}
@@ -53,11 +53,9 @@ export function FeedHeroCard({ post, 'data-demo-id': dataDemoId }: { post: Post;
   return (
     <article className="group" data-demo-id={dataDemoId}>
       <Link href={projectId ? `/project/${projectId}` : "#"} className="block">
-        <GlassCard 
-          variant="default" 
-          padding="none" 
-          rounded="2xl"
-          className="overflow-hidden hover:shadow-xl transition-shadow duration-300"
+        <RidgeCard
+          padding="none"
+          className="overflow-hidden hover:shadow-[var(--neu-raised)] transition-shadow duration-300"
         >
           <div className="relative aspect-[3/2] w-full overflow-hidden">
             {img ? (
@@ -69,7 +67,7 @@ export function FeedHeroCard({ post, 'data-demo-id': dataDemoId }: { post: Post;
                 decoding="async"
               />
             ) : (
-              <div className="h-full w-full bg-gray-100" />
+              <div className="h-full w-full bg-[var(--bg-elevated)]" />
             )}
             {/* Optional logo chip (only if profileImage exists) */}
             <DesignerLogoChip
@@ -78,26 +76,26 @@ export function FeedHeroCard({ post, 'data-demo-id': dataDemoId }: { post: Post;
             />
           </div>
           <div className="p-5 space-y-2">
-            <h2 className="font-serif text-xl italic text-gray-900 line-clamp-1">
+            <h2 className="folio-h3 line-clamp-1">
               {post.title ?? post.project?.name ?? "Untitled Project"}
             </h2>
             {bylineName && post?.designer?.id ? (
               <Link
                 href={`/designer/${post.designer.id}`}
-                className="text-sm italic text-gray-600 hover:text-gray-900 transition-colors block"
+                className="folio-meta hover:text-[var(--accent)] transition-colors block"
                 onClick={(e) => e.stopPropagation()}
               >
                 by {bylineName}
               </Link>
             ) : bylineName ? (
-              <p className="text-sm italic text-gray-600">by {bylineName}</p>
+              <p className="folio-meta">by {bylineName}</p>
             ) : null}
             {post.deck && (
-              <p className="text-sm text-gray-600 line-clamp-2 mt-2">{post.deck}</p>
+              <p className="folio-body text-[var(--text-secondary)] line-clamp-2 mt-2">{post.deck}</p>
             )}
             {/* Badges can be injected later (e.g., Folio House, Awards, AI Recommended) */}
           </div>
-        </GlassCard>
+        </RidgeCard>
       </Link>
     </article>
   );
@@ -111,11 +109,9 @@ export function FeedGridCard({ post }: { post: Post }) {
   return (
     <article className="group">
       <Link href={projectId ? `/project/${projectId}` : "#"} className="block">
-        <GlassCard 
-          variant="default" 
-          padding="none" 
-          rounded="2xl"
-          className="overflow-hidden hover:shadow-xl transition-shadow duration-300"
+        <RidgeCard
+          padding="none"
+          className="overflow-hidden hover:shadow-[var(--neu-raised)] transition-shadow duration-300"
         >
           <div className="relative aspect-[4/3] w-full overflow-hidden">
             {img ? (
@@ -127,7 +123,7 @@ export function FeedGridCard({ post }: { post: Post }) {
                 decoding="async"
               />
             ) : (
-              <div className="h-full w-full bg-gray-100" />
+              <div className="h-full w-full bg-[var(--bg-elevated)]" />
             )}
             {/* Optional logo chip (only if profileImage exists) */}
             <DesignerLogoChip
@@ -136,28 +132,27 @@ export function FeedGridCard({ post }: { post: Post }) {
             />
           </div>
           <div className="p-5 space-y-2">
-            <h3 className="font-serif text-lg italic text-gray-900 line-clamp-1">
+            <h3 className="folio-h3 line-clamp-1">
               {post.title ?? post.project?.name ?? "Untitled Project"}
             </h3>
             {bylineName && post?.designer?.id ? (
               <Link
                 href={`/designer/${post.designer.id}`}
-                className="text-sm italic text-gray-600 hover:text-gray-900 transition-colors block"
+                className="folio-meta hover:text-[var(--accent)] transition-colors block"
                 onClick={(e) => e.stopPropagation()}
               >
                 by {bylineName}
               </Link>
             ) : bylineName ? (
-              <p className="text-sm italic text-gray-600">by {bylineName}</p>
+              <p className="folio-meta">by {bylineName}</p>
             ) : null}
             {post.deck && (
-              <p className="text-sm text-gray-600 line-clamp-2 mt-2">{post.deck}</p>
+              <p className="folio-body text-[var(--text-secondary)] line-clamp-2 mt-2">{post.deck}</p>
             )}
             {/* Reserved badge slot */}
           </div>
-        </GlassCard>
+        </RidgeCard>
       </Link>
     </article>
   );
 }
-

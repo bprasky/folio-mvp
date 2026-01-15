@@ -3,6 +3,9 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
+import { RidgeCard } from '@/components/ui/ridge-card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 export default function CreateFestivalPage() {
   const router = useRouter();
@@ -32,7 +35,7 @@ export default function CreateFestivalPage() {
       uploadFormData.append('city', formData.city);
       uploadFormData.append('state', formData.state);
       uploadFormData.append('country', formData.country);
-      
+
       if (formData.startDate) {
         const startDate = new Date(formData.startDate);
         startDate.setHours(0, 0, 0, 0);
@@ -43,7 +46,7 @@ export default function CreateFestivalPage() {
         endDate.setHours(23, 59, 59, 999);
         uploadFormData.append('endDate', endDate.toISOString());
       }
-      
+
       if (session?.user?.id) {
         uploadFormData.append('createdById', session.user.id);
       }
@@ -78,36 +81,33 @@ export default function CreateFestivalPage() {
   };
 
   return (
-    <div className="p-6">
+    <div className="min-h-screen bg-[var(--bg-base)] p-6">
       <div className="max-w-7xl mx-auto">
-        <div className="bg-white border-b border-gray-200 mb-8">
-          <div className="px-6 py-4">
-            <h1 className="text-2xl font-bold text-gray-900">Create New Festival</h1>
-            <p className="text-gray-600 mt-1">Set up a new festival to showcase design events and connect the community</p>
-          </div>
+        <div className="bg-[var(--bg-elevated)] border-b border-[var(--border-subtle)] mb-8 -mx-6 -mt-6 px-6 py-4">
+          <h1 className="folio-h2 text-[var(--text-primary)]">Create New Festival</h1>
+          <p className="folio-body text-[var(--text-secondary)] mt-1">Set up a new festival to showcase design events and connect the community</p>
         </div>
 
         <div className="max-w-2xl">
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <RidgeCard padding="lg">
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="title" className="block folio-meta font-medium text-[var(--text-primary)] mb-2">
                   Festival Title *
                 </label>
-                <input
+                <Input
                   type="text"
                   id="title"
                   name="title"
                   required
                   value={formData.title}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="Enter festival title"
                 />
               </div>
 
               <div>
-                <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="description" className="block folio-meta font-medium text-[var(--text-primary)] mb-2">
                   Description *
                 </label>
                 <textarea
@@ -117,76 +117,72 @@ export default function CreateFestivalPage() {
                   rows={4}
                   value={formData.description}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="ridge-input w-full"
                   placeholder="Describe the festival"
                 />
               </div>
 
               <div>
-                <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="location" className="block folio-meta font-medium text-[var(--text-primary)] mb-2">
                   Location *
                 </label>
-                <input
+                <Input
                   type="text"
                   id="location"
                   name="location"
                   required
                   value={formData.location}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="Enter location (e.g., Convention Center, Downtown Plaza)"
                 />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="city" className="block folio-meta font-medium text-[var(--text-primary)] mb-2">
                     City
                   </label>
-                  <input
+                  <Input
                     type="text"
                     id="city"
                     name="city"
                     value={formData.city}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder="City"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="state" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="state" className="block folio-meta font-medium text-[var(--text-primary)] mb-2">
                     State/Province
                   </label>
-                  <input
+                  <Input
                     type="text"
                     id="state"
                     name="state"
                     value={formData.state}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder="State/Province"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="country" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="country" className="block folio-meta font-medium text-[var(--text-primary)] mb-2">
                     Country
                   </label>
-                  <input
+                  <Input
                     type="text"
                     id="country"
                     name="country"
                     value={formData.country}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder="Country"
                   />
                 </div>
               </div>
 
               <div>
-                <label htmlFor="image" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="image" className="block folio-meta font-medium text-[var(--text-primary)] mb-2">
                   Festival Image (optional)
                 </label>
                 <input
@@ -195,31 +191,30 @@ export default function CreateFestivalPage() {
                   name="image"
                   accept="image/*"
                   onChange={(e) => setImageFile(e.target.files?.[0] || null)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="ridge-input w-full"
                 />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="startDate" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="startDate" className="block folio-meta font-medium text-[var(--text-primary)] mb-2">
                     Start Date *
                   </label>
-                  <input
+                  <Input
                     type="date"
                     id="startDate"
                     name="startDate"
                     required
                     value={formData.startDate}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="endDate" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="endDate" className="block folio-meta font-medium text-[var(--text-primary)] mb-2">
                     End Date *
                   </label>
-                  <input
+                  <Input
                     type="date"
                     id="endDate"
                     name="endDate"
@@ -227,32 +222,33 @@ export default function CreateFestivalPage() {
                     value={formData.endDate}
                     onChange={handleChange}
                     min={formData.startDate}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
               </div>
 
-              <div className="flex gap-4 pt-6 border-t border-gray-200">
-                <button
+              <div className="flex gap-4 pt-6 border-t border-[var(--border-subtle)]">
+                <Button
                   type="submit"
                   disabled={isLoading}
-                  className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 transition-colors"
+                  variant="accent"
+                  className="flex-1"
                 >
                   {isLoading ? 'Creating...' : 'Create Festival'}
-                </button>
-                
-                <button
+                </Button>
+
+                <Button
                   type="button"
                   onClick={() => router.back()}
-                  className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-colors"
+                  variant="ridge"
+                  className="flex-1"
                 >
                   Cancel
-                </button>
+                </Button>
               </div>
             </form>
-          </div>
+          </RidgeCard>
         </div>
       </div>
     </div>
   );
-} 
+}

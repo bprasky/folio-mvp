@@ -3,6 +3,9 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { BrandAssets } from "@/lib/aesthetic/types";
+import { RidgeCard } from "@/components/ui/ridge-card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 export default function BrandAssetsPage() {
   const router = useRouter();
@@ -75,41 +78,40 @@ export default function BrandAssetsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[var(--bg-base)] flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-neutral-900 mx-auto"></div>
-          <p className="mt-4 text-neutral-600">Loading...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--accent)] mx-auto"></div>
+          <p className="mt-4 folio-body text-[var(--text-secondary)]">Loading...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50">
+    <div className="min-h-screen bg-[var(--bg-base)]">
       <div className="max-w-3xl mx-auto px-6 py-12">
-        <h1 className="text-2xl font-semibold text-neutral-900">Brand Assets</h1>
-        <p className="mt-2 text-neutral-600">
+        <h1 className="folio-h1 text-[var(--text-primary)]">Brand Assets</h1>
+        <p className="mt-2 folio-body text-[var(--text-secondary)]">
           These help us understand your aesthetic before you upload projects.
         </p>
 
         {/* Tagline */}
         <section className="mt-10">
-          <label className="block text-sm font-medium text-neutral-900 mb-2">
+          <label className="block folio-body font-medium text-[var(--text-primary)] mb-2">
             Tagline
           </label>
-          <input
-            type="text"
+          <Input
+            variant="ridge"
             value={assets.tagline || ""}
             onChange={(e) => setAssets({ ...assets, tagline: e.target.value })}
             placeholder="A short phrase that captures your approach..."
-            className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-900"
             maxLength={100}
           />
         </section>
 
         {/* Brand Colors */}
-        <section className="mt-10">
-          <h2 className="text-lg font-medium text-neutral-900 mb-4">Brand Colors</h2>
+        <RidgeCard padding="lg" className="mt-10">
+          <h2 className="folio-h3 text-[var(--text-primary)] mb-4">Brand Colors</h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {[
               { key: "primaryColor", label: "Primary" },
@@ -118,7 +120,7 @@ export default function BrandAssetsPage() {
               { key: "backgroundColor", label: "Background" },
             ].map(({ key, label }) => (
               <div key={key}>
-                <label className="block text-sm text-neutral-600 mb-2">{label}</label>
+                <label className="block folio-meta mb-2">{label}</label>
                 <div className="flex gap-2">
                   <input
                     type="color"
@@ -126,29 +128,29 @@ export default function BrandAssetsPage() {
                     onChange={(e) =>
                       setAssets({ ...assets, [key]: e.target.value })
                     }
-                    className="w-16 h-10 rounded border border-neutral-300"
+                    className="w-16 h-10 rounded border border-[var(--border-subtle)]"
                   />
-                  <input
-                    type="text"
+                  <Input
+                    variant="ridge"
                     value={assets[key as keyof BrandAssets] || ""}
                     onChange={(e) =>
                       setAssets({ ...assets, [key]: e.target.value })
                     }
                     placeholder="#000000"
-                    className="flex-1 px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-900"
+                    className="flex-1"
                   />
                 </div>
               </div>
             ))}
           </div>
-        </section>
+        </RidgeCard>
 
         {/* Brand Adjectives */}
-        <section className="mt-10">
-          <h2 className="text-lg font-medium text-neutral-900 mb-2">
+        <RidgeCard padding="lg" className="mt-10">
+          <h2 className="folio-h3 text-[var(--text-primary)] mb-2">
             Describe Your Aesthetic
           </h2>
-          <p className="text-sm text-neutral-500 mb-4">
+          <p className="folio-meta mb-4">
             Select words that describe your design style (max 5).
           </p>
           <div className="flex flex-wrap gap-2">
@@ -195,8 +197,8 @@ export default function BrandAssetsPage() {
                   }}
                   className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                     isSelected
-                      ? "bg-neutral-900 text-white"
-                      : "bg-white border border-neutral-300 text-neutral-700 hover:border-neutral-900"
+                      ? "bg-[var(--accent)] text-white"
+                      : "bg-[var(--bg-base)] border border-[var(--border-subtle)] text-[var(--text-primary)] hover:border-[var(--accent)]"
                   }`}
                   disabled={!isSelected && assets.brandAdjectives.length >= 5}
                 >
@@ -205,23 +207,23 @@ export default function BrandAssetsPage() {
               );
             })}
           </div>
-        </section>
+        </RidgeCard>
 
         {/* Save Button */}
         <div className="mt-12 flex justify-end gap-4">
-          <button
+          <Button
+            variant="ridge"
             onClick={() => router.back()}
-            className="px-6 py-3 border border-neutral-300 text-neutral-700 font-medium rounded-lg hover:bg-neutral-50"
           >
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="accent"
             onClick={handleSave}
             disabled={saving}
-            className="px-6 py-3 bg-neutral-900 text-white font-medium rounded-lg hover:bg-neutral-800 disabled:opacity-50"
           >
             {saving ? "Saving..." : "Save Brand Assets"}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

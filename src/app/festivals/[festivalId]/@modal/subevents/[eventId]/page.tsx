@@ -1,5 +1,6 @@
 // Subevent modal — Editorial Invitation Layout + FOMO layer
 // Scope: ONLY this file. Do not change other routes/layouts.
+// Folio Design System: Uses neumorphic styling, accent colors, and folio typography
 
 import { prisma } from "@/lib/prisma";
 import Image from "next/image";
@@ -104,17 +105,17 @@ export default async function SubeventInvitationPage({
         </div>
 
         <div className="mx-auto w-full max-w-[960px] px-5 sm:px-6 md:px-8">
-          {/* Hero copy */}
+          {/* Hero copy - Folio Design System typography */}
           <div className="pt-12 md:pt-16">
-            <p className="text-sm md:text-base tracking-wide opacity-90">{inviteCopy}</p>
-            <h1 className="mt-2 text-3xl md:text-5xl font-semibold leading-[1.1]">
+            <p className="folio-meta text-white/90 tracking-wide">{inviteCopy}</p>
+            <h1 className="mt-2 folio-h1 text-white leading-[1.1]">
               {event.title}
             </h1>
 
-            <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm md:text-base opacity-95">
+            <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 folio-body text-white/95">
               {startAt ? (
                 <span className="inline-flex items-center gap-2">
-                  <CalendarDays className="h-4 w-4" />
+                  <CalendarDays className="h-4 w-4 text-[var(--accent)]" />
                   {startAt.toLocaleDateString(undefined, {
                     weekday: "long",
                     month: "short",
@@ -124,7 +125,7 @@ export default async function SubeventInvitationPage({
                   {" · "}
                   {startAt.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}
                   {endAt
-                    ? ` – ${endAt.toLocaleTimeString(undefined, {
+                    ? ` - ${endAt.toLocaleTimeString(undefined, {
                         hour: "numeric",
                         minute: "2-digit",
                       })}`
@@ -133,7 +134,7 @@ export default async function SubeventInvitationPage({
               ) : null}
               {event.location ? (
                 <span className="inline-flex items-center gap-2">
-                  <MapPin className="h-4 w-4" />
+                  <MapPin className="h-4 w-4 text-[var(--accent)]" />
                   {event.location}
                 </span>
               ) : null}
@@ -159,12 +160,12 @@ export default async function SubeventInvitationPage({
               capacity={typeof event.capacity === "number" ? event.capacity : null}
               startAtISO={startAt ? startAt.toISOString() : null}
             />
-            {fomoLine ? <p className="mt-2 text-sm opacity-90">{fomoLine}</p> : null}
+            {fomoLine ? <p className="mt-2 folio-meta text-white/90">{fomoLine}</p> : null}
           </div>
 
           {/* Featured products */}
           <div className="mt-10 md:mt-12">
-            <h3 className="text-base md:text-lg font-medium tracking-tight mb-3">
+            <h3 className="folio-h3 text-white tracking-tight mb-3">
               See these at the event
             </h3>
             {hasFeatured ? (
@@ -178,21 +179,21 @@ export default async function SubeventInvitationPage({
             )}
           </div>
 
-          {/* About / Festival */}
+          {/* About / Festival - Folio Design System typography */}
           <div className="mt-10 pb-10 md:pb-14">
             {event.description ? (
-              <div className="prose prose-invert max-w-none">
-                <h3>About this event</h3>
-                <p className="opacity-95">{event.description}</p>
+              <div className="max-w-none">
+                <h3 className="folio-h3 text-white mb-3">About this event</h3>
+                <p className="folio-body text-white/95">{event.description}</p>
               </div>
             ) : null}
 
             {event.parentFestival ? (
-              <div className="mt-6 text-sm opacity-90">
+              <div className="mt-6 folio-meta text-white/90">
                 Part of{" "}
                 <Link
                   href={`/festivals/${event.parentFestival.id}`}
-                  className="underline hover:opacity-80"
+                  className="underline text-[var(--accent)] hover:text-[var(--accent-hover)]"
                 >
                   {event.parentFestival.title}
                 </Link>

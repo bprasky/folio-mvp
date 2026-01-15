@@ -1,9 +1,13 @@
+/**
+ * FestivalEventPage - Redirects to unified event page
+ * Folio Design System: No visual changes (redirect only)
+ */
 import { redirect } from 'next/navigation';
 
 interface FestivalEventPageProps {
-  params: { 
-    festivalId: string; 
-    eventId: string; 
+  params: {
+    festivalId: string;
+    eventId: string;
   };
 }
 

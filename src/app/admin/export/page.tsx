@@ -2,13 +2,16 @@
 
 import { useState, useEffect } from 'react';
 import { useRole } from '@/contexts/RoleContext';
-import { FaDownload, FaFilePdf, FaFileExcel, FaFilter, FaSearch } from 'react-icons/fa';
+import { FaFilter, FaSearch, FaFileExcel } from 'react-icons/fa';
+import { RidgeCard, StatsCard } from '@/components/ui/ridge-card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 export default function AdminExportDashboard() {
   const { role } = useRole();
   const [loading, setLoading] = useState(true);
-  const [exportData, setExportData] = useState<any[]>([]);
-  const [filteredData, setFilteredData] = useState<any[]>([]);
+  const [exportData, setExportData] = useState<Record<string, unknown>[]>([]);
+  const [filteredData, setFilteredData] = useState<Record<string, unknown>[]>([]);
   const [filters, setFilters] = useState({
     search: '',
     designer: '',
@@ -33,7 +36,7 @@ export default function AdminExportDashboard() {
     try {
       setLoading(true);
       const response = await fetch('/api/export-all-tagged-products');
-      
+
       if (!response.ok) {
         throw new Error('Failed to load export data');
       }
@@ -52,10 +55,10 @@ export default function AdminExportDashboard() {
 
     if (filters.search) {
       const searchLower = filters.search.toLowerCase();
-      filtered = filtered.filter(item => 
-        item.productName?.toLowerCase().includes(searchLower) ||
-        item.project?.toLowerCase().includes(searchLower) ||
-        item.vendorName?.toLowerCase().includes(searchLower)
+      filtered = filtered.filter(item =>
+        (item.productName as string)?.toLowerCase().includes(searchLower) ||
+        (item.project as string)?.toLowerCase().includes(searchLower) ||
+        (item.vendorName as string)?.toLowerCase().includes(searchLower)
       );
     }
 
@@ -64,14 +67,14 @@ export default function AdminExportDashboard() {
     }
 
     if (filters.vendor) {
-      filtered = filtered.filter(item => 
-        item.vendorName?.toLowerCase().includes(filters.vendor.toLowerCase())
+      filtered = filtered.filter(item =>
+        (item.vendorName as string)?.toLowerCase().includes(filters.vendor.toLowerCase())
       );
     }
 
     if (filters.room) {
-      filtered = filtered.filter(item => 
-        item.room?.toLowerCase().includes(filters.room.toLowerCase())
+      filtered = filtered.filter(item =>
+        (item.room as string)?.toLowerCase().includes(filters.room.toLowerCase())
       );
     }
 
@@ -90,7 +93,7 @@ export default function AdminExportDashboard() {
     }
 
     const headers = [
-      'Project Name', 'Client', 'Designer', 'Room', 'Product Name', 'Brand', 
+      'Project Name', 'Client', 'Designer', 'Room', 'Product Name', 'Brand',
       'Price', 'URL', 'Category', 'Vendor', 'Status', 'Date Tagged'
     ];
 
@@ -126,7 +129,7 @@ export default function AdminExportDashboard() {
 
   const getUniqueValues = (field: string) => {
     const values = exportData
-      .map(item => item[field])
+      .map(item => item[field] as string)
       .filter(value => value && value !== '')
       .filter((value, index, self) => self.indexOf(value) === index);
     return values.sort();
@@ -134,13 +137,13 @@ export default function AdminExportDashboard() {
 
   if (loading) {
     return (
-      <div className="p-6">
-        <div className="max-w-7xl mx-auto">
+      <div className="min-h-screen bg-[var(--bg-base)] py-8">
+        <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <h2 className="text-xl font-semibold text-gray-900 mb-2">Loading Export Data</h2>
-              <p className="text-gray-600">Loading export data...</p>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--accent)] mx-auto mb-4"></div>
+              <h2 className="folio-h2 mb-2">Loading Export Data</h2>
+              <p className="folio-body">Loading export data...</p>
             </div>
           </div>
         </div>
@@ -149,65 +152,55 @@ export default function AdminExportDashboard() {
   }
 
   return (
-    <div className="p-6">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-[var(--bg-base)] py-8">
+      <div className="max-w-7xl mx-auto px-4">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Export Dashboard</h1>
-          <p className="text-gray-600">Comprehensive export and analysis of all tagged products</p>
+          <h1 className="folio-h1 mb-2">Export Dashboard</h1>
+          <p className="folio-body">Comprehensive export and analysis of all tagged products</p>
         </div>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <h3 className="text-sm font-medium text-gray-500">Total Products</h3>
-            <p className="text-2xl font-bold text-gray-900">{exportData.length}</p>
-          </div>
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <h3 className="text-sm font-medium text-gray-500">Filtered Results</h3>
-            <p className="text-2xl font-bold text-blue-600">{filteredData.length}</p>
-          </div>
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <h3 className="text-sm font-medium text-gray-500">Pending Approval</h3>
-            <p className="text-2xl font-bold text-amber-600">
-              {exportData.filter(p => p.isPending).length}
-            </p>
-          </div>
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <h3 className="text-sm font-medium text-gray-500">Unique Vendors</h3>
-            <p className="text-2xl font-bold text-green-600">
-              {getUniqueValues('vendorName').length}
-            </p>
-          </div>
+          <StatsCard label="Total Products" value={exportData.length} />
+          <StatsCard label="Filtered Results" value={filteredData.length} />
+          <StatsCard
+            label="Pending Approval"
+            value={exportData.filter(p => p.isPending).length}
+          />
+          <StatsCard
+            label="Unique Vendors"
+            value={getUniqueValues('vendorName').length}
+          />
         </div>
 
         {/* Filters */}
-        <div className="bg-white p-6 rounded-lg shadow-md mb-6">
+        <RidgeCard padding="md" className="mb-6">
           <div className="flex items-center gap-2 mb-4">
-            <FaFilter className="text-gray-500" />
-            <h2 className="text-lg font-semibold">Filters & Search</h2>
+            <FaFilter className="text-[var(--text-tertiary)]" />
+            <h2 className="folio-h3">Filters & Search</h2>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Search</label>
+              <label className="block folio-meta mb-1">Search</label>
               <div className="relative">
-                <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                <input
+                <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[var(--text-tertiary)]" />
+                <Input
                   type="text"
                   value={filters.search}
                   onChange={(e) => setFilters({...filters, search: e.target.value})}
-                  className="pl-10 w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
+                  className="pl-10"
                   placeholder="Search products..."
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Designer</label>
+              <label className="block folio-meta mb-1">Designer</label>
               <select
                 value={filters.designer}
                 onChange={(e) => setFilters({...filters, designer: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
+                className="ridge-input w-full px-3 py-2"
               >
                 <option value="">All Designers</option>
                 {getUniqueValues('designerId').map(designer => (
@@ -217,11 +210,11 @@ export default function AdminExportDashboard() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Vendor</label>
+              <label className="block folio-meta mb-1">Vendor</label>
               <select
                 value={filters.vendor}
                 onChange={(e) => setFilters({...filters, vendor: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
+                className="ridge-input w-full px-3 py-2"
               >
                 <option value="">All Vendors</option>
                 {getUniqueValues('vendorName').map(vendor => (
@@ -231,11 +224,11 @@ export default function AdminExportDashboard() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Room</label>
+              <label className="block folio-meta mb-1">Room</label>
               <select
                 value={filters.room}
                 onChange={(e) => setFilters({...filters, room: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
+                className="ridge-input w-full px-3 py-2"
               >
                 <option value="">All Rooms</option>
                 {getUniqueValues('room').map(room => (
@@ -245,11 +238,11 @@ export default function AdminExportDashboard() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+              <label className="block folio-meta mb-1">Status</label>
               <select
                 value={filters.status}
                 onChange={(e) => setFilters({...filters, status: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
+                className="ridge-input w-full px-3 py-2"
               >
                 <option value="">All Status</option>
                 <option value="approved">Approved</option>
@@ -257,60 +250,57 @@ export default function AdminExportDashboard() {
               </select>
             </div>
           </div>
-        </div>
+        </RidgeCard>
 
         {/* Export Actions */}
-        <div className="bg-white p-6 rounded-lg shadow-md mb-6">
+        <RidgeCard padding="md" className="mb-6">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-semibold mb-2">Export Actions</h2>
-              <p className="text-sm text-gray-600">
+              <h2 className="folio-h3 mb-2">Export Actions</h2>
+              <p className="folio-meta">
                 Export {filteredData.length} filtered products
               </p>
             </div>
-            
+
             <div className="flex gap-3">
-              <button
-                onClick={handleExportCSV}
-                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-              >
-                <FaFileExcel />
+              <Button variant="accent" onClick={handleExportCSV}>
+                <FaFileExcel className="mr-2" />
                 Export CSV
-              </button>
+              </Button>
             </div>
           </div>
-        </div>
+        </RidgeCard>
 
         {/* Products Preview Table */}
-        <div className="bg-white rounded-lg shadow-md overflow-hidden">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-lg font-semibold">Tagged Products Preview ({filteredData.length})</h2>
+        <RidgeCard padding="none" className="overflow-hidden">
+          <div className="p-6 border-b border-[var(--border-subtle)]">
+            <h2 className="folio-h3">Tagged Products Preview ({filteredData.length})</h2>
           </div>
 
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+            <table className="min-w-full divide-y divide-[var(--border-subtle)]">
+              <thead className="bg-[var(--bg-elevated)]">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vendor</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Room</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Project</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Product</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Vendor</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Room</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Price</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Status</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-[var(--bg-base)] divide-y divide-[var(--border-subtle)]">
                 {filteredData.slice(0, 50).map((product, index) => (
-                  <tr key={index} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 text-sm text-gray-900">{product.project}</td>
-                    <td className="px-6 py-4 text-sm text-gray-900">{product.productName}</td>
-                    <td className="px-6 py-4 text-sm text-gray-900">{product.vendorName}</td>
-                    <td className="px-6 py-4 text-sm text-gray-900">{product.room}</td>
-                    <td className="px-6 py-4 text-sm text-gray-900">${product.productPrice}</td>
+                  <tr key={index} className="hover:bg-[var(--bg-elevated)]/50">
+                    <td className="px-6 py-4 text-sm text-[var(--text-primary)]">{product.project as string}</td>
+                    <td className="px-6 py-4 text-sm text-[var(--text-primary)]">{product.productName as string}</td>
+                    <td className="px-6 py-4 text-sm text-[var(--text-primary)]">{product.vendorName as string}</td>
+                    <td className="px-6 py-4 text-sm text-[var(--text-primary)]">{product.room as string}</td>
+                    <td className="px-6 py-4 text-sm text-[var(--text-primary)]">${product.productPrice as string}</td>
                     <td className="px-6 py-4">
                       <span className={`px-2 py-1 text-xs rounded-full ${
-                        product.isPending 
-                          ? 'bg-amber-100 text-amber-800' 
+                        product.isPending
+                          ? 'bg-amber-100 text-amber-800'
                           : 'bg-green-100 text-green-800'
                       }`}>
                         {product.isPending ? 'Pending' : 'Approved'}
@@ -321,13 +311,13 @@ export default function AdminExportDashboard() {
               </tbody>
             </table>
             {filteredData.length > 50 && (
-              <div className="p-4 text-center text-gray-500 text-sm">
+              <div className="p-4 text-center text-[var(--text-secondary)] folio-meta">
                 Showing first 50 results. Export CSV to see all {filteredData.length} products.
               </div>
             )}
           </div>
-        </div>
+        </RidgeCard>
       </div>
     </div>
   );
-} 
+}

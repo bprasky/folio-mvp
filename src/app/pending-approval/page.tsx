@@ -3,7 +3,7 @@
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import { GlassCard, EditorialHeadline } from '@/components/ui/glass';
+import { RidgeCard } from '@/components/ui/ridge-card';
 
 export default function PendingApprovalPage() {
   const { data: session, status } = useSession();
@@ -35,8 +35,8 @@ export default function PendingApprovalPage() {
   // Show loading while checking auth
   if (status === 'loading') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-stone-50 via-white to-stone-100">
-        <div className="text-stone-500">Loading...</div>
+      <div className="min-h-screen flex items-center justify-center bg-[var(--bg-base)]">
+        <div className="folio-body">Loading...</div>
       </div>
     );
   }
@@ -48,17 +48,17 @@ export default function PendingApprovalPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-stone-50 via-white to-stone-100 px-4 py-12">
+    <div className="min-h-screen flex items-center justify-center bg-[var(--bg-base)] px-4 py-12">
       <div className="w-full max-w-lg text-center">
-        <GlassCard variant="strong" padding="xl" rounded="3xl">
+        <RidgeCard size="lg" padding="xl">
           <div className="space-y-8">
             {/* Headline */}
-            <EditorialHeadline size="xl" className="text-stone-900">
+            <h1 className="folio-h1 folio-quote">
               You're on the list.
-            </EditorialHeadline>
+            </h1>
 
             {/* Body */}
-            <div className="space-y-4 text-stone-600 leading-relaxed">
+            <div className="space-y-4 folio-body">
               <p>
                 We're reviewing your application and will be in touch shortly.
               </p>
@@ -69,24 +69,24 @@ export default function PendingApprovalPage() {
             </div>
 
             {/* Divider */}
-            <div className="w-16 h-px bg-stone-300 mx-auto" />
+            <div className="w-16 h-px bg-[var(--ridge-outer)] mx-auto" />
 
             {/* Footer */}
-            <p className="text-sm text-stone-500">
+            <p className="folio-meta">
               Questions? Reach us at{' '}
               <a
                 href="mailto:hello@folioad.com"
-                className="text-stone-700 underline hover:text-stone-900 transition-colors"
+                className="text-[var(--text-secondary)] underline hover:text-[var(--text-primary)] transition-colors"
               >
                 hello@folioad.com
               </a>
             </p>
           </div>
-        </GlassCard>
+        </RidgeCard>
 
         {/* Folio logo/wordmark */}
         <div className="mt-8">
-          <span className="text-lg font-semibold text-stone-400">Folio</span>
+          <span className="folio-logo-text text-[var(--text-tertiary)]">Folio</span>
         </div>
       </div>
     </div>

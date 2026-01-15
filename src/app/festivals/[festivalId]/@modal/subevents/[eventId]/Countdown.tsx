@@ -2,6 +2,10 @@
 
 import React from "react";
 
+/**
+ * Countdown pill component for event modals
+ * Folio Design System: Uses accent background with folio-meta typography
+ */
 export default function Countdown({ startAt }: { startAt: string | null }) {
   const [label, setLabel] = React.useState<string>("");
 
@@ -28,7 +32,7 @@ export default function Countdown({ startAt }: { startAt: string | null }) {
 
   if (!label) return null;
   return (
-    <span className="rounded-full bg-white/12 px-2.5 py-1 text-xs tracking-wide">
+    <span className="rounded-full bg-[var(--accent)]/90 px-2.5 py-1 text-xs font-medium text-white tracking-wide">
       {label}
     </span>
   );

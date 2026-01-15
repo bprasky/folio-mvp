@@ -5,14 +5,14 @@ import { getTrendingProjects } from "@/lib/feed/getTrendingProjects";
 import { getAISuggestions } from "@/lib/feed/getAISuggestions";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/options";
-import { GlassCard } from "@/components/ui/glass";
+import { RidgeCard } from "@/components/ui/ridge-card";
 
 export async function SideTrending() {
   const trending = await getTrendingProjects();
 
   return (
     <section className="space-y-3">
-      <h4 className="text-sm font-medium text-neutral-700">Trending Projects This Week</h4>
+      <h4 className="folio-ui text-[var(--text-secondary)]">Trending Projects This Week</h4>
       {trending.length > 0 ? (
         trending.map((item) => (
           <TrendingTile
@@ -40,8 +40,8 @@ export async function SideAISuggested() {
   return (
     <section className="space-y-3">
       <div className="flex items-center justify-between">
-        <h4 className="text-sm font-medium text-neutral-700">Folio AI: Suggested Matches</h4>
-        <span className="text-[10px] uppercase tracking-wide text-neutral-400">Labs</span>
+        <h4 className="folio-ui text-[var(--text-secondary)]">Folio AI: Suggested Matches</h4>
+        <span className="text-[10px] uppercase tracking-wide text-[var(--text-tertiary)]">Labs</span>
       </div>
       {suggestions.length > 0 ? (
         suggestions.map((item) => (
@@ -73,7 +73,7 @@ function TrendingTile({
 }) {
   return (
     <Link href={href} className="block group">
-      <GlassCard variant="default" padding="none" rounded="2xl" className="overflow-hidden hover:shadow-xl transition-shadow duration-300">
+      <RidgeCard padding="none" className="overflow-hidden hover:shadow-[var(--neu-raised)] transition-shadow duration-300">
         <div className="relative aspect-[4/5] w-full overflow-hidden">
           {imageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -83,26 +83,25 @@ function TrendingTile({
               className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
             />
           ) : (
-            <div className="h-full w-full flex items-center justify-center bg-gray-100">
-              <span className="text-xs text-gray-400">No image</span>
+            <div className="h-full w-full flex items-center justify-center bg-[var(--bg-elevated)]">
+              <span className="folio-meta text-[var(--text-tertiary)]">No image</span>
             </div>
           )}
           <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/60 to-transparent">
-            <p className="text-xs font-medium text-white line-clamp-2">{title}</p>
+            <p className="folio-meta text-white line-clamp-2">{title}</p>
           </div>
         </div>
-      </GlassCard>
+      </RidgeCard>
     </Link>
   );
 }
 
 function OutlineTile({ label }: { label: string }) {
   return (
-    <GlassCard variant="subtle" padding="none" rounded="2xl" className="overflow-hidden">
-      <div className="aspect-[4/5] w-full bg-gray-100/50 grid place-items-center">
-        <span className="text-xs text-gray-400">{label}</span>
+    <RidgeCard padding="none" className="overflow-hidden">
+      <div className="aspect-[4/5] w-full bg-[var(--bg-elevated)] grid place-items-center">
+        <span className="folio-meta text-[var(--text-tertiary)]">{label}</span>
       </div>
-    </GlassCard>
+    </RidgeCard>
   );
 }
-

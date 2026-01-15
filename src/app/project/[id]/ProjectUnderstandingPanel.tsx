@@ -81,27 +81,27 @@ export default function ProjectUnderstandingPanel({
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 sticky top-4" data-tour="project-understanding">
+    <div className="bg-[var(--bg-elevated)] rounded-lg shadow-sm border border-[var(--border-default)] p-6 sticky top-4" data-tour="project-understanding">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-semibold text-gray-900">
+        <h2 className="folio-h3 text-[var(--text-primary)]">
           Project Understanding
         </h2>
         <button
           onClick={handleRefresh}
           disabled={refreshing}
           data-tour="refresh-button"
-          className="text-sm text-blue-600 hover:text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="folio-ui text-[var(--accent)] hover:text-[var(--accent-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           {refreshing ? 'Refreshing...' : 'Refresh'}
         </button>
       </div>
 
       {loading ? (
-        <div className="text-center py-8 text-gray-500">Loading...</div>
+        <div className="text-center py-8 text-[var(--text-secondary)]">Loading...</div>
       ) : !projectIntent ? (
-        <div className="text-center py-8 text-gray-500">
+        <div className="text-center py-8 text-[var(--text-secondary)]">
           <p className="mb-4">No project understanding yet.</p>
-          <p className="text-sm">
+          <p className="folio-ui">
             Add meeting notes and click "Refresh" to generate understanding.
           </p>
         </div>
@@ -110,24 +110,24 @@ export default function ProjectUnderstandingPanel({
           {/* Project Summary */}
           {projectIntent.summary && (
             <div>
-              <h3 className="text-sm font-medium text-gray-700 mb-2">
+              <h3 className="folio-ui font-medium text-[var(--text-primary)] mb-2">
                 Summary
               </h3>
-              <p className="text-sm text-gray-600">{projectIntent.summary}</p>
+              <p className="folio-body text-[var(--text-secondary)]">{projectIntent.summary}</p>
             </div>
           )}
 
           {/* Mood Keywords */}
           {projectIntent.moodKeywords.length > 0 && (
             <div>
-              <h3 className="text-sm font-medium text-gray-700 mb-2">
+              <h3 className="folio-ui font-medium text-[var(--text-primary)] mb-2">
                 Mood Keywords
               </h3>
               <div className="flex flex-wrap gap-2">
                 {projectIntent.moodKeywords.map((keyword, idx) => (
                   <span
                     key={idx}
-                    className="inline-block px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded"
+                    className="inline-block px-2 py-1 bg-[var(--accent)]/10 text-[var(--accent)] folio-meta rounded"
                   >
                     {keyword}
                   </span>
@@ -139,14 +139,14 @@ export default function ProjectUnderstandingPanel({
           {/* Style Tags */}
           {projectIntent.styleTags.length > 0 && (
             <div>
-              <h3 className="text-sm font-medium text-gray-700 mb-2">
+              <h3 className="folio-ui font-medium text-[var(--text-primary)] mb-2">
                 Style Tags
               </h3>
               <div className="flex flex-wrap gap-2">
                 {projectIntent.styleTags.map((tag, idx) => (
                   <span
                     key={idx}
-                    className="inline-block px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded"
+                    className="inline-block px-2 py-1 bg-purple-100 text-purple-700 folio-meta rounded"
                   >
                     {tag}
                   </span>
@@ -158,10 +158,10 @@ export default function ProjectUnderstandingPanel({
           {/* Budget Level */}
           {projectIntent.budgetLevel && (
             <div>
-              <h3 className="text-sm font-medium text-gray-700 mb-2">
+              <h3 className="folio-ui font-medium text-[var(--text-primary)] mb-2">
                 Budget Level
               </h3>
-              <span className="inline-block px-2 py-1 bg-green-100 text-green-700 text-xs rounded">
+              <span className="inline-block px-2 py-1 bg-green-100 text-green-700 folio-meta rounded">
                 {projectIntent.budgetLevel}
               </span>
             </div>
@@ -170,16 +170,16 @@ export default function ProjectUnderstandingPanel({
           {/* Room Intents */}
           {roomIntents.length > 0 && (
             <div>
-              <h3 className="text-sm font-medium text-gray-700 mb-3">
+              <h3 className="folio-ui font-medium text-[var(--text-primary)] mb-3">
                 Room Understanding
               </h3>
               <div className="space-y-4">
                 {roomIntents.map((roomIntent) => (
                   <div
                     key={roomIntent.id}
-                    className="border border-gray-200 rounded-lg p-4"
+                    className="border border-[var(--border-default)] rounded-lg p-4"
                   >
-                    <h4 className="font-medium text-gray-900 mb-2">
+                    <h4 className="font-medium text-[var(--text-primary)] mb-2">
                       {roomIntent.roomName}
                     </h4>
                     {roomIntent.moodKeywords.length > 0 && (
@@ -188,7 +188,7 @@ export default function ProjectUnderstandingPanel({
                           {roomIntent.moodKeywords.map((keyword, idx) => (
                             <span
                               key={idx}
-                              className="inline-block px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded"
+                              className="inline-block px-2 py-0.5 bg-[var(--bg-base)] text-[var(--text-secondary)] folio-meta rounded"
                             >
                               {keyword}
                             </span>
@@ -197,13 +197,13 @@ export default function ProjectUnderstandingPanel({
                       </div>
                     )}
                     {roomIntent.functionalGoals && (
-                      <div className="text-xs text-gray-600">
+                      <div className="folio-meta text-[var(--text-secondary)]">
                         <strong>Goals:</strong>{' '}
                         {JSON.stringify(roomIntent.functionalGoals)}
                       </div>
                     )}
                     {roomIntent.mustHaves && (
-                      <div className="text-xs text-gray-600 mt-1">
+                      <div className="folio-meta text-[var(--text-secondary)] mt-1">
                         <strong>Must Haves:</strong>{' '}
                         {JSON.stringify(roomIntent.mustHaves)}
                       </div>

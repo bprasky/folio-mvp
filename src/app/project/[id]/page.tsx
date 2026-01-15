@@ -162,11 +162,11 @@ export default async function ProjectPage({
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+    <div className="min-h-screen bg-[var(--bg-base)]">
       {/* Back Button */}
-      <div className="p-4 bg-white/80 backdrop-blur-sm border-b border-gray-200/50">
+      <div className="p-4 bg-[var(--bg-elevated)] border-b border-[var(--border-default)]">
         <div className="flex items-center justify-between max-w-7xl mx-auto">
-          <Link href="/projects" className="flex items-center text-blue-600 hover:text-blue-700 transition-colors">
+          <Link href="/projects" className="flex items-center text-[var(--accent)] hover:text-[var(--accent-hover)] transition-colors">
             <FaArrowLeft className="mr-2" /> Back to Projects
           </Link>
         </div>
