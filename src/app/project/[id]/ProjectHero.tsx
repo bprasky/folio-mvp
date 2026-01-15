@@ -44,7 +44,7 @@ export default function ProjectHero({ project, images = [], expandedBlocks }: Pr
 
   return (
     <>
-      <section className="relative w-full rounded-2xl overflow-hidden bg-[var(--bg-elevated)] h-56 md:h-64 border border-[var(--border-default)]">
+      <section className="relative w-full ridge-card ridge-card-lg overflow-hidden h-56 md:h-64 mx-4 mt-4">
         {/* Content */}
         <div className="absolute left-6 bottom-6 right-20">
           <h1 className="folio-h1 font-serif italic tracking-tight mb-2 text-[var(--text-primary)]">

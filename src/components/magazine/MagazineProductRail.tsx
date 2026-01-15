@@ -20,7 +20,7 @@ export default function MagazineProductRail({ products }: Props) {
   return (
     <section className="space-y-3">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-medium text-neutral-800">
+        <h3 className="folio-ui text-sm font-medium text-[var(--text-primary)]">
           Products from this editorial
         </h3>
       </div>
@@ -28,9 +28,9 @@ export default function MagazineProductRail({ products }: Props) {
         {products.map((product) => (
           <div
             key={product.id}
-            className="min-w-[180px] max-w-[220px] flex-shrink-0 overflow-hidden rounded-2xl bg-white shadow-sm"
+            className="ridge-card min-w-[180px] max-w-[220px] flex-shrink-0 overflow-hidden rounded-2xl"
           >
-            <div className="relative aspect-[4/3] w-full bg-neutral-100">
+            <div className="relative aspect-[4/3] w-full bg-[var(--bg-base)]">
               {product.imageUrl && (
                 <Image
                   src={product.imageUrl}
@@ -41,11 +41,11 @@ export default function MagazineProductRail({ products }: Props) {
               )}
             </div>
             <div className="space-y-1 px-3 py-2">
-              <p className="line-clamp-2 text-xs font-medium text-neutral-900">
+              <p className="folio-body line-clamp-2 text-xs font-medium text-[var(--text-primary)]">
                 {product.name}
               </p>
               {product.vendorName && (
-                <p className="text-[11px] text-neutral-500">
+                <p className="folio-meta text-[11px] text-[var(--text-secondary)]">
                   {product.vendorName}
                 </p>
               )}

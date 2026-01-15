@@ -26,7 +26,7 @@ export default async function MagazinePage({ editionSlug }: Props) {
   const data = await getMagazineData(editionSlug, user?.id);
 
   return (
-    <div className="min-h-screen bg-[#F6F4F1] w-full max-w-[100vw] overflow-hidden">
+    <div className="min-h-screen bg-[var(--bg-base)] w-full max-w-[100vw] overflow-hidden">
       {/* Zone 1: Editorial Feature Section */}
       {data.hero && (
         <div className="w-full px-2 sm:px-3 pt-4 md:pt-6 pb-3 md:pb-4">
@@ -41,7 +41,7 @@ export default async function MagazinePage({ editionSlug }: Props) {
       )}
 
       {/* Edition selector - positioned between zones */}
-      <div className="w-full bg-[#F6F4F1] border-b border-neutral-200/40">
+      <div className="w-full bg-[var(--bg-base)] border-b border-[var(--ridge-outer)]">
         <div className="px-2 sm:px-3 py-3 md:py-4">
           <MagazineEditionCarousel
             editions={MAGAZINE_EDITIONS}
