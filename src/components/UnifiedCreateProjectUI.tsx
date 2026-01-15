@@ -64,14 +64,8 @@ export default function UnifiedCreateProjectUI() {
           setErr('Create API did not return an id.');
           return;
         }
-        // Redirect based on project status
-        if (projectStatus === 'new_project') {
-          // New projects go to media tab to upload images
-          router.replace(`/project/${id}?view=media`);
-        } else {
-          // Completed projects go to overview/details
-          router.replace(`/project/${id}?view=details`);
-        }
+        // Both new and completed projects go to media tab to upload images
+        router.replace(`/project/${id}?view=media`);
       }
     } catch (e: any) {
       setErr(e.message || 'Failed to create project');
