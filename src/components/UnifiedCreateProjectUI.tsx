@@ -7,7 +7,6 @@ type ProjectStatus = 'new_project' | 'completed_project';
 
 type DetailsCore = {
   projectType: string;
-  stage: string;
   clientType: 'Residential' | 'Commercial';
   location: { city: string; region: string; country?: string };
 };
@@ -20,7 +19,6 @@ export default function UnifiedCreateProjectUI() {
   const [projectStatus, setProjectStatus] = useState<ProjectStatus | ''>('');
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [projectType, setProjectType] = useState('');
-  const [stage, setStage] = useState('');
   const [clientType, setClientType] = useState<'Residential' | 'Commercial'>('Residential');
   const [locationCity, setLocationCity] = useState('');
   const [locationRegion, setLocationRegion] = useState('');
@@ -41,7 +39,6 @@ export default function UnifiedCreateProjectUI() {
 
     const detailsCore: DetailsCore = {
       projectType,
-      stage,
       clientType,
       location: { city: locationCity, region: locationRegion, country: 'US' },
     };
@@ -183,24 +180,6 @@ export default function UnifiedCreateProjectUI() {
                       <option value="Commercial TI">Commercial TI</option>
                       <option value="Hospitality">Hospitality</option>
                       <option value="Multifamily">Multifamily</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Stage</label>
-                    <select
-                      className="w-full border rounded-lg p-2"
-                      value={stage}
-                      onChange={(e) => setStage(e.target.value)}
-                    >
-                      <option value="">Select stage</option>
-                      <option value="Concept">Concept</option>
-                      <option value="Schematic">Schematic</option>
-                      <option value="Design Development">Design Development</option>
-                      <option value="CD/Pre-spec">CD/Pre-spec</option>
-                      <option value="Spec locked">Spec locked</option>
-                      <option value="In procurement">In procurement</option>
-                      <option value="Install">Install</option>
                     </select>
                   </div>
 
