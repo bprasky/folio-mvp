@@ -241,7 +241,7 @@ export default function OverviewTab({ projectId, project, isOwner }: OverviewTab
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-500 border-t-transparent"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-[var(--accent)] border-t-transparent"></div>
       </div>
     );
   }
@@ -252,18 +252,18 @@ export default function OverviewTab({ projectId, project, isOwner }: OverviewTab
     <div className="space-y-8">
       {/* Resume CTA */}
       {resumeCTA && (
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/60 rounded-xl p-4 flex items-center justify-between">
+        <div className="bg-[var(--bg-elevated)] border border-[var(--border-default)] rounded-xl p-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-blue-500 flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-lg bg-[var(--accent)] flex items-center justify-center shrink-0">
               <FaPlay className="w-5 h-5 text-white" />
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-900">{resumeCTA.label}</p>
+              <p className="folio-ui font-medium text-[var(--text-primary)]">{resumeCTA.label}</p>
             </div>
           </div>
           <button
             onClick={() => router.push(resumeCTA.href)}
-            className="shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors"
+            className="shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white folio-ui font-medium transition-colors"
           >
             Continue <FaArrowRight className="w-3 h-3" />
           </button>
@@ -275,47 +275,47 @@ export default function OverviewTab({ projectId, project, isOwner }: OverviewTab
         <section>
           <div className="mb-4">
             <div className="flex items-center gap-3 mb-1">
-              <FaMagic className="w-5 h-5 text-blue-600" />
-              <h2 className="text-lg font-semibold text-gray-900">Opportunities Detected</h2>
-              <span className="bg-blue-100 text-blue-700 text-xs font-semibold px-3 py-1 rounded-full">
+              <FaMagic className="w-5 h-5 text-[var(--accent)]" />
+              <h2 className="folio-h3 text-[var(--text-primary)]">Opportunities Detected</h2>
+              <span className="bg-[var(--accent)]/10 text-[var(--accent)] text-xs font-semibold px-3 py-1 rounded-full">
                 {approvals.length}
               </span>
             </div>
-            <p className="text-sm text-gray-600 ml-8">
+            <p className="folio-body text-[var(--text-secondary)] ml-8">
               Folio found ways to turn this project into leverage.
             </p>
           </div>
-          
+
           <div className="space-y-3">
             {approvals.map((approval) => {
               const Icon = APPROVAL_ICONS[approval.type] || FaCheckCircle;
               const isExecuting = executingApprovals.has(approval.id);
-              const accentColor = APPROVAL_ACCENT_COLORS[approval.type] || 'bg-blue-500';
+              const accentColor = APPROVAL_ACCENT_COLORS[approval.type] || 'bg-[var(--accent)]';
               const valueLine = APPROVAL_VALUE_LINES[approval.type];
-              
+
               return (
                 <div
                   key={approval.id}
-                  className="relative bg-gray-50/60 border border-gray-200/60 rounded-xl p-5 flex items-start justify-between gap-4 shadow-sm hover:shadow-md transition-all group"
+                  className="relative bg-[var(--bg-elevated)] border border-[var(--border-default)] rounded-xl p-5 flex items-start justify-between gap-4 shadow-sm hover:shadow-md transition-all group"
                 >
                   {/* Left accent strip */}
                   <div className={`absolute left-0 top-0 bottom-0 w-1 ${accentColor} rounded-l-xl`} />
-                  
+
                   <div className="flex items-start gap-4 flex-1 pl-1">
                     <div className={`w-12 h-12 rounded-lg ${accentColor} bg-opacity-10 flex items-center justify-center shrink-0`}>
                       <Icon className={`w-6 h-6 ${accentColor.replace('bg-', 'text-')}`} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-base font-semibold text-gray-900">{approval.title}</h3>
-                      <p className="text-sm text-gray-600 mt-0.5">{approval.description}</p>
-                      
+                      <h3 className="folio-body font-semibold text-[var(--text-primary)]">{approval.title}</h3>
+                      <p className="folio-ui text-[var(--text-secondary)] mt-0.5">{approval.description}</p>
+
                       {/* Value line for key approvals */}
                       {valueLine && (
-                        <p className="text-xs text-gray-500 mt-2 italic">
+                        <p className="folio-meta text-[var(--text-tertiary)] mt-2 italic">
                           {valueLine}
                         </p>
                       )}
-                      
+
                       {/* Room chips for TAGGABLE_ITEMS_READY */}
                       {approval.type === 'TAGGABLE_ITEMS_READY' && approval.payload.byRoom && (
                         <div className="flex flex-wrap gap-2 mt-3">
@@ -330,27 +330,27 @@ export default function OverviewTab({ projectId, project, isOwner }: OverviewTab
                                   router.push(`/project/${projectId}?view=boards&mode=tagging`);
                                 }
                               }}
-                              className="inline-flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-full bg-purple-50 text-purple-700 hover:bg-purple-100 transition-colors cursor-pointer"
+                              className="inline-flex items-center gap-1 folio-meta font-medium px-3 py-1.5 rounded-full bg-[var(--accent)]/10 text-[var(--accent)] hover:bg-[var(--accent)]/20 transition-colors cursor-pointer"
                             >
                               {room.roomName} • {room.count}
                             </button>
                           ))}
                         </div>
                       )}
-                      
+
                       {approval.source && (
-                        <p className="text-xs text-gray-400 mt-2">
+                        <p className="folio-meta text-[var(--text-tertiary)] mt-2">
                           From: {approval.source.noteTitle || 'Meeting Note'} • {' '}
                           {new Date(approval.source.timestamp!).toLocaleDateString()}
                         </p>
                       )}
                     </div>
                   </div>
-                  
+
                   <button
                     onClick={() => executeApproval(approval)}
                     disabled={isExecuting}
-                    className="shrink-0 inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                    className="shrink-0 inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white folio-ui font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
                   >
                     {isExecuting ? (
                       <>
@@ -373,15 +373,15 @@ export default function OverviewTab({ projectId, project, isOwner }: OverviewTab
 
       {/* Editorial Hint - shown when editorial drafts aren't available yet */}
       {editorialHint && !project.isPublic && (
-        <div className="bg-blue-50 border border-blue-200/60 rounded-xl p-4 flex items-start gap-3">
-          <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
-            <FaFileAlt className="w-4 h-4 text-blue-600" />
+        <div className="bg-[var(--bg-elevated)] border border-[var(--border-default)] rounded-xl p-4 flex items-start gap-3">
+          <div className="w-8 h-8 rounded-lg bg-[var(--accent)]/10 flex items-center justify-center shrink-0">
+            <FaFileAlt className="w-4 h-4 text-[var(--accent)]" />
           </div>
           <div>
-            <p className="text-sm text-blue-800">{editorialHint}</p>
+            <p className="folio-ui text-[var(--text-primary)]">{editorialHint}</p>
             <button
               onClick={() => router.push(`/project/${projectId}?view=media`)}
-              className="text-sm font-medium text-blue-700 hover:text-blue-900 mt-1 inline-flex items-center gap-1"
+              className="folio-ui font-medium text-[var(--accent)] hover:text-[var(--accent-hover)] mt-1 inline-flex items-center gap-1"
             >
               Go to Media <FaArrowRight className="w-3 h-3" />
             </button>
@@ -394,26 +394,26 @@ export default function OverviewTab({ projectId, project, isOwner }: OverviewTab
         <div className="flex items-center justify-between mb-4">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <FaStickyNote className="w-5 h-5 text-amber-500" />
-              <h2 className="text-lg font-semibold text-gray-900">Project Trail</h2>
+              <FaStickyNote className="w-5 h-5 text-[var(--accent)]" />
+              <h2 className="folio-h3 text-[var(--text-primary)]">Project Trail</h2>
             </div>
-            <p className="text-sm text-gray-600 ml-7">
+            <p className="folio-body text-[var(--text-secondary)] ml-7">
               Context and decisions you can reference anytime.
             </p>
           </div>
           <button
             onClick={goToNotes}
-            className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1"
+            className="folio-ui text-[var(--accent)] hover:text-[var(--accent-hover)] flex items-center gap-1"
           >
             View all <FaArrowRight className="w-3 h-3" />
           </button>
         </div>
-        
+
         {recentNotes.length === 0 ? (
-          <div className="bg-gray-50 border border-gray-200/60 border-dashed rounded-xl p-8 text-center">
-            <FaStickyNote className="w-8 h-8 text-gray-300 mx-auto mb-3" />
-            <p className="text-gray-500">No notes yet</p>
-            <p className="text-sm text-gray-400 mt-1">
+          <div className="bg-[var(--bg-base)] border border-[var(--border-default)] border-dashed rounded-xl p-8 text-center">
+            <FaStickyNote className="w-8 h-8 text-[var(--text-tertiary)] mx-auto mb-3" />
+            <p className="text-[var(--text-secondary)]">No notes yet</p>
+            <p className="folio-meta text-[var(--text-tertiary)] mt-1">
               Meeting notes will appear here as you add them.
             </p>
           </div>
@@ -423,20 +423,20 @@ export default function OverviewTab({ projectId, project, isOwner }: OverviewTab
               <button
                 key={note.id}
                 onClick={goToNotes}
-                className="w-full bg-white border border-gray-200/60 rounded-xl p-4 text-left hover:border-blue-300 hover:shadow-sm transition-all"
+                className="w-full bg-[var(--bg-elevated)] border border-[var(--border-default)] rounded-xl p-4 text-left hover:border-[var(--accent)] hover:shadow-sm transition-all"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-medium text-gray-900 truncate">
+                    <h3 className="font-medium text-[var(--text-primary)] truncate">
                       {note.title || 'Untitled Note'}
                     </h3>
                     {note.rawText && (
-                      <p className="text-sm text-gray-500 mt-1 line-clamp-2">
+                      <p className="folio-body text-[var(--text-secondary)] mt-1 line-clamp-2">
                         {note.rawText.substring(0, 150)}
                         {note.rawText.length > 150 ? '...' : ''}
                       </p>
                     )}
-                    <p className="text-xs text-gray-400 mt-2">
+                    <p className="folio-meta text-[var(--text-tertiary)] mt-2">
                       {new Date(note.createdAt).toLocaleDateString('en-US', {
                         month: 'short',
                         day: 'numeric',
@@ -445,7 +445,7 @@ export default function OverviewTab({ projectId, project, isOwner }: OverviewTab
                     </p>
                   </div>
                   {note.attachments.length > 0 && (
-                    <span className="shrink-0 text-xs font-medium px-2 py-1 rounded-full bg-purple-50 text-purple-700">
+                    <span className="shrink-0 folio-meta font-medium px-2 py-1 rounded-full bg-[var(--accent)]/10 text-[var(--accent)]">
                       {note.attachments.length} attachment{note.attachments.length !== 1 ? 's' : ''}
                     </span>
                   )}

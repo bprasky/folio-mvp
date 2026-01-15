@@ -6,6 +6,8 @@ import DirectoryStatsComponent from './DirectoryStats';
 import DirectoryFiltersComponent from './DirectoryFilters';
 import DirectoryTable from './DirectoryTable';
 import DirectorySearch from './DirectorySearch';
+import { RidgeCard } from '@/components/ui/ridge-card';
+import { Button } from '@/components/ui/button';
 
 export default function DesignerDirectoryPage() {
   const [entries, setEntries] = useState<DirectoryEntry[]>([]);
@@ -121,17 +123,14 @@ export default function DesignerDirectoryPage() {
   });
 
   return (
-    <div className="min-h-screen bg-[#FAFAF8] p-6">
+    <div className="min-h-screen bg-[var(--bg-base)] p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 
-            className="text-5xl font-semibold mb-3 text-[#2C2925]"
-            style={{ fontFamily: 'var(--font-serif)', letterSpacing: '-0.01em' }}
-          >
+          <h1 className="folio-h1 text-[var(--text-primary)] mb-3">
             Vendor Directory
           </h1>
-          <p className="text-[#6B6560] text-base font-normal">
+          <p className="folio-body text-[var(--text-secondary)]">
             Every product you've specified across all projects
           </p>
         </div>
@@ -161,36 +160,35 @@ export default function DesignerDirectoryPage() {
 
         {/* Table */}
         {loading ? (
-          <div className="bg-white border border-[#E8E6E3] rounded-xl p-12 text-center shadow-sm">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#B5B0A9]"></div>
-            <p className="mt-4 text-[#6B6560]">Loading directory...</p>
-          </div>
+          <RidgeCard padding="xl" className="text-center">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent)]"></div>
+            <p className="mt-4 folio-body text-[var(--text-secondary)]">Loading directory...</p>
+          </RidgeCard>
         ) : error ? (
-          <div className="bg-white border border-[#E8E6E3] rounded-xl p-12 text-center shadow-sm">
+          <RidgeCard padding="xl" className="text-center">
             <p className="text-red-600 mb-4">{error}</p>
-            <button
+            <Button
+              variant="ridge"
               onClick={loadDirectory}
-              className="px-4 py-2 bg-[#7C7268] hover:bg-[#5C554D] text-white rounded-lg transition-colors"
             >
               Retry
-            </button>
-          </div>
+            </Button>
+          </RidgeCard>
         ) : sortedEntries.length === 0 ? (
-          <div className="bg-white border border-[#E8E6E3] rounded-xl p-12 text-center shadow-sm">
-            <p className="text-[#6B6560] mb-4">
+          <RidgeCard padding="xl" className="text-center">
+            <p className="folio-body text-[var(--text-secondary)] mb-4">
               {searchTerm || Object.keys(filters).length > 0
                 ? 'No products found matching your filters.'
                 : "You haven't tagged any products yet."}
             </p>
             {!searchTerm && Object.keys(filters).length === 0 && (
-              <a
-                href="/designer"
-                className="inline-block px-4 py-2 bg-[#7C7268] hover:bg-[#5C554D] text-white rounded-lg transition-colors"
-              >
-                Start Tagging Products
+              <a href="/designer">
+                <Button variant="accent">
+                  Start Tagging Products
+                </Button>
               </a>
             )}
-          </div>
+          </RidgeCard>
         ) : (
           <DirectoryTable
             entries={sortedEntries}

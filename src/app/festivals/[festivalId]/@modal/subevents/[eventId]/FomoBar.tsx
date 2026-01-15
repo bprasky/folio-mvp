@@ -4,6 +4,10 @@ import { Users } from "lucide-react";
 import Countdown from "./Countdown";
 import AvatarRow from "./AvatarRow";
 
+/**
+ * FomoBar - Social proof and urgency indicators for event modals
+ * Folio Design System: Uses accent colors for pills and folio-meta typography
+ */
 export default function FomoBar({
   rsvpCount,
   capacity,
@@ -25,13 +29,13 @@ export default function FomoBar({
 
   return (
     <div className="mt-3 flex flex-wrap items-center gap-3 text-xs md:text-sm opacity-95">
-      <span className="inline-flex items-center gap-1.5">
+      <span className="inline-flex items-center gap-1.5 font-medium">
         <Users className="h-4 w-4" />
         {rsvpCount} attending
       </span>
 
       {typeof spotsLeft === "number" && spotsLeft > 0 ? (
-        <span className="rounded-full bg-white/12 px-2.5 py-1">{spotsLeft} spots left</span>
+        <span className="rounded-full bg-[var(--accent)]/20 px-2.5 py-1 font-medium">{spotsLeft} spots left</span>
       ) : null}
 
       <Countdown startAt={startAtISO} />

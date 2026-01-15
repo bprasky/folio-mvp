@@ -58,10 +58,10 @@ export default function ProjectSetupPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-[var(--bg-base)]">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading project...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--accent)] mx-auto mb-4"></div>
+          <p className="text-[var(--text-secondary)]">Loading project...</p>
         </div>
       </div>
     );
@@ -69,12 +69,12 @@ export default function ProjectSetupPage() {
 
   if (!project) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-[var(--bg-base)]">
         <div className="text-center">
-          <p className="text-gray-600">Project not found</p>
+          <p className="text-[var(--text-secondary)]">Project not found</p>
           <Link
             href="/designer"
-            className="mt-4 inline-block text-blue-600 hover:underline"
+            className="mt-4 inline-block text-[var(--accent)] hover:underline"
           >
             Return to projects
           </Link>
@@ -84,10 +84,10 @@ export default function ProjectSetupPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[var(--bg-base)]">
       {/* Background for modal */}
       <div className="fixed inset-0 bg-black bg-opacity-50 z-40" />
-      
+
       {/* Modal Container */}
       <ProjectCreationModal
         isOpen={modalOpen}

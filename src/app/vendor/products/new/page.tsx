@@ -25,7 +25,7 @@ export default async function NewProductPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-stone-50 via-white to-stone-50 dark:from-stone-950 dark:via-stone-900 dark:to-stone-950">
+    <div className="min-h-screen bg-[var(--bg-base)]">
       <ProductWizard vendorId={session.user.id || ''} />
     </div>
   );

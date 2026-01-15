@@ -98,7 +98,7 @@ const SpringProductLaunch = () => {
     const designerPros = attendees.filter(a => a.isDesignerPro).length;
     const mutuals = attendees.filter(a => a.isMutual).length;
     return (
-      <div className="mt-4 text-gray-400 text-sm flex items-center justify-center">
+      <div className="mt-4 text-[var(--text-tertiary)] text-sm flex items-center justify-center">
         <span>{attendees.length} total attending</span>
         <span className="mx-2">&bull;</span>
         <span>{designerPros} Designer Pros</span>
@@ -116,15 +116,15 @@ const SpringProductLaunch = () => {
   // --- Gallery ---
   const renderGallery = () => {
     if (gallery.length === 0) {
-      return <div className="text-gray-400">No photos yet. Be the first to upload!</div>;
+      return <div className="text-[var(--text-tertiary)]">No photos yet. Be the first to upload!</div>;
     }
     return gallery.map((g, idx) => (
       <div key={idx} className="relative flex flex-col items-center">
         <Image src={g.url} alt="Gallery image" width={128} height={96} className="gallery-img w-32 h-24 object-cover rounded-lg shadow" />
         <div className="absolute bottom-1 left-1 bg-black/60 text-xs px-2 py-0.5 rounded">{g.user}</div>
-        <div className="absolute bottom-1 right-1 text-xs text-gray-300">{g.time}</div>
+        <div className="absolute bottom-1 right-1 text-xs text-[var(--text-secondary)]">{g.time}</div>
         <button
-          className={`mt-2 px-2 py-1 text-xs bg-gray-800 text-green-300 rounded save-moodboard-btn relative ${
+          className={`mt-2 px-2 py-1 text-xs bg-[var(--bg-elevated)] text-[var(--accent)] rounded save-moodboard-btn relative ${
             savedMoodboard.includes(g.url) ? 'show-tooltip' : ''
           }`}
           onClick={() => handleSaveToMoodboard(g.url)}
@@ -210,15 +210,15 @@ const SpringProductLaunch = () => {
   // --- Featured Products ---
   const renderFeaturedProducts = () => {
     return featuredProducts.map(prod => (
-      <div key={prod.id} className="bg-gray-900 rounded-lg shadow-md p-4 w-64 flex flex-col items-center relative border border-green-700">
+      <div key={prod.id} className="bg-[var(--bg-elevated)] rounded-lg shadow-md p-4 w-64 flex flex-col items-center relative border border-[var(--border)]">
         <Image src={prod.image} alt={prod.name} width={256} height={144} className="w-full h-36 object-cover rounded mb-3" />
-        <div className="font-bold text-lg text-green-200 mb-1">{prod.name}</div>
-        <div className="text-green-400 font-medium mb-1">By {prod.brand}</div>
-        <div className="text-amber-300 font-semibold mb-2">{prod.price}</div>
-        <div className="text-gray-300 text-sm mb-3 text-center">{prod.desc}</div>
+        <div className="font-bold text-lg text-[var(--accent)] mb-1">{prod.name}</div>
+        <div className="text-[var(--accent)] font-medium mb-1">By {prod.brand}</div>
+        <div className="text-[var(--accent)] font-semibold mb-2">{prod.price}</div>
+        <div className="text-[var(--text-secondary)] text-sm mb-3 text-center">{prod.desc}</div>
         <button
-          className={`px-4 py-1 rounded-full bg-green-500 text-black font-semibold mt-auto add-to-collection-btn ${
-            addedToCollection.includes(prod.id) ? 'bg-green-700 text-white' : ''
+          className={`px-4 py-1 rounded-full bg-[var(--accent)] text-black font-semibold mt-auto add-to-collection-btn ${
+            addedToCollection.includes(prod.id) ? 'bg-[var(--accent)] text-white' : ''
           }`}
           onClick={() => handleAddToCollection(prod.id)}
         >
@@ -282,7 +282,7 @@ const SpringProductLaunch = () => {
           className="absolute inset-0 w-full h-full bg-cover bg-center"
           style={{ backgroundImage: "url('https://images.unsplash.com/photo-1707923761706-0b81c3c7e099?q=80&w=2000&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D')" }}
         ></div>
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-black/10"></div>
+        <div className="absolute inset-0 bg-black/50"></div>
         <div className="relative z-10 w-full max-w-3xl mx-auto px-6 py-8 text-center">
           <h1 className="text-3xl md:text-5xl font-bold mb-2 drop-shadow-lg">Spring Product Launch</h1>
           <div className="text-lg md:text-2xl font-medium mb-2 flex flex-col md:flex-row items-center justify-center gap-2">
@@ -294,7 +294,7 @@ const SpringProductLaunch = () => {
             id="rsvp-btn"
             className={`mt-4 px-6 py-2 rounded-full font-semibold rsvp-btn relative ${
               new Date() > eventDate
-                ? 'bg-gray-700 text-gray-300 cursor-not-allowed'
+                ? 'bg-[var(--bg-elevated)] text-[var(--text-secondary)] cursor-not-allowed'
                 : currentUser.rsvp
                 ? 'active'
                 : 'inactive'
@@ -323,10 +323,10 @@ const SpringProductLaunch = () => {
       {/* Brand Section */}
       <div className="max-w-4xl mx-auto px-4 py-10 section-mobile-pad">
         <div className="flex flex-col md:flex-row items-center gap-8 mb-8">
-          <Image src="https://randomuser.me/api/portraits/men/34.jpg" alt="Leaf & Co. Logo" width={96} height={96} className="w-24 h-24 rounded-full border-4 border-green-400 shadow-lg" />
+          <Image src="https://randomuser.me/api/portraits/men/34.jpg" alt="Leaf & Co. Logo" width={96} height={96} className="w-24 h-24 rounded-full border-4 border-[var(--border)] shadow-lg" />
           <div>
             <h2 className="text-2xl font-bold flex items-center">Leaf & Co.<span className="brand-badge">Host</span></h2>
-            <p className="mt-2 text-lg text-gray-300 max-w-xl">Leaf & Co. is a leader in sustainable, biophilic design, bringing nature-inspired products to modern interiors. Their Miami showroom is a hub for designers and clients seeking the latest in eco-friendly luxury.</p>
+            <p className="mt-2 text-lg text-[var(--text-secondary)] max-w-xl">Leaf & Co. is a leader in sustainable, biophilic design, bringing nature-inspired products to modern interiors. Their Miami showroom is a hub for designers and clients seeking the latest in eco-friendly luxury.</p>
             <div className="flex gap-4 mt-4">
               <Image src="https://images.unsplash.com/photo-1698295627685-611c0f16bb06?q=80&w=400&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Product 1" width={112} height={80} className="w-28 h-20 object-cover rounded-lg shadow-md" />
               <Image src="https://images.unsplash.com/photo-1549887552-cb1071d3507d?q=80&w=400&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Product 2" width={112} height={80} className="w-28 h-20 object-cover rounded-lg shadow-md" />
@@ -339,8 +339,8 @@ const SpringProductLaunch = () => {
         <div className="mb-10 section-mobile-pad">
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-xl font-semibold">Who's Going</h3>
-            <span className="text-green-400 font-bold">{attendees.length} Attending</span>
-            <button onClick={handleToggleGuestList} className="text-sm text-green-300 underline ml-4">
+            <span className="text-[var(--accent)] font-bold">{attendees.length} Attending</span>
+            <button onClick={handleToggleGuestList} className="text-sm text-[var(--accent)] underline ml-4">
               {showGuestList ? 'Hide Guest List' : 'See Guest List'}
             </button>
           </div>
@@ -365,26 +365,26 @@ const SpringProductLaunch = () => {
         <div className="mb-10 section-mobile-pad">
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-xl font-semibold">Event Gallery</h3>
-            <button onClick={uploadPhotoHandler} className="text-sm text-green-300 underline hidden sm:inline-block">Upload Photo</button>
+            <button onClick={uploadPhotoHandler} className="text-sm text-[var(--accent)] underline hidden sm:inline-block">Upload Photo</button>
           </div>
           <div className="flex flex-wrap gap-4 mt-2">
             {renderGallery()}
           </div>
-          <button id="upload-photo-fab" className="sticky-upload-btn bg-green-500 text-black shadow-lg fixed bottom-6 right-6 sm:hidden" style={{ display: 'none' }} onClick={uploadPhotoHandler}><span className="text-3xl">+</span></button>
+          <button id="upload-photo-fab" className="sticky-upload-btn bg-[var(--accent)] text-black shadow-lg fixed bottom-6 right-6 sm:hidden" style={{ display: 'none' }} onClick={uploadPhotoHandler}><span className="text-3xl">+</span></button>
         </div>
 
         {/* Engagement */}
         <div className="mb-10">
           <h3 className="text-xl font-semibold mb-2">Engagement</h3>
           <div className="flex flex-wrap gap-4 mb-4">
-            <button className="px-4 py-2 rounded-full bg-green-500 text-black font-semibold shadow hover:bg-green-400 transition">Share to Feed</button>
+            <button className="px-4 py-2 rounded-full bg-[var(--accent)] text-black font-semibold shadow hover:bg-[var(--accent-hover)] transition">Share to Feed</button>
             <div className="relative">
-              <button onClick={handleInviteToggle} className="px-4 py-2 rounded-full bg-emerald-700 text-white font-semibold shadow hover:bg-emerald-600 transition">Invite Others <i className="fas fa-caret-down ml-1"></i></button>
+              <button onClick={handleInviteToggle} className="px-4 py-2 rounded-full bg-[var(--accent)] text-white font-semibold shadow hover:bg-[var(--accent-hover)] transition">Invite Others <i className="fas fa-caret-down ml-1"></i></button>
               {showInviteDropdown && (
-                <div className="absolute left-0 mt-2 bg-gray-900 border border-green-400 rounded shadow-lg p-2 z-20">
-                  <button className="block w-full text-left px-3 py-1 hover:bg-green-800 rounded" onClick={() => filterInvite('all')}>All</button>
-                  <button className="block w-full text-left px-3 py-1 hover:bg-green-800 rounded" onClick={() => filterInvite('designerpro')}>Designer Pro</button>
-                  <button className="block w-full text-left px-3 py-1 hover:bg-green-800 rounded" onClick={() => filterInvite('local')}>Local</button>
+                <div className="absolute left-0 mt-2 bg-[var(--bg-elevated)] border border-[var(--border)] rounded shadow-lg p-2 z-20">
+                  <button className="block w-full text-left px-3 py-1 hover:bg-[var(--accent-hover)] rounded" onClick={() => filterInvite('all')}>All</button>
+                  <button className="block w-full text-left px-3 py-1 hover:bg-[var(--accent-hover)] rounded" onClick={() => filterInvite('designerpro')}>Designer Pro</button>
+                  <button className="block w-full text-left px-3 py-1 hover:bg-[var(--accent-hover)] rounded" onClick={() => filterInvite('local')}>Local</button>
                 </div>
               )}
             </div>
@@ -396,15 +396,15 @@ const SpringProductLaunch = () => {
               {renderComments()}
             </div>
             <form onSubmit={handleCommentSubmit} className="flex gap-2 mt-2">
-              <input id="comment-input" type="text" placeholder="Add a comment..." className="flex-1 px-3 py-2 rounded bg-gray-800 text-white focus:outline-none" required />
-              <button type="submit" className="px-4 py-2 rounded bg-green-500 text-black font-semibold">Post</button>
+              <input id="comment-input" type="text" placeholder="Add a comment..." className="flex-1 px-3 py-2 rounded bg-[var(--bg-elevated)] text-white focus:outline-none" required />
+              <button type="submit" className="px-4 py-2 rounded bg-[var(--accent)] text-black font-semibold">Post</button>
             </form>
           </div>
         </div>
       </div>
 
       {/* Footer: Map & Follow CTA */}
-      <div className="w-full bg-gray-900 py-8 mt-8 section-mobile-pad">
+      <div className="w-full bg-[var(--bg-elevated)] py-8 mt-8 section-mobile-pad">
         <div className="max-w-4xl mx-auto flex flex-col md:flex-row items-center gap-8 px-4">
           <div className="flex-1">
             <h4 className="font-semibold mb-2">Event Location</h4>
@@ -414,7 +414,7 @@ const SpringProductLaunch = () => {
             <h4 className="font-semibold mb-2">Stay Connected</h4>
             <button
               onClick={handleFollow}
-              className={`px-6 py-2 rounded-full bg-green-500 text-black font-semibold shadow hover:bg-green-400 transition ${
+              className={`px-6 py-2 rounded-full bg-[var(--accent)] text-black font-semibold shadow hover:bg-[var(--accent-hover)] transition ${
                 currentUser.follows.includes('Leaf & Co.') ? 'opacity-60 cursor-not-allowed' : ''
               }`}
               disabled={currentUser.follows.includes('Leaf & Co.')}

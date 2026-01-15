@@ -3,7 +3,12 @@
 import React from "react";
 import { useSession } from "next-auth/react";
 import { FeaturedProductCard } from "@/components/events/FeaturedProductCard";
+import { Button } from "@/components/ui/button";
 
+/**
+ * FeaturedCarousel - Horizontal scrolling product carousel
+ * Folio Design System: Uses ridge-style navigation buttons and accent accents
+ */
 export default function FeaturedCarousel({
   products,
   eventId,
@@ -28,18 +33,22 @@ export default function FeaturedCarousel({
   return (
     <div className="relative">
       <div className="hidden md:flex items-center justify-end mb-3 gap-2">
-        <button
-          className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-sm hover:bg-white/15"
+        <Button
+          variant="ridge"
+          size="sm"
+          className="rounded-full bg-[var(--bg-base)]/20 border-[var(--bg-base)]/30 text-white hover:bg-[var(--bg-base)]/30"
           onClick={() => scrollBy(-360)}
         >
           ◀
-        </button>
-        <button
-          className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-sm hover:bg-white/15"
+        </Button>
+        <Button
+          variant="ridge"
+          size="sm"
+          className="rounded-full bg-[var(--bg-base)]/20 border-[var(--bg-base)]/30 text-white hover:bg-[var(--bg-base)]/30"
           onClick={() => scrollBy(360)}
         >
           ▶
-        </button>
+        </Button>
       </div>
 
       <div ref={ref} className="flex gap-4 overflow-x-auto pb-2 snap-x snap-mandatory">

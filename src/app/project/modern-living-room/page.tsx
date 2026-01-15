@@ -94,10 +94,10 @@ export default function ModernLivingRoomProjectPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-800">
+    <div className="min-h-screen bg-[var(--bg-base)] text-[var(--text-primary)]">
       {/* Back Button */}
-      <div className="p-4 bg-white shadow-sm">
-        <Link href={project.designer.profileLink} className="flex items-center text-blue-600 hover:underline">
+      <div className="p-4 bg-[var(--bg-elevated)] shadow-sm">
+        <Link href={project.designer.profileLink} className="flex items-center text-[var(--accent)] hover:underline">
           <FaArrowLeft className="mr-2" /> Back to Designer Profile
         </Link>
       </div>
@@ -150,10 +150,10 @@ export default function ModernLivingRoomProjectPage() {
         <div className="lg:col-span-3 space-y-10">
 
           {/* Overview Section */}
-          <section className="bg-white p-8 rounded-lg shadow-md">
-            <h2 className="text-3xl font-bold mb-4">Overview</h2>
-            <p className="text-gray-700 leading-relaxed mb-6">{project.intro}</p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-gray-700">
+          <section className="bg-[var(--bg-elevated)] p-8 rounded-lg shadow-md">
+            <h2 className="folio-h2 mb-4">Overview</h2>
+            <p className="text-[var(--text-secondary)] leading-relaxed mb-6">{project.intro}</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-[var(--text-secondary)]">
               {project.specs.squareFootage && <p><span className="font-semibold">Size:</span> {project.specs.squareFootage}</p>}
               {project.specs.location && <p><span className="font-semibold">Location:</span> {project.specs.location}</p>}
               {project.specs.completionDate && <p><span className="font-semibold">Completed:</span> {project.specs.completionDate}</p>}
@@ -165,10 +165,10 @@ export default function ModernLivingRoomProjectPage() {
 
           {/* Story + Content Timeline */}
           <section className="space-y-8">
-            <h2 className="text-3xl font-bold mb-6">Project Journey</h2>
+            <h2 className="folio-h2 mb-6">Project Journey</h2>
             {project.contentTimeline.map((item) => (
-              <div key={item.id} className="bg-white p-6 rounded-lg shadow-md">
-                <h3 className="text-2xl font-semibold mb-3">{item.title}</h3>
+              <div key={item.id} className="bg-[var(--bg-elevated)] p-6 rounded-lg shadow-md">
+                <h3 className="folio-h3 mb-3">{item.title}</h3>
                 {item.type === "story" && item.imageUrl && (
                   <div className="relative w-full h-80 rounded-lg overflow-hidden mb-4">
                     <Image src={item.imageUrl} alt={item.title} fill className="object-cover" />
@@ -190,15 +190,15 @@ export default function ModernLivingRoomProjectPage() {
                     <Image src={item.imageUrl} alt={item.title} fill className="object-cover" />
                   </div>
                 )}
-                <p className="text-gray-700 leading-relaxed">{item.description || item.content}</p>
+                <p className="text-[var(--text-secondary)] leading-relaxed">{item.description || item.content}</p>
                 {/* Developer comment: Future integration for 'read more' for editorial posts */}
               </div>
             ))}
           </section>
 
           {/* Tagged Image Gallery */}
-          <section className="bg-white p-8 rounded-lg shadow-md">
-            <h2 className="text-3xl font-bold mb-6">Tagged Designs</h2>
+          <section className="bg-[var(--bg-elevated)] p-8 rounded-lg shadow-md">
+            <h2 className="folio-h2 mb-6">Tagged Designs</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 auto-rows-min">
               {project.taggedImages.map((img) => (
                 <div 
@@ -234,17 +234,17 @@ export default function ModernLivingRoomProjectPage() {
           </section>
 
           {/* Product Bank (Shoppable Section) */}
-          <section className="bg-white p-8 rounded-lg shadow-md">
-            <h2 className="text-3xl font-bold mb-6">Products Used in This Project</h2>
+          <section className="bg-[var(--bg-elevated)] p-8 rounded-lg shadow-md">
+            <h2 className="folio-h2 mb-6">Products Used in This Project</h2>
             {/* Optional Filters - Developer comment: Implement category, brand, color filters */}
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {project.productBank.map((product) => (
-                <div key={product.id} className="border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition">
+                <div key={product.id} className="border border-[var(--border-default)] rounded-lg overflow-hidden shadow-sm hover:shadow-md transition">
                   <Link href={product.link}>
                     <Image src={product.thumbnail} alt={product.name} width={200} height={150} className="w-full h-28 object-cover" />
                     <div className="p-3">
-                      <h3 className="font-semibold text-base mb-1">{product.name}</h3>
-                      <button className="mt-2 bg-amber-500 text-black text-sm px-4 py-2 rounded-full font-semibold hover:bg-amber-600 transition">
+                      <h3 className="font-semibold folio-body mb-1">{product.name}</h3>
+                      <button className="mt-2 bg-[var(--accent)] text-white folio-ui px-4 py-2 rounded-full font-semibold hover:bg-[var(--accent-hover)] transition">
                         Add to Mood Board
                       </button>
                     </div>
@@ -258,21 +258,21 @@ export default function ModernLivingRoomProjectPage() {
         {/* Sidebar Column */}
         <aside className="lg:col-span-1 space-y-8">
           {/* Smart Features - Engagement Stats */}
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <h2 className="text-xl font-semibold mb-4">Project Insights</h2>
+          <div className="bg-[var(--bg-elevated)] p-6 rounded-lg shadow-md">
+            <h2 className="folio-h3 mb-4">Project Insights</h2>
             <div className="space-y-3">
-              <p className="flex justify-between items-center text-lg">
-                <span>Saves:</span> <span className="font-bold text-blue-600">{project.engagement.saves.toLocaleString()}</span>
+              <p className="flex justify-between items-center folio-body">
+                <span>Saves:</span> <span className="font-bold text-[var(--accent)]">{project.engagement.saves.toLocaleString()}</span>
               </p>
-              <p className="flex justify-between items-center text-lg">
+              <p className="flex justify-between items-center folio-body">
                 <span>Likes:</span> <span className="font-bold text-red-600">{project.engagement.likes.toLocaleString()}</span>
               </p>
-              <p className="flex justify-between items-center text-lg">
+              <p className="flex justify-between items-center folio-body">
                 <span>Product Clicks:</span> <span className="font-bold text-green-600">{project.engagement.clickThroughs.toLocaleString()}</span>
               </p>
             </div>
             {/* "Used in Projects" Badge - Adjusted for this context */}
-            <div className="mt-6 bg-blue-100 border border-blue-200 text-blue-800 p-4 rounded-lg">
+            <div className="mt-6 bg-[var(--accent)]/10 border border-[var(--accent)]/20 text-[var(--accent)] p-4 rounded-lg">
               <p className="font-bold text-center">Used in 17 Projects by 9 Designers</p> {/* Placeholder, will be dynamic */}
             </div>
             {/* "Saved to Mood Boards" - Adjusted for this context */}
@@ -282,8 +282,8 @@ export default function ModernLivingRoomProjectPage() {
           </div>
 
           {/* Featured Designer Quote */}
-          <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-blue-500">
-            <p className="italic text-gray-700 mb-4 text-lg">"{project.designerQuote.quote}"</p>
+          <div className="bg-[var(--bg-elevated)] p-6 rounded-lg shadow-md border-l-4 border-[var(--accent)]">
+            <p className="folio-quote italic text-[var(--text-secondary)] mb-4">"{project.designerQuote.quote}"</p>
             <div className="flex items-center">
               <Image
                 src={project.designerQuote.designerProfileImage}
@@ -292,37 +292,37 @@ export default function ModernLivingRoomProjectPage() {
                 height={40}
                 className="rounded-full mr-3"
               />
-              <p className="font-semibold text-blue-700">- {project.designerQuote.designerName}</p>
+              <p className="font-semibold text-[var(--accent)]">- {project.designerQuote.designerName}</p>
             </div>
           </div>
 
           {/* Project Files & Downloads */}
-          <section className="bg-white p-6 rounded-lg shadow-md">
-            <h2 className="text-xl font-semibold mb-4">Project Files & Downloads</h2>
+          <section className="bg-[var(--bg-elevated)] p-6 rounded-lg shadow-md">
+            <h2 className="folio-h3 mb-4">Project Files & Downloads</h2>
             <div className="space-y-3">
-              <button className="flex items-center w-full bg-gray-200 text-gray-700 px-4 py-2 rounded-full font-medium hover:bg-gray-300 transition">
+              <button className="flex items-center w-full bg-[var(--bg-base)] text-[var(--text-primary)] px-4 py-2 rounded-full font-medium hover:bg-[var(--border-default)] transition">
                 <FaFilePdf className="mr-2" /> Project Summary (PDF)
               </button>
-              <button className="flex items-center w-full bg-gray-200 text-gray-700 px-4 py-2 rounded-full font-medium hover:bg-gray-300 transition">
+              <button className="flex items-center w-full bg-[var(--bg-base)] text-[var(--text-primary)] px-4 py-2 rounded-full font-medium hover:bg-[var(--border-default)] transition">
                 <FaDownload className="mr-2" /> Designer Boards (PDF)
               </button>
-              <button className="flex items-center w-full bg-gray-200 text-gray-700 px-4 py-2 rounded-full font-medium hover:bg-gray-300 transition">
+              <button className="flex items-center w-full bg-[var(--bg-base)] text-[var(--text-primary)] px-4 py-2 rounded-full font-medium hover:bg-[var(--border-default)] transition">
                 <FaDownload className="mr-2" /> Renderings (DWG, GLB)
               </button>
             </div>
           </section>
 
           {/* Share & Submit */}
-          <section className="bg-white p-6 rounded-lg shadow-md">
-            <h2 className="text-xl font-semibold mb-4">Share & Submit</h2>
+          <section className="bg-[var(--bg-elevated)] p-6 rounded-lg shadow-md">
+            <h2 className="folio-h3 mb-4">Share & Submit</h2>
             <div className="space-y-3">
-              <button className="flex items-center w-full bg-blue-600 text-white px-4 py-2 rounded-full font-semibold hover:bg-blue-700 transition">
+              <button className="flex items-center w-full bg-[var(--accent)] text-white px-4 py-2 rounded-full font-semibold hover:bg-[var(--accent-hover)] transition">
                 <FaPencilAlt className="mr-2" /> Submit to Folio Editorial
               </button>
               <button className="flex items-center w-full bg-green-600 text-white px-4 py-2 rounded-full font-semibold hover:bg-green-700 transition">
                 <FaPrint className="mr-2" /> Generate Print-Friendly Version
               </button>
-              <button className="flex items-center w-full bg-gray-700 text-white px-4 py-2 rounded-full font-semibold hover:bg-gray-600 transition">
+              <button className="flex items-center w-full bg-[var(--text-secondary)] text-white px-4 py-2 rounded-full font-semibold hover:bg-[var(--text-primary)] transition">
                 <FaShareAlt className="mr-2" /> Share Link with Client
               </button>
             </div>

@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { RidgeCard, StatsCard } from '@/components/ui/ridge-card';
+import { Button } from '@/components/ui/button';
 
 interface DashboardStats {
   totalFestivals: number;
@@ -39,47 +41,31 @@ export default function AdminDashboard() {
     });
   }, []);
 
-  const QuickActionCard = ({ title, description, href, icon, color }: {
+  const QuickActionCard = ({ title, description, href, icon }: {
     title: string;
     description: string;
     href: string;
     icon: string;
-    color: string;
   }) => (
-    <Link href={href} className={`block p-6 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow ${color}`}>
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">{title}</h3>
-          <p className="text-gray-600 text-sm">{description}</p>
+    <Link href={href}>
+      <RidgeCard className="h-full hover:shadow-lg transition-shadow cursor-pointer">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="folio-h3 mb-2">{title}</h3>
+            <p className="folio-body">{description}</p>
+          </div>
+          <div className="text-3xl">{icon}</div>
         </div>
-        <div className="text-3xl">{icon}</div>
-      </div>
+      </RidgeCard>
     </Link>
-  );
-
-  const StatCard = ({ title, value, icon, color }: {
-    title: string;
-    value: number;
-    icon: string;
-    color: string;
-  }) => (
-    <div className={`p-6 bg-white rounded-lg shadow-md ${color}`}>
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm font-medium text-gray-600">{title}</p>
-          <p className="text-2xl font-bold text-gray-900">{value}</p>
-        </div>
-        <div className="text-2xl">{icon}</div>
-      </div>
-    </div>
   );
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 py-8">
+      <div className="min-h-screen bg-[var(--bg-base)] py-8">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center">
-            <div className="text-gray-500">Loading dashboard...</div>
+            <div className="text-[var(--text-secondary)]">Loading dashboard...</div>
           </div>
         </div>
       </div>
@@ -87,107 +73,92 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-[var(--bg-base)] py-8">
       <div className="max-w-7xl mx-auto px-4">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>
-          <p className="text-gray-600">Manage your events platform and community</p>
+          <h1 className="folio-h1 mb-2">Admin Dashboard</h1>
+          <p className="folio-body">Manage your events platform and community</p>
         </div>
 
         {/* Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <StatCard
-            title="Total Festivals"
+          <StatsCard
+            label="Total Festivals"
             value={stats.totalFestivals}
-            icon="🎪"
-            color="border-l-4 border-blue-500"
           />
-          <StatCard
-            title="Total Events"
+          <StatsCard
+            label="Total Events"
             value={stats.totalEvents}
-            icon="📅"
-            color="border-l-4 border-green-500"
           />
-          <StatCard
-            title="Total Users"
+          <StatsCard
+            label="Total Users"
             value={stats.totalUsers}
-            icon="👥"
-            color="border-l-4 border-purple-500"
           />
-          <StatCard
-            title="Total Products"
+          <StatsCard
+            label="Total Products"
             value={stats.totalProducts}
-            icon="🛍️"
-            color="border-l-4 border-orange-500"
           />
         </div>
 
         {/* Quick Actions */}
         <div className="mb-8">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Quick Actions</h2>
+          <h2 className="folio-h2 mb-4">Quick Actions</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <QuickActionCard
               title="Create Festival"
               description="Set up a new design festival with multiple events"
               href="/admin/festivals/create"
-              icon="🎪"
-              color="hover:bg-blue-50"
+              icon="*"
             />
             <QuickActionCard
               title="Create Event"
               description="Add a standalone event or festival sub-event"
               href="/events/create"
-              icon="📅"
-              color="hover:bg-green-50"
+              icon="+"
             />
             <QuickActionCard
               title="Manage Events"
               description="View and edit all events and festivals"
               href="/admin/events"
-              icon="⚙️"
-              color="hover:bg-purple-50"
+              icon="#"
             />
             <QuickActionCard
               title="Review Submissions"
               description="Approve or reject pending event submissions"
               href="/admin/events/approvals"
-              icon="✅"
-              color="hover:bg-orange-50"
+              icon="!"
             />
             <QuickActionCard
               title="Manage Users"
               description="View and manage user accounts and roles"
               href="/admin/users"
-              icon="👥"
-              color="hover:bg-red-50"
+              icon="@"
             />
             <QuickActionCard
               title="Organizations"
               description="Manage orgs, verification status, and sales notes"
               href="/admin/organizations"
-              icon="🏢"
-              color="hover:bg-teal-50"
+              icon="&"
             />
             <QuickActionCard
               title="Export Data"
               description="Export events, users, and analytics data"
               href="/admin/export"
-              icon="📊"
-              color="hover:bg-indigo-50"
+              icon="^"
             />
           </div>
         </div>
 
         {/* Recent Activity */}
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Recent Activity</h2>
-          <div className="text-center text-gray-500 py-8">
-            <p>No recent activity to display</p>
-            <p className="text-sm mt-2">Activity tracking coming soon...</p>
+        <RidgeCard padding="lg">
+          <h2 className="folio-h2 mb-4">Recent Activity</h2>
+          <div className="text-center text-[var(--text-secondary)] py-8">
+            <p className="folio-body">No recent activity to display</p>
+            <p className="folio-meta mt-2">Activity tracking coming soon...</p>
           </div>
-        </div>
+        </RidgeCard>
       </div>
     </div>
   );
-} 
+}

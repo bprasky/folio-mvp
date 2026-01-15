@@ -34,10 +34,10 @@ export default async function EventsPage({
       {/* Admin Controls */}
       {isAdmin && (
         <div className="mx-auto max-w-7xl px-4 md:px-6 lg:px-8 mb-4 md:mb-6">
-          <div className="flex flex-wrap gap-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="flex flex-wrap gap-3 p-4 bg-[var(--bg-elevated)] border border-[var(--border)] rounded-lg">
             <Link 
               href="/admin/festivals/create"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-[var(--accent)] text-white font-medium rounded-lg hover:bg-[var(--accent-hover)] transition-colors"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -46,7 +46,7 @@ export default async function EventsPage({
             </Link>
             <Link 
               href="/events/create"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-[var(--accent)] text-white font-medium rounded-lg hover:bg-[var(--accent-hover)] transition-colors"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -59,7 +59,7 @@ export default async function EventsPage({
 
       {/* Edge-to-edge Festival Carousel */}
       <section aria-label="Festival timeline" className="mb-10">
-        <Suspense fallback={<div className="h-[400px] bg-neutral-100" />}>
+        <Suspense fallback={<div className="h-[400px] bg-[var(--bg-base)]" />}>
           <FestivalsCarousel festivals={festivals} />
         </Suspense>
       </section>

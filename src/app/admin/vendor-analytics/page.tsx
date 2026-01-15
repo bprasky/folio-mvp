@@ -2,10 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  FaChartBar, FaCamera, FaUpload, FaMapMarkerAlt, FaTag, 
-  FaPalette, FaStickyNote, FaFilter, FaDownload, FaEye 
+import {
+  FaChartBar, FaCamera, FaTag,
+  FaPalette, FaStickyNote, FaFilter, FaDownload, FaEye
 } from 'react-icons/fa';
+import { RidgeCard, StatsCard } from '@/components/ui/ridge-card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 interface Selection {
   id: string;
@@ -140,12 +143,12 @@ export default function VendorAnalyticsPage() {
 
   if (isLoading) {
     return (
-      <div className="p-6">
-        <div className="max-w-7xl mx-auto">
+      <div className="min-h-screen bg-[var(--bg-base)] py-8">
+        <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center justify-center h-full">
             <div className="text-center">
-              <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-              <p className="text-gray-600">Loading analytics...</p>
+              <div className="w-8 h-8 border-4 border-[var(--accent)] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+              <p className="text-[var(--text-secondary)]">Loading analytics...</p>
             </div>
           </div>
         </div>
@@ -154,106 +157,66 @@ export default function VendorAnalyticsPage() {
   }
 
   return (
-    <div className="p-6">
-        <div className="max-w-7xl mx-auto">
-        <div className="max-w-7xl mx-auto">
-          {/* Header */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-8"
-          >
-            <div className="flex justify-between items-center mb-6">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900">Vendor Analytics</h1>
-                <p className="text-gray-600">Track product selections and designer activity</p>
-              </div>
-              <button
-                onClick={exportData}
-                className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors flex items-center gap-2"
-              >
-                <FaDownload className="w-4 h-4" />
-                Export Data
-              </button>
+    <div className="min-h-screen bg-[var(--bg-base)] py-8">
+      <div className="max-w-7xl mx-auto px-4">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8"
+        >
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h1 className="folio-h1 mb-2">Vendor Analytics</h1>
+              <p className="folio-body">Track product selections and designer activity</p>
             </div>
-          </motion.div>
+            <Button variant="accent" onClick={exportData}>
+              <FaDownload className="w-4 h-4 mr-2" />
+              Export Data
+            </Button>
+          </div>
+        </motion.div>
 
-          {/* Stats Overview */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8"
-          >
-            <div className="bg-white rounded-2xl shadow-lg p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Total Selections</p>
-                  <p className="text-2xl font-bold text-gray-900">{selections.length}</p>
-                </div>
-                <FaChartBar className="w-8 h-8 text-blue-500" />
-              </div>
-            </div>
+        {/* Stats Overview */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8"
+        >
+          <StatsCard label="Total Selections" value={selections.length} />
+          <StatsCard label="Unique Vendors" value={Object.keys(stats.vendorCounts).length} />
+          <StatsCard label="Camera Captures" value={stats.sourceCounts.camera || 0} />
+          <StatsCard label="Final Specs" value={stats.phaseCounts.final_spec || 0} />
+        </motion.div>
 
-            <div className="bg-white rounded-2xl shadow-lg p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Unique Vendors</p>
-                  <p className="text-2xl font-bold text-gray-900">{Object.keys(stats.vendorCounts).length}</p>
-                </div>
-                <FaTag className="w-8 h-8 text-green-500" />
-              </div>
-            </div>
-
-            <div className="bg-white rounded-2xl shadow-lg p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Camera Captures</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.sourceCounts.camera || 0}</p>
-                </div>
-                <FaCamera className="w-8 h-8 text-purple-500" />
-              </div>
-            </div>
-
-            <div className="bg-white rounded-2xl shadow-lg p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Final Specs</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.phaseCounts.final_spec || 0}</p>
-                </div>
-                <FaEye className="w-8 h-8 text-orange-500" />
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Filters */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="bg-white rounded-2xl shadow-lg p-6 mb-8"
-          >
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+        {/* Filters */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+        >
+          <RidgeCard padding="md" className="mb-8">
+            <h3 className="folio-h3 mb-4 flex items-center gap-2">
               <FaFilter className="w-5 h-5" />
               Filters
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Vendor</label>
-                <input
+                <label className="block folio-meta mb-2">Vendor</label>
+                <Input
                   type="text"
                   value={filters.vendorName}
                   onChange={(e) => setFilters(prev => ({ ...prev, vendorName: e.target.value }))}
                   placeholder="Filter by vendor"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Phase</label>
+                <label className="block folio-meta mb-2">Phase</label>
                 <select
                   value={filters.phaseOfUse}
                   onChange={(e) => setFilters(prev => ({ ...prev, phaseOfUse: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="ridge-input w-full px-3 py-2"
                 >
                   <option value="">All Phases</option>
                   <option value="moodboard">Moodboard</option>
@@ -263,11 +226,11 @@ export default function VendorAnalyticsPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Source</label>
+                <label className="block folio-meta mb-2">Source</label>
                 <select
                   value={filters.source}
                   onChange={(e) => setFilters(prev => ({ ...prev, source: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="ridge-input w-full px-3 py-2"
                 >
                   <option value="">All Sources</option>
                   <option value="camera">Camera</option>
@@ -275,11 +238,11 @@ export default function VendorAnalyticsPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Project Type</label>
+                <label className="block folio-meta mb-2">Project Type</label>
                 <select
                   value={filters.projectType}
                   onChange={(e) => setFilters(prev => ({ ...prev, projectType: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="ridge-input w-full px-3 py-2"
                 >
                   <option value="">All Types</option>
                   <option value="Residential">Residential</option>
@@ -288,25 +251,26 @@ export default function VendorAnalyticsPage() {
                 </select>
               </div>
             </div>
-          </motion.div>
+          </RidgeCard>
+        </motion.div>
 
-          {/* Selections Grid */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-          >
-            {filteredSelections.map((selection, index) => (
-              <motion.div
-                key={selection.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-                className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow"
-              >
+        {/* Selections Grid */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+        >
+          {filteredSelections.map((selection, index) => (
+            <motion.div
+              key={selection.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.05 }}
+            >
+              <RidgeCard padding="none" className="overflow-hidden hover:shadow-lg transition-shadow">
                 {/* Image */}
-                <div className="aspect-square bg-gray-200 relative">
+                <div className="aspect-square bg-[var(--bg-elevated)] relative">
                   {selection.photo ? (
                     <img
                       src={selection.photo}
@@ -315,113 +279,113 @@ export default function VendorAnalyticsPage() {
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
-                      <FaCamera className="w-12 h-12 text-gray-400" />
+                      <FaCamera className="w-12 h-12 text-[var(--text-tertiary)]" />
                     </div>
                   )}
-                  
+
                   {/* Source Badge */}
                   <div className="absolute top-2 left-2">
                     <span className={`px-2 py-1 text-xs rounded-full ${
-                      selection.source === 'camera' 
-                        ? 'bg-purple-100 text-purple-800' 
-                        : 'bg-gray-100 text-gray-800'
+                      selection.source === 'camera'
+                        ? 'bg-purple-100 text-purple-800'
+                        : 'bg-[var(--bg-elevated)] text-[var(--text-secondary)]'
                     }`}>
                       {selection.source}
                     </span>
                   </div>
                 </div>
-                
+
                 {/* Content */}
                 <div className="p-4">
                   {/* Product Information */}
                   {selection.productName && (
                     <div className="mb-2">
-                      <h4 className="font-semibold text-gray-900 text-sm">{selection.productName}</h4>
+                      <h4 className="font-semibold text-[var(--text-primary)] text-sm">{selection.productName}</h4>
                       {selection.vendorName && (
-                        <p className="text-xs text-gray-600">{selection.vendorName}</p>
+                        <p className="text-xs text-[var(--text-secondary)]">{selection.vendorName}</p>
                       )}
                     </div>
                   )}
-                  
+
                   {/* Color/Finish */}
                   {selection.colorFinish && (
                     <div className="mb-2">
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <div className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
                         <FaPalette className="w-3 h-3" />
                         <span>{selection.colorFinish}</span>
                       </div>
                     </div>
                   )}
-                  
+
                   {/* Phase of Use */}
                   {selection.phaseOfUse && (
                     <div className="mb-2">
                       <span className={`px-2 py-1 text-xs rounded-full ${
-                        selection.phaseOfUse === 'final_spec' 
+                        selection.phaseOfUse === 'final_spec'
                           ? 'bg-green-100 text-green-800'
                           : selection.phaseOfUse === 'pending_approval'
-                          ? 'bg-yellow-100 text-yellow-800'
+                          ? 'bg-amber-100 text-amber-800'
                           : 'bg-blue-100 text-blue-800'
                       }`}>
                         {selection.phaseOfUse.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
                       </span>
                     </div>
                   )}
-                  
+
                   {/* Project Info */}
                   <div className="mb-2">
-                    <p className="text-xs text-gray-600">
-                      <span className="font-medium">{selection.room.project.name}</span> • {selection.room.name}
+                    <p className="text-xs text-[var(--text-secondary)]">
+                      <span className="font-medium">{selection.room.project.name}</span> - {selection.room.name}
                     </p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-[var(--text-tertiary)]">
                       Designer: {selection.room.project.designer.name}
                     </p>
                   </div>
-                  
+
                   {/* Notes */}
                   {selection.notes && (
                     <div className="mb-3">
                       <div className="flex items-start gap-2">
-                        <FaStickyNote className="w-3 h-3 text-gray-400 mt-0.5 flex-shrink-0" />
-                        <p className="text-xs text-gray-700 line-clamp-2">{selection.notes}</p>
+                        <FaStickyNote className="w-3 h-3 text-[var(--text-tertiary)] mt-0.5 flex-shrink-0" />
+                        <p className="text-xs text-[var(--text-secondary)] line-clamp-2">{selection.notes}</p>
                       </div>
                     </div>
                   )}
-                  
+
                   {/* Date */}
-                  <div className="text-xs text-gray-500">
+                  <div className="text-xs text-[var(--text-tertiary)]">
                     {new Date(selection.createdAt).toLocaleDateString()}
                   </div>
                 </div>
-              </motion.div>
-            ))}
-          </motion.div>
-
-          {/* Empty State */}
-          {filteredSelections.length === 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-              className="text-center py-16"
-            >
-              <div className="bg-white rounded-2xl p-8 shadow-lg max-w-md mx-auto">
-                <FaChartBar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-xl font-bold text-gray-900 mb-2">No Selections Found</h3>
-                <p className="text-gray-600 mb-6">
-                  Try adjusting your filters to see more results
-                </p>
-                <button
-                  onClick={() => setFilters({ vendorName: '', phaseOfUse: '', source: '', projectType: '' })}
-                  className="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors"
-                >
-                  Clear Filters
-                </button>
-              </div>
+              </RidgeCard>
             </motion.div>
-          )}
-        </div>
+          ))}
+        </motion.div>
+
+        {/* Empty State */}
+        {filteredSelections.length === 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="text-center py-16"
+          >
+            <RidgeCard padding="xl" className="max-w-md mx-auto">
+              <FaChartBar className="w-16 h-16 text-[var(--text-tertiary)] mx-auto mb-4" />
+              <h3 className="folio-h3 mb-2">No Selections Found</h3>
+              <p className="folio-body mb-6">
+                Try adjusting your filters to see more results
+              </p>
+              <Button
+                variant="accent"
+                onClick={() => setFilters({ vendorName: '', phaseOfUse: '', source: '', projectType: '' })}
+              >
+                Clear Filters
+              </Button>
+            </RidgeCard>
+          </motion.div>
+        )}
       </div>
     </div>
   );
-} 
+}

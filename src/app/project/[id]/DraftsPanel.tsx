@@ -440,7 +440,7 @@ export default function DraftsPanel({ projectId }: { projectId: string }) {
 
   if (isLoading) {
     return (
-      <div className="p-8 text-center text-gray-500">Loading drafts...</div>
+      <div className="p-8 text-center text-[var(--text-secondary)]">Loading drafts...</div>
     );
   }
 
@@ -448,12 +448,12 @@ export default function DraftsPanel({ projectId }: { projectId: string }) {
     <div className="grid grid-cols-12 gap-6">
       <div className="col-span-8 space-y-8">
         {/* Your Story Section */}
-        <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+        <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-elevated)] p-6 shadow-sm">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-gray-900">Your Story</h2>
+            <h2 className="folio-h3 text-[var(--text-primary)]">Your Story</h2>
             <div className="flex gap-2">
               <button
-                className="px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+                className="px-3 py-1.5 folio-ui font-medium text-white bg-[var(--accent)] rounded-lg hover:bg-[var(--accent-hover)] transition-colors"
                 onClick={addAnswer}
               >
                 + Add
@@ -462,28 +462,28 @@ export default function DraftsPanel({ projectId }: { projectId: string }) {
           </div>
           <div className="space-y-3 max-h-[420px] overflow-y-auto pr-2">
             {filteredAnswers.length === 0 && (
-              <p className="text-sm text-gray-500 italic">
+              <p className="folio-ui text-[var(--text-tertiary)] italic">
                 No answers yet. Add your first answer above.
               </p>
             )}
             {filteredAnswers.map((qa, i) => (
               <div
                 key={i}
-                className="border rounded-lg p-4 mb-3"
+                className="border border-[var(--border-default)] rounded-lg p-4 mb-3"
               >
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block folio-ui font-medium text-[var(--text-primary)] mb-2">
                   {qa.q || qa.question || "Your reflection"}
                 </label>
                 <textarea
                   value={qa.a || qa.answer || ""}
                   onChange={(e) => setAnswer(i, "a", e.target.value)}
-                  className="w-full min-h-[80px] p-2 border rounded text-sm resize-y"
+                  className="w-full min-h-[80px] p-2 border border-[var(--border-default)] rounded folio-ui resize-y bg-[var(--bg-base)]"
                   placeholder="Share your thoughts..."
                 />
                 <div className="flex justify-end mt-2">
-                  <button 
-                    onClick={() => removeAnswer(i)} 
-                    className="text-gray-400 hover:text-red-500"
+                  <button
+                    onClick={() => removeAnswer(i)}
+                    className="text-[var(--text-tertiary)] hover:text-red-500"
                     aria-label="Remove"
                   >
                     <X className="w-4 h-4" />
@@ -495,18 +495,18 @@ export default function DraftsPanel({ projectId }: { projectId: string }) {
         </div>
 
         {/* Follow-up Questions Section */}
-        <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+        <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-elevated)] p-6 shadow-sm">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-gray-900">Follow-up Questions</h2>
+            <h2 className="folio-h3 text-[var(--text-primary)]">Follow-up Questions</h2>
             <div className="flex gap-2">
               <button
-                className="px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+                className="px-3 py-1.5 folio-ui font-medium text-white bg-[var(--accent)] rounded-lg hover:bg-[var(--accent-hover)] transition-colors"
                 onClick={addFollowup}
               >
                 + Add
               </button>
               <button
-                className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-lg hover:bg-gray-200 transition-colors"
+                className="px-3 py-1.5 folio-ui font-medium text-[var(--text-primary)] bg-[var(--bg-base)] border border-[var(--border-default)] rounded-lg hover:bg-[var(--bg-elevated)] transition-colors"
                 onClick={reAskFollowups}
               >
                 Ask
@@ -515,23 +515,23 @@ export default function DraftsPanel({ projectId }: { projectId: string }) {
           </div>
           <div className="space-y-3 max-h-[280px] overflow-y-auto pr-2">
             {filteredFollowups.length === 0 && (
-              <p className="text-sm text-gray-500 italic">
+              <p className="folio-ui text-[var(--text-tertiary)] italic">
                 Deeper questions based on your reflections. Click Ask to generate.
               </p>
             )}
             {filteredFollowups.map((qa, i) => (
               <div
                 key={i}
-                className="grid grid-cols-12 gap-3 items-start p-3 rounded-lg border border-gray-100 hover:border-gray-200 transition-colors"
+                className="grid grid-cols-12 gap-3 items-start p-3 rounded-lg border border-[var(--border-default)] hover:border-[var(--accent)] transition-colors"
               >
                 <input
-                  className="col-span-5 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-w-0"
+                  className="col-span-5 px-3 py-2 folio-ui border border-[var(--border-default)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)] min-w-0 bg-[var(--bg-base)]"
                   value={qa.q || qa.question || ""}
                   placeholder="Follow-up Question"
                   onChange={(e) => setFollowup(i, "q", e.target.value)}
                 />
                 <textarea
-                  className="col-span-6 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                  className="col-span-6 px-3 py-2 folio-ui border border-[var(--border-default)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)] resize-none bg-[var(--bg-base)]"
                   value={qa.a || qa.answer || ""}
                   placeholder="Answer"
                   rows={2}
@@ -552,14 +552,14 @@ export default function DraftsPanel({ projectId }: { projectId: string }) {
         {/* Action Buttons */}
         <div className="flex gap-3 flex-wrap">
           <button
-            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="px-4 py-2 folio-ui font-medium text-white bg-[var(--accent)] rounded-lg hover:bg-[var(--accent-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             disabled={saving}
             onClick={saveAnswers}
           >
             {saving ? "Saving..." : "Save"}
           </button>
           <button
-            className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="px-4 py-2 folio-ui font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             disabled={regenBusy}
             onClick={() => regenerate({ overwrite: true })}
           >
@@ -569,7 +569,7 @@ export default function DraftsPanel({ projectId }: { projectId: string }) {
         <div className="mt-6 text-center">
           <button
             onClick={handleStartOver}
-            className="text-sm text-gray-500 hover:text-gray-700 underline"
+            className="folio-ui text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] underline"
           >
             Start Over
           </button>
@@ -579,8 +579,8 @@ export default function DraftsPanel({ projectId }: { projectId: string }) {
       {/* Sidebar */}
       <div className="col-span-4 space-y-6">
         {/* Current Draft Preview */}
-        <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-          <h3 className="font-semibold text-lg text-gray-900 mb-4">
+        <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-elevated)] p-6 shadow-sm">
+          <h3 className="font-semibold folio-h3 text-[var(--text-primary)] mb-4">
             Current Draft Preview
           </h3>
           {currentLead?.kicker || currentLead?.title ? (
@@ -589,25 +589,25 @@ export default function DraftsPanel({ projectId }: { projectId: string }) {
               {currentPost?.status && (
                 <div className="mb-3">
                   <span
-                    className={`px-2 py-1 rounded text-xs font-medium ${
+                    className={`px-2 py-1 rounded folio-meta font-medium ${
                       currentPost.status === "PUBLISHED"
                         ? "bg-green-100 text-green-800"
-                        : "bg-gray-100 text-gray-700"
+                        : "bg-[var(--bg-base)] text-[var(--text-secondary)]"
                     }`}
                   >
                     {currentPost.status}
                   </span>
                 </div>
               )}
-              <p className="text-base font-medium text-gray-900">
+              <p className="folio-body font-medium text-[var(--text-primary)]">
                 {currentLead.kicker || currentLead.title}
               </p>
               {(currentLead.deck || (currentLead as any).dek) && (
-                <p className="text-sm text-gray-600 leading-relaxed">
+                <p className="folio-ui text-[var(--text-secondary)] leading-relaxed">
                   {currentLead.deck || (currentLead as any).dek}
                 </p>
               )}
-              <div className="mt-4 space-y-2 text-sm text-gray-700">
+              <div className="mt-4 space-y-2 folio-ui text-[var(--text-secondary)]">
                 {currentSections
                   .filter((s: any) => s.type === "narrative" && s.body)
                   .slice(0, 3)
@@ -620,18 +620,18 @@ export default function DraftsPanel({ projectId }: { projectId: string }) {
               {currentSections.filter(
                 (s: any) => s.type === "narrative" && s.body
               ).length === 0 && (
-                <p className="text-sm text-gray-500 italic">
+                <p className="folio-ui text-[var(--text-tertiary)] italic">
                   No narrative sections yet. Generate a draft to see preview.
                 </p>
               )}
               {/* Published post link */}
               {currentPost?.status === 'PUBLISHED' && currentPost?.slug && (
-                <div className="mt-4 pt-4 border-t">
-                  <a 
+                <div className="mt-4 pt-4 border-t border-[var(--border-default)]">
+                  <a
                     href={`/p/${currentPost.slug}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                    className="folio-ui text-[var(--accent)] hover:text-[var(--accent-hover)] flex items-center gap-1"
                   >
                     View Post <ExternalLink className="w-3 h-3" />
                   </a>
@@ -639,14 +639,14 @@ export default function DraftsPanel({ projectId }: { projectId: string }) {
               )}
             </div>
           ) : (
-            <p className="text-sm text-gray-500 italic">
+            <p className="folio-ui text-[var(--text-tertiary)] italic">
               No draft yet. Save answers and click "Update Post" to create one.
             </p>
           )}
           {data?.drafts && data.drafts.length > 0 && (
-            <div className="mt-4 pt-4 border-t">
+            <div className="mt-4 pt-4 border-t border-[var(--border-default)]">
               <button
-                className="w-full px-4 py-2 text-sm font-medium text-purple-700 bg-purple-50 border border-purple-200 rounded-lg hover:bg-purple-100 transition-colors"
+                className="w-full px-4 py-2 folio-ui font-medium text-[var(--accent)] bg-[var(--accent)]/10 border border-[var(--accent)]/20 rounded-lg hover:bg-[var(--accent)]/20 transition-colors"
                 onClick={() => router.push(`/designer/projects/${projectId}/preview`)}
               >
                 View Full Preview

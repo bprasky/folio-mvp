@@ -146,7 +146,7 @@ const EventsPageClient: React.FC<EventsPageClientProps> = ({
 
     return (
       <div className="mb-8">
-        <h2 className="text-lg font-semibold text-folio-text mb-4">Featured Festivals</h2>
+        <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-4">Featured Festivals</h2>
         <div className="flex overflow-x-auto space-x-4 pb-4">
           {festivals.map((festival) => {
             const tags = getFestivalTags(festival);
@@ -158,11 +158,11 @@ const EventsPageClient: React.FC<EventsPageClientProps> = ({
             return (
               <div
                 key={festival.id}
-                className={`flex-shrink-0 w-72 bg-white rounded-lg shadow-sm border cursor-pointer transition-all ${isExpanded ? 'border-folio-accent ring-2 ring-folio-accent ring-opacity-50' : 'border-folio-border hover:shadow-md'} ${isLive ? 'shadow-[0_0_15px_rgba(34,197,94,0.3)]' : ''}`}
+                className={`flex-shrink-0 w-72 bg-[var(--bg-elevated)] rounded-lg shadow-sm border cursor-pointer transition-all ${isExpanded ? 'border-[var(--accent)] ring-2 ring-folio-accent ring-opacity-50' : 'border-[var(--border)] hover:shadow-md'} ${isLive ? 'shadow-[0_0_15px_rgba(34,197,94,0.3)]' : ''}`}
                 onClick={() => setExpandedFestival(isExpanded ? null : festival.id)}
               >
                 {/* Image placeholder */}
-                <div className="w-full h-32 bg-gray-100 rounded-t-lg flex items-center justify-center text-4xl">
+                <div className="w-full h-32 bg-[var(--bg-base)] rounded-t-lg flex items-center justify-center text-4xl">
                   🎪
                 </div>
                 <div className="p-4">
@@ -174,18 +174,18 @@ const EventsPageClient: React.FC<EventsPageClientProps> = ({
                         </span>
                       ))}
                     </div>
-                    <span className="text-xs text-folio-text-muted">
+                    <span className="text-xs text-[var(--text-primary)]-muted">
                       {festival.subevents.length} events
                     </span>
                   </div>
-                  <h3 className="font-semibold text-folio-text mb-2 line-clamp-2">{festival.title}</h3>
-                  <p className="text-sm text-folio-text-muted mb-3 line-clamp-3">{festival.description}</p>
+                  <h3 className="font-semibold text-[var(--text-primary)] mb-2 line-clamp-2">{festival.title}</h3>
+                  <p className="text-sm text-[var(--text-primary)]-muted mb-3 line-clamp-3">{festival.description}</p>
                   <div className="space-y-1">
-                    <div className="flex items-center text-xs text-folio-text-muted">
+                    <div className="flex items-center text-xs text-[var(--text-primary)]-muted">
                       <FaCalendarAlt className="w-3 h-3 mr-2" />
                       {formatDate(festival.startDate)} - {formatDate(festival.endDate)}
                     </div>
-                    <div className="flex items-center text-xs text-folio-text-muted">
+                    <div className="flex items-center text-xs text-[var(--text-primary)]-muted">
                       <FaMapMarkerAlt className="w-3 h-3 mr-2" />
                       {festival.location}
                     </div>
@@ -204,12 +204,12 @@ const EventsPageClient: React.FC<EventsPageClientProps> = ({
                           </li>
                         ))
                       ) : (
-                        <li className="text-sm text-gray-500">No events yet</li>
+                        <li className="text-sm text-[var(--text-secondary)]">No events yet</li>
                       )}
                     </ul>
                     <h4 className="font-semibold mt-4 mb-2">Stories</h4>
                     <div className="flex overflow-x-auto space-x-4 pb-4">
-                      <div className="flex-shrink-0 w-64 h-36 bg-gray-100 rounded-lg flex items-center justify-center text-gray-500">
+                      <div className="flex-shrink-0 w-64 h-36 bg-[var(--bg-base)] rounded-lg flex items-center justify-center text-[var(--text-secondary)]">
                         No stories yet — be the first!
                       </div>
                       {/* Future: map over actual stories */}
@@ -280,18 +280,18 @@ const EventsPageClient: React.FC<EventsPageClientProps> = ({
     return (
       <Link
         href={`/events/${event.id}`}
-        className={`block bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300 overflow-hidden ${getLayoutClasses()}`}
+        className={`block bg-[var(--bg-elevated)] rounded-xl shadow-sm border border-[var(--border)] hover:shadow-md transition-all duration-300 overflow-hidden ${getLayoutClasses()}`}
       >
         {/* Image Container */}
         <div className={`relative ${layoutSize === 'XL' ? 'h-64' : layoutSize === 'L' ? 'h-48' : layoutSize === 'M' ? 'h-40' : 'h-32'} overflow-hidden`}>
-          <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
+          <div className="w-full h-full bg-[var(--bg-base)] flex items-center justify-center">
                             <span className="text-4xl">{getEventTypeIcon(event.eventTypes && event.eventTypes.length > 0 ? event.eventTypes[0] : 'OTHER')}</span>
           </div>
           
           {/* Admin Edit Icon */}
           {userRole === 'ADMIN' && (
             <Link href={`/admin/events/${event.id}`} onClick={(e) => e.stopPropagation()}>
-              <div className="absolute top-2 right-2 bg-blue-500 text-white p-1 rounded-full shadow-sm hover:bg-blue-600 transition-colors z-20">
+              <div className="absolute top-2 right-2 bg-blue-500 text-white p-1 rounded-full shadow-sm hover:bg-[var(--accent)] transition-colors z-20">
                 <FaEdit className="w-3 h-3" />
               </div>
             </Link>
@@ -313,13 +313,13 @@ const EventsPageClient: React.FC<EventsPageClientProps> = ({
         {/* Content */}
         <div className="p-4 space-y-3">
           {/* Title */}
-          <h3 className={`${typography.title} text-gray-900 line-clamp-2 leading-tight`}>
+          <h3 className={`${typography.title} text-[var(--text-primary)] line-clamp-2 leading-tight`}>
             {event.title}
           </h3>
 
           {/* Description - only show for larger tiles */}
           {(layoutSize === 'XL' || layoutSize === 'L') && event.description && (
-            <p className={`${typography.description} text-gray-600 line-clamp-2`}>
+            <p className={`${typography.description} text-[var(--text-secondary)] line-clamp-2`}>
               {event.description}
             </p>
           )}
@@ -327,7 +327,7 @@ const EventsPageClient: React.FC<EventsPageClientProps> = ({
           {/* Event Details */}
           <div className="space-y-2">
             {/* Date and Time */}
-            <div className="flex items-center text-gray-500">
+            <div className="flex items-center text-[var(--text-secondary)]">
               <FaCalendarAlt className={`${typography.meta} mr-2 flex-shrink-0`} />
               <span className={`${typography.meta}`}>
                 {formatDate(event.startDate)}
@@ -336,7 +336,7 @@ const EventsPageClient: React.FC<EventsPageClientProps> = ({
             </div>
 
             {/* Location */}
-            <div className="flex items-center text-gray-500">
+            <div className="flex items-center text-[var(--text-secondary)]">
               <FaMapMarkerAlt className={`${typography.meta} mr-2 flex-shrink-0`} />
               <span className={`${typography.meta} line-clamp-1`}>
                 {event.location}
@@ -345,7 +345,7 @@ const EventsPageClient: React.FC<EventsPageClientProps> = ({
 
             {/* RSVP Count */}
             <div className="flex items-center justify-between">
-              <div className="flex items-center text-gray-500">
+              <div className="flex items-center text-[var(--text-secondary)]">
                 <FaUser className={`${typography.meta} mr-2 flex-shrink-0`} />
                 <span className={`${typography.meta}`}>
                   {Math.floor(Math.random() * 100)} RSVPs
@@ -353,7 +353,7 @@ const EventsPageClient: React.FC<EventsPageClientProps> = ({
               </div>
               
               {/* Event Type Icon */}
-              <div className="flex items-center text-gray-400">
+              <div className="flex items-center text-[var(--text-tertiary)]">
                 <span className={`${typography.meta} mr-1`}>
                   {getEventTypeIcon(event.eventTypes && event.eventTypes.length > 0 ? event.eventTypes[0] : 'OTHER')}
                 </span>
@@ -366,8 +366,8 @@ const EventsPageClient: React.FC<EventsPageClientProps> = ({
 
           {/* Festival Badge - only show for larger tiles */}
           {(layoutSize === 'XL' || layoutSize === 'L') && event.parentFestival && (
-            <div className="pt-2 border-t border-gray-100">
-              <span className="inline-flex items-center px-2 py-1 text-xs font-medium text-folio-accent bg-folio-accent/10 rounded-full">
+            <div className="pt-2 border-t border-[var(--border)]">
+              <span className="inline-flex items-center px-2 py-1 text-xs font-medium text-[var(--accent)] bg-[var(--accent)]/10 rounded-full">
                 {event.parentFestival.title}
               </span>
             </div>
@@ -383,19 +383,19 @@ const EventsPageClient: React.FC<EventsPageClientProps> = ({
       case 'admin':
         return (
           <div className="flex flex-wrap gap-3">
-            <Link href="/admin/events/approvals" className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+            <Link href="/admin/events/approvals" className="flex items-center px-4 py-2 bg-[var(--accent)] text-white rounded-lg hover:bg-[var(--accent-hover)] transition-colors">
               Manage Events
             </Link>
-            <Link href="/admin/festivals/create" className="flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+            <Link href="/admin/festivals/create" className="flex items-center px-4 py-2 bg-[var(--accent)] text-white rounded-lg hover:bg-[var(--accent-hover)] transition-colors">
               Create Festival
             </Link>
-            <Link href="/events/create" className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+            <Link href="/events/create" className="flex items-center px-4 py-2 bg-[var(--accent)] text-white rounded-lg hover:bg-[var(--accent-hover)] transition-colors">
               Create Event
             </Link>
-            <Link href="/admin/events" className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+            <Link href="/admin/events" className="flex items-center px-4 py-2 bg-[var(--accent)] text-white rounded-lg hover:bg-[var(--accent-hover)] transition-colors">
               Edit Events
             </Link>
-            <Link href="/events" className="flex items-center px-4 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700 transition-colors">
+            <Link href="/events" className="flex items-center px-4 py-2 bg-[var(--accent)] text-white rounded-lg hover:bg-[var(--accent-hover)] transition-colors">
               View Events
             </Link>
           </div>
@@ -403,11 +403,11 @@ const EventsPageClient: React.FC<EventsPageClientProps> = ({
       case 'vendor':
         return (
           <div className="flex gap-3">
-            <Link href="/vendors/events/create" className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+            <Link href="/vendors/events/create" className="flex items-center px-4 py-2 bg-[var(--accent)] text-white rounded-lg hover:bg-[var(--accent-hover)] transition-colors">
               <FaPlus className="mr-2" />
               Create Event
             </Link>
-            <Link href="/vendor/events" className="flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+            <Link href="/vendor/events" className="flex items-center px-4 py-2 bg-[var(--accent)] text-white rounded-lg hover:bg-[var(--accent-hover)] transition-colors">
               My Events
             </Link>
           </div>
@@ -415,7 +415,7 @@ const EventsPageClient: React.FC<EventsPageClientProps> = ({
       case 'designer':
         return (
           <div className="flex gap-3">
-            <Link href="/designer/events/schedule" className="flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+            <Link href="/designer/events/schedule" className="flex items-center px-4 py-2 bg-[var(--accent)] text-white rounded-lg hover:bg-[var(--accent-hover)] transition-colors">
               <MdSchedule className="mr-2" />
               My Schedule
             </Link>
@@ -437,8 +437,8 @@ const EventsPageClient: React.FC<EventsPageClientProps> = ({
       {/* Header with Role Actions - now top of page */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-8">
         <div>
-          <h2 className="text-2xl font-bold text-folio-text mb-2">{selectedFest ? `Events in ${selectedFest.title}` : 'Upcoming Events'}</h2>
-          <p className="text-folio-text-muted">{selectedFest ? 'Explore events within this festival' : 'Discover all design events'}</p>
+          <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-2">{selectedFest ? `Events in ${selectedFest.title}` : 'Upcoming Events'}</h2>
+          <p className="text-[var(--text-primary)]-muted">{selectedFest ? 'Explore events within this festival' : 'Discover all design events'}</p>
         </div>
         
         <div className="mt-4 lg:mt-0">
@@ -451,13 +451,13 @@ const EventsPageClient: React.FC<EventsPageClientProps> = ({
       <div className="mb-6 flex flex-wrap gap-3">
         <Link
           href="/admin/festivals/create"
-          className="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors"
+          className="inline-flex items-center px-4 py-2 bg-[var(--accent)] text-white rounded-md hover:bg-[var(--accent-hover)] transition-colors"
         >
           Create Festival
         </Link>
         <Link
           href="/events/create"
-          className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+          className="inline-flex items-center px-4 py-2 bg-[var(--accent)] text-white rounded-md hover:bg-[var(--accent-hover)] transition-colors"
         >
           Create Event
         </Link>
@@ -467,13 +467,13 @@ const EventsPageClient: React.FC<EventsPageClientProps> = ({
       <FestivalCarouselSection />
 
       {/* Filters - updated options */}
-      <div className="flex flex-wrap gap-4 mb-6 sticky top-0 bg-gray-50 z-10 py-4">
+      <div className="flex flex-wrap gap-4 mb-6 sticky top-0 bg-[var(--bg-base)] z-10 py-4">
         <div className="flex items-center space-x-2">
-          <FaFilter className="text-folio-text-muted" />
+          <FaFilter className="text-[var(--text-primary)]-muted" />
           <select
             value={eventTypeFilter}
             onChange={(e) => setEventTypeFilter(e.target.value as EventTypeFilter)}
-            className="px-3 py-2 border border-folio-border rounded-lg focus:outline-none focus:ring-2 focus:ring-folio-accent"
+            className="px-3 py-2 border border-[var(--border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
           >
             <option value="all">All Types</option>
             <option value="booth">Booth</option>
@@ -488,7 +488,7 @@ const EventsPageClient: React.FC<EventsPageClientProps> = ({
         <select
           value={tagFilter}
           onChange={(e) => setTagFilter(e.target.value as BuzzTag)}
-          className="px-3 py-2 border border-folio-border rounded-lg focus:outline-none focus:ring-2 focus:ring-folio-accent"
+          className="px-3 py-2 border border-[var(--border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
         >
           <option value="all">All Buzz</option>
           <option value="trending">Trending</option>
@@ -505,10 +505,10 @@ const EventsPageClient: React.FC<EventsPageClientProps> = ({
         <div className="text-center py-16">
           <div className="max-w-md mx-auto">
             <div className="text-6xl mb-6">🎭</div>
-            <h3 className="text-2xl font-bold text-folio-text mb-4">
+            <h3 className="text-2xl font-bold text-[var(--text-primary)] mb-4">
               { (eventTypeFilter !== 'all' || tagFilter !== 'all') ? 'No events match your filters' : 'No events yet'}
             </h3>
-            <p className="text-folio-text-muted mb-8">
+            <p className="text-[var(--text-primary)]-muted mb-8">
               { (eventTypeFilter !== 'all' || tagFilter !== 'all') 
                 ? 'Try adjusting your filters or check back later for new events. We\'re constantly adding exciting design events!'
                 : 'We\'re working hard to bring you amazing design events. Check back soon for workshops, exhibitions, and networking opportunities!'
@@ -520,12 +520,12 @@ const EventsPageClient: React.FC<EventsPageClientProps> = ({
               <div className="space-y-4">
                 <Link
                   href="/events/create"
-                  className="inline-flex items-center px-6 py-3 bg-folio-accent text-white rounded-lg hover:bg-folio-accent-dark transition-colors"
+                  className="inline-flex items-center px-6 py-3 bg-[var(--accent)] text-white rounded-lg hover:bg-[var(--accent)]-dark transition-colors"
                 >
                   <FaPlus className="mr-2" />
                   Create Your First Event
                 </Link>
-                <p className="text-sm text-folio-text-muted">
+                <p className="text-sm text-[var(--text-primary)]-muted">
                   As an admin, you can create festivals and events to get the community engaged.
                 </p>
               </div>
@@ -535,12 +535,12 @@ const EventsPageClient: React.FC<EventsPageClientProps> = ({
               <div className="space-y-4">
                 <Link
                   href="/events/create"
-                  className="inline-flex items-center px-6 py-3 bg-folio-accent text-white rounded-lg hover:bg-folio-accent-dark transition-colors"
+                  className="inline-flex items-center px-6 py-3 bg-[var(--accent)] text-white rounded-lg hover:bg-[var(--accent)]-dark transition-colors"
                 >
                   <FaPlus className="mr-2" />
                   Create an Event
                 </Link>
-                <p className="text-sm text-folio-text-muted">
+                <p className="text-sm text-[var(--text-primary)]-muted">
                   Host workshops, product launches, or networking events to connect with designers.
                 </p>
               </div>
@@ -550,12 +550,12 @@ const EventsPageClient: React.FC<EventsPageClientProps> = ({
               <div className="space-y-4">
                 <Link
                   href="/inspire"
-                  className="inline-flex items-center px-6 py-3 bg-folio-accent text-white rounded-lg hover:bg-folio-accent-dark transition-colors"
+                  className="inline-flex items-center px-6 py-3 bg-[var(--accent)] text-white rounded-lg hover:bg-[var(--accent)]-dark transition-colors"
                 >
                   <FaUser className="mr-2" />
                   Explore Design Inspiration
                 </Link>
-                <p className="text-sm text-folio-text-muted">
+                <p className="text-sm text-[var(--text-primary)]-muted">
                   While you wait for events, discover amazing design projects from the community.
                 </p>
               </div>
@@ -565,12 +565,12 @@ const EventsPageClient: React.FC<EventsPageClientProps> = ({
               <div className="space-y-4">
                 <Link
                   href="/auth/signin"
-                  className="inline-flex items-center px-6 py-3 bg-folio-accent text-white rounded-lg hover:bg-folio-accent-dark transition-colors"
+                  className="inline-flex items-center px-6 py-3 bg-[var(--accent)] text-white rounded-lg hover:bg-[var(--accent)]-dark transition-colors"
                 >
                   <FaUser className="mr-2" />
                   Sign In to Get Notified
                 </Link>
-                <p className="text-sm text-folio-text-muted">
+                <p className="text-sm text-[var(--text-primary)]-muted">
                   Join our community to be the first to know about new events and opportunities.
                 </p>
               </div>

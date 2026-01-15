@@ -4,17 +4,9 @@ import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import {
-  GlassCard,
-  GlassButton,
-  GlassInput,
-  GlassModal,
-  GlassModalHeader,
-  GlassModalBody,
-  GlassModalFooter,
-  GlassTextarea,
-  GlassBadge,
-} from '@/components/ui/glass';
+import { RidgeCard } from '@/components/ui/ridge-card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -46,20 +38,20 @@ interface UsersResponse {
   totalPages: number;
 }
 
-const statusColors: Record<string, 'warning' | 'success' | 'error' | 'default'> = {
-  PENDING: 'warning',
-  APPROVED: 'success',
-  REJECTED: 'error',
+const statusColors: Record<string, string> = {
+  PENDING: 'bg-amber-100 text-amber-800',
+  APPROVED: 'bg-green-100 text-green-800',
+  REJECTED: 'bg-red-100 text-red-800',
 };
 
 // Individual-First Architecture: INDIVIDUAL is the base user type
-const roleColors: Record<string, 'info' | 'success' | 'default' | 'warning'> = {
-  ADMIN: 'warning',
-  DESIGNER: 'info',
-  VENDOR: 'success',
-  INDIVIDUAL: 'default',
-  HOMEOWNER: 'default',  // Deprecated, kept for backwards compatibility
-  GUEST: 'default',
+const roleColors: Record<string, string> = {
+  ADMIN: 'bg-amber-100 text-amber-800',
+  DESIGNER: 'bg-blue-100 text-blue-800',
+  VENDOR: 'bg-green-100 text-green-800',
+  INDIVIDUAL: 'bg-[var(--bg-elevated)] text-[var(--text-primary)]',
+  HOMEOWNER: 'bg-[var(--bg-elevated)] text-[var(--text-primary)]',  // Deprecated, kept for backwards compatibility
+  GUEST: 'bg-[var(--bg-elevated)] text-[var(--text-primary)]',
 };
 
 function formatRelativeTime(dateString: string): string {
@@ -228,28 +220,28 @@ export default function AdminUsersPage() {
 
   if (status === 'loading' || (status === 'authenticated' && session?.user?.role !== 'ADMIN')) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-gray-500">Loading...</div>
+      <div className="min-h-screen flex items-center justify-center bg-[var(--bg-base)]">
+        <div className="text-[var(--text-secondary)]">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-[var(--bg-base)] py-8">
       <div className="max-w-7xl mx-auto px-4">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">User Management</h1>
-          <p className="text-gray-600">
+          <h1 className="folio-h1 mb-2">User Management</h1>
+          <p className="folio-body">
             Manage user accounts, approve applications, and monitor activity
           </p>
         </div>
 
         {/* Filters */}
-        <GlassCard variant="solid" padding="md" className="mb-6">
+        <RidgeCard padding="md" className="mb-6">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1">
-              <GlassInput
+              <Input
                 placeholder="Search by name or email..."
                 value={searchQuery}
                 onChange={(e) => {
@@ -265,7 +257,7 @@ export default function AdminUsersPage() {
                   setRoleFilter(e.target.value);
                   setPage(1);
                 }}
-                className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                className="ridge-input px-4 py-2"
               >
                 <option value="">All Roles</option>
                 <option value="DESIGNER">Designer</option>
@@ -279,7 +271,7 @@ export default function AdminUsersPage() {
                   setStatusFilter(e.target.value);
                   setPage(1);
                 }}
-                className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                className="ridge-input px-4 py-2"
               >
                 <option value="">All Status</option>
                 <option value="PENDING">Pending</option>
@@ -288,61 +280,61 @@ export default function AdminUsersPage() {
               </select>
             </div>
           </div>
-        </GlassCard>
+        </RidgeCard>
 
         {/* Stats bar */}
-        <div className="mb-4 text-sm text-gray-600">
+        <div className="mb-4 folio-meta">
           Showing {users.length} of {total} users
         </div>
 
         {/* Users table */}
-        <GlassCard variant="solid" padding="none" className="overflow-hidden">
+        <RidgeCard padding="none" className="overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className="bg-[var(--bg-elevated)] border-b border-[var(--border-subtle)]">
                 <tr>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
                     User
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
                     Role
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
                     Signed Up
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
                     Last Active
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
                     Projects
                   </th>
-                  <th className="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-right text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-[var(--border-subtle)]">
                 {loading ? (
                   <tr>
-                    <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
+                    <td colSpan={7} className="px-6 py-8 text-center text-[var(--text-secondary)]">
                       Loading users...
                     </td>
                   </tr>
                 ) : users.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
+                    <td colSpan={7} className="px-6 py-8 text-center text-[var(--text-secondary)]">
                       No users found
                     </td>
                   </tr>
                 ) : (
                   users.map((user) => (
-                    <tr key={user.id} className="hover:bg-gray-50/50">
+                    <tr key={user.id} className="hover:bg-[var(--bg-elevated)]/50">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden flex-shrink-0">
+                          <div className="w-10 h-10 rounded-full bg-[var(--bg-elevated)] overflow-hidden flex-shrink-0">
                             {user.profileImage ? (
                               <Image
                                 src={user.profileImage}
@@ -352,42 +344,42 @@ export default function AdminUsersPage() {
                                 className="w-full h-full object-cover"
                               />
                             ) : (
-                              <div className="w-full h-full flex items-center justify-center text-gray-500 text-sm font-medium">
+                              <div className="w-full h-full flex items-center justify-center text-[var(--text-secondary)] text-sm font-medium">
                                 {user.name.charAt(0).toUpperCase()}
                               </div>
                             )}
                           </div>
                           <div>
-                            <div className="font-medium text-gray-900">{user.name}</div>
-                            <div className="text-sm text-gray-500">{user.email}</div>
+                            <div className="font-medium text-[var(--text-primary)]">{user.name}</div>
+                            <div className="text-sm text-[var(--text-secondary)]">{user.email}</div>
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <GlassBadge variant={roleColors[user.role] || 'default'}>
+                        <span className={cn('px-2 py-1 rounded-full text-xs font-medium', roleColors[user.role] || 'bg-[var(--bg-elevated)] text-[var(--text-primary)]')}>
                           {user.role}
-                        </GlassBadge>
+                        </span>
                       </td>
                       <td className="px-6 py-4">
-                        <GlassBadge variant={statusColors[user.accountStatus] || 'default'}>
+                        <span className={cn('px-2 py-1 rounded-full text-xs font-medium', statusColors[user.accountStatus] || 'bg-[var(--bg-elevated)] text-[var(--text-primary)]')}>
                           {user.accountStatus}
-                        </GlassBadge>
+                        </span>
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">
+                      <td className="px-6 py-4 text-sm text-[var(--text-secondary)]">
                         {formatRelativeTime(user.createdAt)}
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">
+                      <td className="px-6 py-4 text-sm text-[var(--text-secondary)]">
                         {formatRelativeTime(user.updatedAt)}
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">
+                      <td className="px-6 py-4 text-sm text-[var(--text-secondary)]">
                         {user._count.ownedProjects}
                       </td>
                       <td className="px-6 py-4 text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                            <button className="p-2 hover:bg-[var(--bg-elevated)] rounded-lg transition-colors">
                               <svg
-                                className="w-5 h-5 text-gray-500"
+                                className="w-5 h-5 text-[var(--text-secondary)]"
                                 fill="none"
                                 stroke="currentColor"
                                 viewBox="0 0 24 24"
@@ -444,115 +436,113 @@ export default function AdminUsersPage() {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-              <div className="text-sm text-gray-600">
+            <div className="px-6 py-4 border-t border-[var(--border-subtle)] flex items-center justify-between">
+              <div className="folio-meta">
                 Page {page} of {totalPages}
               </div>
               <div className="flex gap-2">
-                <GlassButton
-                  variant="secondary"
+                <Button
+                  variant="ridge"
                   size="sm"
                   onClick={() => setPage(page - 1)}
                   disabled={page <= 1}
                 >
                   Previous
-                </GlassButton>
-                <GlassButton
-                  variant="secondary"
+                </Button>
+                <Button
+                  variant="ridge"
                   size="sm"
                   onClick={() => setPage(page + 1)}
                   disabled={page >= totalPages}
                 >
                   Next
-                </GlassButton>
+                </Button>
               </div>
             </div>
           )}
-        </GlassCard>
+        </RidgeCard>
 
         {/* Reject Modal */}
-        <GlassModal open={rejectModalOpen} onOpenChange={setRejectModalOpen} size="md">
-          <GlassModalHeader>
-            <h2 className="text-xl font-semibold text-gray-900">Reject Application</h2>
-          </GlassModalHeader>
-          <GlassModalBody>
-            <div className="space-y-4">
-              <p className="text-gray-600">
-                You are about to reject <strong>{selectedUser?.name}</strong>'s application.
-              </p>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Reason (optional, will be shared with applicant)
-                </label>
-                <GlassTextarea
-                  value={rejectionReason}
-                  onChange={(e) => setRejectionReason(e.target.value)}
-                  placeholder="Enter a reason for rejection..."
-                  rows={4}
-                />
+        {rejectModalOpen && (
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+            <RidgeCard padding="lg" className="max-w-md w-full">
+              <h2 className="folio-h2 mb-4">Reject Application</h2>
+              <div className="space-y-4">
+                <p className="folio-body">
+                  You are about to reject <strong>{selectedUser?.name}</strong>&apos;s application.
+                </p>
+                <div>
+                  <label className="block folio-meta mb-2">
+                    Reason (optional, will be shared with applicant)
+                  </label>
+                  <textarea
+                    value={rejectionReason}
+                    onChange={(e) => setRejectionReason(e.target.value)}
+                    placeholder="Enter a reason for rejection..."
+                    rows={4}
+                    className="ridge-input w-full px-3 py-2"
+                  />
+                </div>
               </div>
-            </div>
-          </GlassModalBody>
-          <GlassModalFooter>
-            <div className="flex justify-end gap-3">
-              <GlassButton
-                variant="secondary"
-                onClick={() => setRejectModalOpen(false)}
-              >
-                Cancel
-              </GlassButton>
-              <GlassButton
-                variant="danger"
-                onClick={handleReject}
-                disabled={actionLoading}
-              >
-                {actionLoading ? 'Rejecting...' : 'Reject Application'}
-              </GlassButton>
-            </div>
-          </GlassModalFooter>
-        </GlassModal>
+              <div className="flex justify-end gap-3 mt-6">
+                <Button
+                  variant="ridge"
+                  onClick={() => setRejectModalOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={handleReject}
+                  disabled={actionLoading}
+                >
+                  {actionLoading ? 'Rejecting...' : 'Reject Application'}
+                </Button>
+              </div>
+            </RidgeCard>
+          </div>
+        )}
 
         {/* Note Modal */}
-        <GlassModal open={noteModalOpen} onOpenChange={setNoteModalOpen} size="md">
-          <GlassModalHeader>
-            <h2 className="text-xl font-semibold text-gray-900">Application Note</h2>
-          </GlassModalHeader>
-          <GlassModalBody>
-            <div className="space-y-4">
-              <p className="text-gray-600">
-                Internal note for <strong>{selectedUser?.name}</strong>
-              </p>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Note (internal only)
-                </label>
-                <GlassTextarea
-                  value={applicationNote}
-                  onChange={(e) => setApplicationNote(e.target.value)}
-                  placeholder="Add internal notes about this applicant..."
-                  rows={4}
-                />
+        {noteModalOpen && (
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+            <RidgeCard padding="lg" className="max-w-md w-full">
+              <h2 className="folio-h2 mb-4">Application Note</h2>
+              <div className="space-y-4">
+                <p className="folio-body">
+                  Internal note for <strong>{selectedUser?.name}</strong>
+                </p>
+                <div>
+                  <label className="block folio-meta mb-2">
+                    Note (internal only)
+                  </label>
+                  <textarea
+                    value={applicationNote}
+                    onChange={(e) => setApplicationNote(e.target.value)}
+                    placeholder="Add internal notes about this applicant..."
+                    rows={4}
+                    className="ridge-input w-full px-3 py-2"
+                  />
+                </div>
               </div>
-            </div>
-          </GlassModalBody>
-          <GlassModalFooter>
-            <div className="flex justify-end gap-3">
-              <GlassButton
-                variant="secondary"
-                onClick={() => setNoteModalOpen(false)}
-              >
-                Cancel
-              </GlassButton>
-              <GlassButton
-                variant="primary"
-                onClick={handleUpdateNote}
-                disabled={actionLoading}
-              >
-                {actionLoading ? 'Saving...' : 'Save Note'}
-              </GlassButton>
-            </div>
-          </GlassModalFooter>
-        </GlassModal>
+              <div className="flex justify-end gap-3 mt-6">
+                <Button
+                  variant="ridge"
+                  onClick={() => setNoteModalOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="accent"
+                  onClick={handleUpdateNote}
+                  disabled={actionLoading}
+                >
+                  {actionLoading ? 'Saving...' : 'Save Note'}
+                </Button>
+              </div>
+            </RidgeCard>
+          </div>
+        )}
       </div>
     </div>
   );

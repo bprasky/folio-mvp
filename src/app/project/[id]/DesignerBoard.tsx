@@ -212,17 +212,17 @@ export default function DesignerBoard({
 
   return (
     <div className="w-full space-y-6">
-      {/* Controls Bar with Glassmorphism */}
-      <div className="rounded-2xl border border-white/10 bg-white/6 backdrop-blur-md shadow-lg p-4 flex items-center justify-between">
+      {/* Controls Bar */}
+      <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-elevated)] shadow-sm p-4 flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <label htmlFor="room-filter" className="text-sm font-medium text-gray-700">
+          <label htmlFor="room-filter" className="folio-ui font-medium text-[var(--text-primary)]">
             Filter by room:
           </label>
           <select
             id="room-filter"
             value={selectedRoomId || ''}
             onChange={(e) => setSelectedRoomId(e.target.value || null)}
-            className="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+            className="border border-[var(--border-default)] rounded-md px-3 py-1 folio-ui focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-[var(--bg-base)]"
           >
             <option value="">All Rooms</option>
             {project.rooms.map(room => (
@@ -232,20 +232,20 @@ export default function DesignerBoard({
             ))}
           </select>
         </div>
-        
+
         <div className="flex items-center space-x-4">
-          <div className="text-sm text-gray-500">
+          <div className="folio-ui text-[var(--text-secondary)]">
             {filteredRooms.length} room{filteredRooms.length !== 1 ? 's' : ''} • {filteredRooms.reduce((sum, room) => sum + room.selections.length, 0)} items
           </div>
-          
+
           {/* Export Spec Button */}
           <button
             onClick={() => setExportModalOpen(true)}
-            className="px-4 py-2 text-sm font-medium rounded-2xl border border-white/10 bg-white/6 backdrop-blur-md shadow-lg hover:bg-white/10 transition-colors"
+            className="px-4 py-2 folio-ui font-medium rounded-lg border border-[var(--border-default)] bg-[var(--bg-base)] hover:bg-[var(--bg-elevated)] transition-colors"
           >
             Export Spec
           </button>
-          
+
           {/* Generate Images Button */}
           {selectedRoomId && (
             <Button
@@ -275,15 +275,15 @@ export default function DesignerBoard({
       </div>
 
       {filteredRooms.length === 0 && (
-        <div className="text-center py-12 text-gray-500">
-          <p className="text-lg">No rooms found</p>
-          <p className="text-sm mt-2">Create rooms and add selections to see them here</p>
+        <div className="text-center py-12 text-[var(--text-secondary)]">
+          <p className="folio-body">No rooms found</p>
+          <p className="folio-ui mt-2">Create rooms and add selections to see them here</p>
         </div>
       )}
 
       {/* Generated Images Section */}
       {selectedRoomId && (
-        <div className="mt-8 pt-8 border-t border-gray-200">
+        <div className="mt-8 pt-8 border-t border-[var(--border-default)]">
           <GeneratedGrid
             projectId={projectId}
             roomId={selectedRoomId}

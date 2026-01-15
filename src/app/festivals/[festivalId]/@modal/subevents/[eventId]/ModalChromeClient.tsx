@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { Button } from "@/components/ui/button";
 
 /**
  * Centered windowed modal:
@@ -8,6 +9,8 @@ import React from "react";
  * - Centers a rounded-3xl card (max-w ~1100px)
  * - Card is `relative` + `overflow-hidden` so the invitation layout's
  *   absolute full-bleed backdrop is scoped to the card (no page stretch)
+ *
+ * Folio Design System: Uses neumorphic shadows and accent button
  */
 export default function ModalChromeClient({
   children,
@@ -41,20 +44,22 @@ export default function ModalChromeClient({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Windowed card that *contains* the invitation layout */}
-        <div className="relative w-full rounded-3xl shadow-2xl ring-1 ring-black/10 overflow-hidden bg-transparent">
+        <div className="relative w-full rounded-3xl shadow-[var(--neu-raised)] ring-1 ring-[var(--ridge-outer)] overflow-hidden bg-transparent">
           {/* Let the content control height; cap it so it scrolls if needed */}
           <div className="max-h-[90svh] overflow-y-auto">
             {children}
           </div>
 
           {/* Close button inside the card */}
-          <button
+          <Button
             onClick={handleClose}
             aria-label="Close"
-            className="absolute right-3 top-3 z-[60] rounded-full bg-black/60 px-3 py-1 text-xs font-medium text-white backdrop-blur-md hover:bg-black/70"
+            variant="accent"
+            size="sm"
+            className="absolute right-3 top-3 z-[60] rounded-full backdrop-blur-md"
           >
             Close
-          </button>
+          </Button>
         </div>
       </div>
     </div>

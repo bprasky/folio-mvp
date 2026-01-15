@@ -2,6 +2,9 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { RidgeCard } from '@/components/ui/ridge-card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 const CreateProjectPage = () => {
   const router = useRouter();
@@ -59,34 +62,33 @@ const CreateProjectPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pl-20 lg:pl-56">
+    <div className="min-h-screen bg-[var(--bg-base)] pl-20 lg:pl-56">
       <div className="p-4 lg:p-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-folio-text">Create Project</h1>
-          <p className="text-folio-text-muted">Add a new project to the platform</p>
+          <h1 className="folio-h1 text-[var(--text-primary)]">Create Project</h1>
+          <p className="folio-body text-[var(--text-secondary)]">Add a new project to the platform</p>
         </div>
 
         <div className="max-w-2xl mx-auto">
-          <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-sm border border-folio-border p-6">
-            <div className="space-y-6">
+          <RidgeCard padding="lg">
+            <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <label htmlFor="name" className="block text-sm font-medium text-folio-text mb-2">
+                <label htmlFor="name" className="block folio-meta font-medium text-[var(--text-primary)] mb-2">
                   Project Name *
                 </label>
-                <input
+                <Input
                   type="text"
                   id="name"
                   name="name"
                   value={formData.name}
                   onChange={handleInputChange}
                   required
-                  className="w-full px-3 py-2 border border-folio-border rounded-lg focus:outline-none focus:ring-2 focus:ring-folio-accent"
                   placeholder="Enter project name"
                 />
               </div>
 
               <div>
-                <label htmlFor="description" className="block text-sm font-medium text-folio-text mb-2">
+                <label htmlFor="description" className="block folio-meta font-medium text-[var(--text-primary)] mb-2">
                   Description
                 </label>
                 <textarea
@@ -95,13 +97,13 @@ const CreateProjectPage = () => {
                   value={formData.description}
                   onChange={handleInputChange}
                   rows={4}
-                  className="w-full px-3 py-2 border border-folio-border rounded-lg focus:outline-none focus:ring-2 focus:ring-folio-accent"
+                  className="ridge-input w-full"
                   placeholder="Describe the project"
                 />
               </div>
 
               <div>
-                <label htmlFor="category" className="block text-sm font-medium text-folio-text mb-2">
+                <label htmlFor="category" className="block folio-meta font-medium text-[var(--text-primary)] mb-2">
                   Project Category *
                 </label>
                 <select
@@ -110,7 +112,7 @@ const CreateProjectPage = () => {
                   value={formData.category}
                   onChange={handleInputChange}
                   required
-                  className="w-full px-3 py-2 border border-folio-border rounded-lg focus:outline-none focus:ring-2 focus:ring-folio-accent"
+                  className="ridge-input w-full"
                 >
                   <option value="">Select category</option>
                   <option value="residential">Residential</option>
@@ -121,57 +123,55 @@ const CreateProjectPage = () => {
               </div>
 
               <div>
-                <label htmlFor="client" className="block text-sm font-medium text-folio-text mb-2">
+                <label htmlFor="client" className="block folio-meta font-medium text-[var(--text-primary)] mb-2">
                   Client
                 </label>
-                <input
+                <Input
                   type="text"
                   id="client"
                   name="client"
                   value={formData.client}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-folio-border rounded-lg focus:outline-none focus:ring-2 focus:ring-folio-accent"
                   placeholder="Client name"
                 />
               </div>
 
               <div>
-                <label htmlFor="designerId" className="block text-sm font-medium text-folio-text mb-2">
+                <label htmlFor="designerId" className="block folio-meta font-medium text-[var(--text-primary)] mb-2">
                   Designer ID *
                 </label>
-                <input
+                <Input
                   type="text"
                   id="designerId"
                   name="designerId"
                   value={formData.designerId}
                   onChange={handleInputChange}
                   required
-                  className="w-full px-3 py-2 border border-folio-border rounded-lg focus:outline-none focus:ring-2 focus:ring-folio-accent"
                   placeholder="Designer user ID"
                 />
               </div>
-            </div>
 
-            {error && (
-              <div className="mt-6 p-3 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-red-600 text-sm">{error}</p>
+              {error && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-red-600 folio-meta">{error}</p>
+                </div>
+              )}
+
+              <div className="pt-6 border-t border-[var(--border-subtle)] flex justify-end">
+                <Button
+                  type="submit"
+                  disabled={loading}
+                  variant="accent"
+                >
+                  {loading ? 'Creating...' : 'Create Project'}
+                </Button>
               </div>
-            )}
-
-            <div className="mt-8 flex justify-end">
-              <button
-                type="submit"
-                disabled={loading}
-                className="px-6 py-3 bg-folio-accent text-white rounded-lg hover:bg-folio-accent-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loading ? 'Creating...' : 'Create Project'}
-              </button>
-            </div>
-          </form>
+            </form>
+          </RidgeCard>
         </div>
       </div>
     </div>
   );
 };
 
-export default CreateProjectPage; 
+export default CreateProjectPage;

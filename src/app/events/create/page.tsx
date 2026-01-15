@@ -6,6 +6,9 @@ import { useRole } from '../../../contexts/RoleContext';
 import { FaTimes, FaSearch, FaUserPlus, FaMapMarkerAlt, FaGlobe, FaUsers, FaRocket, FaUtensils, FaTags, FaCalendarAlt, FaImage, FaComments, FaRobot, FaFlag, FaCog } from 'react-icons/fa';
 import ConciergeEventCreate from '../../../components/ConciergeEventCreate';
 import ConciergeRecommendation from '../../../components/ConciergeRecommendation';
+import { RidgeCard } from '@/components/ui/ridge-card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 interface User {
   id: string;
@@ -340,11 +343,11 @@ export default function CreateEvent() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[var(--bg-base)]">
       <div className="ml-64">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-8">Create Event</h1>
-          
+          <h1 className="folio-h1 text-[var(--text-primary)] mb-8">Create Event</h1>
+
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
               {error}
@@ -354,15 +357,15 @@ export default function CreateEvent() {
           <form onSubmit={handleSubmit} className="space-y-8">
             
             {/* 1. 🏁 Basic Event Information */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="bg-[var(--bg-elevated)] rounded-lg shadow-sm border border-[var(--border)] p-6">
               <div className="flex items-center mb-4">
-                <FaFlag className="text-folio-accent mr-2" />
-                <h2 className="text-xl font-semibold text-gray-900">Basic Event Information</h2>
+                <FaFlag className="text-[var(--accent)] mr-2" />
+                <h2 className="folio-h2 text-[var(--text-primary)]">Basic Event Information</h2>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block folio-ui text-[var(--text-secondary)] mb-2">
                     Event Title *
                   </label>
                   <input
@@ -370,21 +373,21 @@ export default function CreateEvent() {
                     placeholder="Enter event title"
                     value={form.title}
                     onChange={(e) => setForm({ ...form, title: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-folio-accent focus:border-transparent"
+                    className="w-full px-3 py-2 border border-[var(--border)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                     required
                   />
                 </div>
                 
                                  {role && ['admin', 'vendor'].includes(role) && (
                    <div className="md:col-span-2">
-                     <label className="block text-sm font-medium text-gray-700 mb-2">
+                     <label className="block folio-ui text-[var(--text-secondary)] mb-2">
                        Festival
-                       <span className="text-gray-400 ml-1 text-xs">(optional)</span>
+                       <span className="text-[var(--text-tertiary)] ml-1 text-xs">(optional)</span>
                      </label>
                      <select
                        value={form.parentFestivalId}
                        onChange={(e) => setForm({ ...form, parentFestivalId: e.target.value })}
-                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-folio-accent focus:border-transparent"
+                       className="w-full px-3 py-2 border border-[var(--border)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                      >
                        <option value="">Select festival (optional)</option>
                        {festivals.map((festival) => (
@@ -393,7 +396,7 @@ export default function CreateEvent() {
                          </option>
                        ))}
                      </select>
-                     <p className="text-xs text-gray-500 mt-1">
+                     <p className="text-xs text-[var(--text-secondary)] mt-1">
                        Attach this event to a larger festival or program to help it show up in the correct feed.
                      </p>
                      {form.parentFestivalId && (
@@ -407,7 +410,7 @@ export default function CreateEvent() {
                  )}
                 
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block folio-ui text-[var(--text-secondary)] mb-2">
                     Description *
                   </label>
                   <textarea
@@ -415,13 +418,13 @@ export default function CreateEvent() {
                     value={form.description}
                     onChange={(e) => setForm({ ...form, description: e.target.value })}
                     rows={4}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-folio-accent focus:border-transparent"
+                    className="w-full px-3 py-2 border border-[var(--border)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                     required
                   />
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block folio-ui text-[var(--text-secondary)] mb-2">
                     Start Date & Time *
                   </label>
                   <input
@@ -429,13 +432,13 @@ export default function CreateEvent() {
                     value={form.startDate}
                     min={new Date().toISOString().slice(0,16)}
                     onChange={(e) => setForm({ ...form, startDate: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-folio-accent focus:border-transparent"
+                    className="w-full px-3 py-2 border border-[var(--border)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                     required
                   />
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block folio-ui text-[var(--text-secondary)] mb-2">
                     End Date & Time *
                   </label>
                   <input
@@ -443,7 +446,7 @@ export default function CreateEvent() {
                     value={form.endDate}
                     min={form.startDate}
                     onChange={(e) => setForm({ ...form, endDate: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-folio-accent focus:border-transparent"
+                    className="w-full px-3 py-2 border border-[var(--border)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                     required
                   />
                 </div>
@@ -451,10 +454,10 @@ export default function CreateEvent() {
             </div>
 
             {/* 2. 📍 Location & Format */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="bg-[var(--bg-elevated)] rounded-lg shadow-sm border border-[var(--border)] p-6">
               <div className="flex items-center mb-4">
-                <FaMapMarkerAlt className="text-folio-accent mr-2" />
-                <h2 className="text-xl font-semibold text-gray-900">Location & Format</h2>
+                <FaMapMarkerAlt className="text-[var(--accent)] mr-2" />
+                <h2 className="folio-h2 text-[var(--text-primary)]">Location & Format</h2>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -464,14 +467,14 @@ export default function CreateEvent() {
                       type="checkbox"
                       checked={form.isVirtual}
                       onChange={(e) => setForm({ ...form, isVirtual: e.target.checked })}
-                      className="rounded border-gray-300 text-folio-accent focus:ring-folio-accent"
+                      className="rounded border-[var(--border)] text-[var(--accent)] focus:ring-[var(--accent)]"
                     />
-                    <span className="text-sm font-medium text-gray-700">Is Virtual Event</span>
+                    <span className="folio-ui text-[var(--text-secondary)]">Is Virtual Event</span>
                   </label>
                 </div>
                 
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block folio-ui text-[var(--text-secondary)] mb-2">
                     Location *
                   </label>
                   <input
@@ -479,13 +482,13 @@ export default function CreateEvent() {
                     placeholder="Event location or virtual platform"
                     value={form.location}
                     onChange={(e) => setForm({ ...form, location: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-folio-accent focus:border-transparent"
+                    className="w-full px-3 py-2 border border-[var(--border)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                     required
                   />
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block folio-ui text-[var(--text-secondary)] mb-2">
                     Map Link
                   </label>
                   <input
@@ -493,18 +496,18 @@ export default function CreateEvent() {
                     placeholder="Google Maps or virtual meeting link"
                     value={form.mapLink}
                     onChange={(e) => setForm({ ...form, mapLink: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-folio-accent focus:border-transparent"
+                    className="w-full px-3 py-2 border border-[var(--border)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                   />
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block folio-ui text-[var(--text-secondary)] mb-2">
                     Timezone
                   </label>
                   <select
                     value={form.timezone}
                     onChange={(e) => setForm({ ...form, timezone: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-folio-accent focus:border-transparent"
+                    className="w-full px-3 py-2 border border-[var(--border)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                   >
                     <option value="">Select timezone</option>
                     <option value="UTC">UTC</option>
@@ -518,21 +521,21 @@ export default function CreateEvent() {
             </div>
 
             {/* 3. 👥 Audience & Visibility */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="bg-[var(--bg-elevated)] rounded-lg shadow-sm border border-[var(--border)] p-6">
               <div className="flex items-center mb-4">
-                <FaUsers className="text-folio-accent mr-2" />
-                <h2 className="text-xl font-semibold text-gray-900">Audience & Visibility</h2>
+                <FaUsers className="text-[var(--accent)] mr-2" />
+                <h2 className="folio-h2 text-[var(--text-primary)]">Audience & Visibility</h2>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block folio-ui text-[var(--text-secondary)] mb-2">
                     Invite Type
                   </label>
                   <select
                     value={form.inviteType}
                     onChange={(e) => setForm({ ...form, inviteType: e.target.value as any })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-folio-accent focus:border-transparent"
+                    className="w-full px-3 py-2 border border-[var(--border)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                   >
                     <option value="open">Open to all</option>
                     <option value="invite-only">Invite only</option>
@@ -541,7 +544,7 @@ export default function CreateEvent() {
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block folio-ui text-[var(--text-secondary)] mb-2">
                     Target User Roles
                   </label>
                   <div className="space-y-2">
@@ -557,9 +560,9 @@ export default function CreateEvent() {
                               setForm({ ...form, targetUserRoles: form.targetUserRoles.filter(r => r !== role) });
                             }
                           }}
-                          className="rounded border-gray-300 text-folio-accent focus:ring-folio-accent"
+                          className="rounded border-[var(--border)] text-[var(--accent)] focus:ring-[var(--accent)]"
                         />
-                        <span className="text-sm text-gray-700">{role}</span>
+                        <span className="text-sm text-[var(--text-secondary)]">{role}</span>
                       </label>
                     ))}
                   </div>
@@ -571,24 +574,24 @@ export default function CreateEvent() {
                       type="checkbox"
                       checked={form.allowReshare}
                       onChange={(e) => setForm({ ...form, allowReshare: e.target.checked })}
-                      className="rounded border-gray-300 text-folio-accent focus:ring-folio-accent"
+                      className="rounded border-[var(--border)] text-[var(--accent)] focus:ring-[var(--accent)]"
                     />
-                    <span className="text-sm font-medium text-gray-700">Allow resharing</span>
+                    <span className="folio-ui text-[var(--text-secondary)]">Allow resharing</span>
                   </label>
                 </div>
               </div>
             </div>
 
             {/* 4. 🔢 RSVP & Capacity */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="bg-[var(--bg-elevated)] rounded-lg shadow-sm border border-[var(--border)] p-6">
               <div className="flex items-center mb-4">
-                <FaCalendarAlt className="text-folio-accent mr-2" />
-                <h2 className="text-xl font-semibold text-gray-900">RSVP & Capacity</h2>
+                <FaCalendarAlt className="text-[var(--accent)] mr-2" />
+                <h2 className="folio-h2 text-[var(--text-primary)]">RSVP & Capacity</h2>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block folio-ui text-[var(--text-secondary)] mb-2">
                     Capacity
                   </label>
                   <input
@@ -596,19 +599,19 @@ export default function CreateEvent() {
                     placeholder="Maximum attendees"
                     value={form.capacity}
                     onChange={(e) => setForm({ ...form, capacity: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-folio-accent focus:border-transparent"
+                    className="w-full px-3 py-2 border border-[var(--border)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                   />
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block folio-ui text-[var(--text-secondary)] mb-2">
                     RSVP Deadline
                   </label>
                   <input
                     type="datetime-local"
                     value={form.rsvpDeadline}
                     onChange={(e) => setForm({ ...form, rsvpDeadline: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-folio-accent focus:border-transparent"
+                    className="w-full px-3 py-2 border border-[var(--border)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                   />
                 </div>
                 
@@ -618,36 +621,36 @@ export default function CreateEvent() {
                       type="checkbox"
                       checked={form.waitlistEnabled}
                       onChange={(e) => setForm({ ...form, waitlistEnabled: e.target.checked })}
-                      className="rounded border-gray-300 text-folio-accent focus:ring-folio-accent"
+                      className="rounded border-[var(--border)] text-[var(--accent)] focus:ring-[var(--accent)]"
                     />
-                    <span className="text-sm font-medium text-gray-700">Enable Waitlist</span>
+                    <span className="folio-ui text-[var(--text-secondary)]">Enable Waitlist</span>
                   </label>
                 </div>
               </div>
             </div>
 
             {/* 5. 🛍️ Media & Products */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="bg-[var(--bg-elevated)] rounded-lg shadow-sm border border-[var(--border)] p-6">
               <div className="flex items-center mb-4">
-                <FaImage className="text-folio-accent mr-2" />
-                <h2 className="text-xl font-semibold text-gray-900">Media & Products</h2>
+                <FaImage className="text-[var(--accent)] mr-2" />
+                <h2 className="folio-h2 text-[var(--text-primary)]">Media & Products</h2>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block folio-ui text-[var(--text-secondary)] mb-2">
                     Event Image
                   </label>
                   <input
                     type="file"
                     accept="image/*"
                     onChange={(e) => setImageFile(e.target.files?.[0] || null)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-folio-accent focus:border-transparent"
+                    className="w-full px-3 py-2 border border-[var(--border)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                   />
                 </div>
                 
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block folio-ui text-[var(--text-secondary)] mb-2">
                     Linked Products (SKUs)
                   </label>
                   <div className="flex space-x-2 mb-2">
@@ -657,19 +660,19 @@ export default function CreateEvent() {
                       value={newProductSku}
                       onChange={(e) => setNewProductSku(e.target.value)}
                       onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addProductSku())}
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-folio-accent focus:border-transparent"
+                      className="flex-1 px-3 py-2 border border-[var(--border)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                     />
                     <button
                       type="button"
                       onClick={addProductSku}
-                      className="px-3 py-2 bg-folio-accent text-white rounded-md hover:bg-folio-accent-dark transition-colors"
+                      className="px-3 py-2 bg-[var(--accent)] text-white rounded-md hover:bg-[var(--accent)]-dark transition-colors"
                     >
                       Add
                     </button>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {form.linkedProducts.map((sku) => (
-                      <span key={sku} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                      <span key={sku} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-[var(--bg-base)] text-[var(--text-primary)]">
                         {sku}
                         <button
                           type="button"
@@ -686,15 +689,15 @@ export default function CreateEvent() {
             </div>
 
             {/* 6. 🍽️ Event Type & Food */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="bg-[var(--bg-elevated)] rounded-lg shadow-sm border border-[var(--border)] p-6">
               <div className="flex items-center mb-4">
-                <FaUtensils className="text-folio-accent mr-2" />
-                <h2 className="text-xl font-semibold text-gray-900">Event Type & Food</h2>
+                <FaUtensils className="text-[var(--accent)] mr-2" />
+                <h2 className="folio-h2 text-[var(--text-primary)]">Event Type & Food</h2>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block folio-ui text-[var(--text-secondary)] mb-2">
                     Event Types *
                   </label>
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
@@ -710,9 +713,9 @@ export default function CreateEvent() {
                               setForm({ ...form, eventTypes: form.eventTypes.filter(t => t !== value) });
                             }
                           }}
-                          className="rounded border-gray-300 text-folio-accent focus:ring-folio-accent"
+                          className="rounded border-[var(--border)] text-[var(--accent)] focus:ring-[var(--accent)]"
                         />
-                        <span className="text-sm text-gray-700">{label}</span>
+                        <span className="text-sm text-[var(--text-secondary)]">{label}</span>
                       </label>
                     ))}
                   </div>
@@ -724,19 +727,19 @@ export default function CreateEvent() {
                       type="checkbox"
                       checked={form.includesFood}
                       onChange={(e) => setForm({ ...form, includesFood: e.target.checked })}
-                      className="rounded border-gray-300 text-folio-accent focus:ring-folio-accent"
+                      className="rounded border-[var(--border)] text-[var(--accent)] focus:ring-[var(--accent)]"
                     />
-                    <span className="text-sm font-medium text-gray-700">Includes Food/Drink</span>
+                    <span className="folio-ui text-[var(--text-secondary)]">Includes Food/Drink</span>
                   </label>
                 </div>
               </div>
             </div>
 
             {/* 7. 💬 Community */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="bg-[var(--bg-elevated)] rounded-lg shadow-sm border border-[var(--border)] p-6">
               <div className="flex items-center mb-4">
-                <FaComments className="text-folio-accent mr-2" />
-                <h2 className="text-xl font-semibold text-gray-900">Community</h2>
+                <FaComments className="text-[var(--accent)] mr-2" />
+                <h2 className="folio-h2 text-[var(--text-primary)]">Community</h2>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -746,14 +749,14 @@ export default function CreateEvent() {
                       type="checkbox"
                       checked={form.allowChat}
                       onChange={(e) => setForm({ ...form, allowChat: e.target.checked })}
-                      className="rounded border-gray-300 text-folio-accent focus:ring-folio-accent"
+                      className="rounded border-[var(--border)] text-[var(--accent)] focus:ring-[var(--accent)]"
                     />
-                    <span className="text-sm font-medium text-gray-700">Allow Chat</span>
+                    <span className="folio-ui text-[var(--text-secondary)]">Allow Chat</span>
                   </label>
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block folio-ui text-[var(--text-secondary)] mb-2">
                     Chat Group Link
                   </label>
                   <input
@@ -761,12 +764,12 @@ export default function CreateEvent() {
                     placeholder="Discord, Slack, or WhatsApp link"
                     value={form.chatGroupLink}
                     onChange={(e) => setForm({ ...form, chatGroupLink: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-folio-accent focus:border-transparent"
+                    className="w-full px-3 py-2 border border-[var(--border)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                   />
                 </div>
                 
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block folio-ui text-[var(--text-secondary)] mb-2">
                     Post-Event Message
                   </label>
                   <textarea
@@ -774,7 +777,7 @@ export default function CreateEvent() {
                     value={form.postEventMessage}
                     onChange={(e) => setForm({ ...form, postEventMessage: e.target.value })}
                     rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-folio-accent focus:border-transparent"
+                    className="w-full px-3 py-2 border border-[var(--border)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                   />
                 </div>
               </div>
@@ -782,48 +785,48 @@ export default function CreateEvent() {
 
             {/* Invite-Only Configuration */}
             {form.inviteType === 'invite-only' && (
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">Invite Users</h2>
+              <div className="bg-[var(--bg-elevated)] rounded-lg shadow-sm border border-[var(--border)] p-6">
+                <h2 className="folio-h2 text-[var(--text-primary)] mb-4">Invite Users</h2>
                 
                 {/* Search Existing Users */}
                 <div className="mb-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block folio-ui text-[var(--text-secondary)] mb-2">
                     Search and invite existing users
                   </label>
                   <div className="relative">
-                    <div className="flex items-center border border-gray-300 rounded-md">
-                      <FaSearch className="ml-3 text-gray-400" />
+                    <div className="flex items-center border border-[var(--border)] rounded-md">
+                      <FaSearch className="ml-3 text-[var(--text-tertiary)]" />
                       <input
                         type="text"
                         placeholder="Search by name or email..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="flex-1 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-folio-accent focus:border-transparent"
+                        className="flex-1 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                       />
                     </div>
                     
                     {/* Search Results */}
                     {searchResults.length > 0 && (
-                      <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                      <div className="absolute z-10 w-full mt-1 bg-white border border-[var(--border)] rounded-md shadow-lg max-h-60 overflow-y-auto">
                         {searchResults.map((user) => (
                           <button
                             key={user.id}
                             type="button"
                             onClick={() => addInvitedUser(user)}
-                            className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center space-x-3"
+                            className="w-full px-4 py-2 text-left hover:bg-[var(--bg-base)] flex items-center space-x-3"
                           >
-                            <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
+                            <div className="w-8 h-8 bg-[var(--bg-elevated)] rounded-full flex items-center justify-center">
                               {user.profileImage ? (
                                 <img src={user.profileImage} alt={user.name} className="w-8 h-8 rounded-full" />
                               ) : (
-                                <span className="text-sm font-medium text-gray-600">
+                                <span className="text-sm font-medium text-[var(--text-secondary)]">
                                   {user.name.charAt(0).toUpperCase()}
                                 </span>
                               )}
                             </div>
                             <div>
-                              <div className="font-medium text-gray-900">{user.name}</div>
-                              <div className="text-sm text-gray-500">{user.email}</div>
+                              <div className="font-medium text-[var(--text-primary)]">{user.name}</div>
+                              <div className="text-sm text-[var(--text-secondary)]">{user.email}</div>
                             </div>
                           </button>
                         ))}
@@ -834,7 +837,7 @@ export default function CreateEvent() {
 
                 {/* Invite by Email */}
                 <div className="mb-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block folio-ui text-[var(--text-secondary)] mb-2">
                     Invite by email address
                   </label>
                   <div className="flex space-x-2">
@@ -844,12 +847,12 @@ export default function CreateEvent() {
                       value={newEmail}
                       onChange={(e) => setNewEmail(e.target.value)}
                       onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addInvitedEmail())}
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-folio-accent focus:border-transparent"
+                      className="flex-1 px-3 py-2 border border-[var(--border)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                     />
                     <button
                       type="button"
                       onClick={addInvitedEmail}
-                      className="px-4 py-2 bg-folio-accent text-white rounded-md hover:bg-folio-accent-dark transition-colors flex items-center space-x-2"
+                      className="px-4 py-2 bg-[var(--accent)] text-white rounded-md hover:bg-[var(--accent)]-dark transition-colors flex items-center space-x-2"
                     >
                       <FaUserPlus />
                       <span>Add</span>
@@ -860,30 +863,30 @@ export default function CreateEvent() {
                 {/* Invited Users List */}
                 {(invitedUserIds.length > 0 || invitedEmails.length > 0) && (
                   <div>
-                    <h3 className="text-lg font-medium text-gray-900 mb-3">Invited Users</h3>
+                    <h3 className="text-lg font-medium text-[var(--text-primary)] mb-3">Invited Users</h3>
                     
                     {/* Invited Existing Users */}
                     {invitedUserIds.length > 0 && (
                       <div className="mb-4">
-                        <h4 className="text-sm font-medium text-gray-700 mb-2">Existing Users</h4>
+                        <h4 className="folio-ui text-[var(--text-secondary)] mb-2">Existing Users</h4>
                         <div className="space-y-2">
                           {invitedUserIds.map((userId) => {
                             const user = searchResults.find(u => u.id === userId);
                             return user ? (
-                              <div key={userId} className="flex items-center justify-between p-3 bg-gray-50 rounded-md">
+                              <div key={userId} className="flex items-center justify-between p-3 bg-[var(--bg-base)] rounded-md">
                                 <div className="flex items-center space-x-3">
-                                  <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
+                                  <div className="w-8 h-8 bg-[var(--bg-elevated)] rounded-full flex items-center justify-center">
                                     {user.profileImage ? (
                                       <img src={user.profileImage} alt={user.name} className="w-8 h-8 rounded-full" />
                                     ) : (
-                                      <span className="text-sm font-medium text-gray-600">
+                                      <span className="text-sm font-medium text-[var(--text-secondary)]">
                                         {user.name.charAt(0).toUpperCase()}
                                       </span>
                                     )}
                                   </div>
                                   <div>
-                                    <div className="font-medium text-gray-900">{user.name}</div>
-                                    <div className="text-sm text-gray-500">{user.email}</div>
+                                    <div className="font-medium text-[var(--text-primary)]">{user.name}</div>
+                                    <div className="text-sm text-[var(--text-secondary)]">{user.email}</div>
                                   </div>
                                 </div>
                                 <button
@@ -903,15 +906,15 @@ export default function CreateEvent() {
                     {/* Invited Emails */}
                     {invitedEmails.length > 0 && (
                       <div>
-                        <h4 className="text-sm font-medium text-gray-700 mb-2">Email Addresses</h4>
+                        <h4 className="folio-ui text-[var(--text-secondary)] mb-2">Email Addresses</h4>
                         <div className="space-y-2">
                           {invitedEmails.map((email) => (
-                            <div key={email} className="flex items-center justify-between p-3 bg-gray-50 rounded-md">
+                            <div key={email} className="flex items-center justify-between p-3 bg-[var(--bg-base)] rounded-md">
                               <div className="flex items-center space-x-3">
-                                <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
-                                  <FaUserPlus className="text-gray-500" />
+                                <div className="w-8 h-8 bg-[var(--bg-elevated)] rounded-full flex items-center justify-center">
+                                  <FaUserPlus className="text-[var(--text-secondary)]" />
                                 </div>
-                                <div className="font-medium text-gray-900">{email}</div>
+                                <div className="font-medium text-[var(--text-primary)]">{email}</div>
                               </div>
                               <button
                                 type="button"
@@ -935,7 +938,7 @@ export default function CreateEvent() {
               <button
                 type="button"
                 onClick={handlePromotionConfig}
-                className="px-6 py-3 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors font-medium flex items-center space-x-2"
+                className="px-6 py-3 bg-[var(--bg-base)] text-[var(--text-secondary)] rounded-md hover:bg-[var(--bg-elevated)] transition-colors font-medium flex items-center space-x-2"
               >
                 <FaCog />
                 <span>Configure Promotion</span>
@@ -944,13 +947,13 @@ export default function CreateEvent() {
               <div className="flex space-x-4">
                 <button
                   type="button"
-                  className="px-6 py-3 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors font-medium"
+                  className="px-6 py-3 bg-[var(--bg-base)] text-[var(--text-secondary)] rounded-md hover:bg-[var(--bg-elevated)] transition-colors font-medium"
                 >
                   Save as Draft
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-3 bg-folio-accent text-white rounded-md hover:bg-folio-accent-dark transition-colors font-medium"
+                  className="px-6 py-3 bg-[var(--accent)] text-white rounded-md hover:bg-[var(--accent)]-dark transition-colors font-medium"
                 >
                   Create Event
                 </button>
@@ -964,14 +967,14 @@ export default function CreateEvent() {
       <div className="fixed bottom-6 right-6 z-40">
         <button
           onClick={() => setShowConcierge(true)}
-          className="group relative bg-folio-accent text-white p-4 rounded-full shadow-lg hover:bg-folio-accent-dark transition-all duration-300 hover:scale-110"
+          className="group relative bg-[var(--accent)] text-white p-4 rounded-full shadow-lg hover:bg-[var(--accent)]-dark transition-all duration-300 hover:scale-110"
         >
           <FaRobot className="w-6 h-6" />
           
           {/* Tooltip */}
-          <div className="absolute bottom-full right-0 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
+          <div className="absolute bottom-full right-0 mb-2 px-3 py-2 bg-[var(--bg-elevated)] text-[var(--text-primary)] text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
             Skip the form, describe your event instead
-            <div className="absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+            <div className="absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-[var(--bg-elevated)]"></div>
           </div>
         </button>
       </div>

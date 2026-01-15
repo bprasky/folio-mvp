@@ -3,7 +3,7 @@
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { GlassCard, EditorialHeadline } from '@/components/ui/glass';
+import { RidgeCard } from '@/components/ui/ridge-card';
 
 export default function ApplicationRejectedPage() {
   const { data: session, status } = useSession();
@@ -52,8 +52,8 @@ export default function ApplicationRejectedPage() {
   // Show loading while checking auth
   if (status === 'loading' || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-stone-50 via-white to-stone-100">
-        <div className="text-stone-500">Loading...</div>
+      <div className="min-h-screen flex items-center justify-center bg-[var(--bg-base)]">
+        <div className="folio-body">Loading...</div>
       </div>
     );
   }
@@ -65,17 +65,17 @@ export default function ApplicationRejectedPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-stone-50 via-white to-stone-100 px-4 py-12">
+    <div className="min-h-screen flex items-center justify-center bg-[var(--bg-base)] px-4 py-12">
       <div className="w-full max-w-lg text-center">
-        <GlassCard variant="strong" padding="xl" rounded="3xl">
+        <RidgeCard size="lg" padding="xl">
           <div className="space-y-8">
             {/* Headline */}
-            <EditorialHeadline size="xl" className="text-stone-900">
+            <h1 className="folio-h2">
               Application Status
-            </EditorialHeadline>
+            </h1>
 
             {/* Body */}
-            <div className="space-y-4 text-stone-600 leading-relaxed">
+            <div className="space-y-4 folio-body">
               <p>
                 Thanks for your interest in Folio. After reviewing your
                 application, we're not able to approve your account at this time.
@@ -83,33 +83,33 @@ export default function ApplicationRejectedPage() {
 
               {/* Rejection reason if provided */}
               {rejectionReason && (
-                <div className="mt-6 p-4 bg-stone-100/80 rounded-xl border border-stone-200/50">
-                  <p className="text-sm text-stone-500 mb-2">Note from our team:</p>
-                  <p className="text-stone-700 italic">{rejectionReason}</p>
+                <div className="mt-6 ridge-card ridge-card-sm p-4 bg-[var(--bg-elevated)]">
+                  <p className="folio-meta mb-2">Note from our team:</p>
+                  <p className="folio-quote text-base">{rejectionReason}</p>
                 </div>
               )}
             </div>
 
             {/* Divider */}
-            <div className="w-16 h-px bg-stone-300 mx-auto" />
+            <div className="w-16 h-px bg-[var(--ridge-outer)] mx-auto" />
 
             {/* Footer */}
-            <p className="text-sm text-stone-500 leading-relaxed">
+            <p className="folio-meta leading-relaxed">
               This isn't permanent—we're in an early, intentional phase and may
               expand access soon. Feel free to reach out at{' '}
               <a
                 href="mailto:hello@folioad.com"
-                className="text-stone-700 underline hover:text-stone-900 transition-colors"
+                className="text-[var(--text-secondary)] underline hover:text-[var(--text-primary)] transition-colors"
               >
                 hello@folioad.com
               </a>
             </p>
           </div>
-        </GlassCard>
+        </RidgeCard>
 
         {/* Folio logo/wordmark */}
         <div className="mt-8">
-          <span className="text-lg font-semibold text-stone-400">Folio</span>
+          <span className="folio-logo-text text-[var(--text-tertiary)]">Folio</span>
         </div>
       </div>
     </div>

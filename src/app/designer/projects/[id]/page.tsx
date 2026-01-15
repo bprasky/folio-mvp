@@ -3,12 +3,15 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { 
-  FaArrowLeft, FaPlus, FaEye, FaEyeSlash, FaDownload, 
-  FaUpload, FaHome, FaTag, FaFileAlt, FaCamera 
+import {
+  FaArrowLeft, FaPlus, FaEye, FaEyeSlash, FaDownload,
+  FaUpload, FaHome, FaTag, FaFileAlt, FaCamera
 } from 'react-icons/fa';
 import CameraCapture from '../../../../components/CameraCapture';
 import { ROOM_TEMPLATES } from '../../../project/[id]/roomTemplates';
+import { RidgeCard } from '@/components/ui/ridge-card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 interface Project {
   id: string;
@@ -196,17 +199,17 @@ export default function ProjectDashboard() {
 
   if (isLoading) {
     return (
-      <div className="p-6">
+      <div className="min-h-screen bg-[var(--bg-base)] p-6">
         <div className="max-w-7xl mx-auto">
           <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-1/3 mb-4"></div>
-            <div className="h-4 bg-gray-200 rounded w-1/2 mb-8"></div>
+            <div className="h-8 bg-[var(--bg-elevated)] rounded w-1/3 mb-4"></div>
+            <div className="h-4 bg-[var(--bg-elevated)] rounded w-1/2 mb-8"></div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="bg-white rounded-2xl p-6 shadow-lg">
-                  <div className="h-6 bg-gray-200 rounded w-1/2 mb-4"></div>
-                  <div className="h-4 bg-gray-200 rounded w-1/3"></div>
-                </div>
+                <RidgeCard key={i} padding="lg">
+                  <div className="h-6 bg-[var(--bg-elevated)] rounded w-1/2 mb-4"></div>
+                  <div className="h-4 bg-[var(--bg-elevated)] rounded w-1/3"></div>
+                </RidgeCard>
               ))}
             </div>
           </div>
@@ -217,17 +220,17 @@ export default function ProjectDashboard() {
 
   if (!project) {
     return (
-      <div className="p-6">
+      <div className="min-h-screen bg-[var(--bg-base)] p-6">
         <div className="max-w-7xl mx-auto">
           <div className="text-center py-16">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Project Not Found</h2>
-            <p className="text-gray-600 mb-6">The project you're looking for doesn't exist or you don't have access to it.</p>
-            <button
+            <h2 className="folio-h1 text-[var(--text-primary)] mb-4">Project Not Found</h2>
+            <p className="folio-body text-[var(--text-secondary)] mb-6">The project you're looking for doesn't exist or you don't have access to it.</p>
+            <Button
+              variant="accent"
               onClick={() => router.push('/designer')}
-              className="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors"
             >
               Back to Dashboard
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -235,7 +238,7 @@ export default function ProjectDashboard() {
   }
 
   return (
-    <div className="p-6">
+    <div className="min-h-screen bg-[var(--bg-base)] p-6">
       <div className="max-w-7xl mx-auto">
           {/* Header */}
           <motion.div
@@ -246,58 +249,61 @@ export default function ProjectDashboard() {
             <div className="flex items-center gap-4 mb-6">
               <button
                 onClick={() => router.back()}
-                className="p-2 text-gray-600 hover:text-gray-900 transition-colors"
+                className="p-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
               >
                 <FaArrowLeft className="w-5 h-5" />
               </button>
               <div className="flex-1">
-                <h1 className="text-3xl font-bold text-gray-900">{project.name}</h1>
-                <p className="text-gray-600">{project.category} • {project.description}</p>
+                <h1 className="folio-h1 text-[var(--text-primary)]">{project.name}</h1>
+                <p className="folio-body text-[var(--text-secondary)]">{project.category} - {project.description}</p>
               </div>
             </div>
 
             {/* Project Actions */}
-            <div className="flex flex-wrap gap-4">
-              <button
+            <div className="flex flex-wrap gap-3">
+              <Button
+                variant="accent"
                 onClick={() => setShowCameraCapture(true)}
-                className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors flex items-center gap-2"
+                className="flex items-center gap-2"
               >
                 <FaCamera className="w-4 h-4" />
                 + Add Project-Level Selection
-              </button>
-              
-              <button
+              </Button>
+
+              <Button
+                variant="ridge"
                 onClick={() => setShowAddRoom(true)}
-                className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2"
+                className="flex items-center gap-2"
               >
                 <FaPlus className="w-4 h-4" />
                 Add Room
-              </button>
-              
-              <button
+              </Button>
+
+              <Button
+                variant={isPublic ? 'accent' : 'ridge'}
                 onClick={handleTogglePublic}
-                className={`px-4 py-2 rounded-lg transition-colors flex items-center gap-2 ${
-                  isPublic 
-                    ? 'bg-green-500 text-white hover:bg-green-600' 
-                    : 'bg-gray-500 text-white hover:bg-gray-600'
-                }`}
+                className="flex items-center gap-2"
               >
                 {isPublic ? <FaEye className="w-4 h-4" /> : <FaEyeSlash className="w-4 h-4" />}
                 {isPublic ? 'Public' : 'Private'}
-              </button>
-              
-              <button
+              </Button>
+
+              <Button
+                variant="ridge"
                 onClick={handleExportSpecSheet}
-                className="bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 transition-colors flex items-center gap-2"
+                className="flex items-center gap-2"
               >
                 <FaDownload className="w-4 h-4" />
                 Export Spec Sheet
-              </button>
-              
-              <button className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors flex items-center gap-2">
+              </Button>
+
+              <Button
+                variant="ridge"
+                className="flex items-center gap-2"
+              >
                 <FaUpload className="w-4 h-4" />
                 Upload Files
-              </button>
+              </Button>
             </div>
           </motion.div>
 
@@ -306,69 +312,72 @@ export default function ProjectDashboard() {
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50"
             >
               <motion.div
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                className="bg-white rounded-2xl p-6 w-full max-w-md mx-4"
               >
-                <h3 className="text-xl font-bold text-gray-900 mb-4">Add New Room</h3>
-                
-                <div className="mb-4">
-                  <label htmlFor="room-type" className="block text-sm font-medium text-gray-700 mb-2">
-                    Room Type
-                  </label>
-                  <select
-                    id="room-type"
-                    value={newRoomType}
-                    onChange={(e) => setNewRoomType(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    {Object.entries(ROOM_TEMPLATES).map(([key, template]) => (
-                      <option key={key} value={key}>
-                        {template.type.charAt(0) + template.type.slice(1).toLowerCase()}
-                      </option>
-                    ))}
-                  </select>
-                  
-                  {/* Preview of expected slots */}
-                  {newRoomType && (
-                    <div className="mt-2 p-3 bg-blue-50 rounded-lg">
-                      <div className="text-xs font-medium text-blue-800 mb-1">
-                        Expected items ({ROOM_TEMPLATES[newRoomType as keyof typeof ROOM_TEMPLATES].slots.length}):
+                <RidgeCard padding="lg" className="w-full max-w-md mx-4">
+                  <h3 className="folio-h2 text-[var(--text-primary)] mb-4">Add New Room</h3>
+
+                  <div className="mb-4">
+                    <label htmlFor="room-type" className="block folio-body font-medium text-[var(--text-primary)] mb-2">
+                      Room Type
+                    </label>
+                    <select
+                      id="room-type"
+                      value={newRoomType}
+                      onChange={(e) => setNewRoomType(e.target.value)}
+                      className="w-full ridge-input px-4 py-3"
+                    >
+                      {Object.entries(ROOM_TEMPLATES).map(([key, template]) => (
+                        <option key={key} value={key}>
+                          {template.type.charAt(0) + template.type.slice(1).toLowerCase()}
+                        </option>
+                      ))}
+                    </select>
+
+                    {/* Preview of expected slots */}
+                    {newRoomType && (
+                      <div className="mt-2 p-3 bg-[var(--accent)]/10 rounded-lg">
+                        <div className="text-xs font-medium text-[var(--accent)] mb-1">
+                          Expected items ({ROOM_TEMPLATES[newRoomType as keyof typeof ROOM_TEMPLATES].slots.length}):
+                        </div>
+                        <div className="text-xs text-[var(--text-secondary)]">
+                          {ROOM_TEMPLATES[newRoomType as keyof typeof ROOM_TEMPLATES].slots
+                            .map(slot => slot.label)
+                            .join(', ')}
+                        </div>
                       </div>
-                      <div className="text-xs text-blue-600">
-                        {ROOM_TEMPLATES[newRoomType as keyof typeof ROOM_TEMPLATES].slots
-                          .map(slot => slot.label)
-                          .join(', ')}
-                      </div>
-                    </div>
-                  )}
-                </div>
-                
-                <input
-                  type="text"
-                  value={newRoomName}
-                  onChange={(e) => setNewRoomName(e.target.value)}
-                  placeholder="Room name (e.g., Living Room, Kitchen)"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent mb-4"
-                  onKeyPress={(e) => e.key === 'Enter' && handleAddRoom()}
-                />
-                <div className="flex gap-3">
-                  <button
-                    onClick={handleAddRoom}
-                    className="flex-1 bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors"
-                  >
-                    Add Room
-                  </button>
-                  <button
-                    onClick={() => setShowAddRoom(false)}
-                    className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                </div>
+                    )}
+                  </div>
+
+                  <Input
+                    variant="ridge"
+                    value={newRoomName}
+                    onChange={(e) => setNewRoomName(e.target.value)}
+                    placeholder="Room name (e.g., Living Room, Kitchen)"
+                    className="mb-4"
+                    onKeyPress={(e) => e.key === 'Enter' && handleAddRoom()}
+                  />
+                  <div className="flex gap-3">
+                    <Button
+                      variant="accent"
+                      onClick={handleAddRoom}
+                      className="flex-1"
+                    >
+                      Add Room
+                    </Button>
+                    <Button
+                      variant="ridge"
+                      onClick={() => setShowAddRoom(false)}
+                      className="flex-1"
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </RidgeCard>
               </motion.div>
             </motion.div>
           )}
@@ -386,50 +395,54 @@ export default function ProjectDashboard() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
-                className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-shadow cursor-pointer"
-                onClick={() => router.push(`/designer/projects/${projectId}/rooms/${room.id}`)}
               >
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-xl font-bold text-gray-900">{room.name}</h3>
-                  <FaHome className="w-5 h-5 text-gray-400" />
-                </div>
-                
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <FaTag className="w-4 h-4" />
-                    <span>{room.selections.length} selections</span>
+                <RidgeCard
+                  padding="lg"
+                  className="hover:shadow-lg transition-shadow cursor-pointer"
+                  onClick={() => router.push(`/designer/projects/${projectId}/rooms/${room.id}`)}
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="folio-h3 text-[var(--text-primary)]">{room.name}</h3>
+                    <FaHome className="w-5 h-5 text-[var(--text-tertiary)]" />
                   </div>
-                  
-                  {room.selections.length > 0 && (
-                    <div className="grid grid-cols-2 gap-2">
-                      {room.selections.slice(0, 4).map((selection) => (
-                        <div
-                          key={selection.id}
-                          className="aspect-square bg-gray-200 rounded-lg flex items-center justify-center"
-                        >
-                          {selection.photo ? (
-                            <img
-                              src={selection.photo}
-                              alt="Selection"
-                              className="w-full h-full object-cover rounded-lg"
-                            />
-                          ) : (
-                            <FaFileAlt className="w-6 h-6 text-gray-400" />
-                          )}
-                        </div>
-                      ))}
-                      {room.selections.length > 4 && (
-                        <div className="aspect-square bg-gray-100 rounded-lg flex items-center justify-center">
-                          <span className="text-sm text-gray-500">+{room.selections.length - 4} more</span>
-                        </div>
-                      )}
+
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 folio-meta">
+                      <FaTag className="w-4 h-4" />
+                      <span>{room.selections.length} selections</span>
                     </div>
-                  )}
-                  
-                  <button className="w-full mt-4 bg-gray-100 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-200 transition-colors text-sm">
-                    Manage Room
-                  </button>
-                </div>
+
+                    {room.selections.length > 0 && (
+                      <div className="grid grid-cols-2 gap-2">
+                        {room.selections.slice(0, 4).map((selection) => (
+                          <div
+                            key={selection.id}
+                            className="aspect-square bg-[var(--bg-elevated)] rounded-lg flex items-center justify-center"
+                          >
+                            {selection.photo ? (
+                              <img
+                                src={selection.photo}
+                                alt="Selection"
+                                className="w-full h-full object-cover rounded-lg"
+                              />
+                            ) : (
+                              <FaFileAlt className="w-6 h-6 text-[var(--text-tertiary)]" />
+                            )}
+                          </div>
+                        ))}
+                        {room.selections.length > 4 && (
+                          <div className="aspect-square bg-[var(--bg-elevated)] rounded-lg flex items-center justify-center">
+                            <span className="folio-meta">+{room.selections.length - 4} more</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    <Button variant="ridge" size="sm" className="w-full mt-4">
+                      Manage Room
+                    </Button>
+                  </div>
+                </RidgeCard>
               </motion.div>
             ))}
           </motion.div>
@@ -442,19 +455,19 @@ export default function ProjectDashboard() {
               transition={{ delay: 0.2 }}
               className="text-center py-16"
             >
-              <div className="bg-white rounded-2xl p-8 shadow-lg max-w-md mx-auto">
-                <FaHome className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-xl font-bold text-gray-900 mb-2">No Rooms Yet</h3>
-                <p className="text-gray-600 mb-6">
+              <RidgeCard padding="xl" className="max-w-md mx-auto">
+                <FaHome className="w-16 h-16 text-[var(--text-tertiary)] mx-auto mb-4" />
+                <h3 className="folio-h2 text-[var(--text-primary)] mb-2">No Rooms Yet</h3>
+                <p className="folio-body text-[var(--text-secondary)] mb-6">
                   Start by adding rooms to organize your project selections
                 </p>
-                <button
+                <Button
+                  variant="accent"
                   onClick={() => setShowAddRoom(true)}
-                  className="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors"
                 >
                   Add Your First Room
-                </button>
-              </div>
+                </Button>
+              </RidgeCard>
             </motion.div>
           )}
       </div>

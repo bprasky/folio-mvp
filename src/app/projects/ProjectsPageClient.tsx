@@ -30,12 +30,14 @@ import {
 import { cn } from '@/lib/utils';
 import { useUserCapabilities } from '@/hooks/useUserCapabilities';
 import { EmptyStateHero, GuideCard, UpgradePrompt } from '@/components/projects';
+import { RidgeCard } from '@/components/ui/ridge-card';
+import { Button } from '@/components/ui/button';
 
 // ============================================================================
 // TYPE DEFINITIONS — Lifecycle + Overlays Model
 // ============================================================================
 
-/** 
+/**
  * Lifecycle: The fundamental state of a project (3 states only)
  * - DRAFT: Has no substance yet (empty shell)
  * - ACTIVE: Has substance (images, rooms, tags, etc.)
@@ -174,7 +176,7 @@ export default function ProjectsPageClient({ projectsRaw, operatingAsOrgId }: Pr
       }
 
       // Update local state
-      setProjectsState(prev => 
+      setProjectsState(prev =>
         prev.map(p => p.id === projectId ? { ...p, title: newTitle } : p)
       );
     } catch (error) {
@@ -196,13 +198,13 @@ export default function ProjectsPageClient({ projectsRaw, operatingAsOrgId }: Pr
       }
 
       const result = await response.json();
-      
+
       // If project was deleted (not archived), remove from state
       if (result.deleted) {
         setProjectsState(prev => prev.filter(p => p.id !== projectId));
       } else if (result.archived) {
         // If archived, update status
-        setProjectsState(prev => 
+        setProjectsState(prev =>
           prev.map(p => p.id === projectId ? { ...p, status: 'archived', lifecycle: 'ARCHIVED' as Lifecycle } : p)
         );
         alert(result.message);
@@ -243,19 +245,12 @@ export default function ProjectsPageClient({ projectsRaw, operatingAsOrgId }: Pr
   }, [projects]);
 
   return (
-    <div className="min-h-screen w-full liquid-page-bg -mx-6">
-      {/* Ambient orbs for liquid glass blur effect */}
-      <div className="liquid-ambient-container">
-        <div className="liquid-orb liquid-orb-1" />
-        <div className="liquid-orb liquid-orb-2" />
-        <div className="liquid-orb liquid-orb-3" />
-      </div>
-
-      <div className="relative liquid-z-content w-full">
+    <div className="min-h-screen w-full bg-[var(--bg-base)] -mx-6">
+      <div className="relative w-full">
         {/* Page Header with Context */}
-        <div className="liquid-glass-sticky">
+        <div className="sticky top-0 z-10 bg-[var(--bg-elevated)] border-b border-[var(--border)]">
           <div className="max-w-7xl mx-auto px-4 md:px-8 py-6">
-            <h1 className="text-2xl md:text-3xl font-semibold text-[#1a1a1a] mb-4">
+            <h1 className="folio-h1 text-[var(--text-primary)] mb-4">
               {pageTitle}
             </h1>
 
@@ -265,10 +260,10 @@ export default function ProjectsPageClient({ projectsRaw, operatingAsOrgId }: Pr
                 <button
                   onClick={() => setActiveContextTab('all')}
                   className={cn(
-                    "px-4 py-2 text-sm font-medium rounded-full transition-colors",
+                    "px-4 py-2 folio-ui font-medium rounded-full transition-colors",
                     activeContextTab === 'all'
-                      ? "bg-[#1a1a1a] text-white"
-                      : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
+                      ? "bg-[var(--text-primary)] text-[var(--bg-elevated)]"
+                      : "bg-[var(--bg-base)] text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)]"
                   )}
                 >
                   All ({contextCounts.total})
@@ -276,10 +271,10 @@ export default function ProjectsPageClient({ projectsRaw, operatingAsOrgId }: Pr
                 <button
                   onClick={() => setActiveContextTab('personal')}
                   className={cn(
-                    "px-4 py-2 text-sm font-medium rounded-full transition-colors flex items-center gap-2",
+                    "px-4 py-2 folio-ui font-medium rounded-full transition-colors flex items-center gap-2",
                     activeContextTab === 'personal'
-                      ? "bg-[#1a1a1a] text-white"
-                      : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
+                      ? "bg-[var(--text-primary)] text-[var(--bg-elevated)]"
+                      : "bg-[var(--bg-base)] text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)]"
                   )}
                 >
                   <User className="h-4 w-4" />
@@ -288,10 +283,10 @@ export default function ProjectsPageClient({ projectsRaw, operatingAsOrgId }: Pr
                 <button
                   onClick={() => setActiveContextTab('organization')}
                   className={cn(
-                    "px-4 py-2 text-sm font-medium rounded-full transition-colors flex items-center gap-2",
+                    "px-4 py-2 folio-ui font-medium rounded-full transition-colors flex items-center gap-2",
                     activeContextTab === 'organization'
-                      ? "bg-[#1a1a1a] text-white"
-                      : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
+                      ? "bg-[var(--text-primary)] text-[var(--bg-elevated)]"
+                      : "bg-[var(--bg-base)] text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)]"
                   )}
                 >
                   <Building2 className="h-4 w-4" />
@@ -309,13 +304,13 @@ export default function ProjectsPageClient({ projectsRaw, operatingAsOrgId }: Pr
         <div className="px-4 md:px-8 pt-6 pb-4">
           <div className="max-w-7xl mx-auto">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[#666]" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[var(--text-secondary)]" />
               <input
                 type="text"
                 placeholder="Search projects by name..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 liquid-glass-inset text-[#1a1a1a] placeholder:text-[#888] focus:outline-none focus:ring-2 focus:ring-[#1a1a1a]/20"
+                className="w-full pl-10 pr-4 py-3 rounded-lg border border-[var(--border)] bg-[var(--bg-elevated)] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20"
               />
             </div>
           </div>
@@ -438,7 +433,7 @@ export default function ProjectsPageClient({ projectsRaw, operatingAsOrgId }: Pr
  * 1. If explicitly archived → ARCHIVED
  * 2. If no substance (no images, rooms, tags, notes) → DRAFT
  * 3. Otherwise → ACTIVE
- * 
+ *
  * IMPORTANT: ProjectStage is NOT used for lifecycle determination.
  * Stage is only a sorting hint, not the truth layer.
  */
@@ -455,7 +450,7 @@ function computeLifecycle(p: ProjectLite): Lifecycle {
   const hasTags = (p.taggedCount ?? 0) > 0;
   const hasNotes = (p.noteCount ?? 0) > 0;
   const hasSkeletons = (p.skeletonCount ?? 0) > 0;
-  
+
   const hasSubstance = hasImages || hasRooms || hasTags || hasNotes || hasSkeletons;
 
   if (!hasSubstance) {
@@ -473,17 +468,17 @@ function computeLifecycle(p: ProjectLite): Lifecycle {
  */
 function computeOverlays(p: ProjectLite): Overlays {
   const isPublished = Boolean(p.isPublic || p.publishedAt);
-  
+
   // Editorial Featured: Check for actual editorial publication
   // TODO: Wire to editorial post model when available (e.g., p.editorialPost?.publishedAt)
   // For now, we don't have this field, so default to false
   const isEditorialFeatured = false;
-  
+
   // Editorial Candidate: Must be published AND meet engagement thresholds
   const saves = p.savesByOthers ?? 0;
   const tagged = p.taggedCount ?? 0;
-  const isEditorialCandidate = isPublished && 
-    saves >= EDITORIAL_SAVES_THRESHOLD && 
+  const isEditorialCandidate = isPublished &&
+    saves >= EDITORIAL_SAVES_THRESHOLD &&
     tagged >= EDITORIAL_TAGGED_THRESHOLD;
 
   return {
@@ -502,17 +497,17 @@ function computeUISection(lifecycle: Lifecycle, overlays: Overlays): UISection {
   if (lifecycle === 'ARCHIVED') {
     return 'ARCHIVED';
   }
-  
+
   // Published projects go to Published section
   if (overlays.isPublished) {
     return 'PUBLISHED';
   }
-  
+
   // Drafts (no substance) go to Drafts section
   if (lifecycle === 'DRAFT') {
     return 'DRAFTS';
   }
-  
+
   // Active unpublished projects go to In Progress
   return 'IN_PROGRESS';
 }
@@ -524,12 +519,12 @@ function mapToProjectLite(p: ProjectLite): ProjectLite {
   const savesByOthers = Number(p.savesByOthers ?? 0);
   const influenceValueUsd = Number(p.influenceValueUsd ?? 0);
   const views = Number(p.views ?? 0);
-  
+
   // Compute lifecycle and overlays (the new truth layer)
   const lifecycle = computeLifecycle({ ...p, taggedCount, savesByOthers });
   const overlays = computeOverlays({ ...p, taggedCount, savesByOthers });
   const uiSection = computeUISection(lifecycle, overlays);
-  
+
   return {
     ...p,
     taggedCount,
@@ -550,11 +545,11 @@ function groupBySection(projects: ProjectLite[]) {
     const section = p.uiSection ?? 'IN_PROGRESS';
     (acc[section] ??= []).push(p);
     return acc;
-  }, { 
-    IN_PROGRESS: [], 
-    PUBLISHED: [], 
-    DRAFTS: [], 
-    ARCHIVED: [] 
+  }, {
+    IN_PROGRESS: [],
+    PUBLISHED: [],
+    DRAFTS: [],
+    ARCHIVED: []
   });
 }
 
@@ -583,7 +578,7 @@ function TopImpactBar({ totals, capabilities }: TopImpactBarProps) {
   // Individual users see Collections and Saved Products only
   if (isIndividual) {
     return (
-      <div className="sticky top-0 liquid-z-sticky liquid-glass-sticky">
+      <div className="sticky top-0 z-10 bg-[var(--bg-elevated)] border-b border-[var(--border)]">
         <div className="max-w-7xl mx-auto px-4 md:px-8 py-4 grid grid-cols-2 gap-3">
           <MetricPill icon={Layers} label="COLLECTIONS" value={formatNumber(totals.collectionsCount ?? 0)} />
           <MetricPill icon={BookOpenText} label="SAVED PRODUCTS" value={formatNumber(totals.savedProductsCount ?? 0)} />
@@ -592,9 +587,9 @@ function TopImpactBar({ totals, capabilities }: TopImpactBarProps) {
     );
   }
 
-  // Designers see the full stats bar with liquid glass treatment
+  // Designers see the full stats bar
   return (
-    <div className="sticky top-0 liquid-z-sticky liquid-glass-sticky">
+    <div className="sticky top-0 z-10 bg-[var(--bg-elevated)] border-b border-[var(--border)]">
       <div className="max-w-7xl mx-auto px-4 md:px-8 py-4">
         <div className={cn(
           "grid gap-3",
@@ -621,7 +616,7 @@ function TopImpactBar({ totals, capabilities }: TopImpactBarProps) {
           <div className="mt-3 flex justify-end">
             <Link
               href="/designer/profile"
-              className="inline-flex items-center gap-1.5 text-xs text-[#666] hover:text-[#1a1a1a] transition-colors"
+              className="inline-flex items-center gap-1.5 folio-meta text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
             >
               <Users className="h-3.5 w-3.5" />
               View your directory listing
@@ -648,19 +643,19 @@ function MetricPill({
 }) {
   return (
     <div className={cn(
-      "liquid-glass-pill px-4 py-3 flex items-center gap-3",
+      "px-4 py-3 flex items-center gap-3 rounded-lg border border-[var(--border)] bg-[var(--bg-base)]",
       muted && "opacity-60"
     )}>
       <Icon className={cn(
-        "h-5 w-5 text-[#666]",
-        emphasis && "text-[#8B7355]"
+        "h-5 w-5 text-[var(--text-secondary)]",
+        emphasis && "text-[var(--accent)]"
       )} />
       <div className="flex flex-col leading-tight">
-        <span className="text-xs uppercase tracking-wider text-[#666]">{label}</span>
+        <span className="folio-meta uppercase tracking-wider text-[var(--text-secondary)]">{label}</span>
         <span className={cn(
-          "text-base md:text-lg font-semibold",
-          muted ? "text-[#999]" : "text-[#1a1a1a]",
-          emphasis && "text-[#8B7355]"
+          "folio-h3",
+          muted ? "text-[var(--text-tertiary)]" : "text-[var(--text-primary)]",
+          emphasis && "text-[var(--accent)]"
         )}>{value}</span>
       </div>
     </div>
@@ -668,37 +663,37 @@ function MetricPill({
 }
 
 const SECTION_CONFIG: Record<UISection, { title: string; emptyMessage: string; icon: any }> = {
-  IN_PROGRESS: { 
-    title: 'In Progress', 
+  IN_PROGRESS: {
+    title: 'In Progress',
     emptyMessage: 'No active projects. Start one by uploading your latest completed work.',
     icon: FolderKanban
   },
-  PUBLISHED: { 
-    title: 'Published', 
+  PUBLISHED: {
+    title: 'Published',
     emptyMessage: 'Nothing published yet. When you\'re ready to share, your work will appear here.',
     icon: BadgeCheck
   },
-  DRAFTS: { 
-    title: 'Drafts', 
+  DRAFTS: {
+    title: 'Drafts',
     emptyMessage: 'No empty drafts.',
     icon: Filter
   },
-  ARCHIVED: { 
-    title: 'Archived', 
+  ARCHIVED: {
+    title: 'Archived',
     emptyMessage: 'No archived projects.',
     icon: Filter
   },
 };
 
-function SectionBand({ 
-  section, 
-  projects, 
+function SectionBand({
+  section,
+  projects,
   defaultExpanded = true,
   onRename,
   onDelete,
   onForceDelete
-}: { 
-  section: UISection; 
+}: {
+  section: UISection;
   projects: ProjectLite[];
   defaultExpanded?: boolean;
   onRename?: (projectId: string, newTitle: string) => void;
@@ -708,23 +703,23 @@ function SectionBand({
   const config = SECTION_CONFIG[section];
 
   return (
-    <section className="liquid-glass-section p-4 md:p-6">
+    <RidgeCard className="p-4 md:p-6">
       <header className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
-          <div className="p-2 liquid-icon">
-            <config.icon className="h-5 w-5 text-[#5C5C57]" />
+          <div className="p-2 rounded-lg bg-[var(--bg-base)] border border-[var(--border)]">
+            <config.icon className="h-5 w-5 text-[var(--text-secondary)]" />
           </div>
-          <h2 className="text-xl md:text-2xl font-semibold tracking-tight text-[#1a1a1a]">
+          <h2 className="folio-h2 text-[var(--text-primary)]">
             {config.title}
           </h2>
         </div>
-        <div className="flex items-center gap-2 text-sm text-[#666]">
+        <div className="flex items-center gap-2 folio-meta text-[var(--text-secondary)]">
           {projects.length} {projects.length === 1 ? 'project' : 'projects'}
         </div>
       </header>
 
       {projects.length === 0 ? (
-        <div className="text-sm text-[#666] italic py-8 px-2">{config.emptyMessage}</div>
+        <div className="folio-body text-[var(--text-secondary)] italic py-8 px-2">{config.emptyMessage}</div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {projects.map(p => (
@@ -738,19 +733,19 @@ function SectionBand({
           ))}
         </div>
       )}
-    </section>
+    </RidgeCard>
   );
 }
 
-function CollapsibleSectionBand({ 
-  section, 
-  projects, 
+function CollapsibleSectionBand({
+  section,
+  projects,
   defaultExpanded = false,
   onRename,
   onDelete,
   onForceDelete
-}: { 
-  section: UISection; 
+}: {
+  section: UISection;
   projects: ProjectLite[];
   defaultExpanded?: boolean;
   onRename?: (projectId: string, newTitle: string) => void;
@@ -780,27 +775,27 @@ function CollapsibleSectionBand({
   }
 
   return (
-    <section className={cn(
-      "liquid-glass-muted overflow-hidden transition-all",
-      isExpanded && "liquid-glass-section"
+    <RidgeCard className={cn(
+      "overflow-hidden transition-all",
+      isExpanded && "p-4 md:p-6"
     )}>
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full px-4 py-3 flex items-center justify-between hover:bg-white/40 transition-colors rounded-t-2xl"
+        className="w-full px-4 py-3 flex items-center justify-between hover:bg-[var(--bg-base)] transition-colors rounded-t-2xl"
       >
         <div className="flex items-center gap-3">
-          <div className="p-1.5 liquid-icon">
-            <config.icon className="h-4 w-4 text-[#5C5C57]" />
+          <div className="p-1.5 rounded-lg bg-[var(--bg-base)] border border-[var(--border)]">
+            <config.icon className="h-4 w-4 text-[var(--text-secondary)]" />
           </div>
-          <h3 className="text-base font-medium text-[#1a1a1a]">
+          <h3 className="folio-h3 text-[var(--text-primary)]">
             {config.title}
           </h3>
-          <span className="text-sm text-[#666]">
+          <span className="folio-meta text-[var(--text-secondary)]">
             ({projects.length})
           </span>
         </div>
         <div className={cn(
-          "text-[#666] transition-transform",
+          "text-[var(--text-secondary)] transition-transform",
           isExpanded ? "rotate-180" : ""
         )}>
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -812,7 +807,7 @@ function CollapsibleSectionBand({
       {isExpanded && (
         <div className="px-4 pb-4">
           {projects.length === 0 ? (
-            <div className="text-sm text-[#666] italic py-8">{config.emptyMessage}</div>
+            <div className="folio-body text-[var(--text-secondary)] italic py-8">{config.emptyMessage}</div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {projects.map(p => (
@@ -828,11 +823,11 @@ function CollapsibleSectionBand({
           )}
         </div>
       )}
-    </section>
+    </RidgeCard>
   );
 }
 
-function ProjectCard({ p, onRename, onDelete, onForceDelete }: { 
+function ProjectCard({ p, onRename, onDelete, onForceDelete }: {
   p: ProjectLite;
   onRename?: (projectId: string, newTitle: string) => void;
   onDelete?: (projectId: string) => void;
@@ -883,7 +878,7 @@ function ProjectCard({ p, onRename, onDelete, onForceDelete }: {
 
   const handleRename = async () => {
     if (!onRename || !newTitle.trim()) return;
-    
+
     try {
       await onRename(p.id, newTitle.trim());
       setIsRenaming(false);
@@ -896,14 +891,14 @@ function ProjectCard({ p, onRename, onDelete, onForceDelete }: {
 
   const handleDelete = async () => {
     if (!onDelete) return;
-    
+
     const confirmed = window.confirm(
       'Are you sure you want to delete this project? ' +
-      (p.lifecycle === 'ARCHIVED' 
-        ? 'This will permanently delete the project.' 
+      (p.lifecycle === 'ARCHIVED'
+        ? 'This will permanently delete the project.'
         : 'If the project has content, it will be archived for 30 days before permanent deletion.')
     );
-    
+
     if (!confirmed) return;
 
     try {
@@ -919,11 +914,11 @@ function ProjectCard({ p, onRename, onDelete, onForceDelete }: {
 
   const handleForceDelete = async () => {
     if (!onForceDelete) return;
-    
+
     const confirmed = window.confirm(
       'Are you sure you want to permanently delete this archived project? This action cannot be undone.'
     );
-    
+
     if (!confirmed) return;
 
     try {
@@ -939,7 +934,7 @@ function ProjectCard({ p, onRename, onDelete, onForceDelete }: {
 
   const handleTogglePublish = async () => {
     const newPublishState = !p.isPublic;
-    
+
     try {
       setIsPublishing(true);
       const response = await fetch(`/api/projects/${p.id}`, {
@@ -970,32 +965,32 @@ function ProjectCard({ p, onRename, onDelete, onForceDelete }: {
   };
 
   const isArchived = p.lifecycle === 'ARCHIVED' || p.status === 'archived';
-  
+
   return (
     <div className="group relative">
-      <article className="relative overflow-hidden rounded-2xl bg-white shadow-sm transition-all duration-300 hover:shadow-[0_20px_45px_-12px_rgba(120,100,80,0.15),0_10px_22px_-8px_rgba(120,100,80,0.1)]">
+      <article className="relative overflow-hidden rounded-2xl bg-[var(--bg-elevated)] shadow-sm transition-all duration-300 hover:shadow-md border border-[var(--border)]">
         <Link href={`/project/${p.id}`} className="block">
           <div className="relative aspect-[4/3]">
             {p.coverUrl ? (
-              <Image 
-                src={p.coverUrl} 
-                alt={p.title || 'Project image'} 
-                fill 
-                className="object-cover transition-transform duration-500 group-hover:scale-105" 
+              <Image
+                src={p.coverUrl}
+                alt={p.title || 'Project image'}
+                fill
+                className="object-cover transition-transform duration-500 group-hover:scale-105"
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               />
             ) : (
-              <div className="w-full h-full bg-[#f5f5f5] flex items-center justify-center">
-                <div className="text-[#999] text-sm">No image</div>
+              <div className="w-full h-full bg-[var(--bg-base)] flex items-center justify-center">
+                <div className="folio-meta text-[var(--text-tertiary)]">No image</div>
               </div>
             )}
-            
+
             {/* Quick Actions on Hover */}
             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-200 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
               <Link
                 href={`/project/${p.id}`}
                 onClick={(e) => e.stopPropagation()}
-                className="px-3 py-1.5 bg-white text-[#1a1a1a] rounded-lg text-sm font-medium hover:bg-[#f5f5f5] transition-colors flex items-center gap-1.5"
+                className="px-3 py-1.5 bg-[var(--bg-elevated)] text-[var(--text-primary)] rounded-lg folio-ui font-medium hover:bg-[var(--bg-base)] transition-colors flex items-center gap-1.5"
               >
                 <Edit className="w-4 h-4" />
                 Edit
@@ -1003,7 +998,7 @@ function ProjectCard({ p, onRename, onDelete, onForceDelete }: {
               <Link
                 href={`/project/${p.id}`}
                 onClick={(e) => e.stopPropagation()}
-                className="px-3 py-1.5 bg-white text-[#1a1a1a] rounded-lg text-sm font-medium hover:bg-[#f5f5f5] transition-colors flex items-center gap-1.5"
+                className="px-3 py-1.5 bg-[var(--bg-elevated)] text-[var(--text-primary)] rounded-lg folio-ui font-medium hover:bg-[var(--bg-base)] transition-colors flex items-center gap-1.5"
               >
                 <ExternalLink className="w-4 h-4" />
                 Preview
@@ -1016,7 +1011,7 @@ function ProjectCard({ p, onRename, onDelete, onForceDelete }: {
                     handleTogglePublish();
                   }}
                   disabled={isPublishing}
-                  className="px-3 py-1.5 bg-white text-[#1a1a1a] rounded-lg text-sm font-medium hover:bg-[#f5f5f5] transition-colors flex items-center gap-1.5 disabled:opacity-50"
+                  className="px-3 py-1.5 bg-[var(--bg-elevated)] text-[var(--text-primary)] rounded-lg folio-ui font-medium hover:bg-[var(--bg-base)] transition-colors flex items-center gap-1.5 disabled:opacity-50"
                 >
                   {p.isPublic ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   {isPublishing ? '...' : p.isPublic ? 'Unpublish' : 'Publish'}
@@ -1028,9 +1023,9 @@ function ProjectCard({ p, onRename, onDelete, onForceDelete }: {
             <div className="absolute top-3 left-3 z-10">
               <StatusBadge status={projectStatus} />
             </div>
-            
+
             {/* Action Menu Button */}
-            <div 
+            <div
               ref={menuRef}
               className="absolute top-3 right-3 z-20"
               onClick={(e) => e.stopPropagation()}
@@ -1050,7 +1045,7 @@ function ProjectCard({ p, onRename, onDelete, onForceDelete }: {
 
               {/* Dropdown Menu */}
               {isMenuOpen && (
-                <div className="absolute right-0 top-full mt-1 w-48 bg-white border border-[#e0e0e0] rounded-lg shadow-lg py-1 z-50">
+                <div className="absolute right-0 top-full mt-1 w-48 bg-[var(--bg-elevated)] border border-[var(--border)] rounded-lg shadow-lg py-1 z-50">
                   {!isRenaming ? (
                     <>
                       <Link
@@ -1059,7 +1054,7 @@ function ProjectCard({ p, onRename, onDelete, onForceDelete }: {
                           e.stopPropagation();
                           setIsMenuOpen(false);
                         }}
-                        className="w-full text-left px-3 py-2 text-sm hover:bg-[#f5f5f5] text-[#1a1a1a] flex items-center gap-2"
+                        className="w-full text-left px-3 py-2 folio-ui hover:bg-[var(--bg-base)] text-[var(--text-primary)] flex items-center gap-2"
                       >
                         <Edit className="w-4 h-4" />
                         Edit
@@ -1070,7 +1065,7 @@ function ProjectCard({ p, onRename, onDelete, onForceDelete }: {
                           e.stopPropagation();
                           setIsMenuOpen(false);
                         }}
-                        className="w-full text-left px-3 py-2 text-sm hover:bg-[#f5f5f5] text-[#1a1a1a] flex items-center gap-2"
+                        className="w-full text-left px-3 py-2 folio-ui hover:bg-[var(--bg-base)] text-[var(--text-primary)] flex items-center gap-2"
                       >
                         <ExternalLink className="w-4 h-4" />
                         Preview
@@ -1084,7 +1079,7 @@ function ProjectCard({ p, onRename, onDelete, onForceDelete }: {
                             setIsMenuOpen(false);
                           }}
                           disabled={isPublishing}
-                          className="w-full text-left px-3 py-2 text-sm hover:bg-[#f5f5f5] text-[#1a1a1a] flex items-center gap-2 disabled:opacity-50"
+                          className="w-full text-left px-3 py-2 folio-ui hover:bg-[var(--bg-base)] text-[var(--text-primary)] flex items-center gap-2 disabled:opacity-50"
                         >
                           {p.isPublic ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                           {isPublishing ? 'Updating...' : p.isPublic ? 'Unpublish' : 'Publish'}
@@ -1096,7 +1091,7 @@ function ProjectCard({ p, onRename, onDelete, onForceDelete }: {
                           e.stopPropagation();
                           setIsRenaming(true);
                         }}
-                        className="w-full text-left px-3 py-2 text-sm hover:bg-[#f5f5f5] text-[#1a1a1a] flex items-center gap-2"
+                        className="w-full text-left px-3 py-2 folio-ui hover:bg-[var(--bg-base)] text-[var(--text-primary)] flex items-center gap-2"
                       >
                         <Edit className="w-4 h-4" />
                         Rename
@@ -1109,7 +1104,7 @@ function ProjectCard({ p, onRename, onDelete, onForceDelete }: {
                             handleForceDelete();
                           }}
                           disabled={isDeleting}
-                          className="w-full text-left px-3 py-2 text-sm hover:bg-[#f5f5f5] text-[#dc2626] flex items-center gap-2 disabled:opacity-50"
+                          className="w-full text-left px-3 py-2 folio-ui hover:bg-[var(--bg-base)] text-red-600 flex items-center gap-2 disabled:opacity-50"
                         >
                           <Trash2 className="w-4 h-4" />
                           {isDeleting ? 'Deleting...' : 'Permanently Delete'}
@@ -1122,7 +1117,7 @@ function ProjectCard({ p, onRename, onDelete, onForceDelete }: {
                             handleDelete();
                           }}
                           disabled={isDeleting}
-                          className="w-full text-left px-3 py-2 text-sm hover:bg-[#f5f5f5] text-[#dc2626] flex items-center gap-2 disabled:opacity-50"
+                          className="w-full text-left px-3 py-2 folio-ui hover:bg-[var(--bg-base)] text-red-600 flex items-center gap-2 disabled:opacity-50"
                         >
                           <Trash2 className="w-4 h-4" />
                           {isDeleting ? 'Deleting...' : 'Delete'}
@@ -1144,7 +1139,7 @@ function ProjectCard({ p, onRename, onDelete, onForceDelete }: {
                             setIsRenaming(false);
                           }
                         }}
-                        className="w-full px-2 py-1 text-sm border border-[#e0e0e0] rounded bg-white text-[#1a1a1a] focus:outline-none focus:ring-2 focus:ring-[#1a1a1a]/20"
+                        className="w-full px-2 py-1 folio-ui border border-[var(--border)] rounded bg-[var(--bg-elevated)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20"
                         onClick={(e) => e.stopPropagation()}
                       />
                       <div className="flex gap-2 mt-2">
@@ -1154,7 +1149,7 @@ function ProjectCard({ p, onRename, onDelete, onForceDelete }: {
                             e.stopPropagation();
                             handleRename();
                           }}
-                          className="flex-1 px-2 py-1 text-xs bg-[#1a1a1a] text-white rounded hover:bg-[#1a1a1a]/90"
+                          className="flex-1 px-2 py-1 folio-meta bg-[var(--text-primary)] text-[var(--bg-elevated)] rounded hover:opacity-90"
                         >
                           Save
                         </button>
@@ -1165,7 +1160,7 @@ function ProjectCard({ p, onRename, onDelete, onForceDelete }: {
                             setNewTitle(p.title);
                             setIsRenaming(false);
                           }}
-                          className="flex-1 px-2 py-1 text-xs bg-[#f5f5f5] text-[#666] rounded hover:bg-[#e0e0e0]"
+                          className="flex-1 px-2 py-1 folio-meta bg-[var(--bg-base)] text-[var(--text-secondary)] rounded hover:bg-[var(--bg-elevated)]"
                         >
                           Cancel
                         </button>
@@ -1175,14 +1170,14 @@ function ProjectCard({ p, onRename, onDelete, onForceDelete }: {
                 </div>
               )}
             </div>
-            
+
             {/* bottom overlay for text legibility */}
             <div className="absolute inset-x-0 bottom-0 p-4">
               <div className="rounded-xl bg-gradient-to-t from-black/70 via-black/50 to-transparent px-4 py-3">
-                <div className="text-sm md:text-base font-semibold text-white truncate mb-1">
+                <div className="folio-ui font-semibold text-white truncate mb-1">
                   {p.title}
                 </div>
-                <div className="flex items-center justify-between text-xs text-white/90">
+                <div className="flex items-center justify-between folio-meta text-white/90">
                   <span>Updated {formatTimeAgo(p.updatedAt || p.createdAt)}</span>
                 </div>
               </div>
@@ -1196,16 +1191,16 @@ function ProjectCard({ p, onRename, onDelete, onForceDelete }: {
 
 function StatusBadge({ status }: { status: string }) {
   const styles = {
-    'Draft': 'bg-[#f5f5f5] text-[#666] border-[#e0e0e0]',
-    'Ready to Publish': 'bg-[#fef3c7] text-[#92400e] border-[#fde68a]',
-    'Published': 'bg-[#d1fae5] text-[#065f46] border-[#a7f3d0]',
+    'Draft': 'bg-[var(--bg-base)] text-[var(--text-secondary)] border-[var(--border)]',
+    'Ready to Publish': 'bg-[var(--accent)]/10 text-[var(--accent)] border-[var(--accent)]/20',
+    'Published': 'bg-green-100 text-green-800 border-green-200',
   };
-  
+
   const style = styles[status as keyof typeof styles] || styles['Draft'];
-  
+
   return (
     <span className={cn(
-      "text-[10px] uppercase tracking-wider px-2.5 py-1 rounded-full border font-medium",
+      "folio-meta uppercase tracking-wider px-2.5 py-1 rounded-full border font-medium",
       style
     )}>
       {status}
@@ -1219,15 +1214,15 @@ function StatusBadge({ status }: { status: string }) {
 function EditorialBadge({ variant }: { variant: 'featured' | 'candidate' }) {
   if (variant === 'featured') {
     return (
-      <div className="flex items-center gap-1.5 rounded-full px-3 py-1 text-xs border border-accent bg-accent/10 text-accent-foreground">
+      <div className="flex items-center gap-1.5 rounded-full px-3 py-1 folio-meta border border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]">
         <Sparkles className="h-3.5 w-3.5" />
         <span>Editorial</span>
       </div>
     );
   }
-  
+
   return (
-    <div className="flex items-center gap-1.5 rounded-full px-3 py-1 text-xs border border-border bg-muted text-muted-foreground">
+    <div className="flex items-center gap-1.5 rounded-full px-3 py-1 folio-meta border border-[var(--border)] bg-[var(--bg-base)] text-[var(--text-secondary)]">
       <Newspaper className="h-3.5 w-3.5" />
       <span>Editorial Candidate</span>
     </div>
@@ -1236,7 +1231,7 @@ function EditorialBadge({ variant }: { variant: 'featured' | 'candidate' }) {
 
 function Badge({ label, icon: Icon }: { label: string; icon: any }) {
   return (
-    <div className="flex items-center gap-1.5 rounded-full px-3 py-1 text-xs border border-border bg-muted text-muted-foreground">
+    <div className="flex items-center gap-1.5 rounded-full px-3 py-1 folio-meta border border-[var(--border)] bg-[var(--bg-base)] text-[var(--text-secondary)]">
       <Icon className="h-3.5 w-3.5" />
       <span>{label}</span>
     </div>
@@ -1247,13 +1242,13 @@ function EditorialProgress({ value }: { value: number }) {
   // 0..100
   return (
     <div className="mt-2">
-      <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
-        <div 
-          className="h-full rounded-full bg-primary transition-all duration-500" 
-          style={{ width: `${Math.min(100, Math.max(0, value))}%` }} 
+      <div className="h-2 w-full rounded-full bg-[var(--bg-base)] overflow-hidden">
+        <div
+          className="h-full rounded-full bg-[var(--accent)] transition-all duration-500"
+          style={{ width: `${Math.min(100, Math.max(0, value))}%` }}
         />
       </div>
-      <div className="mt-1 text-[11px] text-muted-foreground">
+      <div className="mt-1 folio-meta text-[var(--text-secondary)]">
         Editorial readiness: {Math.round(value)}%
       </div>
     </div>
@@ -1283,10 +1278,10 @@ function formatNumber(n: number) {
 
 function formatTimeAgo(date: string | Date | null | undefined): string {
   if (!date) return 'recently';
-  
+
   const dateObj = typeof date === 'string' ? new Date(date) : date;
   if (isNaN(dateObj.getTime())) return 'recently';
-  
+
   const now = new Date();
   const diffMs = now.getTime() - dateObj.getTime();
   const diffMins = Math.floor(diffMs / (1000 * 60));
@@ -1294,14 +1289,14 @@ function formatTimeAgo(date: string | Date | null | undefined): string {
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
   const diffWeeks = Math.floor(diffDays / 7);
   const diffMonths = Math.floor(diffDays / 30);
-  
+
   if (diffMins < 1) return 'just now';
   if (diffMins < 60) return `${diffMins} ${diffMins === 1 ? 'minute' : 'minutes'} ago`;
   if (diffHours < 24) return `${diffHours} ${diffHours === 1 ? 'hour' : 'hours'} ago`;
   if (diffDays < 7) return `${diffDays} ${diffDays === 1 ? 'day' : 'days'} ago`;
   if (diffWeeks < 4) return `${diffWeeks} ${diffWeeks === 1 ? 'week' : 'weeks'} ago`;
   if (diffMonths < 12) return `${diffMonths} ${diffMonths === 1 ? 'month' : 'months'} ago`;
-  
+
   const diffYears = Math.floor(diffMonths / 12);
   return `${diffYears} ${diffYears === 1 ? 'year' : 'years'} ago`;
 }
@@ -1313,21 +1308,21 @@ function FolioIndexDrawer({ projects }: { projects: ProjectLite[] }) {
     const total = projects.length || 1;
     const avgSaves = projects.reduce((a, p) => a + (p.savesByOthers ?? 0), 0) / total;
     const avgTagged = projects.reduce((a, p) => a + (p.taggedCount ?? 0), 0) / total;
-    
+
     // Use section-based grouping (new model)
     const grouped = groupBySection(projects);
     const sectionEntries = Object.entries(grouped) as [UISection, ProjectLite[]][];
     const topSection = sectionEntries
       .filter(([key]) => key !== 'ARCHIVED') // Exclude archived from "top" calculation
       .sort((a, b) => (b[1]?.length ?? 0) - (a[1]?.length ?? 0))[0]?.[0] ?? 'IN_PROGRESS';
-    
+
     // Editorial stats
     const editorialCandidates = projects.filter(p => p.overlays?.isEditorialCandidate).length;
     const editorialFeatured = projects.filter(p => p.overlays?.isEditorialFeatured).length;
-    
-    return { 
-      avgSaves: Math.round(avgSaves), 
-      avgTagged: Math.round(avgTagged), 
+
+    return {
+      avgSaves: Math.round(avgSaves),
+      avgTagged: Math.round(avgTagged),
       topSection,
       editorialCandidates,
       editorialFeatured,
@@ -1337,53 +1332,54 @@ function FolioIndexDrawer({ projects }: { projects: ProjectLite[] }) {
 
   return (
     <>
-      <button
+      <Button
         onClick={() => setOpen(v => !v)}
-        className="fixed right-4 bottom-6 z-30 rounded-full px-4 py-2 bg-card border border-border shadow-lg hover:bg-muted text-foreground transition-colors"
+        variant="outline"
+        className="fixed right-4 bottom-6 z-30 shadow-lg"
         aria-label="Open Folio Index"
       >
         <Sparkles className="h-5 w-5 inline mr-2" />
         Folio Index
-      </button>
+      </Button>
 
       {open && (
-        <div 
-          className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm" 
+        <div
+          className="fixed inset-0 z-40 bg-[var(--bg-base)]/80 backdrop-blur-sm"
           onClick={() => setOpen(false)}
         >
           <aside
             onClick={e => e.stopPropagation()}
-            className="absolute right-0 top-0 h-full w-[360px] bg-card border-l border-border p-5 overflow-y-auto shadow-lg"
+            className="absolute right-0 top-0 h-full w-[360px] bg-[var(--bg-elevated)] border-l border-[var(--border)] p-5 overflow-y-auto shadow-lg"
           >
-            <h3 className="text-lg font-semibold mb-4 text-foreground">Portfolio Intelligence</h3>
-            
+            <h3 className="folio-h3 mb-4 text-[var(--text-primary)]">Portfolio Intelligence</h3>
+
             {/* Section Breakdown */}
             <div className="mb-6">
-              <h4 className="text-xs uppercase tracking-wider text-muted-foreground mb-2">By Section</h4>
-              <ul className="space-y-2 text-sm">
-                <li className="flex justify-between text-foreground">
+              <h4 className="folio-meta uppercase tracking-wider text-[var(--text-secondary)] mb-2">By Section</h4>
+              <ul className="space-y-2 folio-body">
+                <li className="flex justify-between text-[var(--text-primary)]">
                   <span>Drafts</span>
                   <span className="font-medium">{aggregates.bySection.DRAFTS.length}</span>
                 </li>
-                <li className="flex justify-between text-foreground">
+                <li className="flex justify-between text-[var(--text-primary)]">
                   <span>In Progress</span>
                   <span className="font-medium">{aggregates.bySection.IN_PROGRESS.length}</span>
                 </li>
-                <li className="flex justify-between text-foreground">
+                <li className="flex justify-between text-[var(--text-primary)]">
                   <span>Published</span>
                   <span className="font-medium">{aggregates.bySection.PUBLISHED.length}</span>
                 </li>
-                <li className="flex justify-between text-muted-foreground">
+                <li className="flex justify-between text-[var(--text-secondary)]">
                   <span>Archived</span>
                   <span className="font-medium">{aggregates.bySection.ARCHIVED.length}</span>
                 </li>
               </ul>
             </div>
-            
+
             {/* Engagement Stats */}
             <div className="mb-6">
-              <h4 className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Engagement</h4>
-              <ul className="space-y-2 text-sm text-foreground">
+              <h4 className="folio-meta uppercase tracking-wider text-[var(--text-secondary)] mb-2">Engagement</h4>
+              <ul className="space-y-2 folio-body text-[var(--text-primary)]">
                 <li className="flex justify-between">
                   <span>Avg Saves / Project</span>
                   <span className="font-medium">{aggregates.avgSaves}</span>
@@ -1394,11 +1390,11 @@ function FolioIndexDrawer({ projects }: { projects: ProjectLite[] }) {
                 </li>
               </ul>
             </div>
-            
+
             {/* Editorial Overlay Stats */}
             <div className="mb-6">
-              <h4 className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Editorial Status</h4>
-              <ul className="space-y-2 text-sm text-foreground">
+              <h4 className="folio-meta uppercase tracking-wider text-[var(--text-secondary)] mb-2">Editorial Status</h4>
+              <ul className="space-y-2 folio-body text-[var(--text-primary)]">
                 <li className="flex justify-between">
                   <span>Editorial Candidates</span>
                   <span className="font-medium">{aggregates.editorialCandidates}</span>
@@ -1409,8 +1405,8 @@ function FolioIndexDrawer({ projects }: { projects: ProjectLite[] }) {
                 </li>
               </ul>
             </div>
-            
-            <div className="mt-6 text-xs text-muted-foreground">
+
+            <div className="mt-6 folio-meta text-[var(--text-tertiary)]">
               *All metrics computed non-destructively from current data. No uploads or schema changes required.
             </div>
           </aside>
@@ -1428,4 +1424,3 @@ function formatSectionName(s: UISection): string {
     ARCHIVED: 'Archived',
   }[s] ?? 'In Progress';
 }
-

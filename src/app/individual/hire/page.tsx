@@ -9,6 +9,8 @@ import { motion } from 'framer-motion';
 import { FaMapMarkerAlt, FaCheck, FaExternalLinkAlt, FaSpinner } from 'react-icons/fa';
 import { normalizeRole } from '@/lib/permissions';
 import { demoIndividualHireData } from './demoData';
+import { RidgeCard } from '@/components/ui/ridge-card';
+import { Button } from '@/components/ui/button';
 
 interface DesignerMatch {
   designerId: string;
@@ -91,7 +93,7 @@ export default function IndividualHirePage() {
   // Role gating: redirect if not INDIVIDUAL
   useEffect(() => {
     if (status === 'loading') return;
-    
+
     if (!session?.user) {
       router.push('/auth/signin');
       return;
@@ -108,14 +110,14 @@ export default function IndividualHirePage() {
   // Show loading state
   if (status === 'loading') {
     return (
-      <div className="p-6">
+      <div className="min-h-screen bg-[var(--bg-base)] p-6">
         <div className="max-w-7xl mx-auto">
           <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-1/3 mb-4"></div>
-            <div className="h-4 bg-gray-200 rounded w-1/2 mb-8"></div>
+            <div className="h-8 bg-[var(--bg-elevated)] rounded w-1/3 mb-4"></div>
+            <div className="h-4 bg-[var(--bg-elevated)] rounded w-1/2 mb-8"></div>
             <div className="space-y-6">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="h-64 bg-gray-200 rounded-2xl"></div>
+                <div key={i} className="h-64 bg-[var(--bg-elevated)] rounded-2xl"></div>
               ))}
             </div>
           </div>
@@ -132,7 +134,7 @@ export default function IndividualHirePage() {
   const { individual, designerMatches: demoMatches, uiCopy } = demoIndividualHireData;
   const { projectProfile } = individual;
   const { inferredSignals } = projectProfile;
-  
+
   // Use fetched matches if available, otherwise fallback to demo data
   const matches = designerMatches.length > 0 ? designerMatches : (demoMatches as DesignerMatch[]);
 
@@ -167,7 +169,7 @@ export default function IndividualHirePage() {
       }
 
       const result = await response.json();
-      
+
       // Redirect to the project page (Designer view will be accessible)
       if (result.project?.id) {
         router.push(`/project/${result.project.id}`);
@@ -182,7 +184,7 @@ export default function IndividualHirePage() {
   };
 
   return (
-    <div className="p-6">
+    <div className="min-h-screen bg-[var(--bg-base)] p-6">
       <div className="max-w-7xl mx-auto">
         {/* Page Header */}
         <motion.div
@@ -191,16 +193,16 @@ export default function IndividualHirePage() {
           transition={{ duration: 0.6 }}
           className="mb-8"
         >
-          <h1 className="text-4xl font-bold text-gray-900 mb-3">
+          <h1 className="folio-h1 text-[var(--text-primary)] mb-3">
             {uiCopy.pageTitle}
           </h1>
-          <p className="text-xl text-gray-600 mb-6">
+          <p className="folio-body text-[var(--text-secondary)] mb-6">
             {uiCopy.pageSubtitle}
           </p>
 
           {/* Project Summary Pill */}
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-white rounded-full border border-gray-200 shadow-sm">
-            <span className="text-sm font-medium text-gray-700">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-[var(--bg-elevated)] rounded-full border border-[var(--border-color)] shadow-sm">
+            <span className="folio-ui text-[var(--text-secondary)]">
               {projectSummary}
             </span>
           </div>
@@ -216,7 +218,7 @@ export default function IndividualHirePage() {
         {/* Designer Matches */}
         {loadingMatches ? (
           <div className="flex justify-center items-center py-12">
-            <FaSpinner className="w-8 h-8 animate-spin text-gray-400" />
+            <FaSpinner className="w-8 h-8 animate-spin text-[var(--text-tertiary)]" />
           </div>
         ) : (
           <div className="space-y-8 mb-12">
@@ -226,175 +228,176 @@ export default function IndividualHirePage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: index * 0.1 }}
-              className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-shadow"
             >
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Left Column - Designer Info */}
-                <div className="lg:col-span-1">
-                  <div className="flex flex-col items-start mb-6">
-                    {/* Avatar */}
-                    <div className="relative w-20 h-20 rounded-full overflow-hidden mb-4 border-2 border-gray-200">
-                      <Image
-                        src={designer.avatarUrl || '/images/placeholder-avatar.jpg'}
-                        alt={designer.name}
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
-
-                    {/* Designer Name & Location */}
-                    <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                      {designer.name}
-                    </h2>
-                    <div className="flex items-center gap-2 text-gray-600 mb-4">
-                      <FaMapMarkerAlt className="w-4 h-4" />
-                      <span className="text-sm">{designer.location}</span>
-                    </div>
-
-                    {/* Match Score Badge */}
-                    <div className="mb-6">
-                      <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 rounded-full">
-                        <span className="text-sm font-semibold text-blue-700">
-                          {formatMatchScore(designer.matchScores.overallMatch)}% Match
-                        </span>
+              <RidgeCard className="p-8">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                  {/* Left Column - Designer Info */}
+                  <div className="lg:col-span-1">
+                    <div className="flex flex-col items-start mb-6">
+                      {/* Avatar */}
+                      <div className="relative w-20 h-20 rounded-full overflow-hidden mb-4 border-2 border-[var(--border-color)]">
+                        <Image
+                          src={designer.avatarUrl || '/images/placeholder-avatar.jpg'}
+                          alt={designer.name}
+                          fill
+                          className="object-cover"
+                        />
                       </div>
-                    </div>
 
-                    {/* Offerings */}
-                    <div className="mb-6">
-                      <h3 className="text-sm font-semibold text-gray-900 mb-2">
-                        Services
-                      </h3>
-                      <div className="flex flex-wrap gap-2">
-                        {designer.offerings.map((offering, idx) => (
-                          <span
-                            key={idx}
-                            className="px-3 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded-full"
-                          >
-                            {offering}
+                      {/* Designer Name & Location */}
+                      <h2 className="folio-h2 text-[var(--text-primary)] mb-2">
+                        {designer.name}
+                      </h2>
+                      <div className="flex items-center gap-2 text-[var(--text-secondary)] mb-4">
+                        <FaMapMarkerAlt className="w-4 h-4" />
+                        <span className="folio-meta">{designer.location}</span>
+                      </div>
+
+                      {/* Match Score Badge */}
+                      <div className="mb-6">
+                        <div className="inline-flex items-center gap-2 px-4 py-2 bg-[var(--accent)]/10 rounded-full">
+                          <span className="folio-ui font-semibold text-[var(--accent)]">
+                            {formatMatchScore(designer.matchScores.overallMatch)}% Match
                           </span>
-                        ))}
+                        </div>
+                      </div>
+
+                      {/* Offerings */}
+                      <div className="mb-6">
+                        <h3 className="folio-ui font-semibold text-[var(--text-primary)] mb-2">
+                          Services
+                        </h3>
+                        <div className="flex flex-wrap gap-2">
+                          {designer.offerings.map((offering, idx) => (
+                            <span
+                              key={idx}
+                              className="px-3 py-1 folio-meta bg-[var(--bg-base)] text-[var(--text-secondary)] rounded-full"
+                            >
+                              {offering}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Project Range */}
+                      <div className="folio-meta text-[var(--text-secondary)]">
+                        <p className="font-medium text-[var(--text-primary)] mb-1">
+                          Budget Range
+                        </p>
+                        <p>
+                          ${designer.projectRange.minBudget.toLocaleString()} - ${designer.projectRange.maxBudget.toLocaleString()}
+                        </p>
+                        <p className="mt-1 text-[var(--text-tertiary)]">
+                          {designer.projectRange.typicalScope}
+                        </p>
                       </div>
                     </div>
+                  </div>
 
-                    {/* Project Range */}
-                    <div className="text-sm text-gray-600">
-                      <p className="font-medium text-gray-900 mb-1">
-                        Budget Range
-                      </p>
-                      <p>
-                        ${designer.projectRange.minBudget.toLocaleString()} - ${designer.projectRange.maxBudget.toLocaleString()}
-                      </p>
-                      <p className="mt-1 text-xs text-gray-500">
-                        {designer.projectRange.typicalScope}
-                      </p>
+                  {/* Right Column - Match Details */}
+                  <div className="lg:col-span-2">
+                    {/* Reason Chips */}
+                    <div className="flex flex-wrap gap-2 mb-6">
+                      {designer.reasonChips.map((reason, idx) => (
+                        <div
+                          key={idx}
+                          className="flex items-center gap-2 px-3 py-1.5 bg-green-50 rounded-full"
+                        >
+                          <FaCheck className="w-3 h-3 text-green-600" />
+                          <span className="folio-meta text-green-800">{reason}</span>
+                        </div>
+                      ))}
                     </div>
-                  </div>
-                </div>
 
-                {/* Right Column - Match Details */}
-                <div className="lg:col-span-2">
-                  {/* Reason Chips */}
-                  <div className="flex flex-wrap gap-2 mb-6">
-                    {designer.reasonChips.map((reason, idx) => (
-                      <div
-                        key={idx}
-                        className="flex items-center gap-2 px-3 py-1.5 bg-green-50 rounded-full"
-                      >
-                        <FaCheck className="w-3 h-3 text-green-600" />
-                        <span className="text-sm text-green-800">{reason}</span>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Preview Projects */}
-                  {designer.previewProjects.length > 0 && (
-                    <div className="mb-6">
-                      <h3 className="text-sm font-semibold text-gray-900 mb-3">
-                        Similar Projects
-                      </h3>
-                      <div className="grid grid-cols-2 gap-4">
-                        {designer.previewProjects.slice(0, 2).map((project) => (
-                          <div
-                            key={project.projectId}
-                            className="relative aspect-[4/3] rounded-lg overflow-hidden"
-                          >
-                            <Image
-                              src={project.heroImageUrl || '/images/placeholder-project.jpg'}
-                              alt={project.name}
-                              fill
-                              className="object-cover"
-                            />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end">
-                              <div className="p-3 text-white">
-                                <p className="text-sm font-medium">{project.name}</p>
+                    {/* Preview Projects */}
+                    {designer.previewProjects.length > 0 && (
+                      <div className="mb-6">
+                        <h3 className="folio-ui font-semibold text-[var(--text-primary)] mb-3">
+                          Similar Projects
+                        </h3>
+                        <div className="grid grid-cols-2 gap-4">
+                          {designer.previewProjects.slice(0, 2).map((project) => (
+                            <div
+                              key={project.projectId}
+                              className="relative aspect-[4/3] rounded-lg overflow-hidden"
+                            >
+                              <Image
+                                src={project.heroImageUrl || '/images/placeholder-project.jpg'}
+                                alt={project.name}
+                                fill
+                                className="object-cover"
+                              />
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end">
+                                <div className="p-3 text-white">
+                                  <p className="folio-meta font-medium">{project.name}</p>
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        ))}
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  )}
-
-                  {/* Match Score Breakdown (optional, can be collapsed) */}
-                  <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                      <div>
-                        <p className="text-gray-600 mb-1">Style</p>
-                        <p className="font-semibold text-gray-900">
-                          {formatMatchScore(designer.matchScores.styleOverlap)}%
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-gray-600 mb-1">Project Fit</p>
-                        <p className="font-semibold text-gray-900">
-                          {formatMatchScore(designer.matchScores.projectTierFit)}%
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-gray-600 mb-1">Vendor Overlap</p>
-                        <p className="font-semibold text-gray-900">
-                          {formatMatchScore(designer.matchScores.vendorOverlap)}%
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-gray-600 mb-1">Location</p>
-                        <p className="font-semibold text-gray-900">
-                          {formatMatchScore(designer.matchScores.locationFit)}%
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* CTAs */}
-                  <div className="flex flex-wrap gap-3">
-                    <button
-                      onClick={() => handleHire(designer.designerId, designer.name)}
-                      disabled={hiringDesignerId === designer.designerId}
-                      className="inline-flex items-center gap-2 px-6 py-3 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                      data-demo-id="hire-button"
-                    >
-                      {hiringDesignerId === designer.designerId ? (
-                        <>
-                          <FaSpinner className="w-4 h-4 animate-spin" />
-                          Creating Project...
-                        </>
-                      ) : (
-                        designer.cta.primary.label
-                      )}
-                    </button>
-                    {designer.cta.secondary && (
-                      <Link
-                        href={designer.cta.secondary.action}
-                        className="inline-flex items-center gap-2 px-6 py-3 bg-white text-gray-700 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors font-medium"
-                      >
-                        {designer.cta.secondary.label}
-                        <FaExternalLinkAlt className="w-3 h-3" />
-                      </Link>
                     )}
+
+                    {/* Match Score Breakdown (optional, can be collapsed) */}
+                    <div className="mb-6 p-4 bg-[var(--bg-base)] rounded-lg">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 folio-meta">
+                        <div>
+                          <p className="text-[var(--text-secondary)] mb-1">Style</p>
+                          <p className="font-semibold text-[var(--text-primary)]">
+                            {formatMatchScore(designer.matchScores.styleOverlap)}%
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-[var(--text-secondary)] mb-1">Project Fit</p>
+                          <p className="font-semibold text-[var(--text-primary)]">
+                            {formatMatchScore(designer.matchScores.projectTierFit)}%
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-[var(--text-secondary)] mb-1">Vendor Overlap</p>
+                          <p className="font-semibold text-[var(--text-primary)]">
+                            {formatMatchScore(designer.matchScores.vendorOverlap)}%
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-[var(--text-secondary)] mb-1">Location</p>
+                          <p className="font-semibold text-[var(--text-primary)]">
+                            {formatMatchScore(designer.matchScores.locationFit)}%
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* CTAs */}
+                    <div className="flex flex-wrap gap-3">
+                      <Button
+                        variant="accent"
+                        onClick={() => handleHire(designer.designerId, designer.name)}
+                        disabled={hiringDesignerId === designer.designerId}
+                        data-demo-id="hire-button"
+                      >
+                        {hiringDesignerId === designer.designerId ? (
+                          <>
+                            <FaSpinner className="w-4 h-4 animate-spin mr-2" />
+                            Creating Project...
+                          </>
+                        ) : (
+                          designer.cta.primary.label
+                        )}
+                      </Button>
+                      {designer.cta.secondary && (
+                        <Link
+                          href={designer.cta.secondary.action}
+                          className="inline-flex items-center gap-2 px-6 py-3 bg-[var(--bg-base)] text-[var(--text-secondary)] rounded-lg border border-[var(--border-color)] hover:bg-[var(--bg-elevated)] transition-colors folio-ui"
+                        >
+                          {designer.cta.secondary.label}
+                          <FaExternalLinkAlt className="w-3 h-3" />
+                        </Link>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
+              </RidgeCard>
             </motion.div>
             ))}
           </div>
@@ -405,17 +408,17 @@ export default function IndividualHirePage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.4 }}
-          className="bg-gray-50 rounded-2xl p-8 mb-8"
         >
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">
-            {uiCopy.sections.howWeMatchTitle}
-          </h2>
-          <p className="text-gray-700 leading-relaxed max-w-3xl">
-            {uiCopy.sections.howWeMatchBody}
-          </p>
+          <RidgeCard className="p-8 mb-8">
+            <h2 className="folio-h2 text-[var(--text-primary)] mb-4">
+              {uiCopy.sections.howWeMatchTitle}
+            </h2>
+            <p className="folio-body text-[var(--text-secondary)] leading-relaxed max-w-3xl">
+              {uiCopy.sections.howWeMatchBody}
+            </p>
+          </RidgeCard>
         </motion.div>
       </div>
     </div>
   );
 }
-
