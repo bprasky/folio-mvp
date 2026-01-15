@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 type ProjectStatus = 'new_project' | 'completed_project';
 
 type DetailsCore = {
-  projectType: string;
   clientType: 'Residential' | 'Commercial';
   location: { city: string; region: string; country?: string };
 };
@@ -18,7 +17,6 @@ export default function UnifiedCreateProjectUI() {
   const [description, setDescription] = useState('');
   const [projectStatus, setProjectStatus] = useState<ProjectStatus | ''>('');
   const [showAdvanced, setShowAdvanced] = useState(false);
-  const [projectType, setProjectType] = useState('');
   const [clientType, setClientType] = useState<'Residential' | 'Commercial'>('Residential');
   const [locationCity, setLocationCity] = useState('');
   const [locationRegion, setLocationRegion] = useState('');
@@ -38,7 +36,6 @@ export default function UnifiedCreateProjectUI() {
     setLoading(true);
 
     const detailsCore: DetailsCore = {
-      projectType,
       clientType,
       location: { city: locationCity, region: locationRegion, country: 'US' },
     };
@@ -67,14 +64,8 @@ export default function UnifiedCreateProjectUI() {
           setErr('Create API did not return an id.');
           return;
         }
-        // Redirect based on project status
-        if (projectStatus === 'new_project') {
-          // New projects go to media tab to upload images
-          router.replace(`/project/${id}?view=media`);
-        } else {
-          // Completed projects go to overview/details
-          router.replace(`/project/${id}?view=details`);
-        }
+        // Both new and completed projects go to media tab to upload images
+        router.replace(`/project/${id}?view=media`);
       }
     } catch (e: any) {
       setErr(e.message || 'Failed to create project');
@@ -164,25 +155,6 @@ export default function UnifiedCreateProjectUI() {
             {showAdvanced && (
               <div className="px-4 pb-4 pt-2 space-y-4 border-t border-gray-200">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Project Type</label>
-                    <select
-                      className="w-full border rounded-lg p-2"
-                      value={projectType}
-                      onChange={(e) => setProjectType(e.target.value)}
-                    >
-                      <option value="">Select project type</option>
-                      <option value="New build">New build</option>
-                      <option value="Whole-home renovation">Whole-home renovation</option>
-                      <option value="Partial remodel">Partial remodel</option>
-                      <option value="Spec house">Spec house</option>
-                      <option value="Cosmetic refresh">Cosmetic refresh</option>
-                      <option value="Commercial TI">Commercial TI</option>
-                      <option value="Hospitality">Hospitality</option>
-                      <option value="Multifamily">Multifamily</option>
-                    </select>
-                  </div>
-
                   <div>
                     <label className="block text-sm font-medium mb-1">Client Type</label>
                     <div className="flex gap-4">
