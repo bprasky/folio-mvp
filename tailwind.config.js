@@ -10,6 +10,45 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        // ========================================
+        // FOLIO NEUMORPHIC DESIGN SYSTEM
+        // ========================================
+
+        // Base colors
+        'neu-base': 'var(--bg-base)',
+        'neu-elevated': 'var(--bg-elevated)',
+
+        // Text colors
+        'neu-text': {
+          DEFAULT: 'var(--text-primary)',
+          primary: 'var(--text-primary)',
+          secondary: 'var(--text-secondary)',
+          tertiary: 'var(--text-tertiary)',
+        },
+
+        // Accent color
+        'neu-accent': {
+          DEFAULT: 'var(--accent)',
+          hover: 'var(--accent-hover)',
+        },
+
+        // Shadow colors
+        'neu-shadow': {
+          dark: 'var(--shadow-dark)',
+          light: 'var(--shadow-light)',
+        },
+
+        // Ridge border colors
+        'neu-ridge': {
+          outer: 'var(--ridge-outer)',
+          inner: 'var(--ridge-inner)',
+          dark: 'var(--ridge-dark)',
+        },
+
+        // ========================================
+        // LEGACY COLORS (backward compatibility)
+        // ========================================
+
         // warm neutrals (from brand book)
         canvas:  { DEFAULT:'#F5F3EF',  100:'#FAF9F7' },
         stone:   { DEFAULT:'#DAD4CC',  700:'#8F8A84' },
@@ -76,14 +115,27 @@ module.exports = {
           900: '#0c4a6e',
         },
       },
-      borderRadius: { 
-        xl: '1.25rem', 
+      borderRadius: {
+        xl: '1.25rem',
         '2xl':'1.75rem',
+        mdx: '10px',
         sm: "var(--radius-sm)",
         md: "var(--radius-md)",
         lg: "var(--radius-lg)",
+        // Neumorphic specific
+        'neu': '16px',
+        'neu-sm': '12px',
+        'neu-lg': '20px',
+        'neu-btn': '10px',
+        'neu-pill': '50px',
       },
       boxShadow: {
+        // Neumorphic shadows
+        'neu-raised': 'var(--neu-raised)',
+        'neu-raised-lg': 'var(--neu-raised-lg)',
+        'neu-inset': 'var(--neu-inset)',
+        'neu-inset-sm': 'var(--neu-inset-sm)',
+        // Legacy shadows
         card: '0 10px 28px rgba(0,0,0,.14)',
         metrics: '0 12px 32px rgba(0,0,0,.35)',
         ring: 'inset 0 1px 0 rgba(255,255,255,0.35), 0 8px 20px rgba(0,0,0,0.18)',
@@ -91,26 +143,35 @@ module.exports = {
         folio2: "var(--shadow-2)",
         folio3: "var(--shadow-3)",
       },
-      backdropBlur: { 
+      backdropBlur: {
         xl: '16px',
         md: '8px'
       },
-      borderRadius: {
-        xl: '1.25rem', 
-        '2xl':'1.75rem',
-        mdx: '10px', // updated for metrics
-        xl: '14px', // updated for metrics
-        sm: "var(--radius-sm)",
-        md: "var(--radius-md)",
-        lg: "var(--radius-lg)",
-      },
       fontFamily: {
+        // Folio Design System typography
+        headline: 'var(--font-headline)',
+        body: 'var(--font-body)',
+        logo: 'var(--font-logo)',
+        // Legacy fonts
         serif: "var(--font-serif)",
         sans: "var(--font-sans)",
         canela: ["ui-serif", "Georgia", "Cambria", "Times New Roman", "Times", "serif"],
         metrics: ['Inter','system-ui','sans-serif'],
         metricsDisplay: ['Space Grotesk','Inter','sans-serif'],
         metricsMono: ['IBM Plex Mono','ui-monospace','SFMono-Regular','monospace']
+      },
+      fontSize: {
+        // Folio Design System typography scale
+        'folio-h1': ['48px', { lineHeight: '1.1', fontWeight: '500' }],
+        'folio-h2': ['36px', { lineHeight: '1.15', fontWeight: '500' }],
+        'folio-h3': ['28px', { lineHeight: '1.2', fontWeight: '500' }],
+        'folio-quote': ['24px', { lineHeight: '1.4', fontWeight: '400', fontStyle: 'italic' }],
+        'folio-body': ['15px', { lineHeight: '1.6', fontWeight: '400' }],
+        'folio-ui': ['14px', { lineHeight: '1.4', fontWeight: '500' }],
+        'folio-meta': ['13px', { lineHeight: '1.4', fontWeight: '400' }],
+        'folio-stat': ['28px', { lineHeight: '1.2', fontWeight: '600' }],
+        'folio-stat-lg': ['32px', { lineHeight: '1.2', fontWeight: '600' }],
+        'folio-logo': ['22px', { lineHeight: '1', fontWeight: '500', letterSpacing: '0.18em', textTransform: 'uppercase' }],
       },
       maxWidth: {
         metrics: '1440px'
