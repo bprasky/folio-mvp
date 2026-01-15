@@ -299,11 +299,18 @@ export function hasClaimedOrg(memberships: OrgMembershipWithOrg[]): boolean {
 }
 
 /**
- * Check if user can create projects (requires org membership)
- * Phase 2: Project creation unlocked by org membership
+ * Check if user belongs to a design firm
+ */
+export function hasDesignFirmMembership(memberships: OrgMembershipWithOrg[]): boolean {
+  return memberships.some(m => m.org.type === 'DESIGN_FIRM');
+}
+
+/**
+ * Check if user can create projects (requires design firm membership)
+ * Phase 2: Project creation unlocked by design firm membership
  */
 export function canCreateProjectWithOrg(memberships: OrgMembershipWithOrg[]): boolean {
-  return hasOrgMembership(memberships);
+  return hasDesignFirmMembership(memberships);
 }
 
 /**
