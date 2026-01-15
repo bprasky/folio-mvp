@@ -350,19 +350,20 @@
   }
 }
 
-/* Override Tailwind base - make html/body transparent for gradient visibility */
+/* Override Tailwind base - make html/body use Folio base background */
 html,
 body {
-  background: transparent !important;
+  background: var(--bg-base) !important;
+  color: var(--text-primary);
 }
 
-/* Ensure root wrapper doesn't force white background */
+/* Ensure root wrapper uses base background */
 #__next,
 [data-reactroot] {
-  background: transparent !important;
+  background: var(--bg-base) !important;
 }
 
-/* Force transparency on layout wrappers for cinematic pages */
+/* Force transparency on layout wrappers for cinematic pages ONLY */
 .cinematic-page,
 .cinematic-page > *,
 .cinematic-page main {
