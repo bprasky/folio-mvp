@@ -3,8 +3,9 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import NextImage from 'next/image';
-import { FaTimes, FaPlus, FaUpload, FaLink, FaTag, FaTrash, FaSearch, FaCheck, FaSpinner, FaExclamationTriangle } from 'react-icons/fa';
+import { FaTimes, FaPlus, FaUpload, FaLink, FaTag, FaTrash, FaSearch, FaCheck, FaSpinner, FaExclamationTriangle, FaEnvelope, FaUser } from 'react-icons/fa';
 import { PROJECT_TYPE_BY_LABEL, CLIENT_BY_LABEL, DEFAULTS } from '@/domain/project/enums';
+import { GlassInput } from '@/components/ui/glass-input';
 
 interface ProjectImage {
   id: string;
@@ -37,23 +38,49 @@ interface Product {
   isPending?: boolean;
 }
 
+// Credit roles that can be added to a project
+type CreditRole = 'Architect' | 'Interior Design' | 'Builder';
+
+interface Credit {
+  id: string;
+  role: CreditRole;
+  userId?: string;
+  name: string;
+  email?: string;
+  profileImage?: string;
+  studio?: string;
+  isInvite?: boolean; // true if this is an email invite (no account)
+}
+
+interface SearchedUser {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  profileImage?: string;
+  studio?: string;
+}
+
 interface ProjectCreationModalProps {
   isOpen: boolean;
   onClose: () => void;
   onProjectCreated: (project: any) => void;
   editingProject?: any;
+  currentUserId?: string;
+  currentUserRole?: string;
 }
 
 const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
   isOpen,
   onClose,
   onProjectCreated,
-  editingProject
+  editingProject,
+  currentUserId,
+  currentUserRole
 }) => {
   const [currentStep, setCurrentStep] = useState<'details' | 'images' | 'tagging'>('details');
   const [projectName, setProjectName] = useState('');
   const [projectClient, setProjectClient] = useState('');
-  const [projectDescription, setProjectDescription] = useState('');
   const [projectCategory, setProjectCategory] = useState('');
   const [selectedDesigner, setSelectedDesigner] = useState('');
   const [images, setImages] = useState<ProjectImage[]>([]);
@@ -80,6 +107,18 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
   const [draftSaved, setDraftSaved] = useState(false);
   const [isSavingDraft, setIsSavingDraft] = useState(false);
 
+  // Credits state
+  const [credits, setCredits] = useState<Credit[]>([]);
+  const [creditSearchQuery, setCreditSearchQuery] = useState('');
+  const [creditSearchResults, setCreditSearchResults] = useState<SearchedUser[]>([]);
+  const [isSearchingCredits, setIsSearchingCredits] = useState(false);
+  const [selectedCreditRole, setSelectedCreditRole] = useState<CreditRole | null>(null);
+  const [showCreditSearch, setShowCreditSearch] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState('');
+
+  // Credit roles available based on current user role
+  const availableCreditRoles: CreditRole[] = ['Architect', 'Interior Design', 'Builder'];
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Initialize form with editing project data
@@ -90,25 +129,40 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
       // Map clientType enum back to label for display
       const clientTypeLabel = editingProject.clientType === 'COMMERCIAL' ? 'Commercial' : 'Residential';
       setProjectClient(editingProject.client || clientTypeLabel);
-      setProjectDescription(editingProject.description || '');
       // Map projectType enum back to label (use category if present, otherwise map from projectType)
       setProjectCategory(editingProject.category || editingProject.projectType || '');
       setSelectedDesigner(editingProject.designerId || '');
       // Only set images if they're already in the database (have proper IDs)
       // Otherwise start with empty array for new uploads
-      const existingImages = editingProject.images?.filter((img: any) => 
+      const existingImages = editingProject.images?.filter((img: any) =>
         img.id && img.id.length > 20 && !img.id.startsWith('pending-') && !img.id.includes('.')
       ) || [];
       setImages(existingImages);
+      // Load existing credits from project post
+      if (editingProject.post?.credits) {
+        const existingCredits = editingProject.post.credits.map((c: any, idx: number) => ({
+          id: `credit-${idx}`,
+          role: c.role as CreditRole,
+          userId: c.userId,
+          name: c.name || '',
+          email: c.email,
+          profileImage: c.profileImage,
+          studio: c.studio,
+          isInvite: c.isInvite
+        }));
+        setCredits(existingCredits);
+      } else {
+        setCredits([]);
+      }
       setCurrentStep('details');
     } else if (!editingProject && isOpen) {
       // Reset form for new project
       setProjectName('');
       setProjectClient('');
-      setProjectDescription('');
       setProjectCategory('');
       setSelectedDesigner('');
       setImages([]);
+      setCredits([]);
       setCurrentStep('details');
     }
   }, [editingProject, isOpen]);
@@ -143,6 +197,96 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
       (product.tags || []).some(tag => tag.toLowerCase().includes(query.toLowerCase()))
     );
     setFilteredProducts(filtered);
+  };
+
+  // Credit search functionality
+  const searchCredits = useCallback(async (query: string) => {
+    if (query.length < 2) {
+      setCreditSearchResults([]);
+      return;
+    }
+
+    setIsSearchingCredits(true);
+    try {
+      // Search for DESIGNER role users (architects, interior designers, builders are all designers)
+      const res = await fetch(
+        `/api/users/search?q=${encodeURIComponent(query)}&role=DESIGNER&limit=10`
+      );
+      if (!res.ok) throw new Error('Search failed');
+      const data = await res.json();
+      // Filter out current user from results
+      const filteredUsers = (data.users || []).filter(
+        (user: SearchedUser) => user.id !== currentUserId
+      );
+      setCreditSearchResults(filteredUsers);
+    } catch (error) {
+      console.error('Failed to search users for credits:', error);
+      setCreditSearchResults([]);
+    } finally {
+      setIsSearchingCredits(false);
+    }
+  }, [currentUserId]);
+
+  const handleCreditSearchChange = useCallback((query: string) => {
+    setCreditSearchQuery(query);
+    searchCredits(query);
+  }, [searchCredits]);
+
+  const handleAddCredit = (user: SearchedUser, role: CreditRole) => {
+    // Check if this user is already credited for this role
+    const existingCredit = credits.find(c => c.userId === user.id && c.role === role);
+    if (existingCredit) {
+      setError(`${user.name} is already credited as ${role}`);
+      return;
+    }
+
+    const newCredit: Credit = {
+      id: `credit-${Date.now()}`,
+      role,
+      userId: user.id,
+      name: user.name,
+      email: user.email,
+      profileImage: user.profileImage,
+      studio: user.studio,
+      isInvite: false
+    };
+
+    setCredits(prev => [...prev, newCredit]);
+    setCreditSearchQuery('');
+    setCreditSearchResults([]);
+    setShowCreditSearch(false);
+    setSelectedCreditRole(null);
+  };
+
+  const handleAddCreditByInvite = (email: string, role: CreditRole) => {
+    if (!email || !email.includes('@')) {
+      setError('Please enter a valid email address');
+      return;
+    }
+
+    // Check if this email is already invited for this role
+    const existingCredit = credits.find(c => c.email === email && c.role === role && c.isInvite);
+    if (existingCredit) {
+      setError(`${email} has already been invited as ${role}`);
+      return;
+    }
+
+    const newCredit: Credit = {
+      id: `credit-invite-${Date.now()}`,
+      role,
+      name: email.split('@')[0], // Use email prefix as placeholder name
+      email,
+      isInvite: true
+    };
+
+    setCredits(prev => [...prev, newCredit]);
+    setInviteEmail('');
+    setShowCreditSearch(false);
+    setSelectedCreditRole(null);
+  };
+
+  const handleRemoveCredit = (creditId: string) => {
+    setCredits(prev => prev.filter(c => c.id !== creditId));
   };
 
   const handleScrapeProduct = async () => {
@@ -397,7 +541,6 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
       // Map legacy UI fields to canonical schema fields
       const projectData: any = {
         title: projectName, // Map 'name' to 'title'
-        description: projectDescription || null,
       };
 
       // Map 'client' to 'clientType' enum
@@ -412,6 +555,20 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
         projectData.projectType = projectType;
       }
 
+      // Add credits for the project post
+      if (credits.length > 0) {
+        projectData.credits = credits.map(c => ({
+          role: c.role,
+          userId: c.userId,
+          name: c.name,
+          email: c.email,
+          profileImage: c.profileImage,
+          studio: c.studio,
+          isInvite: c.isInvite,
+          url: c.userId ? `/designer/${c.userId}` : undefined
+        }));
+      }
+
       // Explicitly exclude invalid fields
       // Images should be uploaded separately via image upload endpoints
       // Status should remain draft (not updated via this modal)
@@ -424,7 +581,7 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
       }
 
       // Final safety check: remove any fields that shouldn't be sent
-      const allowedFields = ['id', 'title', 'description', 'clientType', 'projectType', 'stage', 'budgetBand', 'city', 'regionState'];
+      const allowedFields = ['id', 'title', 'clientType', 'projectType', 'stage', 'budgetBand', 'city', 'regionState', 'credits'];
       const cleanedData: any = {};
       for (const key of allowedFields) {
         if (key in projectData && projectData[key] !== undefined) {
@@ -537,10 +694,10 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
       
       // Reset form
       setProjectName('');
-      setProjectDescription('');
       setProjectClient('');
       setProjectCategory('');
       setImages([]);
+      setCredits([]);
       setCurrentStep('details');
       setImageLoadErrors(new Set());
       setError(null);
@@ -568,21 +725,21 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
     const saveDraft = async () => {
       // Skip auto-save if already submitting or saving draft
       if (isSubmitting || isSavingDraft) return;
-      
-      if (projectName || projectDescription || projectClient || images.length > 0) {
+
+      if (projectName || projectClient || images.length > 0 || credits.length > 0) {
         try {
           setIsSavingDraft(true);
-          
+
           // Only save to localStorage, not to API to prevent multiple saves
           const draft = {
             projectName,
-            description: projectDescription,
             client: projectClient,
             category: projectCategory,
             images: images.map(img => ({
               ...img,
               url: imageLoadErrors.has(img.id) ? '' : img.url
             })),
+            credits: credits,
             timestamp: new Date().toISOString()
           };
           localStorage.setItem('project_draft', JSON.stringify(draft));
@@ -598,7 +755,7 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
 
     const draftTimer = setTimeout(saveDraft, 3000); // Auto-save after 3 seconds of inactivity
     return () => clearTimeout(draftTimer);
-  }, [projectName, projectDescription, projectClient, projectCategory, images, imageLoadErrors, selectedDesigner, isSubmitting, isSavingDraft]);
+  }, [projectName, projectClient, projectCategory, images, imageLoadErrors, credits, isSubmitting, isSavingDraft]);
 
   // Load draft on component mount
   useEffect(() => {
@@ -611,10 +768,10 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
           const draftAge = Date.now() - new Date(draft.timestamp).getTime();
           if (draftAge < 24 * 60 * 60 * 1000) {
             setProjectName(draft.projectName || '');
-            setProjectDescription(draft.description || '');
             setProjectClient(draft.client || '');
             setProjectCategory(draft.category || 'Residential');
             setImages(draft.images || []);
+            setCredits(draft.credits || []);
           }
         }
       } catch (error) {
@@ -761,17 +918,17 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+        className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4"
         onClick={onClose}
       >
         <motion.div
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.9, opacity: 0 }}
-          className="bg-white rounded-2xl max-w-6xl w-full max-h-[90vh] overflow-hidden shadow-2xl"
+          className="bg-white/95 backdrop-blur-xl border border-white/30 rounded-3xl max-w-6xl w-full max-h-[90vh] overflow-hidden shadow-2xl"
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="flex justify-between items-center p-6 border-b border-gray-200">
+          <div className="flex justify-between items-center p-6 border-b border-gray-200/50 bg-white/50">
             <div>
               <h2 className="text-2xl font-bold text-gray-900">
                 {editingProject ? 'Edit Project' : 'Create New Project'}
@@ -849,11 +1006,10 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Project Name *
                     </label>
-                    <input
+                    <GlassInput
                       type="text"
                       value={projectName}
                       onChange={(e) => setProjectName(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                       placeholder="Enter project name"
                     />
                   </div>
@@ -864,7 +1020,7 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
                     <select
                       value={projectCategory}
                       onChange={(e) => setProjectCategory(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                      className="w-full px-4 py-3 bg-gray-50/50 border border-gray-200/70 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 transition-colors text-gray-900"
                     >
                       <option value="">Select category</option>
                       <option value="residential">Residential</option>
@@ -879,25 +1035,232 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Client Name
                   </label>
-                  <input
+                  <GlassInput
                     type="text"
                     value={projectClient}
                     onChange={(e) => setProjectClient(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                     placeholder="Client or company name"
                   />
                 </div>
+
+                {/* Credits Section */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Description
+                    Project Credits
                   </label>
-                  <textarea
-                    value={projectDescription}
-                    onChange={(e) => setProjectDescription(e.target.value)}
-                    rows={4}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-gray-900"
-                    placeholder="Describe your project..."
-                  />
+                  <p className="text-sm text-gray-500 mb-3">
+                    Add collaborators who worked on this project (Architect, Interior Design, Builder)
+                  </p>
+
+                  {/* Existing Credits */}
+                  {credits.length > 0 && (
+                    <div className="space-y-2 mb-4">
+                      {credits.map((credit) => (
+                        <div
+                          key={credit.id}
+                          className="flex items-center justify-between p-3 bg-gray-50/50 border border-gray-200/70 rounded-xl"
+                        >
+                          <div className="flex items-center gap-3">
+                            {credit.profileImage ? (
+                              <NextImage
+                                src={credit.profileImage}
+                                alt={credit.name}
+                                width={32}
+                                height={32}
+                                className="rounded-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                                {credit.isInvite ? (
+                                  <FaEnvelope className="w-4 h-4 text-blue-600" />
+                                ) : (
+                                  <FaUser className="w-4 h-4 text-blue-600" />
+                                )}
+                              </div>
+                            )}
+                            <div>
+                              <p className="text-sm font-medium text-gray-900">
+                                {credit.name}
+                                {credit.studio && (
+                                  <span className="text-gray-500 font-normal"> - {credit.studio}</span>
+                                )}
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                {credit.role}
+                                {credit.isInvite && ' (Invitation pending)'}
+                              </p>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveCredit(credit.id)}
+                            className="text-gray-400 hover:text-red-500 transition-colors"
+                          >
+                            <FaTimes className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Add Credit Button / Search */}
+                  {!showCreditSearch ? (
+                    <button
+                      type="button"
+                      onClick={() => setShowCreditSearch(true)}
+                      className="flex items-center gap-2 px-4 py-2 border border-dashed border-gray-300 rounded-xl text-gray-600 hover:border-blue-500 hover:text-blue-600 transition-colors w-full justify-center"
+                    >
+                      <FaPlus className="w-4 h-4" />
+                      Add Credit
+                    </button>
+                  ) : (
+                    <div className="border border-gray-200 rounded-xl p-4 bg-white/50">
+                      {/* Role Selection */}
+                      {!selectedCreditRole ? (
+                        <div>
+                          <p className="text-sm font-medium text-gray-700 mb-3">Select credit type:</p>
+                          <div className="flex flex-wrap gap-2">
+                            {availableCreditRoles.map((role) => (
+                              <button
+                                key={role}
+                                type="button"
+                                onClick={() => setSelectedCreditRole(role)}
+                                className="px-4 py-2 bg-gray-100 hover:bg-blue-100 text-gray-700 hover:text-blue-700 rounded-lg text-sm font-medium transition-colors"
+                              >
+                                {role}
+                              </button>
+                            ))}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setShowCreditSearch(false)}
+                            className="mt-3 text-sm text-gray-500 hover:text-gray-700"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <div>
+                          <div className="flex items-center justify-between mb-3">
+                            <p className="text-sm font-medium text-gray-700">
+                              Add {selectedCreditRole}
+                            </p>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedCreditRole(null);
+                                setCreditSearchQuery('');
+                                setCreditSearchResults([]);
+                                setInviteEmail('');
+                              }}
+                              className="text-sm text-gray-500 hover:text-gray-700"
+                            >
+                              Back
+                            </button>
+                          </div>
+
+                          {/* Search Input */}
+                          <div className="relative mb-3">
+                            <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                            <GlassInput
+                              type="text"
+                              value={creditSearchQuery}
+                              onChange={(e) => handleCreditSearchChange(e.target.value)}
+                              className="pl-10"
+                              placeholder="Search by name, email, or studio..."
+                            />
+                            {isSearchingCredits && (
+                              <FaSpinner className="absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-500 w-4 h-4 animate-spin" />
+                            )}
+                          </div>
+
+                          {/* Search Results */}
+                          {creditSearchResults.length > 0 && (
+                            <div className="border border-gray-200 rounded-lg max-h-48 overflow-y-auto mb-3">
+                              {creditSearchResults.map((user) => (
+                                <button
+                                  key={user.id}
+                                  type="button"
+                                  onClick={() => handleAddCredit(user, selectedCreditRole)}
+                                  className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 transition-colors text-left border-b border-gray-100 last:border-b-0"
+                                >
+                                  {user.profileImage ? (
+                                    <NextImage
+                                      src={user.profileImage}
+                                      alt={user.name}
+                                      width={32}
+                                      height={32}
+                                      className="rounded-full object-cover"
+                                    />
+                                  ) : (
+                                    <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
+                                      <FaUser className="w-4 h-4 text-gray-500" />
+                                    </div>
+                                  )}
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-medium text-gray-900 truncate">
+                                      {user.name}
+                                    </p>
+                                    <p className="text-xs text-gray-500 truncate">
+                                      {user.studio || user.email}
+                                    </p>
+                                  </div>
+                                </button>
+                              ))}
+                            </div>
+                          )}
+
+                          {/* No Results / Invite Option */}
+                          {creditSearchQuery.length >= 2 && creditSearchResults.length === 0 && !isSearchingCredits && (
+                            <div className="text-center py-3 border border-gray-200 rounded-lg mb-3">
+                              <p className="text-sm text-gray-500 mb-2">No users found</p>
+                              <p className="text-xs text-gray-400">Invite them via email instead</p>
+                            </div>
+                          )}
+
+                          {/* Invite by Email */}
+                          <div className="border-t border-gray-200 pt-3 mt-3">
+                            <p className="text-sm font-medium text-gray-700 mb-2">
+                              Or invite via email:
+                            </p>
+                            <div className="flex gap-2">
+                              <GlassInput
+                                type="email"
+                                value={inviteEmail}
+                                onChange={(e) => setInviteEmail(e.target.value)}
+                                placeholder="email@example.com"
+                                className="flex-1"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => handleAddCreditByInvite(inviteEmail, selectedCreditRole)}
+                                disabled={!inviteEmail || !inviteEmail.includes('@')}
+                                className="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors text-sm font-medium flex items-center gap-2"
+                              >
+                                <FaEnvelope className="w-3 h-3" />
+                                Invite
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Close button */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShowCreditSearch(false);
+                              setSelectedCreditRole(null);
+                              setCreditSearchQuery('');
+                              setCreditSearchResults([]);
+                              setInviteEmail('');
+                            }}
+                            className="mt-3 text-sm text-gray-500 hover:text-gray-700 w-full text-center"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -1170,7 +1533,7 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
             )}
           </div>
 
-          <div className="flex justify-between items-center p-6 border-t border-gray-200">
+          <div className="flex justify-between items-center p-6 border-t border-gray-200/50 bg-white/50">
             <div className="flex gap-3">
               {currentStep !== 'details' && (
                 <button
@@ -1233,16 +1596,16 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-60"
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-60"
             onClick={() => setShowProductModal(false)}
           >
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              className="bg-white rounded-2xl max-w-5xl w-full max-h-[85vh] overflow-hidden shadow-2xl m-4"
+              className="bg-white/95 backdrop-blur-xl border border-white/30 rounded-3xl max-w-5xl w-full max-h-[85vh] overflow-hidden shadow-2xl m-4"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="p-6 border-b border-gray-200">
+              <div className="p-6 border-b border-gray-200/50 bg-white/50">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-xl font-bold text-gray-900">Select or Add Product</h3>
                   <button

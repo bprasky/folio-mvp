@@ -9,6 +9,18 @@ type ClientType = 'RESIDENTIAL' | 'COMMERCIAL';
 type ProjectType = 'UNSPECIFIED' | 'RESIDENTIAL' | 'COMMERCIAL' | 'HOSPITALITY' | 'HEALTHCARE' | 'EDUCATION' | 'OFFICE' | 'RETAIL' | 'INDUSTRIAL' | 'OTHER';
 type BudgetBand = 'UNSPECIFIED' | 'LOW' | 'MID' | 'HIGH' | 'LUXURY';
 
+// Credit schema for project collaborators
+const CreditSchema = z.object({
+  role: z.string(),
+  userId: z.string().optional(),
+  name: z.string(),
+  email: z.string().optional(),
+  profileImage: z.string().optional(),
+  studio: z.string().optional(),
+  isInvite: z.boolean().optional(),
+  url: z.string().optional(),
+});
+
 // Canonical API shape we persist
 export const CanonicalCreateSchema = z.object({
   title: z.string().min(1),
@@ -19,6 +31,7 @@ export const CanonicalCreateSchema = z.object({
   city: z.string().optional().nullable(),        // ← optional for now
   regionState: z.string().optional().nullable(), // ← optional for now
   description: z.string().optional().nullable(),
+  credits: z.array(CreditSchema).optional(),     // ← credits for ProjectPost
 });
 
 // Legacy UI shape (current form)
@@ -28,6 +41,7 @@ const LegacySchema = z.object({
   client: z.string().optional().nullable(),   // 'Residential' | 'Commercial'
   category: z.string().optional().nullable(), // label for projectType
   images: z.any().optional(),                 // ignored by create API
+  credits: z.array(CreditSchema).optional(),  // ← credits for ProjectPost
   // no stage/budget/city/region in legacy
 });
 
@@ -58,7 +72,7 @@ export function normalizeCreatePayload(raw: unknown) {
     // stage default
     const stage = DEFAULTS.stage;
 
-    const candidate = {
+    const candidate: any = {
       title: l.name,
       description: l.description ?? null,
       clientType,
@@ -68,6 +82,11 @@ export function normalizeCreatePayload(raw: unknown) {
       regionState: null,
       stage,
     };
+
+    // Pass through credits if provided
+    if (l.credits) {
+      candidate.credits = l.credits;
+    }
 
     // Validate against canonical
     return CanonicalCreateSchema.parse(candidate);
