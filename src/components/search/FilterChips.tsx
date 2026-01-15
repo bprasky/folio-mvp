@@ -94,11 +94,11 @@ export default function FilterChips({
           <button
             key={`active-${active.filterType}-${active.value}`}
             onClick={() => onFilterChange(active.filterType, null)}
-            className="group inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-neutral-100/80 hover:bg-neutral-200/80 text-neutral-700 hover:text-neutral-900 transition-all font-sans text-xs backdrop-blur-sm border border-neutral-200/50 hover:border-neutral-300/50"
+            className="group inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--bg-elevated)] hover:bg-[var(--bg-elevated)] text-[var(--text-primary)] hover:text-[var(--text-primary)] transition-all font-sans text-xs backdrop-blur-sm border border-[var(--ridge-outer)] hover:border-[var(--ridge-outer)]"
             title={`Remove ${active.label} filter`}
           >
             <span>{active.label}</span>
-            <X className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity text-neutral-500" />
+            <X className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity text-[var(--text-tertiary)]" />
           </button>
         ))}
 
@@ -107,11 +107,11 @@ export default function FilterChips({
           <button
             key={`${facet.filterType}-${facet.value}`}
             onClick={() => onFilterChange(facet.filterType, facet.value)}
-            className="group inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-neutral-50/60 hover:bg-neutral-100/80 text-neutral-600 hover:text-neutral-900 transition-all font-sans text-xs backdrop-blur-sm border border-neutral-200/30 hover:border-neutral-300/50"
+            className="group inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--bg-base)] hover:bg-[var(--bg-elevated)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all font-sans text-xs backdrop-blur-sm border border-[var(--ridge-outer)] hover:border-[var(--ridge-outer)]"
             title={`${facet.label} (${facet.count})`}
           >
             <span>{facet.label}</span>
-            <span className="opacity-0 group-hover:opacity-100 transition-opacity text-neutral-500 text-[10px]">
+            <span className="opacity-0 group-hover:opacity-100 transition-opacity text-[var(--text-tertiary)] text-[10px]">
               {facet.count}
             </span>
           </button>

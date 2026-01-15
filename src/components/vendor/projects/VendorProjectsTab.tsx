@@ -109,9 +109,9 @@ export function VendorProjectsTab({ vendorId }: { vendorId?: string | null }) {
 
 function PlaceholderCard({ label, value = '—' }: { label: string; value?: string | React.ReactNode }) {
   return (
-    <div className="rounded-2xl p-4 bg-white border border-neutral-200 shadow-sm">
-      <div className="text-sm text-neutral-600">{label}</div>
-      <div className="text-2xl font-semibold text-neutral-800">{value}</div>
+    <div className="rounded-2xl p-4 ridge-card">
+      <div className="text-sm text-[var(--text-secondary)]">{label}</div>
+      <div className="text-2xl font-semibold text-[var(--text-primary)]">{value}</div>
     </div>
   );
 }

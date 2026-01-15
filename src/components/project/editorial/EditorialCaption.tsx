@@ -27,24 +27,24 @@ export function EditorialCaption({ roomName, text, products }: EditorialCaptionP
     <div className="flex flex-col justify-end space-y-4">
       {/* Room Label - Section Header Style */}
       {roomName && (
-        <div className="text-sm font-medium uppercase tracking-wider text-neutral-600 mb-2">
+        <div className="folio-ui uppercase tracking-wider text-[var(--text-secondary)] mb-2">
           {roomName}
         </div>
       )}
-      
+
       {/* Editorial Text - Readable Paragraph Style */}
       {text && (
-        <p className="text-base md:text-lg leading-relaxed text-neutral-800 font-normal">
+        <p className="text-base md:text-lg leading-relaxed text-[var(--text-primary)] font-normal">
           {text}
         </p>
       )}
-      
+
       {/* Selections Line */}
       {products && products.length > 0 && (
-        <div className="pt-3 border-t border-neutral-200">
-          <div className="text-sm text-neutral-600">
+        <div className="pt-3 border-t border-[var(--ridge-outer)]">
+          <div className="folio-ui text-[var(--text-secondary)]">
             <span className="font-medium">Selections: </span>
-            <span className="text-neutral-500">
+            <span className="text-[var(--text-secondary)]">
               {products.slice(0, 3).map(p => p.name).join(' • ')}
             </span>
           </div>

@@ -6,7 +6,7 @@ export default function MoodyShell({ designer, projects, aesthetic, viewerContex
   const heroImage = projects[0]?.heroImageUrl || projects[0]?.coverImageUrl || projects[0]?.imageUrl;
 
   return (
-    <div className="min-h-screen bg-neutral-950">
+    <div className="min-h-screen bg-[var(--bg-base)]">
       {/* Full Bleed Dark Hero */}
       {heroImage && (
         <div className="relative h-[60vh] w-full">
@@ -16,7 +16,7 @@ export default function MoodyShell({ designer, projects, aesthetic, viewerContex
             fill
             className="object-cover opacity-80"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-neutral-950 via-neutral-950/50 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-base)] via-[var(--bg-base)]/50 to-transparent" />
           <div className="absolute bottom-0 left-0 right-0 p-12">
             <h1 className="text-5xl font-medium text-gray-100 mb-3">{designer.name}</h1>
             {designer.title && (

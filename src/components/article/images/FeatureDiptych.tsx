@@ -40,7 +40,7 @@ export default function FeatureDiptych({ images }: { images: ImageLike[] }) {
             className="w-full h-[420px] object-cover"
           />
           {feature.caption ? (
-            <figcaption className="p-2 text-[12px] text-neutral-600">
+            <figcaption className="p-2 folio-meta text-[var(--text-secondary)]">
               {feature.caption}
             </figcaption>
           ) : null}
@@ -63,7 +63,7 @@ export default function FeatureDiptych({ images }: { images: ImageLike[] }) {
                 className="w-full h-[300px] object-cover"
               />
               {img.caption ? (
-                <figcaption className="p-2 text-[12px] text-neutral-600">
+                <figcaption className="p-2 folio-meta text-[var(--text-secondary)]">
                   {img.caption}
                 </figcaption>
               ) : null}
@@ -88,7 +88,7 @@ export default function FeatureDiptych({ images }: { images: ImageLike[] }) {
                 className="w-full h-[220px] object-cover"
               />
               {img.caption ? (
-                <figcaption className="p-2 text-[12px] text-neutral-600">
+                <figcaption className="p-2 folio-meta text-[var(--text-secondary)]">
                   {img.caption}
                 </figcaption>
               ) : null}

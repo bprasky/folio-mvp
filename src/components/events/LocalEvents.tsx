@@ -54,7 +54,7 @@ export default function LocalEvents({ events }: LocalEventsProps) {
     <>
       <section className="mt-10">
         <div className="mx-[calc(50%-50vw)] px-6 md:px-12">
-          <h2 className="font-serif text-2xl md:text-3xl mb-4 text-neutral-800">Events near you</h2>
+          <h2 className="font-serif text-2xl md:text-3xl mb-4 text-[var(--text-primary)]">Events near you</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             {events.map((e) => (
               <button

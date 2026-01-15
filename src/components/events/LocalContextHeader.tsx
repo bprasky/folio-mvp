@@ -31,8 +31,8 @@ export default function LocalContextHeader({
 
   return (
     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-      <div className="text-neutral-600">
-        <span className="font-serif text-lg text-neutral-800">Showing events near {localCity}</span>
+      <div className="text-[var(--text-secondary)]">
+        <span className="font-serif text-lg text-[var(--text-primary)]">Showing events near {localCity}</span>
         <span className="ml-2 text-sm opacity-80">Sorted by distance</span>
       </div>
 
@@ -43,8 +43,8 @@ export default function LocalContextHeader({
             <button
               key={r}
               className={cn(
-                "px-3 py-1.5 rounded-full text-sm border border-neutral-300/70 hover:border-neutral-500/70 transition",
-                r === localRadius ? "bg-neutral-900 text-white" : "bg-white text-neutral-800"
+                "px-3 py-1.5 rounded-full text-sm border border-[var(--ridge-outer)] hover:border-[var(--text-secondary)] transition",
+                r === localRadius ? "bg-[var(--text-primary)] text-[var(--bg-base)]" : "bg-[var(--bg-base)] text-[var(--text-primary)]"
               )}
               onClick={() => {
                 setLocalRadius(r);
@@ -70,7 +70,7 @@ export default function LocalContextHeader({
               }
             }}
             placeholder="City"
-            className="px-3 py-1.5 rounded-full text-sm border border-neutral-300/70 bg-white text-neutral-900 focus:outline-none focus:border-neutral-600 transition min-w-[140px]"
+            className="px-3 py-1.5 rounded-full text-sm border border-[var(--ridge-outer)] bg-[var(--bg-base)] text-[var(--text-primary)] focus:outline-none focus:border-[var(--text-secondary)] transition min-w-[140px]"
           />
         </div>
       </div>

@@ -75,7 +75,7 @@ export function PopoverContent({ children, className }: PopoverContentProps) {
   if (!context.open) return null;
 
   return (
-    <div className="absolute right-0 top-full mt-1 z-50 w-72 rounded-xl border border-neutral-200 bg-white shadow-lg p-3 text-xs">
+    <div className="absolute right-0 top-full mt-1 z-50 w-72 rounded-xl border border-[var(--ridge-outer)] bg-[var(--bg-base)] shadow-lg p-3 text-xs">
       <div className={className}>{children}</div>
     </div>
   );

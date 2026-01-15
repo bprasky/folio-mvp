@@ -35,17 +35,17 @@ export function DemoControls() {
     <div className="fixed bottom-4 right-4 z-50">
       <button
         onClick={() => setOpen(o => !o)}
-        className="rounded-full px-4 py-2 bg-black text-white shadow-lg hover:bg-neutral-800 transition text-sm font-medium"
+        className="rounded-full px-4 py-2 bg-[var(--text-primary)] text-[var(--bg-base)] shadow-lg hover:opacity-90 transition text-sm font-medium"
       >
         {open ? 'Close Demo' : 'Demo Controls'}
       </button>
 
       {open && (
-        <div className="mt-2 w-[340px] max-h-[80vh] overflow-y-auto rounded-2xl bg-white/95 backdrop-blur-xl border border-neutral-300 shadow-2xl p-4 space-y-4 text-xs">
+        <div className="mt-2 w-[340px] max-h-[80vh] overflow-y-auto rounded-2xl bg-[var(--bg-base)]/95 backdrop-blur-xl border border-[var(--ridge-outer)] shadow-2xl p-4 space-y-4 text-xs">
           <div className="flex items-center justify-between">
-            <div className="font-semibold text-sm text-neutral-800">Adjust Inputs</div>
+            <div className="font-semibold text-sm text-[var(--text-primary)]">Adjust Inputs</div>
             <button
-              className="text-xs text-neutral-600 underline hover:text-neutral-800 transition"
+              className="folio-meta text-[var(--text-secondary)] underline hover:text-[var(--text-primary)] transition"
               onClick={handleReset}
             >
               Reset
@@ -149,8 +149,8 @@ export function DemoControls() {
           </Section>
 
           {/* Toggle demo (keeps ?demo=1 in URL) */}
-          <div className="pt-2 border-t border-neutral-200">
-            <label className="flex items-center gap-2 text-sm text-neutral-700">
+          <div className="pt-2 border-t border-[var(--ridge-outer)]">
+            <label className="flex items-center gap-2 text-sm text-[var(--text-primary)]">
               <input
                 type="checkbox"
                 className="rounded"
@@ -177,7 +177,7 @@ export function DemoControls() {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="space-y-2">
-      <div className="font-semibold text-[11px] uppercase tracking-wide text-neutral-600">{title}</div>
+      <div className="font-semibold text-[11px] uppercase tracking-wide text-[var(--text-secondary)]">{title}</div>
       {children}
     </div>
   );
@@ -200,9 +200,9 @@ function Slider({
 }) {
   return (
     <div className="space-y-1">
-      <div className="flex justify-between text-neutral-700">
-        <span className="text-xs">{label}</span>
-        <span className="font-mono text-xs">{typeof value === 'number' ? value.toLocaleString() : value}</span>
+      <div className="flex justify-between text-[var(--text-primary)]">
+        <span className="folio-meta">{label}</span>
+        <span className="font-mono folio-meta">{typeof value === 'number' ? value.toLocaleString() : value}</span>
       </div>
       <input
         type="range"
@@ -211,7 +211,7 @@ function Slider({
         step={step}
         value={value}
         onChange={e => onChange(Number(e.currentTarget.value))}
-        className="w-full h-2 bg-neutral-200 rounded-lg appearance-none cursor-pointer accent-black"
+        className="w-full h-2 bg-[var(--ridge-inner)] rounded-lg appearance-none cursor-pointer accent-[var(--text-primary)]"
       />
     </div>
   );

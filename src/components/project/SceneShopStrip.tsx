@@ -30,10 +30,10 @@ export function SceneShopStrip({ products, dense }: SceneShopStripProps) {
           <Link
             key={id}
             href={href}
-            className="group min-w-[140px] max-w-[160px] rounded-2xl bg-white/80 backdrop-blur-xl ring-1 ring-black/5 shadow-[0_8px_24px_rgba(15,14,10,0.08)] overflow-hidden flex flex-col"
+            className="group min-w-[140px] max-w-[160px] ridge-card overflow-hidden flex flex-col"
           >
             {p.imageUrl && (
-              <div className="h-[90px] w-full overflow-hidden bg-neutral-100">
+              <div className="h-[90px] w-full overflow-hidden bg-[var(--bg-elevated)]">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={p.imageUrl}
@@ -43,11 +43,11 @@ export function SceneShopStrip({ products, dense }: SceneShopStripProps) {
               </div>
             )}
             <div className="px-3 py-2 space-y-1">
-              <div className="text-[11px] font-medium text-neutral-900 line-clamp-2">
+              <div className="folio-ui text-[var(--text-primary)] line-clamp-2">
                 {p.name ?? "Product"}
               </div>
               {p.vendorName && (
-                <div className="text-[10px] uppercase tracking-[0.16em] text-neutral-500">
+                <div className="folio-meta uppercase tracking-[0.16em]">
                   {p.vendorName}
                 </div>
               )}
@@ -58,4 +58,3 @@ export function SceneShopStrip({ products, dense }: SceneShopStripProps) {
     </div>
   );
 }
-

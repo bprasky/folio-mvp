@@ -66,11 +66,11 @@ function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
 }
 
 function getContrastColor(bgColor: string | null | undefined): string {
-  if (!bgColor) return "text-neutral-900";
+  if (!bgColor) return "text-[var(--text-primary)]";
   const rgb = hexToRgb(bgColor);
-  if (!rgb) return "text-neutral-900";
+  if (!rgb) return "text-[var(--text-primary)]";
   const lightness = (rgb.r * 0.299 + rgb.g * 0.587 + rgb.b * 0.114) / 255;
-  return lightness > 0.5 ? "text-neutral-900" : "text-white";
+  return lightness > 0.5 ? "text-[var(--text-primary)]" : "text-white";
 }
 
 export default function BrandOnlyProfileState({ designer, brandAssets, isOwner }: Props) {
@@ -144,7 +144,7 @@ export default function BrandOnlyProfileState({ designer, brandAssets, isOwner }
 
   // Owner view - show preview + prompt to add projects
   return (
-    <div className="min-h-screen bg-neutral-50">
+    <div className="min-h-screen bg-[var(--bg-base)]">
       {/* Preview banner */}
       <div className="bg-amber-50 border-b border-amber-200 px-6 py-3">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
@@ -203,12 +203,12 @@ export default function BrandOnlyProfileState({ designer, brandAssets, isOwner }
           {[1, 2, 3].map((i) => (
             <div
               key={i}
-              className="aspect-[4/3] rounded-xl border-2 border-dashed border-neutral-300 flex items-center justify-center bg-white"
+              className="aspect-[4/3] rounded-xl border-2 border-dashed border-[var(--ridge-outer)] flex items-center justify-center bg-[var(--bg-base)]"
             >
               <div className="text-center">
-                <div className="w-12 h-12 mx-auto rounded-full bg-neutral-100 flex items-center justify-center mb-3">
+                <div className="w-12 h-12 mx-auto rounded-full bg-[var(--bg-elevated)] flex items-center justify-center mb-3">
                   <svg
-                    className="w-6 h-6 text-neutral-400"
+                    className="w-6 h-6 text-[var(--text-tertiary)]"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -221,7 +221,7 @@ export default function BrandOnlyProfileState({ designer, brandAssets, isOwner }
                     />
                   </svg>
                 </div>
-                <p className="text-sm text-neutral-500">Add project {i}</p>
+                <p className="text-sm text-[var(--text-secondary)]">Add project {i}</p>
               </div>
             </div>
           ))}

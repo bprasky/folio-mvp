@@ -23,14 +23,14 @@ export function UserAvatar({ src, alt = "User", size = "md" }: UserAvatarProps) 
         alt={alt}
         width={40}
         height={40}
-        className={`${sizeClass} rounded-full object-cover border border-neutral-200`}
+        className={`${sizeClass} rounded-full object-cover border border-[var(--ridge-outer)]`}
       />
     );
   }
 
   return (
-    <div className={`${sizeClass} rounded-full bg-neutral-100 border border-neutral-200 flex items-center justify-center`}>
-      <User className="h-5 w-5 text-neutral-400" />
+    <div className={`${sizeClass} rounded-full bg-[var(--bg-elevated)] border border-[var(--ridge-outer)] flex items-center justify-center`}>
+      <User className="h-5 w-5 text-[var(--text-tertiary)]" />
     </div>
   );
 }

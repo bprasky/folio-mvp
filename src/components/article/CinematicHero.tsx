@@ -40,7 +40,7 @@ export default function CinematicHero({ imageUrl, title, deck }: Props) {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-20% 0px -10% 0px" }}
           transition={{ duration: 0.5 }}
-          className="mt-3 text-[15px] text-neutral-600"
+          className="mt-3 text-[15px] text-[var(--text-secondary)]"
         >
           {deck}
         </motion.p>

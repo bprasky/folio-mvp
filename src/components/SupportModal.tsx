@@ -87,21 +87,21 @@ export default function SupportModal({ open, onOpenChange }: SupportModalProps) 
 
   return (
     <GlassModal open={open} onOpenChange={onOpenChange} size="lg">
-      <GlassModalHeader className="relative border-b border-neutral-100">
+      <GlassModalHeader className="relative border-b border-[var(--ridge-outer)]">
         <button
           onClick={() => onOpenChange(false)}
-          className="absolute right-4 top-4 p-2 rounded-full hover:bg-gray-100 transition-colors"
+          className="absolute right-4 top-4 p-2 rounded-full hover:bg-[var(--bg-elevated)] transition-colors"
           aria-label="Close"
         >
-          <X className="w-4 h-4 text-gray-500" />
+          <X className="w-4 h-4 text-[var(--text-tertiary)]" />
         </button>
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 bg-neutral-900 rounded-full flex items-center justify-center">
             <Headphones className="w-4 h-4 text-white" />
           </div>
           <div>
-            <h2 className="text-lg font-semibold text-neutral-900">Support</h2>
-            <p className="text-xs text-neutral-500">Trained on why, not just what</p>
+            <h2 className="text-lg font-semibold text-[var(--text-primary)]">Support</h2>
+            <p className="text-xs text-[var(--text-tertiary)]">Trained on why, not just what</p>
           </div>
         </div>
       </GlassModalHeader>
@@ -110,7 +110,7 @@ export default function SupportModal({ open, onOpenChange }: SupportModalProps) 
         {/* Messages area */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {messages.length === 0 && (
-            <p className="text-sm text-neutral-500 text-center py-8">
+            <p className="text-sm text-[var(--text-tertiary)] text-center py-8">
               Ask anything about Folio. We'll help you find an answer and explain why we do it that way.
             </p>
           )}
@@ -123,7 +123,7 @@ export default function SupportModal({ open, onOpenChange }: SupportModalProps) 
                 className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm ${
                   message.role === 'user'
                     ? 'bg-neutral-900 text-white'
-                    : 'bg-neutral-100 text-neutral-900'
+                    : 'bg-[var(--bg-elevated)] text-[var(--text-primary)]'
                 }`}
               >
                 <p className="whitespace-pre-wrap">{message.content}</p>
@@ -132,8 +132,8 @@ export default function SupportModal({ open, onOpenChange }: SupportModalProps) 
           ))}
           {isLoading && (
             <div className="flex justify-start">
-              <div className="bg-neutral-100 rounded-2xl px-4 py-2.5">
-                <Loader2 className="w-4 h-4 animate-spin text-neutral-500" />
+              <div className="bg-[var(--bg-elevated)] rounded-2xl px-4 py-2.5">
+                <Loader2 className="w-4 h-4 animate-spin text-[var(--text-tertiary)]" />
               </div>
             </div>
           )}
@@ -141,7 +141,7 @@ export default function SupportModal({ open, onOpenChange }: SupportModalProps) 
         </div>
 
         {/* Input area */}
-        <div className="border-t border-neutral-100 p-4">
+        <div className="border-t border-[var(--ridge-outer)] p-4">
           <form onSubmit={handleSubmit} className="flex gap-2">
             <textarea
               ref={inputRef}
@@ -150,7 +150,7 @@ export default function SupportModal({ open, onOpenChange }: SupportModalProps) 
               onKeyDown={handleKeyDown}
               placeholder="Type your question..."
               rows={1}
-              className="flex-1 resize-none rounded-xl border border-neutral-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent"
+              className="flex-1 resize-none rounded-xl border border-[var(--ridge-outer)] px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent"
             />
             <button
               type="submit"

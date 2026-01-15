@@ -15,16 +15,16 @@ export const WhatIfControls: React.FC<WhatIfControlsProps> = ({
     onChange({ ...controls, ...patch });
 
   return (
-    <section className="mt-6 rounded-2xl border border-neutral-200 bg-white/80 p-4 shadow-sm">
-      <h2 className="text-sm font-semibold text-neutral-900">
+    <section className="mt-6 ridge-card p-4">
+      <h2 className="folio-ui font-semibold text-[var(--text-primary)]">
         What if mode
       </h2>
-      <p className="mt-1 text-xs text-neutral-500">
+      <p className="mt-1 folio-meta text-[var(--text-secondary)]">
         Explore scenarios by adjusting event impact, product momentum, and
         pipeline sensitivity. These controls affect the AI's view of your data.
       </p>
 
-      <div className="mt-4 space-y-4 text-xs text-neutral-700">
+      <div className="mt-4 space-y-4 folio-meta text-[var(--text-primary)]">
         <div>
           <div className="flex justify-between">
             <span>Event impact multiplier</span>

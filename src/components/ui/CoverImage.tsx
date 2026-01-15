@@ -39,7 +39,7 @@ export default function CoverImage({
           className="object-cover"
         />
       ) : (
-        <div className="h-full w-full bg-neutral-200" />
+        <div className="h-full w-full bg-[var(--bg-elevated)]" />
       )}
     </div>
   );

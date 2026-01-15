@@ -29,8 +29,8 @@ export function ProjectHeader({ projectId, title, subtitle }: ProjectHeaderProps
   return (
     <header className="mb-6 flex items-center justify-between">
       <div>
-        <h1 className="text-xl font-semibold text-neutral-900">{title}</h1>
-        {subtitle ? <p className="text-sm text-neutral-600">{subtitle}</p> : null}
+        <h1 className="text-xl font-semibold text-[var(--text-primary)]">{title}</h1>
+        {subtitle ? <p className="text-sm text-[var(--text-secondary)]">{subtitle}</p> : null}
       </div>
 
       <div className="flex items-center gap-2">

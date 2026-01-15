@@ -58,8 +58,8 @@ export default function FestivalsCarousel({ festivals }: FestivalsCarouselProps)
   if (!festivals.length) {
     return (
       <section aria-label="Festival timeline" className="relative w-screen">
-        <div className="h-[340px] bg-neutral-100 rounded-2xl flex items-center justify-center">
-          <p className="text-neutral-500">No festivals available</p>
+        <div className="h-[340px] bg-[var(--bg-elevated)] rounded-2xl flex items-center justify-center">
+          <p className="text-[var(--text-secondary)]">No festivals available</p>
         </div>
       </section>
     );
@@ -93,14 +93,14 @@ export default function FestivalsCarousel({ festivals }: FestivalsCarouselProps)
         {/* Arrows */}
         <div className="pointer-events-none absolute inset-y-0 left-0 right-0 flex items-center justify-between">
           <button
-            className="pointer-events-auto rounded-full bg-white/70 hover:bg-white px-3 py-2 m-2 shadow-md transition-colors z-30"
+            className="pointer-events-auto rounded-full bg-[var(--bg-base)]/70 hover:bg-[var(--bg-base)] px-3 py-2 m-2 shadow-md transition-colors z-30"
             onClick={() => nudge(-1)}
             aria-label="Previous festival"
           >
             ‹
           </button>
           <button
-            className="pointer-events-auto rounded-full bg-white/70 hover:bg-white px-3 py-2 m-2 shadow-md transition-colors z-30"
+            className="pointer-events-auto rounded-full bg-[var(--bg-base)]/70 hover:bg-[var(--bg-base)] px-3 py-2 m-2 shadow-md transition-colors z-30"
             onClick={() => nudge(1)}
             aria-label="Next festival"
           >

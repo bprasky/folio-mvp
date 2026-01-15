@@ -114,14 +114,14 @@ export function EditorialSpread({
               )}
             </>
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-neutral-100">
-              <div className="text-center p-8 text-neutral-400">
-                <p className="text-sm">Image not available</p>
+            <div className="w-full h-full flex items-center justify-center bg-[var(--bg-elevated)]">
+              <div className="text-center p-8 text-[var(--text-tertiary)]">
+                <p className="folio-ui">Image not available</p>
               </div>
             </div>
           )}
         </div>
-        
+
         {/* Caption Region - 4/12 (1/3), bottom-aligned */}
         <div className={`col-span-4 ${captionAlignment === 'center' ? 'self-center' : 'self-end'}`}>
           <EditorialCaption
@@ -151,16 +151,16 @@ export function EditorialSpread({
               )}
             </>
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-neutral-100">
-              <div className="text-center p-8 text-neutral-400">
-                <p className="text-sm">Image not available</p>
+            <div className="w-full h-full flex items-center justify-center bg-[var(--bg-elevated)]">
+              <div className="text-center p-8 text-[var(--text-tertiary)]">
+                <p className="folio-ui">Image not available</p>
               </div>
             </div>
           )}
         </div>
-        
+
         {/* Caption Band - Directly attached, no gap */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-b-2xl -mt-2 relative z-10 px-6 py-5">
+        <div className="ridge-card rounded-b-2xl -mt-2 relative z-10 px-6 py-5">
           <EditorialCaption
             roomName={roomName}
             text={editorialText}

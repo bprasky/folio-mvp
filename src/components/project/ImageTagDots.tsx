@@ -146,19 +146,19 @@ export function ImageTagDots({ image, tags: tagsProp }: ImageTagDotsProps) {
                 setActiveId((prev) => (prev === tag.id ? null : tag.id));
               }}
             >
-              <span className="h-2 w-2 rounded-full bg-neutral-900" />
+              <span className="h-2 w-2 rounded-full bg-[var(--text-primary)]" />
             </button>
 
             {/* Tooltip card - positioned closer to eliminate gap */}
             {activeId === tag.id && (
-              <div 
-                className="absolute left-1/2 top-full mt-1 -translate-x-1/2 w-max max-w-[220px] rounded-2xl bg-white/97 backdrop-blur-sm px-3 py-2 text-[11px] text-neutral-900 shadow-[0_14px_40px_rgba(15,14,10,0.35)] ring-1 ring-black/5 z-20 pointer-events-auto"
+              <div
+                className="absolute left-1/2 top-full mt-1 -translate-x-1/2 w-max max-w-[220px] ridge-card px-3 py-2 folio-meta text-[var(--text-primary)] shadow-[0_14px_40px_rgba(15,14,10,0.35)] z-20 pointer-events-auto"
                 onMouseEnter={() => setActiveId(tag.id)}
                 onMouseLeave={() => setActiveId((prev) => (prev === tag.id ? null : prev))}
               >
                 <div className="flex items-center gap-2">
                   {tag.thumbnailUrl && (
-                    <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-xl bg-neutral-100">
+                    <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-xl bg-[var(--bg-elevated)]">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={tag.thumbnailUrl}
@@ -182,7 +182,7 @@ export function ImageTagDots({ image, tags: tagsProp }: ImageTagDotsProps) {
                       )}
                     </div>
                     {tag.vendorName && (
-                      <div className="truncate text-[10px] uppercase tracking-[0.16em] text-neutral-500">
+                      <div className="truncate text-[10px] uppercase tracking-[0.16em] text-[var(--text-secondary)]">
                         {tag.vendorName}
                       </div>
                     )}
@@ -193,13 +193,13 @@ export function ImageTagDots({ image, tags: tagsProp }: ImageTagDotsProps) {
                 {tag.productId && (
                   <button
                     type="button"
-                    className="mt-2 w-full inline-flex items-center justify-center gap-1 rounded-full bg-neutral-900 px-2.5 py-1 text-[10px] font-medium text-white hover:bg-neutral-800 transition-colors"
+                    className="mt-2 w-full inline-flex items-center justify-center gap-1 rounded-full bg-[var(--text-primary)] px-2.5 py-1 text-[10px] font-medium text-white hover:opacity-90 transition-colors"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleAddToProject(tag);
                     }}
                   >
-                    <span className="text-[12px]">＋</span>
+                    <span className="folio-meta">+</span>
                     <span>Add to project</span>
                   </button>
                 )}

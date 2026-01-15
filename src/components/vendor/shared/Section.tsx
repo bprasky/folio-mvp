@@ -14,10 +14,10 @@ interface SectionProps {
 export const Section: React.FC<SectionProps> = ({ title, ai, subtitle, children }) => (
   <section className="space-y-2">
     <div className="flex items-center gap-2">
-      <h3 className="text-lg font-semibold text-neutral-800">{title}</h3>
+      <h3 className="text-lg font-semibold text-[var(--text-primary)]">{title}</h3>
       {ai && <AIBadge />}
     </div>
-    {subtitle && <p className="text-sm text-neutral-600">{subtitle}</p>}
+    {subtitle && <p className="folio-ui text-[var(--text-secondary)]">{subtitle}</p>}
     <div className="grid gap-3">{children}</div>
   </section>
 );

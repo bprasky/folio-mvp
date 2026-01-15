@@ -196,15 +196,15 @@ export default function EventForm({
 
   return (
     <div className="max-w-4xl mx-auto p-6">
-      <div className="bg-white rounded-lg shadow-sm border border-folio-border p-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">
+      <div className="bg-[var(--bg-base)] rounded-lg shadow-sm border border-folio-border p-6">
+        <h1 className="text-2xl font-bold text-[var(--text-primary)] mb-6">
           {mode === "edit" ? "Edit Event" : "Create New Event"}
         </h1>
 
         <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
           {/* Title */}
           <div>
-            <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="title" className="block text-sm font-medium text-[var(--text-primary)] mb-2">
               Event Title *
             </label>
             <input
@@ -212,7 +212,7 @@ export default function EventForm({
               type="text"
               id="title"
               className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-folio-accent ${
-                errors.title ? 'border-red-500' : 'border-gray-300'
+                errors.title ? 'border-red-500' : 'border-[var(--ridge-outer)]'
               }`}
               placeholder="Enter event title"
             />
@@ -223,7 +223,7 @@ export default function EventForm({
 
           {/* Description */}
           <div>
-            <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="description" className="block text-sm font-medium text-[var(--text-primary)] mb-2">
               Description
             </label>
             <textarea
@@ -231,7 +231,7 @@ export default function EventForm({
               id="description"
               rows={4}
               className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-folio-accent ${
-                errors.description ? 'border-red-500' : 'border-gray-300'
+                errors.description ? 'border-red-500' : 'border-[var(--ridge-outer)]'
               }`}
               placeholder="Enter event description"
             />
@@ -243,7 +243,7 @@ export default function EventForm({
           {/* Date and Time */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label htmlFor="startsAt" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="startsAt" className="block text-sm font-medium text-[var(--text-primary)] mb-2">
                 <FaCalendarAlt className="inline mr-2" />
                 Start Date & Time
               </label>
@@ -252,7 +252,7 @@ export default function EventForm({
                 type="datetime-local"
                 id="startsAt"
                 className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-folio-accent ${
-                  errors.startsAt ? 'border-red-500' : 'border-gray-300'
+                  errors.startsAt ? 'border-red-500' : 'border-[var(--ridge-outer)]'
                 }`}
               />
               {errors.startsAt && (
@@ -261,7 +261,7 @@ export default function EventForm({
             </div>
 
             <div>
-              <label htmlFor="endsAt" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="endsAt" className="block text-sm font-medium text-[var(--text-primary)] mb-2">
                 <FaCalendarAlt className="inline mr-2" />
                 End Date & Time
               </label>
@@ -270,7 +270,7 @@ export default function EventForm({
                 type="datetime-local"
                 id="endsAt"
                 className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-folio-accent ${
-                  errors.endsAt ? 'border-red-500' : 'border-gray-300'
+                  errors.endsAt ? 'border-red-500' : 'border-[var(--ridge-outer)]'
                 }`}
               />
               {errors.endsAt && (
@@ -280,11 +280,11 @@ export default function EventForm({
           </div>
 
           {/* Location */}
-          <section className="rounded-2xl border border-neutral-200/70 bg-white p-4 sm:p-6">
+          <section className="rounded-2xl border border-[var(--ridge-outer)] bg-[var(--bg-base)] p-4 sm:p-6">
             <div className="flex items-center justify-between">
-              <h3 className="font-serif text-lg text-neutral-900">Location</h3>
+              <h3 className="font-serif text-lg text-[var(--text-primary)]">Location</h3>
               {event?.parentFestivalId && canInherit && (
-                <label className="flex items-center gap-2 text-sm text-neutral-700">
+                <label className="flex items-center gap-2 text-sm text-[var(--text-primary)]">
                   <input
                     type="checkbox"
                     className="h-4 w-4"
@@ -304,7 +304,7 @@ export default function EventForm({
                 defaultValue={effective.address1} 
                 disabled={inheritFestivalLocation} 
                 className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-folio-accent ${
-                  inheritFestivalLocation ? 'bg-gray-100 text-gray-500' : 'border-gray-300'
+                  inheritFestivalLocation ? 'bg-[var(--bg-elevated)] text-[var(--text-tertiary)]' : 'border-[var(--ridge-outer)]'
                 }`} 
               />
               <input 
@@ -314,7 +314,7 @@ export default function EventForm({
                 defaultValue={effective.address2} 
                 disabled={inheritFestivalLocation} 
                 className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-folio-accent ${
-                  inheritFestivalLocation ? 'bg-gray-100 text-gray-500' : 'border-gray-300'
+                  inheritFestivalLocation ? 'bg-[var(--bg-elevated)] text-[var(--text-tertiary)]' : 'border-[var(--ridge-outer)]'
                 }`} 
               />
               <input 
@@ -324,7 +324,7 @@ export default function EventForm({
                 defaultValue={effective.city} 
                 disabled={inheritFestivalLocation} 
                 className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-folio-accent ${
-                  inheritFestivalLocation ? 'bg-gray-100 text-gray-500' : 'border-gray-300'
+                  inheritFestivalLocation ? 'bg-[var(--bg-elevated)] text-[var(--text-tertiary)]' : 'border-[var(--ridge-outer)]'
                 }`} 
               />
               <input 
@@ -334,7 +334,7 @@ export default function EventForm({
                 defaultValue={effective.state} 
                 disabled={inheritFestivalLocation} 
                 className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-folio-accent ${
-                  inheritFestivalLocation ? 'bg-gray-100 text-gray-500' : 'border-gray-300'
+                  inheritFestivalLocation ? 'bg-[var(--bg-elevated)] text-[var(--text-tertiary)]' : 'border-[var(--ridge-outer)]'
                 }`} 
               />
               <input 
@@ -344,7 +344,7 @@ export default function EventForm({
                 defaultValue={effective.postalCode} 
                 disabled={inheritFestivalLocation} 
                 className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-folio-accent ${
-                  inheritFestivalLocation ? 'bg-gray-100 text-gray-500' : 'border-gray-300'
+                  inheritFestivalLocation ? 'bg-[var(--bg-elevated)] text-[var(--text-tertiary)]' : 'border-[var(--ridge-outer)]'
                 }`} 
               />
               <input 
@@ -354,7 +354,7 @@ export default function EventForm({
                 defaultValue={effective.country} 
                 disabled={inheritFestivalLocation} 
                 className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-folio-accent ${
-                  inheritFestivalLocation ? 'bg-gray-100 text-gray-500' : 'border-gray-300'
+                  inheritFestivalLocation ? 'bg-[var(--bg-elevated)] text-[var(--text-tertiary)]' : 'border-[var(--ridge-outer)]'
                 }`} 
               />
               <div className="grid grid-cols-2 gap-3">
@@ -365,7 +365,7 @@ export default function EventForm({
                   defaultValue={effective.latitude} 
                   disabled={inheritFestivalLocation} 
                   className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-folio-accent ${
-                    inheritFestivalLocation ? 'bg-gray-100 text-gray-500' : 'border-gray-300'
+                    inheritFestivalLocation ? 'bg-[var(--bg-elevated)] text-[var(--text-tertiary)]' : 'border-[var(--ridge-outer)]'
                   }`} 
                 />
                 <input 
@@ -375,7 +375,7 @@ export default function EventForm({
                   defaultValue={effective.longitude} 
                   disabled={inheritFestivalLocation} 
                   className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-folio-accent ${
-                    inheritFestivalLocation ? 'bg-gray-100 text-gray-500' : 'border-gray-300'
+                    inheritFestivalLocation ? 'bg-[var(--bg-elevated)] text-[var(--text-tertiary)]' : 'border-[var(--ridge-outer)]'
                   }`} 
                 />
               </div>
@@ -383,7 +383,7 @@ export default function EventForm({
 
             {/* Persist the toggle so the action knows whether to null out the event location */}
             <input type="hidden" {...register('inheritFestivalLocation')} value={inheritFestivalLocation ? "1" : "0"} />
-            <p className="mt-2 text-xs text-neutral-500">
+            <p className="mt-2 text-xs text-[var(--text-tertiary)]">
               Tip: If "Use festival location" is on, the event won't store its own city/coords — it inherits from the festival.
             </p>
           </section>
@@ -391,14 +391,14 @@ export default function EventForm({
           {/* Festival Selection - Only show for non-festivals */}
           {!isFestival && (
             <div>
-              <label htmlFor="festivalId" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="festivalId" className="block text-sm font-medium text-[var(--text-primary)] mb-2">
                 Parent Festival (Optional)
               </label>
               <select
                 {...register('festivalId')}
                 id="festivalId"
                 className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-folio-accent ${
-                  errors.festivalId ? 'border-red-500' : 'border-gray-300'
+                  errors.festivalId ? 'border-red-500' : 'border-[var(--ridge-outer)]'
                 }`}
               >
                 <option value="">No parent festival</option>
@@ -424,7 +424,7 @@ export default function EventForm({
 
           {/* Event Types */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
               <FaTag className="inline mr-2" />
               Event Types *
             </label>
@@ -435,9 +435,9 @@ export default function EventForm({
                     type="checkbox"
                     checked={watchedEventTypes?.includes(eventType) || false}
                     onChange={() => toggleEventType(eventType)}
-                    className="rounded border-gray-300 text-folio-accent focus:ring-folio-accent"
+                    className="rounded border-[var(--ridge-outer)] text-folio-accent focus:ring-folio-accent"
                   />
-                  <span className="text-sm text-gray-700">{eventType.replace(/_/g, ' ')}</span>
+                  <span className="text-sm text-[var(--text-primary)]">{eventType.replace(/_/g, ' ')}</span>
                 </label>
               ))}
             </div>
@@ -452,7 +452,7 @@ export default function EventForm({
           {/* Image URLs */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label htmlFor="heroImageUrl" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="heroImageUrl" className="block text-sm font-medium text-[var(--text-primary)] mb-2">
                 <FaImage className="inline mr-2" />
                 Hero Image URL
               </label>
@@ -461,7 +461,7 @@ export default function EventForm({
                 type="url"
                 id="heroImageUrl"
                 className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-folio-accent ${
-                  errors.heroImageUrl ? 'border-red-500' : 'border-gray-300'
+                  errors.heroImageUrl ? 'border-red-500' : 'border-[var(--ridge-outer)]'
                 }`}
                 placeholder="https://example.com/image.jpg"
               />
@@ -471,7 +471,7 @@ export default function EventForm({
             </div>
 
             <div>
-              <label htmlFor="coverImageUrl" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="coverImageUrl" className="block text-sm font-medium text-[var(--text-primary)] mb-2">
                 <FaImage className="inline mr-2" />
                 Cover Image URL
               </label>
@@ -480,7 +480,7 @@ export default function EventForm({
                 type="url"
                 id="coverImageUrl"
                 className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-folio-accent ${
-                  errors.coverImageUrl ? 'border-red-500' : 'border-gray-300'
+                  errors.coverImageUrl ? 'border-red-500' : 'border-[var(--ridge-outer)]'
                 }`}
                 placeholder="https://example.com/cover.jpg"
               />
@@ -493,9 +493,9 @@ export default function EventForm({
           {/* Featured Products - Only show for non-festivals (events and subevents) */}
           {!isFestival && (
             <>
-              <div className="border-t border-gray-200 pt-6">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Featured Products</h3>
-                <p className="text-sm text-gray-600 mb-4">
+              <div className="border-t border-[var(--ridge-outer)] pt-6">
+                <h3 className="text-lg font-medium text-[var(--text-primary)] mb-4">Featured Products</h3>
+                <p className="text-sm text-[var(--text-secondary)] mb-4">
                   Add products to feature at this event. These will be displayed prominently to attendees.
                 </p>
               </div>
@@ -515,7 +515,7 @@ export default function EventForm({
           )}
 
           {/* Action Buttons */}
-          <div className="flex justify-between items-center pt-6 border-t border-gray-200">
+          <div className="flex justify-between items-center pt-6 border-t border-[var(--ridge-outer)]">
             <div className="flex space-x-4">
               <button
                 type="submit"
@@ -544,15 +544,15 @@ export default function EventForm({
         {/* Delete Confirmation Modal */}
         {showDeleteConfirm && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Confirm Delete</h3>
-              <p className="text-gray-600 mb-6">
+            <div className="bg-[var(--bg-base)] rounded-lg p-6 max-w-md w-full mx-4">
+              <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4">Confirm Delete</h3>
+              <p className="text-[var(--text-secondary)] mb-6">
                 Are you sure you want to delete this event? This action cannot be undone.
               </p>
               <div className="flex justify-end space-x-4">
                 <button
                   onClick={() => setShowDeleteConfirm(false)}
-                  className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+                  className="px-4 py-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
                 >
                   Cancel
                 </button>

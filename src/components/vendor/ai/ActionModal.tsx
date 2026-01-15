@@ -59,37 +59,37 @@ export function ActionModal({ action, onClose }: { action: AnyAction; onClose: (
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/30 backdrop-blur-sm">
-      <div className="w-full max-w-lg rounded-2xl p-5 bg-white/95 backdrop-blur-xl shadow-xl border border-neutral-300 space-y-3">
+      <div className="w-full max-w-lg rounded-2xl p-5 bg-[var(--bg-base)]/95 backdrop-blur-xl shadow-xl border border-[var(--ridge-outer)] space-y-3">
         <div className="flex items-center justify-between">
-          <h4 className="font-semibold text-neutral-800">{action.label}</h4>
+          <h4 className="font-semibold text-[var(--text-primary)]">{action.label}</h4>
           <button
             onClick={onClose}
-            className="text-sm text-neutral-600 hover:text-neutral-800 transition"
+            className="folio-ui text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition"
           >
             Close
           </button>
         </div>
-        
-        <div className="text-sm text-neutral-700">
+
+        <div className="folio-ui text-[var(--text-primary)]">
           <p className="mb-2">
             We'll prepare this as a task (no changes yet). You can connect it to Events/Editorial later.
           </p>
-          <pre className="text-xs bg-neutral-50 p-3 rounded-md overflow-auto border border-neutral-200">
+          <pre className="folio-meta bg-[var(--bg-elevated)] p-3 rounded-md overflow-auto border border-[var(--ridge-outer)]">
             {JSON.stringify(action.payload, null, 2)}
           </pre>
         </div>
-        
-        <div className="flex justify-end gap-2 pt-2 border-t border-neutral-200">
+
+        <div className="flex justify-end gap-2 pt-2 border-t border-[var(--ridge-outer)]">
           <button
             onClick={onClose}
-            className="rounded-xl px-4 py-2 border border-neutral-300 hover:bg-neutral-100 text-neutral-700 transition"
+            className="rounded-xl px-4 py-2 border border-[var(--ridge-outer)] hover:bg-[var(--bg-elevated)] text-[var(--text-primary)] transition"
           >
             Cancel
           </button>
           <button
             onClick={submit}
             disabled={submitting}
-            className="rounded-xl px-4 py-2 bg-black text-white hover:bg-neutral-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            className="rounded-xl px-4 py-2 bg-[var(--text-primary)] text-[var(--bg-base)] hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {submitting ? 'Submitting…' : 'Create Task'}
           </button>

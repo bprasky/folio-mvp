@@ -60,12 +60,12 @@ export function DetailBlock({ image, caption, roomName }: DetailBlockProps) {
       {(caption || roomName) && (
         <div className="text-center space-y-2">
           {roomName && (
-            <div className="text-xs font-medium uppercase tracking-wider text-neutral-500">
+            <div className="folio-ui uppercase tracking-wider text-[var(--text-secondary)]">
               {roomName}
             </div>
           )}
           {caption && (
-            <p className="text-sm text-neutral-600 italic">
+            <p className="folio-ui text-[var(--text-secondary)] italic">
               {caption}
             </p>
           )}

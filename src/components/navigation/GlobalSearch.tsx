@@ -43,28 +43,28 @@ export function GlobalSearch({ placeholder = "Search..." }: GlobalSearchProps) {
   return (
     <form onSubmit={handleSubmit} className="relative w-full">
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-tertiary)]" />
         <input
           ref={inputRef}
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder={placeholder}
-          className="h-10 w-full rounded-full border border-neutral-200 bg-neutral-50 pl-10 pr-10 text-sm text-neutral-900 placeholder:text-neutral-500 focus:border-neutral-400 focus:bg-white focus:outline-none focus:ring-1 focus:ring-neutral-400 transition-colors"
+          className="h-10 w-full rounded-full border border-[var(--ridge-outer)] bg-[var(--bg-elevated)] pl-10 pr-10 folio-ui text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] focus:border-[var(--ridge-outer)] focus:bg-[var(--bg-base)] focus:outline-none focus:ring-1 focus:ring-[var(--ridge-outer)] transition-colors"
         />
         {query && (
           <button
             type="button"
             onClick={() => setQuery("")}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
           >
             <X className="h-4 w-4" />
           </button>
         )}
       </div>
       {/* Keyboard shortcut hint */}
-      <div className="absolute right-12 top-1/2 -translate-y-1/2 hidden sm:flex items-center gap-1 text-xs text-neutral-400">
-        <kbd className="px-1.5 py-0.5 rounded border border-neutral-200 bg-neutral-100 font-mono">
+      <div className="absolute right-12 top-1/2 -translate-y-1/2 hidden sm:flex items-center gap-1 folio-meta text-[var(--text-tertiary)]">
+        <kbd className="px-1.5 py-0.5 rounded border border-[var(--ridge-outer)] bg-[var(--bg-elevated)] font-mono">
           ⌘K
         </kbd>
       </div>

@@ -123,7 +123,7 @@ export function UserMenu() {
 
   if (status === "loading") {
     return (
-      <div className="h-10 w-10 rounded-full bg-neutral-100 animate-pulse" />
+      <div className="h-10 w-10 rounded-full bg-[var(--bg-elevated)] animate-pulse" />
     );
   }
 
@@ -131,7 +131,7 @@ export function UserMenu() {
     return (
       <button
         onClick={goToSigninFresh}
-        className="px-4 py-2 text-sm font-medium text-white bg-neutral-900 rounded-full hover:bg-neutral-800 transition-colors"
+        className="px-4 py-2 folio-ui text-[var(--bg-base)] bg-[var(--text-primary)] rounded-full hover:opacity-90 transition-colors"
       >
         Sign In
       </button>
@@ -177,7 +177,7 @@ export function UserMenu() {
     <div ref={menuRef} className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 rounded-full p-1 hover:bg-neutral-50 transition-colors"
+        className="flex items-center gap-2 rounded-full p-1 hover:bg-[var(--bg-elevated)] transition-colors"
         aria-label="User menu"
       >
         <UserAvatarWithBadge
@@ -186,13 +186,13 @@ export function UserMenu() {
           size="sm"
           firmLogo={session.user.operatingAsOrg?.logo}
         />
-        <ChevronDown className={`h-4 w-4 text-neutral-500 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        <ChevronDown className={`h-4 w-4 text-[var(--text-secondary)] transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-72 rounded-xl border border-neutral-200 bg-white shadow-lg py-2 z-50">
+        <div className="absolute right-0 mt-2 w-72 rounded-xl border border-[var(--ridge-outer)] bg-[var(--bg-base)] shadow-lg py-2 z-50">
           {/* User info header */}
-          <div className="px-4 py-3 border-b border-neutral-100">
+          <div className="px-4 py-3 border-b border-[var(--ridge-outer)]">
             <div className="flex items-center gap-3">
               <UserAvatarWithBadge
                 src={user.image}
@@ -201,10 +201,10 @@ export function UserMenu() {
                 firmLogo={session.user.operatingAsOrg?.logo}
               />
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-neutral-900 truncate">
+                <p className="folio-ui text-[var(--text-primary)] truncate">
                   {user.name || "User"}
                 </p>
-                <p className="text-xs text-neutral-500 truncate">
+                <p className="folio-meta text-[var(--text-secondary)] truncate">
                   {user.email}
                 </p>
               </div>
@@ -212,7 +212,7 @@ export function UserMenu() {
           </div>
 
           {/* Primary actions: My Profile, My Projects, Firm */}
-          <div className="py-2 border-b border-neutral-100">
+          <div className="py-2 border-b border-[var(--ridge-outer)]">
             <MenuLink
               href={getProfileLink()}
               icon={<UserIcon className="h-4 w-4" />}
@@ -251,26 +251,26 @@ export function UserMenu() {
 
           {/* Operating As dropdown - only show if user has orgs */}
           {hasOrgs && (
-            <div className="py-2 px-4 border-b border-neutral-100">
-              <p className="text-xs text-neutral-500 mb-2">Operating as:</p>
+            <div className="py-2 px-4 border-b border-[var(--ridge-outer)]">
+              <p className="folio-meta text-[var(--text-secondary)] mb-2">Operating as:</p>
               <div ref={workspaceRef} className="relative">
                 <button
                   onClick={() => setIsWorkspaceDropdownOpen(!isWorkspaceDropdownOpen)}
-                  className="w-full flex items-center justify-between px-3 py-2 text-sm text-neutral-900 bg-neutral-50 rounded-lg hover:bg-neutral-100 transition-colors"
+                  className="w-full flex items-center justify-between px-3 py-2 folio-ui text-[var(--text-primary)] bg-[var(--bg-elevated)] rounded-lg hover:bg-[var(--bg-elevated)] transition-colors"
                 >
                   <span className="truncate">{getOperatingAsLabel()}</span>
-                  <ChevronDown className={`h-4 w-4 text-neutral-500 ml-2 transition-transform ${isWorkspaceDropdownOpen ? 'rotate-180' : ''}`} />
+                  <ChevronDown className={`h-4 w-4 text-[var(--text-secondary)] ml-2 transition-transform ${isWorkspaceDropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
 
                 {isWorkspaceDropdownOpen && (
-                  <div className="absolute left-0 right-0 mt-1 bg-white border border-neutral-200 rounded-lg shadow-lg py-1 z-10">
+                  <div className="absolute left-0 right-0 mt-1 bg-[var(--bg-base)] border border-[var(--ridge-outer)] rounded-lg shadow-lg py-1 z-10">
                     {/* Individual option */}
                     <button
                       onClick={() => handleWorkspaceChange(null)}
-                      className="w-full flex items-center justify-between px-3 py-2 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors"
+                      className="w-full flex items-center justify-between px-3 py-2 folio-ui text-[var(--text-primary)] hover:bg-[var(--bg-elevated)] transition-colors"
                     >
                       <span>{user.name || "Individual"}</span>
-                      {!operatingAsOrgId && <Check className="h-4 w-4 text-neutral-900" />}
+                      {!operatingAsOrgId && <Check className="h-4 w-4 text-[var(--text-primary)]" />}
                     </button>
 
                     {/* Organization options */}
@@ -278,10 +278,10 @@ export function UserMenu() {
                       <button
                         key={org.id}
                         onClick={() => handleWorkspaceChange(org.id)}
-                        className="w-full flex items-center justify-between px-3 py-2 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors"
+                        className="w-full flex items-center justify-between px-3 py-2 folio-ui text-[var(--text-primary)] hover:bg-[var(--bg-elevated)] transition-colors"
                       >
                         <span className="truncate">{org.name}</span>
-                        {operatingAsOrgId === org.id && <Check className="h-4 w-4 text-neutral-900" />}
+                        {operatingAsOrgId === org.id && <Check className="h-4 w-4 text-[var(--text-primary)]" />}
                       </button>
                     ))}
                   </div>
@@ -352,7 +352,7 @@ export function UserMenu() {
                 setIsOpen(false);
                 setIsSupportModalOpen(true);
               }}
-              className="flex w-full items-center gap-3 px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors"
+              className="flex w-full items-center gap-3 px-4 py-2 folio-ui text-[var(--text-primary)] hover:bg-[var(--bg-elevated)] transition-colors"
             >
               <Headphones className="h-4 w-4" />
               Support
@@ -365,7 +365,7 @@ export function UserMenu() {
                   window.location.replace("/auth/signin");
                 });
               }}
-              className="flex w-full items-center gap-3 px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors"
+              className="flex w-full items-center gap-3 px-4 py-2 folio-ui text-[var(--text-primary)] hover:bg-[var(--bg-elevated)] transition-colors"
             >
               <LogOut className="h-4 w-4" />
               Sign Out
@@ -395,7 +395,7 @@ function MenuLink({ href, icon, children, onClick }: MenuLinkProps) {
     <Link
       href={href}
       onClick={onClick}
-      className="flex items-center gap-3 px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors"
+      className="flex items-center gap-3 px-4 py-2 folio-ui text-[var(--text-primary)] hover:bg-[var(--bg-elevated)] transition-colors"
     >
       {icon}
       {children}

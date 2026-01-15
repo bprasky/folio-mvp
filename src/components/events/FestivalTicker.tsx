@@ -37,7 +37,7 @@ export default function FestivalTicker({ festivals, className }: Props) {
         <ChevronRight className="h-4 w-4 opacity-60" />
       </div>
 
-      <div className="group relative overflow-hidden rounded-2xl border border-neutral-200 bg-white">
+      <div className="group relative overflow-hidden rounded-2xl border border-[var(--ridge-outer)] bg-[var(--bg-base)]">
         {/* scroller */}
         <div
           className="
@@ -49,7 +49,7 @@ export default function FestivalTicker({ festivals, className }: Props) {
             return (
               <div
                 key={f.id}
-                className="w-[320px] shrink-0 rounded-xl border border-neutral-200/70 bg-white shadow-sm hover:shadow-md transition-shadow"
+                className="w-[320px] shrink-0 rounded-xl border border-[var(--ridge-outer)] bg-[var(--bg-base)] shadow-sm hover:shadow-md transition-shadow"
               >
                 <Link href={href} className="block">
                   <CoverImage src={f.imageUrl ?? null} alt={f.title} ratio="4/3" className="rounded-b-none rounded-t-xl" />
@@ -58,7 +58,7 @@ export default function FestivalTicker({ festivals, className }: Props) {
                   <Link href={href} className="line-clamp-2 font-medium leading-snug hover:underline">
                     {f.title}
                   </Link>
-                  <div className="mt-1 text-sm text-neutral-600">{formatRange(f.startDate, f.endDate)}</div>
+                  <div className="mt-1 text-sm text-[var(--text-secondary)]">{formatRange(f.startDate, f.endDate)}</div>
 
                   <div className="mt-3 flex items-center gap-2">
                     <Link
@@ -69,7 +69,7 @@ export default function FestivalTicker({ festivals, className }: Props) {
                     </Link>
                     <Link
                       href={href}
-                      className="rounded-md border border-neutral-300 px-3 py-1.5 text-sm font-medium hover:bg-neutral-50"
+                      className="rounded-md border border-[var(--ridge-outer)] px-3 py-1.5 text-sm font-medium hover:bg-[var(--bg-elevated)]"
                     >
                       View Details
                     </Link>
@@ -81,8 +81,8 @@ export default function FestivalTicker({ festivals, className }: Props) {
         </div>
 
         {/* fade masks */}
-        <div className="pointer-events-none absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-white" />
-        <div className="pointer-events-none absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-white" />
+        <div className="pointer-events-none absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-[var(--bg-base)]" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-[var(--bg-base)]" />
       </div>
 
 

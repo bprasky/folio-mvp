@@ -34,7 +34,7 @@ export function ProjectMediaHub({ post, modules, article, heroImage, tags, autho
       {/* 1. Long-form Film hero (if present) */}
       {longFilm ? (
         <section className="space-y-3">
-          <h2 className="text-sm font-semibold tracking-wide text-neutral-700 uppercase">
+          <h2 className="folio-ui tracking-wide text-[var(--text-primary)] uppercase">
             Project Film
           </h2>
           <LongVideoModule module={longFilm} />
@@ -57,10 +57,10 @@ export function ProjectMediaHub({ post, modules, article, heroImage, tags, autho
       {shortClips.length ? (
         <section className="space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold tracking-wide text-neutral-700 uppercase">
+            <h2 className="folio-ui tracking-wide text-[var(--text-primary)] uppercase">
               Stories & Updates
             </h2>
-            <span className="text-[11px] text-neutral-400">
+            <span className="folio-meta text-[var(--text-tertiary)]">
               Follow how this project evolves over time.
             </span>
           </div>
@@ -71,7 +71,7 @@ export function ProjectMediaHub({ post, modules, article, heroImage, tags, autho
       {/* 4. Additional galleries */}
       {galleries.length ? (
         <section className="space-y-3">
-          <h2 className="text-sm font-semibold tracking-wide text-neutral-700 uppercase">
+          <h2 className="folio-ui tracking-wide text-[var(--text-primary)] uppercase">
             Additional Galleries
           </h2>
           <GalleryGrid modules={galleries} />
@@ -81,7 +81,7 @@ export function ProjectMediaHub({ post, modules, article, heroImage, tags, autho
       {/* 5. Boards / selections */}
       {boards.length ? (
         <section className="space-y-3">
-          <h2 className="text-sm font-semibold tracking-wide text-neutral-700 uppercase">
+          <h2 className="folio-ui tracking-wide text-[var(--text-primary)] uppercase">
             Boards & Selections
           </h2>
           <BoardsGrid modules={boards} />
@@ -91,7 +91,7 @@ export function ProjectMediaHub({ post, modules, article, heroImage, tags, autho
       {/* 6. Timeline / logbook (optional, text-heavy) */}
       {timelines.length ? (
         <section className="space-y-3">
-          <h2 className="text-sm font-semibold tracking-wide text-neutral-700 uppercase">
+          <h2 className="folio-ui tracking-wide text-[var(--text-primary)] uppercase">
             Timeline
           </h2>
           <TimelineList modules={timelines} />
