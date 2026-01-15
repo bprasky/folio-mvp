@@ -9,6 +9,347 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ==============================================
+   FOLIO NEUMORPHIC DESIGN SYSTEM
+   A white-base design with double-ridge borders
+   ============================================== */
+
+:root {
+  /* Typography */
+  --font-logo: 'Cormorant Garamond', Georgia, serif;
+  --font-headline: 'Cormorant Garamond', Georgia, serif;
+  --font-body: 'Instrument Sans', -apple-system, sans-serif;
+
+  /* Base */
+  --bg-base: #FFFFFF;
+  --bg-elevated: #FAFAF9;
+
+  /* Neumorphic shadows */
+  --shadow-dark: #E0DDD8;
+  --shadow-light: #FFFFFF;
+
+  /* Text */
+  --text-primary: #1A1A1A;
+  --text-secondary: #5C5C5C;
+  --text-tertiary: #8C8C8C;
+
+  /* Accent */
+  --accent: #B8845C;
+  --accent-hover: #A67548;
+
+  /* Ridge border system */
+  --ridge-outer: rgba(0, 0, 0, 0.06);
+  --ridge-inner: rgba(255, 255, 255, 0.9);
+  --ridge-dark: rgba(0, 0, 0, 0.03);
+
+  /* Neumorphic Shadows */
+  --neu-raised:
+    6px 6px 12px var(--shadow-dark),
+    -6px -6px 12px var(--shadow-light);
+
+  --neu-raised-lg:
+    12px 12px 24px var(--shadow-dark),
+    -12px -12px 24px var(--shadow-light);
+
+  --neu-inset:
+    inset 4px 4px 8px var(--shadow-dark),
+    inset -4px -4px 8px var(--shadow-light);
+
+  --neu-inset-sm:
+    inset 3px 3px 6px var(--shadow-dark),
+    inset -3px -3px 6px var(--shadow-light);
+}
+
+/* Folio Neumorphic Component Layer */
+@layer components {
+  /* Ridge Card Pattern - Core elevated surface */
+  .ridge-card {
+    background: var(--bg-base);
+    border-radius: 16px;
+    border: 1px solid var(--ridge-outer);
+    box-shadow:
+      var(--neu-raised),
+      inset 0 1px 0 var(--ridge-inner),
+      inset 0 -1px 0 var(--ridge-dark);
+    position: relative;
+  }
+
+  .ridge-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 15px; /* 1px less than parent */
+    border: 1px solid var(--ridge-inner);
+    pointer-events: none;
+  }
+
+  /* Ridge Card Sizes */
+  .ridge-card-sm {
+    border-radius: 12px;
+  }
+  .ridge-card-sm::before {
+    border-radius: 11px;
+  }
+
+  .ridge-card-lg {
+    border-radius: 20px;
+    box-shadow:
+      var(--neu-raised-lg),
+      inset 0 1px 0 var(--ridge-inner),
+      inset 0 -1px 0 var(--ridge-dark);
+  }
+  .ridge-card-lg::before {
+    border-radius: 19px;
+  }
+
+  /* Ridge Button - Secondary style */
+  .ridge-btn {
+    background: var(--bg-base);
+    color: var(--text-primary);
+    border: 1px solid var(--ridge-outer);
+    border-radius: 10px;
+    box-shadow:
+      var(--neu-raised),
+      inset 0 1px 0 var(--ridge-inner),
+      inset 0 -1px 0 var(--ridge-dark);
+    position: relative;
+    font-family: var(--font-body);
+    font-weight: 500;
+    font-size: 14px;
+    transition: all 150ms ease;
+  }
+
+  .ridge-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 9px;
+    border: 1px solid var(--ridge-inner);
+    pointer-events: none;
+  }
+
+  .ridge-btn:hover {
+    box-shadow:
+      4px 4px 8px var(--shadow-dark),
+      -4px -4px 8px var(--shadow-light),
+      inset 0 1px 0 var(--ridge-inner),
+      inset 0 -1px 0 var(--ridge-dark);
+  }
+
+  .ridge-btn:active {
+    box-shadow: var(--neu-inset-sm);
+  }
+
+  /* Accent Button - Primary CTA */
+  .accent-btn {
+    background: var(--accent);
+    color: #FFFFFF;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    box-shadow:
+      var(--neu-raised),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+    font-family: var(--font-body);
+    font-weight: 500;
+    font-size: 14px;
+    transition: all 150ms ease;
+  }
+
+  .accent-btn:hover {
+    background: var(--accent-hover);
+    box-shadow:
+      4px 4px 8px var(--shadow-dark),
+      -4px -4px 8px var(--shadow-light),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+  }
+
+  .accent-btn:active {
+    box-shadow:
+      inset 2px 2px 4px rgba(0, 0, 0, 0.15),
+      inset -2px -2px 4px rgba(255, 255, 255, 0.1);
+  }
+
+  /* Pill Button Variant */
+  .pill-btn {
+    border-radius: 50px;
+  }
+  .pill-btn::before {
+    border-radius: 49px;
+  }
+
+  /* Ridge Input - Inset style */
+  .ridge-input {
+    background: var(--bg-base);
+    border: 1px solid var(--ridge-outer);
+    border-radius: 10px;
+    box-shadow: var(--neu-inset);
+    font-family: var(--font-body);
+    font-size: 15px;
+    color: var(--text-primary);
+    transition: all 150ms ease;
+  }
+
+  .ridge-input::placeholder {
+    color: var(--text-tertiary);
+  }
+
+  .ridge-input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow:
+      var(--neu-inset-sm),
+      0 0 0 3px rgba(184, 132, 92, 0.15);
+  }
+
+  /* Toggle Group Container */
+  .ridge-toggle-group {
+    background: var(--bg-base);
+    border: 1px solid var(--ridge-outer);
+    border-radius: 14px;
+    box-shadow: var(--neu-inset);
+    padding: 6px;
+    display: inline-flex;
+    gap: 4px;
+  }
+
+  /* Toggle Item - Inactive */
+  .ridge-toggle-item {
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    padding: 8px 16px;
+    font-family: var(--font-body);
+    font-weight: 500;
+    font-size: 14px;
+    color: var(--text-secondary);
+    transition: all 150ms ease;
+    cursor: pointer;
+  }
+
+  /* Toggle Item - Active */
+  .ridge-toggle-item.active,
+  .ridge-toggle-item[data-state="active"] {
+    background: var(--bg-base);
+    border: 1px solid var(--ridge-outer);
+    border-radius: 10px;
+    box-shadow:
+      4px 4px 8px var(--shadow-dark),
+      -4px -4px 8px var(--shadow-light),
+      inset 0 1px 0 var(--ridge-inner);
+    color: var(--accent);
+  }
+
+  /* Stats Card Pattern */
+  .stats-card {
+    padding: 20px;
+  }
+
+  .stats-card .stats-value {
+    font-family: var(--font-body);
+    font-size: 28px;
+    font-weight: 600;
+    color: var(--text-primary);
+    line-height: 1.2;
+  }
+
+  .stats-card .stats-label {
+    font-family: var(--font-body);
+    font-size: 10px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-tertiary);
+    margin-top: 4px;
+  }
+}
+
+/* Folio Typography Layer */
+@layer base {
+  /* Logo Typography */
+  .folio-logo-text {
+    font-family: var(--font-headline);
+    font-weight: 500;
+    font-size: 22px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--text-primary);
+  }
+
+  /* Headline Typography */
+  .folio-h1 {
+    font-family: var(--font-headline);
+    font-weight: 500;
+    font-size: 48px;
+    color: var(--text-primary);
+    line-height: 1.1;
+  }
+
+  .folio-h2 {
+    font-family: var(--font-headline);
+    font-weight: 500;
+    font-size: 36px;
+    color: var(--text-primary);
+    line-height: 1.15;
+  }
+
+  .folio-h3 {
+    font-family: var(--font-headline);
+    font-weight: 500;
+    font-size: 28px;
+    color: var(--text-primary);
+    line-height: 1.2;
+  }
+
+  /* Quote Typography */
+  .folio-quote {
+    font-family: var(--font-headline);
+    font-weight: 400;
+    font-size: 24px;
+    font-style: italic;
+    color: var(--text-primary);
+    line-height: 1.4;
+  }
+
+  /* Body Typography */
+  .folio-body {
+    font-family: var(--font-body);
+    font-weight: 400;
+    font-size: 15px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+  }
+
+  /* UI/Button Typography */
+  .folio-ui {
+    font-family: var(--font-body);
+    font-weight: 500;
+    font-size: 14px;
+  }
+
+  /* Small/Meta Typography */
+  .folio-meta {
+    font-family: var(--font-body);
+    font-weight: 400;
+    font-size: 13px;
+    color: var(--text-tertiary);
+  }
+
+  /* Stats/Data Typography */
+  .folio-stat {
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 28px;
+  }
+
+  .folio-stat-lg {
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 32px;
+  }
+}
+
 /* Override Tailwind base - make html/body transparent for gradient visibility */
 html,
 body {
@@ -232,45 +573,51 @@ html[data-compact="true"] main { padding-top: 0 !important; }
 
 @layer base {
   html, body {
-    background: var(--folio-bg);
-    color: var(--folio-ink);
+    background: var(--bg-base);
+    color: var(--text-primary);
   }
-  
+
   * {
-    border-color: var(--folio-border);
+    border-color: var(--ridge-outer);
   }
-  
+
+  /* Folio Neumorphic Typography */
   h1, h2, h3, h4 {
-    font-family: var(--font-serif);
-    letter-spacing: -0.01em;
+    font-family: var(--font-headline);
+    color: var(--text-primary);
   }
-  
-  p, li, small, button, input, textarea {
-    font-family: var(--font-sans);
+
+  h1 { font-size: 48px; font-weight: 500; line-height: 1.1; }
+  h2 { font-size: 36px; font-weight: 500; line-height: 1.15; }
+  h3 { font-size: 28px; font-weight: 500; line-height: 1.2; }
+  h4 { font-size: 22px; font-weight: 500; line-height: 1.25; }
+
+  p, li, small, button, input, textarea, label {
+    font-family: var(--font-body);
   }
-  
-  .card {
-    background: var(--folio-surface);
-    box-shadow: var(--shadow-1);
-    border-radius: var(--radius-md);
+
+  p {
+    font-size: 15px;
+    color: var(--text-secondary);
+    line-height: 1.6;
   }
-  
+
   /* Focus rings for accessibility (WCAG AA compliant) */
   *:focus-visible {
-    outline: 2px solid var(--folio-stone-300);
+    outline: 2px solid var(--accent);
     outline-offset: 2px;
   }
-  
+
   button:focus-visible, a:focus-visible {
-    outline: 2px solid var(--folio-stone-300);
+    outline: 2px solid var(--accent);
     outline-offset: 2px;
   }
 }
 
 body {
-  font-family: 'Inter', sans-serif;
-  background-color: var(--folio-background);
-  color: var(--folio-text);
+  font-family: var(--font-body), 'Inter', sans-serif;
+  background-color: var(--bg-base);
+  color: var(--text-primary);
   overflow-x: hidden;
 }
 
