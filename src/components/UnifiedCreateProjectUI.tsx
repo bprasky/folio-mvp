@@ -3,12 +3,13 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
+type ProjectStatus = 'new_project' | 'completed_project';
+
 type DetailsCore = {
   projectType: string;
   stage: string;
   clientType: 'Residential' | 'Commercial';
   location: { city: string; region: string; country?: string };
-  budgetBand: string;
 };
 
 // Unified Create Project UI - single form with optional advanced details
@@ -16,29 +17,35 @@ export default function UnifiedCreateProjectUI() {
   const router = useRouter();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const [projectStatus, setProjectStatus] = useState<ProjectStatus | ''>('');
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [projectType, setProjectType] = useState('');
   const [stage, setStage] = useState('');
   const [clientType, setClientType] = useState<'Residential' | 'Commercial'>('Residential');
   const [locationCity, setLocationCity] = useState('');
   const [locationRegion, setLocationRegion] = useState('');
-  const [budgetBand, setBudgetBand] = useState('');
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setErr(null);
+
+    // Validate required project status
+    if (!projectStatus) {
+      setErr('Please select a project status.');
+      return;
+    }
+
     setLoading(true);
-    
+
     const detailsCore: DetailsCore = {
       projectType,
       stage,
       clientType,
       location: { city: locationCity, region: locationRegion, country: 'US' },
-      budgetBand,
     };
-    
+
     try {
       const r = await fetch('/api/projects', {
         method: 'POST',
@@ -46,13 +53,13 @@ export default function UnifiedCreateProjectUI() {
           'Content-Type': 'application/json',
         },
         credentials: 'same-origin',
-        body: JSON.stringify({ name, description, detailsCore }),
+        body: JSON.stringify({ name, description, projectStatus, detailsCore }),
       });
-      
+
       if (r.status === 401) {
         setErr('You must be signed in to create projects.');
       } else if (r.status === 403) {
-        setErr('Your role is not permitted to create projects.');
+        setErr('You must be a member of a design firm to create projects.');
       } else if (!r.ok) {
         const errorData = await r.json().catch(() => ({}));
         setErr(errorData.error || 'Failed to create project.');
@@ -63,8 +70,14 @@ export default function UnifiedCreateProjectUI() {
           setErr('Create API did not return an id.');
           return;
         }
-        // Always redirect to Media tab
-        router.replace(`/project/${id}?view=media`);
+        // Redirect based on project status
+        if (projectStatus === 'new_project') {
+          // New projects go to media tab to upload images
+          router.replace(`/project/${id}?view=media`);
+        } else {
+          // Completed projects go to overview/details
+          router.replace(`/project/${id}?view=details`);
+        }
       }
     } catch (e: any) {
       setErr(e.message || 'Failed to create project');
@@ -101,6 +114,36 @@ export default function UnifiedCreateProjectUI() {
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-2">Project Status *</label>
+            <div className="flex gap-4">
+              <label className="flex items-center cursor-pointer">
+                <input
+                  type="radio"
+                  name="projectStatus"
+                  value="new_project"
+                  checked={projectStatus === 'new_project'}
+                  onChange={(e) => setProjectStatus(e.target.value as ProjectStatus)}
+                  className="mr-2"
+                />
+                <span>New Project</span>
+                <span className="ml-2 text-xs text-gray-500">(still in progress)</span>
+              </label>
+              <label className="flex items-center cursor-pointer">
+                <input
+                  type="radio"
+                  name="projectStatus"
+                  value="completed_project"
+                  checked={projectStatus === 'completed_project'}
+                  onChange={(e) => setProjectStatus(e.target.value as ProjectStatus)}
+                  className="mr-2"
+                />
+                <span>Completed Project</span>
+                <span className="ml-2 text-xs text-gray-500">(ready to showcase)</span>
+              </label>
+            </div>
           </div>
 
           {/* Advanced Details Accordion */}
@@ -187,22 +230,6 @@ export default function UnifiedCreateProjectUI() {
                         Commercial
                       </label>
                     </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Budget Band</label>
-                    <select
-                      className="w-full border rounded-lg p-2"
-                      value={budgetBand}
-                      onChange={(e) => setBudgetBand(e.target.value)}
-                    >
-                      <option value="">Select budget</option>
-                      <option value="<$25k">&lt;$25k</option>
-                      <option value="$25–100k">$25–100k</option>
-                      <option value="$100–300k">$100–300k</option>
-                      <option value="$300k–$1M">$300k–$1M</option>
-                      <option value="$1M+">$1M+</option>
-                    </select>
                   </div>
 
                   <div>
