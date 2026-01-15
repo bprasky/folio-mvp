@@ -95,21 +95,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'You must be signed in' }, { status: 401 });
   }
 
-  // Check org-based permission (user must be member of a design firm)
+  // Check org-based permission (user must be operating as a design firm)
   const canCreate = await canPerformAction(userId, 'create_project');
-
-  // Debug: get memberships to include in error response
-  const { getUserOrgMemberships } = await import('@/lib/permissions');
-  const memberships = await getUserOrgMemberships(userId);
-
-  if (isDev) {
-    console.log('[create-project] org memberships for user', userId, ':', JSON.stringify(memberships, null, 2));
-    console.log('[create-project] canCreate:', canCreate);
-  }
   if (!canCreate) {
     return NextResponse.json({
-      error: 'You must be a member of a design firm to create projects',
-      debug: { userId, memberships, canCreate }
+      error: 'You must be operating as a design firm to create projects'
     }, { status: 403 });
   }
 

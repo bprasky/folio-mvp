@@ -377,13 +377,50 @@ export function getUserOrgType(memberships: OrgMembershipWithOrg[]): 'DESIGNER' 
 }
 
 /**
- * Combined permission check: can user perform action based on role OR org membership?
- * This allows backwards compatibility with role-based permissions while supporting org-based
+ * Combined permission check: can user perform action based on their operating org context?
+ * Uses the operatingAsOrgId field on User to determine current workspace context
  */
 export async function canPerformAction(
   userId: string,
   action: 'create_project' | 'premium_features' | 'generate_images' | 'connect_clients' | 'earn_affiliate'
 ): Promise<boolean> {
+  // First check operating org context (the "Operating as" dropdown)
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      operatingAsOrgId: true,
+      operatingAsOrg: {
+        select: {
+          id: true,
+          name: true,
+          type: true,
+          status: true,
+        }
+      }
+    }
+  });
+
+  // If user is operating as an org, check that org's type
+  if (user?.operatingAsOrg) {
+    const orgType = user.operatingAsOrg.type;
+    const orgStatus = user.operatingAsOrg.status;
+
+    switch (action) {
+      case 'create_project':
+        // Must be operating as a design firm
+        return orgType === 'DESIGN_FIRM';
+      case 'premium_features':
+      case 'generate_images':
+      case 'connect_clients':
+      case 'earn_affiliate':
+        // Must be operating as a professional org
+        return orgStatus === 'PROFESSIONAL';
+      default:
+        return false;
+    }
+  }
+
+  // Fallback: check org memberships (for users not using "Operating as" feature)
   const memberships = await getUserOrgMemberships(userId);
 
   switch (action) {
