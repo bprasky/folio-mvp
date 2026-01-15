@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { FaUpload, FaImages, FaPlus, FaTag, FaRocket, FaCheckCircle } from 'react-icons/fa';
 import ProjectCreationModal from '@/components/ProjectCreationModal';
 import { InterviewModal } from '@/components/posting/interview/InterviewModal';
+import { FinishScheduleOptionsModal } from '@/components/posting/FinishScheduleOptionsModal';
 
 interface ProductTag {
   id: string;
@@ -41,6 +42,7 @@ const POSTING_V1_ENABLED = process.env.NEXT_PUBLIC_POSTING_V1 === 'true';
 export default function MediaSection({ project, isOwner, images, projectPost }: MediaSectionProps) {
   const router = useRouter();
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [showFinishScheduleModal, setShowFinishScheduleModal] = useState(false);
   const [showInterviewModal, setShowInterviewModal] = useState(false);
   const [selectedHeroImageId, setSelectedHeroImageId] = useState<string | null>(null);
   const [existingPost, setExistingPost] = useState<any>(null);
@@ -180,23 +182,14 @@ export default function MediaSection({ project, isOwner, images, projectPost }: 
             )}
             {isOwner && POSTING_V1_ENABLED && (
               <button
-                onClick={async () => {
-                  // Check LLM availability before opening modal
-                  try {
-                    const res = await fetch("/api/health/llm");
-                    const data = await res.json();
-                    if (!data.ok) {
-                      setLlmWarning("AI not configured—using clean template.");
-                    }
-                  } catch {
-                    // Ignore health check failures
-                  }
-                  setShowInterviewModal(true);
+                onClick={() => {
+                  // Show finish schedule options before interview
+                  setShowFinishScheduleModal(true);
                 }}
                 className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
               >
                 <FaRocket className="w-4 h-4" />
-                Publish
+                Continue to Interview
               </button>
             )}
           </div>
@@ -326,6 +319,37 @@ export default function MediaSection({ project, isOwner, images, projectPost }: 
             router.refresh();
           }}
           editingProject={project}
+        />
+      )}
+
+      {/* Finish Schedule Options Modal */}
+      {showFinishScheduleModal && (
+        <FinishScheduleOptionsModal
+          open={showFinishScheduleModal}
+          onOpenChange={setShowFinishScheduleModal}
+          projectId={project.id}
+          onComplete={async (option) => {
+            setShowFinishScheduleModal(false);
+
+            // Check LLM availability before opening interview modal
+            try {
+              const res = await fetch("/api/health/llm");
+              const data = await res.json();
+              if (!data.ok) {
+                setLlmWarning("AI not configured—using clean template.");
+              }
+            } catch {
+              // Ignore health check failures
+            }
+
+            // If they uploaded a finish schedule, refresh to show new tags
+            if (option === 'uploaded') {
+              router.refresh();
+            }
+
+            // Proceed to interview
+            setShowInterviewModal(true);
+          }}
         />
       )}
 
