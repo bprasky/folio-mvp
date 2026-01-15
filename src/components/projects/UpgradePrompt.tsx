@@ -17,7 +17,7 @@ interface UpgradePromptProps {
  * Not aggressive - just a gentle mention of what's available
  * with a professional upgrade.
  *
- * Uses liquid glass styling for premium look.
+ * Uses Folio neumorphic ridge-card styling.
  */
 export function UpgradePrompt({ className, variant = 'subtle' }: UpgradePromptProps) {
   if (variant === 'subtle') {
@@ -25,22 +25,22 @@ export function UpgradePrompt({ className, variant = 'subtle' }: UpgradePromptPr
       <Link
         href="/professionals/designer/upgrade"
         className={cn(
-          "group flex items-center gap-3 p-4 liquid-glass transition-all",
+          "group flex items-center gap-3 p-4 ridge-card transition-all hover:shadow-lg",
           className
         )}
       >
-        <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-gradient-to-br from-[#8B7355] to-[#A09485] flex items-center justify-center shadow-[0_4px_12px_rgba(139,115,85,0.3)]">
+        <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-[var(--accent)] flex items-center justify-center shadow-[0_4px_12px_rgba(184,132,92,0.3)]">
           <Sparkles className="h-5 w-5 text-white" />
         </div>
         <div className="flex-1 min-w-0">
-          <div className="text-sm font-medium text-[#1a1a1a]">
+          <div className="folio-ui text-[var(--text-primary)]">
             Unlock AI image generation
           </div>
-          <div className="text-xs text-[#666] mt-0.5">
+          <div className="folio-meta mt-0.5">
             Generate room concepts and earn affiliate revenue
           </div>
         </div>
-        <ChevronRight className="h-4 w-4 text-[#999] group-hover:text-[#666] group-hover:translate-x-0.5 transition-all" />
+        <ChevronRight className="h-4 w-4 text-[var(--text-tertiary)] group-hover:text-[var(--text-secondary)] group-hover:translate-x-0.5 transition-all" />
       </Link>
     );
   }
@@ -48,41 +48,38 @@ export function UpgradePrompt({ className, variant = 'subtle' }: UpgradePromptPr
   // Prominent variant for standalone placement
   return (
     <div className={cn(
-      "liquid-glass-muted p-6",
+      "ridge-card ridge-card-lg p-6",
       className
     )}>
       <div className="flex items-start gap-4">
-        <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-[#8B7355] to-[#A09485] flex items-center justify-center shadow-[0_6px_20px_rgba(139,115,85,0.35)]">
+        <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-[var(--accent)] flex items-center justify-center shadow-[0_6px_20px_rgba(184,132,92,0.35)]">
           <Sparkles className="h-6 w-6 text-white" />
         </div>
         <div className="flex-1">
-          <h3 className="text-base font-semibold text-[#1a1a1a] mb-1">
+          <h3 className="folio-h3 text-[var(--text-primary)] mb-1">
             Professional Features Available
           </h3>
-          <p className="text-sm text-[#555] mb-4">
+          <p className="folio-body text-[var(--text-secondary)] mb-4">
             Upgrade to generate AI room concepts, make your product tags visible
             on the feed, and earn affiliate commissions on every click.
           </p>
           <div className="flex flex-wrap gap-2">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 liquid-glass-pill text-xs text-[#555]">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#8B7355]" />
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 ridge-card ridge-card-sm folio-meta">
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)]" />
               AI Image Generation
             </span>
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 liquid-glass-pill text-xs text-[#555]">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#8B7355]" />
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 ridge-card ridge-card-sm folio-meta">
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)]" />
               Visible Product Tags
             </span>
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 liquid-glass-pill text-xs text-[#555]">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#8B7355]" />
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 ridge-card ridge-card-sm folio-meta">
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)]" />
               Affiliate Earnings
             </span>
           </div>
           <Link
             href="/professionals/designer/upgrade"
-            className={cn(
-              "mt-5 liquid-btn-dark inline-flex items-center gap-2 px-6 py-3",
-              "text-white/95 text-sm font-medium"
-            )}
+            className="mt-5 accent-btn inline-flex items-center gap-2 px-6 py-3"
           >
             Learn More
             <ChevronRight className="h-4 w-4" />
