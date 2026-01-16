@@ -11,6 +11,7 @@ import ProjectHero from './ProjectHero';
 import ProjectMediaManager from './ProjectMediaManager';
 import DraftsPanel from './DraftsPanel';
 import ProjectEmptyState from './ProjectEmptyState';
+import ProjectEmptyStateDiscovery from './ProjectEmptyStateDiscovery';
 
 type TabView = 'overview' | 'media' | 'boards' | 'drafts';
 
@@ -24,6 +25,8 @@ export default async function ProjectPage({
   const session = await getServerSession(authOptions);
   const viewerId = session?.user?.id ?? null;
   const viewerRole = (session as any)?.user?.role ?? 'GUEST';
+  // Context detection: null = individual/personal, string = operating as organization
+  const operatingAsOrgId = (session as any)?.user?.operatingAsOrgId ?? null;
 
   // Fetch by ID only — never add owner constraints here
   const base = await prisma.project.findUnique({
@@ -168,8 +171,17 @@ export default async function ProjectPage({
   const isProjectEmpty = !hasMedia && !hasRooms;
 
   // Show empty state for empty projects
+  // Context-aware: organization context → designer flow, personal context → discovery flow
   if (isProjectEmpty) {
-    return <ProjectEmptyState project={sanitizedProject} />;
+    // If operating as organization → show designer import/publish flow
+    // If operating as individual/personal (no org context) → show discovery flow
+    const isOrganizationContext = !!operatingAsOrgId;
+
+    if (isOrganizationContext) {
+      return <ProjectEmptyState project={sanitizedProject} />;
+    } else {
+      return <ProjectEmptyStateDiscovery project={sanitizedProject} />;
+    }
   }
 
   return (
