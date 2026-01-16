@@ -4,7 +4,7 @@
  */
 
 export type RankingType = 'DESIGNER' | 'VENDOR';
-export type SubscriptionTier = 'FREE' | 'PRO' | 'ENTERPRISE';
+export type SubscriptionTier = 'FREE' | 'PRO' | 'STUDIO' | 'ENTERPRISE';
 
 export interface DesignerScoreComponents {
   taggedProjectsScore: number;      // 35% - fully tagged projects
