@@ -148,8 +148,8 @@ export default function ProjectEmptyState({ project }: ProjectEmptyStateProps) {
           </div>
         </header>
 
-        {/* Main Content - Centered Drop Zone */}
-        <main className="max-w-2xl mx-auto px-6 py-16">
+        {/* Main Content - Optical center positioning (content pushed up) */}
+        <main className="max-w-3xl mx-auto px-6 pt-12 pb-24">
           {/* Drop Zone */}
           <div
             ref={dropZoneRef}
@@ -159,6 +159,7 @@ export default function ProjectEmptyState({ project }: ProjectEmptyStateProps) {
             onDrop={handleDrop}
             className={`
               relative border-2 border-dashed rounded-2xl p-12 text-center
+              min-h-[300px] flex flex-col items-center justify-center
               transition-all duration-200 ease-out cursor-pointer
               ${isDragOver
                 ? 'border-[var(--accent)] bg-[var(--accent)]/5 scale-[1.02]'
@@ -182,7 +183,7 @@ export default function ProjectEmptyState({ project }: ProjectEmptyStateProps) {
                   ${isDragOver ? 'text-[var(--accent)]' : 'text-[var(--text-tertiary)]'}
                 `}
               />
-              <p className="folio-body text-[var(--text-primary)] mb-2">
+              <p className="text-lg text-[var(--text-primary)] mb-2">
                 {isDragOver ? 'Drop files here' : 'Drag files here to upload'}
               </p>
               <p className="folio-meta">
@@ -192,7 +193,7 @@ export default function ProjectEmptyState({ project }: ProjectEmptyStateProps) {
           </div>
 
           {/* CTAs */}
-          <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
+          <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
             {/* Primary CTA - Import Presentation */}
             <button
               onClick={() => setShowUploadModal(true)}
@@ -222,7 +223,7 @@ export default function ProjectEmptyState({ project }: ProjectEmptyStateProps) {
           </div>
 
           {/* Helper Cards */}
-          <div className="mt-16 grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="mt-16 grid grid-cols-1 sm:grid-cols-3 gap-6">
             {/* Photos Card */}
             <div className="ridge-card ridge-card-sm p-5">
               <div className="flex items-start gap-3">
