@@ -104,6 +104,14 @@ model User {
   showRankInBio                  Boolean               @default(true)
   directoryRanking               DirectoryRanking?
 
+  // Profile System relations
+  media                          Media[]
+  recognition                    Recognition[]
+  collaborations                 Collaboration[]
+  collaborationPartner           Collaboration[]       @relation("CollaborationPartner")
+  profileInterview               ProfileInterview?
+  teamMemberships                TeamMember[]
+
   @@map("users")
 }
 
@@ -232,6 +240,15 @@ model Project {
 
   // Commerce relations
   orders               Order[]
+
+  // Profile System relations
+  media                Media[]
+  recognition          Recognition[]
+  collaborations       Collaboration[]
+
+  // Pinning for profile feed
+  pinnedAt             DateTime?
+  pinOrder             Int?
 
   @@map("projects")
 }
@@ -531,6 +548,10 @@ model Organization {
 
   // Vendor subscription (for vendor organizations)
   vendorSubscription  VendorSubscription?
+
+  // Profile System relations
+  teamMembers         TeamMember[]
+  collaborations      Collaboration[]
 
   @@index([status])
   @@index([type])
@@ -2057,6 +2078,190 @@ model DirectoryRanking {
   @@index([rankingType, rank])
   @@index([isEligible, isVisible, rankingType])
   @@map("directory_rankings")
+}
+
+// ============================================================
+// PROFILE SYSTEM - Unified feed and rich profile content
+// ============================================================
+
+// Media content (videos, podcasts, interviews)
+model Media {
+  id            String      @id @default(cuid())
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type          MediaType
+  title         String
+  description   String?
+  thumbnailUrl  String?
+  sourceUrl     String?     // YouTube, Vimeo, Spotify URL
+  hostedUrl     String?     // Folio-hosted file URL
+  duration      Int?        // seconds
+  transcript    String?     @db.Text
+  quotes        Json?       // extracted quotes array
+
+  // Linked content
+  projectId     String?
+  project       Project?    @relation(fields: [projectId], references: [id])
+
+  // Engagement
+  views         Int         @default(0)
+  saves         Int         @default(0)
+  shares        Int         @default(0)
+
+  // Publishing
+  publishedAt   DateTime?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  // Pinning
+  pinnedAt      DateTime?
+  pinOrder      Int?
+
+  @@index([userId, publishedAt])
+  @@index([userId, type])
+  @@map("media")
+}
+
+enum MediaType {
+  VIDEO
+  PODCAST
+  INTERVIEW
+  WEBINAR
+  SPEAKING
+  BEHIND_THE_SCENES
+}
+
+// Recognition (press, awards, editorial mentions)
+model Recognition {
+  id            String          @id @default(cuid())
+  userId        String
+  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type          RecognitionType
+  title         String
+  source        String          // Publication name, awarding body
+  sourceLogoUrl String?
+  date          DateTime
+  url           String?         // External link
+
+  // Linked content
+  projectId     String?
+  project       Project?        @relation(fields: [projectId], references: [id])
+
+  imageUrl      String?         // Feature image or badge
+  excerpt       String?         // Pull quote or description
+
+  publishedAt   DateTime?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  // Pinning
+  pinnedAt      DateTime?
+  pinOrder      Int?
+
+  @@index([userId, publishedAt])
+  @@index([userId, type])
+  @@map("recognition")
+}
+
+enum RecognitionType {
+  PRESS
+  AWARD
+  EDITORIAL
+  SPEAKING
+  CERTIFICATION
+}
+
+// Collaborations (vendor partnerships, joint projects)
+model Collaboration {
+  id            String        @id @default(cuid())
+  userId        String
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type          CollabType
+  title         String
+  description   String?
+
+  // Partner info
+  partnerId     String?       // Other designer's userId
+  partner       User?         @relation("CollaborationPartner", fields: [partnerId], references: [id])
+  vendorId      String?
+  vendor        Organization? @relation(fields: [vendorId], references: [id])
+  partnerName   String?       // Fallback if no Folio account
+  partnerLogoUrl String?
+
+  // Linked content
+  projectId     String?
+  project       Project?      @relation(fields: [projectId], references: [id])
+
+  imageUrl      String?
+
+  publishedAt   DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  // Pinning
+  pinnedAt      DateTime?
+  pinOrder      Int?
+
+  @@index([userId, publishedAt])
+  @@map("collaboration")
+}
+
+enum CollabType {
+  FORMAL_PARTNERSHIP
+  PROJECT
+  PRODUCT_FEATURE
+  JOINT_VENTURE
+}
+
+// Profile interview for AI-generated bio
+model ProfileInterview {
+  id                  String    @id @default(cuid())
+  userId              String    @unique
+  user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  answers             Json      // Interview Q&A
+  generatedBio        String?   @db.Text
+  shortBio            String?   // 80 words for cards/search
+  pullQuotes          Json?     // Array of extracted quotes
+  philosophyStatement String?   // One-liner for tagline
+  processDescription  String?   @db.Text
+
+  status              ProfileInterviewStatus @default(DRAFT)
+
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  @@map("profile_interview")
+}
+
+enum ProfileInterviewStatus {
+  DRAFT
+  PUBLISHED
+}
+
+// Team members (for firms)
+model TeamMember {
+  id              String    @id @default(cuid())
+  organizationId  String
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  userId          String?   // If they have a Folio account
+  linkedUser      User?     @relation(fields: [userId], references: [id])
+
+  name            String
+  role            String
+  headshotUrl     String?
+  bio             String?
+  displayOrder    Int       @default(0)
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([organizationId, displayOrder])
+  @@map("team_member")
 }
 
 model RankingHistory {

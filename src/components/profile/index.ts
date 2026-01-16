@@ -4,4 +4,7 @@ export { default as ExplanationOverlay } from "./ExplanationOverlay";
 export type { DesignerProfileShellProps } from "./DesignerProfileShell";
 export type { ProjectMosaicProps } from "./ProjectMosaic";
 
+// Unified Profile System exports
+export * from "./unified";
+
 
