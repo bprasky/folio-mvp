@@ -10,6 +10,7 @@ import DesignerBoard from './DesignerBoard';
 import ProjectHero from './ProjectHero';
 import ProjectMediaManager from './ProjectMediaManager';
 import DraftsPanel from './DraftsPanel';
+import ProjectEmptyState from './ProjectEmptyState';
 
 type TabView = 'overview' | 'media' | 'boards' | 'drafts';
 
@@ -160,6 +161,16 @@ export default async function ProjectPage({
     };
     return typeLabels[type] || type;
   };
+
+  // Determine if project is empty (no media AND no rooms)
+  const hasMedia = base.images && base.images.length > 0;
+  const hasRooms = base.rooms && base.rooms.length > 0;
+  const isProjectEmpty = !hasMedia && !hasRooms;
+
+  // Show empty state for empty projects
+  if (isProjectEmpty) {
+    return <ProjectEmptyState project={sanitizedProject} />;
+  }
 
   return (
     <div className="min-h-screen bg-[var(--bg-base)]">
