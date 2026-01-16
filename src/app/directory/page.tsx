@@ -395,10 +395,10 @@ function DirectoryEmptyState({
   return (
     <div className="flex items-center justify-center py-32">
       <div className="text-center max-w-md">
-        <h2 className="text-4xl md:text-5xl font-bold text-[var(--text-primary)] mb-6">
+        <h2 className="folio-h1 text-[var(--text-primary)] mb-6">
           #1 is open.
         </h2>
-        <p className="text-lg text-[var(--text-secondary)] mb-8 leading-relaxed">
+        <p className="folio-body text-[var(--text-secondary)] mb-8 leading-relaxed">
           The Folio Directory launches with our first founding members.
           Early entrants start at the top while the field is wide open.
         </p>
