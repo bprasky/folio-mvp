@@ -7,6 +7,7 @@ import { GlobalSearch } from "./GlobalSearch";
 import { NavLinks } from "./NavLinks";
 import { UserMenu } from "./UserMenu";
 import { MobileMenu } from "./MobileMenu";
+import { CreateButton } from "./CreateButton";
 
 const SCROLL_THRESHOLD = 100; // Trigger point for state change (50-100px as specified)
 
@@ -114,11 +115,12 @@ export function EditorialMasthead() {
             <NavLinks />
           </div>
 
-          {/* Right: User Menu */}
-          <div className="flex items-center gap-4">
+          {/* Right: Create Button + User Menu */}
+          <div className="flex items-center gap-3">
             <div className="md:hidden">
               <GlobalSearch placeholder="Search..." />
             </div>
+            <CreateButton />
             <UserMenu />
           </div>
         </nav>

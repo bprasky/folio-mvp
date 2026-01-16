@@ -2,19 +2,22 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Plus, FileText, Package, FolderPlus } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { UserAvatar } from "./UserAvatar";
 import { normalizeRole } from "@/lib/permissions";
+import { CreateCollaborationModal } from "@/components/collaboration/CreateCollaborationModal";
 
 export function MobileMenu() {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [showCollaborationModal, setShowCollaborationModal] = useState(false);
   const { data: session } = useSession();
   const router = useRouter();
   const user = session?.user;
   const role = user?.role ? normalizeRole(user.role) : null;
+  const isVendor = role === "VENDOR";
 
   // Get dashboard link based on role
   const getDashboardLink = (userRole: string) => {
@@ -80,6 +83,48 @@ export function MobileMenu() {
             </form>
           </div>
 
+          {/* Create Section - Role-based */}
+          {user && (
+            <div className="py-2 border-b border-[var(--ridge-outer)]">
+              {isVendor ? (
+                <>
+                  <p className="px-4 py-2 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
+                    Create
+                  </p>
+                  <button
+                    onClick={() => {
+                      setIsOpen(false);
+                      setShowCollaborationModal(true);
+                    }}
+                    className="flex w-full items-center gap-3 px-4 py-3 folio-ui text-[var(--text-primary)] hover:bg-[var(--bg-elevated)] transition-colors"
+                  >
+                    <FileText className="h-4 w-4 text-[var(--text-secondary)]" />
+                    Collaboration Story
+                  </button>
+                  <MobileNavLink href="/vendor/products/new" onClick={() => setIsOpen(false)}>
+                    <span className="flex items-center gap-3">
+                      <Package className="h-4 w-4 text-[var(--text-secondary)]" />
+                      Add Product
+                    </span>
+                  </MobileNavLink>
+                  <MobileNavLink href="/vendor/create-project" onClick={() => setIsOpen(false)}>
+                    <span className="flex items-center gap-3">
+                      <FolderPlus className="h-4 w-4 text-[var(--text-secondary)]" />
+                      Project Handoff
+                    </span>
+                  </MobileNavLink>
+                </>
+              ) : (
+                <MobileNavLink href="/projects/new" onClick={() => setIsOpen(false)}>
+                  <span className="flex items-center gap-3">
+                    <Plus className="h-4 w-4" />
+                    Create Project
+                  </span>
+                </MobileNavLink>
+              )}
+            </div>
+          )}
+
           {/* Mobile nav links */}
           <nav className="py-2">
             <MobileNavLink href="/magazine" onClick={() => setIsOpen(false)}>
@@ -141,6 +186,12 @@ export function MobileMenu() {
           )}
         </div>
       )}
+
+      {/* Collaboration Modal for Vendors */}
+      <CreateCollaborationModal
+        open={showCollaborationModal}
+        onOpenChange={setShowCollaborationModal}
+      />
     </div>
   );
 }
