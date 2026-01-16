@@ -5,7 +5,6 @@ import clsx from 'clsx';
 import DesignerBoardRoom from './DesignerBoardRoom';
 import { getRoomTemplate, RoomTemplate } from './roomTemplates';
 import { computeTileSize as dimensionComputeTileSize } from './tileSizing';
-import { Button } from '@/components/ui/button';
 import { FaImage, FaSpinner } from 'react-icons/fa';
 import GenerateDialog from '@/components/boards/GenerateDialog';
 import GeneratedGrid from '@/components/boards/GeneratedGrid';
@@ -212,17 +211,17 @@ export default function DesignerBoard({
 
   return (
     <div className="w-full space-y-6">
-      {/* Controls Bar with Glassmorphism */}
-      <div className="rounded-2xl border border-white/10 bg-white/6 backdrop-blur-md shadow-lg p-4 flex items-center justify-between">
+      {/* Controls Bar */}
+      <div className="ridge-card p-4 flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <label htmlFor="room-filter" className="text-sm font-medium text-gray-700">
+          <label htmlFor="room-filter" className="folio-ui font-medium text-[var(--text-primary)]">
             Filter by room:
           </label>
           <select
             id="room-filter"
             value={selectedRoomId || ''}
             onChange={(e) => setSelectedRoomId(e.target.value || null)}
-            className="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+            className="ridge-input px-3 py-1.5 folio-ui"
           >
             <option value="">All Rooms</option>
             {project.rooms.map(room => (
@@ -232,29 +231,29 @@ export default function DesignerBoard({
             ))}
           </select>
         </div>
-        
+
         <div className="flex items-center space-x-4">
-          <div className="text-sm text-gray-500">
+          <div className="folio-ui text-[var(--text-secondary)]">
             {filteredRooms.length} room{filteredRooms.length !== 1 ? 's' : ''} • {filteredRooms.reduce((sum, room) => sum + room.selections.length, 0)} items
           </div>
-          
+
           {/* Export Spec Button */}
           <button
             onClick={() => setExportModalOpen(true)}
-            className="px-4 py-2 text-sm font-medium rounded-2xl border border-white/10 bg-white/6 backdrop-blur-md shadow-lg hover:bg-white/10 transition-colors"
+            className="ridge-btn px-4 py-2"
           >
             Export Spec
           </button>
-          
+
           {/* Generate Images Button */}
           {selectedRoomId && (
-            <Button
+            <button
               onClick={handleGenerateImages}
-              className="inline-flex items-center gap-2"
+              className="accent-btn px-4 py-2 inline-flex items-center gap-2"
             >
               <FaImage className="w-4 h-4" />
               Generate Images
-            </Button>
+            </button>
           )}
         </div>
       </div>
@@ -275,15 +274,15 @@ export default function DesignerBoard({
       </div>
 
       {filteredRooms.length === 0 && (
-        <div className="text-center py-12 text-gray-500">
-          <p className="text-lg">No rooms found</p>
-          <p className="text-sm mt-2">Create rooms and add selections to see them here</p>
+        <div className="text-center py-12 text-[var(--text-secondary)]">
+          <p className="folio-body">No rooms found</p>
+          <p className="folio-ui mt-2">Create rooms and add selections to see them here</p>
         </div>
       )}
 
       {/* Generated Images Section */}
       {selectedRoomId && (
-        <div className="mt-8 pt-8 border-t border-gray-200">
+        <div className="mt-8 pt-8 border-t border-[var(--border-default)]">
           <GeneratedGrid
             projectId={projectId}
             roomId={selectedRoomId}

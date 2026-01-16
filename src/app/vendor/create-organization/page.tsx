@@ -2,6 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { RidgeCard } from '@/components/ui/ridge-card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 interface User {
   id: string;
@@ -96,10 +99,10 @@ export default function CreateOrganizationPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[var(--bg-base)] flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--accent)] mx-auto"></div>
+          <p className="mt-4 folio-body text-[var(--text-secondary)]">Loading...</p>
         </div>
       </div>
     );
@@ -107,11 +110,11 @@ export default function CreateOrganizationPage() {
 
   if (!currentUser) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[var(--bg-base)] flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-800 mb-4">Please Sign In</h1>
-          <p className="text-gray-600 mb-4">You need to be signed in to create an organization.</p>
-          <a href="/auth/signin" className="text-blue-600 hover:text-blue-800">
+          <h1 className="folio-h2 mb-4">Please Sign In</h1>
+          <p className="folio-body text-[var(--text-secondary)] mb-4">You need to be signed in to create an organization.</p>
+          <a href="/auth/signin" className="text-[var(--accent)] hover:text-[var(--accent-hover)]">
             Sign In
           </a>
         </div>
@@ -120,20 +123,20 @@ export default function CreateOrganizationPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-[var(--bg-base)] py-8">
       <div className="max-w-2xl mx-auto px-4">
-        <div className="bg-white rounded-lg shadow-md p-8">
+        <RidgeCard padding="xl">
           <div className="mb-6">
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">Create Vendor Organization</h1>
-            <p className="text-gray-600">
+            <h1 className="folio-h1 mb-2">Create Vendor Organization</h1>
+            <p className="folio-body text-[var(--text-secondary)]">
               Set up your organization to start creating projects for designers.
             </p>
           </div>
 
           {message && (
             <div className={`mb-6 p-4 rounded-md ${
-              message.includes('successfully') 
-                ? 'bg-green-100 text-green-700 border border-green-200' 
+              message.includes('successfully')
+                ? 'bg-green-100 text-green-700 border border-green-200'
                 : 'bg-red-100 text-red-700 border border-red-200'
             }`}>
               {message}
@@ -142,23 +145,22 @@ export default function CreateOrganizationPage() {
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="name" className="block folio-body font-medium text-[var(--text-primary)] mb-2">
                 Organization Name *
               </label>
-              <input
+              <Input
                 type="text"
                 id="name"
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Enter your organization name"
               />
             </div>
 
             <div>
-              <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="description" className="block folio-body font-medium text-[var(--text-primary)] mb-2">
                 Description
               </label>
               <textarea
@@ -167,44 +169,45 @@ export default function CreateOrganizationPage() {
                 value={formData.description}
                 onChange={handleChange}
                 rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="ridge-input w-full px-3 py-2"
                 placeholder="Brief description of your organization"
               />
             </div>
 
             <div>
-              <label htmlFor="website" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="website" className="block folio-body font-medium text-[var(--text-primary)] mb-2">
                 Website
               </label>
-              <input
+              <Input
                 type="url"
                 id="website"
                 name="website"
                 value={formData.website}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="https://your-website.com"
               />
             </div>
 
             <div className="flex space-x-4">
-              <button
+              <Button
                 type="submit"
+                variant="accent"
                 disabled={isSubmitting}
-                className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="flex-1"
               >
                 {isSubmitting ? 'Creating...' : 'Create Organization'}
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
+                variant="ridge"
                 onClick={() => router.push('/vendor/create-project')}
-                className="flex-1 bg-gray-600 text-white py-2 px-4 rounded-md hover:bg-gray-700 transition-colors"
+                className="flex-1"
               >
                 Cancel
-              </button>
+              </Button>
             </div>
           </form>
-        </div>
+        </RidgeCard>
       </div>
     </div>
   );

@@ -20,7 +20,7 @@ import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { motion, useScroll, useTransform } from 'framer-motion';
-import { 
+import {
   FaInstagram, FaGlobe, FaEnvelope, FaPhone,
   FaEdit, FaSave, FaTimes, FaCheckCircle
 } from 'react-icons/fa';
@@ -30,6 +30,9 @@ import FolioFingerprint from '@/components/atelier/FolioFingerprint';
 import KnownForProducts from '@/components/atelier/KnownForProducts';
 import EditorialMosaic from '@/components/atelier/EditorialMosaic';
 import DesignerCTAs from '@/components/atelier/DesignerCTAs';
+import { RidgeCard } from '@/components/ui/ridge-card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 const defaultDesignerData = {
   name: '',
@@ -161,8 +164,8 @@ export default function DesignerProfile() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-folio-bg flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-folio-accent-700"></div>
+      <div className="min-h-screen bg-[var(--bg-base)] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--accent)]"></div>
       </div>
     );
   }
@@ -172,50 +175,53 @@ export default function DesignerProfile() {
     (session?.user as any)?.role === 'ADMIN';
 
   return (
-    <div className="min-h-screen bg-folio-bg">
+    <div className="min-h-screen bg-[var(--bg-base)]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
           {/* Sticky Sidebar */}
-          <motion.aside 
+          <motion.aside
             className="lg:col-span-4 lg:sticky lg:top-24 lg:self-start"
             style={{ y: sidebarY }}
           >
-            <motion.div 
-              className="bg-white/70 backdrop-blur-md border border-folio-stone-100 rounded-2xl p-6 md:p-8 shadow-folio1 mb-8"
+            <motion.div
               initial={{ opacity: 0, x: -50 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8 }}
             >
+              <RidgeCard padding="lg" className="mb-8">
               {/* Edit/Save Buttons */}
               <div className="flex justify-end mb-6">
                 {isEditing ? (
                   <div className="flex gap-2">
-                    <button
+                    <Button
+                      variant="accent"
+                      size="sm"
                       onClick={handleSave}
                       disabled={saving}
-                      className="bg-folio-accent-700 text-white p-2 rounded-lg hover:bg-folio-accent-400 transition-colors disabled:opacity-50"
                     >
                       <FaSave className="w-4 h-4" />
-                    </button>
-                    <button
+                    </Button>
+                    <Button
+                      variant="ridge"
+                      size="sm"
                       onClick={() => setIsEditing(false)}
-                      className="bg-folio-stone-300 text-white p-2 rounded-lg hover:bg-folio-stone-400 transition-colors"
                     >
                       <FaTimes className="w-4 h-4" />
-                    </button>
+                    </Button>
                   </div>
                 ) : (
-                  <button
+                  <Button
+                    variant="ridge"
+                    size="sm"
                     onClick={() => setIsEditing(true)}
-                    className="bg-folio-stone-200 text-folio-ink p-2 rounded-lg hover:bg-folio-stone-300 transition-colors"
                   >
                     <FaEdit className="w-4 h-4" />
-                  </button>
+                  </Button>
                 )}
               </div>
 
               {/* Profile Image */}
-              <motion.div 
+              <motion.div
                 className="relative w-32 h-32 mx-auto mb-6"
                 whileHover={{ scale: 1.05 }}
                 transition={{ duration: 0.3 }}
@@ -224,7 +230,7 @@ export default function DesignerProfile() {
                   src={designerData.profileImage || '/images/product-placeholder.jpg'}
                   alt={designerData.name || 'Designer'}
                   fill
-                  className="rounded-full object-cover shadow-folio2"
+                  className="rounded-full object-cover shadow-[var(--neu-raised)]"
                 />
               </motion.div>
 
@@ -232,44 +238,46 @@ export default function DesignerProfile() {
               <div className="text-center mb-6">
                 {isEditing ? (
                   <div className="space-y-2">
-                    <input
+                    <Input
                       type="text"
+                      variant="ridge"
                       value={designerData.name || ''}
                       onChange={(e) => setDesignerData({ ...designerData, name: e.target.value })}
-                      className="w-full text-center text-2xl font-serif text-folio-ink border border-folio-stone-300 rounded-lg px-3 py-2"
+                      className="w-full text-center folio-h2"
                       placeholder="Your Name"
                     />
-                    <input
+                    <Input
                       type="text"
+                      variant="ridge"
                       value={designerData.title || ''}
                       onChange={(e) => setDesignerData({ ...designerData, title: e.target.value })}
-                      className="w-full text-center text-folio-stone-600 border border-folio-stone-300 rounded-lg px-3 py-2"
+                      className="w-full text-center"
                       placeholder="Your Title"
                     />
                   </div>
                 ) : (
                   <>
                     <div className="flex items-center justify-center gap-2 mb-3">
-                      <h1 className="text-2xl font-serif text-folio-ink">{designerData.name || 'Your Name'}</h1>
-                      <span className="px-2 py-1 bg-folio-accent-700/10 text-folio-accent-700 text-xs font-sans font-medium rounded-full border border-folio-accent-700/20">
+                      <h1 className="folio-h2 text-[var(--text-primary)]">{designerData.name || 'Your Name'}</h1>
+                      <span className="px-2 py-1 bg-[var(--accent)]/10 text-[var(--accent)] text-xs font-medium rounded-full border border-[var(--accent)]/20">
                         Folio Atelier
                       </span>
                     </div>
                     {designerData.title && (
-                      <p className="text-folio-stone-600 mb-2 font-sans">{designerData.title}</p>
+                      <p className="folio-body text-[var(--text-secondary)] mb-2">{designerData.title}</p>
                     )}
                     {designerData.location && (
-                      <p className="text-folio-stone-500 text-sm font-sans">{designerData.location}</p>
+                      <p className="folio-meta">{designerData.location}</p>
                     )}
-                    
+
                     {/* Atelier Model Indicators */}
                     <div className="mt-4 flex flex-col gap-2 items-center">
-                      <div className="flex items-center gap-2 px-3 py-1 bg-folio-accent-200/30 border border-folio-accent-200/50 rounded-full">
-                        <FaCheckCircle className="w-3 h-3 text-folio-accent-700" />
-                        <span className="text-xs font-sans text-folio-accent-700">Atelier Model: Active</span>
+                      <div className="flex items-center gap-2 px-3 py-1 bg-[var(--accent)]/10 border border-[var(--accent)]/20 rounded-full">
+                        <FaCheckCircle className="w-3 h-3 text-[var(--accent)]" />
+                        <span className="text-xs text-[var(--accent)]">Atelier Model: Active</span>
                       </div>
-                      <div className="px-3 py-1 bg-folio-stone-100 border border-folio-stone-200 rounded-full">
-                        <span className="text-xs font-sans text-folio-stone-500">Surge Pricing Enabled</span>
+                      <div className="px-3 py-1 bg-[var(--bg-elevated)] border border-[var(--border-subtle)] rounded-full">
+                        <span className="folio-meta">Surge Pricing Enabled</span>
                       </div>
                     </div>
                   </>
@@ -277,26 +285,28 @@ export default function DesignerProfile() {
               </div>
 
               {/* Contact Info */}
-              <div className="space-y-3 mb-6 border-t border-folio-stone-100 pt-6">
+              <div className="space-y-3 mb-6 border-t border-[var(--border-subtle)] pt-6">
                 {isEditing ? (
                   <>
                     <div className="flex items-center gap-3">
-                      <FaEnvelope className="w-4 h-4 text-folio-accent-400" />
-                      <input
+                      <FaEnvelope className="w-4 h-4 text-[var(--accent)]" />
+                      <Input
                         type="email"
+                        variant="ridge"
                         value={designerData.email || ''}
                         onChange={(e) => setDesignerData({ ...designerData, email: e.target.value })}
-                        className="flex-1 text-folio-ink border border-folio-stone-300 rounded px-2 py-1 text-sm"
+                        className="flex-1 text-sm"
                         placeholder="your@email.com"
                       />
                     </div>
                     <div className="flex items-center gap-3">
-                      <FaPhone className="w-4 h-4 text-folio-accent-400" />
-                      <input
+                      <FaPhone className="w-4 h-4 text-[var(--accent)]" />
+                      <Input
                         type="tel"
+                        variant="ridge"
                         value={designerData.phone || ''}
                         onChange={(e) => setDesignerData({ ...designerData, phone: e.target.value })}
-                        className="flex-1 text-folio-ink border border-folio-stone-300 rounded px-2 py-1 text-sm"
+                        className="flex-1 text-sm"
                         placeholder="+1 (555) 123-4567"
                       />
                     </div>
@@ -304,18 +314,18 @@ export default function DesignerProfile() {
                 ) : (
                   <>
                     {designerData.email && (
-                      <a 
-                        href={`mailto:${designerData.email}`} 
-                        className="flex items-center gap-3 text-folio-stone-600 hover:text-folio-accent-400 transition-colors text-sm"
+                      <a
+                        href={`mailto:${designerData.email}`}
+                        className="flex items-center gap-3 text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors text-sm"
                       >
                         <FaEnvelope className="w-4 h-4" />
                         <span>{designerData.email}</span>
                       </a>
                     )}
                     {designerData.phone && (
-                      <a 
-                        href={`tel:${designerData.phone}`} 
-                        className="flex items-center gap-3 text-folio-stone-600 hover:text-folio-accent-400 transition-colors text-sm"
+                      <a
+                        href={`tel:${designerData.phone}`}
+                        className="flex items-center gap-3 text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors text-sm"
                       >
                         <FaPhone className="w-4 h-4" />
                         <span>{designerData.phone}</span>
@@ -326,23 +336,23 @@ export default function DesignerProfile() {
               </div>
 
               {/* Social Links */}
-              <div className="flex gap-4 justify-center border-t border-folio-stone-100 pt-6 mb-6">
+              <div className="flex gap-4 justify-center border-t border-[var(--border-subtle)] pt-6 mb-6">
                 {designerData.instagram && (
-                  <a 
-                    href={designerData.instagram} 
-                    target="_blank" 
+                  <a
+                    href={designerData.instagram}
+                    target="_blank"
                     rel="noopener noreferrer"
-                    className="text-folio-stone-400 hover:text-folio-accent-400 transition-colors"
+                    className="text-[var(--text-tertiary)] hover:text-[var(--accent)] transition-colors"
                   >
                     <FaInstagram className="w-5 h-5" />
                   </a>
                 )}
                 {designerData.website && (
-                  <a 
-                    href={designerData.website} 
-                    target="_blank" 
+                  <a
+                    href={designerData.website}
+                    target="_blank"
                     rel="noopener noreferrer"
-                    className="text-folio-stone-400 hover:text-folio-accent-400 transition-colors"
+                    className="text-[var(--text-tertiary)] hover:text-[var(--accent)] transition-colors"
                   >
                     <FaGlobe className="w-5 h-5" />
                   </a>
@@ -354,8 +364,8 @@ export default function DesignerProfile() {
 
               {/* Analytics Section - Only visible to designer or admin */}
               {canSeeAnalytics && (
-                <div className="mt-8 pt-8 border-t border-folio-stone-200">
-                  <h3 className="text-sm font-sans font-semibold text-folio-stone-500 uppercase tracking-wide mb-4">
+                <div className="mt-8 pt-8 border-t border-[var(--border-subtle)]">
+                  <h3 className="text-sm font-semibold text-[var(--text-tertiary)] uppercase tracking-wide mb-4">
                     Analytics
                   </h3>
                   <InfluenceMetrics
@@ -366,6 +376,7 @@ export default function DesignerProfile() {
                   />
                 </div>
               )}
+              </RidgeCard>
             </motion.div>
           </motion.aside>
 
@@ -387,8 +398,8 @@ export default function DesignerProfile() {
             {/* Editorial Mosaic - Projects */}
             <div className="mb-12">
               <div className="mb-8">
-                <h2 className="text-3xl font-serif text-folio-ink mb-2">Projects</h2>
-                <p className="text-folio-stone-500 text-sm font-sans">Editorial showcase of completed work</p>
+                <h2 className="folio-h1 text-[var(--text-primary)] mb-2">Projects</h2>
+                <p className="folio-meta">Editorial showcase of completed work</p>
               </div>
               <EditorialMosaic projects={designerData.featuredProjects || []} />
             </div>

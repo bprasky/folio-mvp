@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { FaCalendarAlt, FaMapMarkerAlt, FaUser, FaCheck, FaTimes, FaEye } from 'react-icons/fa';
+import { FaCalendarAlt, FaMapMarkerAlt, FaUser, FaCheck, FaTimes } from 'react-icons/fa';
+import { RidgeCard } from '@/components/ui/ridge-card';
+import { Button } from '@/components/ui/button';
 
 interface Event {
   id: string;
@@ -66,13 +68,13 @@ const EventApprovalsPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 pl-20 lg:pl-56">
+      <div className="min-h-screen bg-[var(--bg-base)] pl-20 lg:pl-56">
         <div className="p-4 lg:p-8">
           <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded mb-4"></div>
+            <div className="h-8 bg-[var(--bg-elevated)] rounded mb-4"></div>
             <div className="space-y-4">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="h-32 bg-gray-200 rounded"></div>
+                <div key={i} className="h-32 bg-[var(--bg-elevated)] rounded"></div>
               ))}
             </div>
           </div>
@@ -82,29 +84,31 @@ const EventApprovalsPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pl-20 lg:pl-56">
+    <div className="min-h-screen bg-[var(--bg-base)] pl-20 lg:pl-56">
       <div className="p-4 lg:p-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-folio-text mb-2">Event Approvals</h1>
-          <p className="text-folio-text-muted">Review and approve pending events</p>
+          <h1 className="folio-h1 text-[var(--text-primary)] mb-2">Event Approvals</h1>
+          <p className="folio-body text-[var(--text-secondary)]">Review and approve pending events</p>
         </div>
 
         {events.length === 0 ? (
-          <div className="bg-white rounded-lg shadow-sm border border-folio-border p-8 text-center">
-            <FaCalendarAlt className="mx-auto text-4xl text-folio-text-muted mb-4" />
-            <h3 className="text-lg font-semibold text-folio-text mb-2">No pending events</h3>
-            <p className="text-folio-text-muted">All events have been reviewed</p>
-          </div>
+          <RidgeCard padding="lg">
+            <div className="text-center py-8">
+              <FaCalendarAlt className="mx-auto text-4xl text-[var(--text-tertiary)] mb-4" />
+              <h3 className="folio-h3 text-[var(--text-primary)] mb-2">No pending events</h3>
+              <p className="folio-body text-[var(--text-secondary)]">All events have been reviewed</p>
+            </div>
+          </RidgeCard>
         ) : (
           <div className="space-y-4">
             {events.map((event) => (
-              <div key={event.id} className="bg-white rounded-lg shadow-sm border border-folio-border p-6">
-                <div className="flex justify-between items-start mb-4">
+              <RidgeCard key={event.id} padding="lg">
+                <div className="flex justify-between items-start">
                   <div className="flex-1">
-                    <h3 className="text-xl font-semibold text-folio-text mb-2">{event.title}</h3>
-                    <p className="text-folio-text-muted mb-4">{event.description}</p>
-                    
-                    <div className="flex items-center space-x-4 text-sm text-folio-text-muted">
+                    <h3 className="folio-h3 text-[var(--text-primary)] mb-2">{event.title}</h3>
+                    <p className="folio-body text-[var(--text-secondary)] mb-4">{event.description}</p>
+
+                    <div className="flex items-center flex-wrap gap-4 folio-meta text-[var(--text-tertiary)]">
                       <div className="flex items-center">
                         <FaCalendarAlt className="mr-2" />
                         {new Date(event.startDate).toLocaleDateString()} - {new Date(event.endDate).toLocaleDateString()}
@@ -119,12 +123,13 @@ const EventApprovalsPage = () => {
                       </div>
                     </div>
                   </div>
-                  
-                  <div className="flex space-x-2">
-                    <button
+
+                  <div className="flex space-x-2 ml-4">
+                    <Button
                       onClick={() => handleApproval(event.id, true)}
                       disabled={actionLoading === event.id}
-                      className="flex items-center px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      variant="accent"
+                      size="sm"
                     >
                       {actionLoading === event.id ? (
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
@@ -132,12 +137,13 @@ const EventApprovalsPage = () => {
                         <FaCheck className="mr-2" />
                       )}
                       Approve
-                    </button>
-                    
-                    <button
+                    </Button>
+
+                    <Button
                       onClick={() => handleApproval(event.id, false)}
                       disabled={actionLoading === event.id}
-                      className="flex items-center px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      variant="destructive"
+                      size="sm"
                     >
                       {actionLoading === event.id ? (
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
@@ -145,10 +151,10 @@ const EventApprovalsPage = () => {
                         <FaTimes className="mr-2" />
                       )}
                       Reject
-                    </button>
+                    </Button>
                   </div>
                 </div>
-              </div>
+              </RidgeCard>
             ))}
           </div>
         )}
@@ -157,4 +163,4 @@ const EventApprovalsPage = () => {
   );
 };
 
-export default EventApprovalsPage; 
+export default EventApprovalsPage;

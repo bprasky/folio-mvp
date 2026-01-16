@@ -5,6 +5,8 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { FaArrowLeft } from 'react-icons/fa';
 import ProductUploader from '../../../components/vendor/ProductUploader';
+import { RidgeCard } from '@/components/ui/ridge-card';
+import { Button } from '@/components/ui/button';
 
 export default function VendorCreateProduct() {
   const [showUploader, setShowUploader] = useState(true);
@@ -34,9 +36,9 @@ export default function VendorCreateProduct() {
   };
 
   return (
-    <div className="min-h-screen bg-primary flex">
-      
-      
+    <div className="min-h-screen bg-[var(--bg-base)] flex">
+
+
       <div className="flex-1 lg:ml-20 xl:ml-56">
         <div className="max-w-4xl mx-auto px-6 py-12">
           {/* Back Button */}
@@ -47,7 +49,7 @@ export default function VendorCreateProduct() {
           >
             <Link
               href="/vendor"
-              className="inline-flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
+              className="inline-flex items-center space-x-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
             >
               <FaArrowLeft />
               <span>Back to Vendor Dashboard</span>
@@ -60,8 +62,8 @@ export default function VendorCreateProduct() {
             animate={{ opacity: 1, y: 0 }}
             className="text-center mb-8"
           >
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">Add New Product</h1>
-            <p className="text-gray-600">
+            <h1 className="folio-h1 mb-2">Add New Product</h1>
+            <p className="folio-body text-[var(--text-secondary)]">
               Upload your products to reach designers and homeowners in our community
             </p>
           </motion.div>
@@ -81,18 +83,19 @@ export default function VendorCreateProduct() {
               animate={{ opacity: 1, y: 0 }}
               className="text-center py-16"
             >
-              <div className="bg-white rounded-2xl p-8 shadow-lg max-w-md mx-auto">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">Ready to Upload?</h2>
-                <p className="text-gray-600 mb-6">
+              <RidgeCard padding="xl" className="max-w-md mx-auto">
+                <h2 className="folio-h2 mb-4">Ready to Upload?</h2>
+                <p className="folio-body text-[var(--text-secondary)] mb-6">
                   Click the button below to start uploading your product
                 </p>
-                <button
+                <Button
+                  variant="accent"
+                  size="lg"
                   onClick={() => setShowUploader(true)}
-                  className="bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 transition-colors font-medium"
                 >
                   Start Upload
-                </button>
-              </div>
+                </Button>
+              </RidgeCard>
             </motion.div>
           )}
         </div>

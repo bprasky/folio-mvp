@@ -50,16 +50,16 @@ export function MobileMenu() {
     <div className="md:hidden">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="p-2 rounded-lg hover:bg-neutral-100 transition-colors"
+        className="p-2 rounded-lg hover:bg-[var(--bg-elevated)] transition-colors"
         aria-label="Toggle menu"
       >
         {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
       </button>
 
       {isOpen && (
-        <div className="fixed top-16 left-0 right-0 bg-white border-b border-neutral-200 shadow-lg z-50">
+        <div className="fixed top-16 left-0 right-0 bg-[var(--bg-base)] border-b border-[var(--ridge-outer)] shadow-lg z-50">
           {/* Mobile search */}
-          <div className="p-4 border-b border-neutral-100">
+          <div className="p-4 border-b border-[var(--ridge-outer)]">
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -75,7 +75,7 @@ export function MobileMenu() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search..."
-                className="w-full h-10 pl-4 pr-4 rounded-full border border-neutral-200 bg-neutral-50 text-sm"
+                className="w-full h-10 pl-4 pr-4 rounded-full border border-[var(--ridge-outer)] bg-[var(--bg-elevated)] folio-ui"
               />
             </form>
           </div>
@@ -91,7 +91,7 @@ export function MobileMenu() {
 
             {role === "DESIGNER" && (
               <>
-                <div className="border-t border-neutral-100 my-2" />
+                <div className="border-t border-[var(--ridge-outer)] my-2" />
                 <MobileNavLink href="/designer/projects" onClick={() => setIsOpen(false)}>
                   Projects
                 </MobileNavLink>
@@ -103,7 +103,7 @@ export function MobileMenu() {
 
             {role === "VENDOR" && (
               <>
-                <div className="border-t border-neutral-100 my-2" />
+                <div className="border-t border-[var(--ridge-outer)] my-2" />
                 <MobileNavLink href="/vendor/dashboard" onClick={() => setIsOpen(false)}>
                   Dashboard
                 </MobileNavLink>
@@ -112,7 +112,7 @@ export function MobileMenu() {
 
             {role === "ADMIN" && (
               <>
-                <div className="border-t border-neutral-100 my-2" />
+                <div className="border-t border-[var(--ridge-outer)] my-2" />
                 <MobileNavLink href="/admin" onClick={() => setIsOpen(false)}>
                   Admin Panel
                 </MobileNavLink>
@@ -121,7 +121,7 @@ export function MobileMenu() {
 
             {user && role && ['ADMIN', 'VENDOR', 'DESIGNER', 'STUDENT'].includes(role) && (
               <>
-                <div className="border-t border-neutral-100 my-2" />
+                <div className="border-t border-[var(--ridge-outer)] my-2" />
                 <MobileNavLink href={getDashboardLink(role)} onClick={() => setIsOpen(false)}>
                   Dashboard
                 </MobileNavLink>
@@ -131,11 +131,11 @@ export function MobileMenu() {
 
           {/* User section */}
           {user && (
-            <div className="p-4 border-t border-neutral-100 flex items-center gap-3">
+            <div className="p-4 border-t border-[var(--ridge-outer)] flex items-center gap-3">
               <UserAvatar src={user.image} alt={user.name || "User"} size="sm" />
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-neutral-900 truncate">{user.name || "User"}</p>
-                <p className="text-xs text-neutral-500 truncate">{user.email}</p>
+                <p className="folio-ui text-[var(--text-primary)] truncate">{user.name || "User"}</p>
+                <p className="folio-meta text-[var(--text-secondary)] truncate">{user.email}</p>
               </div>
             </div>
           )}
@@ -156,7 +156,7 @@ function MobileNavLink({ href, children, onClick }: MobileNavLinkProps) {
     <Link
       href={href}
       onClick={onClick}
-      className="block px-4 py-3 text-sm font-medium text-neutral-700 hover:bg-neutral-50 transition-colors"
+      className="block px-4 py-3 folio-ui text-[var(--text-primary)] hover:bg-[var(--bg-elevated)] transition-colors"
     >
       {children}
     </Link>

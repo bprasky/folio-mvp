@@ -7,6 +7,8 @@ import { FaPlus, FaEdit, FaTrash, FaChartLine, FaBriefcase, FaUser, FaToggleOn, 
 import ProjectCreationModal from '../../components/ProjectCreationModal';
 import { useRole } from '../../contexts/RoleContext';
 import { PublishButton } from './PublishButton';
+import { RidgeCard } from '@/components/ui/ridge-card';
+import { Button } from '@/components/ui/button';
 
 export default function DesignerProfile() {
   const { role, activeProfileId, setActiveProfileId } = useRole();
@@ -293,7 +295,7 @@ export default function DesignerProfile() {
   };
 
   const renderProjectCard = (project: any) => (
-    <div key={project.id} className="bg-white rounded-lg shadow-md overflow-hidden">
+    <RidgeCard key={project.id} padding="none" className="overflow-hidden">
       <div className="relative">
         <SafeImage
           src={project.images?.[0]?.url || '/placeholder-project.jpg'}
@@ -307,32 +309,32 @@ export default function DesignerProfile() {
           <button
             onClick={() => handleToggleVisibility(project.id, project.visibility)}
             className={`p-2 rounded-full ${
-              project.visibility === 'public' 
-                ? 'bg-green-500 text-white' 
-                : 'bg-gray-500 text-white'
+              project.visibility === 'public'
+                ? 'bg-green-500 text-white'
+                : 'bg-[var(--text-tertiary)] text-white'
             } hover:opacity-80 transition-opacity`}
             title={project.visibility === 'public' ? 'Public (click to make private)' : 'Private (click to make public)'}
           >
             {project.visibility === 'public' ? <FaEye className="w-4 h-4" /> : <FaEyeSlash className="w-4 h-4" />}
           </button>
-          
+
           {/* Edit Button */}
           <button
             onClick={() => handleEditProject(project)}
-            className="p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-colors"
+            className="p-2 bg-[var(--accent)] text-white rounded-full hover:bg-[var(--accent-hover)] transition-colors"
             title="Edit Project"
           >
             <FaEdit className="w-4 h-4" />
           </button>
-          
+
           {/* Publish Button - Only show for draft projects */}
           {(project.status === 'draft' || !project.isPublic) && (
-            <PublishButton 
-              projectId={project.id} 
-              onPublished={() => loadProjects(selectedDesignerId)} 
+            <PublishButton
+              projectId={project.id}
+              onPublished={() => loadProjects(selectedDesignerId)}
             />
           )}
-          
+
           {/* Delete Button */}
           <button
             onClick={() => handleDeleteProject(project.id)}
@@ -343,12 +345,12 @@ export default function DesignerProfile() {
           </button>
         </div>
       </div>
-      
+
       <div className="p-4">
         <div className="flex justify-between items-start mb-2">
-          <Link 
+          <Link
             href={`/project/${project.id}`}
-            className="text-lg font-semibold text-gray-900 hover:text-blue-600 transition-colors"
+            className="folio-h3 text-[var(--text-primary)] hover:text-[var(--accent)] transition-colors"
           >
             {project.name}
           </Link>
@@ -357,90 +359,91 @@ export default function DesignerProfile() {
             {(project.status === 'draft' || !project.isPublic) && !project.images?.length && (
               <Link
                 href={`/project/${project.id}/setup`}
-                className="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium bg-blue-50 text-blue-700 rounded-full hover:bg-blue-100 transition-colors"
+                className="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium bg-[var(--accent)]/10 text-[var(--accent)] rounded-full hover:bg-[var(--accent)]/20 transition-colors"
               >
                 <FaUpload className="w-3 h-3" />
                 Continue Setup
               </Link>
             )}
-            
+
             {/* Status Badge */}
             <div className="flex items-center gap-2">
             <span className={`px-2 py-1 text-xs rounded-full ${
-              project.status === 'published' 
-                ? 'bg-green-100 text-green-800' 
-                : 'bg-yellow-100 text-yellow-800'
+              project.status === 'published'
+                ? 'bg-green-100 text-green-800'
+                : 'bg-amber-100 text-amber-800'
             }`}>
               {project.status === 'published' ? 'Published' : 'Draft'}
             </span>
-            
+
             {/* Visibility Badge */}
             <span className={`px-2 py-1 text-xs rounded-full ${
-              project.visibility === 'public' 
-                ? 'bg-blue-100 text-blue-800' 
-                : 'bg-gray-100 text-gray-800'
+              project.visibility === 'public'
+                ? 'bg-blue-100 text-blue-800'
+                : 'bg-[var(--bg-elevated)] text-[var(--text-secondary)]'
             }`}>
               {project.visibility === 'public' ? 'Public' : 'Private'}
             </span>
             </div>
           </div>
         </div>
-        
-        <p className="text-gray-600 text-sm mb-3 line-clamp-2">
+
+        <p className="folio-body text-[var(--text-secondary)] mb-3 line-clamp-2">
           {project.description}
         </p>
-        
-        <div className="flex justify-between items-center text-sm text-gray-500">
+
+        <div className="flex justify-between items-center folio-meta">
           <span>{project.category}</span>
           <span>{project.images?.length || 0} images</span>
         </div>
-        
+
         {project.metrics && (
-          <div className="flex justify-between items-center mt-3 pt-3 border-t border-gray-100 text-sm text-gray-500">
+          <div className="flex justify-between items-center mt-3 pt-3 border-t border-[var(--border-subtle)] folio-meta">
             <span>{project.metrics.views || 0} views</span>
             <span>{project.metrics.saves || 0} saves</span>
             <span>{project.metrics.shares || 0} shares</span>
           </div>
         )}
       </div>
-    </div>
+    </RidgeCard>
   );
 
   return (
-    <div className="p-6">
+    <div className="min-h-screen bg-[var(--bg-base)] p-6">
       <div className="max-w-7xl mx-auto">
         {/* Profile Switcher for Designers */}
         {role === 'designer' && (
           <div className="mb-6">
-            <h2 className="text-lg font-semibold text-white mb-4">Select Designer Profile</h2>
+            <h2 className="folio-h3 text-[var(--text-primary)] mb-4">Select Designer Profile</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {designers.map((designer) => (
-                <div
+                <RidgeCard
                   key={designer.id}
-                  className={`p-4 rounded-lg border-2 transition-all cursor-pointer ${
+                  padding="md"
+                  className={`cursor-pointer transition-all ${
                     selectedDesignerId === designer.id
-                      ? 'border-purple-500 bg-purple-900/20'
-                      : 'border-gray-600 bg-gray-800 hover:border-gray-500'
+                      ? 'ring-2 ring-[var(--accent)]'
+                      : 'hover:shadow-lg'
                   }`}
                   onClick={() => toggleDesignerProfile(designer.id)}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-                        <FaUser className="w-5 h-5 text-purple-600" />
+                      <div className="w-10 h-10 bg-[var(--accent)]/10 rounded-full flex items-center justify-center">
+                        <FaUser className="w-5 h-5 text-[var(--accent)]" />
                       </div>
                       <div>
-                        <h3 className="font-medium text-white">{designer.name}</h3>
-                        <p className="text-sm text-gray-400">{designer.folders?.length || 0} projects</p>
+                        <h3 className="font-medium text-[var(--text-primary)]">{designer.name}</h3>
+                        <p className="folio-meta">{designer.folders?.length || 0} projects</p>
                       </div>
                     </div>
                     {selectedDesignerId === designer.id ? (
-                      <FaToggleOn className="w-6 h-6 text-purple-500" />
+                      <FaToggleOn className="w-6 h-6 text-[var(--accent)]" />
                     ) : (
-                      <FaToggleOff className="w-6 h-6 text-gray-500" />
+                      <FaToggleOff className="w-6 h-6 text-[var(--text-tertiary)]" />
                     )}
                   </div>
-                </div>
+                </RidgeCard>
               ))}
             </div>
           </div>
@@ -449,54 +452,58 @@ export default function DesignerProfile() {
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-white">
-              {role === 'admin' && getCurrentDesigner() 
-                ? `${getCurrentDesigner()?.name}'s Dashboard` 
+            <h1 className="folio-h1 text-[var(--text-primary)]">
+              {role === 'admin' && getCurrentDesigner()
+                ? `${getCurrentDesigner()?.name}'s Dashboard`
                 : 'Designer Dashboard'
               }
             </h1>
-            <p className="text-gray-400">
-              {role === 'admin' && !selectedDesignerId 
+            <p className="folio-body text-[var(--text-secondary)]">
+              {role === 'admin' && !selectedDesignerId
                 ? 'Select a designer profile above to view their dashboard'
                 : 'Showcase your work and manage projects'
               }
             </p>
           </div>
           <div className="flex gap-3">
-            <button 
+            <Button
+              variant="ridge"
               onClick={handleExportAllMaterials}
-              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md flex items-center transition-colors"
               disabled={role === 'admin' && !selectedDesignerId}
               title="Export all tagged materials as spreadsheet"
             >
               <FaDownload className="mr-2" /> Export Materials
-            </button>
-            <button 
+            </Button>
+            <Button
+              variant="accent"
               onClick={() => {
                 setEditingProject(null);
                 setShowProjectModal(true);
               }}
-              className="bg-gradient-to-r from-amber-500 to-pink-500 text-white px-6 py-2 rounded-md flex items-center"
               disabled={role === 'admin' && !selectedDesignerId}
             >
               <FaPlus className="mr-2" /> Add Project
-            </button>
+            </Button>
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="flex space-x-4 mb-6">
+        <div className="flex space-x-2 mb-6 p-1 bg-[var(--bg-elevated)] rounded-xl">
           <button
-            className={`px-4 py-2 rounded-md flex items-center ${
-              activeTab === 'portfolio' ? 'bg-gray-800 text-white' : 'text-gray-400 hover:text-white'
+            className={`px-4 py-2 rounded-lg flex items-center transition-all ${
+              activeTab === 'portfolio'
+                ? 'bg-[var(--bg-base)] text-[var(--text-primary)] shadow-sm'
+                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
             }`}
             onClick={() => setActiveTab('portfolio')}
           >
             <FaBriefcase className="mr-2" /> Portfolio
           </button>
           <button
-            className={`px-4 py-2 rounded-md flex items-center ${
-              activeTab === 'projects' ? 'bg-gray-800 text-white' : 'text-gray-400 hover:text-white'
+            className={`px-4 py-2 rounded-lg flex items-center transition-all ${
+              activeTab === 'projects'
+                ? 'bg-[var(--bg-base)] text-[var(--text-primary)] shadow-sm'
+                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
             }`}
             onClick={() => setActiveTab('projects')}
           >
@@ -504,13 +511,13 @@ export default function DesignerProfile() {
           </button>
           <Link
             href="/designer/analytics"
-            className="px-4 py-2 rounded-md flex items-center text-gray-400 hover:text-white"
+            className="px-4 py-2 rounded-lg flex items-center text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all"
           >
             <FaChartLine className="mr-2" /> Analytics
           </Link>
           <Link
             href="/designer/directory"
-            className="px-4 py-2 rounded-md flex items-center text-gray-400 hover:text-white"
+            className="px-4 py-2 rounded-lg flex items-center text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all"
           >
             <FaBriefcase className="mr-2" /> Directory
           </Link>
@@ -529,53 +536,52 @@ export default function DesignerProfile() {
         {activeTab === 'projects' && (
           <div className="space-y-6">
             {/* Quick Actions */}
-            <div className="glass-panel p-6 rounded-lg">
+            <RidgeCard padding="lg">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold text-white">Project Lifecycle</h2>
-                <Link
-                  href="/designer/create" // canonical create path → /designer/create
-                  className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all flex items-center gap-2"
-                >
-                  <FaPlus className="w-4 h-4" />
-                  Create New
+                <h2 className="folio-h2 text-[var(--text-primary)]">Project Lifecycle</h2>
+                <Link href="/designer/create">
+                  <Button variant="accent" className="flex items-center gap-2">
+                    <FaPlus className="w-4 h-4" />
+                    Create New
+                  </Button>
                 </Link>
               </div>
-              <p className="text-gray-400 mb-4">
+              <p className="folio-body text-[var(--text-secondary)] mb-4">
                 Manage your design projects with room organization, product selections, and spec sheets.
               </p>
-              
+
               {/* Project Stats */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="bg-gray-800/50 p-4 rounded-lg">
-                  <div className="text-2xl font-bold text-white">{getFilteredProjects().length}</div>
-                  <div className="text-sm text-gray-400">Total Projects</div>
+                <div className="ridge-card p-4">
+                  <div className="stats-value">{getFilteredProjects().length}</div>
+                  <div className="stats-label">Total Projects</div>
                 </div>
-                <div className="bg-gray-800/50 p-4 rounded-lg">
-                  <div className="text-2xl font-bold text-white">
+                <div className="ridge-card p-4">
+                  <div className="stats-value">
                     {getFilteredProjects().filter(p => p.status === 'published').length}
                   </div>
-                  <div className="text-sm text-gray-400">Published</div>
+                  <div className="stats-label">Published</div>
                 </div>
-                <div className="bg-gray-800/50 p-4 rounded-lg">
-                  <div className="text-2xl font-bold text-white">
+                <div className="ridge-card p-4">
+                  <div className="stats-value">
                     {getFilteredProjects().filter(p => p.status === 'draft').length}
                   </div>
-                  <div className="text-sm text-gray-400">Drafts</div>
+                  <div className="stats-label">Drafts</div>
                 </div>
-                <div className="bg-gray-800/50 p-4 rounded-lg">
-                  <div className="text-2xl font-bold text-white">
+                <div className="ridge-card p-4">
+                  <div className="stats-value">
                     {getFilteredProjects().reduce((total, p) => total + (p.rooms?.length || 0), 0)}
                   </div>
-                  <div className="text-sm text-gray-400">Total Rooms</div>
+                  <div className="stats-label">Total Rooms</div>
                 </div>
               </div>
-            </div>
+            </RidgeCard>
 
             {/* Projects Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {getFilteredProjects().map((project) => (
-                <div key={project.id} className="glass-panel rounded-lg overflow-hidden hover:shadow-xl transition-shadow">
-                  <div className="aspect-video bg-gray-700 relative">
+                <RidgeCard key={project.id} padding="none" className="overflow-hidden hover:shadow-lg transition-shadow">
+                  <div className="aspect-video bg-[var(--bg-elevated)] relative">
                     {project.imageUrl ? (
                       <SafeImage
                         src={project.imageUrl}
@@ -584,86 +590,83 @@ export default function DesignerProfile() {
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
-                        <FaBriefcase className="w-12 h-12 text-gray-500" />
+                        <FaBriefcase className="w-12 h-12 text-[var(--text-tertiary)]" />
                       </div>
                     )}
                     <div className="absolute top-2 right-2 flex gap-1">
                       <Link
                         href={`/designer/projects/${project.id}`}
-                        className="p-2 bg-white bg-opacity-90 rounded-lg hover:bg-opacity-100 transition-all"
+                        className="p-2 bg-[var(--bg-base)] rounded-lg hover:shadow-md transition-all"
                         title="Manage Project"
                       >
-                        <FaEdit className="w-4 h-4 text-gray-600" />
+                        <FaEdit className="w-4 h-4 text-[var(--text-secondary)]" />
                       </Link>
                     </div>
                   </div>
-                  
+
                   <div className="p-4">
                     <div className="flex justify-between items-start mb-2">
-                      <Link 
+                      <Link
                         href={`/designer/projects/${project.id}`}
-                        className="text-lg font-semibold text-white hover:text-blue-400 transition-colors"
+                        className="folio-h3 text-[var(--text-primary)] hover:text-[var(--accent)] transition-colors"
                       >
                         {project.name}
                       </Link>
                       <div className="flex items-center gap-2">
                         <span className={`px-2 py-1 text-xs rounded-full ${
-                          project.status === 'published' 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-yellow-100 text-yellow-800'
+                          project.status === 'published'
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-amber-100 text-amber-800'
                         }`}>
                           {project.status === 'published' ? 'Published' : 'Draft'}
                         </span>
                       </div>
                     </div>
-                    
-                    <p className="text-gray-400 text-sm mb-3 line-clamp-2">
+
+                    <p className="folio-body text-[var(--text-secondary)] mb-3 line-clamp-2">
                       {project.description}
                     </p>
-                    
-                    <div className="flex justify-between items-center text-sm text-gray-500">
+
+                    <div className="flex justify-between items-center folio-meta">
                       <span>{project.category}</span>
                       <span>{project.rooms?.length || 0} rooms</span>
                     </div>
-                    
-                    <div className="mt-3 pt-3 border-t border-gray-700 space-y-2">
+
+                    <div className="mt-3 pt-3 border-t border-[var(--border-subtle)] space-y-2">
                       {project.status !== 'published' && (
-                        <Link
-                          href={`/project/${project.id}/setup?onboard=1`}
-                          className="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg transition-colors text-center block font-medium"
-                        >
-                          <FaUpload className="inline mr-2" />
-                          Continue Setup
+                        <Link href={`/project/${project.id}/setup?onboard=1`}>
+                          <Button variant="accent" size="sm" className="w-full">
+                            <FaUpload className="inline mr-2" />
+                            Continue Setup
+                          </Button>
                         </Link>
                       )}
-                      <Link
-                        href={`/designer/projects/${project.id}`}
-                        className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg transition-colors text-center block"
-                      >
-                        Manage Project
+                      <Link href={`/designer/projects/${project.id}`}>
+                        <Button variant="ridge" size="sm" className="w-full">
+                          Manage Project
+                        </Button>
                       </Link>
                     </div>
                   </div>
-                </div>
+                </RidgeCard>
               ))}
             </div>
 
             {/* Empty State */}
             {getFilteredProjects().length === 0 && (
-              <div className="glass-panel p-8 rounded-lg text-center">
-                <FaBriefcase className="w-16 h-16 text-gray-500 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-white mb-2">No Projects Yet</h3>
-                <p className="text-gray-400 mb-6">
+              <RidgeCard padding="xl" className="text-center">
+                <FaBriefcase className="w-16 h-16 text-[var(--text-tertiary)] mx-auto mb-4" />
+                <h3 className="folio-h2 text-[var(--text-primary)] mb-2">No Projects Yet</h3>
+                <p className="folio-body text-[var(--text-secondary)] mb-6">
                   Start creating your first design project to organize rooms and selections
                 </p>
-                <Link
-                  href="/designer/create" // canonical create path → /designer/create
-                  className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-6 py-3 rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all inline-flex items-center gap-2"
-                >
-                  <FaPlus className="w-4 h-4" />
-                  Create Your First Project
+                <Link href="/designer/create">
+                  <Button variant="accent" size="lg" className="inline-flex items-center gap-2">
+                    <FaPlus className="w-4 h-4" />
+                    Create Your First Project
+                  </Button>
                 </Link>
-              </div>
+              </RidgeCard>
             )}
           </div>
         )}

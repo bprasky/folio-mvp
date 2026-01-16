@@ -8,6 +8,12 @@ declare module 'next-auth' {
     role?: string;
     accountStatus?: string;
     onboardingCompletedAt?: Date | null;
+    operatingAsOrgId?: string | null;
+    operatingAsOrg?: {
+      id: string;
+      name: string;
+      logo: string | null;
+    } | null;
   }
 
   interface Session {
@@ -19,6 +25,12 @@ declare module 'next-auth' {
       name?: string | null;
       email?: string | null;
       image?: string | null;
+      operatingAsOrgId?: string | null;
+      operatingAsOrg?: {
+        id: string;
+        name: string;
+        logo: string | null;
+      } | null;
     };
     impersonating?: {
       originalAdminId: string;
@@ -32,6 +44,12 @@ declare module 'next-auth/jwt' {
     role?: string;
     accountStatus?: string;
     onboardingCompletedAt?: Date | null;
+    operatingAsOrgId?: string | null;
+    operatingAsOrg?: {
+      id: string;
+      name: string;
+      logo: string | null;
+    } | null;
     impersonating?: {
       originalAdminId: string;
       originalAdminEmail: string;
@@ -132,35 +150,68 @@ export const authOptions: NextAuthOptions = {
         console.log("DEBUG: JWT callback - Setting token.id:", user.id);
       }
 
-      // Always hydrate role, accountStatus, and onboardingCompletedAt from DB to avoid stale tokens
+      // Always hydrate role, accountStatus, onboardingCompletedAt from DB to avoid stale tokens
+      // Note: Query only core columns that exist in prod, workspace context is optional
       if (token.sub) {
         try {
+          // Core query - these columns definitely exist
           const u = await prisma.user.findUnique({
             where: { id: token.sub as string },
-            select: { role: true, accountStatus: true, onboardingCompletedAt: true },
+            select: {
+              role: true,
+              accountStatus: true,
+              onboardingCompletedAt: true,
+            },
           });
           token.role = u?.role ?? "GUEST";
           token.accountStatus = u?.accountStatus ?? "APPROVED";
           token.onboardingCompletedAt = u?.onboardingCompletedAt ?? null;
           console.log("Hydrated from DB - role:", token.role, "accountStatus:", token.accountStatus);
+
+          // Try to get workspace context (operatingAsOrgId may not exist in prod yet)
+          try {
+            const workspace = await prisma.$queryRaw<any[]>`
+              SELECT "operatingAsOrgId" FROM users WHERE id = ${token.sub}
+            `;
+            if (workspace?.[0]?.operatingAsOrgId) {
+              token.operatingAsOrgId = workspace[0].operatingAsOrgId;
+              // Get org details
+              const org = await prisma.organization.findUnique({
+                where: { id: workspace[0].operatingAsOrgId },
+                select: { id: true, name: true },
+              });
+              token.operatingAsOrg = org ? { ...org, logo: null } : null;
+            } else {
+              token.operatingAsOrgId = null;
+              token.operatingAsOrg = null;
+            }
+          } catch (workspaceErr) {
+            // operatingAsOrgId column doesn't exist yet, that's fine
+            token.operatingAsOrgId = null;
+            token.operatingAsOrg = null;
+          }
         } catch (e) {
           // On DB hiccup, keep previous token values rather than blowing up auth
           console.error("Error hydrating from DB:", e);
           token.role = (token as any).role ?? "GUEST";
           token.accountStatus = (token as any).accountStatus ?? "APPROVED";
           token.onboardingCompletedAt = (token as any).onboardingCompletedAt ?? null;
+          token.operatingAsOrgId = (token as any).operatingAsOrgId ?? null;
+          token.operatingAsOrg = (token as any).operatingAsOrg ?? null;
         }
       } else {
         token.role = (token as any).role ?? "GUEST";
         token.accountStatus = (token as any).accountStatus ?? "APPROVED";
         token.onboardingCompletedAt = (token as any).onboardingCompletedAt ?? null;
+        token.operatingAsOrgId = (token as any).operatingAsOrgId ?? null;
+        token.operatingAsOrg = (token as any).operatingAsOrg ?? null;
       }
 
       return token;
     },
 
     async session({ session, token }) {
-      console.log("DEBUG: Session callback — token.role:", token.role, "token.id:", token.id, "token.accountStatus:", token.accountStatus);
+      console.log("DEBUG: Session callback — token.role:", token.role, "token.id:", token.id, "token.accountStatus:", token.accountStatus, "operatingAsOrgId:", token.operatingAsOrgId);
       session.user = session.user || ({} as any);
       if (token?.id && session?.user) {
         (session.user as any).id = token.id as string;
@@ -169,6 +220,8 @@ export const authOptions: NextAuthOptions = {
       (session.user as any).role = (token as any).role || 'GUEST';
       (session.user as any).accountStatus = (token as any).accountStatus || 'APPROVED';
       (session.user as any).onboardingCompletedAt = (token as any).onboardingCompletedAt || null;
+      (session.user as any).operatingAsOrgId = (token as any).operatingAsOrgId || null;
+      (session.user as any).operatingAsOrg = (token as any).operatingAsOrg || null;
 
       // Include impersonation info if present
       if ((token as any).impersonating) {

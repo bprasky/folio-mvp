@@ -191,15 +191,15 @@ export default function MeetingNotesTab({ projectId }: MeetingNotesTabProps) {
       {/* Main Content */}
       <div className="lg:col-span-2 space-y-6" data-tour="meeting-notes-content">
         {/* Add Note Form */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
+        <div className="bg-[var(--bg-elevated)] rounded-lg shadow-sm border border-[var(--border-default)] p-6">
+          <h2 className="folio-h3 text-[var(--text-primary)] mb-4">
             Add Meeting Note
           </h2>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label
                 htmlFor="title"
-                className="block text-sm font-medium text-gray-700 mb-1"
+                className="block folio-ui font-medium text-[var(--text-primary)] mb-1"
               >
                 Title (optional)
               </label>
@@ -210,14 +210,14 @@ export default function MeetingNotesTab({ projectId }: MeetingNotesTabProps) {
                 onChange={(e) =>
                   setFormData({ ...formData, title: e.target.value })
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-[var(--border-default)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-[var(--bg-base)]"
                 placeholder="e.g., Initial Client Meeting"
               />
             </div>
             <div>
               <label
                 htmlFor="rawText"
-                className="block text-sm font-medium text-gray-700 mb-1"
+                className="block folio-ui font-medium text-[var(--text-primary)] mb-1"
               >
                 Notes
               </label>
@@ -229,14 +229,14 @@ export default function MeetingNotesTab({ projectId }: MeetingNotesTabProps) {
                 }
                 rows={8}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-[var(--border-default)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-[var(--bg-base)]"
                 placeholder="Enter meeting notes, transcript, or other project context..."
               />
             </div>
             <div>
               <label
                 htmlFor="sourceType"
-                className="block text-sm font-medium text-gray-700 mb-1"
+                className="block folio-ui font-medium text-[var(--text-primary)] mb-1"
               >
                 Source Type
               </label>
@@ -246,7 +246,7 @@ export default function MeetingNotesTab({ projectId }: MeetingNotesTabProps) {
                 onChange={(e) =>
                   setFormData({ ...formData, sourceType: e.target.value })
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-[var(--border-default)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-[var(--bg-base)]"
               >
                 <option value="text">Text</option>
                 <option value="audio">Audio</option>
@@ -257,7 +257,7 @@ export default function MeetingNotesTab({ projectId }: MeetingNotesTabProps) {
             <button
               type="submit"
               disabled={submitting || !formData.rawText.trim()}
-              className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="w-full bg-[var(--accent)] text-white py-2 px-4 rounded-md hover:bg-[var(--accent-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {submitting ? 'Saving...' : 'Save Note'}
             </button>
@@ -265,16 +265,16 @@ export default function MeetingNotesTab({ projectId }: MeetingNotesTabProps) {
         </div>
 
         {/* Notes List */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
+        <div className="bg-[var(--bg-elevated)] rounded-lg shadow-sm border border-[var(--border-default)] p-6">
+          <h2 className="folio-h3 text-[var(--text-primary)] mb-4">
             Meeting Notes ({notes.length})
           </h2>
           {loading ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-[var(--text-secondary)]">
               Loading notes...
             </div>
           ) : notes.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-[var(--text-secondary)]">
               No meeting notes yet. Add your first note above.
             </div>
           ) : (
@@ -282,17 +282,17 @@ export default function MeetingNotesTab({ projectId }: MeetingNotesTabProps) {
               {notes.map((note) => (
                 <div
                   key={note.id}
-                  className="border border-gray-200 rounded-lg p-4 hover:border-gray-300 transition-colors"
+                  className="border border-[var(--border-default)] rounded-lg p-4 hover:border-[var(--accent)] transition-colors"
                 >
                   <div className="flex items-start justify-between mb-2">
-                    <h3 className="font-medium text-gray-900">
+                    <h3 className="font-medium text-[var(--text-primary)]">
                       {note.title || 'Untitled Note'}
                     </h3>
-                    <span className="text-xs text-gray-500">
+                    <span className="folio-meta text-[var(--text-tertiary)]">
                       {formatDate(note.createdAt)}
                     </span>
                   </div>
-                  <p className="text-sm text-gray-600 whitespace-pre-wrap">
+                  <p className="folio-body text-[var(--text-secondary)] whitespace-pre-wrap">
                     {note.rawText || 'No content'}
                   </p>
                   
@@ -308,32 +308,32 @@ export default function MeetingNotesTab({ projectId }: MeetingNotesTabProps) {
 
                   {/* Actions */}
                   <div className="mt-3 flex items-center gap-2 flex-wrap">
-                    <span className="inline-block text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded">
+                    <span className="inline-block folio-meta px-2 py-1 bg-[var(--bg-base)] text-[var(--text-secondary)] rounded">
                       {note.sourceType}
                     </span>
-                    
+
                     {/* Attach button */}
                     <div className="relative">
                       <button
                         onClick={() => setAttachingToNoteId(attachingToNoteId === note.id ? null : note.id)}
-                        className="inline-flex items-center gap-1 text-xs px-2 py-1 bg-blue-50 text-blue-600 rounded hover:bg-blue-100"
+                        className="inline-flex items-center gap-1 folio-meta px-2 py-1 bg-[var(--accent)]/10 text-[var(--accent)] rounded hover:bg-[var(--accent)]/20"
                       >
                         <FaPaperclip />
                         Attach...
                       </button>
-                      
+
                       {attachingToNoteId === note.id && (
-                        <div className="absolute left-0 mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-10 min-w-[200px]">
+                        <div className="absolute left-0 mt-1 bg-[var(--bg-elevated)] border border-[var(--border-default)] rounded-md shadow-lg z-10 min-w-[200px]">
                           <div className="p-2">
-                            <div className="text-xs font-medium text-gray-700 mb-1">Attach to:</div>
+                            <div className="folio-meta font-medium text-[var(--text-primary)] mb-1">Attach to:</div>
                             {rooms.length > 0 && (
                               <div className="mb-2">
-                                <div className="text-xs text-gray-500 mb-1">Rooms:</div>
+                                <div className="folio-meta text-[var(--text-tertiary)] mb-1">Rooms:</div>
                                 {rooms.map((room) => (
                                   <button
                                     key={room.id}
                                     onClick={() => handleAttach(note.id, 'room', room.id)}
-                                    className="block w-full text-left text-xs px-2 py-1 hover:bg-gray-100 rounded"
+                                    className="block w-full text-left folio-meta px-2 py-1 hover:bg-[var(--bg-base)] rounded"
                                   >
                                     {room.name}
                                   </button>
@@ -342,12 +342,12 @@ export default function MeetingNotesTab({ projectId }: MeetingNotesTabProps) {
                             )}
                             {productTags.length > 0 && (
                               <div>
-                                <div className="text-xs text-gray-500 mb-1">Products:</div>
+                                <div className="folio-meta text-[var(--text-tertiary)] mb-1">Products:</div>
                                 {productTags.map((tag) => (
                                   <button
                                     key={tag.id}
                                     onClick={() => handleAttach(note.id, 'productTag', tag.id)}
-                                    className="block w-full text-left text-xs px-2 py-1 hover:bg-gray-100 rounded"
+                                    className="block w-full text-left folio-meta px-2 py-1 hover:bg-[var(--bg-base)] rounded"
                                   >
                                     {tag.product.name}
                                   </button>
@@ -355,7 +355,7 @@ export default function MeetingNotesTab({ projectId }: MeetingNotesTabProps) {
                               </div>
                             )}
                             {rooms.length === 0 && productTags.length === 0 && (
-                              <div className="text-xs text-gray-500 py-2">
+                              <div className="folio-meta text-[var(--text-tertiary)] py-2">
                                 No rooms or products available
                               </div>
                             )}
@@ -367,7 +367,7 @@ export default function MeetingNotesTab({ projectId }: MeetingNotesTabProps) {
                     {/* Create Action Item button */}
                     <button
                       onClick={() => setCreateActionItemNoteId(note.id)}
-                      className="inline-flex items-center gap-1 text-xs px-2 py-1 bg-green-50 text-green-600 rounded hover:bg-green-100"
+                      className="inline-flex items-center gap-1 folio-meta px-2 py-1 bg-green-50 text-green-600 rounded hover:bg-green-100"
                     >
                       <FaCheckSquare />
                       Create Action Item

@@ -4,17 +4,20 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import Link from 'next/link';
-import { 
-  FaPlus, 
-  FaFolder, 
-  FaFolderOpen, 
-  FaImage, 
-  FaTrash, 
+import {
+  FaPlus,
+  FaFolder,
+  FaFolderOpen,
+  FaImage,
+  FaTrash,
   FaEdit,
   FaHeart,
   FaShare,
   FaDownload
 } from 'react-icons/fa';
+import { RidgeCard } from '@/components/ui/ridge-card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 // Mock data for folders
 const mockFolders = [
@@ -79,70 +82,68 @@ export default function IndividualFolders() {
   };
 
   return (
-    <div className="p-6">
+    <div className="min-h-screen bg-[var(--bg-base)] p-6">
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">My Folders</h1>
-            <p className="text-gray-600">Organize your saved items and inspiration</p>
+            <h1 className="folio-h1 text-[var(--text-primary)] mb-2">My Folders</h1>
+            <p className="folio-body text-[var(--text-secondary)]">Organize your saved items and inspiration</p>
           </div>
-          <button
+          <Button
+            variant="accent"
             onClick={() => setIsCreating(!isCreating)}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
-            <FaPlus className="w-4 h-4" />
+            <FaPlus className="w-4 h-4 mr-2" />
             New Folder
-          </button>
+          </Button>
         </div>
 
         {isCreating && (
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-white rounded-2xl p-6 shadow-lg mb-6"
+            className="mb-6"
           >
-            <form onSubmit={handleCreateFolder} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Folder Name</label>
-                <input
-                  type="text"
-                  value={newFolderName}
-                  onChange={(e) => setNewFolderName(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="e.g., Living Room Ideas"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Description (optional)</label>
-                <textarea
-                  value={newFolderDescription}
-                  onChange={(e) => setNewFolderDescription(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                  rows={3}
-                  placeholder="Describe what this folder contains..."
-                />
-              </div>
-              <div className="flex gap-3">
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  Create Folder
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsCreating(false);
-                    setNewFolderName('');
-                    setNewFolderDescription('');
-                  }}
-                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
+            <RidgeCard className="p-6">
+              <form onSubmit={handleCreateFolder} className="space-y-4">
+                <div>
+                  <label className="block folio-ui font-medium text-[var(--text-secondary)] mb-2">Folder Name</label>
+                  <Input
+                    type="text"
+                    value={newFolderName}
+                    onChange={(e) => setNewFolderName(e.target.value)}
+                    placeholder="e.g., Living Room Ideas"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block folio-ui font-medium text-[var(--text-secondary)] mb-2">Description (optional)</label>
+                  <textarea
+                    value={newFolderDescription}
+                    onChange={(e) => setNewFolderDescription(e.target.value)}
+                    className="w-full px-4 py-2 bg-[var(--bg-base)] border border-[var(--border-color)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent resize-none folio-body text-[var(--text-primary)]"
+                    rows={3}
+                    placeholder="Describe what this folder contains..."
+                  />
+                </div>
+                <div className="flex gap-3">
+                  <Button type="submit" variant="accent">
+                    Create Folder
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => {
+                      setIsCreating(false);
+                      setNewFolderName('');
+                      setNewFolderDescription('');
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </form>
+            </RidgeCard>
           </motion.div>
         )}
 
@@ -150,66 +151,67 @@ export default function IndividualFolders() {
           {folders.map((folder) => (
             <motion.div
               key={folder.id}
-              className="bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow"
               whileHover={{ scale: 1.02 }}
             >
-              <Link href={`/individual/folders/${folder.id}`}>
-                <div className="relative h-48 bg-gray-100">
-                  {folder.coverImage ? (
-                    <Image
-                      src={folder.coverImage}
-                      alt={folder.name}
-                      fill
-                      className="object-cover"
-                    />
-                  ) : (
-                    <div className="h-full flex items-center justify-center">
-                      <FaFolderOpen className="w-16 h-16 text-gray-400" />
+              <RidgeCard className="overflow-hidden">
+                <Link href={`/individual/folders/${folder.id}`}>
+                  <div className="relative h-48 bg-[var(--bg-base)]">
+                    {folder.coverImage ? (
+                      <Image
+                        src={folder.coverImage}
+                        alt={folder.name}
+                        fill
+                        className="object-cover"
+                      />
+                    ) : (
+                      <div className="h-full flex items-center justify-center">
+                        <FaFolderOpen className="w-16 h-16 text-[var(--text-tertiary)]" />
+                      </div>
+                    )}
+                    <div className="absolute top-3 right-3">
+                      <span className={`px-3 py-1 rounded-full folio-meta font-medium ${
+                        folder.isPublic
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-[var(--bg-elevated)] text-[var(--text-secondary)]'
+                      }`}>
+                        {folder.isPublic ? 'Public' : 'Private'}
+                      </span>
                     </div>
-                  )}
-                  <div className="absolute top-3 right-3">
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                      folder.isPublic 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-gray-100 text-gray-800'
-                    }`}>
-                      {folder.isPublic ? 'Public' : 'Private'}
-                    </span>
+                  </div>
+                </Link>
+
+                <div className="p-4">
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <h3 className="folio-ui font-semibold text-[var(--text-primary)] mb-1">{folder.name}</h3>
+                      <p className="folio-meta text-[var(--text-secondary)] line-clamp-2">{folder.description}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between mt-4">
+                    <div className="flex items-center gap-2 folio-meta text-[var(--text-secondary)]">
+                      <FaImage className="w-4 h-4" />
+                      <span>{folder.imageCount} items</span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleDeleteFolder(folder.id)}
+                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Delete folder"
+                      >
+                        <FaTrash className="w-4 h-4" />
+                      </button>
+                      <button
+                        className="p-2 text-[var(--text-secondary)] hover:bg-[var(--bg-base)] rounded-lg transition-colors"
+                        title="Edit folder"
+                      >
+                        <FaEdit className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </Link>
-              
-              <div className="p-4">
-                <div className="flex justify-between items-start mb-2">
-                  <div>
-                    <h3 className="font-semibold text-gray-900 mb-1">{folder.name}</h3>
-                    <p className="text-sm text-gray-600 line-clamp-2">{folder.description}</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-center justify-between mt-4">
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <FaImage className="w-4 h-4" />
-                    <span>{folder.imageCount} items</span>
-                  </div>
-                  
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => handleDeleteFolder(folder.id)}
-                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                      title="Delete folder"
-                    >
-                      <FaTrash className="w-4 h-4" />
-                    </button>
-                    <button
-                      className="p-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
-                      title="Edit folder"
-                    >
-                      <FaEdit className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              </div>
+              </RidgeCard>
             </motion.div>
           ))}
         </div>
@@ -217,6 +219,3 @@ export default function IndividualFolders() {
     </div>
   );
 }
-
-
-

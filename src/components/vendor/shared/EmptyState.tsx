@@ -11,9 +11,9 @@ export function EmptyState({
   subtitle?: string;
 }) {
   return (
-    <div className="rounded-2xl p-6 border border-neutral-300/50 bg-white/40 backdrop-blur-xl text-center shadow-sm">
-      <div className="text-sm text-neutral-700">{title}</div>
-      {subtitle && <div className="text-xs text-neutral-600 mt-1">{subtitle}</div>}
+    <div className="ridge-card p-6 text-center">
+      <div className="folio-ui text-[var(--text-primary)]">{title}</div>
+      {subtitle && <div className="folio-meta text-[var(--text-secondary)] mt-1">{subtitle}</div>}
     </div>
   );
 }

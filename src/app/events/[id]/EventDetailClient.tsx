@@ -10,6 +10,8 @@ import ActionStrip from "@/components/events/ActionStrip";
 import EventFeaturedProducts from "@/components/events/EventFeaturedProducts";
 import VendorSpotlight from "@/components/events/VendorSpotlight";
 import InsightBar from "@/components/events/InsightBar";
+import { RidgeCard } from '@/components/ui/ridge-card';
+import { Button } from '@/components/ui/button';
 
 type UIProduct = {
   id: string;
@@ -156,7 +158,7 @@ export default function EventDetailClient({ event, canEdit = false, featuredProd
   };
 
   return (
-    <div className="min-h-screen bg-folio-bg">
+    <div className="min-h-screen bg-[var(--bg-base)]">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
@@ -164,7 +166,7 @@ export default function EventDetailClient({ event, canEdit = false, featuredProd
           {event.parentFestivalId && (
             <a
               href={`/events/${event.parentFestivalId}`}
-              className="inline-flex items-center gap-1 text-sm text-folio-accent hover:underline mb-2"
+              className="inline-flex items-center gap-1 text-sm text-[var(--accent)] hover:underline mb-2"
             >
               ← Back to festival
             </a>
@@ -172,7 +174,7 @@ export default function EventDetailClient({ event, canEdit = false, featuredProd
           
           <Link
             href="/events"
-            className="inline-flex items-center text-folio-text-muted hover:text-folio-text transition-colors mb-4"
+            className="inline-flex items-center text-[var(--text-primary)]-muted hover:text-[var(--text-primary)] transition-colors mb-4"
           >
             <FaArrowLeft className="mr-2" />
             Back to Events
@@ -238,9 +240,9 @@ export default function EventDetailClient({ event, canEdit = false, featuredProd
               </div>
             ) : null}
 
-            <div className="bg-white rounded-lg shadow-sm border border-folio-border p-6 mb-6">
+            <div className="bg-[var(--bg-elevated)] rounded-lg shadow-sm border border-[var(--border)] p-6 mb-6">
               <div className="flex justify-between items-start mb-6">
-                <h1 className="text-3xl font-bold text-folio-text">{currentEvent.title}</h1>
+                <h1 className="text-3xl font-bold text-[var(--text-primary)]">{currentEvent.title}</h1>
                 
                 {/* Edit Buttons for Admins */}
                 {canEdit && (
@@ -266,27 +268,27 @@ export default function EventDetailClient({ event, canEdit = false, featuredProd
                 )}
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-                <div className="flex items-center text-folio-text">
-                  <FaCalendarAlt className="w-5 h-5 mr-3 text-folio-accent" />
+                <div className="flex items-center text-[var(--text-primary)]">
+                  <FaCalendarAlt className="w-5 h-5 mr-3 text-[var(--accent)]" />
                   <div>
                     <p className="font-medium">{formatDate(currentEvent.startDate)}</p>
-                    <p className="text-sm text-folio-text-muted">
+                    <p className="text-sm text-[var(--text-primary)]-muted">
                       {formatTime(currentEvent.startDate)} - {formatTime(currentEvent.endDate)}
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center text-folio-text">
-                  <FaMapMarkerAlt className="w-5 h-5 mr-3 text-folio-accent" />
+                <div className="flex items-center text-[var(--text-primary)]">
+                  <FaMapMarkerAlt className="w-5 h-5 mr-3 text-[var(--accent)]" />
                   <div>
                     <p className="font-medium">{currentEvent.location}</p>
-                    <p className="text-sm text-folio-text-muted">Location</p>
+                    <p className="text-sm text-[var(--text-primary)]-muted">Location</p>
                   </div>
                 </div>
-                <div className="flex items-center text-folio-text">
-                  <FaUser className="w-5 h-5 mr-3 text-folio-accent" />
+                <div className="flex items-center text-[var(--text-primary)]">
+                  <FaUser className="w-5 h-5 mr-3 text-[var(--accent)]" />
                   <div>
                     <p className="font-medium">{currentEvent.createdBy.name}</p>
-                    <p className="text-sm text-folio-text-muted">
+                    <p className="text-sm text-[var(--text-primary)]-muted">
                       {currentEvent.createdBy.companyName || 'Organizer'}
                     </p>
                   </div>
@@ -295,26 +297,26 @@ export default function EventDetailClient({ event, canEdit = false, featuredProd
               {/* RSVP Coming Soon */}
               {userRole === 'DESIGNER' && (
                 <div className="text-center mb-6">
-                  <p className="text-folio-text-muted mb-2">Want to RSVP to this event?</p>
-                  <p className="text-sm text-folio-text-muted">
+                  <p className="text-[var(--text-primary)]-muted mb-2">Want to RSVP to this event?</p>
+                  <p className="text-sm text-[var(--text-primary)]-muted">
                     RSVP functionality coming soon! For now, bookmark this page.
                   </p>
                 </div>
               )}
             </div>
             {/* Event Description */}
-            <div className="bg-white rounded-lg shadow-sm border border-folio-border p-6 mb-6">
-              <h2 className="text-xl font-bold text-folio-text mb-4">About This Event</h2>
+            <div className="bg-[var(--bg-elevated)] rounded-lg shadow-sm border border-[var(--border)] p-6 mb-6">
+              <h2 className="text-xl font-bold text-[var(--text-primary)] mb-4">About This Event</h2>
               <div className="prose prose-folio max-w-none">
-                <p className="text-folio-text leading-relaxed whitespace-pre-wrap">{currentEvent.description}</p>
+                <p className="text-[var(--text-primary)] leading-relaxed whitespace-pre-wrap">{currentEvent.description}</p>
               </div>
             </div>
             {/* Festival Events Section - Show if this is a festival */}
             {currentEvent.eventTypes?.includes('FESTIVAL') && (
-              <div className="bg-white rounded-lg shadow-sm border border-folio-border p-6 mb-6">
+              <div className="bg-[var(--bg-elevated)] rounded-lg shadow-sm border border-[var(--border)] p-6 mb-6">
                 {isLoadingEvents ? (
                   <div className="text-center py-8">
-                    <p className="text-gray-500">Loading festival events...</p>
+                    <p className="text-[var(--text-secondary)]">Loading festival events...</p>
                   </div>
                 ) : (
                   <FestivalEventsList events={festivalEvents} />
@@ -323,15 +325,15 @@ export default function EventDetailClient({ event, canEdit = false, featuredProd
             )}
             {/* Parent Festival Link - Show if this event belongs to a festival */}
             {currentEvent.parentFestival && (
-              <div className="bg-white rounded-lg shadow-sm border border-folio-border p-6 mb-6">
-                <h2 className="text-xl font-bold text-folio-text mb-4">Part of Festival</h2>
+              <div className="bg-[var(--bg-elevated)] rounded-lg shadow-sm border border-[var(--border)] p-6 mb-6">
+                <h2 className="text-xl font-bold text-[var(--text-primary)] mb-4">Part of Festival</h2>
                 <Link
                   href={`/events/${currentEvent.parentFestival.id}`}
-                  className="inline-flex items-center p-4 border border-folio-border rounded-lg hover:border-folio-accent hover:shadow-md transition-all"
+                  className="inline-flex items-center p-4 border border-[var(--border)] rounded-lg hover:border-[var(--accent)] hover:shadow-md transition-all"
                 >
                   <div>
-                    <h3 className="font-semibold text-folio-text">{currentEvent.parentFestival.title}</h3>
-                    <p className="text-sm text-folio-text-muted">
+                    <h3 className="font-semibold text-[var(--text-primary)]">{currentEvent.parentFestival.title}</h3>
+                    <p className="text-sm text-[var(--text-primary)]-muted">
                       {new Date(currentEvent.parentFestival.startDate).toLocaleDateString()} - {new Date(currentEvent.parentFestival.endDate).toLocaleDateString()}
                     </p>
                   </div>
@@ -342,7 +344,7 @@ export default function EventDetailClient({ event, canEdit = false, featuredProd
             <div className="text-center">
               <Link
                 href="/events"
-                className="inline-flex items-center px-6 py-3 bg-gray-100 text-folio-text rounded-lg hover:bg-gray-200 transition-colors"
+                className="inline-flex items-center px-6 py-3 bg-[var(--bg-base)] text-[var(--text-primary)] rounded-lg hover:bg-[var(--bg-elevated)] transition-colors"
               >
                 <FaArrowLeft className="mr-2" />
                 Browse All Events

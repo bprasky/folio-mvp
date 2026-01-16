@@ -40,27 +40,66 @@ export function normalizeRole(role?: string | null): string {
 }
 
 // Create target determination
-export function getCreateTarget(role?: string): { href: string; label: string } | string {
+// Individual-First Architecture: Individuals cannot create projects (that requires org membership)
+export function getCreateTarget(role?: string): { href: string; label: string } | null {
   const normalizedRole = normalizeRole(role);
-  
+
   switch (normalizedRole) {
-    case 'HOMEOWNER':
-      return { href: '/projects/new', label: 'Create' };
     case 'DESIGNER':
       return { href: '/designer/create', label: 'Create' };
     case 'VENDOR':
       return { href: '/products/new', label: 'Add Product' };
     case 'ADMIN':
       return { href: '/admin', label: 'Admin' };
+    case 'INDIVIDUAL':
+    case 'HOMEOWNER':  // Deprecated, but handle for backwards compatibility
+      // Individuals can create boards, but not projects
+      return { href: '/boards/new', label: 'Create Board' };
     default:
-      return { href: '/projects/new', label: 'Create' };
+      return null;  // Guests cannot create anything
   }
 }
 
 // Project creation permission check
+// Individual-First Architecture: Only designers and vendors can create projects
+// Individuals need org membership to unlock project creation
 export function canCreateProject(role?: string): boolean {
   const normalizedRole = normalizeRole(role);
-  return ['HOMEOWNER', 'DESIGNER', 'VENDOR', 'ADMIN'].includes(normalizedRole);
+  return ['DESIGNER', 'VENDOR', 'ADMIN'].includes(normalizedRole);
+}
+
+// Board creation permission check
+// Individual-First Architecture: All authenticated users can create boards
+export function canCreateBoard(role?: string): boolean {
+  const normalizedRole = normalizeRole(role);
+  return ['INDIVIDUAL', 'HOMEOWNER', 'DESIGNER', 'VENDOR', 'ADMIN'].includes(normalizedRole);
+}
+
+// Check if user can browse and save products
+// Individual-First Architecture: All authenticated users can browse and save
+export function canBrowseAndSave(role?: string): boolean {
+  const normalizedRole = normalizeRole(role);
+  return normalizedRole !== 'GUEST';
+}
+
+// Check if user can follow designers/orgs
+// Individual-First Architecture: All authenticated users can follow
+export function canFollow(role?: string): boolean {
+  const normalizedRole = normalizeRole(role);
+  return normalizedRole !== 'GUEST';
+}
+
+// Check if user can access designer tools (meeting notes, selections, etc.)
+// Individual-First Architecture: Only designers (via org membership) can access these
+export function canAccessDesignerTools(role?: string): boolean {
+  const normalizedRole = normalizeRole(role);
+  return ['DESIGNER', 'ADMIN'].includes(normalizedRole);
+}
+
+// Check if user is an individual (base user type)
+export function isIndividual(role?: string): boolean {
+  const normalizedRole = normalizeRole(role);
+  return normalizedRole === 'INDIVIDUAL' || normalizedRole === 'HOMEOWNER';
 }
 
 // Vendor-specific permission helpers
@@ -172,4 +211,228 @@ export function canDesignerClaimVisit(user: any, visit: any): boolean {
 export function canAccessAdmin(role?: string | null): boolean {
   const normalizedRole = normalizeRole(role);
   return normalizedRole === 'ADMIN';
+}
+
+// ============================================================
+// Phase 2: Organization-Based Permission System
+// ============================================================
+
+// Types for org membership with org details
+export type OrgMembershipWithOrg = {
+  id: string;
+  userId: string;
+  organizationId: string;
+  role: string;
+  isActive: boolean;
+  showOnProfile: boolean;
+  org: {
+    id: string;
+    name: string;
+    type: string;
+    status: string;
+  };
+};
+
+/**
+ * Get user's org memberships with org status
+ * Used to derive effective permissions from org membership
+ */
+export async function getUserOrgMemberships(userId: string): Promise<OrgMembershipWithOrg[]> {
+  try {
+    const memberships = await prisma.organizationUser.findMany({
+      where: {
+        userId,
+        isActive: true
+      },
+      include: {
+        organization: {
+          select: {
+            id: true,
+            name: true,
+            type: true,
+            status: true,
+          }
+        }
+      }
+    });
+
+    return memberships.map(m => ({
+      id: m.id,
+      userId: m.userId,
+      organizationId: m.organizationId,
+      role: m.role,
+      isActive: m.isActive,
+      showOnProfile: m.showOnProfile,
+      org: {
+        id: m.organization.id,
+        name: m.organization.name,
+        type: m.organization.type,
+        status: m.organization.status,
+      }
+    }));
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Check if user has any org membership
+ */
+export function hasOrgMembership(memberships: OrgMembershipWithOrg[]): boolean {
+  return memberships.length > 0;
+}
+
+/**
+ * Check if user belongs to a professional (paid) org
+ */
+export function hasProfessionalOrg(memberships: OrgMembershipWithOrg[]): boolean {
+  return memberships.some(m => m.org.status === 'PROFESSIONAL');
+}
+
+/**
+ * Check if user belongs to at least a claimed org
+ */
+export function hasClaimedOrg(memberships: OrgMembershipWithOrg[]): boolean {
+  return memberships.some(m =>
+    m.org.status === 'CLAIMED' || m.org.status === 'PROFESSIONAL'
+  );
+}
+
+/**
+ * Check if user belongs to a design firm
+ */
+export function hasDesignFirmMembership(memberships: OrgMembershipWithOrg[]): boolean {
+  return memberships.some(m => m.org.type === 'DESIGN_FIRM');
+}
+
+/**
+ * Check if user can create projects (requires design firm membership)
+ * Phase 2: Project creation unlocked by design firm membership
+ */
+export function canCreateProjectWithOrg(memberships: OrgMembershipWithOrg[]): boolean {
+  return hasDesignFirmMembership(memberships);
+}
+
+/**
+ * Check if user can access premium features (professional org only)
+ */
+export function canAccessPremiumFeatures(memberships: OrgMembershipWithOrg[]): boolean {
+  return hasProfessionalOrg(memberships);
+}
+
+/**
+ * Check if user can generate images (professional org only)
+ */
+export function canGenerateImages(memberships: OrgMembershipWithOrg[]): boolean {
+  return hasProfessionalOrg(memberships);
+}
+
+/**
+ * Check if user can connect with clients (professional org only)
+ */
+export function canConnectWithClients(memberships: OrgMembershipWithOrg[]): boolean {
+  return hasProfessionalOrg(memberships);
+}
+
+/**
+ * Check if user can earn affiliate revenue (professional org only)
+ */
+export function canEarnAffiliate(memberships: OrgMembershipWithOrg[]): boolean {
+  return hasProfessionalOrg(memberships);
+}
+
+/**
+ * Check if user is owner or admin of an org
+ */
+export function isOrgAdmin(memberships: OrgMembershipWithOrg[], orgId: string): boolean {
+  const membership = memberships.find(m => m.organizationId === orgId);
+  return membership ? ['OWNER', 'ADMIN'].includes(membership.role) : false;
+}
+
+/**
+ * Check if user is owner of an org
+ */
+export function isOrgOwner(memberships: OrgMembershipWithOrg[], orgId: string): boolean {
+  const membership = memberships.find(m => m.organizationId === orgId);
+  return membership?.role === 'OWNER';
+}
+
+/**
+ * Get user's org type (designer or vendor) based on their primary org
+ */
+export function getUserOrgType(memberships: OrgMembershipWithOrg[]): 'DESIGNER' | 'VENDOR' | null {
+  if (memberships.length === 0) return null;
+
+  // Check for design firm first
+  const designerOrg = memberships.find(m => m.org.type === 'DESIGN_FIRM');
+  if (designerOrg) return 'DESIGNER';
+
+  // Check for vendor types
+  const vendorOrg = memberships.find(m =>
+    ['VENDOR', 'MANUFACTURER', 'SHOWROOM'].includes(m.org.type)
+  );
+  if (vendorOrg) return 'VENDOR';
+
+  return null;
+}
+
+/**
+ * Combined permission check: can user perform action based on their operating org context?
+ * Uses the operatingAsOrgId field on User to determine current workspace context
+ */
+export async function canPerformAction(
+  userId: string,
+  action: 'create_project' | 'premium_features' | 'generate_images' | 'connect_clients' | 'earn_affiliate'
+): Promise<boolean> {
+  // First check operating org context (the "Operating as" dropdown)
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      operatingAsOrgId: true,
+      operatingAsOrg: {
+        select: {
+          id: true,
+          name: true,
+          type: true,
+        }
+      }
+    }
+  });
+
+  // If user is operating as an org, check that org's type
+  if (user?.operatingAsOrg) {
+    const orgType = user.operatingAsOrg.type;
+
+    switch (action) {
+      case 'create_project':
+        // Must be operating as a design firm
+        return orgType === 'DESIGN_FIRM';
+      case 'premium_features':
+      case 'generate_images':
+      case 'connect_clients':
+      case 'earn_affiliate':
+        // For now, allow if operating as any org (status column not yet in DB)
+        return true;
+      default:
+        return false;
+    }
+  }
+
+  // Fallback: check org memberships (for users not using "Operating as" feature)
+  const memberships = await getUserOrgMemberships(userId);
+
+  switch (action) {
+    case 'create_project':
+      return canCreateProjectWithOrg(memberships);
+    case 'premium_features':
+      return canAccessPremiumFeatures(memberships);
+    case 'generate_images':
+      return canGenerateImages(memberships);
+    case 'connect_clients':
+      return canConnectWithClients(memberships);
+    case 'earn_affiliate':
+      return canEarnAffiliate(memberships);
+    default:
+      return false;
+  }
 }

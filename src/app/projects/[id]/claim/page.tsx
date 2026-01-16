@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { RidgeCard } from '@/components/ui/ridge-card';
+import { Button } from '@/components/ui/button';
 
 interface Project {
   id: string;
@@ -54,7 +56,7 @@ export default function ProjectClaimPage() {
   const params = useParams();
   const router = useRouter();
   const projectId = params.id as string;
-  
+
   const [project, setProject] = useState<Project | null>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [userOrgs, setUserOrgs] = useState<any[]>([]);
@@ -78,7 +80,7 @@ export default function ProjectClaimPage() {
         if (userResponse.ok) {
           const userData = await userResponse.json();
           setCurrentUser(userData);
-          
+
           // Fetch user's organizations
           const orgsResponse = await fetch('/api/organizations?userId=' + (userData?.id || ''));
           if (orgsResponse.ok) {
@@ -156,10 +158,10 @@ export default function ProjectClaimPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[var(--bg-base)] flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading project details...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--accent)] mx-auto"></div>
+          <p className="mt-4 folio-body text-[var(--text-secondary)]">Loading project details...</p>
         </div>
       </div>
     );
@@ -167,11 +169,11 @@ export default function ProjectClaimPage() {
 
   if (!project) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[var(--bg-base)] flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-800 mb-4">Project Not Found</h1>
-          <p className="text-gray-600 mb-4">The project you're looking for doesn't exist or has been removed.</p>
-          <Link href="/" className="text-blue-600 hover:text-blue-800">
+          <h1 className="folio-h2 text-[var(--text-primary)] mb-4">Project Not Found</h1>
+          <p className="folio-body text-[var(--text-secondary)] mb-4">The project you're looking for doesn't exist or has been removed.</p>
+          <Link href="/" className="text-[var(--accent)] hover:text-[var(--accent-hover)]">
             Return to Home
           </Link>
         </div>
@@ -180,104 +182,103 @@ export default function ProjectClaimPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-[var(--bg-base)] py-8">
       <div className="max-w-4xl mx-auto px-4">
         {/* Header */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">{project.name}</h1>
+        <RidgeCard className="p-6 mb-6">
+          <h1 className="folio-h1 text-[var(--text-primary)] mb-2">{project.name}</h1>
           {project.description && (
-            <p className="text-gray-600 mb-4">{project.description}</p>
+            <p className="folio-body text-[var(--text-secondary)] mb-4">{project.description}</p>
           )}
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <div>
-              <span className="font-medium text-gray-700">Created by:</span>
-              <p className="text-gray-600">{project.owner.name} ({project.owner.email})</p>
+              <span className="folio-ui font-medium text-[var(--text-primary)]">Created by:</span>
+              <p className="folio-meta text-[var(--text-secondary)]">{project.owner.name} ({project.owner.email})</p>
             </div>
             {project.vendorOrg && (
               <div>
-                <span className="font-medium text-gray-700">Vendor Organization:</span>
-                <p className="text-gray-600">{project.vendorOrg.name}</p>
+                <span className="folio-ui font-medium text-[var(--text-primary)]">Vendor Organization:</span>
+                <p className="folio-meta text-[var(--text-secondary)]">{project.vendorOrg.name}</p>
               </div>
             )}
           </div>
-        </div>
+        </RidgeCard>
 
         {/* Project Summary */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">Project Summary</h2>
-          
+        <RidgeCard className="p-6 mb-6">
+          <h2 className="folio-h2 text-[var(--text-primary)] mb-4">Project Summary</h2>
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div className="text-center p-4 bg-blue-50 rounded-lg">
-              <div className="text-2xl font-bold text-blue-600">{project.rooms.length}</div>
-              <div className="text-sm text-gray-600">Rooms</div>
+            <div className="text-center p-4 bg-[var(--bg-base)] rounded-lg border border-[var(--border)]">
+              <div className="folio-h2 text-[var(--accent)]">{project.rooms.length}</div>
+              <div className="folio-meta text-[var(--text-secondary)]">Rooms</div>
             </div>
-            <div className="text-center p-4 bg-green-50 rounded-lg">
-              <div className="text-2xl font-bold text-green-600">{project.selections.length}</div>
-              <div className="text-sm text-gray-600">Selections</div>
+            <div className="text-center p-4 bg-[var(--bg-base)] rounded-lg border border-[var(--border)]">
+              <div className="folio-h2 text-[var(--accent)]">{project.selections.length}</div>
+              <div className="folio-meta text-[var(--text-secondary)]">Selections</div>
             </div>
-            <div className="text-center p-4 bg-purple-50 rounded-lg">
-              <div className="text-2xl font-bold text-purple-600">
+            <div className="text-center p-4 bg-[var(--bg-base)] rounded-lg border border-[var(--border)]">
+              <div className="folio-h2 text-[var(--accent)]">
                 {project.isHandoffReady ? 'Ready' : 'Active'}
               </div>
-              <div className="text-sm text-gray-600">Status</div>
+              <div className="folio-meta text-[var(--text-secondary)]">Status</div>
             </div>
           </div>
 
           {/* Rooms and Selections Preview */}
           <div className="space-y-4">
             {project.rooms.map((room) => (
-              <div key={room.id} className="border border-gray-200 rounded-lg p-4">
-                <h3 className="font-medium text-gray-800 mb-2">{room.name}</h3>
+              <div key={room.id} className="border border-[var(--border)] rounded-lg p-4 bg-[var(--bg-base)]">
+                <h3 className="folio-h3 text-[var(--text-primary)] mb-2">{room.name}</h3>
                 {room.selections.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
                     {room.selections.slice(0, 4).map((selection) => (
                       <div key={selection.id} className="flex items-center space-x-2">
-                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                        <span className="text-gray-600">
+                        <div className="w-2 h-2 bg-[var(--accent)] rounded-full"></div>
+                        <span className="folio-meta text-[var(--text-secondary)]">
                           {selection.productName || selection.vendorName || 'Product'}
                         </span>
                       </div>
                     ))}
                     {room.selections.length > 4 && (
-                      <div className="text-gray-500 text-sm">
+                      <div className="folio-meta text-[var(--text-tertiary)]">
                         +{room.selections.length - 4} more selections
                       </div>
                     )}
                   </div>
                 ) : (
-                  <p className="text-gray-500 text-sm">No selections yet</p>
+                  <p className="folio-meta text-[var(--text-tertiary)]">No selections yet</p>
                 )}
               </div>
             ))}
           </div>
-        </div>
+        </RidgeCard>
 
         {/* Claim Project Section */}
         {project.isHandoffReady && (
-          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">Claim This Project</h2>
-            
+          <RidgeCard className="p-6 mb-6">
+            <h2 className="folio-h2 text-[var(--text-primary)] mb-4">Claim This Project</h2>
+
             {!currentUser ? (
               <div className="text-center py-8">
-                <p className="text-gray-600 mb-4">Please log in to claim this project</p>
-                <Link 
-                  href="/auth/signin" 
-                  className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700"
-                >
-                  Sign In
+                <p className="folio-body text-[var(--text-secondary)] mb-4">Please log in to claim this project</p>
+                <Link href="/auth/signin">
+                  <Button variant="accent">
+                    Sign In
+                  </Button>
                 </Link>
               </div>
             ) : (
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block folio-ui font-medium text-[var(--text-primary)] mb-2">
                     Select Your Organization (Optional)
                   </label>
                   <select
                     value={selectedOrgId}
                     onChange={(e) => setSelectedOrgId(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-[var(--border)] rounded-md bg-[var(--bg-elevated)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
                   >
                     <option value="">No organization</option>
                     {userOrgs.map((org) => (
@@ -289,20 +290,22 @@ export default function ProjectClaimPage() {
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-4">
-                  <button
+                  <Button
                     onClick={handleClaimProject}
                     disabled={isClaiming}
-                    className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                    variant="accent"
+                    className="flex-1"
                   >
                     {isClaiming ? 'Claiming Project...' : 'Claim Project Ownership'}
-                  </button>
-                  
-                  <button
+                  </Button>
+
+                  <Button
                     onClick={downloadSelections}
-                    className="flex-1 bg-gray-600 text-white py-2 px-4 rounded-md hover:bg-gray-700"
+                    variant="outline"
+                    className="flex-1"
                   >
                     Download Selections (CSV)
-                  </button>
+                  </Button>
                 </div>
 
                 {message && (
@@ -314,32 +317,31 @@ export default function ProjectClaimPage() {
                 )}
               </div>
             )}
-          </div>
+          </RidgeCard>
         )}
 
         {/* CTA Section */}
-        <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg shadow-md p-6 text-white text-center">
-          <h2 className="text-2xl font-bold mb-2">Ready to Organize Your Selections?</h2>
-          <p className="mb-4 opacity-90">
-            Take ownership of this project to organize your selections, add additional products, 
+        <RidgeCard className="p-6 bg-[var(--bg-elevated)] text-center">
+          <h2 className="folio-h2 text-[var(--text-primary)] mb-2">Ready to Organize Your Selections?</h2>
+          <p className="folio-body text-[var(--text-secondary)] mb-4">
+            Take ownership of this project to organize your selections, add additional products,
             and generate client-ready presentations instantly.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link 
-              href="/auth/signin" 
-              className="bg-white text-blue-600 px-6 py-2 rounded-md hover:bg-gray-100 font-medium"
-            >
-              Get Started with Folio
+            <Link href="/auth/signin">
+              <Button variant="accent">
+                Get Started with Folio
+              </Button>
             </Link>
-            <button
+            <Button
               onClick={downloadSelections}
-              className="border border-white text-white px-6 py-2 rounded-md hover:bg-white hover:text-blue-600 font-medium"
+              variant="outline"
             >
               Download Selections
-            </button>
+            </Button>
           </div>
-        </div>
+        </RidgeCard>
       </div>
     </div>
   );
-} 
+}

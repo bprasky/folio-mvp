@@ -2,8 +2,41 @@
 
 import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
-import { FaUser, FaEnvelope, FaMapMarkerAlt, FaGlobe, FaInstagram, FaLinkedin, FaSave, FaArrowLeft } from 'react-icons/fa';
+import {
+  FaUser,
+  FaEnvelope,
+  FaMapMarkerAlt,
+  FaGlobe,
+  FaInstagram,
+  FaLinkedin,
+  FaSave,
+  FaArrowLeft,
+  FaBuilding,
+  FaEye,
+  FaEyeSlash,
+  FaCrown,
+  FaShieldAlt,
+  FaStar,
+  FaCheck,
+  FaRocket,
+  FaPalette,
+  FaStore,
+} from 'react-icons/fa';
 import Link from 'next/link';
+
+interface OrgMembership {
+  id: string;
+  role: string;
+  showOnProfile: boolean;
+  joinedAt: string;
+  org: {
+    id: string;
+    name: string;
+    type: string;
+    status: string;
+    logo?: string;
+  };
+}
 
 interface UserProfile {
   id: string;
@@ -16,6 +49,7 @@ interface UserProfile {
   linkedin?: string;
   profileImage?: string;
   role: string;
+  orgMemberships?: OrgMembership[];
 }
 
 export default function ProfilePage() {
@@ -31,6 +65,30 @@ export default function ProfilePage() {
     instagram: '',
     linkedin: '',
   });
+  const [orgMemberships, setOrgMemberships] = useState<OrgMembership[]>([]);
+  const [togglingVisibility, setTogglingVisibility] = useState<string | null>(null);
+
+  const toggleOrgVisibility = async (membershipId: string, currentValue: boolean) => {
+    setTogglingVisibility(membershipId);
+    try {
+      const response = await fetch(`/api/auth/me/orgs/${membershipId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ showOnProfile: !currentValue }),
+      });
+
+      if (response.ok) {
+        const updated = await response.json();
+        setOrgMemberships(prev =>
+          prev.map(m => m.id === membershipId ? updated : m)
+        );
+      }
+    } catch (error) {
+      console.error('Error toggling org visibility:', error);
+    } finally {
+      setTogglingVisibility(null);
+    }
+  };
 
   useEffect(() => {
     if (session?.user) {
@@ -52,6 +110,7 @@ export default function ProfilePage() {
           instagram: userData.instagram || '',
           linkedin: userData.linkedin || '',
         });
+        setOrgMemberships(userData.orgMemberships || []);
       }
     } catch (error) {
       console.error('Error fetching profile:', error);
@@ -342,6 +401,179 @@ export default function ProfilePage() {
                     </div>
                   </div>
                 </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Upgrade to Professional CTA - Only for INDIVIDUAL users without orgs */}
+        {profile.role === 'INDIVIDUAL' && orgMemberships.length === 0 && (
+          <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg shadow-lg mt-6 overflow-hidden">
+            <div className="px-6 py-8 sm:px-8 sm:py-10">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
+                <div className="flex-shrink-0">
+                  <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center">
+                    <FaRocket className="w-8 h-8 text-white" />
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-xl font-bold text-white mb-2">
+                    Unlock Professional Features
+                  </h3>
+                  <p className="text-white/90 text-sm mb-4">
+                    Are you a designer or vendor? Join or create an organization to unlock project creation,
+                    image generation, client management, and affiliate earnings.
+                  </p>
+                  <div className="flex flex-wrap gap-4 mb-4">
+                    <div className="flex items-center gap-2 text-white/80 text-sm">
+                      <FaPalette className="w-4 h-4" />
+                      <span>Design Firms</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-white/80 text-sm">
+                      <FaStore className="w-4 h-4" />
+                      <span>Vendors & Manufacturers</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex-shrink-0 w-full sm:w-auto">
+                  <Link
+                    href="/professionals/join"
+                    className="inline-flex items-center justify-center w-full sm:w-auto px-6 py-3 bg-white text-purple-700 font-semibold rounded-lg hover:bg-purple-50 transition-colors shadow-md"
+                  >
+                    Get Started
+                    <FaRocket className="ml-2 w-4 h-4" />
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Organization Memberships */}
+        <div className="bg-white rounded-lg shadow-sm mt-6">
+          <div className="p-6 border-b border-gray-200">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-medium text-gray-900">Organization Memberships</h3>
+              <Link
+                href="/professionals/join"
+                className="text-sm text-blue-600 hover:text-blue-800"
+              >
+                Join an Organization
+              </Link>
+            </div>
+          </div>
+
+          <div className="p-6">
+            {orgMemberships.length === 0 ? (
+              <div className="text-center py-8">
+                <FaBuilding className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                <h4 className="text-gray-900 font-medium mb-2">No Organization Memberships</h4>
+                <p className="text-gray-500 text-sm mb-4">
+                  Join an organization to unlock professional features like project creation, image generation, and affiliate earnings.
+                </p>
+                <Link
+                  href="/professionals/join"
+                  className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                >
+                  <FaBuilding className="mr-2" />
+                  Browse Organizations
+                </Link>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {orgMemberships.map((membership) => (
+                  <div
+                    key={membership.id}
+                    className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
+                        {membership.org.logo ? (
+                          <img
+                            src={membership.org.logo}
+                            alt={membership.org.name}
+                            className="w-full h-full object-cover rounded-lg"
+                          />
+                        ) : (
+                          <FaBuilding className="w-6 h-6 text-gray-400" />
+                        )}
+                      </div>
+                      <div>
+                        <Link
+                          href={`/org/${membership.org.id}`}
+                          className="font-medium text-gray-900 hover:text-blue-600"
+                        >
+                          {membership.org.name}
+                        </Link>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-sm text-gray-500">
+                            {membership.org.type.replace('_', ' ')}
+                          </span>
+                          <span className="text-gray-300">•</span>
+                          <span className="flex items-center gap-1 text-sm text-gray-500">
+                            {membership.role === 'OWNER' && (
+                              <FaCrown className="text-amber-500" />
+                            )}
+                            {membership.role === 'ADMIN' && (
+                              <FaShieldAlt className="text-blue-500" />
+                            )}
+                            {membership.role.toLowerCase()}
+                          </span>
+                          {membership.org.status === 'PROFESSIONAL' && (
+                            <>
+                              <span className="text-gray-300">•</span>
+                              <span className="flex items-center gap-1 text-sm text-purple-600">
+                                <FaStar className="text-purple-500" />
+                                Pro
+                              </span>
+                            </>
+                          )}
+                          {membership.org.status === 'CLAIMED' && (
+                            <>
+                              <span className="text-gray-300">•</span>
+                              <span className="flex items-center gap-1 text-sm text-blue-600">
+                                <FaCheck className="text-blue-500" />
+                                Verified
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => toggleOrgVisibility(membership.id, membership.showOnProfile)}
+                        disabled={togglingVisibility === membership.id}
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm transition-colors ${
+                          membership.showOnProfile
+                            ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        } ${togglingVisibility === membership.id ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        title={membership.showOnProfile ? 'Visible on public profile' : 'Hidden from public profile'}
+                      >
+                        {membership.showOnProfile ? (
+                          <>
+                            <FaEye className="w-4 h-4" />
+                            <span>Visible</span>
+                          </>
+                        ) : (
+                          <>
+                            <FaEyeSlash className="w-4 h-4" />
+                            <span>Hidden</span>
+                          </>
+                        )}
+                      </button>
+
+                      <Link
+                        href={`/org/${membership.org.id}`}
+                        className="px-3 py-1.5 bg-blue-100 text-blue-700 rounded-md text-sm hover:bg-blue-200"
+                      >
+                        View Org
+                      </Link>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>

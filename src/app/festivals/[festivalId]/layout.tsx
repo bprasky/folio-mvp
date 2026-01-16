@@ -1,3 +1,7 @@
+/**
+ * FestivalLayout - Root layout for festival pages
+ * Folio Design System: Uses FestivalLayoutClient with bg-[var(--bg-base)]
+ */
 import FestivalLayoutClient from "./FestivalLayoutClient";
 
 export default function FestivalLayout({

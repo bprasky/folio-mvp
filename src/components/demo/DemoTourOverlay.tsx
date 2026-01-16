@@ -209,7 +209,7 @@ export default function DemoTourOverlay() {
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 20, opacity: 0 }}
-              className="pointer-events-auto w-full max-w-md lg:max-w-lg mx-4 mb-8 md:mr-8 md:mb-0 rounded-3xl bg-neutral-50/95 shadow-2xl p-6 md:p-8 space-y-4 relative"
+              className="pointer-events-auto w-full max-w-md lg:max-w-lg mx-4 mb-8 md:mr-8 md:mb-0 rounded-3xl bg-[var(--bg-elevated)] shadow-2xl p-6 md:p-8 space-y-4 relative"
             >
               <h2 className="text-2xl font-serif text-folio-ink font-light">
                 {currentStep.title}

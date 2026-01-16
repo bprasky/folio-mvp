@@ -35,7 +35,7 @@ export default function EditorialProductCutoutsRail({ products }: Props) {
 
   return (
     <section className="space-y-2">
-      <h3 className="text-xs md:text-sm font-medium text-neutral-700 tracking-wide">
+      <h3 className="folio-ui text-xs md:text-sm font-medium text-[var(--text-secondary)] tracking-wide">
         Featured Products
       </h3>
 
@@ -60,12 +60,12 @@ export default function EditorialProductCutoutsRail({ products }: Props) {
               <Link
                 key={product.id}
                 href={productHref}
-                className="flex flex-col items-stretch rounded-2xl border border-white/80 bg-white/80 backdrop-blur-lg shadow-sm px-3 py-3 transition-all duration-300 hover:shadow-md hover:scale-[1.02] flex-shrink-0 snap-start min-w-[140px] md:min-w-0"
+                className="ridge-card flex flex-col items-stretch rounded-2xl px-3 py-3 transition-all duration-300 hover:shadow-md hover:scale-[1.02] flex-shrink-0 snap-start min-w-[140px] md:min-w-0"
               >
                 {/* Product image/cutout */}
-                <div className="relative mb-2 flex h-24 md:h-28 w-full items-center justify-center rounded-xl bg-[#EBE7E1] shadow-inner overflow-hidden flex-shrink-0">
+                <div className="relative mb-2 flex h-24 md:h-28 w-full items-center justify-center rounded-xl bg-[var(--bg-base)] shadow-inner overflow-hidden flex-shrink-0">
                   <div className="pointer-events-none absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 via-transparent to-black/5" />
-                  
+
                   {imageUrl ? (
                     <Image
                       src={imageUrl}
@@ -75,17 +75,17 @@ export default function EditorialProductCutoutsRail({ products }: Props) {
                       className="object-contain p-2"
                     />
                   ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-neutral-100 to-neutral-200" />
+                    <div className="w-full h-full bg-[var(--bg-elevated)]" />
                   )}
                 </div>
 
                 {/* Product info */}
                 <div className="flex flex-col gap-0.5 min-h-[40px] justify-start flex-shrink-0">
-                  <p className="line-clamp-2 text-xs font-semibold text-neutral-900 leading-snug">
+                  <p className="folio-body line-clamp-2 text-xs font-semibold text-[var(--text-primary)] leading-snug">
                     {product.name}
                   </p>
                   {product.vendorName ? (
-                    <p className="text-[10px] text-neutral-500 font-medium">
+                    <p className="folio-meta text-[10px] text-[var(--text-secondary)] font-medium">
                       {product.vendorName}
                     </p>
                   ) : null}

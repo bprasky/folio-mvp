@@ -27,7 +27,7 @@ export default function ProjectTabs({ project, currentView }: ProjectTabsProps) 
     } else {
       params.set('view', view);
     }
-    
+
     const newUrl = params.toString() ? `${pathname}?${params.toString()}` : pathname;
     router.replace(newUrl);
   };
@@ -58,13 +58,13 @@ export default function ProjectTabs({ project, currentView }: ProjectTabsProps) 
   ];
 
   return (
-    <div className="border-b border-gray-200/50 bg-white/80 backdrop-blur-sm">
+    <div className="bg-[var(--bg-elevated)] py-4">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <nav className="-mb-px flex space-x-8" role="tablist">
+        <nav className="ridge-toggle-group" role="tablist">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = currentView === tab.id;
-            
+
             return (
               <button
                 key={tab.id}
@@ -73,20 +73,12 @@ export default function ProjectTabs({ project, currentView }: ProjectTabsProps) 
                 aria-selected={isActive}
                 aria-controls={`tabpanel-${tab.id}`}
                 id={`tab-${tab.id}`}
-                className={`
-                  py-2 px-4 text-sm font-medium flex items-center gap-2
-                  transition-colors duration-200
-                  focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:ring-offset-2
-                  ${isActive 
-                    ? 'border-b-2 border-blue-600 text-gray-900' 
-                    : 'border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }
-                `}
+                className={`ridge-toggle-item ${isActive ? 'active' : ''}`}
               >
                 {Icon && <Icon className="w-4 h-4" />}
                 <span>{tab.label}</span>
                 {tab.badge !== undefined && tab.badge > 0 && (
-                  <span className="ml-2 bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full">
+                  <span className="ml-2 bg-[var(--bg-base)] text-[var(--text-secondary)] text-xs px-2 py-0.5 rounded-full border border-[var(--ridge-outer)]">
                     ({tab.badge})
                   </span>
                 )}

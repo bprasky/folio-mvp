@@ -23,7 +23,7 @@ import { AIInlinePane } from './ai/AIInlinePane';
  * Glassmorphic container component - Improved visual hierarchy
  */
 const Card: React.FC<React.PropsWithChildren<{ className?: string }>> = ({ className, children }) => (
-  <div className={`rounded-2xl bg-white border border-neutral-200 shadow-sm p-4 md:p-6 ${className ?? ''}`}>
+  <div className={`ridge-card p-4 md:p-6 ${className ?? ''}`}>
     {children}
   </div>
 );
@@ -199,10 +199,10 @@ export function VendorDashboardNew() {
       {/* Reports / Exports */}
       <div className="flex flex-col md:flex-row gap-3">
         <Card className="flex-1">
-          <h3 className="font-semibold mb-2 text-neutral-800">Standard Report</h3>
-          <p className="text-sm text-neutral-600">Export your current period metrics.</p>
+          <h3 className="font-semibold mb-2 text-[var(--text-primary)]">Standard Report</h3>
+          <p className="folio-ui text-[var(--text-secondary)]">Export your current period metrics.</p>
           <div className="mt-3">
-            <button className="rounded-xl px-4 py-2 border border-neutral-300 hover:bg-neutral-100 text-neutral-700 transition">
+            <button className="rounded-xl px-4 py-2 border border-[var(--ridge-outer)] hover:bg-[var(--bg-elevated)] text-[var(--text-primary)] transition">
               Export CSV
             </button>
           </div>
@@ -211,25 +211,25 @@ export function VendorDashboardNew() {
           <div className="absolute right-4 top-4">
             {aiUnlocked && <AIBadge />}
           </div>
-          <h3 className="font-semibold mb-2 text-neutral-800">AI Forecast Report</h3>
-          <p className="text-sm text-neutral-600">
+          <h3 className="font-semibold mb-2 text-[var(--text-primary)]">AI Forecast Report</h3>
+          <p className="folio-ui text-[var(--text-secondary)]">
             Predictive demand, designer affinity, and budget optimization.
           </p>
           <div className="mt-3 flex items-center justify-between">
             {aiUnlocked ? (
               <>
-                <span className="text-xs text-neutral-600">
+                <span className="folio-meta text-[var(--text-secondary)]">
                   Export the current AI forecast/QBR as a report for your internal meetings.
                 </span>
                 <QBRExportButton />
               </>
             ) : (
               <>
-                <span className="text-xs text-neutral-600">
+                <span className="folio-meta text-[var(--text-secondary)]">
                   Unlock to generate AI-powered quarterly business review reports.
                 </span>
-                <button 
-                  className="rounded-xl px-4 py-2 bg-black text-white hover:bg-neutral-800 transition text-sm"
+                <button
+                  className="rounded-xl px-4 py-2 bg-[var(--text-primary)] text-[var(--bg-base)] hover:opacity-90 transition text-sm"
                   data-testid="unlock-ai-button"
                   onClick={() => {
                     // TODO: Wire to upgrade/payment flow
@@ -268,14 +268,14 @@ function KPI({
 }) {
   return (
     <div aria-labelledby={id} data-testid={testId}>
-      <div className="text-xs text-neutral-600 mb-1 font-medium" id={id}>
+      <div className="folio-meta text-[var(--text-secondary)] mb-1 font-medium" id={id}>
         {label}
       </div>
-      <div className="text-2xl md:text-3xl font-semibold text-neutral-900 mb-0.5">
+      <div className="text-2xl md:text-3xl font-semibold text-[var(--text-primary)] mb-0.5">
         {value}
       </div>
       {sublabel && (
-        <div className="text-[11px] text-neutral-500">{sublabel}</div>
+        <div className="text-[11px] text-[var(--text-secondary)]">{sublabel}</div>
       )}
     </div>
   );
@@ -294,10 +294,10 @@ function TabButton({
     <button
       onClick={onClick}
       className={[
-        'px-4 py-2 rounded-xl border text-neutral-800 transition',
-        active 
-          ? 'bg-white/50 border-neutral-400/60 shadow-md text-neutral-900 font-medium' 
-          : 'bg-white/30 border-neutral-300/50 hover:bg-white/40 text-neutral-700'
+        'px-4 py-2 rounded-xl border text-[var(--text-primary)] transition',
+        active
+          ? 'bg-[var(--bg-base)]/50 border-[var(--ridge-outer)] shadow-md text-[var(--text-primary)] font-medium'
+          : 'bg-[var(--bg-base)]/30 border-[var(--ridge-inner)] hover:bg-[var(--bg-base)]/40 text-[var(--text-primary)]'
       ].join(' ')}
     >
       {children}

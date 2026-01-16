@@ -5,6 +5,9 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { createProjectAction } from '@/app/actions/projects';
 import DevDebugPanel from './DevDebugPanel';
 import UnifiedCreateProjectUI from '@/components/UnifiedCreateProjectUI';
+import { RidgeCard } from '@/components/ui/ridge-card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 // DEPRECATED: Long form create UI (kept for reference, legacy links may still reference it)
 function LongFormCreateUI() {
@@ -69,15 +72,15 @@ function LongFormCreateUI() {
   }
 
   return (
-    <div className="p-6">
+    <div className="min-h-screen bg-[var(--bg-base)] p-6">
       <div className="max-w-3xl mx-auto">
-        <h1 className="text-2xl font-semibold mb-6">Create Project</h1>
+        <h1 className="folio-h1 text-[var(--text-primary)] mb-6">Create Project</h1>
 
         <form onSubmit={onSubmit} className="space-y-5">
           <div>
-            <label className="block text-sm font-medium mb-1">Project name</label>
-            <input
-              className="w-full border rounded-lg p-2"
+            <label className="block folio-body font-medium text-[var(--text-primary)] mb-1">Project name</label>
+            <Input
+              variant="ridge"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g., Casa Verde Renovation"
@@ -86,13 +89,13 @@ function LongFormCreateUI() {
           </div>
 
           {/* Project basics section */}
-          <div className="border rounded-lg p-4 bg-gray-50">
-            <h3 className="text-sm font-medium mb-3">Project basics</h3>
+          <RidgeCard padding="md">
+            <h3 className="folio-h3 text-[var(--text-primary)] mb-3">Project basics</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium mb-1">Project Type *</label>
+                <label className="block folio-body font-medium text-[var(--text-primary)] mb-1">Project Type *</label>
                 <select
-                  className="w-full border rounded-lg p-2"
+                  className="w-full ridge-input px-3 py-2"
                   value={projectType}
                   onChange={(e) => setProjectType(e.target.value)}
                   required
@@ -110,9 +113,9 @@ function LongFormCreateUI() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">Stage *</label>
+                <label className="block folio-body font-medium text-[var(--text-primary)] mb-1">Stage *</label>
                 <select
-                  className="w-full border rounded-lg p-2"
+                  className="w-full ridge-input px-3 py-2"
                   value={stage}
                   onChange={(e) => setStage(e.target.value)}
                   required
@@ -129,28 +132,28 @@ function LongFormCreateUI() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">Client Type *</label>
+                <label className="block folio-body font-medium text-[var(--text-primary)] mb-1">Client Type *</label>
                 <div className="flex gap-4">
-                  <label className="flex items-center">
+                  <label className="flex items-center text-[var(--text-primary)]">
                     <input
                       type="radio"
                       name="clientType"
                       value="Residential"
                       checked={clientType === 'Residential'}
                       onChange={(e) => setClientType(e.target.value as 'Residential' | 'Commercial')}
-                      className="mr-2"
+                      className="mr-2 accent-[var(--accent)]"
                       required
                     />
                     Residential
                   </label>
-                  <label className="flex items-center">
+                  <label className="flex items-center text-[var(--text-primary)]">
                     <input
                       type="radio"
                       name="clientType"
                       value="Commercial"
                       checked={clientType === 'Commercial'}
                       onChange={(e) => setClientType(e.target.value as 'Residential' | 'Commercial')}
-                      className="mr-2"
+                      className="mr-2 accent-[var(--accent)]"
                     />
                     Commercial
                   </label>
@@ -158,26 +161,26 @@ function LongFormCreateUI() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">Budget Band *</label>
+                <label className="block folio-body font-medium text-[var(--text-primary)] mb-1">Budget Band *</label>
                 <select
-                  className="w-full border rounded-lg p-2"
+                  className="w-full ridge-input px-3 py-2"
                   value={budgetBand}
                   onChange={(e) => setBudgetBand(e.target.value)}
                   required
                 >
                   <option value="">Select budget</option>
                   <option value="<$25k">&lt;$25k</option>
-                  <option value="$25–100k">$25–100k</option>
-                  <option value="$100–300k">$100–300k</option>
-                  <option value="$300k–$1M">$300k–$1M</option>
+                  <option value="$25–100k">$25-100k</option>
+                  <option value="$100–300k">$100-300k</option>
+                  <option value="$300k–$1M">$300k-$1M</option>
                   <option value="$1M+">$1M+</option>
                 </select>
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">City *</label>
-                <input
-                  className="w-full border rounded-lg p-2"
+                <label className="block folio-body font-medium text-[var(--text-primary)] mb-1">City *</label>
+                <Input
+                  variant="ridge"
                   value={locationCity}
                   onChange={(e) => setLocationCity(e.target.value)}
                   placeholder="e.g., San Francisco"
@@ -186,9 +189,9 @@ function LongFormCreateUI() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">Region/State *</label>
-                <input
-                  className="w-full border rounded-lg p-2"
+                <label className="block folio-body font-medium text-[var(--text-primary)] mb-1">Region/State *</label>
+                <Input
+                  variant="ridge"
                   value={locationRegion}
                   onChange={(e) => setLocationRegion(e.target.value)}
                   placeholder="e.g., CA"
@@ -196,12 +199,12 @@ function LongFormCreateUI() {
                 />
               </div>
             </div>
-          </div>
+          </RidgeCard>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Description</label>
+            <label className="block folio-body font-medium text-[var(--text-primary)] mb-1">Description</label>
             <textarea
-              className="w-full border rounded-lg p-2"
+              className="w-full ridge-input px-3 py-2 min-h-[100px]"
               rows={4}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -211,15 +214,15 @@ function LongFormCreateUI() {
 
           {err && <p className="text-red-600 text-sm">{err}</p>}
 
-          <button
+          <Button
             type="submit"
-            className="px-4 py-2 rounded-lg border"
+            variant="accent"
             disabled={loading}
           >
-            {loading ? 'Creating…' : 'Create project'}
-          </button>
+            {loading ? 'Creating...' : 'Create project'}
+          </Button>
         </form>
-        
+
         <DevDebugPanel />
       </div>
     </div>
@@ -262,16 +265,16 @@ function PublishNowFlow() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
-      <div className="max-w-xl w-full bg-white rounded-2xl shadow-lg p-8">
-        <h1 className="text-3xl font-bold mb-2">Create a Project</h1>
-        <p className="text-gray-600 mb-6">Give your project a title to get started</p>
-        
+    <div className="min-h-screen bg-[var(--bg-base)] flex items-center justify-center p-6">
+      <RidgeCard padding="xl" className="max-w-xl w-full">
+        <h1 className="folio-h1 text-[var(--text-primary)] mb-2">Create a Project</h1>
+        <p className="folio-body text-[var(--text-secondary)] mb-6">Give your project a title to get started</p>
+
         <form onSubmit={handleCreate} className="space-y-5">
           <div>
-            <label className="block text-sm font-medium mb-2">Project Title *</label>
-            <input
-              className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            <label className="block folio-body font-medium text-[var(--text-primary)] mb-2">Project Title *</label>
+            <Input
+              variant="ridge"
               placeholder="e.g., Modern Coastal Living Room"
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -279,11 +282,11 @@ function PublishNowFlow() {
               autoFocus
             />
           </div>
-          
+
           <div>
-            <label className="block text-sm font-medium mb-2">Description (optional)</label>
+            <label className="block folio-body font-medium text-[var(--text-primary)] mb-2">Description (optional)</label>
             <textarea
-              className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              className="w-full ridge-input px-4 py-3"
               placeholder="Brief description of your project..."
               value={desc}
               onChange={(e) => setDesc(e.target.value)}
@@ -297,9 +300,11 @@ function PublishNowFlow() {
             </div>
           )}
 
-          <button 
-            type="submit" 
-            className="w-full rounded-lg px-6 py-3 bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          <Button
+            type="submit"
+            variant="accent"
+            size="lg"
+            className="w-full"
             disabled={loading}
           >
             {loading ? (
@@ -310,15 +315,15 @@ function PublishNowFlow() {
             ) : (
               'Continue to Upload Images'
             )}
-          </button>
+          </Button>
         </form>
-        
-        <p className="text-xs text-gray-500 mt-6 text-center">
+
+        <p className="folio-meta mt-6 text-center">
           Next: Upload images and tag products
         </p>
-        
+
         <DevDebugPanel />
-      </div>
+      </RidgeCard>
     </div>
   );
 }

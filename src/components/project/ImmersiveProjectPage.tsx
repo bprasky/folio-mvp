@@ -40,7 +40,7 @@ export function ImmersiveProjectPage({ post, modules }: Props) {
   return (
     <div className="relative min-h-screen">
       <BackgroundCanvas images={backgroundImageUrls} />
-      <div className="pointer-events-none fixed inset-0 -z-10 bg-[linear-gradient(to_bottom,_rgba(246,242,235,0.8),_rgba(246,242,235,1))]" />
+      <div className="pointer-events-none fixed inset-0 -z-10 bg-[linear-gradient(to_bottom,_rgba(255,255,255,0.85),_rgba(255,255,255,0.98))]" />
 
       {/* MAIN CONTENT */}
       <div className="relative z-10 px-3 py-8 md:px-6 md:py-12">
@@ -52,7 +52,7 @@ export function ImmersiveProjectPage({ post, modules }: Props) {
 
           {/* HERO IMAGE */}
           {projectImages[0]?.url && (
-            <figure className="relative overflow-hidden rounded-3xl bg-neutral-100 shadow-[0_18px_60px_rgba(15,14,10,0.18)]">
+            <figure className="relative overflow-hidden rounded-3xl ridge-card ridge-card-lg shadow-[0_18px_60px_rgba(15,14,10,0.18)]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={projectImages[0].url}
@@ -102,30 +102,30 @@ function DesignerProjectBadge({ post }: { post: any }) {
   const designer = post.project?.designer;
   const name = designer?.studio || designer?.name || "Designer";
   const logoUrl = designer?.profileImage;
-  
+
   return (
     <a
       href={designer?.id ? `/designer/${designer.id}` : "#"}
-      className="rounded-3xl bg-white/70 backdrop-blur-2xl ring-1 ring-black/5 px-4 py-3 flex items-center gap-3 hover:bg-white/80 transition-colors"
+      className="ridge-card px-4 py-3 flex items-center gap-3 hover:shadow-lg transition-all"
     >
       {logoUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={logoUrl}
           alt={name}
-          className="h-10 w-10 rounded-full object-cover ring-1 ring-black/5"
+          className="h-10 w-10 rounded-full object-cover ring-1 ring-[var(--ridge-outer)]"
         />
       ) : (
-        <div className="h-10 w-10 rounded-full bg-neutral-900/80 text-white flex items-center justify-center text-[11px]">
+        <div className="h-10 w-10 rounded-full bg-[var(--accent)] text-white flex items-center justify-center text-[11px]">
           {name.slice(0, 2).toUpperCase()}
         </div>
       )}
       <div className="flex flex-col">
-        <span className="text-xs text-neutral-500 uppercase tracking-[0.16em]">Designer</span>
-        <span className="text-[13px] font-medium text-neutral-900 line-clamp-2">
+        <span className="folio-meta uppercase tracking-[0.16em]">Designer</span>
+        <span className="folio-ui text-[var(--text-primary)] line-clamp-2">
           {name}
         </span>
-        <span className="text-[11px] text-neutral-500 line-clamp-1">
+        <span className="folio-meta line-clamp-1">
           {post.project?.title}
         </span>
       </div>

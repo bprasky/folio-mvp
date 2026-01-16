@@ -65,16 +65,16 @@ const PinnedInsightCard: React.FC<PinnedInsightCardProps> = ({
   }, [vendorId, insight.question]);
 
   return (
-    <article className="rounded-2xl bg-white/80 backdrop-blur border border-neutral-200 p-4 shadow-sm relative">
+    <article className="ridge-card p-4 relative">
       <div className="flex items-start justify-between gap-2 mb-2">
-        <h3 className="text-sm font-medium text-neutral-900 pr-8">
+        <h3 className="folio-ui font-medium text-[var(--text-primary)] pr-8">
           {insight.question}
         </h3>
         {onUnpin && (
           <button
             type="button"
             onClick={onUnpin}
-            className="absolute top-3 right-3 text-neutral-400 hover:text-neutral-600 transition-colors"
+            className="absolute top-3 right-3 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors"
             aria-label="Unpin insight"
           >
             <svg
@@ -94,12 +94,12 @@ const PinnedInsightCard: React.FC<PinnedInsightCardProps> = ({
         )}
       </div>
 
-      <p className="text-[11px] uppercase tracking-wide text-neutral-400 mb-3">
+      <p className="text-[11px] uppercase tracking-wide text-[var(--text-tertiary)] mb-3">
         Pinned {new Date(insight.pinnedAt).toLocaleString()}
       </p>
 
       {isLoading && (
-        <p className="mt-3 text-xs text-neutral-500">Refreshing insight…</p>
+        <p className="mt-3 folio-meta text-[var(--text-secondary)]">Refreshing insight...</p>
       )}
 
       {error && (
@@ -113,7 +113,7 @@ const PinnedInsightCard: React.FC<PinnedInsightCardProps> = ({
       )}
 
       {!snapshot?.visualization && !isLoading && !error && (
-        <p className="mt-3 text-xs text-neutral-500">
+        <p className="mt-3 folio-meta text-[var(--text-secondary)]">
           No visual available for this insight yet.
         </p>
       )}

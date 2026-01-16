@@ -66,19 +66,19 @@ export default function BoardTileMenu({
         
         {/* Dropdown Menu */}
         {isOpen && (
-        <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+        <div className="absolute right-0 top-full mt-1 w-48 bg-[var(--bg-elevated)] rounded-lg shadow-lg border border-[var(--border-default)] py-1 z-50">
           <button
             onClick={(e) => {
               e.stopPropagation();
               setIsOpen(false);
               onEdit(selection.id, product?.id);
             }}
-            className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 text-gray-700 flex items-center gap-2"
+            className="w-full text-left px-3 py-2 folio-ui hover:bg-[var(--bg-base)] text-[var(--text-primary)] flex items-center gap-2"
           >
             <FaEdit className="w-3 h-3" />
             Edit
           </button>
-          
+
           {onReplaceImage && (
             <button
               onClick={(e) => {
@@ -86,16 +86,16 @@ export default function BoardTileMenu({
                 setIsOpen(false);
                 onReplaceImage(selection.id);
               }}
-              className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 text-gray-700 flex items-center gap-2"
+              className="w-full text-left px-3 py-2 folio-ui hover:bg-[var(--bg-base)] text-[var(--text-primary)] flex items-center gap-2"
             >
               <FaImage className="w-3 h-3" />
               Replace Image
             </button>
           )}
-          
+
           {onOverrideSize && (
             <>
-              <div className="border-t border-gray-100 my-1"></div>
+              <div className="border-t border-[var(--border-default)] my-1"></div>
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -103,8 +103,8 @@ export default function BoardTileMenu({
                   onOverrideSize(selection.id, 'large');
                 }}
                 className={clsx(
-                  "w-full text-left px-3 py-2 text-sm hover:bg-gray-50",
-                  currentOverride === 'L' ? "text-blue-600 font-medium" : "text-gray-700"
+                  "w-full text-left px-3 py-2 folio-ui hover:bg-[var(--bg-base)]",
+                  currentOverride === 'L' ? "text-[var(--accent)] font-medium" : "text-[var(--text-primary)]"
                 )}
               >
                 Feature tile (Large)
@@ -116,8 +116,8 @@ export default function BoardTileMenu({
                   onOverrideSize(selection.id, 'small');
                 }}
                 className={clsx(
-                  "w-full text-left px-3 py-2 text-sm hover:bg-gray-50",
-                  currentOverride === 'S' ? "text-blue-600 font-medium" : "text-gray-700"
+                  "w-full text-left px-3 py-2 folio-ui hover:bg-[var(--bg-base)]",
+                  currentOverride === 'S' ? "text-[var(--accent)] font-medium" : "text-[var(--text-primary)]"
                 )}
               >
                 Demote tile (Small)
@@ -129,25 +129,25 @@ export default function BoardTileMenu({
                   onOverrideSize(selection.id, 'auto');
                 }}
                 className={clsx(
-                  "w-full text-left px-3 py-2 text-sm hover:bg-gray-50",
-                  !currentOverride ? "text-blue-600 font-medium" : "text-gray-700"
+                  "w-full text-left px-3 py-2 folio-ui hover:bg-[var(--bg-base)]",
+                  !currentOverride ? "text-[var(--accent)] font-medium" : "text-[var(--text-primary)]"
                 )}
               >
                 Reset to Auto
               </button>
             </>
           )}
-          
+
           {onDelete && (
             <>
-              <div className="border-t border-gray-100 my-1"></div>
+              <div className="border-t border-[var(--border-default)] my-1"></div>
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   setIsOpen(false);
                   onDelete(selection.id);
                 }}
-                className="w-full text-left px-3 py-2 text-sm hover:bg-red-50 text-red-600 flex items-center gap-2"
+                className="w-full text-left px-3 py-2 folio-ui hover:bg-red-50 text-red-600 flex items-center gap-2"
               >
                 <FaTrash className="w-3 h-3" />
                 Delete

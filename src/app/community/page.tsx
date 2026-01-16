@@ -5,6 +5,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { FaHome, FaLightbulb, FaNewspaper, FaStore, FaUsers, FaUser, FaPlus, FaSearch, FaEyeSlash, FaEye, FaUserFriends, FaStar, FaMapPin, FaBolt, FaCalendarAlt, FaMapMarkerAlt, FaCalendarPlus, FaHeart } from 'react-icons/fa';
 import { useRole } from '../../contexts/RoleContext';
+import { RidgeCard } from '@/components/ui/ridge-card';
+import { Button } from '@/components/ui/button';
 
 // --- Interfaces ---
 interface User {
@@ -209,114 +211,121 @@ const addToCalendar = (title: string, date: string, location: string) => {
 // --- Components ---
 const CommunityFeedItem = ({ item, onLike, isLiked }: { item: FeedItem; onLike: () => void; isLiked: boolean }) => {
   let badges = '';
-  if (item.user.accountAge < 90) badges += `<span class='rising-badge'>Rising</span>`;
-  if (item.user.location === currentUser.location) badges += `<span class='local-badge'>Local</span>`;
+  if (item.user.accountAge < 90) badges += `<span class='px-2 py-0.5 bg-[var(--accent)]/10 text-[var(--accent)] rounded-full folio-meta mr-1'>Rising</span>`;
+  if (item.user.location === currentUser.location) badges += `<span class='px-2 py-0.5 bg-green-100 text-green-800 rounded-full folio-meta'>Local</span>`;
 
   return (
-    <div className="community-feed-item">
-      <Image className="profile-photo" src={item.user.photo} alt={item.user.name} width={56} height={56} />
-      <div className="feed-content">
-        <div className="feed-action">
-          <span className="font-semibold">{item.user.name}</span>
-          <span dangerouslySetInnerHTML={{ __html: badges }} /> {item.action}
-        </div>
-        <div className="feed-time">
-          {item.time} <span className="ml-2 text-xs text-amber-400">{item.user.location || ''}</span>
-        </div>
-        <div className="feed-preview">
-          {item.preview.type === 'project' || item.preview.type === 'moodboard' || item.preview.type === 'product' ? (
-            <>
-              <Image src={item.preview.image} alt={item.preview.title} width={320} height={180} />
-              <div className="mt-2 font-medium">{item.preview.title}</div>
-            </>
-          ) : item.preview.type === 'event' ? (
-            <div className="event-preview flex gap-4 items-center">
-              <Image src={item.preview.image} alt={item.preview.title} width={120} height={120} className="object-cover rounded-md" />
-              <div>
-                <div className="font-semibold text-lg mb-1">{item.preview.title}</div>
-                <div className="text-sm text-gray-300 mb-1"><FaCalendarAlt className="mr-1 inline-block" /> {item.preview.date}</div>
-                <div className="text-sm text-gray-400"><FaMapMarkerAlt className="mr-1 inline-block" /> {item.preview.location}</div>
-                {item.preview.tags && (
-                  <div className="flex gap-2 mt-2">
-                    {item.preview.tags.map((tag, index) => (
-                      <span key={index} className="px-2 py-1 bg-gray-800 rounded-full text-xs">{tag}</span>
-                    ))}
-                  </div>
-                )}
-                <div className="flex items-center gap-2 mt-2">
-                  <button
-                    className={`flex items-center gap-1 px-3 py-1 rounded-full ${isLiked ? 'bg-amber-500 text-black' : 'bg-gray-800'}`}
-                    onClick={onLike}
-                  >
-                    <FaHeart className={isLiked ? 'text-black' : 'text-amber-500'} />
-                    <span>{item.likes || 0}</span>
-                  </button>
-                  {item.likedBy && item.likedBy.length > 0 && (
-                    <div className="text-sm text-gray-400">
-                      Liked by {item.likedBy.slice(0, 3).join(', ')}
-                      {item.likedBy.length > 3 && ` and ${item.likedBy.length - 3} others`}
+    <RidgeCard className="p-4 mb-4">
+      <div className="flex gap-4">
+        <Image className="w-14 h-14 rounded-full object-cover" src={item.user.photo} alt={item.user.name} width={56} height={56} />
+        <div className="flex-1">
+          <div className="folio-ui text-[var(--text-primary)]">
+            <span className="font-semibold">{item.user.name}</span>
+            <span dangerouslySetInnerHTML={{ __html: badges }} /> {item.action}
+          </div>
+          <div className="folio-meta text-[var(--text-tertiary)]">
+            {item.time} <span className="ml-2 text-[var(--accent)]">{item.user.location || ''}</span>
+          </div>
+          <div className="mt-3">
+            {item.preview.type === 'project' || item.preview.type === 'moodboard' || item.preview.type === 'product' ? (
+              <>
+                <div className="relative rounded-lg overflow-hidden">
+                  <Image src={item.preview.image} alt={item.preview.title} width={320} height={180} className="w-full h-44 object-cover" />
+                </div>
+                <div className="mt-2 folio-ui font-medium text-[var(--text-primary)]">{item.preview.title}</div>
+              </>
+            ) : item.preview.type === 'event' ? (
+              <div className="flex gap-4 items-center">
+                <Image src={item.preview.image} alt={item.preview.title} width={120} height={120} className="w-28 h-28 object-cover rounded-lg" />
+                <div>
+                  <div className="folio-h3 text-[var(--text-primary)] mb-1">{item.preview.title}</div>
+                  <div className="folio-meta text-[var(--text-secondary)] mb-1"><FaCalendarAlt className="mr-1 inline-block" /> {item.preview.date}</div>
+                  <div className="folio-meta text-[var(--text-tertiary)]"><FaMapMarkerAlt className="mr-1 inline-block" /> {item.preview.location}</div>
+                  {item.preview.tags && (
+                    <div className="flex gap-2 mt-2">
+                      {item.preview.tags.map((tag, index) => (
+                        <span key={index} className="px-2 py-1 bg-[var(--bg-base)] rounded-full folio-meta text-[var(--text-secondary)]">{tag}</span>
+                      ))}
                     </div>
                   )}
+                  <div className="flex items-center gap-2 mt-2">
+                    <button
+                      className={`flex items-center gap-1 px-3 py-1 rounded-full folio-ui ${isLiked ? 'bg-[var(--accent)] text-white' : 'bg-[var(--bg-base)] text-[var(--text-secondary)]'}`}
+                      onClick={onLike}
+                    >
+                      <FaHeart className={isLiked ? 'text-white' : 'text-[var(--accent)]'} />
+                      <span>{item.likes || 0}</span>
+                    </button>
+                    {item.likedBy && item.likedBy.length > 0 && (
+                      <div className="folio-meta text-[var(--text-tertiary)]">
+                        Liked by {item.likedBy.slice(0, 3).join(', ')}
+                        {item.likedBy.length > 3 && ` and ${item.likedBy.length - 3} others`}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          ) : item.preview.type === 'event-photo' ? (
-            <>
-              <Image src={item.preview.image} alt={item.preview.title} width={120} height={120} className="rounded-md" />
-              <div className="mt-2 font-medium">{item.preview.title}</div>
-            </>
-          ) : null}
+            ) : item.preview.type === 'event-photo' ? (
+              <>
+                <Image src={item.preview.image} alt={item.preview.title} width={120} height={120} className="rounded-lg" />
+                <div className="mt-2 folio-ui font-medium text-[var(--text-primary)]">{item.preview.title}</div>
+              </>
+            ) : null}
+          </div>
         </div>
       </div>
-    </div>
+    </RidgeCard>
   );
 };
 
 const EventCardComponent = ({ event, onRSVP, isInline = false }: { event: EventData; onRSVP: (eventId: number, status: 'attending' | 'noresponse' | 'declined') => void; isInline?: boolean }) => {
-  const statusClass = event.status === 'attending' ? 'status-attending' : event.status === 'declined' ? 'status-declined' : 'status-noresponse';
-  const statusLabel = event.status === 'attending' ? 'Attending' : event.status === 'declined' ? 'Declined' : 'No Response';
+  const statusClass = event.status === 'attending' ? 'border-l-4 border-l-green-500' : event.status === 'declined' ? 'border-l-4 border-l-red-500' : 'border-l-4 border-l-[var(--accent)]';
   const isPriority = event.priorityWave && event.priorityWave.includes(currentUser.name);
   const isPast = new Date(event.date) < new Date();
   const isUpcoming = new Date(event.date).getTime() > Date.now() && new Date(event.date).getTime() < Date.now() + 7 * 24 * 60 * 60 * 1000;
 
   let inviteTypeJsx = null;
   if (event.inviteRules && event.inviteRules.includes('Local') && event.inviteRules.includes('Designer Pro')) {
-    inviteTypeJsx = <span className="event-invite-type open">Open Invite</span>;
+    inviteTypeJsx = <span className="px-2 py-0.5 bg-green-100 text-green-800 rounded-full folio-meta mr-1">Open Invite</span>;
   } else if (event.inviteRules && !event.inviteRules.includes('Local')) {
-    inviteTypeJsx = <span className="event-invite-type invite">Invite Only</span>;
+    inviteTypeJsx = <span className="px-2 py-0.5 bg-[var(--accent)]/10 text-[var(--accent)] rounded-full folio-meta mr-1">Invite Only</span>;
   }
   if (event.attendees.some(u => u.name === currentUser.name)) {
-    inviteTypeJsx = <>{inviteTypeJsx}<span className="event-invite-type attending">Attending</span></>;
+    inviteTypeJsx = <>{inviteTypeJsx}<span className="px-2 py-0.5 bg-green-100 text-green-800 rounded-full folio-meta">Attending</span></>;
   }
 
   const eventPath = `/events/${event.id}`;
 
   const cardContent = (
-    <div className={`event-card ${statusClass} ${isInline ? 'event-card-inline' : ''}`}>
-      <Image className="event-image" src={event.image} alt={event.title} width={isInline ? 200 : 64} height={isInline ? 150 : 64} />
-      <div className="event-details">
-        <div className="event-title">{event.title} {inviteTypeJsx} {isPriority && <span className="priority-badge">Priority Access</span>} {isUpcoming && isInline && <span className="upcoming-badge">Upcoming</span>}</div>
-        <div className="event-host">Hosted by {event.host.name}</div>
-        <div className="event-date"><FaCalendarAlt className="mr-1 inline-block" /> {new Date(event.date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</div>
-        <div className="event-location"><FaMapMarkerAlt className="mr-1 inline-block" /> {event.location}</div>
-        <div className="event-attendees">{event.attendees.length} attending</div>
+    <RidgeCard className={`p-4 ${statusClass} ${isInline ? 'flex gap-4' : ''}`}>
+      <Image className={`rounded-lg object-cover ${isInline ? 'w-48 h-36' : 'w-16 h-16'}`} src={event.image} alt={event.title} width={isInline ? 200 : 64} height={isInline ? 150 : 64} />
+      <div className={isInline ? 'flex-1' : 'mt-3'}>
+        <div className="folio-h3 text-[var(--text-primary)] mb-1">
+          {event.title} {inviteTypeJsx} {isPriority && <span className="px-2 py-0.5 bg-[var(--accent)] text-white rounded-full folio-meta ml-1">Priority Access</span>} {isUpcoming && isInline && <span className="px-2 py-0.5 bg-[var(--accent)]/10 text-[var(--accent)] rounded-full folio-meta ml-1">Upcoming</span>}
+        </div>
+        <div className="folio-meta text-[var(--text-secondary)] mb-1">Hosted by {event.host.name}</div>
+        <div className="folio-meta text-[var(--text-secondary)]"><FaCalendarAlt className="mr-1 inline-block" /> {new Date(event.date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</div>
+        <div className="folio-meta text-[var(--text-tertiary)]"><FaMapMarkerAlt className="mr-1 inline-block" /> {event.location}</div>
+        <div className="folio-meta text-[var(--text-tertiary)] mt-1">{event.attendees.length} attending</div>
         {!isPast && (
-          <button 
-            className={`rsvp-button ${event.status === 'attending' ? 'attending' : ''}`}
+          <Button
+            variant={event.status === 'attending' ? 'accent' : 'secondary'}
+            size="sm"
+            className="mt-2"
             onClick={(e) => {
               e.preventDefault();
               onRSVP(event.id, event.status === 'attending' ? 'noresponse' : 'attending');
             }}
           >
             {event.status === 'attending' ? 'Attending' : 'RSVP'}
-          </button>
+          </Button>
         )}
       </div>
-    </div>
+    </RidgeCard>
   );
 
   return isInline ? cardContent : (
-    <Link href={eventPath} className="block hover:opacity-90 transition-opacity">
+    <Link href={eventPath} className="block hover:opacity-90 transition-opacity mb-4">
       {cardContent}
     </Link>
   );
@@ -389,11 +398,11 @@ export default function CommunityPage() {
     const allItems = communityFeed.flatMap(group => group.items);
     const filteredFeedItems = filterFeedItems(allItems);
     const filteredEvents = filterEventsItems(eventsData);
-    
+
     // Convert events to feed items and flag hero events
     const eventFeedItems: FeedItem[] = filteredEvents.map(event => {
       const isUpcoming = new Date(event.date).getTime() > Date.now() && new Date(event.date).getTime() < Date.now() + 7 * 24 * 60 * 60 * 1000;
-      const isEligibleForRSVP = event.inviteRules?.includes('Designer Pro') && currentUser.role === 'Designer Pro' || 
+      const isEligibleForRSVP = event.inviteRules?.includes('Designer Pro') && currentUser.role === 'Designer Pro' ||
                                 event.inviteRules?.includes('Local') && currentUser.location === event.location;
 
       const item: FeedItem = {
@@ -448,144 +457,144 @@ export default function CommunityPage() {
   }, [eventsData]); // Recalculate if events data changes
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex min-h-screen bg-[var(--bg-base)]">
       {/* Sidebar */}
-      <div className="glass-panel w-20 lg:w-56 p-4 lg:p-6 fixed h-full z-20 flex flex-col items-center lg:items-start">
-        <div className="w-10 h-10 rounded bg-gradient-to-br from-amber-500 to-pink-500 flex items-center justify-center text-white font-bold text-xl mb-8">F</div>
+      <div className="w-20 lg:w-56 p-4 lg:p-6 fixed h-full z-20 flex flex-col items-center lg:items-start bg-[var(--bg-elevated)] border-r border-[var(--border-color)]">
+        <div className="w-10 h-10 rounded bg-[var(--accent)] flex items-center justify-center text-white font-bold text-xl mb-8">F</div>
         <nav className="flex-1 flex flex-col items-center lg:items-start space-y-4">
-          <Link href="/" className="p-3 rounded hover:bg-gray-800 flex flex-col items-center lg:flex-row lg:items-center w-full">
+          <Link href="/" className="p-3 rounded hover:bg-[var(--bg-base)] flex flex-col items-center lg:flex-row lg:items-center w-full text-[var(--text-secondary)] hover:text-[var(--text-primary)]">
             <FaHome className="text-lg" />
-            <span className="hidden lg:inline ml-3">Home</span>
+            <span className="hidden lg:inline ml-3 folio-ui">Home</span>
           </Link>
-          <Link href="/inspire" className="p-3 rounded hover:bg-gray-800 flex flex-col items-center lg:flex-row lg:items-center w-full">
+          <Link href="/inspire" className="p-3 rounded hover:bg-[var(--bg-base)] flex flex-col items-center lg:flex-row lg:items-center w-full text-[var(--text-secondary)] hover:text-[var(--text-primary)]">
             <FaLightbulb className="text-lg" />
-            <span className="hidden lg:inline ml-3">Inspire</span>
+            <span className="hidden lg:inline ml-3 folio-ui">Inspire</span>
           </Link>
-          <Link href="/community" className="p-3 rounded active-link flex flex-col items-center lg:flex-row lg:items-center w-full" id="community-sidebar-link" style={{ position: 'relative' }}>
+          <Link href="/community" className="p-3 rounded bg-[var(--accent)]/10 flex flex-col items-center lg:flex-row lg:items-center w-full text-[var(--accent)]" id="community-sidebar-link" style={{ position: 'relative' }}>
             <FaUsers className="text-lg" />
-            <span className="hidden lg:inline ml-3">Community</span>
+            <span className="hidden lg:inline ml-3 folio-ui">Community</span>
             <span id="community-badge" style={{ display: 'none', position: 'absolute', top: '8px', right: '10px', background: '#FF3B30', color: '#fff', fontSize: '0.75rem', fontWeight: '700', padding: '2px 7px', borderRadius: '9999px', zIndex: 10 }}>0</span>
           </Link>
           <div className="flex flex-col space-y-2 w-full">
-            <button id="all-tab" className={`feed-toggle-btn ${currentPanel === 'all' ? 'active' : ''} w-full text-left`} onClick={() => setCurrentPanel('all')}>All</button>
-            <button id="feed-tab" className={`feed-toggle-btn ${currentPanel === 'feed' ? 'active' : ''} w-full text-left`} onClick={() => setCurrentPanel('feed')}>Feed</button>
-            <button id="events-tab" className={`feed-toggle-btn ${currentPanel === 'events' ? 'active' : ''} w-full text-left`} onClick={() => setCurrentPanel('events')}>Events</button>
+            <button id="all-tab" className={`px-3 py-2 rounded folio-ui ${currentPanel === 'all' ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-secondary)] hover:bg-[var(--bg-base)]'} w-full text-left`} onClick={() => setCurrentPanel('all')}>All</button>
+            <button id="feed-tab" className={`px-3 py-2 rounded folio-ui ${currentPanel === 'feed' ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-secondary)] hover:bg-[var(--bg-base)]'} w-full text-left`} onClick={() => setCurrentPanel('feed')}>Feed</button>
+            <button id="events-tab" className={`px-3 py-2 rounded folio-ui ${currentPanel === 'events' ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-secondary)] hover:bg-[var(--bg-base)]'} w-full text-left`} onClick={() => setCurrentPanel('events')}>Events</button>
           </div>
-          <Link href="/editorials" className="p-3 rounded hover:bg-gray-800 flex flex-col items-center lg:flex-row lg:items-center w-full">
+          <Link href="/editorials" className="p-3 rounded hover:bg-[var(--bg-base)] flex flex-col items-center lg:flex-row lg:items-center w-full text-[var(--text-secondary)] hover:text-[var(--text-primary)]">
             <FaNewspaper className="text-lg" />
-            <span className="hidden lg:inline ml-3">Editorials</span>
+            <span className="hidden lg:inline ml-3 folio-ui">Editorials</span>
           </Link>
-          <Link href="/shop" className="p-3 rounded hover:bg-gray-800 flex flex-col items-center lg:flex-row lg:items-center w-full">
+          <Link href="/shop" className="p-3 rounded hover:bg-[var(--bg-base)] flex flex-col items-center lg:flex-row lg:items-center w-full text-[var(--text-secondary)] hover:text-[var(--text-primary)]">
             <FaStore className="text-lg" />
-            <span className="hidden lg:inline ml-3">Shop</span>
+            <span className="hidden lg:inline ml-3 folio-ui">Shop</span>
           </Link>
-          <Link href={getProfileLink()} className="p-3 rounded hover:bg-gray-800 flex flex-col items-center lg:flex-row lg:items-center w-full">
+          <Link href={getProfileLink()} className="p-3 rounded hover:bg-[var(--bg-base)] flex flex-col items-center lg:flex-row lg:items-center w-full text-[var(--text-secondary)] hover:text-[var(--text-primary)]">
             <FaUser className="text-lg" />
-            <span className="hidden lg:inline ml-3">Profile</span>
+            <span className="hidden lg:inline ml-3 folio-ui">Profile</span>
           </Link>
         </nav>
-        <button className="hidden lg:flex w-full bg-gradient-to-r from-amber-500 to-pink-500 text-white py-3 rounded font-medium items-center justify-center mt-auto">
+        <Button variant="accent" className="hidden lg:flex w-full mt-auto">
           <FaPlus className="mr-2" /> Design
-        </button>
-        <button className="lg:hidden w-12 h-12 rounded-full bg-gradient-to-r from-amber-500 to-pink-500 text-white flex items-center justify-center mt-auto">
+        </Button>
+        <button className="lg:hidden w-12 h-12 rounded-full bg-[var(--accent)] text-white flex items-center justify-center mt-auto">
           <FaPlus />
           <span className="sr-only">Design</span>
         </button>
       </div>
 
       {/* Main Content */}
-      <div className="p-6">
-        <div className="max-w-7xl mx-auto">
-        <div className="w-full flex flex-col sm:flex-row items-center justify-between mt-4 px-4">
-          <h1 className="text-2xl font-bold text-white mb-2 sm:mb-0">Community</h1>
-        </div>
+      <div className="ml-20 lg:ml-56 flex-1 p-6">
+        <div className="max-w-5xl mx-auto">
+          <div className="w-full flex flex-col sm:flex-row items-center justify-between mb-8">
+            <h1 className="folio-h1 text-[var(--text-primary)]">Community</h1>
+          </div>
 
-        {currentPanel === 'all' && (
-          <div className="flex flex-col gap-8 w-full max-w-5xl mx-auto mt-8 mb-8">
-            <div id="feed-filters" className="flex gap-2 mb-4">
-              <button className={`feed-toggle-btn ${feedFilter === 'following' ? 'active' : ''}`} onClick={() => setFeedFilter('following')}><FaUserFriends className="mr-1" />Following</button>
-              <button className={`feed-toggle-btn ${feedFilter === 'forYou' ? 'active' : ''}`} onClick={() => setFeedFilter('forYou')}><FaStar className="mr-1" />For You</button>
-              <button className={`feed-toggle-btn ${feedFilter === 'local' ? 'active' : ''}`} onClick={() => setFeedFilter('local')}><FaMapPin className="mr-1" />Local</button>
-              <button className={`feed-toggle-btn ${feedFilter === 'rising' ? 'active' : ''}`} onClick={() => setFeedFilter('rising')}><FaBolt className="mr-1" />Rising</button>
+          {currentPanel === 'all' && (
+            <div className="flex flex-col gap-8">
+              <div className="flex gap-2 flex-wrap">
+                <button className={`px-4 py-2 rounded-full folio-ui flex items-center ${feedFilter === 'following' ? 'bg-[var(--accent)] text-white' : 'bg-[var(--bg-elevated)] text-[var(--text-secondary)] hover:bg-[var(--bg-base)]'}`} onClick={() => setFeedFilter('following')}><FaUserFriends className="mr-1" />Following</button>
+                <button className={`px-4 py-2 rounded-full folio-ui flex items-center ${feedFilter === 'forYou' ? 'bg-[var(--accent)] text-white' : 'bg-[var(--bg-elevated)] text-[var(--text-secondary)] hover:bg-[var(--bg-base)]'}`} onClick={() => setFeedFilter('forYou')}><FaStar className="mr-1" />For You</button>
+                <button className={`px-4 py-2 rounded-full folio-ui flex items-center ${feedFilter === 'local' ? 'bg-[var(--accent)] text-white' : 'bg-[var(--bg-elevated)] text-[var(--text-secondary)] hover:bg-[var(--bg-base)]'}`} onClick={() => setFeedFilter('local')}><FaMapPin className="mr-1" />Local</button>
+                <button className={`px-4 py-2 rounded-full folio-ui flex items-center ${feedFilter === 'rising' ? 'bg-[var(--accent)] text-white' : 'bg-[var(--bg-elevated)] text-[var(--text-secondary)] hover:bg-[var(--bg-base)]'}`} onClick={() => setFeedFilter('rising')}><FaBolt className="mr-1" />Rising</button>
+              </div>
+              <div>
+                {getCombinedFeed().map((item, index) => (
+                  <div key={`feed-${index}`}>
+                    {(item.preview as any).heroEventData ? (
+                      <EventCardComponent event={(item.preview as any).heroEventData} onRSVP={handleRSVP} isInline={true} />
+                    ) : (
+                      <CommunityFeedItem item={item} onLike={() => handleLike(`${item.user.name}-${item.preview.title}`)} isLiked={likedItems[`${item.user.name}-${item.preview.title}`] || false} />
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
-            <div id="combined-feed">
-              {getCombinedFeed().map((item, index) => (
-                <div key={`feed-${index}`} className="community-feed-item">
-                  {(item.preview as any).heroEventData ? (
-                    <EventCardComponent event={(item.preview as any).heroEventData} onRSVP={handleRSVP} isInline={true} />
+          )}
+
+          {currentPanel === 'feed' && (
+            <div className="flex flex-col gap-8">
+              <div className="flex gap-2 flex-wrap">
+                <button className={`px-4 py-2 rounded-full folio-ui flex items-center ${feedFilter === 'following' ? 'bg-[var(--accent)] text-white' : 'bg-[var(--bg-elevated)] text-[var(--text-secondary)] hover:bg-[var(--bg-base)]'}`} onClick={() => setFeedFilter('following')}><FaUserFriends className="mr-1" />Following</button>
+                <button className={`px-4 py-2 rounded-full folio-ui flex items-center ${feedFilter === 'forYou' ? 'bg-[var(--accent)] text-white' : 'bg-[var(--bg-elevated)] text-[var(--text-secondary)] hover:bg-[var(--bg-base)]'}`} onClick={() => setFeedFilter('forYou')}><FaStar className="mr-1" />For You</button>
+                <button className={`px-4 py-2 rounded-full folio-ui flex items-center ${feedFilter === 'local' ? 'bg-[var(--accent)] text-white' : 'bg-[var(--bg-elevated)] text-[var(--text-secondary)] hover:bg-[var(--bg-base)]'}`} onClick={() => setFeedFilter('local')}><FaMapPin className="mr-1" />Local</button>
+                <button className={`px-4 py-2 rounded-full folio-ui flex items-center ${feedFilter === 'rising' ? 'bg-[var(--accent)] text-white' : 'bg-[var(--bg-elevated)] text-[var(--text-secondary)] hover:bg-[var(--bg-base)]'}`} onClick={() => setFeedFilter('rising')}><FaBolt className="mr-1" />Rising</button>
+              </div>
+              <div>
+                {communityFeed.map((group, groupIndex) => (
+                  <div key={groupIndex}>
+                    <h3 className="folio-h3 text-[var(--text-primary)] mb-4">{group.group}</h3>
+                    <div className="space-y-4">
+                      {filterFeedItems(group.items).map((item, index) => (
+                        <div key={index}>
+                          {item.preview.type === 'event' ? (
+                             <EventCardComponent event={eventsData.find(e => e.title === item.preview.title) || {} as EventData} onRSVP={handleRSVP} isInline={true} />
+                          ) : (
+                            <CommunityFeedItem item={item} onLike={() => handleLike(`${item.user.name}-${item.preview.title}`)} isLiked={likedItems[`${item.user.name}-${item.preview.title}`] || false} />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {currentPanel === 'events' && (
+            <div className="flex flex-col gap-8">
+              <div className={`w-full ${eventsVisible ? 'flex' : 'hidden'} flex-col relative`}>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="folio-h2 text-[var(--text-primary)]">Upcoming Events</h2>
+                  <button className="text-[var(--text-tertiary)] hover:text-[var(--text-primary)] text-lg" title="Show/Hide Events" onClick={() => setEventsVisible(!eventsVisible)}>
+                    {eventsVisible ? <FaEyeSlash /> : <FaEye />}
+                  </button>
+                </div>
+                <div className="flex flex-wrap gap-2 mb-4">
+                  <button className={`px-4 py-2 rounded-full folio-ui ${eventTypeFilter === 'all' ? 'bg-[var(--accent)] text-white' : 'bg-[var(--bg-elevated)] text-[var(--text-secondary)] hover:bg-[var(--bg-base)]'}`} onClick={() => setEventTypeFilter('all')}>All</button>
+                  <button className={`px-4 py-2 rounded-full folio-ui ${eventTypeFilter === 'open' ? 'bg-[var(--accent)] text-white' : 'bg-[var(--bg-elevated)] text-[var(--text-secondary)] hover:bg-[var(--bg-base)]'}`} onClick={() => setEventTypeFilter('open')}>Open Invite</button>
+                  <button className={`px-4 py-2 rounded-full folio-ui ${eventTypeFilter === 'invite' ? 'bg-[var(--accent)] text-white' : 'bg-[var(--bg-elevated)] text-[var(--text-secondary)] hover:bg-[var(--bg-base)]'}`} onClick={() => setEventTypeFilter('invite')}>Invite Only</button>
+                  <button className={`px-4 py-2 rounded-full folio-ui ${eventTypeFilter === 'attending' ? 'bg-[var(--accent)] text-white' : 'bg-[var(--bg-elevated)] text-[var(--text-secondary)] hover:bg-[var(--bg-base)]'}`} onClick={() => setEventTypeFilter('attending')}>Attending</button>
+                </div>
+                <div>
+                  {filterEventsItems(eventsData).length === 0 ? (
+                    <div className='text-[var(--text-tertiary)] mt-8 text-center folio-body'>No events match this filter. Try adjusting your selections.</div>
                   ) : (
-                    <CommunityFeedItem item={item} onLike={() => handleLike(`${item.user.name}-${item.preview.title}`)} isLiked={likedItems[`${item.user.name}-${item.preview.title}`] || false} />
+                    (() => {
+                      let lastDay = '';
+                      return filterEventsItems(eventsData).map((event, index) => {
+                        const day = new Date(event.date).toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' });
+                        const dayHeader = day !== lastDay ? <div key={`header-${event.id}`} className='folio-h3 text-[var(--text-primary)] mb-2 mt-4'>{day}</div> : null;
+                        lastDay = day;
+                        return <div key={event.id}>{dayHeader}<EventCardComponent event={event} onRSVP={handleRSVP} isInline={false} /></div>;
+                      });
+                    })()
                   )}
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {currentPanel === 'feed' && (
-          <div className="flex flex-col gap-8 w-full max-w-5xl mx-auto mt-8 mb-8">
-            <div id="feed-filters" className="flex gap-2 mb-4">
-              <button className={`feed-toggle-btn ${feedFilter === 'following' ? 'active' : ''}`} onClick={() => setFeedFilter('following')}><FaUserFriends className="mr-1" />Following</button>
-              <button className={`feed-toggle-btn ${feedFilter === 'forYou' ? 'active' : ''}`} onClick={() => setFeedFilter('forYou')}><FaStar className="mr-1" />For You</button>
-              <button className={`feed-toggle-btn ${feedFilter === 'local' ? 'active' : ''}`} onClick={() => setFeedFilter('local')}><FaMapPin className="mr-1" />Local</button>
-              <button className={`feed-toggle-btn ${feedFilter === 'rising' ? 'active' : ''}`} onClick={() => setFeedFilter('rising')}><FaBolt className="mr-1" />Rising</button>
-            </div>
-            <div id="community-feed">
-              {communityFeed.map((group, groupIndex) => (
-                <div key={groupIndex}>
-                  <h3 className="text-xl font-semibold mb-4">{group.group}</h3>
-                  <div className="space-y-6">
-                    {filterFeedItems(group.items).map((item, index) => (
-                      <div key={index} className="community-feed-item">
-                        {item.preview.type === 'event' ? (
-                           <EventCardComponent event={eventsData.find(e => e.title === item.preview.title) || {} as EventData} onRSVP={handleRSVP} isInline={true} />
-                        ) : (
-                          <CommunityFeedItem item={item} onLike={() => handleLike(`${item.user.name}-${item.preview.title}`)} isLiked={likedItems[`${item.user.name}-${item.preview.title}`] || false} />
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {currentPanel === 'events' && (
-          <div className="flex flex-col gap-8 w-full max-w-5xl mx-auto mt-8 mb-8">
-            <div id="events-panel" className={`w-full lg:w-1/3 order-2 lg:order-1 ${eventsVisible ? 'flex' : 'hidden'} flex-col relative`}>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold">Upcoming Events</h2>
-                <button className="text-gray-400 hover:text-white text-lg" title="Show/Hide Events" onClick={() => setEventsVisible(!eventsVisible)}>
-                  {eventsVisible ? <FaEyeSlash /> : <FaEye />}
-                </button>
-              </div>
-              <div id="event-type-filters" className="mb-4 flex flex-wrap gap-2">
-                <button className={`event-type-btn ${eventTypeFilter === 'all' ? 'active' : ''}`} onClick={() => setEventTypeFilter('all')}>All</button>
-                <button className={`event-type-btn ${eventTypeFilter === 'open' ? 'active' : ''}`} onClick={() => setEventTypeFilter('open')}>Open Invite</button>
-                <button className={`event-type-btn ${eventTypeFilter === 'invite' ? 'active' : ''}`} onClick={() => setEventTypeFilter('invite')}>Invite Only</button>
-                <button className={`event-type-btn ${eventTypeFilter === 'attending' ? 'active' : ''}`} onClick={() => setEventTypeFilter('attending')}>Attending</button>
-              </div>
-              <div id="events-list">
-                {filterEventsItems(eventsData).length === 0 ? (
-                  <div className='text-gray-400 mt-8 text-center text-lg'>No events match this filter. Try adjusting your selections.</div>
-                ) : (
-                  (() => {
-                    let lastDay = '';
-                    return filterEventsItems(eventsData).map((event, index) => {
-                      const day = new Date(event.date).toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' });
-                      const dayHeader = day !== lastDay ? <div key={`header-${event.id}`} className='feed-group-label'>{day}</div> : null;
-                      lastDay = day;
-                      return <div key={event.id}>{dayHeader}<EventCardComponent event={event} onRSVP={handleRSVP} isInline={false} /></div>;
-                    });
-                  })()
-                )}
               </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
-    
-      </div></div>
+    </div>
   );
-} 
+}

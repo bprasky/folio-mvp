@@ -20,10 +20,10 @@ export function ProjectImageGallery({ project }: ProjectImageGalleryProps) {
   return (
     <section className="mt-10 space-y-4">
       <header className="flex items-center justify-between gap-2">
-        <h2 className="text-xs font-semibold uppercase tracking-[0.18em] text-neutral-500">
+        <h2 className="folio-ui tracking-[0.18em] uppercase text-[var(--text-secondary)]">
           Project Gallery
         </h2>
-        <span className="text-[11px] text-neutral-400">
+        <span className="folio-meta text-[var(--text-tertiary)]">
           {galleryImages.length} photos
         </span>
       </header>
@@ -33,7 +33,7 @@ export function ProjectImageGallery({ project }: ProjectImageGalleryProps) {
           <figure
             key={img.id ?? index}
             className={clsx(
-              "relative overflow-hidden rounded-3xl bg-neutral-100 shadow-[0_16px_40px_rgba(15,14,10,0.16)]",
+              "relative overflow-hidden rounded-3xl bg-[var(--bg-elevated)] shadow-[0_16px_40px_rgba(15,14,10,0.16)]",
               // Let the first few images feel larger by spanning more columns on desktop
               index === 0 && "md:col-span-2 lg:col-span-3",
               index === 1 && "md:col-span-1 lg:col-span-2"

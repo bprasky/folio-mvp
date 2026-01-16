@@ -18,11 +18,11 @@ export function DesignerFunnelSection() {
 
   return (
     <section className="space-y-3">
-      <h3 className="text-lg font-semibold text-neutral-800">Designer Activity Funnel (Standard)</h3>
-      <p className="text-sm text-neutral-600">
+      <h3 className="text-lg font-semibold text-[var(--text-primary)]">Designer Activity Funnel (Standard)</h3>
+      <p className="text-sm text-[var(--text-secondary)]">
         How designers move from exploring your catalog to closing projects.
       </p>
-      <div className="rounded-2xl bg-white border border-neutral-200 shadow-sm p-4 grid md:grid-cols-5 gap-3 text-sm">
+      <div className="rounded-2xl ridge-card p-4 grid md:grid-cols-5 gap-3 text-sm">
         <Stage label="Exploring" value={f.exploring} total={f.total} />
         <Stage label="Warming" value={f.warming} total={f.total} />
         <Stage label="High intent" value={f.highIntent} total={f.total} />
@@ -33,16 +33,16 @@ export function DesignerFunnelSection() {
       {/* AI Hot Designers */}
       <section className="space-y-2">
         <div className="flex items-center gap-2">
-          <h4 className="text-sm font-semibold text-neutral-800">AI: Hot Designers</h4>
+          <h4 className="text-sm font-semibold text-[var(--text-primary)]">AI: Hot Designers</h4>
           <AIBadge />
         </div>
         {!aiUnlocked ? (
-          <div className="rounded-2xl bg-white border border-neutral-200 shadow-sm p-3 flex items-center justify-between text-sm">
-            <span className="text-neutral-600">
+          <div className="rounded-2xl ridge-card p-3 flex items-center justify-between text-sm">
+            <span className="text-[var(--text-secondary)]">
               Unlock AI to see which designers are most likely to spec your products next.
             </span>
             <button 
-              className="rounded-xl px-3 py-1 bg-black text-white hover:bg-neutral-800 transition text-xs"
+              className="rounded-xl px-3 py-1 bg-[var(--text-primary)] text-[var(--bg-base)] hover:opacity-90 transition text-xs"
               onClick={() => {
                 // TODO: Wire to upgrade/payment flow
                 console.log('[AI HOT DESIGNERS] Unlock AI clicked');
@@ -52,19 +52,19 @@ export function DesignerFunnelSection() {
             </button>
           </div>
         ) : (
-          <div className="rounded-2xl bg-white border border-neutral-200 shadow-sm p-3 text-sm">
+          <div className="rounded-2xl ridge-card p-3 text-sm">
             <ul className="space-y-1.5">
               {f.hotDesigners.map(d => (
                 <li 
                   key={d.name} 
-                  className="flex items-center justify-between p-2 rounded-lg bg-neutral-50/50 hover:bg-neutral-100/50 transition"
+                  className="flex items-center justify-between p-2 rounded-lg bg-[var(--bg-elevated)]/50 hover:bg-[var(--bg-elevated)] transition"
                 >
-                  <span className="text-neutral-700">{d.name}</span>
-                  <span className="text-xs font-mono text-neutral-600">{d.score}% likelihood</span>
+                  <span className="text-[var(--text-primary)]">{d.name}</span>
+                  <span className="text-xs font-mono text-[var(--text-secondary)]">{d.score}% likelihood</span>
                 </li>
               ))}
             </ul>
-            <div className="mt-2 text-[11px] text-neutral-500">
+            <div className="mt-2 text-[11px] text-[var(--text-secondary)]">
               Based on saves, tags, and event activity for your products.
             </div>
           </div>
@@ -80,15 +80,15 @@ function Stage({ label, value, total }: { label: string; value: number; total: n
   const pct = total ? Math.round((value / total) * 100) : 0;
   return (
     <div className="space-y-1">
-      <div className="text-xs uppercase tracking-wide text-neutral-600">{label}</div>
-      <div className="text-base font-semibold text-neutral-800">{value.toLocaleString()}</div>
-      <div className="h-1 rounded-full bg-neutral-200">
+      <div className="text-xs uppercase tracking-wide text-[var(--text-secondary)]">{label}</div>
+      <div className="text-base font-semibold text-[var(--text-primary)]">{value.toLocaleString()}</div>
+      <div className="h-1 rounded-full bg-[var(--ridge-inner)]">
         <div 
-          className="h-1 rounded-full bg-neutral-800 transition-all" 
+          className="h-1 rounded-full bg-[var(--text-primary)] transition-all" 
           style={{ width: `${pct}%` }} 
         />
       </div>
-      <div className="text-[11px] text-neutral-500">{pct}% of designers</div>
+      <div className="text-[11px] text-[var(--text-secondary)]">{pct}% of designers</div>
     </div>
   );
 }

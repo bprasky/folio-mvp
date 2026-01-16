@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { FaUpload, FaImages, FaPlus, FaTag, FaRocket, FaCheckCircle } from 'react-icons/fa';
 import ProjectCreationModal from '@/components/ProjectCreationModal';
 import { InterviewModal } from '@/components/posting/interview/InterviewModal';
+import { FinishScheduleOptionsModal } from '@/components/posting/FinishScheduleOptionsModal';
 
 interface ProductTag {
   id: string;
@@ -41,6 +42,7 @@ const POSTING_V1_ENABLED = process.env.NEXT_PUBLIC_POSTING_V1 === 'true';
 export default function MediaSection({ project, isOwner, images, projectPost }: MediaSectionProps) {
   const router = useRouter();
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [showFinishScheduleModal, setShowFinishScheduleModal] = useState(false);
   const [showInterviewModal, setShowInterviewModal] = useState(false);
   const [selectedHeroImageId, setSelectedHeroImageId] = useState<string | null>(null);
   const [existingPost, setExistingPost] = useState<any>(null);
@@ -162,17 +164,17 @@ export default function MediaSection({ project, isOwner, images, projectPost }: 
   return (
     <div className="space-y-6">
       {/* Header with Actions */}
-      <section className="bg-white p-6 rounded-lg shadow-md">
+      <section className="bg-[var(--bg-elevated)] p-6 rounded-lg shadow-md">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-3xl font-bold flex items-center gap-3">
-            <FaImages className="w-8 h-8 text-blue-600" />
+          <h2 className="folio-h2 flex items-center gap-3">
+            <FaImages className="w-8 h-8 text-[var(--accent)]" />
             Project Media
           </h2>
           <div className="flex items-center gap-3">
             {isOwner && (
               <button
                 onClick={() => setShowUploadModal(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-[var(--accent)] text-white rounded-lg hover:bg-[var(--accent-hover)] transition-colors"
               >
                 <FaUpload className="w-4 h-4" />
                 Upload Media
@@ -180,23 +182,14 @@ export default function MediaSection({ project, isOwner, images, projectPost }: 
             )}
             {isOwner && POSTING_V1_ENABLED && (
               <button
-                onClick={async () => {
-                  // Check LLM availability before opening modal
-                  try {
-                    const res = await fetch("/api/health/llm");
-                    const data = await res.json();
-                    if (!data.ok) {
-                      setLlmWarning("AI not configured—using clean template.");
-                    }
-                  } catch {
-                    // Ignore health check failures
-                  }
-                  setShowInterviewModal(true);
+                onClick={() => {
+                  // Show finish schedule options before interview
+                  setShowFinishScheduleModal(true);
                 }}
                 className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
               >
                 <FaRocket className="w-4 h-4" />
-                Publish
+                Continue to Interview
               </button>
             )}
           </div>
@@ -207,24 +200,24 @@ export default function MediaSection({ project, isOwner, images, projectPost }: 
           <div className={`mb-6 p-4 rounded-lg border ${
             checklistBanner.hasImages && checklistBanner.hasTags && checklistBanner.hasCover
               ? 'bg-green-50 border-green-200'
-              : 'bg-yellow-50 border-yellow-200'
+              : 'bg-[var(--accent)]/10 border-[var(--accent)]/20'
           }`}>
             <div className="flex items-start gap-3">
               <FaCheckCircle className={`w-5 h-5 mt-0.5 ${
                 checklistBanner.hasImages && checklistBanner.hasTags && checklistBanner.hasCover
                   ? 'text-green-600'
-                  : 'text-yellow-600'
+                  : 'text-[var(--accent)]'
               }`} />
               <div className="flex-1">
-                <h3 className="font-medium mb-2">Publish Checklist</h3>
-                <ul className="space-y-1 text-sm">
-                  <li className={checklistBanner.hasImages ? 'text-green-700' : 'text-yellow-700'}>
+                <h3 className="font-medium mb-2 text-[var(--text-primary)]">Publish Checklist</h3>
+                <ul className="space-y-1 folio-ui">
+                  <li className={checklistBanner.hasImages ? 'text-green-700' : 'text-[var(--accent)]'}>
                     {checklistBanner.hasImages ? '✓' : '○'} At least 1 image uploaded
                   </li>
-                  <li className={checklistBanner.hasTags ? 'text-green-700' : 'text-yellow-700'}>
+                  <li className={checklistBanner.hasTags ? 'text-green-700' : 'text-[var(--accent)]'}>
                     {checklistBanner.hasTags ? '✓' : '○'} At least 1 product tagged
                   </li>
-                  <li className={checklistBanner.hasCover ? 'text-green-700' : 'text-yellow-700'}>
+                  <li className={checklistBanner.hasCover ? 'text-green-700' : 'text-[var(--accent)]'}>
                     {checklistBanner.hasCover ? '✓' : '○'} Cover image selected
                   </li>
                 </ul>
@@ -242,18 +235,18 @@ export default function MediaSection({ project, isOwner, images, projectPost }: 
 
         {/* LLM Warning */}
         {llmWarning && (
-          <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-lg text-sm">
+          <div className="mb-6 p-4 bg-[var(--accent)]/10 border border-[var(--accent)]/20 text-[var(--accent)] rounded-lg folio-ui">
             {llmWarning}
           </div>
         )}
 
         {/* Images Grid */}
         {images.length === 0 ? (
-          <div className="text-center py-12 text-gray-500">
+          <div className="text-center py-12 text-[var(--text-secondary)]">
             <FaImages className="w-16 h-16 mx-auto mb-4 opacity-50" />
-            <p className="text-lg mb-2">No images uploaded yet</p>
+            <p className="folio-body mb-2">No images uploaded yet</p>
             {isOwner && (
-              <p className="text-sm">Click "Upload Media" to add images and tag products</p>
+              <p className="folio-ui">Click "Upload Media" to add images and tag products</p>
             )}
           </div>
         ) : (
@@ -265,8 +258,8 @@ export default function MediaSection({ project, isOwner, images, projectPost }: 
               return (
                 <div
                   key={image.id}
-                  className={`relative group aspect-[4/3] bg-gray-100 rounded-lg overflow-hidden border-2 ${
-                    isCover ? 'border-green-500' : 'border-gray-200 hover:border-blue-400'
+                  className={`relative group aspect-[4/3] bg-[var(--bg-base)] rounded-lg overflow-hidden border-2 ${
+                    isCover ? 'border-green-500' : 'border-[var(--border-default)] hover:border-[var(--accent)]'
                   } transition-all`}
                 >
                   <Image
@@ -301,7 +294,7 @@ export default function MediaSection({ project, isOwner, images, projectPost }: 
                         className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                           isCover
                             ? 'bg-green-600 text-white'
-                            : 'bg-white text-gray-900 hover:bg-gray-100'
+                            : 'bg-[var(--bg-base)] text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]'
                         }`}
                       >
                         {isCover ? 'Cover Selected' : 'Set as Cover'}
@@ -326,6 +319,37 @@ export default function MediaSection({ project, isOwner, images, projectPost }: 
             router.refresh();
           }}
           editingProject={project}
+        />
+      )}
+
+      {/* Finish Schedule Options Modal */}
+      {showFinishScheduleModal && (
+        <FinishScheduleOptionsModal
+          open={showFinishScheduleModal}
+          onOpenChange={setShowFinishScheduleModal}
+          projectId={project.id}
+          onComplete={async (option) => {
+            setShowFinishScheduleModal(false);
+
+            // Check LLM availability before opening interview modal
+            try {
+              const res = await fetch("/api/health/llm");
+              const data = await res.json();
+              if (!data.ok) {
+                setLlmWarning("AI not configured—using clean template.");
+              }
+            } catch {
+              // Ignore health check failures
+            }
+
+            // If they uploaded a finish schedule, refresh to show new tags
+            if (option === 'uploaded') {
+              router.refresh();
+            }
+
+            // Proceed to interview
+            setShowInterviewModal(true);
+          }}
         />
       )}
 

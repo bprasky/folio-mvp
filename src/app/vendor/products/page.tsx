@@ -4,6 +4,8 @@ import { Plus, Package } from 'lucide-react';
 import { listVendors, listVendorProducts } from './actions';
 import ProductsFilters from '@/components/vendor/products/ProductsFilters';
 import { ProductThumbnail } from '@/components/vendor/products/ProductThumbnail';
+import { RidgeCard } from '@/components/ui/ridge-card';
+import { Button } from '@/components/ui/button';
 
 interface SearchParams {
   vendorId?: string;
@@ -43,21 +45,20 @@ async function ProductsContent({ searchParams }: { searchParams: SearchParams })
       <ProductsFilters vendors={vendors} />
 
       {data.items.length === 0 ? (
-        <div className="rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 p-12 text-center">
-          <p className="text-stone-600 dark:text-stone-400 mb-4">No products found</p>
-          <Link
-            href="/vendor/products/new"
-            className="inline-block rounded-full bg-stone-900 dark:bg-stone-100 px-6 py-2 text-white dark:text-stone-900 hover:bg-stone-800 dark:hover:bg-stone-200 transition-colors"
-          >
-            + Add Your First Product
+        <RidgeCard padding="xl" className="text-center">
+          <p className="folio-body text-[var(--text-secondary)] mb-4">No products found</p>
+          <Link href="/vendor/products/new">
+            <Button variant="accent">
+              + Add Your First Product
+            </Button>
           </Link>
-        </div>
+        </RidgeCard>
       ) : (
-        <div className="overflow-hidden rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900">
+        <RidgeCard padding="none" className="overflow-hidden">
           {/* Table */}
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-stone-50 dark:bg-stone-800 text-stone-600 dark:text-stone-400 border-b border-stone-200 dark:border-stone-700">
+              <thead className="bg-[var(--bg-elevated)] text-[var(--text-tertiary)] border-b border-[var(--border-subtle)]">
                 <tr>
                   <th className="px-4 py-3 text-left font-medium">Product</th>
                   <th className="px-4 py-3 text-left font-medium">Brand</th>
@@ -71,48 +72,47 @@ async function ProductsContent({ searchParams }: { searchParams: SearchParams })
                 {data.items.map((product) => (
                   <tr
                     key={product.id}
-                    className="border-t border-stone-200 dark:border-stone-700 hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors"
+                    className="border-t border-[var(--border-subtle)] hover:bg-[var(--bg-elevated)] transition-colors"
                   >
                     <td className="px-4 py-3">
                       <Link
                         href={product.href}
                         className="flex items-center gap-3 hover:underline"
                       >
-                        <ProductThumbnail 
-                          imageUrl={product.imageUrl} 
+                        <ProductThumbnail
+                          imageUrl={product.imageUrl}
                           productName={product.name}
                         />
-                        <span className="text-stone-900 dark:text-stone-100 font-medium">
+                        <span className="text-[var(--text-primary)] font-medium">
                           {product.name}
                         </span>
                       </Link>
                     </td>
-                    <td className="px-4 py-3 text-stone-600 dark:text-stone-400">
+                    <td className="px-4 py-3 text-[var(--text-secondary)]">
                       {product.skuOrBrand}
                     </td>
-                    <td className="px-4 py-3 text-stone-600 dark:text-stone-400">
+                    <td className="px-4 py-3 text-[var(--text-secondary)]">
                       {product.vendorName}
                     </td>
                     <td className="px-4 py-3">
                       <span
                         className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                           product.status === 'PUBLISHED'
-                            ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200'
-                            : 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200'
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-amber-100 text-amber-800'
                         }`}
                       >
                         {product.status}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-stone-600 dark:text-stone-400">
+                    <td className="px-4 py-3 folio-meta">
                       {new Date(product.createdAt).toLocaleDateString()}
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <Link
-                        href={`/vendor/products/${product.id}`}
-                        className="inline-flex items-center gap-2 rounded-md border border-stone-300 dark:border-stone-700 px-3 py-1 text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors text-xs"
-                      >
-                        Manage
+                      <Link href={`/vendor/products/${product.id}`}>
+                        <Button variant="ridge" size="sm">
+                          Manage
+                        </Button>
                       </Link>
                     </td>
                   </tr>
@@ -122,34 +122,34 @@ async function ProductsContent({ searchParams }: { searchParams: SearchParams })
           </div>
 
           {/* Pagination */}
-          <div className="flex items-center justify-between px-4 py-3 border-t border-stone-200 dark:border-stone-700 text-sm">
-            <span className="text-stone-600 dark:text-stone-400">
+          <div className="flex items-center justify-between px-4 py-3 border-t border-[var(--border-subtle)] text-sm">
+            <span className="folio-meta">
               {(currentPage - 1) * data.pageSize + 1}–
               {Math.min(currentPage * data.pageSize, data.total)} of {data.total}
             </span>
             <div className="flex items-center gap-2">
               <Link
                 href={buildUrl(Math.max(1, currentPage - 1))}
-                className={`rounded-md border border-stone-300 dark:border-stone-700 px-3 py-1 text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors ${
-                  currentPage === 1 ? 'opacity-50 pointer-events-none' : ''
-                }`}
+                className={currentPage === 1 ? 'opacity-50 pointer-events-none' : ''}
               >
-                Previous
+                <Button variant="ridge" size="sm">
+                  Previous
+                </Button>
               </Link>
-              <span className="text-stone-600 dark:text-stone-400">
+              <span className="folio-meta">
                 Page {currentPage} of {data.totalPages}
               </span>
               <Link
                 href={buildUrl(Math.min(data.totalPages, currentPage + 1))}
-                className={`rounded-md border border-stone-300 dark:border-stone-700 px-3 py-1 text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors ${
-                  currentPage >= data.totalPages ? 'opacity-50 pointer-events-none' : ''
-                }`}
+                className={currentPage >= data.totalPages ? 'opacity-50 pointer-events-none' : ''}
               >
-                Next
+                <Button variant="ridge" size="sm">
+                  Next
+                </Button>
               </Link>
             </div>
           </div>
-        </div>
+        </RidgeCard>
       )}
     </>
   );
@@ -161,29 +161,28 @@ export default function VendorProductsPage({
   searchParams: SearchParams;
 }) {
   return (
-    <div className="mx-auto max-w-[1200px] px-6 py-8">
+    <div className="mx-auto max-w-[1200px] px-6 py-8 bg-[var(--bg-base)] min-h-screen">
       {/* Header */}
       <div className="mb-8 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="p-3 rounded-xl bg-purple-100 dark:bg-purple-900">
-            <Package className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+          <div className="p-3 rounded-xl bg-[var(--accent)]/10">
+            <Package className="w-6 h-6 text-[var(--accent)]" />
           </div>
           <div>
-            <h1 className="text-3xl font-serif font-light text-stone-900 dark:text-stone-100">
+            <h1 className="folio-h1">
               Products
             </h1>
-            <p className="text-sm text-stone-600 dark:text-stone-400">
+            <p className="folio-body text-[var(--text-secondary)]">
               Manage your product catalog
             </p>
           </div>
         </div>
-        
-        <Link
-          href="/vendor/products/new"
-          className="inline-flex items-center gap-2 rounded-full bg-stone-900 dark:bg-stone-100 px-6 py-2.5 text-white dark:text-stone-900 hover:bg-stone-800 dark:hover:bg-stone-200 transition-colors font-medium"
-        >
-          <Plus className="w-4 h-4" />
-          Add Product
+
+        <Link href="/vendor/products/new">
+          <Button variant="accent" size="lg">
+            <Plus className="w-4 h-4 mr-2" />
+            Add Product
+          </Button>
         </Link>
       </div>
 
@@ -191,8 +190,8 @@ export default function VendorProductsPage({
       <Suspense
         fallback={
           <div className="animate-pulse space-y-4">
-            <div className="h-10 bg-stone-200 dark:bg-stone-800 rounded-lg" />
-            <div className="h-64 bg-stone-200 dark:bg-stone-800 rounded-xl" />
+            <div className="h-10 bg-[var(--bg-elevated)] rounded-lg" />
+            <div className="h-64 bg-[var(--bg-elevated)] rounded-xl" />
           </div>
         }
       >

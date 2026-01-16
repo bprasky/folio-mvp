@@ -14,20 +14,32 @@ interface ProjectsPageProps {
 export default async function ProjectsPage({ searchParams }: ProjectsPageProps) {
   try {
     const session = await getServerSession(authOptions);
-    
+
+    // DEBUG: Log session info to diagnose redirect issues
+    console.log('[ProjectsPage] DEBUG Session:', {
+      hasSession: !!session,
+      userId: session?.user?.id,
+      role: session?.user?.role,
+      normalizedRole: session?.user?.role ? normalizeRole(session.user.role) : 'NO_ROLE',
+      email: session?.user?.email,
+      operatingAsOrgId: (session?.user as any)?.operatingAsOrgId,
+    });
+
     if (!session?.user?.id) {
+      console.log('[ProjectsPage] No session, redirecting to signin');
       redirect('/auth/signin');
     }
 
-    const role = normalizeRole(session.user.role);
-    if (role !== 'DESIGNER' && role !== 'ADMIN') {
-      redirect('/');
-    }
+    // All authenticated users can access projects
+    // (permissions/capabilities within projects are handled separately)
 
-    // Fetch projects with computed stats (read-only, no writes)
-    const projects = await getMyProjectsWithStats();
+    // Get the operating context from session
+    const operatingAsOrgId = (session.user as any)?.operatingAsOrgId as string | null | undefined;
 
-    return <ProjectsPageClient projectsRaw={projects} />;
+    // Fetch projects with computed stats, filtered by operating context
+    const projects = await getMyProjectsWithStats(operatingAsOrgId);
+
+    return <ProjectsPageClient projectsRaw={projects} operatingAsOrgId={operatingAsOrgId} />;
   } catch (error) {
     console.error('[ProjectsPage] Error:', error);
     // Re-throw to show error page instead of 404

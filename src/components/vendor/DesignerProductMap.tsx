@@ -26,11 +26,11 @@ export const DesignerProductMap: React.FC<DesignerProductMapProps> = ({
 
   // For now, we fake a simple engagement score matrix using existing totals
   return (
-    <section className="mt-8 rounded-2xl border border-neutral-200 bg-white/80 p-4 shadow-sm">
-      <h2 className="text-sm font-semibold text-neutral-900">
+    <section className="mt-8 ridge-card p-4">
+      <h2 className="folio-ui font-semibold text-[var(--text-primary)]">
         Designer × Product map
       </h2>
-      <p className="mt-1 text-xs text-neutral-500">
+      <p className="mt-1 folio-meta text-[var(--text-secondary)]">
         A high-level view of how your key designers and products relate. Darker
         cells indicate stronger engagement.
       </p>
@@ -39,7 +39,7 @@ export const DesignerProductMap: React.FC<DesignerProductMapProps> = ({
         <table className="min-w-full text-xs">
           <thead>
             <tr>
-              <th className="px-2 py-2 text-left text-[11px] uppercase tracking-wide text-neutral-500">
+              <th className="px-2 py-2 text-left text-[11px] uppercase tracking-wide text-[var(--text-secondary)]">
                 Product / Designer
               </th>
               {topDesigners.map((d) => {
@@ -47,7 +47,7 @@ export const DesignerProductMap: React.FC<DesignerProductMapProps> = ({
                 return (
                   <th
                     key={d.designerId}
-                    className="px-2 py-2 text-[11px] uppercase tracking-wide text-neutral-500 text-left"
+                    className="px-2 py-2 text-[11px] uppercase tracking-wide text-[var(--text-secondary)] text-left"
                   >
                     {designer?.name || d.designerId}
                   </th>
@@ -57,10 +57,10 @@ export const DesignerProductMap: React.FC<DesignerProductMapProps> = ({
           </thead>
           <tbody>
             {topProducts.map((p) => (
-              <tr key={p.productId} className="border-t border-neutral-100">
-                <td className="px-2 py-2 text-neutral-800">
+              <tr key={p.productId} className="border-t border-[var(--ridge-inner)]">
+                <td className="px-2 py-2 text-[var(--text-primary)]">
                   <div className="font-medium">{p.name}</div>
-                  <div className="text-[11px] text-neutral-500">
+                  <div className="text-[11px] text-[var(--text-secondary)]">
                     {p.collectionName}
                   </div>
                 </td>

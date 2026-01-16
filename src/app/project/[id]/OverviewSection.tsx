@@ -111,9 +111,9 @@ export default function OverviewSection({ project, isOwner }: OverviewSectionPro
   return (
     <div className="space-y-10">
       {/* Overview Section */}
-      <section className="bg-white p-8 rounded-lg shadow-md">
+      <section className="bg-[var(--bg-elevated)] p-8 rounded-lg shadow-md">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-3xl font-bold">Overview</h2>
+          <h2 className="folio-h2">Overview</h2>
           {isOwner && (
             <div className="flex items-center gap-2">
               {isEditing ? (
@@ -130,7 +130,7 @@ export default function OverviewSection({ project, isOwner }: OverviewSectionPro
                       setIsEditing(false);
                       setEditedProject(project);
                     }}
-                    className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                    className="px-4 py-2 bg-[var(--text-secondary)] text-white rounded-lg hover:bg-[var(--text-primary)] transition-colors"
                   >
                     Cancel
                   </button>
@@ -138,7 +138,7 @@ export default function OverviewSection({ project, isOwner }: OverviewSectionPro
               ) : (
                 <button
                   onClick={() => setIsEditing(true)}
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 bg-[var(--accent)] text-white rounded-lg hover:bg-[var(--accent-hover)] transition-colors"
                 >
                   <FaEdit className="w-4 h-4" />
                   Edit Project
@@ -147,60 +147,60 @@ export default function OverviewSection({ project, isOwner }: OverviewSectionPro
             </div>
           )}
         </div>
-        
+
         {isEditing ? (
           <textarea
             value={currentProject.description || ''}
             onChange={(e) => setEditedProject({ ...currentProject, description: e.target.value })}
             rows={4}
-            className="w-full p-3 border border-gray-300 rounded-lg mb-6 resize-none"
+            className="w-full p-3 border border-[var(--border-default)] rounded-lg mb-6 resize-none bg-[var(--bg-base)]"
             placeholder="Project description..."
           />
         ) : (
-          <p className="text-gray-700 leading-relaxed mb-6">{currentProject.description || 'No description yet.'}</p>
+          <p className="text-[var(--text-secondary)] leading-relaxed mb-6">{currentProject.description || 'No description yet.'}</p>
         )}
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-gray-700">
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-[var(--text-secondary)]">
           <div>
             <span className="font-semibold">Stage:</span>
             <span className="ml-2">{getStageLabel(currentProject.stage)}</span>
           </div>
-          
+
           <div>
             <span className="font-semibold">Project Type:</span>
             <span className="ml-2">{getProjectTypeLabel(currentProject.projectType)}</span>
           </div>
-          
+
           <div>
             <span className="font-semibold">Client Type:</span>
             <span className="ml-2">{getClientTypeLabel(currentProject.clientType)}</span>
           </div>
-          
+
           <div>
             <span className="font-semibold">Budget Band:</span>
             <span className="ml-2">{getBudgetBandLabel(currentProject.budgetBand)}</span>
           </div>
-          
+
           <div>
             <span className="font-semibold">Location:</span>
             <span className="ml-2">
-              {currentProject.city && currentProject.regionState 
+              {currentProject.city && currentProject.regionState
                 ? `${currentProject.city}, ${currentProject.regionState}`
                 : currentProject.city || currentProject.regionState || 'Not specified'
               }
             </span>
           </div>
-          
+
           <div>
             <span className="font-semibold">Status:</span>
             <span className="ml-2">{currentProject.status}</span>
           </div>
-          
+
           <div>
             <span className="font-semibold">Created:</span>
             <span className="ml-2">{formatDate(currentProject.createdAt)}</span>
           </div>
-          
+
           <div>
             <span className="font-semibold">Updated:</span>
             <span className="ml-2">{formatDate(currentProject.updatedAt)}</span>
@@ -209,31 +209,31 @@ export default function OverviewSection({ project, isOwner }: OverviewSectionPro
       </section>
 
       {/* Project Stats Section */}
-      <section className="bg-white p-8 rounded-lg shadow-md">
-        <h2 className="text-3xl font-bold mb-6">Project Insights</h2>
+      <section className="bg-[var(--bg-elevated)] p-8 rounded-lg shadow-md">
+        <h2 className="folio-h2 mb-6">Project Insights</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="text-center p-4 bg-blue-50 rounded-lg">
-            <div className="text-3xl font-bold text-blue-600">{currentProject.views.toLocaleString()}</div>
-            <div className="text-gray-600">Views</div>
+          <div className="text-center p-4 bg-[var(--accent)]/10 rounded-lg">
+            <div className="text-3xl font-bold text-[var(--accent)]">{currentProject.views.toLocaleString()}</div>
+            <div className="text-[var(--text-secondary)]">Views</div>
           </div>
           <div className="text-center p-4 bg-green-50 rounded-lg">
             <div className="text-3xl font-bold text-green-600">{currentProject.saves.toLocaleString()}</div>
-            <div className="text-gray-600">Saves</div>
+            <div className="text-[var(--text-secondary)]">Saves</div>
           </div>
           <div className="text-center p-4 bg-purple-50 rounded-lg">
             <div className="text-3xl font-bold text-purple-600">{currentProject.shares.toLocaleString()}</div>
-            <div className="text-gray-600">Shares</div>
+            <div className="text-[var(--text-secondary)]">Shares</div>
           </div>
         </div>
       </section>
 
       {/* Placeholder for Images Section */}
-      <section className="bg-white p-8 rounded-lg shadow-md">
-        <h2 className="text-3xl font-bold mb-6">Project Images</h2>
-        <div className="text-center py-12 text-gray-500">
+      <section className="bg-[var(--bg-elevated)] p-8 rounded-lg shadow-md">
+        <h2 className="folio-h2 mb-6">Project Images</h2>
+        <div className="text-center py-12 text-[var(--text-secondary)]">
           <p>No images uploaded yet.</p>
           {isOwner && (
-            <p className="text-sm mt-2">Upload images to showcase your project.</p>
+            <p className="folio-ui mt-2">Upload images to showcase your project.</p>
           )}
         </div>
       </section>

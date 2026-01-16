@@ -147,7 +147,7 @@ export function CreateAppreciationDinnerModal({
           className="absolute right-4 top-4 z-10 rounded-sm opacity-70 hover:opacity-100 transition-opacity focus:outline-none focus:ring-2 focus:ring-[#b89a72] focus:ring-offset-2"
           aria-label="Close"
         >
-          <X className="h-5 w-5 text-neutral-700" />
+          <X className="h-5 w-5 text-[var(--text-primary)]" />
         </button>
 
         <div className="absolute right-16 top-4 z-10 flex items-center gap-1.5 px-3 py-1.5 bg-[#b89a72]/10 border border-[#b89a72]/30 rounded-full">
@@ -157,13 +157,13 @@ export function CreateAppreciationDinnerModal({
 
         <div className="p-8">
           <div className="mb-8">
-            <h2 className="text-[32px] font-serif text-neutral-900 leading-tight">
+            <h2 className="text-[32px] font-serif text-[var(--text-primary)] leading-tight">
               {plan?.eventName || "Champions Dinner – December 2025"}
             </h2>
           </div>
 
           {isLoading && (
-            <div className="py-12 text-center text-neutral-600">
+            <div className="py-12 text-center text-[var(--text-secondary)]">
               <p>Generating your appreciation dinner plan...</p>
             </div>
           )}
@@ -177,30 +177,30 @@ export function CreateAppreciationDinnerModal({
           {plan && !isLoading && (
             <div className="space-y-8">
               <section>
-                <h3 className="text-lg font-serif text-neutral-900 mb-4">Guest List</h3>
-                <div className="border border-neutral-200 rounded-lg overflow-hidden bg-white">
+                <h3 className="text-lg font-serif text-[var(--text-primary)] mb-4">Guest List</h3>
+                <div className="border border-[var(--ridge-outer)] rounded-lg overflow-hidden bg-[var(--bg-base)]">
                   <table className="w-full text-sm">
-                    <thead className="bg-neutral-50 border-b border-neutral-200">
+                    <thead className="bg-[var(--bg-elevated)] border-b border-[var(--ridge-outer)]">
                       <tr>
-                        <th className="px-4 py-3 text-left font-medium text-neutral-700">Designer</th>
-                        <th className="px-4 py-3 text-left font-medium text-neutral-700">Firm</th>
-                        <th className="px-4 py-3 text-right font-medium text-neutral-700">YTD Influence</th>
-                        <th className="px-4 py-3 text-right font-medium text-neutral-700">Lifetime Pipeline</th>
-                        <th className="px-4 py-3 text-left font-medium text-neutral-700">Reason</th>
+                        <th className="px-4 py-3 text-left font-medium text-[var(--text-primary)]">Designer</th>
+                        <th className="px-4 py-3 text-left font-medium text-[var(--text-primary)]">Firm</th>
+                        <th className="px-4 py-3 text-right font-medium text-[var(--text-primary)]">YTD Influence</th>
+                        <th className="px-4 py-3 text-right font-medium text-[var(--text-primary)]">Lifetime Pipeline</th>
+                        <th className="px-4 py-3 text-left font-medium text-[var(--text-primary)]">Reason</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-neutral-200">
+                    <tbody className="divide-y divide-[var(--ridge-outer)]">
                       {plan.guests.map((guest) => (
-                        <tr key={guest.designerId} className="hover:bg-neutral-50">
-                          <td className="px-4 py-3 font-medium text-neutral-900">{guest.name}</td>
-                          <td className="px-4 py-3 text-neutral-600">{guest.firm}</td>
-                          <td className="px-4 py-3 text-right text-neutral-700">
+                        <tr key={guest.designerId} className="hover:bg-[var(--bg-elevated)]">
+                          <td className="px-4 py-3 font-medium text-[var(--text-primary)]">{guest.name}</td>
+                          <td className="px-4 py-3 text-[var(--text-secondary)]">{guest.firm}</td>
+                          <td className="px-4 py-3 text-right text-[var(--text-primary)]">
                             ${(guest.ytdInfluence / 1000).toFixed(0)}k
                           </td>
-                          <td className="px-4 py-3 text-right text-neutral-700">
+                          <td className="px-4 py-3 text-right text-[var(--text-primary)]">
                             ${(guest.lifetimePipeline / 1000).toFixed(0)}k
                           </td>
-                          <td className="px-4 py-3 text-neutral-600 text-xs max-w-xs">
+                          <td className="px-4 py-3 text-[var(--text-secondary)] text-xs max-w-xs">
                             {guest.personalizedReason}
                           </td>
                         </tr>
@@ -211,56 +211,56 @@ export function CreateAppreciationDinnerModal({
               </section>
 
               <section>
-                <h3 className="text-lg font-serif text-neutral-900 mb-4">Choose Your Event Concept</h3>
-                <p className="text-sm text-neutral-600 mb-6">
+                <h3 className="text-lg font-serif text-[var(--text-primary)] mb-4">Choose Your Event Concept</h3>
+                <p className="text-sm text-[var(--text-secondary)] mb-6">
                   <span className="font-medium">Recommended Date:</span> {plan.recommendedDate}
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 overflow-x-auto md:overflow-visible">
                   {plan.options.map((option, index) => (
                     <div
                       key={index}
-                      className="flex-shrink-0 w-full md:w-auto bg-white border border-neutral-200 rounded-xl overflow-hidden hover:shadow-lg transition-shadow"
+                      className="flex-shrink-0 w-full md:w-auto bg-[var(--bg-base)] border border-[var(--ridge-outer)] rounded-xl overflow-hidden hover:shadow-lg transition-shadow"
                     >
                       {/* Hero image placeholder */}
-                      <div className="h-32 bg-neutral-200 flex items-center justify-center">
-                        <span className="text-xs text-neutral-500 uppercase tracking-wide">Event Image</span>
+                      <div className="h-32 bg-[var(--ridge-inner)] flex items-center justify-center">
+                        <span className="text-xs text-[var(--text-secondary)] uppercase tracking-wide">Event Image</span>
                       </div>
                       
                       <div className="p-4 space-y-3">
                         <div>
-                          <h4 className="text-base font-serif text-neutral-900">{option.conceptName}</h4>
-                          <p className="text-xs text-neutral-600 mt-1">{option.venue.name}</p>
-                          <p className="text-xs text-neutral-500">{option.venue.city}</p>
+                          <h4 className="text-base font-serif text-[var(--text-primary)]">{option.conceptName}</h4>
+                          <p className="text-xs text-[var(--text-secondary)] mt-1">{option.venue.name}</p>
+                          <p className="text-xs text-[var(--text-secondary)]">{option.venue.city}</p>
                         </div>
 
                         <div className="space-y-2 text-sm">
                           <div className="flex justify-between">
-                            <span className="text-neutral-600">Cost:</span>
-                            <span className="font-medium text-neutral-900">{option.costRange}</span>
+                            <span className="text-[var(--text-secondary)]">Cost:</span>
+                            <span className="font-medium text-[var(--text-primary)]">{option.costRange}</span>
                           </div>
                           <div className="flex justify-between">
-                            <span className="text-neutral-600">Prestige:</span>
+                            <span className="text-[var(--text-secondary)]">Prestige:</span>
                             <span className="text-[#b89a72]">{option.prestigeStars}</span>
                           </div>
                           <div className="flex justify-between">
-                            <span className="text-neutral-600">Capacity:</span>
-                            <span className="font-medium text-neutral-900">{option.guestCapacity} guests</span>
+                            <span className="text-[var(--text-secondary)]">Capacity:</span>
+                            <span className="font-medium text-[var(--text-primary)]">{option.guestCapacity} guests</span>
                           </div>
                           <div className="flex justify-between items-start">
-                            <span className="text-neutral-600">Unlock:</span>
-                            <span className="font-serif text-neutral-900 text-right">
+                            <span className="text-[var(--text-secondary)]">Unlock:</span>
+                            <span className="font-serif text-[var(--text-primary)] text-right">
                               ${(option.projectedUnlock / 1000000).toFixed(1)}M+
                             </span>
                           </div>
                         </div>
 
-                        <p className="text-xs text-neutral-600 italic pt-2 border-t border-neutral-100">
+                        <p className="text-xs text-[var(--text-secondary)] italic pt-2 border-t border-[var(--ridge-inner)]">
                           {option.whyThisWorks}
                         </p>
 
                         <button
                           onClick={() => handleSelectPlan(option)}
-                          className="w-full mt-4 rounded-full bg-neutral-900 px-4 py-2.5 text-xs font-medium text-[#b89a72] hover:bg-neutral-800 transition-colors"
+                          className="w-full mt-4 rounded-full bg-[var(--text-primary)] px-4 py-2.5 text-xs font-medium text-[#b89a72] hover:opacity-90 transition-colors"
                         >
                           Select This Plan →
                         </button>
@@ -270,8 +270,8 @@ export function CreateAppreciationDinnerModal({
                 </div>
               </section>
 
-              <div className="pt-6 border-t border-neutral-200 text-right">
-                <p className="text-xs text-neutral-600">
+              <div className="pt-6 border-t border-[var(--ridge-outer)] text-right">
+                <p className="text-xs text-[var(--text-secondary)]">
                   Powered by <span className="font-medium">Grok-4</span>
                 </p>
               </div>

@@ -87,8 +87,8 @@ async function VendorPicker() {
   if (!memberships.length) {
     return (
       <div className="max-w-lg mx-auto text-center space-y-3 p-8">
-        <h2 className="text-2xl font-serif">No vendor organizations found</h2>
-        <p className="text-sm text-muted-foreground">
+        <h2 className="folio-h2">No vendor organizations found</h2>
+        <p className="folio-body text-[var(--text-secondary)]">
           Ask an admin to add you to a vendor organization, or create one if your role allows it.
         </p>
       </div>
@@ -97,20 +97,20 @@ async function VendorPicker() {
 
   return (
     <form action="/vendor/dashboard/set-view-as" method="POST" className="max-w-md mx-auto p-6 space-y-4">
-      <label className="block text-sm">Select vendor organization</label>
-      <select name="view_as_org" className="w-full border rounded-lg p-2">
+      <label className="block folio-body">Select vendor organization</label>
+      <select name="view_as_org" className="ridge-input w-full p-2">
         {memberships.map(m => (
           <option key={m.organizationId} value={m.organizationId}>{m.organization.name}</option>
         ))}
       </select>
-      <button className="px-4 py-2 rounded-lg border" type="submit">View</button>
+      <button className="accent-btn px-4 py-2" type="submit">View</button>
     </form>
   );
 }
 
 export default async function VendorDashboard() {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.id) return <div className="p-8">Please sign in.</div>;
+  if (!session?.user?.id) return <div className="p-8 folio-body">Please sign in.</div>;
 
   const where = vendorProjectsWhereDemo(session.user.id);
 
@@ -153,9 +153,9 @@ export default async function VendorDashboard() {
   // Use question-led dashboard when flag is enabled, or as default for new dashboard
   if (questionLedEnabled || flagEnabled) {
     return (
-      <section className="p-8 space-y-6 -mx-6 -mt-0">
+      <section className="p-8 space-y-6 -mx-6 -mt-0 bg-[var(--bg-base)]">
         <div className="mx-6">
-          <h1 className="text-3xl font-serif mb-6">Vendor Dashboard</h1>
+          <h1 className="folio-h1 mb-6">Vendor Dashboard</h1>
           <VendorAnalyticsDashboard />
         </div>
       </section>
@@ -164,12 +164,12 @@ export default async function VendorDashboard() {
 
   // Existing dashboard (fallback)
   return (
-    <section className="p-8 space-y-6">
-      <h1 className="text-3xl font-serif">Vendor Dashboard</h1>
-      <p className="text-sm text-muted-foreground">
+    <section className="p-8 space-y-6 bg-[var(--bg-base)]">
+      <h1 className="folio-h1">Vendor Dashboard</h1>
+      <p className="folio-body text-[var(--text-secondary)]">
         Showing projects you own or have selections on.
       </p>
-      <VendorDashboardClient 
+      <VendorDashboardClient
         user={{
           id: session.user.id,
           name: session.user.name || '',

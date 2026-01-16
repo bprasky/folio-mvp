@@ -34,34 +34,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if already on waitlist
-    const existing = await prisma.waitlistSignup.findUnique({
+    // Create waitlist signup (upsert to handle duplicates gracefully)
+    // Don't reveal if email already exists for privacy
+    await prisma.waitlistSignup.upsert({
       where: {
         email_type: {
           email,
           type,
         },
       },
-    });
-
-    if (existing) {
-      return NextResponse.json({
-        message: "You're already on the waitlist! We'll be in touch soon.",
-        alreadyExists: true,
-      });
-    }
-
-    // Create waitlist signup
-    await prisma.waitlistSignup.create({
-      data: {
+      update: {}, // Do nothing if already exists
+      create: {
         email,
         type,
       },
     });
 
     return NextResponse.json({
-      message: "Thanks for your interest! We'll notify you when we're ready.",
       success: true,
+      message: "You're on the list.",
     });
   } catch (error) {
     console.error('Error adding to waitlist:', error);

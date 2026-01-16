@@ -4,13 +4,9 @@ import React, { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import {
-  GlassCard,
-  EditorialHeadline,
-  GlassInput,
-  GlassButton,
-  GlassDivider,
-} from "@/components/ui/glass";
+import { RidgeCard } from '@/components/ui/ridge-card';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 
 export default function SigninPage() {
   const router = useRouter();
@@ -41,29 +37,27 @@ export default function SigninPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 via-white to-gray-100 px-4 py-12">
+    <div className="min-h-screen flex items-center justify-center bg-[var(--bg-base)] px-4 py-12">
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <span className="text-2xl font-semibold text-gray-900">Folio</span>
+          <span className="folio-logo-text">Folio</span>
         </div>
-        
-        <GlassCard variant="strong" padding="xl" rounded="3xl">
+
+        <RidgeCard size="lg" padding="xl">
           <div className="text-center mb-8">
-            <EditorialHeadline size="lg" className="mb-2">
-              Welcome back
-            </EditorialHeadline>
-            <p className="text-gray-600">
+            <h1 className="folio-h2 mb-2">Welcome back</h1>
+            <p className="folio-body">
               Sign in to continue to Folio
             </p>
           </div>
-          
+
           <form className="space-y-5" onSubmit={handleSubmit}>
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1.5">
+              <label htmlFor="email" className="block folio-ui text-[var(--text-primary)] mb-1.5">
                 Email
               </label>
-              <GlassInput
+              <Input
                 id="email"
                 name="email"
                 type="email"
@@ -75,12 +69,12 @@ export default function SigninPage() {
                 error={!!err}
               />
             </div>
-            
+
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1.5">
+              <label htmlFor="password" className="block folio-ui text-[var(--text-primary)] mb-1.5">
                 Password
               </label>
-              <GlassInput
+              <Input
                 id="password"
                 name="password"
                 type="password"
@@ -92,40 +86,40 @@ export default function SigninPage() {
                 error={!!err}
               />
             </div>
-            
+
             {err && (
-              <div className="p-3 rounded-md bg-red-50 border border-red-200 text-red-700 text-sm">
+              <div className="ridge-card ridge-card-sm p-3 bg-red-50 border-red-200 text-red-700 text-sm">
                 {err}
               </div>
             )}
-            
-            <GlassButton
+
+            <Button
               type="submit"
-              variant="primary"
+              variant="accent"
               size="lg"
               className="w-full"
               disabled={loading}
             >
               {loading ? 'Signing In...' : 'Sign In'}
-            </GlassButton>
+            </Button>
           </form>
-          
-          <GlassDivider className="my-6" />
-          
-          <p className="text-center text-gray-600">
+
+          <div className="my-6 h-px bg-[var(--ridge-outer)]" />
+
+          <p className="text-center folio-body">
             Don't have an account?{" "}
-            <Link href="/auth/signup" className="text-blue-600 hover:text-blue-700 font-medium">
+            <Link href="/auth/signup" className="text-[var(--accent)] hover:text-[var(--accent-hover)] font-medium">
               Create one
             </Link>
           </p>
-        </GlassCard>
-        
+        </RidgeCard>
+
         {/* Footer */}
-        <p className="text-center text-sm text-gray-500 mt-8">
+        <p className="text-center folio-meta mt-8">
           By signing in, you agree to our{" "}
-          <a href="/terms" className="underline hover:text-gray-700">Terms</a>
+          <a href="/terms" className="underline hover:text-[var(--text-secondary)]">Terms</a>
           {" "}and{" "}
-          <a href="/privacy" className="underline hover:text-gray-700">Privacy Policy</a>
+          <a href="/privacy" className="underline hover:text-[var(--text-secondary)]">Privacy Policy</a>
         </p>
       </div>
     </div>

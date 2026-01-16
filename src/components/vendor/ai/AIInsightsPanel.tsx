@@ -35,7 +35,7 @@ export function AIInsightsPanel() {
   return (
     <section className="space-y-3">
       <div className="flex items-center gap-2">
-        <h3 className="text-lg font-semibold text-neutral-800">AI Insights & Actions</h3>
+        <h3 className="text-lg font-semibold text-[var(--text-primary)]">AI Insights & Actions</h3>
         <AIBadge />
       </div>
       
@@ -54,7 +54,7 @@ export function AIInsightsPanel() {
               ))}
             </div>
           ) : (
-            <div className="rounded-2xl p-4 border border-neutral-300/50 bg-white/40 backdrop-blur-xl text-center text-sm text-neutral-600">
+            <div className="ridge-card p-4 text-center folio-ui text-[var(--text-secondary)]">
               Computing insights...
             </div>
           )}
@@ -80,15 +80,15 @@ export function AIInsightsPanel() {
  */
 function LockedTeaser() {
   return (
-    <div className="rounded-2xl p-4 border border-neutral-300/50 bg-white/50 backdrop-blur-xl flex items-center justify-between shadow-md">
-      <div className="text-sm text-neutral-600">
+    <div className="ridge-card p-4 flex items-center justify-between shadow-md">
+      <div className="folio-ui text-[var(--text-secondary)]">
         Predictive demand, affinity targeting, and budget optimization.
       </div>
       <div className="flex gap-2">
-        <button className="rounded-xl px-4 py-2 border border-neutral-300 hover:bg-neutral-100 text-neutral-700 transition">
+        <button className="rounded-xl px-4 py-2 border border-[var(--ridge-outer)] hover:bg-[var(--bg-elevated)] text-[var(--text-primary)] transition">
           Preview
         </button>
-        <button className="rounded-xl px-4 py-2 bg-black text-white hover:bg-neutral-800 transition">
+        <button className="rounded-xl px-4 py-2 bg-[var(--text-primary)] text-[var(--bg-base)] hover:opacity-90 transition">
           Unlock AI
         </button>
       </div>
@@ -113,23 +113,23 @@ function InsightCard({
   };
 
   return (
-    <div className="rounded-2xl p-4 border border-neutral-300/60 bg-white/60 backdrop-blur-xl space-y-2 shadow-sm">
-      <div className={`text-xs uppercase tracking-wide px-2 py-1 rounded-full border inline-block ${impactColors[insight.impact]}`}>
+    <div className="ridge-card p-4 space-y-2">
+      <div className={`folio-meta uppercase tracking-wide px-2 py-1 rounded-full border inline-block ${impactColors[insight.impact]}`}>
         Impact: {insight.impact}
       </div>
-      <div className="font-semibold text-neutral-800">{insight.title}</div>
-      <p className="text-sm text-neutral-600">{insight.summary}</p>
-      <div className="text-xs font-mono text-neutral-500">
+      <div className="font-semibold text-[var(--text-primary)]">{insight.title}</div>
+      <p className="folio-ui text-[var(--text-secondary)]">{insight.summary}</p>
+      <div className="folio-meta font-mono text-[var(--text-secondary)]">
         {Object.entries(insight.metrics)
           .map(([k, v]) => `${k}: ${v}`)
-          .join(' · ')}
+          .join(' . ')}
       </div>
       <div className="flex flex-wrap gap-2 pt-2">
         {insight.actions.map((a) => (
           <button
             key={a.id}
             onClick={() => onAction(a)}
-            className="rounded-xl px-3 py-1.5 border border-neutral-300 hover:bg-neutral-100 text-sm text-neutral-700 transition"
+            className="rounded-xl px-3 py-1.5 border border-[var(--ridge-outer)] hover:bg-[var(--bg-elevated)] folio-ui text-[var(--text-primary)] transition"
           >
             {a.label}
           </button>

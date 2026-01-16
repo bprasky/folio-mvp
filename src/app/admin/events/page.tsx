@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { RidgeCard } from '@/components/ui/ridge-card';
+import { Button } from '@/components/ui/button';
 
 interface Event {
   id: string;
@@ -39,10 +41,10 @@ export default function AdminEventsPage() {
         fetch('/api/admin/events'),
         fetch('/api/admin/festivals')
       ]);
-      
+
       const eventsData = await eventsRes.json();
       const festivalsData = await festivalsRes.json();
-      
+
       // Combine events and festivals
       const allEvents = [...festivalsData, ...eventsData];
       setEvents(allEvents);
@@ -58,7 +60,7 @@ export default function AdminEventsPage() {
       const response = await fetch(`/api/admin/events/${eventId}/approve`, {
         method: 'POST'
       });
-      
+
       if (response.ok) {
         fetchEvents(); // Refresh the list
       }
@@ -76,7 +78,7 @@ export default function AdminEventsPage() {
         },
         body: JSON.stringify({ reason: 'Rejected by admin' })
       });
-      
+
       if (response.ok) {
         fetchEvents(); // Refresh the list
       }
@@ -110,10 +112,10 @@ export default function AdminEventsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 py-8">
+      <div className="min-h-screen bg-[var(--bg-base)] py-8">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center">
-            <div className="text-gray-500">Loading events...</div>
+            <div className="text-[var(--text-secondary)]">Loading events...</div>
           </div>
         </div>
       </div>
@@ -121,23 +123,23 @@ export default function AdminEventsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-[var(--bg-base)] py-8">
       <div className="max-w-7xl mx-auto px-4">
         {/* Breadcrumb Navigation */}
         <div className="mb-4">
           <nav className="flex" aria-label="Breadcrumb">
             <ol className="inline-flex items-center space-x-1 md:space-x-3">
               <li className="inline-flex items-center">
-                <Link href="/admin" className="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600">
-                  🏠 Admin Dashboard
+                <Link href="/admin" className="inline-flex items-center folio-meta text-[var(--accent)] hover:text-[var(--accent-hover)]">
+                  Admin Dashboard
                 </Link>
               </li>
               <li>
                 <div className="flex items-center">
-                  <svg className="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-6 h-6 text-[var(--text-tertiary)]" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd"></path>
                   </svg>
-                  <span className="ml-1 text-sm font-medium text-gray-500 md:ml-2">Manage Events</span>
+                  <span className="ml-1 folio-meta text-[var(--text-secondary)] md:ml-2">Manage Events</span>
                 </div>
               </li>
             </ol>
@@ -148,136 +150,122 @@ export default function AdminEventsPage() {
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Manage Events</h1>
-              <p className="text-gray-600">View and manage all events and festivals</p>
+              <h1 className="folio-h1 mb-2">Manage Events</h1>
+              <p className="folio-body">View and manage all events and festivals</p>
             </div>
             <div className="flex space-x-3">
-              <Link
-                href="/admin/festivals/create"
-                className="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 transition-colors"
-              >
-                🎪 Create Festival
+              <Link href="/admin/festivals/create">
+                <Button variant="accent">
+                  Create Festival
+                </Button>
               </Link>
-              <Link
-                href="/admin/events/create"
-                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
-              >
-                📅 Create Event
+              <Link href="/admin/events/create">
+                <Button variant="ridge">
+                  Create Event
+                </Button>
               </Link>
             </div>
           </div>
         </div>
 
         {/* Quick Actions */}
-        <div className="mb-6 bg-white rounded-lg shadow-md p-4">
-          <h3 className="text-lg font-semibold text-gray-900 mb-3">Quick Actions</h3>
+        <RidgeCard padding="md" className="mb-6">
+          <h3 className="folio-h3 mb-3">Quick Actions</h3>
           <div className="flex flex-wrap gap-3">
-            <Link
-              href="/admin/festivals/create"
-              className="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors"
-            >
-              🎪 Create Festival
+            <Link href="/admin/festivals/create">
+              <Button variant="accent" size="sm">
+                Create Festival
+              </Button>
             </Link>
-            <Link
-              href="/admin/events/create"
-              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-            >
-              📅 Create Event
+            <Link href="/admin/events/create">
+              <Button variant="ridge" size="sm">
+                Create Event
+              </Button>
             </Link>
-            <Link
-              href="/admin"
-              className="inline-flex items-center px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
-            >
-              🏠 Admin Dashboard
+            <Link href="/admin">
+              <Button variant="ridge" size="sm">
+                Admin Dashboard
+              </Button>
             </Link>
-            <Link
-              href="/events"
-              className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
-            >
-              👀 View Public Events
+            <Link href="/events">
+              <Button variant="ridge" size="sm">
+                View Public Events
+              </Button>
             </Link>
           </div>
-        </div>
+        </RidgeCard>
 
         {/* Filters */}
         <div className="mb-6">
           <div className="flex space-x-4">
-            <button
+            <Button
+              variant={filter === 'all' ? 'accent' : 'ridge'}
               onClick={() => setFilter('all')}
-              className={`px-4 py-2 rounded-md ${
-                filter === 'all' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'
-              }`}
             >
               All ({events.length})
-            </button>
-            <button
+            </Button>
+            <Button
+              variant={filter === 'pending' ? 'accent' : 'ridge'}
               onClick={() => setFilter('pending')}
-              className={`px-4 py-2 rounded-md ${
-                filter === 'pending' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'
-              }`}
             >
               Pending ({events.filter(e => e.requiresApproval && !e.isApproved).length})
-            </button>
-            <button
+            </Button>
+            <Button
+              variant={filter === 'approved' ? 'accent' : 'ridge'}
               onClick={() => setFilter('approved')}
-              className={`px-4 py-2 rounded-md ${
-                filter === 'approved' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'
-              }`}
             >
               Approved ({events.filter(e => e.isApproved).length})
-            </button>
-            <button
+            </Button>
+            <Button
+              variant={filter === 'festivals' ? 'accent' : 'ridge'}
               onClick={() => setFilter('festivals')}
-              className={`px-4 py-2 rounded-md ${
-                filter === 'festivals' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'
-              }`}
             >
               Festivals ({events.filter(e => e.type === 'festival').length})
-            </button>
+            </Button>
           </div>
         </div>
 
         {/* Events List */}
-        <div className="bg-white rounded-lg shadow-md overflow-hidden">
+        <RidgeCard padding="none" className="overflow-hidden">
           {filteredEvents.length === 0 ? (
-            <div className="p-8 text-center text-gray-500">
+            <div className="p-8 text-center text-[var(--text-secondary)]">
               No events found matching your filter.
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+              <table className="min-w-full divide-y divide-[var(--border-subtle)]">
+                <thead className="bg-[var(--bg-elevated)]">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
                       Event
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
                       Type
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
                       Location
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
                       Date
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
                       Created By
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
                       Status
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-[var(--bg-base)] divide-y divide-[var(--border-subtle)]">
                   {filteredEvents.map((event) => (
-                    <tr key={event.id} className="hover:bg-gray-50">
+                    <tr key={event.id} className="hover:bg-[var(--bg-elevated)]/50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div>
-                          <div className="text-sm font-medium text-gray-900">{event.title}</div>
-                          <div className="text-sm text-gray-500 line-clamp-2">{event.description}</div>
+                          <div className="text-sm font-medium text-[var(--text-primary)]">{event.title}</div>
+                          <div className="text-sm text-[var(--text-secondary)] line-clamp-2">{event.description}</div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -285,25 +273,25 @@ export default function AdminEventsPage() {
                           event.type === 'festival' ? 'bg-purple-100 text-purple-800' :
                           event.type === 'panel' ? 'bg-blue-100 text-blue-800' :
                           event.type === 'booth' ? 'bg-green-100 text-green-800' :
-                          'bg-gray-100 text-gray-800'
+                          'bg-[var(--bg-elevated)] text-[var(--text-primary)]'
                         }`}>
                           {event.type}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--text-primary)]">
                         {event.location}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--text-primary)]">
                         {formatDate(event.startDate)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--text-primary)]">
                         {event.createdBy.name}
-                        <div className="text-xs text-gray-500">{event.createdBy.role}</div>
+                        <div className="text-xs text-[var(--text-secondary)]">{event.createdBy.role}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                           event.isApproved ? 'bg-green-100 text-green-800' :
-                          event.requiresApproval ? 'bg-yellow-100 text-yellow-800' :
+                          event.requiresApproval ? 'bg-amber-100 text-amber-800' :
                           'bg-red-100 text-red-800'
                         }`}>
                           {event.isApproved ? 'Approved' : event.requiresApproval ? 'Pending' : 'Rejected'}
@@ -315,13 +303,13 @@ export default function AdminEventsPage() {
                             <>
                               <button
                                 onClick={() => handleApprove(event.id)}
-                                className="text-green-600 hover:text-green-900"
+                                className="text-green-600 hover:text-green-800"
                               >
                                 Approve
                               </button>
                               <button
                                 onClick={() => handleReject(event.id)}
-                                className="text-red-600 hover:text-red-900"
+                                className="text-red-600 hover:text-red-800"
                               >
                                 Reject
                               </button>
@@ -329,7 +317,7 @@ export default function AdminEventsPage() {
                           )}
                           <Link
                             href={`/events/${event.id}`}
-                            className="text-blue-600 hover:text-blue-900"
+                            className="text-[var(--accent)] hover:text-[var(--accent-hover)]"
                           >
                             View
                           </Link>
@@ -341,8 +329,8 @@ export default function AdminEventsPage() {
               </table>
             </div>
           )}
-        </div>
+        </RidgeCard>
       </div>
     </div>
   );
-} 
+}

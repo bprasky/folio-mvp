@@ -71,7 +71,7 @@ export function EditorialMasthead() {
     <>
       {/* Sticky Navigation Bar */}
       <motion.header
-        className="sticky top-0 z-50 w-full border-b border-neutral-200/50 bg-white/95 backdrop-blur-md supports-[backdrop-filter]:bg-white/80"
+        className="sticky top-0 z-50 w-full border-b border-[var(--ridge-outer)] bg-[var(--bg-base)]/95 backdrop-blur-md supports-[backdrop-filter]:bg-[var(--bg-base)]/80"
         style={{
           height: "64px",
         }}
@@ -92,7 +92,7 @@ export function EditorialMasthead() {
             >
               <Link
                 href="/"
-                className="font-serif text-xl tracking-tight font-semibold text-neutral-900 hover:text-neutral-700 transition-colors whitespace-nowrap"
+                className="font-serif text-xl tracking-tight font-semibold text-[var(--text-primary)] hover:text-[var(--text-primary)] transition-colors whitespace-nowrap"
               >
                 <motion.span
                   layoutId="folio-masthead"
@@ -126,7 +126,7 @@ export function EditorialMasthead() {
 
       {/* Large Editorial Masthead - initial state, animates into nav */}
       <div 
-        className="relative w-full bg-white"
+        className="relative w-full bg-[var(--bg-base)]"
         style={{
           paddingTop: "20px",
           paddingBottom: "20px",
@@ -145,7 +145,7 @@ export function EditorialMasthead() {
             >
               <Link
                 href="/"
-                className="block font-serif text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-light uppercase text-neutral-900 hover:text-neutral-700 transition-colors cursor-pointer"
+                className="block font-serif text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-light uppercase text-[var(--text-primary)] hover:text-[var(--text-primary)] transition-colors cursor-pointer"
                 style={{
                   letterSpacing: "0.05em",
                   fontWeight: 300,

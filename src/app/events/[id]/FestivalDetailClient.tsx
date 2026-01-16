@@ -212,7 +212,7 @@ export default function FestivalDetailClient({ festival, initialEvents, canEdit 
   return (
     <div className="pt-0">
       {/* Festival Banner/Hero */}
-      <div className="relative w-full h-64 md:h-80 lg:h-96 bg-gradient-to-br from-folio-accent to-folio-accent-dark">
+      <div className="relative w-full h-64 md:h-80 lg:h-96 bg-[var(--bg-elevated)]">
         {festival?.imageUrl && (
           <div 
             className="absolute inset-0 bg-cover bg-center"
@@ -249,14 +249,14 @@ export default function FestivalDetailClient({ festival, initialEvents, canEdit 
 
       {/* Single compact sticky controls bar */}
       <div className="sticky top-0 z-30 mt-2 mb-3">
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border border-folio-border bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/60 px-3 sm:px-4 py-2 shadow-sm text-sm">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border border-[var(--border)] bg-[var(--bg-elevated)]/90 backdrop-blur supports-[backdrop-filter]:bg-[var(--bg-elevated)]/60 px-3 sm:px-4 py-2 shadow-sm text-sm">
           {/* LEFT: Sort */}
           <div className="flex items-center gap-2">
-            <span className="hidden sm:inline text-gray-500">Sort:</span>
+            <span className="hidden sm:inline text-[var(--text-secondary)]">Sort:</span>
             <select
               value={sortMode}
               onChange={(e) => setSortMode(e.target.value as "chronological"|"trending"|"most-buzz")}
-              className="h-9 px-2.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-folio-accent"
+              className="h-9 px-2.5 text-sm border border-[var(--border)] rounded focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
             >
               <option value="chronological">📅 Chronological</option>
               <option value="trending">🔥 Trending</option>
@@ -269,7 +269,7 @@ export default function FestivalDetailClient({ festival, initialEvents, canEdit 
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="h-9 px-2.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-folio-accent"
+              className="h-9 px-2.5 text-sm border border-[var(--border)] rounded focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
             >
               {categories.map(category => (
                 <option key={category} value={category}>
@@ -280,7 +280,7 @@ export default function FestivalDetailClient({ festival, initialEvents, canEdit 
             <select
               value={eventTypeFilter}
               onChange={(e) => setEventTypeFilter(e.target.value)}
-              className="h-9 px-2.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-folio-accent"
+              className="h-9 px-2.5 text-sm border border-[var(--border)] rounded focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
             >
               {eventTypes.map(type => (
                 <option key={type} value={type}>
@@ -292,7 +292,7 @@ export default function FestivalDetailClient({ festival, initialEvents, canEdit 
           
           {/* RIGHT: Count */}
           <div className="ml-auto">
-            <span className="hidden md:inline text-gray-500">{filteredAndSortedEvents.length} events</span>
+            <span className="hidden md:inline text-[var(--text-secondary)]">{filteredAndSortedEvents.length} events</span>
           </div>
         </div>
       </div>
@@ -304,10 +304,10 @@ export default function FestivalDetailClient({ festival, initialEvents, canEdit 
         ) : (
           <div className="text-center py-12">
             <div className="text-6xl mb-4">🎭</div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">
+            <h3 className="text-xl font-semibold text-[var(--text-primary)] mb-2">
               {filteredAndSortedEvents.length === 0 ? 'No events found for this festival' : 'No events match your filters'}
             </h3>
-            <p className="text-gray-600 mb-4">
+            <p className="text-[var(--text-secondary)] mb-4">
               {filteredAndSortedEvents.length === 0 
                 ? 'This festival doesn\'t have any events yet.'
                 : 'Try adjusting your filters to see more events.'
@@ -316,7 +316,7 @@ export default function FestivalDetailClient({ festival, initialEvents, canEdit 
             {eventTypeFilter !== 'all' && (
               <button
                 onClick={() => setEventTypeFilter('all')}
-                className="text-folio-accent hover:text-folio-accent-dark transition-colors"
+                className="text-[var(--accent)] hover:text-[var(--accent)]-dark transition-colors"
               >
                 Clear filters
               </button>

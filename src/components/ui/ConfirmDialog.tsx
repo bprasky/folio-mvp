@@ -65,7 +65,7 @@ export default function ConfirmDialog({
     >
       <div 
         ref={dialogRef}
-        className="bg-white rounded-2xl shadow-xl border border-neutral-200 max-w-md w-full p-6"
+        className="bg-[var(--bg-base)] rounded-2xl shadow-xl border border-[var(--ridge-outer)] max-w-md w-full p-6"
         role="dialog"
         aria-modal="true"
         aria-labelledby="dialog-title"
@@ -75,7 +75,7 @@ export default function ConfirmDialog({
         <div className="mb-4">
           <h2 
             id="dialog-title"
-            className="text-lg font-semibold text-neutral-900"
+            className="text-lg font-semibold text-[var(--text-primary)]"
           >
             {title}
           </h2>
@@ -85,7 +85,7 @@ export default function ConfirmDialog({
         <div className="mb-6">
           <p 
             id="dialog-description"
-            className="text-sm text-neutral-600 leading-relaxed"
+            className="text-sm text-[var(--text-secondary)] leading-relaxed"
           >
             {description}
           </p>
@@ -95,7 +95,7 @@ export default function ConfirmDialog({
         <div className="flex items-center justify-end gap-3">
           <button
             onClick={onCancel}
-            className="px-4 py-2 text-sm font-medium text-neutral-700 bg-white border border-neutral-300 rounded-lg hover:bg-neutral-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+            className="px-4 py-2 text-sm font-medium text-[var(--text-primary)] bg-[var(--bg-base)] border border-[var(--ridge-outer)] rounded-lg hover:bg-[var(--bg-elevated)] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
           >
             {cancelText}
           </button>

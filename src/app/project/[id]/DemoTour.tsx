@@ -168,7 +168,7 @@ export default function DemoTour() {
 
       {/* Highlight */}
       <div
-        className="fixed z-40 border-2 border-blue-500 rounded-lg pointer-events-none"
+        className="fixed z-40 border-2 border-[var(--accent)] rounded-lg pointer-events-none"
         style={{
           left: `${rect.left - 4}px`,
           top: `${rect.top - 4}px`,
@@ -180,29 +180,29 @@ export default function DemoTour() {
 
       {/* Tooltip */}
       <div
-        className="fixed z-50 bg-white rounded-lg shadow-xl p-4 max-w-sm"
+        className="fixed z-50 bg-[var(--bg-elevated)] rounded-lg shadow-xl p-4 max-w-sm"
         style={tooltipStyle}
       >
         <div className="flex items-start justify-between mb-2">
           <div>
-            <h3 className="font-semibold text-gray-900">{step.title}</h3>
-            <p className="text-sm text-gray-600 mt-1">{step.description}</p>
+            <h3 className="font-semibold text-[var(--text-primary)]">{step.title}</h3>
+            <p className="folio-ui text-[var(--text-secondary)] mt-1">{step.description}</p>
           </div>
         </div>
         <div className="flex items-center justify-between mt-4">
-          <span className="text-xs text-gray-500">
+          <span className="folio-meta text-[var(--text-tertiary)]">
             Step {currentStep + 1} of {tourSteps.length}
           </span>
           <div className="flex gap-2">
             <button
               onClick={handleSkip}
-              className="text-xs text-gray-600 hover:text-gray-900"
+              className="folio-meta text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
             >
               Skip
             </button>
             <button
               onClick={handleNext}
-              className="text-xs px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
+              className="folio-meta px-3 py-1 bg-[var(--accent)] text-white rounded hover:bg-[var(--accent-hover)]"
             >
               {currentStep === tourSteps.length - 1 ? 'Finish' : 'Next'}
             </button>

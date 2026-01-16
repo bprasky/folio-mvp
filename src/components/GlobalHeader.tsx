@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { useRole } from '../contexts/RoleContext';
 import { useSession, signOut } from 'next-auth/react';
 import { useState, useRef, useEffect } from 'react';
-import { FaUser, FaSignOutAlt, FaCog, FaChevronDown, FaPlus } from 'react-icons/fa';
+import { FaUser, FaSignOutAlt, FaCog, FaChevronDown, FaPlus, FaHeadset } from 'react-icons/fa';
+import SupportModal from './SupportModal';
 import { LogoutButton } from './LogoutButton';
 import { getCreateTarget, canCreateProject as canCreate, normalizeRole, getRoleDisplayName } from '@/lib/permissions';
 import DemoRoleSwitcher from './demo/DemoRoleSwitcher';
@@ -15,6 +16,7 @@ export default function GlobalHeader() {
   const { role } = useRole();
   const { data: session, status } = useSession();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Get normalized role and create config for mobile controls
@@ -171,7 +173,18 @@ export default function GlobalHeader() {
                     <FaCog className="w-4 h-4 text-folio-system" />
                     <span className="text-sm text-folio-text">Settings</span>
                   </button>
-                  
+
+                  <button
+                    onClick={() => {
+                      setIsDropdownOpen(false);
+                      setIsSupportModalOpen(true);
+                    }}
+                    className="w-full flex items-center gap-3 p-3 rounded-lg text-left hover:bg-folio-muted transition-colors"
+                  >
+                    <FaHeadset className="w-4 h-4 text-folio-system" />
+                    <span className="text-sm text-folio-text">Support</span>
+                  </button>
+
                   <button
                     onClick={handleLogout}
                     className="w-full flex items-center gap-3 p-3 rounded-lg text-left hover:bg-red-50 transition-colors"
@@ -186,6 +199,12 @@ export default function GlobalHeader() {
         )}
       </div>
     </motion.header>
+
+      {/* Support Modal */}
+      <SupportModal
+        open={isSupportModalOpen}
+        onOpenChange={setIsSupportModalOpen}
+      />
     </>
   );
 } 

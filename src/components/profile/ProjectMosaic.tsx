@@ -44,7 +44,7 @@ type ThemeConfig = {
 const themeConfigs: Record<AestheticTheme, ThemeConfig> = {
   minimal: {
     containerClass: "auto-rows-[10px]",
-    cardClass: "bg-white border-0 shadow-none hover:shadow-md transition-shadow duration-500",
+    cardClass: "bg-[var(--bg-base)] border-0 shadow-none hover:shadow-md transition-shadow duration-500",
     overlayClass: "bg-gradient-to-t from-black/40 via-transparent to-transparent",
     gapClass: "gap-6",
     roundingClass: "rounded-none",
@@ -57,7 +57,7 @@ const themeConfigs: Record<AestheticTheme, ThemeConfig> = {
   },
   editorial: {
     containerClass: "auto-rows-[10px]",
-    cardClass: "bg-white border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300",
+    cardClass: "bg-[var(--bg-base)] border border-[var(--ridge-outer)] shadow-sm hover:shadow-lg transition-all duration-300",
     overlayClass: "bg-gradient-to-t from-black/70 via-black/20 to-transparent",
     gapClass: "gap-4",
     roundingClass: "rounded-sm",
@@ -83,7 +83,7 @@ const themeConfigs: Record<AestheticTheme, ThemeConfig> = {
   },
   moody: {
     containerClass: "auto-rows-[10px]",
-    cardClass: "bg-neutral-950 border border-neutral-800 shadow-lg hover:border-neutral-700 transition-all duration-300",
+    cardClass: "bg-[var(--bg-base)] border border-[var(--ridge-outer)] shadow-lg hover:border-[var(--ridge-outer)] transition-all duration-300",
     overlayClass: "bg-gradient-to-t from-black/60 via-black/10 to-transparent",
     gapClass: "gap-4",
     roundingClass: "rounded-lg",
@@ -96,7 +96,7 @@ const themeConfigs: Record<AestheticTheme, ThemeConfig> = {
   },
   bold: {
     containerClass: "auto-rows-[10px]",
-    cardClass: "bg-white border-2 border-black shadow-[4px_4px_0_0_rgb(0,0,0)] hover:shadow-[6px_6px_0_0_rgb(0,0,0)] hover:scale-[1.02] transition-all duration-200",
+    cardClass: "bg-[var(--bg-base)] border-2 border-[var(--text-primary)] shadow-[4px_4px_0_0_rgb(0,0,0)] hover:shadow-[6px_6px_0_0_rgb(0,0,0)] hover:scale-[1.02] transition-all duration-200",
     overlayClass: "bg-gradient-to-t from-black/80 via-black/30 to-transparent",
     gapClass: "gap-4",
     roundingClass: "rounded-none",
@@ -122,7 +122,7 @@ const themeConfigs: Record<AestheticTheme, ThemeConfig> = {
   },
   eclectic: {
     containerClass: "auto-rows-[10px]",
-    cardClass: "bg-white border border-gray-300 shadow-md hover:shadow-2xl hover:rotate-1 transition-all duration-300",
+    cardClass: "bg-[var(--bg-base)] border border-[var(--ridge-outer)] shadow-md hover:shadow-2xl hover:rotate-1 transition-all duration-300",
     overlayClass: "bg-gradient-to-t from-black/60 via-black/15 to-transparent",
     gapClass: "gap-3",
     roundingClass: "rounded-lg",
@@ -135,7 +135,7 @@ const themeConfigs: Record<AestheticTheme, ThemeConfig> = {
   },
   default: {
     containerClass: "auto-rows-[8px]",
-    cardClass: "bg-white border border-folio-border shadow-sm hover:shadow-md transition-shadow duration-300",
+    cardClass: "bg-[var(--bg-base)] border border-[var(--ridge-outer)] shadow-sm hover:shadow-md transition-shadow duration-300",
     overlayClass: "bg-gradient-to-t from-black/60 via-black/10 to-transparent",
     gapClass: "gap-3",
     roundingClass: "rounded-xl",

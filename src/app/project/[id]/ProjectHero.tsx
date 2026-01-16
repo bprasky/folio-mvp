@@ -44,13 +44,13 @@ export default function ProjectHero({ project, images = [], expandedBlocks }: Pr
 
   return (
     <>
-      <section className="relative w-full rounded-2xl overflow-hidden bg-gradient-to-br from-gray-100 to-gray-50 h-56 md:h-64 border border-gray-200/50">
+      <section className="relative w-full ridge-card ridge-card-lg overflow-hidden h-56 md:h-64 mx-4 mt-4">
         {/* Content */}
         <div className="absolute left-6 bottom-6 right-20">
-          <h1 className="text-4xl md:text-5xl font-serif italic tracking-tight mb-2 text-gray-900">
+          <h1 className="folio-h1 font-serif italic tracking-tight mb-2 text-[var(--text-primary)]">
             {project.title}
           </h1>
-          <p className="mt-1 text-sm/relaxed text-gray-600">
+          <p className="mt-1 folio-body text-[var(--text-secondary)]">
             {project.category || 'Uncategorized'}
           </p>
         </div>
@@ -61,7 +61,7 @@ export default function ProjectHero({ project, images = [], expandedBlocks }: Pr
           {canExportToInstagram && (
             <button
               onClick={() => setShowInstagramModal(true)}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 backdrop-blur-md hover:bg-white/90 border border-gray-200/50 shadow-sm transition text-sm font-medium text-gray-700 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--bg-base)] hover:bg-[var(--bg-elevated)] border border-[var(--border-default)] shadow-sm transition folio-ui font-medium text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30"
               aria-label="Share to Instagram"
             >
               <FaInstagram className="w-4 h-4" />
@@ -72,10 +72,10 @@ export default function ProjectHero({ project, images = [], expandedBlocks }: Pr
           {/* Kebab Menu */}
           <button
             onClick={() => setShowOverviewModal(true)}
-            className="inline-flex items-center justify-center rounded-full bg-white/80 backdrop-blur-md hover:bg-white/90 border border-gray-200/50 shadow-sm transition h-9 w-9 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+            className="inline-flex items-center justify-center rounded-full bg-[var(--bg-base)] hover:bg-[var(--bg-elevated)] border border-[var(--border-default)] shadow-sm transition h-9 w-9 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30"
             aria-label="Project overview menu"
           >
-            <HiOutlineDotsHorizontal className="h-5 w-5 text-gray-700" />
+            <HiOutlineDotsHorizontal className="h-5 w-5 text-[var(--text-primary)]" />
           </button>
         </div>
       </section>

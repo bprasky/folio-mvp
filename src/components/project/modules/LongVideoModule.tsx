@@ -18,7 +18,7 @@ export function LongVideoModule({ module }: { module: M }) {
 
   // Simple responsive embed: can later branch by provider (Vimeo, YouTube, mp4, etc.)
   return (
-    <div className="rounded-3xl overflow-hidden ring-1 ring-black/5 bg-black/90">
+    <div className="rounded-3xl overflow-hidden border border-[var(--ridge-outer)] bg-black/90">
       <div className="relative pb-[56.25%]">
         <video
           src={video.url}
@@ -27,7 +27,7 @@ export function LongVideoModule({ module }: { module: M }) {
         />
       </div>
       {(module.title || module.description) && (
-        <div className="p-4 text-sm text-neutral-100">
+        <div className="p-4 folio-ui text-neutral-100">
           {module.title && <h3 className="font-medium mb-1">{module.title}</h3>}
           {module.description && <p className="text-neutral-200">{module.description}</p>}
         </div>
