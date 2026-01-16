@@ -396,6 +396,50 @@ async function seedFeaturedForNycxDesign2026(festivalId) {
   return summary;
 }
 
+/**
+ * Seed vendor subscriptions for existing vendor organizations
+ * Creates STARTER tier subscriptions for any vendor orgs without one
+ */
+async function seedVendorSubscriptions() {
+  console.log('💰 Seeding vendor subscriptions...');
+
+  // Find all vendor organizations
+  const vendorOrgs = await prisma.organization.findMany({
+    where: { type: 'VENDOR' },
+    select: { id: true, name: true },
+  });
+
+  if (vendorOrgs.length === 0) {
+    console.log('   No vendor organizations found');
+    return 0;
+  }
+
+  let created = 0;
+  for (const org of vendorOrgs) {
+    try {
+      await prisma.vendorSubscription.upsert({
+        where: { organizationId: org.id },
+        create: {
+          organizationId: org.id,
+          tier: 'STARTER',
+          affiliateFeePercent: 18,
+          repSeatLimit: 1,
+          skuLimit: 0,
+          status: 'ACTIVE',
+        },
+        update: {},
+      });
+      created++;
+    } catch (e) {
+      // Model may not exist yet - that's okay
+      console.log(`   Skipping subscription for ${org.name}: ${e.message}`);
+    }
+  }
+
+  console.log(`✅ Seeded ${created} vendor subscriptions`);
+  return created;
+}
+
 async function main() {
   const results = await Promise.all([
     upsertUser({ email: 'admin@folio.com', name: 'Admin User', role: Role.ADMIN }),
@@ -407,14 +451,18 @@ async function main() {
 
   // Seed NYCxDesign 2026 festival and sub-events
   const festivalId = await seedNYCxDesign2026();
-  
+
   // Seed featured products for NYCxDesign 2026
   const featuredSummary = await seedFeaturedForNycxDesign2026(festivalId);
-  
-  console.log('\n📊 NYCxDesign 2026 Seeding Summary:');
+
+  // Seed vendor subscriptions for existing vendor organizations
+  const vendorSubCount = await seedVendorSubscriptions();
+
+  console.log('\n📊 Seeding Summary:');
   console.log(`   Festival ID: ${festivalId}`);
   console.log(`   Sub-events with featured products: ${featuredSummary.subEventsWithFeatured}`);
   console.log(`   Total featured product links: ${featuredSummary.totalFeaturedLinks}`);
+  console.log(`   Vendor subscriptions created: ${vendorSubCount}`);
 }
 
 main()
