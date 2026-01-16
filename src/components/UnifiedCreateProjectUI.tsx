@@ -75,16 +75,16 @@ export default function UnifiedCreateProjectUI() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
-      <div className="max-w-2xl w-full bg-white rounded-2xl shadow-lg p-8">
-        <h1 className="text-3xl font-bold mb-2">Create a Project</h1>
-        <p className="text-gray-600 mb-6">Give your project a title to get started</p>
+    <div className="min-h-screen bg-[var(--bg-elevated)] flex items-center justify-center p-6">
+      <div className="max-w-2xl w-full ridge-card p-8">
+        <h1 className="text-3xl font-bold mb-2 text-[var(--text-primary)]" style={{ fontFamily: 'var(--font-headline)' }}>Create a Project</h1>
+        <p className="text-[var(--text-secondary)] mb-6">Give your project a title to get started</p>
 
         <form onSubmit={onSubmit} className="space-y-5">
           <div>
-            <label className="block text-sm font-medium mb-2">Project Title *</label>
+            <label className="block text-sm font-medium mb-2 text-[var(--text-primary)]">Project Title *</label>
             <input
-              className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              className="w-full border border-[var(--border)] rounded-lg px-4 py-3 focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent transition-all bg-white"
               placeholder="e.g., Modern Coastal Living Room"
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -94,9 +94,9 @@ export default function UnifiedCreateProjectUI() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Description (optional)</label>
+            <label className="block text-sm font-medium mb-2 text-[var(--text-primary)]">Description (optional)</label>
             <textarea
-              className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              className="w-full border border-[var(--border)] rounded-lg px-4 py-3 focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent transition-all bg-white"
               placeholder="Brief description of your project..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -105,7 +105,7 @@ export default function UnifiedCreateProjectUI() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Project Status *</label>
+            <label className="block text-sm font-medium mb-2 text-[var(--text-primary)]">Project Status *</label>
             <div className="flex gap-4">
               <label className="flex items-center cursor-pointer">
                 <input
@@ -114,10 +114,10 @@ export default function UnifiedCreateProjectUI() {
                   value="new_project"
                   checked={projectStatus === 'new_project'}
                   onChange={(e) => setProjectStatus(e.target.value as ProjectStatus)}
-                  className="mr-2"
+                  className="mr-2 accent-[var(--accent)]"
                 />
-                <span>New Project</span>
-                <span className="ml-2 text-xs text-gray-500">(still in progress)</span>
+                <span className="text-[var(--text-primary)]">New Project</span>
+                <span className="ml-2 text-xs text-[var(--text-tertiary)]">(still in progress)</span>
               </label>
               <label className="flex items-center cursor-pointer">
                 <input
@@ -126,24 +126,24 @@ export default function UnifiedCreateProjectUI() {
                   value="completed_project"
                   checked={projectStatus === 'completed_project'}
                   onChange={(e) => setProjectStatus(e.target.value as ProjectStatus)}
-                  className="mr-2"
+                  className="mr-2 accent-[var(--accent)]"
                 />
-                <span>Completed Project</span>
-                <span className="ml-2 text-xs text-gray-500">(ready to showcase)</span>
+                <span className="text-[var(--text-primary)]">Completed Project</span>
+                <span className="ml-2 text-xs text-[var(--text-tertiary)]">(ready to showcase)</span>
               </label>
             </div>
           </div>
 
           {/* Advanced Details Accordion */}
-          <div className="border border-gray-200 rounded-lg">
+          <div className="border border-[var(--border)] rounded-lg bg-white">
             <button
               type="button"
               onClick={() => setShowAdvanced(!showAdvanced)}
-              className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-gray-50 transition-colors"
+              className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-[var(--bg-elevated)] transition-colors rounded-lg"
             >
-              <span className="font-medium text-gray-900">Advanced Details (optional)</span>
+              <span className="font-medium text-[var(--text-primary)]">Advanced Details (optional)</span>
               <svg
-                className={`w-5 h-5 text-gray-500 transition-transform ${showAdvanced ? 'rotate-180' : ''}`}
+                className={`w-5 h-5 text-[var(--text-tertiary)] transition-transform ${showAdvanced ? 'rotate-180' : ''}`}
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -153,30 +153,30 @@ export default function UnifiedCreateProjectUI() {
             </button>
 
             {showAdvanced && (
-              <div className="px-4 pb-4 pt-2 space-y-4 border-t border-gray-200">
+              <div className="px-4 pb-4 pt-2 space-y-4 border-t border-[var(--border)]">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium mb-1">Client Type</label>
+                    <label className="block text-sm font-medium mb-1 text-[var(--text-primary)]">Client Type</label>
                     <div className="flex gap-4">
-                      <label className="flex items-center">
+                      <label className="flex items-center text-[var(--text-primary)]">
                         <input
                           type="radio"
                           name="clientType"
                           value="Residential"
                           checked={clientType === 'Residential'}
                           onChange={(e) => setClientType(e.target.value as 'Residential' | 'Commercial')}
-                          className="mr-2"
+                          className="mr-2 accent-[var(--accent)]"
                         />
                         Residential
                       </label>
-                      <label className="flex items-center">
+                      <label className="flex items-center text-[var(--text-primary)]">
                         <input
                           type="radio"
                           name="clientType"
                           value="Commercial"
                           checked={clientType === 'Commercial'}
                           onChange={(e) => setClientType(e.target.value as 'Residential' | 'Commercial')}
-                          className="mr-2"
+                          className="mr-2 accent-[var(--accent)]"
                         />
                         Commercial
                       </label>
@@ -184,9 +184,9 @@ export default function UnifiedCreateProjectUI() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium mb-1">City</label>
+                    <label className="block text-sm font-medium mb-1 text-[var(--text-primary)]">City</label>
                     <input
-                      className="w-full border rounded-lg p-2"
+                      className="w-full border border-[var(--border)] rounded-lg p-2 bg-white focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent transition-all"
                       value={locationCity}
                       onChange={(e) => setLocationCity(e.target.value)}
                       placeholder="e.g., San Francisco"
@@ -194,9 +194,9 @@ export default function UnifiedCreateProjectUI() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium mb-1">Region/State</label>
+                    <label className="block text-sm font-medium mb-1 text-[var(--text-primary)]">Region/State</label>
                     <input
-                      className="w-full border rounded-lg p-2"
+                      className="w-full border border-[var(--border)] rounded-lg p-2 bg-white focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent transition-all"
                       value={locationRegion}
                       onChange={(e) => setLocationRegion(e.target.value)}
                       placeholder="e.g., CA"
@@ -213,9 +213,9 @@ export default function UnifiedCreateProjectUI() {
             </div>
           )}
 
-          <button 
-            type="submit" 
-            className="w-full rounded-lg px-6 py-3 bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          <button
+            type="submit"
+            className="w-full rounded-lg px-6 py-3 bg-[var(--accent)] text-white font-medium hover:bg-[var(--accent-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             disabled={loading}
           >
             {loading ? (
@@ -228,8 +228,8 @@ export default function UnifiedCreateProjectUI() {
             )}
           </button>
         </form>
-        
-        <p className="text-xs text-gray-500 mt-6 text-center">
+
+        <p className="text-xs text-[var(--text-tertiary)] mt-6 text-center">
           Next: Upload images and tag products in the Media tab
         </p>
       </div>

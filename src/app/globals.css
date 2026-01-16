@@ -378,8 +378,8 @@ body:has([data-testid="cinematic-bg"]) > * {
   background: transparent !important;
 }
 
-body:has([data-testid="cinematic-bg"]) main,
-body:has([data-testid="cinematic-bg"]) .min-h-screen {
+/* Cinematic pages: only make direct children and main transparent */
+body:has([data-testid="cinematic-bg"]) main {
   background: transparent !important;
 }
 
