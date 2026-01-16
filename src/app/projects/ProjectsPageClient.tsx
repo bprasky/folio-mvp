@@ -25,7 +25,8 @@ import {
   User,
   Building2,
   MousePointerClick,
-  Users
+  Users,
+  Plus
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useUserCapabilities } from '@/hooks/useUserCapabilities';
@@ -250,9 +251,18 @@ export default function ProjectsPageClient({ projectsRaw, operatingAsOrgId }: Pr
         {/* Page Header with Context */}
         <div className="sticky top-0 z-10 bg-[var(--bg-elevated)] border-b border-[var(--border)]">
           <div className="max-w-7xl mx-auto px-4 md:px-8 py-6">
-            <h1 className="folio-h1 text-[var(--text-primary)] mb-4">
-              {pageTitle}
-            </h1>
+            <div className="flex items-center justify-between mb-4">
+              <h1 className="folio-h1 text-[var(--text-primary)]">
+                {pageTitle}
+              </h1>
+              <Link
+                href="/projects/new"
+                className="accent-btn px-4 py-2 inline-flex items-center gap-2"
+              >
+                <Plus className="h-5 w-5" />
+                <span>Create Project</span>
+              </Link>
+            </div>
 
             {/* Context Tabs - only show if user has mixed contexts (not filtered by operatingAsOrgId) */}
             {!operatingAsOrgId && contextCounts.organization > 0 && (

@@ -37,6 +37,9 @@
   --accent: #B8845C;
   --accent-hover: #A67548;
 
+  /* Border - unified border color for components */
+  --border: rgba(0, 0, 0, 0.08);
+
   /* Ridge border system - more visible borders */
   --ridge-outer: rgba(0, 0, 0, 0.08);
   --ridge-inner: rgba(255, 255, 255, 0.95);
