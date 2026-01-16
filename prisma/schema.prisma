@@ -529,6 +529,9 @@ model Organization {
   // Directory ranking for vendor organizations
   directoryRanking    DirectoryRanking?    @relation("DirectoryRanking")
 
+  // Vendor subscription (for vendor organizations)
+  vendorSubscription  VendorSubscription?
+
   @@index([status])
   @@index([type])
   @@index([createdById])
@@ -1643,9 +1646,52 @@ enum CollaborationStoryStatus {
 }
 
 enum VendorTier {
-  FREE
-  PLUS
-  PRO
+  STARTER
+  GROWTH
+  PROFESSIONAL
+  ENTERPRISE
+}
+
+enum VendorSubscriptionStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  PAUSED
+}
+
+model VendorSubscription {
+  id                    String                   @id @default(cuid())
+  organizationId        String                   @unique
+  organization          Organization             @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  tier                  VendorTier               @default(STARTER)
+
+  // Pricing
+  priceMonthly          Int?                     // in cents, null for custom/enterprise
+  affiliateFeePercent   Float                    @default(18.0)
+
+  // Limits
+  skuLimit              Int?                     // null = unlimited
+  repSeatLimit          Int                      @default(1)
+
+  // Billing
+  stripeCustomerId      String?
+  stripeSubscriptionId  String?
+  billingEmail          String?
+
+  // Status
+  status                VendorSubscriptionStatus @default(ACTIVE)
+  trialEndsAt           DateTime?
+  currentPeriodStart    DateTime?
+  currentPeriodEnd      DateTime?
+  canceledAt            DateTime?
+
+  // Timestamps
+  createdAt             DateTime                 @default(now())
+  updatedAt             DateTime                 @updatedAt
+
+  @@map("vendor_subscriptions")
 }
 
 model CollaborationStory {
