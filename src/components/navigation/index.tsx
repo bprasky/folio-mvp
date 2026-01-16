@@ -7,10 +7,11 @@ import { UserMenu } from "./UserMenu";
 import { MobileMenu } from "./MobileMenu";
 import { UserAvatar } from "./UserAvatar";
 import { UserAvatarWithBadge } from "./UserAvatarWithBadge";
+import { CreateButton } from "./CreateButton";
 
 export function Navigation() {
   return <EditorialMasthead />;
 }
 
-export { TopNav, Logo, GlobalSearch, NavLinks, UserMenu, MobileMenu, EditorialMasthead, UserAvatar, UserAvatarWithBadge };
+export { TopNav, Logo, GlobalSearch, NavLinks, UserMenu, MobileMenu, EditorialMasthead, UserAvatar, UserAvatarWithBadge, CreateButton };
 
