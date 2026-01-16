@@ -22,8 +22,9 @@ export function isDesignerDirectoryEligible(user: Pick<User, 'role' | 'subscript
     return false;
   }
 
-  // Must be Pro tier
-  if (user.subscriptionTier !== 'PRO' && user.subscriptionTier !== 'ENTERPRISE') {
+  // Must be Pro tier or higher (PRO, STUDIO, or ENTERPRISE)
+  const paidTiers = ['PRO', 'STUDIO', 'ENTERPRISE'];
+  if (!paidTiers.includes(user.subscriptionTier)) {
     return false;
   }
 

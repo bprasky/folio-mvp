@@ -1955,6 +1955,7 @@ enum RankingType {
 enum SubscriptionTier {
   FREE
   PRO
+  STUDIO
   ENTERPRISE
 }
 

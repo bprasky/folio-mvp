@@ -15,6 +15,8 @@ declare module 'next-auth' {
       logo: string | null;
     } | null;
     subscriptionTier?: string;
+    subscriptionExpiresAt?: Date | null;
+    isFoundingDesigner?: boolean;
   }
 
   interface Session {
@@ -33,6 +35,8 @@ declare module 'next-auth' {
         logo: string | null;
       } | null;
       subscriptionTier?: string;
+      subscriptionExpiresAt?: Date | null;
+      isFoundingDesigner?: boolean;
     };
     impersonating?: {
       originalAdminId: string;
@@ -57,6 +61,8 @@ declare module 'next-auth/jwt' {
       originalAdminEmail: string;
     };
     subscriptionTier?: string;
+    subscriptionExpiresAt?: Date | null;
+    isFoundingDesigner?: boolean;
   }
 }
 
@@ -165,13 +171,18 @@ export const authOptions: NextAuthOptions = {
               accountStatus: true,
               onboardingCompletedAt: true,
               subscriptionTier: true,
+              subscriptionExpiresAt: true,
             },
           });
           token.role = u?.role ?? "GUEST";
           token.accountStatus = u?.accountStatus ?? "APPROVED";
           token.onboardingCompletedAt = u?.onboardingCompletedAt ?? null;
           token.subscriptionTier = u?.subscriptionTier ?? "FREE";
-          console.log("Hydrated from DB - role:", token.role, "accountStatus:", token.accountStatus, "subscriptionTier:", token.subscriptionTier);
+          token.subscriptionExpiresAt = u?.subscriptionExpiresAt ?? null;
+          // Founding designers have Pro tier with null expiry (lifetime)
+          const isPaidTier = u?.subscriptionTier === 'PRO' || u?.subscriptionTier === 'STUDIO' || u?.subscriptionTier === 'ENTERPRISE';
+          token.isFoundingDesigner = isPaidTier && u?.subscriptionExpiresAt === null;
+          console.log("Hydrated from DB - role:", token.role, "accountStatus:", token.accountStatus, "subscriptionTier:", token.subscriptionTier, "isFoundingDesigner:", token.isFoundingDesigner);
 
           // Try to get workspace context (operatingAsOrgId may not exist in prod yet)
           try {
@@ -204,6 +215,8 @@ export const authOptions: NextAuthOptions = {
           token.operatingAsOrgId = (token as any).operatingAsOrgId ?? null;
           token.operatingAsOrg = (token as any).operatingAsOrg ?? null;
           token.subscriptionTier = (token as any).subscriptionTier ?? "FREE";
+          token.subscriptionExpiresAt = (token as any).subscriptionExpiresAt ?? null;
+          token.isFoundingDesigner = (token as any).isFoundingDesigner ?? false;
         }
       } else {
         token.role = (token as any).role ?? "GUEST";
@@ -212,13 +225,15 @@ export const authOptions: NextAuthOptions = {
         token.operatingAsOrgId = (token as any).operatingAsOrgId ?? null;
         token.operatingAsOrg = (token as any).operatingAsOrg ?? null;
         token.subscriptionTier = (token as any).subscriptionTier ?? "FREE";
+        token.subscriptionExpiresAt = (token as any).subscriptionExpiresAt ?? null;
+        token.isFoundingDesigner = (token as any).isFoundingDesigner ?? false;
       }
 
       return token;
     },
 
     async session({ session, token }) {
-      console.log("DEBUG: Session callback — token.role:", token.role, "token.id:", token.id, "token.accountStatus:", token.accountStatus, "operatingAsOrgId:", token.operatingAsOrgId, "subscriptionTier:", token.subscriptionTier);
+      console.log("DEBUG: Session callback — token.role:", token.role, "token.id:", token.id, "token.accountStatus:", token.accountStatus, "operatingAsOrgId:", token.operatingAsOrgId, "subscriptionTier:", token.subscriptionTier, "isFoundingDesigner:", token.isFoundingDesigner);
       session.user = session.user || ({} as any);
       if (token?.id && session?.user) {
         (session.user as any).id = token.id as string;
@@ -230,6 +245,8 @@ export const authOptions: NextAuthOptions = {
       (session.user as any).operatingAsOrgId = (token as any).operatingAsOrgId || null;
       (session.user as any).operatingAsOrg = (token as any).operatingAsOrg || null;
       (session.user as any).subscriptionTier = (token as any).subscriptionTier || 'FREE';
+      (session.user as any).subscriptionExpiresAt = (token as any).subscriptionExpiresAt || null;
+      (session.user as any).isFoundingDesigner = (token as any).isFoundingDesigner || false;
 
       // Include impersonation info if present
       if ((token as any).impersonating) {
