@@ -9,6 +9,18 @@ type ClientType = 'RESIDENTIAL' | 'COMMERCIAL';
 type ProjectType = 'UNSPECIFIED' | 'RESIDENTIAL' | 'COMMERCIAL' | 'HOSPITALITY' | 'HEALTHCARE' | 'EDUCATION' | 'OFFICE' | 'RETAIL' | 'INDUSTRIAL' | 'OTHER';
 type BudgetBand = 'UNSPECIFIED' | 'LOW' | 'MID' | 'HIGH' | 'LUXURY';
 
+// Credit schema for project collaborators
+const CreditSchema = z.object({
+  role: z.string(),
+  userId: z.string().optional(),
+  name: z.string(),
+  email: z.string().optional(),
+  profileImage: z.string().optional(),
+  studio: z.string().optional(),
+  isInvite: z.boolean().optional(),
+  url: z.string().optional(),
+});
+
 // Project status: new_project (in progress) or completed_project (ready to showcase)
 type ProjectStatus = 'new_project' | 'completed_project';
 
@@ -23,6 +35,7 @@ export const CanonicalCreateSchema = z.object({
   city: z.string().optional().nullable(),        // ← optional for now
   regionState: z.string().optional().nullable(), // ← optional for now
   description: z.string().optional().nullable(),
+  credits: z.array(CreditSchema).optional(),     // ← credits for ProjectPost
 });
 
 // Legacy UI shape (current form) - now includes projectStatus
@@ -33,7 +46,9 @@ const LegacySchema = z.object({
   client: z.string().optional().nullable(),   // 'Residential' | 'Commercial'
   category: z.string().optional().nullable(), // label for projectType
   images: z.any().optional(),                 // ignored by create API
+  credits: z.array(CreditSchema).optional(),  // ← credits for ProjectPost
   detailsCore: z.any().optional(),            // advanced details from form
+  // no stage/budget/city/region in legacy
 });
 
 // Canonical incoming passthrough (for future form)
@@ -74,7 +89,7 @@ export function normalizeCreatePayload(raw: unknown) {
     const city = details.location?.city ?? null;
     const regionState = details.location?.region ?? null;
 
-    const candidate = {
+    const candidate: any = {
       title: l.name,
       projectStatus: l.projectStatus,
       description: l.description ?? null,
@@ -85,6 +100,11 @@ export function normalizeCreatePayload(raw: unknown) {
       regionState,
       stage,
     };
+
+    // Pass through credits if provided
+    if (l.credits) {
+      candidate.credits = l.credits;
+    }
 
     // Validate against canonical
     return CanonicalCreateSchema.parse(candidate);

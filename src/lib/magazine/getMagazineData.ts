@@ -39,13 +39,17 @@ export interface MagazineProduct {
 
 export interface MagazineMosaicItem {
   id: string;
-  type: "project" | "post" | "product";
+  type: "project" | "post" | "product" | "collaboration";
   title: string;
   imageUrl: string;
   publishedAt?: Date | null;
   isEditorial?: boolean; // true for Editor's Picks, false for For You
+  isCollaboration?: boolean; // true for collaboration stories
   projectTitle?: string; // Project title for routing decisions
   postSlug?: string | null; // Post slug for routing to published articles
+  collaborationSlug?: string | null; // Slug for collaboration stories
+  vendorName?: string | null; // For collaboration stories
+  designerName?: string | null; // For collaboration stories
   // add fields as needed for mosaic layout
 }
 
@@ -275,7 +279,7 @@ export async function getMagazineData(
   }
 
   // Mosaic items: remaining posts (excluding hero)
-  const mosaicItems: MagazineMosaicItem[] = posts
+  const projectMosaicItems: MagazineMosaicItem[] = posts
     .filter((p) => p.id !== heroPost.id && p.project?.id)
     .map((post) => {
       const mosaicImageObj = post.heroAssetId
@@ -298,6 +302,61 @@ export async function getMagazineData(
       };
     })
     .filter((item) => item.imageUrl); // Only include items with images
+
+  // Fetch published collaboration stories
+  let collaborationMosaicItems: MagazineMosaicItem[] = [];
+  try {
+    const collaborations = await prisma.collaborationStory.findMany({
+      where: { status: "PUBLISHED" },
+      orderBy: { publishedAt: "desc" },
+      take: 10,
+      select: {
+        id: true,
+        slug: true,
+        title: true,
+        excerpt: true,
+        heroImageUrl: true,
+        publishedAt: true,
+        vendorOrg: {
+          select: {
+            name: true,
+            logo: true,
+          },
+        },
+        designer: {
+          select: {
+            name: true,
+            profileImage: true,
+          },
+        },
+      },
+    });
+
+    collaborationMosaicItems = collaborations.map((collab) => ({
+      id: collab.id,
+      type: "collaboration" as const,
+      title: collab.title || `${collab.vendorOrg.name} × ${collab.designer.name}`,
+      imageUrl: collab.heroImageUrl || collab.vendorOrg.logo || "",
+      publishedAt: collab.publishedAt,
+      isEditorial: true,
+      isCollaboration: true,
+      collaborationSlug: collab.slug,
+      vendorName: collab.vendorOrg.name,
+      designerName: collab.designer.name,
+    }));
+  } catch (error) {
+    // Collaboration model may not exist yet (pre-migration)
+    console.log('[MAGAZINE] Collaboration stories not available:', error);
+  }
+
+  // Merge and sort by publishedAt
+  const mosaicItems = [...projectMosaicItems, ...collaborationMosaicItems]
+    .filter((item) => item.imageUrl)
+    .sort((a, b) => {
+      const dateA = a.publishedAt ? new Date(a.publishedAt).getTime() : 0;
+      const dateB = b.publishedAt ? new Date(b.publishedAt).getTime() : 0;
+      return dateB - dateA;
+    });
 
   return {
     edition,

@@ -11,6 +11,7 @@ import { normalizeCreatePayload } from './normalizeCreatePayload';
 import { logDbEnv } from '@/lib/dbEnv';
 import { assertProjectView } from "@/lib/authz/access";
 import { CLIENT_BY_LABEL, PROJECT_TYPE_BY_LABEL, DEFAULTS } from '@/domain/project/enums';
+import { makeSlug } from '@/lib/posting/slug';
 
 const isDev = process.env.NODE_ENV !== 'production';
 
@@ -148,6 +149,27 @@ export async function POST(req: Request) {
       console.warn('Analytics logging failed:', analyticsError);
     }
 
+    // Create ProjectPost with credits if provided
+    if (data.credits && Array.isArray(data.credits) && data.credits.length > 0) {
+      try {
+        const slug = makeSlug(data.title || undefined, project.id);
+        await prisma.projectPost.create({
+          data: {
+            projectId: project.id,
+            slug,
+            status: 'DRAFT',
+            credits: data.credits,
+          },
+        });
+        if (isDev) {
+          console.log('[create-project] Created ProjectPost with credits');
+        }
+      } catch (postError) {
+        console.warn('[create-project] Failed to create ProjectPost with credits:', postError);
+        // Don't fail the whole request if ProjectPost creation fails
+      }
+    }
+
     return NextResponse.json({ id: project.id }, { status: 201 });
   } catch (e: any) {
     // ZodError → 422
@@ -182,10 +204,10 @@ export async function PUT(request: NextRequest) {
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    
+
     const projectData = await request.json();
-    
-    const { id, images, status, isDraft, designerId, ...updateData } = projectData;
+
+    const { id, images, status, isDraft, designerId, credits, ...updateData } = projectData;
     
     if (!id) {
       return NextResponse.json(
@@ -248,7 +270,42 @@ export async function PUT(request: NextRequest) {
     });
     
     console.log('Project updated successfully:', updatedProject);
-    
+
+    // Handle credits update - upsert ProjectPost with credits
+    if (credits && Array.isArray(credits)) {
+      try {
+        const existingPost = await prisma.projectPost.findUnique({
+          where: { projectId: id },
+        });
+
+        if (existingPost) {
+          // Update existing ProjectPost with new credits
+          await prisma.projectPost.update({
+            where: { projectId: id },
+            data: {
+              credits: credits,
+              updatedAt: new Date(),
+            },
+          });
+        } else {
+          // Create new ProjectPost with credits
+          const slug = makeSlug(updatedProject.title || undefined, id);
+          await prisma.projectPost.create({
+            data: {
+              projectId: id,
+              slug,
+              status: 'DRAFT',
+              credits: credits,
+            },
+          });
+        }
+        console.log('ProjectPost credits updated successfully');
+      } catch (postError) {
+        console.warn('Failed to update ProjectPost credits:', postError);
+        // Don't fail the whole request if credits update fails
+      }
+    }
+
     return NextResponse.json(updatedProject, { status: 200 });
   } catch (error) {
     console.error('Error updating project:', error);
