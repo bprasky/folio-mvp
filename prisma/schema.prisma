@@ -98,6 +98,12 @@ model User {
   attributedDesignerOrders       Order[]               @relation("AttributedDesignerOrders")
   attributedRepOrders            Order[]               @relation("AttributedRepOrders")
 
+  // Directory & Subscription
+  subscriptionTier               SubscriptionTier      @default(FREE)
+  subscriptionExpiresAt          DateTime?             // null = lifetime (founding designers)
+  showRankInBio                  Boolean               @default(true)
+  directoryRanking               DirectoryRanking?
+
   @@map("users")
 }
 
@@ -519,6 +525,9 @@ model Organization {
   // Commerce & Credit relations
   vendorOrders        Order[]              @relation("VendorOrders")
   tradeAccounts       VendorTradeAccount[]
+
+  // Directory ranking for vendor organizations
+  directoryRanking    DirectoryRanking?    @relation("DirectoryRanking")
 
   @@index([status])
   @@index([type])
@@ -1930,4 +1939,88 @@ model VendorTradeAccount {
   @@index([vendorOrgId])
   @@index([isActive])
   @@map("vendor_trade_accounts")
+}
+
+// ============================================================
+// DIRECTORY SYSTEM - Merit-based ranking and discovery
+// Real-time leaderboard for designers and vendors
+// ============================================================
+
+enum RankingType {
+  DESIGNER
+  VENDOR
+  // Future: INDIVIDUAL, PROJECT
+}
+
+enum SubscriptionTier {
+  FREE
+  PRO
+  ENTERPRISE
+}
+
+model DirectoryRanking {
+  id                    String       @id @default(cuid())
+
+  // Polymorphic - either designer or vendor
+  userId                String?      @unique
+  user                  User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vendorOrgId           String?      @unique
+  vendorOrg             Organization? @relation("DirectoryRanking", fields: [vendorOrgId], references: [id], onDelete: Cascade)
+
+  // Ranking type
+  rankingType           RankingType  @default(DESIGNER)
+
+  // Designer component scores (stored for transparency/debugging)
+  taggedProjectsScore   Float        @default(0)
+  completenessScore     Float        @default(0)
+  engagementScore       Float        @default(0)
+  editorialScore        Float        @default(0)
+  vendorDiversityScore  Float        @default(0)
+  recencyScore          Float        @default(0)
+
+  // Vendor-specific scores
+  designerTagsScore     Float        @default(0)
+  projectInclusionScore Float        @default(0)
+  saveScore             Float        @default(0)
+  catalogCompletenessScore Float     @default(0)
+
+  // Composite score
+  totalScore            Float        @default(0)
+
+  // Ranking position
+  rank                  Int?
+  previousRank          Int?
+  rankChange            Int          @default(0)
+
+  // Eligibility
+  isEligible            Boolean      @default(false)  // Pro subscription active
+  isVisible             Boolean      @default(true)   // User hasn't opted out
+
+  // Timestamps
+  lastCalculatedAt      DateTime     @default(now())
+  createdAt             DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
+
+  // Relations
+  history               RankingHistory[]
+
+  @@unique([userId, rankingType])
+  @@unique([vendorOrgId, rankingType])
+  @@index([rankingType, totalScore])
+  @@index([rankingType, rank])
+  @@index([isEligible, isVisible, rankingType])
+  @@map("directory_rankings")
+}
+
+model RankingHistory {
+  id          String           @id @default(cuid())
+  rankingId   String
+  ranking     DirectoryRanking @relation(fields: [rankingId], references: [id], onDelete: Cascade)
+
+  rank        Int
+  totalScore  Float
+  recordedAt  DateTime         @default(now())
+
+  @@index([rankingId, recordedAt])
+  @@map("ranking_history")
 }

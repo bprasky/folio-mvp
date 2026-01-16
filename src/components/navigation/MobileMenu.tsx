@@ -130,6 +130,9 @@ export function MobileMenu() {
             <MobileNavLink href="/magazine" onClick={() => setIsOpen(false)}>
               Magazine
             </MobileNavLink>
+            <MobileNavLink href="/directory" onClick={() => setIsOpen(false)}>
+              Directory
+            </MobileNavLink>
             <MobileNavLink href="/events" onClick={() => setIsOpen(false)}>
               Events
             </MobileNavLink>
@@ -141,7 +144,7 @@ export function MobileMenu() {
                   Projects
                 </MobileNavLink>
                 <MobileNavLink href="/designer/directory" onClick={() => setIsOpen(false)}>
-                  Directory
+                  Vendor Products
                 </MobileNavLink>
               </>
             )}
