@@ -80,6 +80,18 @@ model User {
   operatingAsOrgId               String?
   operatingAsOrg                 Organization?         @relation("UserOperatingAs", fields: [operatingAsOrgId], references: [id])
 
+  // Architect-specific profile fields
+  architectLicenseNumber         String?               // Professional license number
+  architectLicensedStates        String[]              // e.g., ["CA", "NY", "TX"]
+  architectProjectScale          String[]              // e.g., ["residential", "commercial", "institutional"]
+  architectSpecializations       String[]              // e.g., ["adaptive_reuse", "ground_up", "historic_preservation"]
+
+  // Builder-specific profile fields
+  builderProjectTypes            String[]              // e.g., ["custom_homes", "renovations", "commercial_ti"]
+  builderSquareFootageRange      String?               // e.g., "5000-25000" or "25000+"
+  builderSpecialtyTrades         String[]              // e.g., ["millwork", "steel", "concrete", "glass"]
+  builderYearsInBusiness         Int?
+
   // Commerce & Credit relations
   creditAccount                  CreditAccount?
   purchaserOrders                Order[]               @relation("PurchaserOrders")
@@ -703,6 +715,9 @@ enum Role {
   DESIGNER
   INDIVIDUAL  // Base user type - all new signups start here (Individual-First Architecture)
   GUEST
+  HOMEOWNER   // Legacy - kept for backward compatibility, deprecated in UI
+  ARCHITECT   // NEW - parallel to DESIGNER for architecture professionals
+  BUILDER     // NEW - parallel to DESIGNER for construction professionals
 }
 
 enum AccountStatus {
@@ -716,7 +731,8 @@ enum OrgType {
   DESIGN_FIRM
   MANUFACTURER
   SHOWROOM
-  CONTRACTOR
+  CONTRACTOR        // Used for builders/construction companies
+  ARCHITECTURE_FIRM // NEW - parallel to DESIGN_FIRM for architecture practices
 }
 
 // Phase 2: Organization tier status for feature gating
@@ -909,6 +925,8 @@ model ProjectParticipant {
 enum ParticipantSide {
   DESIGNER
   VENDOR
+  ARCHITECT  // NEW - for architecture participants
+  BUILDER    // NEW - for construction/builder participants
 }
 
 enum ParticipantRole {

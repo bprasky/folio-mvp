@@ -62,8 +62,8 @@ export default function OrganizationPage() {
   const params = useParams();
   const role = params.role as string;
 
-  // Validate role parameter
-  const isValidRole = role === 'designer' || role === 'vendor';
+  // Validate role parameter - now includes architect and builder
+  const isValidRole = role === 'designer' || role === 'vendor' || role === 'architect' || role === 'builder';
 
   const [view, setView] = useState<ViewState>('search');
   const [searchQuery, setSearchQuery] = useState('');
@@ -89,6 +89,13 @@ export default function OrganizationPage() {
     if (role === 'designer') {
       return [{ value: 'DESIGN_FIRM', label: 'Design Firm' }];
     }
+    if (role === 'architect') {
+      return [{ value: 'ARCHITECTURE_FIRM', label: 'Architecture Firm' }];
+    }
+    if (role === 'builder') {
+      return [{ value: 'CONTRACTOR', label: 'General Contractor / Builder' }];
+    }
+    // Vendor role
     return [
       { value: 'VENDOR', label: 'Vendor' },
       { value: 'MANUFACTURER', label: 'Manufacturer' },
@@ -100,7 +107,15 @@ export default function OrganizationPage() {
 
   // Sync org type with role when it becomes available
   useEffect(() => {
-    setSelectedOrgType(role === 'designer' ? 'DESIGN_FIRM' : 'VENDOR');
+    if (role === 'designer') {
+      setSelectedOrgType('DESIGN_FIRM');
+    } else if (role === 'architect') {
+      setSelectedOrgType('ARCHITECTURE_FIRM');
+    } else if (role === 'builder') {
+      setSelectedOrgType('CONTRACTOR');
+    } else {
+      setSelectedOrgType('VENDOR');
+    }
   }, [role]);
 
   // Redirect if not authenticated
@@ -133,7 +148,12 @@ export default function OrganizationPage() {
       setHasSearched(true);
 
       try {
-        const typeFilter = role === 'designer' ? 'DESIGNER' : 'VENDOR';
+        // Map role to org type filter for search
+        let typeFilter = 'VENDOR';
+        if (role === 'designer') typeFilter = 'DESIGNER';
+        else if (role === 'architect') typeFilter = 'ARCHITECT';
+        else if (role === 'builder') typeFilter = 'BUILDER';
+
         const response = await fetch(
           `/api/orgs/search?q=${encodeURIComponent(debouncedSearchQuery)}&type=${typeFilter}`
         );
@@ -222,7 +242,17 @@ export default function OrganizationPage() {
     );
   }
 
-  const roleLabel = role === 'designer' ? 'Designer' : 'Vendor';
+  // Get human-readable role label
+  const getRoleLabel = () => {
+    switch (role) {
+      case 'designer': return 'Interior Designer';
+      case 'architect': return 'Architect';
+      case 'builder': return 'Builder';
+      case 'vendor': return 'Vendor';
+      default: return 'Professional';
+    }
+  };
+  const roleLabel = getRoleLabel();
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#FAF8F5' }}>
@@ -436,8 +466,8 @@ export default function OrganizationPage() {
                     </p>
                   </div>
 
-                  {/* Organization Type (for vendors) */}
-                  {role === 'vendor' && (
+                  {/* Organization Type (for roles with multiple options) */}
+                  {role === 'vendor' && getOrgTypeOptions().length > 1 && (
                     <div>
                       <label className="block text-sm font-sans font-medium text-folio-stone-700 mb-2">
                         Organization Type <span className="text-red-500">*</span>

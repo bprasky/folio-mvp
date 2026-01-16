@@ -144,8 +144,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate org type
-    const validTypes = ['VENDOR', 'DESIGN_FIRM', 'MANUFACTURER', 'SHOWROOM', 'CONTRACTOR'];
+    // Validate org type - includes new ARCHITECTURE_FIRM
+    const validTypes = ['VENDOR', 'DESIGN_FIRM', 'MANUFACTURER', 'SHOWROOM', 'CONTRACTOR', 'ARCHITECTURE_FIRM'];
     const orgType = type?.toUpperCase() || 'DESIGN_FIRM';
     if (!validTypes.includes(orgType)) {
       return NextResponse.json(
@@ -184,8 +184,16 @@ export async function POST(request: NextRequest) {
 
     // Update user's role based on org type using Prisma ORM
     // (role column exists in prod, only need raw SQL for tables with missing columns)
-    // DESIGN_FIRM -> DESIGNER, all others -> VENDOR
-    const userRole = orgType === 'DESIGN_FIRM' ? 'DESIGNER' : 'VENDOR';
+    // Map org type to user role:
+    // - DESIGN_FIRM -> DESIGNER
+    // - ARCHITECTURE_FIRM -> ARCHITECT
+    // - CONTRACTOR -> BUILDER
+    // - All others (VENDOR, MANUFACTURER, SHOWROOM) -> VENDOR
+    let userRole = 'VENDOR';
+    if (orgType === 'DESIGN_FIRM') userRole = 'DESIGNER';
+    else if (orgType === 'ARCHITECTURE_FIRM') userRole = 'ARCHITECT';
+    else if (orgType === 'CONTRACTOR') userRole = 'BUILDER';
+
     await prisma.user.update({
       where: { id: session.user.id },
       data: { role: userRole as any },

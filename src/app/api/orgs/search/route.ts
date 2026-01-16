@@ -46,8 +46,13 @@ export async function GET(request: NextRequest) {
       },
     };
 
+    // Map role-based type filter to org types
     if (type === 'DESIGNER') {
       where.type = 'DESIGN_FIRM';
+    } else if (type === 'ARCHITECT') {
+      where.type = 'ARCHITECTURE_FIRM';
+    } else if (type === 'BUILDER') {
+      where.type = 'CONTRACTOR';
     } else if (type === 'VENDOR') {
       where.type = { in: ['VENDOR', 'MANUFACTURER', 'SHOWROOM'] };
     } else if (type) {
