@@ -14,6 +14,7 @@ declare module 'next-auth' {
       name: string;
       logo: string | null;
     } | null;
+    subscriptionTier?: string;
   }
 
   interface Session {
@@ -31,6 +32,7 @@ declare module 'next-auth' {
         name: string;
         logo: string | null;
       } | null;
+      subscriptionTier?: string;
     };
     impersonating?: {
       originalAdminId: string;
@@ -54,6 +56,7 @@ declare module 'next-auth/jwt' {
       originalAdminId: string;
       originalAdminEmail: string;
     };
+    subscriptionTier?: string;
   }
 }
 
@@ -150,7 +153,7 @@ export const authOptions: NextAuthOptions = {
         console.log("DEBUG: JWT callback - Setting token.id:", user.id);
       }
 
-      // Always hydrate role, accountStatus, onboardingCompletedAt from DB to avoid stale tokens
+      // Always hydrate role, accountStatus, onboardingCompletedAt, subscriptionTier from DB to avoid stale tokens
       // Note: Query only core columns that exist in prod, workspace context is optional
       if (token.sub) {
         try {
@@ -161,12 +164,14 @@ export const authOptions: NextAuthOptions = {
               role: true,
               accountStatus: true,
               onboardingCompletedAt: true,
+              subscriptionTier: true,
             },
           });
           token.role = u?.role ?? "GUEST";
           token.accountStatus = u?.accountStatus ?? "APPROVED";
           token.onboardingCompletedAt = u?.onboardingCompletedAt ?? null;
-          console.log("Hydrated from DB - role:", token.role, "accountStatus:", token.accountStatus);
+          token.subscriptionTier = u?.subscriptionTier ?? "FREE";
+          console.log("Hydrated from DB - role:", token.role, "accountStatus:", token.accountStatus, "subscriptionTier:", token.subscriptionTier);
 
           // Try to get workspace context (operatingAsOrgId may not exist in prod yet)
           try {
@@ -198,6 +203,7 @@ export const authOptions: NextAuthOptions = {
           token.onboardingCompletedAt = (token as any).onboardingCompletedAt ?? null;
           token.operatingAsOrgId = (token as any).operatingAsOrgId ?? null;
           token.operatingAsOrg = (token as any).operatingAsOrg ?? null;
+          token.subscriptionTier = (token as any).subscriptionTier ?? "FREE";
         }
       } else {
         token.role = (token as any).role ?? "GUEST";
@@ -205,13 +211,14 @@ export const authOptions: NextAuthOptions = {
         token.onboardingCompletedAt = (token as any).onboardingCompletedAt ?? null;
         token.operatingAsOrgId = (token as any).operatingAsOrgId ?? null;
         token.operatingAsOrg = (token as any).operatingAsOrg ?? null;
+        token.subscriptionTier = (token as any).subscriptionTier ?? "FREE";
       }
 
       return token;
     },
 
     async session({ session, token }) {
-      console.log("DEBUG: Session callback — token.role:", token.role, "token.id:", token.id, "token.accountStatus:", token.accountStatus, "operatingAsOrgId:", token.operatingAsOrgId);
+      console.log("DEBUG: Session callback — token.role:", token.role, "token.id:", token.id, "token.accountStatus:", token.accountStatus, "operatingAsOrgId:", token.operatingAsOrgId, "subscriptionTier:", token.subscriptionTier);
       session.user = session.user || ({} as any);
       if (token?.id && session?.user) {
         (session.user as any).id = token.id as string;
@@ -222,6 +229,7 @@ export const authOptions: NextAuthOptions = {
       (session.user as any).onboardingCompletedAt = (token as any).onboardingCompletedAt || null;
       (session.user as any).operatingAsOrgId = (token as any).operatingAsOrgId || null;
       (session.user as any).operatingAsOrg = (token as any).operatingAsOrg || null;
+      (session.user as any).subscriptionTier = (token as any).subscriptionTier || 'FREE';
 
       // Include impersonation info if present
       if ((token as any).impersonating) {
