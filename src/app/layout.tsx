@@ -6,6 +6,7 @@ import SessionRoleSync from '../components/SessionRoleSync';
 import RoleBasedLayout from '../components/layouts/RoleBasedLayout';
 import { Toaster } from 'react-hot-toast';
 import { ImpersonationBanner } from '../components/admin/ImpersonationBanner';
+import { CookieConsentBanner } from '../components/CookieConsentBanner';
 
 // Folio Design System - Typography
 const cormorant = Cormorant_Garamond({
@@ -43,6 +44,7 @@ export default function RootLayout({
             {children}
           </RoleBasedLayout>
           <Toaster position="top-right" />
+          <CookieConsentBanner />
         </Providers>
       </body>
     </html>

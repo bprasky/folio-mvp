@@ -19,6 +19,7 @@ export default function SignupPage() {
     password: '',
     confirmPassword: '',
   });
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
 
@@ -46,12 +47,21 @@ export default function SignupPage() {
       return;
     }
 
+    if (!acceptedTerms) {
+      setMessage('You must agree to the Terms of Service and Privacy Policy');
+      setIsLoading(false);
+      return;
+    }
+
     try {
       // Individual-First: All users created as INDIVIDUAL role
       const requestBody = {
         name: formData.name,
         email: formData.email,
         password: formData.password,
+        acceptedTerms: true,
+        tosVersion: '2026-01-19',
+        privacyVersion: '2026-01-19',
       };
       console.log('[Signup] Sending request with body:', { ...requestBody, password: '[REDACTED]' });
 
@@ -169,6 +179,39 @@ export default function SignupPage() {
         />
       </div>
 
+      {/* Terms and Privacy Consent */}
+      <div className="flex items-start gap-3">
+        <input
+          id="acceptedTerms"
+          name="acceptedTerms"
+          type="checkbox"
+          checked={acceptedTerms}
+          onChange={(e) => setAcceptedTerms(e.target.checked)}
+          className="mt-1 h-4 w-4 rounded border-[var(--ridge-outer)] text-[var(--accent)] focus:ring-[var(--accent)] focus:ring-offset-0 cursor-pointer"
+        />
+        <label htmlFor="acceptedTerms" className="text-sm text-[var(--text-secondary)] cursor-pointer">
+          I agree to the{' '}
+          <Link
+            href="/terms"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[var(--accent)] hover:text-[var(--accent-hover)] underline underline-offset-2"
+          >
+            Terms of Service
+          </Link>
+          {' '}and{' '}
+          <Link
+            href="/privacy"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[var(--accent)] hover:text-[var(--accent-hover)] underline underline-offset-2"
+          >
+            Privacy Policy
+          </Link>
+          {' '}*
+        </label>
+      </div>
+
       {message && (
         <div className={`ridge-card ridge-card-sm p-3 ${
           message.includes('Error') || message.includes('Failed') || message.includes('do not match')
@@ -221,10 +264,9 @@ export default function SignupPage() {
         </RidgeCard>
 
         <p className="text-center folio-meta mt-8">
-          By creating an account, you agree to our{" "}
-          <a href="/terms" className="underline hover:text-[var(--text-secondary)]">Terms</a>
-          {" "}and{" "}
-          <a href="/privacy" className="underline hover:text-[var(--text-secondary)]">Privacy Policy</a>
+          Read our{" "}
+          <Link href="/cookies" className="underline hover:text-[var(--text-secondary)]">Cookie Policy</Link>
+          {" "}for information about how we use cookies.
         </p>
       </div>
     </div>

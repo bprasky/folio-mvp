@@ -58,11 +58,19 @@ export async function POST(request: NextRequest) {
     if (process.env.NODE_ENV !== 'production') {
       console.log('[Signup API] Request body:', { ...body, password: '[REDACTED]' });
     }
-    const { name, email, password } = body;
+    const { name, email, password, acceptedTerms, tosVersion, privacyVersion } = body;
 
     if (!name || !email || !password) {
       return NextResponse.json(
         { error: 'Missing required fields: name, email, password' },
+        { status: 400 }
+      );
+    }
+
+    // Validate consent
+    if (!acceptedTerms) {
+      return NextResponse.json(
+        { error: 'You must agree to the Terms of Service and Privacy Policy' },
         { status: 400 }
       );
     }
@@ -123,6 +131,7 @@ export async function POST(request: NextRequest) {
     }
 
     let user;
+    const consentTimestamp = new Date();
     try {
       user = await prisma.user.create({
         data: {
@@ -131,6 +140,11 @@ export async function POST(request: NextRequest) {
           passwordHash: hashedPassword,
           role: 'INDIVIDUAL',
           accountStatus: AccountStatus.APPROVED,
+          // Legal consent tracking
+          tosAcceptedAt: consentTimestamp,
+          privacyAcceptedAt: consentTimestamp,
+          tosVersion: tosVersion || '2026-01-19',
+          privacyVersion: privacyVersion || '2026-01-19',
         },
       });
       if (process.env.NODE_ENV !== 'production') {
