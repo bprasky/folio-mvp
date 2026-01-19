@@ -1,10 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { HiOutlineDotsHorizontal } from 'react-icons/hi';
-import { FaInstagram } from 'react-icons/fa';
+import { FaInstagram, FaChevronDown } from 'react-icons/fa';
+import { MdDownload, MdCampaign } from 'react-icons/md';
 import OverviewModal from './OverviewModal';
 import InstagramExportModal from '@/components/instagram/InstagramExportModal';
+import { CampaignWizard } from '@/components/instagram/CampaignWizard';
 
 interface Project {
   id: string;
@@ -38,9 +40,23 @@ interface ProjectHeroProps {
 export default function ProjectHero({ project, images = [], expandedBlocks }: ProjectHeroProps) {
   const [showOverviewModal, setShowOverviewModal] = useState(false);
   const [showInstagramModal, setShowInstagramModal] = useState(false);
+  const [showCampaignWizard, setShowCampaignWizard] = useState(false);
+  const [showShareDropdown, setShowShareDropdown] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Only show Instagram export if project is published
   const canExportToInstagram = project.isPublic && project.publishedAt && images.length > 0;
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowShareDropdown(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   return (
     <>
@@ -57,16 +73,57 @@ export default function ProjectHero({ project, images = [], expandedBlocks }: Pr
 
         {/* Action Buttons (top-right) */}
         <div className="absolute right-3 top-3 flex items-center gap-2">
-          {/* Share to Instagram Button */}
+          {/* Share to Instagram Dropdown */}
           {canExportToInstagram && (
-            <button
-              onClick={() => setShowInstagramModal(true)}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--bg-base)] hover:bg-[var(--bg-elevated)] border border-[var(--border-default)] shadow-sm transition folio-ui font-medium text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30"
-              aria-label="Share to Instagram"
-            >
-              <FaInstagram className="w-4 h-4" />
-              <span className="hidden sm:inline">Share to Instagram</span>
-            </button>
+            <div className="relative" ref={dropdownRef}>
+              <button
+                onClick={() => setShowShareDropdown(!showShareDropdown)}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--bg-base)] hover:bg-[var(--bg-elevated)] border border-[var(--border-default)] shadow-sm transition folio-ui font-medium text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30"
+                aria-label="Share to Instagram"
+              >
+                <FaInstagram className="w-4 h-4" />
+                <span className="hidden sm:inline">Share</span>
+                <FaChevronDown className="w-3 h-3" />
+              </button>
+
+              {/* Dropdown Menu */}
+              {showShareDropdown && (
+                <div className="absolute right-0 mt-2 w-64 rounded-lg bg-white border border-gray-200 shadow-lg z-10">
+                  <div className="py-1">
+                    <button
+                      onClick={() => {
+                        setShowCampaignWizard(true);
+                        setShowShareDropdown(false);
+                      }}
+                      className="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-start gap-3 transition"
+                    >
+                      <MdCampaign className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <div className="font-medium text-gray-900 text-sm">Instagram Campaign</div>
+                        <div className="text-xs text-gray-500 mt-0.5">
+                          Generate 8-12 posts with room spotlights
+                        </div>
+                      </div>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowInstagramModal(true);
+                        setShowShareDropdown(false);
+                      }}
+                      className="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-start gap-3 transition"
+                    >
+                      <MdDownload className="w-5 h-5 text-gray-600 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <div className="font-medium text-gray-900 text-sm">Quick Export</div>
+                        <div className="text-xs text-gray-500 mt-0.5">
+                          Single carousel with selected images
+                        </div>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           )}
 
           {/* Kebab Menu */}
@@ -87,7 +144,7 @@ export default function ProjectHero({ project, images = [], expandedBlocks }: Pr
         project={project}
       />
 
-      {/* Instagram Export Modal */}
+      {/* Instagram Export Modal (Quick Export) */}
       {canExportToInstagram && (
         <InstagramExportModal
           isOpen={showInstagramModal}
@@ -96,6 +153,15 @@ export default function ProjectHero({ project, images = [], expandedBlocks }: Pr
           projectTitle={project.title}
           images={images}
           expandedBlocks={expandedBlocks}
+        />
+      )}
+
+      {/* Campaign Wizard Modal */}
+      {canExportToInstagram && showCampaignWizard && (
+        <CampaignWizard
+          projectId={project.id}
+          projectTitle={project.title}
+          onClose={() => setShowCampaignWizard(false)}
         />
       )}
     </>

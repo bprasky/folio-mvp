@@ -237,6 +237,7 @@ model Project {
   modules              ProjectModule[]
   attributeVerifications AttributeVerification[] @relation("ProjectAttributeVerifications")
   designerDecisions    DesignerDecision[]
+  instagramCampaigns   InstagramCampaign[]
 
   // Commerce relations
   orders               Order[]
@@ -1087,6 +1088,66 @@ model EditorialEdition {
   updatedAt   DateTime  @updatedAt
 
   @@map("editorial_edition")
+}
+
+// Instagram Campaign System
+model InstagramCampaign {
+  id        String   @id @default(cuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  // Campaign metadata
+  preset       String   // "compact" | "standard" | "complete" | "custom"
+  totalPosts   Int      // e.g., 8-12 posts
+  generatedAt  DateTime @default(now())
+  expiresAt    DateTime // 30 days from generation
+
+  // Download URL for ZIP file
+  downloadUrl  String?
+
+  // Settings
+  formats          String[] // ["square", "portrait", "story"]
+  includeRooms     Boolean  @default(true)
+  includeProducts  Boolean  @default(true)
+  includeQuotes    Boolean  @default(true)
+  includeDetails   Boolean  @default(false)
+
+  posts InstagramCampaignPost[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([projectId])
+  @@map("instagram_campaigns")
+}
+
+model InstagramCampaignPost {
+  id         String            @id @default(cuid())
+  campaignId String
+  campaign   InstagramCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  // Post metadata
+  postType    String // "launch" | "room_spotlight" | "product_feature" | "quote" | "detail" | "closer"
+  sequenceNum Int    // 1, 2, 3... (for "1 of 6")
+
+  // Content
+  title    String?
+  caption  String
+  hashtags String[]
+
+  // Assets
+  format     String[] // ["square", "portrait", "story"]
+  imageIds   String[] // ProjectImage IDs used
+  productIds String[] // Products featured (if applicable)
+  roomName   String?  // Room featured (if applicable)
+
+  // Generated file URLs
+  fileUrls Json? // { square: "url", portrait: "url", story: "url" }
+
+  createdAt DateTime @default(now())
+
+  @@index([campaignId, sequenceNum])
+  @@map("instagram_campaign_posts")
 }
 
 enum EditorialInterviewStatus {
