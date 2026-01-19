@@ -156,7 +156,9 @@ export function PresentationImportModal({
       });
 
       if (!sessionRes.ok) {
-        throw new Error('Failed to create import session');
+        const errorData = await sessionRes.json().catch(() => ({}));
+        const errorDetails = errorData.details || errorData.error || sessionRes.statusText;
+        throw new Error(`Failed to create import session (${sessionRes.status}): ${errorDetails}`);
       }
 
       const { sessionId: newSessionId } = await sessionRes.json();
@@ -177,8 +179,15 @@ export function PresentationImportModal({
       });
 
       if (!uploadRes.ok) {
-        const errorData = await uploadRes.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to process presentation');
+        const errorText = await uploadRes.text();
+        let errorMessage: string;
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.details || errorData.error || uploadRes.statusText;
+        } catch {
+          errorMessage = errorText || uploadRes.statusText;
+        }
+        throw new Error(`Failed to upload presentation (${uploadRes.status}): ${errorMessage}`);
       }
 
       const { extractedImages, totalPages } = await uploadRes.json();

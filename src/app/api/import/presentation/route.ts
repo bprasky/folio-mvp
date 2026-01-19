@@ -7,7 +7,11 @@ import { prisma } from '@/lib/prisma';
 // These libraries don't work in Edge runtime
 
 export const runtime = 'nodejs';
-export const maxDuration = 120; // 2 minutes for large files
+export const maxDuration = 60; // 1 minute (compatible with Vercel Pro, Hobby is 10s max)
+
+// Configure body size limit for file uploads (50MB)
+export const fetchCache = 'force-no-store';
+export const dynamic = 'force-dynamic';
 
 /**
  * POST /api/import/presentation
@@ -136,8 +140,17 @@ export async function POST(req: NextRequest) {
     });
   } catch (error) {
     console.error('Error processing presentation:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorName = error instanceof Error ? error.name : 'Unknown';
+    const errorStack = error instanceof Error ? error.stack : undefined;
+
     return NextResponse.json(
-      { error: 'Failed to process presentation' },
+      {
+        error: 'Failed to process presentation',
+        details: errorMessage,
+        type: errorName,
+        stack: process.env.NODE_ENV === 'development' ? errorStack : undefined,
+      },
       { status: 500 }
     );
   }
