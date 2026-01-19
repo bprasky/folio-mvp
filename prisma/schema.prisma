@@ -1668,6 +1668,9 @@ model PendingProductTag {
   detectionConfidence   String  // high, medium, low
   attributionConfidence String? // high, medium, low (after search)
 
+  // Room type detected from image analysis
+  roomType        String?
+
   // Verification status
   status          PendingTagStatus @default(UNREVIEWED)
   // UNREVIEWED → CONFIRMED → CORRECTED → DISMISSED
