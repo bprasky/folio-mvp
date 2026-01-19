@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getToken } from 'next-auth/jwt';
+import { checkRateLimit, getClientIp, RateLimitPresets } from '@/lib/rateLimit';
 
 // Routes that require designer approval
 const DESIGNER_ROUTES = ['/designer'];
@@ -16,8 +17,41 @@ const EXEMPT_ROUTES = [
   '/favicon.ico',
 ];
 
+// Auth routes that should be rate limited
+const AUTH_RATE_LIMITED_ROUTES = [
+  '/api/auth/signin',
+  '/api/auth/callback/credentials',
+];
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // Rate limiting for auth endpoints (before exempt check)
+  if (AUTH_RATE_LIMITED_ROUTES.some((route) => pathname.startsWith(route))) {
+    const clientIp = getClientIp(request.headers);
+    const rateLimitResult = checkRateLimit(clientIp, {
+      ...RateLimitPresets.AUTH,
+      keyGenerator: (ip) => `auth-login:${ip}`,
+    });
+
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        {
+          error: 'Too many login attempts. Please try again later.',
+          retryAfter: Math.ceil((rateLimitResult.reset - Date.now()) / 1000),
+        },
+        {
+          status: 429,
+          headers: {
+            'X-RateLimit-Limit': String(rateLimitResult.limit),
+            'X-RateLimit-Remaining': String(rateLimitResult.remaining),
+            'X-RateLimit-Reset': String(rateLimitResult.reset),
+            'Retry-After': String(Math.ceil((rateLimitResult.reset - Date.now()) / 1000)),
+          },
+        }
+      );
+    }
+  }
 
   // Skip exempt routes
   if (EXEMPT_ROUTES.some((route) => pathname.startsWith(route))) {

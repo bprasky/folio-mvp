@@ -20,12 +20,43 @@ import { NextRequest, NextResponse } from 'next/server';
 import { AccountStatus } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
+import { checkRateLimit, getClientIp, RateLimitPresets } from '@/lib/rateLimit';
 
 export async function POST(request: NextRequest) {
-  console.log('[Signup API] Request received');
+  // Rate limiting: 10 signup attempts per 15 minutes per IP
+  const clientIp = getClientIp(request.headers);
+  const rateLimitResult = checkRateLimit(clientIp, {
+    ...RateLimitPresets.AUTH,
+    keyGenerator: (ip) => `signup:${ip}`,
+  });
+
+  if (!rateLimitResult.success) {
+    return NextResponse.json(
+      {
+        error: 'Too many signup attempts. Please try again later.',
+        retryAfter: Math.ceil((rateLimitResult.reset - Date.now()) / 1000),
+      },
+      {
+        status: 429,
+        headers: {
+          'X-RateLimit-Limit': String(rateLimitResult.limit),
+          'X-RateLimit-Remaining': String(rateLimitResult.remaining),
+          'X-RateLimit-Reset': String(rateLimitResult.reset),
+          'Retry-After': String(Math.ceil((rateLimitResult.reset - Date.now()) / 1000)),
+        },
+      }
+    );
+  }
+
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('[Signup API] Request received');
+  }
+
   try {
     const body = await request.json();
-    console.log('[Signup API] Request body:', { ...body, password: '[REDACTED]' });
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('[Signup API] Request body:', { ...body, password: '[REDACTED]' });
+    }
     const { name, email, password } = body;
 
     if (!name || !email || !password) {
@@ -36,7 +67,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if user already exists (case-insensitive)
-    console.log('[Signup API] Checking for existing user with email:', email);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('[Signup API] Checking for existing user with email:', email);
+    }
+
     let existingUser;
     try {
       existingUser = await prisma.user.findFirst({
@@ -47,14 +81,18 @@ export async function POST(request: NextRequest) {
           }
         },
       });
-      console.log('[Signup API] findFirst completed, existingUser:', existingUser ? 'found' : 'not found');
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('[Signup API] findFirst completed, existingUser:', existingUser ? 'found' : 'not found');
+      }
     } catch (dbError) {
       console.error('[Signup API] Database error checking existing user:', dbError);
       throw new Error(`Database error checking existing user: ${dbError instanceof Error ? dbError.message : String(dbError)}`);
     }
 
     if (existingUser) {
-      console.log('[Signup API] User already exists with email:', email);
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('[Signup API] User already exists with email:', email);
+      }
       return NextResponse.json(
         { error: 'User with this email already exists' },
         { status: 409 }
@@ -62,11 +100,16 @@ export async function POST(request: NextRequest) {
     }
 
     // Hash password
-    console.log('[Signup API] Hashing password...');
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('[Signup API] Hashing password...');
+    }
+
     let hashedPassword;
     try {
       hashedPassword = await bcrypt.hash(password, 12);
-      console.log('[Signup API] Password hashed successfully');
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('[Signup API] Password hashed successfully');
+      }
     } catch (hashError) {
       console.error('[Signup API] Error hashing password:', hashError);
       throw new Error(`Password hashing failed: ${hashError instanceof Error ? hashError.message : String(hashError)}`);
@@ -74,7 +117,10 @@ export async function POST(request: NextRequest) {
 
     // Individual-First: All users start as INDIVIDUAL with APPROVED status
     // No admin approval needed - they can browse immediately
-    console.log('[Signup API] Creating user with status: APPROVED, role: INDIVIDUAL');
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('[Signup API] Creating user with status: APPROVED, role: INDIVIDUAL');
+    }
+
     let user;
     try {
       user = await prisma.user.create({
@@ -86,7 +132,9 @@ export async function POST(request: NextRequest) {
           accountStatus: AccountStatus.APPROVED,
         },
       });
-      console.log('[Signup API] User created successfully with ID:', user.id);
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('[Signup API] User created successfully with ID:', user.id);
+      }
     } catch (createError) {
       console.error('[Signup API] Database error creating user:', createError);
       throw new Error(`Database error creating user: ${createError instanceof Error ? createError.message : String(createError)}`);

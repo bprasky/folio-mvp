@@ -10,9 +10,14 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/options';
  * Remove after QA complete
  */
 export async function GET(request: NextRequest) {
+  // Debug routes only available in development
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  }
+
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }

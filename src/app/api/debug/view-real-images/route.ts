@@ -3,6 +3,11 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 
 export async function GET() {
+  // Debug routes only available in development
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  }
+
   try {
     // These are the real images that were generated and uploaded to Supabase
     // Based on the logs from earlier generation attempts

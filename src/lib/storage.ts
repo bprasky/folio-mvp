@@ -1,4 +1,5 @@
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import sharp from "sharp";
 
 // Lazy initialization to avoid build-time errors when env vars aren't available
 let _supabase: SupabaseClient | null = null;
@@ -15,6 +16,42 @@ function getSupabase() {
 // Pick ONE bucket name and stick to it. You're currently using "event-images".
 const BUCKET = process.env.SB_BUCKET_NAME || "event-images";
 
+/**
+ * Strip EXIF metadata from image buffer for privacy and security
+ * Removes GPS coordinates, timestamps, camera info, etc.
+ * @param buffer - Original image buffer
+ * @param mime - MIME type of the image
+ * @returns Buffer with EXIF data removed
+ */
+async function stripExifMetadata(buffer: Buffer, mime: string): Promise<Buffer> {
+  try {
+    // Determine output format based on MIME type
+    const isJpeg = mime.includes('jpeg') || mime.includes('jpg');
+    const isPng = mime.includes('png');
+
+    let processor = sharp(buffer)
+      .rotate() // Auto-rotate based on EXIF orientation, then remove EXIF
+      .withMetadata({
+        // Keep only ICC color profile for color accuracy
+        // Remove all EXIF, XMP, and IPTC metadata
+      });
+
+    // Convert to appropriate format
+    if (isPng) {
+      processor = processor.png({ quality: 95 });
+    } else {
+      // Default to JPEG for other formats
+      processor = processor.jpeg({ quality: 90 });
+    }
+
+    return await processor.toBuffer();
+  } catch (error) {
+    console.error('[stripExifMetadata] Error stripping EXIF:', error);
+    // If stripping fails, return original buffer rather than failing the upload
+    return buffer;
+  }
+}
+
 export interface StorageResult {
   bucket: string;
   path: string;
@@ -22,26 +59,29 @@ export interface StorageResult {
 }
 
 export async function saveBufferToProjectStorage({
-  projectId, 
-  roomId, 
-  buffer, 
+  projectId,
+  roomId,
+  buffer,
   mime,
-}: { 
-  projectId: string; 
-  roomId: string; 
-  buffer: Buffer; 
-  mime: string; 
+}: {
+  projectId: string;
+  roomId: string;
+  buffer: Buffer;
+  mime: string;
 }) {
   const { ulid } = await import("ulid");
   const id = ulid();
   const ext = mime === "image/png" ? "png" : "jpg";
+
+  // Strip EXIF metadata for privacy (removes GPS, timestamps, camera info)
+  const sanitizedBuffer = await stripExifMetadata(buffer, mime);
 
   // Keep the prefix out of the path if the bucket already implies purpose
   const path = `${projectId}/${roomId}/generated/${id}.${ext}`;
 
   // Try with anon client first (faster if RLS allows it)
   const supabase = getSupabase();
-  let up = await supabase.storage.from(BUCKET).upload(path, buffer, {
+  let up = await supabase.storage.from(BUCKET).upload(path, sanitizedBuffer, {
     contentType: mime,
     upsert: false,
   });
@@ -50,7 +90,7 @@ export async function saveBufferToProjectStorage({
   if (up.error) {
     console.log(`[saveBufferToProjectStorage] Anon client upload failed, trying admin client: ${up.error.message}`);
     const { supabaseAdmin } = await import('./supabaseAdmin');
-    const adminUp = await supabaseAdmin.storage.from(BUCKET).upload(path, buffer, {
+    const adminUp = await supabaseAdmin.storage.from(BUCKET).upload(path, sanitizedBuffer, {
       contentType: mime,
       upsert: false,
     });
@@ -124,8 +164,11 @@ export async function uploadGeneratedCutout({
   const ext = mime === "image/png" ? "png" : "jpg";
   const path = `${projectId}/cutouts/${productId}/${id}.${ext}`;
 
+  // Strip EXIF metadata for privacy
+  const sanitizedBuffer = await stripExifMetadata(buffer, mime);
+
   const { supabaseAdmin } = await import('./supabaseAdmin');
-  const { error } = await supabaseAdmin.storage.from(BUCKET).upload(path, buffer, {
+  const { error } = await supabaseAdmin.storage.from(BUCKET).upload(path, sanitizedBuffer, {
     contentType: mime,
     upsert: false,
   });

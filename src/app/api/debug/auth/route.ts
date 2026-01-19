@@ -6,6 +6,11 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { cookies } from 'next/headers';
 
 export async function GET() {
+  // Debug routes only available in development
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  }
+
   const session = await getServerSession(authOptions);
   const cookieDump = cookies().getAll().map(c => ({ name: c.name, v: (c.value ?? '').slice(0,12) + '…' }));
   return NextResponse.json({ sessionUser: session?.user ?? null, cookies: cookieDump });

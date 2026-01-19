@@ -5,6 +5,11 @@ import { logDbEnv } from '@/lib/dbEnv';
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
+  // Debug routes only available in development
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  }
+
   logDbEnv('db-sanity');
 
   // Check table + columns + last migration
