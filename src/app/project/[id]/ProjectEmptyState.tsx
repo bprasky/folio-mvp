@@ -7,6 +7,7 @@ import { HiOutlineDotsHorizontal } from 'react-icons/hi';
 import { FaCloudUploadAlt, FaFileImport, FaGlobe, FaDoorOpen, FaImage, FaFileAlt, FaCalendarAlt, FaArrowLeft } from 'react-icons/fa';
 import OverviewModal from './OverviewModal';
 import ProjectCreationModal from '@/components/ProjectCreationModal';
+import { PresentationImportModal } from '@/components/import/PresentationImportModal';
 
 interface Project {
   id: string;
@@ -34,6 +35,8 @@ export default function ProjectEmptyState({ project }: ProjectEmptyStateProps) {
   const router = useRouter();
   const [showOverviewModal, setShowOverviewModal] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [showPresentationImport, setShowPresentationImport] = useState(false);
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [isDragOver, setIsDragOver] = useState(false);
   const dropZoneRef = useRef<HTMLDivElement>(null);
 
@@ -65,25 +68,78 @@ export default function ProjectEmptyState({ project }: ProjectEmptyStateProps) {
 
     const files = Array.from(e.dataTransfer.files);
     if (files.length > 0) {
-      // Open the upload modal with the files
-      // The ProjectCreationModal will handle file detection
-      setShowUploadModal(true);
-      // Store files in sessionStorage for the modal to pick up
-      const fileData = files.map(f => ({
-        name: f.name,
-        type: f.type,
-        size: f.size,
-      }));
-      sessionStorage.setItem('pendingUploadFiles', JSON.stringify(fileData));
+      // Check if any files are presentations (PDF or PPTX)
+      const hasPresentationFile = files.some(file => {
+        const name = file.name.toLowerCase();
+        return name.endsWith('.pdf') || name.endsWith('.pptx');
+      });
+
+      if (hasPresentationFile) {
+        // Use the AI-powered presentation import for PDF/PPTX
+        const presentationFiles = files.filter(file => {
+          const name = file.name.toLowerCase();
+          return name.endsWith('.pdf') || name.endsWith('.pptx');
+        });
+        setPendingFiles(presentationFiles);
+        setShowPresentationImport(true);
+      } else {
+        // Use the regular upload modal for images
+        setShowUploadModal(true);
+        // Store file info for legacy modal
+        const fileData = files.map(f => ({
+          name: f.name,
+          type: f.type,
+          size: f.size,
+        }));
+        sessionStorage.setItem('pendingUploadFiles', JSON.stringify(fileData));
+      }
     }
   }, []);
 
   const handleFileInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length > 0) {
-      setShowUploadModal(true);
+      // Check if any files are presentations (PDF or PPTX)
+      const hasPresentationFile = files.some(file => {
+        const name = file.name.toLowerCase();
+        return name.endsWith('.pdf') || name.endsWith('.pptx');
+      });
+
+      if (hasPresentationFile) {
+        // Use the AI-powered presentation import for PDF/PPTX
+        const presentationFiles = files.filter(file => {
+          const name = file.name.toLowerCase();
+          return name.endsWith('.pdf') || name.endsWith('.pptx');
+        });
+        setPendingFiles(presentationFiles);
+        setShowPresentationImport(true);
+      } else {
+        // Use the regular upload modal for images
+        setShowUploadModal(true);
+      }
     }
   }, []);
+
+  const handleImportPresentation = useCallback(() => {
+    // Open file picker for presentation files
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.pdf,.pptx';
+    input.onchange = (e) => {
+      const target = e.target as HTMLInputElement;
+      const files = Array.from(target.files || []);
+      if (files.length > 0) {
+        setPendingFiles(files);
+        setShowPresentationImport(true);
+      }
+    };
+    input.click();
+  }, []);
+
+  const handlePresentationImportComplete = useCallback((result: { roomsCreated: number; productsTagged: number }) => {
+    // Refresh the page to show new rooms
+    router.refresh();
+  }, [router]);
 
   const handleAddRoom = useCallback(() => {
     // Navigate to designer board view which allows room creation
@@ -196,7 +252,7 @@ export default function ProjectEmptyState({ project }: ProjectEmptyStateProps) {
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
             {/* Primary CTA - Import Presentation */}
             <button
-              onClick={() => setShowUploadModal(true)}
+              onClick={handleImportPresentation}
               className="accent-btn px-6 py-3 flex items-center gap-2"
             >
               <FaFileImport className="w-4 h-4" />
@@ -279,7 +335,7 @@ export default function ProjectEmptyState({ project }: ProjectEmptyStateProps) {
         project={project}
       />
 
-      {/* Upload Modal */}
+      {/* Upload Modal (for images) */}
       {showUploadModal && (
         <ProjectCreationModal
           isOpen={showUploadModal}
@@ -295,6 +351,21 @@ export default function ProjectEmptyState({ project }: ProjectEmptyStateProps) {
           editingProject={project}
         />
       )}
+
+      {/* Presentation Import Modal (for PDF/PPTX with AI processing) */}
+      <PresentationImportModal
+        open={showPresentationImport}
+        onOpenChange={(open) => {
+          setShowPresentationImport(open);
+          if (!open) {
+            setPendingFiles([]);
+          }
+        }}
+        projectId={project.id}
+        projectTitle={project.title}
+        initialFiles={pendingFiles.length > 0 ? pendingFiles : undefined}
+        onComplete={handlePresentationImportComplete}
+      />
     </>
   );
 }
