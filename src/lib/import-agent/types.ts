@@ -55,12 +55,15 @@ export interface ProductAttribution {
 }
 
 export interface ExtractedImage {
-  index: number;
-  base64: string;
+  pageNumber?: number;
+  base64?: string;
   url?: string;
   mimeType: string;
+  width?: number;
+  height?: number;
   isSkipped?: boolean;
   skipReason?: string;
+  needsRendering?: boolean;
 }
 
 export interface ImportJob {
