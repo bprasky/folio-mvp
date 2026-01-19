@@ -61,8 +61,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ sessionId: importSession.id }, { status: 201 });
   } catch (error) {
     console.error('Error creating import session:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorName = error instanceof Error ? error.name : 'Unknown';
     return NextResponse.json(
-      { error: 'Failed to create import session' },
+      {
+        error: 'Failed to create import session',
+        details: errorMessage,
+        type: errorName,
+      },
       { status: 500 }
     );
   }
