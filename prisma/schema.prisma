@@ -112,6 +112,12 @@ model User {
   profileInterview               ProfileInterview?
   teamMemberships                TeamMember[]
 
+  // Legal consent tracking
+  tosAcceptedAt                  DateTime?
+  privacyAcceptedAt              DateTime?
+  tosVersion                     String?               // e.g., "2026-01-19"
+  privacyVersion                 String?               // e.g., "2026-01-19"
+
   @@map("users")
 }
 

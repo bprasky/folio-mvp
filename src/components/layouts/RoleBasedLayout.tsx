@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import MainLayout from "./MainLayout";
 import SimpleLayout from "./SimpleLayout";
 import { Navigation } from "../navigation";
+import { Footer } from "../Footer";
 
 // Ensure this layout is always dynamic to avoid stale header state
 export const dynamic = 'force-dynamic';
@@ -57,6 +58,7 @@ export default function RoleBasedLayout({ children }: RoleBasedLayoutProps) {
       ) : (
         <SimpleLayout>{children}</SimpleLayout>
       )}
+      <Footer />
     </div>
   );
 } 
