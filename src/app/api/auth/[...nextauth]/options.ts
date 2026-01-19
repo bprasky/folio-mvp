@@ -2,6 +2,7 @@ import { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
+import { checkRateLimit, RateLimitPresets } from '@/lib/rateLimit';
 
 declare module 'next-auth' {
   interface User {
@@ -86,6 +87,21 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
+          return null;
+        }
+
+        // Per-email rate limiting (prevents credential stuffing on specific accounts)
+        // This complements the IP-level rate limiting in middleware
+        const emailRateLimit = checkRateLimit(credentials.email.toLowerCase().trim(), {
+          ...RateLimitPresets.LOGIN_PER_EMAIL,
+          keyGenerator: (email) => `login-email:${email}`,
+        });
+
+        if (!emailRateLimit.success) {
+          if (process.env.NODE_ENV !== 'production') {
+            console.log(`Rate limit exceeded for email: ${credentials.email}`);
+          }
+          // Return null to fail authentication, but don't reveal rate limiting to prevent email enumeration
           return null;
         }
 

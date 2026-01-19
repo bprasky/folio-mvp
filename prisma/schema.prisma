@@ -2034,11 +2034,24 @@ model VendorTradeAccount {
   accountName     String           // Display name for this account
   accountType     TradeAccountType
 
-  // Credentials (encrypted in practice via application layer)
+  // Credentials - DUAL-WRITE MIGRATION IN PROGRESS
+  // Phase 1: Add encrypted columns, keep plaintext for safety
+  // Phase 2: Backfill encrypted columns from plaintext
+  // Phase 3: Read from encrypted, fallback to plaintext
+  // Phase 4: Remove plaintext columns after verification
+
   loginUrl        String?
-  username        String?          // Encrypted
-  password        String?          // Encrypted
-  apiKey          String?          // Encrypted
+
+  // OLD (plaintext) - Will be removed after migration
+  username        String?          // DEPRECATED: Use usernameEncrypted
+  password        String?          // DEPRECATED: Use passwordEncrypted
+  apiKey          String?          // DEPRECATED: Use apiKeyEncrypted
+
+  // NEW (encrypted with AES-256-GCM)
+  usernameEncrypted String?       // Format: iv:authTag:ciphertext
+  passwordEncrypted String?       // Format: iv:authTag:ciphertext
+  apiKeyEncrypted   String?       // Format: iv:authTag:ciphertext
+
   apiEndpoint     String?
 
   // Terms
