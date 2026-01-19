@@ -4,6 +4,11 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
 export async function GET(req: Request) {
+  // Debug routes only available in development
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  }
+
   try {
     const { searchParams } = new URL(req.url);
     const projectId = searchParams.get("projectId")!;

@@ -4,6 +4,11 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
 export async function GET(req: Request) {
+  // Debug routes only available in development
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  }
+
   const { searchParams } = new URL(req.url);
   const email = searchParams.get('email');
   if (!email) return NextResponse.json({ error: 'email required' }, { status: 400 });

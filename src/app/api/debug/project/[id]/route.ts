@@ -4,6 +4,11 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
 export async function GET(_: Request, { params }: { params: { id: string } }) {
+  // Debug routes only available in development
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  }
+
   try {
     const core = await prisma.project.findUnique({
       where: { id: params.id },

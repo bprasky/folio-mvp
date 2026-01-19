@@ -66,13 +66,15 @@ declare module 'next-auth/jwt' {
   }
 }
 
-// Debug environment variables
-console.log('DEBUG: NextAuth Environment Check');
-console.log('NEXTAUTH_SECRET exists:', !!process.env.NEXTAUTH_SECRET);
-console.log('NEXTAUTH_SECRET length:', process.env.NEXTAUTH_SECRET?.length || 0);
-console.log('NEXTAUTH_URL:', process.env.NEXTAUTH_URL);
-console.log('Current working directory:', process.cwd());
-console.log('Environment variables loaded:', Object.keys(process.env).filter(key => key.includes('NEXTAUTH')));
+// Debug environment variables (only in development)
+if (process.env.NODE_ENV !== 'production') {
+  console.log('DEBUG: NextAuth Environment Check');
+  console.log('NEXTAUTH_SECRET exists:', !!process.env.NEXTAUTH_SECRET);
+  console.log('NEXTAUTH_SECRET length:', process.env.NEXTAUTH_SECRET?.length || 0);
+  console.log('NEXTAUTH_URL:', process.env.NEXTAUTH_URL);
+  console.log('Current working directory:', process.cwd());
+  console.log('Environment variables loaded:', Object.keys(process.env).filter(key => key.includes('NEXTAUTH')));
+}
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -106,31 +108,39 @@ export const authOptions: NextAuthOptions = {
           });
 
           if (!user) {
-            console.error('User not found:', credentials.email);
+            if (process.env.NODE_ENV !== 'production') {
+              console.error('User not found:', credentials.email);
+            }
             return null;
           }
 
           if (!user.passwordHash) {
-            console.error('User found but no passwordHash:', credentials.email);
+            if (process.env.NODE_ENV !== 'production') {
+              console.error('User found but no passwordHash:', credentials.email);
+            }
             return null;
           }
 
-          console.log('DEBUG authorize - Prisma user found:', {
-            id: user.id,
-            email: user.email,
-            role: user.role,
-            name: user.name
-          });
+          if (process.env.NODE_ENV !== 'production') {
+            console.log('DEBUG authorize - Prisma user found:', {
+              id: user.id,
+              email: user.email,
+              role: user.role,
+              name: user.name
+            });
+          }
 
           // Compare password against passwordHash
           const isValidPassword = await bcrypt.compare(credentials.password, user.passwordHash);
-          
+
           if (isValidPassword) {
-            console.log('DEBUG authorize - User authenticated:', {
-              id: user.id,
-              email: user.email,
-              role: user.role
-            });
+            if (process.env.NODE_ENV !== 'production') {
+              console.log('DEBUG authorize - User authenticated:', {
+                id: user.id,
+                email: user.email,
+                role: user.role
+              });
+            }
             // RETURN ID! - This is critical for session.user.id
             return {
               id: user.id,
@@ -140,7 +150,9 @@ export const authOptions: NextAuthOptions = {
             };
           }
 
-          console.log('Invalid password for user:', credentials.email);
+          if (process.env.NODE_ENV !== 'production') {
+            console.log('Invalid password for user:', credentials.email);
+          }
           return null;
         } catch (error) {
           console.error('Auth error:', error);
@@ -151,12 +163,16 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async jwt({ token, user, trigger }) {
-      console.log("DEBUG: Entering JWT callback");
+      if (process.env.NODE_ENV !== 'production') {
+        console.log("DEBUG: Entering JWT callback");
+      }
 
       // Persist id on initial sign-in
       if (user?.id) {
         token.id = user.id;
-        console.log("DEBUG: JWT callback - Setting token.id:", user.id);
+        if (process.env.NODE_ENV !== 'production') {
+          console.log("DEBUG: JWT callback - Setting token.id:", user.id);
+        }
       }
 
       // Always hydrate role, accountStatus, onboardingCompletedAt, subscriptionTier from DB to avoid stale tokens
@@ -182,7 +198,9 @@ export const authOptions: NextAuthOptions = {
           // Founding designers have Pro tier with null expiry (lifetime)
           const isPaidTier = u?.subscriptionTier === 'PRO' || u?.subscriptionTier === 'STUDIO' || u?.subscriptionTier === 'ENTERPRISE';
           token.isFoundingDesigner = isPaidTier && u?.subscriptionExpiresAt === null;
-          console.log("Hydrated from DB - role:", token.role, "accountStatus:", token.accountStatus, "subscriptionTier:", token.subscriptionTier, "isFoundingDesigner:", token.isFoundingDesigner);
+          if (process.env.NODE_ENV !== 'production') {
+            console.log("Hydrated from DB - role:", token.role, "accountStatus:", token.accountStatus, "subscriptionTier:", token.subscriptionTier, "isFoundingDesigner:", token.isFoundingDesigner);
+          }
 
           // Try to get workspace context (operatingAsOrgId may not exist in prod yet)
           try {
@@ -233,11 +251,15 @@ export const authOptions: NextAuthOptions = {
     },
 
     async session({ session, token }) {
-      console.log("DEBUG: Session callback — token.role:", token.role, "token.id:", token.id, "token.accountStatus:", token.accountStatus, "operatingAsOrgId:", token.operatingAsOrgId, "subscriptionTier:", token.subscriptionTier, "isFoundingDesigner:", token.isFoundingDesigner);
+      if (process.env.NODE_ENV !== 'production') {
+        console.log("DEBUG: Session callback — token.role:", token.role, "token.id:", token.id, "token.accountStatus:", token.accountStatus, "operatingAsOrgId:", token.operatingAsOrgId, "subscriptionTier:", token.subscriptionTier, "isFoundingDesigner:", token.isFoundingDesigner);
+      }
       session.user = session.user || ({} as any);
       if (token?.id && session?.user) {
         (session.user as any).id = token.id as string;
-        console.log("DEBUG: Session callback - Setting session.user.id:", token.id);
+        if (process.env.NODE_ENV !== 'production') {
+          console.log("DEBUG: Session callback - Setting session.user.id:", token.id);
+        }
       }
       (session.user as any).role = (token as any).role || 'GUEST';
       (session.user as any).accountStatus = (token as any).accountStatus || 'APPROVED';
@@ -279,7 +301,7 @@ export const authOptions: NextAuthOptions = {
       },
     },
   },
-  secret: process.env.NEXTAUTH_SECRET || 'your-secret-key',
+  secret: process.env.NEXTAUTH_SECRET || (process.env.NODE_ENV === 'production' ? undefined : 'dev-secret-key-not-for-production'),
   // Add NEXTAUTH_URL for production
   ...(process.env.NEXTAUTH_URL && { url: process.env.NEXTAUTH_URL }),
 }; 

@@ -1,20 +1,157 @@
-const buckets = new Map<string, { count: number; resetAt: number }>();
+/**
+ * Simple in-memory rate limiter
+ *
+ * IMPORTANT: This implementation uses in-memory storage and is suitable for:
+ * - Development environments
+ * - Single-instance deployments
+ *
+ * For production with multiple instances, consider using:
+ * - @upstash/ratelimit with Redis
+ * - Vercel Edge Config rate limiting
+ * - Or similar distributed rate limiting solution
+ */
 
-function key(userId: string, scope: string) {
-  return `${scope}:${userId}`;
+interface RateLimitRecord {
+  count: number;
+  resetAt: number;
 }
 
-export function rateLimit({ userId, scope, limit, windowMs }: { userId: string; scope: string; limit: number; windowMs: number }) {
-  const k = key(userId, scope);
+const rateLimitStore = new Map<string, RateLimitRecord>();
+
+export interface RateLimitConfig {
+  /**
+   * Maximum number of requests allowed in the time window
+   */
+  max: number;
+
+  /**
+   * Time window in milliseconds
+   */
+  windowMs: number;
+
+  /**
+   * Optional: Generate custom identifier from request
+   * Default: Uses IP address
+   */
+  keyGenerator?: (identifier: string) => string;
+}
+
+export interface RateLimitResult {
+  success: boolean;
+  limit: number;
+  remaining: number;
+  reset: number;
+}
+
+/**
+ * Check if request should be rate limited
+ * @param identifier - Unique identifier for the requester (e.g., IP address, user ID)
+ * @param config - Rate limit configuration
+ * @returns RateLimitResult indicating if request is allowed
+ */
+export function checkRateLimit(
+  identifier: string,
+  config: RateLimitConfig
+): RateLimitResult {
+  const key = config.keyGenerator ? config.keyGenerator(identifier) : identifier;
   const now = Date.now();
-  const b = buckets.get(k);
-  if (!b || b.resetAt <= now) {
-    buckets.set(k, { count: 1, resetAt: now + windowMs });
-    return { ok: true, remaining: limit - 1, resetAt: now + windowMs };
+
+  // Clean up expired entries (simple garbage collection)
+  if (rateLimitStore.size > 10000) {
+    for (const [k, v] of rateLimitStore.entries()) {
+      if (v.resetAt < now) {
+        rateLimitStore.delete(k);
+      }
+    }
   }
-  if (b.count >= limit) {
-    return { ok: false, remaining: 0, resetAt: b.resetAt };
+
+  let record = rateLimitStore.get(key);
+
+  // Create new record or reset if window expired
+  if (!record || record.resetAt < now) {
+    record = {
+      count: 0,
+      resetAt: now + config.windowMs,
+    };
+    rateLimitStore.set(key, record);
   }
-  b.count += 1;
-  return { ok: true, remaining: limit - b.count, resetAt: b.resetAt };
+
+  // Increment count
+  record.count++;
+
+  const success = record.count <= config.max;
+  const remaining = Math.max(0, config.max - record.count);
+
+  return {
+    success,
+    limit: config.max,
+    remaining,
+    reset: record.resetAt,
+  };
 }
+
+/**
+ * Get client IP address from request headers
+ * Works with various proxy configurations (Vercel, Cloudflare, etc.)
+ */
+export function getClientIp(headers: Headers): string {
+  // Try various headers in order of preference
+  const forwardedFor = headers.get('x-forwarded-for');
+  if (forwardedFor) {
+    return forwardedFor.split(',')[0].trim();
+  }
+
+  const realIp = headers.get('x-real-ip');
+  if (realIp) {
+    return realIp.trim();
+  }
+
+  const cfConnectingIp = headers.get('cf-connecting-ip');
+  if (cfConnectingIp) {
+    return cfConnectingIp.trim();
+  }
+
+  // Fallback to a generic identifier
+  return 'unknown';
+}
+
+/**
+ * Preset rate limit configurations
+ */
+export const RateLimitPresets = {
+  /**
+   * Very strict - for sensitive operations like password reset
+   * 5 requests per 15 minutes
+   */
+  STRICT: {
+    max: 5,
+    windowMs: 15 * 60 * 1000,
+  },
+
+  /**
+   * Auth endpoints - login, signup
+   * 10 requests per 15 minutes
+   */
+  AUTH: {
+    max: 10,
+    windowMs: 15 * 60 * 1000,
+  },
+
+  /**
+   * Standard API endpoints
+   * 100 requests per 15 minutes
+   */
+  STANDARD: {
+    max: 100,
+    windowMs: 15 * 60 * 1000,
+  },
+
+  /**
+   * Generous limit for authenticated users
+   * 1000 requests per hour
+   */
+  GENEROUS: {
+    max: 1000,
+    windowMs: 60 * 60 * 1000,
+  },
+} as const;
