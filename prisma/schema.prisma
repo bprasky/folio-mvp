@@ -80,6 +80,12 @@ model User {
   operatingAsOrgId               String?
   operatingAsOrg                 Organization?         @relation("UserOperatingAs", fields: [operatingAsOrgId], references: [id])
 
+  // Presale consultation relations
+  buyerConsultations             Consultation[]        @relation("BuyerConsultations")
+  designerConsultations          Consultation[]        @relation("DesignerConsultations")
+  developmentDesigners           DevelopmentDesigner[]
+  consultationBuyer              ConsultationBuyer?
+
   // Architect-specific profile fields
   architectLicenseNumber         String?               // Professional license number
   architectLicensedStates        String[]              // e.g., ["CA", "NY", "TX"]
@@ -371,6 +377,9 @@ model Product {
   // Commerce relations
   orderItems       OrderItem[]
 
+  // Presale development catalog relations
+  developmentProducts DevelopmentProduct[]
+
   @@map("products")
 }
 
@@ -553,6 +562,9 @@ model Organization {
   // Profile System relations
   teamMembers         TeamMember[]
   collaborations      Collaboration[]
+
+  // Presale development relations (for DEVELOPER orgs)
+  developments        Development[]
 
   @@index([status])
   @@index([type])
@@ -752,6 +764,7 @@ enum Role {
   HOMEOWNER   // Legacy - kept for backward compatibility, deprecated in UI
   ARCHITECT   // NEW - parallel to DESIGNER for architecture professionals
   BUILDER     // NEW - parallel to DESIGNER for construction professionals
+  DEVELOPER   // Real estate developer for presale listings
 }
 
 enum AccountStatus {
@@ -767,6 +780,7 @@ enum OrgType {
   SHOWROOM
   CONTRACTOR        // Used for builders/construction companies
   ARCHITECTURE_FIRM // NEW - parallel to DESIGN_FIRM for architecture practices
+  DEVELOPER         // Real estate development company
 }
 
 // Phase 2: Organization tier status for feature gating
@@ -1502,8 +1516,15 @@ model AtelierFingerprint {
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
 
+  // Versioning for consultation attribution
+  version        Int              @default(1)
+  snapshot       Json?            // Computed fingerprint snapshot for deployments
+
   nodes AtelierNode[]
   edges AtelierEdge[]
+
+  // Deployment relations
+  deployments    AtelierDeployment[]
 
   @@index([ownerType, designerId])
   @@index([ownerType, vendorId])
@@ -2316,6 +2337,40 @@ enum ProfileInterviewStatus {
   PUBLISHED
 }
 
+// ============================================================
+// PRESALE & CONSULTATION ENUMS
+// ============================================================
+
+enum DevelopmentStatus {
+  PLANNING
+  PRE_CONSTRUCTION
+  UNDER_CONSTRUCTION
+  READY_FOR_OCCUPANCY
+  SOLD_OUT
+}
+
+enum FinishPackageTier {
+  STANDARD
+  UPGRADE_1
+  UPGRADE_2
+  PREMIUM
+  CUSTOM
+}
+
+enum ConsultationStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  ABANDONED
+  EXPIRED
+}
+
+enum AtelierDeploymentType {
+  DEVELOPMENT_CONSULTATION
+  VENDOR_CONFIGURATOR
+  DESIGNER_ASSISTANT
+}
+
 // Team members (for firms)
 model TeamMember {
   id              String    @id @default(cuid())
@@ -2349,4 +2404,358 @@ model RankingHistory {
 
   @@index([rankingId, recordedAt])
   @@map("ranking_history")
+}
+
+// ============================================================
+// PRESALE/DEVELOPER MODELS
+// Real estate development listings and finish package configuration
+// ============================================================
+
+// Represents a real estate development listing
+model Development {
+  id                   String              @id @default(cuid())
+  developerOrgId       String
+  developerOrg         Organization        @relation(fields: [developerOrgId], references: [id])
+
+  name                 String
+  slug                 String              @unique
+  description          String?             @db.Text
+
+  // Location
+  address              String
+  city                 String
+  state                String
+  country              String              @default("USA")
+
+  // Development details
+  totalUnits           Int
+  status               DevelopmentStatus   @default(PLANNING)
+  expectedCompletion   DateTime?
+
+  // Atelier consultations enabled
+  consultationsEnabled Boolean             @default(false)
+  defaultDesignerId    String?             // Default Atelier for this development
+
+  // Imagery
+  heroImageUrl         String?
+  galleryUrls          String[]            @default([])
+
+  // Timestamps
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+  publishedAt          DateTime?
+
+  // Relations
+  unitTypes            UnitType[]
+  finishPackages       FinishPackage[]
+  productCatalog       DevelopmentProduct[]
+  designerPool         DevelopmentDesigner[]
+  consultations        Consultation[]
+  consultationBuyers   ConsultationBuyer[]
+  deployments          AtelierDeployment[]
+
+  @@index([status])
+  @@index([city, state])
+  @@index([developerOrgId])
+  @@map("developments")
+}
+
+// Unit type within a development (e.g., "2BR Corner", "Penthouse")
+model UnitType {
+  id                   String              @id @default(cuid())
+  developmentId        String
+  development          Development         @relation(fields: [developmentId], references: [id], onDelete: Cascade)
+
+  name                 String              // "2BR Corner Unit"
+  code                 String              // "2BR-C"
+  squareFootage        Int?
+  bedrooms             Int
+  bathrooms            Float
+
+  // Base price
+  basePriceCents       Int?
+
+  // Floor plan
+  floorPlanUrl         String?
+
+  createdAt            DateTime            @default(now())
+
+  // Relations
+  rooms                UnitTypeRoom[]
+  consultations        Consultation[]
+
+  @@unique([developmentId, code])
+  @@map("unit_types")
+}
+
+// Rooms within a unit type
+model UnitTypeRoom {
+  id                   String              @id @default(cuid())
+  unitTypeId           String
+  unitType             UnitType            @relation(fields: [unitTypeId], references: [id], onDelete: Cascade)
+
+  name                 String              // "Primary Bathroom"
+  type                 String              // "BATH"
+
+  // Finish slots available
+  finishSlots          FinishSlot[]
+
+  @@map("unit_type_rooms")
+}
+
+// Finish slot configuration within a room
+model FinishSlot {
+  id                   String              @id @default(cuid())
+  unitTypeRoomId       String
+  unitTypeRoom         UnitTypeRoom        @relation(fields: [unitTypeRoomId], references: [id], onDelete: Cascade)
+
+  key                  String              // "countertop", "faucet"
+  label                String              // "Kitchen Countertop"
+  category             String              // Product category constraint
+
+  // Whether buyer can customize
+  isCustomizable       Boolean             @default(true)
+
+  @@unique([unitTypeRoomId, key])
+  @@map("finish_slots")
+}
+
+// Constrained product catalog for a development
+model DevelopmentProduct {
+  id                   String              @id @default(cuid())
+  developmentId        String
+  development          Development         @relation(fields: [developmentId], references: [id], onDelete: Cascade)
+
+  productId            String
+  product              Product             @relation(fields: [productId], references: [id])
+
+  // Availability constraints
+  availableInPackages  FinishPackageTier[] @default([STANDARD])
+  isUpgrade            Boolean             @default(false)
+  upgradePriceCents    Int?                // Additional cost if upgrade
+
+  // Slot restriction
+  allowedSlots         String[]            @default([]) // e.g., ["countertop", "backsplash"]
+
+  createdAt            DateTime            @default(now())
+
+  // Relations
+  finishPackageDefaults FinishPackageDefault[]
+  consultationSelections ConsultationSelection[]
+
+  @@unique([developmentId, productId])
+  @@index([developmentId])
+  @@map("development_products")
+}
+
+// Finish package template
+model FinishPackage {
+  id                   String              @id @default(cuid())
+  developmentId        String
+  development          Development         @relation(fields: [developmentId], references: [id], onDelete: Cascade)
+
+  name                 String              // "Designer Collection"
+  tier                 FinishPackageTier
+  description          String?
+
+  // Price delta from base
+  priceDeltaCents      Int                 @default(0)
+
+  // Imagery
+  heroImageUrl         String?
+
+  createdAt            DateTime            @default(now())
+
+  // Relations
+  defaultSelections    FinishPackageDefault[]
+  consultations        Consultation[]
+
+  @@unique([developmentId, tier])
+  @@map("finish_packages")
+}
+
+// Default product for a slot in a finish package
+model FinishPackageDefault {
+  id                   String              @id @default(cuid())
+  finishPackageId      String
+  finishPackage        FinishPackage       @relation(fields: [finishPackageId], references: [id], onDelete: Cascade)
+
+  slotKey              String              // "countertop", "faucet"
+  roomType             String              // "KITCHEN", "BATH"
+  developmentProductId String
+  developmentProduct   DevelopmentProduct  @relation(fields: [developmentProductId], references: [id])
+
+  @@unique([finishPackageId, slotKey, roomType])
+  @@map("finish_package_defaults")
+}
+
+// Designers available for consultations on a development
+model DevelopmentDesigner {
+  id                   String              @id @default(cuid())
+  developmentId        String
+  development          Development         @relation(fields: [developmentId], references: [id], onDelete: Cascade)
+
+  designerId           String
+  designer             User                @relation(fields: [designerId], references: [id])
+
+  // Commission structure
+  consultationFeeShare Float               @default(0.7) // 70% to designer
+
+  // Availability
+  isActive             Boolean             @default(true)
+
+  createdAt            DateTime            @default(now())
+
+  @@unique([developmentId, designerId])
+  @@map("development_designers")
+}
+
+// ============================================================
+// CONSULTATION MODELS
+// Buyer consultation sessions with designer Ateliers
+// ============================================================
+
+// A buyer consultation session
+model Consultation {
+  id                   String              @id @default(cuid())
+
+  // Context
+  developmentId        String
+  development          Development         @relation(fields: [developmentId], references: [id])
+  unitTypeId           String?
+  unitType             UnitType?           @relation(fields: [unitTypeId], references: [id])
+  finishPackageId      String?             // Starting package
+  finishPackage        FinishPackage?      @relation(fields: [finishPackageId], references: [id])
+
+  // Participants
+  buyerId              String              // User ID (INDIVIDUAL or lightweight)
+  buyer                User                @relation("BuyerConsultations", fields: [buyerId], references: [id])
+  designerId           String
+  designer             User                @relation("DesignerConsultations", fields: [designerId], references: [id])
+  deploymentId         String?             // Atelier deployment used
+  deployment           AtelierDeployment?  @relation(fields: [deploymentId], references: [id])
+
+  // Session
+  status               ConsultationStatus  @default(SCHEDULED)
+  scheduledAt          DateTime?
+  startedAt            DateTime?
+  completedAt          DateTime?
+  durationMinutes      Int?
+
+  // Conversation
+  conversationHistory  Json?               // Message array
+
+  // Outcomes
+  summary              String?             @db.Text // AI-generated summary
+  designerNotes        String?             @db.Text
+
+  // Attribution
+  attributionLocked    Boolean             @default(false)
+
+  // Pricing
+  consultationFeeCents Int?
+  designerEarningsCents Int?
+
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+
+  // Relations
+  selections           ConsultationSelection[]
+
+  @@index([buyerId])
+  @@index([designerId])
+  @@index([developmentId, status])
+  @@map("consultations")
+}
+
+// Product selection made during consultation
+model ConsultationSelection {
+  id                   String              @id @default(cuid())
+  consultationId       String
+  consultation         Consultation        @relation(fields: [consultationId], references: [id], onDelete: Cascade)
+
+  // What was selected
+  slotKey              String
+  roomType             String
+  developmentProductId String
+  developmentProduct   DevelopmentProduct  @relation(fields: [developmentProductId], references: [id])
+
+  // Designer reasoning (for Atelier learning)
+  reasoning            String?             @db.Text
+  alternatives         Json?               // Other options considered
+
+  // Buyer acceptance
+  buyerAccepted        Boolean             @default(true)
+  buyerNote            String?
+
+  createdAt            DateTime            @default(now())
+
+  @@unique([consultationId, slotKey, roomType])
+  @@map("consultation_selections")
+}
+
+// Lightweight buyer record (can exist without full User)
+model ConsultationBuyer {
+  id                   String              @id @default(cuid())
+
+  // Contact info (may not have full account)
+  email                String
+  name                 String
+  phone                String?
+
+  // Optional link to User (if they create account)
+  userId               String?             @unique
+  user                 User?               @relation(fields: [userId], references: [id])
+
+  // Development context
+  developmentId        String
+  development          Development         @relation(fields: [developmentId], references: [id])
+  unitNumber           String?             // Their specific unit
+
+  // Session token for lightweight auth
+  sessionToken         String              @unique
+  sessionExpiresAt     DateTime
+
+  createdAt            DateTime            @default(now())
+
+  @@unique([email, developmentId])
+  @@index([sessionToken])
+  @@map("consultation_buyers")
+}
+
+// ============================================================
+// ATELIER DEPLOYMENT MODELS
+// Deployed Atelier instances with context constraints
+// ============================================================
+
+// Deployed Atelier instance with context constraints
+model AtelierDeployment {
+  id                   String              @id @default(cuid())
+
+  fingerprintId        String
+  fingerprint          AtelierFingerprint  @relation(fields: [fingerprintId], references: [id])
+
+  deploymentType       AtelierDeploymentType
+
+  // Context constraints
+  developmentId        String?             // If DEVELOPMENT_CONSULTATION
+  development          Development?        @relation(fields: [developmentId], references: [id])
+
+  // System prompt augmentation
+  contextPrompt        String?             @db.Text // Additional context for AI
+
+  // Behavior configuration
+  config               Json?               // Temperature, response style, etc.
+
+  isActive             Boolean             @default(true)
+
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+
+  // Relations
+  consultations        Consultation[]
+
+  @@index([fingerprintId, isActive])
+  @@index([developmentId])
+  @@map("atelier_deployments")
 }
