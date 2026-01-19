@@ -23,26 +23,27 @@ import { prisma } from '@/lib/prisma';
 import { checkRateLimit, getClientIp, RateLimitPresets } from '@/lib/rateLimit';
 
 export async function POST(request: NextRequest) {
-  // Rate limiting: 10 signup attempts per 15 minutes per IP
+  // Rate limiting: Check IP-level limit (prevents mass signup from single source)
+  // This is generous to avoid false positives from corporate networks/VPNs
   const clientIp = getClientIp(request.headers);
-  const rateLimitResult = checkRateLimit(clientIp, {
-    ...RateLimitPresets.AUTH,
-    keyGenerator: (ip) => `signup:${ip}`,
+  const ipRateLimit = checkRateLimit(clientIp, {
+    ...RateLimitPresets.SIGNUP_PER_IP,
+    keyGenerator: (ip) => `signup-ip:${ip}`,
   });
 
-  if (!rateLimitResult.success) {
+  if (!ipRateLimit.success) {
     return NextResponse.json(
       {
-        error: 'Too many signup attempts. Please try again later.',
-        retryAfter: Math.ceil((rateLimitResult.reset - Date.now()) / 1000),
+        error: 'Too many signup attempts from this network. Please try again later.',
+        retryAfter: Math.ceil((ipRateLimit.reset - Date.now()) / 1000),
       },
       {
         status: 429,
         headers: {
-          'X-RateLimit-Limit': String(rateLimitResult.limit),
-          'X-RateLimit-Remaining': String(rateLimitResult.remaining),
-          'X-RateLimit-Reset': String(rateLimitResult.reset),
-          'Retry-After': String(Math.ceil((rateLimitResult.reset - Date.now()) / 1000)),
+          'X-RateLimit-Limit': String(ipRateLimit.limit),
+          'X-RateLimit-Remaining': String(ipRateLimit.remaining),
+          'X-RateLimit-Reset': String(ipRateLimit.reset),
+          'Retry-After': String(Math.ceil((ipRateLimit.reset - Date.now()) / 1000)),
         },
       }
     );

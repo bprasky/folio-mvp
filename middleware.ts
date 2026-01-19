@@ -26,18 +26,19 @@ const AUTH_RATE_LIMITED_ROUTES = [
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Rate limiting for auth endpoints (before exempt check)
+  // Rate limiting for auth endpoints (IP-level only, prevents mass attacks)
+  // Per-email rate limiting happens in the authorize callback where we have email access
   if (AUTH_RATE_LIMITED_ROUTES.some((route) => pathname.startsWith(route))) {
     const clientIp = getClientIp(request.headers);
     const rateLimitResult = checkRateLimit(clientIp, {
-      ...RateLimitPresets.AUTH,
-      keyGenerator: (ip) => `auth-login:${ip}`,
+      ...RateLimitPresets.LOGIN_PER_IP,
+      keyGenerator: (ip) => `login-ip:${ip}`,
     });
 
     if (!rateLimitResult.success) {
       return NextResponse.json(
         {
-          error: 'Too many login attempts. Please try again later.',
+          error: 'Too many login attempts from this network. Please try again later.',
           retryAfter: Math.ceil((rateLimitResult.reset - Date.now()) / 1000),
         },
         {
