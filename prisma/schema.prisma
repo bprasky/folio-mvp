@@ -68,6 +68,7 @@ model User {
   // Removed - AttributeVerification doesn't have designerId field
   designerDecisions              DesignerDecision[]
   voiceProfile                   DesignerVoiceProfile?
+  reasoningProfile               DesignerReasoningProfile?
   // Impersonation relations
   adminImpersonations            ImpersonationLog[]    @relation("AdminImpersonations")
   userImpersonations             ImpersonationLog[]    @relation("UserImpersonations")
@@ -1449,6 +1450,42 @@ model DesignerVoiceProfile {
   designer                User     @relation(fields: [designerId], references: [id], onDelete: Cascade)
 
   @@map("designer_voice_profile")
+}
+
+// Designer reasoning profile - captures HOW a designer thinks and decides,
+// not just their aesthetic preferences. Used to inform AI consultation guidance.
+model DesignerReasoningProfile {
+  id                    String   @id @default(cuid())
+  userId                String   @unique
+
+  // Derived from bio and brand profile - their own words
+  statedApproach        String?  // Their description of how they work
+  statedValues          String[] // What they say matters to them
+
+  // Derived from project selections (ProductTag patterns)
+  materialTendencies    Json?    @default("{}") // { "natural_stone": 0.7, "engineered": 0.3 }
+  pricePointPattern     String?  // "investment_focused" | "value_conscious" | "balanced" | "context_dependent"
+  vendorAffinities      Json?    @default("[]") // [{ vendorId, vendorName, frequency }]
+
+  // Derived from interview content
+  decisionPatterns      Json?    @default("[]") // How they explain choices
+  tradeoffExamples      Json?    @default("[]") // [{ context, reasoning }]
+  quotesOnApproach      String[] // Verbatim quotes about their philosophy
+
+  // Derived from editorial/project narratives
+  explanationExamples   Json?    @default("[]") // [{ topic, explanation }]
+
+  // Metadata
+  lastComputedAt        DateTime?
+  dataSourcesUsed       String[] // ["bio", "projects", "interviews", "editorial"]
+  confidenceScore       Float?   // How much data we have (0-1)
+
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("designer_reasoning_profiles")
 }
 
 model OrbQuestion {
