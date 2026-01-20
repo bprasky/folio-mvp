@@ -15,7 +15,7 @@ export const dynamic = 'force-dynamic';
 
 /**
  * POST /api/import/presentation
- * Upload and process a presentation file (PDF or PPTX)
+ * Process presentation files that were uploaded to Supabase storage
  * Extracts images for AI analysis
  */
 export async function POST(req: NextRequest) {
@@ -27,13 +27,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const formData = await req.formData();
-    const files = formData.getAll('files') as File[];
-    const sessionId = formData.get('sessionId') as string;
-    const projectId = formData.get('projectId') as string | null;
+    // Accept JSON body with file paths (files already uploaded to Supabase)
+    const body = await req.json();
+    const { sessionId, projectId, filePaths, fileNames } = body as {
+      sessionId: string;
+      projectId?: string;
+      filePaths: string[];
+      fileNames: string[];
+    };
 
-    if (!files || files.length === 0) {
-      return NextResponse.json({ error: 'No files provided' }, { status: 400 });
+    if (!filePaths || filePaths.length === 0) {
+      return NextResponse.json({ error: 'No file paths provided' }, { status: 400 });
     }
 
     if (!sessionId) {
@@ -49,6 +53,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Import session not found' }, { status: 404 });
     }
 
+    // Fetch files from Supabase storage
+    const { supabaseAdmin } = await import('@/lib/supabaseAdmin');
+    const BUCKET = process.env.SB_BUCKET_NAME || 'event-images';
+
     // Process each file and extract images
     const allExtractedImages: Array<{
       pageNumber: number;
@@ -57,24 +65,35 @@ export async function POST(req: NextRequest) {
       fileName: string;
     }> = [];
 
-    for (const file of files) {
-      const fileName = file.name.toLowerCase();
-      const arrayBuffer = await file.arrayBuffer();
+    for (let i = 0; i < filePaths.length; i++) {
+      const filePath = filePaths[i];
+      const fileName = fileNames[i] || filePath.split('/').pop() || 'unknown';
+
+      // Download file from Supabase
+      const { data: fileData, error: downloadError } = await supabaseAdmin.storage
+        .from(BUCKET)
+        .download(filePath);
+
+      if (downloadError || !fileData) {
+        console.error(`Failed to download file ${filePath}:`, downloadError);
+        continue;
+      }
+
+      const arrayBuffer = await fileData.arrayBuffer();
       const buffer = Buffer.from(arrayBuffer);
 
-      if (fileName.endsWith('.pdf')) {
-        const images = await extractPdfImages(buffer, file.name);
+      if (fileName.toLowerCase().endsWith('.pdf')) {
+        const images = await extractPdfImages(buffer, fileName);
         allExtractedImages.push(...images);
-      } else if (fileName.endsWith('.pptx')) {
-        const images = await extractPptxImages(buffer, file.name);
+      } else if (fileName.toLowerCase().endsWith('.pptx')) {
+        const images = await extractPptxImages(buffer, fileName);
         allExtractedImages.push(...images);
       } else {
-        console.warn(`Skipping unsupported file: ${file.name}`);
+        console.warn(`Skipping unsupported file: ${fileName}`);
       }
     }
 
     // Store extracted images in temp storage and save URLs
-    const { supabaseAdmin } = await import('@/lib/supabaseAdmin');
     const { ulid } = await import('ulid');
 
     const storedImages: Array<{
@@ -82,8 +101,6 @@ export async function POST(req: NextRequest) {
       url: string;
       mimeType: string;
     }> = [];
-
-    const BUCKET = process.env.SB_BUCKET_NAME || 'event-images';
 
     for (const img of allExtractedImages) {
       try {
@@ -119,7 +136,7 @@ export async function POST(req: NextRequest) {
     await prisma.importSession.update({
       where: { id: sessionId },
       data: {
-        fileName: files.map(f => f.name).join(', '),
+        fileName: fileNames.join(', '),
         totalImages: storedImages.length,
         processingMeta: {
           extractedImages: storedImages.length,
