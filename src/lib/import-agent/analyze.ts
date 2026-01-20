@@ -6,6 +6,7 @@ export interface PdfAnalysisResult {
   pages: Array<{
     pageNumber: number;
     roomType: RoomType;
+    roomName?: string; // e.g. "Primary Bedroom" from title slides
     products: DetectedProduct[];
     styleIndicators: string[];
   }>;
@@ -13,6 +14,7 @@ export interface PdfAnalysisResult {
     totalPages: number;
     interiorPages: number;
     dominantStyles: string[];
+    roomsDetected?: string[];
   };
 }
 
@@ -303,9 +305,11 @@ export async function analyzePdfDocument(pdfUrl: string): Promise<PdfAnalysisRes
                   type: 'text',
                   text: `Analyze this interior design presentation PDF.
 
-For each page that contains an interior design photo (skip title slides, text-only pages, floor plans):
+IMPORTANT: Look for room context in title slides, headers, or section dividers. If a title slide says "Primary Bedroom" or "Living Room", apply that room type to ALL subsequent interior photos until a new room section begins. Interior designers often organize presentations by room.
 
-1. Identify the room type
+For each page that contains an interior design photo (skip title slides, text-only pages, floor plans, but READ title slides to understand room context):
+
+1. Identify the room type (use context from title slides if the image itself doesn't clearly show the room type)
 2. Detect all visible products (furniture, lighting, rugs, art, etc.)
 3. Note style indicators
 
@@ -315,6 +319,7 @@ Return ONLY a valid JSON object with this structure:
     {
       "pageNumber": 1,
       "roomType": "living_room" | "bedroom" | "kitchen" | "bathroom" | "dining_room" | "office" | "entry" | "outdoor" | "hallway" | "laundry" | "closet" | "other",
+      "roomName": "Primary Bedroom" or "Living Room" or null,
       "products": [
         {
           "description": "detailed description for search (e.g., 'Navy velvet sofa with brass legs')",
@@ -330,12 +335,14 @@ Return ONLY a valid JSON object with this structure:
   "documentSummary": {
     "totalPages": 10,
     "interiorPages": 7,
-    "dominantStyles": ["modern", "scandinavian"]
+    "dominantStyles": ["modern", "scandinavian"],
+    "roomsDetected": ["Primary Bedroom", "Living Room"]
   }
 }
 
 Rules:
-- Only include pages with actual interior photos
+- Only include pages with actual interior photos (not title slides)
+- Use room names/labels from title slides to categorize ALL subsequent photos in that section
 - Maximum ${IMPORT_AGENT_CONFIG.maxProductsPerImage} products per page
 - Position coordinates should be normalized (0-1)
 - Be conservative with confidence levels`,
@@ -361,6 +368,7 @@ Rules:
           .map((page: Record<string, unknown>) => ({
             pageNumber: typeof page.pageNumber === 'number' ? page.pageNumber : 1,
             roomType: validateRoomType(page.roomType),
+            roomName: typeof page.roomName === 'string' ? page.roomName : undefined,
             products: (Array.isArray(page.products) ? page.products : [])
               .map(validateProduct)
               .filter(Boolean) as DetectedProduct[],

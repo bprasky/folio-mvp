@@ -133,6 +133,7 @@ export async function processImportImages(
           detectionConfidence: tag.detectionConfidence,
           attributionConfidence: tag.attributionConfidence,
           status: tag.status,
+          roomType: tag.roomType,
         })),
       });
       result.pendingTagsCreated = allPendingTags.length;
@@ -220,6 +221,7 @@ export async function processImportPdf(
       attributionConfidence: string | null;
       status: 'UNREVIEWED';
       pageNumber?: number;
+      roomType?: string;
     }> = [];
 
     // Process each PDF document
@@ -258,6 +260,7 @@ export async function processImportPdf(
               attributionConfidence: null,
               status: 'UNREVIEWED' as const,
               pageNumber: pageAnalysis.pageNumber,
+              roomType: pageAnalysis.roomType, // Include room type from analysis
             });
           }
         }
@@ -302,6 +305,7 @@ export async function processImportPdf(
           detectionConfidence: tag.detectionConfidence,
           attributionConfidence: tag.attributionConfidence,
           status: tag.status,
+          roomType: tag.roomType,
         })),
       });
       result.pendingTagsCreated = allPendingTags.length;

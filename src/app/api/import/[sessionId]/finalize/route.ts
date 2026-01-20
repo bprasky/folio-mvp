@@ -212,9 +212,16 @@ export async function POST(
       productsTagged: productTagsCreated,
     });
   } catch (error) {
-    console.error('Error finalizing import:', error);
+    const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    console.error('Error finalizing import:', errorMsg);
+    console.error('Stack:', errorStack);
     return NextResponse.json(
-      { error: 'Failed to finalize import' },
+      {
+        error: 'Failed to finalize import',
+        details: errorMsg,
+        stack: process.env.NODE_ENV === 'development' ? errorStack : undefined,
+      },
       { status: 500 }
     );
   }
