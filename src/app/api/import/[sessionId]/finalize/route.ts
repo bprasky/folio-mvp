@@ -155,13 +155,17 @@ export async function POST(
       let projectImageId: string | null = pendingTag.projectImageId;
 
       if (!projectImageId && pendingTag.tempImageUrl) {
+        // Get the room name for this room type
+        const roomInfo = rooms.find(r => r.type === product.roomType);
+        const roomName = roomInfo?.name || 'Imported';
+
         // Create project image from temp URL
         const projectImage = await prisma.projectImage.create({
           data: {
             projectId,
             url: pendingTag.tempImageUrl,
-            roomId,
-            caption: `Imported from presentation - ${pendingTag.category}`,
+            room: roomName, // Room name string
+            name: `Imported from presentation - ${pendingTag.category}`,
           },
         });
         projectImageId = projectImage.id;
