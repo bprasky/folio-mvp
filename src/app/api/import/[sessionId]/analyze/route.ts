@@ -11,6 +11,7 @@ export const maxDuration = 300; // 5 minutes for AI analysis
 /**
  * POST /api/import/[sessionId]/analyze
  * Trigger AI analysis on extracted images or PDF documents
+ * NOTE: This runs synchronously because Vercel serverless can't do background work
  */
 export async function POST(
   req: NextRequest,
@@ -52,177 +53,110 @@ export async function POST(
       );
     }
 
+    // Update status to processing immediately
+    await prisma.importSession.update({
+      where: { id: sessionId },
+      data: { status: 'PROCESSING' },
+    });
+
     // If we have PDF documents but no images, use PDF analysis
     if (storedImages.length === 0 && pdfDocuments.length > 0) {
-      console.log(`Using PDF document analysis for ${pdfDocuments.length} PDFs`);
+      console.log(`Running synchronous PDF analysis for ${pdfDocuments.length} PDFs`);
 
-      // Start PDF analysis in background
-      processPdfAnalysisInBackground(sessionId, pdfDocuments, userId, importSession.projectId);
+      try {
+        // Run PDF analysis SYNCHRONOUSLY (not in background - serverless can't do that)
+        const result = await processImportPdf(sessionId, pdfDocuments, {
+          userId,
+          projectId: importSession.projectId || undefined,
+        });
 
-      return NextResponse.json({
-        status: 'processing',
-        message: 'PDF analysis started',
-        totalDocuments: pdfDocuments.length,
-        totalPages: pdfDocuments.reduce((sum, doc) => sum + doc.pageCount, 0),
-      });
+        if (result.success) {
+          return NextResponse.json({
+            status: 'completed',
+            message: 'PDF analysis completed',
+            totalDocuments: pdfDocuments.length,
+            totalProducts: result.totalProducts,
+            analyzedPages: result.analyzedImages,
+          });
+        } else {
+          return NextResponse.json({
+            status: 'failed',
+            error: result.error || 'PDF analysis failed',
+          }, { status: 500 });
+        }
+      } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+        console.error('PDF analysis error:', errorMsg);
+
+        await prisma.importSession.update({
+          where: { id: sessionId },
+          data: {
+            status: 'FAILED',
+            errorMessage: errorMsg,
+          },
+        });
+
+        return NextResponse.json({
+          status: 'failed',
+          error: errorMsg,
+        }, { status: 500 });
+      }
     }
 
     // Convert to ExtractedImage format for image analysis
     const images: ExtractedImage[] = storedImages.map((img, index) => ({
       pageNumber: img.pageNumber || index + 1,
       url: img.url,
-      mimeType: 'image/jpeg', // Default, actual type determined by URL
+      mimeType: 'image/jpeg',
       isSkipped: false,
     }));
 
-    // Start background processing
-    // In production, this would be a queue job. For now, we process inline.
-    processAnalysisInBackground(sessionId, images, userId, importSession.projectId);
+    console.log(`Running synchronous image analysis for ${images.length} images`);
 
-    return NextResponse.json({
-      status: 'processing',
-      message: 'Analysis started',
-      totalImages: images.length,
-    });
+    try {
+      // Run image analysis SYNCHRONOUSLY
+      const result = await processImportImages(sessionId, images, {
+        userId,
+        projectId: importSession.projectId || undefined,
+      });
+
+      if (result.success) {
+        return NextResponse.json({
+          status: 'completed',
+          message: 'Analysis completed',
+          totalImages: images.length,
+          totalProducts: result.totalProducts,
+          analyzedImages: result.analyzedImages,
+        });
+      } else {
+        return NextResponse.json({
+          status: 'failed',
+          error: result.error || 'Analysis failed',
+        }, { status: 500 });
+      }
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Image analysis error:', errorMsg);
+
+      await prisma.importSession.update({
+        where: { id: sessionId },
+        data: {
+          status: 'FAILED',
+          errorMessage: errorMsg,
+        },
+      });
+
+      return NextResponse.json({
+        status: 'failed',
+        error: errorMsg,
+      }, { status: 500 });
+    }
   } catch (error) {
-    console.error('Error starting analysis:', error);
+    console.error('Error in analyze endpoint:', error);
     return NextResponse.json(
       { error: 'Failed to start analysis' },
       { status: 500 }
     );
-  }
-}
-
-/**
- * Process PDF documents in background using Claude's document API
- */
-async function processPdfAnalysisInBackground(
-  sessionId: string,
-  pdfDocuments: PdfDocument[],
-  userId: string,
-  projectId: string | null
-) {
-  try {
-    console.log(`Starting PDF analysis for session ${sessionId} with ${pdfDocuments.length} documents`);
-
-    // Update status to processing
-    await prisma.importSession.update({
-      where: { id: sessionId },
-      data: { status: 'PROCESSING' },
-    });
-
-    // Process PDFs with the import agent
-    const result = await processImportPdf(sessionId, pdfDocuments, {
-      userId,
-      projectId: projectId || undefined,
-    });
-
-    if (result.success) {
-      console.log(`PDF analysis complete: ${result.analyzedImages} pages analyzed, ${result.totalProducts} products detected`);
-
-      // Update session to ready for review
-      await prisma.importSession.update({
-        where: { id: sessionId },
-        data: {
-          status: 'READY_FOR_REVIEW',
-          totalProducts: result.totalProducts,
-          processingMeta: {
-            ...(await getExistingMeta(sessionId)),
-            processedPages: result.analyzedImages,
-            productsDetected: result.totalProducts,
-            pendingTagsCreated: result.pendingTagsCreated,
-            completedAt: new Date().toISOString(),
-          },
-        },
-      });
-    } else {
-      console.error(`PDF analysis failed: ${result.error}`);
-
-      await prisma.importSession.update({
-        where: { id: sessionId },
-        data: {
-          status: 'FAILED',
-          errorMessage: result.error || 'PDF analysis failed',
-        },
-      });
-    }
-  } catch (error) {
-    console.error('PDF background processing error:', error);
-
-    await prisma.importSession.update({
-      where: { id: sessionId },
-      data: {
-        status: 'FAILED',
-        errorMessage: error instanceof Error ? error.message : 'PDF processing failed',
-      },
-    });
-  }
-}
-
-/**
- * Process images in background
- * This runs asynchronously and updates the session status
- */
-async function processAnalysisInBackground(
-  sessionId: string,
-  images: ExtractedImage[],
-  userId: string,
-  projectId: string | null
-) {
-  try {
-    console.log(`Starting analysis for session ${sessionId} with ${images.length} images`);
-
-    // Update status to processing
-    await prisma.importSession.update({
-      where: { id: sessionId },
-      data: { status: 'PROCESSING' },
-    });
-
-    // Process images with the import agent
-    const result = await processImportImages(sessionId, images, {
-      userId,
-      projectId: projectId || undefined,
-    });
-
-    if (result.success) {
-      console.log(`Analysis complete: ${result.analyzedImages} images analyzed, ${result.totalProducts} products detected`);
-
-      // Update session to ready for review
-      await prisma.importSession.update({
-        where: { id: sessionId },
-        data: {
-          status: 'READY_FOR_REVIEW',
-          totalProducts: result.totalProducts,
-          processingMeta: {
-            ...(await getExistingMeta(sessionId)),
-            processedImages: result.analyzedImages,
-            productsDetected: result.totalProducts,
-            pendingTagsCreated: result.pendingTagsCreated,
-            completedAt: new Date().toISOString(),
-          },
-        },
-      });
-    } else {
-      console.error(`Analysis failed: ${result.error}`);
-
-      await prisma.importSession.update({
-        where: { id: sessionId },
-        data: {
-          status: 'FAILED',
-          errorMessage: result.error || 'Analysis failed',
-        },
-      });
-    }
-  } catch (error) {
-    console.error('Background processing error:', error);
-
-    await prisma.importSession.update({
-      where: { id: sessionId },
-      data: {
-        status: 'FAILED',
-        errorMessage: error instanceof Error ? error.message : 'Processing failed',
-      },
-    });
   }
 }
 
