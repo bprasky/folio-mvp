@@ -65,6 +65,14 @@ export async function POST(req: NextRequest) {
       fileName: string;
     }> = [];
 
+    // Track PDF documents that couldn't be converted to images
+    // These will be analyzed directly using Claude's document API
+    const pdfDocuments: Array<{
+      url: string;
+      pageCount: number;
+      fileName: string;
+    }> = [];
+
     for (let i = 0; i < filePaths.length; i++) {
       const filePath = filePaths[i];
       const fileName = fileNames[i] || filePath.split('/').pop() || 'unknown';
@@ -84,7 +92,33 @@ export async function POST(req: NextRequest) {
 
       if (fileName.toLowerCase().endsWith('.pdf')) {
         const images = await extractPdfImages(buffer, fileName, sessionId);
-        allExtractedImages.push(...images);
+
+        if (images.length > 0) {
+          allExtractedImages.push(...images);
+        } else {
+          // PDF extraction failed - store PDF info for direct Claude document analysis
+          console.log(`PDF image extraction failed for ${fileName}, will use Claude document API`);
+
+          // Get page count using pdf-lib
+          try {
+            const { PDFDocument } = await import('pdf-lib');
+            const pdfDoc = await PDFDocument.load(buffer);
+            const pageCount = pdfDoc.getPageCount();
+
+            // Get public URL for the PDF
+            const { data: pub } = supabaseAdmin.storage.from(IMPORTS_BUCKET).getPublicUrl(filePath);
+
+            pdfDocuments.push({
+              url: pub.publicUrl,
+              pageCount,
+              fileName,
+            });
+
+            console.log(`Stored PDF document: ${fileName} with ${pageCount} pages`);
+          } catch (e) {
+            console.error(`Failed to get PDF info for ${fileName}:`, e);
+          }
+        }
       } else if (fileName.toLowerCase().endsWith('.pptx')) {
         const images = await extractPptxImages(buffer, fileName);
         allExtractedImages.push(...images);
@@ -132,19 +166,25 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Calculate total pages (from images + PDF documents)
+    const totalPdfPages = pdfDocuments.reduce((sum, doc) => sum + doc.pageCount, 0);
+    const totalPages = allExtractedImages.length + totalPdfPages;
+
     // Update session with file info
     await prisma.importSession.update({
       where: { id: sessionId },
       data: {
         fileName: fileNames.join(', '),
-        totalImages: storedImages.length,
+        totalImages: storedImages.length || totalPdfPages, // Use PDF page count if no images
         processingMeta: {
           extractedImages: storedImages.length,
-          totalPages: allExtractedImages.length,
+          totalPages,
           storedImages: storedImages.map(img => ({
             pageNumber: img.pageNumber,
             url: img.url,
           })),
+          // Store PDF documents for direct Claude analysis
+          pdfDocuments: pdfDocuments.length > 0 ? pdfDocuments : undefined,
         },
       },
     });
@@ -152,8 +192,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       extractedImages: storedImages,
-      totalPages: allExtractedImages.length,
+      pdfDocuments: pdfDocuments.length > 0 ? pdfDocuments : undefined,
+      totalPages,
       storedCount: storedImages.length,
+      pdfCount: pdfDocuments.length,
     });
   } catch (error) {
     console.error('Error processing presentation:', error);

@@ -66,6 +66,12 @@ export interface ExtractedImage {
   needsRendering?: boolean;
 }
 
+export interface PdfDocument {
+  url: string;
+  pageCount: number;
+  fileName: string;
+}
+
 export interface ImportJob {
   sessionId: string;
   fileUrl?: string;
