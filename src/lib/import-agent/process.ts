@@ -47,6 +47,7 @@ export async function processImportImages(
       detectionConfidence: string;
       attributionConfidence: string | null;
       status: 'UNREVIEWED';
+      roomType?: string;
     }> = [];
 
     // Process each image
@@ -100,6 +101,7 @@ export async function processImportImages(
           detectionConfidence: product.confidence,
           attributionConfidence: attributions[0]?.confidence || null,
           status: 'UNREVIEWED' as const,
+          roomType: analysis.roomType, // Include room type from image analysis
         });
       }
 
