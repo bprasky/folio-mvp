@@ -98,7 +98,7 @@ export async function POST(
 
     // Process selected products
     let confirmedCount = 0;
-    let productTagsCreated = 0;
+    let selectionsCreated = 0;
 
     for (const product of products) {
       const pendingTag = await prisma.pendingProductTag.findUnique({
@@ -110,38 +110,14 @@ export async function POST(
         continue;
       }
 
-      // Get or create the product from the suggestion
+      // Get the suggestion data
       const suggestion = pendingTag.topSuggestion as {
         productUrl?: string;
         vendorName?: string;
         productName?: string;
         price?: string;
+        imageUrl?: string;
       } | null;
-
-      let productId: string | null = null;
-
-      if (suggestion && suggestion.productUrl) {
-        // Check if product already exists by URL
-        const existingProduct = await prisma.product.findFirst({
-          where: { url: suggestion.productUrl },
-        });
-
-        if (existingProduct) {
-          productId = existingProduct.id;
-        } else {
-          // Create pending product
-          const newProduct = await prisma.product.create({
-            data: {
-              name: suggestion.productName || pendingTag.description,
-              brand: suggestion.vendorName || 'Unknown',
-              url: suggestion.productUrl,
-              isPending: true,
-              pendingReason: 'Imported from presentation',
-            },
-          });
-          productId = newProduct.id;
-        }
-      }
 
       // Get room ID for this product
       const roomId = roomIdMap.get(product.roomType);
@@ -151,47 +127,27 @@ export async function POST(
         continue;
       }
 
-      // Create project image if temp URL exists
-      let projectImageId: string | null = pendingTag.projectImageId;
-
-      if (!projectImageId && pendingTag.tempImageUrl) {
-        // Get the room name for this room type
-        const roomInfo = rooms.find(r => r.type === product.roomType);
-        const roomName = roomInfo?.name || 'Imported';
-
-        // Create project image from temp URL
-        const projectImage = await prisma.projectImage.create({
-          data: {
-            projectId,
-            url: pendingTag.tempImageUrl,
-            room: roomName, // Room name string
-            name: `Imported from presentation - ${pendingTag.category}`,
-          },
-        });
-        projectImageId = projectImage.id;
-      }
-
-      // Create product tag if we have both product and image
-      if (productId && projectImageId) {
-        await prisma.productTag.create({
-          data: {
-            projectImageId,
-            productId,
-            x: pendingTag.x,
-            y: pendingTag.y,
-            createdById: userId,
-          },
-        });
-        productTagsCreated++;
-      }
+      // Create a Selection (this is what Designer Board displays)
+      const selection = await prisma.selection.create({
+        data: {
+          projectId,
+          roomId,
+          photo: pendingTag.tempImageUrl || suggestion?.imageUrl || null,
+          productName: suggestion?.productName || pendingTag.description,
+          vendorName: suggestion?.vendorName || null,
+          productUrl: suggestion?.productUrl || null,
+          tags: [pendingTag.category.toLowerCase()], // e.g., ["furniture", "lighting"]
+          source: 'import',
+          notes: `Imported from presentation`,
+        },
+      });
+      selectionsCreated++;
 
       // Update pending tag status
       await prisma.pendingProductTag.update({
         where: { id: pendingTag.id },
         data: {
           status: 'CONFIRMED',
-          confirmedProductId: productId,
-          projectImageId,
           reviewedAt: new Date(),
         },
       });
@@ -213,7 +169,7 @@ export async function POST(
       success: true,
       roomsCreated: roomIdMap.size,
       productsConfirmed: confirmedCount,
-      productsTagged: productTagsCreated,
+      selectionsCreated,
     });
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : 'Unknown error';
