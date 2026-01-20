@@ -176,6 +176,81 @@ export async function processImportImages(
 }
 
 /**
+ * Upload PDF to Cloudinary and get page image URLs
+ * Returns a map of page number -> image URL
+ */
+async function uploadPdfToCloudinaryForPages(
+  pdfUrl: string,
+  pageCount: number,
+  fileName: string
+): Promise<Map<number, string>> {
+  const pageUrlMap = new Map<number, string>();
+
+  const cloudinaryUrl = process.env.CLOUDINARY_URL;
+  if (!cloudinaryUrl) {
+    console.log('Cloudinary not configured, skipping PDF-to-image conversion');
+    return pageUrlMap;
+  }
+
+  try {
+    // Fetch PDF from the signed URL
+    console.log(`Fetching PDF from: ${pdfUrl.substring(0, 100)}...`);
+    const pdfResponse = await fetch(pdfUrl);
+    if (!pdfResponse.ok) {
+      console.error(`Failed to fetch PDF: ${pdfResponse.status}`);
+      return pageUrlMap;
+    }
+    const pdfBuffer = Buffer.from(await pdfResponse.arrayBuffer());
+
+    // Dynamic import cloudinary
+    const cloudinary = await import('cloudinary');
+
+    // Upload PDF to Cloudinary
+    const uploadResult = await new Promise<{ public_id: string; secure_url: string }>((resolve, reject) => {
+      const uploadStream = cloudinary.v2.uploader.upload_stream(
+        {
+          resource_type: 'raw',
+          folder: 'pdf-imports',
+          format: 'pdf',
+          public_id: `pdf-${Date.now()}-${fileName.replace(/[^a-z0-9]/gi, '-')}`,
+        },
+        (error, result) => {
+          if (error) reject(error);
+          else if (result) resolve(result);
+          else reject(new Error('No result from Cloudinary'));
+        }
+      );
+      uploadStream.end(pdfBuffer);
+    });
+
+    console.log(`PDF uploaded to Cloudinary: ${uploadResult.public_id}`);
+
+    // Generate image URLs for each page
+    for (let page = 1; page <= pageCount; page++) {
+      const imageUrl = cloudinary.v2.url(uploadResult.public_id, {
+        resource_type: 'image',
+        format: 'jpg',
+        transformation: [
+          { page: page },
+          { width: 1200, crop: 'limit' },
+          { quality: 'auto:good' },
+        ],
+      });
+      pageUrlMap.set(page, imageUrl);
+    }
+
+    console.log(`Generated ${pageUrlMap.size} page image URLs from Cloudinary`);
+
+    // Note: We don't delete the PDF from Cloudinary here since we need the URLs to persist
+    // Consider a cleanup job or TTL setting in Cloudinary
+  } catch (error) {
+    console.error('Failed to upload PDF to Cloudinary for page URLs:', error);
+  }
+
+  return pageUrlMap;
+}
+
+/**
  * Process PDF documents directly using Claude's document API
  * This is used when PDF-to-image conversion fails in serverless environments
  */
@@ -242,14 +317,25 @@ export async function processImportPdf(
 
         console.log(`Found ${analysis.pages.length} interior pages with content`);
 
+        // Upload PDF to Cloudinary to get image URLs for each page
+        // This converts PDF pages to displayable images
+        const pageImageUrls = await uploadPdfToCloudinaryForPages(
+          pdfDoc.url,
+          pdfDoc.pageCount,
+          pdfDoc.fileName
+        );
+
         // Process each page's analysis
         for (const pageAnalysis of analysis.pages) {
           result.totalProducts += pageAnalysis.products.length;
 
+          // Get the image URL for this page (fall back to PDF URL if Cloudinary failed)
+          const pageImageUrl = pageImageUrls.get(pageAnalysis.pageNumber) || pdfDoc.url;
+
           for (const product of pageAnalysis.products) {
             allPendingTags.push({
               importSessionId: sessionId,
-              tempImageUrl: pdfDoc.url,
+              tempImageUrl: pageImageUrl, // Use Cloudinary page image URL
               projectImageId: null,
               x: product.position.x,
               y: product.position.y,
