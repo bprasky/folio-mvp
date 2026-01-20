@@ -234,37 +234,55 @@ export async function analyzePdfDocument(pdfUrl: string): Promise<PdfAnalysisRes
   try {
     console.log(`Analyzing PDF document: ${pdfUrl}`);
 
-    // Fetch the PDF as base64
-    const response = await fetch(pdfUrl);
+    // Fetch the PDF with timeout
+    const controller = new AbortController();
+    const fetchTimeout = setTimeout(() => controller.abort(), 30000); // 30 second timeout for fetch
+
+    const response = await fetch(pdfUrl, { signal: controller.signal });
+    clearTimeout(fetchTimeout);
+
     if (!response.ok) {
       throw new Error(`Failed to fetch PDF: ${response.status} ${response.statusText}`);
     }
 
     const arrayBuffer = await response.arrayBuffer();
+    const fileSizeKB = Math.round(arrayBuffer.byteLength / 1024);
+    const fileSizeMB = fileSizeKB / 1024;
+
+    console.log(`PDF fetched, size: ${fileSizeKB}KB (${fileSizeMB.toFixed(2)}MB)`);
+
+    // Check size limit - Claude's document API has a ~32MB limit for PDFs
+    // But for practical purposes, keep it under 10MB for reasonable response times
+    if (fileSizeMB > 25) {
+      console.error(`PDF too large for analysis: ${fileSizeMB.toFixed(2)}MB. Maximum is 25MB.`);
+      throw new Error(`PDF file is too large (${fileSizeMB.toFixed(2)}MB). Please use a smaller file.`);
+    }
+
     const base64Data = Buffer.from(arrayBuffer).toString('base64');
 
-    console.log(`PDF fetched, size: ${Math.round(arrayBuffer.byteLength / 1024)}KB`);
+    console.log(`Starting Claude document analysis...`);
 
-    // Use Claude's document API to analyze the PDF
-    const result = await anthropic.messages.create({
-      model: IMPORT_AGENT_CONFIG.model,
-      max_tokens: 8192, // Larger for PDF analysis
-      system: IMPORT_AGENT_SYSTEM,
-      messages: [
-        {
-          role: 'user',
-          content: [
-            {
-              type: 'document',
-              source: {
-                type: 'base64',
-                media_type: 'application/pdf',
-                data: base64Data,
+    // Use Claude's document API to analyze the PDF with timeout
+    const result = await Promise.race([
+      anthropic.messages.create({
+        model: IMPORT_AGENT_CONFIG.model,
+        max_tokens: 8192,
+        system: IMPORT_AGENT_SYSTEM,
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'document',
+                source: {
+                  type: 'base64',
+                  media_type: 'application/pdf',
+                  data: base64Data,
+                },
               },
-            },
-            {
-              type: 'text',
-              text: `Analyze this interior design presentation PDF.
+              {
+                type: 'text',
+                text: `Analyze this interior design presentation PDF.
 
 For each page that contains an interior design photo (skip title slides, text-only pages, floor plans):
 
@@ -302,11 +320,16 @@ Rules:
 - Maximum ${IMPORT_AGENT_CONFIG.maxProductsPerImage} products per page
 - Position coordinates should be normalized (0-1)
 - Be conservative with confidence levels`,
-            },
-          ],
-        },
-      ],
-    });
+              },
+            ],
+          },
+        ],
+      }),
+      // Timeout after 4 minutes (leave 1 min buffer for Vercel's 5 min limit)
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Claude API timeout after 4 minutes')), 240000)
+      ),
+    ]);
 
     const text = result.content[0].type === 'text' ? result.content[0].text : '';
     const jsonMatch = text.match(/\{[\s\S]*\}/);

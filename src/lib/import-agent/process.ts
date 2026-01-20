@@ -237,28 +237,26 @@ export async function processImportPdf(
         }
 
         // Process each page's analysis
+        // Skip attribution search for now to speed up - can be done on-demand later
         for (const pageAnalysis of analysis.pages) {
           result.totalProducts += pageAnalysis.products.length;
 
-          // Search for product attributions
           for (const product of pageAnalysis.products) {
-            const attributions = await searchProductAttribution(product, {
-              preferredVendors: options?.preferredVendors,
-            });
-
+            // Skip slow web search attribution for now
+            // Users can search for attributions on-demand in the review step
             allPendingTags.push({
               importSessionId: sessionId,
-              tempImageUrl: pdfDoc.url, // Reference to PDF
+              tempImageUrl: pdfDoc.url,
               projectImageId: null,
               x: product.position.x,
               y: product.position.y,
               description: product.description,
               category: product.category,
               searchQuery: product.searchQuery,
-              suggestions: attributions,
-              topSuggestion: attributions[0] || null,
+              suggestions: [], // Attribution search skipped for speed
+              topSuggestion: null,
               detectionConfidence: product.confidence,
-              attributionConfidence: attributions[0]?.confidence || null,
+              attributionConfidence: null,
               status: 'UNREVIEWED' as const,
               pageNumber: pageAnalysis.pageNumber,
             });
