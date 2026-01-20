@@ -176,7 +176,7 @@ export function PresentationImportModal({
       }
 
       const supabase = createClient(supabaseUrl, supabaseAnonKey);
-      const bucket = process.env.NEXT_PUBLIC_SB_BUCKET_NAME || 'event-images';
+      const bucket = 'imports'; // Dedicated bucket for presentation uploads
       const uploadedPaths: string[] = [];
 
       for (let i = 0; i < filesToProcess.length; i++) {
