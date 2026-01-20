@@ -55,7 +55,8 @@ export async function POST(req: NextRequest) {
 
     // Fetch files from Supabase storage
     const { supabaseAdmin } = await import('@/lib/supabaseAdmin');
-    const BUCKET = process.env.SB_BUCKET_NAME || 'event-images';
+    const IMPORTS_BUCKET = 'imports'; // Bucket for uploaded presentations
+    const IMAGES_BUCKET = process.env.SB_BUCKET_NAME || 'event-images'; // Bucket for extracted images
 
     // Process each file and extract images
     const allExtractedImages: Array<{
@@ -69,9 +70,9 @@ export async function POST(req: NextRequest) {
       const filePath = filePaths[i];
       const fileName = fileNames[i] || filePath.split('/').pop() || 'unknown';
 
-      // Download file from Supabase
+      // Download file from Supabase imports bucket
       const { data: fileData, error: downloadError } = await supabaseAdmin.storage
-        .from(BUCKET)
+        .from(IMPORTS_BUCKET)
         .download(filePath);
 
       if (downloadError || !fileData) {
@@ -110,7 +111,7 @@ export async function POST(req: NextRequest) {
 
         const imageBuffer = Buffer.from(img.base64, 'base64');
 
-        const { error } = await supabaseAdmin.storage.from(BUCKET).upload(path, imageBuffer, {
+        const { error } = await supabaseAdmin.storage.from(IMAGES_BUCKET).upload(path, imageBuffer, {
           contentType: img.mimeType,
           upsert: false,
         });
@@ -120,7 +121,7 @@ export async function POST(req: NextRequest) {
           continue;
         }
 
-        const { data: pub } = supabaseAdmin.storage.from(BUCKET).getPublicUrl(path);
+        const { data: pub } = supabaseAdmin.storage.from(IMAGES_BUCKET).getPublicUrl(path);
 
         storedImages.push({
           pageNumber: img.pageNumber,
