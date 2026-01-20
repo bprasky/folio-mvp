@@ -102,8 +102,6 @@ export async function POST(req: NextRequest) {
       mimeType: string;
     }> = [];
 
-    const BUCKET = process.env.SB_BUCKET_NAME || 'event-images';
-
     for (const img of allExtractedImages) {
       try {
         const id = ulid();
