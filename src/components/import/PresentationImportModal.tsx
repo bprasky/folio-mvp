@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { GlassModal, GlassModalHeader, GlassModalBody } from '@/components/ui/glass-modal';
 import { Button } from '@/components/ui/button';
 import { FaCloudUploadAlt, FaCheck, FaSpinner, FaTimes, FaImage, FaDoorOpen, FaTag, FaExclamationTriangle } from 'react-icons/fa';
+import { createClient } from '@supabase/supabase-js';
 
 type ImportStep = 'upload' | 'extracting' | 'analyzing' | 'review' | 'creating';
 
@@ -164,33 +165,71 @@ export function PresentationImportModal({
       const { sessionId: newSessionId } = await sessionRes.json();
       setSessionId(newSessionId);
 
-      // Step 2: Upload and extract files
-      setProgress({ current: 10, total: 100, message: 'Uploading and extracting images...' });
+      // Step 2: Upload files directly to Supabase storage (bypasses Vercel body size limits)
+      setProgress({ current: 5, total: 100, message: 'Uploading files to storage...' });
 
-      const formData = new FormData();
-      filesToProcess.forEach(file => formData.append('files', file));
-      formData.append('sessionId', newSessionId);
-      formData.append('projectId', projectId);
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-      const uploadRes = await fetch('/api/import/presentation', {
+      if (!supabaseUrl || !supabaseAnonKey) {
+        throw new Error('Supabase configuration missing');
+      }
+
+      const supabase = createClient(supabaseUrl, supabaseAnonKey);
+      const bucket = process.env.NEXT_PUBLIC_SB_BUCKET_NAME || 'event-images';
+      const uploadedPaths: string[] = [];
+
+      for (let i = 0; i < filesToProcess.length; i++) {
+        const file = filesToProcess[i];
+        const ext = file.name.split('.').pop()?.toLowerCase() || 'pdf';
+        const path = `imports/${newSessionId}/source-${i}.${ext}`;
+
+        setProgress({
+          current: 5 + (i / filesToProcess.length) * 10,
+          total: 100,
+          message: `Uploading ${file.name}...`
+        });
+
+        const { error: uploadError } = await supabase.storage
+          .from(bucket)
+          .upload(path, file, { upsert: true });
+
+        if (uploadError) {
+          console.error('Supabase upload error:', uploadError);
+          throw new Error(`Failed to upload ${file.name}: ${uploadError.message}`);
+        }
+
+        uploadedPaths.push(path);
+      }
+
+      // Step 3: Call API to process the uploaded files
+      setProgress({ current: 15, total: 100, message: 'Extracting images from presentation...' });
+
+      const processRes = await fetch('/api/import/presentation', {
         method: 'POST',
-        body: formData,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionId: newSessionId,
+          projectId,
+          filePaths: uploadedPaths,
+          fileNames: filesToProcess.map(f => f.name),
+        }),
         signal: abortControllerRef.current.signal,
       });
 
-      if (!uploadRes.ok) {
-        const errorText = await uploadRes.text();
+      if (!processRes.ok) {
+        const errorText = await processRes.text();
         let errorMessage: string;
         try {
           const errorData = JSON.parse(errorText);
-          errorMessage = errorData.details || errorData.error || uploadRes.statusText;
+          errorMessage = errorData.details || errorData.error || processRes.statusText;
         } catch {
-          errorMessage = errorText || uploadRes.statusText;
+          errorMessage = errorText || processRes.statusText;
         }
-        throw new Error(`Failed to upload presentation (${uploadRes.status}): ${errorMessage}`);
+        throw new Error(`Failed to process presentation (${processRes.status}): ${errorMessage}`);
       }
 
-      const { extractedImages, totalPages } = await uploadRes.json();
+      const { extractedImages, totalPages } = await processRes.json();
       setStats(prev => ({ ...prev, totalImages: totalPages || extractedImages?.length || 0 }));
       setProgress({ current: 30, total: 100, message: `Extracted ${extractedImages?.length || 0} images from ${totalPages || 0} pages` });
 
