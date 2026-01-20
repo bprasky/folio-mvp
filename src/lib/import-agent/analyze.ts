@@ -232,39 +232,76 @@ export async function analyzePdfDocument(pdfUrl: string): Promise<PdfAnalysisRes
   };
 
   try {
-    console.log(`Analyzing PDF document: ${pdfUrl}`);
+    console.log(`Analyzing PDF document: ${pdfUrl.substring(0, 100)}...`);
 
-    // Fetch the PDF as base64
-    const response = await fetch(pdfUrl);
+    // Fetch the PDF with aggressive timeout
+    const controller = new AbortController();
+    const fetchTimeout = setTimeout(() => {
+      console.log('PDF fetch timeout - aborting');
+      controller.abort();
+    }, 15000); // 15 second timeout for fetch
+
+    let response: Response;
+    try {
+      response = await fetch(pdfUrl, { signal: controller.signal });
+      clearTimeout(fetchTimeout);
+    } catch (fetchError) {
+      clearTimeout(fetchTimeout);
+      console.error('PDF fetch failed:', fetchError);
+      throw new Error(`Failed to fetch PDF: ${fetchError instanceof Error ? fetchError.message : 'Network error'}`);
+    }
+
     if (!response.ok) {
       throw new Error(`Failed to fetch PDF: ${response.status} ${response.statusText}`);
     }
 
     const arrayBuffer = await response.arrayBuffer();
+    const fileSizeKB = Math.round(arrayBuffer.byteLength / 1024);
+    const fileSizeMB = fileSizeKB / 1024;
+
+    console.log(`PDF fetched successfully, size: ${fileSizeKB}KB (${fileSizeMB.toFixed(2)}MB)`);
+
+    // Check size limit
+    if (fileSizeMB > 25) {
+      throw new Error(`PDF file is too large (${fileSizeMB.toFixed(2)}MB). Maximum is 25MB.`);
+    }
+
     const base64Data = Buffer.from(arrayBuffer).toString('base64');
 
-    console.log(`PDF fetched, size: ${Math.round(arrayBuffer.byteLength / 1024)}KB`);
+    console.log(`Starting Claude document analysis (this may take 1-2 minutes)...`);
 
-    // Use Claude's document API to analyze the PDF
-    const result = await anthropic.messages.create({
-      model: IMPORT_AGENT_CONFIG.model,
-      max_tokens: 8192, // Larger for PDF analysis
-      system: IMPORT_AGENT_SYSTEM,
-      messages: [
-        {
-          role: 'user',
-          content: [
+    // Use Claude's document API with 2 minute timeout
+    const apiTimeout = 120000; // 2 minutes
+    let timeoutId: NodeJS.Timeout;
+
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      timeoutId = setTimeout(() => {
+        console.log('Claude API timeout reached');
+        reject(new Error('Claude API timeout after 2 minutes'));
+      }, apiTimeout);
+    });
+
+    try {
+      const result = await Promise.race([
+        anthropic.messages.create({
+          model: IMPORT_AGENT_CONFIG.model,
+          max_tokens: 8192,
+          system: IMPORT_AGENT_SYSTEM,
+          messages: [
             {
-              type: 'document',
-              source: {
-                type: 'base64',
-                media_type: 'application/pdf',
-                data: base64Data,
-              },
-            },
-            {
-              type: 'text',
-              text: `Analyze this interior design presentation PDF.
+              role: 'user',
+              content: [
+                {
+                  type: 'document',
+                  source: {
+                    type: 'base64',
+                    media_type: 'application/pdf',
+                    data: base64Data,
+                  },
+                },
+                {
+                  type: 'text',
+                  text: `Analyze this interior design presentation PDF.
 
 For each page that contains an interior design photo (skip title slides, text-only pages, floor plans):
 
@@ -302,46 +339,56 @@ Rules:
 - Maximum ${IMPORT_AGENT_CONFIG.maxProductsPerImage} products per page
 - Position coordinates should be normalized (0-1)
 - Be conservative with confidence levels`,
+                },
+              ],
             },
           ],
-        },
-      ],
-    });
+        }),
+        timeoutPromise,
+      ]);
 
-    const text = result.content[0].type === 'text' ? result.content[0].text : '';
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
+      clearTimeout(timeoutId!);
+      console.log('Claude API response received');
 
-    if (jsonMatch) {
-      const parsed = JSON.parse(jsonMatch[0]);
+      const text = result.content[0].type === 'text' ? result.content[0].text : '';
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
 
-      // Validate and transform the response
-      const validatedPages = (parsed.pages || [])
-        .filter((page: unknown) => page && typeof page === 'object')
-        .map((page: Record<string, unknown>) => ({
-          pageNumber: typeof page.pageNumber === 'number' ? page.pageNumber : 1,
-          roomType: validateRoomType(page.roomType),
-          products: (Array.isArray(page.products) ? page.products : [])
-            .map(validateProduct)
-            .filter(Boolean) as DetectedProduct[],
-          styleIndicators: Array.isArray(page.styleIndicators) ? page.styleIndicators : [],
-        }));
+      if (jsonMatch) {
+        const parsed = JSON.parse(jsonMatch[0]);
 
-      console.log(`PDF analysis complete: ${validatedPages.length} pages with content`);
+        const validatedPages = (parsed.pages || [])
+          .filter((page: unknown) => page && typeof page === 'object')
+          .map((page: Record<string, unknown>) => ({
+            pageNumber: typeof page.pageNumber === 'number' ? page.pageNumber : 1,
+            roomType: validateRoomType(page.roomType),
+            products: (Array.isArray(page.products) ? page.products : [])
+              .map(validateProduct)
+              .filter(Boolean) as DetectedProduct[],
+            styleIndicators: Array.isArray(page.styleIndicators) ? page.styleIndicators : [],
+          }));
 
-      return {
-        pages: validatedPages,
-        documentSummary: {
-          totalPages: parsed.documentSummary?.totalPages || 0,
-          interiorPages: validatedPages.length,
-          dominantStyles: parsed.documentSummary?.dominantStyles || [],
-        },
-      };
+        console.log(`PDF analysis complete: ${validatedPages.length} pages with content`);
+
+        return {
+          pages: validatedPages,
+          documentSummary: {
+            totalPages: parsed.documentSummary?.totalPages || 0,
+            interiorPages: validatedPages.length,
+            dominantStyles: parsed.documentSummary?.dominantStyles || [],
+          },
+        };
+      }
+
+      console.log('No valid JSON found in PDF analysis response');
+      return emptyResult;
+    } catch (apiError) {
+      clearTimeout(timeoutId!);
+      throw apiError;
     }
-
-    console.log('No valid JSON found in PDF analysis response');
-    return emptyResult;
   } catch (error) {
-    console.error('PDF document analysis failed:', error);
-    return emptyResult;
+    const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+    console.error('PDF document analysis failed:', errorMsg);
+    // Re-throw so the caller knows it failed
+    throw new Error(`PDF analysis failed: ${errorMsg}`);
   }
 }

@@ -105,11 +105,18 @@ export async function POST(req: NextRequest) {
             const pdfDoc = await PDFDocument.load(buffer);
             const pageCount = pdfDoc.getPageCount();
 
-            // Get public URL for the PDF
-            const { data: pub } = supabaseAdmin.storage.from(IMPORTS_BUCKET).getPublicUrl(filePath);
+            // Get signed URL for the PDF (works even if bucket isn't public)
+            const { data: signedUrlData, error: signedUrlError } = await supabaseAdmin.storage
+              .from(IMPORTS_BUCKET)
+              .createSignedUrl(filePath, 3600); // 1 hour expiry
+
+            if (signedUrlError || !signedUrlData?.signedUrl) {
+              console.error(`Failed to create signed URL for ${filePath}:`, signedUrlError);
+              continue;
+            }
 
             pdfDocuments.push({
-              url: pub.publicUrl,
+              url: signedUrlData.signedUrl,
               pageCount,
               fileName,
             });

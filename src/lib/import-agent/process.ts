@@ -236,29 +236,26 @@ export async function processImportPdf(
           continue;
         }
 
+        console.log(`Found ${analysis.pages.length} interior pages with content`);
+
         // Process each page's analysis
         for (const pageAnalysis of analysis.pages) {
           result.totalProducts += pageAnalysis.products.length;
 
-          // Search for product attributions
           for (const product of pageAnalysis.products) {
-            const attributions = await searchProductAttribution(product, {
-              preferredVendors: options?.preferredVendors,
-            });
-
             allPendingTags.push({
               importSessionId: sessionId,
-              tempImageUrl: pdfDoc.url, // Reference to PDF
+              tempImageUrl: pdfDoc.url,
               projectImageId: null,
               x: product.position.x,
               y: product.position.y,
               description: product.description,
               category: product.category,
               searchQuery: product.searchQuery,
-              suggestions: attributions,
-              topSuggestion: attributions[0] || null,
+              suggestions: [],
+              topSuggestion: null,
               detectionConfidence: product.confidence,
-              attributionConfidence: attributions[0]?.confidence || null,
+              attributionConfidence: null,
               status: 'UNREVIEWED' as const,
               pageNumber: pageAnalysis.pageNumber,
             });
@@ -277,7 +274,14 @@ export async function processImportPdf(
           },
         });
       } catch (docError) {
-        console.error(`Error analyzing PDF ${pdfDoc.fileName}:`, docError);
+        const errorMsg = docError instanceof Error ? docError.message : 'Unknown error';
+        console.error(`Error analyzing PDF ${pdfDoc.fileName}:`, errorMsg);
+
+        // Update session with error but continue if there are more documents
+        if (pdfDocuments.length === 1) {
+          // Only one document and it failed - throw to trigger failure status
+          throw new Error(`PDF analysis failed: ${errorMsg}`);
+        }
       }
     }
 
