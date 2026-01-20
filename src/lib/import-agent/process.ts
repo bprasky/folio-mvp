@@ -236,14 +236,13 @@ export async function processImportPdf(
           continue;
         }
 
+        console.log(`Found ${analysis.pages.length} interior pages with content`);
+
         // Process each page's analysis
-        // Skip attribution search for now to speed up - can be done on-demand later
         for (const pageAnalysis of analysis.pages) {
           result.totalProducts += pageAnalysis.products.length;
 
           for (const product of pageAnalysis.products) {
-            // Skip slow web search attribution for now
-            // Users can search for attributions on-demand in the review step
             allPendingTags.push({
               importSessionId: sessionId,
               tempImageUrl: pdfDoc.url,
@@ -253,7 +252,7 @@ export async function processImportPdf(
               description: product.description,
               category: product.category,
               searchQuery: product.searchQuery,
-              suggestions: [], // Attribution search skipped for speed
+              suggestions: [],
               topSuggestion: null,
               detectionConfidence: product.confidence,
               attributionConfidence: null,
@@ -275,7 +274,14 @@ export async function processImportPdf(
           },
         });
       } catch (docError) {
-        console.error(`Error analyzing PDF ${pdfDoc.fileName}:`, docError);
+        const errorMsg = docError instanceof Error ? docError.message : 'Unknown error';
+        console.error(`Error analyzing PDF ${pdfDoc.fileName}:`, errorMsg);
+
+        // Update session with error but continue if there are more documents
+        if (pdfDocuments.length === 1) {
+          // Only one document and it failed - throw to trigger failure status
+          throw new Error(`PDF analysis failed: ${errorMsg}`);
+        }
       }
     }
 

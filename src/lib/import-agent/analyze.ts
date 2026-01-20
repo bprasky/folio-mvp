@@ -232,14 +232,24 @@ export async function analyzePdfDocument(pdfUrl: string): Promise<PdfAnalysisRes
   };
 
   try {
-    console.log(`Analyzing PDF document: ${pdfUrl}`);
+    console.log(`Analyzing PDF document: ${pdfUrl.substring(0, 100)}...`);
 
-    // Fetch the PDF with timeout
+    // Fetch the PDF with aggressive timeout
     const controller = new AbortController();
-    const fetchTimeout = setTimeout(() => controller.abort(), 30000); // 30 second timeout for fetch
+    const fetchTimeout = setTimeout(() => {
+      console.log('PDF fetch timeout - aborting');
+      controller.abort();
+    }, 15000); // 15 second timeout for fetch
 
-    const response = await fetch(pdfUrl, { signal: controller.signal });
-    clearTimeout(fetchTimeout);
+    let response: Response;
+    try {
+      response = await fetch(pdfUrl, { signal: controller.signal });
+      clearTimeout(fetchTimeout);
+    } catch (fetchError) {
+      clearTimeout(fetchTimeout);
+      console.error('PDF fetch failed:', fetchError);
+      throw new Error(`Failed to fetch PDF: ${fetchError instanceof Error ? fetchError.message : 'Network error'}`);
+    }
 
     if (!response.ok) {
       throw new Error(`Failed to fetch PDF: ${response.status} ${response.statusText}`);
@@ -249,40 +259,49 @@ export async function analyzePdfDocument(pdfUrl: string): Promise<PdfAnalysisRes
     const fileSizeKB = Math.round(arrayBuffer.byteLength / 1024);
     const fileSizeMB = fileSizeKB / 1024;
 
-    console.log(`PDF fetched, size: ${fileSizeKB}KB (${fileSizeMB.toFixed(2)}MB)`);
+    console.log(`PDF fetched successfully, size: ${fileSizeKB}KB (${fileSizeMB.toFixed(2)}MB)`);
 
-    // Check size limit - Claude's document API has a ~32MB limit for PDFs
-    // But for practical purposes, keep it under 10MB for reasonable response times
+    // Check size limit
     if (fileSizeMB > 25) {
-      console.error(`PDF too large for analysis: ${fileSizeMB.toFixed(2)}MB. Maximum is 25MB.`);
-      throw new Error(`PDF file is too large (${fileSizeMB.toFixed(2)}MB). Please use a smaller file.`);
+      throw new Error(`PDF file is too large (${fileSizeMB.toFixed(2)}MB). Maximum is 25MB.`);
     }
 
     const base64Data = Buffer.from(arrayBuffer).toString('base64');
 
-    console.log(`Starting Claude document analysis...`);
+    console.log(`Starting Claude document analysis (this may take 1-2 minutes)...`);
 
-    // Use Claude's document API to analyze the PDF with timeout
-    const result = await Promise.race([
-      anthropic.messages.create({
-        model: IMPORT_AGENT_CONFIG.model,
-        max_tokens: 8192,
-        system: IMPORT_AGENT_SYSTEM,
-        messages: [
-          {
-            role: 'user',
-            content: [
-              {
-                type: 'document',
-                source: {
-                  type: 'base64',
-                  media_type: 'application/pdf',
-                  data: base64Data,
+    // Use Claude's document API with 2 minute timeout
+    const apiTimeout = 120000; // 2 minutes
+    let timeoutId: NodeJS.Timeout;
+
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      timeoutId = setTimeout(() => {
+        console.log('Claude API timeout reached');
+        reject(new Error('Claude API timeout after 2 minutes'));
+      }, apiTimeout);
+    });
+
+    try {
+      const result = await Promise.race([
+        anthropic.messages.create({
+          model: IMPORT_AGENT_CONFIG.model,
+          max_tokens: 8192,
+          system: IMPORT_AGENT_SYSTEM,
+          messages: [
+            {
+              role: 'user',
+              content: [
+                {
+                  type: 'document',
+                  source: {
+                    type: 'base64',
+                    media_type: 'application/pdf',
+                    data: base64Data,
+                  },
                 },
-              },
-              {
-                type: 'text',
-                text: `Analyze this interior design presentation PDF.
+                {
+                  type: 'text',
+                  text: `Analyze this interior design presentation PDF.
 
 For each page that contains an interior design photo (skip title slides, text-only pages, floor plans):
 
@@ -320,51 +339,56 @@ Rules:
 - Maximum ${IMPORT_AGENT_CONFIG.maxProductsPerImage} products per page
 - Position coordinates should be normalized (0-1)
 - Be conservative with confidence levels`,
-              },
-            ],
+                },
+              ],
+            },
+          ],
+        }),
+        timeoutPromise,
+      ]);
+
+      clearTimeout(timeoutId!);
+      console.log('Claude API response received');
+
+      const text = result.content[0].type === 'text' ? result.content[0].text : '';
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+
+      if (jsonMatch) {
+        const parsed = JSON.parse(jsonMatch[0]);
+
+        const validatedPages = (parsed.pages || [])
+          .filter((page: unknown) => page && typeof page === 'object')
+          .map((page: Record<string, unknown>) => ({
+            pageNumber: typeof page.pageNumber === 'number' ? page.pageNumber : 1,
+            roomType: validateRoomType(page.roomType),
+            products: (Array.isArray(page.products) ? page.products : [])
+              .map(validateProduct)
+              .filter(Boolean) as DetectedProduct[],
+            styleIndicators: Array.isArray(page.styleIndicators) ? page.styleIndicators : [],
+          }));
+
+        console.log(`PDF analysis complete: ${validatedPages.length} pages with content`);
+
+        return {
+          pages: validatedPages,
+          documentSummary: {
+            totalPages: parsed.documentSummary?.totalPages || 0,
+            interiorPages: validatedPages.length,
+            dominantStyles: parsed.documentSummary?.dominantStyles || [],
           },
-        ],
-      }),
-      // Timeout after 4 minutes (leave 1 min buffer for Vercel's 5 min limit)
-      new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('Claude API timeout after 4 minutes')), 240000)
-      ),
-    ]);
+        };
+      }
 
-    const text = result.content[0].type === 'text' ? result.content[0].text : '';
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-
-    if (jsonMatch) {
-      const parsed = JSON.parse(jsonMatch[0]);
-
-      // Validate and transform the response
-      const validatedPages = (parsed.pages || [])
-        .filter((page: unknown) => page && typeof page === 'object')
-        .map((page: Record<string, unknown>) => ({
-          pageNumber: typeof page.pageNumber === 'number' ? page.pageNumber : 1,
-          roomType: validateRoomType(page.roomType),
-          products: (Array.isArray(page.products) ? page.products : [])
-            .map(validateProduct)
-            .filter(Boolean) as DetectedProduct[],
-          styleIndicators: Array.isArray(page.styleIndicators) ? page.styleIndicators : [],
-        }));
-
-      console.log(`PDF analysis complete: ${validatedPages.length} pages with content`);
-
-      return {
-        pages: validatedPages,
-        documentSummary: {
-          totalPages: parsed.documentSummary?.totalPages || 0,
-          interiorPages: validatedPages.length,
-          dominantStyles: parsed.documentSummary?.dominantStyles || [],
-        },
-      };
+      console.log('No valid JSON found in PDF analysis response');
+      return emptyResult;
+    } catch (apiError) {
+      clearTimeout(timeoutId!);
+      throw apiError;
     }
-
-    console.log('No valid JSON found in PDF analysis response');
-    return emptyResult;
   } catch (error) {
-    console.error('PDF document analysis failed:', error);
-    return emptyResult;
+    const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+    console.error('PDF document analysis failed:', errorMsg);
+    // Re-throw so the caller knows it failed
+    throw new Error(`PDF analysis failed: ${errorMsg}`);
   }
 }
