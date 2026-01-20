@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { FaUpload, FaImages, FaPlus, FaTag, FaRocket, FaCheckCircle } from 'react-icons/fa';
+import { FaUpload, FaImages, FaPlus, FaTag, FaRocket, FaCheckCircle, FaCloudUploadAlt, FaFileImport } from 'react-icons/fa';
 import ProjectCreationModal from '@/components/ProjectCreationModal';
 import { InterviewModal } from '@/components/posting/interview/InterviewModal';
 import { FinishScheduleOptionsModal } from '@/components/posting/FinishScheduleOptionsModal';
+import { PresentationImportModal } from '@/components/import/PresentationImportModal';
 
 interface ProductTag {
   id: string;
@@ -54,6 +55,82 @@ export default function MediaSection({ project, isOwner, images, projectPost }: 
     hasTags: boolean;
     hasCover: boolean;
   } | null>(null);
+
+  // Drag and drop state
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [showPresentationImport, setShowPresentationImport] = useState(false);
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const dropZoneRef = useRef<HTMLDivElement>(null);
+
+  // Drag and drop handlers
+  const handleDragEnter = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (dropZoneRef.current && !dropZoneRef.current.contains(e.relatedTarget as Node)) {
+      setIsDragOver(false);
+    }
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length > 0) {
+      const hasPresentationFile = files.some(file => {
+        const name = file.name.toLowerCase();
+        return name.endsWith('.pdf') || name.endsWith('.pptx');
+      });
+
+      if (hasPresentationFile) {
+        const presentationFiles = files.filter(file => {
+          const name = file.name.toLowerCase();
+          return name.endsWith('.pdf') || name.endsWith('.pptx');
+        });
+        setPendingFiles(presentationFiles);
+        setShowPresentationImport(true);
+      } else {
+        setShowUploadModal(true);
+        const fileData = files.map(f => ({
+          name: f.name,
+          type: f.type,
+          size: f.size,
+        }));
+        sessionStorage.setItem('pendingUploadFiles', JSON.stringify(fileData));
+      }
+    }
+  }, []);
+
+  const handleImportPresentation = useCallback(() => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.pdf,.pptx';
+    input.onchange = (e) => {
+      const target = e.target as HTMLInputElement;
+      const files = Array.from(target.files || []);
+      if (files.length > 0) {
+        setPendingFiles(files);
+        setShowPresentationImport(true);
+      }
+    };
+    input.click();
+  }, []);
+
+  const handlePresentationImportComplete = useCallback(() => {
+    router.refresh();
+  }, [router]);
 
   // Load existing ProjectPost to check heroAssetId
   useEffect(() => {
@@ -164,7 +241,16 @@ export default function MediaSection({ project, isOwner, images, projectPost }: 
   return (
     <div className="space-y-6">
       {/* Header with Actions */}
-      <section className="bg-[var(--bg-elevated)] p-6 rounded-lg shadow-md">
+      <section
+        ref={images.length > 0 ? dropZoneRef : undefined}
+        onDragEnter={images.length > 0 ? handleDragEnter : undefined}
+        onDragLeave={images.length > 0 ? handleDragLeave : undefined}
+        onDragOver={images.length > 0 ? handleDragOver : undefined}
+        onDrop={images.length > 0 ? handleDrop : undefined}
+        className={`bg-[var(--bg-elevated)] p-6 rounded-lg shadow-md transition-all ${
+          images.length > 0 && isDragOver ? 'ring-2 ring-[var(--accent)] ring-offset-2' : ''
+        }`}
+      >
         <div className="flex items-center justify-between mb-6">
           <h2 className="folio-h2 flex items-center gap-3">
             <FaImages className="w-8 h-8 text-[var(--accent)]" />
@@ -172,13 +258,22 @@ export default function MediaSection({ project, isOwner, images, projectPost }: 
           </h2>
           <div className="flex items-center gap-3">
             {isOwner && (
-              <button
-                onClick={() => setShowUploadModal(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-[var(--accent)] text-white rounded-lg hover:bg-[var(--accent-hover)] transition-colors"
-              >
-                <FaUpload className="w-4 h-4" />
-                Upload Media
-              </button>
+              <>
+                <button
+                  onClick={() => setShowUploadModal(true)}
+                  className="flex items-center gap-2 px-4 py-2 bg-[var(--accent)] text-white rounded-lg hover:bg-[var(--accent-hover)] transition-colors"
+                >
+                  <FaUpload className="w-4 h-4" />
+                  Upload Media
+                </button>
+                <button
+                  onClick={handleImportPresentation}
+                  className="flex items-center gap-2 px-4 py-2 border border-[var(--border-default)] text-[var(--text-primary)] rounded-lg hover:bg-[var(--bg-base)] transition-colors"
+                >
+                  <FaFileImport className="w-4 h-4" />
+                  Import Presentation
+                </button>
+              </>
             )}
             {isOwner && POSTING_V1_ENABLED && (
               <button
@@ -242,15 +337,90 @@ export default function MediaSection({ project, isOwner, images, projectPost }: 
 
         {/* Images Grid */}
         {images.length === 0 ? (
-          <div className="text-center py-12 text-[var(--text-secondary)]">
-            <FaImages className="w-16 h-16 mx-auto mb-4 opacity-50" />
-            <p className="folio-body mb-2">No images uploaded yet</p>
+          <div
+            ref={dropZoneRef}
+            onDragEnter={handleDragEnter}
+            onDragLeave={handleDragLeave}
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
+            className={`
+              relative border-2 border-dashed rounded-xl p-8 text-center
+              transition-all duration-200 ease-out cursor-pointer
+              ${isDragOver
+                ? 'border-[var(--accent)] bg-[var(--accent)]/5 scale-[1.01]'
+                : 'border-[var(--ridge-outer)] hover:border-[var(--text-tertiary)] bg-[var(--bg-base)]'
+              }
+            `}
+            onClick={() => setShowUploadModal(true)}
+          >
+            <input
+              type="file"
+              multiple
+              accept="image/*,.pdf,.pptx"
+              onChange={(e) => {
+                const files = Array.from(e.target.files || []);
+                if (files.length > 0) {
+                  const hasPresentationFile = files.some(file => {
+                    const name = file.name.toLowerCase();
+                    return name.endsWith('.pdf') || name.endsWith('.pptx');
+                  });
+                  if (hasPresentationFile) {
+                    const presentationFiles = files.filter(file => {
+                      const name = file.name.toLowerCase();
+                      return name.endsWith('.pdf') || name.endsWith('.pptx');
+                    });
+                    setPendingFiles(presentationFiles);
+                    setShowPresentationImport(true);
+                  } else {
+                    setShowUploadModal(true);
+                  }
+                }
+              }}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+            />
+
+            <div className="pointer-events-none">
+              <FaCloudUploadAlt
+                className={`
+                  w-12 h-12 mx-auto mb-3 transition-colors duration-200
+                  ${isDragOver ? 'text-[var(--accent)]' : 'text-[var(--text-tertiary)]'}
+                `}
+              />
+              <p className="text-lg text-[var(--text-primary)] mb-1">
+                {isDragOver ? 'Drop files here' : 'Drag files here to upload'}
+              </p>
+              <p className="folio-meta mb-4">
+                Photos or presentations (PDF, PPTX)
+              </p>
+            </div>
+
             {isOwner && (
-              <p className="folio-ui">Click "Upload Media" to add images and tag products</p>
+              <div className="flex items-center justify-center gap-3 pointer-events-auto mt-2">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleImportPresentation();
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 bg-[var(--accent)] text-white rounded-lg hover:bg-[var(--accent-hover)] transition-colors text-sm"
+                >
+                  <FaFileImport className="w-4 h-4" />
+                  Import Presentation
+                </button>
+              </div>
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="relative">
+            {/* Drag overlay when files are being dragged over */}
+            {isDragOver && (
+              <div className="absolute inset-0 bg-[var(--accent)]/10 border-2 border-dashed border-[var(--accent)] rounded-xl flex items-center justify-center z-10">
+                <div className="text-center">
+                  <FaCloudUploadAlt className="w-12 h-12 mx-auto mb-2 text-[var(--accent)]" />
+                  <p className="text-lg text-[var(--accent)] font-medium">Drop files here</p>
+                </div>
+              </div>
+            )}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {images.map((image) => {
               const isCover = selectedHeroImageId === image.id || existingPost?.heroAssetId === image.id;
               const tagCount = image.tags.length;
@@ -304,6 +474,7 @@ export default function MediaSection({ project, isOwner, images, projectPost }: 
                 </div>
               );
             })}
+            </div>
           </div>
         )}
       </section>
@@ -365,6 +536,21 @@ export default function MediaSection({ project, isOwner, images, projectPost }: 
           tags={images.flatMap((img) => img.tags)}
         />
       )}
+
+      {/* Presentation Import Modal */}
+      <PresentationImportModal
+        open={showPresentationImport}
+        onOpenChange={(open) => {
+          setShowPresentationImport(open);
+          if (!open) {
+            setPendingFiles([]);
+          }
+        }}
+        projectId={project.id}
+        projectTitle={project.title}
+        initialFiles={pendingFiles.length > 0 ? pendingFiles : undefined}
+        onComplete={handlePresentationImportComplete}
+      />
     </div>
   );
 }
