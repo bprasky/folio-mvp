@@ -97,7 +97,7 @@ const nextConfig = {
         ]
       };
     }
-    
+
     // Handle Three.js and react-three-fiber for client-side only
     if (!isServer) {
       config.resolve.fallback = {
@@ -107,7 +107,16 @@ const nextConfig = {
         crypto: false,
       };
     }
-    
+
+    // Externalize native modules for server-side (API routes)
+    if (isServer) {
+      config.externals = config.externals || [];
+      config.externals.push({
+        '@napi-rs/canvas': 'commonjs @napi-rs/canvas',
+        'canvas': 'commonjs canvas',
+      });
+    }
+
     return config;
   },
   images: {

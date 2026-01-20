@@ -174,8 +174,8 @@ export async function POST(req: NextRequest) {
 }
 
 /**
- * Extract images from PDF file
- * For PDFs, we extract embedded images
+ * Extract images from PDF file by rendering each page
+ * Uses pdf-to-png-converter to render PDF pages as PNG images
  */
 async function extractPdfImages(
   buffer: Buffer,
@@ -184,93 +184,56 @@ async function extractPdfImages(
   const images: Array<{ pageNumber: number; base64: string; mimeType: string; fileName: string }> = [];
 
   try {
-    // Try to use pdf-lib to extract embedded images
-    const { PDFDocument } = await import('pdf-lib');
-    const pdfDoc = await PDFDocument.load(buffer);
-    const pages = pdfDoc.getPages();
+    // Use pdf-to-png-converter to render each page as an image
+    const { pdfToPng } = await import('pdf-to-png-converter');
 
-    // For now, convert each page to an image using a different approach
-    // Since pdf-lib doesn't directly render pages, we'll use the PDF page dimensions
-    // and note that full rendering would require a headless browser or canvas-based solution
+    console.log(`Starting PDF extraction for: ${fileName}`);
 
-    // As a workaround, we'll try to extract embedded images from the PDF
-    // This is a simplified approach - production would use pdf.js or a rendering service
+    // Convert PDF buffer to PNG images
+    // Scale of 2.0 gives good quality for AI analysis without being too large
+    // Convert Buffer to Uint8Array for type compatibility
+    const pngPages = await pdfToPng(new Uint8Array(buffer), {
+      disableFontFace: true, // Faster processing
+      useSystemFonts: true,  // Use system fonts for better text rendering
+      viewportScale: 2.0,    // Scale factor for image quality
+    });
 
-    // Check for XObject images in the PDF
-    const pdfImages = await extractPdfEmbeddedImages(pdfDoc);
+    console.log(`PDF rendered ${pngPages.length} pages`);
 
-    let pageNum = 1;
-    for (const img of pdfImages) {
-      images.push({
-        pageNumber: pageNum++,
-        base64: img.base64,
-        mimeType: img.mimeType,
-        fileName,
-      });
-    }
+    for (let i = 0; i < pngPages.length; i++) {
+      const page = pngPages[i];
 
-    // If no embedded images found, we need to render pages
-    // This requires additional infrastructure (like pdf.js with canvas)
-    if (images.length === 0) {
-      console.log(`PDF has ${pages.length} pages but no extractable embedded images.`);
-      console.log('Note: Full page rendering requires additional setup.');
+      // pdfToPng returns { pageNumber, name, content, path, width, height }
+      // content is a Buffer of the PNG image
+      if (page.content) {
+        const base64 = page.content.toString('base64');
 
-      // Return placeholder info so the UI knows pages exist
-      for (let i = 0; i < pages.length; i++) {
-        // We can't extract the actual page as an image without rendering
-        // In production, this would use pdf.js or a service like Cloudinary
+        images.push({
+          pageNumber: page.pageNumber || (i + 1),
+          base64,
+          mimeType: 'image/png',
+          fileName,
+        });
       }
     }
 
+    console.log(`Successfully extracted ${images.length} images from PDF`);
     return images;
   } catch (error) {
     console.error('PDF extraction failed:', error);
+
+    // Try fallback: use pdf-lib to at least get page count
+    try {
+      const { PDFDocument } = await import('pdf-lib');
+      const pdfDoc = await PDFDocument.load(buffer);
+      const pageCount = pdfDoc.getPageCount();
+      console.log(`PDF has ${pageCount} pages but rendering failed. Error: ${error}`);
+    } catch (e) {
+      console.error('Even basic PDF parsing failed:', e);
+    }
+
     return images;
   }
-}
-
-/**
- * Extract embedded images from PDF
- */
-async function extractPdfEmbeddedImages(
-  pdfDoc: any
-): Promise<Array<{ base64: string; mimeType: string }>> {
-  const images: Array<{ base64: string; mimeType: string }> = [];
-
-  try {
-    // Get all pages
-    const pages = pdfDoc.getPages();
-
-    for (const page of pages) {
-      // Access the page's resources to find XObjects (images)
-      const resources = page.node.Resources();
-      if (!resources) continue;
-
-      const xObjects = resources.lookup('XObject', 'PDFDict');
-      if (!xObjects) continue;
-
-      // Iterate through XObjects
-      const entries = xObjects.entries();
-      for (const [name, ref] of entries) {
-        try {
-          const xObject = ref;
-          const subtype = xObject.lookup('Subtype', 'PDFName');
-
-          if (subtype?.toString() === '/Image') {
-            // This is an image - try to extract it
-            // Note: Full extraction requires handling various compression types
-            // This is a simplified version
-          }
-        } catch (e) {
-          // Skip problematic XObjects
-        }
-      }
-    }
-  } catch (error) {
-    console.error('Error extracting PDF images:', error);
-  }
-
-  return images;
 }
 
 /**
