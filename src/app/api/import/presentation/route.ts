@@ -83,7 +83,7 @@ export async function POST(req: NextRequest) {
       const buffer = Buffer.from(arrayBuffer);
 
       if (fileName.toLowerCase().endsWith('.pdf')) {
-        const images = await extractPdfImages(buffer, fileName);
+        const images = await extractPdfImages(buffer, fileName, sessionId);
         allExtractedImages.push(...images);
       } else if (fileName.toLowerCase().endsWith('.pptx')) {
         const images = await extractPptxImages(buffer, fileName);
@@ -175,65 +175,161 @@ export async function POST(req: NextRequest) {
 
 /**
  * Extract images from PDF file by rendering each page
- * Uses pdf-to-png-converter to render PDF pages as PNG images
+ * Uses Cloudinary for reliable serverless PDF-to-image conversion
+ * Falls back to pdf-to-png-converter if Cloudinary is not configured
  */
 async function extractPdfImages(
   buffer: Buffer,
-  fileName: string
+  fileName: string,
+  sessionId?: string
 ): Promise<Array<{ pageNumber: number; base64: string; mimeType: string; fileName: string }>> {
   const images: Array<{ pageNumber: number; base64: string; mimeType: string; fileName: string }> = [];
 
+  // First, get page count using pdf-lib (reliable, no native deps)
+  let pageCount = 0;
   try {
-    // Use pdf-to-png-converter to render each page as an image
+    const { PDFDocument } = await import('pdf-lib');
+    const pdfDoc = await PDFDocument.load(buffer);
+    pageCount = pdfDoc.getPageCount();
+    console.log(`PDF "${fileName}" has ${pageCount} pages`);
+  } catch (e) {
+    console.error('Failed to parse PDF:', e);
+    return images;
+  }
+
+  // Try Cloudinary if credentials are available
+  const cloudinaryUrl = process.env.CLOUDINARY_URL;
+  if (cloudinaryUrl) {
+    try {
+      console.log('Using Cloudinary for PDF conversion...');
+      const cloudinaryImages = await extractPdfWithCloudinary(buffer, fileName, pageCount);
+      if (cloudinaryImages.length > 0) {
+        return cloudinaryImages;
+      }
+    } catch (error) {
+      console.error('Cloudinary PDF conversion failed:', error);
+    }
+  }
+
+  // Try pdf-to-png-converter (works in environments with native canvas support)
+  try {
+    console.log('Attempting pdf-to-png-converter...');
     const { pdfToPng } = await import('pdf-to-png-converter');
 
-    console.log(`Starting PDF extraction for: ${fileName}`);
-
-    // Convert PDF buffer to PNG images
-    // Scale of 2.0 gives good quality for AI analysis without being too large
-    // Convert Buffer to Uint8Array for type compatibility
     const pngPages = await pdfToPng(new Uint8Array(buffer), {
-      disableFontFace: true, // Faster processing
-      useSystemFonts: true,  // Use system fonts for better text rendering
-      viewportScale: 2.0,    // Scale factor for image quality
+      disableFontFace: true,
+      useSystemFonts: true,
+      viewportScale: 2.0,
     });
 
     console.log(`PDF rendered ${pngPages.length} pages`);
 
     for (let i = 0; i < pngPages.length; i++) {
       const page = pngPages[i];
-
-      // pdfToPng returns { pageNumber, name, content, path, width, height }
-      // content is a Buffer of the PNG image
       if (page.content) {
-        const base64 = page.content.toString('base64');
-
         images.push({
           pageNumber: page.pageNumber || (i + 1),
-          base64,
+          base64: page.content.toString('base64'),
           mimeType: 'image/png',
           fileName,
         });
       }
     }
 
-    console.log(`Successfully extracted ${images.length} images from PDF`);
-    return images;
+    if (images.length > 0) {
+      console.log(`Successfully extracted ${images.length} images from PDF`);
+      return images;
+    }
   } catch (error) {
-    console.error('PDF extraction failed:', error);
+    console.error('pdf-to-png-converter failed (likely missing native canvas):', error);
+  }
 
-    // Try fallback: use pdf-lib to at least get page count
-    try {
-      const { PDFDocument } = await import('pdf-lib');
-      const pdfDoc = await PDFDocument.load(buffer);
-      const pageCount = pdfDoc.getPageCount();
-      console.log(`PDF has ${pageCount} pages but rendering failed. Error: ${error}`);
-    } catch (e) {
-      console.error('Even basic PDF parsing failed:', e);
+  // If we get here, we couldn't render the PDF
+  console.error(`PDF conversion failed. Configure CLOUDINARY_URL for reliable serverless PDF rendering.`);
+  console.error(`PDF has ${pageCount} pages but no rendering method available.`);
+
+  return images;
+}
+
+/**
+ * Extract PDF pages as images using Cloudinary
+ * Cloudinary handles PDF-to-image conversion on their servers
+ */
+async function extractPdfWithCloudinary(
+  buffer: Buffer,
+  fileName: string,
+  pageCount: number
+): Promise<Array<{ pageNumber: number; base64: string; mimeType: string; fileName: string }>> {
+  const images: Array<{ pageNumber: number; base64: string; mimeType: string; fileName: string }> = [];
+
+  try {
+    // Dynamic import to avoid build issues if not installed
+    const cloudinary = await import('cloudinary');
+
+    // Upload PDF to Cloudinary
+    const uploadResult = await new Promise<{ public_id: string; secure_url: string }>((resolve, reject) => {
+      const uploadStream = cloudinary.v2.uploader.upload_stream(
+        {
+          resource_type: 'raw',
+          folder: 'pdf-imports',
+          format: 'pdf',
+        },
+        (error, result) => {
+          if (error) reject(error);
+          else if (result) resolve(result);
+          else reject(new Error('No result from Cloudinary'));
+        }
+      );
+      uploadStream.end(buffer);
+    });
+
+    console.log(`PDF uploaded to Cloudinary: ${uploadResult.public_id}`);
+
+    // Generate image URLs for each page and fetch them
+    for (let page = 1; page <= pageCount; page++) {
+      try {
+        // Cloudinary transforms PDF pages to images using the pg_ parameter
+        const imageUrl = cloudinary.v2.url(uploadResult.public_id, {
+          resource_type: 'image',
+          format: 'jpg',
+          transformation: [
+            { page: page },
+            { width: 1200, crop: 'limit' },
+            { quality: 'auto:good' },
+          ],
+        });
+
+        // Fetch the image and convert to base64
+        const response = await fetch(imageUrl);
+        if (response.ok) {
+          const arrayBuffer = await response.arrayBuffer();
+          const base64 = Buffer.from(arrayBuffer).toString('base64');
+
+          images.push({
+            pageNumber: page,
+            base64,
+            mimeType: 'image/jpeg',
+            fileName,
+          });
+
+          console.log(`Extracted page ${page}/${pageCount}`);
+        }
+      } catch (pageError) {
+        console.error(`Failed to extract page ${page}:`, pageError);
+      }
     }
 
-    return images;
+    // Clean up: delete the PDF from Cloudinary
+    try {
+      await cloudinary.v2.uploader.destroy(uploadResult.public_id, { resource_type: 'raw' });
+    } catch (e) {
+      console.warn('Failed to cleanup Cloudinary PDF:', e);
+    }
+  } catch (error) {
+    console.error('Cloudinary extraction failed:', error);
   }
+
+  return images;
 }
 
 /**
