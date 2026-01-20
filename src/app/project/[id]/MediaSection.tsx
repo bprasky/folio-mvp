@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { FaUpload, FaImages, FaPlus, FaTag, FaRocket, FaCheckCircle, FaCloudUploadAlt, FaFileImport } from 'react-icons/fa';
+import { FaUpload, FaImages, FaPlus, FaTag, FaRocket, FaCheckCircle, FaCloudUploadAlt, FaFileImport, FaTrash } from 'react-icons/fa';
 import ProjectCreationModal from '@/components/ProjectCreationModal';
 import { InterviewModal } from '@/components/posting/interview/InterviewModal';
 import { FinishScheduleOptionsModal } from '@/components/posting/FinishScheduleOptionsModal';
@@ -131,6 +131,25 @@ export default function MediaSection({ project, isOwner, images, projectPost }: 
   const handlePresentationImportComplete = useCallback(() => {
     router.refresh();
   }, [router]);
+
+  const handleDeleteImage = useCallback(async (imageId: string) => {
+    if (!confirm('Delete this image?')) return;
+
+    try {
+      const res = await fetch(`/api/projects/${project.id}/images/${imageId}`, {
+        method: 'DELETE',
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to delete image');
+      }
+
+      router.refresh();
+    } catch (error) {
+      console.error('Delete error:', error);
+      alert('Failed to delete image');
+    }
+  }, [project.id, router]);
 
   // Load existing ProjectPost to check heroAssetId
   useEffect(() => {
@@ -468,6 +487,12 @@ export default function MediaSection({ project, isOwner, images, projectPost }: 
                         }`}
                       >
                         {isCover ? 'Cover Selected' : 'Set as Cover'}
+                      </button>
+                      <button
+                        onClick={() => handleDeleteImage(image.id)}
+                        className="px-3 py-2 rounded-lg text-sm font-medium bg-red-500 text-white hover:bg-red-600 transition-colors"
+                      >
+                        <FaTrash className="w-4 h-4" />
                       </button>
                     </div>
                   )}
