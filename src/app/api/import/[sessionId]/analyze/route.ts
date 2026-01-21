@@ -2,11 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
+// Import directly from process.ts to avoid barrel export issues
 import { processImportImages, processImportPdf } from '@/lib/import-agent/process';
 import type { ExtractedImage, PdfDocument } from '@/lib/import-agent/types';
 
 export const runtime = 'nodejs';
 export const maxDuration = 300; // 5 minutes for AI analysis
+
+// Log that the module loaded successfully
+console.log('[analyze route] Module loaded successfully');
 
 /**
  * POST /api/import/[sessionId]/analyze
@@ -17,6 +21,7 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ sessionId: string }> }
 ) {
+  console.log('[analyze route] POST handler called');
   try {
     const session = await getServerSession(authOptions);
     const userId = (session?.user as { id?: string })?.id;
