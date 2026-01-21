@@ -237,12 +237,22 @@ async function extractSpecsFromPdf(
     const arrayBuffer = await response.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    // Use pdf-parse directly (more serverless-friendly than pdfjs-dist)
+    // Use pdf-parse with timeout (can hang in serverless environments)
     console.log('[extractSpecsFromPdf] Parsing PDF with pdf-parse...');
     let pdfData;
     try {
       const pdfParse = (await import('pdf-parse')).default;
-      pdfData = await pdfParse(buffer);
+
+      // Add timeout to prevent hanging
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('PDF parse timeout after 15s')), 15000)
+      );
+
+      pdfData = await Promise.race([
+        pdfParse(buffer),
+        timeoutPromise
+      ]) as { text: string; numpages: number };
+
       console.log(`[extractSpecsFromPdf] Extracted ${pdfData.text.length} characters from PDF, ${pdfData.numpages} pages`);
     } catch (parseErr) {
       console.error('[extractSpecsFromPdf] pdf-parse failed:', parseErr);
@@ -516,16 +526,32 @@ export async function processImportPdf(
 
     // Process each PDF document
     for (const pdfDoc of pdfDocuments) {
-      console.log(`Analyzing PDF: ${pdfDoc.fileName} (${pdfDoc.pageCount} pages)`);
+      console.log(`[processImportPdf] Analyzing PDF: ${pdfDoc.fileName} (${pdfDoc.pageCount} pages)`);
 
       try {
-        // First, extract text/specs from PDF
-        console.log('Extracting text specs from PDF...');
-        const pageSpecs = await extractSpecsFromPdf(pdfDoc.url);
-        console.log(`Got specs from ${pageSpecs.size} pages`);
+        // Run text extraction and visual analysis in parallel
+        // Text extraction is optional - if it fails, we continue with visual-only
+        console.log('[processImportPdf] Starting parallel analysis (text + visual)...');
 
-        // Analyze PDF using Claude's document API (visual analysis)
-        const analysis = await analyzePdfDocument(pdfDoc.url);
+        const textExtractionPromise = extractSpecsFromPdf(pdfDoc.url)
+          .then(specs => {
+            console.log(`[processImportPdf] Text extraction completed: ${specs.size} pages with specs`);
+            return specs;
+          })
+          .catch(err => {
+            console.error('[processImportPdf] Text extraction failed (continuing with visual only):', err);
+            return new Map<number, ExtractedPageSpecs>();
+          });
+
+        const visualAnalysisPromise = analyzePdfDocument(pdfDoc.url);
+
+        // Wait for both, but text extraction failure won't block
+        const [pageSpecs, analysis] = await Promise.all([
+          textExtractionPromise,
+          visualAnalysisPromise
+        ]);
+
+        console.log(`[processImportPdf] Got specs from ${pageSpecs.size} pages`);
         result.analyzedImages += pdfDoc.pageCount;
 
         if (analysis.pages.length === 0) {
