@@ -278,6 +278,9 @@ async function extractSpecsFromPdf(
 
     // Since pdf-parse doesn't give per-page text easily, we'll extract specs from the entire PDF
     // and assign them to page 1 (the process.ts logic will distribute to detected products)
+    const fullText = pdfData.text;
+    const lines = fullText.split(/\n+/).filter((line: string) => line.trim());
+
     const specs: ExtractedPageSpecs = {
       vendors: [],
       prices: [],
