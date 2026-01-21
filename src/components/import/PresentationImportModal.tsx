@@ -39,6 +39,13 @@ interface DetectedProduct {
     price?: string;
   };
   selected: boolean;
+  // Extracted spec data from PDF text
+  extractedVendor?: string | null;
+  extractedPrice?: number | null;
+  extractedDimensions?: string | null;
+  extractedSku?: string | null;
+  extractedMaterial?: string | null;
+  extractedProductUrl?: string | null;
 }
 
 interface PresentationImportModalProps {
@@ -330,6 +337,18 @@ export function PresentationImportModal({
           });
         }
 
+        // Determine confidence based on extracted data
+        // High: has vendor AND price from text extraction
+        // Medium: has vendor OR price OR dimensions
+        // Low: no extracted spec data (visual only)
+        let confidence: 'high' | 'medium' | 'low' = tag.attributionConfidence || tag.detectionConfidence || 'low';
+        const hasExtractedData = tag.extractedVendor || tag.extractedPrice || tag.extractedDimensions;
+        if (tag.extractedVendor && tag.extractedPrice) {
+          confidence = 'high';
+        } else if (hasExtractedData) {
+          confidence = 'medium';
+        }
+
         // Add product
         room.products.push({
           id: tag.id,
@@ -337,14 +356,21 @@ export function PresentationImportModal({
           description: tag.description,
           category: tag.category,
           position: { x: tag.x, y: tag.y },
-          confidence: tag.attributionConfidence || tag.detectionConfidence || 'low',
+          confidence,
           suggestion: tag.topSuggestion ? {
             productName: tag.topSuggestion.productName,
             vendorName: tag.topSuggestion.vendorName,
             productUrl: tag.topSuggestion.productUrl,
             price: tag.topSuggestion.price,
           } : undefined,
-          selected: tag.attributionConfidence === 'high',
+          selected: confidence === 'high',
+          // Include extracted spec data
+          extractedVendor: tag.extractedVendor,
+          extractedPrice: tag.extractedPrice,
+          extractedDimensions: tag.extractedDimensions,
+          extractedSku: tag.extractedSku,
+          extractedMaterial: tag.extractedMaterial,
+          extractedProductUrl: tag.extractedProductUrl,
         });
       }
 
@@ -465,6 +491,11 @@ export function PresentationImportModal({
 
   const highConfidenceCount = detectedRooms.reduce(
     (sum, room) => sum + room.products.filter(p => p.confidence === 'high').length,
+    0
+  );
+
+  const withSpecDataCount = detectedRooms.reduce(
+    (sum, room) => sum + room.products.filter(p => p.extractedVendor || p.extractedPrice).length,
     0
   );
 
@@ -613,7 +644,7 @@ export function PresentationImportModal({
                   Found {stats.totalProducts} products in {detectedRooms.length} rooms
                 </p>
                 <p className="text-sm text-stone-500">
-                  {totalSelectedProducts} selected • {highConfidenceCount} high confidence
+                  {totalSelectedProducts} selected • {withSpecDataCount > 0 ? `${withSpecDataCount} with specs` : `${highConfidenceCount} high confidence`}
                 </p>
               </div>
               {highConfidenceCount > 0 && (
@@ -665,8 +696,37 @@ export function PresentationImportModal({
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-stone-900 text-sm">{product.description}</p>
-                            <div className="flex items-center gap-2 mt-1">
+                            {/* Product description or extracted vendor */}
+                            <p className="text-stone-900 text-sm font-medium">
+                              {product.extractedVendor || product.description}
+                            </p>
+                            {product.extractedVendor && (
+                              <p className="text-stone-600 text-xs mt-0.5">{product.description}</p>
+                            )}
+
+                            {/* Extracted spec data row */}
+                            {(product.extractedPrice || product.extractedDimensions || product.extractedSku) && (
+                              <div className="flex flex-wrap items-center gap-2 mt-1.5">
+                                {product.extractedPrice && (
+                                  <span className="text-sm font-semibold text-emerald-700">
+                                    ${(product.extractedPrice / 100).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                  </span>
+                                )}
+                                {product.extractedDimensions && (
+                                  <span className="text-xs text-stone-600 bg-stone-100 px-1.5 py-0.5 rounded">
+                                    {product.extractedDimensions}
+                                  </span>
+                                )}
+                                {product.extractedSku && (
+                                  <span className="text-xs text-stone-500">
+                                    SKU: {product.extractedSku}
+                                  </span>
+                                )}
+                              </div>
+                            )}
+
+                            {/* Category and confidence badges */}
+                            <div className="flex items-center gap-2 mt-1.5">
                               <span className="text-xs text-stone-500">{product.category}</span>
                               <span
                                 className={`text-xs px-2 py-0.5 rounded-full ${
@@ -674,13 +734,22 @@ export function PresentationImportModal({
                                     ? 'bg-emerald-100 text-emerald-700'
                                     : product.confidence === 'medium'
                                     ? 'bg-amber-100 text-amber-700'
-                                    : 'bg-red-100 text-red-700'
+                                    : 'bg-stone-100 text-stone-500'
                                 }`}
                               >
-                                {product.confidence}
+                                {product.confidence === 'high' ? 'spec match' : product.confidence === 'medium' ? 'partial spec' : 'visual only'}
                               </span>
                             </div>
-                            {product.suggestion && (
+
+                            {/* Material if extracted */}
+                            {product.extractedMaterial && (
+                              <p className="text-xs text-stone-500 mt-1">
+                                Materials: {product.extractedMaterial}
+                              </p>
+                            )}
+
+                            {/* Suggestion match (fallback if no extracted data) */}
+                            {product.suggestion && !product.extractedVendor && (
                               <p className="text-xs text-stone-500 mt-1">
                                 Match: {product.suggestion.productName} by {product.suggestion.vendorName}
                               </p>

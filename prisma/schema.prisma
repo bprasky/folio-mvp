@@ -1728,6 +1728,14 @@ model PendingProductTag {
   // Room type detected from image analysis
   roomType        String?
 
+  // Extracted spec data from PDF text (populated when PDF has text annotations)
+  extractedVendor     String?      // Brand/vendor name from text
+  extractedPrice      Int?         // Price in cents
+  extractedDimensions String?      // Dimensions string (e.g., "72W x 36D x 30H")
+  extractedSku        String?      // SKU or model number
+  extractedMaterial   String?      // Material description
+  extractedProductUrl String?      // Product URL if found
+
   // Verification status
   status          PendingTagStatus @default(UNREVIEWED)
   // UNREVIEWED → CONFIRMED → CORRECTED → DISMISSED
