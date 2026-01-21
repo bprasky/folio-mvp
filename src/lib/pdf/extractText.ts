@@ -4,9 +4,13 @@
  * Uses pdfjs-dist legacy build for Node.js compatibility
  */
 
+console.log('[extractText.ts] Starting module load...');
+
 // Use the legacy build for Node.js environments (no DOMMatrix dependency)
 // @ts-ignore - Legacy build types
 import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs'
+
+console.log('[extractText.ts] pdfjs-dist imported successfully');
 import type { TextItem, TextMarkedContent } from 'pdfjs-dist/types/src/display/api'
 
 // Disable worker in Node.js environment

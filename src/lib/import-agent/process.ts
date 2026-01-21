@@ -1,9 +1,13 @@
+console.log('[process.ts] Starting module load...');
+
 import { prisma } from '@/lib/prisma';
 import { analyzeImage, shouldAnalyzeImage, analyzePdfDocument } from './analyze';
 import { searchProductAttribution } from './attribute';
 import type { ExtractedImage, ProcessingResult, RoomAnalysis, ProductAttribution, PdfDocument } from './types';
 import { extractTextFromPdfBuffer, clusterTextByPage } from '@/lib/pdf/extractText';
 import { SPEC_PATTERNS } from '@/lib/pdf/patterns';
+
+console.log('[process.ts] All imports successful');
 
 /**
  * Process extracted images from a presentation import
