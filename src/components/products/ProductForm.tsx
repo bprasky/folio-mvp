@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { FaUpload, FaLink, FaSpinner } from 'react-icons/fa';
+import { FaUpload, FaLink, FaSpinner, FaMagic, FaSearch } from 'react-icons/fa';
 
 interface ProductFormData {
   name: string;
@@ -19,6 +19,7 @@ interface ProductFormData {
     heightIn?: number;
   };
   slotKey?: string;
+  specConfidence?: 'high' | 'partial' | 'visual_only';
 }
 
 interface ProductFormProps {
@@ -29,16 +30,18 @@ interface ProductFormProps {
   isLoading?: boolean;
   roomType?: string;
   roomId?: string;
+  selectionId?: string;
 }
 
-export default function ProductForm({ 
-  mode, 
-  initialData = {}, 
-  onSubmit, 
-  onCancel, 
+export default function ProductForm({
+  mode,
+  initialData = {},
+  onSubmit,
+  onCancel,
   isLoading = false,
   roomType,
-  roomId
+  roomId,
+  selectionId
 }: ProductFormProps) {
   const [formData, setFormData] = useState<ProductFormData>({
     name: '',
@@ -56,12 +59,15 @@ export default function ProductForm({
       heightIn: undefined
     },
     slotKey: '',
+    specConfidence: 'visual_only',
     ...initialData
   });
 
   const [isImporting, setIsImporting] = useState(false);
   const [importError, setImportError] = useState('');
   const [replaceExisting, setReplaceExisting] = useState(false);
+  const [isAiSearching, setIsAiSearching] = useState(false);
+  const [isFolioSearching, setIsFolioSearching] = useState(false);
 
   // Get room template for role options
   const roomTemplate = useMemo(() => {
@@ -185,6 +191,120 @@ export default function ProductForm({
     }
   };
 
+  // AI-powered web search to complete missing product specs
+  const handleCompleteWithAi = async () => {
+    if (!formData.name && !formData.vendorName && !formData.imageUrl) {
+      setImportError('Need at least a product name, vendor, or image to search');
+      return;
+    }
+
+    setIsAiSearching(true);
+    setImportError('');
+
+    try {
+      const response = await fetch('/api/ai/complete-product', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productName: formData.name,
+          vendorName: formData.vendorName || formData.brand,
+          description: formData.description,
+          imageUrl: formData.imageUrl,
+          existingData: {
+            sku: formData.sku,
+            price: formData.priceCents,
+            dimensions: formData.dimensions,
+            url: formData.url
+          }
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'AI search failed');
+      }
+
+      if (result.data) {
+        // Merge AI results with existing data (don't overwrite existing values)
+        setFormData(prev => ({
+          ...prev,
+          name: prev.name || result.data.productName || prev.name,
+          vendorName: prev.vendorName || result.data.vendorName || prev.vendorName,
+          brand: prev.brand || result.data.brand || prev.brand,
+          sku: prev.sku || result.data.sku || prev.sku,
+          priceCents: prev.priceCents || (result.data.price ? Math.round(result.data.price * 100).toString() : prev.priceCents),
+          url: prev.url || result.data.productUrl || prev.url,
+          imageUrl: prev.imageUrl || result.data.imageUrl || prev.imageUrl,
+          description: prev.description || result.data.description || prev.description,
+          dimensions: {
+            widthIn: prev.dimensions?.widthIn || result.data.dimensions?.width,
+            depthIn: prev.dimensions?.depthIn || result.data.dimensions?.depth,
+            heightIn: prev.dimensions?.heightIn || result.data.dimensions?.height,
+          },
+          specConfidence: 'high' // Update confidence after AI completion
+        }));
+      }
+    } catch (error: any) {
+      setImportError(error.message || 'AI search failed');
+    } finally {
+      setIsAiSearching(false);
+    }
+  };
+
+  // Search within Folio's product database for a matching spec
+  const handleFindInFolio = async () => {
+    if (!formData.name && !formData.description && !formData.imageUrl) {
+      setImportError('Need a product name, description, or image to search Folio');
+      return;
+    }
+
+    setIsFolioSearching(true);
+    setImportError('');
+
+    try {
+      const response = await fetch('/api/ai/find-in-folio', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productName: formData.name,
+          description: formData.description,
+          imageUrl: formData.imageUrl,
+          category: formData.slotKey || undefined,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Folio search failed');
+      }
+
+      if (result.data && result.data.match) {
+        // Found a match - offer to apply it
+        const match = result.data.match;
+        setFormData(prev => ({
+          ...prev,
+          name: match.productName || prev.name,
+          vendorName: match.vendorName || prev.vendorName,
+          brand: match.brand || prev.brand,
+          sku: match.sku || prev.sku,
+          priceCents: match.unitPrice ? Math.round(Number(match.unitPrice) * 100).toString() : prev.priceCents,
+          url: match.productUrl || prev.url,
+          imageUrl: match.photo || prev.imageUrl,
+          dimensions: match.dimensions || prev.dimensions,
+          specConfidence: 'high'
+        }));
+      } else {
+        setImportError('No matching product found in Folio. Try "Complete with AI" for a web search.');
+      }
+    } catch (error: any) {
+      setImportError(error.message || 'Folio search failed');
+    } finally {
+      setIsFolioSearching(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -244,6 +364,50 @@ export default function ProductForm({
           
         </div>
       </div>
+
+      {/* AI Search Section - show based on spec confidence */}
+      {mode === 'edit' && (formData.specConfidence === 'partial' || formData.specConfidence === 'visual_only' || !formData.priceCents || !formData.vendorName) && (
+        <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+          <h3 className="text-sm font-medium text-purple-900 mb-2">
+            {formData.specConfidence === 'visual_only' ? 'Missing Product Specs' : 'Incomplete Product Info'}
+          </h3>
+          <p className="text-xs text-purple-700 mb-3">
+            {formData.specConfidence === 'visual_only'
+              ? 'This product was detected visually but has no spec data. Use AI to find matching products.'
+              : 'Some product details are missing. Use AI to complete the information.'}
+          </p>
+          <div className="flex gap-2">
+            {/* Find in Folio - prioritized for visual_only */}
+            <button
+              type="button"
+              onClick={handleFindInFolio}
+              disabled={isFolioSearching || isAiSearching}
+              className="flex-1 px-3 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm flex items-center justify-center gap-2"
+            >
+              {isFolioSearching ? (
+                <FaSpinner className="w-4 h-4 animate-spin" />
+              ) : (
+                <FaSearch className="w-4 h-4" />
+              )}
+              Find in Folio
+            </button>
+            {/* Complete with AI - web search */}
+            <button
+              type="button"
+              onClick={handleCompleteWithAi}
+              disabled={isAiSearching || isFolioSearching}
+              className="flex-1 px-3 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm flex items-center justify-center gap-2"
+            >
+              {isAiSearching ? (
+                <FaSpinner className="w-4 h-4 animate-spin" />
+              ) : (
+                <FaMagic className="w-4 h-4" />
+              )}
+              Complete with AI
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Error Display */}
       {importError && (

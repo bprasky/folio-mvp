@@ -102,7 +102,8 @@ export default function EditProductDrawer({
           depthIn: undefined,
           heightIn: undefined
         },
-        slotKey: selection.slotKey || ''
+        slotKey: selection.slotKey || '',
+        specConfidence: selection.uiMeta?.specConfidence || 'visual_only'
       });
     } catch (error: any) {
       setError(error.message || 'Failed to load selection data');
@@ -250,6 +251,7 @@ export default function EditProductDrawer({
                 isLoading={isLoading}
                 roomType={roomType}
                 roomId={roomId}
+                selectionId={selectionId}
               />
             )}
           </div>
