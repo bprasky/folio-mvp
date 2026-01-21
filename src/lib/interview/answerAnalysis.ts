@@ -387,3 +387,41 @@ export function isVendorHighlightWorthy(analysis: AnswerAnalysis, vendorName: st
     analysis.quotable
   );
 }
+
+/**
+ * Analyze an answer and create boost opportunities if eligible
+ *
+ * This is the main integration point for the boost system.
+ * Call this after a designer submits an interview answer.
+ */
+export async function analyzeAndProcessAnswer(
+  projectId: string,
+  designerId: string,
+  questionId: string,
+  question: GeneratedQuestion,
+  answer: string
+): Promise<AnswerAnalysis> {
+  // Run analysis
+  const analysis = await analyzeAnswer(question, answer);
+
+  // Create boost opportunities if eligible
+  if (analysis.boost_eligible) {
+    try {
+      // Dynamically import to avoid circular dependencies
+      const { createBoostOpportunities } = await import('@/lib/boost');
+
+      await createBoostOpportunities({
+        projectId,
+        designerId,
+        questionId,
+        answer,
+        analysis,
+      });
+    } catch (error) {
+      console.error('[analyzeAndProcessAnswer] Failed to create boost opportunities:', error);
+      // Don't fail the analysis if boost creation fails
+    }
+  }
+
+  return analysis;
+}

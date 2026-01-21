@@ -87,6 +87,11 @@ model User {
   developmentDesigners           DevelopmentDesigner[]
   consultationBuyer              ConsultationBuyer?
 
+  // Boost system relations
+  boostOpportunities             BoostOpportunity[]    @relation("DesignerBoostOpportunities")
+  approvedBoosts                 Boost[]               @relation("UserBoosts")
+  notifications                  Notification[]
+
   // Architect-specific profile fields
   architectLicenseNumber         String?               // Professional license number
   architectLicensedStates        String[]              // e.g., ["CA", "NY", "TX"]
@@ -267,6 +272,9 @@ model Project {
   // PDF Extraction relations
   pdfExtractions       PdfExtraction[]
   skeletonItems        SkeletonItem[]
+
+  // Boost system relations
+  boostOpportunities   BoostOpportunity[]
 
   @@map("projects")
 }
@@ -573,6 +581,10 @@ model Organization {
 
   // Vendor subscription (for vendor organizations)
   vendorSubscription  VendorSubscription?
+
+  // Boost system relations
+  boostOpportunities  BoostOpportunity[]   @relation("VendorBoostOpportunities")
+  boosts              Boost[]              @relation("VendorBoosts")
 
   // Profile System relations
   teamMembers         TeamMember[]
@@ -2881,4 +2893,133 @@ model SkeletonItem {
   @@index([projectId])
   @@index([status])
   @@index([sourceExtractionId])
+}
+
+// ============================================================
+// VENDOR BOOST SYSTEM
+// Testimonial marketplace for designer-vendor mentions
+// ============================================================
+
+enum BoostStatus {
+  PENDING      // Created, not yet notified
+  NOTIFIED     // Vendor has been notified
+  VIEWED       // Vendor has viewed the opportunity
+  BOOSTED      // Vendor has boosted
+  DECLINED     // Vendor explicitly declined
+  EXPIRED      // Passed expiration without action
+}
+
+model BoostOpportunity {
+  id                 String       @id @default(cuid())
+
+  // Source
+  projectId          String
+  project            Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  questionId         String       // Reference to the question asked
+
+  // The content
+  designerId         String
+  designer           User         @relation("DesignerBoostOpportunities", fields: [designerId], references: [id])
+  vendorId           String
+  vendor             Organization @relation("VendorBoostOpportunities", fields: [vendorId], references: [id])
+
+  // Quote details
+  fullAnswer         String       @db.Text
+  suggestedPullQuote String?      @db.Text
+  productIds         String[]     // Products mentioned
+  sentiment          String       // positive, neutral
+
+  // Status
+  status             BoostStatus  @default(PENDING)
+  notifiedAt         DateTime?
+  viewedAt           DateTime?
+  respondedAt        DateTime?
+  expiresAt          DateTime     // Boost opportunities expire after 14 days
+
+  // If boosted
+  boost              Boost?
+
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+
+  @@map("boost_opportunities")
+  @@index([vendorId, status])
+  @@index([projectId])
+  @@index([designerId])
+}
+
+model Boost {
+  id                  String           @id @default(cuid())
+
+  // Source
+  opportunityId       String           @unique
+  opportunity         BoostOpportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+
+  // Vendor
+  vendorId            String
+  vendor              Organization     @relation("VendorBoosts", fields: [vendorId], references: [id])
+  boostedById         String           // User who approved the boost
+  boostedBy           User             @relation("UserBoosts", fields: [boostedById], references: [id])
+
+  // Content (may be edited from suggested)
+  pullQuote           String           @db.Text
+
+  // Placement preferences
+  showInArticle       Boolean          @default(true)
+  showOnVendorPage    Boolean          @default(true)
+  showInFeed          Boolean          @default(false) // Premium placement
+
+  // Display settings
+  priority            Int              @default(0) // Higher = more prominent
+  displayUntil        DateTime?        // Optional expiration
+
+  // Billing
+  boostTier           String           // 'included', 'premium', 'featured'
+  amountCents         Int              @default(0)
+  billedAt            DateTime?
+
+  // Stats
+  impressions         Int              @default(0)
+  clicks              Int              @default(0)
+
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+
+  @@map("boosts")
+  @@index([vendorId])
+}
+
+// Vendor invite signals for vendors not yet on platform
+model VendorInviteSignal {
+  id          String   @id @default(cuid())
+  vendorName  String
+  signalType  String   // 'TESTIMONIAL_AVAILABLE', 'PRODUCT_TAG', etc.
+  projectId   String?
+  designerId  String?
+  metadata    Json?
+  processedAt DateTime?
+  createdAt   DateTime @default(now())
+
+  @@map("vendor_invite_signals")
+  @@index([vendorName])
+  @@index([signalType])
+}
+
+// In-app notification system
+model Notification {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type       String   // 'BOOST_OPPORTUNITY', 'TESTIMONIAL_BOOSTED', etc.
+  title      String
+  body       String
+  actionUrl  String?
+  metadata   Json?
+  read       Boolean  @default(false)
+  readAt     DateTime?
+  createdAt  DateTime @default(now())
+
+  @@map("notifications")
+  @@index([userId, read])
+  @@index([createdAt])
 }
