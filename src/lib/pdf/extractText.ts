@@ -1,13 +1,15 @@
 /**
  * PDF Text Extraction Module
- * Extracts text with positional data and images from PDFs using pdfjs-dist
+ * Extracts text with positional data and images from PDFs
+ * Uses pdfjs-dist legacy build for Node.js compatibility
  */
 
-import * as pdfjsLib from 'pdfjs-dist'
+// Use the legacy build for Node.js environments (no DOMMatrix dependency)
+// @ts-ignore - Legacy build types
+import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs'
 import type { TextItem, TextMarkedContent } from 'pdfjs-dist/types/src/display/api'
 
-// Configure the worker source for Node.js environment
-// @ts-ignore - Worker source configuration
+// Disable worker in Node.js environment
 pdfjsLib.GlobalWorkerOptions.workerSrc = ''
 
 export interface TextBlock {
