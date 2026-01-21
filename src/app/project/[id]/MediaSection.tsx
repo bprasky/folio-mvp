@@ -8,6 +8,7 @@ import ProjectCreationModal from '@/components/ProjectCreationModal';
 import { InterviewModal } from '@/components/posting/interview/InterviewModal';
 import { FinishScheduleOptionsModal } from '@/components/posting/FinishScheduleOptionsModal';
 import { PresentationImportModal } from '@/components/import/PresentationImportModal';
+import { PdfSpecImportModal } from '@/components/import/PdfSpecImportModal';
 
 interface ProductTag {
   id: string;
@@ -59,8 +60,26 @@ export default function MediaSection({ project, isOwner, images, projectPost }: 
   // Drag and drop state
   const [isDragOver, setIsDragOver] = useState(false);
   const [showPresentationImport, setShowPresentationImport] = useState(false);
+  const [showPdfSpecImport, setShowPdfSpecImport] = useState(false);
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [rooms, setRooms] = useState<Array<{ id: string; name: string; type?: string | null }>>([]);
   const dropZoneRef = useRef<HTMLDivElement>(null);
+
+  // Fetch rooms for PDF spec import
+  useEffect(() => {
+    async function fetchRooms() {
+      try {
+        const res = await fetch(`/api/projects/${project.id}`);
+        if (res.ok) {
+          const data = await res.json();
+          setRooms(data.rooms || []);
+        }
+      } catch (error) {
+        console.error('Failed to fetch rooms:', error);
+      }
+    }
+    fetchRooms();
+  }, [project.id]);
 
   // Drag and drop handlers
   const handleDragEnter = useCallback((e: React.DragEvent) => {
@@ -131,6 +150,25 @@ export default function MediaSection({ project, isOwner, images, projectPost }: 
   const handlePresentationImportComplete = useCallback(() => {
     router.refresh();
   }, [router]);
+
+  const handlePdfSpecImportComplete = useCallback(() => {
+    router.refresh();
+  }, [router]);
+
+  const handleImportPdfSpecs = useCallback(() => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.pdf';
+    input.onchange = (e) => {
+      const target = e.target as HTMLInputElement;
+      const files = Array.from(target.files || []);
+      if (files.length > 0 && files[0].name.toLowerCase().endsWith('.pdf')) {
+        setPendingFiles(files);
+        setShowPdfSpecImport(true);
+      }
+    };
+    input.click();
+  }, []);
 
   const handleDeleteImage = useCallback(async (imageId: string) => {
     if (!confirm('Delete this image?')) return;
@@ -291,6 +329,14 @@ export default function MediaSection({ project, isOwner, images, projectPost }: 
                 >
                   <FaFileImport className="w-4 h-4" />
                   Import Presentation
+                </button>
+                <button
+                  onClick={handleImportPdfSpecs}
+                  className="flex items-center gap-2 px-4 py-2 border border-[var(--border-default)] text-[var(--text-primary)] rounded-lg hover:bg-[var(--bg-base)] transition-colors"
+                  title="Extract product specs from PDF (brand, price, dimensions)"
+                >
+                  <FaTag className="w-4 h-4" />
+                  Import PDF Specs
                 </button>
               </>
             )}
@@ -575,6 +621,22 @@ export default function MediaSection({ project, isOwner, images, projectPost }: 
         projectTitle={project.title}
         initialFiles={pendingFiles.length > 0 ? pendingFiles : undefined}
         onComplete={handlePresentationImportComplete}
+      />
+
+      {/* PDF Spec Import Modal */}
+      <PdfSpecImportModal
+        open={showPdfSpecImport}
+        onOpenChange={(open) => {
+          setShowPdfSpecImport(open);
+          if (!open) {
+            setPendingFiles([]);
+          }
+        }}
+        projectId={project.id}
+        projectTitle={project.title}
+        rooms={rooms}
+        initialFile={pendingFiles.length > 0 ? pendingFiles[0] : undefined}
+        onComplete={handlePdfSpecImportComplete}
       />
     </div>
   );

@@ -5,3 +5,5 @@ export { VerificationQueue } from './VerificationQueue';
 export { PendingTagCard } from './PendingTagCard';
 export { ImportProgress } from './ImportProgress';
 export { ConfidenceBadge } from './ConfidenceBadge';
+export { PresentationImportModal } from './PresentationImportModal';
+export { PdfSpecImportModal } from './PdfSpecImportModal';
