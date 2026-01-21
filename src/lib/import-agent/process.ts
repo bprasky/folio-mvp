@@ -237,12 +237,22 @@ async function extractSpecsFromPdf(
     const arrayBuffer = await response.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    // Use pdf-parse directly (more serverless-friendly than pdfjs-dist)
+    // Use pdf-parse with timeout (can hang in serverless environments)
     console.log('[extractSpecsFromPdf] Parsing PDF with pdf-parse...');
     let pdfData;
     try {
       const pdfParse = (await import('pdf-parse')).default;
-      pdfData = await pdfParse(buffer);
+
+      // Add timeout to prevent hanging
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('PDF parse timeout after 15s')), 15000)
+      );
+
+      pdfData = await Promise.race([
+        pdfParse(buffer),
+        timeoutPromise
+      ]) as { text: string; numpages: number };
+
       console.log(`[extractSpecsFromPdf] Extracted ${pdfData.text.length} characters from PDF, ${pdfData.numpages} pages`);
     } catch (parseErr) {
       console.error('[extractSpecsFromPdf] pdf-parse failed:', parseErr);
