@@ -273,7 +273,7 @@ export default function MediaSection({ project, isOwner, images, projectPost }: 
         <div className="flex items-center justify-between mb-6">
           <h2 className="folio-h2 flex items-center gap-3">
             <FaImages className="w-8 h-8 text-[var(--accent)]" />
-            Project Media
+            Project Files
           </h2>
           <div className="flex items-center gap-3">
             {isOwner && (

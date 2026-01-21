@@ -10,6 +10,7 @@ import GenerateDialog from '@/components/boards/GenerateDialog';
 import GeneratedGrid from '@/components/boards/GeneratedGrid';
 import ExportSpecModal from './ExportSpecModal';
 import { toast } from 'sonner';
+import { BoardsEmptyState } from '@/components/designer/project';
 
 // Types based on the actual schema
 type Selection = {
@@ -273,10 +274,17 @@ export default function DesignerBoard({
         ))}
       </div>
 
-      {filteredRooms.length === 0 && (
+      {filteredRooms.length === 0 && project.rooms.length === 0 && (
+        <BoardsEmptyState
+          projectId={projectId}
+          projectName={project.title}
+        />
+      )}
+
+      {filteredRooms.length === 0 && project.rooms.length > 0 && (
         <div className="text-center py-12 text-[var(--text-secondary)]">
-          <p className="folio-body">No rooms found</p>
-          <p className="folio-ui mt-2">Create rooms and add selections to see them here</p>
+          <p className="folio-body">No rooms match your filter</p>
+          <p className="folio-ui mt-2">Try selecting a different room or "All Rooms"</p>
         </div>
       )}
 

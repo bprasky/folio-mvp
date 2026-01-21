@@ -13,7 +13,7 @@ import DraftsPanel from './DraftsPanel';
 import ProjectEmptyState from './ProjectEmptyState';
 import ProjectEmptyStateDiscovery from './ProjectEmptyStateDiscovery';
 
-type TabView = 'overview' | 'media' | 'boards' | 'drafts';
+type TabView = 'overview' | 'media' | 'boards' | 'drafts' | 'files' | 'publish';
 
 export default async function ProjectPage({ 
   params, 
@@ -108,10 +108,18 @@ export default async function ProjectPage({
   }
 
   // Determine current view from search params - default to 'boards'
-  const currentView: TabView = (searchParams.view as TabView) || 'boards';
-  
+  let currentView: TabView = (searchParams.view as TabView) || 'boards';
+
+  // Handle redirects from old tab names
+  // media → files, drafts → publish
+  if (currentView === 'media') {
+    currentView = 'files';
+  } else if (currentView === 'drafts') {
+    currentView = 'publish';
+  }
+
   // Validate view parameter
-  const validViews: TabView[] = ['overview', 'media', 'boards', 'drafts'];
+  const validViews: TabView[] = ['overview', 'media', 'boards', 'drafts', 'files', 'publish'];
   const view = validViews.includes(currentView) ? currentView : 'boards';
 
   // Convert Prisma Decimal objects to numbers for client components
@@ -214,18 +222,20 @@ export default async function ProjectPage({
 
       {/* Main Content - Full Width */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {view === 'media' && (
+        {/* FILES tab (replaces Media) */}
+        {(view === 'files' || view === 'media') && (
           <MediaSection project={sanitizedProject} isOwner={isOwner} images={base.images} />
         )}
-        
-        {view === 'drafts' && (
+
+        {/* PUBLISH tab (replaces Story/Drafts) */}
+        {(view === 'publish' || view === 'drafts') && (
           <DraftsPanel projectId={sanitizedProject.id} />
         )}
-        
-        {/* Default to boards view */}
+
+        {/* BOARDS tab - default view */}
         {(view === 'boards' || view === 'overview') && (
-          <DesignerBoard 
-            projectId={sanitizedProject.id} 
+          <DesignerBoard
+            projectId={sanitizedProject.id}
             project={sanitizedProject}
           />
         )}
