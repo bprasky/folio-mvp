@@ -3,7 +3,7 @@ import { analyzeImage, shouldAnalyzeImage, analyzePdfDocument } from './analyze'
 import { searchProductAttribution } from './attribute';
 import type { ExtractedImage, ProcessingResult, RoomAnalysis, ProductAttribution, PdfDocument } from './types';
 import { extractTextFromPdfBuffer, clusterTextByPage } from '@/lib/pdf/extractText';
-import { applyPatterns, SPEC_PATTERNS } from '@/lib/pdf/patterns';
+import { SPEC_PATTERNS } from '@/lib/pdf/patterns';
 
 /**
  * Process extracted images from a presentation import
