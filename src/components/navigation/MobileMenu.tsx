@@ -17,7 +17,16 @@ export function MobileMenu() {
   const router = useRouter();
   const user = session?.user;
   const role = user?.role ? normalizeRole(user.role) : null;
-  const isVendor = role === "VENDOR";
+  const operatingAsOrgType = session?.user?.operatingAsOrg?.type;
+
+  // Check if user is effectively a designer (by base role OR org membership)
+  const isDesigner = role === "DESIGNER" || operatingAsOrgType === "DESIGN_FIRM";
+
+  // Check if user is effectively a vendor (by base role OR org membership)
+  const isVendor = role === "VENDOR" ||
+    operatingAsOrgType === "VENDOR" ||
+    operatingAsOrgType === "MANUFACTURER" ||
+    operatingAsOrgType === "SHOWROOM";
 
   // Get dashboard link based on role
   const getDashboardLink = (userRole: string) => {
@@ -33,17 +42,13 @@ export function MobileMenu() {
     }
   };
 
-  // Get profile link based on role
+  // Get profile link based on role and org membership
   const getProfileLink = () => {
     if (!user) return "/profile";
-    if (role === "DESIGNER") {
-      if (user.email) {
-        const emailPrefix = user.email.split("@")[0];
-        return `/@${emailPrefix.toLowerCase()}`;
-      }
+    if (isDesigner) {
       return "/designer/profile";
     }
-    if (role === "VENDOR") return "/vendor";
+    if (isVendor) return "/vendor";
     if (role === "STUDENT") return "/student";
     if (role === "ADMIN") return "/admin";
     return "/profile";
@@ -137,7 +142,7 @@ export function MobileMenu() {
               Events
             </MobileNavLink>
 
-            {role === "DESIGNER" && (
+            {isDesigner && (
               <>
                 <div className="border-t border-[var(--ridge-outer)] my-2" />
                 <MobileNavLink href="/designer/projects" onClick={() => setIsOpen(false)}>
@@ -149,7 +154,7 @@ export function MobileMenu() {
               </>
             )}
 
-            {role === "VENDOR" && (
+            {isVendor && (
               <>
                 <div className="border-t border-[var(--ridge-outer)] my-2" />
                 <MobileNavLink href="/vendor/dashboard" onClick={() => setIsOpen(false)}>
@@ -167,10 +172,13 @@ export function MobileMenu() {
               </>
             )}
 
-            {user && role && ['ADMIN', 'VENDOR', 'DESIGNER', 'STUDENT'].includes(role) && (
+            {user && (isDesigner || isVendor || role === "ADMIN" || role === "STUDENT") && (
               <>
                 <div className="border-t border-[var(--ridge-outer)] my-2" />
-                <MobileNavLink href={getDashboardLink(role)} onClick={() => setIsOpen(false)}>
+                <MobileNavLink
+                  href={isDesigner ? "/designer/dashboard" : isVendor ? "/vendor/dashboard" : getDashboardLink(role || "")}
+                  onClick={() => setIsOpen(false)}
+                >
                   Dashboard
                 </MobileNavLink>
               </>
