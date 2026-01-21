@@ -136,11 +136,12 @@ export async function processImportImages(
         });
       }
 
-      // Update progress
+      // Update progress (merge with existing to preserve PDF URLs)
       await prisma.importSession.update({
         where: { id: sessionId },
         data: {
           processingMeta: {
+            ...(await getExistingMeta(sessionId)),
             processedImages: i + 1,
             totalImages: images.length,
             productsDetected: result.totalProducts,
@@ -692,11 +693,12 @@ export async function processImportPdf(
           }
         }
 
-        // Update progress
+        // Update progress (merge with existing to preserve PDF URLs)
         await prisma.importSession.update({
           where: { id: sessionId },
           data: {
             processingMeta: {
+              ...(await getExistingMeta(sessionId)),
               processedPages: result.analyzedImages,
               totalPages,
               productsDetected: result.totalProducts,
