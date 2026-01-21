@@ -226,119 +226,151 @@ async function extractSpecsFromPdf(
   const pageSpecs = new Map<number, ExtractedPageSpecs>();
 
   try {
-    // Load PDF extraction modules (lazy import to avoid blocking module load)
-    const loaded = await loadPdfExtraction();
-    if (!loaded || !extractTextFromPdfBuffer || !clusterTextByPage || !SPEC_PATTERNS) {
-      console.log('PDF text extraction not available, skipping spec extraction');
-      return pageSpecs;
-    }
-
     // Fetch PDF from URL
-    console.log('Fetching PDF for text extraction...');
+    console.log('[extractSpecsFromPdf] Fetching PDF for text extraction...');
     const response = await fetch(pdfUrl);
     if (!response.ok) {
-      console.error(`Failed to fetch PDF: ${response.status}`);
+      console.error(`[extractSpecsFromPdf] Failed to fetch PDF: ${response.status}`);
       return pageSpecs;
     }
 
     const arrayBuffer = await response.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    // Extract text from PDF
-    console.log('Extracting text from PDF...');
-    const textBlocks = await extractTextFromPdfBuffer(buffer);
-    console.log(`Extracted ${textBlocks.length} text blocks from PDF`);
-
-    if (textBlocks.length === 0) {
+    // Use pdf-parse directly (more serverless-friendly than pdfjs-dist)
+    console.log('[extractSpecsFromPdf] Parsing PDF with pdf-parse...');
+    let pdfData;
+    try {
+      const pdfParse = (await import('pdf-parse')).default;
+      pdfData = await pdfParse(buffer);
+      console.log(`[extractSpecsFromPdf] Extracted ${pdfData.text.length} characters from PDF, ${pdfData.numpages} pages`);
+    } catch (parseErr) {
+      console.error('[extractSpecsFromPdf] pdf-parse failed:', parseErr);
       return pageSpecs;
     }
 
-    // Group text by page
-    const textByPage = clusterTextByPage(textBlocks);
+    if (!pdfData.text || pdfData.text.length === 0) {
+      console.log('[extractSpecsFromPdf] No text found in PDF');
+      return pageSpecs;
+    }
 
-    // Extract specs from each page
-    for (const [pageNum, blocks] of textByPage.entries()) {
-      const specs: ExtractedPageSpecs = {
-        vendors: [],
-        prices: [],
-        dimensions: [],
-        skus: [],
-        materials: [],
-        urls: [],
-        rawText: [],
-      };
+    // Load patterns for extraction
+    const loaded = await loadPdfExtraction();
+    if (!loaded || !SPEC_PATTERNS) {
+      console.log('[extractSpecsFromPdf] Patterns not available, using built-in patterns');
+    }
 
-      for (const block of blocks) {
-        const text = block.text.trim();
-        if (!text) continue;
+    // Define fallback patterns if SPEC_PATTERNS isn't available
+    const patterns = SPEC_PATTERNS || {
+      knownVendors: [
+        'RH', 'Restoration Hardware', 'Pottery Barn', 'West Elm', 'CB2', 'Crate & Barrel',
+        'Design Within Reach', 'DWR', 'Article', 'Wayfair', 'Arhaus', 'Serena & Lily',
+        'Anthropologie', 'Room & Board', 'Mitchell Gold', 'Ethan Allen', 'Williams Sonoma',
+        'Four Hands', 'Uttermost', 'Arteriors', 'Visual Comfort', 'Hudson Valley', 'Circa',
+        'Kelly Wearstler', 'Noir', 'Currey', 'Regina Andrew', 'Gabby', 'Made Goods'
+      ],
+      price: /\$\s*(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)/g,
+      dimensionsLWH: /(\d+(?:\.\d+)?)\s*["']?\s*[Ww]?\s*[xX×]\s*(\d+(?:\.\d+)?)\s*["']?\s*[DdLl]?\s*[xX×]\s*(\d+(?:\.\d+)?)\s*["']?\s*[Hh]?/g,
+      dimensionsInches: /(\d+(?:\.\d+)?)\s*(?:"|in|inch(?:es)?)\s*[xX×]\s*(\d+(?:\.\d+)?)\s*(?:"|in|inch(?:es)?)/gi,
+      dimensionsSimple: /(\d+)\s*[xX×]\s*(\d+)\s*[xX×]\s*(\d+)/g,
+      sku: /(?:SKU|Model|Item|Style)[:\s#]*([A-Z0-9-]+)/gi
+    };
 
-        specs.rawText.push(text);
+    // Since pdf-parse doesn't give per-page text easily, we'll extract specs from the entire PDF
+    // and assign them to page 1 (the process.ts logic will distribute to detected products)
+    const specs: ExtractedPageSpecs = {
+      vendors: [],
+      prices: [],
+      dimensions: [],
+      skus: [],
+      materials: [],
+      urls: [],
+      rawText: [],
+    };
 
-        // Check for known vendors
-        for (const vendor of SPEC_PATTERNS.knownVendors) {
-          if (text.toLowerCase().includes(vendor.toLowerCase())) {
-            if (!specs.vendors.includes(vendor)) {
-              specs.vendors.push(vendor);
-            }
-          }
-        }
+    console.log(`[extractSpecsFromPdf] Processing ${lines.length} lines of text`);
 
-        // Extract price
-        const priceMatch = text.match(SPEC_PATTERNS.price);
-        if (priceMatch) {
-          const priceStr = priceMatch[1].replace(/,/g, '');
-          const price = Math.round(parseFloat(priceStr) * 100);
-          if (price > 0 && !specs.prices.includes(price)) {
-            specs.prices.push(price);
-          }
-        }
+    for (const line of lines) {
+      const text = line.trim();
+      if (!text) continue;
 
-        // Extract dimensions (try multiple patterns)
-        const dimsMatch = text.match(SPEC_PATTERNS.dimensionsLWH) ||
-                          text.match(SPEC_PATTERNS.dimensionsInches) ||
-                          text.match(SPEC_PATTERNS.dimensionsSimple);
-        if (dimsMatch) {
-          const dimsStr = dimsMatch[0];
-          if (!specs.dimensions.includes(dimsStr)) {
-            specs.dimensions.push(dimsStr);
-          }
-        }
+      specs.rawText.push(text);
 
-        // Extract SKU
-        const skuMatch = text.match(SPEC_PATTERNS.sku);
-        if (skuMatch) {
-          const sku = skuMatch[1] || skuMatch[0];
-          if (!specs.skus.includes(sku)) {
-            specs.skus.push(sku);
-          }
-        }
-
-        // Check for material keywords
-        const materialKeywords = ['wood', 'leather', 'velvet', 'linen', 'cotton', 'marble', 'brass', 'steel', 'oak', 'walnut', 'fabric', 'metal'];
-        for (const mat of materialKeywords) {
-          if (text.toLowerCase().includes(mat) && !specs.materials.includes(mat)) {
-            specs.materials.push(mat);
-          }
-        }
-
-        // Extract URLs
-        const urlMatch = text.match(/https?:\/\/[^\s]+/gi);
-        if (urlMatch) {
-          for (const url of urlMatch) {
-            if (!specs.urls.includes(url)) {
-              specs.urls.push(url);
-            }
+      // Check for known vendors
+      for (const vendor of patterns.knownVendors) {
+        if (text.toLowerCase().includes(vendor.toLowerCase())) {
+          if (!specs.vendors.includes(vendor)) {
+            specs.vendors.push(vendor);
+            console.log(`[extractSpecsFromPdf] Found vendor: ${vendor}`);
           }
         }
       }
 
-      if (specs.vendors.length > 0 || specs.prices.length > 0 || specs.dimensions.length > 0) {
-        pageSpecs.set(pageNum, specs);
-        console.log(`Page ${pageNum}: Found ${specs.vendors.length} vendors, ${specs.prices.length} prices, ${specs.dimensions.length} dims`);
+      // Extract prices (use matchAll for global regex)
+      const priceRegex = /\$\s*(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)/g;
+      let priceMatch;
+      while ((priceMatch = priceRegex.exec(text)) !== null) {
+        const priceStr = priceMatch[1].replace(/,/g, '');
+        const price = Math.round(parseFloat(priceStr) * 100);
+        if (price > 0 && !specs.prices.includes(price)) {
+          specs.prices.push(price);
+          console.log(`[extractSpecsFromPdf] Found price: $${price / 100}`);
+        }
+      }
+
+      // Extract dimensions (try multiple patterns)
+      const dimsMatch = text.match(/(\d+(?:\.\d+)?)\s*["']?\s*[Ww]?\s*[xX×]\s*(\d+(?:\.\d+)?)\s*["']?\s*[DdLl]?\s*[xX×]\s*(\d+(?:\.\d+)?)\s*["']?\s*[Hh]?/) ||
+                        text.match(/(\d+(?:\.\d+)?)\s*(?:"|in|inch(?:es)?)\s*[xX×]\s*(\d+(?:\.\d+)?)\s*(?:"|in|inch(?:es)?)/i) ||
+                        text.match(/(\d+)\s*[xX×]\s*(\d+)\s*[xX×]\s*(\d+)/);
+      if (dimsMatch) {
+        const dimsStr = dimsMatch[0];
+        if (!specs.dimensions.includes(dimsStr)) {
+          specs.dimensions.push(dimsStr);
+          console.log(`[extractSpecsFromPdf] Found dimensions: ${dimsStr}`);
+        }
+      }
+
+      // Extract SKU
+      const skuMatch = text.match(/(?:SKU|Model|Item|Style)[:\s#]*([A-Z0-9-]+)/i);
+      if (skuMatch) {
+        const sku = skuMatch[1] || skuMatch[0];
+        if (!specs.skus.includes(sku)) {
+          specs.skus.push(sku);
+          console.log(`[extractSpecsFromPdf] Found SKU: ${sku}`);
+        }
+      }
+
+      // Check for material keywords
+      const materialKeywords = ['wood', 'leather', 'velvet', 'linen', 'cotton', 'marble', 'brass', 'steel', 'oak', 'walnut', 'fabric', 'metal', 'glass', 'ceramic', 'porcelain', 'iron', 'bronze', 'nickel', 'chrome'];
+      for (const mat of materialKeywords) {
+        if (text.toLowerCase().includes(mat) && !specs.materials.includes(mat)) {
+          specs.materials.push(mat);
+        }
+      }
+
+      // Extract URLs
+      const urlMatch = text.match(/https?:\/\/[^\s]+/gi);
+      if (urlMatch) {
+        for (const url of urlMatch) {
+          if (!specs.urls.includes(url)) {
+            specs.urls.push(url);
+          }
+        }
       }
     }
 
-    console.log(`Extracted specs from ${pageSpecs.size} pages`);
+    // Store specs for all pages (we'll distribute to products based on page number)
+    // Since pdf-parse doesn't give per-page text, assign to each page
+    if (specs.vendors.length > 0 || specs.prices.length > 0 || specs.dimensions.length > 0) {
+      for (let pageNum = 1; pageNum <= pdfData.numpages; pageNum++) {
+        pageSpecs.set(pageNum, specs);
+      }
+      console.log(`[extractSpecsFromPdf] Found ${specs.vendors.length} vendors, ${specs.prices.length} prices, ${specs.dimensions.length} dimensions, ${specs.materials.length} materials`);
+    } else {
+      console.log('[extractSpecsFromPdf] No spec data found in PDF text');
+    }
+
+    console.log(`[extractSpecsFromPdf] Extracted specs applied to ${pageSpecs.size} pages`);
   } catch (error) {
     console.error('Error extracting specs from PDF:', error);
   }
