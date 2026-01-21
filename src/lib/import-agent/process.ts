@@ -4,10 +4,35 @@ import { prisma } from '@/lib/prisma';
 import { analyzeImage, shouldAnalyzeImage, analyzePdfDocument } from './analyze';
 import { searchProductAttribution } from './attribute';
 import type { ExtractedImage, ProcessingResult, RoomAnalysis, ProductAttribution, PdfDocument } from './types';
-import { extractTextFromPdfBuffer, clusterTextByPage } from '@/lib/pdf/extractText';
-import { SPEC_PATTERNS } from '@/lib/pdf/patterns';
+// Lazy import PDF extraction to avoid blocking module load if pdfjs-dist fails
+// import { extractTextFromPdfBuffer, clusterTextByPage } from '@/lib/pdf/extractText';
+// import { SPEC_PATTERNS } from '@/lib/pdf/patterns';
 
-console.log('[process.ts] All imports successful');
+console.log('[process.ts] Core imports successful');
+
+// Dynamic imports for PDF text extraction (may fail in some environments)
+let extractTextFromPdfBuffer: ((buffer: Buffer) => Promise<Array<{text: string; page: number; x: number; y: number; fontSize: number}>>) | null = null;
+let clusterTextByPage: ((blocks: Array<{text: string; page: number; x: number; y: number; fontSize: number}>) => Map<number, Array<{text: string; page: number; x: number; y: number; fontSize: number}>>) | null = null;
+let SPEC_PATTERNS: { knownVendors: string[]; price: RegExp; dimensionsLWH: RegExp; dimensionsInches: RegExp; dimensionsSimple: RegExp; sku: RegExp } | null = null;
+
+async function loadPdfExtraction() {
+  if (extractTextFromPdfBuffer && clusterTextByPage && SPEC_PATTERNS) {
+    return true;
+  }
+  try {
+    console.log('[process.ts] Loading PDF extraction modules...');
+    const extractModule = await import('@/lib/pdf/extractText');
+    const patternsModule = await import('@/lib/pdf/patterns');
+    extractTextFromPdfBuffer = extractModule.extractTextFromPdfBuffer;
+    clusterTextByPage = extractModule.clusterTextByPage;
+    SPEC_PATTERNS = patternsModule.SPEC_PATTERNS;
+    console.log('[process.ts] PDF extraction modules loaded successfully');
+    return true;
+  } catch (err) {
+    console.error('[process.ts] Failed to load PDF extraction modules:', err);
+    return false;
+  }
+}
 
 /**
  * Process extracted images from a presentation import
@@ -201,6 +226,13 @@ async function extractSpecsFromPdf(
   const pageSpecs = new Map<number, ExtractedPageSpecs>();
 
   try {
+    // Load PDF extraction modules (lazy import to avoid blocking module load)
+    const loaded = await loadPdfExtraction();
+    if (!loaded || !extractTextFromPdfBuffer || !clusterTextByPage || !SPEC_PATTERNS) {
+      console.log('PDF text extraction not available, skipping spec extraction');
+      return pageSpecs;
+    }
+
     // Fetch PDF from URL
     console.log('Fetching PDF for text extraction...');
     const response = await fetch(pdfUrl);
