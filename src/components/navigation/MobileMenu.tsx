@@ -37,10 +37,7 @@ export function MobileMenu() {
   const getProfileLink = () => {
     if (!user) return "/profile";
     if (role === "DESIGNER") {
-      if (user.email) {
-        const emailPrefix = user.email.split("@")[0];
-        return `/@${emailPrefix.toLowerCase()}`;
-      }
+      // Use the session-based profile page which correctly loads the logged-in user's profile
       return "/designer/profile";
     }
     if (role === "VENDOR") return "/vendor";
