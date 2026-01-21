@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { HiOutlineDotsHorizontal } from 'react-icons/hi';
@@ -8,6 +8,7 @@ import { FaCloudUploadAlt, FaFileImport, FaGlobe, FaDoorOpen, FaImage, FaFileAlt
 import OverviewModal from './OverviewModal';
 import ProjectCreationModal from '@/components/ProjectCreationModal';
 import { PresentationImportModal } from '@/components/import/PresentationImportModal';
+import { PdfSpecImportModal } from '@/components/import/PdfSpecImportModal';
 
 interface Project {
   id: string;
@@ -36,9 +37,27 @@ export default function ProjectEmptyState({ project }: ProjectEmptyStateProps) {
   const [showOverviewModal, setShowOverviewModal] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showPresentationImport, setShowPresentationImport] = useState(false);
+  const [showPdfSpecImport, setShowPdfSpecImport] = useState(false);
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [rooms, setRooms] = useState<Array<{ id: string; name: string; type?: string | null }>>([]);
   const [isDragOver, setIsDragOver] = useState(false);
   const dropZoneRef = useRef<HTMLDivElement>(null);
+
+  // Fetch rooms for PDF spec import
+  useEffect(() => {
+    async function fetchRooms() {
+      try {
+        const res = await fetch(`/api/projects/${project.id}`);
+        if (res.ok) {
+          const data = await res.json();
+          setRooms(data.rooms || []);
+        }
+      } catch (error) {
+        console.error('Failed to fetch rooms:', error);
+      }
+    }
+    fetchRooms();
+  }, [project.id]);
 
   // Drag and drop handlers
   const handleDragEnter = useCallback((e: React.DragEvent) => {
@@ -138,6 +157,27 @@ export default function ProjectEmptyState({ project }: ProjectEmptyStateProps) {
 
   const handlePresentationImportComplete = useCallback((result: { roomsCreated: number; productsTagged: number }) => {
     // Refresh the page to show new rooms
+    router.refresh();
+  }, [router]);
+
+  const handleImportPdfSpecs = useCallback(() => {
+    // Open file picker for PDF spec files
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.pdf';
+    input.onchange = (e) => {
+      const target = e.target as HTMLInputElement;
+      const files = Array.from(target.files || []);
+      if (files.length > 0 && files[0].name.toLowerCase().endsWith('.pdf')) {
+        setPendingFiles(files);
+        setShowPdfSpecImport(true);
+      }
+    };
+    input.click();
+  }, []);
+
+  const handlePdfSpecImportComplete = useCallback(() => {
+    // Refresh the page to show new items
     router.refresh();
   }, [router]);
 
@@ -249,7 +289,7 @@ export default function ProjectEmptyState({ project }: ProjectEmptyStateProps) {
           </div>
 
           {/* CTAs */}
-          <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
+          <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4 flex-wrap">
             {/* Primary CTA - Import Presentation */}
             <button
               onClick={handleImportPresentation}
@@ -257,6 +297,16 @@ export default function ProjectEmptyState({ project }: ProjectEmptyStateProps) {
             >
               <FaFileImport className="w-4 h-4" />
               Import Presentation
+            </button>
+
+            {/* PDF Spec Import */}
+            <button
+              onClick={handleImportPdfSpecs}
+              className="ridge-btn px-6 py-3 flex items-center gap-2"
+              title="Extract product specs from PDF (brand, price, dimensions)"
+            >
+              <FaCalendarAlt className="w-4 h-4" />
+              Import PDF Specs
             </button>
 
             {/* Secondary CTA - Publish Project */}
@@ -365,6 +415,22 @@ export default function ProjectEmptyState({ project }: ProjectEmptyStateProps) {
         projectTitle={project.title}
         initialFiles={pendingFiles.length > 0 ? pendingFiles : undefined}
         onComplete={handlePresentationImportComplete}
+      />
+
+      {/* PDF Spec Import Modal (for extracting text specs from PDFs) */}
+      <PdfSpecImportModal
+        open={showPdfSpecImport}
+        onOpenChange={(open) => {
+          setShowPdfSpecImport(open);
+          if (!open) {
+            setPendingFiles([]);
+          }
+        }}
+        projectId={project.id}
+        projectTitle={project.title}
+        rooms={rooms}
+        initialFile={pendingFiles.length > 0 ? pendingFiles[0] : undefined}
+        onComplete={handlePdfSpecImportComplete}
       />
     </>
   );
