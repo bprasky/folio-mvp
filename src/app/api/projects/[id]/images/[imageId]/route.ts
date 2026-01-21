@@ -47,42 +47,50 @@ export async function DELETE(
       return NextResponse.json({ error: 'Image not found' }, { status: 404 });
     }
 
-    // Parse metadata to check if it's a generated image
+    // Check if it's a generated image (has JSON metadata in name)
+    let isGeneratedImage = false;
     let metadata = null;
     try {
       metadata = JSON.parse(image.name || '{}');
+      isGeneratedImage = metadata.type === 'GENERATED';
     } catch (e) {
-      return NextResponse.json({ error: 'Invalid image metadata' }, { status: 400 });
+      // Not JSON metadata - it's a regular image
+      isGeneratedImage = false;
     }
 
-    if (metadata.type !== 'GENERATED') {
-      return NextResponse.json({ error: 'Not a generated image' }, { status: 400 });
-    }
-
-    // Extract storage path from URL for deletion
-    // This is a simplified approach - in production you'd want more robust URL parsing
-    const urlParts = image.url.split('/');
-    const storagePath = urlParts.slice(urlParts.indexOf('project-assets')).join('/');
-
-    // Delete from storage
-    try {
-      await deleteProjectImage(storagePath);
-    } catch (storageError) {
-      console.warn('Storage deletion failed:', storageError);
-      // Continue with database deletion even if storage fails
-    }
-
-    // Soft delete from database (mark as deleted instead of hard delete)
-    await prisma.projectImage.update({
-      where: { id: imageId },
-      data: {
-        name: JSON.stringify({
-          ...metadata,
-          deletedAt: new Date().toISOString(),
-          deletedBy: userId
-        })
+    // Try to delete from storage if URL points to our storage
+    if (image.url.includes('supabase') || image.url.includes('project-assets')) {
+      try {
+        const urlParts = image.url.split('/');
+        const storageIndex = urlParts.indexOf('project-assets');
+        if (storageIndex !== -1) {
+          const storagePath = urlParts.slice(storageIndex).join('/');
+          await deleteProjectImage(storagePath);
+        }
+      } catch (storageError) {
+        console.warn('Storage deletion failed:', storageError);
+        // Continue with database deletion even if storage fails
       }
-    });
+    }
+
+    if (isGeneratedImage && metadata) {
+      // Soft delete for generated images (preserve metadata)
+      await prisma.projectImage.update({
+        where: { id: imageId },
+        data: {
+          name: JSON.stringify({
+            ...metadata,
+            deletedAt: new Date().toISOString(),
+            deletedBy: userId
+          })
+        }
+      });
+    } else {
+      // Hard delete for regular images
+      await prisma.projectImage.delete({
+        where: { id: imageId }
+      });
+    }
 
     return NextResponse.json({ success: true });
 
