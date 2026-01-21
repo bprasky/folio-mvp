@@ -119,6 +119,14 @@ export async function POST(
         imageUrl?: string;
       } | null;
 
+      // Get extracted spec data (from PDF text extraction)
+      const extractedVendor = pendingTag.extractedVendor;
+      const extractedPrice = pendingTag.extractedPrice; // in cents
+      const extractedDimensions = pendingTag.extractedDimensions;
+      const extractedSku = pendingTag.extractedSku;
+      const extractedMaterial = pendingTag.extractedMaterial;
+      const extractedProductUrl = pendingTag.extractedProductUrl;
+
       // Get room ID for this product
       const roomId = roomIdMap.get(product.roomType);
 
@@ -127,18 +135,50 @@ export async function POST(
         continue;
       }
 
+      // Parse dimensions string into structured format (e.g., "24W x 18D x 30H" -> {width: 24, depth: 18, height: 30})
+      let dimensionsObj: { width?: number; depth?: number; height?: number } | undefined;
+      if (extractedDimensions) {
+        const dimMatch = extractedDimensions.match(/(\d+(?:\.\d+)?)\s*[Ww]?\s*[xX×]\s*(\d+(?:\.\d+)?)\s*[DdLl]?\s*[xX×]\s*(\d+(?:\.\d+)?)\s*[Hh]?/);
+        if (dimMatch) {
+          dimensionsObj = {
+            width: parseFloat(dimMatch[1]),
+            depth: parseFloat(dimMatch[2]),
+            height: parseFloat(dimMatch[3]),
+          };
+        }
+      }
+
+      // Build notes with material info if available
+      let notes = 'Imported from presentation';
+      if (extractedMaterial) {
+        notes += ` | Materials: ${extractedMaterial}`;
+      }
+
+      // Determine confidence level for uiMeta
+      const hasVendor = !!(extractedVendor || suggestion?.vendorName);
+      const hasPrice = !!(extractedPrice || suggestion?.price);
+      const specConfidence = hasVendor && hasPrice ? 'high' : (hasVendor || hasPrice ? 'partial' : 'visual_only');
+
       // Create a Selection (this is what Designer Board displays)
+      // Priority: extracted specs > suggestion data > defaults
       const selection = await prisma.selection.create({
         data: {
           projectId,
           roomId,
           photo: pendingTag.tempImageUrl || suggestion?.imageUrl || null,
           productName: suggestion?.productName || pendingTag.description,
-          vendorName: suggestion?.vendorName || null,
-          productUrl: suggestion?.productUrl || null,
+          vendorName: extractedVendor || suggestion?.vendorName || null,
+          productUrl: extractedProductUrl || suggestion?.productUrl || null,
+          vendorProductId: extractedSku || null,
+          unitPrice: extractedPrice ? (extractedPrice / 100) : (suggestion?.price ? parseFloat(suggestion.price) : null),
           tags: [pendingTag.category.toLowerCase()], // e.g., ["furniture", "lighting"]
           source: 'import',
-          notes: `Imported from presentation`,
+          notes,
+          uiMeta: {
+            dimensions: dimensionsObj,
+            specConfidence,
+            importedAt: new Date().toISOString(),
+          },
         },
       });
       selectionsCreated++;
