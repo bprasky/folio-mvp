@@ -447,10 +447,10 @@ export default function DraftsPanel({ projectId }: { projectId: string }) {
   return (
     <div className="grid grid-cols-12 gap-6">
       <div className="col-span-8 space-y-8">
-        {/* Your Story Section */}
+        {/* Your Reflections Section */}
         <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-elevated)] p-6 shadow-sm">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="folio-h3 text-[var(--text-primary)]">Your Story</h2>
+            <h2 className="folio-h3 text-[var(--text-primary)]">Your Reflections</h2>
             <div className="flex gap-2">
               <button
                 className="px-3 py-1.5 folio-ui font-medium text-white bg-[var(--accent)] rounded-lg hover:bg-[var(--accent-hover)] transition-colors"
@@ -463,7 +463,7 @@ export default function DraftsPanel({ projectId }: { projectId: string }) {
           <div className="space-y-3 max-h-[420px] overflow-y-auto pr-2">
             {filteredAnswers.length === 0 && (
               <p className="folio-ui text-[var(--text-tertiary)] italic">
-                No answers yet. Add your first answer above.
+                No reflections yet. Add your first reflection above.
               </p>
             )}
             {filteredAnswers.map((qa, i) => (
@@ -563,7 +563,7 @@ export default function DraftsPanel({ projectId }: { projectId: string }) {
             disabled={regenBusy}
             onClick={() => regenerate({ overwrite: true })}
           >
-            {regenBusy ? "Updating..." : "Update Post"}
+            {regenBusy ? "Generating..." : "Generate Editorial"}
           </button>
         </div>
         <div className="mt-6 text-center">
@@ -578,10 +578,10 @@ export default function DraftsPanel({ projectId }: { projectId: string }) {
 
       {/* Sidebar */}
       <div className="col-span-4 space-y-6">
-        {/* Current Draft Preview */}
+        {/* Editorial Draft Preview */}
         <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-elevated)] p-6 shadow-sm">
           <h3 className="font-semibold folio-h3 text-[var(--text-primary)] mb-4">
-            Current Draft Preview
+            Editorial Draft
           </h3>
           {currentLead?.kicker || currentLead?.title ? (
             <div className="space-y-3">
@@ -640,7 +640,7 @@ export default function DraftsPanel({ projectId }: { projectId: string }) {
             </div>
           ) : (
             <p className="folio-ui text-[var(--text-tertiary)] italic">
-              No draft yet. Save answers and click "Update Post" to create one.
+              No editorial draft yet. Save your reflections and click "Generate Editorial" to create one.
             </p>
           )}
           {data?.drafts && data.drafts.length > 0 && (

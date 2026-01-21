@@ -1,9 +1,9 @@
 'use client';
 
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
-import { FaThLarge, FaImages, FaFileAlt } from 'react-icons/fa';
+import { LayoutGrid, FolderOpen, Share2 } from 'lucide-react';
 
-type TabView = 'overview' | 'media' | 'boards' | 'drafts';
+type TabView = 'overview' | 'media' | 'boards' | 'drafts' | 'files' | 'publish';
 
 interface ProjectTabsProps {
   project: {
@@ -37,23 +37,23 @@ export default function ProjectTabs({ project, currentView }: ProjectTabsProps) 
     return sum + (room.selections?.length || 0);
   }, 0) || 0;
 
-  // Tabs reordered: Boards first, then Media, then Drafts (Overview moved to hero kebab menu)
+  // New tab structure: BOARDS | FILES | PUBLISH
   const tabs = [
     {
       id: 'boards' as TabView,
-      label: 'Designer Boards',
-      icon: FaThLarge,
+      label: 'Boards',
+      icon: LayoutGrid,
       badge: totalSelections > 0 ? totalSelections : undefined,
     },
     {
-      id: 'media' as TabView,
-      label: 'Media',
-      icon: FaImages,
+      id: 'files' as TabView,
+      label: 'Files',
+      icon: FolderOpen,
     },
     {
-      id: 'drafts' as TabView,
-      label: 'Story',
-      icon: FaFileAlt,
+      id: 'publish' as TabView,
+      label: 'Publish',
+      icon: Share2,
     },
   ];
 
