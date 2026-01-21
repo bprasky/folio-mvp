@@ -140,26 +140,39 @@ export function UserMenu() {
 
   const user = session.user;
   const role = normalizeRole(user.role);
-  const isDesigner = role === "DESIGNER";
-  const isVendor = role === "VENDOR";
   const isAdmin = role === "ADMIN";
-
-  // Get profile link based on role
-  const getProfileLink = () => {
-    if (role === "DESIGNER") {
-      // Use the session-based profile page which correctly loads the logged-in user's profile
-      return "/designer/profile";
-    }
-    if (role === "VENDOR") return "/vendor";
-    if (role === "STUDENT") return "/student";
-    if (role === "ADMIN") return "/admin";
-    return "/profile";
-  };
 
   // Determine if user has any orgs
   const hasOrgs = workspaceData && workspaceData.organizations.length > 0;
   const currentOrg = workspaceData?.operatingAsOrg;
   const operatingAsOrgId = workspaceData?.operatingAsOrgId || session.user.operatingAsOrgId;
+
+  // Check if user is effectively a designer (by base role OR org membership)
+  const isDesigner = role === "DESIGNER" ||
+    currentOrg?.type === "DESIGN_FIRM" ||
+    session.user.operatingAsOrg?.type === "DESIGN_FIRM" ||
+    workspaceData?.organizations?.some(org => org.type === "DESIGN_FIRM");
+
+  // Check if user is effectively a vendor (by base role OR org membership)
+  const isVendor = role === "VENDOR" ||
+    currentOrg?.type === "VENDOR" ||
+    currentOrg?.type === "MANUFACTURER" ||
+    currentOrg?.type === "SHOWROOM" ||
+    session.user.operatingAsOrg?.type === "VENDOR" ||
+    session.user.operatingAsOrg?.type === "MANUFACTURER" ||
+    session.user.operatingAsOrg?.type === "SHOWROOM";
+
+  // Get profile link based on role and org membership
+  const getProfileLink = () => {
+    // Check org context first (operating as or membership)
+    if (isDesigner) {
+      return "/designer/profile";
+    }
+    if (isVendor) return "/vendor";
+    if (role === "STUDENT") return "/student";
+    if (isAdmin) return "/admin";
+    return "/profile";
+  };
 
   // Get current operating context label
   const getOperatingAsLabel = () => {
