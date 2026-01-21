@@ -172,13 +172,14 @@ export async function processImportImages(
       result.pendingTagsCreated = allPendingTags.length;
     }
 
-    // Update session to ready for review
+    // Update session to ready for review (merge with existing meta to preserve PDF URLs)
     await prisma.importSession.update({
       where: { id: sessionId },
       data: {
         status: 'READY_FOR_REVIEW',
         totalProducts: result.totalProducts,
         processingMeta: {
+          ...(await getExistingMeta(sessionId)),
           processedImages: result.analyzedImages,
           totalImages: images.length,
           productsDetected: result.totalProducts,
@@ -744,13 +745,15 @@ export async function processImportPdf(
       result.pendingTagsCreated = allPendingTags.length;
     }
 
-    // Update session to ready for review
+    // Update session to ready for review (merge with existing meta to preserve PDF URLs)
+    const existingMeta = await getExistingMeta(sessionId);
     await prisma.importSession.update({
       where: { id: sessionId },
       data: {
         status: 'READY_FOR_REVIEW',
         totalProducts: result.totalProducts,
         processingMeta: {
+          ...existingMeta,
           processedPages: result.analyzedImages,
           totalPages,
           productsDetected: result.totalProducts,
