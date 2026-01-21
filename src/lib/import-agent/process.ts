@@ -207,6 +207,17 @@ export async function processImportImages(
 }
 
 /**
+ * Helper to get existing processingMeta from a session
+ */
+async function getExistingMeta(sessionId: string): Promise<Record<string, unknown>> {
+  const session = await prisma.importSession.findUnique({
+    where: { id: sessionId },
+    select: { processingMeta: true },
+  });
+  return (session?.processingMeta as Record<string, unknown>) || {};
+}
+
+/**
  * Extract spec data from PDF text blocks for each page
  * Returns a map of page number -> extracted specs
  */
@@ -536,20 +547,46 @@ export async function processImportPdf(
         const textExtractionPromise = extractSpecsFromPdf(pdfDoc.url)
           .then(specs => {
             console.log(`[processImportPdf] Text extraction completed: ${specs.size} pages with specs`);
-            return specs;
+            return { specs, error: null };
           })
           .catch(err => {
             console.error('[processImportPdf] Text extraction failed (continuing with visual only):', err);
-            return new Map<number, ExtractedPageSpecs>();
+            return { specs: new Map<number, ExtractedPageSpecs>(), error: err?.message || 'Unknown error' };
           });
 
         const visualAnalysisPromise = analyzePdfDocument(pdfDoc.url);
 
         // Wait for both, but text extraction failure won't block
-        const [pageSpecs, analysis] = await Promise.all([
+        const [textResult, analysis] = await Promise.all([
           textExtractionPromise,
           visualAnalysisPromise
         ]);
+
+        const pageSpecs = textResult.specs;
+        const extractionError = textResult.error;
+
+        // Log extraction results for debugging
+        const extractionDebug = {
+          pagesWithSpecs: pageSpecs.size,
+          extractionError,
+          sampleSpecs: pageSpecs.size > 0 ? Object.fromEntries([...pageSpecs.entries()].slice(0, 1).map(([k, v]) => [k, {
+            vendors: v.vendors,
+            prices: v.prices,
+            dimensions: v.dimensions
+          }])) : null
+        };
+        console.log('[processImportPdf] Extraction debug:', JSON.stringify(extractionDebug));
+
+        // Save extraction debug to session meta
+        await prisma.importSession.update({
+          where: { id: sessionId },
+          data: {
+            processingMeta: {
+              ...(await getExistingMeta(sessionId)),
+              extractionDebug,
+            },
+          },
+        });
 
         console.log(`[processImportPdf] Got specs from ${pageSpecs.size} pages`);
         result.analyzedImages += pdfDoc.pageCount;
