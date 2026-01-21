@@ -337,17 +337,19 @@ export function PresentationImportModal({
           });
         }
 
-        // Determine confidence based on extracted data
-        // High: has vendor AND price from text extraction
-        // Medium: has vendor OR price OR dimensions
-        // Low: no extracted spec data (visual only)
-        let confidence: 'high' | 'medium' | 'low' = tag.attributionConfidence || tag.detectionConfidence || 'low';
+        // Determine confidence based on EXTRACTED data only
+        // High: has vendor AND price from text extraction (spec match)
+        // Medium: has vendor OR price OR dimensions (partial spec)
+        // Low: no extracted spec data (visual only - AI detected but no text specs)
+        let confidence: 'high' | 'medium' | 'low' = 'low'; // Default to visual only
         const hasExtractedData = tag.extractedVendor || tag.extractedPrice || tag.extractedDimensions;
         if (tag.extractedVendor && tag.extractedPrice) {
           confidence = 'high';
         } else if (hasExtractedData) {
           confidence = 'medium';
         }
+        // Note: AI's attributionConfidence/detectionConfidence no longer affects the badge
+        // The badge now specifically indicates spec data quality, not AI detection confidence
 
         // Add product
         room.products.push({
