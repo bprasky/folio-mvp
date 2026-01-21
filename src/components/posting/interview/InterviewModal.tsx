@@ -380,7 +380,7 @@ export function InterviewModal({
   }, []);
 
   // Fetch questions using the new hook
-  const { questions: fetchedQuestions, loading: questionsLoading } = useInterviewQuestions(projectId);
+  const { questions: fetchedQuestions, loading: questionsLoading, context: questionsContext } = useInterviewQuestions(projectId);
   
   // Convert fetched questions to InterviewQuestion format for compatibility
   const contextualQuestions = useMemo(() => {
@@ -1166,6 +1166,47 @@ export function InterviewModal({
             </p>
           )}
         </DialogHeader>
+
+        {/* Context level indicator - shows how personalized questions are */}
+        {phase === "pick" && !questionsLoading && questionsContext.contextLevel > 0 && (
+          <div className="mx-6 mb-4 p-4 bg-gradient-to-r from-stone-50 to-stone-100 border border-stone-200 rounded-lg">
+            <div className="flex items-center gap-2 text-sm text-stone-700">
+              <svg className="w-4 h-4 text-stone-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              <span className="font-medium">{questionsContext.contextDescription}</span>
+            </div>
+            {questionsContext.upgradeSuggestion && (
+              <p className="mt-1 text-xs text-stone-500">
+                {questionsContext.upgradeSuggestion}
+              </p>
+            )}
+            <div className="mt-2 flex items-center gap-1">
+              {[0, 1, 2, 3, 4, 5].map((level) => (
+                <div
+                  key={level}
+                  className={`h-1.5 flex-1 rounded-full ${
+                    level <= questionsContext.contextLevel
+                      ? 'bg-stone-600'
+                      : 'bg-stone-200'
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Show upgrade suggestion when context is low */}
+        {phase === "pick" && !questionsLoading && questionsContext.contextLevel === 0 && (
+          <div className="mx-6 mb-4 p-4 bg-stone-50 border border-stone-200 rounded-lg">
+            <div className="flex items-center gap-2 text-sm text-stone-600">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>Add project photos to unlock personalized questions</span>
+            </div>
+          </div>
+        )}
 
         {banner && (
           <div className={`mx-8 mt-4 mb-4 rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-3 text-xs text-yellow-800 ${phase === "question" || phase === "followup" ? "" : ""}`}>

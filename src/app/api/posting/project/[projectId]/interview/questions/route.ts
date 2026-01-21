@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
-import { getInterviewQuestions } from '@/lib/editorial/getInterviewQuestions';
+import { getInterviewQuestionsWithContext } from '@/lib/editorial/getInterviewQuestions';
 import { assertProjectView } from '@/lib/authz/access';
 
 export async function GET(
@@ -19,8 +19,22 @@ export async function GET(
     const projectId = params.projectId;
     await assertProjectView(session.user.id, projectId);
 
-    const questions = await getInterviewQuestions(projectId);
-    return NextResponse.json({ questions });
+    // Get URL params for customization
+    const url = new URL(request.url);
+    const maxQuestions = url.searchParams.get('maxQuestions');
+    const prioritizeBoostable = url.searchParams.get('prioritizeBoostable');
+
+    const result = await getInterviewQuestionsWithContext(projectId, {
+      maxQuestions: maxQuestions ? parseInt(maxQuestions, 10) : undefined,
+      prioritizeBoostable: prioritizeBoostable === 'true',
+    });
+
+    return NextResponse.json({
+      questions: result.questions,
+      contextLevel: result.contextLevel,
+      contextDescription: result.contextDescription,
+      upgradeSuggestion: result.upgradeSuggestion,
+    });
   } catch (error) {
     console.error('Error fetching interview questions:', error);
     return NextResponse.json(
