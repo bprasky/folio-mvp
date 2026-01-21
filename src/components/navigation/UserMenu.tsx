@@ -147,11 +147,7 @@ export function UserMenu() {
   // Get profile link based on role
   const getProfileLink = () => {
     if (role === "DESIGNER") {
-      // Try to generate username from email
-      if (user.email) {
-        const emailPrefix = user.email.split("@")[0];
-        return `/@${emailPrefix.toLowerCase()}`;
-      }
+      // Use the session-based profile page which correctly loads the logged-in user's profile
       return "/designer/profile";
     }
     if (role === "VENDOR") return "/vendor";
