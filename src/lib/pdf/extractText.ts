@@ -243,3 +243,56 @@ export async function renderPDFPage(
     return null
   }
 }
+
+/**
+ * Simple interface for text blocks used by the extraction pipeline
+ */
+export interface SimpleTextBlock {
+  text: string
+  page: number
+  x: number
+  y: number
+  fontSize: number
+}
+
+/**
+ * Extracts text blocks from a PDF buffer
+ * Returns an array of simple text blocks for spec extraction
+ */
+export async function extractTextFromPdfBuffer(
+  pdfBuffer: Buffer
+): Promise<SimpleTextBlock[]> {
+  try {
+    const result = await extractPDFContent(pdfBuffer)
+
+    return result.textBlocks.map(block => ({
+      text: block.content,
+      page: block.page,
+      x: block.bounds.x,
+      y: block.bounds.y,
+      fontSize: block.fontSize
+    }))
+  } catch (err) {
+    console.error('Failed to extract text from PDF:', err)
+    return []
+  }
+}
+
+/**
+ * Groups text blocks by page number
+ */
+export function clusterTextByPage(
+  textBlocks: SimpleTextBlock[]
+): Map<number, SimpleTextBlock[]> {
+  const pageMap = new Map<number, SimpleTextBlock[]>()
+
+  for (const block of textBlocks) {
+    const page = block.page
+    if (!pageMap.has(page)) {
+      pageMap.set(page, [])
+    }
+    pageMap.get(page)!.push(block)
+  }
+
+  return pageMap
+}

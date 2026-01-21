@@ -2,6 +2,8 @@ import { prisma } from '@/lib/prisma';
 import { analyzeImage, shouldAnalyzeImage, analyzePdfDocument } from './analyze';
 import { searchProductAttribution } from './attribute';
 import type { ExtractedImage, ProcessingResult, RoomAnalysis, ProductAttribution, PdfDocument } from './types';
+import { extractTextFromPdfBuffer, clusterTextByPage } from '@/lib/pdf/extractText';
+import { applyPatterns, SPEC_PATTERNS } from '@/lib/pdf/patterns';
 
 /**
  * Process extracted images from a presentation import
@@ -176,6 +178,139 @@ export async function processImportImages(
 }
 
 /**
+ * Extract spec data from PDF text blocks for each page
+ * Returns a map of page number -> extracted specs
+ */
+interface ExtractedPageSpecs {
+  vendors: string[];
+  prices: number[];
+  dimensions: string[];
+  skus: string[];
+  materials: string[];
+  urls: string[];
+  rawText: string[];
+}
+
+async function extractSpecsFromPdf(
+  pdfUrl: string
+): Promise<Map<number, ExtractedPageSpecs>> {
+  const pageSpecs = new Map<number, ExtractedPageSpecs>();
+
+  try {
+    // Fetch PDF from URL
+    console.log('Fetching PDF for text extraction...');
+    const response = await fetch(pdfUrl);
+    if (!response.ok) {
+      console.error(`Failed to fetch PDF: ${response.status}`);
+      return pageSpecs;
+    }
+
+    const arrayBuffer = await response.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    // Extract text from PDF
+    console.log('Extracting text from PDF...');
+    const textBlocks = await extractTextFromPdfBuffer(buffer);
+    console.log(`Extracted ${textBlocks.length} text blocks from PDF`);
+
+    if (textBlocks.length === 0) {
+      return pageSpecs;
+    }
+
+    // Group text by page
+    const textByPage = clusterTextByPage(textBlocks);
+
+    // Extract specs from each page
+    for (const [pageNum, blocks] of textByPage.entries()) {
+      const specs: ExtractedPageSpecs = {
+        vendors: [],
+        prices: [],
+        dimensions: [],
+        skus: [],
+        materials: [],
+        urls: [],
+        rawText: [],
+      };
+
+      for (const block of blocks) {
+        const text = block.text.trim();
+        if (!text) continue;
+
+        specs.rawText.push(text);
+
+        // Check for known vendors
+        for (const vendor of SPEC_PATTERNS.knownVendors) {
+          if (text.toLowerCase().includes(vendor.toLowerCase())) {
+            if (!specs.vendors.includes(vendor)) {
+              specs.vendors.push(vendor);
+            }
+          }
+        }
+
+        // Extract price
+        const priceMatch = text.match(SPEC_PATTERNS.price);
+        if (priceMatch) {
+          const priceStr = priceMatch[1].replace(/,/g, '');
+          const price = Math.round(parseFloat(priceStr) * 100);
+          if (price > 0 && !specs.prices.includes(price)) {
+            specs.prices.push(price);
+          }
+        }
+
+        // Extract dimensions (try multiple patterns)
+        const dimsMatch = text.match(SPEC_PATTERNS.dimensionsLWH) ||
+                          text.match(SPEC_PATTERNS.dimensionsInches) ||
+                          text.match(SPEC_PATTERNS.dimensionsSimple);
+        if (dimsMatch) {
+          const dimsStr = dimsMatch[0];
+          if (!specs.dimensions.includes(dimsStr)) {
+            specs.dimensions.push(dimsStr);
+          }
+        }
+
+        // Extract SKU
+        const skuMatch = text.match(SPEC_PATTERNS.sku);
+        if (skuMatch) {
+          const sku = skuMatch[1] || skuMatch[0];
+          if (!specs.skus.includes(sku)) {
+            specs.skus.push(sku);
+          }
+        }
+
+        // Check for material keywords
+        const materialKeywords = ['wood', 'leather', 'velvet', 'linen', 'cotton', 'marble', 'brass', 'steel', 'oak', 'walnut', 'fabric', 'metal'];
+        for (const mat of materialKeywords) {
+          if (text.toLowerCase().includes(mat) && !specs.materials.includes(mat)) {
+            specs.materials.push(mat);
+          }
+        }
+
+        // Extract URLs
+        const urlMatch = text.match(/https?:\/\/[^\s]+/gi);
+        if (urlMatch) {
+          for (const url of urlMatch) {
+            if (!specs.urls.includes(url)) {
+              specs.urls.push(url);
+            }
+          }
+        }
+      }
+
+      if (specs.vendors.length > 0 || specs.prices.length > 0 || specs.dimensions.length > 0) {
+        pageSpecs.set(pageNum, specs);
+        console.log(`Page ${pageNum}: Found ${specs.vendors.length} vendors, ${specs.prices.length} prices, ${specs.dimensions.length} dims`);
+      }
+    }
+
+    console.log(`Extracted specs from ${pageSpecs.size} pages`);
+  } catch (error) {
+    console.error('Error extracting specs from PDF:', error);
+  }
+
+  return pageSpecs;
+}
+
+/**
  * Upload PDF to Cloudinary and get page image URLs
  * Returns a map of page number -> image URL
  */
@@ -299,6 +434,13 @@ export async function processImportPdf(
       status: 'UNREVIEWED';
       pageNumber?: number;
       roomType?: string;
+      // Extracted spec fields
+      extractedVendor?: string | null;
+      extractedPrice?: number | null;
+      extractedDimensions?: string | null;
+      extractedSku?: string | null;
+      extractedMaterial?: string | null;
+      extractedProductUrl?: string | null;
     }> = [];
 
     // Process each PDF document
@@ -306,7 +448,12 @@ export async function processImportPdf(
       console.log(`Analyzing PDF: ${pdfDoc.fileName} (${pdfDoc.pageCount} pages)`);
 
       try {
-        // Analyze PDF using Claude's document API
+        // First, extract text/specs from PDF
+        console.log('Extracting text specs from PDF...');
+        const pageSpecs = await extractSpecsFromPdf(pdfDoc.url);
+        console.log(`Got specs from ${pageSpecs.size} pages`);
+
+        // Analyze PDF using Claude's document API (visual analysis)
         const analysis = await analyzePdfDocument(pdfDoc.url);
         result.analyzedImages += pdfDoc.pageCount;
 
@@ -332,7 +479,55 @@ export async function processImportPdf(
           // Get the image URL for this page (fall back to PDF URL if Cloudinary failed)
           const pageImageUrl = pageImageUrls.get(pageAnalysis.pageNumber) || pdfDoc.url;
 
-          for (const product of pageAnalysis.products) {
+          // Get extracted specs for this page
+          const specs = pageSpecs.get(pageAnalysis.pageNumber);
+          const productsOnPage = pageAnalysis.products.length;
+
+          for (let idx = 0; idx < pageAnalysis.products.length; idx++) {
+            const product = pageAnalysis.products[idx];
+
+            // Determine which extracted specs to assign to this product
+            // Strategy: if single product on page, assign all specs; if multiple, distribute
+            let extractedVendor: string | null = null;
+            let extractedPrice: number | null = null;
+            let extractedDimensions: string | null = null;
+            let extractedSku: string | null = null;
+            let extractedMaterial: string | null = null;
+            let extractedProductUrl: string | null = null;
+
+            if (specs) {
+              // If there's only one product on the page, it gets all the extracted data
+              if (productsOnPage === 1) {
+                extractedVendor = specs.vendors[0] || null;
+                extractedPrice = specs.prices[0] || null;
+                extractedDimensions = specs.dimensions[0] || null;
+                extractedSku = specs.skus[0] || null;
+                extractedMaterial = specs.materials.join(', ') || null;
+                extractedProductUrl = specs.urls[0] || null;
+              } else {
+                // Multiple products - try to distribute specs
+                // If we have equal numbers, assign by index; otherwise first product gets first specs
+                extractedVendor = specs.vendors[idx] || specs.vendors[0] || null;
+                extractedPrice = specs.prices[idx] || (idx === 0 ? specs.prices[0] : null);
+                extractedDimensions = specs.dimensions[idx] || (idx === 0 ? specs.dimensions[0] : null);
+                extractedSku = specs.skus[idx] || null;
+                extractedMaterial = specs.materials[idx] || (idx === 0 && specs.materials.length > 0 ? specs.materials.join(', ') : null);
+                extractedProductUrl = specs.urls[idx] || null;
+              }
+            }
+
+            // Determine confidence based on extracted data
+            // High: has vendor AND price
+            // Medium: has vendor OR price
+            // Low: no extracted spec data (visual only)
+            let confidence = product.confidence;
+            if (extractedVendor && extractedPrice) {
+              confidence = 'high';
+            } else if (extractedVendor || extractedPrice || extractedDimensions) {
+              confidence = 'medium';
+            }
+            // Keep original confidence if no text data was found
+
             allPendingTags.push({
               importSessionId: sessionId,
               tempImageUrl: pageImageUrl, // Use Cloudinary page image URL
@@ -341,14 +536,23 @@ export async function processImportPdf(
               y: product.position.y,
               description: product.description,
               category: product.category,
-              searchQuery: product.searchQuery,
+              searchQuery: extractedVendor
+                ? `${extractedVendor} ${product.searchQuery}`.trim()
+                : product.searchQuery,
               suggestions: [],
               topSuggestion: null,
-              detectionConfidence: product.confidence,
+              detectionConfidence: confidence,
               attributionConfidence: null,
               status: 'UNREVIEWED' as const,
               pageNumber: pageAnalysis.pageNumber,
-              roomType: pageAnalysis.roomType, // Include room type from analysis
+              roomType: pageAnalysis.roomType,
+              // Include extracted spec data
+              extractedVendor,
+              extractedPrice,
+              extractedDimensions,
+              extractedSku,
+              extractedMaterial,
+              extractedProductUrl,
             });
           }
         }
@@ -394,6 +598,13 @@ export async function processImportPdf(
           attributionConfidence: tag.attributionConfidence,
           status: tag.status,
           roomType: tag.roomType,
+          // Include extracted spec fields
+          extractedVendor: tag.extractedVendor,
+          extractedPrice: tag.extractedPrice,
+          extractedDimensions: tag.extractedDimensions,
+          extractedSku: tag.extractedSku,
+          extractedMaterial: tag.extractedMaterial,
+          extractedProductUrl: tag.extractedProductUrl,
         })),
       });
       result.pendingTagsCreated = allPendingTags.length;
