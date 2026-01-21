@@ -264,6 +264,10 @@ model Project {
   pinnedAt             DateTime?
   pinOrder             Int?
 
+  // PDF Extraction relations
+  pdfExtractions       PdfExtraction[]
+  skeletonItems        SkeletonItem[]
+
   @@map("projects")
 }
 
@@ -387,6 +391,9 @@ model Product {
   // Presale development catalog relations
   developmentProducts DevelopmentProduct[]
 
+  // PDF Extraction - skeleton items confirmed as this product
+  skeletonItems       SkeletonItem[]
+
   @@map("products")
 }
 
@@ -459,15 +466,16 @@ model Category {
 }
 
 model Room {
-  id         String      @id @default(uuid())
-  name       String
-  type       String? // Optional room type: KITCHEN, BATH, LIVING, BEDROOM, DINING, OFFICE, ENTRY
-  projectId  String
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
-  quotes     Quote[]
-  project    Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  selections Selection[]
+  id            String         @id @default(uuid())
+  name          String
+  type          String? // Optional room type: KITCHEN, BATH, LIVING, BEDROOM, DINING, OFFICE, ENTRY
+  projectId     String
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  quotes        Quote[]
+  project       Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  selections    Selection[]
+  skeletonItems SkeletonItem[]
 
   @@map("rooms")
 }
@@ -2804,4 +2812,73 @@ model AtelierDeployment {
   @@index([fingerprintId, isActive])
   @@index([developmentId])
   @@map("atelier_deployments")
+}
+
+// ============================================================
+// PDF SPECIFICATION EXTRACTION SYSTEM
+// Extract structured product data from PDF presentations
+// ============================================================
+
+enum SkeletonItemStatus {
+  UNCONFIRMED
+  CONFIRMED
+  DISMISSED
+}
+
+model PdfExtraction {
+  id          String   @id @default(cuid())
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  fileName    String
+  result      Json     // ExtractionResult from extractionPipeline
+  status      String   @default("pending_review") // pending_review, completed, cancelled
+  createdBy   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("pdf_extractions")
+  @@index([projectId])
+  @@index([createdBy])
+  @@index([status])
+}
+
+model SkeletonItem {
+  id                 String             @id @default(cuid())
+  roomId             String
+  room               Room               @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  projectId          String
+  project            Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  // For AI search functionality
+  searchQuery        String?
+  description        String?
+  imageData          String?            @db.Text  // Base64 or URL
+  imageUrl           String?            // Uploaded image URL
+
+  // Extracted data (from PDF)
+  extractedBrand     String?
+  extractedPrice     Int?               // In cents
+  extractedMaterial  String?
+  extractedDimensions Json?             // ParsedDimensions object
+
+  // Source tracking
+  sourceExtractionId String?            // Link to PdfExtraction
+  sourcePage         Int?               // Page number in PDF
+
+  // Matching - when user confirms a product for this skeleton
+  confirmedProductId String?
+  confirmedProduct   Product?           @relation(fields: [confirmedProductId], references: [id])
+
+  // Resulting selection after confirmation
+  resultingSelectionId String?          @unique
+
+  status             SkeletonItemStatus @default(UNCONFIRMED)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  @@map("skeleton_items")
+  @@index([roomId])
+  @@index([projectId])
+  @@index([status])
+  @@index([sourceExtractionId])
 }

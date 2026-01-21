@@ -1,0 +1,243 @@
+/**
+ * PDF Text Extraction Module
+ * Extracts text with positional data and images from PDFs using pdfjs-dist
+ */
+
+import * as pdfjsLib from 'pdfjs-dist'
+import type { TextItem, TextMarkedContent } from 'pdfjs-dist/types/src/display/api'
+
+// Configure the worker source for Node.js environment
+// @ts-ignore - Worker source configuration
+pdfjsLib.GlobalWorkerOptions.workerSrc = ''
+
+export interface TextBlock {
+  content: string
+  bounds: {
+    x: number
+    y: number
+    width: number
+    height: number
+  }
+  page: number
+  fontSize: number
+  fontName: string
+}
+
+export interface ImageRegion {
+  bounds: {
+    x: number
+    y: number
+    width: number
+    height: number
+  }
+  page: number
+  imageIndex: number
+  objectName?: string
+}
+
+export interface PDFExtractionResult {
+  textBlocks: TextBlock[]
+  imageRegions: ImageRegion[]
+  pageCount: number
+  pageDimensions: { width: number; height: number }[]
+}
+
+/**
+ * Checks if a text content item is a TextItem (has string content)
+ */
+function isTextItem(item: TextItem | TextMarkedContent): item is TextItem {
+  return 'str' in item && typeof item.str === 'string'
+}
+
+/**
+ * Extracts text content with positional information from a PDF buffer
+ */
+export async function extractPDFContent(
+  pdfBuffer: Buffer
+): Promise<PDFExtractionResult> {
+  // Convert buffer to Uint8Array for pdfjs
+  const data = new Uint8Array(pdfBuffer)
+
+  // Load the PDF document
+  const loadingTask = pdfjsLib.getDocument({
+    data,
+    useSystemFonts: true,
+    disableFontFace: true,
+  })
+
+  const pdfDoc = await loadingTask.promise
+  const pageCount = pdfDoc.numPages
+
+  const textBlocks: TextBlock[] = []
+  const imageRegions: ImageRegion[] = []
+  const pageDimensions: { width: number; height: number }[] = []
+
+  // Process each page
+  for (let pageNum = 1; pageNum <= pageCount; pageNum++) {
+    const page = await pdfDoc.getPage(pageNum)
+    const viewport = page.getViewport({ scale: 1.0 })
+
+    pageDimensions.push({
+      width: viewport.width,
+      height: viewport.height
+    })
+
+    // Extract text content
+    const textContent = await page.getTextContent()
+
+    for (const item of textContent.items) {
+      if (!isTextItem(item) || !item.str.trim()) {
+        continue
+      }
+
+      // Transform coordinates from PDF space to page space
+      // PDF coordinates: origin at bottom-left
+      // We transform to top-left origin for easier UI work
+      const transform = item.transform
+      const x = transform[4]
+      const y = viewport.height - transform[5] // Flip Y coordinate
+      const fontSize = Math.sqrt(transform[0] * transform[0] + transform[1] * transform[1])
+
+      // Estimate width based on string length and font size
+      const width = item.width || (item.str.length * fontSize * 0.5)
+      const height = item.height || fontSize
+
+      textBlocks.push({
+        content: item.str,
+        bounds: {
+          x,
+          y: y - height, // Adjust for height since we flipped Y
+          width,
+          height
+        },
+        page: pageNum,
+        fontSize,
+        fontName: item.fontName || 'unknown'
+      })
+    }
+
+    // Extract image regions from operators
+    try {
+      const operatorList = await page.getOperatorList()
+      let imageIndex = 0
+
+      for (let i = 0; i < operatorList.fnArray.length; i++) {
+        const fn = operatorList.fnArray[i]
+
+        // OPS.paintImageXObject = 85, OPS.paintInlineImageXObject = 86
+        if (fn === 85 || fn === 86) {
+          const args = operatorList.argsArray[i]
+          const objectName = args?.[0] as string | undefined
+
+          // Try to get image dimensions from the object
+          // This is an approximation - actual image bounds depend on the transform matrix
+          try {
+            const objs = page.objs
+            const imgData = objs.get(objectName || '') as { width?: number; height?: number } | null
+
+            // Use default bounds if we can't get exact dimensions
+            // The image placement depends on the current transform matrix
+            // For simplicity, we'll mark the page region
+            const imgWidth = imgData?.width || 100
+            const imgHeight = imgData?.height || 100
+
+            imageRegions.push({
+              bounds: {
+                x: 0,
+                y: 0,
+                width: imgWidth,
+                height: imgHeight
+              },
+              page: pageNum,
+              imageIndex: imageIndex++,
+              objectName
+            })
+          } catch {
+            // If we can't get the image data, still record its existence
+            imageRegions.push({
+              bounds: {
+                x: 0,
+                y: 0,
+                width: viewport.width,
+                height: viewport.height
+              },
+              page: pageNum,
+              imageIndex: imageIndex++,
+              objectName
+            })
+          }
+        }
+      }
+    } catch (err) {
+      console.warn(`Failed to extract images from page ${pageNum}:`, err)
+    }
+  }
+
+  return {
+    textBlocks,
+    imageRegions,
+    pageCount,
+    pageDimensions
+  }
+}
+
+/**
+ * Extracts a specific image from a PDF as a base64-encoded PNG
+ * This is a placeholder - actual image extraction requires more complex handling
+ */
+export async function extractImageFromPDF(
+  pdfBuffer: Buffer,
+  imageRegion: ImageRegion
+): Promise<string | null> {
+  try {
+    // For now, we'll use pdf-to-png-converter for full page rendering
+    // and then crop the image region
+    // This is a simplified approach - in production, you might want to
+    // extract the actual image XObject data
+
+    const { pdfToPng } = await import('pdf-to-png-converter')
+
+    const pngPages = await pdfToPng(pdfBuffer, {
+      pagesToProcess: [imageRegion.page],
+      viewportScale: 2.0 // Higher resolution for better quality
+    })
+
+    if (pngPages.length > 0 && pngPages[0].content) {
+      // Return the full page as base64 for now
+      // In a more sophisticated implementation, you would crop to the bounds
+      return pngPages[0].content.toString('base64')
+    }
+
+    return null
+  } catch (err) {
+    console.error('Failed to extract image from PDF:', err)
+    return null
+  }
+}
+
+/**
+ * Renders a PDF page to a base64-encoded PNG
+ */
+export async function renderPDFPage(
+  pdfBuffer: Buffer,
+  pageNumber: number,
+  scale: number = 2.0
+): Promise<string | null> {
+  try {
+    const { pdfToPng } = await import('pdf-to-png-converter')
+
+    const pngPages = await pdfToPng(pdfBuffer, {
+      pagesToProcess: [pageNumber],
+      viewportScale: scale
+    })
+
+    if (pngPages.length > 0 && pngPages[0].content) {
+      return pngPages[0].content.toString('base64')
+    }
+
+    return null
+  } catch (err) {
+    console.error('Failed to render PDF page:', err)
+    return null
+  }
+}
