@@ -94,6 +94,7 @@ export {
   analyzeAnswers,
   generateBoostSummary,
   isVendorHighlightWorthy,
+  analyzeAndProcessAnswer,
 } from './answerAnalysis';
 
 export type {
