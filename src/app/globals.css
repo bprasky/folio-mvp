@@ -266,6 +266,30 @@
     color: var(--text-tertiary);
     margin-top: 4px;
   }
+
+  /* Glass Foil Effect - Magazine Cover Masthead
+     Creates a foil-stamp effect that interacts with underlying imagery */
+  .masthead-glass-foil {
+    color: rgba(255, 255, 255, 0.92);
+    text-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.6),
+      0 -1px 0 rgba(0, 0, 0, 0.15),
+      0 0 40px rgba(255, 255, 255, 0.15);
+    mix-blend-mode: overlay;
+    filter: contrast(1.05);
+  }
+
+  /* Fallback for dark hero images - adds extra white base for legibility */
+  .masthead-glass-foil-enhanced {
+    color: rgba(255, 255, 255, 0.95);
+    text-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.7),
+      0 -1px 0 rgba(0, 0, 0, 0.2),
+      0 0 60px rgba(255, 255, 255, 0.25),
+      0 0 2px rgba(255, 255, 255, 0.8);
+    mix-blend-mode: overlay;
+    filter: contrast(1.08);
+  }
 }
 
 /* Folio Typography Layer */

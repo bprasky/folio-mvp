@@ -11,7 +11,7 @@
 import { getMagazineData } from "@/lib/magazine/getMagazineData";
 import { MAGAZINE_EDITIONS } from "@/lib/magazine/editions";
 import MagazineEditionCarousel from "./MagazineEditionCarousel";
-import MagazineHero from "./MagazineHero";
+import MagazineCoverHero from "./MagazineCoverHero";
 import EditorialProductCutoutsRail from "./EditorialProductCutoutsRail";
 import MagazineMosaicGrid from "./MagazineMosaicGrid";
 import { auth } from "@/lib/auth";
@@ -27,17 +27,17 @@ export default async function MagazinePage({ editionSlug }: Props) {
 
   return (
     <div className="min-h-screen bg-[var(--bg-base)] w-full max-w-[100vw] overflow-hidden">
-      {/* Zone 1: Editorial Feature Section */}
+      {/* Zone 1: Magazine Cover Hero - Full-bleed editorial treatment */}
       {data.hero && (
-        <div className="w-full px-2 sm:px-3 pt-4 md:pt-6 pb-3 md:pb-4">
-          {/* Hero editorial card */}
-          <MagazineHero hero={data.hero} edition={data.edition} />
+        <>
+          {/* Full-bleed hero - no padding wrapper for true edge-to-edge */}
+          <MagazineCoverHero hero={data.hero} edition={data.edition} />
 
-          {/* Featured Products strip - tightly attached */}
-          <div className="mt-2 md:mt-3">
+          {/* Featured Products strip - with padding restored below hero */}
+          <div className="w-full px-2 sm:px-3 pt-4 md:pt-6 pb-3 md:pb-4">
             <EditorialProductCutoutsRail products={data.heroProducts} />
           </div>
-        </div>
+        </>
       )}
 
       {/* Edition selector - positioned between zones */}
