@@ -35,6 +35,12 @@ export interface DetectedProduct {
   position: { x: number; y: number }; // Normalized 0-1 coordinates
   confidence: ConfidenceLevel;
   searchQuery: string;           // Optimized query for web search
+  // Extracted text specs from visual analysis (when visible near the product)
+  extractedVendor?: string;      // "Serena & Lily", "RH", etc.
+  extractedPrice?: string;       // "$1,299", "2,500 USD", etc.
+  extractedDimensions?: string;  // "72W x 36D x 30H"
+  extractedSku?: string;         // "SKU12345"
+  extractedProductName?: string; // "Harbor Sofa" if visible
 }
 
 export interface RoomAnalysis {

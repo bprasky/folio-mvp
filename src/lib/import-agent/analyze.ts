@@ -1,6 +1,15 @@
 import { anthropic, IMPORT_AGENT_CONFIG, IMPORT_AGENT_SYSTEM } from './config';
 import type { RoomAnalysis, DetectedProduct, AnalysisContext, ProductCategory, RoomType, ConfidenceLevel } from './types';
 
+// Extracted specs from visible text on a page (not tied to specific products)
+export interface PageExtractedSpecs {
+  vendors: string[];      // ["Serena & Lily", "RH"]
+  prices: string[];       // ["$1,299", "$2,500"]
+  dimensions: string[];   // ["72W x 36D x 30H"]
+  skus: string[];         // ["SKU12345"]
+  productNames: string[]; // ["Harbor Sofa", "Luna Chair"]
+}
+
 // Type for PDF analysis result with multiple pages
 export interface PdfAnalysisResult {
   pages: Array<{
@@ -9,6 +18,7 @@ export interface PdfAnalysisResult {
     roomName?: string; // e.g. "Primary Bedroom" from title slides
     products: DetectedProduct[];
     styleIndicators: string[];
+    extractedSpecs?: PageExtractedSpecs; // Specs visible on this page
   }>;
   documentSummary: {
     totalPages: number;
@@ -203,7 +213,7 @@ function validateProduct(product: unknown): DetectedProduct | null {
 
   const position = p.position as { x?: number; y?: number } | undefined;
 
-  return {
+  const result: DetectedProduct = {
     description: p.description,
     category: validCategories.includes(p.category as ProductCategory)
       ? (p.category as ProductCategory)
@@ -217,6 +227,25 @@ function validateProduct(product: unknown): DetectedProduct | null {
       : 'low',
     searchQuery: typeof p.searchQuery === 'string' ? p.searchQuery : p.description,
   };
+
+  // Add extracted spec fields if present
+  if (typeof p.extractedVendor === 'string' && p.extractedVendor) {
+    result.extractedVendor = p.extractedVendor;
+  }
+  if (typeof p.extractedPrice === 'string' && p.extractedPrice) {
+    result.extractedPrice = p.extractedPrice;
+  }
+  if (typeof p.extractedDimensions === 'string' && p.extractedDimensions) {
+    result.extractedDimensions = p.extractedDimensions;
+  }
+  if (typeof p.extractedSku === 'string' && p.extractedSku) {
+    result.extractedSku = p.extractedSku;
+  }
+  if (typeof p.extractedProductName === 'string' && p.extractedProductName) {
+    result.extractedProductName = p.extractedProductName;
+  }
+
+  return result;
 }
 
 /**
@@ -307,11 +336,19 @@ export async function analyzePdfDocument(pdfUrl: string): Promise<PdfAnalysisRes
 
 IMPORTANT: Look for room context in title slides, headers, or section dividers. If a title slide says "Primary Bedroom" or "Living Room", apply that room type to ALL subsequent interior photos until a new room section begins. Interior designers often organize presentations by room.
 
-For each page that contains an interior design photo (skip title slides, text-only pages, floor plans, but READ title slides to understand room context):
+CRITICAL - TEXT EXTRACTION: Many design PDFs include specification callouts, product labels, or annotation text near products. You MUST extract any visible text that contains:
+- Vendor/brand names (e.g., "Serena & Lily", "RH", "Restoration Hardware", "West Elm", "Pottery Barn", "CB2", "Arhaus", "Four Hands", "Visual Comfort", "Kelly Wearstler", "Made Goods")
+- Prices (e.g., "$1,299", "2,500 USD", "$899.00")
+- Dimensions (e.g., "72W x 36D x 30H", "24\" diameter", "6' x 9'")
+- SKU/product codes (e.g., "SKU: 12345", "Item #ABC-123")
+- Product names (e.g., "Harbor Sofa", "Luna Chandelier")
+
+For each page that contains an interior design photo:
 
 1. Identify the room type (use context from title slides if the image itself doesn't clearly show the room type)
 2. Detect all visible products (furniture, lighting, rugs, art, etc.)
-3. Note style indicators
+3. EXTRACT any visible text specs and associate them with the nearest product if possible
+4. Note style indicators
 
 Return ONLY a valid JSON object with this structure:
 {
@@ -326,10 +363,22 @@ Return ONLY a valid JSON object with this structure:
           "category": "FURNITURE" | "LIGHTING" | "RUG" | "ART" | "FIXTURES" | "MATERIALS" | "TEXTILES" | "ACCESSORIES" | "HARDWARE" | "APPLIANCES" | "OTHER",
           "position": { "x": 0.0-1.0, "y": 0.0-1.0 },
           "confidence": "high" | "medium" | "low",
-          "searchQuery": "optimized search terms"
+          "searchQuery": "optimized search terms",
+          "extractedVendor": "Serena & Lily" or null,
+          "extractedPrice": "$1,299" or null,
+          "extractedDimensions": "72W x 36D x 30H" or null,
+          "extractedSku": "SKU12345" or null,
+          "extractedProductName": "Harbor Sofa" or null
         }
       ],
-      "styleIndicators": ["modern", "minimalist"]
+      "styleIndicators": ["modern", "minimalist"],
+      "extractedSpecs": {
+        "vendors": ["Serena & Lily", "RH"],
+        "prices": ["$1,299", "$849"],
+        "dimensions": ["72W x 36D x 30H"],
+        "skus": [],
+        "productNames": ["Harbor Sofa"]
+      }
     }
   ],
   "documentSummary": {
@@ -341,11 +390,14 @@ Return ONLY a valid JSON object with this structure:
 }
 
 Rules:
-- Only include pages with actual interior photos (not title slides)
+- Only include pages with actual interior photos (not title slides, but DO read text from all pages)
 - Use room names/labels from title slides to categorize ALL subsequent photos in that section
 - Maximum ${IMPORT_AGENT_CONFIG.maxProductsPerImage} products per page
 - Position coordinates should be normalized (0-1)
-- Be conservative with confidence levels`,
+- Be conservative with confidence levels
+- ALWAYS extract visible text specs - this is critical for matching products to vendor inventory
+- If a spec label is near a product, include it in that product's extracted fields
+- Also include ALL specs found on the page in the extractedSpecs array`,
                 },
               ],
             },
@@ -365,17 +417,36 @@ Rules:
 
         const validatedPages = (parsed.pages || [])
           .filter((page: unknown) => page && typeof page === 'object')
-          .map((page: Record<string, unknown>) => ({
-            pageNumber: typeof page.pageNumber === 'number' ? page.pageNumber : 1,
-            roomType: validateRoomType(page.roomType),
-            roomName: typeof page.roomName === 'string' ? page.roomName : undefined,
-            products: (Array.isArray(page.products) ? page.products : [])
-              .map(validateProduct)
-              .filter(Boolean) as DetectedProduct[],
-            styleIndicators: Array.isArray(page.styleIndicators) ? page.styleIndicators : [],
-          }));
+          .map((page: Record<string, unknown>) => {
+            const extractedSpecs = page.extractedSpecs as Record<string, unknown> | undefined;
+            return {
+              pageNumber: typeof page.pageNumber === 'number' ? page.pageNumber : 1,
+              roomType: validateRoomType(page.roomType),
+              roomName: typeof page.roomName === 'string' ? page.roomName : undefined,
+              products: (Array.isArray(page.products) ? page.products : [])
+                .map(validateProduct)
+                .filter(Boolean) as DetectedProduct[],
+              styleIndicators: Array.isArray(page.styleIndicators) ? page.styleIndicators : [],
+              extractedSpecs: extractedSpecs ? {
+                vendors: Array.isArray(extractedSpecs.vendors) ? extractedSpecs.vendors.filter((v: unknown) => typeof v === 'string') : [],
+                prices: Array.isArray(extractedSpecs.prices) ? extractedSpecs.prices.filter((v: unknown) => typeof v === 'string') : [],
+                dimensions: Array.isArray(extractedSpecs.dimensions) ? extractedSpecs.dimensions.filter((v: unknown) => typeof v === 'string') : [],
+                skus: Array.isArray(extractedSpecs.skus) ? extractedSpecs.skus.filter((v: unknown) => typeof v === 'string') : [],
+                productNames: Array.isArray(extractedSpecs.productNames) ? extractedSpecs.productNames.filter((v: unknown) => typeof v === 'string') : [],
+              } : undefined,
+            };
+          });
 
-        console.log(`PDF analysis complete: ${validatedPages.length} pages with content`);
+        // Log extracted specs for debugging
+        const pagesWithSpecs = validatedPages.filter(p =>
+          p.extractedSpecs?.vendors?.length ||
+          p.extractedSpecs?.prices?.length ||
+          p.products.some(prod => prod.extractedVendor || prod.extractedPrice)
+        ).length;
+        const productsWithSpecs = validatedPages.flatMap(p => p.products).filter(
+          prod => prod.extractedVendor || prod.extractedPrice || prod.extractedDimensions || prod.extractedSku
+        ).length;
+        console.log(`PDF analysis complete: ${validatedPages.length} pages with content, ${pagesWithSpecs} pages with specs, ${productsWithSpecs} products with extracted specs`);
 
         return {
           pages: validatedPages,

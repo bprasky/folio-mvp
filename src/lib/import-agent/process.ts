@@ -567,15 +567,38 @@ export async function processImportPdf(
         const pageSpecs = textResult.specs;
         const extractionError = textResult.error;
 
+        // Count visual extractions from Claude's analysis
+        const visualExtractionStats = {
+          pagesWithVisualSpecs: analysis.pages.filter(p =>
+            p.extractedSpecs?.vendors?.length ||
+            p.extractedSpecs?.prices?.length ||
+            p.products.some(prod => prod.extractedVendor || prod.extractedPrice)
+          ).length,
+          productsWithVisualSpecs: analysis.pages.flatMap(p => p.products).filter(
+            prod => prod.extractedVendor || prod.extractedPrice || prod.extractedDimensions
+          ).length,
+          sampleVisualSpecs: analysis.pages.length > 0 ? {
+            pageSpecs: analysis.pages[0].extractedSpecs,
+            productSpecs: analysis.pages[0].products[0] ? {
+              vendor: analysis.pages[0].products[0].extractedVendor,
+              price: analysis.pages[0].products[0].extractedPrice,
+              dims: analysis.pages[0].products[0].extractedDimensions,
+            } : null
+          } : null
+        };
+
         // Log extraction results for debugging
         const extractionDebug = {
-          pagesWithSpecs: pageSpecs.size,
-          extractionError,
-          sampleSpecs: pageSpecs.size > 0 ? Object.fromEntries([...pageSpecs.entries()].slice(0, 1).map(([k, v]) => [k, {
-            vendors: v.vendors,
-            prices: v.prices,
-            dimensions: v.dimensions
-          }])) : null
+          pdfParse: {
+            pagesWithSpecs: pageSpecs.size,
+            extractionError,
+            sampleSpecs: pageSpecs.size > 0 ? Object.fromEntries([...pageSpecs.entries()].slice(0, 1).map(([k, v]) => [k, {
+              vendors: v.vendors,
+              prices: v.prices,
+              dimensions: v.dimensions
+            }])) : null
+          },
+          visualExtraction: visualExtractionStats
         };
         console.log('[processImportPdf] Extraction debug:', JSON.stringify(extractionDebug));
 
@@ -615,40 +638,105 @@ export async function processImportPdf(
           // Get the image URL for this page (fall back to PDF URL if Cloudinary failed)
           const pageImageUrl = pageImageUrls.get(pageAnalysis.pageNumber) || pdfDoc.url;
 
-          // Get extracted specs for this page
-          const specs = pageSpecs.get(pageAnalysis.pageNumber);
+          // Get extracted specs from pdf-parse for this page (fallback)
+          const pdfParseSpecs = pageSpecs.get(pageAnalysis.pageNumber);
+          // Get visual-extracted specs from Claude's analysis for this page
+          const visualPageSpecs = pageAnalysis.extractedSpecs;
           const productsOnPage = pageAnalysis.products.length;
 
           for (let idx = 0; idx < pageAnalysis.products.length; idx++) {
             const product = pageAnalysis.products[idx];
 
             // Determine which extracted specs to assign to this product
-            // Strategy: if single product on page, assign all specs; if multiple, distribute
+            // Priority: 1) Product-level visual extraction, 2) Page-level visual extraction, 3) PDF-parse extraction
             let extractedVendor: string | null = null;
             let extractedPrice: number | null = null;
             let extractedDimensions: string | null = null;
             let extractedSku: string | null = null;
             let extractedMaterial: string | null = null;
             let extractedProductUrl: string | null = null;
+            let extractedProductName: string | null = null;
 
-            if (specs) {
-              // If there's only one product on the page, it gets all the extracted data
+            // 1. First check if the product itself has visual-extracted specs (from Claude)
+            if (product.extractedVendor) {
+              extractedVendor = product.extractedVendor;
+            }
+            if (product.extractedPrice) {
+              // Parse price string to cents (e.g., "$1,299" -> 129900)
+              const priceStr = product.extractedPrice.replace(/[^0-9.]/g, '');
+              const priceNum = parseFloat(priceStr);
+              if (!isNaN(priceNum)) {
+                extractedPrice = Math.round(priceNum * 100);
+              }
+            }
+            if (product.extractedDimensions) {
+              extractedDimensions = product.extractedDimensions;
+            }
+            if (product.extractedSku) {
+              extractedSku = product.extractedSku;
+            }
+            if (product.extractedProductName) {
+              extractedProductName = product.extractedProductName;
+            }
+
+            // 2. Fall back to page-level visual extraction (from Claude)
+            if (!extractedVendor && visualPageSpecs?.vendors?.length) {
               if (productsOnPage === 1) {
-                extractedVendor = specs.vendors[0] || null;
-                extractedPrice = specs.prices[0] || null;
-                extractedDimensions = specs.dimensions[0] || null;
-                extractedSku = specs.skus[0] || null;
-                extractedMaterial = specs.materials.join(', ') || null;
-                extractedProductUrl = specs.urls[0] || null;
+                extractedVendor = visualPageSpecs.vendors[0];
               } else {
-                // Multiple products - try to distribute specs
-                // If we have equal numbers, assign by index; otherwise first product gets first specs
-                extractedVendor = specs.vendors[idx] || specs.vendors[0] || null;
-                extractedPrice = specs.prices[idx] || (idx === 0 ? specs.prices[0] : null);
-                extractedDimensions = specs.dimensions[idx] || (idx === 0 ? specs.dimensions[0] : null);
-                extractedSku = specs.skus[idx] || null;
-                extractedMaterial = specs.materials[idx] || (idx === 0 && specs.materials.length > 0 ? specs.materials.join(', ') : null);
-                extractedProductUrl = specs.urls[idx] || null;
+                extractedVendor = visualPageSpecs.vendors[idx] || visualPageSpecs.vendors[0];
+              }
+            }
+            if (!extractedPrice && visualPageSpecs?.prices?.length) {
+              const priceStr = productsOnPage === 1
+                ? visualPageSpecs.prices[0]
+                : (visualPageSpecs.prices[idx] || (idx === 0 ? visualPageSpecs.prices[0] : null));
+              if (priceStr) {
+                const priceNum = parseFloat(priceStr.replace(/[^0-9.]/g, ''));
+                if (!isNaN(priceNum)) {
+                  extractedPrice = Math.round(priceNum * 100);
+                }
+              }
+            }
+            if (!extractedDimensions && visualPageSpecs?.dimensions?.length) {
+              extractedDimensions = productsOnPage === 1
+                ? visualPageSpecs.dimensions[0]
+                : (visualPageSpecs.dimensions[idx] || (idx === 0 ? visualPageSpecs.dimensions[0] : null));
+            }
+            if (!extractedSku && visualPageSpecs?.skus?.length) {
+              extractedSku = visualPageSpecs.skus[idx] || null;
+            }
+            if (!extractedProductName && visualPageSpecs?.productNames?.length) {
+              extractedProductName = productsOnPage === 1
+                ? visualPageSpecs.productNames[0]
+                : (visualPageSpecs.productNames[idx] || null);
+            }
+
+            // 3. Fall back to pdf-parse extraction (if available)
+            if (pdfParseSpecs) {
+              if (!extractedVendor) {
+                extractedVendor = productsOnPage === 1
+                  ? pdfParseSpecs.vendors[0] || null
+                  : (pdfParseSpecs.vendors[idx] || pdfParseSpecs.vendors[0] || null);
+              }
+              if (!extractedPrice && pdfParseSpecs.prices.length > 0) {
+                extractedPrice = productsOnPage === 1
+                  ? pdfParseSpecs.prices[0]
+                  : (pdfParseSpecs.prices[idx] || (idx === 0 ? pdfParseSpecs.prices[0] : null));
+              }
+              if (!extractedDimensions) {
+                extractedDimensions = productsOnPage === 1
+                  ? pdfParseSpecs.dimensions[0] || null
+                  : (pdfParseSpecs.dimensions[idx] || (idx === 0 ? pdfParseSpecs.dimensions[0] : null));
+              }
+              if (!extractedSku) {
+                extractedSku = pdfParseSpecs.skus[idx] || null;
+              }
+              if (!extractedMaterial && pdfParseSpecs.materials.length > 0) {
+                extractedMaterial = pdfParseSpecs.materials.join(', ');
+              }
+              if (!extractedProductUrl && pdfParseSpecs.urls.length > 0) {
+                extractedProductUrl = pdfParseSpecs.urls[idx] || pdfParseSpecs.urls[0] || null;
               }
             }
 
@@ -664,17 +752,27 @@ export async function processImportPdf(
             }
             // Keep original confidence if no text data was found
 
+            // Build enhanced search query with extracted data
+            let enhancedSearchQuery = product.searchQuery;
+            if (extractedVendor || extractedProductName) {
+              const parts = [extractedVendor, extractedProductName, product.searchQuery].filter(Boolean);
+              enhancedSearchQuery = parts.join(' ').trim();
+            }
+
+            // Build enhanced description with product name if available
+            const enhancedDescription = extractedProductName
+              ? `${extractedProductName} - ${product.description}`
+              : product.description;
+
             allPendingTags.push({
               importSessionId: sessionId,
               tempImageUrl: pageImageUrl, // Use Cloudinary page image URL
               projectImageId: null,
               x: product.position.x,
               y: product.position.y,
-              description: product.description,
+              description: enhancedDescription,
               category: product.category,
-              searchQuery: extractedVendor
-                ? `${extractedVendor} ${product.searchQuery}`.trim()
-                : product.searchQuery,
+              searchQuery: enhancedSearchQuery,
               suggestions: [],
               topSuggestion: null,
               detectionConfidence: confidence,
