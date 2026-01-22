@@ -241,7 +241,7 @@ export function UserMenu() {
             {/* Firm row: Show firm name or "Go Professional" */}
             {hasOrgs ? (
               <MenuLink
-                href={`/organization/${workspaceData.organizations[0]?.id}/settings`}
+                href={`/org/${workspaceData.organizations[0]?.id}`}
                 icon={<Building2 className="h-4 w-4" />}
                 onClick={() => setIsOpen(false)}
               >
