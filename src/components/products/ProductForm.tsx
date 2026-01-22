@@ -210,6 +210,7 @@ export default function ProductForm({
           vendorName: formData.vendorName || formData.brand,
           description: formData.description,
           imageUrl: formData.imageUrl,
+          selectionId,
           existingData: {
             sku: formData.sku,
             price: formData.priceCents,
@@ -271,6 +272,7 @@ export default function ProductForm({
           description: formData.description,
           imageUrl: formData.imageUrl,
           category: formData.slotKey || undefined,
+          selectionId,
         }),
       });
 
@@ -365,19 +367,21 @@ export default function ProductForm({
         </div>
       </div>
 
-      {/* AI Search Section - show based on spec confidence */}
-      {mode === 'edit' && (formData.specConfidence === 'partial' || formData.specConfidence === 'visual_only' || !formData.priceCents || !formData.vendorName) && (
+      {/* AI Search Section - always show in edit mode */}
+      {mode === 'edit' && (
         <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
           <h3 className="text-sm font-medium text-purple-900 mb-2">
-            {formData.specConfidence === 'visual_only' ? 'Missing Product Specs' : 'Incomplete Product Info'}
+            {(!formData.priceCents || !formData.vendorName || !formData.sku)
+              ? 'Complete Product Specs'
+              : 'Verify or Update Specs'}
           </h3>
           <p className="text-xs text-purple-700 mb-3">
-            {formData.specConfidence === 'visual_only'
-              ? 'This product was detected visually but has no spec data. Use AI to find matching products.'
-              : 'Some product details are missing. Use AI to complete the information.'}
+            {(!formData.priceCents || !formData.vendorName || !formData.sku)
+              ? 'Search Folio\'s database or use AI to find complete product specifications.'
+              : 'Specs look complete. Use these tools to verify accuracy or find updated pricing.'}
           </p>
           <div className="flex gap-2">
-            {/* Find in Folio - prioritized for visual_only */}
+            {/* Find in Folio - search internal database */}
             <button
               type="button"
               onClick={handleFindInFolio}

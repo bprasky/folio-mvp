@@ -130,6 +130,10 @@ model User {
   tosVersion                     String?               // e.g., "2026-01-19"
   privacyVersion                 String?               // e.g., "2026-01-19"
 
+  // Product search and rep contact relations
+  productSearchLogs              ProductSearchLog[]
+  vendorRepContacts              VendorRepContact[]
+
   @@map("users")
 }
 
@@ -3119,4 +3123,80 @@ model Notification {
   @@map("notifications")
   @@index([userId, read])
   @@index([createdAt])
+}
+
+// Product search logging for business intelligence
+// Tracks what designers search for to build vendor demand signals
+model ProductSearchLog {
+  id            String   @id @default(cuid())
+
+  // Who searched
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orgId         String?  // Designer's organization if applicable
+
+  // What they searched for
+  searchType    String   // 'FOLIO_SEARCH', 'AI_COMPLETE', 'URL_IMPORT'
+  brandName     String?  // Extracted or searched brand
+  productName   String?  // Product name searched
+  searchQuery   String?  // Raw search query
+
+  // Context
+  selectionId   String?  // If search was for a specific selection
+  projectId     String?  // Which project it was for
+
+  // Results
+  wasSuccessful Boolean  @default(false)
+  matchedProductId String? // If found a match in Folio
+  resultData    Json?    // Additional result metadata
+
+  // Timestamps
+  createdAt     DateTime @default(now())
+
+  @@map("product_search_logs")
+  @@index([brandName])
+  @@index([userId])
+  @@index([searchType])
+  @@index([createdAt])
+}
+
+// Designer's personal directory of vendor rep contacts
+// Allows designers to store and manage rep relationships
+model VendorRepContact {
+  id            String   @id @default(cuid())
+
+  // Owner (designer)
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Rep information
+  repName       String
+  repEmail      String?
+  repPhone      String?
+  repTitle      String?  // e.g., "Territory Sales Rep", "Account Manager"
+
+  // Vendor/Brand association
+  vendorName    String   // Brand they represent (e.g., "FOURHANDS", "RH")
+  vendorOrgId   String?  // Link to Organization if vendor is on platform
+
+  // Preferences
+  preferredContact String? // 'email', 'phone', 'text'
+  notes         String?  @db.Text // Personal notes about this rep
+
+  // Trade account info with this rep/vendor
+  hasTradeAccount Boolean @default(false)
+  tradeAccountNumber String?
+  tradeDiscount   Decimal? @db.Decimal(5, 2) // e.g., 40.00 for 40%
+
+  // Status
+  isActive      Boolean  @default(true)
+  lastContactedAt DateTime?
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([userId, vendorName]) // One rep per vendor per designer
+  @@map("vendor_rep_contacts")
+  @@index([userId])
+  @@index([vendorName])
 }

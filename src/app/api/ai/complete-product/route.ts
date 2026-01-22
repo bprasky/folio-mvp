@@ -1,11 +1,48 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
+import { prisma } from '@/lib/prisma';
 import Anthropic from '@anthropic-ai/sdk';
 
 export const runtime = 'nodejs';
 
 const anthropic = new Anthropic();
+
+/**
+ * Helper to log product searches for business intelligence
+ */
+async function logProductSearch(params: {
+  userId: string;
+  searchType: string;
+  brandName?: string | null;
+  productName?: string | null;
+  searchQuery?: string | null;
+  selectionId?: string | null;
+  projectId?: string | null;
+  wasSuccessful: boolean;
+  matchedProductId?: string | null;
+  resultData?: Record<string, unknown> | null;
+}) {
+  try {
+    await prisma.productSearchLog.create({
+      data: {
+        userId: params.userId,
+        searchType: params.searchType,
+        brandName: params.brandName || null,
+        productName: params.productName || null,
+        searchQuery: params.searchQuery || null,
+        selectionId: params.selectionId || null,
+        projectId: params.projectId || null,
+        wasSuccessful: params.wasSuccessful,
+        matchedProductId: params.matchedProductId || null,
+        resultData: params.resultData || null,
+      },
+    });
+  } catch (error) {
+    // Don't fail the request if logging fails
+    console.error('Failed to log product search:', error);
+  }
+}
 
 /**
  * POST /api/ai/complete-product
@@ -21,7 +58,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { productName, vendorName, description, imageUrl, existingData } = body;
+    const { productName, vendorName, description, imageUrl, existingData, selectionId, projectId } = body;
 
     if (!productName && !vendorName && !description) {
       return NextResponse.json(
@@ -115,6 +152,19 @@ If you cannot find specific information, omit that field. Include confidence lev
     // Parse JSON from response
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
+      // Log unsuccessful AI search
+      await logProductSearch({
+        userId,
+        searchType: 'AI_COMPLETE',
+        brandName: vendorName,
+        productName,
+        searchQuery: searchContext,
+        selectionId,
+        projectId,
+        wasSuccessful: false,
+        resultData: { noJsonResponse: true },
+      });
+
       return NextResponse.json(
         { error: 'Could not find product information', data: null },
         { status: 200 }
@@ -122,6 +172,25 @@ If you cannot find specific information, omit that field. Include confidence lev
     }
 
     const productData = JSON.parse(jsonMatch[0]);
+
+    // Log successful AI search
+    await logProductSearch({
+      userId,
+      searchType: 'AI_COMPLETE',
+      brandName: productData.brand || productData.vendorName || vendorName,
+      productName: productData.productName || productName,
+      searchQuery: searchContext,
+      selectionId,
+      projectId,
+      wasSuccessful: true,
+      resultData: {
+        confidence: productData.confidence,
+        source: productData.source,
+        foundPrice: !!productData.price,
+        foundDimensions: !!productData.dimensions,
+        foundUrl: !!productData.productUrl,
+      },
+    });
 
     return NextResponse.json({
       success: true,
