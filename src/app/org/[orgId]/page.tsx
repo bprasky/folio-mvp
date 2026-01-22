@@ -52,16 +52,17 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
     id: org.id,
     name: org.name,
     type: org.type,
-    description: org.description,
-    logo: org.logo,
-    website: org.website,
-    address: org.address,
-    // New profile fields (might not exist yet)
-    tagline: (org as any).tagline || null,
-    philosophy: (org as any).philosophy || null,
-    location: (org as any).location || null,
-    foundedYear: (org as any).foundedYear || null,
-    specialties: (org as any).specialties || [],
+    description: org.description ?? null,
+    logo: org.logo ?? null,
+    website: org.website ?? null,
+    address: org.address ?? null,
+    // Profile fields
+    tagline: (org as any).tagline ?? null,
+    philosophy: (org as any).philosophy ?? null,
+    location: (org as any).location ?? null,
+    foundedYear: (org as any).foundedYear ?? null,
+    specialties: Array.isArray((org as any).specialties) ? (org as any).specialties : [],
+    followerCount: typeof (org as any).followerCount === 'number' ? (org as any).followerCount : 0,
   };
 
   // Try to fetch team members separately (graceful fallback if relation doesn't exist)
@@ -124,12 +125,12 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
 
   // Serialize team members for client components
   const teamData = teamMembers.map((m: any) => ({
-    id: m.id,
-    name: m.name,
-    role: m.role,
-    headshotUrl: m.headshotUrl,
-    bio: m.bio,
-    displayOrder: m.displayOrder,
+    id: m.id ?? '',
+    name: m.name ?? '',
+    role: m.role ?? '',
+    headshotUrl: m.headshotUrl ?? null,
+    bio: m.bio ?? null,
+    displayOrder: typeof m.displayOrder === 'number' ? m.displayOrder : 0,
   }));
 
   return (
@@ -138,7 +139,7 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
         org={orgData}
         projectCount={projectCount}
         featuredCount={featuredCount}
-        followerCount={(org as any).followerCount || 0}
+        followerCount={orgData.followerCount}
         isOwner={isOwner}
       />
 
@@ -189,8 +190,8 @@ async function getPinnedItems(memberIds: string[]) {
       id: p.id,
       type: 'project' as const,
       data: {
-        title: p.name,
-        image: p.images[0]?.url,
+        title: p.title || 'Untitled',
+        image: p.images[0]?.url || null,
         subtitle: `${p.city || 'Project'} · ${p.saves || 0} saves`,
       },
     }));
