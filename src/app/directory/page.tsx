@@ -425,7 +425,7 @@ function DesignerRow({ designer, index }: { designer: DirectoryDesigner; index: 
         </div>
 
         {/* Avatar */}
-        <Link href={`/profiles/${designer.user.id}`} className="flex-shrink-0">
+        <Link href={`/profile/${designer.user.id}`} className="flex-shrink-0">
           {designer.user.profileImage ? (
             <Image
               src={designer.user.profileImage}
@@ -445,7 +445,7 @@ function DesignerRow({ designer, index }: { designer: DirectoryDesigner; index: 
 
         {/* Info */}
         <div className="flex-grow min-w-0">
-          <Link href={`/profiles/${designer.user.id}`}>
+          <Link href={`/profile/${designer.user.id}`}>
             <h3 className="text-lg font-semibold text-[var(--text-primary)] hover:text-[var(--accent)] truncate">
               {designer.user.name}
             </h3>
