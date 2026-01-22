@@ -47,6 +47,23 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
     notFound();
   }
 
+  // Serialize org data for client components (Prisma objects can have non-serializable properties)
+  const orgData = {
+    id: org.id,
+    name: org.name,
+    type: org.type,
+    description: org.description,
+    logo: org.logo,
+    website: org.website,
+    address: org.address,
+    // New profile fields (might not exist yet)
+    tagline: (org as any).tagline || null,
+    philosophy: (org as any).philosophy || null,
+    location: (org as any).location || null,
+    foundedYear: (org as any).foundedYear || null,
+    specialties: (org as any).specialties || [],
+  };
+
   // Try to fetch team members separately (graceful fallback if relation doesn't exist)
   let teamMembers: any[] = [];
   try {
@@ -105,10 +122,20 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
   const activeFilter = resolvedSearchParams.filter || 'all';
   const activeSort = resolvedSearchParams.sort || 'featured';
 
+  // Serialize team members for client components
+  const teamData = teamMembers.map((m: any) => ({
+    id: m.id,
+    name: m.name,
+    role: m.role,
+    headshotUrl: m.headshotUrl,
+    bio: m.bio,
+    displayOrder: m.displayOrder,
+  }));
+
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#FAF9F7' }}>
       <OrgProfileHero
-        org={org}
+        org={orgData}
         projectCount={projectCount}
         featuredCount={featuredCount}
         followerCount={(org as any).followerCount || 0}
@@ -130,8 +157,8 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
           </Suspense>
         ) : (
           <OrgProfileAbout
-            org={org}
-            team={teamMembers}
+            org={orgData}
+            team={teamData}
             isAdmin={isAdmin}
           />
         )}
