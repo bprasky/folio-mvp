@@ -188,6 +188,7 @@ async function createSelection(
       roomId,
       vendorName: item.vendor || item.brand,
       productName: item.productName,
+      vendorProductId: item.sku,
       colorFinish: item.finish || item.material,
       notes: item.description || item.sourceText.join('\n'),
       photo: imageUrl,
