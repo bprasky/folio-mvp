@@ -15,7 +15,13 @@ export async function GET(
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    const { access, selection } = await assertSelectionView(session.user.id, params.selectionId);
+    // assertSelectionView checks permissions but only returns minimal fields
+    await assertSelectionView(session.user.id, params.selectionId);
+
+    // Fetch full selection data after authorization passes
+    const selection = await prisma.selection.findUnique({
+      where: { id: params.selectionId },
+    });
 
     if (!selection) {
       return NextResponse.json(
