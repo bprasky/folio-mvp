@@ -547,6 +547,14 @@ model Organization {
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt
 
+  // Profile fields
+  tagline             String?
+  philosophy          String?              @db.Text
+  location            String?
+  foundedYear         Int?
+  specialties         String[]
+  followerCount       Int                  @default(0)
+
   // Phase 2: Organization tier and verification
   status              OrgStatus            @default(UNCLAIMED)
   address             String?              // Required for creation in Phase 2
@@ -589,6 +597,9 @@ model Organization {
   // Profile System relations
   teamMembers         TeamMember[]
   collaborations      Collaboration[]
+  orgMedia            OrgMedia[]
+  orgRecognition      OrgRecognition[]
+  orgCollaborations   OrgCollaboration[]
 
   // Presale development relations (for DEVELOPER orgs)
   developments        Development[]
@@ -2465,6 +2476,84 @@ model TeamMember {
 
   @@index([organizationId, displayOrder])
   @@map("team_member")
+}
+
+// Organization media (videos, podcasts, interviews)
+model OrgMedia {
+  id              String       @id @default(cuid())
+  organizationId  String
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  type            MediaType
+  title           String
+  description     String?
+  thumbnailUrl    String?
+  sourceUrl       String?      // YouTube, Spotify URL
+  hostedUrl       String?      // Folio-hosted
+  duration        Int?
+
+  views           Int          @default(0)
+  saves           Int          @default(0)
+
+  publishedAt     DateTime?
+  pinnedAt        DateTime?
+  pinOrder        Int?
+
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@index([organizationId, publishedAt])
+  @@map("org_media")
+}
+
+// Organization recognition (press, awards)
+model OrgRecognition {
+  id              String          @id @default(cuid())
+  organizationId  String
+  organization    Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  type            RecognitionType
+  title           String
+  source          String
+  sourceLogoUrl   String?
+  date            DateTime
+  url             String?
+  imageUrl        String?
+  excerpt         String?
+
+  publishedAt     DateTime?
+  pinnedAt        DateTime?
+  pinOrder        Int?
+
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@index([organizationId, date])
+  @@map("org_recognition")
+}
+
+// Organization collaborations
+model OrgCollaboration {
+  id              String        @id @default(cuid())
+  organizationId  String
+  organization    Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  type            CollabType
+  title           String
+  description     String?
+  partnerName     String?
+  partnerLogoUrl  String?
+  imageUrl        String?
+
+  publishedAt     DateTime?
+  pinnedAt        DateTime?
+  pinOrder        Int?
+
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([organizationId, publishedAt])
+  @@map("org_collaboration")
 }
 
 model RankingHistory {
