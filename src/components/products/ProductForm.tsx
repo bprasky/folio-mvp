@@ -1,7 +1,18 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { FaUpload, FaLink, FaSpinner, FaMagic, FaSearch } from 'react-icons/fa';
+import { FaUpload, FaLink, FaSpinner, FaMagic, FaSearch, FaUser, FaEnvelope, FaPhone, FaPlus } from 'react-icons/fa';
+
+interface VendorRepContact {
+  id: string;
+  repName: string;
+  repEmail?: string | null;
+  repPhone?: string | null;
+  repTitle?: string | null;
+  vendorName: string;
+  hasTradeAccount: boolean;
+  tradeDiscount?: number | null;
+}
 
 interface ProductFormData {
   name: string;
@@ -68,6 +79,10 @@ export default function ProductForm({
   const [replaceExisting, setReplaceExisting] = useState(false);
   const [isAiSearching, setIsAiSearching] = useState(false);
   const [isFolioSearching, setIsFolioSearching] = useState(false);
+  const [repContact, setRepContact] = useState<VendorRepContact | null>(null);
+  const [isLoadingRep, setIsLoadingRep] = useState(false);
+  const [isRequestingSpec, setIsRequestingSpec] = useState(false);
+  const [showAddRepModal, setShowAddRepModal] = useState(false);
 
   // Get room template for role options
   const roomTemplate = useMemo(() => {
@@ -124,6 +139,75 @@ export default function ProductForm({
       setFormData(prev => ({ ...prev, ...initialData }));
     }
   }, [initialData]);
+
+  // Fetch rep contact when vendor name changes
+  useEffect(() => {
+    const vendorName = formData.vendorName || formData.brand;
+    if (!vendorName || vendorName.length < 2) {
+      setRepContact(null);
+      return;
+    }
+
+    const fetchRepContact = async () => {
+      setIsLoadingRep(true);
+      try {
+        const response = await fetch(`/api/rep-contacts?vendorName=${encodeURIComponent(vendorName)}`);
+        if (response.ok) {
+          const data = await response.json();
+          setRepContact(data.contact || null);
+        } else {
+          setRepContact(null);
+        }
+      } catch (error) {
+        console.error('Failed to fetch rep contact:', error);
+        setRepContact(null);
+      } finally {
+        setIsLoadingRep(false);
+      }
+    };
+
+    // Debounce the fetch
+    const timer = setTimeout(fetchRepContact, 500);
+    return () => clearTimeout(timer);
+  }, [formData.vendorName, formData.brand]);
+
+  // Request spec from rep via email
+  const handleRequestSpecFromRep = async () => {
+    if (!repContact?.repEmail) {
+      setImportError('No email address for this rep');
+      return;
+    }
+
+    setIsRequestingSpec(true);
+    setImportError('');
+
+    try {
+      const response = await fetch('/api/rep-contacts/request-spec', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          repContactId: repContact.id,
+          productName: formData.name,
+          vendorName: formData.vendorName || formData.brand,
+          sku: formData.sku,
+          selectionId,
+        }),
+      });
+
+      if (!response.ok) {
+        const result = await response.json();
+        throw new Error(result.error || 'Failed to send request');
+      }
+
+      // Show success (could use a toast here)
+      setImportError(''); // Clear any previous error
+      alert(`Spec request sent to ${repContact.repName} at ${repContact.repEmail}`);
+    } catch (error: any) {
+      setImportError(error.message || 'Failed to request spec from rep');
+    } finally {
+      setIsRequestingSpec(false);
+    }
+  };
 
   const handleInputChange = (field: keyof ProductFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -410,6 +494,80 @@ export default function ProductForm({
               Complete with AI
             </button>
           </div>
+        </div>
+      )}
+
+      {/* Rep Contact Section - show in edit mode when vendor is set */}
+      {mode === 'edit' && (formData.vendorName || formData.brand) && (
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+          <h3 className="text-sm font-medium text-amber-900 mb-2 flex items-center gap-2">
+            <FaUser className="w-4 h-4" />
+            Vendor Rep Contact
+          </h3>
+
+          {isLoadingRep ? (
+            <div className="flex items-center gap-2 text-amber-700 text-sm">
+              <FaSpinner className="w-4 h-4 animate-spin" />
+              Looking up rep...
+            </div>
+          ) : repContact ? (
+            <div className="space-y-2">
+              <div className="text-sm text-amber-800">
+                <span className="font-medium">{repContact.repName}</span>
+                {repContact.repTitle && (
+                  <span className="text-amber-600"> - {repContact.repTitle}</span>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-3 text-xs text-amber-700">
+                {repContact.repEmail && (
+                  <span className="flex items-center gap-1">
+                    <FaEnvelope className="w-3 h-3" />
+                    {repContact.repEmail}
+                  </span>
+                )}
+                {repContact.repPhone && (
+                  <span className="flex items-center gap-1">
+                    <FaPhone className="w-3 h-3" />
+                    {repContact.repPhone}
+                  </span>
+                )}
+              </div>
+              {repContact.hasTradeAccount && repContact.tradeDiscount && (
+                <div className="text-xs text-amber-600">
+                  Trade account: {Number(repContact.tradeDiscount)}% discount
+                </div>
+              )}
+              <div className="flex gap-2 mt-3">
+                <button
+                  type="button"
+                  onClick={handleRequestSpecFromRep}
+                  disabled={isRequestingSpec || !repContact.repEmail}
+                  className="flex-1 px-3 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm flex items-center justify-center gap-2"
+                >
+                  {isRequestingSpec ? (
+                    <FaSpinner className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <FaEnvelope className="w-4 h-4" />
+                  )}
+                  Request Spec from Rep
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <p className="text-xs text-amber-700">
+                No rep contact saved for {formData.vendorName || formData.brand}.
+              </p>
+              <button
+                type="button"
+                onClick={() => setShowAddRepModal(true)}
+                className="px-3 py-2 bg-amber-100 text-amber-800 border border-amber-300 rounded-md hover:bg-amber-200 text-sm flex items-center gap-2"
+              >
+                <FaPlus className="w-3 h-3" />
+                Add Rep Contact
+              </button>
+            </div>
+          )}
         </div>
       )}
 
