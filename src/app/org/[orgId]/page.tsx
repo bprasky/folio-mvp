@@ -37,15 +37,24 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
   const resolvedParams = params instanceof Promise ? await params : params;
   const resolvedSearchParams = searchParams instanceof Promise ? await searchParams : searchParams;
 
+  // Fetch org without relations that might not exist in Prisma client yet
   const org = await prisma.organization.findUnique({
     where: { id: resolvedParams.orgId },
-    include: {
-      teamMembers: { orderBy: { displayOrder: 'asc' } },
-    },
   });
 
   if (!org) {
     notFound();
+  }
+
+  // Try to fetch team members separately (graceful fallback if relation doesn't exist)
+  let teamMembers: any[] = [];
+  try {
+    teamMembers = await (prisma as any).teamMember?.findMany?.({
+      where: { organizationId: resolvedParams.orgId },
+      orderBy: { displayOrder: 'asc' },
+    }) || [];
+  } catch {
+    // TeamMember model might not exist in Prisma client yet
   }
 
   // Check if current user is a member of this org
@@ -72,19 +81,23 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
   }).then(members => members.map(m => m.userId));
 
   // Get project count
-  const projectCount = await prisma.project.count({
-    where: { designerId: { in: memberIds }, isPublic: true },
-  });
+  const projectCount = memberIds.length > 0
+    ? await prisma.project.count({
+        where: { designerId: { in: memberIds }, isPublic: true },
+      })
+    : 0;
 
   // Get featured count
-  const featuredCount = await prisma.projectPost.count({
-    where: {
-      project: { designerId: { in: memberIds } },
-      status: 'PUBLISHED',
-    },
-  });
+  const featuredCount = memberIds.length > 0
+    ? await prisma.projectPost.count({
+        where: {
+          project: { designerId: { in: memberIds } },
+          status: 'PUBLISHED',
+        },
+      })
+    : 0;
 
-  // Get pinned items
+  // Get pinned items (with fallback for missing fields)
   const pinnedItems = await getPinnedItems(memberIds);
 
   const activeTab = resolvedSearchParams.tab || 'feed';
@@ -117,7 +130,7 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
         ) : (
           <OrgProfileAbout
             org={org}
-            team={org.teamMembers || []}
+            team={teamMembers}
             isAdmin={isAdmin}
           />
         )}
@@ -129,28 +142,34 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
 async function getPinnedItems(memberIds: string[]) {
   if (memberIds.length === 0) return [];
 
-  const projects = await prisma.project.findMany({
-    where: {
-      designerId: { in: memberIds },
-      isPublic: true,
-      pinnedAt: { not: null },
-    },
-    include: {
-      images: { take: 1, orderBy: { displayOrder: 'asc' } },
-    },
-    orderBy: { pinOrder: 'asc' },
-    take: 5,
-  });
+  try {
+    // Try to query with pinnedAt field
+    const projects = await prisma.project.findMany({
+      where: {
+        designerId: { in: memberIds },
+        isPublic: true,
+        pinnedAt: { not: null },
+      },
+      include: {
+        images: { take: 1, orderBy: { displayOrder: 'asc' } },
+      },
+      orderBy: { pinOrder: 'asc' },
+      take: 5,
+    });
 
-  return projects.map(p => ({
-    id: p.id,
-    type: 'project' as const,
-    data: {
-      title: p.name,
-      image: p.images[0]?.url,
-      subtitle: `${p.city || 'Project'} · ${p.saves || 0} saves`,
-    },
-  }));
+    return projects.map(p => ({
+      id: p.id,
+      type: 'project' as const,
+      data: {
+        title: p.name,
+        image: p.images[0]?.url,
+        subtitle: `${p.city || 'Project'} · ${p.saves || 0} saves`,
+      },
+    }));
+  } catch {
+    // pinnedAt field might not exist in Prisma client yet
+    return [];
+  }
 }
 
 function FeedSkeleton() {

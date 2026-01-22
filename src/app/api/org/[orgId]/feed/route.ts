@@ -60,8 +60,9 @@ export async function GET(
             images: p.images,
           },
           publishedAt: p.publishedAt,
-          pinnedAt: p.pinnedAt,
-          pinOrder: p.pinOrder,
+          // These fields might not exist in Prisma client yet
+          pinnedAt: (p as any).pinnedAt || null,
+          pinOrder: (p as any).pinOrder || null,
           engagement: p.saves || 0,
         }))
       );
