@@ -1,7 +1,8 @@
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
-import { auth } from '@/lib/auth';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import OrgProfileHero from '@/components/org-profile/OrgProfileHero';
 import OrgProfileTabs from '@/components/org-profile/OrgProfileTabs';
 import OrgProfileFeed from '@/components/org-profile/OrgProfileFeed';
@@ -58,7 +59,7 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
   }
 
   // Check if current user is a member of this org
-  const session = await auth();
+  const session = await getServerSession(authOptions);
   let isOwner = false;
   let isAdmin = false;
 
