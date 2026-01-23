@@ -124,6 +124,10 @@ model User {
   profileInterview               ProfileInterview?
   teamMemberships                TeamMember[]
 
+  // Team member invites
+  invitedTeamMembers             TeamMemberInvite[]   @relation("InvitedTeamMembers")
+  claimedInvites                 TeamMemberInvite[]   @relation("ClaimedInvites")
+
   // Legal consent tracking
   tosAcceptedAt                  DateTime?
   privacyAcceptedAt              DateTime?
@@ -559,6 +563,14 @@ model Organization {
   specialties         String[]
   followerCount       Int                  @default(0)
 
+  // Studio details (structured)
+  teamSizeRange       TeamSizeRange?
+  services            String[]             // Full-service, Consultation, E-design
+  projectTypes        String[]             // Residential, Commercial, Hospitality
+  serviceRegions      String[]             // Geographic service areas
+  memberships         String[]             // ASID, AIA, NKBA
+  certifications      String[]             // LEED, WELL, Passive House
+
   // Phase 2: Organization tier and verification
   status              OrgStatus            @default(UNCLAIMED)
   address             String?              // Required for creation in Phase 2
@@ -605,6 +617,14 @@ model Organization {
   orgRecognition      OrgRecognition[]
   orgCollaborations   OrgCollaboration[]
 
+  // Organization onboarding relations
+  onboardingProgress   OrgOnboardingProgress?
+  bioInterview         OrgBioInterview?
+  teamMemberInvites    TeamMemberInvite[]
+  processPhases        OrgProcessPhase[]
+  vendorPartnerships   OrgVendorPartnership[] @relation("DesignFirmPartnerships")
+  inboundPartnerships  OrgVendorPartnership[] @relation("VendorPartnerships")
+
   // Presale development relations (for DEVELOPER orgs)
   developments        Development[]
 
@@ -628,6 +648,9 @@ model OrganizationUser {
 
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Team member quiz for onboarding
+  teamMemberQuiz TeamMemberQuiz?
 
   @@unique([userId, organizationId])
   @@index([userId])
@@ -3199,4 +3222,186 @@ model VendorRepContact {
   @@map("vendor_rep_contacts")
   @@index([userId])
   @@index([vendorName])
+}
+
+// ============================================================
+// ORGANIZATION ONBOARDING SYSTEM
+// ============================================================
+
+enum TeamSizeRange {
+  SOLO
+  SMALL_2_5
+  MEDIUM_6_15
+  LARGE_16_50
+  ENTERPRISE_50_PLUS
+}
+
+enum TeamInviteStatus {
+  PENDING
+  CLAIMED
+  EXPIRED
+  CANCELLED
+}
+
+enum PartnershipStatus {
+  PENDING     // Design firm added, vendor not confirmed
+  CONFIRMED   // Vendor confirmed the partnership
+  DECLINED    // Vendor declined
+}
+
+// Organization onboarding progress tracking
+model OrgOnboardingProgress {
+  id              String       @id @default(cuid())
+  organizationId  String       @unique
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  bioInterviewComplete        Boolean @default(false)
+  studioDetailsComplete       Boolean @default(false)
+  teamSetupComplete           Boolean @default(false)
+  processComplete             Boolean @default(false)
+  recognitionComplete         Boolean @default(false)
+  vendorRelationshipsComplete Boolean @default(false)
+  pinnedWorkComplete          Boolean @default(false)
+
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@map("org_onboarding_progress")
+}
+
+// Bio interview responses (preserves raw answers for reprocessing)
+model OrgBioInterview {
+  id              String       @id @default(cuid())
+  organizationId  String       @unique
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  // Layer 1 responses
+  originStory       String?   @db.Text
+  philosophyStatement String?
+  projectTypes      String[]
+  location          String?
+  serviceRegions    String[]
+  idealClient       String?   @db.Text
+
+  // Layer 2 responses (contextual follow-ups)
+  layer2Responses   Json?     // { questionId: answer } for contextual questions
+
+  // Layer 3 responses (proof points)
+  representativeProjectId String?
+  recognitionMentions     String?   @db.Text
+  collaboratorMentions    String?   @db.Text
+
+  // AI-generated outputs
+  fullBio           String?   @db.Text
+  shortBio          String?   // 80 words for cards
+  pullQuotes        Json?     // string[]
+  philosophyTagline String?   // one-liner
+  processDescription String?  @db.Text
+
+  generatedAt       DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@map("org_bio_interview")
+}
+
+// Team member invitations
+model TeamMemberInvite {
+  id              String       @id @default(cuid())
+  organizationId  String
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  email           String
+  role            String       // "Principal", "Senior Designer", etc.
+  invitedById     String
+  invitedBy       User         @relation("InvitedTeamMembers", fields: [invitedById], references: [id])
+
+  status          TeamInviteStatus @default(PENDING)
+  claimedAt       DateTime?
+  claimedByUserId String?
+  claimedBy       User?        @relation("ClaimedInvites", fields: [claimedByUserId], references: [id])
+
+  token           String       @unique @default(cuid())
+  createdAt       DateTime     @default(now())
+  expiresAt       DateTime
+
+  @@unique([organizationId, email])
+  @@index([token])
+  @@map("team_member_invite")
+}
+
+// Team member quiz responses (for users linked to org)
+model TeamMemberQuiz {
+  id              String       @id @default(cuid())
+
+  // Links to OrganizationUser (the team membership)
+  orgUserId       String       @unique
+  orgUser         OrganizationUser @relation(fields: [orgUserId], references: [id], onDelete: Cascade)
+
+  // Basic info captured at join
+  joinDate        DateTime?
+  specialties     String[]
+
+  // Quiz answers
+  whatBroughtYou  String?      @db.Text
+  roleInProcess   String?      @db.Text
+  proudestProject String?      @db.Text
+  background      String?      @db.Text
+
+  // Contextual questions (based on org bio)
+  contextualAnswers Json?      // { questionKey: answer }
+
+  // AI-generated outputs
+  teamBlurb       String?      // 2-3 sentences for org profile
+  extendedBio     String?      @db.Text // for personal profile
+  pullQuote       String?
+  expertiseTags   String[]
+
+  // Privacy settings
+  showOnPersonalProfile Boolean @default(false)
+  showRoleOnProfile     Boolean @default(true)
+
+  generatedAt     DateTime?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@map("team_member_quiz")
+}
+
+// Organization process phases
+model OrgProcessPhase {
+  id              String       @id @default(cuid())
+  organizationId  String
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  name            String
+  description     String?      @db.Text
+  order           Int
+
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@unique([organizationId, order])
+  @@index([organizationId])
+  @@map("org_process_phase")
+}
+
+// Vendor partnerships (org to vendor org relationship)
+model OrgVendorPartnership {
+  id                  String       @id @default(cuid())
+  designFirmOrgId     String
+  designFirmOrg       Organization @relation("DesignFirmPartnerships", fields: [designFirmOrgId], references: [id], onDelete: Cascade)
+
+  vendorOrgId         String
+  vendorOrg           Organization @relation("VendorPartnerships", fields: [vendorOrgId], references: [id], onDelete: Cascade)
+
+  status              PartnershipStatus @default(PENDING)
+  addedByUserId       String
+  confirmedAt         DateTime?
+
+  createdAt           DateTime     @default(now())
+
+  @@unique([designFirmOrgId, vendorOrgId])
+  @@index([vendorOrgId])
+  @@map("org_vendor_partnership")
 }
