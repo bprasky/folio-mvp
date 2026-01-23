@@ -1,12 +1,11 @@
 'use client';
 
-import { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
+import { useState, useRef, useEffect } from 'react';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, ChevronRight, ChevronLeft, Sparkles, Check } from 'lucide-react';
+import { Loader2, ChevronRight, ChevronLeft, Sparkles, Check, X } from 'lucide-react';
 import {
   LAYER_1_QUESTIONS,
   LAYER_3_QUESTIONS,
@@ -37,6 +36,8 @@ export function BioInterviewModal({
   const [layer2Questions, setLayer2Questions] = useState<InterviewQuestion[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // Get current question set based on step
   const getCurrentQuestions = (): InterviewQuestion[] => {
@@ -60,6 +61,15 @@ export function BioInterviewModal({
     return LAYER_1_QUESTIONS.length + layer2Questions.length + LAYER_3_QUESTIONS.length;
   };
 
+  // Get current question number across all layers
+  const getCurrentQuestionNumber = () => {
+    if (step === 'layer1') return currentQuestionIndex + 1;
+    if (step === 'layer2') return LAYER_1_QUESTIONS.length + currentQuestionIndex + 1;
+    if (step === 'layer3')
+      return LAYER_1_QUESTIONS.length + layer2Questions.length + currentQuestionIndex + 1;
+    return getTotalQuestions();
+  };
+
   // Calculate progress
   const getProgress = () => {
     let completed = 0;
@@ -71,6 +81,35 @@ export function BioInterviewModal({
     return Math.round((completed / Math.max(getTotalQuestions(), 1)) * 100);
   };
 
+  // Auto-focus input on question change
+  useEffect(() => {
+    if (open && currentQuestion) {
+      setTimeout(() => {
+        if (currentQuestion.inputType === 'textarea' && textareaRef.current) {
+          textareaRef.current.focus();
+        } else if (currentQuestion.inputType === 'text' && inputRef.current) {
+          inputRef.current.focus();
+        }
+      }, 100);
+    }
+  }, [open, currentQuestion?.fieldMapping]);
+
+  // Handle keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Cmd/Ctrl + Enter to proceed
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && !isSubmitting) {
+        e.preventDefault();
+        handleNext();
+      }
+    };
+
+    if (open && step !== 'generating' && step !== 'complete') {
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [open, step, isSubmitting, currentQuestionIndex, answers]);
+
   // Handle answer updates
   const handleAnswer = (value: string | string[]) => {
     if (!currentQuestion) return;
@@ -78,6 +117,13 @@ export function BioInterviewModal({
       ...prev,
       [currentQuestion.fieldMapping]: value
     }));
+  };
+
+  // Get current answer
+  const getCurrentAnswer = (): string => {
+    if (!currentQuestion) return '';
+    const answer = answers[currentQuestion.fieldMapping];
+    return typeof answer === 'string' ? answer : '';
   };
 
   // Navigate between questions
@@ -161,184 +207,219 @@ export function BioInterviewModal({
   // Replace {orgName} in questions
   const formatQuestion = (question: string) => question.replace('{orgName}', orgName);
 
+  // Generating state - immersive
   if (step === 'generating') {
     return (
       <Dialog open={open} onOpenChange={() => {}}>
-        <DialogContent className="sm:max-w-lg">
-          <div className="flex flex-col items-center justify-center py-12 space-y-4">
-            <Sparkles className="w-12 h-12 text-amber-600 animate-pulse" />
-            <h3 className="text-xl" style={{ fontFamily: 'Georgia, serif' }}>
+        <DialogContent className="w-full max-w-5xl h-[90vh] max-h-[90vh] mx-auto my-auto rounded-3xl flex flex-col items-center justify-center bg-white/90 backdrop-blur-xl border border-white/30 shadow-2xl overflow-hidden">
+          <div className="flex flex-col items-center justify-center space-y-6">
+            <Sparkles className="w-16 h-16 text-amber-600 animate-pulse" />
+            <h3 className="text-3xl font-serif italic text-gray-900">
               Crafting your story...
             </h3>
-            <p className="text-sm text-center" style={{ color: 'var(--text-secondary)' }}>
+            <p className="text-base text-gray-500 text-center max-w-md">
               We're generating your bio, tagline, and philosophy based on your answers.
             </p>
-            <Loader2 className="w-6 h-6 animate-spin" style={{ color: 'var(--text-tertiary)' }} />
+            <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
           </div>
         </DialogContent>
       </Dialog>
     );
   }
 
+  // Complete state - immersive
   if (step === 'complete') {
     return (
       <Dialog open={open} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-lg">
-          <div className="flex flex-col items-center justify-center py-12 space-y-4">
+        <DialogContent className="w-full max-w-5xl h-[90vh] max-h-[90vh] mx-auto my-auto rounded-3xl flex flex-col items-center justify-center bg-white/90 backdrop-blur-xl border border-white/30 shadow-2xl overflow-hidden">
+          <div className="flex flex-col items-center justify-center space-y-6">
             <div
-              className="w-16 h-16 rounded-full flex items-center justify-center"
+              className="w-20 h-20 rounded-full flex items-center justify-center"
               style={{ backgroundColor: 'rgba(34, 197, 94, 0.1)' }}
             >
-              <Check className="w-8 h-8" style={{ color: 'rgb(34, 197, 94)' }} />
+              <Check className="w-10 h-10" style={{ color: 'rgb(34, 197, 94)' }} />
             </div>
-            <h3 className="text-xl" style={{ fontFamily: 'Georgia, serif' }}>
+            <h3 className="text-3xl font-serif italic text-gray-900">
               Your bio is ready
             </h3>
-            <p className="text-sm text-center" style={{ color: 'var(--text-secondary)' }}>
+            <p className="text-base text-gray-500 text-center max-w-md">
               Review your generated bio and make any adjustments in your profile settings.
             </p>
-            <Button onClick={onClose}>View Profile</Button>
+            <button
+              onClick={onClose}
+              className="mt-4 px-8 py-3 bg-gray-900 text-white rounded-full text-sm font-medium hover:bg-gray-800 transition-colors"
+            >
+              View Profile
+            </button>
           </div>
         </DialogContent>
       </Dialog>
     );
   }
 
+  // Main interview view - immersive style
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-xl">
-        <DialogHeader>
-          <DialogTitle style={{ fontFamily: 'Georgia, serif' }}>
-            Tell your studio's story
-          </DialogTitle>
-          <div className="flex items-center gap-2 mt-2">
-            <div
-              className="flex-1 h-1 rounded-full overflow-hidden"
-              style={{ backgroundColor: 'var(--bg-elevated)' }}
-            >
-              <div
-                className="h-full transition-all duration-300"
-                style={{
-                  width: `${getProgress()}%`,
-                  backgroundColor: 'var(--accent)'
-                }}
-              />
-            </div>
-            <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
-              {getProgress()}%
+      <DialogContent className="w-full max-w-5xl h-[90vh] max-h-[90vh] mx-auto my-auto rounded-3xl flex flex-col bg-white/90 backdrop-blur-xl border border-white/30 shadow-2xl overflow-hidden">
+        {/* Header with close button and progress */}
+        <div className="flex items-center justify-between px-8 py-4 border-b border-gray-200/50 bg-white/50">
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700 transition-colors p-1 rounded-full hover:bg-gray-100"
+            aria-label="Close"
+          >
+            <X className="w-6 h-6" />
+          </button>
+
+          <div className="flex items-center gap-3">
+            <Badge variant="outline" className="text-xs px-3 py-1">
+              {step === 'layer1'
+                ? 'Foundation'
+                : step === 'layer2'
+                  ? 'Context'
+                  : 'Proof Points'}
+            </Badge>
+            <span className="text-sm text-gray-500">
+              Question {getCurrentQuestionNumber()} of {getTotalQuestions()}
             </span>
           </div>
-        </DialogHeader>
 
-        <div className="px-6 pb-6">
-          {error && (
+          <div className="w-6" /> {/* Spacer for alignment */}
+        </div>
+
+        {/* Progress bar */}
+        <div className="px-8 pt-4">
+          <div className="w-full h-1 rounded-full bg-gray-100 overflow-hidden">
             <div
-              className="mb-4 p-3 rounded-lg text-sm"
-              style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', color: 'rgb(220, 38, 38)' }}
-            >
-              {error}
-            </div>
-          )}
+              className="h-full transition-all duration-500 ease-out rounded-full"
+              style={{
+                width: `${getProgress()}%`,
+                backgroundColor: '#1a1a1a'
+              }}
+            />
+          </div>
+        </div>
 
-          {currentQuestion && (
-            <div className="py-6 space-y-4">
-              <div className="space-y-2">
-                <Badge variant="outline" className="text-xs">
-                  {step === 'layer1'
-                    ? 'Foundation'
-                    : step === 'layer2'
-                      ? 'Context'
-                      : 'Proof Points'}
-                </Badge>
-                <h3 className="text-lg font-medium">{formatQuestion(currentQuestion.question)}</h3>
-                <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                  {currentQuestion.purpose}
-                </p>
+        {error && (
+          <div className="mx-8 mt-4 p-4 rounded-xl bg-red-50 border border-red-200 text-sm text-red-800">
+            {error}
+          </div>
+        )}
+
+        {/* Question section - centered and immersive */}
+        {currentQuestion && (
+          <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
+            {/* Question (top portion) */}
+            <div className="flex-1 flex flex-col justify-center px-8 md:px-16 py-12 space-y-4">
+              <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl italic text-gray-900 leading-tight max-w-3xl">
+                {formatQuestion(currentQuestion.question)}
+              </h2>
+              <p className="text-base text-gray-500 max-w-2xl">
+                {currentQuestion.purpose}
+              </p>
+            </div>
+
+            {/* Input section (bottom portion) */}
+            <div className="flex-1 flex flex-col justify-start px-8 md:px-16 py-6 space-y-4">
+              <div className="max-w-3xl w-full">
+                {currentQuestion.inputType === 'textarea' && (
+                  <Textarea
+                    ref={textareaRef}
+                    value={getCurrentAnswer()}
+                    onChange={(e) => handleAnswer(e.target.value)}
+                    placeholder={currentQuestion.placeholder}
+                    className="w-full min-h-[180px] p-4 bg-gray-50/50 border border-gray-200 rounded-xl text-lg placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-300 resize-y leading-relaxed"
+                  />
+                )}
+
+                {currentQuestion.inputType === 'text' && (
+                  <Input
+                    ref={inputRef}
+                    value={getCurrentAnswer()}
+                    onChange={(e) => handleAnswer(e.target.value)}
+                    placeholder={currentQuestion.placeholder}
+                    className="w-full p-4 bg-gray-50/50 border border-gray-200 rounded-xl text-lg placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-300"
+                  />
+                )}
+
+                {currentQuestion.inputType === 'multiselect' && currentQuestion.options && (
+                  <div className="flex flex-wrap gap-3">
+                    {currentQuestion.options.map((option) => {
+                      const selected = (
+                        (answers[currentQuestion.fieldMapping] as string[]) || []
+                      ).includes(option);
+                      return (
+                        <button
+                          key={option}
+                          type="button"
+                          className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+                            selected
+                              ? 'bg-gray-900 text-white'
+                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          }`}
+                          onClick={() => {
+                            const current =
+                              (answers[currentQuestion.fieldMapping] as string[]) || [];
+                            if (selected) {
+                              handleAnswer(current.filter((o) => o !== option));
+                            } else {
+                              handleAnswer([...current, option]);
+                            }
+                          }}
+                        >
+                          {option}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {currentQuestion.inputType === 'project-picker' && (
+                  <div className="border border-gray-200 rounded-xl p-6 bg-gray-50/50">
+                    <p className="text-sm text-gray-500 mb-4">
+                      Project selection will be available once you have projects on Folio.
+                    </p>
+                    <Textarea
+                      value={getCurrentAnswer()}
+                      onChange={(e) => handleAnswer(e.target.value)}
+                      placeholder="Or describe a representative project here..."
+                      className="w-full min-h-[120px] p-4 bg-white border border-gray-200 rounded-xl text-lg placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-300 resize-y"
+                    />
+                  </div>
+                )}
               </div>
 
-              {currentQuestion.inputType === 'textarea' && (
-                <Textarea
-                  value={(answers[currentQuestion.fieldMapping] as string) || ''}
-                  onChange={(e) => handleAnswer(e.target.value)}
-                  placeholder={currentQuestion.placeholder}
-                  className="min-h-[150px]"
-                />
-              )}
-
-              {currentQuestion.inputType === 'text' && (
-                <Input
-                  value={(answers[currentQuestion.fieldMapping] as string) || ''}
-                  onChange={(e) => handleAnswer(e.target.value)}
-                  placeholder={currentQuestion.placeholder}
-                />
-              )}
-
-              {currentQuestion.inputType === 'multiselect' && currentQuestion.options && (
-                <div className="flex flex-wrap gap-2">
-                  {currentQuestion.options.map((option) => {
-                    const selected = (
-                      (answers[currentQuestion.fieldMapping] as string[]) || []
-                    ).includes(option);
-                    return (
-                      <Badge
-                        key={option}
-                        variant={selected ? 'default' : 'outline'}
-                        className="cursor-pointer transition-colors"
-                        onClick={() => {
-                          const current =
-                            (answers[currentQuestion.fieldMapping] as string[]) || [];
-                          if (selected) {
-                            handleAnswer(current.filter((o) => o !== option));
-                          } else {
-                            handleAnswer([...current, option]);
-                          }
-                        }}
-                      >
-                        {option}
-                      </Badge>
-                    );
-                  })}
-                </div>
-              )}
-
-              {currentQuestion.inputType === 'project-picker' && (
-                <div
-                  className="border rounded-lg p-4 text-center"
-                  style={{ borderColor: 'var(--ridge-outer)', color: 'var(--text-secondary)' }}
-                >
-                  <p className="text-sm">
-                    Project selection will be available once you have projects on Folio.
-                  </p>
-                  <Textarea
-                    className="mt-3"
-                    value={(answers[currentQuestion.fieldMapping] as string) || ''}
-                    onChange={(e) => handleAnswer(e.target.value)}
-                    placeholder="Or describe a representative project here..."
-                  />
-                </div>
-              )}
+              {/* Keyboard hint */}
+              <div className="max-w-3xl flex justify-end text-sm text-gray-400">
+                <span>Press ⌘ + Enter to continue</span>
+              </div>
             </div>
-          )}
+          </div>
+        )}
 
-          <div
-            className="flex justify-between pt-4"
-            style={{ borderTop: '1px solid var(--ridge-outer)' }}
+        {/* Footer with navigation */}
+        <div className="flex items-center justify-between px-8 py-4 border-t border-gray-200/50 bg-white/50">
+          <button
+            onClick={handleBack}
+            disabled={step === 'layer1' && currentQuestionIndex === 0}
+            className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
-            <Button
-              variant="ghost"
-              onClick={handleBack}
-              disabled={step === 'layer1' && currentQuestionIndex === 0}
-            >
-              <ChevronLeft className="w-4 h-4 mr-1" />
-              Back
-            </Button>
-            <Button onClick={handleNext} disabled={isSubmitting}>
+            <ChevronLeft className="w-5 h-5" />
+            <span>Back</span>
+          </button>
+
+          <button
+            onClick={handleNext}
+            disabled={isSubmitting}
+            className="flex items-center gap-2 px-6 py-3 bg-gray-900 text-white rounded-full text-sm font-medium hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            <span>
               {step === 'layer3' && currentQuestionIndex === LAYER_3_QUESTIONS.length - 1
                 ? 'Generate Bio'
-                : 'Next'}
-              <ChevronRight className="w-4 h-4 ml-1" />
-            </Button>
-          </div>
+                : 'Continue'}
+            </span>
+            <ChevronRight className="w-5 h-5" />
+          </button>
         </div>
       </DialogContent>
     </Dialog>
