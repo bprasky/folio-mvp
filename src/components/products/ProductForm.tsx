@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { FaUpload, FaLink, FaSpinner, FaMagic, FaSearch, FaUser, FaEnvelope, FaPhone, FaPlus } from 'react-icons/fa';
+import AddRepContactModal from './AddRepContactModal';
 
 interface VendorRepContact {
   id: string;
@@ -816,6 +817,17 @@ export default function ProductForm({
           {isLoading ? 'Saving...' : mode === 'create' ? 'Create Product' : 'Update Product'}
         </button>
       </div>
+
+      {/* Add Rep Contact Modal */}
+      <AddRepContactModal
+        isOpen={showAddRepModal}
+        onClose={() => setShowAddRepModal(false)}
+        vendorName={formData.vendorName || formData.brand || ''}
+        onSuccess={(contact) => {
+          setRepContact(contact);
+          setShowAddRepModal(false);
+        }}
+      />
     </form>
   );
 }
