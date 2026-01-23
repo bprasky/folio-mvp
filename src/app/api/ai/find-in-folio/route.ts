@@ -9,6 +9,42 @@ export const runtime = 'nodejs';
 const anthropic = new Anthropic();
 
 /**
+ * Helper to log product searches for business intelligence
+ */
+async function logProductSearch(params: {
+  userId: string;
+  searchType: string;
+  brandName?: string | null;
+  productName?: string | null;
+  searchQuery?: string | null;
+  selectionId?: string | null;
+  projectId?: string | null;
+  wasSuccessful: boolean;
+  matchedProductId?: string | null;
+  resultData?: Record<string, unknown> | null;
+}) {
+  try {
+    await prisma.productSearchLog.create({
+      data: {
+        userId: params.userId,
+        searchType: params.searchType,
+        brandName: params.brandName || null,
+        productName: params.productName || null,
+        searchQuery: params.searchQuery || null,
+        selectionId: params.selectionId || null,
+        projectId: params.projectId || null,
+        wasSuccessful: params.wasSuccessful,
+        matchedProductId: params.matchedProductId || null,
+        resultData: params.resultData || null,
+      },
+    });
+  } catch (error) {
+    // Don't fail the request if logging fails
+    console.error('Failed to log product search:', error);
+  }
+}
+
+/**
  * POST /api/ai/find-in-folio
  * Searches within Folio's existing product database (Selections) to find matching products
  */
@@ -22,7 +58,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { productName, description, imageUrl, category } = body;
+    const { productName, description, imageUrl, category, selectionId, projectId } = body;
 
     if (!productName && !description) {
       return NextResponse.json(
@@ -98,7 +134,23 @@ export async function POST(req: NextRequest) {
 
     console.log(`Found ${candidates.length} candidate products in Folio`);
 
+    // Extract brand from product name for logging (first word often brand)
+    const extractedBrand = productName?.split(' ')[0]?.toUpperCase() || null;
+
     if (candidates.length === 0) {
+      // Log unsuccessful search
+      await logProductSearch({
+        userId,
+        searchType: 'FOLIO_SEARCH',
+        brandName: extractedBrand,
+        productName,
+        searchQuery: [productName, description].filter(Boolean).join(' '),
+        selectionId,
+        projectId,
+        wasSuccessful: false,
+        resultData: { candidatesFound: 0 },
+      });
+
       return NextResponse.json({
         success: true,
         data: { match: null, candidates: [] },
@@ -160,6 +212,24 @@ Return ONLY a JSON object:
           // Parse dimensions from uiMeta if available
           const uiMeta = bestMatch.uiMeta as { dimensions?: { width?: number; depth?: number; height?: number } } | null;
 
+          // Log successful search
+          await logProductSearch({
+            userId,
+            searchType: 'FOLIO_SEARCH',
+            brandName: bestMatch.vendorName || extractedBrand,
+            productName,
+            searchQuery: [productName, description].filter(Boolean).join(' '),
+            selectionId,
+            projectId,
+            wasSuccessful: true,
+            matchedProductId: bestMatch.id,
+            resultData: {
+              confidence: matchResult.confidence,
+              candidatesFound: candidates.length,
+              matchedVendor: bestMatch.vendorName,
+            },
+          });
+
           return NextResponse.json({
             success: true,
             data: {
@@ -181,6 +251,19 @@ Return ONLY a JSON object:
         }
       }
     }
+
+    // Log unsuccessful search (had candidates but no strong match)
+    await logProductSearch({
+      userId,
+      searchType: 'FOLIO_SEARCH',
+      brandName: extractedBrand,
+      productName,
+      searchQuery: [productName, description].filter(Boolean).join(' '),
+      selectionId,
+      projectId,
+      wasSuccessful: false,
+      resultData: { candidatesFound: candidates.length, noStrongMatch: true },
+    });
 
     // No good match found
     return NextResponse.json({
