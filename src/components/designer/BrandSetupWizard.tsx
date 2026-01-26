@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { DesignerFlowErrorBoundary } from '@/components/ui/DesignerFlowErrorBoundary';
 import { saveBrandProfile, skipBrandSetup } from '@/app/actions/brandSetup';
 
 interface BrandSetupWizardProps {
@@ -89,8 +90,9 @@ export function BrandSetupWizard({ brandProfile, isEditMode = false }: BrandSetu
   };
 
   return (
-    <Card className="w-full max-w-2xl">
-      <CardHeader>
+    <DesignerFlowErrorBoundary context="brand-setup">
+      <Card className="w-full max-w-2xl">
+        <CardHeader>
         <CardTitle>
           {isEditMode ? 'Edit Brand Identity' : 'Set up your studio identity'}
         </CardTitle>
@@ -235,10 +237,11 @@ export function BrandSetupWizard({ brandProfile, isEditMode = false }: BrandSetu
                 Skip for now
               </Button>
             )}
-          </div>
-        </form>
-      </CardContent>
-    </Card>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+    </DesignerFlowErrorBoundary>
   );
 }
 

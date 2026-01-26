@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { DesignerFlowErrorBoundary } from "@/components/ui/DesignerFlowErrorBoundary";
 import { TagRail } from "./TagRail";
 import { MaterialsLedger } from "./MaterialsLedger";
 import { Credits } from "./Credits";
@@ -161,7 +162,8 @@ export function PostExpanded({ payload }: PostExpandedProps) {
     : [];
 
   return (
-    <article className="max-w-7xl mx-auto px-4 py-8 space-y-6">
+    <DesignerFlowErrorBoundary context="post-expanded">
+      <article className="max-w-7xl mx-auto px-4 py-8 space-y-6">
       {/* 1) Cinematic hero */}
       {heroImage?.url && (
         <CinematicHero
@@ -360,10 +362,11 @@ export function PostExpanded({ payload }: PostExpandedProps) {
         </div>
       )}
 
-      {/* 5) Related projects footer */}
-      {relatedProjects && relatedProjects.length > 0 && (
-        <RelatedProjects items={relatedProjects} />
-      )}
-    </article>
+        {/* 5) Related projects footer */}
+        {relatedProjects && relatedProjects.length > 0 && (
+          <RelatedProjects items={relatedProjects} />
+        )}
+      </article>
+    </DesignerFlowErrorBoundary>
   );
 }

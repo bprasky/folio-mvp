@@ -6,6 +6,7 @@ import NextImage from 'next/image';
 import { FaTimes, FaPlus, FaUpload, FaLink, FaTag, FaTrash, FaSearch, FaCheck, FaSpinner, FaExclamationTriangle, FaEnvelope, FaUser } from 'react-icons/fa';
 import { PROJECT_TYPE_BY_LABEL, CLIENT_BY_LABEL, DEFAULTS } from '@/domain/project/enums';
 import { GlassInput } from '@/components/ui/glass-input';
+import { DesignerFlowErrorBoundary } from '@/components/ui/DesignerFlowErrorBoundary';
 
 interface ProjectImage {
   id: string;
@@ -913,8 +914,9 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <AnimatePresence>
-      <motion.div
+    <DesignerFlowErrorBoundary context="project-creation">
+      <AnimatePresence>
+        <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -1786,8 +1788,9 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
             </motion.div>
           </motion.div>
         )}
-      </motion.div>
-    </AnimatePresence>
+        </motion.div>
+      </AnimatePresence>
+    </DesignerFlowErrorBoundary>
   );
 };
 

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { FaUpload, FaLink, FaSpinner, FaMagic, FaSearch, FaUser, FaEnvelope, FaPhone, FaPlus } from 'react-icons/fa';
+import { DesignerFlowErrorBoundary } from '@/components/ui/DesignerFlowErrorBoundary';
 import AddRepContactModal from './AddRepContactModal';
 
 interface VendorRepContact {
@@ -421,7 +422,8 @@ export default function ProductForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <DesignerFlowErrorBoundary context="product-form">
+      <form onSubmit={handleSubmit} className="space-y-6">
       {/* URL Import Section */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
         <h3 className="text-sm font-medium text-blue-900 mb-3 flex items-center gap-2">
@@ -819,15 +821,16 @@ export default function ProductForm({
       </div>
 
       {/* Add Rep Contact Modal */}
-      <AddRepContactModal
-        isOpen={showAddRepModal}
-        onClose={() => setShowAddRepModal(false)}
-        vendorName={formData.vendorName || formData.brand || ''}
-        onSuccess={(contact) => {
-          setRepContact(contact);
-          setShowAddRepModal(false);
-        }}
-      />
-    </form>
+        <AddRepContactModal
+          isOpen={showAddRepModal}
+          onClose={() => setShowAddRepModal(false)}
+          vendorName={formData.vendorName || formData.brand || ''}
+          onSuccess={(contact) => {
+            setRepContact(contact);
+            setShowAddRepModal(false);
+          }}
+        />
+      </form>
+    </DesignerFlowErrorBoundary>
   );
 }

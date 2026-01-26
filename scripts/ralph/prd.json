@@ -13,8 +13,8 @@
         "build passes"
       ],
       "priority": 1,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Wrapped AnimatePresence content with ErrorBoundary"
     },
     {
       "id": "EB-002",
@@ -27,8 +27,8 @@
         "build passes"
       ],
       "priority": 2,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Wrapped DialogContent inside Dialog with ErrorBoundary"
     },
     {
       "id": "EB-003",
@@ -41,8 +41,8 @@
         "build passes"
       ],
       "priority": 3,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Wrapped article element with ErrorBoundary"
     },
     {
       "id": "EB-004",
@@ -55,8 +55,8 @@
         "build passes"
       ],
       "priority": 4,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Wrapped Dialog content with ErrorBoundary"
     },
     {
       "id": "EB-005",
@@ -69,8 +69,8 @@
         "build passes"
       ],
       "priority": 5,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Added 'use client', refactored to single return with renderContent helper"
     },
     {
       "id": "EB-006",
@@ -83,8 +83,8 @@
         "build passes"
       ],
       "priority": 6,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Wrapped form element with ErrorBoundary"
     },
     {
       "id": "EB-007",
@@ -97,8 +97,8 @@
         "build passes"
       ],
       "priority": 7,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Wrapped Card component with ErrorBoundary"
     }
   ]
 }

@@ -1,5 +1,8 @@
+"use client";
+
 import { ComponentType } from "react";
 import { ProfileContext, AestheticProfile } from "@/lib/aesthetic/types";
+import { DesignerFlowErrorBoundary } from "@/components/ui/DesignerFlowErrorBoundary";
 import MinimalShell from "./shells/MinimalShell";
 import EditorialShell from "./shells/EditorialShell";
 import WarmShell from "./shells/WarmShell";
@@ -41,80 +44,88 @@ export default function DesignerProfileShell(props: ProfileContext) {
   const { state, designer, projects, brandAssets, aesthetic, viewerContext, isOwner } = props;
 
   // Route to appropriate state component
-  switch (state) {
-    case "empty":
-      return <EmptyProfileState designer={designer} isOwner={isOwner} />;
-
-    case "brand_only":
-      if (!brandAssets) {
-        // Fallback if state says brand_only but no assets
+  const renderContent = () => {
+    switch (state) {
+      case "empty":
         return <EmptyProfileState designer={designer} isOwner={isOwner} />;
-      }
-      return (
-        <BrandOnlyProfileState
-          designer={designer}
-          brandAssets={brandAssets}
-          isOwner={isOwner}
-        />
-      );
 
-    case "projects_only":
-      return (
-        <ProjectsOnlyProfileState
-          designer={designer}
-          projects={projects}
-          viewerContext={viewerContext}
-          isOwner={isOwner}
-        />
-      );
+      case "brand_only":
+        if (!brandAssets) {
+          // Fallback if state says brand_only but no assets
+          return <EmptyProfileState designer={designer} isOwner={isOwner} />;
+        }
+        return (
+          <BrandOnlyProfileState
+            designer={designer}
+            brandAssets={brandAssets}
+            isOwner={isOwner}
+          />
+        );
 
-    case "ready":
-      // Trigger detection (should happen server-side, but fallback here)
-      return (
-        <ProjectsOnlyProfileState
-          designer={designer}
-          projects={projects}
-          viewerContext={viewerContext}
-          isOwner={isOwner}
-        />
-      );
+      case "projects_only":
+        return (
+          <ProjectsOnlyProfileState
+            designer={designer}
+            projects={projects}
+            viewerContext={viewerContext}
+            isOwner={isOwner}
+          />
+        );
 
-    case "generated":
-    case "customized":
-      // Full profile with detected/customized aesthetic
-      if (!aesthetic) {
+      case "ready":
+        // Trigger detection (should happen server-side, but fallback here)
+        return (
+          <ProjectsOnlyProfileState
+            designer={designer}
+            projects={projects}
+            viewerContext={viewerContext}
+            isOwner={isOwner}
+          />
+        );
+
+      case "generated":
+      case "customized":
+        // Full profile with detected/customized aesthetic
+        if (!aesthetic) {
+          return (
+            <DefaultShell
+              designer={designer}
+              projects={projects}
+              aesthetic={defaultAesthetic}
+              viewerContext={viewerContext}
+            />
+          );
+        }
+        const Shell = shellMap[aesthetic.theme] || DefaultShell;
+        const showExplanation = state === "generated" && aesthetic.confidence > 0.3;
+        return (
+          <>
+            <Shell
+              designer={designer}
+              projects={projects}
+              aesthetic={aesthetic}
+              viewerContext={viewerContext}
+            />
+            {showExplanation && <ExplanationOverlay aesthetic={aesthetic} />}
+          </>
+        );
+
+      default:
         return (
           <DefaultShell
             designer={designer}
             projects={projects}
-            aesthetic={defaultAesthetic}
+            aesthetic={aesthetic || defaultAesthetic}
             viewerContext={viewerContext}
           />
         );
-      }
-      const Shell = shellMap[aesthetic.theme] || DefaultShell;
-      const showExplanation = state === "generated" && aesthetic.confidence > 0.3;
-      return (
-        <>
-          <Shell
-            designer={designer}
-            projects={projects}
-            aesthetic={aesthetic}
-            viewerContext={viewerContext}
-          />
-          {showExplanation && <ExplanationOverlay aesthetic={aesthetic} />}
-        </>
-      );
+    }
+  };
 
-    default:
-      return (
-        <DefaultShell
-          designer={designer}
-          projects={projects}
-          aesthetic={aesthetic || defaultAesthetic}
-          viewerContext={viewerContext}
-        />
-      );
-  }
+  return (
+    <DesignerFlowErrorBoundary context="designer-profile">
+      {renderContent()}
+    </DesignerFlowErrorBoundary>
+  );
 }
 

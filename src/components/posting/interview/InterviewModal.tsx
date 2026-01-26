@@ -24,6 +24,7 @@ import type {
 import { useInterviewQuestions } from "@/hooks/useInterviewQuestions";
 import { LinkedImagePreview } from "@/components/editorial/LinkedImagePreview";
 import type { InterviewQuestion as ContextualQuestion } from "@/types/interview";
+import { DesignerFlowErrorBoundary } from "@/components/ui/DesignerFlowErrorBoundary";
 
 interface InterviewModalProps {
   open: boolean;
@@ -1097,13 +1098,14 @@ export function InterviewModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        className={
-          phase === "question" || phase === "followup"
-            ? "w-full max-w-5xl h-[90vh] max-h-[90vh] mx-auto my-auto rounded-3xl flex flex-col bg-white/90 backdrop-blur-xl border border-white/30 shadow-2xl overflow-hidden"
-            : "max-w-6xl max-h-[90vh] overflow-y-auto bg-white/90 backdrop-blur-xl border border-white/30 shadow-2xl rounded-3xl"
-        }
-      >
+      <DesignerFlowErrorBoundary context="editorial-interview">
+        <DialogContent
+          className={
+            phase === "question" || phase === "followup"
+              ? "w-full max-w-5xl h-[90vh] max-h-[90vh] mx-auto my-auto rounded-3xl flex flex-col bg-white/90 backdrop-blur-xl border border-white/30 shadow-2xl overflow-hidden"
+              : "max-w-6xl max-h-[90vh] overflow-y-auto bg-white/90 backdrop-blur-xl border border-white/30 shadow-2xl rounded-3xl"
+          }
+        >
         {/* Loading state for questions */}
         {questionsLoading && phase === "pick" && (
           <div className="flex items-center justify-center p-12">
@@ -1325,7 +1327,8 @@ export function InterviewModal({
           isGenerating={isGenerating}
           isLoadingFollowUps={isLoadingFollowUps}
         />
-      </DialogContent>
+        </DialogContent>
+      </DesignerFlowErrorBoundary>
     </Dialog>
   );
 }

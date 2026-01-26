@@ -8,6 +8,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogPanel, DialogTitle } from '@headlessui/react';
 import { FaTimes, FaInstagram, FaDownload, FaImage } from 'react-icons/fa';
+import { DesignerFlowErrorBoundary } from '@/components/ui/DesignerFlowErrorBoundary';
 import ImageReorderGrid from './ImageReorderGrid';
 import QuoteSelector from './QuoteSelector';
 import CarouselPreview from './CarouselPreview';
@@ -434,10 +435,11 @@ export default function InstagramExportModal({
 
   return (
     <Dialog open={isOpen} onClose={onClose} className="relative z-50">
-      <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
+      <DesignerFlowErrorBoundary context="instagram-export">
+        <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
 
-      <div className="fixed inset-0 flex items-center justify-center p-4">
-        <DialogPanel className="mx-auto max-w-4xl w-full bg-white rounded-2xl shadow-xl max-h-[90vh] overflow-hidden flex flex-col">
+        <div className="fixed inset-0 flex items-center justify-center p-4">
+          <DialogPanel className="mx-auto max-w-4xl w-full bg-white rounded-2xl shadow-xl max-h-[90vh] overflow-hidden flex flex-col">
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-gray-200">
             <div className="flex items-center gap-3">
@@ -659,8 +661,9 @@ export default function InstagramExportModal({
               )}
             </div>
           </div>
-        </DialogPanel>
-      </div>
+          </DialogPanel>
+        </div>
+      </DesignerFlowErrorBoundary>
     </Dialog>
   );
 }
