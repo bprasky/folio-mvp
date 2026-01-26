@@ -122,18 +122,6 @@ export function InterviewModal({
   const baseAnswers = useMemo(() => answers.filter((answer) => !answer.isFollowUp), [answers]);
   const followUpAnswersState = useMemo(() => answers.filter((answer) => answer.isFollowUp), [answers]);
   
-  // Debug logging
-  useEffect(() => {
-    if (open) {
-      console.log('[InterviewModal] State:', {
-        totalAnswers: answers.length,
-        baseAnswers: baseAnswers.length,
-        followUpAnswers: followUpAnswersState.length,
-        step,
-        selectedQuestionIds: selectedQuestionIds.length,
-      });
-    }
-  }, [open, answers.length, baseAnswers.length, followUpAnswersState.length, step, selectedQuestionIds.length]);
 
   useEffect(() => {
     return () => {
@@ -189,13 +177,7 @@ export function InterviewModal({
         
         if (res.ok) {
           const data = await res.json();
-          console.log('[InterviewModal] Preloaded data:', { 
-            answerCount: data?.answers?.length || 0, 
-            followUpsCount: data?.followUps?.length || 0,
-            selectedQuestionIdsCount: data?.selectedQuestionIds?.length || 0,
-            contextualQuestionsCount: data?.contextualQuestions?.length || 0
-          });
-          
+
           // Contextual questions are now loaded via useInterviewQuestions hook
           // No need to load from this endpoint anymore
           
@@ -203,9 +185,7 @@ export function InterviewModal({
           const serverFollowUps = Array.isArray(data?.followUps) ? data.followUps : [];
           
           if (cancelled) return;
-          
-          console.log('[InterviewModal] Setting answers:', serverAnswers.length);
-          
+
           // Include all questionIds from loaded answers in selectedQuestionIds
           // This ensures all answered questions are shown in the form
           const loadedQuestionIds = serverAnswers.map(a => a.questionId);
@@ -231,7 +211,6 @@ export function InterviewModal({
               try {
                 const { answers: da = [], followups: df = [] } = JSON.parse(draft);
                 if (da.length || df.length) {
-                  console.log('[InterviewModal] Found localStorage draft:', { da: da.length, df: df.length });
                   // Merge draft with server data
                   const draftAnswers = normalizeIncomingAnswers(da);
                   const merged = [...serverAnswers];
@@ -244,9 +223,8 @@ export function InterviewModal({
                     }
                   }
                   if (!cancelled) {
-                    console.log('[InterviewModal] Setting merged answers:', merged.length);
                     setAnswers(merged);
-                    
+
                     if (Array.isArray(df) && df.length > 0) {
                       setFollowUps(df);
                     }
@@ -261,32 +239,16 @@ export function InterviewModal({
             setSelectedQuestionIds([]);
             setAnswers([]);
             setFollowUps([]);
-            console.log('[InterviewModal] All data cleared - starting fresh');
-            
+
             // Server data is cleared - also clear localStorage to ensure fresh start
             localStorage.removeItem(draftKey);
-            console.log('[InterviewModal] Cleared localStorage draft - starting fresh');
             draft = null; // Explicitly set to null since we cleared it
-          }
-
-          // If no server answers but we have localStorage, use that
-          if (serverAnswers.length === 0 && !draft && !cancelled) {
-            console.warn('[InterviewModal] No answers found from server or localStorage');
           }
 
           // Set step based on what we have
           const finalAnswers = serverAnswers.length > 0 ? serverAnswers : (draft ? normalizeIncomingAnswers(JSON.parse(draft).answers || []) : []);
           const hasBaseAnswers = finalAnswers.filter((a: any) => !a.isFollowUp).length > 0;
           const hasFollowUps = finalAnswers.filter((a: any) => a.isFollowUp).length > 0 || serverFollowUps.length > 0;
-
-          console.log('[InterviewModal] Step decision:', {
-            finalAnswersCount: finalAnswers.length,
-            hasBaseAnswers,
-            hasFollowUps,
-            selectedQuestionIdsCount: allQuestionIds.length,
-            serverAnswersCount: serverAnswers.length,
-            currentStep: step,
-          });
 
           // If no answers exist, always start from pick phase
           // This handles "Start Over" correctly - even if selectedQuestionIds exist,
@@ -298,15 +260,12 @@ export function InterviewModal({
             if (serverAnswers.length === 0) {
               setSelectedQuestionIds([]);
             }
-            console.log('[InterviewModal] Reset to pick phase - no answers found');
           } else if (hasBaseAnswers && !cancelled) {
             setStep("answer");
             setPhase("question");
-            console.log('[InterviewModal] Resuming at answer phase');
           } else if (hasFollowUps && !cancelled) {
             setStep("followups");
             setPhase("followup");
-            console.log('[InterviewModal] Resuming at followups phase');
           }
         } else {
           console.warn('[InterviewModal] Failed to fetch answers', res.status);
@@ -350,7 +309,6 @@ export function InterviewModal({
       const hasFollowUps = answers.filter(a => a.isFollowUp).length > 0;
       
       if (!hasAnswers && !hasFollowUps) {
-        console.log('[InterviewModal] Modal opened with no answers - resetting to pick');
         setStep("pick");
         setPhase("pick");
         setSelectedQuestionIds([]);
@@ -615,13 +573,6 @@ export function InterviewModal({
             }),
         };
       
-      console.log("[InterviewModal] Saving answers:", {
-        projectId,
-        answerCount: sanitized.length,
-        selectedQuestionIds: selectedQuestionIds.length,
-        payload: JSON.stringify(payload, null, 2),
-      });
-
       const res = await fetch(
         `/api/posting/project/${projectId}/interview`,
         {
@@ -632,13 +583,6 @@ export function InterviewModal({
           keepalive: false,
         }
       );
-      
-      console.log("[InterviewModal] Save response:", {
-        status: res.status,
-        statusText: res.statusText,
-        ok: res.ok,
-        headers: Object.fromEntries(res.headers.entries()),
-      });
 
       if (res.status === 422) {
         const data = await res.json().catch(() => ({}));
@@ -671,7 +615,6 @@ export function InterviewModal({
       }
 
       const json = (await res.json()) as SaveResult;
-      console.log("[InterviewModal] Save request succeeded:", json);
       setFieldErrors({});
       if (banner) setBanner(null);
       if (typeof window !== "undefined") {
@@ -732,10 +675,8 @@ export function InterviewModal({
           const allAnswersResult = await persistAnswers([...baseAnswers, ...followUpAnswersState], {
             includeFollowUps: true,
           });
-          console.log("[InterviewModal] All answers save result:", allAnswersResult);
-          
+
           if (allAnswersResult === undefined) {
-            console.warn("[InterviewModal] Save was aborted, waiting and retrying...");
             await new Promise(resolve => setTimeout(resolve, 1000));
             const retryResult = await persistAnswers([...baseAnswers, ...followUpAnswersState], {
               includeFollowUps: true,
@@ -754,7 +695,6 @@ export function InterviewModal({
           }
           if (saveError?.message === "concurrent_update") {
             // Retry after a delay
-            console.log("[InterviewModal] Concurrent update, retrying...");
             await new Promise(resolve => setTimeout(resolve, 1000));
             const retryResult = await persistAnswers([...baseAnswers, ...followUpAnswersState], {
               includeFollowUps: true,

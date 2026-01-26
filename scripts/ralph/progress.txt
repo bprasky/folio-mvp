@@ -11,3 +11,26 @@ Branch: ralph/console-cleanup-batch-1
 ## Session Log
 
 ---
+## 2025-01-26 - CL-001 through CL-010 (Batch Complete)
+
+### Analysis Summary
+Reviewed all 10 target files for debug console.log statements:
+
+**Files with no changes needed:**
+- CL-001, CL-002, CL-003: Only `console.error` in catch blocks (appropriate)
+- CL-004, CL-005: Job files - operational logging is necessary
+- CL-008: Only `console.warn` for service availability
+- CL-009: No console statements found
+
+**Files modified:**
+- CL-006 (DesignerBoard.tsx): Removed 1 debug log
+- CL-007 (DraftsPanel.tsx): Removed ~15 debug logs
+- CL-010 (InterviewModal.tsx): Removed ~20 debug logs
+
+### Learnings
+- Job files (src/jobs/*) should retain operational console.log for visibility
+- Keep `console.error` in catch blocks, `console.warn` for deprecations
+- Keep `console.info` for operational logging (health checks, etc.)
+- Remove: debug variable inspection, 'here' markers, state dumps
+
+---

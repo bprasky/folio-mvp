@@ -76,18 +76,11 @@ export default function DraftsPanel({ projectId }: { projectId: string }) {
   const fetchData = async () => {
     try {
       setIsLoading(true);
-      console.log('[DraftsPanel] Fetching data from /api/posting/project/${projectId}/drafts');
       const res = await fetch(`/api/posting/project/${projectId}/drafts`);
       if (res.ok) {
         const result = await res.json();
         setData(result);
-        
-        console.log('[DraftsPanel] Fetched data:', {
-          hasInterview: !!result.interview,
-          answerCount: result.interview?.answers?.length || 0,
-          followUpsCount: result.interview?.followUps?.length || 0,
-        });
-        
+
         // Sync answers and followups with auto-dedupe
         if (result.interview?.answers && result.interview.answers.length > 0) {
           const mappedAnswers = result.interview.answers.map((a: any) => ({
@@ -97,19 +90,9 @@ export default function DraftsPanel({ projectId }: { projectId: string }) {
             answer: a.answer || a.a || '',
             questionId: a.questionId || a.id,
           }));
-          
-          // Log data structure for debugging
-          console.log("Answer data:", mappedAnswers.map(a => ({ 
-            questionId: a.questionId, 
-            q: a.q, 
-            question: a.question,
-            a: a.a,
-            answer: a.answer 
-          })));
-          
+
           setAnswers(dedupeAnswers(mappedAnswers));
         } else {
-          console.log('[DraftsPanel] No answers found in fetched data - clearing local state');
           setAnswers([]);
         }
         if (result.interview?.followUps && result.interview.followUps.length > 0) {
@@ -120,7 +103,6 @@ export default function DraftsPanel({ projectId }: { projectId: string }) {
             answer: f.answer || f.a || '',
           })));
         } else {
-          console.log('[DraftsPanel] No followUps found in fetched data - clearing local state');
           setFollowups([]);
         }
       } else {
@@ -237,8 +219,6 @@ export default function DraftsPanel({ projectId }: { projectId: string }) {
         delete payload.forceOverwriteDraft;
       }
       
-      console.log("[DraftsPanel] Regenerating draft", { url, overwrite: opts.overwrite, debugMode });
-      
       const res = await fetch(url, {
         method: "POST",
         headers: { 
@@ -274,7 +254,6 @@ export default function DraftsPanel({ projectId }: { projectId: string }) {
       }
 
       const result = await res.json().catch(() => ({}));
-      console.log("[DraftsPanel] Regenerate successful", result);
 
       // Debug mode: show JSON in modal
       if (debugMode) {
@@ -380,57 +359,45 @@ export default function DraftsPanel({ projectId }: { projectId: string }) {
     const confirmed = window.confirm(
       "This will clear your current reflections and begin a new interview. Continue?"
     );
-    
+
     if (!confirmed) return;
-    
+
     try {
-      console.log('[StartOver] Step 1: Clearing local state...');
       // Clear answers from state
       setAnswers([]);
       setFollowups([]);
-      
-      console.log('[StartOver] Step 2: Clearing localStorage...');
+
       // Clear localStorage draft (check both possible key formats)
       if (typeof window !== "undefined") {
         localStorage.removeItem(`interviewDraft:${projectId}`);
         localStorage.removeItem(`interview-draft-${projectId}`);
-        console.log('[StartOver] Cleared localStorage drafts');
       }
-      
-      console.log('[StartOver] Step 3: Calling API to clear database...');
+
       // Clear from database - POST empty answers AND empty selectedQuestionIds
       const clearRes = await fetch(`/api/posting/project/${projectId}/interview`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          answers: [], 
+        body: JSON.stringify({
+          answers: [],
           followUps: [],
           selectedQuestionIds: [] // Explicitly clear selected questions
         })
       });
-      
-      console.log('[StartOver] API response status:', clearRes.status);
+
       const responseData = await clearRes.json().catch(() => ({}));
-      console.log('[StartOver] API response data:', responseData);
-      
+
       if (!clearRes.ok) {
         const error = responseData.error || "Failed to clear answers";
-        console.error('[StartOver] API error:', error);
         throw new Error(error);
       }
-      
-      console.log('[StartOver] Step 4: Successfully cleared interview data');
-      
+
       // Refresh current page data first to ensure UI reflects cleared state
-      console.log('[StartOver] Step 5: Refreshing current page data...');
       await fetchData();
-      
-      console.log('[StartOver] Step 6: Navigating to preview page...');
+
       // Navigate to preview page with query param to auto-open interview modal
       const targetUrl = `/designer/projects/${projectId}/preview?startInterview=true`;
-      console.log('[StartOver] Target URL:', targetUrl);
       router.push(targetUrl);
-      
+
     } catch (err) {
       console.error("[StartOver] Error:", err);
       alert("Failed to reset interview: " + (err instanceof Error ? err.message : "Unknown error"));

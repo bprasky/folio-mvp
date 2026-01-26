@@ -114,7 +114,6 @@ export default function DesignerBoard({
 
   const handleSelectionSizeOverride = (selectionId: string, newSize: Size | 'auto') => {
     // TODO: Implement persistence when schema supports metadata field
-    console.log('Size override:', { selectionId, newSize });
     // For now, this will be handled by local state in DesignerBoardRoom
   };
 
