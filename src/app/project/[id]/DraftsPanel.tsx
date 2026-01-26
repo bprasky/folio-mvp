@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ExternalLink, X } from "lucide-react";
+import { NewProductsBanner } from "@/components/posting/NewProductsBanner";
 
 type QA = { 
   q?: string; 
@@ -45,6 +46,7 @@ export default function DraftsPanel({ projectId }: { projectId: string }) {
   const [data, setData] = useState<{
     interview: Interview;
     drafts: DraftVersion[];
+    newProducts?: { hasNew: boolean; count: number };
   } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [answers, setAnswers] = useState<QA[]>([]);
@@ -55,6 +57,7 @@ export default function DraftsPanel({ projectId }: { projectId: string }) {
   const debugMode = searchParams.get('debug') === '1';
   const [debugOpen, setDebugOpen] = useState(false);
   const [debugPayload, setDebugPayload] = useState<any>(null);
+
 
   // Deduplicate answers by question and answer content (normalized)
   const dedupeAnswers = (answers: QA[]): QA[] => {
@@ -136,6 +139,7 @@ export default function DraftsPanel({ projectId }: { projectId: string }) {
   useEffect(() => {
     fetchData();
   }, [projectId]);
+
 
   const filteredAnswers = answers.filter((qa) => (qa.q || qa.question || "").trim() || (qa.a || qa.answer || "").trim());
   const filteredFollowups = followups.filter((qa) => (qa.q || qa.question || "").trim() || (qa.a || qa.answer || "").trim());
@@ -446,6 +450,16 @@ export default function DraftsPanel({ projectId }: { projectId: string }) {
 
   return (
     <div className="grid grid-cols-12 gap-6">
+      {/* New Products Banner - spans full width */}
+      {data?.newProducts?.hasNew && (
+        <div className="col-span-12">
+          <NewProductsBanner
+            projectId={projectId}
+            newProductCount={data.newProducts.count}
+            onRegenerateClick={() => regenerate({ overwrite: true })}
+          />
+        </div>
+      )}
       <div className="col-span-8 space-y-8">
         {/* Your Reflections Section */}
         <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-elevated)] p-6 shadow-sm">
