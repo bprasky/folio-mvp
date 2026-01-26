@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
+import { recordAtelierSignal } from '@/lib/atelier/signals';
+import { AtelierOwnerType, AtelierSignalSourceType } from '@prisma/client';
 
 export const runtime = 'nodejs';
 
@@ -19,6 +21,97 @@ const ROOM_TYPE_TO_ENUM: Record<string, string> = {
   'closet': 'CLOSET',
   'other': 'OTHER',
 };
+
+/**
+ * Helper: Find matching ProjectImage ID from temporary image URL
+ */
+function findProjectImageId(
+  tempImageUrl: string | null,
+  imageUrlToId: Map<string, string>
+): string | null {
+  if (!tempImageUrl) return null;
+
+  // Direct match
+  if (imageUrlToId.has(tempImageUrl)) {
+    return imageUrlToId.get(tempImageUrl)!;
+  }
+
+  // Try base URL without query params
+  const baseUrl = tempImageUrl.split('?')[0];
+  if (imageUrlToId.has(baseUrl)) {
+    return imageUrlToId.get(baseUrl)!;
+  }
+
+  // Try matching by filename
+  const filename = tempImageUrl.split('/').pop()?.split('?')[0];
+  if (filename) {
+    for (const [url, id] of imageUrlToId) {
+      if (url.includes(filename)) {
+        return id;
+      }
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Helper: Find or create Product from PendingProductTag data
+ */
+async function findOrCreateProductFromPending(
+  pendingTag: {
+    description: string;
+    extractedVendor: string | null;
+    extractedPrice: number | null; // in cents
+    category: string;
+    topSuggestion: unknown;
+  }
+): Promise<string> {
+  const suggestion = pendingTag.topSuggestion as {
+    productUrl?: string;
+    vendorName?: string;
+    productName?: string;
+    price?: string;
+    imageUrl?: string;
+  } | null;
+
+  // Determine best name: suggestion name > description
+  const productName = suggestion?.productName || pendingTag.description;
+  const vendorName = pendingTag.extractedVendor || suggestion?.vendorName || null;
+
+  // Try to find existing product by name + vendor (case-insensitive)
+  const existing = await prisma.product.findFirst({
+    where: {
+      name: { equals: productName, mode: 'insensitive' },
+      ...(vendorName ? { brand: { equals: vendorName, mode: 'insensitive' } } : {}),
+    },
+  });
+
+  if (existing) {
+    return existing.id;
+  }
+
+  // Create new pending product
+  const price = pendingTag.extractedPrice
+    ? pendingTag.extractedPrice / 100 // Convert cents to dollars
+    : suggestion?.price
+      ? parseFloat(suggestion.price)
+      : null;
+
+  const product = await prisma.product.create({
+    data: {
+      name: productName,
+      brand: vendorName,
+      price: price,
+      category: pendingTag.category.toLowerCase(),
+      imageUrl: suggestion?.imageUrl || null,
+      url: suggestion?.productUrl || null,
+      isPending: true,
+    },
+  });
+
+  return product.id;
+}
 
 /**
  * POST /api/import/[sessionId]/finalize
@@ -63,10 +156,35 @@ export async function POST(
         id: projectId,
         OR: [{ ownerId: userId }, { designerId: userId }],
       },
+      select: {
+        id: true,
+        designerId: true,
+        ownerId: true,
+      },
     });
 
     if (!project) {
       return NextResponse.json({ error: 'Project not found or access denied' }, { status: 404 });
+    }
+
+    // Get designerId for Atelier signals (prefer project.designerId, fallback to ownerId)
+    const designerId = project.designerId || project.ownerId;
+
+    // Fetch project images for URL-to-ID mapping (needed for ProductTag creation)
+    const projectImages = await prisma.projectImage.findMany({
+      where: { projectId },
+      select: { id: true, url: true },
+    });
+
+    // Create URL-to-ID mapping for fast lookup
+    const imageUrlToId = new Map<string, string>();
+    for (const img of projectImages) {
+      imageUrlToId.set(img.url, img.id);
+      // Also index by base URL without query params
+      const baseUrl = img.url.split('?')[0];
+      if (baseUrl !== img.url) {
+        imageUrlToId.set(baseUrl, img.id);
+      }
     }
 
     // Create rooms if they don't exist
@@ -99,6 +217,7 @@ export async function POST(
     // Process selected products
     let confirmedCount = 0;
     let selectionsCreated = 0;
+    let productTagsCreated = 0;
 
     for (const product of products) {
       const pendingTag = await prisma.pendingProductTag.findUnique({
@@ -183,12 +302,121 @@ export async function POST(
       });
       selectionsCreated++;
 
+      // NEW: Create ProductTag if we have coordinates (connects to Editorial flow)
+      // This allows PDF-imported products to appear as visual tags and in materials ledger
+      let createdProductTagId: string | null = null;
+      if (pendingTag.x != null && pendingTag.y != null) {
+        const projectImageId = findProjectImageId(pendingTag.tempImageUrl, imageUrlToId);
+
+        if (projectImageId) {
+          try {
+            // Find or create Product from pending tag data
+            const productId = await findOrCreateProductFromPending(pendingTag);
+
+            // Create ProductTag (same entity as manual tagging creates)
+            // Convert coordinates: PendingProductTag uses 0-1 normalized, ProductTag uses 0-100 percentage
+            const tag = await prisma.productTag.create({
+              data: {
+                x: pendingTag.x * 100,
+                y: pendingTag.y * 100,
+                productId: productId,
+                imageId: projectImageId,
+              },
+            });
+            createdProductTagId = tag.id;
+            productTagsCreated++;
+
+            console.log('[PDF Import] Created ProductTag:', {
+              tagId: tag.id,
+              projectId,
+              imageId: projectImageId,
+              productId,
+              position: { x: pendingTag.x * 100, y: pendingTag.y * 100 },
+            });
+
+            // Record Atelier signals (same as manual tagging for ML training)
+            if (designerId) {
+              try {
+                // Get product details for signal recording
+                const productDetails = await prisma.product.findUnique({
+                  where: { id: productId },
+                  select: { category: true, vendorId: true },
+                });
+
+                // Main signal: product tagged
+                await recordAtelierSignal({
+                  ownerType: AtelierOwnerType.DESIGNER,
+                  designerId,
+                  sourceType: AtelierSignalSourceType.PRODUCT_TAG,
+                  sourceId: tag.id,
+                  key: 'product_tagged',
+                  value: productId,
+                  weight: 1.0,
+                });
+
+                // Signal: product category preference
+                if (productDetails?.category) {
+                  await recordAtelierSignal({
+                    ownerType: AtelierOwnerType.DESIGNER,
+                    designerId,
+                    sourceType: AtelierSignalSourceType.PRODUCT_TAG,
+                    sourceId: tag.id,
+                    key: `category:${productDetails.category}`,
+                    value: productId,
+                    weight: 1.0,
+                  });
+                }
+
+                // Signal: vendor preference
+                if (productDetails?.vendorId) {
+                  await recordAtelierSignal({
+                    ownerType: AtelierOwnerType.DESIGNER,
+                    designerId,
+                    sourceType: AtelierSignalSourceType.PRODUCT_TAG,
+                    sourceId: tag.id,
+                    key: `vendor:${productDetails.vendorId}`,
+                    value: productId,
+                    weight: 1.0,
+                  });
+                }
+
+                // Signal: source indicator (distinguishes from manual tagging)
+                await recordAtelierSignal({
+                  ownerType: AtelierOwnerType.DESIGNER,
+                  designerId,
+                  sourceType: AtelierSignalSourceType.PRODUCT_TAG,
+                  sourceId: tag.id,
+                  key: 'source:pdf_import',
+                  value: productId,
+                  weight: 1.0,
+                });
+
+                console.log('[Atelier] Signals recorded for PDF import product tag:', {
+                  tagId: tag.id,
+                  designerId,
+                });
+              } catch (signalError) {
+                // Log but don't fail the tag creation
+                console.error('[Atelier] Failed to record signals for PDF import:', signalError);
+              }
+            }
+          } catch (productTagError) {
+            // Log error but don't fail Selection creation - existing flow continues
+            console.error(`[PDF Import] Failed to create ProductTag for pending tag ${pendingTag.id}:`, productTagError);
+          }
+        } else {
+          console.warn(`[PDF Import] Could not match image URL for ProductTag: ${pendingTag.tempImageUrl}`);
+        }
+      }
+
       // Update pending tag status
       await prisma.pendingProductTag.update({
         where: { id: pendingTag.id },
         data: {
           status: 'CONFIRMED',
           reviewedAt: new Date(),
+          // Link to created ProductTag if successful
+          ...(createdProductTagId ? { resultingTagId: createdProductTagId } : {}),
         },
       });
       confirmedCount++;
@@ -210,6 +438,7 @@ export async function POST(
       roomsCreated: roomIdMap.size,
       productsConfirmed: confirmedCount,
       selectionsCreated,
+      productTagsCreated,
     });
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : 'Unknown error';
