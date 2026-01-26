@@ -1,12 +1,14 @@
-# Ralph Progress Log - Folio
-Started: 2025-01-25
-Branch: ralph/console-cleanup-batch-1
+# Ralph Progress Log - Error Boundary Hardening
+Started: 2026-01-26
+Branch: ralph/error-boundary-hardening
 
 ## Codebase Patterns
 
+- ErrorBoundary component: `src/components/ui/DesignerFlowErrorBoundary.tsx`
+- Import path: `@/components/ui/DesignerFlowErrorBoundary`
+- For modals: wrap inside Dialog, not around it
+- Context prop should be kebab-case descriptor
 - Build check: `npm run typecheck && npm run build`
-- Keep `console.error` in catch blocks
-- ADD only - don't refactor unrelated code
 
 ## Session Log
 

@@ -1,58 +1,57 @@
-# Ralph Agent Instructions - Folio
+# Ralph Agent Instructions - Folio Hardening
 
 ## Context
 
-You are Ralph, an autonomous coding agent for the Folio codebase.
-Folio is a Next.js 14 app with TypeScript, Prisma, and Supabase.
+You are hardening designer-facing components by wrapping them in ErrorBoundary.
+Pattern is established in `src/components/ui/DesignerFlowErrorBoundary.tsx`.
 
-**Critical Rules:**
-- Make ONE story's changes per iteration
-- ADD only - don't refactor unrelated code
-- Commit after each successful story
-- If stuck, mark story with notes and move to next
+**Rules:**
+- ONE story per iteration
+- Import the ErrorBoundary at top of file
+- Wrap the main return JSX
+- Set appropriate `context` prop
+- Don't modify component logic, just wrap it
+- Commit after each success
 
 ## Your Task
 
-1. Read `scripts/ralph/prd.json` for task list
-2. Read `scripts/ralph/progress.txt` for learnings (CHECK CODEBASE PATTERNS FIRST)
-3. Verify you're on branch `ralph/console-cleanup-batch-1` (create if needed)
-4. Pick the **highest priority** story where `"passes": false`
-5. Implement that ONE story
+1. Read `scripts/ralph/prd.json` for stories
+2. Read `scripts/ralph/progress.txt` for patterns
+3. Ensure on branch `ralph/error-boundary-hardening`
+4. Pick highest priority story where `"passes": false`
+5. Implement wrapping pattern
 6. Run: `npm run typecheck && npm run build`
-7. If passing:
-   - Commit: `chore: [ID] - [Title]`
-   - Update prd.json: set `"passes": true`
-   - Append learnings to progress.txt
-8. If failing:
-   - Add error to story's `"notes"` field
-   - Move to next story
+7. If passing: commit, update prd.json, append to progress.txt
+8. If failing: add error to notes, move to next
 
-## Progress Format
+## Wrapping Pattern
+```tsx
+// At top of file
+import { DesignerFlowErrorBoundary } from '@/components/ui/DesignerFlowErrorBoundary';
 
-APPEND to progress.txt:
+// Wrap the return
+export default function ComponentName() {
+  // ... existing logic ...
+
+  return (
+    <DesignerFlowErrorBoundary context="component-name">
+      {/* existing JSX */}
+    </DesignerFlowErrorBoundary>
+  );
+}
 ```
----
-## [Date] - [Story ID]
-- What was changed
-- Files modified
-- **Learnings:** Any patterns discovered
+
+For modals with Dialog, wrap inside the Dialog:
+```tsx
+<Dialog open={open} onClose={onClose}>
+  <DesignerFlowErrorBoundary context="modal-name">
+    {/* modal content */}
+  </DesignerFlowErrorBoundary>
+</Dialog>
 ```
-
-## Console.log Cleanup Rules
-
-**REMOVE:**
-- console.log used for debugging
-- console.log with variable inspection
-- console.log('here') style markers
-
-**KEEP:**
-- console.error in catch blocks
-- console.warn for deprecation notices
 
 ## Stop Condition
 
-When ALL stories have `"passes": true`, respond with:
+When ALL stories have `"passes": true`:
 
 <promise>COMPLETE</promise>
-
-Otherwise, end normally after completing one story.
