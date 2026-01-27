@@ -9,6 +9,7 @@ import { InterviewModal } from '@/components/posting/interview/InterviewModal';
 import { FinishScheduleOptionsModal } from '@/components/posting/FinishScheduleOptionsModal';
 import { PresentationImportModal } from '@/components/import/PresentationImportModal';
 import { PdfSpecImportModal } from '@/components/import/PdfSpecImportModal';
+import { NewProductsBanner } from '@/components/posting/NewProductsBanner';
 
 interface ProductTag {
   id: string;
@@ -57,6 +58,14 @@ export default function MediaSection({ project, isOwner, images, projectPost }: 
     hasCover: boolean;
   } | null>(null);
 
+  // New products banner state
+  const [newProductsInfo, setNewProductsInfo] = useState<{
+    hasNew: boolean;
+    newCount: number;
+    newestProductAt: string | null;
+  } | null>(null);
+  const [newProductsDismissed, setNewProductsDismissed] = useState(false);
+
   // Drag and drop state
   const [isDragOver, setIsDragOver] = useState(false);
   const [showPresentationImport, setShowPresentationImport] = useState(false);
@@ -80,6 +89,55 @@ export default function MediaSection({ project, isOwner, images, projectPost }: 
     }
     fetchRooms();
   }, [project.id]);
+
+  // Fetch new products status and check localStorage for dismissal
+  useEffect(() => {
+    if (!POSTING_V1_ENABLED || !isOwner) return;
+
+    // Check localStorage for dismissal
+    const dismissKey = `folio:dismissed-new-products:${project.id}`;
+    const dismissedData = localStorage.getItem(dismissKey);
+    if (dismissedData) {
+      try {
+        const { dismissedAt, newestProductAt } = JSON.parse(dismissedData);
+        // If we have a timestamp, we'll compare later to see if new products came in
+        if (dismissedAt) {
+          setNewProductsDismissed(true);
+        }
+      } catch {
+        // Invalid JSON, clear it
+        localStorage.removeItem(dismissKey);
+      }
+    }
+
+    // Fetch new products status
+    async function fetchNewProducts() {
+      try {
+        const res = await fetch(`/api/posting/project/${project.id}/new-products`);
+        if (res.ok) {
+          const data = await res.json();
+          setNewProductsInfo(data);
+
+          // If new products have been added since dismissal, show banner again
+          if (data.hasNew && dismissedData) {
+            try {
+              const { newestProductAt: dismissedNewest } = JSON.parse(dismissedData);
+              if (data.newestProductAt && dismissedNewest && data.newestProductAt > dismissedNewest) {
+                // New products added since dismissal - show banner again
+                setNewProductsDismissed(false);
+                localStorage.removeItem(dismissKey);
+              }
+            } catch {
+              // Ignore parse errors
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch new products status:', error);
+      }
+    }
+    fetchNewProducts();
+  }, [project.id, isOwner]);
 
   // Drag and drop handlers
   const handleDragEnter = useCallback((e: React.DragEvent) => {
@@ -188,6 +246,22 @@ export default function MediaSection({ project, isOwner, images, projectPost }: 
       alert('Failed to delete image');
     }
   }, [project.id, router]);
+
+  // Handle dismissing the new products banner
+  const handleDismissNewProducts = useCallback(() => {
+    const dismissKey = `folio:dismissed-new-products:${project.id}`;
+    localStorage.setItem(dismissKey, JSON.stringify({
+      dismissedAt: new Date().toISOString(),
+      newestProductAt: newProductsInfo?.newestProductAt || null,
+    }));
+    setNewProductsDismissed(true);
+  }, [project.id, newProductsInfo]);
+
+  // Handle "Update Post" click from new products banner
+  const handleUpdatePostFromBanner = useCallback(() => {
+    // Open the finish schedule modal which leads to the interview
+    setShowFinishScheduleModal(true);
+  }, []);
 
   // Load existing ProjectPost to check heroAssetId
   useEffect(() => {
@@ -354,6 +428,15 @@ export default function MediaSection({ project, isOwner, images, projectPost }: 
             )}
           </div>
         </div>
+
+        {/* New Products Banner - shows when products added since last post generation */}
+        {POSTING_V1_ENABLED && isOwner && newProductsInfo?.hasNew && !newProductsDismissed && (
+          <NewProductsBanner
+            newCount={newProductsInfo.newCount}
+            onUpdatePost={handleUpdatePostFromBanner}
+            onDismiss={handleDismissNewProducts}
+          />
+        )}
 
         {/* Draft Checklist Banner */}
         {POSTING_V1_ENABLED && checklistBanner && (
@@ -599,7 +682,14 @@ export default function MediaSection({ project, isOwner, images, projectPost }: 
       {showInterviewModal && (
         <InterviewModal
           open={showInterviewModal}
-          onOpenChange={setShowInterviewModal}
+          onOpenChange={(open) => {
+            setShowInterviewModal(open);
+            // When interview modal closes, assume post was regenerated
+            // and dismiss the new products banner
+            if (!open && newProductsInfo?.hasNew) {
+              handleDismissNewProducts();
+            }
+          }}
           projectId={project.id}
           images={images}
           post={existingPost}
