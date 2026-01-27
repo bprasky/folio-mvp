@@ -138,6 +138,14 @@ model User {
   productSearchLogs              ProductSearchLog[]
   vendorRepContacts              VendorRepContact[]
 
+  // Intelligence System relations
+  likes                          Like[]                @relation("UserLikes")
+  saves                          Save[]                @relation("UserSaves")
+  boards                         Board[]               @relation("UserBoards")
+  tasteInferences                TasteInference[]      @relation("UserTasteInferences")
+  tasteProfile                   UserTasteProfile?     @relation("UserTasteProfile")
+  trendInterviewRequests         TrendInterviewRequest[] @relation("DesignerTrendInterviews")
+
   @@map("users")
 }
 
@@ -284,6 +292,9 @@ model Project {
   // Boost system relations
   boostOpportunities   BoostOpportunity[]
 
+  // Intelligence System relations
+  trendInterviewRequests TrendInterviewRequest[] @relation("ProjectTrendInterviews")
+
   @@map("projects")
 }
 
@@ -410,6 +421,11 @@ model Product {
   // PDF Extraction - skeleton items confirmed as this product
   skeletonItems       SkeletonItem[]
 
+  // Intelligence System relations
+  likes               Like[]                      @relation("ProductLikes")
+  savesReceived       Save[]                      @relation("ProductSaves")
+  contentOpportunities VendorContentOpportunity[] @relation("ProductContentOpportunities")
+
   @@map("products")
 }
 
@@ -424,6 +440,9 @@ model ProductTag {
   image     ProjectImage @relation(fields: [imageId], references: [id], onDelete: Cascade)
   product   Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
   selection Selection?   // Selection created from this tag
+
+  // Intelligence System relations
+  supplementalQuotes SupplementalQuote[] @relation("ProductTagQuotes")
 
   @@map("product_tags")
 }
@@ -627,6 +646,9 @@ model Organization {
 
   // Presale development relations (for DEVELOPER orgs)
   developments        Development[]
+
+  // Intelligence System relations
+  contentOpportunities VendorContentOpportunity[] @relation("VendorContentOpportunities")
 
   @@index([status])
   @@index([type])
@@ -1083,6 +1105,9 @@ model ProjectPost {
   createdAt            DateTime              @default(now())
   updatedAt            DateTime              @updatedAt
   editorialAssignments EditorialAssignment[]
+
+  // Intelligence System relations
+  supplementalQuotes   SupplementalQuote[]   @relation("PostSupplementalQuotes")
 
   @@map("project_posts")
 }
@@ -3404,4 +3429,279 @@ model OrgVendorPartnership {
   @@unique([designFirmOrgId, vendorOrgId])
   @@index([vendorOrgId])
   @@map("org_vendor_partnership")
+}
+
+// ============================================================
+// INTELLIGENCE SYSTEM - User taste signals, patterns, and profiles
+// See docs/12_INTELLIGENCE_SYSTEM.md for full specification
+// ============================================================
+
+// Layer 1: Signal Capture - Likes (impulsive engagement)
+model Like {
+  id                String   @id @default(cuid())
+  userId            String
+  productId         String
+  createdAt         DateTime @default(now())
+
+  // Extracted attributes (populated async from product)
+  productAttributes Json?    // { colors: [], materials: [], shapes: [], styles: [] }
+
+  user              User     @relation("UserLikes", fields: [userId], references: [id], onDelete: Cascade)
+  product           Product  @relation("ProductLikes", fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@index([userId, createdAt])
+  @@index([productId])
+  @@map("likes")
+}
+
+// Layer 1: Signal Capture - Saves (intentional engagement)
+model Save {
+  id                String   @id @default(cuid())
+  userId            String
+  productId         String
+
+  // Organization
+  boardId           String?
+  roomType          String?  // "living_room", "bedroom", "kitchen", etc.
+
+  // Extracted attributes (populated async from product)
+  productAttributes Json?    // { colors: [], materials: [], shapes: [], styles: [] }
+
+  // Conversion tracking
+  converted         Boolean  @default(false)
+  convertedAt       DateTime?
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user              User     @relation("UserSaves", fields: [userId], references: [id], onDelete: Cascade)
+  product           Product  @relation("ProductSaves", fields: [productId], references: [id], onDelete: Cascade)
+  board             Board?   @relation(fields: [boardId], references: [id], onDelete: SetNull)
+
+  @@unique([userId, productId])
+  @@index([userId, boardId])
+  @@index([userId, createdAt])
+  @@index([productId])
+  @@map("saves")
+}
+
+// Layer 1 & 5: Boards for organizing saves
+model Board {
+  id            String   @id @default(cuid())
+  userId        String
+  name          String
+  type          String   // 'room', 'style', 'inspiration', 'auto'
+  roomType      String?  // If type='room': 'living_room', 'bedroom', etc.
+
+  // Auto-generated boards track their source
+  autoGenerated Boolean  @default(false)
+  autoSource    String?  // 'room_clustering', 'style_clustering'
+
+  // Cover image (first save's product image or custom)
+  coverImageUrl String?
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user          User     @relation("UserBoards", fields: [userId], references: [id], onDelete: Cascade)
+  saves         Save[]
+
+  @@index([userId])
+  @@index([userId, type])
+  @@map("boards")
+}
+
+// Layer 2: Pattern Inference - Detected taste patterns
+model TasteInference {
+  id              String    @id @default(cuid())
+  userId          String
+
+  attribute       String    // "curved", "green", "velvet", "warm_modern"
+  attributeType   String    // "shape", "color", "material", "style"
+
+  confidence      Float     // 0-1 based on pattern strength
+  evidence        String    // Human-readable explanation
+  source          String    // "frequency", "cross_pattern", "clustering"
+
+  // User confirmation
+  confirmedByUser Boolean?  // null = not asked, true = yes, false = no
+  confirmedAt     DateTime?
+
+  // Display tracking
+  shownToUser     Boolean   @default(false)
+  shownAt         DateTime?
+  dismissedAt     DateTime?
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  user            User      @relation("UserTasteInferences", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, attribute])
+  @@index([userId, confirmedByUser])
+  @@index([userId, shownToUser])
+  @@map("taste_inferences")
+}
+
+// Layer 5: User Taste Profile - Self-discovery dashboard
+model UserTasteProfile {
+  id                  String    @id @default(cuid())
+  userId              String    @unique
+
+  // AI-generated summary
+  styleName           String?   // "Warm Modern with Art Deco influence"
+  styleDescription    String?   @db.Text // Full paragraph description
+
+  // Confirmed preferences (high confidence)
+  confirmedAttributes String[]
+
+  // Stats
+  totalLikes          Int       @default(0)
+  totalSaves          Int       @default(0)
+  profileStrength     Float     @default(0) // 0-1 based on confirmations
+
+  // Milestones
+  firstInsightAt      DateTime?
+  styleNamedAt        DateTime?
+
+  // Fingerprint vector for matching
+  fingerprintVector   Json?     // Numeric vector for similarity matching
+
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  user                User      @relation("UserTasteProfile", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_taste_profiles")
+}
+
+// Layer 6: Supplemental Quotes - Designer micro-answers
+model SupplementalQuote {
+  id              String   @id @default(cuid())
+  projectPostId   String
+  productTagId    String?  // If quote is about a specific product
+
+  question        String
+  answer          String   @db.Text
+  source          String   // 'welcome_back', 'trend_interview', 'user_question'
+
+  // Display control
+  pinned          Boolean  @default(false)
+  displayLocation String?  // 'near_product', 'sidebar', 'end_of_post'
+
+  createdAt       DateTime @default(now())
+
+  post            ProjectPost @relation("PostSupplementalQuotes", fields: [projectPostId], references: [id], onDelete: Cascade)
+  productTag      ProductTag? @relation("ProductTagQuotes", fields: [productTagId], references: [id], onDelete: SetNull)
+
+  @@index([projectPostId])
+  @@index([productTagId])
+  @@map("supplemental_quotes")
+}
+
+// Layer 6: Trend Detection - Rising signals across platform
+model TrendSignal {
+  id                 String    @id @default(cuid())
+
+  signalType         String    // 'search', 'save', 'like', 'tag_density'
+  topic              String    // 'green chair', 'brass fixtures', 'curved sofa'
+  topicType          String    // 'product', 'color', 'material', 'shape', 'style'
+
+  // Metrics
+  currentVolume      Int       // This period's count
+  previousVolume     Int       // Last period's count
+  growthRate         Float     // Percentage increase
+  magnitude          Float     // How strong is the spike (0-1)
+
+  // Related entities
+  topProducts        String[]  // Product IDs driving the trend
+  topDesigners       String[]  // Designers who tagged trending items
+
+  // Status
+  status             String    @default("detected") // 'detected', 'interviewing', 'published', 'expired'
+
+  // Output
+  generatedArticleId String?
+
+  detectedAt         DateTime  @default(now())
+  expiresAt          DateTime
+
+  interviewRequests  TrendInterviewRequest[]
+
+  @@index([status])
+  @@index([topicType])
+  @@index([detectedAt])
+  @@map("trend_signals")
+}
+
+// Layer 6: Trend Interview Requests - Designer micro-interviews
+model TrendInterviewRequest {
+  id              String    @id @default(cuid())
+  trendSignalId   String
+  designerId      String
+  projectId       String
+  productTagId    String?
+
+  // The question (AI-generated based on trend)
+  question        String
+
+  // Response
+  answer          String?   @db.Text
+  answeredAt      DateTime?
+
+  // Status
+  status          String    @default("pending") // 'pending', 'answered', 'skipped', 'expired'
+
+  // Quality signals
+  engagementScore Float?    // How good is this project for the trend
+
+  createdAt       DateTime  @default(now())
+  expiresAt       DateTime
+
+  trendSignal     TrendSignal @relation(fields: [trendSignalId], references: [id], onDelete: Cascade)
+  designer        User        @relation("DesignerTrendInterviews", fields: [designerId], references: [id], onDelete: Cascade)
+  project         Project     @relation("ProjectTrendInterviews", fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([trendSignalId])
+  @@index([designerId, status])
+  @@index([projectId])
+  @@map("trend_interview_requests")
+}
+
+// Layer 7: Vendor Content Opportunity - Monetization
+model VendorContentOpportunity {
+  id               String    @id @default(cuid())
+  vendorId         String    // Organization ID
+  productId        String
+
+  // Engagement that triggered this
+  likeCount        Int
+  saveCount        Int
+  uncommittedCount Int
+  designerTagCount Int
+
+  // Distribution estimate
+  tier1Reach       Int       // Direct engagers
+  tier2Reach       Int       // Fingerprint matches
+  tier3Reach       Int       // Designer followers
+  totalReach       Int
+
+  // Status
+  status           String    @default("available") // 'available', 'in_progress', 'published', 'expired'
+
+  // If published
+  articleId        String?
+  publishedAt      DateTime?
+
+  createdAt        DateTime  @default(now())
+  expiresAt        DateTime  // 7 days default
+
+  vendor           Organization @relation("VendorContentOpportunities", fields: [vendorId], references: [id], onDelete: Cascade)
+  product          Product      @relation("ProductContentOpportunities", fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([vendorId, status])
+  @@index([productId])
+  @@index([status, expiresAt])
+  @@map("vendor_content_opportunities")
 }
