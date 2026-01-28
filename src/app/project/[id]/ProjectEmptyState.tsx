@@ -271,64 +271,22 @@ export default function ProjectEmptyState({ project }: ProjectEmptyStateProps) {
 
         {/* Main Content - Optical center positioning (content pushed up) */}
         <main className="max-w-3xl mx-auto px-6 pt-12 pb-24">
-          {/* Drop Zone */}
-          <div
-            ref={dropZoneRef}
-            onDragEnter={handleDragEnter}
-            onDragLeave={handleDragLeave}
-            onDragOver={handleDragOver}
-            onDrop={handleDrop}
-            className={`
-              relative border-2 border-dashed rounded-2xl p-12 text-center
-              min-h-[300px] flex flex-col items-center justify-center
-              transition-all duration-200 ease-out cursor-pointer
-              ${isDragOver
-                ? 'border-[var(--accent)] bg-[var(--accent)]/5 scale-[1.02]'
-                : 'border-[var(--ridge-outer)] hover:border-[var(--text-tertiary)] bg-[var(--bg-elevated)]'
-              }
-            `}
-            onClick={() => setShowUploadModal(true)}
-          >
-            <input
-              type="file"
-              multiple
-              accept="image/*,.pdf,.pptx,.ppt,.key,.xlsx,.xls,.csv"
-              onChange={handleFileInputChange}
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-            />
-
-            <div className="pointer-events-none">
-              <FaCloudUploadAlt
-                className={`
-                  w-16 h-16 mx-auto mb-4 transition-colors duration-200
-                  ${isDragOver ? 'text-[var(--accent)]' : 'text-[var(--text-tertiary)]'}
-                `}
-              />
-              <p className="text-lg text-[var(--text-primary)] mb-2">
-                {isDragOver ? 'Drop files here' : 'Drag files here to upload'}
-              </p>
-              <p className="folio-meta">
-                Photos, presentations, or schedules
-              </p>
-            </div>
-          </div>
-
           {/* CTAs - Different layout based on project status */}
           {isDraftProject ? (
             <>
-              {/* NEW PROJECT FLOW - Emphasize starting from scratch */}
-              <div className="mt-8 flex flex-col items-center gap-6">
+              {/* NEW PROJECT FLOW - Primary CTA first */}
+              <div className="flex flex-col items-center gap-6">
                 <div className="text-center">
                   <p className="folio-meta text-[var(--text-secondary)] mb-4">
                     Start building your project from the ground up
                   </p>
-                  {/* Primary CTA - Add Room (prominent) */}
+                  {/* Primary CTA - Add Room */}
                   <button
                     onClick={handleAddRoom}
                     disabled={isCreatingRoom}
-                    className="accent-btn px-8 py-4 text-lg flex items-center gap-3 mx-auto"
+                    className="accent-btn px-6 py-3 flex items-center gap-2.5 mx-auto"
                   >
-                    <FaDoorOpen className="w-5 h-5" />
+                    <FaDoorOpen className="w-4 h-4" />
                     {isCreatingRoom ? 'Creating...' : 'Add Your First Room'}
                   </button>
                 </div>
@@ -336,8 +294,52 @@ export default function ProjectEmptyState({ project }: ProjectEmptyStateProps) {
                 {/* Divider */}
                 <div className="w-full max-w-md flex items-center gap-4">
                   <div className="flex-1 border-t border-[var(--ridge-outer)]" />
-                  <span className="folio-meta text-[var(--text-tertiary)]">or import existing work</span>
+                  <span className="folio-meta text-[var(--text-tertiary)]">or add files</span>
                   <div className="flex-1 border-t border-[var(--ridge-outer)]" />
+                </div>
+
+                {/* Drop Zone - Compact */}
+                <div
+                  ref={dropZoneRef}
+                  onDragEnter={handleDragEnter}
+                  onDragLeave={handleDragLeave}
+                  onDragOver={handleDragOver}
+                  onDrop={handleDrop}
+                  className={`
+                    relative w-full border-2 border-dashed rounded-xl py-8 px-6 text-center
+                    flex flex-col items-center justify-center
+                    transition-all duration-200 ease-out cursor-pointer
+                    ${isDragOver
+                      ? 'border-[var(--accent)] bg-[var(--accent)]/5 scale-[1.01]'
+                      : 'border-[var(--ridge-outer)] hover:border-[var(--text-tertiary)] bg-[var(--bg-elevated)]'
+                    }
+                  `}
+                  onClick={() => setShowUploadModal(true)}
+                >
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*,.pdf,.pptx,.ppt,.key,.xlsx,.xls,.csv"
+                    onChange={handleFileInputChange}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  />
+
+                  <div className="pointer-events-none flex items-center gap-4">
+                    <FaCloudUploadAlt
+                      className={`
+                        w-8 h-8 flex-shrink-0 transition-colors duration-200
+                        ${isDragOver ? 'text-[var(--accent)]' : 'text-[var(--text-tertiary)]'}
+                      `}
+                    />
+                    <div className="text-left">
+                      <p className="text-[var(--text-primary)] folio-ui">
+                        {isDragOver ? 'Drop files here' : 'Drag files here to upload'}
+                      </p>
+                      <p className="folio-meta">
+                        Photos, presentations, or schedules
+                      </p>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Secondary options - Import */}
@@ -363,6 +365,50 @@ export default function ProjectEmptyState({ project }: ProjectEmptyStateProps) {
           ) : (
             <>
               {/* COMPLETED PROJECT FLOW - Emphasize importing/publishing */}
+              {/* Drop Zone - Compact */}
+              <div
+                ref={dropZoneRef}
+                onDragEnter={handleDragEnter}
+                onDragLeave={handleDragLeave}
+                onDragOver={handleDragOver}
+                onDrop={handleDrop}
+                className={`
+                  relative w-full border-2 border-dashed rounded-xl py-8 px-6 text-center
+                  flex flex-col items-center justify-center
+                  transition-all duration-200 ease-out cursor-pointer
+                  ${isDragOver
+                    ? 'border-[var(--accent)] bg-[var(--accent)]/5 scale-[1.01]'
+                    : 'border-[var(--ridge-outer)] hover:border-[var(--text-tertiary)] bg-[var(--bg-elevated)]'
+                  }
+                `}
+                onClick={() => setShowUploadModal(true)}
+              >
+                <input
+                  type="file"
+                  multiple
+                  accept="image/*,.pdf,.pptx,.ppt,.key,.xlsx,.xls,.csv"
+                  onChange={handleFileInputChange}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                />
+
+                <div className="pointer-events-none flex items-center gap-4">
+                  <FaCloudUploadAlt
+                    className={`
+                      w-8 h-8 flex-shrink-0 transition-colors duration-200
+                      ${isDragOver ? 'text-[var(--accent)]' : 'text-[var(--text-tertiary)]'}
+                    `}
+                  />
+                  <div className="text-left">
+                    <p className="text-[var(--text-primary)] folio-ui">
+                      {isDragOver ? 'Drop files here' : 'Drag files here to upload'}
+                    </p>
+                    <p className="folio-meta">
+                      Photos, presentations, or schedules
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4 flex-wrap">
                 {/* Primary CTA - Import Presentation */}
                 <button
