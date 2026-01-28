@@ -5,6 +5,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/options";
 import { prisma } from "@/lib/prisma";
 import { assertProjectView } from "@/lib/authz/access";
+import { hasNewProductsSinceGeneration } from "@/lib/posting/hasNewProductsSinceGeneration";
 
 export async function GET(
   request: NextRequest,
@@ -82,9 +83,16 @@ export async function GET(
       };
     });
 
+    // Check for new products since last generation
+    const newProductsInfo = await hasNewProductsSinceGeneration(projectId);
+
     return NextResponse.json({
       interview: interviewData,
       drafts: versions,
+      newProducts: {
+        hasNew: newProductsInfo.hasNew,
+        count: newProductsInfo.newCount,
+      },
     });
   } catch (e: any) {
     console.error("[drafts] GET failed", { err: e?.message });
