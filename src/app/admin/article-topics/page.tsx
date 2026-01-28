@@ -26,6 +26,17 @@ interface ArticleTopic {
   designerCount: number;
   vendorCount: number;
   individualCount: number;
+  trendSignalId: string | null;
+}
+
+interface AutoGeneratePreview {
+  eligibleCount: number;
+  signals: Array<{
+    id: string;
+    signalType: string;
+    entityName: string;
+    mentionCount: number;
+  }>;
 }
 
 const statusColors: Record<string, string> = {
@@ -74,6 +85,9 @@ export default function AdminArticleTopicsPage() {
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [activating, setActivating] = useState<string | null>(null);
+  const [autoGenerating, setAutoGenerating] = useState(false);
+  const [autoGeneratePreview, setAutoGeneratePreview] = useState<AutoGeneratePreview | null>(null);
+  const [showAutoGenerateModal, setShowAutoGenerateModal] = useState(false);
 
   // Check auth
   useEffect(() => {
@@ -126,6 +140,39 @@ export default function AdminArticleTopicsPage() {
     }
   };
 
+  const handleCheckAutoGenerate = async () => {
+    try {
+      const response = await fetch('/api/admin/article-topics/auto-generate');
+      if (response.ok) {
+        const data = await response.json();
+        setAutoGeneratePreview(data);
+        setShowAutoGenerateModal(true);
+      }
+    } catch (error) {
+      console.error('Error checking auto-generate:', error);
+    }
+  };
+
+  const handleAutoGenerate = async () => {
+    setAutoGenerating(true);
+    try {
+      const response = await fetch('/api/admin/article-topics/auto-generate', {
+        method: 'POST',
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setShowAutoGenerateModal(false);
+        setAutoGeneratePreview(null);
+        fetchTopics();
+        alert(`Generated ${data.generatedCount} new topic(s) from trends!`);
+      }
+    } catch (error) {
+      console.error('Error auto-generating topics:', error);
+    } finally {
+      setAutoGenerating(false);
+    }
+  };
+
   // Group topics by status
   const groupedTopics = topics.reduce((acc, topic) => {
     if (!acc[topic.status]) acc[topic.status] = [];
@@ -154,9 +201,14 @@ export default function AdminArticleTopicsPage() {
               Manage the voice-gathering pipeline for upcoming articles
             </p>
           </div>
-          <Link href="/admin/article-topics/new">
-            <Button variant="accent">Create Topic</Button>
-          </Link>
+          <div className="flex gap-3">
+            <Button variant="ridge" onClick={handleCheckAutoGenerate}>
+              Check for Trend-Based Topics
+            </Button>
+            <Link href="/admin/article-topics/new">
+              <Button variant="accent">Create Topic</Button>
+            </Link>
+          </div>
         </div>
 
         {/* Filter */}
@@ -226,6 +278,11 @@ export default function AdminArticleTopicsPage() {
                               <span className="px-2 py-0.5 rounded text-xs bg-[var(--bg-elevated)] text-[var(--text-secondary)]">
                                 {categoryLabels[topic.category] || topic.category}
                               </span>
+                              {topic.trendSignalId && (
+                                <span className="px-2 py-0.5 rounded text-xs bg-purple-100 text-purple-800">
+                                  Auto-generated from trend
+                                </span>
+                              )}
                             </div>
 
                             <p className="folio-body text-[var(--text-secondary)] mb-3 line-clamp-1">
@@ -293,6 +350,76 @@ export default function AdminArticleTopicsPage() {
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {/* Auto-Generate Modal */}
+        {showAutoGenerateModal && autoGeneratePreview && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <RidgeCard padding="lg" className="max-w-lg w-full mx-4">
+              <h2 className="folio-h2 mb-4">Generate Topics from Trends</h2>
+
+              {autoGeneratePreview.eligibleCount === 0 ? (
+                <div>
+                  <p className="folio-body text-[var(--text-secondary)] mb-6">
+                    No eligible trend signals found. Trends need at least 3 mentions
+                    to be eligible for topic generation.
+                  </p>
+                  <div className="flex justify-end">
+                    <Button
+                      variant="ridge"
+                      onClick={() => setShowAutoGenerateModal(false)}
+                    >
+                      Close
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <p className="folio-body text-[var(--text-secondary)] mb-4">
+                    Found {autoGeneratePreview.eligibleCount} trend signal(s) eligible
+                    for topic generation:
+                  </p>
+
+                  <div className="space-y-2 mb-6 max-h-60 overflow-y-auto">
+                    {autoGeneratePreview.signals.map((signal) => (
+                      <div
+                        key={signal.id}
+                        className="flex items-center justify-between p-3 bg-[var(--bg-elevated)] rounded-lg"
+                      >
+                        <div>
+                          <span className="folio-body font-medium">
+                            {signal.entityName}
+                          </span>
+                          <span className="folio-meta text-[var(--text-secondary)] ml-2">
+                            ({signal.signalType})
+                          </span>
+                        </div>
+                        <span className="px-2 py-0.5 rounded text-xs bg-blue-100 text-blue-800">
+                          {signal.mentionCount} mentions
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex justify-end gap-3">
+                    <Button
+                      variant="ridge"
+                      onClick={() => setShowAutoGenerateModal(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      variant="accent"
+                      onClick={handleAutoGenerate}
+                      disabled={autoGenerating}
+                    >
+                      {autoGenerating ? 'Generating...' : `Generate ${autoGeneratePreview.eligibleCount} Topic(s)`}
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </RidgeCard>
           </div>
         )}
       </div>

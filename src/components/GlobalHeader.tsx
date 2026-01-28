@@ -11,6 +11,7 @@ import { LogoutButton } from './LogoutButton';
 import { getCreateTarget, canCreateProject as canCreate, normalizeRole, getRoleDisplayName } from '@/lib/permissions';
 import DemoRoleSwitcher from './demo/DemoRoleSwitcher';
 import GlobalSearchBar from './search/GlobalSearchBar';
+import { NotificationBell } from './notifications';
 
 export default function GlobalHeader() {
   const { role } = useRole();
@@ -119,9 +120,16 @@ export default function GlobalHeader() {
           )}
         </div>
 
+        {/* Notification Bell */}
+        {session?.user && (
+          <div className="hidden sm:block">
+            <NotificationBell />
+          </div>
+        )}
+
         {/* Profile Dropdown */}
         {session?.user && (
-          <div className="relative ml-auto" ref={dropdownRef}>
+          <div className="relative" ref={dropdownRef}>
             <motion.button
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
               className="flex items-center gap-3 px-4 py-2 bg-white/90 backdrop-blur-sm rounded-lg shadow-sm border border-folio-border hover:bg-white transition-all duration-200"

@@ -69,6 +69,7 @@ export async function GET(request: NextRequest) {
         minIndividuals: topic.minIndividuals,
         status: topic.status,
         autoTriggered: topic.autoTriggered,
+        trendSignalId: topic.trendSignalId,
         queuedAt: topic.queuedAt,
         gatheringStartedAt: topic.gatheringStartedAt,
         targetPublishDate: topic.targetPublishDate,
