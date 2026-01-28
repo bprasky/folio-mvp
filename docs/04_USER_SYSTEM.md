@@ -58,6 +58,13 @@ Observed in schema (`prisma/schema.prisma` - User model):
 - `onboardingBrandStepCompletedAt`: DateTime? (optional)
 - `brandProfile`: DesignerBrandProfile? (relation)
 
+**Designer Attribution Fields:**
+- `vendorVisibility`: Boolean (default: false) — Whether vendors can see designer's active specifications
+- `vendorVisibilityEnabledAt`: DateTime? (optional) — When visibility was turned on
+- `influenceScore`: Float? (optional) — Calculated influence score (0-100)
+- `influenceScoreUpdatedAt`: DateTime? (optional) — Last score calculation
+- `folioCreditBalance`: Decimal (default: 0) — Current Folio Credit balance in USD
+
 **Vendor Rep Fields:**
 - `isVendorRep`: Boolean (default: false)
 - `vendorOrganizationId`: String? (optional, relation to Organization)
@@ -142,5 +149,40 @@ Observed relationships from User model:
 - Interview sessions
 - Action items (assigned, created)
 
+## Designer Directory Ranking
 
+Designer directory position is calculated from ecosystem participation signals:
+
+| Signal | Weight | Description |
+|--------|--------|-------------|
+| Post frequency + engagement | High | Published projects and their saves/views |
+| On-platform transactions | High | Purchases completed through Folio checkout |
+| Profile completeness | Medium | Bio, portfolio, contact info filled |
+| Response rate to inquiries | Medium | Speed and rate of responding to messages |
+| Vendor Visibility status | Low | Small boost when visibility is ON |
+| Influence-to-transaction ratio | Modifier | Adjusts score based on conversion behavior |
+
+Ranking is recalculated daily. See 12_COMPENSATION_SYSTEM.md for full economics.
+
+## Vendor Visibility Setting
+
+Controls what vendors can see about designer's specification activity.
+
+**When OFF (default):**
+- Vendors see only aggregate engagement data
+- Designer's saves and specs are private
+- Designer does not appear in vendor specifier dashboards
+
+**When ON:**
+- Vendors can see designer is actively specifying their products
+- Designer eligible for appreciation programs and priority support
+- Designer appears in vendor "Top Specifiers" analytics
+- Small boost to directory ranking
+
+See 13_ATTRIBUTION_CONSENT.md for full consent architecture.
+
+## Related Documents
+
+- 12_COMPENSATION_SYSTEM.md — Tier 1 and Tier 2 compensation structures
+- 13_ATTRIBUTION_CONSENT.md — Data visibility tiers and consent requirements
 
