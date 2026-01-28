@@ -6,6 +6,7 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
 import { recordAtelierSignal } from '@/lib/atelier/signals';
 import { AtelierOwnerType, AtelierSignalSourceType } from '@prisma/client';
+import { syncSingleTestimonial } from '@/lib/syncTestimonials';
 
 export async function POST(request: NextRequest) {
   try {
@@ -154,6 +155,15 @@ export async function POST(request: NextRequest) {
             console.log('[ShopProduct] Updated with quote:', { shopProductId: shopProduct.id });
           } else {
             shopProduct = existingShopProduct;
+          }
+        }
+
+        // Sync testimonial if shop product has a quote
+        if (shopProduct && shopProduct.quote) {
+          try {
+            await syncSingleTestimonial(shopProduct.id);
+          } catch (syncError) {
+            console.error('[ProductTestimonial] Failed to sync testimonial:', syncError);
           }
         }
       } catch (shopError) {
