@@ -163,6 +163,11 @@ model User {
   // Designer Shop System relations
   shopProducts                   ShopProduct[]         @relation("DesignerShopProducts")
 
+  // Vendor Invite & Presentation System
+  vendorInvitesClaimed           VendorInvite[]        @relation("VendorInvitesClaimed")
+  vendorInvitesAdmin             VendorInvite[]        @relation("VendorInvitesAdmin")
+  vendorPresentationViews        VendorPresentationView[] @relation("VendorPresentationViews")
+
   @@map("users")
 }
 
@@ -474,6 +479,9 @@ model ProductTag {
   // Intelligence System relations
   supplementalQuotes SupplementalQuote[] @relation("ProductTagQuotes")
 
+  // Vendor Invite System
+  vendorInviteTriggers VendorInvite[] @relation("VendorInviteTriggerTag")
+
   @@map("product_tags")
 }
 
@@ -682,6 +690,12 @@ model Organization {
 
   // Designer Shop System relations
   shopBoosts           ShopBoost[]               @relation("VendorShopBoosts")
+
+  // Vendor Invite & Presentation System
+  vendorInvite             VendorInvite?
+  presentationViews        VendorPresentationView[]
+  isFoundingVendor         Boolean   @default(false)
+  foundingVendorClaimedAt  DateTime?
 
   @@index([status])
   @@index([type])
@@ -4058,4 +4072,71 @@ model ProductTestimonial {
 
   @@index([productId])
   @@map("product_testimonials")
+}
+
+// ─── Vendor Invite & Presentation System ────────────────────────────────────
+
+// Track vendor notification/claim status when designers tag vendor products
+model VendorInvite {
+  id                String       @id @default(cuid())
+  organizationId    String       @unique
+  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  // Trigger tag (the tag that initiated the invite)
+  triggerTagId      String?
+  triggerTag        ProductTag?  @relation("VendorInviteTriggerTag", fields: [triggerTagId], references: [id], onDelete: SetNull)
+
+  // Invite tracking
+  emailSentAt       DateTime?
+  emailOpenedAt     DateTime?
+  linkClickedAt     DateTime?
+
+  // Claim tracking
+  claimedAt         DateTime?
+  claimedByUserId   String?
+  claimedByUser     User?        @relation("VendorInvitesClaimed", fields: [claimedByUserId], references: [id], onDelete: SetNull)
+
+  // Admin activation
+  adminActivatedAt  DateTime?
+  adminUserId       String?
+  adminUser         User?        @relation("VendorInvitesAdmin", fields: [adminUserId], references: [id], onDelete: SetNull)
+
+  // Founding vendor program
+  foundingVendorSlot Int?        // null = not in program, 1-20 = slot number
+
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  @@index([claimedByUserId])
+  @@index([adminUserId])
+  @@map("vendor_invites")
+}
+
+// Track presentation scroll analytics
+model VendorPresentationView {
+  id                String       @id @default(cuid())
+  organizationId    String
+  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  userId            String?
+  user              User?        @relation("VendorPresentationViews", fields: [userId], references: [id], onDelete: SetNull)
+
+  presentationType  String       // "rep" or "admin"
+
+  // Scroll analytics
+  maxScrollDepth    Float        @default(0)  // 0-1 percentage
+  sectionsViewed    String[]     // ["hook", "what-happened", ...]
+  timeOnPageMs      Int          @default(0)
+
+  // CTA tracking
+  ctaClicked        String?      // which CTA was clicked
+
+  viewToken         String       @unique @default(cuid())
+
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  @@index([organizationId])
+  @@index([userId])
+  @@map("vendor_presentation_views")
 }
