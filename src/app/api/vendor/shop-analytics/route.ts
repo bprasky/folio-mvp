@@ -166,6 +166,7 @@ export async function GET(request: NextRequest) {
               id: true,
               name: true,
               profileImage: true,
+              vendorVisibility: true,
             },
           },
           product: {
@@ -211,7 +212,7 @@ export async function GET(request: NextRequest) {
       shopCount: tp._count,
     }));
 
-    // Enrich top designers with details
+    // Enrich top designers with details (respecting vendorVisibility)
     const topDesignerIds = topDesigners.map((d) => d.designerId);
     const designerDetails = await prisma.user.findMany({
       where: { id: { in: topDesignerIds } },
@@ -220,24 +221,61 @@ export async function GET(request: NextRequest) {
         name: true,
         profileImage: true,
         companyName: true,
+        vendorVisibility: true,
+        influenceScore: true,
       },
     });
     const designerMap = new Map(designerDetails.map((d) => [d.id, d]));
 
-    const enrichedTopDesigners = topDesigners.map((td) => ({
-      designer: designerMap.get(td.designerId),
-      productCount: td._count,
-    }));
+    const enrichedTopDesigners = topDesigners.map((td) => {
+      const designer = designerMap.get(td.designerId);
+      // Anonymize designers with vendorVisibility = false
+      if (designer && !designer.vendorVisibility) {
+        return {
+          designer: {
+            id: null, // No profile link for anonymous
+            name: 'Anonymous Designer',
+            profileImage: null,
+            companyName: null,
+            influenceScore: designer.influenceScore,
+          },
+          productCount: td._count,
+        };
+      }
+      return {
+        designer: designer ? {
+          id: designer.id,
+          name: designer.name,
+          profileImage: designer.profileImage,
+          companyName: designer.companyName,
+          influenceScore: designer.influenceScore,
+        } : null,
+        productCount: td._count,
+      };
+    });
 
-    // Format recent activity
-    const recentActivity = recentShopProducts.map((sp) => ({
-      id: sp.id,
-      type: 'shop_add' as const,
-      designer: sp.designer,
-      product: sp.product,
-      hasQuote: !!sp.quote,
-      createdAt: sp.createdAt,
-    }));
+    // Format recent activity (respecting vendorVisibility)
+    const recentActivity = recentShopProducts.map((sp) => {
+      const isAnonymous = !sp.designer.vendorVisibility;
+      return {
+        id: sp.id,
+        type: 'shop_add' as const,
+        designer: isAnonymous
+          ? {
+              id: null,
+              name: 'Anonymous Designer',
+              profileImage: null,
+            }
+          : {
+              id: sp.designer.id,
+              name: sp.designer.name,
+              profileImage: sp.designer.profileImage,
+            },
+        product: sp.product,
+        hasQuote: !!sp.quote,
+        createdAt: sp.createdAt,
+      };
+    });
 
     return NextResponse.json({
       overview: {

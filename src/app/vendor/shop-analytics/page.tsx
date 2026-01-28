@@ -422,69 +422,12 @@ export default function VendorShopAnalyticsPage() {
                   <div className="space-y-3">
                     {analytics.topDesigners.map((item, index) =>
                       item.designer ? (
-                        <Link
-                          key={item.designer.id}
-                          href={`/designer/${item.designer.id}?tab=shop`}
-                          className="flex items-center gap-3 hover:bg-gray-50 -mx-2 px-2 py-1 rounded-lg transition-colors"
-                        >
-                          <span
-                            className="text-sm font-medium w-5"
-                            style={{ color: '#A9A29A' }}
-                          >
-                            {index + 1}
-                          </span>
-                          {item.designer.profileImage ? (
-                            <Image
-                              src={item.designer.profileImage}
-                              alt={item.designer.name || 'Designer'}
-                              width={40}
-                              height={40}
-                              className="rounded-full object-cover"
-                            />
-                          ) : (
-                            <div
-                              className="w-10 h-10 rounded-full flex items-center justify-center"
-                              style={{ backgroundColor: '#E8E4DF' }}
-                            >
-                              <span
-                                className="text-sm font-medium"
-                                style={{ color: '#8B8178' }}
-                              >
-                                {(item.designer.name || 'D')
-                                  .charAt(0)
-                                  .toUpperCase()}
-                              </span>
-                            </div>
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <p
-                              className="text-sm font-medium truncate"
-                              style={{ color: '#2C2825' }}
-                            >
-                              {item.designer.name || 'Anonymous'}
-                            </p>
-                            {item.designer.companyName && (
-                              <p
-                                className="text-xs truncate"
-                                style={{ color: '#8B8178' }}
-                              >
-                                {item.designer.companyName}
-                              </p>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <span
-                              className="text-sm font-medium"
-                              style={{ color: '#10B981' }}
-                            >
-                              {item.productCount} products
-                            </span>
-                            <ArrowUpRight
-                              className="w-3 h-3"
-                              style={{ color: '#A9A29A' }}
-                            />
-                          </div>
-                        </Link>
+                        <DesignerRow
+                          key={item.designer.id || `anon-${index}`}
+                          index={index}
+                          designer={item.designer}
+                          productCount={item.productCount}
+                        />
                       ) : null
                     )}
                   </div>
@@ -543,12 +486,18 @@ export default function VendorShopAnalyticsPage() {
                       {/* Activity text */}
                       <div className="flex-1 min-w-0">
                         <p className="text-sm" style={{ color: '#2C2825' }}>
-                          <Link
-                            href={`/designer/${activity.designer.id}?tab=shop`}
-                            className="font-medium hover:underline"
-                          >
-                            {activity.designer.name || 'A designer'}
-                          </Link>{' '}
+                          {activity.designer.id ? (
+                            <Link
+                              href={`/designer/${activity.designer.id}?tab=shop`}
+                              className="font-medium hover:underline"
+                            >
+                              {activity.designer.name || 'A designer'}
+                            </Link>
+                          ) : (
+                            <span className="font-medium">
+                              {activity.designer.name || 'A designer'}
+                            </span>
+                          )}{' '}
                           added{' '}
                           <span className="font-medium">
                             {activity.product.name}
@@ -638,6 +587,102 @@ function StatCard({
       <p className="text-xs" style={{ color: '#A9A29A' }}>
         {subtext}
       </p>
+    </div>
+  );
+}
+
+function DesignerRow({
+  index,
+  designer,
+  productCount,
+}: {
+  index: number;
+  designer: {
+    id: string | null;
+    name: string;
+    profileImage: string | null;
+    companyName?: string | null;
+  };
+  productCount: number;
+}) {
+  const content = (
+    <>
+      <span
+        className="text-sm font-medium w-5"
+        style={{ color: '#A9A29A' }}
+      >
+        {index + 1}
+      </span>
+      {designer.profileImage ? (
+        <Image
+          src={designer.profileImage}
+          alt={designer.name || 'Designer'}
+          width={40}
+          height={40}
+          className="rounded-full object-cover"
+        />
+      ) : (
+        <div
+          className="w-10 h-10 rounded-full flex items-center justify-center"
+          style={{ backgroundColor: '#E8E4DF' }}
+        >
+          <span
+            className="text-sm font-medium"
+            style={{ color: '#8B8178' }}
+          >
+            {(designer.name || 'D').charAt(0).toUpperCase()}
+          </span>
+        </div>
+      )}
+      <div className="flex-1 min-w-0">
+        <p
+          className="text-sm font-medium truncate"
+          style={{ color: '#2C2825' }}
+        >
+          {designer.name || 'Anonymous'}
+        </p>
+        {designer.companyName && (
+          <p
+            className="text-xs truncate"
+            style={{ color: '#8B8178' }}
+          >
+            {designer.companyName}
+          </p>
+        )}
+      </div>
+      <div className="flex items-center gap-1">
+        <span
+          className="text-sm font-medium"
+          style={{ color: '#10B981' }}
+        >
+          {productCount} products
+        </span>
+        {designer.id && (
+          <ArrowUpRight
+            className="w-3 h-3"
+            style={{ color: '#A9A29A' }}
+          />
+        )}
+      </div>
+    </>
+  );
+
+  // Only link if designer has an ID (not anonymous)
+  if (designer.id) {
+    return (
+      <Link
+        href={`/designer/${designer.id}?tab=shop`}
+        className="flex items-center gap-3 hover:bg-gray-50 -mx-2 px-2 py-1 rounded-lg transition-colors"
+      >
+        {content}
+      </Link>
+    );
+  }
+
+  // Non-clickable row for anonymous designers
+  return (
+    <div className="flex items-center gap-3 -mx-2 px-2 py-1">
+      {content}
     </div>
   );
 }
