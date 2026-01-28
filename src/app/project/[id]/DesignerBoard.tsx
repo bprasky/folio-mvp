@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import clsx from 'clsx';
+import { useRouter } from 'next/navigation';
 import DesignerBoardRoom from './DesignerBoardRoom';
 import { getRoomTemplate, RoomTemplate } from './roomTemplates';
 import { computeTileSize as dimensionComputeTileSize } from './tileSizing';
@@ -80,14 +81,16 @@ function computeTileSize(sel: Selection): Size {
 }
 
 
-export default function DesignerBoard({ 
-  projectId, 
-  project, 
-  showAll = true 
+export default function DesignerBoard({
+  projectId,
+  project,
+  showAll = true
 }: DesignerBoardProps) {
+  const router = useRouter();
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
   const [paintAccentEnabled, setPaintAccentEnabled] = useState<Record<string, boolean>>({});
   const [generateDialogOpen, setGenerateDialogOpen] = useState(false);
+  const [isCreatingRoom, setIsCreatingRoom] = useState(false);
   const [generatedImages, setGeneratedImages] = useState<Array<{
     id: string;
     url: string;
@@ -111,6 +114,31 @@ export default function DesignerBoard({
       [roomId]: !prev[roomId]
     }));
   };
+
+  const handleCreateRoom = useCallback(async () => {
+    if (isCreatingRoom) return;
+    setIsCreatingRoom(true);
+
+    try {
+      const res = await fetch(`/api/designer/projects/${projectId}/rooms`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: 'New Room' })
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to create room');
+      }
+
+      toast.success('Room created');
+      router.refresh();
+    } catch (error) {
+      console.error('Failed to create room:', error);
+      toast.error('Failed to create room');
+    } finally {
+      setIsCreatingRoom(false);
+    }
+  }, [projectId, router, isCreatingRoom]);
 
   const handleSelectionSizeOverride = (selectionId: string, newSize: Size | 'auto') => {
     // TODO: Implement persistence when schema supports metadata field
@@ -278,6 +306,7 @@ export default function DesignerBoard({
         <BoardsEmptyState
           projectId={projectId}
           projectName={project.title}
+          onCreateRoom={handleCreateRoom}
         />
       )}
 

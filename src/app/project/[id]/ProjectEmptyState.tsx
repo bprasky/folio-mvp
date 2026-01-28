@@ -181,10 +181,35 @@ export default function ProjectEmptyState({ project }: ProjectEmptyStateProps) {
     router.refresh();
   }, [router]);
 
-  const handleAddRoom = useCallback(() => {
-    // Navigate to designer board view which allows room creation
-    router.push(`/project/${project.id}?view=boards`);
-  }, [project.id, router]);
+  const [isCreatingRoom, setIsCreatingRoom] = useState(false);
+
+  const handleAddRoom = useCallback(async () => {
+    if (isCreatingRoom) return;
+    setIsCreatingRoom(true);
+
+    try {
+      const res = await fetch(`/api/designer/projects/${project.id}/rooms`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: 'New Room' })
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to create room');
+      }
+
+      // Refresh to show the new room
+      router.refresh();
+    } catch (error) {
+      console.error('Failed to create room:', error);
+    } finally {
+      setIsCreatingRoom(false);
+    }
+  }, [project.id, router, isCreatingRoom]);
+
+  // Determine if this is a new/draft project (starting from scratch)
+  // vs a completed project (importing existing work)
+  const isDraftProject = !project.status || project.status === 'draft';
 
   const handlePublish = useCallback(() => {
     // Navigate to media section for publishing workflow
@@ -288,45 +313,99 @@ export default function ProjectEmptyState({ project }: ProjectEmptyStateProps) {
             </div>
           </div>
 
-          {/* CTAs */}
-          <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4 flex-wrap">
-            {/* Primary CTA - Import Presentation */}
-            <button
-              onClick={handleImportPresentation}
-              className="accent-btn px-6 py-3 flex items-center gap-2"
-            >
-              <FaFileImport className="w-4 h-4" />
-              Import Presentation
-            </button>
+          {/* CTAs - Different layout based on project status */}
+          {isDraftProject ? (
+            <>
+              {/* NEW PROJECT FLOW - Emphasize starting from scratch */}
+              <div className="mt-8 flex flex-col items-center gap-6">
+                <div className="text-center">
+                  <p className="folio-meta text-[var(--text-secondary)] mb-4">
+                    Start building your project from the ground up
+                  </p>
+                  {/* Primary CTA - Add Room (prominent) */}
+                  <button
+                    onClick={handleAddRoom}
+                    disabled={isCreatingRoom}
+                    className="accent-btn px-8 py-4 text-lg flex items-center gap-3 mx-auto"
+                  >
+                    <FaDoorOpen className="w-5 h-5" />
+                    {isCreatingRoom ? 'Creating...' : 'Add Your First Room'}
+                  </button>
+                </div>
 
-            {/* PDF Spec Import */}
-            <button
-              onClick={handleImportPdfSpecs}
-              className="ridge-btn px-6 py-3 flex items-center gap-2"
-              title="Extract product specs from PDF (brand, price, dimensions)"
-            >
-              <FaCalendarAlt className="w-4 h-4" />
-              Import PDF Specs
-            </button>
+                {/* Divider */}
+                <div className="w-full max-w-md flex items-center gap-4">
+                  <div className="flex-1 border-t border-[var(--ridge-outer)]" />
+                  <span className="folio-meta text-[var(--text-tertiary)]">or import existing work</span>
+                  <div className="flex-1 border-t border-[var(--ridge-outer)]" />
+                </div>
 
-            {/* Secondary CTA - Publish Project */}
-            <button
-              onClick={handlePublish}
-              className="ridge-btn px-6 py-3 flex items-center gap-2"
-            >
-              <FaGlobe className="w-4 h-4" />
-              Publish Project
-            </button>
+                {/* Secondary options - Import */}
+                <div className="flex flex-wrap items-center justify-center gap-3">
+                  <button
+                    onClick={handleImportPresentation}
+                    className="ridge-btn px-5 py-2.5 flex items-center gap-2"
+                  >
+                    <FaFileImport className="w-4 h-4" />
+                    Import Presentation
+                  </button>
+                  <button
+                    onClick={handleImportPdfSpecs}
+                    className="ridge-btn px-5 py-2.5 flex items-center gap-2"
+                    title="Extract product specs from PDF (brand, price, dimensions)"
+                  >
+                    <FaCalendarAlt className="w-4 h-4" />
+                    Import PDF Specs
+                  </button>
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              {/* COMPLETED PROJECT FLOW - Emphasize importing/publishing */}
+              <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4 flex-wrap">
+                {/* Primary CTA - Import Presentation */}
+                <button
+                  onClick={handleImportPresentation}
+                  className="accent-btn px-6 py-3 flex items-center gap-2"
+                >
+                  <FaFileImport className="w-4 h-4" />
+                  Import Presentation
+                </button>
 
-            {/* Tertiary CTA - Add Room */}
-            <button
-              onClick={handleAddRoom}
-              className="px-6 py-3 text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors folio-ui flex items-center gap-2"
-            >
-              <FaDoorOpen className="w-4 h-4" />
-              Add Room
-            </button>
-          </div>
+                {/* PDF Spec Import */}
+                <button
+                  onClick={handleImportPdfSpecs}
+                  className="ridge-btn px-6 py-3 flex items-center gap-2"
+                  title="Extract product specs from PDF (brand, price, dimensions)"
+                >
+                  <FaCalendarAlt className="w-4 h-4" />
+                  Import PDF Specs
+                </button>
+
+                {/* Secondary CTA - Publish Project */}
+                <button
+                  onClick={handlePublish}
+                  className="ridge-btn px-6 py-3 flex items-center gap-2"
+                >
+                  <FaGlobe className="w-4 h-4" />
+                  Publish Project
+                </button>
+              </div>
+
+              {/* Add Room as tertiary option */}
+              <div className="mt-4 text-center">
+                <button
+                  onClick={handleAddRoom}
+                  disabled={isCreatingRoom}
+                  className="px-6 py-3 text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors folio-ui flex items-center gap-2 mx-auto"
+                >
+                  <FaDoorOpen className="w-4 h-4" />
+                  {isCreatingRoom ? 'Creating...' : 'Add Room'}
+                </button>
+              </div>
+            </>
+          )}
 
           {/* Helper Cards */}
           <div className="mt-16 grid grid-cols-1 sm:grid-cols-3 gap-6">
