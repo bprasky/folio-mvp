@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import ShopProductModal from '@/components/shop/ShopProductModal';
 
 interface ShopProduct {
   id: string;
@@ -52,6 +53,20 @@ export default function ProfileShop({ userId }: ProfileShopProps) {
   const [productType, setProductType] = useState('all');
   const [vendor, setVendor] = useState('all');
   const [sort, setSort] = useState('recent');
+
+  // Modal state
+  const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const openProductModal = (shopProductId: string) => {
+    setSelectedProductId(shopProductId);
+    setIsModalOpen(true);
+  };
+
+  const closeProductModal = () => {
+    setIsModalOpen(false);
+    setSelectedProductId(null);
+  };
 
   useEffect(() => {
     const fetchShopProducts = async () => {
@@ -206,18 +221,37 @@ export default function ProfileShop({ userId }: ProfileShopProps) {
       {/* Product Grid */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {products.map((item) => (
-          <ShopProductCard key={item.id} item={item} />
+          <ShopProductCard
+            key={item.id}
+            item={item}
+            onOpenModal={openProductModal}
+          />
         ))}
       </div>
+
+      {/* Product Modal */}
+      {selectedProductId && (
+        <ShopProductModal
+          shopProductId={selectedProductId}
+          isOpen={isModalOpen}
+          onClose={closeProductModal}
+        />
+      )}
     </div>
   );
 }
 
-function ShopProductCard({ item }: { item: ShopProduct }) {
+function ShopProductCard({
+  item,
+  onOpenModal,
+}: {
+  item: ShopProduct;
+  onOpenModal: (shopProductId: string) => void;
+}) {
   return (
-    <Link
-      href={`/product/${item.productId}`}
-      className="group block rounded-xl overflow-hidden border transition-shadow hover:shadow-lg"
+    <button
+      onClick={() => onOpenModal(item.id)}
+      className="group block rounded-xl overflow-hidden border transition-shadow hover:shadow-lg text-left w-full"
       style={{ backgroundColor: '#FFFFFF', borderColor: '#E8E4DF' }}
     >
       {/* Product Image */}
@@ -284,7 +318,7 @@ function ShopProductCard({ item }: { item: ShopProduct }) {
           In {item.projectCount} project{item.projectCount !== 1 ? 's' : ''}
         </p>
       </div>
-    </Link>
+    </button>
   );
 }
 
