@@ -39,6 +39,11 @@ export default function GenerateDialog({
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationProgress, setGenerationProgress] = useState(0);
 
+  // Render settings state
+  const [timeOfDay, setTimeOfDay] = useState<string>('midday');
+  const [lightingMood, setLightingMood] = useState<string>('bright_airy');
+  const [cameraAngle, setCameraAngle] = useState<string>('eye_level');
+
   const handleGenerate = async () => {
     setIsGenerating(true);
     setGenerationProgress(0);
@@ -54,7 +59,12 @@ export default function GenerateDialog({
           n: count,
           width,
           height,
-          seed: seed.trim() || undefined
+          seed: seed.trim() || undefined,
+          settings: {
+            timeOfDay,
+            lightingMood,
+            cameraAngle,
+          },
         })
       });
 
@@ -65,7 +75,7 @@ export default function GenerateDialog({
       }
 
       const result = await response.json();
-      
+
       // Simulate progress for better UX
       for (let i = 0; i < 100; i += 10) {
         setGenerationProgress(i);
@@ -74,16 +84,16 @@ export default function GenerateDialog({
       setGenerationProgress(100);
 
       toast.success(`${result.assets.length} images generated successfully`);
-      
+
       if (onDone) {
         onDone(result.assets);
       }
-      
+
       onOpenChange(false);
-      
+
     } catch (error: any) {
       console.error('Generation error:', error);
-      
+
       // Provide more specific error messages
       if (error.message?.includes('502')) {
         toast.error('The image service returned no results—try again or adjust modifiers.');
@@ -113,13 +123,20 @@ export default function GenerateDialog({
     setHeight(preset.height);
   };
 
+  const lightingMoodOptions = [
+    { value: 'bright_airy', label: 'Bright & Airy', icon: '✨' },
+    { value: 'moody_dramatic', label: 'Moody', icon: '🎭' },
+    { value: 'warm_cozy', label: 'Warm & Cozy', icon: '🕯️' },
+    { value: 'cool_minimal', label: 'Cool & Minimal', icon: '❄️' },
+  ];
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FaImage className="w-5 h-5" />
-            Generate AI Images
+            Generate AI Images for {roomName}
           </DialogTitle>
         </DialogHeader>
 
@@ -146,21 +163,79 @@ export default function GenerateDialog({
             </div>
           </div>
 
-          {/* Modifiers */}
+          {/* Render Settings */}
+          <div className="space-y-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+            <h4 className="text-sm font-semibold text-gray-900">Render Settings</h4>
+
+            {/* Time of Day */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-gray-700">Time of Day</Label>
+              <Select value={timeOfDay} onValueChange={setTimeOfDay}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select time..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="golden_hour_morning">🌅 Morning Golden Hour</SelectItem>
+                  <SelectItem value="midday">☀️ Midday (Bright)</SelectItem>
+                  <SelectItem value="golden_hour_evening">🌇 Evening Golden Hour</SelectItem>
+                  <SelectItem value="twilight">🌆 Twilight / Blue Hour</SelectItem>
+                  <SelectItem value="night">🌙 Night / Evening</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Lighting Mood */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-gray-700">Lighting Mood</Label>
+              <div className="grid grid-cols-2 gap-2">
+                {lightingMoodOptions.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setLightingMood(opt.value)}
+                    className={`px-3 py-2 rounded border text-sm transition-colors ${
+                      lightingMood === opt.value
+                        ? 'border-blue-500 bg-blue-50 text-blue-700'
+                        : 'border-gray-200 hover:border-gray-300 bg-white'
+                    }`}
+                  >
+                    {opt.icon} {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Camera Angle */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-gray-700">Camera Angle</Label>
+              <Select value={cameraAngle} onValueChange={setCameraAngle}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select angle..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="eye_level">👁️ Eye Level (Natural)</SelectItem>
+                  <SelectItem value="elevated">🔺 Elevated (Overview)</SelectItem>
+                  <SelectItem value="low_angle">🔻 Low Angle (Dramatic)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Additional Modifiers */}
           <div>
             <Label htmlFor="modifiers" className="text-sm font-medium text-gray-700">
-              Style & Mood Modifiers
+              Additional Art Direction (optional)
             </Label>
             <Textarea
               id="modifiers"
-              placeholder="e.g., warm neutral palette, soft afternoon light, human eye-level camera, editorial crop"
+              placeholder="e.g., minimalist composition, warm tones, shallow depth of field..."
               value={modifiers}
               onChange={(e) => setModifiers(e.target.value)}
               className="mt-1"
-              rows={3}
+              rows={2}
             />
             <p className="mt-1 text-xs text-gray-500">
-              Suggested: "warm neutral palette, soft afternoon light, human eye-level camera, editorial crop" for consistent results
+              Add specific styling notes to guide the AI beyond the settings above
             </p>
           </div>
 

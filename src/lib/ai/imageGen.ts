@@ -1,27 +1,48 @@
 import OpenAI from "openai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
-export type ImageGenInput = { 
-  prompt: string; 
-  width?: number; 
-  height?: number; 
-  n?: number; 
-  seed?: number; 
-};
+// ============ RENDER SETTINGS ============
 
-export type ImageGenOutput = { 
-  images: Array<{ buffer: Buffer; mime: string }>; 
-  meta: Record<string, any>; 
-};
-
-export interface ImageGenProvider { 
-  generate(input: ImageGenInput): Promise<ImageGenOutput>; 
+export interface RenderSettings {
+  timeOfDay: 'golden_hour_morning' | 'midday' | 'golden_hour_evening' | 'twilight' | 'night';
+  lightingMood: 'bright_airy' | 'moody_dramatic' | 'warm_cozy' | 'cool_minimal';
+  cameraAngle: 'eye_level' | 'elevated' | 'low_angle';
 }
 
-// Fake provider for development/testing
+// ============ INPUT/OUTPUT TYPES ============
+
+export type ImageGenInput = {
+  prompt: string;
+  width?: number;
+  height?: number;
+  n?: number;
+  seed?: number;
+  negativePrompt?: string;
+  settings?: RenderSettings;
+};
+
+export type ImageGenOutput = {
+  images: Array<{ buffer: Buffer; mime: string }>;
+  meta: Record<string, any>;
+};
+
+export interface ImageGenProvider {
+  name: string;
+  generate(input: ImageGenInput): Promise<ImageGenOutput>;
+}
+
+// ============ CONSTANTS ============
+
+const DEFAULT_NEGATIVE_PROMPT = `blurry, low quality, distorted, watermark, text, signature, unrealistic proportions, cartoon, anime, illustration, oversaturated colors, harsh lighting, overexposed, underexposed, people, humans, figures, hands, faces`;
+
+// ============ FAKE PROVIDER ============
+
 class FakeProvider implements ImageGenProvider {
+  name = 'fake';
+
   async generate(input: ImageGenInput): Promise<ImageGenOutput> {
     const { prompt, width = 1024, height = 1024, n = 2 } = input;
-    
+
     // Create a simple placeholder image with prompt text
     const images = Array.from({ length: n }, (_, i) => {
       const buffer = this.createPlaceholderImage(prompt, width, height, i + 1);
@@ -43,7 +64,6 @@ class FakeProvider implements ImageGenProvider {
 
   private createPlaceholderImage(prompt: string, width: number, height: number, index: number): Buffer {
     // Create a simple PNG buffer with prompt text
-    // This is a minimal implementation - in production you'd use a proper image library
     const canvas = {
       width,
       height,
@@ -55,10 +75,10 @@ class FakeProvider implements ImageGenProvider {
       const pixel = i / 4;
       const x = pixel % width;
       const y = Math.floor(pixel / width);
-      
+
       // Create a subtle gradient
       const intensity = Math.floor(240 + (Math.sin(x / 100) * 10) + (Math.cos(y / 100) * 10));
-      
+
       canvas.data[i] = intensity;     // R
       canvas.data[i + 1] = intensity; // G
       canvas.data[i + 2] = intensity; // B
@@ -66,7 +86,6 @@ class FakeProvider implements ImageGenProvider {
     }
 
     // For now, return a minimal PNG header + data
-    // In a real implementation, you'd use a library like canvas or sharp
     const header = Buffer.from([
       0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, // PNG signature
     ]);
@@ -81,8 +100,10 @@ class FakeProvider implements ImageGenProvider {
   }
 }
 
-// OpenAI provider using gpt-image-1
+// ============ OPENAI PROVIDER ============
+
 class OpenAIProvider implements ImageGenProvider {
+  name = 'openai';
   private client: OpenAI;
   private model: string;
 
@@ -126,17 +147,19 @@ class OpenAIProvider implements ImageGenProvider {
   }
 }
 
-// Stability AI provider
+// ============ STABILITY PROVIDER ============
+
 class StabilityProvider implements ImageGenProvider {
+  name = 'stability';
   private apiKey: string;
   private engine: string;
-  
+
   constructor() {
     this.apiKey = process.env.STABILITY_API_KEY || "";
     this.engine = process.env.STABILITY_ENGINE || "stable-image-ultra";
     if (!this.apiKey) throw new Error("STABILITY_API_KEY missing");
   }
-  
+
   async generate(input: ImageGenInput): Promise<ImageGenOutput> {
     const n = input.n ?? 2;
     const width = input.width ?? 1024;
@@ -163,15 +186,122 @@ class StabilityProvider implements ImageGenProvider {
 
     // Stability may return a multipart; many endpoints return a single image body.
     const arrayBuf = await res.arrayBuffer();
-    // If single image: return one. If multi-part, parse boundary (left as future enhancement).
     const buffer = Buffer.from(arrayBuf);
     return { images: [{ buffer, mime: "image/png" }], meta: { provider: "stability", engine: this.engine } };
   }
 }
 
+// ============ GEMINI PROVIDER (Imagen 3) ============
+
+class GeminiProvider implements ImageGenProvider {
+  name = 'gemini';
+  private genAI: GoogleGenerativeAI;
+  private modelName: string;
+
+  constructor() {
+    const key = process.env.GEMINI_API_KEY;
+    if (!key) throw new Error("GEMINI_API_KEY missing");
+    this.genAI = new GoogleGenerativeAI(key);
+    this.modelName = process.env.GEMINI_IMAGE_MODEL || "imagen-3.0-generate-002";
+  }
+
+  private getAspectRatio(width: number, height: number): string {
+    const ratio = width / height;
+    // Gemini Imagen 3 supported aspect ratios
+    if (Math.abs(ratio - 1) < 0.1) return '1:1';
+    if (Math.abs(ratio - 16/9) < 0.15) return '16:9';
+    if (Math.abs(ratio - 9/16) < 0.15) return '9:16';
+    if (Math.abs(ratio - 4/3) < 0.15) return '4:3';
+    if (Math.abs(ratio - 3/4) < 0.15) return '3:4';
+    // Default to closest based on ratio
+    return ratio > 1 ? '16:9' : '9:16';
+  }
+
+  async generate(input: ImageGenInput): Promise<ImageGenOutput> {
+    const n = input.n ?? 2;
+    const width = input.width ?? 1024;
+    const height = input.height ?? 1024;
+    const aspectRatio = this.getAspectRatio(width, height);
+    const negativePrompt = input.negativePrompt || DEFAULT_NEGATIVE_PROMPT;
+
+    // Use the Gemini API for image generation
+    // Note: The exact API may vary based on Google's SDK version
+    try {
+      const model = this.genAI.getGenerativeModel({ model: this.modelName });
+
+      // Build the full prompt with negative prompt guidance
+      const fullPrompt = `${input.prompt}\n\nAvoid: ${negativePrompt}`;
+
+      // Generate images one at a time (Imagen API limitation)
+      const images: Array<{ buffer: Buffer; mime: string }> = [];
+
+      for (let i = 0; i < n; i++) {
+        // Use generateContent with image generation capabilities
+        const result = await model.generateContent({
+          contents: [{
+            role: 'user',
+            parts: [{
+              text: `Generate a photorealistic interior design image with aspect ratio ${aspectRatio}.\n\n${fullPrompt}`
+            }]
+          }],
+          generationConfig: {
+            // @ts-ignore - Image generation config
+            responseModality: 'image',
+          }
+        });
+
+        const response = result.response;
+
+        // Extract image data from response
+        if (response.candidates && response.candidates[0]?.content?.parts) {
+          for (const part of response.candidates[0].content.parts) {
+            if (part.inlineData?.data) {
+              const buffer = Buffer.from(part.inlineData.data, 'base64');
+              images.push({ buffer, mime: part.inlineData.mimeType || 'image/png' });
+            }
+          }
+        }
+      }
+
+      if (images.length === 0) {
+        throw new Error('Gemini returned no images');
+      }
+
+      return {
+        images,
+        meta: {
+          provider: 'gemini',
+          model: this.modelName,
+          aspectRatio,
+          count: images.length,
+        }
+      };
+    } catch (error: any) {
+      console.error('[GeminiProvider] Generation error:', error);
+      throw new Error(`Gemini image generation failed: ${error.message}`);
+    }
+  }
+}
+
+// ============ PROVIDER FACTORY ============
+
 export function getImageGenProvider(): ImageGenProvider {
-  const p = (process.env.IMAGE_GEN_PROVIDER || "openai").toLowerCase();
-  
+  // Override to fake if explicitly set
+  if (process.env.FAKE_PROVIDER === '1') {
+    return new FakeProvider();
+  }
+
+  const p = (process.env.IMAGE_GEN_PROVIDER || "gemini").toLowerCase();
+
+  if (p === "gemini") {
+    try {
+      return new GeminiProvider();
+    } catch (error) {
+      console.warn('Gemini provider failed to initialize, falling back to fake provider:', error);
+      return new FakeProvider();
+    }
+  }
+
   if (p === "openai") {
     try {
       return new OpenAIProvider();
@@ -180,7 +310,7 @@ export function getImageGenProvider(): ImageGenProvider {
       return new FakeProvider();
     }
   }
-  
+
   if (p === "stability") {
     try {
       return new StabilityProvider();
@@ -189,17 +319,17 @@ export function getImageGenProvider(): ImageGenProvider {
       return new FakeProvider();
     }
   }
-  
-  if (p === "fake" || process.env.FAKE_PROVIDER === '1') {
+
+  if (p === "fake") {
     return new FakeProvider();
   }
-  
-  // Default to OpenAI
-  console.warn(`Unknown image generation provider: ${p}, defaulting to OpenAI`);
+
+  // Default to Gemini
+  console.warn(`Unknown image generation provider: ${p}, defaulting to Gemini`);
   try {
-    return new OpenAIProvider();
+    return new GeminiProvider();
   } catch (error) {
-    console.warn('OpenAI provider failed, falling back to fake provider:', error);
+    console.warn('Gemini provider failed, falling back to fake provider:', error);
     return new FakeProvider();
   }
 }

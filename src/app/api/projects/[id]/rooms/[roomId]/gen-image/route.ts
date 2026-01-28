@@ -6,9 +6,16 @@ import { assertProjectAccess } from '@/lib/permissions';
 import { prisma } from '@/lib/prisma';
 import { rateLimit } from '@/lib/rateLimit';
 import { buildBasePrompt, mergeModifiers } from '@/lib/boards/prompt';
-import { getImageGenProvider } from '@/lib/ai/imageGen';
+import { getImageGenProvider, type RenderSettings } from '@/lib/ai/imageGen';
 import { saveBufferToProjectStorage } from '@/lib/storage';
 import { logPassiveEvent } from '@/lib/analytics';
+
+// Default render settings
+const DEFAULT_SETTINGS: RenderSettings = {
+  timeOfDay: 'midday',
+  lightingMood: 'bright_airy',
+  cameraAngle: 'eye_level',
+};
 
 export async function POST(
   request: NextRequest,
@@ -43,7 +50,20 @@ export async function POST(
     }
 
     const body = await request.json().catch(() => ({}));
-    const { modifiers = "", n = 2, width = 1024, height = 1024, seed } = body;
+    const {
+      modifiers = "",
+      n = 2,
+      width = 1024,
+      height = 1024,
+      seed,
+      settings: rawSettings
+    } = body;
+
+    // Merge provided settings with defaults
+    const settings: RenderSettings = {
+      ...DEFAULT_SETTINGS,
+      ...(rawSettings || {}),
+    };
 
     // Validate inputs
     if (n < 1 || n > 4) {
@@ -60,20 +80,32 @@ export async function POST(
       );
     }
 
-    const { base, context, selectionIds } = await buildBasePrompt({ projectId, roomId });
+    // Build prompt with settings
+    const { base, context, selectionIds } = await buildBasePrompt({
+      projectId,
+      roomId,
+      settings,
+    });
     const prompt = mergeModifiers(base, modifiers);
 
     const provider = getImageGenProvider();
-    let out = await provider.generate({ prompt, n, width, height, seed });
-    
+    let out = await provider.generate({
+      prompt,
+      n,
+      width,
+      height,
+      seed,
+      settings,
+    });
+
     // Retry once if no images returned
     if (!out.images?.length) {
       console.warn("[gen-image] Empty result; retrying once");
-      out = await provider.generate({ prompt, n, width, height, seed });
+      out = await provider.generate({ prompt, n, width, height, seed, settings });
     }
-    
+
     if (!out.images?.length) {
-      console.error("[gen-image] OpenAI returned no images after retry");
+      console.error("[gen-image] Provider returned no images after retry");
       return NextResponse.json({ error: "Image service returned no images" }, { status: 502 });
     }
 
@@ -94,12 +126,13 @@ export async function POST(
       // Persist to database for GET route compatibility
       const metadata = {
         type: 'GENERATED',
-        provider: (out.meta?.provider ?? "unknown").toString(),
+        provider: (out.meta?.provider ?? provider.name ?? "unknown").toString(),
         promptBase: base,
         promptModifiers: modifiers,
         promptFull: prompt,
         selectionIds,
         contextJSON: { ...(context ?? {}), roomName: room?.name ?? null },
+        settings,
         width,
         height,
         seed: seed ?? null,
@@ -123,8 +156,11 @@ export async function POST(
         url: publicUrl,
         width: width ?? 1024,
         height: height ?? 1024,
-        provider: out.meta?.provider ?? "openai",
-        metadata: { context: { ...(context ?? {}), roomName: room?.name ?? null } },
+        provider: out.meta?.provider ?? provider.name ?? "gemini",
+        metadata: {
+          context: { ...(context ?? {}), roomName: room?.name ?? null },
+          settings,
+        },
       });
     }
 
@@ -142,8 +178,9 @@ export async function POST(
           event: 'boards.image.generated',
           roomId,
           count: saved.length,
-          provider: out.meta?.provider,
-          hasModifiers: !!modifiers
+          provider: out.meta?.provider ?? provider.name,
+          hasModifiers: !!modifiers,
+          settings,
         }
       });
     } catch (analyticsError) {
