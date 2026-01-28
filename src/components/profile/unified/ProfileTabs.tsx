@@ -10,6 +10,7 @@ interface ProfileTabsProps {
 
 const TABS = [
   { id: 'feed', label: 'Feed' },
+  { id: 'shop', label: 'Shop' },
   { id: 'about', label: 'About' },
 ];
 
@@ -19,8 +20,8 @@ export default function ProfileTabs({ userId, activeTab }: ProfileTabsProps) {
   const createTabUrl = (tabId: string) => {
     const params = new URLSearchParams(searchParams.toString());
     params.set('tab', tabId);
-    // Remove filter when switching to about tab
-    if (tabId === 'about') {
+    // Remove feed-specific params when switching to about or shop tab
+    if (tabId === 'about' || tabId === 'shop') {
       params.delete('filter');
       params.delete('sort');
     }

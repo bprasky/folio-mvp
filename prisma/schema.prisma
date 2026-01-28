@@ -134,6 +134,13 @@ model User {
   tosVersion                     String?               // e.g., "2026-01-19"
   privacyVersion                 String?               // e.g., "2026-01-19"
 
+  // Designer Attribution & Compensation System
+  vendorVisibility               Boolean               @default(false) // Whether vendors can see designer's active specifications
+  vendorVisibilityEnabledAt      DateTime?             // When visibility was turned on
+  influenceScore                 Float?                // Calculated influence score 0-100
+  influenceScoreUpdatedAt        DateTime?             // Last score calculation
+  folioCreditBalance             Decimal               @default(0) @db.Decimal(10, 2) // Current Folio Credit balance in USD
+
   // Product search and rep contact relations
   productSearchLogs              ProductSearchLog[]
   vendorRepContacts              VendorRepContact[]
@@ -152,6 +159,9 @@ model User {
   contributionCount              Int                   @default(0)
   publishedContributionCount     Int                   @default(0)
   contributorLevel               BadgeLevel?
+
+  // Designer Shop System relations
+  shopProducts                   ShopProduct[]         @relation("DesignerShopProducts")
 
   @@map("users")
 }
@@ -305,6 +315,9 @@ model Project {
   // Contributor/Voice System relations
   contributions          Contribution[]          @relation("ProjectContributions")
 
+  // Designer Shop System relations
+  shopProducts           ShopProduct[]           @relation("ProjectShopProducts")
+
   @@map("projects")
 }
 
@@ -438,6 +451,10 @@ model Product {
 
   // Contributor/Voice System relations
   contributions       Contribution[]              @relation("ProductContributions")
+
+  // Designer Shop System relations
+  shopProducts        ShopProduct[]               @relation("ProductShopProducts")
+  testimonials        ProductTestimonial[]        @relation("ProductTestimonials")
 
   @@map("products")
 }
@@ -662,6 +679,9 @@ model Organization {
 
   // Intelligence System relations
   contentOpportunities VendorContentOpportunity[] @relation("VendorContentOpportunities")
+
+  // Designer Shop System relations
+  shopBoosts           ShopBoost[]               @relation("VendorShopBoosts")
 
   @@index([status])
   @@index([type])
@@ -3075,6 +3095,16 @@ enum BoostStatus {
   EXPIRED      // Passed expiration without action
 }
 
+// Designer Shop Boost Status (separate from BoostOpportunity system)
+enum ShopBoostStatus {
+  PENDING
+  APPROVED
+  ACTIVE
+  DECLINED
+  EXPIRED
+  CANCELLED
+}
+
 model BoostOpportunity {
   id                 String       @id @default(cuid())
 
@@ -3955,4 +3985,77 @@ model ShareCard {
   generatedAt       DateTime @default(now())
 
   @@map("share_cards")
+}
+
+// ============================================================
+// DESIGNER SHOP SYSTEM
+// Products curated by designers with testimonials and vendor boosts
+// ============================================================
+
+model ShopProduct {
+  id              String    @id @default(cuid())
+  designerId      String
+  productId       String
+  projectId       String?   // Source project where product was tagged
+  quote           String?   // Designer testimonial
+  quoteApprovedAt DateTime? // When quote was approved/added
+  isActive        Boolean   @default(true)
+  isFeatured      Boolean   @default(false) // Designer-pinned to top
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  designer        User      @relation("DesignerShopProducts", fields: [designerId], references: [id], onDelete: Cascade)
+  product         Product   @relation("ProductShopProducts", fields: [productId], references: [id], onDelete: Cascade)
+  project         Project?  @relation("ProjectShopProducts", fields: [projectId], references: [id], onDelete: SetNull)
+  boosts          ShopBoost[]
+  testimonial     ProductTestimonial?
+
+  @@unique([designerId, productId])
+  @@index([designerId])
+  @@index([productId])
+  @@map("shop_products")
+}
+
+model ShopBoost {
+  id              String          @id @default(cuid())
+  shopProductId   String
+  vendorId        String          // Organization ID
+  status          ShopBoostStatus @default(PENDING)
+  startDate       DateTime
+  endDate         DateTime
+  amountPaid      Decimal         @db.Decimal(10, 2)
+  designerCredit  Decimal         @db.Decimal(10, 2) // 70% share
+  folioRevenue    Decimal         @db.Decimal(10, 2) // 30% share
+  approvedAt      DateTime?
+  declinedAt      DateTime?
+  declineReason   String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  // Relations
+  shopProduct     ShopProduct     @relation(fields: [shopProductId], references: [id], onDelete: Cascade)
+  vendor          Organization    @relation("VendorShopBoosts", fields: [vendorId], references: [id], onDelete: Cascade)
+
+  @@index([shopProductId])
+  @@index([vendorId])
+  @@index([status])
+  @@map("shop_boosts")
+}
+
+model ProductTestimonial {
+  id              String      @id @default(cuid())
+  productId       String
+  shopProductId   String      @unique
+  quote           String
+  isFeatured      Boolean     @default(false) // Vendor-boosted
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  // Relations
+  product         Product     @relation("ProductTestimonials", fields: [productId], references: [id], onDelete: Cascade)
+  shopProduct     ShopProduct @relation(fields: [shopProductId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@map("product_testimonials")
 }

@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
+import { DesignerTestimonials } from "@/components/product/DesignerTestimonials";
 
 interface ProductPageProps {
   params: { productId: string };
@@ -251,6 +252,9 @@ export default async function ProductPage({ params }: ProductPageProps) {
                 </div>
               </div>
             )}
+
+            {/* Designer Testimonials */}
+            <DesignerTestimonials productId={product.id} />
           </div>
 
           {/* Sidebar */}

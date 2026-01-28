@@ -5,6 +5,7 @@ import { auth } from '@/lib/auth';
 import ProfileHero from '@/components/profile/unified/ProfileHero';
 import ProfileTabs from '@/components/profile/unified/ProfileTabs';
 import ProfileFeed from '@/components/profile/unified/ProfileFeed';
+import ProfileShop from '@/components/profile/unified/ProfileShop';
 import ProfileAbout from '@/components/profile/unified/ProfileAbout';
 import PinnedCarousel from '@/components/profile/unified/PinnedCarousel';
 
@@ -111,7 +112,7 @@ export default async function ProfilePage({ params, searchParams }: Props) {
       <ProfileTabs activeTab={activeTab} userId={resolvedParams.userId} />
 
       <div className="max-w-6xl mx-auto px-6 py-8">
-        {activeTab === 'feed' ? (
+        {activeTab === 'feed' && (
           <Suspense fallback={<FeedSkeleton />}>
             <ProfileFeed
               userId={resolvedParams.userId}
@@ -119,7 +120,13 @@ export default async function ProfilePage({ params, searchParams }: Props) {
               initialSort={activeSort}
             />
           </Suspense>
-        ) : (
+        )}
+        {activeTab === 'shop' && (
+          <Suspense fallback={<ShopSkeleton />}>
+            <ProfileShop userId={resolvedParams.userId} />
+          </Suspense>
+        )}
+        {activeTab === 'about' && (
           <ProfileAbout
             user={user}
             team={team}
@@ -231,6 +238,49 @@ function FeedSkeleton() {
             <div className="p-4 space-y-2">
               <div className="h-4 w-3/4 rounded" style={{ backgroundColor: '#E8E4DF' }} />
               <div className="h-3 w-1/2 rounded" style={{ backgroundColor: '#E8E4DF' }} />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ShopSkeleton() {
+  return (
+    <div>
+      {/* Header skeleton */}
+      <div className="flex items-center justify-between mb-6">
+        <div
+          className="h-6 w-24 rounded animate-pulse"
+          style={{ backgroundColor: '#E8E4DF' }}
+        />
+      </div>
+
+      {/* Filter skeleton */}
+      <div className="flex gap-4 mb-8">
+        {[1, 2, 3].map(i => (
+          <div
+            key={i}
+            className="h-10 w-32 rounded-lg animate-pulse"
+            style={{ backgroundColor: '#E8E4DF' }}
+          />
+        ))}
+      </div>
+
+      {/* Grid skeleton */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
+          <div
+            key={i}
+            className="rounded-xl overflow-hidden animate-pulse"
+            style={{ backgroundColor: '#F5F3F0' }}
+          >
+            <div className="aspect-square" style={{ backgroundColor: '#E8E4DF' }} />
+            <div className="p-4 space-y-2">
+              <div className="h-4 w-3/4 rounded" style={{ backgroundColor: '#E8E4DF' }} />
+              <div className="h-3 w-1/2 rounded" style={{ backgroundColor: '#E8E4DF' }} />
+              <div className="h-3 w-1/3 rounded" style={{ backgroundColor: '#E8E4DF' }} />
             </div>
           </div>
         ))}

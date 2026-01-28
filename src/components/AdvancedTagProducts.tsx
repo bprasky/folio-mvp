@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
-import { FaTimes, FaCheck, FaTag, FaSearch, FaTrash } from "react-icons/fa";
+import { FaTimes, FaCheck, FaTag, FaSearch, FaTrash, FaStore } from "react-icons/fa";
 
 interface Product {
   id: string;
@@ -50,6 +50,11 @@ export default function AdvancedTagProducts({
   const [isLoading, setIsLoading] = useState(false);
   const [hoveredTag, setHoveredTag] = useState<string | null>(null);
   const imageRef = useRef<HTMLImageElement | null>(null);
+
+  // Shop product state
+  const [addToShop, setAddToShop] = useState(false);
+  const [shopQuote, setShopQuote] = useState("");
+  const [addQuoteLater, setAddQuoteLater] = useState(false);
 
   // Fetch products on component mount
   useEffect(() => {
@@ -107,6 +112,13 @@ export default function AdvancedTagProducts({
     setSelectedProductId("");
   };
 
+  // Reset shop state when modal closes
+  const resetShopState = () => {
+    setAddToShop(false);
+    setShopQuote("");
+    setAddQuoteLater(false);
+  };
+
   // Handle product selection and tag creation
   const handleTagProduct = async () => {
     if (!selected || !selectedProductId) return;
@@ -114,10 +126,16 @@ export default function AdvancedTagProducts({
     setIsLoading(true);
 
     try {
-      // Use imageId if available (database mode), otherwise imageUrl (legacy/demo mode)
-      const payload = imageId 
+      // Build payload with shop product data if enabled
+      const basePayload = imageId
         ? { x: selected.x, y: selected.y, imageId, projectId, productId: selectedProductId }
         : { x: selected.x, y: selected.y, imageUrl, projectId, productId: selectedProductId };
+
+      const payload = {
+        ...basePayload,
+        addToShop,
+        shopQuote: addToShop && !addQuoteLater ? shopQuote : undefined,
+      };
 
       const res = await fetch("/api/tag-product-to-image", {
         method: "POST",
@@ -140,10 +158,11 @@ export default function AdvancedTagProducts({
         const updatedTags = [...tags, newTag];
         setTags(updatedTags);
         onTagsUpdate?.(updatedTags);
-        
+
         setSelected(null);
         setSelectedProductId("");
         setShowProductModal(false);
+        resetShopState();
       } else {
         console.error("Failed to create tag");
       }
@@ -306,7 +325,7 @@ export default function AdvancedTagProducts({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={() => setShowProductModal(false)}
+            onClick={() => { setShowProductModal(false); resetShopState(); }}
           >
             <motion.div
               className="bg-white rounded-xl p-6 max-w-2xl w-full max-h-[80vh] overflow-hidden flex flex-col border border-folio-border shadow-xl"
@@ -324,7 +343,7 @@ export default function AdvancedTagProducts({
                   </p>
                 </div>
                 <button
-                  onClick={() => setShowProductModal(false)}
+                  onClick={() => { setShowProductModal(false); resetShopState(); }}
                   className="text-folio-border hover:text-folio-text transition-colors"
                 >
                   <FaTimes className="w-6 h-6" />
@@ -395,10 +414,83 @@ export default function AdvancedTagProducts({
                 )}
               </div>
 
+              {/* Add to Shop Section - shows when a product is selected */}
+              {selectedProductId && (
+                <motion.div
+                  className="mb-6 p-4 bg-folio-muted rounded-lg border border-folio-border"
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                >
+                  {/* Add to Shop Toggle */}
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={addToShop}
+                      onChange={(e) => setAddToShop(e.target.checked)}
+                      className="w-5 h-5 rounded border-folio-border text-folio-accent focus:ring-folio-accent"
+                    />
+                    <div className="flex items-center gap-2">
+                      <FaStore className="w-4 h-4 text-folio-accent" />
+                      <span className="font-medium text-folio-text">Add to my Shop</span>
+                    </div>
+                  </label>
+
+                  {/* Quote Input - shows when Add to Shop is checked */}
+                  <AnimatePresence>
+                    {addToShop && (
+                      <motion.div
+                        className="mt-4 space-y-3"
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                      >
+                        <div>
+                          <label className="block text-sm text-folio-text mb-2">
+                            Add a quote about this product (optional)
+                          </label>
+                          <textarea
+                            value={shopQuote}
+                            onChange={(e) => setShopQuote(e.target.value.slice(0, 500))}
+                            placeholder="What makes this product special? How did it work in this space?"
+                            disabled={addQuoteLater}
+                            maxLength={500}
+                            rows={3}
+                            className={`w-full px-3 py-2 border border-folio-border rounded-lg focus:ring-1 focus:ring-folio-accent focus:border-folio-accent bg-white text-folio-text placeholder-folio-border resize-none ${
+                              addQuoteLater ? 'opacity-50' : ''
+                            }`}
+                          />
+                          <div className="flex justify-between mt-1">
+                            <span className="text-xs text-folio-border">
+                              {shopQuote.length}/500 characters
+                            </span>
+                          </div>
+                        </div>
+
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={addQuoteLater}
+                            onChange={(e) => {
+                              setAddQuoteLater(e.target.checked);
+                              if (e.target.checked) setShopQuote("");
+                            }}
+                            className="w-4 h-4 rounded border-folio-border text-folio-accent focus:ring-folio-accent"
+                          />
+                          <span className="text-sm text-folio-border">
+                            I&apos;ll add thoughts later
+                          </span>
+                        </label>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
+              )}
+
               {/* Modal Actions */}
               <div className="flex gap-3">
                 <button
-                  onClick={() => setShowProductModal(false)}
+                  onClick={() => { setShowProductModal(false); resetShopState(); }}
                   className="flex-1 px-6 py-3 border border-folio-border text-folio-text rounded-lg hover:bg-folio-muted transition-colors font-medium"
                 >
                   Cancel

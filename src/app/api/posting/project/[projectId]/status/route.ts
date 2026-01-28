@@ -8,6 +8,7 @@ import { assertProjectView } from "@/lib/authz/access";
 import { normalizeRole } from "@/lib/permissions";
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
+import { notifyTaggedVendors } from "@/lib/email/notifyVendorTagged";
 
 // Accept both {action:"publish"} and {status:"PUBLISHED"} or legacy {to:"PUBLISHED"}
 const BodySchema = z
@@ -454,6 +455,11 @@ export async function PATCH(
       }
 
       console.log(`[${correlationId}] Published successfully:`, { slug, status: updated.status });
+
+      // Notify vendors of tagged products (async, non-blocking)
+      notifyTaggedVendors({ projectId }).catch((err) => {
+        console.error(`[${correlationId}] Failed to notify vendors:`, err);
+      });
 
       return NextResponse.json(
         {
