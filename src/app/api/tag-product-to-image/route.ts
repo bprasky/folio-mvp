@@ -14,17 +14,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { 
-      x, 
-      y, 
-      productId, 
-      projectId, 
+    const {
+      x,
+      y,
+      productId,
+      projectId,
       imageId,
       // Optional decision capture fields
       decisionReasoning,
       alternativesConsidered,
       tradeoffs,
-      convictionLevel
+      convictionLevel,
+      // Shop product fields
+      addToShop,
+      shopQuote,
     } = await request.json();
 
     // Validate required fields
@@ -110,6 +113,54 @@ export async function POST(request: NextRequest) {
     });
 
     console.log('[ProductTag] Created:', { tagId: tag.id, projectId, imageId, productId });
+
+    // Create ShopProduct if requested
+    let shopProduct = null;
+    if (addToShop && designerId) {
+      try {
+        // Check if ShopProduct already exists for this designer-product combo
+        const existingShopProduct = await prisma.shopProduct.findUnique({
+          where: {
+            designerId_productId: {
+              designerId,
+              productId,
+            },
+          },
+        });
+
+        if (!existingShopProduct) {
+          shopProduct = await prisma.shopProduct.create({
+            data: {
+              designerId,
+              productId,
+              projectId, // Link to source project
+              quote: shopQuote || null,
+              quoteApprovedAt: shopQuote ? new Date() : null,
+              isActive: true,
+              isFeatured: false,
+            },
+          });
+          console.log('[ShopProduct] Created:', { shopProductId: shopProduct.id, designerId, productId });
+        } else {
+          // Update existing ShopProduct if quote provided
+          if (shopQuote && !existingShopProduct.quote) {
+            shopProduct = await prisma.shopProduct.update({
+              where: { id: existingShopProduct.id },
+              data: {
+                quote: shopQuote,
+                quoteApprovedAt: new Date(),
+              },
+            });
+            console.log('[ShopProduct] Updated with quote:', { shopProductId: shopProduct.id });
+          } else {
+            shopProduct = existingShopProduct;
+          }
+        }
+      } catch (shopError) {
+        // Log but don't fail tag creation
+        console.error('[ShopProduct] Failed to create/update shop product:', shopError);
+      }
+    }
 
     // Record Atelier signals (non-blocking)
     if (designerId) {
@@ -209,10 +260,11 @@ export async function POST(request: NextRequest) {
       console.warn('[Atelier] No designerId found for project, skipping signal recording');
     }
 
-    return NextResponse.json({ 
-      success: true, 
+    return NextResponse.json({
+      success: true,
       id: tag.id,
-      tag 
+      tag,
+      shopProduct: shopProduct ? { id: shopProduct.id, hasQuote: !!shopProduct.quote } : null,
     });
 
   } catch (error) {
