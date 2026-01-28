@@ -146,6 +146,13 @@ model User {
   tasteProfile                   UserTasteProfile?     @relation("UserTasteProfile")
   trendInterviewRequests         TrendInterviewRequest[] @relation("DesignerTrendInterviews")
 
+  // Contributor/Voice System relations
+  contributions                  Contribution[]        @relation("UserContributions")
+  contributorBadges              ContributorBadge[]    @relation("UserContributorBadges")
+  contributionCount              Int                   @default(0)
+  publishedContributionCount     Int                   @default(0)
+  contributorLevel               BadgeLevel?
+
   @@map("users")
 }
 
@@ -295,6 +302,9 @@ model Project {
   // Intelligence System relations
   trendInterviewRequests TrendInterviewRequest[] @relation("ProjectTrendInterviews")
 
+  // Contributor/Voice System relations
+  contributions          Contribution[]          @relation("ProjectContributions")
+
   @@map("projects")
 }
 
@@ -425,6 +435,9 @@ model Product {
   likes               Like[]                      @relation("ProductLikes")
   savesReceived       Save[]                      @relation("ProductSaves")
   contentOpportunities VendorContentOpportunity[] @relation("ProductContentOpportunities")
+
+  // Contributor/Voice System relations
+  contributions       Contribution[]              @relation("ProductContributions")
 
   @@map("products")
 }
@@ -1108,6 +1121,10 @@ model ProjectPost {
 
   // Intelligence System relations
   supplementalQuotes   SupplementalQuote[]   @relation("PostSupplementalQuotes")
+
+  // Contributor/Voice System relations
+  publishedContributions Contribution[]      @relation("PostContributions")
+  sourceArticleTopic     ArticleTopic?       @relation("TopicPublishedPost")
 
   @@map("project_posts")
 }
@@ -3629,6 +3646,9 @@ model TrendSignal {
 
   interviewRequests  TrendInterviewRequest[]
 
+  // Contributor/Voice System relations
+  generatedTopics    ArticleTopic[] @relation("TrendGeneratedTopics")
+
   @@index([status])
   @@index([topicType])
   @@index([detectedAt])
@@ -3704,4 +3724,235 @@ model VendorContentOpportunity {
   @@index([productId])
   @@index([status, expiresAt])
   @@map("vendor_content_opportunities")
+}
+
+// ============================================================================
+// CONTRIBUTOR/VOICE SYSTEM
+// See: Implementation spec for contributor voice gathering
+// ============================================================================
+
+enum ArticleTopicStatus {
+  QUEUED          // In admin queue, not visible to users yet
+  GATHERING       // Actively collecting contributions
+  THRESHOLD_MET   // Min reached, can move to writing
+  WRITING         // Being written/edited
+  REVIEW          // Editorial review
+  PUBLISHED       // Live
+  ARCHIVED        // Closed without publishing
+}
+
+enum ContributionType {
+  QUICK_TAKE        // 2-3 sentences
+  EXPERTISE         // Rep product knowledge
+  PREDICTION        // Future trend take
+  REFLECTION        // Project reflection
+  ENDORSEMENT       // Product endorsement
+  CONSUMER_VOICE    // Individual perspective
+}
+
+enum ContributionStatus {
+  PENDING           // Awaiting review
+  APPROVED          // Approved for use
+  SELECTED          // Selected for article
+  PUBLISHED         // Live in article
+  REJECTED          // Not usable
+}
+
+enum BadgeLevel {
+  VOICE             // 1 published
+  PERSPECTIVE       // 5 published (Designer)
+  SPECIALIST        // 5 published (Rep)
+  ENGAGED           // 5 published (Individual)
+  AUTHORITY         // 15 published
+  EDITORIAL_VOICE   // 30+ published
+}
+
+enum PromptLocation {
+  MAGAZINE_PAGE
+  FOR_YOU_FEED
+  POST_SAVE
+  POST_PUBLISH
+  WELCOME_BACK
+  PRODUCT_PAGE
+  PROJECT_DETAIL
+  PROFILE_DASHBOARD
+}
+
+// Article Topic Queue - Admin-managed pipeline for upcoming articles
+model ArticleTopic {
+  id                  String   @id @default(cuid())
+
+  // Topic definition
+  title               String   // "The Quiet Return of Travertine"
+  slug                String   @unique
+  promptQuestion      String   @db.Text // "What draws you to travertine right now?"
+  description         String?  @db.Text // Internal admin notes
+
+  // Categorization
+  category            String   // 'material', 'trend', 'philosophy', 'vendor', 'regional'
+  tags                String[] // ['stone', 'natural', 'warm-tones']
+
+  // Targeting - who sees this prompt
+  targetRoles         String[] // ['DESIGNER', 'VENDOR', 'INDIVIDUAL']
+  targetMaterials     String[] // Material categories that trigger visibility
+  targetStyles        String[] // Style categories
+  minSaveCount        Int?     // User must have X saves in related category
+
+  // Thresholds for progression
+  minContributions    Int      @default(5)
+  targetContributions Int      @default(15)
+  minDesigners        Int      @default(3)
+  minReps             Int?
+  minIndividuals      Int?
+
+  // Status
+  status              ArticleTopicStatus @default(QUEUED)
+
+  // Auto-trigger from trends
+  autoTriggered       Boolean  @default(false)
+  triggerSignalId     String?
+  triggerSignal       TrendSignal? @relation("TrendGeneratedTopics", fields: [triggerSignalId], references: [id])
+
+  // Timing
+  queuedAt            DateTime @default(now())
+  gatheringStartedAt  DateTime?
+  writingStartedAt    DateTime?
+  publishedAt         DateTime?
+  targetPublishDate   DateTime?
+
+  // Relations
+  contributions       Contribution[]
+  prompts             ContributionPrompt[]
+
+  // When published, links to the article
+  publishedPostId     String?  @unique
+  publishedPost       ProjectPost? @relation("TopicPublishedPost", fields: [publishedPostId], references: [id])
+
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([status])
+  @@index([category])
+  @@map("article_topics")
+}
+
+// Universal voice capture - works for all user types
+model Contribution {
+  id                String   @id @default(cuid())
+
+  // Who contributed
+  userId            String
+  user              User     @relation("UserContributions", fields: [userId], references: [id], onDelete: Cascade)
+  userRole          String   // Role at time of contribution
+
+  // What topic
+  articleTopicId    String
+  articleTopic      ArticleTopic @relation(fields: [articleTopicId], references: [id], onDelete: Cascade)
+
+  // Optional context anchors
+  productId         String?  // If about specific product
+  product           Product? @relation("ProductContributions", fields: [productId], references: [id])
+  projectId         String?  // If reflecting on project
+  project           Project? @relation("ProjectContributions", fields: [projectId], references: [id])
+  saveId            String?  // If prompted after save
+
+  // The contribution
+  type              ContributionType
+  content           String   @db.Text
+
+  // Voice support (reuse existing pattern)
+  audioUrl          String?
+  voiceTranscript   String?  @db.Text
+
+  // Editorial processing
+  status            ContributionStatus @default(PENDING)
+  editedContent     String?  @db.Text
+  pullQuote         String?
+
+  // Publishing
+  publishedInPostId String?
+  publishedInPost   ProjectPost? @relation("PostContributions", fields: [publishedInPostId], references: [id])
+  displayOrder      Int?
+
+  // Share card
+  shareCardUrl      String?
+  shareCardGeneratedAt DateTime?
+  shareCount        Int      @default(0)
+
+  // Share card relation
+  shareCard         ShareCard?
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([userId, articleTopicId])
+  @@index([articleTopicId, status])
+  @@index([userId])
+  @@index([userRole])
+  @@map("contributions")
+}
+
+// Contributor recognition badges
+model ContributorBadge {
+  id                String     @id @default(cuid())
+  userId            String
+  user              User       @relation("UserContributorBadges", fields: [userId], references: [id], onDelete: Cascade)
+
+  level             BadgeLevel
+  earnedAt          DateTime   @default(now())
+  publishedCount    Int
+  totalContributions Int
+
+  @@unique([userId, level])
+  @@map("contributor_badges")
+}
+
+// Contextual prompts for where/when to show contribution opportunities
+model ContributionPrompt {
+  id                String   @id @default(cuid())
+
+  location          PromptLocation
+
+  // Targeting
+  targetRoles       String[]
+  targetMaterials   String[]
+  targetStyles      String[]
+  minSaveCount      Int?
+  minDaysActive     Int?
+
+  // Link to topic
+  articleTopicId    String
+  articleTopic      ArticleTopic @relation(fields: [articleTopicId], references: [id])
+  customQuestion    String?  // Override default
+
+  // Display
+  priority          Int      @default(0)
+  active            Boolean  @default(true)
+  maxImpressions    Int?
+  impressionCount   Int      @default(0)
+
+  createdAt         DateTime @default(now())
+
+  @@index([location, active])
+  @@map("contribution_prompts")
+}
+
+// Share cards for social sharing
+model ShareCard {
+  id                String   @id @default(cuid())
+
+  contributionId    String?  @unique
+  contribution      Contribution? @relation(fields: [contributionId], references: [id])
+  projectPostId     String?
+
+  imageUrl          String
+  quote             String   @db.Text
+  attribution       String
+  articleTitle      String
+  articleUrl        String
+  variant           String   @default("instagram")
+
+  generatedAt       DateTime @default(now())
+
+  @@map("share_cards")
 }

@@ -142,6 +142,12 @@ export default function AdminDashboard() {
               icon="&"
             />
             <QuickActionCard
+              title="Article Topics"
+              description="Manage voice-gathering pipeline for articles"
+              href="/admin/article-topics"
+              icon='"'
+            />
+            <QuickActionCard
               title="Export Data"
               description="Export events, users, and analytics data"
               href="/admin/export"

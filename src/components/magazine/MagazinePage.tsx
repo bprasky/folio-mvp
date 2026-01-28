@@ -14,6 +14,7 @@ import MagazineEditionCarousel from "./MagazineEditionCarousel";
 import MagazineCoverHero from "./MagazineCoverHero";
 import EditorialProductCutoutsRail from "./EditorialProductCutoutsRail";
 import MagazineMosaicGrid from "./MagazineMosaicGrid";
+import { GatheringVoicesSection } from "@/components/contributions";
 import { auth } from "@/lib/auth";
 
 interface Props {
@@ -39,6 +40,13 @@ export default async function MagazinePage({ editionSlug }: Props) {
           </div>
         </>
       )}
+
+      {/* Gathering Voices Section - Show contribution opportunities */}
+      <div className="w-full px-4 sm:px-6 py-6 md:py-8 bg-gradient-to-b from-stone-50 to-transparent">
+        <div className="max-w-7xl mx-auto">
+          <GatheringVoicesSection />
+        </div>
+      </div>
 
       {/* Edition selector - positioned between zones */}
       <div className="w-full bg-[var(--bg-base)] border-b border-[var(--ridge-outer)]">
