@@ -48,14 +48,21 @@ export async function PUT(
     const { id: projectId, roomId } = params;
     const body = await request.json();
 
+    // Build update data - only include fields that are provided
+    const updateData: { name?: string; type?: string | null } = {};
+    if (body.name !== undefined) {
+      updateData.name = body.name;
+    }
+    if (body.type !== undefined) {
+      updateData.type = body.type; // Can be null to clear the type
+    }
+
     const room = await prisma.room.update({
       where: {
         id: roomId,
         projectId: projectId,
       },
-      data: {
-        name: body.name,
-      },
+      data: updateData,
       include: {
         selections: {
           orderBy: {
