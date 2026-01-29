@@ -176,10 +176,10 @@ export default async function ProjectPage({
   // Determine if project has meaningful content
   // A project is considered "empty" if:
   // - No images uploaded, AND
-  // - No rooms with actual selections (empty rooms from failed imports don't count)
+  // - No rooms created
   const hasMedia = base.images && base.images.length > 0;
-  const hasRoomsWithContent = base.rooms && base.rooms.some(room => room.selections && room.selections.length > 0);
-  const isProjectEmpty = !hasMedia && !hasRoomsWithContent;
+  const hasRooms = base.rooms && base.rooms.length > 0;
+  const isProjectEmpty = !hasMedia && !hasRooms;
 
   // Show empty state for empty projects
   // Context-aware: organization context → designer flow, personal context → discovery flow
