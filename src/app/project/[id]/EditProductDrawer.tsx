@@ -17,6 +17,19 @@ interface ProductFormData {
   currency?: string;
 }
 
+interface SelectionData extends Partial<ProductFormData> {
+  source?: string;
+  uiMeta?: {
+    specConfidence?: 'high' | 'partial' | 'visual_only';
+    importedAt?: string;
+    dimensions?: {
+      widthIn?: number;
+      depthIn?: number;
+      heightIn?: number;
+    };
+  };
+}
+
 interface EditProductDrawerProps {
   open: boolean;
   onClose: () => void;
@@ -39,7 +52,7 @@ export default function EditProductDrawer({
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(false);
-  const [productData, setProductData] = useState<Partial<ProductFormData>>({});
+  const [productData, setProductData] = useState<SelectionData>({});
   const [error, setError] = useState('');
 
   // Fetch selection data when drawer opens
@@ -103,7 +116,10 @@ export default function EditProductDrawer({
           heightIn: undefined
         },
         slotKey: selection.slotKey || '',
-        specConfidence: selection.uiMeta?.specConfidence || 'visual_only'
+        specConfidence: selection.uiMeta?.specConfidence || 'visual_only',
+        // Track source for presentation import detection
+        source: selection.source,
+        uiMeta: selection.uiMeta,
       });
     } catch (error: any) {
       setError(error.message || 'Failed to load selection data');
@@ -252,6 +268,11 @@ export default function EditProductDrawer({
                 roomType={roomType}
                 roomId={roomId}
                 selectionId={selectionId}
+                fromPresentationImport={
+                  productData.source === 'import' &&
+                  (productData.uiMeta?.specConfidence === 'visual_only' ||
+                   productData.uiMeta?.specConfidence === 'partial')
+                }
               />
             )}
           </div>
