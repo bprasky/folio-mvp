@@ -15,6 +15,21 @@ interface VendorRepContact {
   tradeDiscount?: number | null;
 }
 
+// Material types and their associated roles
+type MaterialType = 'stone' | 'tile' | 'wood' | 'fabric' | 'metal' | 'lighting' | 'appliance' | 'furniture' | 'other';
+
+const MATERIAL_ROLE_MAPPING: Record<MaterialType, string[]> = {
+  stone: ['countertop', 'backsplash', 'vanity-top', 'wall-tile', 'floor-tile', 'island'],
+  tile: ['backsplash', 'wall-tile', 'floor-tile'],
+  wood: ['island', 'table', 'desk', 'bed', 'dresser', 'nightstands', 'storage', 'console', 'coffee-table'],
+  fabric: ['sofa', 'rug', 'bed', 'accent-chairs', 'chairs'],
+  metal: ['faucet', 'sink', 'lighting', 'shower-system'],
+  lighting: ['lighting'],
+  appliance: ['appliances'],
+  furniture: ['sofa', 'bed', 'dresser', 'nightstands', 'desk', 'chair', 'accent-chairs', 'storage', 'console', 'coffee-table', 'table', 'chairs'],
+  other: [], // Show all available roles
+};
+
 interface ProductFormData {
   name: string;
   sku: string;
@@ -32,6 +47,8 @@ interface ProductFormData {
   };
   slotKey?: string;
   specConfidence?: 'high' | 'partial' | 'visual_only';
+  materialType?: MaterialType;
+  applicationNotes?: string;
 }
 
 interface ProductFormProps {
@@ -75,6 +92,8 @@ export default function ProductForm({
     },
     slotKey: '',
     specConfidence: 'visual_only',
+    materialType: undefined,
+    applicationNotes: '',
     ...initialData
   });
 
@@ -469,38 +488,21 @@ export default function ProductForm({
             Complete Product Specs
           </h3>
           <p className="text-xs text-purple-700 mb-3">
-            Search Folio&apos;s database or use AI to find complete product specifications.
+            Use AI to search the web and find complete product specifications.
           </p>
-          <div className="flex gap-2">
-            {/* Find in Folio - search internal database */}
-            <button
-              type="button"
-              onClick={handleFindInFolio}
-              disabled={isFolioSearching || isAiSearching}
-              className="flex-1 px-3 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm flex items-center justify-center gap-2"
-            >
-              {isFolioSearching ? (
-                <FaSpinner className="w-4 h-4 animate-spin" />
-              ) : (
-                <FaSearch className="w-4 h-4" />
-              )}
-              Find in Folio
-            </button>
-            {/* Complete with AI - web search */}
-            <button
-              type="button"
-              onClick={handleCompleteWithAi}
-              disabled={isAiSearching || isFolioSearching}
-              className="flex-1 px-3 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm flex items-center justify-center gap-2"
-            >
-              {isAiSearching ? (
-                <FaSpinner className="w-4 h-4 animate-spin" />
-              ) : (
-                <FaMagic className="w-4 h-4" />
-              )}
-              Complete with AI
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={handleCompleteWithAi}
+            disabled={isAiSearching}
+            className="w-full px-3 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm flex items-center justify-center gap-2"
+          >
+            {isAiSearching ? (
+              <FaSpinner className="w-4 h-4 animate-spin" />
+            ) : (
+              <FaMagic className="w-4 h-4" />
+            )}
+            Complete with AI
+          </button>
         </div>
       )}
 
@@ -721,28 +723,90 @@ export default function ProductForm({
           </div>
         </div>
 
-        {/* Role in Room Section */}
+        {/* Material Type & Role Section */}
         {roomTemplate && (
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Role in this room
-            </label>
-            <select
-              value={formData.slotKey || ''}
-              onChange={(e) => handleInputChange('slotKey', e.target.value)}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="">None / Unassigned</option>
-              {roomTemplate.slots.map((slot: any) => (
-                <option key={slot.key} value={slot.key}>
-                  {slot.label}
-                </option>
-              ))}
-            </select>
-            <p className="text-xs text-gray-500 mt-1">
-              This sets the item's purpose on the board (e.g., Accent Chair, Rug, Countertop). It controls which placeholder it replaces.
-            </p>
-          </div>
+          <>
+            {/* Material Type */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Material Type
+              </label>
+              <select
+                value={formData.materialType || ''}
+                onChange={(e) => {
+                  const newMaterial = e.target.value as MaterialType | '';
+                  handleInputChange('materialType', newMaterial || undefined);
+                  // Clear role if it's not compatible with new material
+                  if (newMaterial && formData.slotKey) {
+                    const allowedRoles = MATERIAL_ROLE_MAPPING[newMaterial as MaterialType] || [];
+                    if (allowedRoles.length > 0 && !allowedRoles.includes(formData.slotKey)) {
+                      handleInputChange('slotKey', '');
+                    }
+                  }
+                }}
+                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">Select material type...</option>
+                <option value="stone">Stone / Marble / Quartz</option>
+                <option value="tile">Tile / Ceramic</option>
+                <option value="wood">Wood / Veneer</option>
+                <option value="fabric">Fabric / Textile</option>
+                <option value="metal">Metal / Hardware</option>
+                <option value="lighting">Lighting</option>
+                <option value="appliance">Appliance</option>
+                <option value="furniture">Furniture</option>
+                <option value="other">Other</option>
+              </select>
+              <p className="text-xs text-gray-500 mt-1">
+                Helps filter role options to relevant applications
+              </p>
+            </div>
+
+            {/* Role in Room */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Role in this room
+              </label>
+              <select
+                value={formData.slotKey || ''}
+                onChange={(e) => handleInputChange('slotKey', e.target.value)}
+                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">None / Unassigned</option>
+                {roomTemplate.slots
+                  .filter((slot: any) => {
+                    // If material type is set, filter to relevant roles
+                    if (formData.materialType && formData.materialType !== 'other') {
+                      const allowedRoles = MATERIAL_ROLE_MAPPING[formData.materialType] || [];
+                      return allowedRoles.length === 0 || allowedRoles.includes(slot.key);
+                    }
+                    return true;
+                  })
+                  .map((slot: any) => (
+                    <option key={slot.key} value={slot.key}>
+                      {slot.label}
+                    </option>
+                  ))}
+              </select>
+            </div>
+
+            {/* Application Notes */}
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Application Notes
+              </label>
+              <textarea
+                value={formData.applicationNotes || ''}
+                onChange={(e) => handleInputChange('applicationNotes', e.target.value)}
+                placeholder="e.g., 'Use for countertops and backsplash' or 'Entire kitchen including cabinets will be made from this material'"
+                rows={2}
+                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Describe how this material should be applied. This will be used when generating room visualizations.
+              </p>
+            </div>
+          </>
         )}
 
         <div className="md:col-span-2">

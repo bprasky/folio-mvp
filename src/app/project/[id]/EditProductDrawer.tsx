@@ -15,10 +15,19 @@ interface ProductFormData {
   description?: string;
   brand?: string;
   currency?: string;
+  slotKey?: string;
+  dimensions?: {
+    widthIn?: number;
+    depthIn?: number;
+    heightIn?: number;
+  };
+  materialType?: string;
+  applicationNotes?: string;
 }
 
 interface SelectionData extends Partial<ProductFormData> {
   source?: string;
+  slotKey?: string;
   uiMeta?: {
     specConfidence?: 'high' | 'partial' | 'visual_only';
     importedAt?: string;
@@ -38,16 +47,19 @@ interface EditProductDrawerProps {
   projectId?: string;
   roomId?: string;
   roomType?: string;
+  /** Pre-selected slot key for skeleton placeholder uploads */
+  initialSlotKey?: string;
 }
 
-export default function EditProductDrawer({ 
-  open, 
-  onClose, 
-  productId, 
+export default function EditProductDrawer({
+  open,
+  onClose,
+  productId,
   selectionId,
   projectId,
   roomId,
-  roomType
+  roomType,
+  initialSlotKey
 }: EditProductDrawerProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
@@ -61,7 +73,7 @@ export default function EditProductDrawer({
       if (selectionId) {
         fetchProductData();
       } else {
-        // Create mode - reset form to defaults
+        // Create mode - reset form to defaults, with optional pre-selected slot
         setProductData({
           name: '',
           sku: '',
@@ -76,7 +88,8 @@ export default function EditProductDrawer({
             widthIn: undefined,
             depthIn: undefined,
             heightIn: undefined
-          }
+          },
+          slotKey: initialSlotKey || ''
         });
         setError('');
         setIsLoadingData(false);
@@ -117,6 +130,8 @@ export default function EditProductDrawer({
         },
         slotKey: selection.slotKey || '',
         specConfidence: selection.uiMeta?.specConfidence || 'visual_only',
+        materialType: selection.uiMeta?.materialType || undefined,
+        applicationNotes: selection.uiMeta?.applicationNotes || '',
         // Track source for presentation import detection
         source: selection.source,
         uiMeta: selection.uiMeta,
@@ -151,7 +166,9 @@ export default function EditProductDrawer({
             slotKey: formData.slotKey || null,
             uiMeta: {
               dimensions: formData.dimensions,
-              slotKey: formData.slotKey
+              slotKey: formData.slotKey,
+              materialType: formData.materialType,
+              applicationNotes: formData.applicationNotes
             }
           }),
         });
@@ -173,7 +190,9 @@ export default function EditProductDrawer({
             slotKey: formData.slotKey || null,
             uiMeta: {
               dimensions: formData.dimensions,
-              slotKey: formData.slotKey
+              slotKey: formData.slotKey,
+              materialType: formData.materialType,
+              applicationNotes: formData.applicationNotes
             }
           }),
         });
