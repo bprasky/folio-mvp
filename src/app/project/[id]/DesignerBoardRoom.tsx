@@ -1,14 +1,27 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import clsx from 'clsx';
-import { FaChevronDown, FaChevronUp, FaEllipsisV, FaShoppingBag, FaUpload, FaEdit, FaImage, FaExchangeAlt } from 'react-icons/fa';
+import { FaChevronDown, FaChevronUp, FaEllipsisV, FaShoppingBag, FaUpload, FaEdit, FaImage, FaExchangeAlt, FaTrash } from 'react-icons/fa';
+import { HiOutlineDotsVertical } from 'react-icons/hi';
 import { useRouter } from 'next/navigation';
 import SafeImage from '@/components/SafeImage';
-import { getRoomTemplate, Slot, inferSlotKey, inferSlotKeyFromCategory } from './roomTemplates';
+import { getRoomTemplate, Slot, inferSlotKey, inferSlotKeyFromCategory, ROOM_TEMPLATES, RoomTemplate } from './roomTemplates';
 import EditProductDrawer from './EditProductDrawer';
 import BoardTileMenu from './BoardTileMenu';
 import { computeTileSize } from './tileSizing';
+
+// Room type options for the edit modal
+const ROOM_TYPE_OPTIONS: { value: RoomTemplate['type'] | ''; label: string }[] = [
+  { value: '', label: 'No Template' },
+  { value: 'KITCHEN', label: 'Kitchen' },
+  { value: 'BATH', label: 'Bathroom' },
+  { value: 'LIVING', label: 'Living Room' },
+  { value: 'BEDROOM', label: 'Bedroom' },
+  { value: 'DINING', label: 'Dining Room' },
+  { value: 'OFFICE', label: 'Office' },
+  { value: 'ENTRY', label: 'Entry / Foyer' },
+];
 
 // Types
 type Selection = {
@@ -75,6 +88,8 @@ type DesignerBoardRoomProps = {
   paintAccentEnabled: boolean;
   onPaintAccentToggle: () => void;
   onSelectionSizeOverride: (selectionId: string, newSize: Size | 'auto') => void;
+  onRoomUpdate?: (roomId: string, data: { name?: string; type?: string | null }) => Promise<void>;
+  onRoomDelete?: (roomId: string) => Promise<void>;
 };
 
 // Reuse Festival sizing logic for spans
@@ -135,14 +150,109 @@ export default function DesignerBoardRoom({
   showAll = true,
   paintAccentEnabled,
   onPaintAccentToggle,
-  onSelectionSizeOverride
+  onSelectionSizeOverride,
+  onRoomUpdate,
+  onRoomDelete
 }: DesignerBoardRoomProps) {
   const [sizeOverrides, setSizeOverrides] = useState<Record<string, Size>>({});
   const [editing, setEditing] = useState<{ open: boolean; productId?: string; selectionId?: string }>({ open: false });
   const [replacingImage, setReplacingImage] = useState<{ open: boolean; selectionId?: string }>({ open: false });
   const [roleChangePopover, setRoleChangePopover] = useState<{ open: boolean; selectionId?: string }>({ open: false });
+
+  // Room menu state
+  const [roomMenuOpen, setRoomMenuOpen] = useState(false);
+  const [roomEditOpen, setRoomEditOpen] = useState(false);
+  const [editingRoomName, setEditingRoomName] = useState(room.name);
+  const [editingRoomType, setEditingRoomType] = useState<string>(room.type || '');
+  const [isSavingRoom, setIsSavingRoom] = useState(false);
+  const [isDeletingRoom, setIsDeletingRoom] = useState(false);
+  const roomMenuRef = useRef<HTMLDivElement>(null);
+
   const cols = useEstimatedCols();
   const router = useRouter();
+
+  // Close room menu on outside click
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (roomMenuRef.current && !roomMenuRef.current.contains(event.target as Node)) {
+        setRoomMenuOpen(false);
+      }
+    }
+    if (roomMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [roomMenuOpen]);
+
+  // Reset edit form when modal opens
+  useEffect(() => {
+    if (roomEditOpen) {
+      setEditingRoomName(room.name);
+      setEditingRoomType(room.type || '');
+    }
+  }, [roomEditOpen, room.name, room.type]);
+
+  // Room edit handler
+  const handleSaveRoom = async () => {
+    if (!editingRoomName.trim()) return;
+    setIsSavingRoom(true);
+    try {
+      if (onRoomUpdate) {
+        await onRoomUpdate(room.id, {
+          name: editingRoomName.trim(),
+          type: editingRoomType || null
+        });
+      } else {
+        // Fallback: call API directly
+        const res = await fetch(`/api/projects/${projectId}/rooms/${room.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: editingRoomName.trim(),
+            type: editingRoomType || null
+          })
+        });
+        if (!res.ok) throw new Error('Failed to update room');
+        router.refresh();
+      }
+      setRoomEditOpen(false);
+    } catch (error) {
+      console.error('Error updating room:', error);
+      alert('Failed to update room. Please try again.');
+    } finally {
+      setIsSavingRoom(false);
+    }
+  };
+
+  // Room delete handler
+  const handleDeleteRoom = async () => {
+    const selectionCount = room.selections?.length || 0;
+    const message = selectionCount > 0
+      ? `Delete "${room.name}"? This will also delete ${selectionCount} item${selectionCount !== 1 ? 's' : ''} in this room.`
+      : `Delete "${room.name}"?`;
+
+    if (!confirm(message)) return;
+
+    setIsDeletingRoom(true);
+    try {
+      if (onRoomDelete) {
+        await onRoomDelete(room.id);
+      } else {
+        // Fallback: call API directly
+        const res = await fetch(`/api/projects/${projectId}/rooms/${room.id}`, {
+          method: 'DELETE'
+        });
+        if (!res.ok) throw new Error('Failed to delete room');
+        router.refresh();
+      }
+    } catch (error) {
+      console.error('Error deleting room:', error);
+      alert('Failed to delete room. Please try again.');
+    } finally {
+      setIsDeletingRoom(false);
+      setRoomMenuOpen(false);
+    }
+  };
 
   // Get room template and calculate placeholders
   const roomTemplate = useMemo(() => {
@@ -305,6 +415,48 @@ export default function DesignerBoardRoom({
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
           <h3 className="folio-h3 text-[var(--text-primary)]">{room.name}</h3>
+
+          {/* Room Type Badge */}
+          {room.type && (
+            <span className="px-2 py-0.5 folio-meta text-[var(--text-tertiary)] bg-[var(--bg-elevated)] rounded border border-[var(--border-default)]">
+              {ROOM_TYPE_OPTIONS.find(opt => opt.value === room.type)?.label || room.type}
+            </span>
+          )}
+
+          {/* Room Menu */}
+          <div className="relative" ref={roomMenuRef}>
+            <button
+              onClick={() => setRoomMenuOpen(!roomMenuOpen)}
+              className="p-1.5 rounded-md hover:bg-[var(--bg-elevated)] text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors"
+              title="Room options"
+            >
+              <HiOutlineDotsVertical className="w-4 h-4" />
+            </button>
+
+            {/* Dropdown Menu */}
+            {roomMenuOpen && (
+              <div className="absolute left-0 top-full mt-1 w-40 bg-[var(--bg-base)] border border-[var(--border-default)] rounded-lg shadow-lg z-50 overflow-hidden">
+                <button
+                  onClick={() => {
+                    setRoomMenuOpen(false);
+                    setRoomEditOpen(true);
+                  }}
+                  className="w-full px-3 py-2 text-left folio-ui text-[var(--text-primary)] hover:bg-[var(--bg-elevated)] flex items-center gap-2"
+                >
+                  <FaEdit className="w-3 h-3" />
+                  Edit Room
+                </button>
+                <button
+                  onClick={handleDeleteRoom}
+                  disabled={isDeletingRoom}
+                  className="w-full px-3 py-2 text-left folio-ui text-red-600 hover:bg-red-50 flex items-center gap-2"
+                >
+                  <FaTrash className="w-3 h-3" />
+                  {isDeletingRoom ? 'Deleting...' : 'Delete Room'}
+                </button>
+              </div>
+            )}
+          </div>
 
           {/* Paint Color Swatch */}
           {room.paintColor && (
@@ -623,6 +775,70 @@ export default function DesignerBoardRoom({
               >
                 Cancel
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Room Edit Modal */}
+      {roomEditOpen && (
+        <div className="fixed inset-0 z-50 overflow-hidden">
+          <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setRoomEditOpen(false)} />
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-[var(--bg-elevated)] rounded-lg shadow-xl p-6">
+            <h3 className="folio-h3 mb-4">Edit Room</h3>
+            <div className="space-y-4">
+              {/* Room Name */}
+              <div>
+                <label className="block folio-ui font-medium text-[var(--text-primary)] mb-1">
+                  Room Name
+                </label>
+                <input
+                  type="text"
+                  value={editingRoomName}
+                  onChange={(e) => setEditingRoomName(e.target.value)}
+                  placeholder="e.g., Primary Bedroom"
+                  className="w-full border border-[var(--border-default)] rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] bg-[var(--bg-base)]"
+                  autoFocus
+                />
+              </div>
+
+              {/* Room Type */}
+              <div>
+                <label className="block folio-ui font-medium text-[var(--text-primary)] mb-1">
+                  Room Type
+                </label>
+                <p className="folio-meta text-[var(--text-tertiary)] mb-2">
+                  Determines which product categories appear as placeholders
+                </p>
+                <select
+                  value={editingRoomType}
+                  onChange={(e) => setEditingRoomType(e.target.value)}
+                  className="w-full border border-[var(--border-default)] rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] bg-[var(--bg-base)]"
+                >
+                  {ROOM_TYPE_OPTIONS.map(opt => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Actions */}
+              <div className="flex justify-end gap-3 pt-2">
+                <button
+                  onClick={() => setRoomEditOpen(false)}
+                  className="px-4 py-2 text-[var(--text-primary)] border border-[var(--border-default)] rounded-md hover:bg-[var(--bg-base)]"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveRoom}
+                  disabled={isSavingRoom || !editingRoomName.trim()}
+                  className="px-4 py-2 bg-[var(--accent)] text-white rounded-md hover:bg-[var(--accent-hover)] disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isSavingRoom ? 'Saving...' : 'Save'}
+                </button>
+              </div>
             </div>
           </div>
         </div>
