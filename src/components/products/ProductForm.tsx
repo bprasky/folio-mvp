@@ -43,6 +43,8 @@ interface ProductFormProps {
   roomType?: string;
   roomId?: string;
   selectionId?: string;
+  /** When true, shows the "Complete Product Specs" section for AI-assisted completion */
+  fromPresentationImport?: boolean;
 }
 
 export default function ProductForm({
@@ -53,7 +55,8 @@ export default function ProductForm({
   isLoading = false,
   roomType,
   roomId,
-  selectionId
+  selectionId,
+  fromPresentationImport = false
 }: ProductFormProps) {
   const [formData, setFormData] = useState<ProductFormData>({
     name: '',
@@ -252,10 +255,17 @@ export default function ProductForm({
           imageUrl: importedData.imageUrl || formData.imageUrl,
           sku: importedData.sku || formData.sku,
           brand: importedData.brand || formData.brand,
+          vendorName: importedData.vendorName || formData.vendorName,
           priceCents: importedData.price ? Math.round(importedData.price * 100).toString() : formData.priceCents,
           currency: importedData.currency || formData.currency,
           // Always update the URL field
           url: importedData.url || formData.url,
+          // Update dimensions if provided
+          dimensions: importedData.dimensions ? {
+            widthIn: importedData.dimensions.width,
+            depthIn: importedData.dimensions.depth,
+            heightIn: importedData.dimensions.height,
+          } : formData.dimensions,
         };
         
         console.log('New form data after merge:', newFormData);
@@ -452,18 +462,14 @@ export default function ProductForm({
         </div>
       </div>
 
-      {/* AI Search Section - always show in edit mode */}
-      {mode === 'edit' && (
+      {/* AI Search Section - only show when from presentation import with incomplete data */}
+      {fromPresentationImport && (formData.name || formData.imageUrl) && (!formData.priceCents || !formData.vendorName || !formData.sku) && (
         <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
           <h3 className="text-sm font-medium text-purple-900 mb-2">
-            {(!formData.priceCents || !formData.vendorName || !formData.sku)
-              ? 'Complete Product Specs'
-              : 'Verify or Update Specs'}
+            Complete Product Specs
           </h3>
           <p className="text-xs text-purple-700 mb-3">
-            {(!formData.priceCents || !formData.vendorName || !formData.sku)
-              ? 'Search Folio\'s database or use AI to find complete product specifications.'
-              : 'Specs look complete. Use these tools to verify accuracy or find updated pricing.'}
+            Search Folio&apos;s database or use AI to find complete product specifications.
           </p>
           <div className="flex gap-2">
             {/* Find in Folio - search internal database */}
