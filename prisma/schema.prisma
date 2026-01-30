@@ -172,6 +172,11 @@ model User {
   claimedCachedProducts          CachedProduct[]       @relation("ClaimedCachedProducts")
   cachedProductEngagements       CachedProductEngagement[] @relation("CachedProductEngagements")
 
+  // Designer Fingerprint Tracking
+  productAffinities              DesignerProductAffinity[]
+  designerPairings               DesignerPairing[]
+  designerStyleProfile           DesignerStyleProfile?
+
   @@map("users")
 }
 
@@ -4211,6 +4216,11 @@ model CachedProduct {
   selectionLinks  SelectionCachedProduct[]
   stats           CachedProductStats?
 
+  // Designer Fingerprint Relations
+  designerAffinities    DesignerProductAffinity[]
+  designerPairingsAsA   DesignerPairing[] @relation("DesignerPairingA")
+  designerPairingsAsB   DesignerPairing[] @relation("DesignerPairingB")
+
   @@index([brand])
   @@index([vendorName])
   @@index([materialType])
@@ -4356,4 +4366,126 @@ model BrandRegistry {
   @@index([normalizedName])
   @@index([claimedOrgId])
   @@map("brand_registry")
+}
+
+// =====================================================
+// Designer Fingerprint Tracking
+// =====================================================
+
+// Tracks individual designer affinity for products, brands, materials, and styles
+model DesignerProductAffinity {
+  id              String    @id @default(uuid())
+
+  designerId      String
+  designer        User      @relation(fields: [designerId], references: [id], onDelete: Cascade)
+
+  // What they're affiliated with (one of these will be set)
+  cachedProductId String?
+  cachedProduct   CachedProduct? @relation(fields: [cachedProductId], references: [id], onDelete: Cascade)
+  brandName       String?   // Normalized brand name
+  materialType    String?   // stone, tile, wood, etc.
+  style           String?   // modern, traditional, etc.
+
+  // Affinity metrics
+  useCount        Int       @default(1)
+  projectCount    Int       @default(1)
+  firstUsedAt     DateTime  @default(now())
+  lastUsedAt      DateTime  @default(now())
+
+  // Engagement signals
+  totalLikesReceived  Int   @default(0)
+  totalSavesReceived  Int   @default(0)
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([designerId])
+  @@index([cachedProductId])
+  @@index([brandName])
+  @@index([materialType])
+  @@index([style])
+  @@index([useCount(sort: Desc)])
+  @@map("designer_product_affinity")
+}
+
+// Tracks what products each designer pairs together (vs aggregate)
+model DesignerPairing {
+  id              String    @id @default(uuid())
+
+  designerId      String
+  designer        User      @relation(fields: [designerId], references: [id], onDelete: Cascade)
+
+  // The two products (ordered: product_a_id < product_b_id)
+  productAId      String
+  productA        CachedProduct @relation("DesignerPairingA", fields: [productAId], references: [id], onDelete: Cascade)
+  productBId      String
+  productB        CachedProduct @relation("DesignerPairingB", fields: [productBId], references: [id], onDelete: Cascade)
+
+  // Context
+  roomType        String?
+
+  // Pairing strength for THIS designer
+  pairCount       Int       @default(1)
+  sameRoomCount   Int       @default(0)
+
+  // Quality signals
+  avgLikes        Decimal?  @db.Decimal(5, 2) @default(0)
+  avgSaves        Decimal?  @db.Decimal(5, 2) @default(0)
+
+  firstPairedAt   DateTime  @default(now())
+  lastPairedAt    DateTime  @default(now())
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@unique([designerId, productAId, productBId])
+  @@index([designerId])
+  @@index([productAId])
+  @@index([productBId])
+  @@index([roomType])
+  @@index([pairCount(sort: Desc)])
+  @@map("designer_pairings")
+}
+
+// Aggregated style fingerprint for each designer
+model DesignerStyleProfile {
+  designerId      String    @id
+  designer        User      @relation(fields: [designerId], references: [id], onDelete: Cascade)
+
+  // Material preferences (percentages)
+  materialBreakdown   Json  @default("{}")
+
+  // Style preferences
+  styleBreakdown      Json  @default("{}")
+
+  // Price tier preferences
+  priceTierBreakdown  Json  @default("{}")
+
+  // Top brands (ordered by usage)
+  topBrands           Json  @default("[]")
+
+  // Room type preferences
+  roomTypeBreakdown   Json  @default("{}")
+
+  // Signature pairings (what they uniquely use together vs aggregate)
+  signaturePairings   Json  @default("[]")
+
+  // Delta from aggregate (how different from average designer)
+  aggregateDeltaScore Decimal @db.Decimal(5, 2) @default(0)
+
+  // Stats
+  totalProductsUsed   Int   @default(0)
+  totalProjects       Int   @default(0)
+  totalSelections     Int   @default(0)
+
+  // Quality metrics
+  avgProjectLikes     Decimal @db.Decimal(5, 2) @default(0)
+  avgProjectSaves     Decimal @db.Decimal(5, 2) @default(0)
+
+  // Timestamps
+  profileComputedAt   DateTime @default(now())
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@map("designer_style_profile")
 }

@@ -6,6 +6,7 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
 import Anthropic from '@anthropic-ai/sdk';
 import * as cheerio from 'cheerio';
+import { trackDesignerProductUse } from '@/lib/designer-fingerprint';
 
 export const runtime = 'nodejs';
 
@@ -216,10 +217,21 @@ export async function POST(req: NextRequest) {
         resultData: { cached: true },
       });
 
+      // Track designer fingerprint for cache hits too
+      await trackDesignerProductUse({
+        designerId: userId,
+        cachedProductId: cachedProduct.id,
+        brandName: cachedProduct.brand,
+        materialType: cachedProduct.materialType,
+        style: cachedProduct.style,
+        projectId,
+      });
+
       // Return cached data
       return NextResponse.json({
         ok: true,
         cached: true,
+        cachedProductId: cachedProduct.id,
         data: {
           title: cachedProduct.productName || '',
           description: cachedProduct.description || '',
@@ -386,6 +398,18 @@ If you cannot find specific information, omit that field rather than guessing.`,
       }
     }
 
+    // 5. TRACK DESIGNER FINGERPRINT
+    if (cachedProduct) {
+      await trackDesignerProductUse({
+        designerId: userId,
+        cachedProductId: cachedProduct.id,
+        brandName: productData.brand,
+        materialType: productData.materialType,
+        style: productData.style,
+        projectId,
+      });
+    }
+
     // Log successful import
     await logProductSearch({
       userId,
@@ -428,7 +452,7 @@ If you cannot find specific information, omit that field rather than guessing.`,
       price: data.price,
     });
 
-    return NextResponse.json({ ok: true, cached: false, data });
+    return NextResponse.json({ ok: true, cached: false, cachedProductId: cachedProduct?.id || null, data });
   } catch (e: any) {
     console.error('Import product error:', e);
     console.error('Error stack:', e?.stack);
