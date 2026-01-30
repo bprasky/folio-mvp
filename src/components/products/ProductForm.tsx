@@ -285,6 +285,8 @@ export default function ProductForm({
             depthIn: importedData.dimensions.depth,
             heightIn: importedData.dimensions.height,
           } : formData.dimensions,
+          // Update material type if AI classified it
+          materialType: importedData.materialType || formData.materialType,
         };
         
         console.log('New form data after merge:', newFormData);
