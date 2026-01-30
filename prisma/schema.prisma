@@ -168,6 +168,10 @@ model User {
   vendorInvitesAdmin             VendorInvite[]        @relation("VendorInvitesAdmin")
   vendorPresentationViews        VendorPresentationView[] @relation("VendorPresentationViews")
 
+  // Product Cache & Relationship System
+  claimedCachedProducts          CachedProduct[]       @relation("ClaimedCachedProducts")
+  cachedProductEngagements       CachedProductEngagement[] @relation("CachedProductEngagements")
+
   @@map("users")
 }
 
@@ -584,6 +588,9 @@ model Selection {
   room              Room?    @relation(fields: [roomId], references: [id], onDelete: Cascade)
   vendorRep         User?    @relation("VendorSelections", fields: [vendorRepId], references: [id])
   productTag        ProductTag? @relation(fields: [productTagId], references: [id], onDelete: SetNull)
+
+  // Product Cache System - links to cached product data
+  cachedProductLinks SelectionCachedProduct[]
 
   @@map("selections")
 }
@@ -4139,4 +4146,214 @@ model VendorPresentationView {
   @@index([organizationId])
   @@index([userId])
   @@map("vendor_presentation_views")
+}
+
+// =====================================================
+// Product Cache & Relationship System
+// =====================================================
+
+// Cache of products imported from URLs, before vendor claims
+model CachedProduct {
+  id              String    @id @default(uuid())
+
+  // URL is unique key for lookups
+  url             String    @unique
+
+  // Basic product info (from AI extraction)
+  productName     String?
+  brand           String?
+  vendorName      String?   // Retailer/website name
+  sku             String?
+  priceCents      Int?      // Store in cents for precision
+  currency        String    @default("USD")
+  description     String?
+
+  // Image (from Browserless extraction)
+  imageUrl        String?
+
+  // Dimensions (inches)
+  widthIn         Decimal?  @db.Decimal(10, 2)
+  depthIn         Decimal?  @db.Decimal(10, 2)
+  heightIn        Decimal?  @db.Decimal(10, 2)
+
+  // AI Classification
+  materialType    String?   // stone, tile, wood, fabric, metal, lighting, appliance, furniture, other
+  style           String?   // modern, traditional, transitional, industrial, coastal, farmhouse
+  colorPalette    Json      @default("[]")  // Array of dominant colors
+  roomSuitability Json      @default("{}") // { kitchen: 0.9, bathroom: 0.7, ... }
+  priceTier       String?   // budget, mid, premium, luxury
+
+  // Categories/Tags
+  categories      String[]  @default([])
+  tags            String[]  @default([])
+
+  // Vendor relationship
+  claimedVendorId String?
+  claimedVendor   User?     @relation("ClaimedCachedProducts", fields: [claimedVendorId], references: [id], onDelete: SetNull)
+  claimedOrgId    String?
+  status          String    @default("unofficial") // unofficial, claimed, verified, rejected
+
+  // Tracking
+  fetchCount      Int       @default(1)
+  useCount        Int       @default(0)  // How many times used in projects
+  lastFetchedAt   DateTime  @default(now())
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Raw AI response for debugging/reprocessing
+  aiResponse            Json?
+  extractionConfidence  String    @default("medium") // high, medium, low
+
+  // Relations
+  pairingsAsA     ProductPairing[]  @relation("PairingProductA")
+  pairingsAsB     ProductPairing[]  @relation("PairingProductB")
+  engagements     CachedProductEngagement[]
+  selectionLinks  SelectionCachedProduct[]
+  stats           CachedProductStats?
+
+  @@index([brand])
+  @@index([vendorName])
+  @@index([materialType])
+  @@index([style])
+  @@index([status])
+  @@index([claimedOrgId])
+  @@map("cached_products")
+}
+
+// Tracks which products are used together in projects
+model ProductPairing {
+  id              String    @id @default(uuid())
+
+  // The two products (ordered: productAId < productBId)
+  productAId      String
+  productA        CachedProduct @relation("PairingProductA", fields: [productAId], references: [id], onDelete: Cascade)
+  productBId      String
+  productB        CachedProduct @relation("PairingProductB", fields: [productBId], references: [id], onDelete: Cascade)
+
+  // Pairing context
+  roomType        String?   // kitchen, bathroom, living, bedroom, etc.
+
+  // Strength metrics
+  pairCount       Int       @default(1)  // How many times paired together
+  sameProjectCount Int      @default(0)  // In same project
+  sameRoomCount   Int       @default(0)  // In same room
+
+  // Quality signals
+  avgProjectLikes Decimal   @default(0) @db.Decimal(5, 2)
+  avgProjectSaves Decimal   @default(0) @db.Decimal(5, 2)
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@unique([productAId, productBId])
+  @@index([productAId])
+  @@index([productBId])
+  @@index([roomType])
+  @@map("product_pairings")
+}
+
+// Tracks user engagement with cached products
+model CachedProductEngagement {
+  id                String    @id @default(uuid())
+
+  cachedProductId   String
+  cachedProduct     CachedProduct @relation(fields: [cachedProductId], references: [id], onDelete: Cascade)
+
+  userId            String?
+  user              User?     @relation("CachedProductEngagements", fields: [userId], references: [id], onDelete: SetNull)
+
+  engagementType    String    // view, like, save, use, share, click_url
+
+  // Context
+  source            String?   // import_modal, project_board, search, recommendation
+  projectId         String?
+  roomId            String?
+
+  createdAt         DateTime  @default(now())
+
+  @@index([cachedProductId])
+  @@index([userId])
+  @@index([engagementType])
+  @@index([createdAt])
+  @@map("cached_product_engagement")
+}
+
+// Links selections in projects to cached products
+model SelectionCachedProduct {
+  id                String    @id @default(uuid())
+
+  selectionId       String
+  selection         Selection @relation(fields: [selectionId], references: [id], onDelete: Cascade)
+
+  cachedProductId   String
+  cachedProduct     CachedProduct @relation(fields: [cachedProductId], references: [id], onDelete: Cascade)
+
+  // How confident is this link
+  matchConfidence   Decimal   @default(1.0) @db.Decimal(3, 2)  // 0.0 to 1.0
+  matchMethod       String    @default("url")  // url, ai_match, manual
+
+  createdAt         DateTime  @default(now())
+
+  @@unique([selectionId, cachedProductId])
+  @@index([selectionId])
+  @@index([cachedProductId])
+  @@map("selection_cached_product")
+}
+
+// Aggregated stats for cached products (updated by background job)
+model CachedProductStats {
+  cachedProductId   String    @id
+  cachedProduct     CachedProduct @relation(fields: [cachedProductId], references: [id], onDelete: Cascade)
+
+  // Usage stats
+  totalUses         Int       @default(0)
+  uniqueProjects    Int       @default(0)
+  uniqueDesigners   Int       @default(0)
+
+  // Engagement stats
+  totalViews        Int       @default(0)
+  totalLikes        Int       @default(0)
+  totalSaves        Int       @default(0)
+
+  // Pairing stats
+  totalPairings     Int       @default(0)
+  topPairedProducts Json      @default("[]")  // Array of {productId, count}
+
+  // Quality score (computed)
+  qualityScore      Decimal   @default(0) @db.Decimal(5, 2)  // 0-100
+  trendingScore     Decimal   @default(0) @db.Decimal(5, 2)  // Recent momentum
+
+  // Time-based
+  lastUsedAt        DateTime?
+  updatedAt         DateTime  @updatedAt
+
+  @@map("cached_product_stats")
+}
+
+// Registry of brands seen, tracking claim status
+model BrandRegistry {
+  id              String    @id @default(uuid())
+
+  // Brand identification
+  name            String
+  normalizedName  String    @unique  // lowercase, alphanumeric only
+
+  // Known URLs
+  websiteUrl      String?
+  knownRetailerUrls String[] @default([])  // URLs where this brand is sold
+
+  // Claimed status
+  claimedOrgId    String?
+  claimedAt       DateTime?
+
+  // Stats
+  productCount    Int       @default(0)
+  totalUses       Int       @default(0)
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([normalizedName])
+  @@index([claimedOrgId])
+  @@map("brand_registry")
 }
