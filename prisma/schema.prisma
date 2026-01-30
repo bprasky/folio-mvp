@@ -177,6 +177,9 @@ model User {
   designerPairings               DesignerPairing[]
   designerStyleProfile           DesignerStyleProfile?
 
+  // Design Journey Tracking
+  selectionChanges               SelectionHistory[]
+
   @@map("users")
 }
 
@@ -331,6 +334,12 @@ model Project {
 
   // Designer Shop System relations
   shopProducts           ShopProduct[]           @relation("ProjectShopProducts")
+
+  // Design Journey Tracking
+  presentationProducts   PresentationProduct[]
+  designIntent           ProjectDesignIntent?
+  selectionHistory       SelectionHistory[]
+  designJourney          ProjectDesignJourney?
 
   @@map("projects")
 }
@@ -596,6 +605,10 @@ model Selection {
 
   // Product Cache System - links to cached product data
   cachedProductLinks SelectionCachedProduct[]
+
+  // Design Journey Tracking
+  selectionHistory       SelectionHistory[]
+  presentationProducts   PresentationProduct[] // Links back to original presentation product
 
   @@map("selections")
 }
@@ -4221,6 +4234,13 @@ model CachedProduct {
   designerPairingsAsA   DesignerPairing[] @relation("DesignerPairingA")
   designerPairingsAsB   DesignerPairing[] @relation("DesignerPairingB")
 
+  // Design Journey Relations
+  presentationProducts  PresentationProduct[]
+  historyAsPrevious     SelectionHistory[] @relation("HistoryPreviousProduct")
+  historyAsNew          SelectionHistory[] @relation("HistoryNewProduct")
+  swapsFrom             SwapPattern[] @relation("SwapFrom")
+  swapsTo               SwapPattern[] @relation("SwapTo")
+
   @@index([brand])
   @@index([vendorName])
   @@index([materialType])
@@ -4488,4 +4508,233 @@ model DesignerStyleProfile {
   updatedAt           DateTime @updatedAt
 
   @@map("designer_style_profile")
+}
+
+// =====================================================
+// Design Journey Tracking
+// =====================================================
+
+// Products extracted from original presentations
+model PresentationProduct {
+  id              String    @id @default(uuid())
+
+  projectId       String
+  project         Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  // Link to cached product once matched
+  cachedProductId String?
+  cachedProduct   CachedProduct? @relation(fields: [cachedProductId], references: [id], onDelete: SetNull)
+
+  // Extracted data
+  extractedName     String?
+  extractedBrand    String?
+  extractedImageUrl String?
+  extractedUrl      String?
+  extractedPrice    Decimal?  @db.Decimal(10, 2)
+
+  // Role/placement
+  suggestedRole     String?
+  suggestedRoom     String?
+
+  // Source context
+  slideNumber       Int?
+  pageNumber        Int?
+  sourceFileUrl     String?
+  sourceType        String?   // pdf, pptx, figma, image, url_list
+
+  // Matching
+  matchStatus       String    @default("unmatched")
+  matchConfidence   Decimal?  @db.Decimal(3, 2)
+
+  // Outcome
+  keptInFinal       Boolean?
+  finalSelectionId  String?
+  finalSelection    Selection? @relation(fields: [finalSelectionId], references: [id], onDelete: SetNull)
+
+  extractedAt       DateTime  @default(now())
+  createdAt         DateTime  @default(now())
+
+  @@index([projectId])
+  @@index([cachedProductId])
+  @@index([matchStatus])
+  @@map("presentation_products")
+}
+
+// Original design intent/vision for a project
+model ProjectDesignIntent {
+  id              String    @id @default(uuid())
+
+  projectId       String    @unique
+  project         Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  // Style goals
+  styleGoals          String[]  @default([])
+  materialPreferences String[]  @default([])
+  colorPalette        Json      @default("[]")
+
+  // Budget
+  budgetTier          String?
+  budgetNotes         String?
+
+  // Priorities
+  priorityRooms       String[]  @default([])
+
+  // Presentation source
+  presentationFileUrl     String?
+  presentationParsedAt    DateTime?
+  presentationProductCount Int       @default(0)
+
+  // Mood/inspiration
+  moodKeywords        String[]  @default([])
+  inspirationUrls     String[]  @default([])
+  clientNotes         String?
+
+  // AI-detected
+  aiDetectedStyle     String?
+  aiDetectedMood      Json?
+  aiConfidence        String?
+
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  @@map("project_design_intent")
+}
+
+// Changelog for selection changes
+model SelectionHistory {
+  id              String    @id @default(uuid())
+
+  selectionId     String?
+  selection       Selection? @relation(fields: [selectionId], references: [id], onDelete: SetNull)
+
+  projectId       String
+  project         Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  roomId          String?
+  slotKey         String?
+
+  // Action
+  action          String    // created, updated, deleted, swapped, restored
+
+  // Who
+  changedByUserId String?
+  changedByUser   User?     @relation(fields: [changedByUserId], references: [id], onDelete: SetNull)
+  changedByRole   String?   // designer, client, collaborator, system
+
+  // Products before/after
+  previousProductId String?
+  previousProduct   CachedProduct? @relation("HistoryPreviousProduct", fields: [previousProductId], references: [id], onDelete: SetNull)
+  newProductId      String?
+  newProduct        CachedProduct? @relation("HistoryNewProduct", fields: [newProductId], references: [id], onDelete: SetNull)
+
+  // What changed
+  changedFields   Json?
+
+  // Why
+  reasonCategory  String?   // budget, availability, client_preference, design_change, substitution
+  reasonNotes     String?
+
+  // Context
+  source          String?   // designer_board, import, presentation, client_portal, ai_suggestion
+
+  // Snapshot
+  selectionSnapshot Json?
+
+  changedAt       DateTime  @default(now())
+
+  @@index([selectionId])
+  @@index([projectId])
+  @@index([changedByUserId])
+  @@index([action])
+  @@index([reasonCategory])
+  @@index([changedAt(sort: Desc)])
+  @@map("selection_history")
+}
+
+// Aggregated journey summary for a project
+model ProjectDesignJourney {
+  projectId       String    @id
+  project         Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  // Counts
+  presentationProductCount  Int @default(0)
+  finalSelectionCount       Int @default(0)
+
+  // Product journey
+  productsKept    Int       @default(0)
+  productsSwapped Int       @default(0)
+  productsAdded   Int       @default(0)
+  productsRemoved Int       @default(0)
+
+  // Attribution
+  totalChanges          Int @default(0)
+  changesByDesigner     Int @default(0)
+  changesByClient       Int @default(0)
+  changesByCollaborator Int @default(0)
+  changesBySystem       Int @default(0)
+
+  // Reasons
+  changesForBudget          Int @default(0)
+  changesForAvailability    Int @default(0)
+  changesForClientPreference Int @default(0)
+  changesForDesignChange    Int @default(0)
+  changesForSubstitution    Int @default(0)
+  changesForOther           Int @default(0)
+
+  // Style analysis
+  originalStyleTags     Json      @default("[]")
+  finalStyleTags        Json      @default("[]")
+  styleConsistencyScore Decimal?  @db.Decimal(5, 2)
+  styleDriftNotes       String?
+
+  // Timeline
+  firstChangeAt         DateTime?
+  lastChangeAt          DateTime?
+  avgChangesPerDay      Decimal?  @db.Decimal(5, 2)
+
+  // Insights
+  budgetImpactPercent   Decimal?  @db.Decimal(5, 2)
+  clientInfluenceScore  Decimal?  @db.Decimal(5, 2)
+
+  computedAt            DateTime  @default(now())
+
+  @@map("project_design_journey")
+}
+
+// Common product substitution patterns
+model SwapPattern {
+  id              String    @id @default(uuid())
+
+  // Product-level swap
+  fromProductId   String?
+  fromProduct     CachedProduct? @relation("SwapFrom", fields: [fromProductId], references: [id], onDelete: Cascade)
+  toProductId     String?
+  toProduct       CachedProduct? @relation("SwapTo", fields: [toProductId], references: [id], onDelete: Cascade)
+
+  // Brand-level swap
+  fromBrand       String?
+  toBrand         String?
+
+  // Context
+  materialType    String?
+  role            String?
+
+  // Frequency
+  swapCount       Int       @default(1)
+
+  // Reasons
+  commonReasons   Json      @default("[]")
+
+  // Quality
+  avgProjectSatisfaction Decimal? @db.Decimal(3, 2)
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@unique([fromProductId, toProductId])
+  @@index([fromProductId])
+  @@index([toProductId])
+  @@index([fromBrand])
+  @@index([swapCount(sort: Desc)])
+  @@map("swap_patterns")
 }
