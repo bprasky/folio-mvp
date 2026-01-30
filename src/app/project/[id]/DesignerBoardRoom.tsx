@@ -155,7 +155,7 @@ export default function DesignerBoardRoom({
   onRoomDelete
 }: DesignerBoardRoomProps) {
   const [sizeOverrides, setSizeOverrides] = useState<Record<string, Size>>({});
-  const [editing, setEditing] = useState<{ open: boolean; productId?: string; selectionId?: string }>({ open: false });
+  const [editing, setEditing] = useState<{ open: boolean; productId?: string; selectionId?: string; slotKey?: string }>({ open: false });
   const [replacingImage, setReplacingImage] = useState<{ open: boolean; selectionId?: string }>({ open: false });
   const [roleChangePopover, setRoleChangePopover] = useState<{ open: boolean; selectionId?: string }>({ open: false });
 
@@ -646,8 +646,8 @@ export default function DesignerBoardRoom({
                     </button>
                     <button
                       onClick={() => {
-                        // TODO: Open upload flow scoped to this room/slot
-                        console.log('Upload for slot:', slot.key, 'in room:', room.id);
+                        // Open upload flow scoped to this room/slot
+                        setEditing({ open: true, productId: undefined, selectionId: undefined, slotKey: slot.key });
                       }}
                       className="flex items-center justify-center space-x-2 px-3 py-2 bg-[var(--text-secondary)] text-white folio-meta rounded-lg hover:bg-[var(--text-primary)] transition-colors"
                     >
@@ -683,6 +683,7 @@ export default function DesignerBoardRoom({
         projectId={projectId}
         roomId={room.id}
         roomType={room.type || room.name}
+        initialSlotKey={editing.slotKey}
       />
 
       {/* Image Replacement Modal */}
