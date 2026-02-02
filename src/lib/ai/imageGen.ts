@@ -171,35 +171,31 @@ class StabilityProvider implements ImageGenProvider {
 
 export function getImageGenProvider(): ImageGenProvider {
   const p = (process.env.IMAGE_GEN_PROVIDER || "openai").toLowerCase();
-  
-  if (p === "openai") {
-    try {
-      return new OpenAIProvider();
-    } catch (error) {
-      console.warn('OpenAI provider failed to initialize, falling back to fake provider:', error);
-      return new FakeProvider();
-    }
-  }
-  
-  if (p === "stability") {
-    try {
-      return new StabilityProvider();
-    } catch (error) {
-      console.warn('Stability provider failed to initialize, falling back to fake provider:', error);
-      return new FakeProvider();
-    }
-  }
-  
+
+  // Only use fake provider if explicitly requested
   if (p === "fake" || process.env.FAKE_PROVIDER === '1') {
+    console.warn('[imageGen] Using FAKE provider - images will be placeholders');
     return new FakeProvider();
   }
-  
+
+  if (p === "openai") {
+    if (!process.env.OPENAI_API_KEY) {
+      throw new Error("OPENAI_API_KEY environment variable is not set. Image generation requires a valid API key.");
+    }
+    return new OpenAIProvider();
+  }
+
+  if (p === "stability") {
+    if (!process.env.STABILITY_API_KEY) {
+      throw new Error("STABILITY_API_KEY environment variable is not set. Image generation requires a valid API key.");
+    }
+    return new StabilityProvider();
+  }
+
   // Default to OpenAI
   console.warn(`Unknown image generation provider: ${p}, defaulting to OpenAI`);
-  try {
-    return new OpenAIProvider();
-  } catch (error) {
-    console.warn('OpenAI provider failed, falling back to fake provider:', error);
-    return new FakeProvider();
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error("OPENAI_API_KEY environment variable is not set. Image generation requires a valid API key.");
   }
+  return new OpenAIProvider();
 }
