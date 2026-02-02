@@ -205,3 +205,22 @@ export const RateLimitPresets = {
     windowMs: 60 * 60 * 1000,
   },
 } as const;
+
+/**
+ * Simple rate limit function that returns ok/not ok status
+ * Supports object-based configuration for consistency
+ */
+export function rateLimit(opts: {
+  userId?: string;
+  scope: string;
+  limit: number;
+  windowMs: number;
+}): { ok: boolean; remaining: number; reset: number } {
+  const key = opts.userId ? `${opts.userId}:${opts.scope}` : opts.scope;
+  const result = checkRateLimit(key, { max: opts.limit, windowMs: opts.windowMs });
+  return {
+    ok: result.success,
+    remaining: result.remaining,
+    reset: result.reset,
+  };
+}

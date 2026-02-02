@@ -31,11 +31,14 @@ export async function POST(
     }
 
     // Rate limiting
-    const limitKey = `gen-image:${userId}`;
     const maxPerHour = parseInt(process.env.IMAGE_GEN_MAX_PER_HOUR || '10');
-    try {
-      rateLimit(limitKey, maxPerHour, 60 * 60 * 1000); // 1 hour window
-    } catch (rateLimitError: any) {
+    const rateLimitResult = rateLimit({
+      userId,
+      scope: 'gen-image',
+      limit: maxPerHour,
+      windowMs: 60 * 60 * 1000, // 1 hour
+    });
+    if (!rateLimitResult.ok) {
       return NextResponse.json(
         { error: 'Rate limit exceeded. Please try again later.' },
         { status: 429 }
