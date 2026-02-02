@@ -335,13 +335,7 @@ export default function DesignerBoard({
           projectId={projectId}
           roomId={selectedRoomId}
           roomName={project.rooms.find(r => r.id === selectedRoomId)?.name || 'Room'}
-          selectionsCount={project.rooms.find(r => r.id === selectedRoomId)?.selections.length || 0}
-          selectionsPreview={project.rooms.find(r => r.id === selectedRoomId)?.selections.slice(0, 6).map(s => ({
-            name: s.productName || 'Untitled Product',
-            category: s.tags.find(tag => 
-              ['sofas', 'chairs', 'tables', 'lighting', 'rugs', 'art', 'storage', 'countertops', 'appliances', 'faucets', 'sinks'].includes(tag.toLowerCase())
-            )
-          })) || []}
+          selections={project.rooms.find(r => r.id === selectedRoomId)?.selections || []}
           open={generateDialogOpen}
           onOpenChange={setGenerateDialogOpen}
           onDone={handleGenerationComplete}
