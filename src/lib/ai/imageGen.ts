@@ -1,27 +1,27 @@
 import OpenAI from "openai";
 
-export type ImageGenInput = { 
-  prompt: string; 
-  width?: number; 
-  height?: number; 
-  n?: number; 
-  seed?: number; 
+export type ImageGenInput = {
+  prompt: string;
+  width?: number;
+  height?: number;
+  n?: number;
+  seed?: number;
 };
 
-export type ImageGenOutput = { 
-  images: Array<{ buffer: Buffer; mime: string }>; 
-  meta: Record<string, any>; 
+export type ImageGenOutput = {
+  images: Array<{ buffer: Buffer; mime: string }>;
+  meta: Record<string, any>;
 };
 
-export interface ImageGenProvider { 
-  generate(input: ImageGenInput): Promise<ImageGenOutput>; 
+export interface ImageGenProvider {
+  generate(input: ImageGenInput): Promise<ImageGenOutput>;
 }
 
 // Fake provider for development/testing
 class FakeProvider implements ImageGenProvider {
   async generate(input: ImageGenInput): Promise<ImageGenOutput> {
     const { prompt, width = 1024, height = 1024, n = 2 } = input;
-    
+
     // Create a simple placeholder image with prompt text
     const images = Array.from({ length: n }, (_, i) => {
       const buffer = this.createPlaceholderImage(prompt, width, height, i + 1);
@@ -55,10 +55,10 @@ class FakeProvider implements ImageGenProvider {
       const pixel = i / 4;
       const x = pixel % width;
       const y = Math.floor(pixel / width);
-      
+
       // Create a subtle gradient
       const intensity = Math.floor(240 + (Math.sin(x / 100) * 10) + (Math.cos(y / 100) * 10));
-      
+
       canvas.data[i] = intensity;     // R
       canvas.data[i + 1] = intensity; // G
       canvas.data[i + 2] = intensity; // B
@@ -78,6 +78,90 @@ class FakeProvider implements ImageGenProvider {
     ]);
 
     return pngData;
+  }
+}
+
+// Google Gemini/Imagen provider
+class GeminiProvider implements ImageGenProvider {
+  private apiKey: string;
+  private model: string;
+
+  constructor() {
+    this.apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_API_KEY || "";
+    if (!this.apiKey) throw new Error("GEMINI_API_KEY or GOOGLE_AI_API_KEY missing");
+    this.model = process.env.GEMINI_IMAGE_MODEL || "imagen-3.0-generate-002";
+  }
+
+  async generate(input: ImageGenInput): Promise<ImageGenOutput> {
+    const n = Math.min(input.n ?? 2, 4); // Imagen supports up to 4 images
+    const aspectRatio = this.getAspectRatio(input.width, input.height);
+
+    // Use the Imagen API via Generative Language API
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${this.model}:predict?key=${this.apiKey}`;
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        instances: [{ prompt: input.prompt }],
+        parameters: {
+          sampleCount: n,
+          aspectRatio: aspectRatio,
+          personGeneration: "allow_adult",
+          safetyFilterLevel: "block_few",
+        },
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("[GeminiProvider] API error:", response.status, errorText);
+      throw new Error(`Gemini API error ${response.status}: ${errorText}`);
+    }
+
+    const result = await response.json();
+
+    // Parse the response - Imagen returns base64 encoded images
+    const images: Array<{ buffer: Buffer; mime: string }> = [];
+
+    if (result.predictions) {
+      for (const prediction of result.predictions) {
+        if (prediction.bytesBase64Encoded) {
+          const buffer = Buffer.from(prediction.bytesBase64Encoded, "base64");
+          images.push({ buffer, mime: prediction.mimeType || "image/png" });
+        }
+      }
+    }
+
+    if (images.length === 0) {
+      console.error("[GeminiProvider] No images in response:", JSON.stringify(result).slice(0, 500));
+      throw new Error("Gemini returned no images");
+    }
+
+    return {
+      images,
+      meta: {
+        provider: "gemini",
+        model: this.model,
+        aspectRatio,
+        count: images.length,
+      },
+    };
+  }
+
+  private getAspectRatio(width?: number, height?: number): string {
+    const w = width ?? 1024;
+    const h = height ?? 1024;
+    const ratio = w / h;
+
+    // Imagen 3 supports: 1:1, 3:4, 4:3, 9:16, 16:9
+    if (ratio > 1.7) return "16:9";      // Wide landscape
+    if (ratio > 1.2) return "4:3";       // Landscape
+    if (ratio < 0.6) return "9:16";      // Tall portrait
+    if (ratio < 0.85) return "3:4";      // Portrait
+    return "1:1";                         // Square
   }
 }
 
@@ -130,13 +214,13 @@ class OpenAIProvider implements ImageGenProvider {
 class StabilityProvider implements ImageGenProvider {
   private apiKey: string;
   private engine: string;
-  
+
   constructor() {
     this.apiKey = process.env.STABILITY_API_KEY || "";
     this.engine = process.env.STABILITY_ENGINE || "stable-image-ultra";
     if (!this.apiKey) throw new Error("STABILITY_API_KEY missing");
   }
-  
+
   async generate(input: ImageGenInput): Promise<ImageGenOutput> {
     const n = input.n ?? 2;
     const width = input.width ?? 1024;
@@ -178,6 +262,13 @@ export function getImageGenProvider(): ImageGenProvider {
     return new FakeProvider();
   }
 
+  if (p === "gemini" || p === "google" || p === "imagen") {
+    if (!process.env.GEMINI_API_KEY && !process.env.GOOGLE_AI_API_KEY) {
+      throw new Error("GEMINI_API_KEY or GOOGLE_AI_API_KEY environment variable is not set. Image generation requires a valid API key.");
+    }
+    return new GeminiProvider();
+  }
+
   if (p === "openai") {
     if (!process.env.OPENAI_API_KEY) {
       throw new Error("OPENAI_API_KEY environment variable is not set. Image generation requires a valid API key.");
@@ -192,7 +283,12 @@ export function getImageGenProvider(): ImageGenProvider {
     return new StabilityProvider();
   }
 
-  // Default to OpenAI
+  // Default to Gemini if GEMINI_API_KEY is set, otherwise OpenAI
+  if (process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_API_KEY) {
+    console.log('[imageGen] Defaulting to Gemini provider');
+    return new GeminiProvider();
+  }
+
   console.warn(`Unknown image generation provider: ${p}, defaulting to OpenAI`);
   if (!process.env.OPENAI_API_KEY) {
     throw new Error("OPENAI_API_KEY environment variable is not set. Image generation requires a valid API key.");
