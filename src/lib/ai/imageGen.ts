@@ -82,6 +82,10 @@ class FakeProvider implements ImageGenProvider {
 }
 
 // Google Gemini/Imagen provider
+// Available models:
+//   - imagen-3.0-generate-002 (standard quality)
+//   - imagen-3.0-fast-generate-001 (faster, cheaper)
+// Set GEMINI_IMAGE_MODEL to override the default
 class GeminiProvider implements ImageGenProvider {
   private apiKey: string;
   private model: string;
@@ -89,7 +93,9 @@ class GeminiProvider implements ImageGenProvider {
   constructor() {
     this.apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_API_KEY || "";
     if (!this.apiKey) throw new Error("GEMINI_API_KEY or GOOGLE_AI_API_KEY missing");
-    this.model = process.env.GEMINI_IMAGE_MODEL || "imagen-3.0-generate-002";
+    // Default to fast model for better UX; override with GEMINI_IMAGE_MODEL if needed
+    this.model = process.env.GEMINI_IMAGE_MODEL || "imagen-3.0-fast-generate-001";
+    console.log(`[GeminiProvider] Using model: ${this.model}`);
   }
 
   async generate(input: ImageGenInput): Promise<ImageGenOutput> {
@@ -254,7 +260,7 @@ class StabilityProvider implements ImageGenProvider {
 }
 
 export function getImageGenProvider(): ImageGenProvider {
-  const p = (process.env.IMAGE_GEN_PROVIDER || "openai").toLowerCase();
+  const p = (process.env.IMAGE_GEN_PROVIDER || "gemini").toLowerCase();
 
   // Only use fake provider if explicitly requested
   if (p === "fake" || process.env.FAKE_PROVIDER === '1') {
@@ -283,15 +289,10 @@ export function getImageGenProvider(): ImageGenProvider {
     return new StabilityProvider();
   }
 
-  // Default to Gemini if GEMINI_API_KEY is set, otherwise OpenAI
-  if (process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_API_KEY) {
-    console.log('[imageGen] Defaulting to Gemini provider');
-    return new GeminiProvider();
-  }
-
-  console.warn(`Unknown image generation provider: ${p}, defaulting to OpenAI`);
-  if (!process.env.OPENAI_API_KEY) {
-    throw new Error("OPENAI_API_KEY environment variable is not set. Image generation requires a valid API key.");
-  }
-  return new OpenAIProvider();
+  // No fallback - fail with clear error
+  throw new Error(
+    `Unknown image generation provider: "${p}". ` +
+    `Valid options: gemini, openai, stability. ` +
+    `Set IMAGE_GEN_PROVIDER env var to one of these values and ensure the corresponding API key is set.`
+  );
 }
