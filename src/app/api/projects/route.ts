@@ -96,17 +96,35 @@ export async function POST(req: Request) {
       }, { status: 403 });
     }
 
-    let json: unknown;
+    let json: any;
     try {
       json = await req.json();
     } catch {
       return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
     }
 
+    // Extract designerOrgId before normalization (not part of schema)
+    const requestedOrgId = json?.designerOrgId as string | undefined;
+
+    // If designerOrgId provided, validate user is a member of that org
+    let validatedOrgId: string | null = null;
+    if (requestedOrgId) {
+      const membership = await prisma.organizationUser.findFirst({
+        where: { userId, organizationId: requestedOrgId, isActive: true },
+        select: { id: true },
+      });
+      if (!membership) {
+        return NextResponse.json({
+          error: 'You are not a member of this organization'
+        }, { status: 403 });
+      }
+      validatedOrgId = requestedOrgId;
+    }
+
     const data = normalizeCreatePayload(json); // accepts both shapes, returns canonical
 
     if (isDev) {
-      console.log('[create-project] normalized data:', data);
+      console.log('[create-project] normalized data:', data, 'orgId:', validatedOrgId);
     }
 
     // Map projectStatus to database status
@@ -126,6 +144,7 @@ export async function POST(req: Request) {
         description: data.description ?? null,
         designerId: userId,
         ownerId: userId,
+        designerOrgId: validatedOrgId,
         status: dbStatus,
         isPublic: false,
         publishedAt: null,

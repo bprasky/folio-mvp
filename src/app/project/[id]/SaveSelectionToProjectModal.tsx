@@ -26,6 +26,12 @@ interface Project {
   updatedAt?: string;
 }
 
+interface UserOrg {
+  id: string;
+  name: string;
+  type: string;
+}
+
 interface Selection {
   id: string;
   photo?: string | null;
@@ -53,11 +59,13 @@ export default function SaveSelectionToProjectModal({
 }: SaveSelectionToProjectModalProps) {
   const { data: session } = useSession();
   const [projects, setProjects] = useState<Project[]>([]);
+  const [userOrgs, setUserOrgs] = useState<UserOrg[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [createNew, setCreateNew] = useState(false);
   const [newProjectTitle, setNewProjectTitle] = useState('New Project');
+  const [newProjectOrgId, setNewProjectOrgId] = useState<string | null>(null); // null = personal
 
   // Collapsible sections state
   const [expandedSections, setExpandedSections] = useState({
@@ -106,9 +114,12 @@ export default function SaveSelectionToProjectModal({
 
   // Get first org name for section title
   const primaryOrgName = useMemo(() => {
+    if (userOrgs.length > 0) {
+      return userOrgs[0].name;
+    }
     const orgProject = projects.find(p => p.organizationName);
-    return orgProject?.organizationName || (session?.user as any)?.operatingAsOrg?.name || 'My Firm';
-  }, [projects, session]);
+    return orgProject?.organizationName || 'Organization';
+  }, [projects, userOrgs]);
 
   useEffect(() => {
     if (isOpen && session?.user?.id) {
@@ -116,13 +127,30 @@ export default function SaveSelectionToProjectModal({
     }
   }, [isOpen, session]);
 
+  // Reset form when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setSelectedProjectId(null);
+      setCreateNew(false);
+      setNewProjectTitle('New Project');
+      setNewProjectOrgId(null);
+    }
+  }, [isOpen]);
+
   const fetchProjects = async () => {
     setLoading(true);
     try {
       const response = await fetch('/api/my-projects');
       if (response.ok) {
         const data = await response.json();
-        setProjects(data);
+        // Handle both old format (array) and new format ({ projects, userOrgs })
+        if (Array.isArray(data)) {
+          setProjects(data);
+          setUserOrgs([]);
+        } else {
+          setProjects(data.projects || []);
+          setUserOrgs(data.userOrgs || []);
+        }
       }
     } catch (error) {
       console.error('Error fetching projects:', error);
@@ -171,17 +199,25 @@ export default function SaveSelectionToProjectModal({
 
       // Create new project if needed
       if (createNew) {
+        const createPayload: any = {
+          title: newProjectTitle,
+          description: 'Created from saved selection',
+          projectType: 'RESIDENTIAL',
+          clientType: 'RESIDENTIAL',
+          budgetBand: 'UNSPECIFIED',
+          stage: 'concept',
+          projectStatus: 'new_project', // Required field
+        };
+
+        // If creating for an org, include the org ID
+        if (newProjectOrgId) {
+          createPayload.designerOrgId = newProjectOrgId;
+        }
+
         const createResponse = await fetch('/api/projects', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            title: newProjectTitle,
-            description: 'Created from saved selection',
-            projectType: 'RESIDENTIAL',
-            clientType: 'RESIDENTIAL',
-            budgetBand: 'UNSPECIFIED',
-            stage: 'concept',
-          }),
+          body: JSON.stringify(createPayload),
         });
 
         if (createResponse.ok) {
@@ -218,7 +254,7 @@ export default function SaveSelectionToProjectModal({
       saveRecentProject(targetProjectId);
 
       const targetProject = projects.find(p => p.id === targetProjectId);
-      toast.success(`Saved to ${targetProject?.title || 'project'}`);
+      toast.success(`Saved to ${targetProject?.title || newProjectTitle}`);
       onSuccess?.(targetProjectId);
       onClose();
     } catch (error: any) {
@@ -230,6 +266,8 @@ export default function SaveSelectionToProjectModal({
   };
 
   if (!isOpen || !selection) return null;
+
+  const hasOrgs = userOrgs.length > 0;
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -299,20 +337,19 @@ export default function SaveSelectionToProjectModal({
                 )}
 
                 {/* Personal Projects */}
-                {groupedProjects.personal.length > 0 && (
-                  <ProjectSection
-                    title="Personal Projects"
-                    icon={<User className="h-4 w-4" />}
-                    projects={groupedProjects.personal}
-                    expanded={expandedSections.personal}
-                    onToggle={() => toggleSection('personal')}
-                    selectedId={selectedProjectId}
-                    onSelect={handleProjectSelect}
-                  />
-                )}
+                <ProjectSection
+                  title="Personal Projects"
+                  icon={<User className="h-4 w-4" />}
+                  projects={groupedProjects.personal}
+                  expanded={expandedSections.personal}
+                  onToggle={() => toggleSection('personal')}
+                  selectedId={selectedProjectId}
+                  onSelect={handleProjectSelect}
+                  emptyMessage="No personal projects"
+                />
 
-                {/* Organization Projects */}
-                {groupedProjects.organization.length > 0 && (
+                {/* Organization Projects - always show if user has orgs */}
+                {hasOrgs && (
                   <ProjectSection
                     title={primaryOrgName}
                     icon={<Building2 className="h-4 w-4" />}
@@ -321,17 +358,8 @@ export default function SaveSelectionToProjectModal({
                     onToggle={() => toggleSection('organization')}
                     selectedId={selectedProjectId}
                     onSelect={handleProjectSelect}
+                    emptyMessage="No organization projects"
                   />
-                )}
-
-                {/* Empty state */}
-                {groupedProjects.personal.length === 0 &&
-                 groupedProjects.organization.length === 0 &&
-                 !loading && (
-                  <div className="text-center py-8 text-[var(--text-tertiary,#9ca3af)]">
-                    <p>No other projects available</p>
-                    <p className="text-sm mt-1">Create a new project below</p>
-                  </div>
                 )}
 
                 {/* Create New Project */}
@@ -354,15 +382,70 @@ export default function SaveSelectionToProjectModal({
                   </button>
 
                   {createNew && (
-                    <div className="mt-3 px-3">
-                      <input
-                        type="text"
-                        value={newProjectTitle}
-                        onChange={(e) => setNewProjectTitle(e.target.value)}
-                        className="w-full px-3 py-2 border border-[var(--ridge-outer,#e5e7eb)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--text-primary,#111)]/20 bg-[var(--bg-base,#fff)]"
-                        placeholder="Project name"
-                        autoFocus
-                      />
+                    <div className="mt-3 space-y-3 px-3">
+                      {/* Project name */}
+                      <div>
+                        <label className="block text-xs font-medium text-[var(--text-secondary,#6b7280)] mb-1">
+                          Project name
+                        </label>
+                        <input
+                          type="text"
+                          value={newProjectTitle}
+                          onChange={(e) => setNewProjectTitle(e.target.value)}
+                          className="w-full px-3 py-2 border border-[var(--ridge-outer,#e5e7eb)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--text-primary,#111)]/20 bg-[var(--bg-base,#fff)]"
+                          placeholder="Project name"
+                          autoFocus
+                        />
+                      </div>
+
+                      {/* Ownership selector - only show if user has orgs */}
+                      {hasOrgs && (
+                        <div>
+                          <label className="block text-xs font-medium text-[var(--text-secondary,#6b7280)] mb-1">
+                            Create in
+                          </label>
+                          <div className="space-y-2">
+                            {/* Personal option */}
+                            <button
+                              type="button"
+                              onClick={() => setNewProjectOrgId(null)}
+                              className={cn(
+                                "w-full flex items-center gap-3 px-3 py-2 rounded-lg border transition-colors text-left",
+                                newProjectOrgId === null
+                                  ? "border-[var(--text-primary,#111)] bg-[var(--bg-elevated,#f3f4f6)]"
+                                  : "border-[var(--ridge-outer,#e5e7eb)] hover:bg-[var(--bg-elevated,#f3f4f6)]"
+                              )}
+                            >
+                              <User className="h-4 w-4 text-[var(--text-secondary,#6b7280)]" />
+                              <span className="text-sm text-[var(--text-primary,#111)]">Personal</span>
+                              {newProjectOrgId === null && (
+                                <Check className="h-4 w-4 ml-auto text-[var(--text-primary,#111)]" />
+                              )}
+                            </button>
+
+                            {/* Org options */}
+                            {userOrgs.map(org => (
+                              <button
+                                key={org.id}
+                                type="button"
+                                onClick={() => setNewProjectOrgId(org.id)}
+                                className={cn(
+                                  "w-full flex items-center gap-3 px-3 py-2 rounded-lg border transition-colors text-left",
+                                  newProjectOrgId === org.id
+                                    ? "border-[var(--text-primary,#111)] bg-[var(--bg-elevated,#f3f4f6)]"
+                                    : "border-[var(--ridge-outer,#e5e7eb)] hover:bg-[var(--bg-elevated,#f3f4f6)]"
+                                )}
+                              >
+                                <Building2 className="h-4 w-4 text-[var(--text-secondary,#6b7280)]" />
+                                <span className="text-sm text-[var(--text-primary,#111)]">{org.name}</span>
+                                {newProjectOrgId === org.id && (
+                                  <Check className="h-4 w-4 ml-auto text-[var(--text-primary,#111)]" />
+                                )}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -410,6 +493,7 @@ interface ProjectSectionProps {
   onToggle: () => void;
   selectedId: string | null;
   onSelect: (id: string) => void;
+  emptyMessage?: string;
 }
 
 function ProjectSection({
@@ -420,6 +504,7 @@ function ProjectSection({
   onToggle,
   selectedId,
   onSelect,
+  emptyMessage,
 }: ProjectSectionProps) {
   return (
     <div>
@@ -440,38 +525,44 @@ function ProjectSection({
 
       {expanded && (
         <div className="mt-1 space-y-1">
-          {projects.map((project) => (
-            <button
-              key={project.id}
-              type="button"
-              onClick={() => onSelect(project.id)}
-              className={cn(
-                "w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-left",
-                selectedId === project.id
-                  ? "bg-[var(--bg-elevated,#f3f4f6)] ring-1 ring-[var(--text-primary,#111)]"
-                  : "hover:bg-[var(--bg-elevated,#f3f4f6)]"
-              )}
-            >
-              <div className={cn(
-                "w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0",
-                selectedId === project.id
-                  ? "border-[var(--text-primary,#111)] bg-[var(--text-primary,#111)]"
-                  : "border-[var(--text-tertiary,#9ca3af)]"
-              )}>
-                {selectedId === project.id && (
-                  <Check className="h-3 w-3 text-[var(--bg-base,#fff)]" />
+          {projects.length === 0 ? (
+            <p className="px-3 py-2 text-sm text-[var(--text-tertiary,#9ca3af)] italic">
+              {emptyMessage || 'No projects'}
+            </p>
+          ) : (
+            projects.map((project) => (
+              <button
+                key={project.id}
+                type="button"
+                onClick={() => onSelect(project.id)}
+                className={cn(
+                  "w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-left",
+                  selectedId === project.id
+                    ? "bg-[var(--bg-elevated,#f3f4f6)] ring-1 ring-[var(--text-primary,#111)]"
+                    : "hover:bg-[var(--bg-elevated,#f3f4f6)]"
                 )}
-              </div>
-              <span className="text-sm text-[var(--text-primary,#111)] truncate flex-1">
-                {project.title}
-              </span>
-              {project.organizationName && (
-                <span className="text-xs text-[var(--text-tertiary,#9ca3af)] truncate max-w-[100px]">
-                  {project.organizationName}
+              >
+                <div className={cn(
+                  "w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0",
+                  selectedId === project.id
+                    ? "border-[var(--text-primary,#111)] bg-[var(--text-primary,#111)]"
+                    : "border-[var(--text-tertiary,#9ca3af)]"
+                )}>
+                  {selectedId === project.id && (
+                    <Check className="h-3 w-3 text-[var(--bg-base,#fff)]" />
+                  )}
+                </div>
+                <span className="text-sm text-[var(--text-primary,#111)] truncate flex-1">
+                  {project.title}
                 </span>
-              )}
-            </button>
-          ))}
+                {project.organizationName && (
+                  <span className="text-xs text-[var(--text-tertiary,#9ca3af)] truncate max-w-[100px]">
+                    {project.organizationName}
+                  </span>
+                )}
+              </button>
+            ))
+          )}
         </div>
       )}
     </div>
