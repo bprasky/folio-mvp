@@ -262,7 +262,7 @@ class StabilityProvider implements ImageGenProvider {
 }
 
 // Replicate provider - supports Flux models with image inputs
-// Flux 1.1 Pro supports up to 4 reference images, Kontext supports more
+// Flux 2 Flex supports up to 10 input images for multi-subject generation
 class ReplicateProvider implements ImageGenProvider {
   private apiToken: string;
   private model: string;
@@ -270,33 +270,36 @@ class ReplicateProvider implements ImageGenProvider {
   constructor() {
     this.apiToken = process.env.REPLICATE_API_TOKEN || "";
     if (!this.apiToken) throw new Error("REPLICATE_API_TOKEN missing");
-    // Default to flux-kontext-pro for multi-image support
-    // Options: black-forest-labs/flux-1.1-pro, black-forest-labs/flux-kontext-pro
-    this.model = process.env.REPLICATE_MODEL || "black-forest-labs/flux-kontext-pro";
+    // Default to flux-2-flex for multi-image support (up to 10 images)
+    this.model = process.env.REPLICATE_MODEL || "black-forest-labs/flux-2-flex";
     console.log(`[ReplicateProvider] Using model: ${this.model}`);
   }
 
   async generate(input: ImageGenInput): Promise<ImageGenOutput> {
     const width = input.width ?? 1024;
     const height = input.height ?? 1024;
-    const n = input.n ?? 1; // Replicate typically generates one at a time
 
-    // Build the input based on whether we have reference images
+    // Build the input based on model type
     const modelInput: Record<string, any> = {
       prompt: input.prompt,
-      width,
-      height,
-      output_format: "png",
     };
 
-    // Add reference images if provided (Flux Kontext supports up to 10)
-    if (input.referenceImages && input.referenceImages.length > 0) {
-      // Flux Kontext uses 'input_images' for multiple references
-      if (this.model.includes("kontext")) {
-        modelInput.input_images = input.referenceImages.slice(0, 10);
-        console.log(`[ReplicateProvider] Using ${modelInput.input_images.length} reference images`);
-      } else {
-        // Standard Flux uses 'image' for single reference
+    // Flux 2 Flex and Kontext use different input formats
+    if (this.model.includes("flex") || this.model.includes("kontext")) {
+      // Flux 2 Flex uses 'images' array for multi-subject (up to 10)
+      if (input.referenceImages && input.referenceImages.length > 0) {
+        modelInput.images = input.referenceImages.slice(0, 10);
+        console.log(`[ReplicateProvider] Using ${modelInput.images.length} reference images for flex/kontext`);
+      }
+      // Flex supports aspect_ratio instead of explicit width/height
+      modelInput.aspect_ratio = this.getAspectRatio(width, height);
+    } else {
+      // Standard Flux uses width/height
+      modelInput.width = width;
+      modelInput.height = height;
+      modelInput.output_format = "png";
+      // Single image reference for older models
+      if (input.referenceImages && input.referenceImages.length > 0) {
         modelInput.image = input.referenceImages[0];
         console.log(`[ReplicateProvider] Using 1 reference image`);
       }
@@ -393,6 +396,18 @@ class ReplicateProvider implements ImageGenProvider {
     }
 
     throw new Error("Replicate prediction timed out");
+  }
+
+  private getAspectRatio(width: number, height: number): string {
+    const ratio = width / height;
+    // Flux 2 Flex supports: 1:1, 16:9, 9:16, 4:3, 3:4, 21:9, 9:21
+    if (ratio > 2.2) return "21:9";       // Ultra-wide
+    if (ratio > 1.7) return "16:9";       // Wide landscape
+    if (ratio > 1.2) return "4:3";        // Landscape
+    if (ratio < 0.45) return "9:21";      // Ultra-tall
+    if (ratio < 0.6) return "9:16";       // Tall portrait
+    if (ratio < 0.85) return "3:4";       // Portrait
+    return "1:1";                          // Square
   }
 }
 
