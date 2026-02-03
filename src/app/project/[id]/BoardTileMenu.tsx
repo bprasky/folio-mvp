@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { FaEllipsisV, FaEdit, FaImage, FaTrash } from 'react-icons/fa';
+import { FaEllipsisV, FaEdit, FaImage, FaTrash, FaFolderPlus } from 'react-icons/fa';
 import clsx from 'clsx';
 
 type BoardTileMenuProps = {
@@ -11,6 +11,7 @@ type BoardTileMenuProps = {
   onReplaceImage?: (selId: string) => void;
   onOverrideSize?: (selId: string, size: 'auto'|'large'|'medium'|'small') => void;
   onFeatureToggle?: (selId: string, featured: boolean) => void;
+  onSaveToProject?: (selection: any) => void;
   onDelete?: (selId: string) => void;
   editable?: boolean; // disabled for placeholders
   currentOverride?: string;
@@ -23,6 +24,7 @@ export default function BoardTileMenu({
   onReplaceImage,
   onOverrideSize,
   onFeatureToggle,
+  onSaveToProject,
   onDelete,
   editable = true,
   currentOverride
@@ -90,6 +92,20 @@ export default function BoardTileMenu({
             >
               <FaImage className="w-3 h-3" />
               Replace Image
+            </button>
+          )}
+
+          {onSaveToProject && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsOpen(false);
+                onSaveToProject(selection);
+              }}
+              className="w-full text-left px-3 py-2 folio-ui hover:bg-[var(--bg-base)] text-[var(--text-primary)] flex items-center gap-2"
+            >
+              <FaFolderPlus className="w-3 h-3" />
+              Save to Another Project
             </button>
           )}
 

@@ -9,6 +9,7 @@ import SafeImage from '@/components/SafeImage';
 import { getRoomTemplate, Slot, inferSlotKey, inferSlotKeyFromCategory, ROOM_TEMPLATES, RoomTemplate } from './roomTemplates';
 import EditProductDrawer from './EditProductDrawer';
 import BoardTileMenu from './BoardTileMenu';
+import SaveSelectionToProjectModal from './SaveSelectionToProjectModal';
 import { computeTileSize } from './tileSizing';
 
 // Room type options for the edit modal
@@ -158,6 +159,7 @@ export default function DesignerBoardRoom({
   const [editing, setEditing] = useState<{ open: boolean; productId?: string; selectionId?: string; slotKey?: string }>({ open: false });
   const [replacingImage, setReplacingImage] = useState<{ open: boolean; selectionId?: string }>({ open: false });
   const [roleChangePopover, setRoleChangePopover] = useState<{ open: boolean; selectionId?: string }>({ open: false });
+  const [saveToProjectSelection, setSaveToProjectSelection] = useState<Selection | null>(null);
 
   // Room menu state
   const [roomMenuOpen, setRoomMenuOpen] = useState(false);
@@ -541,6 +543,7 @@ export default function DesignerBoardRoom({
                 onEdit={(selId, productId) => setEditing({ open: true, productId, selectionId: selId })}
                 onReplaceImage={(selId) => setReplacingImage({ open: true, selectionId: selId })}
                 onOverrideSize={handleSizeOverride}
+                onSaveToProject={(sel) => setSaveToProjectSelection(sel)}
                 onDelete={handleDeleteSelection}
                 currentOverride={currentOverride}
                 editable={true}
@@ -844,6 +847,17 @@ export default function DesignerBoardRoom({
           </div>
         </div>
       )}
+
+      {/* Save to Project Modal */}
+      <SaveSelectionToProjectModal
+        isOpen={!!saveToProjectSelection}
+        onClose={() => setSaveToProjectSelection(null)}
+        selection={saveToProjectSelection}
+        onSuccess={() => {
+          setSaveToProjectSelection(null);
+          router.refresh();
+        }}
+      />
     </div>
   );
 }
