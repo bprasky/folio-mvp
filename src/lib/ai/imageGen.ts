@@ -309,8 +309,9 @@ class ReplicateProvider implements ImageGenProvider {
       modelInput.seed = input.seed;
     }
 
-    // Create prediction
-    const createRes = await fetch("https://api.replicate.com/v1/predictions", {
+    // Create prediction using the models endpoint (not predictions endpoint)
+    // Format: /v1/models/{owner}/{name}/predictions
+    const createRes = await fetch(`https://api.replicate.com/v1/models/${this.model}/predictions`, {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${this.apiToken}`,
@@ -318,7 +319,6 @@ class ReplicateProvider implements ImageGenProvider {
         "Prefer": "wait", // Wait for result instead of polling
       },
       body: JSON.stringify({
-        model: this.model,
         input: modelInput,
       }),
     });
