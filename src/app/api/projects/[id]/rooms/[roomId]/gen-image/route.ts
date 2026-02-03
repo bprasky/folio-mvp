@@ -66,13 +66,28 @@ export async function POST(
     const { base, context, selectionIds } = await buildBasePrompt({ projectId, roomId });
     const prompt = mergeModifiers(base, modifiers);
 
+    // Fetch selection photos for reference images (Flux/Replicate support)
+    const selections = await prisma.selection.findMany({
+      where: {
+        id: { in: selectionIds },
+        photo: { not: null },
+      },
+      select: { photo: true },
+      take: 10, // Flux Kontext supports up to 10 reference images
+    });
+    const referenceImages = selections
+      .map(s => s.photo)
+      .filter((url): url is string => !!url && url.startsWith('http'));
+
+    console.log(`[gen-image] Found ${referenceImages.length} reference images from ${selectionIds.length} selections`);
+
     const provider = getImageGenProvider();
-    let out = await provider.generate({ prompt, n, width, height, seed });
+    let out = await provider.generate({ prompt, n, width, height, seed, referenceImages });
     
     // Retry once if no images returned
     if (!out.images?.length) {
       console.warn("[gen-image] Empty result; retrying once");
-      out = await provider.generate({ prompt, n, width, height, seed });
+      out = await provider.generate({ prompt, n, width, height, seed, referenceImages });
     }
     
     if (!out.images?.length) {
