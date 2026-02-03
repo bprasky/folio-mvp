@@ -6,6 +6,8 @@ export type ImageGenInput = {
   height?: number;
   n?: number;
   seed?: number;
+  // Reference images (URLs) for models that support image-to-image
+  referenceImages?: string[];
 };
 
 export type ImageGenOutput = {
@@ -259,13 +261,155 @@ class StabilityProvider implements ImageGenProvider {
   }
 }
 
+// Replicate provider - supports Flux models with image inputs
+// Flux 1.1 Pro supports up to 4 reference images, Kontext supports more
+class ReplicateProvider implements ImageGenProvider {
+  private apiToken: string;
+  private model: string;
+
+  constructor() {
+    this.apiToken = process.env.REPLICATE_API_TOKEN || "";
+    if (!this.apiToken) throw new Error("REPLICATE_API_TOKEN missing");
+    // Default to flux-kontext-pro for multi-image support
+    // Options: black-forest-labs/flux-1.1-pro, black-forest-labs/flux-kontext-pro
+    this.model = process.env.REPLICATE_MODEL || "black-forest-labs/flux-kontext-pro";
+    console.log(`[ReplicateProvider] Using model: ${this.model}`);
+  }
+
+  async generate(input: ImageGenInput): Promise<ImageGenOutput> {
+    const width = input.width ?? 1024;
+    const height = input.height ?? 1024;
+    const n = input.n ?? 1; // Replicate typically generates one at a time
+
+    // Build the input based on whether we have reference images
+    const modelInput: Record<string, any> = {
+      prompt: input.prompt,
+      width,
+      height,
+      output_format: "png",
+    };
+
+    // Add reference images if provided (Flux Kontext supports up to 10)
+    if (input.referenceImages && input.referenceImages.length > 0) {
+      // Flux Kontext uses 'input_images' for multiple references
+      if (this.model.includes("kontext")) {
+        modelInput.input_images = input.referenceImages.slice(0, 10);
+        console.log(`[ReplicateProvider] Using ${modelInput.input_images.length} reference images`);
+      } else {
+        // Standard Flux uses 'image' for single reference
+        modelInput.image = input.referenceImages[0];
+        console.log(`[ReplicateProvider] Using 1 reference image`);
+      }
+    }
+
+    if (input.seed) {
+      modelInput.seed = input.seed;
+    }
+
+    // Create prediction
+    const createRes = await fetch("https://api.replicate.com/v1/predictions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${this.apiToken}`,
+        "Content-Type": "application/json",
+        "Prefer": "wait", // Wait for result instead of polling
+      },
+      body: JSON.stringify({
+        model: this.model,
+        input: modelInput,
+      }),
+    });
+
+    if (!createRes.ok) {
+      const errorText = await createRes.text();
+      console.error("[ReplicateProvider] Create prediction error:", createRes.status, errorText);
+      throw new Error(`Replicate API error ${createRes.status}: ${errorText}`);
+    }
+
+    let prediction = await createRes.json();
+
+    // If not completed, poll for result
+    if (prediction.status !== "succeeded") {
+      prediction = await this.pollForResult(prediction.id);
+    }
+
+    if (prediction.status === "failed") {
+      console.error("[ReplicateProvider] Prediction failed:", prediction.error);
+      throw new Error(`Replicate prediction failed: ${prediction.error}`);
+    }
+
+    // Download the output image(s)
+    const images: Array<{ buffer: Buffer; mime: string }> = [];
+    const outputs = Array.isArray(prediction.output) ? prediction.output : [prediction.output];
+
+    for (const outputUrl of outputs) {
+      if (!outputUrl) continue;
+
+      const imgRes = await fetch(outputUrl);
+      if (!imgRes.ok) {
+        console.warn(`[ReplicateProvider] Failed to fetch output image: ${outputUrl}`);
+        continue;
+      }
+
+      const buffer = Buffer.from(await imgRes.arrayBuffer());
+      images.push({ buffer, mime: "image/png" });
+    }
+
+    if (images.length === 0) {
+      console.error("[ReplicateProvider] No images in output:", JSON.stringify(prediction).slice(0, 500));
+      throw new Error("Replicate returned no images");
+    }
+
+    return {
+      images,
+      meta: {
+        provider: "replicate",
+        model: this.model,
+        predictionId: prediction.id,
+        referenceImagesUsed: input.referenceImages?.length ?? 0,
+      },
+    };
+  }
+
+  private async pollForResult(predictionId: string, maxAttempts = 60): Promise<any> {
+    for (let i = 0; i < maxAttempts; i++) {
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
+
+      const res = await fetch(`https://api.replicate.com/v1/predictions/${predictionId}`, {
+        headers: { "Authorization": `Bearer ${this.apiToken}` },
+      });
+
+      if (!res.ok) {
+        throw new Error(`Failed to poll prediction: ${res.status}`);
+      }
+
+      const prediction = await res.json();
+
+      if (prediction.status === "succeeded" || prediction.status === "failed") {
+        return prediction;
+      }
+
+      console.log(`[ReplicateProvider] Polling... status: ${prediction.status}`);
+    }
+
+    throw new Error("Replicate prediction timed out");
+  }
+}
+
 export function getImageGenProvider(): ImageGenProvider {
-  const p = (process.env.IMAGE_GEN_PROVIDER || "gemini").toLowerCase();
+  const p = (process.env.IMAGE_GEN_PROVIDER || "replicate").toLowerCase();
 
   // Only use fake provider if explicitly requested
   if (p === "fake" || process.env.FAKE_PROVIDER === '1') {
     console.warn('[imageGen] Using FAKE provider - images will be placeholders');
     return new FakeProvider();
+  }
+
+  if (p === "replicate" || p === "flux") {
+    if (!process.env.REPLICATE_API_TOKEN) {
+      throw new Error("REPLICATE_API_TOKEN environment variable is not set. Image generation requires a valid API token.");
+    }
+    return new ReplicateProvider();
   }
 
   if (p === "gemini" || p === "google" || p === "imagen") {
@@ -292,7 +436,7 @@ export function getImageGenProvider(): ImageGenProvider {
   // No fallback - fail with clear error
   throw new Error(
     `Unknown image generation provider: "${p}". ` +
-    `Valid options: gemini, openai, stability. ` +
-    `Set IMAGE_GEN_PROVIDER env var to one of these values and ensure the corresponding API key is set.`
+    `Valid options: replicate, gemini, openai, stability. ` +
+    `Set IMAGE_GEN_PROVIDER env var to one of these values and ensure the corresponding API key/token is set.`
   );
 }
