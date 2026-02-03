@@ -8,6 +8,7 @@ import { prisma } from "@/lib/prisma";
 /**
  * GET /api/my-projects
  * Returns all projects the user has access to, grouped by ownership context.
+ * Also returns user's org memberships so modal can offer creating org projects.
  * Used by SaveToProjectModal to show personal and org projects.
  */
 export async function GET() {
@@ -22,10 +23,26 @@ export async function GET() {
     // Get user's org memberships
     const memberships = await prisma.organizationUser.findMany({
       where: { userId, isActive: true },
-      select: { organizationId: true, organization: { select: { id: true, name: true } } },
+      select: {
+        organizationId: true,
+        organization: {
+          select: {
+            id: true,
+            name: true,
+            type: true,
+          }
+        }
+      },
     });
 
     const orgIds = memberships.map(m => m.organizationId);
+
+    // Format orgs for the response
+    const userOrgs = memberships.map(m => ({
+      id: m.organization.id,
+      name: m.organization.name,
+      type: m.organization.type,
+    }));
 
     // Build query filters
     const orFilters: any[] = [
@@ -71,7 +88,7 @@ export async function GET() {
     });
 
     // Transform to include ownership context
-    const result = projects.map(project => ({
+    const projectList = projects.map(project => ({
       id: project.id,
       title: project.title || 'Untitled Project',
       updatedAt: project.updatedAt.toISOString(),
@@ -80,7 +97,10 @@ export async function GET() {
       organizationName: project.designerOrg?.name || null,
     }));
 
-    return NextResponse.json(result);
+    return NextResponse.json({
+      projects: projectList,
+      userOrgs: userOrgs,
+    });
   } catch (error) {
     console.error('[my-projects] Error fetching projects:', error);
     return NextResponse.json(
