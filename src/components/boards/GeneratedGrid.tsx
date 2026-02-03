@@ -5,16 +5,18 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'react-hot-toast';
-import { 
-  FaDownload, 
-  FaTrash, 
-  FaEye, 
-  FaImage, 
+import {
+  FaDownload,
+  FaTrash,
+  FaEye,
+  FaImage,
   FaStar,
   FaRegStar,
   FaInfoCircle,
-  FaSpinner
+  FaSpinner,
+  FaFolderPlus
 } from 'react-icons/fa';
+import SaveImageToProjectModal from './SaveImageToProjectModal';
 
 interface GeneratedImage {
   id: string;
@@ -54,6 +56,7 @@ export default function GeneratedGrid({
   const safeImages = Array.isArray(images) ? images : [];
   const [selectedImage, setSelectedImage] = useState<GeneratedImage | null>(null);
   const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
+  const [saveToProjectImage, setSaveToProjectImage] = useState<GeneratedImage | null>(null);
 
   if (safeImages.length === 0) {
     return (
@@ -168,14 +171,25 @@ export default function GeneratedGrid({
                       variant="secondary"
                       onClick={() => setSelectedImage(image)}
                       className="bg-white/90 hover:bg-white"
+                      title="View details"
                     >
                       <FaEye className="w-3 h-3" />
                     </Button>
                     <Button
                       size="sm"
                       variant="secondary"
+                      onClick={() => setSaveToProjectImage(image)}
+                      className="bg-white/90 hover:bg-white"
+                      title="Save to another project"
+                    >
+                      <FaFolderPlus className="w-3 h-3" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="secondary"
                       onClick={() => handleDownload(image)}
                       className="bg-white/90 hover:bg-white"
+                      title="Download"
                     >
                       <FaDownload className="w-3 h-3" />
                     </Button>
@@ -185,6 +199,7 @@ export default function GeneratedGrid({
                       onClick={() => handleDelete(image.id)}
                       disabled={deletingIds.has(image.id)}
                       className="bg-white/90 hover:bg-white text-red-600 hover:text-red-700"
+                      title="Delete"
                     >
                       {deletingIds.has(image.id) ? (
                         <FaSpinner className="w-3 h-3 animate-spin" />
@@ -315,6 +330,18 @@ export default function GeneratedGrid({
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Save to Project Modal */}
+      <SaveImageToProjectModal
+        isOpen={!!saveToProjectImage}
+        onClose={() => setSaveToProjectImage(null)}
+        sourceProjectId={projectId}
+        imageId={saveToProjectImage?.id ?? ''}
+        imageUrl={saveToProjectImage?.url ?? ''}
+        onSuccess={() => {
+          setSaveToProjectImage(null);
+        }}
+      />
     </div>
   );
 }

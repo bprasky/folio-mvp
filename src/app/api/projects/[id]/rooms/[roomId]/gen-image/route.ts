@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
-import { assertProjectAccess } from '@/lib/permissions';
+import { assertProjectAccess, getUserOrgMemberships, canGenerateImages as canGenerateImagesWithMembership } from '@/lib/permissions';
 import { prisma } from '@/lib/prisma';
 import { rateLimit } from '@/lib/rateLimit';
 import { buildBasePrompt, mergeModifiers } from '@/lib/boards/prompt';
@@ -28,6 +28,50 @@ export async function POST(
     if (!access.ok) {
       console.warn("[gen-image][access]", access);
       return NextResponse.json({ error: access.reason }, { status: access.status });
+    }
+
+    // Permission check: Image generation requires a professional org project
+    const project = await prisma.project.findUnique({
+      where: { id: projectId },
+      select: {
+        designerOrgId: true,
+        designerOrg: {
+          select: {
+            id: true,
+            status: true,
+          }
+        }
+      }
+    });
+
+    // Check if this is an org project with professional status
+    if (!project?.designerOrgId || !project.designerOrg) {
+      console.warn("[gen-image][permissions] Image generation not available for personal projects");
+      return NextResponse.json(
+        { error: "Image generation is only available for organization projects. Please upgrade to a professional plan." },
+        { status: 403 }
+      );
+    }
+
+    // Check if the org is professional
+    if (project.designerOrg.status !== 'PROFESSIONAL') {
+      console.warn("[gen-image][permissions] Image generation requires professional org status");
+      return NextResponse.json(
+        { error: "Image generation requires a professional organization subscription." },
+        { status: 403 }
+      );
+    }
+
+    // Verify user belongs to this org with proper membership
+    const memberships = await getUserOrgMemberships(userId);
+    const hasOrgMembership = memberships.some(m => m.organizationId === project.designerOrgId);
+
+    if (!hasOrgMembership) {
+      console.warn("[gen-image][permissions] User not a member of project's organization");
+      return NextResponse.json(
+        { error: "You must be a member of the project's organization to generate images." },
+        { status: 403 }
+      );
     }
 
     // Rate limiting
