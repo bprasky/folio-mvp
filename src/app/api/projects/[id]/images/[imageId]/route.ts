@@ -22,20 +22,16 @@ export async function DELETE(
 
     console.log('[DELETE image] Starting:', { projectId, imageId, userId });
 
-    // Verify user has access to project
-    const project = await prisma.project.findFirst({
-      where: {
-        id: projectId,
-        OR: [
-          { ownerId: userId },
-          { designerId: userId }
-        ]
-      }
+    // Verify user has access to project - check ownerId only first
+    const project = await prisma.project.findUnique({
+      where: { id: projectId },
+      select: { id: true, ownerId: true }
     });
 
-    console.log('[DELETE image] Project lookup result:', project ? project.id : 'NOT FOUND');
+    console.log('[DELETE image] Project:', project ? { id: project.id, ownerId: project.ownerId } : 'NOT FOUND');
 
-    if (!project) {
+    if (!project || project.ownerId !== userId) {
+      console.log('[DELETE image] Access denied - user is not owner');
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
 
