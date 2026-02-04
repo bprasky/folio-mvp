@@ -16,6 +16,9 @@ import { FooterBar } from "./FooterBar";
 import { TagPreview } from "./TagPreview";
 import { QuestionCard } from "./QuestionCard";
 import { ProgressIndicator } from "./ProgressIndicator";
+import { InterviewModeSelector } from "./InterviewModeSelector";
+import { RealtimeInterviewView } from "./RealtimeInterviewView";
+import { flags, realtimeInterviewConfig } from "@/lib/flags";
 import { DEFAULT_QUESTION_BANK, type InterviewQuestion } from "@/lib/posting/questionBank";
 import type {
   InterviewAnswer,
@@ -29,6 +32,7 @@ interface InterviewModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   projectId: string;
+  projectName?: string;
   images: Array<{ id: string; url: string; name?: string }>;
   post?: any;
   hasVendors?: boolean;
@@ -86,12 +90,17 @@ export function InterviewModal({
   open,
   onOpenChange,
   projectId,
+  projectName = "your project",
   images,
   post,
   hasVendors = false,
   tags = [],
 }: InterviewModalProps) {
   const router = useRouter();
+  // Interview mode: 'select' shows mode picker, 'realtime' for voice, 'text' for traditional
+  const [interviewMode, setInterviewMode] = useState<"select" | "realtime" | "text">(
+    flags.realtimeInterview && realtimeInterviewConfig.enabled ? "select" : "text"
+  );
   // Phase A: Sequential flow - new phase system
   const [phase, setPhase] = useState<"pick" | "question" | "followup" | "complete">("pick");
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -1104,15 +1113,56 @@ export function InterviewModal({
             : "max-w-6xl max-h-[90vh] overflow-y-auto bg-white/90 backdrop-blur-xl border border-white/30 shadow-2xl rounded-3xl"
         }
       >
-        {/* Loading state for questions */}
-        {questionsLoading && phase === "pick" && (
-          <div className="flex items-center justify-center p-12">
-            <div className="animate-spin h-8 w-8 border-2 border-stone-900 border-t-transparent rounded-full" />
-          </div>
+        {/* Interview Mode Selection */}
+        {interviewMode === "select" && phase === "pick" && (
+          <InterviewModeSelector
+            projectName={projectName}
+            onSelectMode={(mode) => {
+              setInterviewMode(mode);
+              // If text mode, continue with existing flow
+              // If realtime, the RealtimeInterviewView handles everything
+            }}
+          />
         )}
-        
-        {/* Error state for questions */}
-        {!questionsLoading && fetchedQuestions.length === 0 && phase === "pick" && (
+
+        {/* Realtime Interview View */}
+        {interviewMode === "realtime" && (
+          <RealtimeInterviewView
+            projectId={projectId}
+            projectName={projectName}
+            onComplete={async (sessionId) => {
+              // Convert realtime session to editorial format
+              try {
+                await fetch('/api/interview/realtime/convert', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ sessionId }),
+                });
+                // Close modal and navigate to post
+                onOpenChange(false);
+                router.push(`/posting/project/${projectId}?tab=post`);
+              } catch (err) {
+                console.error('Failed to convert session:', err);
+              }
+            }}
+            onSwitchToText={() => {
+              setInterviewMode("text");
+            }}
+          />
+        )}
+
+        {/* Text Interview Flow (existing) */}
+        {interviewMode === "text" && (
+          <>
+            {/* Loading state for questions */}
+            {questionsLoading && phase === "pick" && (
+              <div className="flex items-center justify-center p-12">
+                <div className="animate-spin h-8 w-8 border-2 border-stone-900 border-t-transparent rounded-full" />
+              </div>
+            )}
+
+            {/* Error state for questions */}
+            {!questionsLoading && fetchedQuestions.length === 0 && phase === "pick" && (
           <div className="p-8 text-center">
             <p className="text-stone-600 mb-4">
               No questions available for this project. Please ensure your project has images with AI classifications.
@@ -1282,49 +1332,51 @@ export function InterviewModal({
           </div>
         )}
 
-        <FooterBar
-          phase={phase}
-          onBack={
-            phase === "question"
-              ? () => {
-                  if (currentQuestionIndex > 0) {
-                    setCurrentQuestionIndex((prev) => prev - 1);
-                  } else {
-                    setPhase("pick");
-                    setStep("pick");
-                  }
-                }
-              : step === "answer"
-              ? () => setStep("pick")
-              : step === "followups"
-              ? () => setStep("answer")
-              : undefined
-          }
-          onNext={handleBeginInterview}
-          onSubmit={phase === "question" ? handleQuestionAnswerSubmit : undefined}
-          onGenerate={phase === "complete" || step === "followups" ? handleGenerate : undefined}
-          onSkip={
-            phase === "followup"
-              ? handleGenerate
-              : step === "followups"
-              ? handleGenerate
-              : (banner && followupsTried && step === "answer")
-              ? handleGenerate
-              : undefined
-          }
-          canProceed={
-            phase === "pick"
-              ? canProceedFromPick
-              : phase === "question"
-              ? canProceedFromQuestion
-              : step === "answer"
-              ? canProceedFromAnswer
-              : true
-          }
-          isSubmitting={isSubmitting}
-          isGenerating={isGenerating}
-          isLoadingFollowUps={isLoadingFollowUps}
-        />
+            <FooterBar
+              phase={phase}
+              onBack={
+                phase === "question"
+                  ? () => {
+                      if (currentQuestionIndex > 0) {
+                        setCurrentQuestionIndex((prev) => prev - 1);
+                      } else {
+                        setPhase("pick");
+                        setStep("pick");
+                      }
+                    }
+                  : step === "answer"
+                  ? () => setStep("pick")
+                  : step === "followups"
+                  ? () => setStep("answer")
+                  : undefined
+              }
+              onNext={handleBeginInterview}
+              onSubmit={phase === "question" ? handleQuestionAnswerSubmit : undefined}
+              onGenerate={phase === "complete" || step === "followups" ? handleGenerate : undefined}
+              onSkip={
+                phase === "followup"
+                  ? handleGenerate
+                  : step === "followups"
+                  ? handleGenerate
+                  : (banner && followupsTried && step === "answer")
+                  ? handleGenerate
+                  : undefined
+              }
+              canProceed={
+                phase === "pick"
+                  ? canProceedFromPick
+                  : phase === "question"
+                  ? canProceedFromQuestion
+                  : step === "answer"
+                  ? canProceedFromAnswer
+                  : true
+              }
+              isSubmitting={isSubmitting}
+              isGenerating={isGenerating}
+              isLoadingFollowUps={isLoadingFollowUps}
+            />
+          </>
+        )}
       </DialogContent>
     </Dialog>
   );

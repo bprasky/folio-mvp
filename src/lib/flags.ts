@@ -7,6 +7,16 @@ export const flags = {
   vendorAIInsights: process.env.NEXT_PUBLIC_FLAG_VENDOR_AI_INSIGHTS === '1',
   /** Enable demo data for investor runs - fills all panels with realistic values */
   vendorDemoData: process.env.NEXT_PUBLIC_FLAG_VENDOR_DEMO_DATA === '1',
+  /** Enable real-time conversational interview (LiveKit + Deepgram + Cartesia) */
+  realtimeInterview: process.env.NEXT_PUBLIC_FLAG_REALTIME_INTERVIEW === '1',
+} as const;
+
+/** Real-time interview configuration */
+export const realtimeInterviewConfig = {
+  /** Maximum interview duration in milliseconds (default: 30 minutes) */
+  maxDurationMs: parseInt(process.env.REALTIME_INTERVIEW_MAX_DURATION_MS || '1800000'),
+  /** Whether the feature is enabled */
+  enabled: process.env.REALTIME_INTERVIEW_ENABLED === 'true',
 } as const;
 
 /**
