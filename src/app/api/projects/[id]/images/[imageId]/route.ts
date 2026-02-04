@@ -20,7 +20,7 @@ export async function DELETE(
     const { id: projectId, imageId } = await params;
     const userId = session.user.id;
 
-    console.log('[DELETE image] Starting delete:', { projectId, imageId, userId });
+    console.log('[DELETE image] Starting:', { projectId, imageId, userId });
 
     // Verify user has access to project
     const project = await prisma.project.findFirst({
@@ -32,6 +32,8 @@ export async function DELETE(
         ]
       }
     });
+
+    console.log('[DELETE image] Project lookup result:', project ? project.id : 'NOT FOUND');
 
     if (!project) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
@@ -45,7 +47,7 @@ export async function DELETE(
       }
     });
 
-    console.log('[DELETE image] Found image:', image ? { id: image.id, name: image.name, url: image.url?.substring(0, 50) } : 'NOT FOUND');
+    console.log('[DELETE image] Image lookup:', image ? { id: image.id, name: image.name } : 'NOT FOUND');
 
     if (!image) {
       return NextResponse.json({ error: 'Image not found' }, { status: 404 });
@@ -98,9 +100,10 @@ export async function DELETE(
       await prisma.projectImage.delete({
         where: { id: imageId }
       });
-      console.log('[DELETE image] Hard delete completed successfully');
+      console.log('[DELETE image] Hard delete completed for:', imageId);
     }
 
+    console.log('[DELETE image] SUCCESS - returning 200');
     return NextResponse.json({ success: true });
 
   } catch (error: any) {
