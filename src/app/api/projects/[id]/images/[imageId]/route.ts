@@ -93,10 +93,14 @@ export async function DELETE(
     } else {
       // Hard delete for regular images
       console.log('[DELETE image] Performing hard delete for imageId:', imageId);
-      await prisma.projectImage.delete({
+      const deleted = await prisma.projectImage.delete({
         where: { id: imageId }
       });
-      console.log('[DELETE image] Hard delete completed for:', imageId);
+      console.log('[DELETE image] Prisma delete returned:', deleted?.id);
+
+      // Verify deletion
+      const check = await prisma.projectImage.findUnique({ where: { id: imageId } });
+      console.log('[DELETE image] Verification - image still exists?:', !!check);
     }
 
     console.log('[DELETE image] SUCCESS - returning 200');
