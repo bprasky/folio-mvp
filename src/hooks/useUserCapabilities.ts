@@ -14,6 +14,11 @@ import { normalizeRole } from '@/lib/permissions';
 export type UserType = 'INDIVIDUAL' | 'FREE_DESIGNER' | 'PAID_DESIGNER' | 'VENDOR' | 'ADMIN';
 
 /**
+ * Organization status type
+ */
+export type OrgStatus = 'UNCLAIMED' | 'CLAIMED' | 'PROFESSIONAL' | null;
+
+/**
  * Capabilities object based on user type
  */
 export interface UserCapabilities {
@@ -25,6 +30,11 @@ export interface UserCapabilities {
   isIndividual: boolean;
   isVendor: boolean;
   isAdmin: boolean;
+
+  // Organization context (for upgrade flows)
+  orgId: string | null;
+  orgName: string | null;
+  orgStatus: OrgStatus;
 
   // Feature access (from permission matrix)
   canSaveProducts: boolean;
@@ -51,6 +61,15 @@ export interface UserCapabilities {
 }
 
 /**
+ * Organization info for capabilities
+ */
+interface OrgInfo {
+  id: string | null;
+  name: string | null;
+  status: OrgStatus;
+}
+
+/**
  * Hook to get user capabilities based on their role and org membership
  * Uses session data to determine user type and available features
  */
@@ -62,11 +81,18 @@ export function useUserCapabilities(): UserCapabilities {
 
     // Default to individual if no session
     if (!session?.user) {
-      return getCapabilitiesForType('INDIVIDUAL', isLoading);
+      return getCapabilitiesForType('INDIVIDUAL', isLoading, { id: null, name: null, status: null });
     }
 
     const role = normalizeRole(session.user.role);
     const user = session.user as any;
+
+    // Extract org info from session
+    const orgInfo: OrgInfo = {
+      id: user.operatingAsOrgId || null,
+      name: user.operatingAsOrg?.name || null,
+      status: user.operatingAsOrg?.status || null,
+    };
 
     // Determine user type based on role and org membership
     let userType: UserType = 'INDIVIDUAL';
@@ -101,14 +127,14 @@ export function useUserCapabilities(): UserCapabilities {
       }
     }
 
-    return getCapabilitiesForType(userType, isLoading);
+    return getCapabilitiesForType(userType, isLoading, orgInfo);
   }, [session, status]);
 }
 
 /**
  * Get capabilities object for a given user type
  */
-function getCapabilitiesForType(userType: UserType, isLoading: boolean): UserCapabilities {
+function getCapabilitiesForType(userType: UserType, isLoading: boolean, orgInfo: OrgInfo): UserCapabilities {
   const base = {
     userType,
     isLoading,
@@ -118,6 +144,10 @@ function getCapabilitiesForType(userType: UserType, isLoading: boolean): UserCap
     isIndividual: userType === 'INDIVIDUAL',
     isVendor: userType === 'VENDOR',
     isAdmin: userType === 'ADMIN',
+    // Organization context
+    orgId: orgInfo.id,
+    orgName: orgInfo.name,
+    orgStatus: orgInfo.status,
   };
 
   switch (userType) {
