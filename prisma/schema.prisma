@@ -302,6 +302,7 @@ model Project {
   post                 ProjectPost?
   editorialAssignments EditorialAssignment[]
   editorialInterviews  EditorialInterview[]
+  realtimeInterviewSessions RealtimeInterviewSession[]
   modules              ProjectModule[]
   attributeVerifications AttributeVerification[] @relation("ProjectAttributeVerifications")
   designerDecisions    DesignerDecision[]
@@ -1349,6 +1350,9 @@ model EditorialInterview {
   updatedAt DateTime @updatedAt
 
   answers EditorialInterviewAnswer[]
+
+  // Real-time interview sessions that contributed to this editorial
+  realtimeSessions RealtimeInterviewSession[]
 
   @@map("editorial_interviews")
 }
@@ -4737,4 +4741,109 @@ model SwapPattern {
   @@index([fromBrand])
   @@index([swapCount(sort: Desc)])
   @@map("swap_patterns")
+}
+
+// ============================================
+// REAL-TIME INTERVIEW MODELS
+// ============================================
+
+enum RealtimeSessionStatus {
+  ACTIVE
+  PAUSED
+  COMPLETED
+  ABANDONED
+  FAILED
+}
+
+model RealtimeInterviewSession {
+  id              String   @id @default(cuid())
+  projectId       String
+  project         Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  // Link to editorial interview for provenance
+  editorialInterviewId String?
+  editorialInterview   EditorialInterview? @relation(fields: [editorialInterviewId], references: [id])
+
+  // Session state
+  status          RealtimeSessionStatus @default(ACTIVE)
+  startedAt       DateTime @default(now())
+  endedAt         DateTime?
+  totalDurationMs Int?
+
+  // Context snapshot (loaded at session start)
+  projectContext  Json?    // { images[], products[], rooms[], designerName }
+
+  // Running conversation management
+  conversationSummary String? @db.Text  // AI-maintained summary
+  turnCount           Int     @default(0)
+
+  // Accumulated extractions
+  extractedQuotes     Json?   // [{ text, timestamp, confidence, context }]
+  extractedProducts   Json?   // [{ name, context, sentiment, timestamp }]
+  extractedThemes     Json?   // [{ theme, frequency, quotes[] }]
+  extractedDecisions  Json?   // [{ decision, reasoning, room? }]
+
+  // LiveKit metadata
+  livekitRoomName String?  @unique
+  livekitRoomId   String?
+
+  // Quality metrics
+  avgTranscriptConfidence Float?
+  designerSpeakingRatio   Float?  // % of time designer vs AI spoke
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  segments        RealtimeConversationSegment[]
+
+  @@index([projectId])
+  @@index([status])
+  @@map("realtime_interview_sessions")
+}
+
+model RealtimeConversationSegment {
+  id              String   @id @default(cuid())
+  sessionId       String
+  session         RealtimeInterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  // Sequence
+  sequenceNumber  Int
+
+  // Who spoke
+  role            String   // 'designer' | 'ai'
+
+  // Content
+  content         String   @db.Text
+  audioUrl        String?  // S3/Supabase URL if retained
+
+  // Timing
+  startedAt       DateTime
+  endedAt         DateTime?
+  durationMs      Int?
+
+  // For designer segments: transcription metadata
+  transcriptConfidence Float?
+  transcriptRaw        String?  @db.Text  // Before any cleanup
+
+  // For AI segments: generation metadata
+  promptTokens    Int?
+  responseTokens  Int?
+  latencyMs       Int?     // Time from designer stop → AI audio start
+
+  // Real-time extractions from this segment
+  extractedQuote    String?   @db.Text
+  extractedProducts String[]
+  extractedMood     String?   // 'excited', 'reflective', 'uncertain', etc.
+
+  // Contextual linking
+  linkedQuestionId  String?   // If responding to a specific question
+  linkedImageIds    String[]  // Images referenced in this segment
+  linkedProductIds  String[]  // Products referenced in this segment
+  linkedRoomName    String?   // Room being discussed
+
+  createdAt        DateTime @default(now())
+
+  @@unique([sessionId, sequenceNumber])
+  @@index([sessionId, startedAt])
+  @@map("realtime_conversation_segments")
 }
