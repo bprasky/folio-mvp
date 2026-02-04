@@ -20,6 +20,8 @@ export async function DELETE(
     const { id: projectId, imageId } = await params;
     const userId = session.user.id;
 
+    console.log('[DELETE image] Starting delete:', { projectId, imageId, userId });
+
     // Verify user has access to project
     const project = await prisma.project.findFirst({
       where: {
@@ -87,9 +89,11 @@ export async function DELETE(
       });
     } else {
       // Hard delete for regular images
+      console.log('[DELETE image] Performing hard delete for imageId:', imageId);
       await prisma.projectImage.delete({
         where: { id: imageId }
       });
+      console.log('[DELETE image] Hard delete completed successfully');
     }
 
     return NextResponse.json({ success: true });
