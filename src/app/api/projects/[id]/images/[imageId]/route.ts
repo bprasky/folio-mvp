@@ -45,6 +45,8 @@ export async function DELETE(
       }
     });
 
+    console.log('[DELETE image] Found image:', image ? { id: image.id, name: image.name, url: image.url?.substring(0, 50) } : 'NOT FOUND');
+
     if (!image) {
       return NextResponse.json({ error: 'Image not found' }, { status: 404 });
     }
@@ -75,8 +77,11 @@ export async function DELETE(
       }
     }
 
+    console.log('[DELETE image] isGeneratedImage:', isGeneratedImage, 'metadata:', metadata);
+
     if (isGeneratedImage && metadata) {
       // Soft delete for generated images (preserve metadata)
+      console.log('[DELETE image] Taking SOFT DELETE path');
       await prisma.projectImage.update({
         where: { id: imageId },
         data: {
