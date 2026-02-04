@@ -14,6 +14,7 @@ declare module 'next-auth' {
       id: string;
       name: string;
       logo: string | null;
+      status: 'UNCLAIMED' | 'CLAIMED' | 'PROFESSIONAL';
     } | null;
     subscriptionTier?: string;
     subscriptionExpiresAt?: Date | null;
@@ -34,6 +35,7 @@ declare module 'next-auth' {
         id: string;
         name: string;
         logo: string | null;
+        status: 'UNCLAIMED' | 'CLAIMED' | 'PROFESSIONAL';
       } | null;
       subscriptionTier?: string;
       subscriptionExpiresAt?: Date | null;
@@ -56,6 +58,7 @@ declare module 'next-auth/jwt' {
       id: string;
       name: string;
       logo: string | null;
+      status: 'UNCLAIMED' | 'CLAIMED' | 'PROFESSIONAL';
     } | null;
     impersonating?: {
       originalAdminId: string;
@@ -225,12 +228,12 @@ export const authOptions: NextAuthOptions = {
             `;
             if (workspace?.[0]?.operatingAsOrgId) {
               token.operatingAsOrgId = workspace[0].operatingAsOrgId;
-              // Get org details
+              // Get org details including status
               const org = await prisma.organization.findUnique({
                 where: { id: workspace[0].operatingAsOrgId },
-                select: { id: true, name: true },
+                select: { id: true, name: true, status: true },
               });
-              token.operatingAsOrg = org ? { ...org, logo: null } : null;
+              token.operatingAsOrg = org ? { ...org, logo: null, status: org.status as 'UNCLAIMED' | 'CLAIMED' | 'PROFESSIONAL' } : null;
             } else {
               token.operatingAsOrgId = null;
               token.operatingAsOrg = null;

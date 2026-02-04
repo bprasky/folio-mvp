@@ -12,6 +12,8 @@ import GeneratedGrid from '@/components/boards/GeneratedGrid';
 import ExportSpecModal from './ExportSpecModal';
 import { toast } from 'sonner';
 import { BoardsEmptyState } from '@/components/designer/project';
+import { useUserCapabilities } from '@/hooks/useUserCapabilities';
+import { ProfessionalUpgradeModal } from '@/components/upgrade/ProfessionalUpgradeModal';
 
 // Types based on the actual schema
 type Selection = {
@@ -87,9 +89,11 @@ export default function DesignerBoard({
   showAll = true
 }: DesignerBoardProps) {
   const router = useRouter();
+  const capabilities = useUserCapabilities();
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
   const [paintAccentEnabled, setPaintAccentEnabled] = useState<Record<string, boolean>>({});
   const [generateDialogOpen, setGenerateDialogOpen] = useState(false);
+  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const [isCreatingRoom, setIsCreatingRoom] = useState(false);
   const [generatedImages, setGeneratedImages] = useState<Array<{
     id: string;
@@ -168,6 +172,11 @@ export default function DesignerBoard({
   };
 
   const handleGenerateImages = () => {
+    // Check if user can generate images (requires professional tier)
+    if (!capabilities.canGenerateImages) {
+      setUpgradeModalOpen(true);
+      return;
+    }
     setGenerateDialogOpen(true);
   };
 
@@ -349,6 +358,16 @@ export default function DesignerBoard({
         projectId={projectId}
         currentRoomId={selectedRoomId}
         onExport={handleExport}
+      />
+
+      {/* Professional Upgrade Modal */}
+      <ProfessionalUpgradeModal
+        open={upgradeModalOpen}
+        onOpenChange={setUpgradeModalOpen}
+        orgId={capabilities.orgId}
+        orgName={capabilities.orgName}
+        orgStatus={capabilities.orgStatus}
+        featureRequested="image_generation"
       />
     </div>
   );
