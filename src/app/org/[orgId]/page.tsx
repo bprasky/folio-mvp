@@ -19,19 +19,24 @@ interface Props {
 export async function generateMetadata({ params }: Props) {
   const resolvedParams = params instanceof Promise ? await params : params;
 
-  const org = await prisma.organization.findUnique({
-    where: { id: resolvedParams.orgId },
-    select: { name: true, description: true },
-  });
+  try {
+    const org = await prisma.organization.findUnique({
+      where: { id: resolvedParams.orgId },
+      select: { name: true, description: true },
+    });
 
-  if (!org) {
-    return { title: 'Organization Not Found | Folio' };
+    if (!org) {
+      return { title: 'Organization Not Found | Folio' };
+    }
+
+    return {
+      title: `${org.name} | Folio`,
+      description: org.description || `${org.name}'s professional profile on Folio`,
+    };
+  } catch (err) {
+    console.error('[OrgProfilePage] Error generating metadata:', err);
+    return { title: 'Organization | Folio' };
   }
-
-  return {
-    title: `${org.name} | Folio`,
-    description: org.description || `${org.name}'s professional profile on Folio`,
-  };
 }
 
 export default async function OrgProfilePage({ params, searchParams }: Props) {
@@ -39,9 +44,15 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
   const resolvedSearchParams = searchParams instanceof Promise ? await searchParams : searchParams;
 
   // Fetch org without relations that might not exist in Prisma client yet
-  const org = await prisma.organization.findUnique({
-    where: { id: resolvedParams.orgId },
-  });
+  let org;
+  try {
+    org = await prisma.organization.findUnique({
+      where: { id: resolvedParams.orgId },
+    });
+  } catch (err) {
+    console.error('[OrgProfilePage] Error fetching organization:', err);
+    notFound();
+  }
 
   if (!org) {
     notFound();
@@ -138,39 +149,60 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
   let isAdmin = false;
 
   if (session?.user?.id) {
-    const membership = await prisma.organizationUser.findFirst({
-      where: {
-        organizationId: resolvedParams.orgId,
-        userId: session.user.id,
-        isActive: true,
-      },
-    });
-    isOwner = membership?.role === 'OWNER';
-    isAdmin = membership?.role === 'OWNER' || membership?.role === 'ADMIN';
+    try {
+      const membership = await prisma.organizationUser.findFirst({
+        where: {
+          organizationId: resolvedParams.orgId,
+          userId: session.user.id,
+          isActive: true,
+        },
+      });
+      isOwner = membership?.role === 'OWNER';
+      isAdmin = membership?.role === 'OWNER' || membership?.role === 'ADMIN';
+    } catch (err) {
+      console.error('[OrgProfilePage] Error checking membership:', err);
+      // Continue with default isOwner/isAdmin = false
+    }
   }
 
   // Get org members to find their projects
-  const memberIds = await prisma.organizationUser.findMany({
-    where: { organizationId: resolvedParams.orgId, isActive: true },
-    select: { userId: true },
-  }).then(members => members.map(m => m.userId));
+  let memberIds: string[] = [];
+  try {
+    const members = await prisma.organizationUser.findMany({
+      where: { organizationId: resolvedParams.orgId, isActive: true },
+      select: { userId: true },
+    });
+    memberIds = members.map(m => m.userId);
+  } catch (err) {
+    console.error('[OrgProfilePage] Error fetching member IDs:', err);
+  }
 
   // Get project count
-  const projectCount = memberIds.length > 0
-    ? await prisma.project.count({
+  let projectCount = 0;
+  if (memberIds.length > 0) {
+    try {
+      projectCount = await prisma.project.count({
         where: { designerId: { in: memberIds }, isPublic: true },
-      })
-    : 0;
+      });
+    } catch (err) {
+      console.error('[OrgProfilePage] Error counting projects:', err);
+    }
+  }
 
   // Get featured count
-  const featuredCount = memberIds.length > 0
-    ? await prisma.projectPost.count({
+  let featuredCount = 0;
+  if (memberIds.length > 0) {
+    try {
+      featuredCount = await prisma.projectPost.count({
         where: {
           project: { designerId: { in: memberIds } },
           status: 'PUBLISHED',
         },
-      })
-    : 0;
+      });
+    } catch (err) {
+      console.error('[OrgProfilePage] Error counting featured posts:', err);
+    }
+  }
 
   // Get pinned items (with fallback for missing fields)
   const pinnedItems = await getPinnedItems(memberIds);
