@@ -8,7 +8,7 @@ import { deleteProjectImage } from '@/lib/storage';
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string; imageId: string } }
+  { params }: { params: Promise<{ id: string; imageId: string }> }
 ) {
   try {
     // Auth check
@@ -17,7 +17,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id: projectId, imageId } = params;
+    const { id: projectId, imageId } = await params;
     const userId = session.user.id;
 
     // Verify user has access to project
