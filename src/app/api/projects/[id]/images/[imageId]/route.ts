@@ -49,17 +49,6 @@ export async function DELETE(
       return NextResponse.json({ error: 'Image not found' }, { status: 404 });
     }
 
-    // Check if it's a generated image (has JSON metadata in name)
-    let isGeneratedImage = false;
-    let metadata = null;
-    try {
-      metadata = JSON.parse(image.name || '{}');
-      isGeneratedImage = metadata.type === 'GENERATED';
-    } catch (e) {
-      // Not JSON metadata - it's a regular image
-      isGeneratedImage = false;
-    }
-
     // Try to delete from storage if URL points to our storage
     if (image.url.includes('supabase') || image.url.includes('project-assets')) {
       try {
@@ -75,33 +64,16 @@ export async function DELETE(
       }
     }
 
-    console.log('[DELETE image] isGeneratedImage:', isGeneratedImage, 'metadata:', metadata);
+    // Always hard delete - soft delete was causing images to persist
+    console.log('[DELETE image] Performing hard delete for imageId:', imageId);
+    const deleted = await prisma.projectImage.delete({
+      where: { id: imageId }
+    });
+    console.log('[DELETE image] Prisma delete returned:', deleted?.id);
 
-    if (isGeneratedImage && metadata) {
-      // Soft delete for generated images (preserve metadata)
-      console.log('[DELETE image] Taking SOFT DELETE path');
-      await prisma.projectImage.update({
-        where: { id: imageId },
-        data: {
-          name: JSON.stringify({
-            ...metadata,
-            deletedAt: new Date().toISOString(),
-            deletedBy: userId
-          })
-        }
-      });
-    } else {
-      // Hard delete for regular images
-      console.log('[DELETE image] Performing hard delete for imageId:', imageId);
-      const deleted = await prisma.projectImage.delete({
-        where: { id: imageId }
-      });
-      console.log('[DELETE image] Prisma delete returned:', deleted?.id);
-
-      // Verify deletion
-      const check = await prisma.projectImage.findUnique({ where: { id: imageId } });
-      console.log('[DELETE image] Verification - image still exists?:', !!check);
-    }
+    // Verify deletion
+    const check = await prisma.projectImage.findUnique({ where: { id: imageId } });
+    console.log('[DELETE image] Verification - image still exists?:', !!check);
 
     console.log('[DELETE image] SUCCESS - returning 200');
     return NextResponse.json({ success: true });
