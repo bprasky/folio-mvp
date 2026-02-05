@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { FaUpload, FaImages, FaPlus, FaTag, FaRocket, FaCheckCircle, FaCloudUploadAlt, FaFileImport, FaTrash } from 'react-icons/fa';
 import ProjectCreationModal from '@/components/ProjectCreationModal';
 import { InterviewFlow } from '@/components/interview';
+import { TagDiagnosticModal } from '@/components/posting/interview/TagDiagnosticModal';
 import { FinishScheduleOptionsModal } from '@/components/posting/FinishScheduleOptionsModal';
 import { PresentationImportModal } from '@/components/import/PresentationImportModal';
 import { PdfSpecImportModal } from '@/components/import/PdfSpecImportModal';
@@ -46,6 +47,7 @@ export default function MediaSection({ project, isOwner, images, projectPost }: 
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showFinishScheduleModal, setShowFinishScheduleModal] = useState(false);
   const [showInterviewModal, setShowInterviewModal] = useState(false);
+  const [showTagDiagnostic, setShowTagDiagnostic] = useState(false);
   const [selectedHeroImageId, setSelectedHeroImageId] = useState<string | null>(null);
   const [existingPost, setExistingPost] = useState<any>(null);
   const [isPublishing, setIsPublishing] = useState(false);
@@ -343,8 +345,17 @@ export default function MediaSection({ project, isOwner, images, projectPost }: 
             {isOwner && POSTING_V1_ENABLED && (
               <button
                 onClick={() => {
-                  // Go directly to interview
-                  setShowInterviewModal(true);
+                  // Check tag diagnostic first, then open interview
+                  fetch(`/api/posting/project/${project.id}/tag-diagnostic`)
+                    .then((res) => (res.ok ? res.json() : null))
+                    .then((data) => {
+                      if (data?.summary?.needsAttention) {
+                        setShowTagDiagnostic(true);
+                      } else {
+                        setShowInterviewModal(true);
+                      }
+                    })
+                    .catch(() => setShowInterviewModal(true));
                 }}
                 className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
               >
@@ -591,6 +602,25 @@ export default function MediaSection({ project, isOwner, images, projectPost }: 
 
             // Proceed to interview
             setShowInterviewModal(true);
+          }}
+        />
+      )}
+
+      {/* Tag Diagnostic Modal */}
+      {showTagDiagnostic && (
+        <TagDiagnosticModal
+          open={showTagDiagnostic}
+          onOpenChange={(open) => {
+            setShowTagDiagnostic(open);
+            if (!open) {
+              // After closing diagnostic, proceed to interview
+              setShowInterviewModal(true);
+            }
+          }}
+          projectId={project.id}
+          onAutoTagComplete={() => {
+            // Refresh page to pick up new tags
+            router.refresh();
           }}
         />
       )}
