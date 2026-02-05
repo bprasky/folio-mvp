@@ -100,7 +100,7 @@ function combineTags(
   // Note: extractAttributes already prioritizes product context for materials
   aiTags.materials.forEach(m => combined.add(m.toLowerCase()));
   aiTags.colors.forEach(c => combined.add(c.toLowerCase()));
-  aiTags.objects.forEach(o => combined.add(o.toLowerCase()));
+  (aiTags.objects || []).forEach(o => combined.add(o.toLowerCase()));
   
   return Array.from(combined);
 }
@@ -367,7 +367,7 @@ export async function indexMoment(projectImageId: string): Promise<void> {
       materials: allMaterials,
       spaces: allSpaces,
       colors: aiTags.colors,
-      objects: aiTags.objects,
+      objects: aiTags.elements,
     }
   );
   
