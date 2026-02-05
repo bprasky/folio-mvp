@@ -6,6 +6,7 @@ import { PostCard } from "@/components/posting/PostCard";
 import { PostCondensed } from "@/components/posting/PostCondensed";
 import { PostExpanded } from "@/components/posting/PostExpanded";
 import { InterviewModal } from "@/components/posting/interview/InterviewModal";
+import { TagDiagnosticModal } from "@/components/posting/interview/TagDiagnosticModal";
 import { RichArticle } from "@/components/posting/preview/RichArticle";
 import { Blocks } from "@/lib/posting/schemas";
 
@@ -24,7 +25,9 @@ export default function ProjectPostPreviewPage() {
   const [generating, setGenerating] = useState(false);
   const [generateError, setGenerateError] = useState<string | null>(null);
   const [showRegenerateConfirm, setShowRegenerateConfirm] = useState(false);
+  const [showTagDiagnostic, setShowTagDiagnostic] = useState(false);
   const hasProcessedStartInterview = useRef(false);
+  const hasCheckedDiagnostic = useRef(false);
 
   useEffect(() => {
     if (!POSTING_V1_ENABLED) {
@@ -32,8 +35,9 @@ export default function ProjectPostPreviewPage() {
       return;
     }
 
-    // Reset the ref when projectId changes
+    // Reset the refs when projectId changes
     hasProcessedStartInterview.current = false;
+    hasCheckedDiagnostic.current = false;
     fetchPost();
   }, [projectId]);
 
@@ -53,15 +57,32 @@ export default function ProjectPostPreviewPage() {
     if (shouldStartInterview && !hasProcessedStartInterview.current && !loading && post) {
       hasProcessedStartInterview.current = true;
       console.log('[preview] Auto-opening interview modal from startInterview param', { postId: post?.post?.id });
-      
-      // Small delay to ensure everything is ready
-      setTimeout(() => {
-        setShowInterviewModal(true);
-        // Remove the query param from URL to clean up
-        const url = new URL(window.location.href);
-        url.searchParams.delete('startInterview');
-        window.history.replaceState({}, '', url.toString());
-      }, 200); // Increased delay to ensure post data is fully loaded
+
+      // Remove the query param from URL to clean up
+      const url = new URL(window.location.href);
+      url.searchParams.delete('startInterview');
+      window.history.replaceState({}, '', url.toString());
+
+      // Check tag diagnostic first — show it if there are auto-taggable rooms
+      if (!hasCheckedDiagnostic.current) {
+        hasCheckedDiagnostic.current = true;
+        fetch(`/api/posting/project/${projectId}/tag-diagnostic`)
+          .then((res) => (res.ok ? res.json() : null))
+          .then((data) => {
+            if (data?.summary?.needsAttention) {
+              console.log('[preview] Tag diagnostic needs attention, showing modal first');
+              setShowTagDiagnostic(true);
+            } else {
+              setShowInterviewModal(true);
+            }
+          })
+          .catch(() => {
+            // On error, just proceed to interview
+            setShowInterviewModal(true);
+          });
+      } else {
+        setTimeout(() => setShowInterviewModal(true), 200);
+      }
     } else if (shouldStartInterview && !loading && !post) {
       // If post doesn't exist, we might need to initialize it first
       console.warn('[preview] startInterview=true but post is null - post may need to be initialized');
@@ -426,6 +447,21 @@ export default function ProjectPostPreviewPage() {
             )}
           </div>
         </div>
+      )}
+
+      {showTagDiagnostic && (
+        <TagDiagnosticModal
+          open={showTagDiagnostic}
+          onOpenChange={(open) => {
+            setShowTagDiagnostic(open);
+            if (!open) {
+              // After closing diagnostic, proceed to interview
+              fetchPost().then(() => setShowInterviewModal(true));
+            }
+          }}
+          projectId={projectId}
+          onAutoTagComplete={() => fetchPost()}
+        />
       )}
 
       {showInterviewModal && post && (

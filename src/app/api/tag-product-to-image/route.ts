@@ -29,6 +29,8 @@ export async function POST(request: NextRequest) {
       // Shop product fields
       addToShop,
       shopQuote,
+      // Backfill option: create a Selection on the design board if none matches
+      createSelection,
     } = await request.json();
 
     // Validate required fields
@@ -64,11 +66,11 @@ export async function POST(request: NextRequest) {
 
     // Verify image belongs to project
     const image = await prisma.projectImage.findFirst({
-      where: { 
+      where: {
         id: imageId,
-        projectId: projectId 
+        projectId: projectId
       },
-      select: { id: true },
+      select: { id: true, room: true },
     });
 
     if (!image) {
@@ -86,6 +88,8 @@ export async function POST(request: NextRequest) {
         name: true,
         vendorId: true,
         category: true,
+        url: true,
+        brand: true,
       }
     });
 
@@ -114,6 +118,66 @@ export async function POST(request: NextRequest) {
     });
 
     console.log('[ProductTag] Created:', { tagId: tag.id, projectId, imageId, productId });
+
+    // Backfill: link an existing Selection to this tag (or create one)
+    let linkedSelectionId: string | null = null;
+    try {
+      if (image.room) {
+        const room = await prisma.room.findFirst({
+          where: {
+            projectId,
+            name: { equals: image.room, mode: 'insensitive' },
+          },
+        });
+
+        if (room) {
+          // Find an unlinked selection that matches this product
+          const orConditions: any[] = [];
+          if (product.url) {
+            orConditions.push({ cachedProductLinks: { some: { cachedProduct: { url: product.url } } } });
+          }
+          if (product.name) {
+            orConditions.push({ productName: { contains: product.name, mode: 'insensitive' } });
+          }
+
+          const matchingSelection = orConditions.length > 0
+            ? await prisma.selection.findFirst({
+                where: {
+                  roomId: room.id,
+                  productTagId: null,
+                  OR: orConditions,
+                },
+              })
+            : null;
+
+          if (matchingSelection) {
+            await prisma.selection.update({
+              where: { id: matchingSelection.id },
+              data: { productTagId: tag.id },
+            });
+            linkedSelectionId = matchingSelection.id;
+            console.log('[ProductTag] Backfill linked selection:', { selectionId: matchingSelection.id, tagId: tag.id });
+          } else if (createSelection) {
+            // Optionally create a new Selection for this product
+            const newSel = await prisma.selection.create({
+              data: {
+                projectId,
+                roomId: room.id,
+                productName: product.name,
+                vendorName: product.brand ?? null,
+                productTagId: tag.id,
+                source: 'auto_tag',
+              },
+            });
+            linkedSelectionId = newSel.id;
+            console.log('[ProductTag] Backfill created selection:', { selectionId: newSel.id, tagId: tag.id });
+          }
+        }
+      }
+    } catch (backfillError) {
+      // Log but don't fail the tag creation
+      console.error('[ProductTag] Backfill error:', backfillError);
+    }
 
     // Create ShopProduct if requested
     let shopProduct = null;
@@ -275,6 +339,7 @@ export async function POST(request: NextRequest) {
       id: tag.id,
       tag,
       shopProduct: shopProduct ? { id: shopProduct.id, hasQuote: !!shopProduct.quote } : null,
+      linkedSelectionId,
     });
 
   } catch (error) {
