@@ -49,6 +49,7 @@ export async function GET(
           select: {
             id: true,
             room: true,
+            aiSpaces: true,
             tags: { select: { id: true } },
             aiClassification: true,
           },
@@ -60,13 +61,22 @@ export async function GET(
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
 
+    // Helper: check if an image matches a room by room field OR aiSpaces
+    const roomNameLower = (name: string) => name.toLowerCase();
+    const imageMatchesRoom = (img: { room: string | null; aiSpaces: string[] }, roomName: string) => {
+      const rn = roomNameLower(roomName);
+      // Direct room assignment match
+      if (img.room && roomNameLower(img.room) === rn) return true;
+      // AI-detected spaces match (e.g., aiSpaces: ["kitchen"] matches Room "Kitchen")
+      if (img.aiSpaces?.some((s) => roomNameLower(s) === rn)) return true;
+      return false;
+    };
+
     // Build room diagnostics
     const roomDiagnostics = await Promise.all(
       project.rooms.map(async (room) => {
-        // Match images to this room by string name (case-insensitive)
-        const roomImages = project.images.filter(
-          (img) => img.room && img.room.toLowerCase() === room.name.toLowerCase()
-        );
+        // Match images to this room by room field OR AI-detected spaces
+        const roomImages = project.images.filter((img) => imageMatchesRoom(img, room.name));
 
         const taggedImages = roomImages.filter((img) => img.tags.length > 0);
         const untaggedImages = roomImages.filter((img) => img.tags.length === 0);

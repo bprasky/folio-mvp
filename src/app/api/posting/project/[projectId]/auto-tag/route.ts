@@ -90,6 +90,7 @@ export async function POST(
           select: {
             id: true,
             room: true,
+            aiSpaces: true,
             tags: { select: { id: true } },
           },
         },
@@ -103,13 +104,18 @@ export async function POST(
     const created: CreatedTag[] = [];
     const skipped: SkippedSelection[] = [];
 
+    // Helper: check if an image matches a room by room field OR aiSpaces
+    const imageMatchesRoom = (img: { room: string | null; aiSpaces: string[] }, roomName: string) => {
+      const rn = roomName.toLowerCase();
+      if (img.room && img.room.toLowerCase() === rn) return true;
+      if (img.aiSpaces?.some((s) => s.toLowerCase() === rn)) return true;
+      return false;
+    };
+
     for (const room of project.rooms) {
-      // Get untagged images that belong to this room (string match)
+      // Get untagged images that belong to this room (room field OR AI-detected spaces)
       const untaggedImages = project.images.filter(
-        (img) =>
-          img.room &&
-          img.room.toLowerCase() === room.name.toLowerCase() &&
-          img.tags.length === 0
+        (img) => imageMatchesRoom(img, room.name) && img.tags.length === 0
       );
 
       // Get unlinked selections
