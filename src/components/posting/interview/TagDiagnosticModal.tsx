@@ -66,6 +66,13 @@ function ChecklistIcon({ done }: { done: boolean }) {
   );
 }
 
+/** Spinner icon for in-progress states */
+function SpinnerIcon() {
+  return (
+    <div className="w-5 h-5 rounded-full border-2 border-[var(--accent)] border-t-transparent animate-spin flex-shrink-0" />
+  );
+}
+
 /** Subtle loading dots animation */
 function LoadingDots() {
   return (
@@ -91,14 +98,15 @@ export function TagDiagnosticModal({
   const [selectedRoomIds, setSelectedRoomIds] = useState<Set<string>>(new Set());
   const [autoTagging, setAutoTagging] = useState(false);
   const [autoTagDone, setAutoTagDone] = useState(false);
+  const [classifying, setClassifying] = useState(false);
+  const [classifyDone, setClassifyDone] = useState(false);
 
   const fetchDiagnostic = useCallback(async () => {
-    setLoading(true);
     try {
       const res = await fetch(
         `/api/posting/project/${projectId}/tag-diagnostic`
       );
-      if (!res.ok) return;
+      if (!res.ok) return null;
       const data: DiagnosticData = await res.json();
       setDiagnostic(data);
 
@@ -107,19 +115,45 @@ export function TagDiagnosticModal({
         data.rooms.filter((r) => r.autoTaggable).map((r) => r.roomId)
       );
       setSelectedRoomIds(autoTaggable);
+      return data;
     } catch {
-      // Silently handle — the UI gracefully shows no data
-    } finally {
-      setLoading(false);
+      return null;
     }
   }, [projectId]);
 
+  // On open: fetch diagnostic, then auto-classify if needed
   useEffect(() => {
-    if (open) {
-      fetchDiagnostic();
-      setAutoTagDone(false);
-    }
-  }, [open, fetchDiagnostic]);
+    if (!open) return;
+    setAutoTagDone(false);
+    setClassifyDone(false);
+    setClassifying(false);
+    setLoading(true);
+
+    (async () => {
+      const data = await fetchDiagnostic();
+      setLoading(false);
+
+      // Gate: if photos exist but aren't classified, classify them now
+      if (data && data.summary.totalImages > 0 && data.summary.classifiedImages === 0) {
+        setClassifying(true);
+        try {
+          const res = await fetch(
+            `/api/posting/project/${projectId}/classify-images`,
+            { method: 'POST' }
+          );
+          if (res.ok) {
+            setClassifyDone(true);
+            // Re-fetch diagnostic with updated classification data
+            await fetchDiagnostic();
+          }
+        } catch {
+          // Silent — checklist will still show unchecked
+        } finally {
+          setClassifying(false);
+        }
+      }
+    })();
+  }, [open, projectId, fetchDiagnostic]);
 
   const toggleRoom = (roomId: string) => {
     setSelectedRoomIds((prev) => {
@@ -157,6 +191,24 @@ export function TagDiagnosticModal({
     }
   };
 
+  const handleClassify = async () => {
+    setClassifying(true);
+    try {
+      const res = await fetch(
+        `/api/posting/project/${projectId}/classify-images`,
+        { method: 'POST' }
+      );
+      if (res.ok) {
+        setClassifyDone(true);
+        await fetchDiagnostic();
+      }
+    } catch {
+      // Silent
+    } finally {
+      setClassifying(false);
+    }
+  };
+
   // Readiness checks
   const hasPhotos = (diagnostic?.summary.totalImages ?? 0) > 0;
   const hasAIAnalysis = (diagnostic?.summary.classifiedImages ?? 0) > 0;
@@ -170,7 +222,6 @@ export function TagDiagnosticModal({
     if (onStartInterview) {
       onStartInterview();
     } else {
-      // Fallback: close modal (callers without onStartInterview get legacy behavior)
       onOpenChange(false);
     }
   };
@@ -214,30 +265,43 @@ export function TagDiagnosticModal({
 
                 {/* AI analysis */}
                 <div className="flex items-start gap-3">
-                  <ChecklistIcon done={hasAIAnalysis} />
+                  {classifying ? <SpinnerIcon /> : <ChecklistIcon done={hasAIAnalysis} />}
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-[var(--text-primary)]">
                       Photos analyzed
                     </p>
                     <p className="text-xs text-[var(--text-tertiary)] mt-0.5">
-                      {hasAIAnalysis
+                      {classifying
+                        ? 'Analyzing your photos for colors, materials & style...'
+                        : hasAIAnalysis
                         ? `${diagnostic.summary.classifiedImages} of ${diagnostic.summary.totalImages} analyzed for colors, materials & style`
                         : hasPhotos
-                        ? 'AI analysis runs automatically \u2014 check back shortly'
+                        ? 'Your photos need analysis to generate personalized questions'
                         : 'Available after photos are uploaded'}
                     </p>
+                    {/* Manual analyze button — only when photos exist, not classified, not currently classifying */}
+                    {hasPhotos && !hasAIAnalysis && !classifying && (
+                      <button
+                        onClick={handleClassify}
+                        className="mt-1.5 text-xs font-medium text-[var(--accent)] hover:underline"
+                      >
+                        Analyze now
+                      </button>
+                    )}
                   </div>
                 </div>
 
                 {/* Products tagged */}
                 <div className="flex items-start gap-3">
-                  <ChecklistIcon done={hasTaggedProducts} />
+                  {autoTagging ? <SpinnerIcon /> : <ChecklistIcon done={hasTaggedProducts} />}
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-[var(--text-primary)]">
                       Products tagged
                     </p>
                     <p className="text-xs text-[var(--text-tertiary)] mt-0.5">
-                      {hasTaggedProducts
+                      {autoTagging
+                        ? 'Matching products to your photos...'
+                        : hasTaggedProducts
                         ? `${diagnostic.summary.taggedImages} photo${diagnostic.summary.taggedImages !== 1 ? 's' : ''} with product tags for vendor attribution`
                         : canAutoTag
                         ? 'Tag products below to enable vendor attribution'
@@ -357,20 +421,21 @@ export function TagDiagnosticModal({
                   <>
                     <button
                       onClick={() => onOpenChange(false)}
-                      className="flex-1 rounded-[10px] px-4 py-2.5 text-sm font-medium text-white transition-all duration-150"
+                      disabled={classifying || autoTagging}
+                      className="flex-1 rounded-[10px] px-4 py-2.5 text-sm font-medium text-white transition-all duration-150 disabled:opacity-50"
                       style={{
                         background: 'var(--accent, #B8845C)',
                         boxShadow: 'var(--neu-raised, 0 1px 3px rgba(0,0,0,0.1))',
                       }}
                     >
-                      Go back to project
+                      {classifying ? 'Analyzing...' : 'Go back to project'}
                     </button>
                   </>
                 )}
               </div>
 
               {/* Subtle hint when not ready */}
-              {!isReady && (
+              {!isReady && !classifying && (
                 <p className="text-xs text-[var(--text-tertiary)] text-center mt-3">
                   Complete the steps above to unlock your personalized interview.
                 </p>
