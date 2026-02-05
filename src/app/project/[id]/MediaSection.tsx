@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { FaUpload, FaImages, FaPlus, FaTag, FaRocket, FaCheckCircle, FaCloudUploadAlt, FaFileImport, FaTrash } from 'react-icons/fa';
 import ProjectCreationModal from '@/components/ProjectCreationModal';
-import { InterviewModal } from '@/components/posting/interview/InterviewModal';
+import { InterviewFlow } from '@/components/interview';
 import { FinishScheduleOptionsModal } from '@/components/posting/FinishScheduleOptionsModal';
 import { PresentationImportModal } from '@/components/import/PresentationImportModal';
 import { PdfSpecImportModal } from '@/components/import/PdfSpecImportModal';
@@ -595,17 +595,29 @@ export default function MediaSection({ project, isOwner, images, projectPost }: 
         />
       )}
 
-      {/* Interview Modal */}
+      {/* New Interview Flow */}
       {showInterviewModal && (
-        <InterviewModal
-          open={showInterviewModal}
-          onOpenChange={setShowInterviewModal}
-          projectId={project.id}
-          images={images}
-          post={existingPost}
-          hasVendors={false} // TODO: detect if project has vendor tags
-          tags={images.flatMap((img) => img.tags)}
-        />
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => setShowInterviewModal(false)}
+          />
+          {/* Modal */}
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-3xl mx-4 max-h-[90vh] overflow-hidden">
+            <InterviewFlow
+              projectId={project.id}
+              projectName={project.title}
+              images={images.map(img => ({ id: img.id, url: img.url, name: img.name }))}
+              onComplete={(draftId) => {
+                setShowInterviewModal(false);
+                // Navigate to preview or editorial page
+                router.push(`/designer/projects/${project.id}/preview`);
+              }}
+              onCancel={() => setShowInterviewModal(false)}
+            />
+          </div>
+        </div>
       )}
 
       {/* Presentation Import Modal */}
