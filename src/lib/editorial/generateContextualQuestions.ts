@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { randomUUID } from 'crypto';
 
@@ -85,7 +86,7 @@ export async function generateContextualQuestions(
   const images = await prisma.projectImage.findMany({
     where: {
       projectId,
-      aiClassification: { not: null },
+      aiClassification: { not: Prisma.DbNull },
     },
     select: {
       id: true,
