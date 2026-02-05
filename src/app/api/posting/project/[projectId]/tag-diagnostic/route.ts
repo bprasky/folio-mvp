@@ -50,6 +50,7 @@ export async function GET(
             id: true,
             room: true,
             tags: { select: { id: true } },
+            aiClassification: true,
           },
         },
       },
@@ -103,7 +104,17 @@ export async function GET(
     const totalSelections = roomDiagnostics.reduce((n, r) => n + r.selections.total, 0);
     const totalImages = project.images.length;
     const taggedImages = project.images.filter((img) => img.tags.length > 0).length;
+    const classifiedImages = project.images.filter((img) => img.aiClassification != null).length;
     const autoTaggableRooms = roomDiagnostics.filter((r) => r.autoTaggable).length;
+    // Also count images without a room assignment (can't be matched to selections)
+    const imagesWithoutRoom = project.images.filter((img) => !img.room).length;
+
+    // needsAttention is true when the project has gaps that hurt interview quality:
+    // 1. Auto-taggable rooms exist (selections can become tags)
+    // 2. Images exist but NONE are tagged (interview has no product context)
+    // 3. Images exist but NONE are classified (interview can't generate contextual questions)
+    const hasNoTags = totalImages > 0 && taggedImages === 0;
+    const hasNoClassifications = totalImages > 0 && classifiedImages === 0;
 
     return NextResponse.json({
       rooms: roomDiagnostics,
@@ -111,8 +122,14 @@ export async function GET(
         totalSelections,
         totalImages,
         taggedImages,
+        classifiedImages,
         autoTaggableRooms,
-        needsAttention: autoTaggableRooms > 0,
+        imagesWithoutRoom,
+        needsAttention: autoTaggableRooms > 0 || hasNoTags,
+        // Separate flags so the UI can show specific guidance
+        hasNoTags,
+        hasNoClassifications,
+        hasAutoTaggable: autoTaggableRooms > 0,
       },
     });
   } catch (error: any) {
