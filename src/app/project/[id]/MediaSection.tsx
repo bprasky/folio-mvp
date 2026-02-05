@@ -343,8 +343,8 @@ export default function MediaSection({ project, isOwner, images, projectPost }: 
             {isOwner && POSTING_V1_ENABLED && (
               <button
                 onClick={() => {
-                  // Show finish schedule options before interview
-                  setShowFinishScheduleModal(true);
+                  // Go directly to interview
+                  setShowInterviewModal(true);
                 }}
                 className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
               >
