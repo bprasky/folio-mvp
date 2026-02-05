@@ -5,7 +5,6 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/options";
 import { prisma } from "@/lib/prisma";
 import { assertProjectView } from "@/lib/authz/access";
-import { normalizeRole } from "@/lib/permissions";
 import { z } from "zod";
 import { randomUUID } from "crypto";
 
@@ -80,8 +79,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify project access
-    const role = normalizeRole(user.orgRole ?? "viewer");
-    await assertProjectView(projectId, user.id, role);
+    await assertProjectView(user.id, projectId);
 
     // Get project with images
     const project = await prisma.project.findUnique({
