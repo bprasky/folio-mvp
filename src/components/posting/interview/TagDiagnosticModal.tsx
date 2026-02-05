@@ -46,6 +46,37 @@ interface TagDiagnosticModalProps {
   onOpenChange: (open: boolean) => void;
   projectId: string;
   onAutoTagComplete?: () => void;
+  /** Called when the user clicks "Start Interview" — only available when ready */
+  onStartInterview?: () => void;
+}
+
+/** Checklist icon — filled accent circle with checkmark when done, subtle ring when pending */
+function ChecklistIcon({ done }: { done: boolean }) {
+  if (done) {
+    return (
+      <div className="w-5 h-5 rounded-full bg-[var(--accent)] flex items-center justify-center flex-shrink-0">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+          <path d="M2.5 6L5 8.5L9.5 3.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </div>
+    );
+  }
+  return (
+    <div className="w-5 h-5 rounded-full border-2 border-[var(--ridge-outer)] flex-shrink-0" />
+  );
+}
+
+/** Subtle loading dots animation */
+function LoadingDots() {
+  return (
+    <div className="flex items-center justify-center py-8">
+      <div className="flex gap-1.5">
+        <div className="w-2 h-2 rounded-full bg-[var(--accent)] opacity-60 animate-pulse" style={{ animationDelay: '0ms' }} />
+        <div className="w-2 h-2 rounded-full bg-[var(--accent)] opacity-60 animate-pulse" style={{ animationDelay: '150ms' }} />
+        <div className="w-2 h-2 rounded-full bg-[var(--accent)] opacity-60 animate-pulse" style={{ animationDelay: '300ms' }} />
+      </div>
+    </div>
+  );
 }
 
 export function TagDiagnosticModal({
@@ -53,25 +84,21 @@ export function TagDiagnosticModal({
   onOpenChange,
   projectId,
   onAutoTagComplete,
+  onStartInterview,
 }: TagDiagnosticModalProps) {
   const [diagnostic, setDiagnostic] = useState<DiagnosticData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [selectedRoomIds, setSelectedRoomIds] = useState<Set<string>>(new Set());
   const [autoTagging, setAutoTagging] = useState(false);
-  const [autoTagResult, setAutoTagResult] = useState<{
-    created: number;
-    skipped: number;
-  } | null>(null);
+  const [autoTagDone, setAutoTagDone] = useState(false);
 
   const fetchDiagnostic = useCallback(async () => {
     setLoading(true);
-    setError(null);
     try {
       const res = await fetch(
         `/api/posting/project/${projectId}/tag-diagnostic`
       );
-      if (!res.ok) throw new Error('Failed to fetch diagnostic');
+      if (!res.ok) return;
       const data: DiagnosticData = await res.json();
       setDiagnostic(data);
 
@@ -80,8 +107,8 @@ export function TagDiagnosticModal({
         data.rooms.filter((r) => r.autoTaggable).map((r) => r.roomId)
       );
       setSelectedRoomIds(autoTaggable);
-    } catch (err: any) {
-      setError(err.message || 'Failed to load diagnostic');
+    } catch {
+      // Silently handle — the UI gracefully shows no data
     } finally {
       setLoading(false);
     }
@@ -90,7 +117,7 @@ export function TagDiagnosticModal({
   useEffect(() => {
     if (open) {
       fetchDiagnostic();
-      setAutoTagResult(null);
+      setAutoTagDone(false);
     }
   }, [open, fetchDiagnostic]);
 
@@ -109,7 +136,6 @@ export function TagDiagnosticModal({
   const handleAutoTag = async () => {
     if (selectedRoomIds.size === 0) return;
     setAutoTagging(true);
-    setError(null);
     try {
       const res = await fetch(
         `/api/posting/project/${projectId}/auto-tag`,
@@ -119,14 +145,33 @@ export function TagDiagnosticModal({
           body: JSON.stringify({ roomIds: Array.from(selectedRoomIds) }),
         }
       );
-      if (!res.ok) throw new Error('Auto-tag failed');
-      const data = await res.json();
-      setAutoTagResult(data.summary);
+      if (!res.ok) return;
+      setAutoTagDone(true);
       onAutoTagComplete?.();
-    } catch (err: any) {
-      setError(err.message || 'Auto-tag failed');
+      // Re-fetch diagnostic to update checklist
+      await fetchDiagnostic();
+    } catch {
+      // Silently handle
     } finally {
       setAutoTagging(false);
+    }
+  };
+
+  // Readiness checks
+  const hasPhotos = (diagnostic?.summary.totalImages ?? 0) > 0;
+  const hasAIAnalysis = (diagnostic?.summary.classifiedImages ?? 0) > 0;
+  const hasTaggedProducts = (diagnostic?.summary.taggedImages ?? 0) > 0;
+  const canAutoTag = diagnostic?.summary.hasAutoTaggable ?? false;
+
+  // Ready when: photos exist AND at least one of (tags or AI analysis)
+  const isReady = hasPhotos && (hasTaggedProducts || hasAIAnalysis);
+
+  const handleStartInterview = () => {
+    if (onStartInterview) {
+      onStartInterview();
+    } else {
+      // Fallback: close modal (callers without onStartInterview get legacy behavior)
+      onOpenChange(false);
     }
   };
 
@@ -134,157 +179,220 @@ export function TagDiagnosticModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Tag Products for Attribution</DialogTitle>
+          <DialogTitle
+            className="font-[var(--font-headline)] text-xl"
+            style={{ fontFamily: 'var(--font-headline, Cormorant Garamond, serif)' }}
+          >
+            Preparing Your Interview
+          </DialogTitle>
           <DialogDescription className="mt-1">
-            Tagged products get vendor attribution and help viewers shop your
-            project.
+            A few things help us craft the best questions for your project.
           </DialogDescription>
         </DialogHeader>
 
         <div className="px-6 pb-6">
-          {loading && (
-            <p className="text-sm text-[var(--text-secondary)] py-4">
-              Checking tag readiness...
-            </p>
-          )}
-
-          {error && (
-            <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800 mb-4">
-              {error}
-            </div>
-          )}
-
-          {autoTagResult && (
-            <div className="rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-800 mb-4">
-              Created {autoTagResult.created} tag
-              {autoTagResult.created !== 1 ? 's' : ''}.
-              {autoTagResult.skipped > 0 && (
-                <> {autoTagResult.skipped} skipped (no product match or already tagged).</>
-              )}
-            </div>
-          )}
-
-          {diagnostic && !loading && (
+          {loading ? (
+            <LoadingDots />
+          ) : diagnostic ? (
             <>
-              {/* Readiness warnings */}
-              <div className="space-y-2 mb-4">
-                {diagnostic.summary.hasNoTags && (
-                  <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-                    <p className="font-medium">No products tagged on photos</p>
-                    <p className="text-xs mt-0.5">
-                      Tagging products on your photos enables vendor attribution and generates better interview questions.
-                      {diagnostic.summary.hasAutoTaggable
-                        ? ' Select rooms below to auto-tag from your design board.'
-                        : ' Tag products manually in the image viewer, or add products to your design board first.'}
+              {/* Readiness checklist */}
+              <div className="space-y-3 mb-5">
+                {/* Photos uploaded */}
+                <div className="flex items-start gap-3">
+                  <ChecklistIcon done={hasPhotos} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-[var(--text-primary)]">
+                      Photos uploaded
+                    </p>
+                    <p className="text-xs text-[var(--text-tertiary)] mt-0.5">
+                      {hasPhotos
+                        ? `${diagnostic.summary.totalImages} photo${diagnostic.summary.totalImages !== 1 ? 's' : ''} in your project`
+                        : 'Upload project photos to unlock personalized questions'}
                     </p>
                   </div>
-                )}
-                {diagnostic.summary.hasNoClassifications && (
-                  <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-                    <p className="font-medium">Photos not yet analyzed by AI</p>
-                    <p className="text-xs mt-0.5">
-                      AI classification detects colors, materials, and styles in your photos to generate personalized interview questions. This runs automatically — try refreshing in a moment.
-                    </p>
-                  </div>
-                )}
-                {!diagnostic.summary.hasNoTags && !diagnostic.summary.hasNoClassifications && diagnostic.summary.hasAutoTaggable && (
-                  <div className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-800">
-                    <p className="font-medium">Some products can be auto-tagged</p>
-                    <p className="text-xs mt-0.5">
-                      We found design board selections that match products in untagged photos. Auto-tag them for better attribution.
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {/* Summary stats */}
-              <div className="flex gap-4 text-xs text-[var(--text-secondary)] mb-3 px-1">
-                <span>{diagnostic.summary.totalImages} photo{diagnostic.summary.totalImages !== 1 ? 's' : ''}</span>
-                <span>{diagnostic.summary.taggedImages} tagged</span>
-                <span>{diagnostic.summary.classifiedImages} classified</span>
-                <span>{diagnostic.summary.totalSelections} on board</span>
-              </div>
-
-              {diagnostic.rooms.length === 0 ? (
-                <p className="text-sm text-[var(--text-secondary)] py-2">
-                  No rooms found. Add rooms and selections to your design board first.
-                </p>
-              ) : diagnostic.summary.hasAutoTaggable ? (
-                <div className="space-y-2 mb-4 max-h-60 overflow-y-auto">
-                  {diagnostic.rooms.filter((r) => r.autoTaggable || r.images.untagged > 0).map((room) => {
-                    const disabled = !room.autoTaggable;
-                    const checked = selectedRoomIds.has(room.roomId);
-                    return (
-                      <label
-                        key={room.roomId}
-                        className={`flex items-start gap-3 rounded-lg border px-3 py-2 text-sm cursor-pointer transition-colors ${
-                          disabled
-                            ? 'border-[var(--ridge-outer)] opacity-50 cursor-default'
-                            : checked
-                            ? 'border-blue-300 bg-blue-50'
-                            : 'border-[var(--ridge-outer)] hover:bg-[var(--bg-muted)]'
-                        }`}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={checked}
-                          disabled={disabled}
-                          onChange={() => toggleRoom(room.roomId)}
-                          className="mt-0.5 rounded border-gray-300"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-[var(--text-primary)]">
-                            {room.roomName}
-                          </p>
-                          <p className="text-xs text-[var(--text-secondary)]">
-                            {room.selections.total} product
-                            {room.selections.total !== 1 ? 's' : ''} on board
-                            {room.selections.withProductMatch > 0 && (
-                              <>, {room.selections.withProductMatch} matchable</>
-                            )}
-                            {' \u2022 '}
-                            {room.images.total} photo
-                            {room.images.total !== 1 ? 's' : ''}
-                            {room.images.untagged > 0 && (
-                              <>, {room.images.untagged} untagged</>
-                            )}
-                          </p>
-                          {room.selections.alreadyLinkedToTag > 0 && (
-                            <p className="text-xs text-green-600">
-                              {room.selections.alreadyLinkedToTag} already linked
-                            </p>
-                          )}
-                        </div>
-                      </label>
-                    );
-                  })}
                 </div>
-              ) : null}
 
-              <div className="flex items-center gap-3">
-                {diagnostic.summary.hasAutoTaggable && (
+                {/* AI analysis */}
+                <div className="flex items-start gap-3">
+                  <ChecklistIcon done={hasAIAnalysis} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-[var(--text-primary)]">
+                      Photos analyzed
+                    </p>
+                    <p className="text-xs text-[var(--text-tertiary)] mt-0.5">
+                      {hasAIAnalysis
+                        ? `${diagnostic.summary.classifiedImages} of ${diagnostic.summary.totalImages} analyzed for colors, materials & style`
+                        : hasPhotos
+                        ? 'AI analysis runs automatically \u2014 check back shortly'
+                        : 'Available after photos are uploaded'}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Products tagged */}
+                <div className="flex items-start gap-3">
+                  <ChecklistIcon done={hasTaggedProducts} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-[var(--text-primary)]">
+                      Products tagged
+                    </p>
+                    <p className="text-xs text-[var(--text-tertiary)] mt-0.5">
+                      {hasTaggedProducts
+                        ? `${diagnostic.summary.taggedImages} photo${diagnostic.summary.taggedImages !== 1 ? 's' : ''} with product tags for vendor attribution`
+                        : canAutoTag
+                        ? 'Tag products below to enable vendor attribution'
+                        : 'Add products to your design board, then tag them on photos'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Auto-tag section — only shown when rooms can be auto-tagged */}
+              {canAutoTag && !autoTagDone && (
+                <div
+                  className="rounded-xl border border-[var(--ridge-outer)] p-4 mb-5"
+                  style={{ boxShadow: 'var(--neu-raised, 0 1px 3px rgba(0,0,0,0.06))' }}
+                >
+                  <p className="text-sm font-medium text-[var(--text-primary)] mb-1">
+                    Quick-tag from your design board
+                  </p>
+                  <p className="text-xs text-[var(--text-tertiary)] mb-3">
+                    We matched products from your board to untagged photos. Select rooms to tag automatically.
+                  </p>
+
+                  <div className="space-y-2 mb-3 max-h-40 overflow-y-auto">
+                    {diagnostic.rooms
+                      .filter((r) => r.autoTaggable)
+                      .map((room) => {
+                        const checked = selectedRoomIds.has(room.roomId);
+                        return (
+                          <label
+                            key={room.roomId}
+                            className={`flex items-center gap-3 rounded-[10px] border px-3 py-2 text-sm cursor-pointer transition-all duration-150 ${
+                              checked
+                                ? 'border-[var(--accent)] bg-[var(--accent)]/5'
+                                : 'border-[var(--ridge-outer)] hover:border-[var(--accent)]/30'
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={() => toggleRoom(room.roomId)}
+                              className="sr-only"
+                            />
+                            <div
+                              className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
+                                checked
+                                  ? 'bg-[var(--accent)] border-[var(--accent)]'
+                                  : 'border-[var(--text-tertiary)]'
+                              }`}
+                            >
+                              {checked && (
+                                <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                                  <path d="M2 5L4 7L8 3" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                </svg>
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <span className="font-medium text-[var(--text-primary)]">
+                                {room.roomName}
+                              </span>
+                              <span className="text-xs text-[var(--text-tertiary)] ml-2">
+                                {room.selections.withProductMatch} product{room.selections.withProductMatch !== 1 ? 's' : ''} &middot; {room.images.untagged} photo{room.images.untagged !== 1 ? 's' : ''}
+                              </span>
+                            </div>
+                          </label>
+                        );
+                      })}
+                  </div>
+
                   <button
                     onClick={handleAutoTag}
                     disabled={selectedRoomIds.size === 0 || autoTagging}
-                    className="flex-1 rounded-lg px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="w-full rounded-[10px] px-4 py-2 text-sm font-medium text-white transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{
+                      background: 'var(--accent, #B8845C)',
+                      boxShadow: 'var(--neu-raised, 0 1px 3px rgba(0,0,0,0.1))',
+                    }}
                   >
                     {autoTagging
-                      ? 'Auto-tagging...'
-                      : `Auto-tag ${selectedRoomIds.size} room${selectedRoomIds.size !== 1 ? 's' : ''}`}
+                      ? 'Tagging products...'
+                      : `Tag ${selectedRoomIds.size} room${selectedRoomIds.size !== 1 ? 's' : ''}`}
                   </button>
-                )}
-                <button
-                  onClick={() => onOpenChange(false)}
-                  className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-                    diagnostic.summary.hasAutoTaggable
-                      ? 'text-[var(--text-secondary)] border border-[var(--ridge-outer)] hover:bg-[var(--bg-muted)]'
-                      : 'flex-1 text-white bg-blue-600 hover:bg-blue-700'
-                  }`}
+                </div>
+              )}
+
+              {/* Auto-tag success */}
+              {autoTagDone && (
+                <div
+                  className="rounded-xl border border-[var(--accent)]/20 p-3 mb-5 text-sm text-[var(--text-secondary)]"
+                  style={{ background: 'var(--accent-bg, rgba(184, 132, 92, 0.05))' }}
                 >
-                  {diagnostic.summary.hasAutoTaggable ? 'Skip for now' : 'Continue to Interview'}
-                </button>
+                  Products tagged successfully. Your interview questions will now include product-specific context.
+                </div>
+              )}
+
+              {/* Action buttons */}
+              <div className="flex items-center gap-3">
+                {isReady ? (
+                  <>
+                    <button
+                      onClick={handleStartInterview}
+                      className="flex-1 rounded-[10px] px-4 py-2.5 text-sm font-medium text-white transition-all duration-150"
+                      style={{
+                        background: 'var(--accent, #B8845C)',
+                        boxShadow: 'var(--neu-raised, 0 1px 3px rgba(0,0,0,0.1))',
+                      }}
+                    >
+                      Start Interview
+                    </button>
+                    <button
+                      onClick={() => onOpenChange(false)}
+                      className="rounded-[10px] px-4 py-2.5 text-sm font-medium text-[var(--text-secondary)] border border-[var(--ridge-outer)] hover:bg-[var(--bg-elevated)] transition-all duration-150"
+                    >
+                      Not yet
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => onOpenChange(false)}
+                      className="flex-1 rounded-[10px] px-4 py-2.5 text-sm font-medium text-white transition-all duration-150"
+                      style={{
+                        background: 'var(--accent, #B8845C)',
+                        boxShadow: 'var(--neu-raised, 0 1px 3px rgba(0,0,0,0.1))',
+                      }}
+                    >
+                      Go back to project
+                    </button>
+                  </>
+                )}
               </div>
+
+              {/* Subtle hint when not ready */}
+              {!isReady && (
+                <p className="text-xs text-[var(--text-tertiary)] text-center mt-3">
+                  Complete the steps above to unlock your personalized interview.
+                </p>
+              )}
             </>
+          ) : (
+            // No data / silent error — show gentle fallback
+            <div className="py-6 text-center">
+              <p className="text-sm text-[var(--text-secondary)] mb-4">
+                We couldn&apos;t check your project&apos;s readiness right now.
+              </p>
+              <button
+                onClick={() => onOpenChange(false)}
+                className="rounded-[10px] px-4 py-2.5 text-sm font-medium text-white transition-all duration-150"
+                style={{
+                  background: 'var(--accent, #B8845C)',
+                  boxShadow: 'var(--neu-raised, 0 1px 3px rgba(0,0,0,0.1))',
+                }}
+              >
+                Go back to project
+              </button>
+            </div>
           )}
         </div>
       </DialogContent>

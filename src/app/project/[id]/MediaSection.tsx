@@ -612,15 +612,15 @@ export default function MediaSection({ project, isOwner, images, projectPost }: 
           open={showTagDiagnostic}
           onOpenChange={(open) => {
             setShowTagDiagnostic(open);
-            if (!open) {
-              // After closing diagnostic, proceed to interview
-              setShowInterviewModal(true);
-            }
           }}
           projectId={project.id}
           onAutoTagComplete={() => {
             // Refresh page to pick up new tags
             router.refresh();
+          }}
+          onStartInterview={() => {
+            setShowTagDiagnostic(false);
+            setShowInterviewModal(true);
           }}
         />
       )}
