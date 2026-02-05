@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
       where: { id: projectId },
       select: {
         id: true,
-        name: true,
+        title: true,
         images: {
           select: { id: true, url: true, name: true },
           orderBy: { createdAt: "desc" },
@@ -134,7 +134,7 @@ export async function POST(request: NextRequest) {
         source: q.source,
       })),
       projectContext: {
-        title: project.name ?? "Untitled Project",
+        title: project.title ?? "Untitled Project",
         imageCount: project.images.length,
         heroImageUrl,
       },
