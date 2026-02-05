@@ -2,11 +2,11 @@
 -- Migration: Ensure editorial_interviews + realtime_interview tables exist
 -- Run this in Supabase SQL Editor
 --
--- NOTE: Prisma uses camelCase column names by default (no @map directives).
--- If tables were created via `prisma db push`, columns are camelCase.
+-- NOTE: editorial tables have snake_case columns (created by manual SQL migration).
+--       realtime tables have camelCase columns (created by prisma db push).
 -- ============================================================
 
--- 1. Editorial Interview tables
+-- 1. Editorial Interview tables (snake_case columns)
 -- ============================================================
 
 -- Create enum (if not exists)
@@ -18,81 +18,89 @@ END $$;
 -- Create editorial_interviews (if not exists)
 CREATE TABLE IF NOT EXISTS "editorial_interviews" (
     "id" TEXT NOT NULL,
-    "projectId" TEXT NOT NULL,
+    "project_id" TEXT NOT NULL,
     "status" "EditorialInterviewStatus" NOT NULL DEFAULT 'IN_PROGRESS',
-    "selectedQuestionIds" TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "selected_question_ids" TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
     CONSTRAINT "editorial_interviews_pkey" PRIMARY KEY ("id")
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS "editorial_interviews_projectId_key"
-  ON "editorial_interviews"("projectId");
+DO $$ BEGIN
+  CREATE UNIQUE INDEX "editorial_interviews_project_id_key" ON "editorial_interviews"("project_id");
+EXCEPTION WHEN duplicate_table THEN NULL;
+END $$;
 
-ALTER TABLE "editorial_interviews"
-  DROP CONSTRAINT IF EXISTS "editorial_interviews_projectId_fkey";
-ALTER TABLE "editorial_interviews"
-  ADD CONSTRAINT "editorial_interviews_projectId_fkey"
-  FOREIGN KEY ("projectId") REFERENCES "projects"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "editorial_interviews"
+    ADD CONSTRAINT "editorial_interviews_project_id_fkey"
+    FOREIGN KEY ("project_id") REFERENCES "projects"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- Create editorial_interview_answers (if not exists)
 CREATE TABLE IF NOT EXISTS "editorial_interview_answers" (
     "id" TEXT NOT NULL,
-    "interviewId" TEXT NOT NULL,
-    "questionId" TEXT NOT NULL,
-    "isFollowUp" BOOLEAN NOT NULL DEFAULT false,
-    "parentAnswerId" TEXT,
-    "answerText" TEXT NOT NULL,
-    "audioUrl" TEXT,
-    "inputModality" TEXT NOT NULL DEFAULT 'text',
-    "confidenceScore" DOUBLE PRECISION,
-    "inferredPriorities" TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
-    "softConstraints" TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
-    "linkedImageId" TEXT,
-    "linkedProductId" TEXT,
-    "questionSource" TEXT,
-    "aiClassificationAttribute" TEXT,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "interview_id" TEXT NOT NULL,
+    "question_id" TEXT NOT NULL,
+    "is_follow_up" BOOLEAN NOT NULL DEFAULT false,
+    "parent_answer_id" TEXT,
+    "answer_text" TEXT NOT NULL,
+    "audio_url" TEXT,
+    "input_modality" TEXT NOT NULL DEFAULT 'text',
+    "confidence_score" DOUBLE PRECISION,
+    "inferred_priorities" TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
+    "soft_constraints" TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "editorial_interview_answers_pkey" PRIMARY KEY ("id")
 );
 
-CREATE INDEX IF NOT EXISTS "editorial_interview_answers_interviewId_idx"
-  ON "editorial_interview_answers"("interviewId");
-CREATE INDEX IF NOT EXISTS "editorial_interview_answers_questionId_idx"
-  ON "editorial_interview_answers"("questionId");
-CREATE INDEX IF NOT EXISTS "editorial_interview_answers_linkedImageId_idx"
-  ON "editorial_interview_answers"("linkedImageId");
+DO $$ BEGIN
+  CREATE INDEX "editorial_interview_answers_interview_id_idx" ON "editorial_interview_answers"("interview_id");
+EXCEPTION WHEN duplicate_table THEN NULL;
+END $$;
 
-ALTER TABLE "editorial_interview_answers"
-  DROP CONSTRAINT IF EXISTS "editorial_interview_answers_interviewId_fkey";
-ALTER TABLE "editorial_interview_answers"
-  ADD CONSTRAINT "editorial_interview_answers_interviewId_fkey"
-  FOREIGN KEY ("interviewId") REFERENCES "editorial_interviews"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  CREATE INDEX "editorial_interview_answers_question_id_idx" ON "editorial_interview_answers"("question_id");
+EXCEPTION WHEN duplicate_table THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  ALTER TABLE "editorial_interview_answers"
+    ADD CONSTRAINT "editorial_interview_answers_interview_id_fkey"
+    FOREIGN KEY ("interview_id") REFERENCES "editorial_interviews"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- Add columns that may be missing from original migration
 DO $$ BEGIN
-  ALTER TABLE "editorial_interview_answers" ADD COLUMN "linkedImageId" TEXT;
+  ALTER TABLE "editorial_interview_answers" ADD COLUMN "linked_image_id" TEXT;
 EXCEPTION WHEN duplicate_column THEN NULL;
 END $$;
 
 DO $$ BEGIN
-  ALTER TABLE "editorial_interview_answers" ADD COLUMN "linkedProductId" TEXT;
+  ALTER TABLE "editorial_interview_answers" ADD COLUMN "linked_product_id" TEXT;
 EXCEPTION WHEN duplicate_column THEN NULL;
 END $$;
 
 DO $$ BEGIN
-  ALTER TABLE "editorial_interview_answers" ADD COLUMN "questionSource" TEXT;
+  ALTER TABLE "editorial_interview_answers" ADD COLUMN "question_source" TEXT;
 EXCEPTION WHEN duplicate_column THEN NULL;
 END $$;
 
 DO $$ BEGIN
-  ALTER TABLE "editorial_interview_answers" ADD COLUMN "aiClassificationAttribute" TEXT;
+  ALTER TABLE "editorial_interview_answers" ADD COLUMN "ai_classification_attribute" TEXT;
 EXCEPTION WHEN duplicate_column THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE INDEX "editorial_interview_answers_linked_image_id_idx" ON "editorial_interview_answers"("linked_image_id");
+EXCEPTION WHEN duplicate_table THEN NULL;
 END $$;
 
 
 -- ============================================================
--- 2. Realtime Interview Session tables (for "Have a conversation" feature)
+-- 2. Realtime Interview Session tables (camelCase columns, from prisma db push)
 -- ============================================================
 
 DO $$ BEGIN
@@ -124,24 +132,34 @@ CREATE TABLE IF NOT EXISTS "realtime_interview_sessions" (
     CONSTRAINT "realtime_interview_sessions_pkey" PRIMARY KEY ("id")
 );
 
-CREATE INDEX IF NOT EXISTS "realtime_interview_sessions_projectId_idx"
-  ON "realtime_interview_sessions"("projectId");
-CREATE INDEX IF NOT EXISTS "realtime_interview_sessions_status_idx"
-  ON "realtime_interview_sessions"("status");
-CREATE UNIQUE INDEX IF NOT EXISTS "realtime_interview_sessions_livekitRoomName_key"
-  ON "realtime_interview_sessions"("livekitRoomName");
+DO $$ BEGIN
+  CREATE INDEX "realtime_interview_sessions_projectId_idx" ON "realtime_interview_sessions"("projectId");
+EXCEPTION WHEN duplicate_table THEN NULL;
+END $$;
 
-ALTER TABLE "realtime_interview_sessions"
-  DROP CONSTRAINT IF EXISTS "realtime_interview_sessions_projectId_fkey";
-ALTER TABLE "realtime_interview_sessions"
-  ADD CONSTRAINT "realtime_interview_sessions_projectId_fkey"
-  FOREIGN KEY ("projectId") REFERENCES "projects"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  CREATE INDEX "realtime_interview_sessions_status_idx" ON "realtime_interview_sessions"("status");
+EXCEPTION WHEN duplicate_table THEN NULL;
+END $$;
 
-ALTER TABLE "realtime_interview_sessions"
-  DROP CONSTRAINT IF EXISTS "realtime_interview_sessions_editorialInterviewId_fkey";
-ALTER TABLE "realtime_interview_sessions"
-  ADD CONSTRAINT "realtime_interview_sessions_editorialInterviewId_fkey"
-  FOREIGN KEY ("editorialInterviewId") REFERENCES "editorial_interviews"("id");
+DO $$ BEGIN
+  CREATE UNIQUE INDEX "realtime_interview_sessions_livekitRoomName_key" ON "realtime_interview_sessions"("livekitRoomName");
+EXCEPTION WHEN duplicate_table THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  ALTER TABLE "realtime_interview_sessions"
+    ADD CONSTRAINT "realtime_interview_sessions_projectId_fkey"
+    FOREIGN KEY ("projectId") REFERENCES "projects"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  ALTER TABLE "realtime_interview_sessions"
+    ADD CONSTRAINT "realtime_interview_sessions_editorialInterviewId_fkey"
+    FOREIGN KEY ("editorialInterviewId") REFERENCES "editorial_interviews"("id");
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 CREATE TABLE IF NOT EXISTS "realtime_conversation_segments" (
     "id" TEXT NOT NULL,
@@ -169,18 +187,26 @@ CREATE TABLE IF NOT EXISTS "realtime_conversation_segments" (
     CONSTRAINT "realtime_conversation_segments_pkey" PRIMARY KEY ("id")
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS "realtime_conversation_segments_sessionId_sequenceNumber_key"
-  ON "realtime_conversation_segments"("sessionId", "sequenceNumber");
-CREATE INDEX IF NOT EXISTS "realtime_conversation_segments_sessionId_startedAt_idx"
-  ON "realtime_conversation_segments"("sessionId", "startedAt");
+DO $$ BEGIN
+  CREATE UNIQUE INDEX "realtime_conversation_segments_sessionId_sequenceNumber_key" ON "realtime_conversation_segments"("sessionId", "sequenceNumber");
+EXCEPTION WHEN duplicate_table THEN NULL;
+END $$;
 
-ALTER TABLE "realtime_conversation_segments"
-  DROP CONSTRAINT IF EXISTS "realtime_conversation_segments_sessionId_fkey";
-ALTER TABLE "realtime_conversation_segments"
-  ADD CONSTRAINT "realtime_conversation_segments_sessionId_fkey"
-  FOREIGN KEY ("sessionId") REFERENCES "realtime_interview_sessions"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  CREATE INDEX "realtime_conversation_segments_sessionId_startedAt_idx" ON "realtime_conversation_segments"("sessionId", "startedAt");
+EXCEPTION WHEN duplicate_table THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  ALTER TABLE "realtime_conversation_segments"
+    ADD CONSTRAINT "realtime_conversation_segments_sessionId_fkey"
+    FOREIGN KEY ("sessionId") REFERENCES "realtime_interview_sessions"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- ============================================================
 -- Done! Verify with:
--- SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND tablename LIKE '%interview%';
+-- SELECT table_name, column_name FROM information_schema.columns
+--   WHERE table_schema = 'public' AND table_name LIKE '%interview%'
+--   ORDER BY table_name, ordinal_position;
 -- ============================================================
