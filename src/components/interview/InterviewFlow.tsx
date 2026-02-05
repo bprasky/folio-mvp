@@ -6,6 +6,7 @@ import { X, Loader2 } from "lucide-react";
 import { ModeSelection } from "./ModeSelection";
 import { TextInterview } from "./TextInterview/TextInterview";
 import { useInterviewSession } from "./hooks/useInterviewSession";
+import { flags, realtimeInterviewConfig } from "@/lib/flags";
 import type {
   InterviewStep,
   InterviewQuestion,
@@ -78,14 +79,10 @@ export function InterviewFlow({
     }
   }, [initialMode, session.step, startSession]);
 
-  // Voice availability check (placeholder - would check actual voice API)
-  const [voiceAvailable, setVoiceAvailable] = useState(false);
-
-  useEffect(() => {
-    // Check if voice mode is available
-    // For now, always disabled (Phase 2)
-    setVoiceAvailable(false);
-  }, []);
+  // Voice availability: check feature flags
+  const [voiceAvailable] = useState(
+    () => flags.realtimeInterview && realtimeInterviewConfig.enabled
+  );
 
   const handleSelectVoice = useCallback(() => {
     startSession("voice");

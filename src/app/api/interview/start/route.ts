@@ -99,18 +99,25 @@ export async function POST(request: NextRequest) {
     }
 
     // Create or get EditorialInterview
-    let interview = await prisma.editorialInterview.findUnique({
-      where: { projectId },
-    });
-
-    if (!interview) {
-      interview = await prisma.editorialInterview.create({
-        data: {
-          projectId,
-          status: "IN_PROGRESS",
-          selectedQuestionIds: [],
-        },
+    let interview: any = null;
+    try {
+      interview = await prisma.editorialInterview.findUnique({
+        where: { projectId },
       });
+
+      if (!interview) {
+        interview = await prisma.editorialInterview.create({
+          data: {
+            projectId,
+            status: "IN_PROGRESS",
+            selectedQuestionIds: [],
+          },
+        });
+      }
+    } catch (dbError: any) {
+      // Table may not exist yet — log and continue without persisting the session
+      console.warn("[/api/interview/start] EditorialInterview DB error (table may need migration):", dbError?.message);
+      interview = { id: `temp-${randomUUID()}`, projectId, status: "IN_PROGRESS" };
     }
 
     // Generate session ID
@@ -139,7 +146,10 @@ export async function POST(request: NextRequest) {
         heroImageUrl,
       },
     });
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.message === "Forbidden") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
     console.error("[/api/interview/start] Error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
