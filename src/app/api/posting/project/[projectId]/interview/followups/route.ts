@@ -30,6 +30,7 @@ const FollowUpsRequestSchema = z.object({
 
 const POSTING_V1_ENABLED =
   (process.env.POSTING_V1 ?? "").toLowerCase() === "true" ||
+  (process.env.NEXT_PUBLIC_POSTING_V1 ?? "").toLowerCase() === "true" ||
   process.env.NODE_ENV !== "production";
 const OPENAI_ENABLED =
   !!process.env.OPENAI_API_KEY && process.env.OPENAI_ENABLED !== "false";

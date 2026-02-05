@@ -23,6 +23,7 @@ const USER_DAILY_LIMIT = 5;
 const PROJECT_MINUTE_LIMIT = 1;
 const POSTING_V1_ENABLED =
   (process.env.POSTING_V1 ?? "").toLowerCase() === "true" ||
+  (process.env.NEXT_PUBLIC_POSTING_V1 ?? "").toLowerCase() === "true" ||
   process.env.NODE_ENV !== "production";
 
 // Safe body reader that doesn't consume the stream

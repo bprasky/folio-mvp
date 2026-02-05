@@ -111,9 +111,9 @@ export function FinishScheduleOptionsModal({
       <div className="relative bg-white rounded-2xl shadow-2xl max-w-lg w-full mx-4 overflow-hidden">
         {/* Header */}
         <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-5 text-white">
-          <h2 className="text-xl font-bold">Automate Product Tagging</h2>
+          <h2 className="text-xl font-bold">Before Your Interview</h2>
           <p className="text-blue-100 text-sm mt-1">
-            Upload your finish schedule to automatically tag products in your images
+            Optionally upload your finish schedule to help generate richer editorial content
           </p>
         </div>
 
