@@ -454,13 +454,13 @@ export default function ProjectPostPreviewPage() {
           open={showTagDiagnostic}
           onOpenChange={(open) => {
             setShowTagDiagnostic(open);
-            if (!open) {
-              // After closing diagnostic, proceed to interview
-              fetchPost().then(() => setShowInterviewModal(true));
-            }
           }}
           projectId={projectId}
           onAutoTagComplete={() => fetchPost()}
+          onStartInterview={() => {
+            setShowTagDiagnostic(false);
+            fetchPost().then(() => setShowInterviewModal(true));
+          }}
         />
       )}
 
