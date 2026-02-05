@@ -31,8 +31,13 @@ interface DiagnosticData {
     totalSelections: number;
     totalImages: number;
     taggedImages: number;
+    classifiedImages: number;
     autoTaggableRooms: number;
+    imagesWithoutRoom: number;
     needsAttention: boolean;
+    hasNoTags: boolean;
+    hasNoClassifications: boolean;
+    hasAutoTaggable: boolean;
   };
 }
 
@@ -161,13 +166,52 @@ export function TagDiagnosticModal({
 
           {diagnostic && !loading && (
             <>
+              {/* Readiness warnings */}
+              <div className="space-y-2 mb-4">
+                {diagnostic.summary.hasNoTags && (
+                  <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                    <p className="font-medium">No products tagged on photos</p>
+                    <p className="text-xs mt-0.5">
+                      Tagging products on your photos enables vendor attribution and generates better interview questions.
+                      {diagnostic.summary.hasAutoTaggable
+                        ? ' Select rooms below to auto-tag from your design board.'
+                        : ' Tag products manually in the image viewer, or add products to your design board first.'}
+                    </p>
+                  </div>
+                )}
+                {diagnostic.summary.hasNoClassifications && (
+                  <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                    <p className="font-medium">Photos not yet analyzed by AI</p>
+                    <p className="text-xs mt-0.5">
+                      AI classification detects colors, materials, and styles in your photos to generate personalized interview questions. This runs automatically — try refreshing in a moment.
+                    </p>
+                  </div>
+                )}
+                {!diagnostic.summary.hasNoTags && !diagnostic.summary.hasNoClassifications && diagnostic.summary.hasAutoTaggable && (
+                  <div className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-800">
+                    <p className="font-medium">Some products can be auto-tagged</p>
+                    <p className="text-xs mt-0.5">
+                      We found design board selections that match products in untagged photos. Auto-tag them for better attribution.
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Summary stats */}
+              <div className="flex gap-4 text-xs text-[var(--text-secondary)] mb-3 px-1">
+                <span>{diagnostic.summary.totalImages} photo{diagnostic.summary.totalImages !== 1 ? 's' : ''}</span>
+                <span>{diagnostic.summary.taggedImages} tagged</span>
+                <span>{diagnostic.summary.classifiedImages} classified</span>
+                <span>{diagnostic.summary.totalSelections} on board</span>
+              </div>
+
               {diagnostic.rooms.length === 0 ? (
                 <p className="text-sm text-[var(--text-secondary)] py-2">
                   No rooms found. Add rooms and selections to your design board first.
                 </p>
-              ) : (
+              ) : diagnostic.summary.hasAutoTaggable ? (
                 <div className="space-y-2 mb-4 max-h-60 overflow-y-auto">
-                  {diagnostic.rooms.map((room) => {
+                  {diagnostic.rooms.filter((r) => r.autoTaggable || r.images.untagged > 0).map((room) => {
                     const disabled = !room.autoTaggable;
                     const checked = selectedRoomIds.has(room.roomId);
                     return (
@@ -215,23 +259,29 @@ export function TagDiagnosticModal({
                     );
                   })}
                 </div>
-              )}
+              ) : null}
 
               <div className="flex items-center gap-3">
-                <button
-                  onClick={handleAutoTag}
-                  disabled={selectedRoomIds.size === 0 || autoTagging}
-                  className="flex-1 rounded-lg px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  {autoTagging
-                    ? 'Auto-tagging...'
-                    : `Auto-tag ${selectedRoomIds.size} room${selectedRoomIds.size !== 1 ? 's' : ''}`}
-                </button>
+                {diagnostic.summary.hasAutoTaggable && (
+                  <button
+                    onClick={handleAutoTag}
+                    disabled={selectedRoomIds.size === 0 || autoTagging}
+                    className="flex-1 rounded-lg px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {autoTagging
+                      ? 'Auto-tagging...'
+                      : `Auto-tag ${selectedRoomIds.size} room${selectedRoomIds.size !== 1 ? 's' : ''}`}
+                  </button>
+                )}
                 <button
                   onClick={() => onOpenChange(false)}
-                  className="rounded-lg px-4 py-2 text-sm font-medium text-[var(--text-secondary)] border border-[var(--ridge-outer)] hover:bg-[var(--bg-muted)] transition-colors"
+                  className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+                    diagnostic.summary.hasAutoTaggable
+                      ? 'text-[var(--text-secondary)] border border-[var(--ridge-outer)] hover:bg-[var(--bg-muted)]'
+                      : 'flex-1 text-white bg-blue-600 hover:bg-blue-700'
+                  }`}
                 >
-                  Skip for now
+                  {diagnostic.summary.hasAutoTaggable ? 'Skip for now' : 'Continue to Interview'}
                 </button>
               </div>
             </>
