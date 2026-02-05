@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { assertProjectEdit } from '@/lib/authz/access';
 import { indexMoment } from '@/lib/search/indexMoment';
@@ -34,7 +35,7 @@ export async function POST(
     const unclassified = await prisma.projectImage.findMany({
       where: {
         projectId,
-        aiClassification: null,
+        aiClassification: { equals: Prisma.DbNull },
       },
       select: { id: true },
     });

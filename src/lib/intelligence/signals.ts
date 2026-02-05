@@ -3,6 +3,7 @@
  * See docs/12_INTELLIGENCE_SYSTEM.md - Layer 1: Signal Capture
  */
 
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { ProductAttributes, SIGNAL_WEIGHTS } from './types';
 import { queuePatternDetection } from './patterns';
@@ -41,7 +42,7 @@ export async function getProductAttributes(productId: string): Promise<ProductAt
       tags: {
         some: { productId },
       },
-      aiClassification: { not: null },
+      aiClassification: { not: Prisma.DbNull },
     },
     select: {
       aiClassification: true,
