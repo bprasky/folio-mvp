@@ -1,4 +1,7 @@
-import React, { useState } from 'react';
+'use client';
+
+import React, { useState, useEffect, useCallback } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 
 interface Folder {
   id: string;
@@ -23,7 +26,21 @@ export const SaveModal: React.FC<SaveModalProps> = ({
   const [newFolderName, setNewFolderName] = useState('');
   const [isCreating, setIsCreating] = useState(false);
 
-  if (!isOpen) return null;
+  // Handle escape key
+  const handleEscape = useCallback((e: KeyboardEvent) => {
+    if (e.key === 'Escape') onClose();
+  }, [onClose]);
+
+  useEffect(() => {
+    if (isOpen) {
+      document.addEventListener('keydown', handleEscape);
+      document.body.style.overflow = 'hidden';
+    }
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+      document.body.style.overflow = '';
+    };
+  }, [isOpen, handleEscape]);
 
   const handleCreateFolder = () => {
     if (newFolderName.trim()) {
@@ -34,8 +51,25 @@ export const SaveModal: React.FC<SaveModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          <motion.div
+            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-[2px]"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            onClick={onClose}
+          />
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            initial={{ opacity: 0, scale: 0.96, y: 8 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, y: 8 }}
+            transition={{ duration: 0.15, ease: [0.4, 0, 0.2, 1] }}
+          >
+            <div className="bg-white rounded-lg shadow-xl max-w-md w-full" onClick={(e) => e.stopPropagation()}>
         <div className="p-6">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold text-gray-900">Save to Folder</h2>
@@ -110,7 +144,10 @@ export const SaveModal: React.FC<SaveModalProps> = ({
             </div>
           )}
         </div>
-      </div>
-    </div>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
   );
 }; 
