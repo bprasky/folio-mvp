@@ -36,18 +36,22 @@ export async function POST(
           include: {
             selections: {
               where: {
+                // Include any selection with product info
                 OR: [
                   { vendorProductId: { not: null } },
-                  { productUrl: { not: null } },
+                  { productName: { not: null } },
+                  { photo: { not: null } },
                 ],
               },
               select: {
                 id: true,
                 productName: true,
                 vendorProductId: true,
+                vendorName: true,
                 productUrl: true,
                 photo: true,
                 roomId: true,
+                unitPrice: true,
               },
             },
           },
@@ -66,17 +70,17 @@ export async function POST(
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
 
-    // Get all selections with vendorProductId (these are linked to actual products)
-    const selectionsWithProducts = project.rooms.flatMap(room =>
+    // Get all selections with any product info
+    const allSelections = project.rooms.flatMap(room =>
       room.selections
-        .filter(s => s.vendorProductId)
+        .filter(s => s.productName || s.vendorProductId || s.photo)
         .map(s => ({
           ...s,
           roomName: room.name,
         }))
     );
 
-    if (selectionsWithProducts.length === 0) {
+    if (allSelections.length === 0) {
       return NextResponse.json({
         success: true,
         message: 'No products in design boards to tag',
@@ -117,11 +121,35 @@ export async function POST(
     });
 
     let taggedCount = 0;
+    let productsCreated = 0;
     const tagsCreated: Array<{ productId: string; imageId: string; productName: string }> = [];
 
-    // For each selection with a linked product, try to tag it on images
-    for (const selection of selectionsWithProducts) {
-      if (!selection.vendorProductId) continue;
+    // For each selection, try to tag it on images
+    for (const selection of allSelections) {
+      let productId = selection.vendorProductId;
+
+      // If no vendorProductId, create a Product record from selection data
+      if (!productId && (selection.productName || selection.photo)) {
+        const newProduct = await prisma.product.create({
+          data: {
+            name: selection.productName || 'Untitled Product',
+            imageUrl: selection.photo,
+            url: selection.productUrl,
+            brand: selection.vendorName,
+            price: selection.unitPrice ? Number(selection.unitPrice) : null,
+          },
+        });
+        productId = newProduct.id;
+        productsCreated++;
+
+        // Link the selection to this new product
+        await prisma.selection.update({
+          where: { id: selection.id },
+          data: { vendorProductId: productId },
+        });
+      }
+
+      if (!productId) continue;
 
       // Find images that match this room (or all images if no room match)
       const matchingImages = project.images.filter(img => {
@@ -133,7 +161,7 @@ export async function POST(
 
       for (const image of matchingImages) {
         // Skip if already tagged
-        const tagKey = `${selection.vendorProductId}-${image.id}`;
+        const tagKey = `${productId}-${image.id}`;
         if (existingTagSet.has(tagKey)) continue;
 
         // Find a matching skeleton for this image
@@ -155,7 +183,7 @@ export async function POST(
             where: { id: skeleton.id },
             data: {
               status: 'CONFIRMED',
-              confirmedProductId: selection.vendorProductId,
+              confirmedProductId: productId,
             },
           });
 
@@ -169,7 +197,7 @@ export async function POST(
           data: {
             x,
             y,
-            productId: selection.vendorProductId,
+            productId,
             imageId: image.id,
           },
         });
@@ -177,7 +205,7 @@ export async function POST(
         existingTagSet.add(tagKey);
         taggedCount++;
         tagsCreated.push({
-          productId: selection.vendorProductId,
+          productId,
           imageId: image.id,
           productName: selection.productName || 'Unknown',
         });
@@ -190,10 +218,11 @@ export async function POST(
     return NextResponse.json({
       success: true,
       message: taggedCount > 0
-        ? `Auto-tagged ${taggedCount} products from your design boards`
+        ? `Auto-tagged ${taggedCount} products from your design boards${productsCreated > 0 ? ` (created ${productsCreated} new product records)` : ''}`
         : 'No new products to tag',
       tagged: taggedCount,
-      selections: selectionsWithProducts.length,
+      selections: allSelections.length,
+      productsCreated,
       tags: tagsCreated,
     });
 
@@ -247,11 +276,15 @@ export async function GET(
           image: { projectId },
         },
       }),
-      // Selections in design boards with linked products
+      // Selections in design boards with ANY product info (not just vendorProductId)
       prisma.selection.count({
         where: {
           room: { projectId },
-          vendorProductId: { not: null },
+          OR: [
+            { vendorProductId: { not: null } },
+            { productName: { not: null } },
+            { photo: { not: null } },
+          ],
         },
       }),
     ]);
