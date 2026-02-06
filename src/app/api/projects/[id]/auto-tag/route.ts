@@ -52,16 +52,9 @@ export async function POST(
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
 
-    // Query selections directly by projectId (not through rooms)
+    // Query ALL selections for project (same as design board - no field filters)
     const selections = await prisma.selection.findMany({
-      where: {
-        projectId,
-        OR: [
-          { vendorProductId: { not: null } },
-          { productName: { not: null } },
-          { photo: { not: null } },
-        ],
-      },
+      where: { projectId },
       select: {
         id: true,
         productName: true,
@@ -71,16 +64,15 @@ export async function POST(
         photo: true,
         roomId: true,
         unitPrice: true,
+        notes: true,
       },
     });
 
-    // Map selections with room names
-    const allSelections = selections
-      .filter(s => s.productName || s.vendorProductId || s.photo)
-      .map(s => ({
-        ...s,
-        roomName: s.roomId ? project.rooms.find(r => r.id === s.roomId)?.name : null,
-      }));
+    // Map selections with room names (no filter - include all)
+    const allSelections = selections.map(s => ({
+      ...s,
+      roomName: s.roomId ? project.rooms.find(r => r.id === s.roomId)?.name : null,
+    }));
 
     if (allSelections.length === 0) {
       return NextResponse.json({
@@ -130,11 +122,11 @@ export async function POST(
     for (const selection of allSelections) {
       let productId = selection.vendorProductId;
 
-      // If no vendorProductId, create a Product record from selection data
-      if (!productId && (selection.productName || selection.photo)) {
+      // If no vendorProductId, create a Product record from ANY available selection data
+      if (!productId) {
         const newProduct = await prisma.product.create({
           data: {
-            name: selection.productName || 'Untitled Product',
+            name: selection.productName || selection.vendorName || selection.notes || 'Untitled Product',
             imageUrl: selection.photo,
             url: selection.productUrl,
             brand: selection.vendorName,
@@ -278,16 +270,9 @@ export async function GET(
           image: { projectId },
         },
       }),
-      // Selections in design boards with ANY product info (not just vendorProductId)
+      // Count ALL selections in design boards (same as design board UI - no filters)
       prisma.selection.count({
-        where: {
-          projectId,
-          OR: [
-            { vendorProductId: { not: null } },
-            { productName: { not: null } },
-            { photo: { not: null } },
-          ],
-        },
+        where: { projectId },
       }),
     ]);
 
