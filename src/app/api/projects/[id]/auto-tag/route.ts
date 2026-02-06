@@ -28,32 +28,14 @@ export async function POST(
     // Check project access
     await assertProjectView(userId, projectId);
 
-    // Get project with rooms, selections, and images
+    // Get project with images and rooms (for room name lookup)
     const project = await prisma.project.findUnique({
       where: { id: projectId },
       include: {
         rooms: {
-          include: {
-            selections: {
-              where: {
-                // Include any selection with product info
-                OR: [
-                  { vendorProductId: { not: null } },
-                  { productName: { not: null } },
-                  { photo: { not: null } },
-                ],
-              },
-              select: {
-                id: true,
-                productName: true,
-                vendorProductId: true,
-                vendorName: true,
-                productUrl: true,
-                photo: true,
-                roomId: true,
-                unitPrice: true,
-              },
-            },
+          select: {
+            id: true,
+            name: true,
           },
         },
         images: {
@@ -70,15 +52,35 @@ export async function POST(
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
 
-    // Get all selections with any product info
-    const allSelections = project.rooms.flatMap(room =>
-      room.selections
-        .filter(s => s.productName || s.vendorProductId || s.photo)
-        .map(s => ({
-          ...s,
-          roomName: room.name,
-        }))
-    );
+    // Query selections directly by projectId (not through rooms)
+    const selections = await prisma.selection.findMany({
+      where: {
+        projectId,
+        OR: [
+          { vendorProductId: { not: null } },
+          { productName: { not: null } },
+          { photo: { not: null } },
+        ],
+      },
+      select: {
+        id: true,
+        productName: true,
+        vendorProductId: true,
+        vendorName: true,
+        productUrl: true,
+        photo: true,
+        roomId: true,
+        unitPrice: true,
+      },
+    });
+
+    // Map selections with room names
+    const allSelections = selections
+      .filter(s => s.productName || s.vendorProductId || s.photo)
+      .map(s => ({
+        ...s,
+        roomName: s.roomId ? project.rooms.find(r => r.id === s.roomId)?.name : null,
+      }));
 
     if (allSelections.length === 0) {
       return NextResponse.json({
@@ -279,7 +281,7 @@ export async function GET(
       // Selections in design boards with ANY product info (not just vendorProductId)
       prisma.selection.count({
         where: {
-          room: { projectId },
+          projectId,
           OR: [
             { vendorProductId: { not: null } },
             { productName: { not: null } },
