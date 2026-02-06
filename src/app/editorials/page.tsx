@@ -245,7 +245,7 @@ export default function EditorialsPage() {
           {/* Load More */}
           {filteredEditorials.length > 0 && (
             <div className="text-center">
-              <button className="bg-gray-900 text-white px-8 py-3 rounded-lg font-medium hover:bg-gray-800 transition-colors">
+              <button className="bg-gray-900 text-white px-8 py-3 rounded-lg font-medium hover:bg-gray-800 transition-all duration-150 hover:-translate-y-[1px] hover:shadow-md active:translate-y-[0.5px]">
                 Load More Editorials
               </button>
             </div>

@@ -132,6 +132,7 @@
   }
 
   .ridge-btn:hover {
+    transform: translateY(-0.5px);
     box-shadow:
       4px 4px 8px var(--shadow-dark),
       -4px -4px 8px var(--shadow-light),
@@ -140,6 +141,7 @@
   }
 
   .ridge-btn:active {
+    transform: translateY(0.5px);
     box-shadow: var(--neu-inset-sm);
   }
 
@@ -160,6 +162,7 @@
   }
 
   .accent-btn:hover {
+    transform: translateY(-1px);
     background: var(--accent-hover);
     box-shadow:
       4px 4px 8px var(--shadow-dark),
@@ -169,6 +172,7 @@
   }
 
   .accent-btn:active {
+    transform: translateY(0.5px);
     box-shadow:
       inset 2px 2px 4px rgba(0, 0, 0, 0.15),
       inset -2px -2px 4px rgba(255, 255, 255, 0.1);

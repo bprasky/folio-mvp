@@ -791,7 +791,7 @@ function CollapsibleSectionBand({
     )}>
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full px-4 py-3 flex items-center justify-between hover:bg-[var(--bg-base)] transition-colors rounded-t-2xl"
+        className="w-full px-4 py-3 flex items-center justify-between hover:bg-[var(--bg-base)] transition-all duration-150 rounded-t-2xl"
       >
         <div className="flex items-center gap-3">
           <div className="p-1.5 rounded-lg bg-[var(--bg-base)] border border-[var(--border)]">

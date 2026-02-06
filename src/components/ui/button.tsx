@@ -26,11 +26,11 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       ridge: 'ridge-btn',
       pill: 'ridge-btn pill-btn',
       // Legacy variants (mapped to Folio where appropriate)
-      default: 'bg-[var(--accent)] text-white border border-[rgba(0,0,0,0.1)] rounded-[10px] shadow-[var(--neu-raised),inset_0_1px_0_rgba(255,255,255,0.2),inset_0_-1px_0_rgba(0,0,0,0.1)] hover:bg-[var(--accent-hover)]',
+      default: 'bg-[var(--accent)] text-white border border-[rgba(0,0,0,0.1)] rounded-[10px] shadow-[var(--neu-raised),inset_0_1px_0_rgba(255,255,255,0.2),inset_0_-1px_0_rgba(0,0,0,0.1)] hover:bg-[var(--accent-hover)] hover:-translate-y-[1px] hover:shadow-md active:translate-y-[0.5px] active:shadow-sm',
       outline: 'ridge-btn',
       secondary: 'ridge-btn',
-      ghost: 'bg-transparent text-[var(--text-primary)] hover:bg-[var(--bg-elevated)] rounded-[10px]',
-      destructive: 'bg-red-600 text-white border border-[rgba(0,0,0,0.1)] rounded-[10px] shadow-[var(--neu-raised)] hover:bg-red-700',
+      ghost: 'bg-transparent text-[var(--text-primary)] hover:bg-[var(--bg-elevated)] rounded-[10px] hover:-translate-y-[0.5px] active:translate-y-[0.5px]',
+      destructive: 'bg-red-600 text-white border border-[rgba(0,0,0,0.1)] rounded-[10px] shadow-[var(--neu-raised)] hover:bg-red-700 hover:-translate-y-[0.5px] active:translate-y-[0.5px]',
     };
 
     const sizes = {
