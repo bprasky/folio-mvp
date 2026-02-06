@@ -38,7 +38,7 @@ export default function ProductInsightsHeader({
         <div className="flex-1 text-center md:text-left">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">{productName}</h1>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-            <div className="flex items-center gap-2 text-blue-600">
+            <div className="flex items-center gap-2 text-[var(--accent)]">
               <FaEye /> <span className="font-medium">{totalViews.toLocaleString()} Views</span>
             </div>
             <div className="flex items-center gap-2 text-green-600">

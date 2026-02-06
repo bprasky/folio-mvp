@@ -216,13 +216,13 @@ export default function FolderAssignPanel({ folderId, onUpdate }: FolderAssignPa
                 value={newSection}
                 onChange={(e) => setNewSection(e.target.value)}
                 placeholder="Section name..."
-                className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                 onKeyPress={(e) => e.key === 'Enter' && handleAssignSection()}
               />
               <button
                 onClick={handleAssignSection}
                 disabled={!newSection.trim() || assigning}
-                className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                className="px-4 py-2 text-sm bg-[var(--accent)] text-white rounded-lg hover:bg-[var(--accent-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
               >
                 {assigning ? (
                   <>
@@ -264,7 +264,7 @@ export default function FolderAssignPanel({ folderId, onUpdate }: FolderAssignPa
             key={item.id}
             className={`relative group rounded-2xl border-2 transition-all duration-200 hover:shadow-lg ${
               selectedItems.has(item.id)
-                ? "border-blue-500 bg-blue-50 shadow-blue-100"
+                ? "border-[var(--accent)] bg-[var(--accent)]/5 shadow-blue-100"
                 : "border-gray-200 hover:border-gray-300 bg-white"
             }`}
           >
@@ -274,7 +274,7 @@ export default function FolderAssignPanel({ folderId, onUpdate }: FolderAssignPa
                 onClick={() => handleSelectItem(item.id)}
                 className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
                   selectedItems.has(item.id)
-                    ? "bg-blue-500 border-blue-500 text-white"
+                    ? "bg-[var(--accent)] border-[var(--accent)] text-white"
                     : "bg-white border-gray-300 hover:border-blue-400"
                 }`}
               >
@@ -321,7 +321,7 @@ export default function FolderAssignPanel({ folderId, onUpdate }: FolderAssignPa
               )}
 
               {item.product.price && (
-                <p className="text-sm font-semibold text-blue-600">
+                <p className="text-sm font-semibold text-[var(--accent)]">
                   ${item.product.price.toLocaleString()}
                 </p>
               )}
@@ -332,7 +332,7 @@ export default function FolderAssignPanel({ folderId, onUpdate }: FolderAssignPa
                   <input
                     type="text"
                     placeholder="Add section..."
-                    className="w-full px-2 py-1 text-xs border border-gray-200 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-2 py-1 text-xs border border-gray-200 rounded focus:ring-1 focus:ring-[var(--accent)] focus:border-[var(--accent)]"
                     onKeyPress={(e) => {
                       if (e.key === 'Enter') {
                         const target = e.target as HTMLInputElement;

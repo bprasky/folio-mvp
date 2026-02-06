@@ -67,7 +67,7 @@ function getFestivalTags(festival: Festival): { label: string; color: string; gl
   }
   
   if (ageHours < 48) {
-    tags.push({ label: 'New', color: 'bg-blue-100 text-blue-800' });
+    tags.push({ label: 'New', color: 'bg-[var(--accent)]/10 text-blue-800' });
   }
   
   if (festival.subevents.length > 10) {
@@ -173,7 +173,7 @@ export default function FestivalCard({
         );
       case 'upcoming':
         return (
-          <span className="bg-blue-500 text-white text-xs font-medium px-3 py-1 rounded-full shadow-lg">
+          <span className="bg-[var(--accent)] text-white text-xs font-medium px-3 py-1 rounded-full shadow-lg">
             UPCOMING
           </span>
         );
@@ -217,7 +217,7 @@ export default function FestivalCard({
         {canEdit && (
           <Link 
             href={`/admin/events/new?edit=${festival.id}`}
-            className="absolute top-4 left-4 bg-blue-500 text-white p-2 rounded-full shadow-sm hover:bg-blue-600 transition-colors z-20"
+            className="absolute top-4 left-4 bg-[var(--accent)] text-white p-2 rounded-full shadow-sm hover:bg-[var(--accent)] transition-colors z-20"
             onClick={(e) => e.stopPropagation()}
           >
             <FaEdit className="w-4 h-4" />

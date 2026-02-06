@@ -30,7 +30,7 @@ export function MicCheck({ onReady, onError }: MicCheckProps) {
 
       <button
         onClick={onReady}
-        className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+        className="flex items-center gap-2 px-6 py-3 bg-[var(--accent)] text-white rounded-lg font-medium hover:bg-[var(--accent-hover)] transition-colors"
       >
         <CheckCircle className="w-4 h-4" />
         Ready to start

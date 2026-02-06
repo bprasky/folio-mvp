@@ -26,16 +26,16 @@ export default function CreateVendorMenu({
         <div className="grid gap-3">
           {/* Add Product - Primary action for vendors */}
           <button
-            className="w-full rounded-xl border-2 border-blue-600 bg-blue-50 dark:bg-blue-950 px-4 py-3 text-left hover:bg-blue-100 dark:hover:bg-blue-900 transition-colors group"
+            className="w-full rounded-xl border-2 border-[var(--accent)] bg-[var(--accent)]/5 dark:bg-blue-950 px-4 py-3 text-left hover:bg-[var(--accent)]/10 dark:hover:bg-blue-900 transition-colors group"
             onClick={addProduct}
           >
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900 group-hover:bg-blue-200 dark:group-hover:bg-blue-800">
-                <Package className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+              <div className="p-2 rounded-lg bg-[var(--accent)]/10 dark:bg-blue-900 group-hover:bg-blue-200 dark:group-hover:bg-blue-800">
+                <Package className="w-5 h-5 text-[var(--accent)] dark:text-blue-400" />
               </div>
               <div className="flex-1">
                 <div className="font-medium text-blue-900 dark:text-blue-100">Add Product</div>
-                <div className="text-sm text-blue-700 dark:text-blue-300">
+                <div className="text-sm text-[var(--accent-hover)] dark:text-blue-300">
                   Scrape from URL or manual entry with media upload
                 </div>
               </div>

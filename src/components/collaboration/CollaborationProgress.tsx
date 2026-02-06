@@ -191,7 +191,7 @@ export function CollaborationProgress({
               ? 'bg-red-100 text-red-700'
               : status === 'ARCHIVED'
               ? 'bg-neutral-100 text-neutral-700'
-              : 'bg-blue-100 text-blue-700'
+              : 'bg-[var(--accent)]/10 text-[var(--accent-hover)]'
           )}
         >
           {status.replace(/_/g, ' ')}
@@ -201,7 +201,7 @@ export function CollaborationProgress({
       {/* Legend */}
       <div className="flex items-center gap-4 mb-4 text-xs">
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-blue-500" />
+          <div className="w-3 h-3 rounded-full bg-[var(--accent)]" />
           <span className="text-neutral-600">{vendorName}</span>
         </div>
         <div className="flex items-center gap-2">
@@ -231,7 +231,7 @@ export function CollaborationProgress({
                 className={cn(
                   'w-4 h-4 rounded-full flex items-center justify-center',
                   step.vendorStatus === 'complete'
-                    ? 'bg-blue-500'
+                    ? 'bg-[var(--accent)]'
                     : step.vendorStatus === 'active'
                     ? 'bg-blue-200 animate-pulse'
                     : 'bg-neutral-200'

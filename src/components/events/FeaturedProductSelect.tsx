@@ -85,7 +85,7 @@ export default function FeaturedProductSelect({
             }}
             onFocus={() => setShowResults(true)}
             placeholder="Search products by name or brand..."
-            className="w-full rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 px-4 py-2 pl-10 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 px-4 py-2 pl-10 focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
           />
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
         </div>

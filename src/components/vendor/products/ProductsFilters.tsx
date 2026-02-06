@@ -57,7 +57,7 @@ export default function ProductsFilters({ vendors }: ProductsFiltersProps) {
           <select
             value={searchParams.get('vendorId') || ''}
             onChange={(e) => updateFilter('vendorId', e.target.value || undefined)}
-            className="rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 px-3 py-2 focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
           >
             <option value="">All Suppliers</option>
             {vendors.map((v) => (
@@ -75,7 +75,7 @@ export default function ProductsFilters({ vendors }: ProductsFiltersProps) {
             defaultValue={searchParams.get('q') || ''}
             onKeyDown={handleSearch}
             placeholder="Search by name or brand..."
-            className="w-full rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 px-3 py-2 pl-10 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 px-3 py-2 pl-10 focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
           />
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
         </div>
@@ -88,7 +88,7 @@ export default function ProductsFilters({ vendors }: ProductsFiltersProps) {
             type="checkbox"
             checked={includeDrafts}
             onChange={toggleDrafts}
-            className="rounded border-stone-300 dark:border-stone-700 text-blue-600 focus:ring-blue-500"
+            className="rounded border-stone-300 dark:border-stone-700 text-[var(--accent)] focus:ring-[var(--accent)]"
           />
           Show draft products
         </label>

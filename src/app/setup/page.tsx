@@ -67,7 +67,7 @@ export default function SetupPage() {
                 <button
                   onClick={checkDatabase}
                   disabled={status === 'checking'}
-                  className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50"
+                  className="bg-[var(--accent)] text-white px-4 py-2 rounded-md hover:bg-[var(--accent-hover)] disabled:opacity-50"
                 >
                   {status === 'checking' ? 'Checking...' : 'Check Status'}
                 </button>
@@ -87,7 +87,7 @@ export default function SetupPage() {
               <div className={`p-4 rounded-md ${
                 status === 'success' ? 'bg-green-50 text-green-800' :
                 status === 'error' ? 'bg-red-50 text-red-800' :
-                'bg-blue-50 text-blue-800'
+                'bg-[var(--accent)]/5 text-[var(--accent-hover)]'
               }`}>
                 {message}
               </div>

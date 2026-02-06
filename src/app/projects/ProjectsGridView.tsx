@@ -32,7 +32,7 @@ export default function ProjectsGridView({ projects, sortKey }: ProjectsGridView
               <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                 project.stage === 'install' ? 'bg-green-100 text-green-800' :
                 project.stage === 'in_procurement' ? 'bg-[var(--accent)]/10 text-[var(--accent)]' :
-                project.stage === 'design_development' ? 'bg-blue-100 text-blue-800' :
+                project.stage === 'design_development' ? 'bg-[var(--accent)]/10 text-[var(--accent-hover)]' :
                 project.stage === 'spec_locked' ? 'bg-purple-100 text-purple-800' :
                 'bg-[var(--bg-base)] text-[var(--text-secondary)]'
               }`}>

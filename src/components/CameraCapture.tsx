@@ -395,7 +395,7 @@ export default function CameraCapture({
                         <button
                           onClick={startCamera}
                           disabled={isCapturing}
-                          className="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2 disabled:opacity-50"
+                          className="bg-[var(--accent)] text-white px-6 py-3 rounded-lg hover:bg-[var(--accent)] transition-colors flex items-center gap-2 disabled:opacity-50"
                         >
                           <FaCamera className="w-4 h-4" />
                           {isCapturing ? 'Starting Camera...' : 'Start Camera'}
@@ -463,7 +463,7 @@ export default function CameraCapture({
                       value={formData.vendorName}
                       onChange={(e) => handleInputChange('vendorName', e.target.value)}
                       placeholder="Enter vendor name"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                       required
                     />
                   </div>
@@ -477,7 +477,7 @@ export default function CameraCapture({
                       value={formData.productName}
                       onChange={(e) => handleInputChange('productName', e.target.value)}
                       placeholder="Enter product name"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                       required
                     />
                   </div>
@@ -491,7 +491,7 @@ export default function CameraCapture({
                       value={formData.colorFinish}
                       onChange={(e) => handleInputChange('colorFinish', e.target.value)}
                       placeholder="e.g., Matte Black, Natural Oak"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                     />
                   </div>
 
@@ -502,7 +502,7 @@ export default function CameraCapture({
                     <select
                       value={formData.phaseOfUse}
                       onChange={(e) => handleInputChange('phaseOfUse', e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                     >
                       {PHASE_OPTIONS.map(option => (
                         <option key={option.value} value={option.value}>
@@ -522,7 +522,7 @@ export default function CameraCapture({
                     onChange={(e) => handleInputChange('notes', e.target.value)}
                     placeholder="Describe application, install ideas, room context (e.g., 'Perfect for guest bathroom vanity')"
                     rows={4}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent resize-none"
                   />
                 </div>
 
@@ -543,7 +543,7 @@ export default function CameraCapture({
                   <button
                     onClick={handleNext}
                     disabled={!formData.vendorName || !formData.productName}
-                    className="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50"
+                    className="bg-[var(--accent)] text-white px-6 py-3 rounded-lg hover:bg-[var(--accent)] transition-colors disabled:opacity-50"
                   >
                     {currentProjectId && currentRoomId && !isProjectLevel ? 'Save Selection' : 'Continue to Assignment'}
                   </button>
@@ -582,7 +582,7 @@ export default function CameraCapture({
                         setSelectedProjectId(e.target.value);
                         setSelectedRoomId(''); // Reset room when project changes
                       }}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                       required
                     >
                       <option value="">Select a project</option>
@@ -605,7 +605,7 @@ export default function CameraCapture({
                       <select
                         value={selectedRoomId}
                         onChange={(e) => setSelectedRoomId(e.target.value)}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                         required={!isProjectLevel}
                       >
                         <option value="">
@@ -620,7 +620,7 @@ export default function CameraCapture({
 
                       <button
                         onClick={() => setShowNewRoomInput(true)}
-                        className="text-blue-500 hover:text-blue-600 text-sm flex items-center gap-2"
+                        className="text-[var(--accent)] hover:text-[var(--accent)] text-sm flex items-center gap-2"
                       >
                         <FaHome className="w-4 h-4" />
                         Create new room
@@ -633,7 +633,7 @@ export default function CameraCapture({
                             value={newRoomName}
                             onChange={(e) => setNewRoomName(e.target.value)}
                             placeholder="Enter room name"
-                            className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                           />
                           <button
                             onClick={createNewRoom}

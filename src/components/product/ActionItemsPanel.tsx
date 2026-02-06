@@ -25,7 +25,7 @@ export default function ActionItemsPanel({ productTagId, projectId }: ActionItem
         <h2 className="text-lg font-semibold text-gray-900">Action Items</h2>
         <button
           onClick={() => setShowCreateModal(true)}
-          className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700"
+          className="inline-flex items-center gap-2 px-3 py-1.5 bg-[var(--accent)] text-white text-sm rounded-md hover:bg-[var(--accent-hover)]"
         >
           <FaPlus />
           New Action Item

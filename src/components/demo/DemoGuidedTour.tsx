@@ -653,7 +653,7 @@ export default function DemoGuidedTour({ role }: DemoGuidedTourProps) {
                 {currentStep.body}
               </p>
               {currentStep.actionHint && (
-                <p className="text-xs text-blue-600 font-medium italic mb-3">
+                <p className="text-xs text-[var(--accent)] font-medium italic mb-3">
                   💡 {currentStep.actionHint}
                 </p>
               )}

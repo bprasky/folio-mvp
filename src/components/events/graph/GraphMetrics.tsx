@@ -19,7 +19,7 @@ export default function GraphMetrics({ metrics, summary }: GraphMetricsProps) {
       label: 'Total Invites',
       value: metrics.totalInvites || 0,
       icon: Mail,
-      color: 'text-blue-600',
+      color: 'text-[var(--accent)]',
     },
     {
       label: 'Total RSVPs',

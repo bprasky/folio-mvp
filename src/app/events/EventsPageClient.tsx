@@ -128,7 +128,7 @@ const EventsPageClient: React.FC<EventsPageClientProps> = ({
       tags.push({ label: 'LIVE', color: 'bg-green-500 text-white shadow-glow', glow: true });
     }
     if (ageHours < 48) {
-      tags.push({ label: 'New', color: 'bg-blue-100 text-blue-800' });
+      tags.push({ label: 'New', color: 'bg-[var(--accent)]/10 text-[var(--accent-hover)]' });
     }
     return tags;
   };
@@ -291,7 +291,7 @@ const EventsPageClient: React.FC<EventsPageClientProps> = ({
           {/* Admin Edit Icon */}
           {userRole === 'ADMIN' && (
             <Link href={`/admin/events/${event.id}`} onClick={(e) => e.stopPropagation()}>
-              <div className="absolute top-2 right-2 bg-blue-500 text-white p-1 rounded-full shadow-sm hover:bg-[var(--accent)] transition-colors z-20">
+              <div className="absolute top-2 right-2 bg-[var(--accent)] text-white p-1 rounded-full shadow-sm hover:bg-[var(--accent)] transition-colors z-20">
                 <FaEdit className="w-3 h-3" />
               </div>
             </Link>

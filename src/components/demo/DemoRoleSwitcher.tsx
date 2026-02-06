@@ -12,7 +12,7 @@ const roleConfig: Record<DemoRole, { label: string; icon: typeof FaUser; color: 
   INDIVIDUAL: {
     label: 'Individual',
     icon: FaUser,
-    color: 'bg-blue-500',
+    color: 'bg-[var(--accent)]',
   },
   DESIGNER: {
     label: 'Designer',
@@ -96,7 +96,7 @@ export default function DemoRoleSwitcher() {
     <motion.div
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-white/95 backdrop-blur-md border-2 border-blue-300 rounded-xl shadow-lg p-3"
+      className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-white/95 backdrop-blur-md border-2 border-[var(--accent)]/30 rounded-xl shadow-lg p-3"
       data-demo-id="demo-role-switcher"
     >
       <div className="flex items-center gap-2">
@@ -134,7 +134,7 @@ export default function DemoRoleSwitcher() {
         })}
         {isChanging && (
           <div className="ml-2">
-            <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+            <div className="w-4 h-4 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin" />
           </div>
         )}
       </div>

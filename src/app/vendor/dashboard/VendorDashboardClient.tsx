@@ -121,7 +121,7 @@ export default function VendorDashboardClient({ user, projects, stats }: VendorD
       return <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">Claimed</span>;
     }
     if (project.isHandoffReady) {
-      return <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">Ready</span>;
+      return <span className="px-2 py-1 bg-[var(--accent)]/10 text-[var(--accent-hover)] text-xs rounded-full">Ready</span>;
     }
     return <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full">Draft</span>;
   };

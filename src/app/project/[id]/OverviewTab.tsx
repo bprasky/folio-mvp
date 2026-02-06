@@ -43,7 +43,7 @@ const APPROVAL_BUTTON_LABELS: Record<string, string> = {
 
 // Approval type accent colors
 const APPROVAL_ACCENT_COLORS: Record<string, string> = {
-  TAGGABLE_ITEMS_READY: 'bg-blue-500',
+  TAGGABLE_ITEMS_READY: 'bg-[var(--accent)]',
   DRAFT_EDITORIAL: 'bg-emerald-500',
   PUBLISH_EDITORIAL: 'bg-green-500',
   CREATE_ROOM: 'bg-purple-500',

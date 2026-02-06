@@ -108,7 +108,7 @@ export default function EditorialsPage() {
                 placeholder="Search editorials..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)]"
               />
             </div>
             
@@ -116,7 +116,7 @@ export default function EditorialsPage() {
               <select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)]"
               >
                 {categories.map(category => (
                   <option key={category} value={category}>{category}</option>
@@ -126,7 +126,7 @@ export default function EditorialsPage() {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)]"
               >
                 <option value="newest">Newest</option>
                 <option value="popular">Most Popular</option>
@@ -149,10 +149,10 @@ export default function EditorialsPage() {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
                   <div className="absolute bottom-0 left-0 right-0 p-8 text-white">
                     <div className="flex items-center gap-4 mb-4">
-                      <span className="bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-medium">
+                      <span className="bg-[var(--accent)] text-white px-3 py-1 rounded-full text-sm font-medium">
                         Featured
                       </span>
-                      <span className="text-blue-200">{featuredEditorial.category}</span>
+                      <span className="text-[var(--accent)]/60">{featuredEditorial.category}</span>
                     </div>
                     <h3 className="text-3xl font-bold mb-2">{featuredEditorial.title}</h3>
                     <p className="text-xl text-gray-200 mb-4">{featuredEditorial.subtitle}</p>
@@ -201,7 +201,7 @@ export default function EditorialsPage() {
                     </div>
                     
                     <div className="p-6">
-                      <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">
+                      <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-[var(--accent)] transition-colors">
                         {editorial.title}
                       </h3>
                       <p className="text-gray-600 mb-4 line-clamp-3">{editorial.excerpt}</p>

@@ -121,7 +121,7 @@ export default function CatalogPicker({
                     <p className="text-xs text-gray-500">Finish: {product.finish}</p>
                   )}
                   {product.vendorName && (
-                    <p className="text-xs text-blue-600">{product.vendorName}</p>
+                    <p className="text-xs text-[var(--accent)]">{product.vendorName}</p>
                   )}
                   {product.price && (
                     <p className="text-xs font-medium">${product.price}</p>

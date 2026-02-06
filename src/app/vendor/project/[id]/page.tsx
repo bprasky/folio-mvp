@@ -233,7 +233,7 @@ export default function VendorProjectDetailPage() {
             <p className="text-gray-600 mb-6">The project you're looking for doesn't exist or you don't have access to it.</p>
             <button
               onClick={() => router.push('/vendor/dashboard')}
-              className="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors"
+              className="bg-[var(--accent)] text-white px-6 py-3 rounded-lg hover:bg-[var(--accent)] transition-colors"
             >
               Back to Dashboard
             </button>
@@ -277,7 +277,7 @@ export default function VendorProjectDetailPage() {
             
             <button
               onClick={() => setShowAddRoom(true)}
-              className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2"
+              className="bg-[var(--accent)] text-white px-4 py-2 rounded-lg hover:bg-[var(--accent)] transition-colors flex items-center gap-2"
             >
               <FaPlus className="w-4 h-4" />
               Add Room
@@ -369,7 +369,7 @@ export default function VendorProjectDetailPage() {
               
               <button
                 onClick={() => router.push(`/vendor/project/${projectId}/rooms/${room.id}`)}
-                className="w-full mt-4 bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition-colors"
+                className="w-full mt-4 bg-[var(--accent)] text-white py-2 rounded-lg hover:bg-[var(--accent)] transition-colors"
               >
                 View Room
               </button>
@@ -387,7 +387,7 @@ export default function VendorProjectDetailPage() {
                 value={newRoomName}
                 onChange={(e) => setNewRoomName(e.target.value)}
                 placeholder="Room name (e.g., Living Room, Kitchen)"
-                className="w-full p-3 border border-gray-300 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full p-3 border border-gray-300 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
                 onKeyPress={(e) => e.key === 'Enter' && handleAddRoom()}
               />
               <div className="flex gap-3">
@@ -397,7 +397,7 @@ export default function VendorProjectDetailPage() {
                   className={`flex-1 py-2 rounded-lg transition-colors flex items-center justify-center ${
                     isAddingRoom 
                       ? 'bg-gray-400 text-gray-600 cursor-not-allowed' 
-                      : 'bg-blue-500 text-white hover:bg-blue-600'
+                      : 'bg-[var(--accent)] text-white hover:bg-[var(--accent)]'
                   }`}
                 >
                   {isAddingRoom ? (

@@ -138,7 +138,7 @@ export default function SmartInvitesCard({ vendorId, eventId }: SmartInvitesCard
       </div>
 
       {/* "No More Excel" Copy */}
-      <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+      <div className="mb-6 p-4 bg-[var(--accent)]/5 border border-[var(--accent)]/20 rounded-lg">
         <p className="text-sm text-blue-900">
           <strong>No more exporting to Excel or juggling Eventbrite.</strong> Folio helps you invite the right designers automatically.
         </p>
@@ -191,7 +191,7 @@ export default function SmartInvitesCard({ vendorId, eventId }: SmartInvitesCard
                   className={`ml-4 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
                     isInvited
                       ? 'bg-gray-100 text-gray-500 cursor-not-allowed'
-                      : 'bg-blue-600 text-white hover:bg-blue-700'
+                      : 'bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)]'
                   }`}
                 >
                   {isInvited ? (

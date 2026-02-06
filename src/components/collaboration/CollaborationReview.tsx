@@ -251,7 +251,7 @@ export function CollaborationReview({
                   return (
                     <div
                       key={index}
-                      className="my-8 p-6 bg-neutral-50 rounded-xl border-l-4 border-blue-500"
+                      className="my-8 p-6 bg-neutral-50 rounded-xl border-l-4 border-[var(--accent)]"
                     >
                       <p className="text-lg italic text-neutral-800 mb-3">"{block.text}"</p>
                       <p className="text-sm font-medium text-neutral-600">
@@ -295,7 +295,7 @@ export function CollaborationReview({
             value={feedback}
             onChange={(e) => setFeedback(e.target.value)}
             placeholder="Describe the changes you'd like..."
-            className="w-full h-24 px-3 py-2 border border-neutral-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full h-24 px-3 py-2 border border-neutral-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
             maxLength={1000}
           />
           <div className="flex gap-2 mt-3">

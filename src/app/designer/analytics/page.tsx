@@ -111,7 +111,7 @@ export default function DesignerAnalyticsPage() {
           </div>
           <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 text-center w-full md:w-auto">
             <div className="ridge-card p-4">
-              <FaEye className="text-3xl text-blue-500 mx-auto mb-2" />
+              <FaEye className="text-3xl text-[var(--accent)] mx-auto mb-2" />
               <p className="stats-value">{productData.profile_views_total}</p>
               <p className="stats-label">Profile Views</p>
             </div>
@@ -396,7 +396,7 @@ export default function DesignerAnalyticsPage() {
                             </span>
                           )}
                           {project.eligible_for_print && (
-                            <span className="inline-flex items-center bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-1 rounded-full">
+                            <span className="inline-flex items-center bg-[var(--accent)]/10 text-[var(--accent-hover)] text-xs font-semibold px-2.5 py-1 rounded-full">
                               <FaPrint className="mr-1" /> Print Eligible
                             </span>
                           )}

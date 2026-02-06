@@ -143,7 +143,7 @@ export default function ProfilePage() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--accent)] mx-auto"></div>
           <p className="mt-4 text-gray-600">Loading profile...</p>
         </div>
       </div>
@@ -159,7 +159,7 @@ export default function ProfilePage() {
           <p className="text-gray-500 mb-4">Unable to load your profile information.</p>
           <Link
             href="/"
-            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+            className="bg-[var(--accent)] text-white px-4 py-2 rounded-md hover:bg-[var(--accent-hover)]"
           >
             Back to Home
           </Link>
@@ -203,14 +203,14 @@ export default function ProfilePage() {
                 <div>
                   <h2 className="text-2xl font-bold text-gray-900">{profile.name}</h2>
                   <p className="text-gray-600">{profile.email}</p>
-                  <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full mt-1 capitalize">
+                  <span className="inline-block bg-[var(--accent)]/10 text-[var(--accent-hover)] text-xs px-2 py-1 rounded-full mt-1 capitalize">
                     {profile.role}
                   </span>
                 </div>
               </div>
               <button
                 onClick={() => setIsEditing(!isEditing)}
-                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+                className="bg-[var(--accent)] text-white px-4 py-2 rounded-md hover:bg-[var(--accent-hover)]"
               >
                 {isEditing ? 'Cancel' : 'Edit Profile'}
               </button>
@@ -230,7 +230,7 @@ export default function ProfilePage() {
                       type="text"
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
                     />
                   </div>
 
@@ -255,7 +255,7 @@ export default function ProfilePage() {
                       value={formData.bio}
                       onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
                       rows={4}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
                       placeholder="Tell us about yourself..."
                     />
                   </div>
@@ -270,7 +270,7 @@ export default function ProfilePage() {
                         type="text"
                         value={formData.location}
                         onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                        className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
                         placeholder="City, State"
                       />
                     </div>
@@ -286,7 +286,7 @@ export default function ProfilePage() {
                         type="url"
                         value={formData.website}
                         onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-                        className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
                         placeholder="https://yourwebsite.com"
                       />
                     </div>
@@ -302,7 +302,7 @@ export default function ProfilePage() {
                         type="text"
                         value={formData.instagram}
                         onChange={(e) => setFormData({ ...formData, instagram: e.target.value })}
-                        className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
                         placeholder="@username"
                       />
                     </div>
@@ -318,7 +318,7 @@ export default function ProfilePage() {
                         type="url"
                         value={formData.linkedin}
                         onChange={(e) => setFormData({ ...formData, linkedin: e.target.value })}
-                        className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
                         placeholder="https://linkedin.com/in/username"
                       />
                     </div>
@@ -335,7 +335,7 @@ export default function ProfilePage() {
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center"
+                    className="px-4 py-2 bg-[var(--accent)] text-white rounded-md hover:bg-[var(--accent-hover)] flex items-center"
                   >
                     <FaSave className="mr-2" />
                     Save Changes
@@ -372,7 +372,7 @@ export default function ProfilePage() {
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Website</label>
                       {profile.website ? (
-                        <a href={profile.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800">
+                        <a href={profile.website} target="_blank" rel="noopener noreferrer" className="text-[var(--accent)] hover:text-[var(--accent-hover)]">
                           {profile.website}
                         </a>
                       ) : (
@@ -382,7 +382,7 @@ export default function ProfilePage() {
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Instagram</label>
                       {profile.instagram ? (
-                        <a href={`https://instagram.com/${profile.instagram.replace('@', '')}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800">
+                        <a href={`https://instagram.com/${profile.instagram.replace('@', '')}`} target="_blank" rel="noopener noreferrer" className="text-[var(--accent)] hover:text-[var(--accent-hover)]">
                           {profile.instagram}
                         </a>
                       ) : (
@@ -392,7 +392,7 @@ export default function ProfilePage() {
                     <div>
                       <label className="block text-sm font-medium text-gray-700">LinkedIn</label>
                       {profile.linkedin ? (
-                        <a href={profile.linkedin} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800">
+                        <a href={profile.linkedin} target="_blank" rel="noopener noreferrer" className="text-[var(--accent)] hover:text-[var(--accent-hover)]">
                           {profile.linkedin}
                         </a>
                       ) : (
@@ -456,7 +456,7 @@ export default function ProfilePage() {
               <h3 className="text-lg font-medium text-gray-900">Organization Memberships</h3>
               <Link
                 href="/professionals/join"
-                className="text-sm text-blue-600 hover:text-blue-800"
+                className="text-sm text-[var(--accent)] hover:text-[var(--accent-hover)]"
               >
                 Join an Organization
               </Link>
@@ -473,7 +473,7 @@ export default function ProfilePage() {
                 </p>
                 <Link
                   href="/professionals/join"
-                  className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                  className="inline-flex items-center px-4 py-2 bg-[var(--accent)] text-white rounded-md hover:bg-[var(--accent-hover)]"
                 >
                   <FaBuilding className="mr-2" />
                   Browse Organizations
@@ -501,7 +501,7 @@ export default function ProfilePage() {
                       <div>
                         <Link
                           href={`/org/${membership.org.id}`}
-                          className="font-medium text-gray-900 hover:text-blue-600"
+                          className="font-medium text-gray-900 hover:text-[var(--accent)]"
                         >
                           {membership.org.name}
                         </Link>
@@ -515,7 +515,7 @@ export default function ProfilePage() {
                               <FaCrown className="text-amber-500" />
                             )}
                             {membership.role === 'ADMIN' && (
-                              <FaShieldAlt className="text-blue-500" />
+                              <FaShieldAlt className="text-[var(--accent)]" />
                             )}
                             {membership.role.toLowerCase()}
                           </span>
@@ -531,8 +531,8 @@ export default function ProfilePage() {
                           {membership.org.status === 'CLAIMED' && (
                             <>
                               <span className="text-gray-300">•</span>
-                              <span className="flex items-center gap-1 text-sm text-blue-600">
-                                <FaCheck className="text-blue-500" />
+                              <span className="flex items-center gap-1 text-sm text-[var(--accent)]">
+                                <FaCheck className="text-[var(--accent)]" />
                                 Verified
                               </span>
                             </>
@@ -567,7 +567,7 @@ export default function ProfilePage() {
 
                       <Link
                         href={`/org/${membership.org.id}`}
-                        className="px-3 py-1.5 bg-blue-100 text-blue-700 rounded-md text-sm hover:bg-blue-200"
+                        className="px-3 py-1.5 bg-[var(--accent)]/10 text-[var(--accent-hover)] rounded-md text-sm hover:bg-[var(--accent)]/20"
                       >
                         View Org
                       </Link>

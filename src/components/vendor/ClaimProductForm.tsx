@@ -78,7 +78,7 @@ export default function ClaimProductForm({
           value={vendorName}
           onChange={(e) => setVendorName(e.target.value)}
           required
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)]"
           placeholder="Your company name"
         />
       </div>
@@ -93,7 +93,7 @@ export default function ClaimProductForm({
           value={vendorEmail}
           onChange={(e) => setVendorEmail(e.target.value)}
           required
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)]"
           placeholder="contact@yourcompany.com"
         />
       </div>
@@ -107,7 +107,7 @@ export default function ClaimProductForm({
           id="website"
           value={website}
           onChange={(e) => setWebsite(e.target.value)}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)]"
           placeholder="https://yourcompany.com"
         />
       </div>
@@ -121,7 +121,7 @@ export default function ClaimProductForm({
       <button
         type="submit"
         disabled={isSubmitting}
-        className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full px-6 py-3 bg-[var(--accent)] text-white rounded-lg font-medium hover:bg-[var(--accent-hover)] transition disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {isSubmitting ? "Claiming..." : "Claim This Product"}
       </button>

@@ -111,15 +111,15 @@ export default function LiveActivity({ eventId, initialActivity }: LiveActivityP
     <div className="space-y-3">
       {isLoading && (
         <div className="text-center py-4">
-          <div className="inline-block animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
+          <div className="inline-block animate-spin rounded-full h-4 w-4 border-2 border-[var(--accent)] border-t-transparent"></div>
         </div>
       )}
       
       {activity.map((item) => (
         <div key={item.id} className="flex items-start space-x-3 p-3 bg-[var(--bg-elevated)] rounded-lg">
           {/* Activity Icon */}
-          <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-            <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="flex-shrink-0 w-8 h-8 bg-[var(--accent)]/10 rounded-full flex items-center justify-center">
+            <svg className="w-4 h-4 text-[var(--accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
             </svg>
           </div>

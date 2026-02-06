@@ -132,7 +132,7 @@ export default function SaveToFolderModal({
               onSuccess?.(data.folderId);
               onClose();
             }}
-            className="px-3 py-1 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition-colors"
+            className="px-3 py-1 bg-[var(--accent)] text-white text-xs rounded-lg hover:bg-[var(--accent-hover)] transition-colors"
           >
             Open
           </button>
@@ -217,7 +217,7 @@ export default function SaveToFolderModal({
                   <p className="text-sm">No folders yet</p>
                   <button
                     onClick={() => handleTabChange("new")}
-                    className="text-xs text-blue-600 hover:text-blue-700 mt-2"
+                    className="text-xs text-[var(--accent)] hover:text-[var(--accent-hover)] mt-2"
                   >
                     Create your first folder
                   </button>
@@ -230,7 +230,7 @@ export default function SaveToFolderModal({
                       onClick={() => setSelectedFolderId(folder.id)}
                       className={`w-full p-3 text-left rounded-xl border-2 transition-all hover:shadow-sm ${
                         selectedFolderId === folder.id
-                          ? "border-blue-500 bg-blue-50"
+                          ? "border-[var(--accent)] bg-[var(--accent)]/5"
                           : "border-gray-200 hover:border-gray-300"
                       }`}
                     >
@@ -245,7 +245,7 @@ export default function SaveToFolderModal({
                           </div>
                         </div>
                         {selectedFolderId === folder.id && (
-                          <Check className="w-5 h-5 text-blue-500" />
+                          <Check className="w-5 h-5 text-[var(--accent)]" />
                         )}
                       </div>
                     </button>
@@ -267,14 +267,14 @@ export default function SaveToFolderModal({
                   value={newFolderName}
                   onChange={(e) => setNewFolderName(e.target.value)}
                   placeholder="Enter folder name..."
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent transition-all"
                   autoFocus
                 />
               </div>
               
               {eventTitle && (
-                <div className="bg-blue-50 border border-blue-200 rounded-xl p-3">
-                  <p className="text-xs text-blue-700">
+                <div className="bg-[var(--accent)]/5 border border-[var(--accent)]/20 rounded-xl p-3">
+                  <p className="text-xs text-[var(--accent-hover)]">
                     <strong>Tip:</strong> This folder will be created from "{eventTitle}"
                   </p>
                 </div>
@@ -297,7 +297,7 @@ export default function SaveToFolderModal({
                 (isCreatingNew && !newFolderName.trim()) ||
                 (!isCreatingNew && !selectedFolderId)
               }
-              className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center justify-center gap-2"
+              className="flex-1 px-4 py-3 bg-[var(--accent)] text-white rounded-xl hover:bg-[var(--accent-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center justify-center gap-2"
             >
               {loading ? (
                 <>

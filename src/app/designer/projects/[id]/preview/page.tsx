@@ -278,7 +278,7 @@ export default function ProjectPostPreviewPage() {
         <button
           onClick={handleInitialize}
           disabled={initializing}
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+          className="px-4 py-2 bg-[var(--accent)] text-white rounded hover:bg-[var(--accent-hover)] disabled:opacity-50"
         >
           {initializing ? "Initializing..." : "Initialize Post"}
         </button>
@@ -302,7 +302,7 @@ export default function ProjectPostPreviewPage() {
             onClick={() => setView("article")}
             className={`px-4 py-2 border-b-2 ${
               view === "article"
-                ? "border-blue-600 text-blue-600"
+                ? "border-[var(--accent)] text-[var(--accent)]"
                 : "border-transparent text-gray-500 hover:text-gray-700"
             }`}
           >
@@ -312,7 +312,7 @@ export default function ProjectPostPreviewPage() {
             onClick={() => setView("card")}
             className={`px-4 py-2 border-b-2 ${
               view === "card"
-                ? "border-blue-600 text-blue-600"
+                ? "border-[var(--accent)] text-[var(--accent)]"
                 : "border-transparent text-gray-500 hover:text-gray-700"
             }`}
           >
@@ -322,7 +322,7 @@ export default function ProjectPostPreviewPage() {
             onClick={() => setView("condensed")}
             className={`px-4 py-2 border-b-2 ${
               view === "condensed"
-                ? "border-blue-600 text-blue-600"
+                ? "border-[var(--accent)] text-[var(--accent)]"
                 : "border-transparent text-gray-500 hover:text-gray-700"
             }`}
           >
@@ -332,7 +332,7 @@ export default function ProjectPostPreviewPage() {
             onClick={() => setView("expanded")}
             className={`px-4 py-2 border-b-2 ${
               view === "expanded"
-                ? "border-blue-600 text-blue-600"
+                ? "border-[var(--accent)] text-[var(--accent)]"
                 : "border-transparent text-gray-500 hover:text-gray-700"
             }`}
           >
@@ -357,7 +357,7 @@ export default function ProjectPostPreviewPage() {
           <button
             onClick={handleGenerate}
             disabled={generating}
-            className="rounded-full px-6 py-3 font-medium shadow-md hover:shadow-lg bg-blue-600 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            className="rounded-full px-6 py-3 font-medium shadow-md hover:shadow-lg bg-[var(--accent)] text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all"
           >
             {generating ? "Generating…" : "Generate AI Draft"}
           </button>
@@ -419,7 +419,7 @@ export default function ProjectPostPreviewPage() {
             {post.post.expandedBlocks && (
               <button
                 onClick={() => setShowInterviewModal(true)}
-                className="px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors"
+                className="px-4 py-2 text-sm font-medium text-[var(--accent)] bg-[var(--accent)]/5 border border-[var(--accent)]/20 rounded-lg hover:bg-[var(--accent)]/10 transition-colors"
               >
                 Edit Answers / Regenerate
               </button>

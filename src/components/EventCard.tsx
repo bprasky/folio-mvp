@@ -58,7 +58,7 @@ export default function EventCard({ event, onClick, className, userRole }: Event
 
   const getEventTypeColor = (type: string) => {
     const colors: { [key: string]: string } = {
-      'PANEL': 'bg-blue-100 text-blue-800',
+      'PANEL': 'bg-[var(--accent)]/10 text-blue-800',
       'PRODUCT_REVEAL': 'bg-purple-100 text-purple-800',
       'HAPPY_HOUR': 'bg-yellow-100 text-yellow-800',
       'LUNCH_AND_LEARN': 'bg-green-100 text-green-800',
@@ -97,7 +97,7 @@ export default function EventCard({ event, onClick, className, userRole }: Event
       {/* Admin Edit Icon */}
       {userRole === 'ADMIN' && (
         <Link href={`/admin/events/new?edit=${event.id}`} onClick={(e) => e.stopPropagation()}>
-          <div className="absolute top-2 right-2 bg-blue-500 text-white p-1 rounded-full shadow-sm hover:bg-blue-600 transition-colors z-20">
+          <div className="absolute top-2 right-2 bg-[var(--accent)] text-white p-1 rounded-full shadow-sm hover:bg-[var(--accent)] transition-colors z-20">
             <FaEdit className="w-3 h-3" />
           </div>
         </Link>
@@ -127,7 +127,7 @@ export default function EventCard({ event, onClick, className, userRole }: Event
         
         {/* Virtual indicator overlay */}
         {event.isVirtual && (
-          <div className="absolute top-2 left-2 bg-blue-500 text-white px-2 py-1 rounded-full text-xs font-medium">
+          <div className="absolute top-2 left-2 bg-[var(--accent)] text-white px-2 py-1 rounded-full text-xs font-medium">
             Virtual
           </div>
         )}

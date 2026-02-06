@@ -74,12 +74,12 @@ interface InterviewStatusViewProps {
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
   TRANSCRIBING: {
     label: "Transcribing",
-    color: "text-blue-600",
+    color: "text-[var(--accent)]",
     icon: <Loader2 className="h-5 w-5 animate-spin" />,
   },
   TRANSCRIBED: {
     label: "Transcribed",
-    color: "text-blue-600",
+    color: "text-[var(--accent)]",
     icon: <CheckCircle className="h-5 w-5" />,
   },
   EXTRACTING: {

@@ -69,7 +69,7 @@ export default function ThreeDAssetList({
       case 'PROCESSING':
       case 'PENDING':
         return (
-          <Badge variant="default" className="bg-blue-100 text-blue-800">
+          <Badge variant="default" className="bg-[var(--accent)]/10 text-blue-800">
             <FaSpinner className="w-3 h-3 mr-1 animate-spin" />
             Processing
           </Badge>
@@ -187,7 +187,7 @@ export default function ThreeDAssetList({
                           handleToggle(asset.id, asset.includeInUnrealExport)
                         }
                         disabled={isToggling || asset.status !== 'READY'}
-                        className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 disabled:opacity-50"
+                        className="w-4 h-4 text-[var(--accent)] rounded focus:ring-[var(--accent)] disabled:opacity-50"
                       />
                       <span className="text-sm text-gray-700">
                         Include in Unreal Export

@@ -499,7 +499,7 @@ Total Selections: ${room.selections.length}
         <div className="max-w-7xl mx-auto">
           <div className="max-w-7xl mx-auto">
             <div className="text-center py-16">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--accent)] mx-auto"></div>
               <p className="mt-4 text-gray-600">Loading room...</p>
             </div>
           </div>
@@ -519,7 +519,7 @@ Total Selections: ${room.selections.length}
             <p className="text-gray-600 mb-6">Only vendors can access this page.</p>
             <button
               onClick={() => router.push('/vendor')}
-              className="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors"
+              className="bg-[var(--accent)] text-white px-6 py-3 rounded-lg hover:bg-[var(--accent)] transition-colors"
             >
               Back to Vendor Dashboard
             </button>
@@ -540,7 +540,7 @@ Total Selections: ${room.selections.length}
               <p className="text-gray-600 mb-6">The room you're looking for doesn't exist or you don't have access to it.</p>
               <button
                 onClick={() => router.push(`/vendor/project/${projectId}`)}
-                className="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors"
+                className="bg-[var(--accent)] text-white px-6 py-3 rounded-lg hover:bg-[var(--accent)] transition-colors"
               >
                 Back to Project
               </button>
@@ -583,7 +583,7 @@ Total Selections: ${room.selections.length}
                 <>
                   <button
                     onClick={() => setShowAddSelection(true)}
-                    className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2"
+                    className="bg-[var(--accent)] text-white px-4 py-2 rounded-lg hover:bg-[var(--accent)] transition-colors flex items-center gap-2"
                   >
                     <FaPlus className="w-4 h-4" />
                     Add Selection
@@ -635,7 +635,7 @@ Total Selections: ${room.selections.length}
                 {/* Spec Sheet Badge */}
                 {selection.specSheetUrl && (
                   <div className="absolute top-4 right-4 z-10">
-                    <div className="bg-blue-500 text-white px-2 py-1 rounded-full text-xs flex items-center gap-1">
+                    <div className="bg-[var(--accent)] text-white px-2 py-1 rounded-full text-xs flex items-center gap-1">
                       <FaFileAlt className="w-3 h-3" />
                       Spec
                     </div>
@@ -689,7 +689,7 @@ Total Selections: ${room.selections.length}
                         href={selection.productUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-sm text-blue-600 hover:text-blue-800 truncate"
+                        className="text-sm text-[var(--accent)] hover:text-[var(--accent-hover)] truncate"
                       >
                         Product Link
                       </a>
@@ -710,10 +710,10 @@ Total Selections: ${room.selections.length}
                   )}
                   
                   {selection.specSheetUrl && (
-                    <div className="flex items-center justify-between p-2 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-center justify-between p-2 bg-[var(--accent)]/5 border border-[var(--accent)]/20 rounded-lg">
                       <div className="flex items-center">
-                        <FaFileAlt className="w-4 h-4 text-blue-600 mr-2" />
-                        <span className="text-sm text-blue-800">
+                        <FaFileAlt className="w-4 h-4 text-[var(--accent)] mr-2" />
+                        <span className="text-sm text-[var(--accent-hover)]">
                           {selection.specSheetFileName || 'Spec Sheet'}
                         </span>
                       </div>
@@ -721,7 +721,7 @@ Total Selections: ${room.selections.length}
                         href={selection.specSheetUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                        className="text-sm text-[var(--accent)] hover:text-[var(--accent-hover)] font-medium"
                       >
                         View
                       </a>
@@ -732,7 +732,7 @@ Total Selections: ${room.selections.length}
                     <div className="flex space-x-2 pt-3 border-t border-gray-200">
                       <button
                         onClick={() => startEditing(selection)}
-                        className="text-blue-600 hover:text-blue-800 text-sm flex items-center gap-1"
+                        className="text-[var(--accent)] hover:text-[var(--accent-hover)] text-sm flex items-center gap-1"
                       >
                         <FaEdit className="w-3 h-3" />
                         Edit
@@ -768,7 +768,7 @@ Total Selections: ${room.selections.length}
                 {canEdit() && (
                   <button
                     onClick={() => setShowAddSelection(true)}
-                    className="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors"
+                    className="bg-[var(--accent)] text-white px-6 py-3 rounded-lg hover:bg-[var(--accent)] transition-colors"
                   >
                     Add Your First Selection
                   </button>
@@ -804,7 +804,7 @@ Total Selections: ${room.selections.length}
                   type="text"
                   value={newSelection.productName}
                   onChange={(e) => setNewSelection(prev => ({ ...prev, productName: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                   placeholder="Enter product name"
                 />
               </div>
@@ -817,7 +817,7 @@ Total Selections: ${room.selections.length}
                   type="url"
                   value={newSelection.productUrl}
                   onChange={(e) => setNewSelection(prev => ({ ...prev, productUrl: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                   placeholder="https://example.com/product"
                 />
               </div>
@@ -830,7 +830,7 @@ Total Selections: ${room.selections.length}
                   type="text"
                   value={newSelection.vendorName}
                   onChange={(e) => setNewSelection(prev => ({ ...prev, vendorName: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                   placeholder="Enter vendor name"
                 />
               </div>
@@ -843,7 +843,7 @@ Total Selections: ${room.selections.length}
                   type="text"
                   value={newSelection.colorFinish}
                   onChange={(e) => setNewSelection(prev => ({ ...prev, colorFinish: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                   placeholder="Enter color or finish"
                 />
               </div>
@@ -857,7 +857,7 @@ Total Selections: ${room.selections.length}
                     type="number"
                     value={newSelection.unitPrice}
                     onChange={(e) => setNewSelection(prev => ({ ...prev, unitPrice: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                     placeholder="0.00"
                   />
                 </div>
@@ -869,7 +869,7 @@ Total Selections: ${room.selections.length}
                     type="number"
                     value={newSelection.quantity}
                     onChange={(e) => setNewSelection(prev => ({ ...prev, quantity: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                     placeholder="1"
                   />
                 </div>
@@ -882,7 +882,7 @@ Total Selections: ${room.selections.length}
                 <textarea
                   value={newSelection.notes}
                   onChange={(e) => setNewSelection(prev => ({ ...prev, notes: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                   rows={3}
                   placeholder="Add notes about this selection"
                 />
@@ -928,7 +928,7 @@ Total Selections: ${room.selections.length}
                     ...prev, 
                     tags: e.target.value.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0)
                   }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                   placeholder="modern, luxury, sustainable"
                 />
               </div>
@@ -947,7 +947,7 @@ Total Selections: ${room.selections.length}
                         await handleSpecSheetUpload(file);
                       }
                     }}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                   />
                 </div>
                 {newSelection.specSheetUrl && (
@@ -964,7 +964,7 @@ Total Selections: ${room.selections.length}
                           href={newSelection.specSheetUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-sm text-blue-600 hover:text-blue-800"
+                          className="text-sm text-[var(--accent)] hover:text-[var(--accent-hover)]"
                         >
                           View
                         </a>
@@ -989,7 +989,7 @@ Total Selections: ${room.selections.length}
               <button
                 onClick={editingSelection ? handleUpdateSelection : handleAddSelection}
                 disabled={isSubmitting}
-                className="flex-1 bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                className="flex-1 bg-[var(--accent)] text-white py-2 px-4 rounded-lg hover:bg-[var(--accent)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
               >
                 {isSubmitting ? (
                   <>
@@ -1033,7 +1033,7 @@ Total Selections: ${room.selections.length}
                 <select
                   value={quoteForm.type}
                   onChange={(e) => setQuoteForm(prev => ({ ...prev, type: e.target.value as 'PDF' | 'IMAGE' | 'TEXT' }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                 >
                   <option value="TEXT">Text Note</option>
                   <option value="IMAGE">Image</option>
@@ -1048,7 +1048,7 @@ Total Selections: ${room.selections.length}
                   <textarea
                     value={quoteForm.content}
                     onChange={(e) => setQuoteForm(prev => ({ ...prev, content: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                     rows={4}
                     placeholder="Enter quote details..."
                   />
@@ -1062,7 +1062,7 @@ Total Selections: ${room.selections.length}
                     type="file"
                     accept={quoteForm.type === 'PDF' ? '.pdf' : 'image/*'}
                     onChange={(e) => setQuoteForm(prev => ({ ...prev, file: e.target.files?.[0] || null }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                   />
                 </div>
               )}
@@ -1125,7 +1125,7 @@ Total Selections: ${room.selections.length}
                 }
                 setShowUploadModal(false);
               }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
             />
             <div className="flex justify-end mt-6">
               <button

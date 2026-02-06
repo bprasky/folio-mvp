@@ -310,7 +310,7 @@ export function AnswerForm({
                   }
                   maxLength={maxLen}
                   rows={Math.min(Math.max(Math.ceil(maxLen / 400), 4), 10)}
-                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm leading-relaxed ${
+                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)] text-sm leading-relaxed ${
                     errorMessage ? "border-red-400 focus:border-red-500" : ""
                   }`}
                   style={{ maxWidth: "72ch" }}

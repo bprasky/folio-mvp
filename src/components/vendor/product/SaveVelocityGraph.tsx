@@ -19,7 +19,7 @@ export default function SaveVelocityGraph({ data }: SaveVelocityGraphProps) {
   return (
     <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
       <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
-        <FaChartLine className="text-blue-500 mr-3" /> Save Velocity (Last 7 Days)
+        <FaChartLine className="text-[var(--accent)] mr-3" /> Save Velocity (Last 7 Days)
       </h2>
       <div className="flex items-end justify-between h-40 mt-4 bg-gray-50 rounded-md p-2">
         {data.map((saves, index) => (

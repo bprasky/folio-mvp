@@ -171,7 +171,7 @@ export function InterviewFlow({
               </p>
               <button
                 onClick={handleSwitchToText}
-                className="text-blue-600 hover:text-blue-700"
+                className="text-[var(--accent)] hover:text-[var(--accent-hover)]"
               >
                 Use text interview instead
               </button>

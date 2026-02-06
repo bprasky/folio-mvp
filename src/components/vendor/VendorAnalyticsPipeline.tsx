@@ -28,7 +28,7 @@ export default function VendorAnalyticsPipeline({
       label: 'Specified',
       count: data.specified,
       icon: FileText,
-      color: 'bg-blue-500',
+      color: 'bg-[var(--accent)]',
       description: 'Projects with specifications'
     },
     {

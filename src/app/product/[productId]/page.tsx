@@ -99,7 +99,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
         <div className="container mx-auto px-4 py-4">
           <Link 
             href="/inspire" 
-            className="text-blue-600 hover:underline inline-flex items-center gap-2"
+            className="text-[var(--accent)] hover:underline inline-flex items-center gap-2"
           >
             ← Back to Inspire
           </Link>
@@ -271,7 +271,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
                         href={product.vendorRecord.website}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-blue-600 hover:underline text-sm"
+                        className="text-[var(--accent)] hover:underline text-sm"
                       >
                         Visit Website
                       </a>
@@ -296,7 +296,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
                   href={product.sourceUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-blue-600 hover:underline text-sm break-all"
+                  className="text-[var(--accent)] hover:underline text-sm break-all"
                 >
                   View Original
                 </a>

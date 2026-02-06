@@ -44,7 +44,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.
   },
   ACCEPTED: {
     label: "Accepted",
-    color: "text-blue-600",
+    color: "text-[var(--accent)]",
     icon: <CheckCircle className="h-4 w-4" />,
   },
   COMPLETED: {

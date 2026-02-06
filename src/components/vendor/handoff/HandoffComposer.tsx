@@ -111,7 +111,7 @@ export default function HandoffComposer({ vendorCtx }: HandoffComposerProps = {}
               </button>
               <button
                 onClick={() => window.open(inviteUrl, '_blank')}
-                className="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700"
+                className="px-4 py-2 rounded-xl bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)]"
               >
                 Open
               </button>

@@ -44,7 +44,7 @@ export function KeyAccounts({ firms }: KeyAccountsProps) {
                         </Badge>
                       )}
                       {firm.reactivated && (
-                        <Badge className="text-xs bg-blue-100 text-blue-800 border-blue-200">
+                        <Badge className="text-xs bg-[var(--accent)]/10 text-blue-800 border-[var(--accent)]/20">
                           Reactivated
                         </Badge>
                       )}
@@ -117,8 +117,8 @@ export function KeyAccounts({ firms }: KeyAccountsProps) {
         <Card className="bg-white border-[#DAD2CA]">
           <CardContent className="p-4">
             <div className="flex items-center space-x-3 mb-3">
-              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                <Building2 className="w-4 h-4 text-blue-600" />
+              <div className="w-8 h-8 bg-[var(--accent)]/10 rounded-full flex items-center justify-center">
+                <Building2 className="w-4 h-4 text-[var(--accent)]" />
               </div>
               <div>
                 <h4 className="font-medium text-[#2B2B2B]">Reactivated Accounts</h4>

@@ -261,7 +261,7 @@ const SMSModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void })
         exit={{ scale: 0.9, opacity: 0 }}
       >
         <div className="flex items-center mb-6">
-          <FaSms className="w-6 h-6 text-blue-600 mr-3" />
+          <FaSms className="w-6 h-6 text-[var(--accent)] mr-3" />
           <h3 className="text-xl font-bold text-gray-900">Send a Text Message</h3>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -272,7 +272,7 @@ const SMSModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void })
               required
               value={formData.name}
               onChange={(e) => setFormData({...formData, name: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
               placeholder="Enter your full name"
             />
           </div>
@@ -283,7 +283,7 @@ const SMSModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void })
               required
               value={formData.phone}
               onChange={(e) => setFormData({...formData, phone: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
               placeholder="+1 (555) 123-4567"
             />
           </div>
@@ -294,14 +294,14 @@ const SMSModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void })
               rows={3}
               value={formData.message}
               onChange={(e) => setFormData({...formData, message: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent resize-none"
               placeholder="Hi Diana, I'd love to discuss a potential project..."
             />
           </div>
           <div className="flex gap-3 pt-4">
             <button
               type="submit"
-              className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+              className="flex-1 bg-[var(--accent)] text-white px-4 py-2 rounded-lg hover:bg-[var(--accent-hover)] transition-colors font-medium"
             >
               Send via Text Message
             </button>
@@ -399,7 +399,7 @@ const VideoSection = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-16">
-        <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+        <div className="w-8 h-8 border-4 border-[var(--accent)] border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -414,7 +414,7 @@ const VideoSection = () => {
         </div>
         <button
           onClick={() => setShowUploader(true)}
-          className="bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 transition-colors flex items-center gap-2"
+          className="bg-[var(--accent)] text-white px-4 py-2 rounded-xl hover:bg-[var(--accent-hover)] transition-colors flex items-center gap-2"
         >
           <FaPlus className="w-4 h-4" />
           Upload Video
@@ -428,7 +428,7 @@ const VideoSection = () => {
           <p className="text-gray-600 mb-4">Start building your channel by uploading your first video</p>
           <button
             onClick={() => setShowUploader(true)}
-            className="bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 transition-colors"
+            className="bg-[var(--accent)] text-white px-6 py-3 rounded-xl hover:bg-[var(--accent-hover)] transition-colors"
           >
             Upload First Video
           </button>
@@ -486,7 +486,7 @@ const VideoSection = () => {
                       </div>
                     </div>
                     <div className="flex-1">
-                      <h4 className="font-semibold text-gray-900 text-sm group-hover:text-blue-600 transition-colors line-clamp-2">
+                      <h4 className="font-semibold text-gray-900 text-sm group-hover:text-[var(--accent)] transition-colors line-clamp-2">
                         {video.title}
                       </h4>
                       <p className="text-xs text-gray-500">{video.views} views</p>
@@ -526,7 +526,7 @@ const AboutSection = () => (
       custom={0}
     >
       <div className="relative">
-        <FaQuoteLeft className="w-12 h-12 text-blue-600/20 absolute -top-4 -left-4" />
+        <FaQuoteLeft className="w-12 h-12 text-[var(--accent)]/20 absolute -top-4 -left-4" />
         <p className="text-xl text-gray-700 leading-relaxed pl-8">
           {designerData.bio}
         </p>
@@ -586,7 +586,7 @@ const TeamSection = () => (
             />
           </div>
           <h3 className="text-lg font-semibold text-gray-900">{member.name}</h3>
-          <p className="text-blue-600 text-sm font-medium mb-2">{member.role}</p>
+          <p className="text-[var(--accent)] text-sm font-medium mb-2">{member.role}</p>
           <p className="text-gray-600 text-sm">{member.bio}</p>
         </motion.div>
       ))}
@@ -613,7 +613,7 @@ const TeamSection = () => (
           </div>
           <div>
             <h4 className="font-semibold text-gray-900 text-sm">{member.name}</h4>
-            <p className="text-blue-600 text-xs">{member.role}</p>
+            <p className="text-[var(--accent)] text-xs">{member.role}</p>
           </div>
         </motion.div>
       ))}
@@ -643,15 +643,15 @@ const PressSection = () => (
             />
           </div>
           <div className="flex items-center mb-3">
-            <FaNewspaper className="w-4 h-4 text-blue-600 mr-2" />
-            <span className="text-sm font-medium text-blue-600">
+            <FaNewspaper className="w-4 h-4 text-[var(--accent)] mr-2" />
+            <span className="text-sm font-medium text-[var(--accent)]">
               {designerData.editorials.filter(e => e.featured)[0].publication}
             </span>
             <span className="text-sm text-gray-400 ml-2">
               {designerData.editorials.filter(e => e.featured)[0].date}
             </span>
           </div>
-          <h3 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-blue-600 transition-colors">
+          <h3 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-[var(--accent)] transition-colors">
             {designerData.editorials.filter(e => e.featured)[0].title}
           </h3>
           <p className="text-gray-600 leading-relaxed">
@@ -682,10 +682,10 @@ const PressSection = () => (
           </div>
           <div className="flex-1">
             <div className="flex items-center mb-2">
-              <FaNewspaper className="w-3 h-3 text-blue-600 mr-1" />
-              <span className="text-xs font-medium text-blue-600">{editorial.publication}</span>
+              <FaNewspaper className="w-3 h-3 text-[var(--accent)] mr-1" />
+              <span className="text-xs font-medium text-[var(--accent)]">{editorial.publication}</span>
             </div>
-            <h4 className="font-semibold text-gray-900 text-sm group-hover:text-blue-600 transition-colors mb-1">
+            <h4 className="font-semibold text-gray-900 text-sm group-hover:text-[var(--accent)] transition-colors mb-1">
               {editorial.title}
             </h4>
             <p className="text-xs text-gray-500">{editorial.date}</p>
@@ -799,7 +799,7 @@ export default function DesignerProfile() {
               <div className="space-y-3 mb-6">
                 <motion.button
                   onClick={() => setIsMessageModalOpen(true)}
-                  className="w-full bg-blue-600 text-white px-4 py-3 rounded-xl hover:bg-blue-700 transition-colors font-medium"
+                  className="w-full bg-[var(--accent)] text-white px-4 py-3 rounded-xl hover:bg-[var(--accent-hover)] transition-colors font-medium"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
@@ -821,14 +821,14 @@ export default function DesignerProfile() {
               {/* Contact Info */}
               <div className="space-y-3 mb-6">
                 <div className="flex items-center gap-3">
-                  <FaEnvelope className="w-4 h-4 text-blue-600" />
-                  <a href={`mailto:${designerData.contact.email}`} className="text-gray-700 hover:text-blue-600 transition-colors text-sm">
+                  <FaEnvelope className="w-4 h-4 text-[var(--accent)]" />
+                  <a href={`mailto:${designerData.contact.email}`} className="text-gray-700 hover:text-[var(--accent)] transition-colors text-sm">
                     {designerData.contact.email}
                   </a>
                 </div>
                 <div className="flex items-center gap-3">
-                  <FaPhone className="w-4 h-4 text-blue-600" />
-                  <a href={`tel:${designerData.contact.phone}`} className="text-gray-700 hover:text-blue-600 transition-colors text-sm">
+                  <FaPhone className="w-4 h-4 text-[var(--accent)]" />
+                  <a href={`tel:${designerData.contact.phone}`} className="text-gray-700 hover:text-[var(--accent)] transition-colors text-sm">
                     {designerData.contact.phone}
                   </a>
                 </div>
@@ -840,7 +840,7 @@ export default function DesignerProfile() {
                   <FaInstagram className="w-6 h-6 text-gray-600 hover:text-pink-600 transition-colors" />
                 </a>
                 <a href={designerData.social.website} target="_blank" rel="noopener noreferrer">
-                  <FaGlobe className="w-6 h-6 text-gray-600 hover:text-blue-600 transition-colors" />
+                  <FaGlobe className="w-6 h-6 text-gray-600 hover:text-[var(--accent)] transition-colors" />
                 </a>
               </div>
             </motion.div>
@@ -864,7 +864,7 @@ export default function DesignerProfile() {
                       onClick={() => handleTabChange(tab.id)}
                       className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl transition-all duration-300 ${
                         activeTab === tab.id
-                          ? 'bg-blue-600 text-white shadow-lg'
+                          ? 'bg-[var(--accent)] text-white shadow-lg'
                           : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                       }`}
                       whileHover={{ scale: 1.02 }}

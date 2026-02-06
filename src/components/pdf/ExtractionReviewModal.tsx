@@ -152,13 +152,13 @@ export function ExtractionReviewModal({
             <span className="text-sm font-medium text-gray-700">{selected.size} of {totalItems} selected</span>
             <button
               onClick={selectAll}
-              className="text-sm text-blue-600 hover:text-blue-800"
+              className="text-sm text-[var(--accent)] hover:text-blue-800"
             >
               Select all
             </button>
             <button
               onClick={selectNone}
-              className="text-sm text-blue-600 hover:text-blue-800"
+              className="text-sm text-[var(--accent)] hover:text-blue-800"
             >
               Select none
             </button>

@@ -30,7 +30,7 @@ const PROFESSIONAL_BENEFITS = [
     icon: Eye,
     title: 'Visible Product Tags',
     description: 'Your product tags appear on the public feed, driving discovery and engagement with your curated selections.',
-    color: 'bg-blue-100 text-blue-600',
+    color: 'bg-[var(--accent)]/10 text-[var(--accent)]',
   },
   {
     icon: DollarSign,

@@ -99,7 +99,7 @@ export function QuestionCard({
             <div className="flex items-center gap-2 flex-wrap">
               {questionMetadata.attributeType && questionMetadata.attributeValue && (
                 <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
-                  questionMetadata.attributeType === 'color' ? 'bg-blue-100 text-blue-700' :
+                  questionMetadata.attributeType === 'color' ? 'bg-[var(--accent)]/10 text-[var(--accent-hover)]' :
                   questionMetadata.attributeType === 'material' ? 'bg-amber-100 text-amber-700' :
                   questionMetadata.attributeType === 'style' ? 'bg-purple-100 text-purple-700' :
                   questionMetadata.attributeType === 'mood' ? 'bg-rose-100 text-rose-700' :
@@ -139,7 +139,7 @@ export function QuestionCard({
             onChange={(e) => onAnswerChange(e.target.value)}
             maxLength={maxLength}
             rows={8}
-            className={`w-full min-h-[200px] p-4 bg-gray-50/50 border rounded-xl text-lg placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 resize-y leading-relaxed ${
+            className={`w-full min-h-[200px] p-4 bg-gray-50/50 border rounded-xl text-lg placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30 focus:border-[var(--accent)]/50 resize-y leading-relaxed ${
               fieldError ? "border-red-400 focus:border-red-500" : "border-gray-200"
             }`}
             placeholder="Type your answer here…"
@@ -153,7 +153,7 @@ export function QuestionCard({
               </span>
             )}
             {isTranscribing && (
-              <Loader2 className="h-4 w-4 text-blue-600 animate-spin" />
+              <Loader2 className="h-4 w-4 text-[var(--accent)] animate-spin" />
             )}
             {!isRecording && !isTranscribing && (
               <button

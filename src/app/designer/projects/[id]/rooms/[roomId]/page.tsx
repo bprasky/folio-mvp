@@ -228,7 +228,7 @@ export default function RoomManagementPage() {
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-center h-full">
             <div className="text-center">
-              <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+              <div className="w-8 h-8 border-4 border-[var(--accent)] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
               <p className="text-gray-600">Loading room...</p>
             </div>
           </div>
@@ -246,7 +246,7 @@ export default function RoomManagementPage() {
             <p className="text-gray-600 mb-6">The room you're looking for doesn't exist.</p>
             <button
               onClick={() => router.push(`/designer/projects/${projectId}`)}
-              className="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors"
+              className="bg-[var(--accent)] text-white px-6 py-3 rounded-lg hover:bg-[var(--accent)] transition-colors"
             >
               Back to Project
             </button>
@@ -279,7 +279,7 @@ export default function RoomManagementPage() {
               </div>
               <button
                 onClick={() => setShowAddSelection(true)}
-                className="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2"
+                className="bg-[var(--accent)] text-white px-6 py-3 rounded-lg hover:bg-[var(--accent)] transition-colors flex items-center gap-2"
               >
                 <FaPlus className="w-4 h-4" />
                 + Add Selection
@@ -319,9 +319,9 @@ export default function RoomManagementPage() {
                           setShowAddSelection(false);
                           setShowCameraCapture(true);
                         }}
-                        className="p-6 border-2 border-gray-200 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition-all text-center"
+                        className="p-6 border-2 border-gray-200 rounded-xl hover:border-[var(--accent)] hover:bg-[var(--accent)]/5 transition-all text-center"
                       >
-                        <FaCamera className="w-8 h-8 text-blue-500 mx-auto mb-3" />
+                        <FaCamera className="w-8 h-8 text-[var(--accent)] mx-auto mb-3" />
                         <h5 className="font-semibold text-gray-900 mb-2">Take Photo</h5>
                         <p className="text-sm text-gray-600">Use your device camera to capture the product</p>
                       </button>
@@ -331,9 +331,9 @@ export default function RoomManagementPage() {
                           setShowAddSelection(false);
                           setShowUploadModal(true);
                         }}
-                        className="p-6 border-2 border-gray-200 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition-all text-center"
+                        className="p-6 border-2 border-gray-200 rounded-xl hover:border-[var(--accent)] hover:bg-[var(--accent)]/5 transition-all text-center"
                       >
-                        <FaUpload className="w-8 h-8 text-blue-500 mx-auto mb-3" />
+                        <FaUpload className="w-8 h-8 text-[var(--accent)] mx-auto mb-3" />
                         <h5 className="font-semibold text-gray-900 mb-2">Upload Image</h5>
                         <p className="text-sm text-gray-600">Choose from your photo library or files</p>
                       </button>
@@ -348,9 +348,9 @@ export default function RoomManagementPage() {
                         setShowAddSelection(false);
                         setShowQuickAddModal(true);
                       }}
-                      className="w-full p-4 border-2 border-gray-200 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition-all text-center"
+                      className="w-full p-4 border-2 border-gray-200 rounded-xl hover:border-[var(--accent)] hover:bg-[var(--accent)]/5 transition-all text-center"
                     >
-                      <FaStickyNote className="w-6 h-6 text-blue-500 mx-auto mb-2" />
+                      <FaStickyNote className="w-6 h-6 text-[var(--accent)] mx-auto mb-2" />
                       <span className="font-semibold text-gray-900">Add Notes Only</span>
                     </button>
                   </div>
@@ -391,7 +391,7 @@ export default function RoomManagementPage() {
                       onChange={(e) => setNewSelection(prev => ({ ...prev, notes: e.target.value }))}
                       placeholder="Describe this selection, materials, specifications..."
                       rows={3}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent resize-none"
                     />
                   </div>
                   
@@ -404,7 +404,7 @@ export default function RoomManagementPage() {
                       value={newSelection.vendorId}
                       onChange={(e) => setNewSelection(prev => ({ ...prev, vendorId: e.target.value }))}
                       placeholder="Vendor identifier"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                     />
                   </div>
                 </div>
@@ -412,7 +412,7 @@ export default function RoomManagementPage() {
                 <div className="flex gap-3 mt-6">
                   <button
                     onClick={handleAddSelection}
-                    className="flex-1 bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors"
+                    className="flex-1 bg-[var(--accent)] text-white py-2 px-4 rounded-lg hover:bg-[var(--accent)] transition-colors"
                   >
                     Add Selection
                   </button>
@@ -451,7 +451,7 @@ export default function RoomManagementPage() {
                       value={newSelection.photo}
                       onChange={(e) => setNewSelection(prev => ({ ...prev, photo: e.target.value }))}
                       placeholder="https://example.com/image.jpg"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                     />
                   </div>
                   
@@ -464,7 +464,7 @@ export default function RoomManagementPage() {
                       onChange={(e) => setNewSelection(prev => ({ ...prev, notes: e.target.value }))}
                       placeholder="Describe this selection, materials, specifications..."
                       rows={3}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent resize-none"
                     />
                   </div>
                   
@@ -477,7 +477,7 @@ export default function RoomManagementPage() {
                       value={newSelection.vendorId}
                       onChange={(e) => setNewSelection(prev => ({ ...prev, vendorId: e.target.value }))}
                       placeholder="Vendor identifier"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                     />
                   </div>
                 </div>
@@ -485,7 +485,7 @@ export default function RoomManagementPage() {
                 <div className="flex gap-3 mt-6">
                   <button
                     onClick={handleUpdateSelection}
-                    className="flex-1 bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors"
+                    className="flex-1 bg-[var(--accent)] text-white py-2 px-4 rounded-lg hover:bg-[var(--accent)] transition-colors"
                   >
                     Update Selection
                   </button>
@@ -576,7 +576,7 @@ export default function RoomManagementPage() {
                           ? 'bg-green-100 text-green-800'
                           : selection.phaseOfUse === 'pending_approval'
                           ? 'bg-yellow-100 text-yellow-800'
-                          : 'bg-blue-100 text-blue-800'
+                          : 'bg-[var(--accent)]/10 text-[var(--accent-hover)]'
                       }`}>
                         {selection.phaseOfUse.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
                       </span>
@@ -626,7 +626,7 @@ export default function RoomManagementPage() {
                 </p>
                 <button
                   onClick={() => setShowAddSelection(true)}
-                  className="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors"
+                  className="bg-[var(--accent)] text-white px-6 py-3 rounded-lg hover:bg-[var(--accent)] transition-colors"
                 >
                   + Add Selection
                 </button>
@@ -696,7 +696,7 @@ export default function RoomManagementPage() {
                 />
                 <label
                   htmlFor="image-upload"
-                  className="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors cursor-pointer"
+                  className="bg-[var(--accent)] text-white px-6 py-3 rounded-lg hover:bg-[var(--accent)] transition-colors cursor-pointer"
                 >
                   Select Image
                 </label>

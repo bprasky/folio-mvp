@@ -69,7 +69,7 @@ export default function ProjectsOnlyProfileState({
   return (
     <div className="min-h-screen bg-white">
       {/* Suggestion banner */}
-      <div className="bg-blue-50 border-b border-blue-200 px-6 py-3">
+      <div className="bg-[var(--accent)]/5 border-b border-[var(--accent)]/20 px-6 py-3">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <p className="text-sm text-blue-800">
             {projects.length === 1
@@ -78,7 +78,7 @@ export default function ProjectsOnlyProfileState({
           </p>
           <Link
             href={projects.length === 1 ? "/designer/projects/new" : "/designer/brand"}
-            className="px-4 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700"
+            className="px-4 py-1.5 bg-[var(--accent)] text-white text-sm font-medium rounded-lg hover:bg-[var(--accent-hover)]"
           >
             {projects.length === 1 ? "Add Project" : "Add Brand"}
           </Link>

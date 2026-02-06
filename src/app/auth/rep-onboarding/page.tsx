@@ -56,7 +56,7 @@ export default function RepOnboardingPage() {
           <div className="space-y-4">
             <Link
               href={`/auth/signin?callbackUrl=/auth/rep-onboarding?inviteId=${inviteId}&token=${token}`}
-              className="block w-full text-center bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700"
+              className="block w-full text-center bg-[var(--accent)] text-white py-2 px-4 rounded hover:bg-[var(--accent-hover)]"
             >
               Sign In
             </Link>
@@ -115,7 +115,7 @@ export default function RepOnboardingPage() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--accent)] mx-auto"></div>
           <p className="mt-4 text-gray-600">Loading...</p>
         </div>
       </div>
@@ -130,7 +130,7 @@ export default function RepOnboardingPage() {
           <p className="text-gray-600 mb-6">{error}</p>
           <Link
             href="/"
-            className="block w-full text-center bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700"
+            className="block w-full text-center bg-[var(--accent)] text-white py-2 px-4 rounded hover:bg-[var(--accent-hover)]"
           >
             Go to Home
           </Link>
@@ -208,7 +208,7 @@ export default function RepOnboardingPage() {
           <button
             type="submit"
             disabled={submitting || !emailChoice}
-            className="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-[var(--accent)] text-white py-2 px-4 rounded hover:bg-[var(--accent-hover)] disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {submitting ? 'Setting up...' : 'Complete Setup'}
           </button>

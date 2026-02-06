@@ -61,7 +61,7 @@ export default function EcoModularSofaPage() {
     <div className="min-h-screen bg-gray-100 text-gray-800">
       {/* Back Button */}
       <div className="p-4 bg-white shadow-sm">
-        <Link href="/inspire" className="flex items-center text-blue-600 hover:underline">
+        <Link href="/inspire" className="flex items-center text-[var(--accent)] hover:underline">
           <FaArrowLeft className="mr-2" /> Back to Inspire
         </Link>
       </div>
@@ -89,7 +89,7 @@ export default function EcoModularSofaPage() {
             <button className="bg-gray-700 text-white px-6 py-3 rounded-full font-semibold hover:bg-gray-600 transition">
               <FaInfoCircle className="inline-block mr-2" /> Request Info
             </button>
-            <button className="bg-blue-600 text-white px-6 py-3 rounded-full font-semibold hover:bg-blue-700 transition">
+            <button className="bg-[var(--accent)] text-white px-6 py-3 rounded-full font-semibold hover:bg-[var(--accent-hover)] transition">
               <Link href="/project/modern-living-room" className="flex items-center">
                 <FaCube className="inline-block mr-2" /> See in Projects
               </Link>
@@ -112,7 +112,7 @@ export default function EcoModularSofaPage() {
                   {product.swatches.map((swatch) => (
                     <button
                       key={swatch.name}
-                      className={`w-12 h-12 rounded-full border-2 ${selectedSwatch === swatch.name ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-300'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                      className={`w-12 h-12 rounded-full border-2 ${selectedSwatch === swatch.name ? 'border-[var(--accent)] ring-2 ring-blue-200' : 'border-gray-300'} focus:outline-none focus:ring-2 focus:ring-[var(--accent)]`}
                       style={{ backgroundColor: swatch.color }}
                       onClick={() => setSelectedSwatch(swatch.name)}
                       title={swatch.name}
@@ -127,7 +127,7 @@ export default function EcoModularSofaPage() {
                 <label htmlFor="dimensions" className="block text-lg font-medium text-gray-700 mb-2">Dimensions</label>
                 <select
                   id="dimensions"
-                  className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+                  className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-[var(--accent)] focus:border-[var(--accent)] sm:text-sm rounded-md"
                   value={selectedDimension}
                   onChange={(e) => setSelectedDimension(e.target.value)}
                 >
@@ -158,7 +158,7 @@ export default function EcoModularSofaPage() {
           {/* Used in Projects Section */}
           <section className="bg-white p-6 rounded-lg shadow-md">
             <h2 className="text-2xl font-semibold mb-4">Used in Projects</h2>
-            <div className="bg-blue-100 border border-blue-200 text-blue-800 p-4 rounded-lg text-center mb-6">
+            <div className="bg-[var(--accent)]/10 border border-[var(--accent)]/20 text-[var(--accent-hover)] p-4 rounded-lg text-center mb-6">
               <p className="text-xl font-bold">This product has been used in {product.projectsUsedIn} projects</p>
               <p className="text-md">by {product.designersUsing} designers.</p>
             </div>
@@ -235,7 +235,7 @@ export default function EcoModularSofaPage() {
           </div>
 
           {/* Featured Designer Quote */}
-          <div className="bg-blue-50 p-6 rounded-lg shadow-md border-l-4 border-blue-500">
+          <div className="bg-[var(--accent)]/5 p-6 rounded-lg shadow-md border-l-4 border-[var(--accent)]">
             <p className="italic text-lg text-gray-700 mb-4">"{product.featuredDesignerQuote.quote}"</p>
             <div className="flex items-center">
               <Image
@@ -245,7 +245,7 @@ export default function EcoModularSofaPage() {
                 height={40}
                 className="rounded-full mr-3"
               />
-              <p className="font-semibold text-blue-700">- {product.featuredDesignerQuote.designerName}</p>
+              <p className="font-semibold text-[var(--accent-hover)]">- {product.featuredDesignerQuote.designerName}</p>
             </div>
           </div>
         </aside>

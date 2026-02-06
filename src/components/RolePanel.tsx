@@ -33,7 +33,7 @@ const roleFeatures: Record<UserRole, { title: string; subtitle: string; features
         icon: FaSearch,
         label: 'Browse Projects',
         description: 'Explore stunning interior designs',
-        color: 'bg-blue-500 hover:bg-blue-600',
+        color: 'bg-[var(--accent)] hover:bg-[var(--accent)]',
         onClick: () => console.log('Browse Projects clicked')
       },
       {
@@ -94,7 +94,7 @@ const roleFeatures: Record<UserRole, { title: string; subtitle: string; features
         icon: FaChartLine,
         label: 'Analytics',
         description: 'Track performance metrics',
-        color: 'bg-blue-500 hover:bg-blue-600',
+        color: 'bg-[var(--accent)] hover:bg-[var(--accent)]',
         onClick: () => console.log('Analytics clicked')
       },
       {
@@ -121,7 +121,7 @@ const roleFeatures: Record<UserRole, { title: string; subtitle: string; features
         icon: FaFolder,
         label: 'My Portfolio',
         description: 'Showcase your design projects',
-        color: 'bg-blue-500 hover:bg-blue-600',
+        color: 'bg-[var(--accent)] hover:bg-[var(--accent)]',
         onClick: () => console.log('My Portfolio clicked')
       },
       {
@@ -148,7 +148,7 @@ const roleFeatures: Record<UserRole, { title: string; subtitle: string; features
         icon: FaChartBar,
         label: 'Analytics',
         description: 'View platform statistics',
-        color: 'bg-blue-500 hover:bg-blue-600',
+        color: 'bg-[var(--accent)] hover:bg-[var(--accent)]',
         onClick: () => console.log('Analytics clicked')
       },
       {

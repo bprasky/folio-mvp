@@ -86,7 +86,7 @@ export default function OrgMemberships({ userId }: OrgMembershipsProps) {
       case 'OWNER':
         return <Crown className="w-4 h-4 text-yellow-500" />;
       case 'ADMIN':
-        return <Shield className="w-4 h-4 text-blue-500" />;
+        return <Shield className="w-4 h-4 text-[var(--accent)]" />;
       default:
         return null;
     }
@@ -102,7 +102,7 @@ export default function OrgMemberships({ userId }: OrgMembershipsProps) {
         );
       case 'CLAIMED':
         return (
-          <span className="px-1.5 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full">
+          <span className="px-1.5 py-0.5 bg-[var(--accent)]/10 text-[var(--accent-hover)] text-xs rounded-full">
             Verified
           </span>
         );
@@ -129,7 +129,7 @@ export default function OrgMemberships({ userId }: OrgMembershipsProps) {
         <h3 className="text-lg font-medium text-gray-900">Organizations</h3>
         <Link
           href="/professionals/join"
-          className="text-sm text-blue-600 hover:text-blue-800"
+          className="text-sm text-[var(--accent)] hover:text-blue-800"
         >
           Join or create
         </Link>
@@ -141,7 +141,7 @@ export default function OrgMemberships({ userId }: OrgMembershipsProps) {
           <p className="text-gray-600 mb-2">No organizations yet</p>
           <Link
             href="/professionals"
-            className="text-blue-600 hover:text-blue-800 text-sm"
+            className="text-[var(--accent)] hover:text-blue-800 text-sm"
           >
             Join as a professional
           </Link>
@@ -169,7 +169,7 @@ export default function OrgMemberships({ userId }: OrgMembershipsProps) {
                   <div className="flex items-center gap-2">
                     <Link
                       href={`/org/${membership.organization.id}`}
-                      className="font-medium text-gray-900 hover:text-blue-600 flex items-center gap-1"
+                      className="font-medium text-gray-900 hover:text-[var(--accent)] flex items-center gap-1"
                     >
                       {membership.organization.name}
                       <ExternalLink className="w-3 h-3" />

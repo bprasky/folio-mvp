@@ -131,7 +131,7 @@ export function StepMedia({ initialData, onNext, onBack }: StepMediaProps) {
                 onClick={() => setHeroType('image')}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg border ${
                   heroType === 'image'
-                    ? 'border-blue-600 bg-blue-50 dark:bg-blue-950 text-blue-900 dark:text-blue-100'
+                    ? 'border-[var(--accent)] bg-[var(--accent)]/5 dark:bg-blue-950 text-blue-900 dark:text-blue-100'
                     : 'border-stone-300 dark:border-stone-700'
                 } transition-colors`}
               >
@@ -142,7 +142,7 @@ export function StepMedia({ initialData, onNext, onBack }: StepMediaProps) {
                 onClick={() => setHeroType('video')}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg border ${
                   heroType === 'video'
-                    ? 'border-blue-600 bg-blue-50 dark:bg-blue-950 text-blue-900 dark:text-blue-100'
+                    ? 'border-[var(--accent)] bg-[var(--accent)]/5 dark:bg-blue-950 text-blue-900 dark:text-blue-100'
                     : 'border-stone-300 dark:border-stone-700'
                 } transition-colors`}
               >
@@ -160,7 +160,7 @@ export function StepMedia({ initialData, onNext, onBack }: StepMediaProps) {
                 value={heroUrl}
                 onChange={(e) => handleHeroChange(e.target.value)}
                 placeholder="https://example.com/images/hero.jpg"
-                className="w-full px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
               />
               <p className="text-xs text-stone-500 dark:text-stone-400 mt-1">
                 {heroType === 'image' 
@@ -179,7 +179,7 @@ export function StepMedia({ initialData, onNext, onBack }: StepMediaProps) {
                   value={heroAlt}
                   onChange={(e) => setHeroAlt(e.target.value)}
                   placeholder="Terra Travertine Side Table in natural honed finish"
-                  className="w-full px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                 />
               </div>
             )}
@@ -274,7 +274,7 @@ export function StepMedia({ initialData, onNext, onBack }: StepMediaProps) {
                       value={item.url}
                       onChange={(e) => updateGalleryItem(index, 'url', e.target.value)}
                       placeholder="https://example.com/images/gallery-1.jpg"
-                      className="w-full px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                      className="w-full px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent text-sm"
                     />
 
                     <input
@@ -282,7 +282,7 @@ export function StepMedia({ initialData, onNext, onBack }: StepMediaProps) {
                       value={item.alt || ''}
                       onChange={(e) => updateGalleryItem(index, 'alt', e.target.value)}
                       placeholder="Alt text (required for images)"
-                      className="w-full px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                      className="w-full px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent text-sm"
                     />
 
                     {item.url && (

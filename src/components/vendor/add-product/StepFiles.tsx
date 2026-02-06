@@ -282,7 +282,7 @@ function FileItem({
         value={item.label}
         onChange={(e) => onUpdate('label', e.target.value)}
         placeholder={placeholder}
-        className="w-full px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+        className="w-full px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent text-sm"
       />
 
       <input
@@ -290,7 +290,7 @@ function FileItem({
         value={item.url}
         onChange={(e) => onUpdate('url', e.target.value)}
         placeholder={urlPlaceholder}
-        className="w-full px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+        className="w-full px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent text-sm"
       />
 
       {fileExtension && (

@@ -193,7 +193,7 @@ export default function CreatePostPage() {
                   value={formData.title}
                   onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
                   placeholder="e.g., Kitchen Mood Board, Bathroom Essentials..."
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent transition-all"
                   maxLength={100}
                 />
                 <p className="text-xs text-gray-500 mt-1">
@@ -210,7 +210,7 @@ export default function CreatePostPage() {
                   onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
                   placeholder="Share your inspiration, design philosophy, or project details..."
                   rows={4}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent transition-all resize-none"
                   maxLength={500}
                 />
                 <p className="text-xs text-gray-500 mt-1">
@@ -224,7 +224,7 @@ export default function CreatePostPage() {
                   id="affiliate"
                   checked={formData.affiliate}
                   onChange={(e) => setFormData(prev => ({ ...prev, affiliate: e.target.checked }))}
-                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  className="w-4 h-4 text-[var(--accent)] border-gray-300 rounded focus:ring-[var(--accent)]"
                 />
                 <label htmlFor="affiliate" className="text-sm text-gray-700">
                   Enable affiliate tracking for product links
@@ -246,7 +246,7 @@ export default function CreatePostPage() {
                   const allItemIds = new Set(folderProducts.map(p => p.id));
                   setFormData(prev => ({ ...prev, selectedItems: allItemIds }));
                 }}
-                className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                className="text-sm text-[var(--accent)] hover:text-[var(--accent-hover)] font-medium"
               >
                 Select All
               </button>
@@ -258,7 +258,7 @@ export default function CreatePostPage() {
                   key={item.id}
                   className={`relative group rounded-2xl border-2 transition-all duration-200 cursor-pointer ${
                     formData.selectedItems.has(item.id)
-                      ? "border-blue-500 bg-blue-50 shadow-blue-100"
+                      ? "border-[var(--accent)] bg-[var(--accent)]/5 shadow-blue-100"
                       : "border-gray-200 hover:border-gray-300 bg-white"
                   }`}
                   onClick={() => handleItemToggle(item.id)}
@@ -267,7 +267,7 @@ export default function CreatePostPage() {
                   <div className="absolute top-3 left-3 z-10">
                     <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
                       formData.selectedItems.has(item.id)
-                        ? "bg-blue-500 border-blue-500 text-white"
+                        ? "bg-[var(--accent)] border-[var(--accent)] text-white"
                         : "bg-white border-gray-300"
                     }`}>
                       {formData.selectedItems.has(item.id) && (
@@ -309,7 +309,7 @@ export default function CreatePostPage() {
                     )}
 
                     {item.product.price && (
-                      <p className="text-sm font-semibold text-blue-600">
+                      <p className="text-sm font-semibold text-[var(--accent)]">
                         ${item.product.price.toLocaleString()}
                       </p>
                     )}
@@ -332,7 +332,7 @@ export default function CreatePostPage() {
             <button
               type="submit"
               disabled={submitting || !formData.title.trim() || formData.selectedItems.size === 0}
-              className="px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center gap-2"
+              className="px-6 py-3 bg-[var(--accent)] text-white rounded-xl hover:bg-[var(--accent-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center gap-2"
             >
               {submitting ? (
                 <>

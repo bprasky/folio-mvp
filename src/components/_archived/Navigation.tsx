@@ -260,7 +260,7 @@ const Navigation = () => {
           <FolioLogo size="md" variant="combined" />
         </div>
         <div className="flex-1 flex items-center justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent)]"></div>
         </div>
         {/* Placeholder for Sign In button slot to avoid layout jump */}
         <div className="mt-6 pt-6 border-t border-folio-border">

@@ -258,7 +258,7 @@ export default function EventDetailClient({ event, canEdit = false, featuredProd
                     ) : (
                       <Link
                         href={`/admin/events/new?edit=${currentEvent.id}`}
-                        className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                        className="flex items-center px-4 py-2 bg-[var(--accent)] text-white rounded-lg hover:bg-[var(--accent-hover)] transition-colors"
                       >
                         <FaEdit className="mr-2" />
                         Edit Event

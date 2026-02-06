@@ -112,7 +112,7 @@ export function FinishScheduleOptionsModal({
         {/* Header */}
         <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-5 text-white">
           <h2 className="text-xl font-bold">Before Your Interview</h2>
-          <p className="text-blue-100 text-sm mt-1">
+          <p className="text-white/90 text-sm mt-1">
             Optionally upload your finish schedule to help generate richer editorial content
           </p>
         </div>
@@ -124,18 +124,18 @@ export function FinishScheduleOptionsModal({
               {/* Upload Option */}
               <button
                 onClick={handleUploadClick}
-                className="w-full p-4 border-2 border-dashed border-blue-300 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition-all group"
+                className="w-full p-4 border-2 border-dashed border-[var(--accent)]/30 rounded-xl hover:border-[var(--accent)] hover:bg-[var(--accent)]/5 transition-all group"
               >
                 <div className="flex items-start gap-4">
-                  <div className="p-3 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors">
-                    <FaFileAlt className="w-6 h-6 text-blue-600" />
+                  <div className="p-3 bg-[var(--accent)]/10 rounded-lg group-hover:bg-[var(--accent)]/20 transition-colors">
+                    <FaFileAlt className="w-6 h-6 text-[var(--accent)]" />
                   </div>
                   <div className="text-left flex-1">
                     <h3 className="font-semibold text-gray-900">Upload Finish Schedule</h3>
                     <p className="text-sm text-gray-600 mt-1">
                       PDF, PowerPoint, Excel, or CSV with your product specifications
                     </p>
-                    <p className="text-xs text-blue-600 mt-2">
+                    <p className="text-xs text-[var(--accent)] mt-2">
                       AI will match products to your uploaded images
                     </p>
                   </div>
@@ -188,7 +188,7 @@ export function FinishScheduleOptionsModal({
 
           {(uploadStatus === 'uploading' || uploadStatus === 'processing') && (
             <div className="py-8 text-center">
-              <FaSpinner className="w-12 h-12 text-blue-600 animate-spin mx-auto mb-4" />
+              <FaSpinner className="w-12 h-12 text-[var(--accent)] animate-spin mx-auto mb-4" />
               <h3 className="font-semibold text-gray-900 mb-2">
                 {uploadStatus === 'uploading' ? 'Uploading...' : 'Processing finish schedule...'}
               </h3>
@@ -199,7 +199,7 @@ export function FinishScheduleOptionsModal({
               </p>
               <div className="w-full bg-gray-200 rounded-full h-2">
                 <div
-                  className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                  className="bg-[var(--accent)] h-2 rounded-full transition-all duration-300"
                   style={{ width: `${uploadProgress}%` }}
                 />
               </div>

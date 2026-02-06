@@ -97,7 +97,7 @@ export default function ProjectHero({ project, images = [], expandedBlocks }: Pr
                       }}
                       className="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-start gap-3 transition"
                     >
-                      <MdCampaign className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                      <MdCampaign className="w-5 h-5 text-[var(--accent)] flex-shrink-0 mt-0.5" />
                       <div>
                         <div className="font-medium text-gray-900 text-sm">Instagram Campaign</div>
                         <div className="text-xs text-gray-500 mt-0.5">

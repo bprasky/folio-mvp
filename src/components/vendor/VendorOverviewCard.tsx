@@ -25,8 +25,8 @@ export default function VendorOverviewCard({
     <div className="bg-white rounded-lg shadow-lg p-6">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         {/* Total Views */}
-        <div className="bg-blue-50 rounded-lg p-5">
-          <div className="flex items-center gap-2 text-blue-600 mb-2">
+        <div className="bg-[var(--accent)]/5 rounded-lg p-5">
+          <div className="flex items-center gap-2 text-[var(--accent)] mb-2">
             <FaEye className="text-xl" />
             <h3 className="font-semibold mb-1">Total Views</h3>
           </div>

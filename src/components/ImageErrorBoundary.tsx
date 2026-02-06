@@ -59,7 +59,7 @@ export default class ImageErrorBoundary extends Component<Props, State> {
           </p>
           <button
             onClick={this.handleRetry}
-            className="flex items-center gap-2 px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600 transition-colors"
+            className="flex items-center gap-2 px-3 py-1 bg-[var(--accent)] text-white rounded text-sm hover:bg-[var(--accent)] transition-colors"
           >
             <FaRefresh className="w-3 h-3" />
             Retry

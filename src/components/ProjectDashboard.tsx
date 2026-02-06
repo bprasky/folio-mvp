@@ -73,7 +73,7 @@ export default function ProjectDashboard({
               <div className="flex items-center gap-2 mb-4">
                 {project.isAIEnabled ? (
                   <div className="flex items-center gap-2 px-3 py-1 bg-gradient-to-r from-blue-100 to-purple-100 rounded-full">
-                    <FaRobot className="w-3 h-3 text-blue-600" />
+                    <FaRobot className="w-3 h-3 text-[var(--accent)]" />
                     <span className="text-xs font-medium text-blue-800">AI Enabled</span>
                   </div>
                 ) : (
@@ -95,7 +95,7 @@ export default function ProjectDashboard({
                 
                 <button
                   onClick={(e) => handleSaveItem(project.id, e)}
-                  className="text-xs px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
+                  className="text-xs px-3 py-1 bg-[var(--accent)] hover:bg-[var(--accent)] text-white rounded-lg transition-colors"
                 >
                   Save Item
                 </button>
@@ -116,7 +116,7 @@ export default function ProjectDashboard({
                     {project.aiData.rooms.slice(0, 2).map((room) => (
                       <span
                         key={room}
-                        className="text-xs px-2 py-1 bg-blue-50 text-blue-700 rounded-md"
+                        className="text-xs px-2 py-1 bg-[var(--accent)]/5 text-[var(--accent-hover)] rounded-md"
                       >
                         {room.replace('-', ' ')}
                       </span>

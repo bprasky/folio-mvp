@@ -176,12 +176,12 @@ export default function VideoUploader({
         case 'youtube':
           return <FaYoutube className="text-red-500" />;
         case 'vimeo':
-          return <FaVimeo className="text-blue-500" />;
+          return <FaVimeo className="text-[var(--accent)]" />;
         default:
           return <FaLink className="text-gray-500" />;
       }
     }
-    return <FaVideo className="text-blue-500" />;
+    return <FaVideo className="text-[var(--accent)]" />;
   };
 
   return (
@@ -210,7 +210,7 @@ export default function VideoUploader({
               onClick={() => setUploadMethod('file')}
               className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl border-2 transition-all ${
                 uploadMethod === 'file'
-                  ? 'border-blue-500 bg-blue-50 text-blue-700'
+                  ? 'border-[var(--accent)] bg-[var(--accent)]/5 text-[var(--accent-hover)]'
                   : 'border-gray-200 text-gray-600 hover:border-gray-300'
               }`}
             >
@@ -221,7 +221,7 @@ export default function VideoUploader({
               onClick={() => setUploadMethod('url')}
               className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl border-2 transition-all ${
                 uploadMethod === 'url'
-                  ? 'border-blue-500 bg-blue-50 text-blue-700'
+                  ? 'border-[var(--accent)] bg-[var(--accent)]/5 text-[var(--accent-hover)]'
                   : 'border-gray-200 text-gray-600 hover:border-gray-300'
               }`}
             >
@@ -235,7 +235,7 @@ export default function VideoUploader({
             <div
               className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-all ${
                 dragActive
-                  ? 'border-blue-500 bg-blue-50'
+                  ? 'border-[var(--accent)] bg-[var(--accent)]/5'
                   : videoFile
                   ? 'border-green-500 bg-green-50'
                   : 'border-gray-300 hover:border-gray-400'
@@ -277,7 +277,7 @@ export default function VideoUploader({
                     <p className="text-sm text-gray-500">or</p>
                     <button
                       onClick={() => fileInputRef.current?.click()}
-                      className="text-blue-600 hover:text-blue-700 font-medium"
+                      className="text-[var(--accent)] hover:text-[var(--accent-hover)] font-medium"
                     >
                       browse files
                     </button>
@@ -305,7 +305,7 @@ export default function VideoUploader({
                   value={videoUrl}
                   onChange={(e) => setVideoUrl(e.target.value)}
                   placeholder="https://youtube.com/watch?v=... or direct video URL"
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                 />
               </div>
               <p className="text-xs text-gray-500">
@@ -325,7 +325,7 @@ export default function VideoUploader({
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Enter video title"
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
               />
             </div>
 
@@ -338,7 +338,7 @@ export default function VideoUploader({
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Describe your video content"
                 rows={3}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent resize-none"
               />
             </div>
 
@@ -353,7 +353,7 @@ export default function VideoUploader({
                   value={tags}
                   onChange={(e) => setTags(e.target.value)}
                   placeholder="design, modern, kitchen (comma separated)"
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                 />
               </div>
             </div>
@@ -369,7 +369,7 @@ export default function VideoUploader({
                   <select
                     value={relatedProjectId}
                     onChange={(e) => setRelatedProjectId(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none"
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent appearance-none"
                   >
                     <option value="">No project</option>
                     {projects.map((project) => (
@@ -392,7 +392,7 @@ export default function VideoUploader({
                   onClick={() => setIsPublic(true)}
                   className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl border-2 transition-all ${
                     isPublic
-                      ? 'border-blue-500 bg-blue-50 text-blue-700'
+                      ? 'border-[var(--accent)] bg-[var(--accent)]/5 text-[var(--accent-hover)]'
                       : 'border-gray-200 text-gray-600 hover:border-gray-300'
                   }`}
                 >
@@ -403,7 +403,7 @@ export default function VideoUploader({
                   onClick={() => setIsPublic(false)}
                   className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl border-2 transition-all ${
                     !isPublic
-                      ? 'border-blue-500 bg-blue-50 text-blue-700'
+                      ? 'border-[var(--accent)] bg-[var(--accent)]/5 text-[var(--accent-hover)]'
                       : 'border-gray-200 text-gray-600 hover:border-gray-300'
                   }`}
                 >
@@ -429,7 +429,7 @@ export default function VideoUploader({
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
                   <motion.div
-                    className="bg-blue-600 h-2 rounded-full"
+                    className="bg-[var(--accent)] h-2 rounded-full"
                     initial={{ width: 0 }}
                     animate={{ width: `${uploadProgress}%` }}
                     transition={{ duration: 0.3 }}
@@ -437,7 +437,7 @@ export default function VideoUploader({
                 </div>
                 
                 {transcriptionStatus === 'processing' && (
-                  <div className="flex items-center gap-2 text-sm text-blue-600">
+                  <div className="flex items-center gap-2 text-sm text-[var(--accent)]">
                     <FaSpinner className="w-4 h-4 animate-spin" />
                     AI transcription in progress...
                   </div>
@@ -469,7 +469,7 @@ export default function VideoUploader({
             <button
               onClick={handleUpload}
               disabled={isUploading || uploadComplete || !title.trim() || (uploadMethod === 'file' && !videoFile) || (uploadMethod === 'url' && !videoUrl.trim())}
-              className="flex-1 py-3 px-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="flex-1 py-3 px-4 bg-[var(--accent)] text-white rounded-xl hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {isUploading ? (
                 <>

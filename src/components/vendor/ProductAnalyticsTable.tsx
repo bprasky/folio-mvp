@@ -56,7 +56,7 @@ export default function ProductAnalyticsTable({ products }: ProductAnalyticsTabl
               <tr key={product.product_id} className="hover:bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap">
                   <Link href={`/vendor/product/${product.product_id}`}>
-                    <div className="text-sm font-medium text-blue-600 hover:underline cursor-pointer">{product.product_name}</div>
+                    <div className="text-sm font-medium text-[var(--accent)] hover:underline cursor-pointer">{product.product_name}</div>
                   </Link>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">

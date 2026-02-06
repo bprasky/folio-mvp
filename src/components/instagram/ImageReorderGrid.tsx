@@ -97,8 +97,8 @@ function SortableImageItem({ image, index }: SortableImageItemProps) {
         {index + 1}
       </div>
       {isDragging && (
-        <div className="absolute inset-0 bg-blue-500/20 flex items-center justify-center">
-          <div className="text-blue-600 font-semibold">Moving...</div>
+        <div className="absolute inset-0 bg-[var(--accent)]/20 flex items-center justify-center">
+          <div className="text-[var(--accent)] font-semibold">Moving...</div>
         </div>
       )}
     </div>

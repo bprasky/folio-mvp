@@ -114,9 +114,9 @@ export default function DesignerEventsSchedule() {
           </div>
 
           {/* Future Implementation Note */}
-          <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
-            <h3 className="text-lg font-semibold text-blue-900 mb-2">What's Coming Next</h3>
-            <ul className="text-blue-800 space-y-1">
+          <div className="mt-8 bg-[var(--accent)]/5 border border-[var(--accent)]/20 rounded-lg p-6">
+            <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-2">What's Coming Next</h3>
+            <ul className="text-[var(--accent-hover)] space-y-1">
               <li>• RSVP to events directly from the events page</li>
               <li>• Calendar integration for your scheduled events</li>
               <li>• Event notifications and reminders</li>

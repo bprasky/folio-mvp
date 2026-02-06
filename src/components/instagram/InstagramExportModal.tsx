@@ -468,7 +468,7 @@ export default function InstagramExportModal({
                 onClick={() => setActiveTab(tab.id as any)}
                 className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
                   activeTab === tab.id
-                    ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50'
+                    ? 'text-[var(--accent)] border-b-2 border-[var(--accent)] bg-[var(--accent)]/5'
                     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                 }`}
               >
@@ -529,7 +529,7 @@ export default function InstagramExportModal({
               <div className="space-y-4">
                 {loadingCaption ? (
                   <div className="text-center py-8">
-                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent)]"></div>
                     <p className="mt-2 text-sm text-gray-600">Generating caption...</p>
                   </div>
                 ) : (
@@ -542,7 +542,7 @@ export default function InstagramExportModal({
                         value={caption}
                         onChange={(e) => setCaption(e.target.value)}
                         rows={8}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent resize-none"
                         placeholder="Caption will be generated automatically..."
                       />
                       <p className="mt-1 text-xs text-gray-500">

@@ -179,7 +179,7 @@ export function ProjectDetailPage({ project, isOwner }: ProjectDetailPageProps) 
       {/* Back Button & Edit Controls */}
       <div className="p-4 bg-white shadow-sm">
         <div className="flex items-center justify-between">
-          <Link href="/projects" className="flex items-center text-blue-600 hover:underline">
+          <Link href="/projects" className="flex items-center text-[var(--accent)] hover:underline">
             <FaArrowLeft className="mr-2" /> Back to Projects
           </Link>
           
@@ -207,7 +207,7 @@ export function ProjectDetailPage({ project, isOwner }: ProjectDetailPageProps) 
               ) : (
                 <button
                   onClick={() => setIsEditing(true)}
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 bg-[var(--accent)] text-white rounded-lg hover:bg-[var(--accent-hover)] transition-colors"
                 >
                   <FaEdit className="w-4 h-4" />
                   Edit Project
@@ -273,7 +273,7 @@ export function ProjectDetailPage({ project, isOwner }: ProjectDetailPageProps) 
               onClick={() => setActiveTab('overview')}
               className={`py-2 px-1 border-b-2 font-medium text-sm ${
                 activeTab === 'overview'
-                  ? 'border-blue-500 text-blue-600'
+                  ? 'border-[var(--accent)] text-[var(--accent)]'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
@@ -283,7 +283,7 @@ export function ProjectDetailPage({ project, isOwner }: ProjectDetailPageProps) 
               onClick={() => setActiveTab('boards')}
               className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center ${
                 activeTab === 'boards'
-                  ? 'border-blue-500 text-blue-600'
+                  ? 'border-[var(--accent)] text-[var(--accent)]'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
@@ -371,8 +371,8 @@ export function ProjectDetailPage({ project, isOwner }: ProjectDetailPageProps) 
           <section className="bg-white p-8 rounded-lg shadow-md">
             <h2 className="text-3xl font-bold mb-6">Project Insights</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="text-center p-4 bg-blue-50 rounded-lg">
-                <div className="text-3xl font-bold text-blue-600">{currentProject.views.toLocaleString()}</div>
+              <div className="text-center p-4 bg-[var(--accent)]/5 rounded-lg">
+                <div className="text-3xl font-bold text-[var(--accent)]">{currentProject.views.toLocaleString()}</div>
                 <div className="text-gray-600">Views</div>
               </div>
               <div className="text-center p-4 bg-green-50 rounded-lg">
@@ -426,7 +426,7 @@ export function ProjectDetailPage({ project, isOwner }: ProjectDetailPageProps) 
           <div className="bg-white p-6 rounded-lg shadow-md">
             <h2 className="text-xl font-semibold mb-4">Project Actions</h2>
             <div className="space-y-3">
-              <button className="flex items-center w-full bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition">
+              <button className="flex items-center w-full bg-[var(--accent)] text-white px-4 py-2 rounded-lg font-medium hover:bg-[var(--accent-hover)] transition">
                 <FaEdit className="mr-2" /> Edit Project
               </button>
               <button 

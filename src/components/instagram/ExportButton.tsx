@@ -107,7 +107,7 @@ export default function ExportButton({
       <button
         onClick={handleExport}
         disabled={isExporting || orderedImageIds.length === 0}
-        className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+        className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-[var(--accent)] text-white rounded-lg hover:bg-[var(--accent-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
         title="Generate and download all carousel slides as a ZIP file"
       >
         {isExporting ? (

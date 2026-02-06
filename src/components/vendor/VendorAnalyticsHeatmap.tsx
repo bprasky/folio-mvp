@@ -38,10 +38,10 @@ export default function VendorAnalyticsHeatmap({
           <div className="space-y-3">
             {entries.slice(0, 8).map(([region, count]) => {
               const intensity = maxCount > 0 ? count / maxCount : 0;
-              const bgColor = intensity > 0.7 ? 'bg-blue-100' : 
-                             intensity > 0.4 ? 'bg-blue-50' : 'bg-gray-50';
+              const bgColor = intensity > 0.7 ? 'bg-[var(--accent)]/10' : 
+                             intensity > 0.4 ? 'bg-[var(--accent)]/5' : 'bg-gray-50';
               const textColor = intensity > 0.7 ? 'text-blue-900' : 
-                               intensity > 0.4 ? 'text-blue-700' : 'text-gray-600';
+                               intensity > 0.4 ? 'text-[var(--accent-hover)]' : 'text-gray-600';
               
               return (
                 <div key={region} className="flex items-center justify-between">
@@ -49,7 +49,7 @@ export default function VendorAnalyticsHeatmap({
                   <div className="flex items-center gap-2">
                     <div className={`w-16 h-2 rounded-full ${bgColor}`}>
                       <div 
-                        className={`h-2 rounded-full bg-blue-500 transition-all duration-300`}
+                        className={`h-2 rounded-full bg-[var(--accent)] transition-all duration-300`}
                         style={{ width: `${intensity * 100}%` }}
                       />
                     </div>

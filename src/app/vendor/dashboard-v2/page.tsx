@@ -94,7 +94,7 @@ export default function VendorDashboardV2() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--accent)] mx-auto"></div>
           <p className="mt-4 text-gray-600">Loading your command center...</p>
         </div>
       </div>
@@ -121,7 +121,7 @@ export default function VendorDashboardV2() {
               )}
               <button
                 onClick={() => router.push('/vendor/create-project')}
-                className="flex items-center bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+                className="flex items-center bg-[var(--accent)] text-white px-6 py-3 rounded-lg hover:bg-[var(--accent-hover)] transition-colors"
               >
                 <FaPlus className="mr-2" />
                 New Project
@@ -143,8 +143,8 @@ export default function VendorDashboardV2() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-center">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <FaChartLine className="text-blue-600" />
+              <div className="p-2 bg-[var(--accent)]/10 rounded-lg">
+                <FaChartLine className="text-[var(--accent)]" />
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Active Projects</p>

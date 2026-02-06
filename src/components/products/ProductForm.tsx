@@ -454,7 +454,7 @@ export default function ProductForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* URL Import Section */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+      <div className="bg-[var(--accent)]/5 border border-[var(--accent)]/20 rounded-lg p-4">
         <h3 className="text-sm font-medium text-blue-900 mb-3 flex items-center gap-2">
           <FaLink className="w-4 h-4" />
           Import from URL
@@ -467,13 +467,13 @@ export default function ProductForm({
               placeholder="https://example.com/product"
               value={formData.url}
               onChange={(e) => handleInputChange('url', e.target.value)}
-              className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
             />
             <button
               type="button"
               onClick={handleImportFromUrl}
               disabled={isImporting || !formData.url.trim()}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm flex items-center gap-2"
+              className="px-4 py-2 bg-[var(--accent)] text-white rounded-md hover:bg-[var(--accent-hover)] disabled:opacity-50 disabled:cursor-not-allowed text-sm flex items-center gap-2"
             >
               {isImporting ? <FaSpinner className="w-4 h-4 animate-spin" /> : <FaLink className="w-4 h-4" />}
               Import
@@ -601,7 +601,7 @@ export default function ProductForm({
             onChange={(e) => handleInputChange('name', e.target.value)}
             placeholder="Enter product name"
             required
-            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
           />
         </div>
 
@@ -614,7 +614,7 @@ export default function ProductForm({
             value={formData.sku}
             onChange={(e) => handleInputChange('sku', e.target.value)}
             placeholder="Product SKU"
-            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
           />
         </div>
 
@@ -627,7 +627,7 @@ export default function ProductForm({
             value={formData.brand}
             onChange={(e) => handleInputChange('brand', e.target.value)}
             placeholder="Brand name"
-            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
           />
         </div>
 
@@ -640,7 +640,7 @@ export default function ProductForm({
             value={formData.vendorName}
             onChange={(e) => handleInputChange('vendorName', e.target.value)}
             placeholder="Vendor or retailer name"
-            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
           />
         </div>
 
@@ -654,12 +654,12 @@ export default function ProductForm({
               value={formData.priceCents}
               onChange={(e) => handleInputChange('priceCents', e.target.value)}
               placeholder="12900"
-              className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
             />
             <select
               value={formData.currency}
               onChange={(e) => handleInputChange('currency', e.target.value)}
-              className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
             >
               <option value="USD">USD</option>
               <option value="EUR">EUR</option>
@@ -691,7 +691,7 @@ export default function ProductForm({
                   widthIn: e.target.value ? Number(e.target.value) : undefined
                 })}
                 placeholder="24"
-                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
               />
             </div>
             <div>
@@ -705,7 +705,7 @@ export default function ProductForm({
                   depthIn: e.target.value ? Number(e.target.value) : undefined
                 })}
                 placeholder="18"
-                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
               />
             </div>
             <div>
@@ -719,7 +719,7 @@ export default function ProductForm({
                   heightIn: e.target.value ? Number(e.target.value) : undefined
                 })}
                 placeholder="30"
-                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
               />
             </div>
           </div>
@@ -746,7 +746,7 @@ export default function ProductForm({
                     }
                   }
                 }}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
               >
                 <option value="">Select material type...</option>
                 <option value="stone">Stone / Marble / Quartz</option>
@@ -772,7 +772,7 @@ export default function ProductForm({
               <select
                 value={formData.slotKey || ''}
                 onChange={(e) => handleInputChange('slotKey', e.target.value)}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
               >
                 <option value="">None / Unassigned</option>
                 {roomTemplate.slots
@@ -802,7 +802,7 @@ export default function ProductForm({
                 onChange={(e) => handleInputChange('applicationNotes', e.target.value)}
                 placeholder="e.g., 'Use for countertops and backsplash' or 'Entire kitchen including cabinets will be made from this material'"
                 rows={2}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
               />
               <p className="text-xs text-gray-500 mt-1">
                 Describe how this material should be applied. This will be used when generating room visualizations.
@@ -820,7 +820,7 @@ export default function ProductForm({
             value={formData.url}
             onChange={(e) => handleInputChange('url', e.target.value)}
             placeholder="https://example.com/product"
-            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
           />
         </div>
 
@@ -833,7 +833,7 @@ export default function ProductForm({
             onChange={(e) => handleInputChange('description', e.target.value)}
             placeholder="Product description"
             rows={3}
-            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
           />
         </div>
 
@@ -847,7 +847,7 @@ export default function ProductForm({
               value={formData.imageUrl}
               onChange={(e) => handleInputChange('imageUrl', e.target.value)}
               placeholder="https://example.com/image.jpg"
-              className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
             />
             <button
               type="button"
@@ -877,14 +877,14 @@ export default function ProductForm({
         <button
           type="button"
           onClick={onCancel}
-          className="px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
         >
           Cancel
         </button>
         <button
           type="submit"
           disabled={isLoading || !formData.name.trim()}
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="px-4 py-2 bg-[var(--accent)] text-white rounded-md hover:bg-[var(--accent-hover)] disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
         >
           {isLoading ? 'Saving...' : mode === 'create' ? 'Create Product' : 'Update Product'}
         </button>

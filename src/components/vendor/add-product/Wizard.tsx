@@ -98,7 +98,7 @@ export function ProductWizard({ vendorId }: ProductWizardProps) {
                       index < currentStepIndex
                         ? 'bg-green-500 text-white'
                         : index === currentStepIndex
-                        ? 'bg-blue-600 text-white'
+                        ? 'bg-[var(--accent)] text-white'
                         : 'bg-stone-200 dark:bg-stone-700 text-stone-600 dark:text-stone-400'
                     }`}
                   >
@@ -110,7 +110,7 @@ export function ProductWizard({ vendorId }: ProductWizardProps) {
                   </div>
                   <div className={`mt-2 text-xs text-center ${
                     index === currentStepIndex
-                      ? 'text-blue-600 dark:text-blue-400 font-medium'
+                      ? 'text-[var(--accent)] dark:text-blue-400 font-medium'
                       : 'text-stone-600 dark:text-stone-400'
                   }`}>
                     {step.label}

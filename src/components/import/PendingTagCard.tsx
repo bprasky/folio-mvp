@@ -96,7 +96,7 @@ export function PendingTagCard({
                 href={tag.topSuggestion.productUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-xs text-blue-600 hover:underline flex-shrink-0"
+                className="text-xs text-[var(--accent)] hover:underline flex-shrink-0"
               >
                 View
               </a>

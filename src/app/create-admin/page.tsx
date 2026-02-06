@@ -33,7 +33,7 @@ export default function CreateAdminPage() {
         <button
           onClick={createAdmin}
           disabled={loading}
-          className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+          className="w-full bg-[var(--accent)] text-white py-2 px-4 rounded-lg hover:bg-[var(--accent-hover)] disabled:opacity-50"
         >
           {loading ? 'Creating...' : 'Create New Admin User'}
         </button>
@@ -48,8 +48,8 @@ export default function CreateAdminPage() {
                   <p><strong>Password:</strong> {result.credentials.password}</p>
                   <p><strong>Role:</strong> {result.credentials.role}</p>
                 </div>
-                <div className="mt-4 p-3 bg-blue-100 rounded">
-                  <p className="text-blue-800 text-sm">
+                <div className="mt-4 p-3 bg-[var(--accent)]/10 rounded">
+                  <p className="text-[var(--accent-hover)] text-sm">
                     <strong>Login at:</strong> <a href="/auth/signin" className="underline">/auth/signin</a>
                   </p>
                 </div>

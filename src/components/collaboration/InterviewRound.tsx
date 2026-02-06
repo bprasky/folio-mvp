@@ -163,7 +163,7 @@ export function InterviewRound({
         {/* Progress bar */}
         <div className="h-2 bg-neutral-100 rounded-full overflow-hidden">
           <div
-            className="h-full bg-blue-500 transition-all duration-300"
+            className="h-full bg-[var(--accent)] transition-all duration-300"
             style={{ width: `${progress}%` }}
           />
         </div>
@@ -179,7 +179,7 @@ export function InterviewRound({
               onClick={() => setCurrentQuestionIndex(index)}
               className={`px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors ${
                 index === currentQuestionIndex
-                  ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50'
+                  ? 'text-[var(--accent)] border-b-2 border-[var(--accent)] bg-[var(--accent)]/5'
                   : responses[q.id]?.trim()
                   ? 'text-green-600 hover:bg-neutral-50'
                   : 'text-neutral-500 hover:bg-neutral-50'
@@ -208,7 +208,7 @@ export function InterviewRound({
           <div className="p-6">
             {/* Round 3 quote reference */}
             {round === 3 && currentQuestion.referencedQuote && (
-              <div className="mb-6 p-4 bg-neutral-50 rounded-lg border-l-4 border-blue-500">
+              <div className="mb-6 p-4 bg-neutral-50 rounded-lg border-l-4 border-[var(--accent)]">
                 <p className="text-sm text-neutral-500 mb-1">
                   {currentQuestion.referencesParty === 'VENDOR' ? 'The vendor' : 'The designer'} said:
                 </p>
@@ -219,7 +219,7 @@ export function InterviewRound({
             {/* Question */}
             <div className="mb-4">
               {currentQuestion.category && (
-                <span className="text-xs font-medium text-blue-600 uppercase tracking-wide">
+                <span className="text-xs font-medium text-[var(--accent)] uppercase tracking-wide">
                   {currentQuestion.category}
                 </span>
               )}
@@ -236,7 +236,7 @@ export function InterviewRound({
               value={responses[currentQuestion.id] || ''}
               onChange={(e) => handleAnswerChange(currentQuestion.id, e.target.value)}
               placeholder="Share your thoughts..."
-              className="w-full h-40 px-4 py-3 border border-neutral-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full h-40 px-4 py-3 border border-neutral-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
               maxLength={5000}
             />
             <div className="flex justify-between items-center mt-2 text-xs text-neutral-400">

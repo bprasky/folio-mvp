@@ -345,9 +345,9 @@ export function PdfSpecImportModal({
               <p className="text-sm text-stone-500">or click to browse • PDF up to 50MB</p>
             </div>
 
-            <div className="p-4 bg-blue-50 rounded-lg">
+            <div className="p-4 bg-[var(--accent)]/5 rounded-lg">
               <h4 className="font-medium text-blue-900 mb-2">What we extract:</h4>
-              <ul className="text-sm text-blue-700 space-y-1">
+              <ul className="text-sm text-[var(--accent-hover)] space-y-1">
                 <li>• Brand names (60+ known vendors)</li>
                 <li>• Product names and descriptions</li>
                 <li>• Prices ($1,485, $6,120 ea., etc.)</li>
@@ -400,13 +400,13 @@ export function PdfSpecImportModal({
                     const allIds = [...items.high, ...items.medium, ...items.low].map(i => i.id);
                     setSelected(new Set(allIds));
                   }}
-                  className="text-sm text-blue-600 hover:text-blue-800"
+                  className="text-sm text-[var(--accent)] hover:text-blue-800"
                 >
                   Select all
                 </button>
                 <button
                   onClick={() => setSelected(new Set())}
-                  className="text-sm text-blue-600 hover:text-blue-800"
+                  className="text-sm text-[var(--accent)] hover:text-blue-800"
                 >
                   Select none
                 </button>
@@ -663,7 +663,7 @@ function ExtractedItemRow({
             <button
               onClick={(e) => { e.stopPropagation(); onCompleteWithAI(); }}
               disabled={loading}
-              className="mt-2 text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"
+              className="mt-2 text-xs text-[var(--accent)] hover:text-blue-800 flex items-center gap-1"
             >
               {loading ? (
                 <><FaSpinner className="w-3 h-3 animate-spin" /> Searching...</>

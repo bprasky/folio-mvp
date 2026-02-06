@@ -24,7 +24,7 @@ export default function GraphNode({ node, type }: GraphNodeProps) {
   const getNodeColor = () => {
     switch (type) {
       case 'designer':
-        return 'bg-blue-50 border-blue-200';
+        return 'bg-[var(--accent)]/5 border-[var(--accent)]/20';
       case 'vendor':
         return 'bg-green-50 border-green-200';
       case 'product':

@@ -44,7 +44,7 @@ export default function TagTrail({
             <a
               key={id}
               href={meta.href || '#'}
-              className="rounded-full bg-blue-100 px-2 py-1 text-xs text-blue-700 hover:bg-blue-200 transition-colors"
+              className="rounded-full bg-[var(--accent)]/10 px-2 py-1 text-xs text-[var(--accent-hover)] hover:bg-[var(--accent)]/20 transition-colors"
               onMouseEnter={() => track({ ev: 'hover_tag', productId: id, source: 'trail' })}
             >
               {meta.label}

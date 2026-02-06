@@ -53,7 +53,7 @@ export default function InlineTagLink({
   return (
     <span
       ref={ref}
-      className="relative font-medium underline decoration-dotted underline-offset-4 cursor-pointer text-blue-600/90 hover:text-blue-700"
+      className="relative font-medium underline decoration-dotted underline-offset-4 cursor-pointer text-[var(--accent)]/90 hover:text-[var(--accent-hover)]"
       onMouseEnter={() => {
         setOpen(true);
         track({ ev: 'hover_tag', productId, source: 'inline' });
@@ -88,7 +88,7 @@ export default function InlineTagLink({
                   <div className="mt-2 flex gap-2">
                     <a
                       href={data.slug ? `/product/${data.slug}` : `/products/${productId}`}
-                      className="text-xs px-2 py-1 rounded-full bg-blue-100 hover:bg-blue-200 text-blue-700"
+                      className="text-xs px-2 py-1 rounded-full bg-[var(--accent)]/10 hover:bg-[var(--accent)]/20 text-[var(--accent-hover)]"
                     >
                       View
                     </a>

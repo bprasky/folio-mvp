@@ -88,7 +88,7 @@ export default function VendorCreateEventPage() {
                 required
                 value={formData.title}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
                 placeholder="Enter event title"
               />
             </div>
@@ -104,7 +104,7 @@ export default function VendorCreateEventPage() {
                 rows={4}
                 value={formData.description}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
                 placeholder="Describe your event"
               />
             </div>
@@ -119,7 +119,7 @@ export default function VendorCreateEventPage() {
                 required
                 value={formData.eventType}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
               >
                 <option value="booth">Booth/Exhibition</option>
                 <option value="dinner">Dinner/Networking</option>
@@ -142,7 +142,7 @@ export default function VendorCreateEventPage() {
                 required
                 value={formData.location}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
                 placeholder="Enter location"
               />
             </div>
@@ -156,7 +156,7 @@ export default function VendorCreateEventPage() {
                 name="parentFestivalId"
                 value={formData.parentFestivalId}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
               >
                 <option value="">Create standalone event</option>
                 {festivals.map((festival) => (
@@ -182,7 +182,7 @@ export default function VendorCreateEventPage() {
                   required
                   value={formData.startDate}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
                 />
               </div>
 
@@ -197,14 +197,14 @@ export default function VendorCreateEventPage() {
                   required
                   value={formData.endDate}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
                 />
               </div>
             </div>
 
-            <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
-              <h3 className="text-sm font-medium text-blue-800 mb-2">Event Submission Process</h3>
-              <ul className="text-sm text-blue-700 space-y-1">
+            <div className="bg-[var(--accent)]/5 border border-[var(--accent)]/20 rounded-md p-4">
+              <h3 className="text-sm font-medium text-[var(--accent-hover)] mb-2">Event Submission Process</h3>
+              <ul className="text-sm text-[var(--accent-hover)] space-y-1">
                 <li>• Your event will be reviewed by our admin team</li>
                 <li>• Approval typically takes 24-48 hours</li>
                 <li>• You'll receive an email notification once approved</li>
@@ -216,7 +216,7 @@ export default function VendorCreateEventPage() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                className="flex-1 bg-[var(--accent)] text-white py-2 px-4 rounded-md hover:bg-[var(--accent-hover)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] disabled:opacity-50"
               >
                 {isLoading ? 'Creating...' : 'Submit Event for Review'}
               </button>

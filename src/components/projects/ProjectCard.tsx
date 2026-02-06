@@ -28,7 +28,7 @@ const STAGE_LABELS = {
 };
 
 const STAGE_COLORS = {
-  concept: 'bg-blue-50 text-blue-700 border-blue-200',
+  concept: 'bg-[var(--accent)]/5 text-[var(--accent-hover)] border-[var(--accent)]/20',
   schematic: 'bg-indigo-50 text-indigo-700 border-indigo-200',
   design_development: 'bg-purple-50 text-purple-700 border-purple-200',
   cd_pre_spec: 'bg-yellow-50 text-yellow-700 border-yellow-200',
@@ -98,7 +98,7 @@ export function ProjectCard({
             <select
               value={project.stage}
               onChange={handleStageChange}
-              className="text-xs border border-[var(--ridge-outer)] rounded-lg px-2 py-1 bg-[var(--bg-base)] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="text-xs border border-[var(--ridge-outer)] rounded-lg px-2 py-1 bg-[var(--bg-base)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
               onClick={(e) => e.stopPropagation()}
             >
               {Object.entries(STAGE_LABELS).map(([stage, label]) => (

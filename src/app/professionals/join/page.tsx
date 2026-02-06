@@ -220,8 +220,8 @@ function JoinContent() {
           className="w-full p-6 bg-white/50 backdrop-blur-sm border border-gray-200/70 rounded-xl hover:border-blue-400 hover:bg-white/70 transition-all text-left shadow-sm"
         >
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
-              <Palette className="w-6 h-6 text-blue-600" />
+            <div className="w-12 h-12 bg-[var(--accent)]/10 rounded-xl flex items-center justify-center flex-shrink-0">
+              <Palette className="w-6 h-6 text-[var(--accent)]" />
             </div>
             <div>
               <h4 className="font-semibold text-gray-900">Design Firm</h4>
@@ -321,7 +321,7 @@ function JoinContent() {
                   <div className="flex items-center gap-2">
                     <h4 className="font-medium text-gray-900">{org.name}</h4>
                     {org.status === 'CLAIMED' && (
-                      <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full">
+                      <span className="px-2 py-0.5 bg-[var(--accent)]/10 text-[var(--accent-hover)] text-xs rounded-full">
                         Verified
                       </span>
                     )}
@@ -555,8 +555,8 @@ function JoinContent() {
         <div className="space-y-4">
           <GlassCard variant="subtle" padding="lg" rounded="xl">
             <div className="flex items-start gap-3">
-              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                <CheckCircle className="w-5 h-5 text-blue-600" />
+              <div className="w-10 h-10 bg-[var(--accent)]/10 rounded-full flex items-center justify-center flex-shrink-0">
+                <CheckCircle className="w-5 h-5 text-[var(--accent)]" />
               </div>
               <div>
                 <h4 className="font-medium text-gray-900 mb-1">Request to join</h4>

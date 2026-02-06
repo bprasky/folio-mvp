@@ -165,7 +165,7 @@ export function DesignerInsights({ productId }: DesignerInsightsProps) {
               >
                 <Play
                   className={`h-4 w-4 ${
-                    playingId === insight.id ? "text-blue-600" : "text-gray-400"
+                    playingId === insight.id ? "text-[var(--accent)]" : "text-gray-400"
                   }`}
                 />
               </button>

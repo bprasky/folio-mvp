@@ -56,7 +56,7 @@ export default function ConfirmDialog({
 
   const confirmButtonClasses = confirmVariant === 'destructive' 
     ? 'bg-red-600 hover:bg-red-700 focus:ring-red-500' 
-    : 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500';
+    : 'bg-[var(--accent)] hover:bg-[var(--accent-hover)] focus:ring-[var(--accent)]';
 
   return createPortal(
     <div 
@@ -95,7 +95,7 @@ export default function ConfirmDialog({
         <div className="flex items-center justify-end gap-3">
           <button
             onClick={onCancel}
-            className="px-4 py-2 text-sm font-medium text-[var(--text-primary)] bg-[var(--bg-base)] border border-[var(--ridge-outer)] rounded-lg hover:bg-[var(--bg-elevated)] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+            className="px-4 py-2 text-sm font-medium text-[var(--text-primary)] bg-[var(--bg-base)] border border-[var(--ridge-outer)] rounded-lg hover:bg-[var(--bg-elevated)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent transition-colors"
           >
             {cancelText}
           </button>

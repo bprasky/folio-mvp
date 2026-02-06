@@ -54,13 +54,13 @@ export default function QuoteSelector({
         {quotes.map((quote, index) => (
           <label
             key={index}
-            className="flex items-start gap-3 p-3 rounded-lg border border-gray-200 hover:border-blue-300 cursor-pointer transition-colors"
+            className="flex items-start gap-3 p-3 rounded-lg border border-gray-200 hover:border-[var(--accent)]/30 cursor-pointer transition-colors"
           >
             <input
               type="checkbox"
               checked={selectedQuotes.includes(quote)}
               onChange={() => handleToggle(quote)}
-              className="mt-1 h-4 w-4 text-blue-600 rounded focus:ring-blue-500"
+              className="mt-1 h-4 w-4 text-[var(--accent)] rounded focus:ring-[var(--accent)]"
             />
             <span className="flex-1 text-sm text-gray-700 italic leading-relaxed">
               "{quote}"

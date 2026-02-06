@@ -69,7 +69,7 @@ export default function RepDashboardPage() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--accent)] mx-auto"></div>
           <p className="mt-4 text-gray-600">Loading dashboard...</p>
         </div>
       </div>
@@ -84,7 +84,7 @@ export default function RepDashboardPage() {
           <p className="text-gray-600 mb-6">{error}</p>
           <Link
             href="/"
-            className="inline-block bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700"
+            className="inline-block bg-[var(--accent)] text-white py-2 px-4 rounded hover:bg-[var(--accent-hover)]"
           >
             Go to Home
           </Link>
@@ -170,14 +170,14 @@ export default function RepDashboardPage() {
                           <div>
                             <Link
                               href={`/project/${item.project.id}`}
-                              className="text-lg font-semibold hover:text-blue-600"
+                              className="text-lg font-semibold hover:text-[var(--accent)]"
                             >
                               {item.project.title || 'Untitled Project'}
                             </Link>
                             {item.designer && (
                               <Link
                                 href={`/designer/${item.designer.id}`}
-                                className="text-sm text-gray-600 hover:text-blue-600 ml-2"
+                                className="text-sm text-gray-600 hover:text-[var(--accent)] ml-2"
                               >
                                 by {item.designer.name}
                               </Link>

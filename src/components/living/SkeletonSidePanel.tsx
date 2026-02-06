@@ -294,7 +294,7 @@ export default function SkeletonSidePanel({
                     onClick={() => setSelectedProduct(product)}
                     className={`w-full p-3 text-left border rounded-lg transition-colors ${
                       selectedProduct?.id === product.id
-                        ? 'border-blue-500 bg-blue-50'
+                        ? 'border-[var(--accent)] bg-[var(--accent)]/5'
                         : 'hover:bg-gray-50'
                     }`}
                   >
@@ -317,7 +317,7 @@ export default function SkeletonSidePanel({
               <button
                 onClick={handleConfirmProduct}
                 disabled={!selectedProduct || loading}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 px-4 py-2 bg-[var(--accent)] text-white rounded-md hover:bg-[var(--accent-hover)] disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? 'Confirming...' : 'Confirm'}
               </button>
@@ -351,7 +351,7 @@ export default function SkeletonSidePanel({
               <button
                 onClick={handleConfirmLabel}
                 disabled={!labelText.trim() || loading}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 px-4 py-2 bg-[var(--accent)] text-white rounded-md hover:bg-[var(--accent-hover)] disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? 'Confirming...' : 'Confirm'}
               </button>

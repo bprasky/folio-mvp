@@ -128,7 +128,7 @@ export function ExtractedItemCard({
               <button
                 onClick={onCompleteWithAI}
                 disabled={loading}
-                className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1 disabled:opacity-50"
+                className="text-sm text-[var(--accent)] hover:text-blue-800 flex items-center gap-1 disabled:opacity-50"
               >
                 {loading ? (
                   <>
@@ -239,7 +239,7 @@ function ItemDetails({ item }: { item: ExtractedItem }) {
               href={item.productUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-blue-600 hover:underline truncate block max-w-xs"
+              className="text-[var(--accent)] hover:underline truncate block max-w-xs"
             >
               {item.productUrl}
             </a>

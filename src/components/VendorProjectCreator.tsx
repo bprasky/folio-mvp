@@ -68,7 +68,7 @@ export default function VendorProjectCreator(props: any) {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="e.g., Smith Residence"
-            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
             required
           />
         </div>
@@ -80,13 +80,13 @@ export default function VendorProjectCreator(props: any) {
               value={newRoom}
               onChange={(e) => setNewRoom(e.target.value)}
               placeholder="e.g., Kitchen"
-              className="flex-1 rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex-1 rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
               onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addRoom())}
             />
             <button 
               type="button" 
               onClick={addRoom} 
-              className="rounded-md border border-gray-300 px-4 py-2 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="rounded-md border border-gray-300 px-4 py-2 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
             >
               Add
             </button>
@@ -115,7 +115,7 @@ export default function VendorProjectCreator(props: any) {
             value={note}
             onChange={(e) => setNote(e.target.value)}
             placeholder="Context for the designer"
-            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
             rows={3}
           />
         </div>
@@ -126,7 +126,7 @@ export default function VendorProjectCreator(props: any) {
           <button
             type="submit"
             disabled={submitting}
-            className="rounded-lg px-6 py-2 bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="rounded-lg px-6 py-2 bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)] disabled:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
           >
             {submitting ? "Creating…" : "Create Project"}
           </button>

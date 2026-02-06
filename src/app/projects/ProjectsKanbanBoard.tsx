@@ -9,7 +9,7 @@ interface ProjectsKanbanBoardProps {
 }
 
 const PHASES = [
-  { key: 'concept', label: 'Concept', color: 'bg-blue-100 text-blue-800' },
+  { key: 'concept', label: 'Concept', color: 'bg-[var(--accent)]/10 text-[var(--accent-hover)]' },
   { key: 'schematic', label: 'Schematic', color: 'bg-green-100 text-green-800' },
   { key: 'design_development', label: 'Design Development', color: 'bg-[var(--accent)]/10 text-[var(--accent)]' },
   { key: 'cd_pre_spec', label: 'CD Pre-Spec', color: 'bg-purple-100 text-purple-800' },

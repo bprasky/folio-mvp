@@ -196,7 +196,7 @@ export function FollowUpsForm({
         return (
           <div
             key={group.questionId}
-            className="space-y-4 border-l-2 border-blue-200 pl-4"
+            className="space-y-4 border-l-2 border-[var(--accent)]/20 pl-4"
           >
             {parentQuestion && (
               <div className="text-sm font-medium text-gray-700">
@@ -212,7 +212,7 @@ export function FollowUpsForm({
 
             {/* Phase C: Acknowledgment sentence */}
             {group.acknowledgment && (
-              <div className="text-sm text-gray-700 italic mb-4 px-3 py-2 bg-gray-50 rounded-lg border-l-4 border-blue-300">
+              <div className="text-sm text-gray-700 italic mb-4 px-3 py-2 bg-gray-50 rounded-lg border-l-4 border-[var(--accent)]/30">
                 {group.acknowledgment}
               </div>
             )}
@@ -237,7 +237,7 @@ export function FollowUpsForm({
                     }
                     maxLength={2000}
                     rows={4}
-                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm leading-relaxed ${
+                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)] text-sm leading-relaxed ${
                       errorMessage ? "border-red-400 focus:border-red-500" : ""
                     }`}
                     style={{ maxWidth: "72ch" }}

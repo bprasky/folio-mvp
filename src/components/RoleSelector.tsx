@@ -22,7 +22,7 @@ const roleOptions: RoleOption[] = [
     value: 'individual',
     label: 'Individual',
     icon: FaUser,
-    color: 'bg-blue-500',
+    color: 'bg-[var(--accent)]',
     description: 'Browse, save, and follow designers'
   },
   {
@@ -104,7 +104,7 @@ export default function RoleSelector() {
         className={`
           flex items-center gap-3 px-4 py-2 rounded-xl border border-gray-200 
           bg-white shadow-sm hover:shadow-md transition-all duration-200
-          ${isOpen ? 'ring-2 ring-blue-500 ring-opacity-50' : ''}
+          ${isOpen ? 'ring-2 ring-[var(--accent)] ring-opacity-50' : ''}
         `}
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
@@ -156,7 +156,7 @@ export default function RoleSelector() {
                       w-full flex items-center gap-3 p-3 rounded-lg text-left
                       transition-all duration-200 group
                       ${isSelected 
-                        ? 'bg-blue-50 border border-blue-200' 
+                        ? 'bg-[var(--accent)]/5 border border-[var(--accent)]/20' 
                         : 'hover:bg-gray-50 border border-transparent'
                       }
                     `}
@@ -182,7 +182,7 @@ export default function RoleSelector() {
                       <motion.div
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
-                        className="w-2 h-2 bg-blue-500 rounded-full"
+                        className="w-2 h-2 bg-[var(--accent)] rounded-full"
                       />
                     )}
                   </motion.button>

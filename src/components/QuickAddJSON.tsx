@@ -35,7 +35,7 @@ export default function QuickAddJSON({ projectId }: { projectId: string }) {
           <div className="bg-white rounded-xl p-4 w-[520px] space-y-3">
             <h3 className="font-medium text-gray-900">Paste items (JSON array)</h3>
             <textarea 
-              className="w-full h-48 border border-gray-300 rounded p-2 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full h-48 border border-gray-300 rounded p-2 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
               value={payload} 
               onChange={e=>setPayload(e.target.value)} 
             />

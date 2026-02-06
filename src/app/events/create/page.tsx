@@ -400,8 +400,8 @@ export default function CreateEvent() {
                        Attach this event to a larger festival or program to help it show up in the correct feed.
                      </p>
                      {form.parentFestivalId && (
-                       <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded-md">
-                         <p className="text-sm text-blue-700">
+                       <div className="mt-2 p-2 bg-[var(--accent)]/5 border border-[var(--accent)]/20 rounded-md">
+                         <p className="text-sm text-[var(--accent-hover)]">
                            This event will appear in the {festivals.find(f => f.id === form.parentFestivalId)?.title} feed.
                          </p>
                        </div>

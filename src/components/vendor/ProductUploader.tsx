@@ -163,14 +163,14 @@ export default function ProductUploader({ onProductAdded, onClose }: ProductUplo
                     value={url}
                     onChange={(e) => setUrl(e.target.value)}
                     placeholder="https://example.com/product-page"
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                     disabled={isLoading}
                   />
                 </div>
                 <button
                   onClick={handleUrlScrape}
                   disabled={isLoading || !url.trim()}
-                  className="px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center gap-2"
+                  className="px-6 py-3 bg-[var(--accent)] text-white rounded-xl hover:bg-[var(--accent-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center gap-2"
                 >
                   {isLoading ? (
                     <>
@@ -197,9 +197,9 @@ export default function ProductUploader({ onProductAdded, onClose }: ProductUplo
                 </motion.p>
               )}
 
-              <div className="mt-4 p-4 bg-blue-50 rounded-xl">
+              <div className="mt-4 p-4 bg-[var(--accent)]/5 rounded-xl">
                 <h4 className="font-medium text-blue-900 mb-2">Supported Sites:</h4>
-                <p className="text-sm text-blue-700">
+                <p className="text-sm text-[var(--accent-hover)]">
                   Most major furniture and decor retailers (West Elm, CB2, Wayfair, etc.). 
                   We'll extract product name, price, images, and description automatically.
                 </p>
@@ -264,7 +264,7 @@ export default function ProductUploader({ onProductAdded, onClose }: ProductUplo
                           value={formData.image}
                           onChange={(e) => updateFormField('image', e.target.value)}
                           placeholder="Image URL"
-                          className="w-full mt-2 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          className="w-full mt-2 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                         />
                       )}
                     </div>
@@ -281,7 +281,7 @@ export default function ProductUploader({ onProductAdded, onClose }: ProductUplo
                             type="text"
                             value={formData.name}
                             onChange={(e) => updateFormField('name', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                             required
                           />
                         ) : (
@@ -301,12 +301,12 @@ export default function ProductUploader({ onProductAdded, onClose }: ProductUplo
                               type="text"
                               value={formData.price}
                               onChange={(e) => updateFormField('price', e.target.value)}
-                              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                               placeholder="$0.00"
                             />
                           </div>
                         ) : (
-                          <p className="text-xl font-bold text-blue-600">{formData.price}</p>
+                          <p className="text-xl font-bold text-[var(--accent)]">{formData.price}</p>
                         )}
                       </div>
 
@@ -320,7 +320,7 @@ export default function ProductUploader({ onProductAdded, onClose }: ProductUplo
                             type="text"
                             value={formData.brand}
                             onChange={(e) => updateFormField('brand', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                           />
                         ) : (
                           <p className="text-gray-700">{formData.brand}</p>
@@ -336,7 +336,7 @@ export default function ProductUploader({ onProductAdded, onClose }: ProductUplo
                           <select
                             value={formData.category}
                             onChange={(e) => updateFormField('category', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                           >
                             <option value="">Select Category</option>
                             <option value="Furniture">Furniture</option>
@@ -365,7 +365,7 @@ export default function ProductUploader({ onProductAdded, onClose }: ProductUplo
                           value={formData.description}
                           onChange={(e) => updateFormField('description', e.target.value)}
                           rows={4}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent resize-none"
                         />
                       ) : (
                         <p className="text-gray-700 text-sm leading-relaxed">{formData.description}</p>
@@ -381,7 +381,7 @@ export default function ProductUploader({ onProductAdded, onClose }: ProductUplo
                         {formData.tags.map((tag, index) => (
                           <span
                             key={index}
-                            className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"
+                            className="inline-flex items-center gap-1 px-3 py-1 bg-[var(--accent)]/10 text-blue-800 rounded-full text-sm"
                           >
                             <FaTag className="w-3 h-3" />
                             {tag}
@@ -389,7 +389,7 @@ export default function ProductUploader({ onProductAdded, onClose }: ProductUplo
                               <button
                                 type="button"
                                 onClick={() => removeTag(tag)}
-                                className="ml-1 text-blue-600 hover:text-blue-800"
+                                className="ml-1 text-[var(--accent)] hover:text-blue-800"
                               >
                                 <FaTimes className="w-3 h-3" />
                               </button>
@@ -401,7 +401,7 @@ export default function ProductUploader({ onProductAdded, onClose }: ProductUplo
                         <input
                           type="text"
                           placeholder="Add tag and press Enter"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                           onKeyPress={(e) => {
                             if (e.key === 'Enter') {
                               e.preventDefault();
@@ -424,7 +424,7 @@ export default function ProductUploader({ onProductAdded, onClose }: ProductUplo
                           value={formData.dimensions}
                           onChange={(e) => updateFormField('dimensions', e.target.value)}
                           placeholder="e.g., 84&quot;W x 36&quot;D x 32&quot;H"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                         />
                       ) : (
                         <p className="text-gray-700">{formData.dimensions || 'Not specified'}</p>
@@ -442,7 +442,7 @@ export default function ProductUploader({ onProductAdded, onClose }: ProductUplo
                           value={formData.materials.join(', ')}
                           onChange={(e) => updateFormField('materials', e.target.value.split(',').map(m => m.trim()))}
                           placeholder="e.g., Solid wood, Steel, Fabric"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                         />
                       ) : (
                         <p className="text-gray-700">{formData.materials.join(', ') || 'Not specified'}</p>

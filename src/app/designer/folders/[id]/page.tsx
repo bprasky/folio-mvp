@@ -110,7 +110,7 @@ export default function FolderPage() {
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Folder not found</h1>
           <button
             onClick={() => router.push("/designer/folders")}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="px-4 py-2 bg-[var(--accent)] text-white rounded-lg hover:bg-[var(--accent-hover)] transition-colors"
           >
             Back to Folders
           </button>
@@ -145,7 +145,7 @@ export default function FolderPage() {
               <div className="flex items-center gap-3">
                 <button
                   onClick={handleCreatePost}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+                  className="px-4 py-2 bg-[var(--accent)] text-white rounded-lg hover:bg-[var(--accent-hover)] transition-colors flex items-center gap-2"
                 >
                   <Plus className="w-4 h-4" />
                   Create Post

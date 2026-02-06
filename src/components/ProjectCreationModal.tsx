@@ -978,7 +978,7 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
                 <div key={step} className="flex items-center">
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
                     currentStep === step 
-                      ? 'bg-blue-600 text-white' 
+                      ? 'bg-[var(--accent)] text-white' 
                       : index < ['details', 'images', 'tagging'].indexOf(currentStep)
                         ? 'bg-green-600 text-white'
                         : 'bg-gray-200 text-gray-600'
@@ -1020,7 +1020,7 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
                     <select
                       value={projectCategory}
                       onChange={(e) => setProjectCategory(e.target.value)}
-                      className="w-full px-4 py-3 bg-gray-50/50 border border-gray-200/70 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 transition-colors text-gray-900"
+                      className="w-full px-4 py-3 bg-gray-50/50 border border-gray-200/70 rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30 focus:border-[var(--accent)]/50 transition-colors text-gray-900"
                     >
                       <option value="">Select category</option>
                       <option value="residential">Residential</option>
@@ -1070,11 +1070,11 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
                                 className="rounded-full object-cover"
                               />
                             ) : (
-                              <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                              <div className="w-8 h-8 rounded-full bg-[var(--accent)]/10 flex items-center justify-center">
                                 {credit.isInvite ? (
-                                  <FaEnvelope className="w-4 h-4 text-blue-600" />
+                                  <FaEnvelope className="w-4 h-4 text-[var(--accent)]" />
                                 ) : (
-                                  <FaUser className="w-4 h-4 text-blue-600" />
+                                  <FaUser className="w-4 h-4 text-[var(--accent)]" />
                                 )}
                               </div>
                             )}
@@ -1108,7 +1108,7 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
                     <button
                       type="button"
                       onClick={() => setShowCreditSearch(true)}
-                      className="flex items-center gap-2 px-4 py-2 border border-dashed border-gray-300 rounded-xl text-gray-600 hover:border-blue-500 hover:text-blue-600 transition-colors w-full justify-center"
+                      className="flex items-center gap-2 px-4 py-2 border border-dashed border-gray-300 rounded-xl text-gray-600 hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors w-full justify-center"
                     >
                       <FaPlus className="w-4 h-4" />
                       Add Credit
@@ -1125,7 +1125,7 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
                                 key={role}
                                 type="button"
                                 onClick={() => setSelectedCreditRole(role)}
-                                className="px-4 py-2 bg-gray-100 hover:bg-blue-100 text-gray-700 hover:text-blue-700 rounded-lg text-sm font-medium transition-colors"
+                                className="px-4 py-2 bg-gray-100 hover:bg-[var(--accent)]/10 text-gray-700 hover:text-[var(--accent-hover)] rounded-lg text-sm font-medium transition-colors"
                               >
                                 {role}
                               </button>
@@ -1170,7 +1170,7 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
                               placeholder="Search by name, email, or studio..."
                             />
                             {isSearchingCredits && (
-                              <FaSpinner className="absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-500 w-4 h-4 animate-spin" />
+                              <FaSpinner className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[var(--accent)] w-4 h-4 animate-spin" />
                             )}
                           </div>
 
@@ -1235,7 +1235,7 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
                                 type="button"
                                 onClick={() => handleAddCreditByInvite(inviteEmail, selectedCreditRole)}
                                 disabled={!inviteEmail || !inviteEmail.includes('@')}
-                                className="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors text-sm font-medium flex items-center gap-2"
+                                className="px-4 py-2 bg-[var(--accent)] text-white rounded-xl hover:bg-[var(--accent-hover)] disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors text-sm font-medium flex items-center gap-2"
                               >
                                 <FaEnvelope className="w-3 h-3" />
                                 Invite
@@ -1270,7 +1270,7 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div
                     onClick={() => fileInputRef.current?.click()}
-                    className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-colors"
+                    className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center cursor-pointer hover:border-[var(--accent)] hover:bg-[var(--accent)]/5 transition-colors"
                   >
                     <FaUpload className="w-8 h-8 text-gray-400 mx-auto mb-4" />
                     <p className="text-gray-600 font-medium">Upload Images</p>
@@ -1295,7 +1295,7 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
                         <button
                           onClick={handleAddImageUrl}
                           disabled={!imageUrl.trim()}
-                          className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                          className="px-4 py-2 bg-[var(--accent)] text-white rounded-lg text-sm hover:bg-[var(--accent-hover)] disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
                         >
                           Add
                         </button>
@@ -1339,7 +1339,7 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
                                     e.stopPropagation();
                                     retryImageLoad(image.id);
                                   }}
-                                  className="text-blue-600 text-xs mt-1 hover:underline"
+                                  className="text-[var(--accent)] text-xs mt-1 hover:underline"
                                 >
                                   Retry
                                 </button>
@@ -1369,7 +1369,7 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
                             type="text"
                             value={image.room}
                             onChange={(e) => handleRoomChange(index, e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent text-gray-900"
                             placeholder="Room (e.g. Living Room, Master Bath)"
                           />
                         </div>
@@ -1396,7 +1396,7 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
                       {imageLoadErrors.size > 0 && (
                         <button
                           onClick={() => setImageLoadErrors(new Set())}
-                          className="text-blue-600 hover:text-blue-800 text-sm"
+                          className="text-[var(--accent)] hover:text-blue-800 text-sm"
                         >
                           Retry all failed images
                         </button>
@@ -1414,12 +1414,12 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
 
             {currentStep === 'tagging' && (
               <div className="space-y-6">
-                <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                <div className="bg-[var(--accent)]/5 border border-[var(--accent)]/20 rounded-xl p-4">
                   <div className="flex items-start gap-3">
-                    <FaTag className="w-5 h-5 text-blue-600 mt-0.5" />
+                    <FaTag className="w-5 h-5 text-[var(--accent)] mt-0.5" />
                     <div>
                       <h4 className="font-medium text-blue-900">How to tag products</h4>
-                      <p className="text-blue-700 text-sm mt-1">
+                      <p className="text-[var(--accent-hover)] text-sm mt-1">
                         Click on any part of your images to tag products. Search existing products or add new ones from URLs. Products added from URLs will be marked as pending for admin review.
                       </p>
                     </div>
@@ -1433,7 +1433,7 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
                         <div>
                           <h4 className="font-medium text-gray-900">{image.name}</h4>
                           {image.room && (
-                            <p className="text-sm text-blue-600">{image.room}</p>
+                            <p className="text-sm text-[var(--accent)]">{image.room}</p>
                           )}
                         </div>
                         <span className="text-sm text-gray-500">
@@ -1454,7 +1454,7 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
                                   e.stopPropagation();
                                   retryImageLoad(image.id);
                                 }}
-                                className="text-blue-600 text-xs mt-1 hover:underline"
+                                className="text-[var(--accent)] text-xs mt-1 hover:underline"
                               >
                                 Retry
                               </button>
@@ -1475,7 +1475,7 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
                           <div
                             key={tag.id}
                             className={`absolute w-4 h-4 border-2 border-white rounded-full transform -translate-x-1/2 -translate-y-1/2 cursor-pointer group hover:scale-125 transition-transform ${
-                              tag.isPending ? 'bg-orange-500' : 'bg-blue-600'
+                              tag.isPending ? 'bg-orange-500' : 'bg-[var(--accent)]'
                             }`}
                             style={{ left: `${tag.x}%`, top: `${tag.y}%` }}
                           >
@@ -1507,7 +1507,7 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
                                       )}
                                     </div>
                                     <p className="text-gray-600 text-xs">{tag.productBrand}</p>
-                                    <p className="text-blue-600 font-medium text-sm">
+                                    <p className="text-[var(--accent)] font-medium text-sm">
                                       ${tag.productPrice}
                                     </p>
                                   </div>
@@ -1558,7 +1558,7 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
                 <button
                   onClick={() => setCurrentStep('images')}
                   disabled={!canProceedToImages}
-                  className="px-6 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors font-medium"
+                  className="px-6 py-2 bg-[var(--accent)] text-white rounded-xl hover:bg-[var(--accent-hover)] disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors font-medium"
                 >
                   Next: Add Images
                 </button>
@@ -1567,7 +1567,7 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
                 <button
                   onClick={() => setCurrentStep('tagging')}
                   disabled={!canProceedToTagging}
-                  className="px-6 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors font-medium"
+                  className="px-6 py-2 bg-[var(--accent)] text-white rounded-xl hover:bg-[var(--accent-hover)] disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors font-medium"
                 >
                   Next: Tag Products
                 </button>
@@ -1576,7 +1576,7 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
                 <button
                   onClick={handleCreateProject}
                   disabled={!canCreateProject || isSubmitting}
-                  className="px-6 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors font-medium flex items-center gap-2"
+                  className="px-6 py-2 bg-[var(--accent)] text-white rounded-xl hover:bg-[var(--accent-hover)] disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors font-medium flex items-center gap-2"
                 >
                   {isSubmitting ? (
                     <>
@@ -1621,7 +1621,7 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
                     onClick={() => setShowAddProductTab(false)}
                     className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${
                       !showAddProductTab 
-                        ? 'border-blue-500 text-blue-600' 
+                        ? 'border-[var(--accent)] text-[var(--accent)]' 
                         : 'border-transparent text-gray-500 hover:text-gray-700'
                     }`}
                   >
@@ -1632,7 +1632,7 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
                     onClick={() => setShowAddProductTab(true)}
                     className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${
                       showAddProductTab 
-                        ? 'border-blue-500 text-blue-600' 
+                        ? 'border-[var(--accent)] text-[var(--accent)]' 
                         : 'border-transparent text-gray-500 hover:text-gray-700'
                     }`}
                   >
@@ -1648,7 +1648,7 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
                       type="text"
                       value={searchQuery}
                       onChange={(e) => handleProductSearch(e.target.value)}
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent text-gray-900"
                       placeholder="Search products..."
                     />
                   </div>
@@ -1661,14 +1661,14 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
                         type="url"
                         value={productUrl}
                         onChange={(e) => setProductUrl(e.target.value)}
-                        className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                        className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent text-gray-900"
                         placeholder="https://example.com/product-page"
                         disabled={isScrapingProduct}
                       />
                       <button
                         onClick={handleScrapeProduct}
                         disabled={!productUrl.trim() || isScrapingProduct}
-                        className="px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors font-medium flex items-center gap-2"
+                        className="px-6 py-3 bg-[var(--accent)] text-white rounded-xl hover:bg-[var(--accent-hover)] disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors font-medium flex items-center gap-2"
                       >
                         {isScrapingProduct ? (
                           <>
@@ -1698,7 +1698,7 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
                       <div
                         key={product.id}
                         onClick={() => handleProductSelect(product)}
-                        className="bg-white border border-gray-200 rounded-xl p-4 cursor-pointer hover:shadow-lg hover:border-blue-300 transition-all"
+                        className="bg-white border border-gray-200 rounded-xl p-4 cursor-pointer hover:shadow-lg hover:border-[var(--accent)]/30 transition-all"
                       >
                         <div className="relative aspect-square rounded-lg overflow-hidden mb-3">
                           <NextImage
@@ -1717,7 +1717,7 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
                           {product.name}
                         </h4>
                         <p className="text-gray-600 text-xs mb-2">{product.brand}</p>
-                        <p className="text-blue-600 font-medium text-sm">${product.price}</p>
+                        <p className="text-[var(--accent)] font-medium text-sm">${product.price}</p>
                       </div>
                     ))}
                   </div>
@@ -1756,7 +1756,7 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
                         {scrapedProduct.name}
                       </h4>
                       <p className="text-gray-600 text-sm mb-2">{scrapedProduct.brand}</p>
-                      <p className="text-blue-600 font-medium text-lg mb-3">{scrapedProduct.price}</p>
+                      <p className="text-[var(--accent)] font-medium text-lg mb-3">{scrapedProduct.price}</p>
                       {scrapedProduct.description && (
                         <p className="text-gray-600 text-sm line-clamp-3">{scrapedProduct.description}</p>
                       )}
@@ -1775,7 +1775,7 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
                     <p className="text-gray-500 mb-4">No products found</p>
                     <button
                       onClick={() => setShowAddProductTab(true)}
-                      className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-[var(--accent)] text-white rounded-lg hover:bg-[var(--accent-hover)] transition-colors"
                     >
                       <FaPlus className="w-4 h-4" />
                       Add Product from URL

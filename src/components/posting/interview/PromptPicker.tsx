@@ -79,13 +79,13 @@ export function PromptPicker({
       {hasContextual && (
         <details
           open
-          className="rounded-xl border-2 border-blue-200 bg-blue-50 p-3"
+          className="rounded-xl border-2 border-[var(--accent)]/20 bg-[var(--accent)]/5 p-3"
         >
           <summary className="flex items-center justify-between cursor-pointer list-none">
-            <span className="font-semibold text-blue-900">
+            <span className="font-semibold text-[var(--text-primary)]">
               ✨ Personalized Questions (Based on Your Images)
             </span>
-            <span className="text-sm text-blue-700">
+            <span className="text-sm text-[var(--accent-hover)]">
               {contextualQuestions.filter(q => selectedQuestionIds.includes(q.id)).length}/{contextualQuestions.length}
             </span>
           </summary>
@@ -95,7 +95,7 @@ export function PromptPicker({
               return (
                 <li
                   key={q.id}
-                  className="flex items-start justify-between rounded-lg border border-blue-200 bg-white px-3 py-2 hover:bg-blue-50 transition-colors"
+                  className="flex items-start justify-between rounded-lg border border-[var(--accent)]/20 bg-white px-3 py-2 hover:bg-[var(--accent)]/5 transition-colors"
                 >
                   <div className="flex-1">
                     <div className="font-medium text-sm text-gray-900">{q.prompt}</div>
@@ -108,8 +108,8 @@ export function PromptPicker({
                     onClick={() => toggleQuestion(q.id)}
                     className={`ml-3 px-3 py-1 rounded text-sm font-medium transition-colors ${
                       on
-                        ? "bg-blue-600 text-white hover:bg-blue-700"
-                        : "bg-blue-100 text-blue-700 hover:bg-blue-200"
+                        ? "bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)]"
+                        : "bg-[var(--accent)]/10 text-[var(--accent-hover)] hover:bg-[var(--accent)]/20"
                     }`}
                     disabled={!on && selectedQuestionIds.length >= 12}
                   >
@@ -156,7 +156,7 @@ export function PromptPicker({
                       onClick={() => toggleQuestion(q.id)}
                       className={`ml-3 px-3 py-1 rounded text-sm font-medium transition-colors ${
                         on
-                          ? "bg-blue-600 text-white hover:bg-blue-700"
+                          ? "bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)]"
                           : "bg-gray-200 text-gray-700 hover:bg-gray-300"
                       }`}
                       disabled={!on && selectedQuestionIds.length >= 12}

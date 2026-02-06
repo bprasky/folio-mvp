@@ -21,8 +21,8 @@ export default function EventMetricsPanel({ events }: EventMetricsPanelProps) {
           <div key={event.event_name} className="border-b border-gray-200 last:border-0 pb-6 last:pb-0">
             <h3 className="text-lg font-medium text-gray-900 mb-4">{event.event_name}</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <div className="text-sm text-blue-600 font-medium">Views</div>
+              <div className="bg-[var(--accent)]/5 p-4 rounded-lg">
+                <div className="text-sm text-[var(--accent)] font-medium">Views</div>
                 <div className="text-2xl font-bold text-blue-900">
                   {event.views_during_event.toLocaleString()}
                 </div>

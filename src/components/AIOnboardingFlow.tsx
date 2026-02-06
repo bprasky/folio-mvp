@@ -188,7 +188,7 @@ export default function AIOnboardingFlow({
 
           <button
             onClick={handleNext}
-            className="flex items-center gap-2 px-6 py-2 rounded-xl bg-blue-500 text-white hover:bg-blue-600"
+            className="flex items-center gap-2 px-6 py-2 rounded-xl bg-[var(--accent)] text-white hover:bg-[var(--accent)]"
           >
             {currentStep === totalSteps ? 'Complete' : 'Next'}
             <FaArrowRight className="w-4 h-4" />

@@ -72,9 +72,9 @@ function VisitLanding({ tokenId, token }: { tokenId: string; token: any }) {
         </div>
 
         {token.note && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <h3 className="font-medium text-blue-900 mb-1">Note from vendor</h3>
-            <p className="text-blue-800 text-sm">{token.note}</p>
+          <div className="bg-[var(--accent)]/5 border border-[var(--accent)]/20 rounded-lg p-4">
+            <h3 className="font-medium text-[var(--text-primary)] mb-1">Note from vendor</h3>
+            <p className="text-[var(--accent-hover)] text-sm">{token.note}</p>
           </div>
         )}
 

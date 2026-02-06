@@ -172,7 +172,7 @@ export default function DemoFlowPage() {
                 onClick={() => handleGoToStep(index)}
                 className={`p-3 rounded-lg border-2 transition-all ${
                   isStepCurrent
-                    ? 'border-blue-500 bg-blue-50'
+                    ? 'border-[var(--accent)] bg-[var(--accent)]/5'
                     : isStepCompleted
                     ? 'border-green-500 bg-green-50'
                     : 'border-gray-200 bg-white hover:border-gray-300'
@@ -182,9 +182,9 @@ export default function DemoFlowPage() {
                   {isStepCompleted ? (
                     <FaCheck className="w-5 h-5 text-green-600" />
                   ) : (
-                    <StepIcon className={`w-5 h-5 ${isStepCurrent ? 'text-blue-600' : 'text-gray-400'}`} />
+                    <StepIcon className={`w-5 h-5 ${isStepCurrent ? 'text-[var(--accent)]' : 'text-gray-400'}`} />
                   )}
-                  <span className={`text-xs font-medium text-center ${isStepCurrent ? 'text-blue-600' : isStepCompleted ? 'text-green-600' : 'text-gray-500'}`}>
+                  <span className={`text-xs font-medium text-center ${isStepCurrent ? 'text-[var(--accent)]' : isStepCompleted ? 'text-green-600' : 'text-gray-500'}`}>
                     {step.title}
                   </span>
                 </div>
@@ -218,8 +218,8 @@ export default function DemoFlowPage() {
                 </div>
                 <p className="text-gray-600 mb-4 text-lg">{currentStepData.description}</p>
                 {currentStepData.note && (
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
-                    <p className="text-sm text-blue-800">
+                  <div className="bg-[var(--accent)]/5 border border-[var(--accent)]/20 rounded-lg p-3 mb-4">
+                    <p className="text-sm text-[var(--accent-hover)]">
                       <strong>Note:</strong> {currentStepData.note}
                     </p>
                   </div>
@@ -255,7 +255,7 @@ export default function DemoFlowPage() {
                 onClick={() => handleGoToStep(index)}
                 className={`w-2 h-2 rounded-full transition-all ${
                   index === currentStep
-                    ? 'bg-blue-600 w-8'
+                    ? 'bg-[var(--accent)] w-8'
                     : completedSteps.has(index)
                     ? 'bg-green-500'
                     : 'bg-gray-300'
@@ -281,9 +281,9 @@ export default function DemoFlowPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <button
               onClick={() => router.push('/feed')}
-              className="p-3 bg-white rounded-lg border border-gray-200 hover:border-blue-500 hover:shadow-md transition-all text-left"
+              className="p-3 bg-white rounded-lg border border-gray-200 hover:border-[var(--accent)] hover:shadow-md transition-all text-left"
             >
-              <FaHome className="w-5 h-5 text-blue-600 mb-2" />
+              <FaHome className="w-5 h-5 text-[var(--accent)] mb-2" />
               <div className="text-sm font-medium text-gray-900">Feed</div>
             </button>
             <button

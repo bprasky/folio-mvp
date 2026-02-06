@@ -227,15 +227,15 @@ export default async function VendorPreviewPage({ params }: VendorPreviewPagePro
               <h3 className="font-semibold mb-4">What you can do:</h3>
               <ul className="space-y-2 text-gray-600">
                 <li className="flex items-start gap-2">
-                  <span className="text-blue-600">✓</span>
+                  <span className="text-[var(--accent)]">✓</span>
                   <span>Claim the product and complete its specifications</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="text-blue-600">✓</span>
+                  <span className="text-[var(--accent)]">✓</span>
                   <span>See how it looks in the designer's project</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="text-blue-600">✓</span>
+                  <span className="text-[var(--accent)]">✓</span>
                   <span>Explore how Folio can help you reach more designers</span>
                 </li>
               </ul>
@@ -253,7 +253,7 @@ export default async function VendorPreviewPage({ params }: VendorPreviewPagePro
             <div className="mt-4">
               <Link
                 href="/vendor/demo"
-                className="text-blue-600 hover:underline"
+                className="text-[var(--accent)] hover:underline"
               >
                 Explore Folio vendor demo →
               </Link>

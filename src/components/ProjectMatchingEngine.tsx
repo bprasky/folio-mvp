@@ -189,7 +189,7 @@ export default function ProjectMatchingEngine({ preferences }: ProjectMatchingEn
 
   const getMatchBadge = (score: number) => {
     if (score >= 90) return { label: 'Excellent', color: 'bg-green-500', textColor: 'text-white' };
-    if (score >= 70) return { label: 'Good', color: 'bg-blue-500', textColor: 'text-white' };
+    if (score >= 70) return { label: 'Good', color: 'bg-[var(--accent)]', textColor: 'text-white' };
     if (score >= 50) return { label: 'Decent', color: 'bg-yellow-500', textColor: 'text-white' };
     return { label: 'Poor', color: 'bg-gray-400', textColor: 'text-white' };
   };
@@ -197,7 +197,7 @@ export default function ProjectMatchingEngine({ preferences }: ProjectMatchingEn
   const getTimelineBadge = (status: string) => {
     switch (status) {
       case 'ready-to-start': return { label: 'Ready to Start', color: 'bg-green-100 text-green-800' };
-      case 'interviewing': return { label: 'Interviewing', color: 'bg-blue-100 text-blue-800' };
+      case 'interviewing': return { label: 'Interviewing', color: 'bg-[var(--accent)]/10 text-blue-800' };
       case 'planning': return { label: 'Planning', color: 'bg-yellow-100 text-yellow-800' };
       default: return { label: status, color: 'bg-gray-100 text-gray-800' };
     }
@@ -246,7 +246,7 @@ export default function ProjectMatchingEngine({ preferences }: ProjectMatchingEn
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as 'match' | 'recent' | 'budget')}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)]"
             >
               <option value="match">Sort by Match Score</option>
               <option value="recent">Sort by Most Recent</option>
@@ -333,7 +333,7 @@ export default function ProjectMatchingEngine({ preferences }: ProjectMatchingEn
                     <span className="text-sm text-gray-700">{project.budget}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <FaMapMarkerAlt className="w-4 h-4 text-blue-600" />
+                    <FaMapMarkerAlt className="w-4 h-4 text-[var(--accent)]" />
                     <span className="text-sm text-gray-700">{project.location}</span>
                   </div>
                   <div className="flex items-center gap-2">

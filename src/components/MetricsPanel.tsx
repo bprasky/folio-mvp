@@ -42,7 +42,7 @@ export const MetricsPanel: React.FC<MetricsPanelProps> = ({
             </div>
             <div className="h-2 bg-gray-100 rounded-full">
               <div
-                className="h-2 bg-blue-600 rounded-full"
+                className="h-2 bg-[var(--accent)] rounded-full"
                 style={{ width: `${(saves / views) * 100}%` }}
               />
             </div>

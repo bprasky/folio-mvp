@@ -117,8 +117,8 @@ export function CollaborationStoryView({ story }: CollaborationStoryViewProps) {
                 className="w-12 h-12 rounded-lg object-cover"
               />
             ) : (
-              <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center">
-                <span className="text-lg font-semibold text-blue-600">
+              <div className="w-12 h-12 rounded-lg bg-[var(--accent)]/10 flex items-center justify-center">
+                <span className="text-lg font-semibold text-[var(--accent)]">
                   {story.vendorOrg.name.charAt(0)}
                 </span>
               </div>
@@ -292,7 +292,7 @@ export function CollaborationStoryView({ story }: CollaborationStoryViewProps) {
           </p>
           <Link
             href="/magazine"
-            className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+            className="text-sm text-[var(--accent)] hover:text-[var(--accent-hover)] font-medium"
           >
             More Collaborations →
           </Link>

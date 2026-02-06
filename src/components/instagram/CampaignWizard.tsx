@@ -149,7 +149,7 @@ export function CampaignWizard({ projectId, projectTitle, onClose }: CampaignWiz
                 onClick={() => setPreset('compact')}
                 className={`rounded-lg border-2 p-4 text-center transition ${
                   preset === 'compact'
-                    ? 'border-blue-500 bg-blue-50'
+                    ? 'border-[var(--accent)] bg-[var(--accent)]/5'
                     : 'border-gray-200 hover:border-gray-300'
                 }`}
               >
@@ -160,7 +160,7 @@ export function CampaignWizard({ projectId, projectTitle, onClose }: CampaignWiz
                 onClick={() => setPreset('standard')}
                 className={`rounded-lg border-2 p-4 text-center transition ${
                   preset === 'standard'
-                    ? 'border-blue-500 bg-blue-50'
+                    ? 'border-[var(--accent)] bg-[var(--accent)]/5'
                     : 'border-gray-200 hover:border-gray-300'
                 }`}
               >
@@ -171,7 +171,7 @@ export function CampaignWizard({ projectId, projectTitle, onClose }: CampaignWiz
                 onClick={() => setPreset('complete')}
                 className={`rounded-lg border-2 p-4 text-center transition ${
                   preset === 'complete'
-                    ? 'border-blue-500 bg-blue-50'
+                    ? 'border-[var(--accent)] bg-[var(--accent)]/5'
                     : 'border-gray-200 hover:border-gray-300'
                 }`}
               >
@@ -199,7 +199,7 @@ export function CampaignWizard({ projectId, projectTitle, onClose }: CampaignWiz
               <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
                 <div className="mb-4 flex items-center justify-between">
                   <h3 className="font-medium text-gray-900">What's Included</h3>
-                  <span className="text-2xl font-bold text-blue-600">{totalPosts} posts</span>
+                  <span className="text-2xl font-bold text-[var(--accent)]">{totalPosts} posts</span>
                 </div>
 
                 <div className="space-y-3 text-sm">
@@ -253,11 +253,11 @@ export function CampaignWizard({ projectId, projectTitle, onClose }: CampaignWiz
               </div>
 
               {/* Suggested Pacing */}
-              <div className="rounded-lg bg-blue-50 p-4 text-sm">
+              <div className="rounded-lg bg-[var(--accent)]/5 p-4 text-sm">
                 <div className="font-medium text-blue-900">
                   Suggested pacing: 2 posts/week ≈ {Math.ceil(totalPosts / 2)} weeks
                 </div>
-                <div className="mt-1 text-blue-700">
+                <div className="mt-1 text-[var(--accent-hover)]">
                   Mix with other projects for feed variety.
                 </div>
               </div>
@@ -276,7 +276,7 @@ export function CampaignWizard({ projectId, projectTitle, onClose }: CampaignWiz
           <button
             onClick={handleGenerate}
             disabled={!contentSelection || generating}
-            className="flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex items-center gap-2 rounded-lg bg-[var(--accent)] px-6 py-2.5 text-sm font-medium text-white hover:bg-[var(--accent-hover)] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {generating ? (
               <>

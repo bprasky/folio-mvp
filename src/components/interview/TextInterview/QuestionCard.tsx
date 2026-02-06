@@ -154,7 +154,7 @@ export function QuestionCard({
             className={cn(
               "py-3 px-6 rounded-lg font-medium transition-all",
               answer.trim() && !isLoading
-                ? "bg-blue-600 text-white hover:bg-blue-700"
+                ? "bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)]"
                 : "bg-gray-100 text-gray-400 cursor-not-allowed"
             )}
           >

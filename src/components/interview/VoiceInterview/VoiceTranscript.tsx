@@ -30,7 +30,7 @@ export function VoiceTranscript({ segments, isRecording }: VoiceTranscriptProps)
             <div
               key={index}
               className={`text-sm ${
-                segment.speaker === "ai" ? "text-blue-600" : "text-gray-700"
+                segment.speaker === "ai" ? "text-[var(--accent)]" : "text-gray-700"
               }`}
             >
               <span className="text-xs text-gray-400 mr-2">

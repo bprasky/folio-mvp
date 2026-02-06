@@ -35,7 +35,7 @@ interface ActionItemCardProps {
 
 const priorityColors = {
   LOW: 'bg-gray-100 text-gray-700',
-  MEDIUM: 'bg-blue-100 text-blue-700',
+  MEDIUM: 'bg-[var(--accent)]/10 text-[var(--accent-hover)]',
   HIGH: 'bg-orange-100 text-orange-700',
   URGENT: 'bg-red-100 text-red-700',
 };
@@ -102,7 +102,7 @@ export default function ActionItemCard({ actionItem, onStatusChange, onComplete 
         {!isCompleted && (
           <button
             onClick={handleComplete}
-            className="text-blue-600 hover:text-blue-800 font-medium"
+            className="text-[var(--accent)] hover:text-blue-800 font-medium"
           >
             Mark Complete
           </button>

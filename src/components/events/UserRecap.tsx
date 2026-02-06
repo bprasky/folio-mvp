@@ -94,7 +94,7 @@ export default function UserRecap({ recaps: propRecaps, eventId }: UserRecapProp
             <div className="absolute top-2 left-2">
               <Link
                 href={`/projects/${recap.project.id}`}
-                className="inline-flex items-center px-2 py-1 rounded-full bg-[var(--bg-base)]/90 backdrop-blur-sm text-xs font-medium text-[var(--text-primary)] hover:bg-blue-600 hover:text-white transition-colors"
+                className="inline-flex items-center px-2 py-1 rounded-full bg-[var(--bg-base)]/90 backdrop-blur-sm text-xs font-medium text-[var(--text-primary)] hover:bg-[var(--accent)] hover:text-white transition-colors"
               >
                 {recap.project.name}
               </Link>
@@ -115,7 +115,7 @@ export default function UserRecap({ recaps: propRecaps, eventId }: UserRecapProp
 
             {recap.price && (
               <div className="mt-2">
-                <span className="text-sm font-semibold text-blue-600">
+                <span className="text-sm font-semibold text-[var(--accent)]">
                   ${recap.price.toLocaleString()}
                 </span>
               </div>
