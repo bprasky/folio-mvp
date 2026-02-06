@@ -219,7 +219,7 @@ export function CreateCollaborationModal({
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               placeholder="Add a personal note to your invitation..."
-              className="w-full px-3 py-2 border border-neutral-300 rounded-lg resize-none h-20 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-neutral-300 rounded-lg resize-none h-20 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
               maxLength={500}
             />
           </div>

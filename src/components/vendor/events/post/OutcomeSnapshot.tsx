@@ -14,7 +14,7 @@ export function OutcomeSnapshot({ outcome }: OutcomeSnapshotProps) {
   const getDeltaColor = (delta: number) => {
     if (delta > 0) return 'text-green-600 bg-green-50';
     if (delta < 0) return 'text-red-600 bg-red-50';
-    return 'text-gray-600 bg-gray-50';
+    return 'text-[var(--text-secondary)] bg-gray-50';
   };
 
   const getDeltaIcon = (delta: number) => {

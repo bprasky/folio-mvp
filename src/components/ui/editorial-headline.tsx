@@ -29,7 +29,7 @@ const EditorialHeadline = forwardRef<HTMLHeadingElement, EditorialHeadlineProps>
           "font-serif leading-tight",
           sizes[size],
           italic && "italic",
-          muted ? "text-gray-600" : "text-gray-900",
+          muted ? "text-[var(--text-secondary)]" : "text-[var(--text-primary)]",
           className
         )}
         {...props}

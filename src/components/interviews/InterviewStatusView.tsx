@@ -37,7 +37,7 @@ function ProcessButton({ interviewId }: { interviewId: string }) {
       <Button
         onClick={handleProcess}
         disabled={isProcessing}
-        className="bg-gray-900 hover:bg-gray-800"
+        className="bg-[var(--text-primary)] hover:opacity-90"
       >
         {isProcessing ? (
           <>
@@ -74,12 +74,12 @@ interface InterviewStatusViewProps {
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
   TRANSCRIBING: {
     label: "Transcribing",
-    color: "text-blue-600",
+    color: "text-[var(--accent)]",
     icon: <Loader2 className="h-5 w-5 animate-spin" />,
   },
   TRANSCRIBED: {
     label: "Transcribed",
-    color: "text-blue-600",
+    color: "text-[var(--accent)]",
     icon: <CheckCircle className="h-5 w-5" />,
   },
   EXTRACTING: {
@@ -109,7 +109,7 @@ export function InterviewStatusView({ interviewSession }: InterviewStatusViewPro
 
   const statusConfig = STATUS_CONFIG[interviewSession.status] || {
     label: interviewSession.status,
-    color: "text-gray-600",
+    color: "text-[var(--text-secondary)]",
     icon: <Clock className="h-5 w-5" />,
   };
 
@@ -151,13 +151,13 @@ export function InterviewStatusView({ interviewSession }: InterviewStatusViewPro
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 space-y-6">
+    <div className="bg-white rounded-lg shadow-sm border border-[var(--ridge-outer)] p-8 space-y-6">
       {/* Status Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
           <div className={statusConfig.color}>{statusConfig.icon}</div>
           <div>
-            <h2 className="text-xl font-medium text-gray-900">{statusConfig.label}</h2>
+            <h2 className="text-xl font-medium text-[var(--text-primary)]">{statusConfig.label}</h2>
             {interviewSession.errorMessage && (
               <p className="text-sm text-red-600 mt-1 flex items-center space-x-1">
                 <AlertCircle className="h-4 w-4" />
@@ -186,11 +186,11 @@ export function InterviewStatusView({ interviewSession }: InterviewStatusViewPro
 
       {/* Audio Playback */}
       {interviewSession.recordingAsset && (
-        <div className="border-t border-gray-200 pt-6">
+        <div className="border-t border-[var(--ridge-outer)] pt-6">
           <div className="flex items-center space-x-4">
-            <Play className="h-5 w-5 text-gray-400" />
+            <Play className="h-5 w-5 text-[var(--text-tertiary)]" />
             <audio src={interviewSession.recordingAsset.url} controls className="flex-1" />
-            <span className="text-sm text-gray-500">
+            <span className="text-sm text-[var(--text-secondary)]">
               {formatDuration(interviewSession.recordingAsset.durationMs)}
             </span>
           </div>
@@ -198,40 +198,40 @@ export function InterviewStatusView({ interviewSession }: InterviewStatusViewPro
       )}
 
       {/* Timeline */}
-      <div className="border-t border-gray-200 pt-6 space-y-3">
-        <div className="text-sm font-medium text-gray-700 mb-4">Progress</div>
+      <div className="border-t border-[var(--ridge-outer)] pt-6 space-y-3">
+        <div className="text-sm font-medium text-[var(--text-primary)] mb-4">Progress</div>
         <div className="space-y-2">
           <div className="flex items-center space-x-3">
             {interviewSession.recordingAsset ? (
               <CheckCircle className="h-4 w-4 text-green-600" />
             ) : (
-              <Clock className="h-4 w-4 text-gray-400" />
+              <Clock className="h-4 w-4 text-[var(--text-tertiary)]" />
             )}
-            <span className="text-sm text-gray-600">Recording uploaded</span>
+            <span className="text-sm text-[var(--text-secondary)]">Recording uploaded</span>
           </div>
           <div className="flex items-center space-x-3">
             {interviewSession.transcribedAt ? (
               <CheckCircle className="h-4 w-4 text-green-600" />
             ) : (
-              <Clock className="h-4 w-4 text-gray-400" />
+              <Clock className="h-4 w-4 text-[var(--text-tertiary)]" />
             )}
-            <span className="text-sm text-gray-600">Transcription complete</span>
+            <span className="text-sm text-[var(--text-secondary)]">Transcription complete</span>
           </div>
           <div className="flex items-center space-x-3">
             {interviewSession.extractedAt ? (
               <CheckCircle className="h-4 w-4 text-green-600" />
             ) : (
-              <Clock className="h-4 w-4 text-gray-400" />
+              <Clock className="h-4 w-4 text-[var(--text-tertiary)]" />
             )}
-            <span className="text-sm text-gray-600">Quotes extracted</span>
+            <span className="text-sm text-[var(--text-secondary)]">Quotes extracted</span>
           </div>
           <div className="flex items-center space-x-3">
             {interviewSession.publishedAt ? (
               <CheckCircle className="h-4 w-4 text-green-600" />
             ) : (
-              <Clock className="h-4 w-4 text-gray-400" />
+              <Clock className="h-4 w-4 text-[var(--text-tertiary)]" />
             )}
-            <span className="text-sm text-gray-600">Published</span>
+            <span className="text-sm text-[var(--text-secondary)]">Published</span>
           </div>
         </div>
       </div>

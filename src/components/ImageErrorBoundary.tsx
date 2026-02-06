@@ -52,14 +52,14 @@ export default class ImageErrorBoundary extends Component<Props, State> {
 
       // Default fallback UI
       return (
-        <div className="flex flex-col items-center justify-center p-4 bg-gray-100 rounded-lg border-2 border-dashed border-gray-300">
+        <div className="flex flex-col items-center justify-center p-4 bg-[var(--bg-elevated)] rounded-lg border-2 border-dashed border-[var(--ridge-outer)]">
           <FaExclamationTriangle className="w-8 h-8 text-yellow-500 mb-2" />
-          <p className="text-gray-600 text-sm text-center mb-3">
+          <p className="text-[var(--text-secondary)] text-sm text-center mb-3">
             Image failed to load
           </p>
           <button
             onClick={this.handleRetry}
-            className="flex items-center gap-2 px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600 transition-colors"
+            className="flex items-center gap-2 px-3 py-1 bg-[var(--accent)] text-white rounded text-sm hover:bg-[var(--accent)] transition-colors"
           >
             <FaRefresh className="w-3 h-3" />
             Retry

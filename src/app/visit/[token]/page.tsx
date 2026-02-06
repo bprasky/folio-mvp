@@ -68,13 +68,13 @@ function VisitLanding({ tokenId, token }: { tokenId: string; token: any }) {
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-serif">Vendor Handoff</h1>
-          <p className="text-gray-600">Review the products and choose where to add them.</p>
+          <p className="text-[var(--text-secondary)]">Review the products and choose where to add them.</p>
         </div>
 
         {token.note && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <h3 className="font-medium text-blue-900 mb-1">Note from vendor</h3>
-            <p className="text-blue-800 text-sm">{token.note}</p>
+          <div className="bg-[var(--accent)]/5 border border-[var(--accent)]/20 rounded-lg p-4">
+            <h3 className="font-medium text-[var(--text-primary)] mb-1">Note from vendor</h3>
+            <p className="text-[var(--accent-hover)] text-sm">{token.note}</p>
           </div>
         )}
 
@@ -86,9 +86,9 @@ function VisitLanding({ tokenId, token }: { tokenId: string; token: any }) {
               <div key={index} className="border rounded-lg p-4">
                 <div className="space-y-2">
                   <h3 className="font-medium">{item.sku || item.productName || 'Product'}</h3>
-                  {item.finish && <p className="text-sm text-gray-600">Finish: {item.finish}</p>}
-                  {item.quantity && <p className="text-sm text-gray-600">Quantity: {item.quantity}</p>}
-                  {item.note && <p className="text-sm text-gray-600">{item.note}</p>}
+                  {item.finish && <p className="text-sm text-[var(--text-secondary)]">Finish: {item.finish}</p>}
+                  {item.quantity && <p className="text-sm text-[var(--text-secondary)]">Quantity: {item.quantity}</p>}
+                  {item.note && <p className="text-sm text-[var(--text-secondary)]">{item.note}</p>}
                   {item.imageUrl && (
                     <img 
                       src={item.imageUrl} 
@@ -151,11 +151,11 @@ function DestinationOption({
   tokenId: string;
 }) {
   return (
-    <div className="border rounded-lg p-4 hover:bg-gray-50 cursor-pointer">
+    <div className="border rounded-lg p-4 hover:bg-[var(--bg-elevated)] cursor-pointer">
       <h3 className="font-medium mb-1">{title}</h3>
-      <p className="text-sm text-gray-600 mb-3">{description}</p>
+      <p className="text-sm text-[var(--text-secondary)] mb-3">{description}</p>
       <button 
-        className="w-full px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800"
+        className="w-full px-4 py-2 bg-black text-white rounded-lg hover:opacity-90"
         onClick={async () => {
           // Handle destination selection
           const response = await fetch(`/api/visit-tokens/${tokenId}/choose-destination`, {

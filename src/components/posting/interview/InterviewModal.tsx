@@ -1174,17 +1174,17 @@ export function InterviewModal({
         )}
         {/* Modal header with close button and progress */}
         {(phase === "question" || phase === "followup") && (
-          <div className="flex items-center justify-between px-8 py-4 border-b border-gray-200/50 bg-white/50">
+          <div className="flex items-center justify-between px-8 py-4 border-b border-[var(--ridge-outer)]/50 bg-white/50">
             <button 
               onClick={() => onOpenChange(false)}
-              className="text-gray-500 hover:text-gray-700 transition-colors p-1 rounded-full hover:bg-gray-100"
+              className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors p-1 rounded-full hover:bg-[var(--bg-elevated)]"
               aria-label="Close"
             >
               <X className="w-6 h-6" />
             </button>
             
             {phase === "question" && currentQuestion && (
-              <span className="text-sm text-gray-500">
+              <span className="text-sm text-[var(--text-secondary)]">
                 Question {currentQuestionIndex + 1} of {totalQuestions}
               </span>
             )}
@@ -1205,7 +1205,7 @@ export function InterviewModal({
             Project Interview
           </DialogTitle>
           {phase !== "question" && phase !== "followup" && (
-            <p className="text-sm text-gray-600 mt-2">
+            <p className="text-sm text-[var(--text-secondary)] mt-2">
               Answer a few questions to generate your editorial draft.
               {hasTaggedProducts && (
                 <span className="block mt-1 text-xs">

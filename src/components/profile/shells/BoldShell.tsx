@@ -37,11 +37,11 @@ export default function BoldShell({ designer, projects, aesthetic, viewerContext
         {/* Bio Section */}
         {designer.bio && (
           <div className="mb-20 border-t-4 border-black pt-12">
-            <p className="text-xl font-bold leading-relaxed text-gray-900 max-w-3xl">
+            <p className="text-xl font-bold leading-relaxed text-[var(--text-primary)] max-w-3xl">
               {designer.bio}
             </p>
             {designer.location && (
-              <p className="mt-6 text-lg font-semibold text-gray-700">{designer.location}</p>
+              <p className="mt-6 text-lg font-semibold text-[var(--text-primary)]">{designer.location}</p>
             )}
           </div>
         )}

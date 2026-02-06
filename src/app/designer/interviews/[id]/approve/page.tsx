@@ -68,11 +68,11 @@ export default async function ApproveHighlightsPage({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[var(--bg-elevated)]">
       <div className="max-w-4xl mx-auto py-12 px-4">
         <div className="mb-8">
-          <h1 className="text-3xl font-light text-gray-900 mb-2">Review & Approve Quotes</h1>
-          <p className="text-gray-500">
+          <h1 className="text-3xl font-light text-[var(--text-primary)] mb-2">Review & Approve Quotes</h1>
+          <p className="text-[var(--text-secondary)]">
             {interviewSession.project?.title || interviewSession.product?.name || "Interview"}
           </p>
         </div>

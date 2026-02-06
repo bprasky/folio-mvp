@@ -41,13 +41,13 @@ export function ActiveRecording({
       </div>
 
       {/* Transcript area */}
-      <div className="flex-1 bg-gray-50 p-6 overflow-y-auto">
-        <p className="text-xs text-gray-400 uppercase tracking-wide mb-3">
+      <div className="flex-1 bg-[var(--bg-elevated)] p-6 overflow-y-auto">
+        <p className="text-xs text-[var(--text-tertiary)] uppercase tracking-wide mb-3">
           Live transcript
         </p>
-        <p className="text-gray-700 leading-relaxed">
+        <p className="text-[var(--text-primary)] leading-relaxed">
           {transcript || (
-            <span className="text-gray-400">Start speaking...</span>
+            <span className="text-[var(--text-tertiary)]">Start speaking...</span>
           )}
         </p>
       </div>
@@ -70,19 +70,19 @@ export function ActiveRecording({
         </div>
 
         {/* Timer */}
-        <p className="text-gray-600 mb-4">Recording... {formatDuration(duration)}</p>
+        <p className="text-[var(--text-secondary)] mb-4">Recording... {formatDuration(duration)}</p>
 
         {/* Control buttons */}
         <div className="flex items-center gap-4">
           <button
             onClick={onPause}
-            className="text-gray-500 hover:text-gray-700 text-sm"
+            className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-sm"
           >
             Pause
           </button>
           <button
             onClick={onComplete}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg text-sm hover:bg-gray-800"
+            className="flex items-center gap-2 px-4 py-2 bg-[var(--text-primary)] text-white rounded-lg text-sm hover:opacity-90"
           >
             <Square className="w-4 h-4" />
             I'm done talking

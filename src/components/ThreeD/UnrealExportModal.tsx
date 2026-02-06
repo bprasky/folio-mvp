@@ -49,18 +49,18 @@ export default function UnrealExportModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
       <div className="relative w-full h-full max-w-4xl max-h-[90vh] bg-white rounded-lg overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+        <div className="flex items-center justify-between p-6 border-b border-[var(--ridge-outer)]">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">
+            <h2 className="text-2xl font-bold text-[var(--text-primary)]">
               Unreal Export JSON
             </h2>
-            <p className="text-sm text-gray-600 mt-1">
+            <p className="text-sm text-[var(--text-secondary)] mt-1">
               Export data for {projectTitle}
             </p>
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+            className="p-2 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors"
             aria-label="Close"
           >
             <FaTimes className="w-5 h-5" />
@@ -69,14 +69,14 @@ export default function UnrealExportModal({
 
         {/* JSON Content */}
         <div className="flex-1 overflow-auto p-6 bg-gray-50">
-          <pre className="text-xs font-mono text-gray-800 whitespace-pre-wrap break-words">
+          <pre className="text-xs font-mono text-[var(--text-primary)] whitespace-pre-wrap break-words">
             {jsonString}
           </pre>
         </div>
 
         {/* Footer Actions */}
-        <div className="flex items-center justify-between p-6 border-t border-gray-200 bg-white">
-          <div className="text-sm text-gray-600">
+        <div className="flex items-center justify-between p-6 border-t border-[var(--ridge-outer)] bg-white">
+          <div className="text-sm text-[var(--text-secondary)]">
             {exportData.assets?.length || 0} asset(s) included
           </div>
           <div className="flex items-center gap-3">

@@ -211,7 +211,7 @@ export default function SkeletonSidePanel({
         <h2 className="text-lg font-semibold">We noticed something here</h2>
         <button
           onClick={onClose}
-          className="text-gray-400 hover:text-gray-600"
+          className="text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
           aria-label="Close"
         >
           <FaTimes className="w-5 h-5" />
@@ -220,7 +220,7 @@ export default function SkeletonSidePanel({
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-[var(--text-secondary)]">
           Confirm it if you'd like — or ignore it. Nothing changes unless you choose.
         </p>
 
@@ -228,24 +228,24 @@ export default function SkeletonSidePanel({
           <div className="space-y-3">
             <button
               onClick={() => setMode('product')}
-              className="w-full px-4 py-3 text-left border rounded-lg hover:bg-gray-50 transition-colors"
+              className="w-full px-4 py-3 text-left border rounded-lg hover:bg-[var(--bg-elevated)] transition-colors"
             >
               <div className="font-medium">Confirm as Product</div>
-              <div className="text-sm text-gray-500">Search and select an existing product</div>
+              <div className="text-sm text-[var(--text-secondary)]">Search and select an existing product</div>
             </button>
 
             <button
               onClick={() => setMode('label')}
-              className="w-full px-4 py-3 text-left border rounded-lg hover:bg-gray-50 transition-colors"
+              className="w-full px-4 py-3 text-left border rounded-lg hover:bg-[var(--bg-elevated)] transition-colors"
             >
               <div className="font-medium">Confirm as Label</div>
-              <div className="text-sm text-gray-500">Enter a custom label name</div>
+              <div className="text-sm text-[var(--text-secondary)]">Enter a custom label name</div>
             </button>
 
             {/* Optional: Move to room */}
             {roomOptions.length > 0 && (
               <div className="border-t pt-3">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
                   Move to room
                 </label>
                 <select
@@ -294,13 +294,13 @@ export default function SkeletonSidePanel({
                     onClick={() => setSelectedProduct(product)}
                     className={`w-full p-3 text-left border rounded-lg transition-colors ${
                       selectedProduct?.id === product.id
-                        ? 'border-blue-500 bg-blue-50'
-                        : 'hover:bg-gray-50'
+                        ? 'border-[var(--accent)] bg-[var(--accent)]/5'
+                        : 'hover:bg-[var(--bg-elevated)]'
                     }`}
                   >
                     <div className="font-medium">{product.name}</div>
                     {product.vendorName && (
-                      <div className="text-sm text-gray-500">{product.vendorName}</div>
+                      <div className="text-sm text-[var(--text-secondary)]">{product.vendorName}</div>
                     )}
                   </button>
                 ))}
@@ -310,14 +310,14 @@ export default function SkeletonSidePanel({
             <div className="flex gap-2">
               <button
                 onClick={() => setMode('choose')}
-                className="flex-1 px-4 py-2 border rounded-md hover:bg-gray-50"
+                className="flex-1 px-4 py-2 border rounded-md hover:bg-[var(--bg-elevated)]"
               >
                 Back
               </button>
               <button
                 onClick={handleConfirmProduct}
                 disabled={!selectedProduct || loading}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 px-4 py-2 bg-[var(--accent)] text-white rounded-md hover:bg-[var(--accent-hover)] disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? 'Confirming...' : 'Confirm'}
               </button>
@@ -328,7 +328,7 @@ export default function SkeletonSidePanel({
         {mode === 'label' && (
           <div className="space-y-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
                 What is this?
               </label>
               <input
@@ -344,14 +344,14 @@ export default function SkeletonSidePanel({
             <div className="flex gap-2">
               <button
                 onClick={() => setMode('choose')}
-                className="flex-1 px-4 py-2 border rounded-md hover:bg-gray-50"
+                className="flex-1 px-4 py-2 border rounded-md hover:bg-[var(--bg-elevated)]"
               >
                 Back
               </button>
               <button
                 onClick={handleConfirmLabel}
                 disabled={!labelText.trim() || loading}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 px-4 py-2 bg-[var(--accent)] text-white rounded-md hover:bg-[var(--accent-hover)] disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? 'Confirming...' : 'Confirm'}
               </button>
@@ -365,7 +365,7 @@ export default function SkeletonSidePanel({
         <button
           onClick={handleDismiss}
           disabled={loading}
-          className="w-full px-4 py-2 text-gray-600 border rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full px-4 py-2 text-[var(--text-secondary)] border rounded-md hover:bg-[var(--bg-elevated)] disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Dismiss (don't ask again)
         </button>

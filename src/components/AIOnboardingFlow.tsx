@@ -153,17 +153,17 @@ export default function AIOnboardingFlow({
               <FaRobot className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="font-bold text-gray-900">{projectName}</h1>
-              <p className="text-sm text-gray-600">Step {currentStep} of {totalSteps}</p>
+              <h1 className="font-bold text-[var(--text-primary)]">{projectName}</h1>
+              <p className="text-sm text-[var(--text-secondary)]">Step {currentStep} of {totalSteps}</p>
             </div>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+          <button onClick={onClose} className="text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]">
             <FaTimes className="w-6 h-6" />
           </button>
         </div>
 
         <div className="mb-8">
-          <div className="w-full bg-gray-200 rounded-full h-2">
+          <div className="w-full bg-[var(--bg-elevated)] rounded-full h-2">
             <motion.div
               className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full"
               animate={{ width: `${(currentStep / totalSteps) * 100}%` }}
@@ -172,15 +172,15 @@ export default function AIOnboardingFlow({
         </div>
 
         <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">AI Setup Step {currentStep}</h2>
-          <p className="text-gray-600">Configuring your project preferences...</p>
+          <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-2">AI Setup Step {currentStep}</h2>
+          <p className="text-[var(--text-secondary)]">Configuring your project preferences...</p>
         </div>
 
         <div className="flex justify-between">
           <button
             onClick={handleBack}
             disabled={currentStep === 1}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-gray-600 hover:bg-gray-100"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)]"
           >
             <FaArrowLeft className="w-4 h-4" />
             Back
@@ -188,7 +188,7 @@ export default function AIOnboardingFlow({
 
           <button
             onClick={handleNext}
-            className="flex items-center gap-2 px-6 py-2 rounded-xl bg-blue-500 text-white hover:bg-blue-600"
+            className="flex items-center gap-2 px-6 py-2 rounded-xl bg-[var(--accent)] text-white hover:bg-[var(--accent)]"
           >
             {currentStep === totalSteps ? 'Complete' : 'Next'}
             <FaArrowRight className="w-4 h-4" />

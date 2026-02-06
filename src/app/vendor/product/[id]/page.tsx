@@ -65,14 +65,14 @@ export default function ProductInsightsPage() {
 
   if (!productData) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        <p className="text-lg text-gray-700">Loading product insights or product not found...</p>
+      <div className="min-h-screen flex items-center justify-center bg-[var(--bg-elevated)]">
+        <p className="text-lg text-[var(--text-primary)]">Loading product insights or product not found...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 p-8">
+    <div className="min-h-screen bg-[var(--bg-elevated)] p-8">
       <div className="max-w-7xl mx-auto">
         <ProductInsightsHeader
           productName={productData.product_name}

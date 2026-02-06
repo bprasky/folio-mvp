@@ -18,13 +18,13 @@ export function CohortMini({ data }: {
     const getTrendIcon = (you: number, benchmark: number) => {
       if (you > benchmark + 5) return <TrendingUp className="w-3 h-3 text-green-600" />;
       if (you < benchmark - 5) return <TrendingDown className="w-3 h-3 text-red-600" />;
-      return <Minus className="w-3 h-3 text-gray-400" />;
+      return <Minus className="w-3 h-3 text-[var(--text-tertiary)]" />;
     };
 
     const getStatus = (you: number, prev3: number, cohort: number) => {
       if (you > Math.max(prev3, cohort) + 5) return "bg-green-100 text-green-800";
       if (you < Math.min(prev3, cohort) - 5) return "bg-red-100 text-red-800";
-      return "bg-gray-100 text-gray-800";
+      return "bg-[var(--bg-elevated)] text-[var(--text-primary)]";
     };
 
     return (

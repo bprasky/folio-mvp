@@ -96,10 +96,10 @@ export default function CreateActionItemModal({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
         <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-xl font-semibold text-gray-900">Create Action Item</h2>
+          <h2 className="text-xl font-semibold text-[var(--text-primary)]">Create Action Item</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
+            className="text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
           >
             <FaTimes />
           </button>
@@ -113,7 +113,7 @@ export default function CreateActionItemModal({
           )}
 
           <div>
-            <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="title" className="block text-sm font-medium text-[var(--text-primary)] mb-1">
               Title *
             </label>
             <input
@@ -121,13 +121,13 @@ export default function CreateActionItemModal({
               id="title"
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-[var(--ridge-outer)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
               required
             />
           </div>
 
           <div>
-            <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="description" className="block text-sm font-medium text-[var(--text-primary)] mb-1">
               Description
             </label>
             <textarea
@@ -135,12 +135,12 @@ export default function CreateActionItemModal({
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-[var(--ridge-outer)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
             />
           </div>
 
           <div>
-            <label htmlFor="priority" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="priority" className="block text-sm font-medium text-[var(--text-primary)] mb-1">
               Priority
             </label>
             <select
@@ -149,7 +149,7 @@ export default function CreateActionItemModal({
               onChange={(e) =>
                 setFormData({ ...formData, priority: e.target.value as any })
               }
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-[var(--ridge-outer)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
             >
               <option value="LOW">Low</option>
               <option value="MEDIUM">Medium</option>
@@ -159,7 +159,7 @@ export default function CreateActionItemModal({
           </div>
 
           <div>
-            <label htmlFor="dueDate" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="dueDate" className="block text-sm font-medium text-[var(--text-primary)] mb-1">
               Due Date
             </label>
             <input
@@ -167,7 +167,7 @@ export default function CreateActionItemModal({
               id="dueDate"
               value={formData.dueDate}
               onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-[var(--ridge-outer)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
             />
           </div>
 
@@ -175,14 +175,14 @@ export default function CreateActionItemModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+              className="flex-1 px-4 py-2 border border-[var(--ridge-outer)] rounded-md text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={submitting}
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+              className="flex-1 px-4 py-2 bg-[var(--accent)] text-white rounded-md hover:bg-[var(--accent-hover)] disabled:opacity-50"
             >
               {submitting ? 'Creating...' : 'Create'}
             </button>

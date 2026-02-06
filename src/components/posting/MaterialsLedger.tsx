@@ -9,38 +9,38 @@ export function MaterialsLedger({ ledger }: MaterialsLedgerProps) {
 
   return (
     <div>
-      <h2 className="text-2xl font-semibold text-gray-900 mb-4">Materials</h2>
-      <div className="border border-gray-200 rounded-lg overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+      <h2 className="text-2xl font-semibold text-[var(--text-primary)] mb-4">Materials</h2>
+      <div className="border border-[var(--ridge-outer)] rounded-lg overflow-hidden">
+        <table className="min-w-full divide-y divide-[var(--ridge-outer)]">
+          <thead className="bg-[var(--bg-elevated)]">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
                 Product
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
                 Finish
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
                 Vendor
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
                 Note
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="bg-white divide-y divide-[var(--ridge-outer)]">
             {ledger.map((item, idx) => (
               <tr key={idx}>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-[var(--text-primary)]">
                   {item.name}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--text-secondary)]">
                   {item.finish || "—"}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--text-secondary)]">
                   {item.vendorName || "—"}
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-500">
+                <td className="px-6 py-4 text-sm text-[var(--text-secondary)]">
                   {item.note || "—"}
                 </td>
               </tr>

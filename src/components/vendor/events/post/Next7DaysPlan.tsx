@@ -32,8 +32,8 @@ export function Next7DaysPlan({ suggestions }: Next7DaysPlanProps) {
     switch (impact) {
       case 'High': return 'bg-red-100 text-red-800 border-red-200';
       case 'Medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'Low': return 'bg-gray-100 text-gray-800 border-gray-200';
-      default: return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'Low': return 'bg-[var(--bg-elevated)] text-[var(--text-primary)] border-[var(--ridge-outer)]';
+      default: return 'bg-[var(--accent)]/10 text-blue-800 border-[var(--accent)]/20';
     }
   };
 
@@ -74,7 +74,7 @@ export function Next7DaysPlan({ suggestions }: Next7DaysPlanProps) {
       expectedLift: '+12% consideration',
       target: 'Material evaluation',
       type: 'sample' as const,
-      color: 'bg-blue-100 text-blue-800 border-blue-200'
+      color: 'bg-[var(--accent)]/10 text-blue-800 border-[var(--accent)]/20'
     },
     {
       id: 'localized-push',

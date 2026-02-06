@@ -194,7 +194,7 @@ function JoinContent() {
   if (status === 'loading') {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+        <Loader2 className="w-8 h-8 animate-spin text-[var(--text-tertiary)]" />
       </div>
     );
   }
@@ -205,7 +205,7 @@ function JoinContent() {
         <EditorialHeadline size="lg" className="mb-2">
           What type of organization?
         </EditorialHeadline>
-        <p className="text-gray-600">
+        <p className="text-[var(--text-secondary)]">
           Select the type that best describes your business
         </p>
       </div>
@@ -217,15 +217,15 @@ function JoinContent() {
             setSelectedType('DESIGNER');
             setStep('search');
           }}
-          className="w-full p-6 bg-white/50 backdrop-blur-sm border border-gray-200/70 rounded-xl hover:border-blue-400 hover:bg-white/70 transition-all text-left shadow-sm"
+          className="w-full p-6 bg-white/50 backdrop-blur-sm border border-[var(--ridge-outer)]/70 rounded-xl hover:border-blue-400 hover:bg-white/70 transition-all text-left shadow-sm"
         >
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
-              <Palette className="w-6 h-6 text-blue-600" />
+            <div className="w-12 h-12 bg-[var(--accent)]/10 rounded-xl flex items-center justify-center flex-shrink-0">
+              <Palette className="w-6 h-6 text-[var(--accent)]" />
             </div>
             <div>
-              <h4 className="font-semibold text-gray-900">Design Firm</h4>
-              <p className="text-sm text-gray-600">
+              <h4 className="font-semibold text-[var(--text-primary)]">Design Firm</h4>
+              <p className="text-sm text-[var(--text-secondary)]">
                 Interior design studio, architecture firm, or design consultancy
               </p>
             </div>
@@ -238,15 +238,15 @@ function JoinContent() {
             setSelectedType('VENDOR');
             setStep('search');
           }}
-          className="w-full p-6 bg-white/50 backdrop-blur-sm border border-gray-200/70 rounded-xl hover:border-green-400 hover:bg-white/70 transition-all text-left shadow-sm"
+          className="w-full p-6 bg-white/50 backdrop-blur-sm border border-[var(--ridge-outer)]/70 rounded-xl hover:border-green-400 hover:bg-white/70 transition-all text-left shadow-sm"
         >
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center flex-shrink-0">
               <Building2 className="w-6 h-6 text-green-600" />
             </div>
             <div>
-              <h4 className="font-semibold text-gray-900">Vendor / Manufacturer</h4>
-              <p className="text-sm text-gray-600">
+              <h4 className="font-semibold text-[var(--text-primary)]">Vendor / Manufacturer</h4>
+              <p className="text-sm text-[var(--text-secondary)]">
                 Furniture, lighting, textiles, or other product manufacturer or showroom
               </p>
             </div>
@@ -265,7 +265,7 @@ function JoinContent() {
           setSearchResults([]);
           setSearchQuery('');
         }}
-        className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+        className="flex items-center gap-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
       >
         <ArrowLeft className="w-4 h-4" />
         <span>Back</span>
@@ -275,7 +275,7 @@ function JoinContent() {
         <EditorialHeadline size="lg" className="mb-2">
           Find your organization
         </EditorialHeadline>
-        <p className="text-gray-600">
+        <p className="text-[var(--text-secondary)]">
           Search to see if your organization already exists on Folio
         </p>
       </div>
@@ -304,7 +304,7 @@ function JoinContent() {
       {/* Search Results */}
       {searchResults.length > 0 && (
         <div className="space-y-3">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-[var(--text-secondary)]">
             {searchResults.length} organization{searchResults.length !== 1 ? 's' : ''} found
           </p>
           {searchResults.map((org) => (
@@ -314,14 +314,14 @@ function JoinContent() {
                 setSelectedOrg(org);
                 setStep('request');
               }}
-              className="w-full p-4 bg-white/50 backdrop-blur-sm border border-gray-200/70 rounded-xl hover:border-blue-400 hover:bg-white/70 transition-all text-left"
+              className="w-full p-4 bg-white/50 backdrop-blur-sm border border-[var(--ridge-outer)]/70 rounded-xl hover:border-blue-400 hover:bg-white/70 transition-all text-left"
             >
               <div className="flex items-center justify-between">
                 <div>
                   <div className="flex items-center gap-2">
-                    <h4 className="font-medium text-gray-900">{org.name}</h4>
+                    <h4 className="font-medium text-[var(--text-primary)]">{org.name}</h4>
                     {org.status === 'CLAIMED' && (
-                      <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full">
+                      <span className="px-2 py-0.5 bg-[var(--accent)]/10 text-[var(--accent-hover)] text-xs rounded-full">
                         Verified
                       </span>
                     )}
@@ -331,12 +331,12 @@ function JoinContent() {
                       </span>
                     )}
                     {org.status === 'UNCLAIMED' && (
-                      <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full">
+                      <span className="px-2 py-0.5 bg-[var(--bg-elevated)] text-[var(--text-secondary)] text-xs rounded-full">
                         Unclaimed
                       </span>
                     )}
                   </div>
-                  <div className="flex items-center gap-3 text-sm text-gray-500 mt-1">
+                  <div className="flex items-center gap-3 text-sm text-[var(--text-secondary)] mt-1">
                     {org.website && <span>{org.website}</span>}
                     <span className="flex items-center gap-1">
                       <Users className="w-3 h-3" />
@@ -344,7 +344,7 @@ function JoinContent() {
                     </span>
                   </div>
                 </div>
-                <ArrowRight className="w-5 h-5 text-gray-400" />
+                <ArrowRight className="w-5 h-5 text-[var(--text-tertiary)]" />
               </div>
             </button>
           ))}
@@ -353,24 +353,24 @@ function JoinContent() {
 
       {searchQuery.length >= 2 && !isSearching && searchResults.length === 0 && (
         <div className="text-center py-6">
-          <p className="text-gray-600 mb-4">No organizations found matching "{searchQuery}"</p>
+          <p className="text-[var(--text-secondary)] mb-4">No organizations found matching "{searchQuery}"</p>
         </div>
       )}
 
       {/* Create New Option */}
-      <div className="pt-6 border-t border-gray-200">
+      <div className="pt-6 border-t border-[var(--ridge-outer)]">
         <button
           onClick={() => {
             setFormData(prev => ({ ...prev, name: searchQuery }));
             setStep('create');
           }}
-          className="w-full p-4 bg-white/50 backdrop-blur-sm border-2 border-dashed border-gray-300 rounded-xl hover:border-blue-400 hover:bg-white/70 transition-all text-center"
+          className="w-full p-4 bg-white/50 backdrop-blur-sm border-2 border-dashed border-[var(--ridge-outer)] rounded-xl hover:border-blue-400 hover:bg-white/70 transition-all text-center"
         >
-          <div className="flex items-center justify-center gap-2 text-gray-700">
+          <div className="flex items-center justify-center gap-2 text-[var(--text-primary)]">
             <Plus className="w-5 h-5" />
             <span className="font-medium">Create a new organization</span>
           </div>
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="text-sm text-[var(--text-secondary)] mt-1">
             Don't see your organization? Create it now.
           </p>
         </button>
@@ -382,7 +382,7 @@ function JoinContent() {
     <div className="space-y-6">
       <button
         onClick={() => setStep('search')}
-        className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+        className="flex items-center gap-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
       >
         <ArrowLeft className="w-4 h-4" />
         <span>Back to search</span>
@@ -392,14 +392,14 @@ function JoinContent() {
         <EditorialHeadline size="lg" className="mb-2">
           Create your organization
         </EditorialHeadline>
-        <p className="text-gray-600">
+        <p className="text-[var(--text-secondary)]">
           Fill in your business details to get started
         </p>
       </div>
 
       <form onSubmit={handleCreateOrg} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">
+          <label className="block text-sm font-medium text-[var(--text-primary)] mb-1.5">
             Business Name *
           </label>
           <GlassInput
@@ -412,7 +412,7 @@ function JoinContent() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">
+          <label className="block text-sm font-medium text-[var(--text-primary)] mb-1.5">
             Business Address
           </label>
           <GlassInput
@@ -424,7 +424,7 @@ function JoinContent() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">
+          <label className="block text-sm font-medium text-[var(--text-primary)] mb-1.5">
             Website
           </label>
           <GlassInput
@@ -436,7 +436,7 @@ function JoinContent() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">
+          <label className="block text-sm font-medium text-[var(--text-primary)] mb-1.5">
             Phone
           </label>
           <GlassInput
@@ -448,7 +448,7 @@ function JoinContent() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">
+          <label className="block text-sm font-medium text-[var(--text-primary)] mb-1.5">
             Description
           </label>
           <textarea
@@ -456,7 +456,7 @@ function JoinContent() {
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             placeholder="Tell us about your business..."
             rows={3}
-            className="w-full px-4 py-3 bg-white/50 backdrop-blur-sm border border-gray-200/70 rounded-xl focus:border-blue-400 focus:ring-1 focus:ring-blue-400 transition-all resize-none"
+            className="w-full px-4 py-3 bg-white/50 backdrop-blur-sm border border-[var(--ridge-outer)]/70 rounded-xl focus:border-blue-400 focus:ring-1 focus:ring-blue-400 transition-all resize-none"
           />
         </div>
 
@@ -490,7 +490,7 @@ function JoinContent() {
           setStep('search');
           setSelectedOrg(null);
         }}
-        className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+        className="flex items-center gap-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
       >
         <ArrowLeft className="w-4 h-4" />
         <span>Back to search</span>
@@ -500,11 +500,11 @@ function JoinContent() {
         <EditorialHeadline size="lg" className="mb-2">
           {selectedOrg?.name}
         </EditorialHeadline>
-        <div className="flex items-center justify-center gap-2 text-gray-600">
+        <div className="flex items-center justify-center gap-2 text-[var(--text-secondary)]">
           <Users className="w-4 h-4" />
           <span>{selectedOrg?._count.users} member{selectedOrg?._count.users !== 1 ? 's' : ''}</span>
           {selectedOrg?.status === 'UNCLAIMED' && (
-            <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full ml-2">
+            <span className="px-2 py-0.5 bg-[var(--bg-elevated)] text-[var(--text-secondary)] text-xs rounded-full ml-2">
               Unclaimed
             </span>
           )}
@@ -519,8 +519,8 @@ function JoinContent() {
                 <Building2 className="w-5 h-5 text-yellow-600" />
               </div>
               <div>
-                <h4 className="font-medium text-gray-900 mb-1">This organization is unclaimed</h4>
-                <p className="text-sm text-gray-600">
+                <h4 className="font-medium text-[var(--text-primary)] mb-1">This organization is unclaimed</h4>
+                <p className="text-sm text-[var(--text-secondary)]">
                   If you are the owner of this business, you can claim it to become the administrator.
                   Otherwise, you can request to join as a member.
                 </p>
@@ -555,12 +555,12 @@ function JoinContent() {
         <div className="space-y-4">
           <GlassCard variant="subtle" padding="lg" rounded="xl">
             <div className="flex items-start gap-3">
-              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                <CheckCircle className="w-5 h-5 text-blue-600" />
+              <div className="w-10 h-10 bg-[var(--accent)]/10 rounded-full flex items-center justify-center flex-shrink-0">
+                <CheckCircle className="w-5 h-5 text-[var(--accent)]" />
               </div>
               <div>
-                <h4 className="font-medium text-gray-900 mb-1">Request to join</h4>
-                <p className="text-sm text-gray-600">
+                <h4 className="font-medium text-[var(--text-primary)] mb-1">Request to join</h4>
+                <p className="text-sm text-[var(--text-secondary)]">
                   Your request will be sent to the organization administrators for review.
                 </p>
               </div>
@@ -568,7 +568,7 @@ function JoinContent() {
           </GlassCard>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+            <label className="block text-sm font-medium text-[var(--text-primary)] mb-1.5">
               Message (optional)
             </label>
             <textarea
@@ -576,7 +576,7 @@ function JoinContent() {
               onChange={(e) => setJoinMessage(e.target.value)}
               placeholder="Introduce yourself and explain why you'd like to join..."
               rows={3}
-              className="w-full px-4 py-3 bg-white/50 backdrop-blur-sm border border-gray-200/70 rounded-xl focus:border-blue-400 focus:ring-1 focus:ring-blue-400 transition-all resize-none"
+              className="w-full px-4 py-3 bg-white/50 backdrop-blur-sm border border-[var(--ridge-outer)]/70 rounded-xl focus:border-blue-400 focus:ring-1 focus:ring-blue-400 transition-all resize-none"
             />
           </div>
 
@@ -608,7 +608,7 @@ function JoinContent() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 via-white to-gray-100 px-4 py-12">
       <div className="w-full max-w-lg">
         <div className="text-center mb-8">
-          <Link href="/" className="text-2xl font-semibold text-gray-900">
+          <Link href="/" className="text-2xl font-semibold text-[var(--text-primary)]">
             Folio
           </Link>
         </div>
@@ -628,7 +628,7 @@ export default function ProfessionalsJoinPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+        <Loader2 className="w-8 h-8 animate-spin text-[var(--text-tertiary)]" />
       </div>
     }>
       <JoinContent />

@@ -175,11 +175,11 @@ export function ProjectDetailPage({ project, isOwner }: ProjectDetailPageProps) 
   const currentProject = isEditing ? editedProject : project;
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-800">
+    <div className="min-h-screen bg-[var(--bg-elevated)] text-[var(--text-primary)]">
       {/* Back Button & Edit Controls */}
       <div className="p-4 bg-white shadow-sm">
         <div className="flex items-center justify-between">
-          <Link href="/projects" className="flex items-center text-blue-600 hover:underline">
+          <Link href="/projects" className="flex items-center text-[var(--accent)] hover:underline">
             <FaArrowLeft className="mr-2" /> Back to Projects
           </Link>
           
@@ -207,7 +207,7 @@ export function ProjectDetailPage({ project, isOwner }: ProjectDetailPageProps) 
               ) : (
                 <button
                   onClick={() => setIsEditing(true)}
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 bg-[var(--accent)] text-white rounded-lg hover:bg-[var(--accent-hover)] transition-colors"
                 >
                   <FaEdit className="w-4 h-4" />
                   Edit Project
@@ -243,21 +243,21 @@ export function ProjectDetailPage({ project, isOwner }: ProjectDetailPageProps) 
                   {currentProject.title.charAt(0).toUpperCase()}
                 </div>
               </div>
-              <span className="text-lg md:text-xl text-gray-300">
+              <span className="text-lg md:text-xl text-[var(--text-tertiary)]">
                 Project Details
               </span>
             </div>
           </div>
           
           <div className="flex flex-wrap gap-2 mt-4">
-            <span className="bg-gray-700 text-gray-200 text-sm px-3 py-1 rounded-full flex items-center">
+            <span className="bg-gray-700 text-white/80 text-sm px-3 py-1 rounded-full flex items-center">
               <FaTag className="mr-1" /> {getStageLabel(currentProject.stage)}
             </span>
-            <span className="bg-gray-700 text-gray-200 text-sm px-3 py-1 rounded-full flex items-center">
+            <span className="bg-gray-700 text-white/80 text-sm px-3 py-1 rounded-full flex items-center">
               <FaTag className="mr-1" /> {getProjectTypeLabel(currentProject.projectType)}
             </span>
             {currentProject.city && (
-              <span className="bg-gray-700 text-gray-200 text-sm px-3 py-1 rounded-full flex items-center">
+              <span className="bg-gray-700 text-white/80 text-sm px-3 py-1 rounded-full flex items-center">
                 <FaTag className="mr-1" /> {currentProject.city}
               </span>
             )}
@@ -267,14 +267,14 @@ export function ProjectDetailPage({ project, isOwner }: ProjectDetailPageProps) 
 
       {/* Tab Navigation */}
       <div className="container mx-auto px-8">
-        <div className="border-b border-gray-200">
+        <div className="border-b border-[var(--ridge-outer)]">
           <nav className="-mb-px flex space-x-8">
             <button
               onClick={() => setActiveTab('overview')}
               className={`py-2 px-1 border-b-2 font-medium text-sm ${
                 activeTab === 'overview'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'border-[var(--accent)] text-[var(--accent)]'
+                  : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--ridge-outer)]'
               }`}
             >
               Overview
@@ -283,14 +283,14 @@ export function ProjectDetailPage({ project, isOwner }: ProjectDetailPageProps) 
               onClick={() => setActiveTab('boards')}
               className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center ${
                 activeTab === 'boards'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'border-[var(--accent)] text-[var(--accent)]'
+                  : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--ridge-outer)]'
               }`}
             >
               <FaThLarge className="mr-2" />
               Designer Boards
               {project.rooms.length > 0 && (
-                <span className="ml-2 bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full">
+                <span className="ml-2 bg-[var(--bg-elevated)] text-[var(--text-secondary)] text-xs px-2 py-0.5 rounded-full">
                   {project.rooms.reduce((sum, room) => sum + room.selections.length, 0)}
                 </span>
               )}
@@ -312,14 +312,14 @@ export function ProjectDetailPage({ project, isOwner }: ProjectDetailPageProps) 
                 value={currentProject.description || ''}
                 onChange={(e) => setEditedProject({ ...currentProject, description: e.target.value })}
                 rows={4}
-                className="w-full p-3 border border-gray-300 rounded-lg mb-6 resize-none"
+                className="w-full p-3 border border-[var(--ridge-outer)] rounded-lg mb-6 resize-none"
                 placeholder="Project description..."
               />
             ) : (
-              <p className="text-gray-700 leading-relaxed mb-6">{currentProject.description || 'No description yet.'}</p>
+              <p className="text-[var(--text-primary)] leading-relaxed mb-6">{currentProject.description || 'No description yet.'}</p>
             )}
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-gray-700">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-[var(--text-primary)]">
               <div>
                 <span className="font-semibold">Stage:</span>
                 <span className="ml-2">{getStageLabel(currentProject.stage)}</span>
@@ -371,17 +371,17 @@ export function ProjectDetailPage({ project, isOwner }: ProjectDetailPageProps) 
           <section className="bg-white p-8 rounded-lg shadow-md">
             <h2 className="text-3xl font-bold mb-6">Project Insights</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="text-center p-4 bg-blue-50 rounded-lg">
-                <div className="text-3xl font-bold text-blue-600">{currentProject.views.toLocaleString()}</div>
-                <div className="text-gray-600">Views</div>
+              <div className="text-center p-4 bg-[var(--accent)]/5 rounded-lg">
+                <div className="text-3xl font-bold text-[var(--accent)]">{currentProject.views.toLocaleString()}</div>
+                <div className="text-[var(--text-secondary)]">Views</div>
               </div>
               <div className="text-center p-4 bg-green-50 rounded-lg">
                 <div className="text-3xl font-bold text-green-600">{currentProject.saves.toLocaleString()}</div>
-                <div className="text-gray-600">Saves</div>
+                <div className="text-[var(--text-secondary)]">Saves</div>
               </div>
               <div className="text-center p-4 bg-purple-50 rounded-lg">
                 <div className="text-3xl font-bold text-purple-600">{currentProject.shares.toLocaleString()}</div>
-                <div className="text-gray-600">Shares</div>
+                <div className="text-[var(--text-secondary)]">Shares</div>
               </div>
             </div>
           </section>
@@ -389,7 +389,7 @@ export function ProjectDetailPage({ project, isOwner }: ProjectDetailPageProps) 
           {/* Placeholder for Images Section */}
           <section className="bg-white p-8 rounded-lg shadow-md">
             <h2 className="text-3xl font-bold mb-6">Project Images</h2>
-            <div className="text-center py-12 text-gray-500">
+            <div className="text-center py-12 text-[var(--text-secondary)]">
               <p>No images uploaded yet.</p>
               {isOwner && (
                 <p className="text-sm mt-2">Upload images to showcase your project.</p>
@@ -400,7 +400,7 @@ export function ProjectDetailPage({ project, isOwner }: ProjectDetailPageProps) 
           {/* Placeholder for Timeline Section */}
           <section className="bg-white p-8 rounded-lg shadow-md">
             <h2 className="text-3xl font-bold mb-6">Project Timeline</h2>
-            <div className="text-center py-12 text-gray-500">
+            <div className="text-center py-12 text-[var(--text-secondary)]">
               <p>No timeline events yet.</p>
               {isOwner && (
                 <p className="text-sm mt-2">Add milestones and progress updates to track your project journey.</p>
@@ -426,7 +426,7 @@ export function ProjectDetailPage({ project, isOwner }: ProjectDetailPageProps) 
           <div className="bg-white p-6 rounded-lg shadow-md">
             <h2 className="text-xl font-semibold mb-4">Project Actions</h2>
             <div className="space-y-3">
-              <button className="flex items-center w-full bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition">
+              <button className="flex items-center w-full bg-[var(--accent)] text-white px-4 py-2 rounded-lg font-medium hover:bg-[var(--accent-hover)] transition">
                 <FaEdit className="mr-2" /> Edit Project
               </button>
               <button 
@@ -445,13 +445,13 @@ export function ProjectDetailPage({ project, isOwner }: ProjectDetailPageProps) 
           <section className="bg-white p-6 rounded-lg shadow-md">
             <h2 className="text-xl font-semibold mb-4">Project Files & Downloads</h2>
             <div className="space-y-3">
-              <button className="flex items-center w-full bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-300 transition">
+              <button className="flex items-center w-full bg-[var(--bg-elevated)] text-[var(--text-primary)] px-4 py-2 rounded-lg font-medium hover:bg-[var(--text-tertiary)]/20 transition">
                 <FaDownload className="mr-2" /> Project Summary (PDF)
               </button>
-              <button className="flex items-center w-full bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-300 transition">
+              <button className="flex items-center w-full bg-[var(--bg-elevated)] text-[var(--text-primary)] px-4 py-2 rounded-lg font-medium hover:bg-[var(--text-tertiary)]/20 transition">
                 <FaFilePdf className="mr-2" /> Design Boards (PDF)
               </button>
-              <button className="flex items-center w-full bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-300 transition">
+              <button className="flex items-center w-full bg-[var(--bg-elevated)] text-[var(--text-primary)] px-4 py-2 rounded-lg font-medium hover:bg-[var(--text-tertiary)]/20 transition">
                 <FaDownload className="mr-2" /> Materials List
               </button>
             </div>
@@ -464,14 +464,14 @@ export function ProjectDetailPage({ project, isOwner }: ProjectDetailPageProps) 
               <div className="flex justify-between items-center">
                 <span>Visibility:</span>
                 <span className={`px-2 py-1 rounded text-xs font-medium ${
-                  currentProject.isPublic ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                  currentProject.isPublic ? 'bg-green-100 text-green-800' : 'bg-[var(--bg-elevated)] text-[var(--text-primary)]'
                 }`}>
                   {currentProject.isPublic ? 'Public' : 'Private'}
                 </span>
               </div>
               <div className="flex justify-between items-center">
                 <span>Category:</span>
-                <span className="text-gray-600">{currentProject.category || 'Uncategorized'}</span>
+                <span className="text-[var(--text-secondary)]">{currentProject.category || 'Uncategorized'}</span>
               </div>
             </div>
           </div>

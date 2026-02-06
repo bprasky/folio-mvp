@@ -20,7 +20,7 @@ export default function MoodyShell({ designer, projects, aesthetic, viewerContex
           <div className="absolute bottom-0 left-0 right-0 p-12">
             <h1 className="text-5xl font-medium text-gray-100 mb-3">{designer.name}</h1>
             {designer.title && (
-              <p className="text-xl text-gray-400">{designer.title}</p>
+              <p className="text-xl text-[var(--text-tertiary)]">{designer.title}</p>
             )}
           </div>
         </div>
@@ -31,9 +31,9 @@ export default function MoodyShell({ designer, projects, aesthetic, viewerContex
         {/* Bio - Muted text colors */}
         {designer.bio && (
           <div className="mb-16">
-            <p className="text-lg text-gray-300 leading-relaxed mb-6">{designer.bio}</p>
+            <p className="text-lg text-[var(--text-tertiary)] leading-relaxed mb-6">{designer.bio}</p>
             {designer.location && (
-              <p className="text-gray-500">{designer.location}</p>
+              <p className="text-[var(--text-secondary)]">{designer.location}</p>
             )}
           </div>
         )}

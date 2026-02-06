@@ -196,7 +196,7 @@ export function StepMap({ initialData, scrapedData, onNext, onBack }: StepMapPro
                       className={`w-full px-4 py-2 rounded-lg border ${
                         errors.name
                           ? 'border-red-500 focus:ring-red-500'
-                          : 'border-stone-300 dark:border-stone-700 focus:ring-blue-500'
+                          : 'border-stone-300 dark:border-stone-700 focus:ring-[var(--accent)]'
                       } bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 focus:ring-2 focus:border-transparent`}
                     />
                     <ConfidenceBadge {...getFieldConfidence('name')} />
@@ -216,7 +216,7 @@ export function StepMap({ initialData, scrapedData, onNext, onBack }: StepMapPro
                         errors.sku
                           ? 'border-red-500'
                           : 'border-stone-300 dark:border-stone-700'
-                      } bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+                      } bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent`}
                     />
                     <ConfidenceBadge {...getFieldConfidence('sku')} />
                     {errors.sku && (
@@ -232,7 +232,7 @@ export function StepMap({ initialData, scrapedData, onNext, onBack }: StepMapPro
                       type="number"
                       {...registerTouched('price')}
                       placeholder="1250"
-                      className="w-full px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                     />
                     <ConfidenceBadge {...getFieldConfidence('price')} />
                   </div>
@@ -249,7 +249,7 @@ export function StepMap({ initialData, scrapedData, onNext, onBack }: StepMapPro
                         errors.description
                           ? 'border-red-500'
                           : 'border-stone-300 dark:border-stone-700'
-                      } bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none`}
+                      } bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent resize-none`}
                     />
                     <ConfidenceBadge {...getFieldConfidence('description')} />
                     {errors.description && (
@@ -273,7 +273,7 @@ export function StepMap({ initialData, scrapedData, onNext, onBack }: StepMapPro
                     <input
                       {...registerTouched('materials')}
                       placeholder="Travertine, Stone"
-                      className="w-full px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                     />
                     <ConfidenceBadge {...getFieldConfidence('materials')} />
                     {errors.materials && (
@@ -288,7 +288,7 @@ export function StepMap({ initialData, scrapedData, onNext, onBack }: StepMapPro
                     <input
                       {...registerTouched('finish')}
                       placeholder="Honed Natural"
-                      className="w-full px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                     />
                     <ConfidenceBadge {...getFieldConfidence('finish')} />
                   </div>
@@ -303,23 +303,23 @@ export function StepMap({ initialData, scrapedData, onNext, onBack }: StepMapPro
                         type="number"
                         {...registerTouched('dimensions.w')}
                         placeholder="Width"
-                        className="px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                       />
                       <input
                         type="number"
                         {...registerTouched('dimensions.d')}
                         placeholder="Depth"
-                        className="px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                       />
                       <input
                         type="number"
                         {...registerTouched('dimensions.h')}
                         placeholder="Height"
-                        className="px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                       />
                       <select
                         {...registerTouched('dimensions.units')}
-                        className="px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                       >
                         <option value="in">in</option>
                         <option value="cm">cm</option>
@@ -337,11 +337,11 @@ export function StepMap({ initialData, scrapedData, onNext, onBack }: StepMapPro
                         type="number"
                         {...registerTouched('weight.value')}
                         placeholder="25"
-                        className="px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                       />
                       <select
                         {...registerTouched('weight.units')}
-                        className="px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                       >
                         <option value="lb">lb</option>
                         <option value="kg">kg</option>
@@ -356,7 +356,7 @@ export function StepMap({ initialData, scrapedData, onNext, onBack }: StepMapPro
                     <input
                       {...registerTouched('leadTime')}
                       placeholder="6–8 weeks"
-                      className="w-full px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                     />
                     <ConfidenceBadge {...getFieldConfidence('leadTime')} />
                   </div>
@@ -378,7 +378,7 @@ export function StepMap({ initialData, scrapedData, onNext, onBack }: StepMapPro
                     <input
                       {...registerTouched('category')}
                       placeholder="Furniture, Lighting, Textiles..."
-                      className="w-full px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                     />
                     <ConfidenceBadge {...getFieldConfidence('category')} />
                   </div>
@@ -390,7 +390,7 @@ export function StepMap({ initialData, scrapedData, onNext, onBack }: StepMapPro
                     <input
                       {...registerTouched('tags')}
                       placeholder="modern, stone, side-table, luxury"
-                      className="w-full px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                     />
                   </div>
                 </div>

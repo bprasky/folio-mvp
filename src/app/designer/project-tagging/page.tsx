@@ -59,7 +59,7 @@ export default function ProjectTaggingDemo() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-[var(--bg-elevated)] flex">
       {/* Navigation */}
       
       
@@ -71,7 +71,7 @@ export default function ProjectTaggingDemo() {
           <div className="mb-8">
             <Link 
               href="/designer" 
-              className="inline-flex items-center text-blue-600 hover:text-blue-700 mb-4 transition-colors"
+              className="inline-flex items-center text-[var(--accent)] hover:text-[var(--accent-hover)] mb-4 transition-colors"
             >
               <FaArrowLeft className="w-4 h-4 mr-2" />
               Back to Designer Dashboard
@@ -79,21 +79,21 @@ export default function ProjectTaggingDemo() {
             
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                <h1 className="text-3xl font-bold text-[var(--text-primary)] mb-2">
                   Advanced Product Tagging
                 </h1>
-                <p className="text-gray-600 text-lg">
+                <p className="text-[var(--text-secondary)] text-lg">
                   Click on any part of your project images to tag products from our vendor catalog
                 </p>
               </div>
               
               <div className="flex items-center gap-4">
                 <div className="text-right">
-                  <div className="text-2xl font-bold text-blue-600">{tags.length}</div>
-                  <div className="text-sm text-gray-500">Products Tagged</div>
+                  <div className="text-2xl font-bold text-[var(--accent)]">{tags.length}</div>
+                  <div className="text-sm text-[var(--text-secondary)]">Products Tagged</div>
                 </div>
-                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                  <FaTag className="w-6 h-6 text-blue-600" />
+                <div className="w-12 h-12 bg-[var(--accent)]/10 rounded-full flex items-center justify-center">
+                  <FaTag className="w-6 h-6 text-[var(--accent)]" />
                 </div>
               </div>
             </div>
@@ -102,10 +102,10 @@ export default function ProjectTaggingDemo() {
           {/* Image Selection */}
           <div className="mb-8">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold text-gray-900">Select Project Image</h2>
+              <h2 className="text-xl font-semibold text-[var(--text-primary)]">Select Project Image</h2>
               <button
                 onClick={() => setShowCustomInput(!showCustomInput)}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-[var(--accent)] text-white rounded-lg hover:bg-[var(--accent-hover)] transition-colors"
               >
                 <FaUpload className="w-4 h-4" />
                 Use Custom Image
@@ -118,7 +118,7 @@ export default function ProjectTaggingDemo() {
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
-                className="mb-4 p-4 bg-white rounded-lg border border-gray-200"
+                className="mb-4 p-4 bg-white rounded-lg border border-[var(--ridge-outer)]"
               >
                 <div className="flex gap-3">
                   <input
@@ -126,12 +126,12 @@ export default function ProjectTaggingDemo() {
                     placeholder="Enter image URL (e.g., https://example.com/image.jpg)"
                     value={customImageUrl}
                     onChange={(e) => setCustomImageUrl(e.target.value)}
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="flex-1 px-4 py-2 border border-[var(--ridge-outer)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                   />
                   <button
                     onClick={handleCustomImageSubmit}
                     disabled={!customImageUrl.trim()}
-                    className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                    className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-[var(--text-tertiary)]/30 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
                   >
                     <FaCheck className="w-4 h-4" />
                     Use Image
@@ -147,8 +147,8 @@ export default function ProjectTaggingDemo() {
                   key={image.id}
                   className={`relative rounded-lg overflow-hidden cursor-pointer border-2 transition-all duration-200 ${
                     selectedImage.id === image.id
-                      ? 'border-blue-500 shadow-lg'
-                      : 'border-gray-200 hover:border-gray-300'
+                      ? 'border-[var(--accent)] shadow-lg'
+                      : 'border-[var(--ridge-outer)] hover:border-[var(--ridge-outer)]'
                   }`}
                   onClick={() => {
                     setSelectedImage(image);
@@ -157,7 +157,7 @@ export default function ProjectTaggingDemo() {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
-                  <div className="aspect-video bg-gray-100">
+                  <div className="aspect-video bg-[var(--bg-elevated)]">
                     <img
                       src={image.url}
                       alt={image.name}
@@ -165,12 +165,12 @@ export default function ProjectTaggingDemo() {
                     />
                   </div>
                   <div className="p-3">
-                    <h3 className="font-semibold text-gray-900 text-sm mb-1">{image.name}</h3>
-                    <p className="text-gray-600 text-xs">{image.description}</p>
+                    <h3 className="font-semibold text-[var(--text-primary)] text-sm mb-1">{image.name}</h3>
+                    <p className="text-[var(--text-secondary)] text-xs">{image.description}</p>
                   </div>
                   
                   {selectedImage.id === image.id && (
-                    <div className="absolute top-2 right-2 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center">
+                    <div className="absolute top-2 right-2 w-6 h-6 bg-[var(--accent)] text-white rounded-full flex items-center justify-center">
                       <FaCheck className="w-3 h-3" />
                     </div>
                   )}
@@ -182,10 +182,10 @@ export default function ProjectTaggingDemo() {
           {/* Main Tagging Interface */}
           <div className="bg-white rounded-xl shadow-lg p-6">
             <div className="mb-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-2">
+              <h2 className="text-xl font-semibold text-[var(--text-primary)] mb-2">
                 Tag Products in: {selectedImage.name}
               </h2>
-              <p className="text-gray-600">
+              <p className="text-[var(--text-secondary)]">
                 Click anywhere on the image below to tag products from our vendor catalog. 
                 Hover over existing tags to see product details.
               </p>
@@ -202,32 +202,32 @@ export default function ProjectTaggingDemo() {
 
           {/* Instructions */}
           <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-white rounded-lg p-6 border border-gray-200">
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
-                <FaImage className="w-6 h-6 text-blue-600" />
+            <div className="bg-white rounded-lg p-6 border border-[var(--ridge-outer)]">
+              <div className="w-12 h-12 bg-[var(--accent)]/10 rounded-lg flex items-center justify-center mb-4">
+                <FaImage className="w-6 h-6 text-[var(--accent)]" />
               </div>
-              <h3 className="font-semibold text-gray-900 mb-2">1. Select Image</h3>
-              <p className="text-gray-600 text-sm">
+              <h3 className="font-semibold text-[var(--text-primary)] mb-2">1. Select Image</h3>
+              <p className="text-[var(--text-secondary)] text-sm">
                 Choose from our demo images or upload your own project image using a URL.
               </p>
             </div>
 
-            <div className="bg-white rounded-lg p-6 border border-gray-200">
+            <div className="bg-white rounded-lg p-6 border border-[var(--ridge-outer)]">
               <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
                 <FaTag className="w-6 h-6 text-green-600" />
               </div>
-              <h3 className="font-semibold text-gray-900 mb-2">2. Click to Tag</h3>
-              <p className="text-gray-600 text-sm">
+              <h3 className="font-semibold text-[var(--text-primary)] mb-2">2. Click to Tag</h3>
+              <p className="text-[var(--text-secondary)] text-sm">
                 Click on any furniture, decor, or fixture in the image to tag it with a product from our catalog.
               </p>
             </div>
 
-            <div className="bg-white rounded-lg p-6 border border-gray-200">
+            <div className="bg-white rounded-lg p-6 border border-[var(--ridge-outer)]">
               <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
                 <FaCheck className="w-6 h-6 text-purple-600" />
               </div>
-              <h3 className="font-semibold text-gray-900 mb-2">3. Save & Share</h3>
-              <p className="text-gray-600 text-sm">
+              <h3 className="font-semibold text-[var(--text-primary)] mb-2">3. Save & Share</h3>
+              <p className="text-[var(--text-secondary)] text-sm">
                 Tagged products are automatically saved and can be shared with clients or used for analytics.
               </p>
             </div>
@@ -235,28 +235,28 @@ export default function ProjectTaggingDemo() {
 
           {/* Features Highlight */}
           <div className="mt-8 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">✨ Advanced Features</h3>
+            <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4">✨ Advanced Features</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
               <div className="flex items-start gap-3">
-                <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                <div className="w-2 h-2 bg-[var(--accent)] rounded-full mt-2 flex-shrink-0"></div>
                 <div>
                   <strong>Smart Product Search:</strong> Find products by name, brand, category, or tags
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                <div className="w-2 h-2 bg-[var(--accent)] rounded-full mt-2 flex-shrink-0"></div>
                 <div>
                   <strong>Precise Positioning:</strong> Percentage-based coordinates for responsive tagging
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                <div className="w-2 h-2 bg-[var(--accent)] rounded-full mt-2 flex-shrink-0"></div>
                 <div>
                   <strong>Interactive Tooltips:</strong> Hover over tags to see product details instantly
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                <div className="w-2 h-2 bg-[var(--accent)] rounded-full mt-2 flex-shrink-0"></div>
                 <div>
                   <strong>Tag Management:</strong> Easy deletion and editing of existing tags
                 </div>

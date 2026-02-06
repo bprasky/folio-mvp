@@ -45,7 +45,7 @@ export function IntentSegments({ segments }: IntentSegmentsProps) {
       description: 'Early-stage designers exploring concepts',
       icon: Clock,
       action: 'Share Moodboard Images',
-      color: 'bg-blue-100 text-blue-800 border-blue-200',
+      color: 'bg-[var(--accent)]/10 text-blue-800 border-[var(--accent)]/20',
       designers: segments.earlyExplorers
     }
   ];
@@ -69,7 +69,7 @@ export function IntentSegments({ segments }: IntentSegmentsProps) {
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
                   <div className={`w-10 h-10 rounded-full ${segment.color.replace('text-', 'bg-').replace('border-', '').replace('-800', '-100')} flex items-center justify-center`}>
-                    <segment.icon className={`w-5 h-5 ${segment.color.includes('red') ? 'text-red-600' : segment.color.includes('yellow') ? 'text-yellow-600' : 'text-blue-600'}`} />
+                    <segment.icon className={`w-5 h-5 ${segment.color.includes('red') ? 'text-red-600' : segment.color.includes('yellow') ? 'text-yellow-600' : 'text-[var(--accent)]'}`} />
                   </div>
                   <div>
                     <CardTitle className="text-lg font-serif text-[#2B2B2B]">

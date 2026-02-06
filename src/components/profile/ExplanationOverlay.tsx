@@ -22,7 +22,7 @@ export default function ExplanationOverlay({ aesthetic, onClose }: ExplanationOv
       <div className="relative bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-8">
         <button
           onClick={handleClose}
-          className="absolute top-4 right-4 p-2 hover:bg-gray-100 rounded-full transition-colors"
+          className="absolute top-4 right-4 p-2 hover:bg-[var(--bg-elevated)] rounded-full transition-colors"
           aria-label="Close"
         >
           <svg
@@ -43,26 +43,26 @@ export default function ExplanationOverlay({ aesthetic, onClose }: ExplanationOv
         <div className="pr-8">
           <h2 className="text-3xl font-bold mb-4">Your Aesthetic Profile</h2>
           <div className="mb-6">
-            <span className="inline-block px-4 py-2 bg-gray-100 rounded-full text-sm font-semibold text-gray-800 capitalize">
+            <span className="inline-block px-4 py-2 bg-[var(--bg-elevated)] rounded-full text-sm font-semibold text-[var(--text-primary)] capitalize">
               {aesthetic.theme}
             </span>
-            <span className="ml-3 text-sm text-gray-600">
+            <span className="ml-3 text-sm text-[var(--text-secondary)]">
               {Math.round(aesthetic.confidence * 100)}% confidence
             </span>
           </div>
 
-          <p className="text-lg text-gray-700 leading-relaxed mb-6">
+          <p className="text-lg text-[var(--text-primary)] leading-relaxed mb-6">
             {aesthetic.explanation}
           </p>
 
           {aesthetic.alternativeThemes.length > 0 && (
             <div className="mb-6">
-              <p className="text-sm font-semibold text-gray-600 mb-2">Also considered:</p>
+              <p className="text-sm font-semibold text-[var(--text-secondary)] mb-2">Also considered:</p>
               <div className="flex flex-wrap gap-2">
                 {aesthetic.alternativeThemes.map((theme) => (
                   <span
                     key={theme}
-                    className="px-3 py-1 bg-gray-50 rounded-full text-xs text-gray-600 capitalize"
+                    className="px-3 py-1 bg-[var(--bg-elevated)] rounded-full text-xs text-[var(--text-secondary)] capitalize"
                   >
                     {theme}
                   </span>
@@ -71,13 +71,13 @@ export default function ExplanationOverlay({ aesthetic, onClose }: ExplanationOv
             </div>
           )}
 
-          <div className="pt-6 border-t border-gray-200">
-            <p className="text-sm text-gray-600 mb-4">
+          <div className="pt-6 border-t border-[var(--ridge-outer)]">
+            <p className="text-sm text-[var(--text-secondary)] mb-4">
               We automatically detected your aesthetic from your uploaded projects. Your profile layout and project grid have been customized to match your style.
             </p>
             <button
               onClick={handleClose}
-              className="px-6 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors font-medium"
+              className="px-6 py-2 bg-black text-white rounded-lg hover:opacity-90 transition-colors font-medium"
             >
               Got it
             </button>

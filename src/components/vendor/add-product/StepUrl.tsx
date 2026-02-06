@@ -34,8 +34,8 @@ export function StepUrl({ onNext, onSkip }: StepUrlProps) {
     <GlassPanel>
       <div className="p-8">
         <div className="flex items-center gap-3 mb-6">
-          <div className="p-3 rounded-xl bg-blue-100 dark:bg-blue-900">
-            <LinkIcon className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+          <div className="p-3 rounded-xl bg-[var(--accent)]/10 dark:bg-blue-900">
+            <LinkIcon className="w-6 h-6 text-[var(--accent)] dark:text-blue-400" />
           </div>
           <div>
             <h2 className="text-2xl font-medium text-stone-900 dark:text-stone-100">
@@ -58,7 +58,7 @@ export function StepUrl({ onNext, onSkip }: StepUrlProps) {
               onChange={(e) => setUrl(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="https://example.com/products/terra-travertine-side-table"
-              className="w-full px-4 py-3 rounded-xl border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              className="w-full px-4 py-3 rounded-xl border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent transition-all"
               autoFocus
             />
             {error && (
@@ -66,12 +66,12 @@ export function StepUrl({ onNext, onSkip }: StepUrlProps) {
             )}
           </div>
 
-          <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
+          <div className="bg-[var(--accent)]/5 dark:bg-blue-950 border border-[var(--accent)]/20 dark:border-blue-800 rounded-xl p-4">
             <div className="flex items-start gap-3">
-              <Sparkles className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+              <Sparkles className="w-5 h-5 text-[var(--accent)] dark:text-blue-400 flex-shrink-0 mt-0.5" />
               <div className="text-sm text-blue-900 dark:text-blue-100">
                 <p className="font-medium mb-1">We'll extract:</p>
-                <ul className="list-disc list-inside space-y-0.5 text-blue-700 dark:text-blue-300">
+                <ul className="list-disc list-inside space-y-0.5 text-[var(--accent-hover)] dark:text-blue-300">
                   <li>Product name, description, and SKU</li>
                   <li>Images and media files</li>
                   <li>Specifications and dimensions</li>

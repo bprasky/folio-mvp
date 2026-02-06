@@ -107,7 +107,7 @@ function InsightCard({
   onAction: (action: AIInsight['actions'][number]) => void;
 }) {
   const impactColors = {
-    low: 'bg-blue-100/50 text-blue-800 border-blue-200',
+    low: 'bg-[var(--accent)]/10/50 text-blue-800 border-[var(--accent)]/20',
     medium: 'bg-yellow-100/50 text-yellow-800 border-yellow-200',
     high: 'bg-green-100/50 text-green-800 border-green-200'
   };

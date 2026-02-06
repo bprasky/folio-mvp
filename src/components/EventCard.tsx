@@ -58,7 +58,7 @@ export default function EventCard({ event, onClick, className, userRole }: Event
 
   const getEventTypeColor = (type: string) => {
     const colors: { [key: string]: string } = {
-      'PANEL': 'bg-blue-100 text-blue-800',
+      'PANEL': 'bg-[var(--accent)]/10 text-blue-800',
       'PRODUCT_REVEAL': 'bg-purple-100 text-purple-800',
       'HAPPY_HOUR': 'bg-yellow-100 text-yellow-800',
       'LUNCH_AND_LEARN': 'bg-green-100 text-green-800',
@@ -71,7 +71,7 @@ export default function EventCard({ event, onClick, className, userRole }: Event
       'AWARDS': 'bg-amber-100 text-amber-800',
       'WORKSHOP': 'bg-cyan-100 text-cyan-800',
       'KEYNOTE': 'bg-violet-100 text-violet-800',
-      'OTHER': 'bg-gray-100 text-gray-800',
+      'OTHER': 'bg-[var(--bg-elevated)] text-[var(--text-primary)]',
       'FESTIVAL': 'bg-purple-100 text-purple-800'
     };
     return colors[type] || colors['OTHER'];
@@ -83,7 +83,7 @@ export default function EventCard({ event, onClick, className, userRole }: Event
   return (
     <div
       className={clsx(
-        "rounded-xl border border-gray-200 shadow-sm p-4 transition-all duration-300 hover:shadow-md cursor-pointer bg-white relative",
+        "rounded-xl border border-[var(--ridge-outer)] shadow-sm p-4 transition-all duration-300 hover:shadow-md cursor-pointer bg-white relative",
         {
           // Dynamic sizing based on promotion tier
           "col-span-4 row-span-2": event.promotionTier === 2, // Full-width featured
@@ -97,7 +97,7 @@ export default function EventCard({ event, onClick, className, userRole }: Event
       {/* Admin Edit Icon */}
       {userRole === 'ADMIN' && (
         <Link href={`/admin/events/new?edit=${event.id}`} onClick={(e) => e.stopPropagation()}>
-          <div className="absolute top-2 right-2 bg-blue-500 text-white p-1 rounded-full shadow-sm hover:bg-blue-600 transition-colors z-20">
+          <div className="absolute top-2 right-2 bg-[var(--accent)] text-white p-1 rounded-full shadow-sm hover:bg-[var(--accent)] transition-colors z-20">
             <FaEdit className="w-3 h-3" />
           </div>
         </Link>
@@ -127,7 +127,7 @@ export default function EventCard({ event, onClick, className, userRole }: Event
         
         {/* Virtual indicator overlay */}
         {event.isVirtual && (
-          <div className="absolute top-2 left-2 bg-blue-500 text-white px-2 py-1 rounded-full text-xs font-medium">
+          <div className="absolute top-2 left-2 bg-[var(--accent)] text-white px-2 py-1 rounded-full text-xs font-medium">
             Virtual
           </div>
         )}
@@ -161,7 +161,7 @@ export default function EventCard({ event, onClick, className, userRole }: Event
       </h3>
 
       {/* Date and Time */}
-      <div className="flex items-center text-sm text-gray-500 mb-2">
+      <div className="flex items-center text-sm text-[var(--text-secondary)] mb-2">
         <FaCalendarAlt className="mr-1" />
         <span>{formatDate(event.startDate)}</span>
         <FaClock className="ml-2 mr-1" />
@@ -169,7 +169,7 @@ export default function EventCard({ event, onClick, className, userRole }: Event
       </div>
 
       {/* Location */}
-      <div className="flex items-center text-sm text-gray-500 mb-3">
+      <div className="flex items-center text-sm text-[var(--text-secondary)] mb-3">
         <FaMapMarkerAlt className="mr-1" />
         <span className="truncate">{event.location}</span>
       </div>
@@ -198,7 +198,7 @@ export default function EventCard({ event, onClick, className, userRole }: Event
 
         {/* Show more types indicator for featured events */}
         {event.promotionTier >= 1 && event.eventTypes.length > 3 && (
-          <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+          <span className="px-2 py-1 rounded-full text-xs font-medium bg-[var(--bg-elevated)] text-[var(--text-secondary)]">
             +{event.eventTypes.length - 3} more
           </span>
         )}
@@ -206,7 +206,7 @@ export default function EventCard({ event, onClick, className, userRole }: Event
 
       {/* Description for larger cards */}
       {event.promotionTier >= 1 && (
-        <p className="text-sm text-gray-600 mb-3 line-clamp-3">
+        <p className="text-sm text-[var(--text-secondary)] mb-3 line-clamp-3">
           {event.description}
         </p>
       )}
@@ -214,15 +214,15 @@ export default function EventCard({ event, onClick, className, userRole }: Event
       {/* Design Styles for featured events */}
       {event.promotionTier === 2 && event.designStyles && event.designStyles.length > 0 && (
         <div className="mb-3">
-          <div className="text-xs text-gray-500 mb-1">Design Styles:</div>
+          <div className="text-xs text-[var(--text-secondary)] mb-1">Design Styles:</div>
           <div className="flex flex-wrap gap-1">
             {event.designStyles.slice(0, 4).map((style) => (
-              <span key={style} className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+              <span key={style} className="px-2 py-1 rounded-full text-xs font-medium bg-[var(--bg-elevated)] text-[var(--text-primary)]">
                 {style}
               </span>
             ))}
             {event.designStyles.length > 4 && (
-              <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+              <span className="px-2 py-1 rounded-full text-xs font-medium bg-[var(--bg-elevated)] text-[var(--text-secondary)]">
                 +{event.designStyles.length - 4}
               </span>
             )}
@@ -233,7 +233,7 @@ export default function EventCard({ event, onClick, className, userRole }: Event
       {/* Event Tags for featured events */}
       {event.promotionTier === 2 && event.eventTags && event.eventTags.length > 0 && (
         <div className="mb-3">
-          <div className="text-xs text-gray-500 mb-1">Tags:</div>
+          <div className="text-xs text-[var(--text-secondary)] mb-1">Tags:</div>
           <div className="flex flex-wrap gap-1">
             {event.eventTags.slice(0, 3).map((tag) => (
               <span key={tag} className="px-2 py-1 rounded-full text-xs font-medium bg-folio-accent text-white">
@@ -241,7 +241,7 @@ export default function EventCard({ event, onClick, className, userRole }: Event
               </span>
             ))}
             {event.eventTags.length > 3 && (
-              <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+              <span className="px-2 py-1 rounded-full text-xs font-medium bg-[var(--bg-elevated)] text-[var(--text-secondary)]">
                 +{event.eventTags.length - 3}
               </span>
             )}
@@ -251,7 +251,7 @@ export default function EventCard({ event, onClick, className, userRole }: Event
 
       {/* Bottom section with RSVP count and creator */}
       <div className="flex items-center justify-between mt-auto">
-        <div className="flex items-center text-sm text-gray-500">
+        <div className="flex items-center text-sm text-[var(--text-secondary)]">
           <FaUsers className="mr-1" />
           <span>{rsvpCount}</span>
           {event.capacity && (
@@ -262,7 +262,7 @@ export default function EventCard({ event, onClick, className, userRole }: Event
         {/* Creator info for larger cards */}
         {event.promotionTier >= 1 && event.createdBy && (
           <div className="flex items-center">
-            <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center mr-2">
+            <div className="w-6 h-6 bg-[var(--bg-elevated)] rounded-full flex items-center justify-center mr-2">
               {event.createdBy.profileImage ? (
                 <img 
                   src={event.createdBy.profileImage} 
@@ -270,12 +270,12 @@ export default function EventCard({ event, onClick, className, userRole }: Event
                   className="w-6 h-6 rounded-full object-cover"
                 />
               ) : (
-                <span className="text-xs font-medium text-gray-600">
+                <span className="text-xs font-medium text-[var(--text-secondary)]">
                   {event.createdBy.name.charAt(0).toUpperCase()}
                 </span>
               )}
             </div>
-            <span className="text-xs text-gray-600">{event.createdBy.name}</span>
+            <span className="text-xs text-[var(--text-secondary)]">{event.createdBy.name}</span>
           </div>
         )}
       </div>

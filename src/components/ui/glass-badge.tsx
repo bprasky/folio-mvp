@@ -8,11 +8,11 @@ interface GlassBadgeProps {
 
 const GlassBadge = ({ children, variant = "default", className }: GlassBadgeProps) => {
   const variants = {
-    default: "bg-gray-100/80 text-gray-700",
+    default: "bg-[var(--bg-elevated)]/80 text-[var(--text-primary)]",
     success: "bg-green-100/80 text-green-800",
     warning: "bg-amber-100/80 text-amber-800",
     error: "bg-red-100/80 text-red-800",
-    info: "bg-blue-100/80 text-blue-800",
+    info: "bg-[var(--accent)]/10/80 text-[var(--accent-hover)]",
   };
   
   return (

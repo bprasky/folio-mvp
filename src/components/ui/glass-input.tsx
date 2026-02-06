@@ -12,12 +12,12 @@ const GlassInput = forwardRef<HTMLInputElement, GlassInputProps>(
         ref={ref}
         className={cn(
           "w-full px-4 py-3",
-          "bg-gray-50/50",
+          "bg-[var(--bg-elevated)]/50",
           "border rounded-xl",
-          error ? "border-red-300" : "border-gray-200/70",
-          "text-base text-gray-900",
-          "placeholder:text-gray-400",
-          "focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50",
+          error ? "border-red-300" : "border-[var(--ridge-outer)]/70",
+          "text-base text-[var(--text-primary)]",
+          "placeholder:text-[var(--text-tertiary)]",
+          "focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30 focus:border-[var(--accent)]/50",
           "transition-colors",
           className
         )}

@@ -32,7 +32,7 @@ export function ImportProgress({ step, className }: ImportProgressProps) {
                 'flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium transition-colors',
                 {
                   'bg-emerald-500 text-white': isCompleted,
-                  'bg-blue-500 text-white': isCurrent,
+                  'bg-[var(--accent)] text-white': isCurrent,
                   'bg-stone-200 text-stone-500': !isCompleted && !isCurrent,
                 }
               )}

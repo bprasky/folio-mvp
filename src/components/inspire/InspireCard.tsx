@@ -86,7 +86,7 @@ export default function InspireCard({ post }: InspireCardProps) {
           </Link>
         ) : (
           <div className="absolute inset-0 flex items-center justify-center bg-[#2a2a2a]">
-            <div className="text-gray-400 text-center p-4">
+            <div className="text-[var(--text-tertiary)] text-center p-4">
               <p className="text-sm">Image not available</p>
               <p className="text-xs mt-1">{post.title}</p>
             </div>
@@ -108,7 +108,7 @@ export default function InspireCard({ post }: InspireCardProps) {
                                 className="rounded-full border border-gray-600 group-hover/author:border-amber-400 transition-colors"
                                 priority={true}
                             />
-                            <span className="text-gray-300 text-sm group-hover/author:text-amber-400 transition-colors">{post.author}</span>
+                            <span className="text-[var(--text-tertiary)] text-sm group-hover/author:text-amber-400 transition-colors">{post.author}</span>
                         </Link>
                     ) : (
                         <>
@@ -120,7 +120,7 @@ export default function InspireCard({ post }: InspireCardProps) {
                                 className="rounded-full border border-gray-600"
                                 priority={true}
                             />
-                            <span className="text-gray-300 text-sm">{post.author}</span>
+                            <span className="text-[var(--text-tertiary)] text-sm">{post.author}</span>
                         </>
                     )}
                 </div>
@@ -160,13 +160,13 @@ export default function InspireCard({ post }: InspireCardProps) {
 
         {/* Quick Actions */}
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex space-x-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          <button className="bg-white/90 hover:bg-white text-gray-900 rounded-full p-2.5 transition-colors duration-200 shadow-md">
+          <button className="bg-white/90 hover:bg-white text-[var(--text-primary)] rounded-full p-2.5 transition-colors duration-200 shadow-md">
             <FaHeart className="text-lg" />
           </button>
-          <button className="bg-white/90 hover:bg-white text-gray-900 rounded-full p-2.5 transition-colors duration-200 shadow-md">
+          <button className="bg-white/90 hover:bg-white text-[var(--text-primary)] rounded-full p-2.5 transition-colors duration-200 shadow-md">
             <FaBookmark className="text-lg" />
           </button>
-          <button className="bg-white/90 hover:bg-white text-gray-900 rounded-full p-2.5 transition-colors duration-200 shadow-md">
+          <button className="bg-white/90 hover:bg-white text-[var(--text-primary)] rounded-full p-2.5 transition-colors duration-200 shadow-md">
             <FaEye className="text-lg" />
           </button>
         </div>

@@ -48,7 +48,7 @@ export function MarketPopularity({ data, onHover }: MarketPopularityProps) {
                   <Badge className={`text-xs ${
                     market.badge === 'Hot' 
                       ? 'bg-red-100 text-red-800 border-red-200' 
-                      : 'bg-blue-100 text-blue-800 border-blue-200'
+                      : 'bg-[var(--accent)]/10 text-blue-800 border-[var(--accent)]/20'
                   }`}>
                     {market.badge}
                   </Badge>

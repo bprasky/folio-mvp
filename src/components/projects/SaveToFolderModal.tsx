@@ -132,7 +132,7 @@ export default function SaveToFolderModal({
               onSuccess?.(data.folderId);
               onClose();
             }}
-            className="px-3 py-1 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition-colors"
+            className="px-3 py-1 bg-[var(--accent)] text-white text-xs rounded-lg hover:bg-[var(--accent-hover)] transition-colors"
           >
             Open
           </button>
@@ -165,25 +165,25 @@ export default function SaveToFolderModal({
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-100">
-          <h2 className="text-xl font-semibold text-gray-900">Save to Project Folder</h2>
+          <h2 className="text-xl font-semibold text-[var(--text-primary)]">Save to Project Folder</h2>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
+            className="p-2 hover:bg-[var(--bg-elevated)] rounded-xl transition-colors"
           >
-            <X className="w-5 h-5 text-gray-500" />
+            <X className="w-5 h-5 text-[var(--text-secondary)]" />
           </button>
         </div>
 
         {/* Content */}
         <div className="p-6">
           {/* Tab Navigation */}
-          <div className="flex bg-gray-100 rounded-xl p-1 mb-6">
+          <div className="flex bg-[var(--bg-elevated)] rounded-xl p-1 mb-6">
             <button
               onClick={() => handleTabChange("select")}
               className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
                 !isCreatingNew
-                  ? "bg-white text-gray-900 shadow-sm"
-                  : "text-gray-600 hover:text-gray-900"
+                  ? "bg-white text-[var(--text-primary)] shadow-sm"
+                  : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
               }`}
             >
               Select Folder
@@ -192,8 +192,8 @@ export default function SaveToFolderModal({
               onClick={() => handleTabChange("new")}
               className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
                 isCreatingNew
-                  ? "bg-white text-gray-900 shadow-sm"
-                  : "text-gray-600 hover:text-gray-900"
+                  ? "bg-white text-[var(--text-primary)] shadow-sm"
+                  : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
               }`}
             >
               New Folder
@@ -207,17 +207,17 @@ export default function SaveToFolderModal({
                 <div className="space-y-3">
                   {Array.from({ length: 3 }).map((_, i) => (
                     <div key={i} className="animate-pulse">
-                      <div className="h-12 bg-gray-200 rounded-xl"></div>
+                      <div className="h-12 bg-[var(--bg-elevated)] rounded-xl"></div>
                     </div>
                   ))}
                 </div>
               ) : folders.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <Folder className="w-12 h-12 mx-auto text-gray-300 mb-3" />
+                <div className="text-center py-8 text-[var(--text-secondary)]">
+                  <Folder className="w-12 h-12 mx-auto text-[var(--text-tertiary)] mb-3" />
                   <p className="text-sm">No folders yet</p>
                   <button
                     onClick={() => handleTabChange("new")}
-                    className="text-xs text-blue-600 hover:text-blue-700 mt-2"
+                    className="text-xs text-[var(--accent)] hover:text-[var(--accent-hover)] mt-2"
                   >
                     Create your first folder
                   </button>
@@ -230,22 +230,22 @@ export default function SaveToFolderModal({
                       onClick={() => setSelectedFolderId(folder.id)}
                       className={`w-full p-3 text-left rounded-xl border-2 transition-all hover:shadow-sm ${
                         selectedFolderId === folder.id
-                          ? "border-blue-500 bg-blue-50"
-                          : "border-gray-200 hover:border-gray-300"
+                          ? "border-[var(--accent)] bg-[var(--accent)]/5"
+                          : "border-[var(--ridge-outer)] hover:border-[var(--ridge-outer)]"
                       }`}
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                          <Folder className="w-5 h-5 text-gray-500" />
+                          <Folder className="w-5 h-5 text-[var(--text-secondary)]" />
                           <div>
-                            <p className="font-medium text-gray-900">{folder.name}</p>
-                            <p className="text-xs text-gray-500">
+                            <p className="font-medium text-[var(--text-primary)]">{folder.name}</p>
+                            <p className="text-xs text-[var(--text-secondary)]">
                               Created {new Date(folder.createdAt).toLocaleDateString()}
                             </p>
                           </div>
                         </div>
                         {selectedFolderId === folder.id && (
-                          <Check className="w-5 h-5 text-blue-500" />
+                          <Check className="w-5 h-5 text-[var(--accent)]" />
                         )}
                       </div>
                     </button>
@@ -259,7 +259,7 @@ export default function SaveToFolderModal({
           {isCreatingNew && (
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
                   Folder Name
                 </label>
                 <input
@@ -267,14 +267,14 @@ export default function SaveToFolderModal({
                   value={newFolderName}
                   onChange={(e) => setNewFolderName(e.target.value)}
                   placeholder="Enter folder name..."
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  className="w-full px-4 py-3 border border-[var(--ridge-outer)] rounded-xl focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent transition-all"
                   autoFocus
                 />
               </div>
               
               {eventTitle && (
-                <div className="bg-blue-50 border border-blue-200 rounded-xl p-3">
-                  <p className="text-xs text-blue-700">
+                <div className="bg-[var(--accent)]/5 border border-[var(--accent)]/20 rounded-xl p-3">
+                  <p className="text-xs text-[var(--accent-hover)]">
                     <strong>Tip:</strong> This folder will be created from "{eventTitle}"
                   </p>
                 </div>
@@ -286,7 +286,7 @@ export default function SaveToFolderModal({
           <div className="flex gap-3 mt-6 pt-6 border-t border-gray-100">
             <button
               onClick={onClose}
-              className="flex-1 px-4 py-3 text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors font-medium"
+              className="flex-1 px-4 py-3 text-[var(--text-primary)] bg-[var(--bg-elevated)] rounded-xl hover:bg-[var(--bg-elevated)] transition-colors font-medium"
             >
               Cancel
             </button>
@@ -297,7 +297,7 @@ export default function SaveToFolderModal({
                 (isCreatingNew && !newFolderName.trim()) ||
                 (!isCreatingNew && !selectedFolderId)
               }
-              className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center justify-center gap-2"
+              className="flex-1 px-4 py-3 bg-[var(--accent)] text-white rounded-xl hover:bg-[var(--accent-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center justify-center gap-2"
             >
               {loading ? (
                 <>

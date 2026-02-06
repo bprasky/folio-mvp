@@ -143,22 +143,22 @@ export function ExtractionReviewModal({
         {/* Header with stats */}
         <div className="p-6 border-b">
           <h2 className="text-xl font-semibold">Review Extracted Items</h2>
-          <div className="mt-2 flex gap-4 text-sm text-gray-600">
+          <div className="mt-2 flex gap-4 text-sm text-[var(--text-secondary)]">
             <span>{result.stats.specificationsFound} specifications</span>
             <span>{result.stats.inspirationImages} inspiration images</span>
             <span>{result.stats.pagesProcessed} pages</span>
           </div>
           <div className="mt-3 flex items-center gap-3">
-            <span className="text-sm font-medium text-gray-700">{selected.size} of {totalItems} selected</span>
+            <span className="text-sm font-medium text-[var(--text-primary)]">{selected.size} of {totalItems} selected</span>
             <button
               onClick={selectAll}
-              className="text-sm text-blue-600 hover:text-blue-800"
+              className="text-sm text-[var(--accent)] hover:text-blue-800"
             >
               Select all
             </button>
             <button
               onClick={selectNone}
-              className="text-sm text-blue-600 hover:text-blue-800"
+              className="text-sm text-[var(--accent)] hover:text-blue-800"
             >
               Select none
             </button>
@@ -219,7 +219,7 @@ export function ExtractionReviewModal({
           )}
 
           {totalItems === 0 && (
-            <div className="text-center py-12 text-gray-500">
+            <div className="text-center py-12 text-[var(--text-secondary)]">
               No items were extracted from this PDF. Try uploading a different file.
             </div>
           )}
@@ -230,7 +230,7 @@ export function ExtractionReviewModal({
         <div className="p-6 border-t bg-gray-50">
           {/* Room selector */}
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">
               Import to room
             </label>
             <select
@@ -254,7 +254,7 @@ export function ExtractionReviewModal({
             <button
               onClick={onCancel}
               disabled={isConfirming}
-              className="px-4 py-2 text-gray-600 hover:text-gray-800 disabled:opacity-50"
+              className="px-4 py-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] disabled:opacity-50"
             >
               Cancel
             </button>

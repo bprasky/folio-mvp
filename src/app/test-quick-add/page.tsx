@@ -13,7 +13,7 @@ export default function TestQuickAddPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold mb-6">Quick Add Demo</h1>
-      <p className="text-gray-600 mb-8">
+      <p className="text-[var(--text-secondary)] mb-8">
         This page demonstrates the Designer Quick-Add feature. 
         Click the "+" button on any product to save it to a project and room.
       </p>

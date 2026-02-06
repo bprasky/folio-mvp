@@ -207,10 +207,10 @@ export default async function Monograph({ params }: Props) {
         {/* Opening Quote Spread */}
         {quote && (
           <section className="max-w-3xl mx-auto prose prose-lg">
-            <blockquote className="text-2xl md:text-3xl lg:text-4xl font-light italic text-gray-700 leading-relaxed font-serif text-center border-none p-0 m-0">
+            <blockquote className="text-2xl md:text-3xl lg:text-4xl font-light italic text-[var(--text-primary)] leading-relaxed font-serif text-center border-none p-0 m-0">
               "{quote}"
             </blockquote>
-            <footer className="text-right mt-8 text-sm uppercase tracking-widest text-gray-500">
+            <footer className="text-right mt-8 text-sm uppercase tracking-widest text-[var(--text-secondary)]">
               — {designer.name}
             </footer>
           </section>

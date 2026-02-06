@@ -299,7 +299,7 @@ export function ImportWizard({ open, onOpenChange, projectId, onComplete }: Impo
                 />
               </svg>
               <p className="text-stone-600 mb-2">
-                <span className="text-blue-600 font-medium">Click to upload</span> or drag and drop
+                <span className="text-[var(--accent)] font-medium">Click to upload</span> or drag and drop
               </p>
               <p className="text-sm text-stone-400">PDF or PPTX up to 50MB</p>
             </div>
@@ -315,7 +315,7 @@ export function ImportWizard({ open, onOpenChange, projectId, onComplete }: Impo
             <div className="w-20 h-20 mx-auto relative">
               <div className="absolute inset-0 rounded-full border-4 border-stone-200" />
               <div
-                className="absolute inset-0 rounded-full border-4 border-blue-500 border-t-transparent animate-spin"
+                className="absolute inset-0 rounded-full border-4 border-[var(--accent)] border-t-transparent animate-spin"
                 style={{
                   clipPath: `polygon(0 0, 100% 0, 100% 100%, 0 100%)`,
                 }}
@@ -334,7 +334,7 @@ export function ImportWizard({ open, onOpenChange, projectId, onComplete }: Impo
             <div className="max-w-xs mx-auto">
               <div className="h-2 bg-stone-200 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-blue-500 transition-all duration-300"
+                  className="h-full bg-[var(--accent)] transition-all duration-300"
                   style={{ width: `${uploadProgress}%` }}
                 />
               </div>

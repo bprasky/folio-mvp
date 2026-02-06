@@ -1,4 +1,7 @@
-import React, { useState } from 'react';
+'use client';
+
+import React, { useState, useEffect, useCallback } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 
 interface Folder {
   id: string;
@@ -23,7 +26,21 @@ export const SaveModal: React.FC<SaveModalProps> = ({
   const [newFolderName, setNewFolderName] = useState('');
   const [isCreating, setIsCreating] = useState(false);
 
-  if (!isOpen) return null;
+  // Handle escape key
+  const handleEscape = useCallback((e: KeyboardEvent) => {
+    if (e.key === 'Escape') onClose();
+  }, [onClose]);
+
+  useEffect(() => {
+    if (isOpen) {
+      document.addEventListener('keydown', handleEscape);
+      document.body.style.overflow = 'hidden';
+    }
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+      document.body.style.overflow = '';
+    };
+  }, [isOpen, handleEscape]);
 
   const handleCreateFolder = () => {
     if (newFolderName.trim()) {
@@ -34,14 +51,31 @@ export const SaveModal: React.FC<SaveModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          <motion.div
+            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-[2px]"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            onClick={onClose}
+          />
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            initial={{ opacity: 0, scale: 0.96, y: 8 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, y: 8 }}
+            transition={{ duration: 0.15, ease: [0.4, 0, 0.2, 1] }}
+          >
+            <div className="bg-white rounded-lg shadow-xl max-w-md w-full" onClick={(e) => e.stopPropagation()}>
         <div className="p-6">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold text-gray-900">Save to Folder</h2>
+            <h2 className="text-xl font-semibold text-[var(--text-primary)]">Save to Folder</h2>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-500"
+              className="text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
             >
               <span className="sr-only">Close</span>
               <svg
@@ -67,7 +101,7 @@ export const SaveModal: React.FC<SaveModalProps> = ({
                   <button
                     key={folder.id}
                     onClick={() => onSave(folder.id)}
-                    className="w-full text-left px-4 py-2 hover:bg-gray-100 rounded-md transition-colors duration-200"
+                    className="w-full text-left px-4 py-2 hover:bg-[var(--bg-elevated)] rounded-md transition-colors duration-200"
                   >
                     {folder.name}
                   </button>
@@ -76,7 +110,7 @@ export const SaveModal: React.FC<SaveModalProps> = ({
 
               <button
                 onClick={() => setIsCreating(true)}
-                className="mt-4 w-full py-2 px-4 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors duration-200"
+                className="mt-4 w-full py-2 px-4 border border-[var(--ridge-outer)] rounded-md text-[var(--text-primary)] hover:bg-[var(--bg-elevated)] transition-colors duration-200"
               >
                 Create New Folder
               </button>
@@ -88,12 +122,12 @@ export const SaveModal: React.FC<SaveModalProps> = ({
                 value={newFolderName}
                 onChange={(e) => setNewFolderName(e.target.value)}
                 placeholder="Enter folder name"
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-2 border border-[var(--ridge-outer)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
               />
               <div className="flex gap-2">
                 <button
                   onClick={handleCreateFolder}
-                  className="flex-1 py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200"
+                  className="flex-1 py-2 px-4 bg-[var(--accent)] text-white rounded-md hover:bg-[var(--accent-hover)] transition-colors duration-200"
                 >
                   Create
                 </button>
@@ -102,7 +136,7 @@ export const SaveModal: React.FC<SaveModalProps> = ({
                     setIsCreating(false);
                     setNewFolderName('');
                   }}
-                  className="flex-1 py-2 px-4 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors duration-200"
+                  className="flex-1 py-2 px-4 border border-[var(--ridge-outer)] rounded-md text-[var(--text-primary)] hover:bg-[var(--bg-elevated)] transition-colors duration-200"
                 >
                   Cancel
                 </button>
@@ -110,7 +144,10 @@ export const SaveModal: React.FC<SaveModalProps> = ({
             </div>
           )}
         </div>
-      </div>
-    </div>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
   );
 }; 

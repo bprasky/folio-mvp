@@ -261,60 +261,60 @@ const SMSModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void })
         exit={{ scale: 0.9, opacity: 0 }}
       >
         <div className="flex items-center mb-6">
-          <FaSms className="w-6 h-6 text-blue-600 mr-3" />
-          <h3 className="text-xl font-bold text-gray-900">Send a Text Message</h3>
+          <FaSms className="w-6 h-6 text-[var(--accent)] mr-3" />
+          <h3 className="text-xl font-bold text-[var(--text-primary)]">Send a Text Message</h3>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Your Name</label>
+            <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">Your Name</label>
             <input
               type="text"
               required
               value={formData.name}
               onChange={(e) => setFormData({...formData, name: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-[var(--ridge-outer)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
               placeholder="Enter your full name"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+            <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">Phone Number</label>
             <input
               type="tel"
               required
               value={formData.phone}
               onChange={(e) => setFormData({...formData, phone: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-[var(--ridge-outer)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
               placeholder="+1 (555) 123-4567"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Message</label>
+            <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">Message</label>
             <textarea
               required
               rows={3}
               value={formData.message}
               onChange={(e) => setFormData({...formData, message: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              className="w-full px-3 py-2 border border-[var(--ridge-outer)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent resize-none"
               placeholder="Hi Diana, I'd love to discuss a potential project..."
             />
           </div>
           <div className="flex gap-3 pt-4">
             <button
               type="submit"
-              className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+              className="flex-1 bg-[var(--accent)] text-white px-4 py-2 rounded-lg hover:bg-[var(--accent-hover)] transition-colors font-medium"
             >
               Send via Text Message
             </button>
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+              className="px-4 py-2 border border-[var(--ridge-outer)] text-[var(--text-primary)] rounded-lg hover:bg-[var(--bg-elevated)] transition-colors"
             >
               Cancel
             </button>
           </div>
         </form>
-        <p className="text-xs text-gray-500 mt-4 text-center">
+        <p className="text-xs text-[var(--text-secondary)] mt-4 text-center">
           We'll respond within 24 hours during business days
         </p>
       </motion.div>
@@ -341,7 +341,7 @@ const FibonacciProjectGrid = () => (
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true }}
-          className={`${sizeConfig[project.size as keyof typeof sizeConfig]} group cursor-pointer relative overflow-hidden rounded-xl bg-gray-100`}
+          className={`${sizeConfig[project.size as keyof typeof sizeConfig]} group cursor-pointer relative overflow-hidden rounded-xl bg-[var(--bg-elevated)]`}
           whileHover={{ scale: 1.02 }}
           transition={{ duration: 0.3 }}
         >
@@ -399,7 +399,7 @@ const VideoSection = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-16">
-        <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+        <div className="w-8 h-8 border-4 border-[var(--accent)] border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -409,12 +409,12 @@ const VideoSection = () => {
       {/* Channel Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Channel</h2>
-          <p className="text-gray-600">Share your design process and insights</p>
+          <h2 className="text-2xl font-bold text-[var(--text-primary)]">Channel</h2>
+          <p className="text-[var(--text-secondary)]">Share your design process and insights</p>
         </div>
         <button
           onClick={() => setShowUploader(true)}
-          className="bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 transition-colors flex items-center gap-2"
+          className="bg-[var(--accent)] text-white px-4 py-2 rounded-xl hover:bg-[var(--accent-hover)] transition-colors flex items-center gap-2"
         >
           <FaPlus className="w-4 h-4" />
           Upload Video
@@ -422,13 +422,13 @@ const VideoSection = () => {
       </div>
 
       {videos.length === 0 ? (
-        <div className="text-center py-16 bg-gray-50 rounded-xl">
-          <FaVideo className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">No videos yet</h3>
-          <p className="text-gray-600 mb-4">Start building your channel by uploading your first video</p>
+        <div className="text-center py-16 bg-[var(--bg-elevated)] rounded-xl">
+          <FaVideo className="w-16 h-16 text-[var(--text-tertiary)] mx-auto mb-4" />
+          <h3 className="text-xl font-semibold text-[var(--text-primary)] mb-2">No videos yet</h3>
+          <p className="text-[var(--text-secondary)] mb-4">Start building your channel by uploading your first video</p>
           <button
             onClick={() => setShowUploader(true)}
-            className="bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 transition-colors"
+            className="bg-[var(--accent)] text-white px-6 py-3 rounded-xl hover:bg-[var(--accent-hover)] transition-colors"
           >
             Upload First Video
           </button>
@@ -451,7 +451,7 @@ const VideoSection = () => {
                   </div>
                   <div className="absolute inset-0 flex items-center justify-center">
                     <div className="w-20 h-20 bg-white bg-opacity-90 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                      <FaPlay className="w-8 h-8 text-gray-800 ml-2" />
+                      <FaPlay className="w-8 h-8 text-[var(--text-primary)] ml-2" />
                     </div>
                   </div>
                   <div className="absolute bottom-4 left-4 right-4">
@@ -479,18 +479,18 @@ const VideoSection = () => {
                 custom={index + 1}
               >
                 <Link href={`/watch/${video.id}`}>
-                  <div className="flex gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors cursor-pointer group">
+                  <div className="flex gap-3 p-3 rounded-xl hover:bg-[var(--bg-elevated)] transition-colors cursor-pointer group">
                     <div className="relative w-24 h-16 flex-shrink-0 rounded-lg overflow-hidden">
                       <div className="w-full h-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center">
                         <FaPlay className="w-4 h-4 text-white" />
                       </div>
                     </div>
                     <div className="flex-1">
-                      <h4 className="font-semibold text-gray-900 text-sm group-hover:text-blue-600 transition-colors line-clamp-2">
+                      <h4 className="font-semibold text-[var(--text-primary)] text-sm group-hover:text-[var(--accent)] transition-colors line-clamp-2">
                         {video.title}
                       </h4>
-                      <p className="text-xs text-gray-500">{video.views} views</p>
-                      <p className="text-xs text-gray-400">{new Date(video.createdAt).toLocaleDateString()}</p>
+                      <p className="text-xs text-[var(--text-secondary)]">{video.views} views</p>
+                      <p className="text-xs text-[var(--text-tertiary)]">{new Date(video.createdAt).toLocaleDateString()}</p>
                     </div>
                   </div>
                 </Link>
@@ -526,8 +526,8 @@ const AboutSection = () => (
       custom={0}
     >
       <div className="relative">
-        <FaQuoteLeft className="w-12 h-12 text-blue-600/20 absolute -top-4 -left-4" />
-        <p className="text-xl text-gray-700 leading-relaxed pl-8">
+        <FaQuoteLeft className="w-12 h-12 text-[var(--accent)]/20 absolute -top-4 -left-4" />
+        <p className="text-xl text-[var(--text-primary)] leading-relaxed pl-8">
           {designerData.bio}
         </p>
       </div>
@@ -541,7 +541,7 @@ const AboutSection = () => (
       whileInView="visible"
       custom={1}
     >
-      <h3 className="text-lg font-bold text-gray-900 mb-4">Recognition</h3>
+      <h3 className="text-lg font-bold text-[var(--text-primary)] mb-4">Recognition</h3>
       <div className="space-y-3">
         {designerData.badges.map((badge, index) => (
           <motion.div
@@ -554,7 +554,7 @@ const AboutSection = () => (
             ) : (
               <span className="text-2xl">{badge.icon}</span>
             )}
-            <span className="text-sm font-medium text-gray-700">{badge.name}</span>
+            <span className="text-sm font-medium text-[var(--text-primary)]">{badge.name}</span>
           </motion.div>
         ))}
       </div>
@@ -585,9 +585,9 @@ const TeamSection = () => (
               className="object-cover group-hover:scale-110 transition-transform duration-500"
             />
           </div>
-          <h3 className="text-lg font-semibold text-gray-900">{member.name}</h3>
-          <p className="text-blue-600 text-sm font-medium mb-2">{member.role}</p>
-          <p className="text-gray-600 text-sm">{member.bio}</p>
+          <h3 className="text-lg font-semibold text-[var(--text-primary)]">{member.name}</h3>
+          <p className="text-[var(--accent)] text-sm font-medium mb-2">{member.role}</p>
+          <p className="text-[var(--text-secondary)] text-sm">{member.bio}</p>
         </motion.div>
       ))}
     </div>
@@ -601,7 +601,7 @@ const TeamSection = () => (
           initial="hidden"
           whileInView="visible"
           custom={index + 2}
-          className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors"
+          className="flex items-center gap-3 p-3 rounded-xl hover:bg-[var(--bg-elevated)] transition-colors"
         >
           <div className="relative w-12 h-12 flex-shrink-0 overflow-hidden rounded-full">
             <Image
@@ -612,8 +612,8 @@ const TeamSection = () => (
             />
           </div>
           <div>
-            <h4 className="font-semibold text-gray-900 text-sm">{member.name}</h4>
-            <p className="text-blue-600 text-xs">{member.role}</p>
+            <h4 className="font-semibold text-[var(--text-primary)] text-sm">{member.name}</h4>
+            <p className="text-[var(--accent)] text-xs">{member.role}</p>
           </div>
         </motion.div>
       ))}
@@ -643,18 +643,18 @@ const PressSection = () => (
             />
           </div>
           <div className="flex items-center mb-3">
-            <FaNewspaper className="w-4 h-4 text-blue-600 mr-2" />
-            <span className="text-sm font-medium text-blue-600">
+            <FaNewspaper className="w-4 h-4 text-[var(--accent)] mr-2" />
+            <span className="text-sm font-medium text-[var(--accent)]">
               {designerData.editorials.filter(e => e.featured)[0].publication}
             </span>
-            <span className="text-sm text-gray-400 ml-2">
+            <span className="text-sm text-[var(--text-tertiary)] ml-2">
               {designerData.editorials.filter(e => e.featured)[0].date}
             </span>
           </div>
-          <h3 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-blue-600 transition-colors">
+          <h3 className="text-2xl font-bold text-[var(--text-primary)] mb-3 group-hover:text-[var(--accent)] transition-colors">
             {designerData.editorials.filter(e => e.featured)[0].title}
           </h3>
-          <p className="text-gray-600 leading-relaxed">
+          <p className="text-[var(--text-secondary)] leading-relaxed">
             {designerData.editorials.filter(e => e.featured)[0].excerpt}
           </p>
         </div>
@@ -670,7 +670,7 @@ const PressSection = () => (
           initial="hidden"
           whileInView="visible"
           custom={index + 1}
-          className="flex gap-4 p-4 rounded-xl hover:bg-gray-50 transition-colors cursor-pointer group"
+          className="flex gap-4 p-4 rounded-xl hover:bg-[var(--bg-elevated)] transition-colors cursor-pointer group"
         >
           <div className="relative w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden">
             <Image
@@ -682,13 +682,13 @@ const PressSection = () => (
           </div>
           <div className="flex-1">
             <div className="flex items-center mb-2">
-              <FaNewspaper className="w-3 h-3 text-blue-600 mr-1" />
-              <span className="text-xs font-medium text-blue-600">{editorial.publication}</span>
+              <FaNewspaper className="w-3 h-3 text-[var(--accent)] mr-1" />
+              <span className="text-xs font-medium text-[var(--accent)]">{editorial.publication}</span>
             </div>
-            <h4 className="font-semibold text-gray-900 text-sm group-hover:text-blue-600 transition-colors mb-1">
+            <h4 className="font-semibold text-[var(--text-primary)] text-sm group-hover:text-[var(--accent)] transition-colors mb-1">
               {editorial.title}
             </h4>
-            <p className="text-xs text-gray-500">{editorial.date}</p>
+            <p className="text-xs text-[var(--text-secondary)]">{editorial.date}</p>
           </div>
         </motion.div>
       ))}
@@ -774,24 +774,24 @@ export default function DesignerProfile() {
 
               {/* Name & Title */}
               <div className="text-center mb-6">
-                <h1 className="text-2xl font-bold text-gray-900 mb-2">{designerData.name}</h1>
-                <p className="text-gray-600 mb-1">{designerData.title}</p>
-                <p className="text-gray-500 text-sm">{designerData.location}</p>
+                <h1 className="text-2xl font-bold text-[var(--text-primary)] mb-2">{designerData.name}</h1>
+                <p className="text-[var(--text-secondary)] mb-1">{designerData.title}</p>
+                <p className="text-[var(--text-secondary)] text-sm">{designerData.location}</p>
               </div>
 
               {/* Stats */}
               <div className="grid grid-cols-3 gap-4 mb-6 text-center">
                 <div>
-                  <div className="font-bold text-gray-900 text-lg">{designerData.projects}</div>
-                  <div className="text-xs text-gray-500">Projects</div>
+                  <div className="font-bold text-[var(--text-primary)] text-lg">{designerData.projects}</div>
+                  <div className="text-xs text-[var(--text-secondary)]">Projects</div>
                 </div>
                 <div>
-                  <div className="font-bold text-gray-900 text-lg">{designerData.followers}</div>
-                  <div className="text-xs text-gray-500">Followers</div>
+                  <div className="font-bold text-[var(--text-primary)] text-lg">{designerData.followers}</div>
+                  <div className="text-xs text-[var(--text-secondary)]">Followers</div>
                 </div>
                 <div>
-                  <div className="font-bold text-gray-900 text-lg">{designerData.following}</div>
-                  <div className="text-xs text-gray-500">Following</div>
+                  <div className="font-bold text-[var(--text-primary)] text-lg">{designerData.following}</div>
+                  <div className="text-xs text-[var(--text-secondary)]">Following</div>
                 </div>
               </div>
 
@@ -799,7 +799,7 @@ export default function DesignerProfile() {
               <div className="space-y-3 mb-6">
                 <motion.button
                   onClick={() => setIsMessageModalOpen(true)}
-                  className="w-full bg-blue-600 text-white px-4 py-3 rounded-xl hover:bg-blue-700 transition-colors font-medium"
+                  className="w-full bg-[var(--accent)] text-white px-4 py-3 rounded-xl hover:bg-[var(--accent-hover)] transition-colors font-medium"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
@@ -808,11 +808,11 @@ export default function DesignerProfile() {
                 <motion.div className="grid grid-cols-2 gap-3">
                   <Link
                     href="/schedule-consultation"
-                    className="bg-gray-100 text-gray-900 px-4 py-2 rounded-xl hover:bg-gray-200 transition-colors font-medium text-sm text-center"
+                    className="bg-[var(--bg-elevated)] text-[var(--text-primary)] px-4 py-2 rounded-xl hover:bg-[var(--bg-elevated)] transition-colors font-medium text-sm text-center"
                   >
                     Consult
                   </Link>
-                  <button className="bg-gray-100 text-gray-900 px-4 py-2 rounded-xl hover:bg-gray-200 transition-colors">
+                  <button className="bg-[var(--bg-elevated)] text-[var(--text-primary)] px-4 py-2 rounded-xl hover:bg-[var(--bg-elevated)] transition-all duration-150 hover:-translate-y-[0.5px] active:translate-y-[0.5px]">
                     <FaBookmark className="w-4 h-4 mx-auto" />
                   </button>
                 </motion.div>
@@ -821,14 +821,14 @@ export default function DesignerProfile() {
               {/* Contact Info */}
               <div className="space-y-3 mb-6">
                 <div className="flex items-center gap-3">
-                  <FaEnvelope className="w-4 h-4 text-blue-600" />
-                  <a href={`mailto:${designerData.contact.email}`} className="text-gray-700 hover:text-blue-600 transition-colors text-sm">
+                  <FaEnvelope className="w-4 h-4 text-[var(--accent)]" />
+                  <a href={`mailto:${designerData.contact.email}`} className="text-[var(--text-primary)] hover:text-[var(--accent)] transition-colors text-sm">
                     {designerData.contact.email}
                   </a>
                 </div>
                 <div className="flex items-center gap-3">
-                  <FaPhone className="w-4 h-4 text-blue-600" />
-                  <a href={`tel:${designerData.contact.phone}`} className="text-gray-700 hover:text-blue-600 transition-colors text-sm">
+                  <FaPhone className="w-4 h-4 text-[var(--accent)]" />
+                  <a href={`tel:${designerData.contact.phone}`} className="text-[var(--text-primary)] hover:text-[var(--accent)] transition-colors text-sm">
                     {designerData.contact.phone}
                   </a>
                 </div>
@@ -837,10 +837,10 @@ export default function DesignerProfile() {
               {/* Social Links */}
               <div className="flex gap-4 justify-center">
                 <a href={designerData.social.instagram} target="_blank" rel="noopener noreferrer">
-                  <FaInstagram className="w-6 h-6 text-gray-600 hover:text-pink-600 transition-colors" />
+                  <FaInstagram className="w-6 h-6 text-[var(--text-secondary)] hover:text-pink-600 transition-colors" />
                 </a>
                 <a href={designerData.social.website} target="_blank" rel="noopener noreferrer">
-                  <FaGlobe className="w-6 h-6 text-gray-600 hover:text-blue-600 transition-colors" />
+                  <FaGlobe className="w-6 h-6 text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors" />
                 </a>
               </div>
             </motion.div>
@@ -864,8 +864,8 @@ export default function DesignerProfile() {
                       onClick={() => handleTabChange(tab.id)}
                       className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl transition-all duration-300 ${
                         activeTab === tab.id
-                          ? 'bg-blue-600 text-white shadow-lg'
-                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                          ? 'bg-[var(--accent)] text-white shadow-lg'
+                          : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]'
                       }`}
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}

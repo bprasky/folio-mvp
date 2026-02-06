@@ -214,13 +214,13 @@ export function BioInterviewModal({
         <DialogContent className="w-full max-w-5xl h-[90vh] max-h-[90vh] mx-auto my-auto rounded-3xl flex flex-col items-center justify-center bg-white/90 backdrop-blur-xl border border-white/30 shadow-2xl overflow-hidden">
           <div className="flex flex-col items-center justify-center space-y-6">
             <Sparkles className="w-16 h-16 text-amber-600 animate-pulse" />
-            <h3 className="text-3xl font-serif italic text-gray-900">
+            <h3 className="text-3xl font-serif italic text-[var(--text-primary)]">
               Crafting your story...
             </h3>
-            <p className="text-base text-gray-500 text-center max-w-md">
+            <p className="text-base text-[var(--text-secondary)] text-center max-w-md">
               We're generating your bio, tagline, and philosophy based on your answers.
             </p>
-            <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+            <Loader2 className="w-8 h-8 animate-spin text-[var(--text-tertiary)]" />
           </div>
         </DialogContent>
       </Dialog>
@@ -239,15 +239,15 @@ export function BioInterviewModal({
             >
               <Check className="w-10 h-10" style={{ color: 'rgb(34, 197, 94)' }} />
             </div>
-            <h3 className="text-3xl font-serif italic text-gray-900">
+            <h3 className="text-3xl font-serif italic text-[var(--text-primary)]">
               Your bio is ready
             </h3>
-            <p className="text-base text-gray-500 text-center max-w-md">
+            <p className="text-base text-[var(--text-secondary)] text-center max-w-md">
               Review your generated bio and make any adjustments in your profile settings.
             </p>
             <button
               onClick={onClose}
-              className="mt-4 px-8 py-3 bg-gray-900 text-white rounded-full text-sm font-medium hover:bg-gray-800 transition-colors"
+              className="mt-4 px-8 py-3 bg-[var(--text-primary)] text-white rounded-full text-sm font-medium hover:opacity-90 transition-colors"
             >
               View Profile
             </button>
@@ -262,10 +262,10 @@ export function BioInterviewModal({
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="w-full max-w-5xl h-[90vh] max-h-[90vh] mx-auto my-auto rounded-3xl flex flex-col bg-white/90 backdrop-blur-xl border border-white/30 shadow-2xl overflow-hidden">
         {/* Header with close button and progress */}
-        <div className="flex items-center justify-between px-8 py-4 border-b border-gray-200/50 bg-white/50">
+        <div className="flex items-center justify-between px-8 py-4 border-b border-[var(--ridge-outer)]/50 bg-white/50">
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 transition-colors p-1 rounded-full hover:bg-gray-100"
+            className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors p-1 rounded-full hover:bg-[var(--bg-elevated)]"
             aria-label="Close"
           >
             <X className="w-6 h-6" />
@@ -279,7 +279,7 @@ export function BioInterviewModal({
                   ? 'Context'
                   : 'Proof Points'}
             </Badge>
-            <span className="text-sm text-gray-500">
+            <span className="text-sm text-[var(--text-secondary)]">
               Question {getCurrentQuestionNumber()} of {getTotalQuestions()}
             </span>
           </div>
@@ -289,7 +289,7 @@ export function BioInterviewModal({
 
         {/* Progress bar */}
         <div className="px-8 pt-4">
-          <div className="w-full h-1 rounded-full bg-gray-100 overflow-hidden">
+          <div className="w-full h-1 rounded-full bg-[var(--bg-elevated)] overflow-hidden">
             <div
               className="h-full transition-all duration-500 ease-out rounded-full"
               style={{
@@ -311,10 +311,10 @@ export function BioInterviewModal({
           <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
             {/* Question (top portion) */}
             <div className="flex-1 flex flex-col justify-center px-8 md:px-16 py-12 space-y-4">
-              <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl italic text-gray-900 leading-tight max-w-3xl">
+              <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl italic text-[var(--text-primary)] leading-tight max-w-3xl">
                 {formatQuestion(currentQuestion.question)}
               </h2>
-              <p className="text-base text-gray-500 max-w-2xl">
+              <p className="text-base text-[var(--text-secondary)] max-w-2xl">
                 {currentQuestion.purpose}
               </p>
             </div>
@@ -328,7 +328,7 @@ export function BioInterviewModal({
                     value={getCurrentAnswer()}
                     onChange={(e) => handleAnswer(e.target.value)}
                     placeholder={currentQuestion.placeholder}
-                    className="w-full min-h-[180px] p-4 bg-gray-50/50 border border-gray-200 rounded-xl text-lg placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-300 resize-y leading-relaxed"
+                    className="w-full min-h-[180px] p-4 bg-[var(--bg-elevated)]/50 border border-[var(--ridge-outer)] rounded-xl text-lg placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-[var(--ridge-outer)] resize-y leading-relaxed"
                   />
                 )}
 
@@ -338,7 +338,7 @@ export function BioInterviewModal({
                     value={getCurrentAnswer()}
                     onChange={(e) => handleAnswer(e.target.value)}
                     placeholder={currentQuestion.placeholder}
-                    className="w-full p-4 bg-gray-50/50 border border-gray-200 rounded-xl text-lg placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-300"
+                    className="w-full p-4 bg-[var(--bg-elevated)]/50 border border-[var(--ridge-outer)] rounded-xl text-lg placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-[var(--ridge-outer)]"
                   />
                 )}
 
@@ -354,8 +354,8 @@ export function BioInterviewModal({
                           type="button"
                           className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
                             selected
-                              ? 'bg-gray-900 text-white'
-                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                              ? 'bg-[var(--text-primary)] text-white'
+                              : 'bg-[var(--bg-elevated)] text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]'
                           }`}
                           onClick={() => {
                             const current =
@@ -375,22 +375,22 @@ export function BioInterviewModal({
                 )}
 
                 {currentQuestion.inputType === 'project-picker' && (
-                  <div className="border border-gray-200 rounded-xl p-6 bg-gray-50/50">
-                    <p className="text-sm text-gray-500 mb-4">
+                  <div className="border border-[var(--ridge-outer)] rounded-xl p-6 bg-[var(--bg-elevated)]/50">
+                    <p className="text-sm text-[var(--text-secondary)] mb-4">
                       Project selection will be available once you have projects on Folio.
                     </p>
                     <Textarea
                       value={getCurrentAnswer()}
                       onChange={(e) => handleAnswer(e.target.value)}
                       placeholder="Or describe a representative project here..."
-                      className="w-full min-h-[120px] p-4 bg-white border border-gray-200 rounded-xl text-lg placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-300 resize-y"
+                      className="w-full min-h-[120px] p-4 bg-white border border-[var(--ridge-outer)] rounded-xl text-lg placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-[var(--ridge-outer)] resize-y"
                     />
                   </div>
                 )}
               </div>
 
               {/* Keyboard hint */}
-              <div className="max-w-3xl flex justify-end text-sm text-gray-400">
+              <div className="max-w-3xl flex justify-end text-sm text-[var(--text-tertiary)]">
                 <span>Press ⌘ + Enter to continue</span>
               </div>
             </div>
@@ -398,11 +398,11 @@ export function BioInterviewModal({
         )}
 
         {/* Footer with navigation */}
-        <div className="flex items-center justify-between px-8 py-4 border-t border-gray-200/50 bg-white/50">
+        <div className="flex items-center justify-between px-8 py-4 border-t border-[var(--ridge-outer)]/50 bg-white/50">
           <button
             onClick={handleBack}
             disabled={step === 'layer1' && currentQuestionIndex === 0}
-            className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="flex items-center gap-2 px-4 py-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
             <ChevronLeft className="w-5 h-5" />
             <span>Back</span>
@@ -411,7 +411,7 @@ export function BioInterviewModal({
           <button
             onClick={handleNext}
             disabled={isSubmitting}
-            className="flex items-center gap-2 px-6 py-3 bg-gray-900 text-white rounded-full text-sm font-medium hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="flex items-center gap-2 px-6 py-3 bg-[var(--text-primary)] text-white rounded-full text-sm font-medium hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <span>
               {step === 'layer3' && currentQuestionIndex === LAYER_3_QUESTIONS.length - 1

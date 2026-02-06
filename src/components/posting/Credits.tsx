@@ -12,25 +12,25 @@ export function Credits({ credits }: CreditsProps) {
   if (creditsArray.length === 0) return null;
 
   return (
-    <div className="border-t border-gray-200 pt-6">
-      <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4">
+    <div className="border-t border-[var(--ridge-outer)] pt-6">
+      <h3 className="text-sm font-semibold text-[var(--text-primary)] uppercase tracking-wider mb-4">
         Credits
       </h3>
       <div className="grid grid-cols-2 gap-4 text-sm">
         {creditsArray.map((credit: any, idx: number) => (
           <div key={idx}>
-            <span className="font-medium text-gray-700">{credit.role}</span>
+            <span className="font-medium text-[var(--text-primary)]">{credit.role}</span>
             {credit.url ? (
               <a
                 href={credit.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="ml-2 text-gray-600 hover:text-gray-900 underline"
+                className="ml-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] underline"
               >
                 {credit.name}
               </a>
             ) : (
-              <span className="ml-2 text-gray-600">{credit.name}</span>
+              <span className="ml-2 text-[var(--text-secondary)]">{credit.name}</span>
             )}
           </div>
         ))}

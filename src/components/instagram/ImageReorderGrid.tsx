@@ -59,7 +59,7 @@ function SortableImageItem({ image, index }: SortableImageItemProps) {
     <div
       ref={setNodeRef}
       style={style}
-      className="relative group aspect-square bg-gray-100 rounded-lg overflow-hidden border-2 border-gray-200 hover:border-blue-400 transition-all cursor-grab active:cursor-grabbing"
+      className="relative group aspect-square bg-[var(--bg-elevated)] rounded-lg overflow-hidden border-2 border-[var(--ridge-outer)] hover:border-blue-400 transition-all cursor-grab active:cursor-grabbing"
       {...attributes}
       {...listeners}
     >
@@ -89,7 +89,7 @@ function SortableImageItem({ image, index }: SortableImageItemProps) {
           />
         </>
       ) : (
-        <div className="flex items-center justify-center h-full text-gray-400 text-sm">
+        <div className="flex items-center justify-center h-full text-[var(--text-tertiary)] text-sm">
           No image URL
         </div>
       )}
@@ -97,8 +97,8 @@ function SortableImageItem({ image, index }: SortableImageItemProps) {
         {index + 1}
       </div>
       {isDragging && (
-        <div className="absolute inset-0 bg-blue-500/20 flex items-center justify-center">
-          <div className="text-blue-600 font-semibold">Moving...</div>
+        <div className="absolute inset-0 bg-[var(--accent)]/20 flex items-center justify-center">
+          <div className="text-[var(--accent)] font-semibold">Moving...</div>
         </div>
       )}
     </div>
@@ -141,7 +141,7 @@ export default function ImageReorderGrid({ images, onReorder }: ImageReorderGrid
 
   if (items.length === 0) {
     return (
-      <div className="text-center py-12 text-gray-500">
+      <div className="text-center py-12 text-[var(--text-secondary)]">
         <p>No images available for this project.</p>
         <p className="text-sm mt-2">Upload images to the project first.</p>
       </div>

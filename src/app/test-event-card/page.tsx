@@ -35,9 +35,9 @@ export default function TestEventCardPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
+    <div className="min-h-screen bg-[var(--bg-elevated)] py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">EventCard Component Test</h1>
+        <h1 className="text-3xl font-bold text-[var(--text-primary)] mb-8">EventCard Component Test</h1>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {sampleEvents.map((event) => (
@@ -47,7 +47,7 @@ export default function TestEventCardPage() {
         
         <div className="mt-12 p-6 bg-white rounded-lg">
           <h2 className="text-xl font-semibold mb-4">Test Notes:</h2>
-          <ul className="space-y-2 text-sm text-gray-600">
+          <ul className="space-y-2 text-sm text-[var(--text-secondary)]">
             <li>• First card: Standalone event (no festival)</li>
             <li>• Second card: Child event with image</li>
             <li>• Third card: Child event without image</li>

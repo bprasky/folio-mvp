@@ -88,7 +88,7 @@ const EditorialDetailPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 pl-20 lg:pl-56">
+      <div className="min-h-screen bg-[var(--bg-elevated)] pl-20 lg:pl-56">
         <div className="p-8">
           <div className="flex items-center justify-center h-64">
             <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-folio-accent"></div>
@@ -100,7 +100,7 @@ const EditorialDetailPage = () => {
 
   if (!editorial) {
     return (
-      <div className="min-h-screen bg-gray-50 pl-20 lg:pl-56">
+      <div className="min-h-screen bg-[var(--bg-elevated)] pl-20 lg:pl-56">
         <div className="p-8">
           <div className="text-center py-12">
             <h1 className="text-2xl font-bold text-folio-text mb-4">Editorial Not Found</h1>
@@ -118,7 +118,7 @@ const EditorialDetailPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pl-20 lg:pl-56">
+    <div className="min-h-screen bg-[var(--bg-elevated)] pl-20 lg:pl-56">
       <div className="p-4 lg:p-8">
         {/* Header */}
         <div className="flex items-center mb-8">

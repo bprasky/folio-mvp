@@ -87,7 +87,7 @@ export default function ProfessionalsPage() {
                 </div>
 
                 {/* CTA Button */}
-                <button className="w-full py-3.5 px-6 rounded-full bg-folio-ink text-white font-sans font-medium flex items-center justify-center gap-2 group-hover:bg-gray-800 transition-colors">
+                <button className="w-full py-3.5 px-6 rounded-full bg-folio-ink text-white font-sans font-medium flex items-center justify-center gap-2 group-hover:opacity-90 transition-colors">
                   Continue as Designer
                   <FaArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </button>
@@ -122,7 +122,7 @@ export default function ProfessionalsPage() {
                 </div>
 
                 {/* CTA Button */}
-                <button className="w-full py-3.5 px-6 rounded-full bg-folio-ink text-white font-sans font-medium flex items-center justify-center gap-2 group-hover:bg-gray-800 transition-colors">
+                <button className="w-full py-3.5 px-6 rounded-full bg-folio-ink text-white font-sans font-medium flex items-center justify-center gap-2 group-hover:opacity-90 transition-colors">
                   Continue as Vendor
                   <FaArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </button>

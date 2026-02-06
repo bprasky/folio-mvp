@@ -54,7 +54,7 @@ export default function EventMosaic({ events, canEdit = false }: { events: Event
           {/* Admin Edit Icon */}
           {canEdit && (
             <Link href={`/admin/events/${e.id}`} onClick={(e) => e.stopPropagation()}>
-              <div className="absolute top-2 right-2 bg-blue-500 text-white p-1.5 rounded-full shadow-sm hover:bg-blue-600 transition-colors z-20">
+              <div className="absolute top-2 right-2 bg-[var(--accent)] text-white p-1.5 rounded-full shadow-sm hover:bg-[var(--accent)] transition-colors z-20">
                 <FaEdit className="w-3 h-3" />
               </div>
             </Link>

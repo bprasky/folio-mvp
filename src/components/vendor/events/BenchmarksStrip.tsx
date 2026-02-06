@@ -64,8 +64,8 @@ export function BenchmarksStrip({ benchmarks, events }: BenchmarksStripProps) {
       <Card className="bg-white border-[#DAD2CA]">
         <CardContent className="p-4">
           <div className="flex items-start space-x-3">
-            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-              <MapPin className="w-5 h-5 text-blue-600" />
+            <div className="w-10 h-10 bg-[var(--accent)]/10 rounded-full flex items-center justify-center flex-shrink-0">
+              <MapPin className="w-5 h-5 text-[var(--accent)]" />
             </div>
             <div className="flex-1 min-w-0">
               <h4 className="text-sm font-medium text-[#2B2B2B] mb-1">

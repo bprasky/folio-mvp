@@ -32,8 +32,8 @@ export default function ProjectDashboard({
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900">My Projects</h2>
-        <div className="text-sm text-gray-500">
+        <h2 className="text-2xl font-bold text-[var(--text-primary)]">My Projects</h2>
+        <div className="text-sm text-[var(--text-secondary)]">
           {projects.length} {projects.length === 1 ? 'project' : 'projects'}
         </div>
       </div>
@@ -57,14 +57,14 @@ export default function ProjectDashboard({
                     <FaFolder className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-gray-900 text-lg">{project.name}</h3>
-                    <p className="text-sm text-gray-500">
+                    <h3 className="font-bold text-[var(--text-primary)] text-lg">{project.name}</h3>
+                    <p className="text-sm text-[var(--text-secondary)]">
                       Created {project.createdAt.toLocaleDateString()}
                     </p>
                   </div>
                 </div>
                 
-                <button className="text-gray-400 hover:text-gray-600 p-1">
+                <button className="text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] p-1">
                   <FaEllipsisV className="w-4 h-4" />
                 </button>
               </div>
@@ -73,13 +73,13 @@ export default function ProjectDashboard({
               <div className="flex items-center gap-2 mb-4">
                 {project.isAIEnabled ? (
                   <div className="flex items-center gap-2 px-3 py-1 bg-gradient-to-r from-blue-100 to-purple-100 rounded-full">
-                    <FaRobot className="w-3 h-3 text-blue-600" />
+                    <FaRobot className="w-3 h-3 text-[var(--accent)]" />
                     <span className="text-xs font-medium text-blue-800">AI Enabled</span>
                   </div>
                 ) : (
-                  <div className="flex items-center gap-2 px-3 py-1 bg-gray-100 rounded-full">
-                    <FaFolder className="w-3 h-3 text-gray-600" />
-                    <span className="text-xs font-medium text-gray-700">Basic Folder</span>
+                  <div className="flex items-center gap-2 px-3 py-1 bg-[var(--bg-elevated)] rounded-full">
+                    <FaFolder className="w-3 h-3 text-[var(--text-secondary)]" />
+                    <span className="text-xs font-medium text-[var(--text-primary)]">Basic Folder</span>
                   </div>
                 )}
               </div>
@@ -87,15 +87,15 @@ export default function ProjectDashboard({
               {/* Saved Items Count */}
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                  <FaBookmark className="w-4 h-4 text-gray-500" />
-                  <span className="text-sm text-gray-600">
+                  <FaBookmark className="w-4 h-4 text-[var(--text-secondary)]" />
+                  <span className="text-sm text-[var(--text-secondary)]">
                     {project.savedItemsCount} saved items
                   </span>
                 </div>
                 
                 <button
                   onClick={(e) => handleSaveItem(project.id, e)}
-                  className="text-xs px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
+                  className="text-xs px-3 py-1 bg-[var(--accent)] hover:bg-[var(--accent)] text-white rounded-lg transition-colors"
                 >
                   Save Item
                 </button>
@@ -104,11 +104,11 @@ export default function ProjectDashboard({
               {/* AI Project Details */}
               {project.isAIEnabled && project.aiData && (
                 <div className="space-y-2 pt-4 border-t border-gray-100">
-                  <div className="flex items-center gap-2 text-xs text-gray-600">
+                  <div className="flex items-center gap-2 text-xs text-[var(--text-secondary)]">
                     <FaCalendarAlt className="w-3 h-3" />
                     <span>{project.aiData.timeline}</span>
                   </div>
-                  <div className="flex items-center gap-2 text-xs text-gray-600">
+                  <div className="flex items-center gap-2 text-xs text-[var(--text-secondary)]">
                     <FaDollarSign className="w-3 h-3" />
                     <span>{project.aiData.budget}</span>
                   </div>
@@ -116,13 +116,13 @@ export default function ProjectDashboard({
                     {project.aiData.rooms.slice(0, 2).map((room) => (
                       <span
                         key={room}
-                        className="text-xs px-2 py-1 bg-blue-50 text-blue-700 rounded-md"
+                        className="text-xs px-2 py-1 bg-[var(--accent)]/5 text-[var(--accent-hover)] rounded-md"
                       >
                         {room.replace('-', ' ')}
                       </span>
                     ))}
                     {project.aiData.rooms.length > 2 && (
-                      <span className="text-xs px-2 py-1 bg-gray-50 text-gray-600 rounded-md">
+                      <span className="text-xs px-2 py-1 bg-[var(--bg-elevated)] text-[var(--text-secondary)] rounded-md">
                         +{project.aiData.rooms.length - 2} more
                       </span>
                     )}
@@ -134,10 +134,10 @@ export default function ProjectDashboard({
               {!project.isAIEnabled && project.savedItemsCount > 0 && (
                 <div className="pt-4 border-t border-gray-100">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs text-gray-600">Progress to AI upgrade</span>
-                    <span className="text-xs text-gray-600">{project.savedItemsCount}/5</span>
+                    <span className="text-xs text-[var(--text-secondary)]">Progress to AI upgrade</span>
+                    <span className="text-xs text-[var(--text-secondary)]">{project.savedItemsCount}/5</span>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-1.5">
+                  <div className="w-full bg-[var(--bg-elevated)] rounded-full h-1.5">
                     <div
                       className="bg-gradient-to-r from-blue-500 to-purple-500 h-1.5 rounded-full transition-all duration-300"
                       style={{ width: `${Math.min((project.savedItemsCount / 5) * 100, 100)}%` }}
@@ -159,11 +159,11 @@ export default function ProjectDashboard({
           animate={{ opacity: 1 }}
           className="text-center py-12"
         >
-          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <FaFolder className="w-8 h-8 text-gray-400" />
+          <div className="w-16 h-16 bg-[var(--bg-elevated)] rounded-full flex items-center justify-center mx-auto mb-4">
+            <FaFolder className="w-8 h-8 text-[var(--text-tertiary)]" />
           </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No projects yet</h3>
-          <p className="text-gray-600">Create your first project to get started!</p>
+          <h3 className="text-lg font-medium text-[var(--text-primary)] mb-2">No projects yet</h3>
+          <p className="text-[var(--text-secondary)]">Create your first project to get started!</p>
         </motion.div>
       )}
     </div>

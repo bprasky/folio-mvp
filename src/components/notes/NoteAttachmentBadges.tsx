@@ -33,7 +33,7 @@ export default function NoteAttachmentBadges({
           return (
             <span
               key={attachment.id}
-              className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full"
+              className="inline-flex items-center gap-1 px-2 py-1 bg-[var(--accent)]/10 text-[var(--accent-hover)] text-xs rounded-full"
             >
               <FaDoorOpen />
               {attachment.room.name}
@@ -73,14 +73,14 @@ export default function NoteAttachmentBadges({
           return (
             <span
               key={attachment.id}
-              className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full"
+              className="inline-flex items-center gap-1 px-2 py-1 bg-[var(--bg-elevated)] text-[var(--text-primary)] text-xs rounded-full"
             >
               <FaFolder />
               {attachment.project.title}
               {onRemove && (
                 <button
                   onClick={() => onRemove(attachment.id)}
-                  className="ml-1 hover:text-gray-900"
+                  className="ml-1 hover:text-[var(--text-primary)]"
                 >
                   ×
                 </button>

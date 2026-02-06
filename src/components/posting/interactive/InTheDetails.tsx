@@ -21,7 +21,7 @@ export default function InTheDetails({
   return (
     <div className="mt-10">
       <button
-        className="rounded-xl bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 transition-colors"
+        className="rounded-xl bg-[var(--bg-elevated)] px-4 py-2 text-sm font-medium text-[var(--text-primary)] hover:bg-[var(--bg-elevated)] transition-colors"
         onClick={() => setOpen((o) => !o)}
       >
         In the Details {open ? '▲' : '▼'}
@@ -39,7 +39,7 @@ export default function InTheDetails({
               {products.map((p) => (
                 <figure key={p.id} className="group">
                   {p.imageUrl ? (
-                    <div className="relative aspect-square rounded-xl overflow-hidden bg-gray-100">
+                    <div className="relative aspect-square rounded-xl overflow-hidden bg-[var(--bg-elevated)]">
                       <Image
                         src={p.imageUrl}
                         alt={p.name}
@@ -49,9 +49,9 @@ export default function InTheDetails({
                       />
                     </div>
                   ) : (
-                    <div className="aspect-square rounded-xl bg-gray-200" />
+                    <div className="aspect-square rounded-xl bg-[var(--bg-elevated)]" />
                   )}
-                  <figcaption className="mt-1 truncate text-xs text-gray-600">{p.name}</figcaption>
+                  <figcaption className="mt-1 truncate text-xs text-[var(--text-secondary)]">{p.name}</figcaption>
                 </figure>
               ))}
             </div>

@@ -16,13 +16,13 @@ interface ProgressIndicatorProps {
  *
  * Dots variant:
  * - 5 dots max displayed
- * - Filled dot: bg-gray-900
- * - Empty dot: bg-gray-300
+ * - Filled dot: bg-[var(--text-primary)]
+ * - Empty dot: bg-[var(--text-tertiary)]/30
  * - If total > 5, show first few filled + "..." + remaining
  *
  * Line variant:
- * - Thin line: h-1 bg-gray-200 rounded-full
- * - Fill: h-1 bg-gray-900 rounded-full, width = (current/total * 100)%
+ * - Thin line: h-1 bg-[var(--bg-elevated)] rounded-full
+ * - Fill: h-1 bg-[var(--text-primary)] rounded-full, width = (current/total * 100)%
  *
  * DO NOT show: "Question 3 of 12" or "0/4" counters
  */
@@ -36,9 +36,9 @@ export function ProgressIndicator({
 
     return (
       <div className="w-full max-w-xs">
-        <div className="h-1 bg-gray-200 rounded-full overflow-hidden">
+        <div className="h-1 bg-[var(--bg-elevated)] rounded-full overflow-hidden">
           <div
-            className="h-1 bg-gray-900 rounded-full transition-all duration-300 ease-out"
+            className="h-1 bg-[var(--text-primary)] rounded-full transition-all duration-300 ease-out"
             style={{ width: `${progress}%` }}
           />
         </div>
@@ -67,13 +67,13 @@ export function ProgressIndicator({
             key={index}
             className={cn(
               "w-2 h-2 rounded-full transition-all duration-200",
-              isFilled ? "bg-gray-900 scale-100" : "bg-gray-300 scale-[0.85]"
+              isFilled ? "bg-[var(--text-primary)] scale-100" : "bg-[var(--text-tertiary)]/30 scale-[0.85]"
             )}
           />
         );
       })}
       {showEllipsis && (
-        <span className="text-gray-400 text-xs tracking-wider">...</span>
+        <span className="text-[var(--text-tertiary)] text-xs tracking-wider">...</span>
       )}
     </div>
   );

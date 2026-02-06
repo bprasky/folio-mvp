@@ -13,7 +13,7 @@ interface PostCardProps {
 export function PostCard({ post, project, heroImage, designer }: PostCardProps) {
   return (
     <Link href={`/p/${post.slug}`} className="block group">
-      <div className="relative aspect-[3/2] overflow-hidden rounded-lg bg-gray-100">
+      <div className="relative aspect-[3/2] overflow-hidden rounded-lg bg-[var(--bg-elevated)]">
         {heroImage?.url && (
           <Image
             src={heroImage.url}
@@ -24,16 +24,16 @@ export function PostCard({ post, project, heroImage, designer }: PostCardProps) 
         )}
       </div>
       <div className="mt-4">
-        <h3 className="text-lg font-semibold text-gray-900 group-hover:text-gray-700">
+        <h3 className="text-lg font-semibold text-[var(--text-primary)] group-hover:text-[var(--text-primary)]">
           {project.title}
         </h3>
         {post.excerpt && (
-          <p className="mt-1 text-sm text-gray-600 line-clamp-2">
+          <p className="mt-1 text-sm text-[var(--text-secondary)] line-clamp-2">
             {post.excerpt}
           </p>
         )}
         {designer && (
-          <p className="mt-2 text-xs text-gray-500">
+          <p className="mt-2 text-xs text-[var(--text-secondary)]">
             by {designer.name}
           </p>
         )}

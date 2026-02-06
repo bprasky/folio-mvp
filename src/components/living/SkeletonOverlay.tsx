@@ -87,8 +87,8 @@ export default function SkeletonOverlay({
             key={skeleton.id}
             className={`absolute border-2 rounded-sm transition-all pointer-events-auto cursor-pointer ${
               isHighlighted
-                ? 'border-blue-500 bg-blue-500/20 shadow-lg shadow-blue-500/50'
-                : 'border-gray-400/40 bg-gray-400/5 hover:border-gray-500/60 hover:bg-gray-500/10'
+                ? 'border-[var(--accent)] bg-[var(--accent)]/20 shadow-lg shadow-blue-500/50'
+                : 'border-gray-400/40 bg-[var(--text-tertiary)]/40/5 hover:border-gray-500/60 hover:bg-[var(--bg-elevated)]0/10'
             }`}
             style={{
               left,

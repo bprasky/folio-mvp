@@ -11,9 +11,9 @@ const badgeConfig = {
   new: {
     icon: FaClock,
     text: 'New',
-    bgColor: 'bg-blue-500',
+    bgColor: 'bg-[var(--accent)]',
     textColor: 'text-white',
-    borderColor: 'border-blue-600'
+    borderColor: 'border-[var(--accent)]'
   },
   rising: {
     icon: FaRocket,

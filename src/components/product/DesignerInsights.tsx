@@ -109,7 +109,7 @@ export function DesignerInsights({ productId }: DesignerInsightsProps) {
     return (
       <div className="rounded-2xl border border-[#E5E7EB] bg-white p-4">
         <div className="text-sm text-[#6B7280]">Designer Insights</div>
-        <div className="mt-2 text-sm text-gray-400">Loading...</div>
+        <div className="mt-2 text-sm text-[var(--text-tertiary)]">Loading...</div>
       </div>
     );
   }
@@ -132,7 +132,7 @@ export function DesignerInsights({ productId }: DesignerInsightsProps) {
             className="border-t border-gray-100 pt-4 first:border-t-0 first:pt-0"
           >
             <div className="flex items-start space-x-3">
-              <Quote className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0" />
+              <Quote className="h-4 w-4 text-[var(--text-tertiary)] mt-0.5 flex-shrink-0" />
               <div className="flex-1 min-w-0">
                 <p className="text-sm text-[#111827] leading-relaxed italic">
                   "{insight.quoteText}"
@@ -160,12 +160,12 @@ export function DesignerInsights({ productId }: DesignerInsightsProps) {
               </div>
               <button
                 onClick={() => playSegment(insight)}
-                className="flex-shrink-0 p-2 rounded-lg hover:bg-gray-50 transition-colors"
+                className="flex-shrink-0 p-2 rounded-lg hover:bg-[var(--bg-elevated)] transition-colors"
                 title="Play audio segment"
               >
                 <Play
                   className={`h-4 w-4 ${
-                    playingId === insight.id ? "text-blue-600" : "text-gray-400"
+                    playingId === insight.id ? "text-[var(--accent)]" : "text-[var(--text-tertiary)]"
                   }`}
                 />
               </button>

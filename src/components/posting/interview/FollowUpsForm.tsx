@@ -171,10 +171,10 @@ export function FollowUpsForm({
   return (
     <div className="space-y-8">
       {isSaving && (
-        <div className="text-xs text-gray-500 italic">Saving…</div>
+        <div className="text-xs text-[var(--text-secondary)] italic">Saving…</div>
       )}
 
-      <div className="text-sm text-gray-600 mb-6">
+      <div className="text-sm text-[var(--text-secondary)] mb-6">
         <p className="font-medium mb-2">
           Let's go a little deeper — these are optional.
         </p>
@@ -196,15 +196,15 @@ export function FollowUpsForm({
         return (
           <div
             key={group.questionId}
-            className="space-y-4 border-l-2 border-blue-200 pl-4"
+            className="space-y-4 border-l-2 border-[var(--accent)]/20 pl-4"
           >
             {parentQuestion && (
-              <div className="text-sm font-medium text-gray-700">
+              <div className="text-sm font-medium text-[var(--text-primary)]">
                 {parentQuestion.prompt}
               </div>
             )}
             {parentAnswer && (
-              <div className="text-xs text-gray-500 italic mb-3">
+              <div className="text-xs text-[var(--text-secondary)] italic mb-3">
                 Your answer: "{parentAnswer.answer.substring(0, 100)}
                 {parentAnswer.answer.length > 100 ? "…" : ""}"
               </div>
@@ -212,7 +212,7 @@ export function FollowUpsForm({
 
             {/* Phase C: Acknowledgment sentence */}
             {group.acknowledgment && (
-              <div className="text-sm text-gray-700 italic mb-4 px-3 py-2 bg-gray-50 rounded-lg border-l-4 border-blue-300">
+              <div className="text-sm text-[var(--text-primary)] italic mb-4 px-3 py-2 bg-[var(--bg-elevated)] rounded-lg border-l-4 border-[var(--accent)]/30">
                 {group.acknowledgment}
               </div>
             )}
@@ -224,9 +224,9 @@ export function FollowUpsForm({
 
               return (
                 <div key={followUp.id} className="space-y-2 ml-4">
-                  <label className="block text-sm font-medium text-gray-900">
+                  <label className="block text-sm font-medium text-[var(--text-primary)]">
                     {followUp.prompt}
-                    <span className="ml-2 text-xs text-gray-500 italic">
+                    <span className="ml-2 text-xs text-[var(--text-secondary)] italic">
                       AI-suggested
                     </span>
                   </label>
@@ -237,13 +237,13 @@ export function FollowUpsForm({
                     }
                     maxLength={2000}
                     rows={4}
-                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm leading-relaxed ${
+                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)] text-sm leading-relaxed ${
                       errorMessage ? "border-red-400 focus:border-red-500" : ""
                     }`}
                     style={{ maxWidth: "72ch" }}
                     placeholder="Type your answer here (optional)…"
                   />
-                  <div className="flex justify-between text-xs text-gray-500">
+                  <div className="flex justify-between text-xs text-[var(--text-secondary)]">
                     <span>{charCount} / 2000 characters</span>
                   </div>
                   {errorMessage && (

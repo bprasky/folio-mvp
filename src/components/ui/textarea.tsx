@@ -17,7 +17,7 @@ interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement
 export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
   ({ className, variant = 'ridge', error, ...props }, ref) => {
     const variants = {
-      default: 'flex min-h-[80px] w-full rounded-lg border border-[var(--ridge-outer)] bg-[var(--bg-base)] px-3 py-2 text-sm placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50',
+      default: 'flex min-h-[80px] w-full rounded-lg border border-[var(--ridge-outer)] bg-[var(--bg-base)] px-3 py-2 text-sm placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50',
       ridge: 'ridge-input flex min-h-[80px] w-full px-3 py-2 resize-none disabled:cursor-not-allowed disabled:opacity-50',
     };
 

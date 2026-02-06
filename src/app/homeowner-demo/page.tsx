@@ -140,8 +140,8 @@ export default function HomeownerDemo() {
           <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <FaFolder className="w-8 h-8 text-orange-600" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Homeowner Features</h2>
-          <p className="text-gray-600 mb-4">
+          <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-2">Homeowner Features</h2>
+          <p className="text-[var(--text-secondary)] mb-4">
             This feature is only available for homeowners. Please sign in with a homeowner account.
           </p>
         </div>
@@ -159,10 +159,10 @@ export default function HomeownerDemo() {
             animate={{ opacity: 1, y: 0 }}
             className="mb-8"
           >
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">
+            <h1 className="text-4xl font-bold text-[var(--text-primary)] mb-4">
               Welcome to Your Design Journey
             </h1>
-            <p className="text-xl text-gray-600 mb-8">
+            <p className="text-xl text-[var(--text-secondary)] mb-8">
               Create projects, save inspiration, and get AI-powered design guidance
             </p>
             
@@ -188,8 +188,8 @@ export default function HomeownerDemo() {
               <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl flex items-center justify-center mb-4">
                 <FaRobot className="w-6 h-6 text-white" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">AI-Guided Projects</h3>
-              <p className="text-gray-600">
+              <h3 className="text-xl font-bold text-[var(--text-primary)] mb-2">AI-Guided Projects</h3>
+              <p className="text-[var(--text-secondary)]">
                 Get personalized design guidance, budget help, and designer matches through our AI onboarding flow.
               </p>
             </motion.div>
@@ -203,8 +203,8 @@ export default function HomeownerDemo() {
               <div className="w-12 h-12 bg-gray-600 rounded-xl flex items-center justify-center mb-4">
                 <FaFolder className="w-6 h-6 text-white" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Basic Folders</h3>
-              <p className="text-gray-600">
+              <h3 className="text-xl font-bold text-[var(--text-primary)] mb-2">Basic Folders</h3>
+              <p className="text-[var(--text-secondary)]">
                 Start simple with basic folders. After saving 5+ items, unlock AI features for smarter suggestions.
               </p>
             </motion.div>

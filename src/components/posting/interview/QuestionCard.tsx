@@ -99,7 +99,7 @@ export function QuestionCard({
             <div className="flex items-center gap-2 flex-wrap">
               {questionMetadata.attributeType && questionMetadata.attributeValue && (
                 <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
-                  questionMetadata.attributeType === 'color' ? 'bg-blue-100 text-blue-700' :
+                  questionMetadata.attributeType === 'color' ? 'bg-[var(--accent)]/10 text-[var(--accent-hover)]' :
                   questionMetadata.attributeType === 'material' ? 'bg-amber-100 text-amber-700' :
                   questionMetadata.attributeType === 'style' ? 'bg-purple-100 text-purple-700' :
                   questionMetadata.attributeType === 'mood' ? 'bg-rose-100 text-rose-700' :
@@ -111,7 +111,7 @@ export function QuestionCard({
                 </span>
               )}
               {questionMetadata.roomContext && (
-                <span className="text-xs text-gray-500">• {questionMetadata.roomContext}</span>
+                <span className="text-xs text-[var(--text-secondary)]">• {questionMetadata.roomContext}</span>
               )}
             </div>
             {questionMetadata.linkedImageId && images.length > 0 && (
@@ -122,11 +122,11 @@ export function QuestionCard({
             )}
           </div>
         )}
-        <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl italic text-gray-900 leading-tight mb-8 max-w-3xl">
+        <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl italic text-[var(--text-primary)] leading-tight mb-8 max-w-3xl">
           {question.prompt}
         </h2>
         {question.helper && (
-          <p className="text-sm text-gray-500 max-w-2xl">{question.helper}</p>
+          <p className="text-sm text-[var(--text-secondary)] max-w-2xl">{question.helper}</p>
         )}
       </div>
 
@@ -139,8 +139,8 @@ export function QuestionCard({
             onChange={(e) => onAnswerChange(e.target.value)}
             maxLength={maxLength}
             rows={8}
-            className={`w-full min-h-[200px] p-4 bg-gray-50/50 border rounded-xl text-lg placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 resize-y leading-relaxed ${
-              fieldError ? "border-red-400 focus:border-red-500" : "border-gray-200"
+            className={`w-full min-h-[200px] p-4 bg-[var(--bg-elevated)]/50 border rounded-xl text-lg placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30 focus:border-[var(--accent)]/50 resize-y leading-relaxed ${
+              fieldError ? "border-red-400 focus:border-red-500" : "border-[var(--ridge-outer)]"
             }`}
             placeholder="Type your answer here…"
             disabled={isSubmitting || isRecording || isTranscribing}
@@ -153,7 +153,7 @@ export function QuestionCard({
               </span>
             )}
             {isTranscribing && (
-              <Loader2 className="h-4 w-4 text-blue-600 animate-spin" />
+              <Loader2 className="h-4 w-4 text-[var(--accent)] animate-spin" />
             )}
             {!isRecording && !isTranscribing && (
               <button
@@ -162,7 +162,7 @@ export function QuestionCard({
                   await startRecording();
                 }}
                 disabled={isSubmitting}
-                className="p-2 rounded-full transition-colors bg-gray-100 text-gray-600 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="p-2 rounded-full transition-colors bg-[var(--bg-elevated)] text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)] disabled:opacity-50 disabled:cursor-not-allowed"
                 title="Record voice answer"
               >
                 <Mic className="h-4 w-4" />
@@ -188,7 +188,7 @@ export function QuestionCard({
                 <button
                   type="button"
                   onClick={cancelRecording}
-                  className="p-1.5 text-xs text-gray-500 hover:text-gray-700"
+                  className="p-1.5 text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                   title="Cancel recording"
                 >
                   Cancel
@@ -199,7 +199,7 @@ export function QuestionCard({
         </div>
 
         {/* Character count and error */}
-        <div className="flex justify-between items-center text-sm text-gray-400 max-w-3xl">
+        <div className="flex justify-between items-center text-sm text-[var(--text-tertiary)] max-w-3xl">
           <div>
             {fieldError && (
               <p className="text-red-600">{fieldError}</p>

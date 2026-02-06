@@ -94,7 +94,7 @@ export default function EventHero({ event, userRSVP }: EventHeroProps) {
   return (
     <div className="relative w-full">
       {/* Hero Background */}
-      <div className="relative w-full h-[50vh] min-h-[400px] max-h-[600px] overflow-hidden bg-gray-200">
+      <div className="relative w-full h-[50vh] min-h-[400px] max-h-[600px] overflow-hidden bg-[var(--bg-elevated)]">
         <SafeImage
           src={heroImage}
           alt={event.title}
@@ -155,14 +155,14 @@ export default function EventHero({ event, userRSVP }: EventHeroProps) {
                     value={rsvpStatus}
                     onChange={(e) => handleRSVP(e.target.value)}
                     disabled={isSubmitting}
-                    className="appearance-none bg-white/90 backdrop-blur-sm text-gray-900 px-6 py-3 rounded-lg font-medium border-0 focus:ring-2 focus:ring-folio-accent focus:outline-none disabled:opacity-50"
+                    className="appearance-none bg-white/90 backdrop-blur-sm text-[var(--text-primary)] px-6 py-3 rounded-lg font-medium border-0 focus:ring-2 focus:ring-folio-accent focus:outline-none disabled:opacity-50"
                   >
                     <option value="none">RSVP</option>
                     <option value="attending">Attending</option>
                     <option value="interested">Interested</option>
                     <option value="declined">Declined</option>
                   </select>
-                  <svg className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-600 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[var(--text-secondary)] pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </div>
@@ -187,7 +187,7 @@ export default function EventHero({ event, userRSVP }: EventHeroProps) {
       {event.description && (
         <div className="bg-white py-8">
           <div className="max-w-4xl mx-auto px-6 sm:px-8">
-            <p className="text-gray-700 text-lg leading-relaxed">
+            <p className="text-[var(--text-primary)] text-lg leading-relaxed">
               {event.description}
             </p>
           </div>

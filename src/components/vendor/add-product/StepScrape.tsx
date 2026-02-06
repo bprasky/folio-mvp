@@ -104,8 +104,8 @@ export function StepScrape({ url, onComplete, onBack }: StepScrapeProps) {
         {status === 'loading' && (
           <div className="text-center py-12">
             <div className="relative inline-block mb-6">
-              <Globe className="w-16 h-16 text-blue-600 dark:text-blue-400" />
-              <Loader2 className="w-6 h-6 text-blue-600 dark:text-blue-400 animate-spin absolute -top-1 -right-1" />
+              <Globe className="w-16 h-16 text-[var(--accent)] dark:text-blue-400" />
+              <Loader2 className="w-6 h-6 text-[var(--accent)] dark:text-blue-400 animate-spin absolute -top-1 -right-1" />
             </div>
             <h2 className="text-2xl font-medium mb-2 text-stone-900 dark:text-stone-100">
               Scraping Product...
@@ -115,19 +115,19 @@ export function StepScrape({ url, onComplete, onBack }: StepScrapeProps) {
             </p>
             <div className="max-w-md mx-auto space-y-2 text-sm text-stone-500 dark:text-stone-400">
               <div className="flex items-center justify-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+                <div className="w-2 h-2 rounded-full bg-[var(--accent)] animate-pulse" />
                 <span>Fetching page content...</span>
               </div>
               <div className="flex items-center justify-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse animation-delay-200" />
+                <div className="w-2 h-2 rounded-full bg-[var(--accent)] animate-pulse animation-delay-200" />
                 <span>Parsing JSON-LD & OpenGraph...</span>
               </div>
               <div className="flex items-center justify-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse animation-delay-400" />
+                <div className="w-2 h-2 rounded-full bg-[var(--accent)] animate-pulse animation-delay-400" />
                 <span>Extracting images & files...</span>
               </div>
               <div className="flex items-center justify-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse animation-delay-600" />
+                <div className="w-2 h-2 rounded-full bg-[var(--accent)] animate-pulse animation-delay-600" />
                 <span>Analyzing specifications...</span>
               </div>
             </div>

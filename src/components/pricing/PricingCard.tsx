@@ -33,7 +33,7 @@ export function PricingCard({
         isHighlighted
           ? 'border-black bg-white shadow-lg ring-2 ring-black'
           : 'border-neutral-200 bg-white'
-      } ${isCurrentTier ? 'ring-2 ring-blue-500' : ''}`}
+      } ${isCurrentTier ? 'ring-2 ring-[var(--accent)]' : ''}`}
     >
       {isHighlighted && (
         <div className="absolute -top-3 left-1/2 -translate-x-1/2">
@@ -45,7 +45,7 @@ export function PricingCard({
 
       {isCurrentTier && (
         <div className="absolute -top-3 right-4">
-          <span className="bg-blue-500 text-white text-xs font-medium px-3 py-1 rounded-full">
+          <span className="bg-[var(--accent)] text-white text-xs font-medium px-3 py-1 rounded-full">
             Current Plan
           </span>
         </div>

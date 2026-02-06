@@ -86,7 +86,7 @@ export default function OrgMemberships({ userId }: OrgMembershipsProps) {
       case 'OWNER':
         return <Crown className="w-4 h-4 text-yellow-500" />;
       case 'ADMIN':
-        return <Shield className="w-4 h-4 text-blue-500" />;
+        return <Shield className="w-4 h-4 text-[var(--accent)]" />;
       default:
         return null;
     }
@@ -102,7 +102,7 @@ export default function OrgMemberships({ userId }: OrgMembershipsProps) {
         );
       case 'CLAIMED':
         return (
-          <span className="px-1.5 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full">
+          <span className="px-1.5 py-0.5 bg-[var(--accent)]/10 text-[var(--accent-hover)] text-xs rounded-full">
             Verified
           </span>
         );
@@ -114,10 +114,10 @@ export default function OrgMemberships({ userId }: OrgMembershipsProps) {
   if (isLoading) {
     return (
       <div className="animate-pulse">
-        <div className="h-6 bg-gray-200 rounded w-1/3 mb-4"></div>
+        <div className="h-6 bg-[var(--bg-elevated)] rounded w-1/3 mb-4"></div>
         <div className="space-y-3">
-          <div className="h-16 bg-gray-200 rounded"></div>
-          <div className="h-16 bg-gray-200 rounded"></div>
+          <div className="h-16 bg-[var(--bg-elevated)] rounded"></div>
+          <div className="h-16 bg-[var(--bg-elevated)] rounded"></div>
         </div>
       </div>
     );
@@ -126,22 +126,22 @@ export default function OrgMemberships({ userId }: OrgMembershipsProps) {
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-medium text-gray-900">Organizations</h3>
+        <h3 className="text-lg font-medium text-[var(--text-primary)]">Organizations</h3>
         <Link
           href="/professionals/join"
-          className="text-sm text-blue-600 hover:text-blue-800"
+          className="text-sm text-[var(--accent)] hover:text-blue-800"
         >
           Join or create
         </Link>
       </div>
 
       {memberships.length === 0 ? (
-        <div className="text-center py-8 bg-gray-50 rounded-lg">
-          <Building2 className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-          <p className="text-gray-600 mb-2">No organizations yet</p>
+        <div className="text-center py-8 bg-[var(--bg-elevated)] rounded-lg">
+          <Building2 className="w-12 h-12 text-[var(--text-tertiary)] mx-auto mb-3" />
+          <p className="text-[var(--text-secondary)] mb-2">No organizations yet</p>
           <Link
             href="/professionals"
-            className="text-blue-600 hover:text-blue-800 text-sm"
+            className="text-[var(--accent)] hover:text-blue-800 text-sm"
           >
             Join as a professional
           </Link>
@@ -151,7 +151,7 @@ export default function OrgMemberships({ userId }: OrgMembershipsProps) {
           {memberships.map((membership) => (
             <div
               key={membership.id}
-              className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
+              className="flex items-center justify-between p-4 bg-[var(--bg-elevated)] rounded-lg"
             >
               <div className="flex items-center gap-3">
                 {membership.organization.logo ? (
@@ -161,15 +161,15 @@ export default function OrgMemberships({ userId }: OrgMembershipsProps) {
                     className="w-10 h-10 rounded-lg object-cover"
                   />
                 ) : (
-                  <div className="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center">
-                    <Building2 className="w-5 h-5 text-gray-400" />
+                  <div className="w-10 h-10 bg-[var(--bg-elevated)] rounded-lg flex items-center justify-center">
+                    <Building2 className="w-5 h-5 text-[var(--text-tertiary)]" />
                   </div>
                 )}
                 <div>
                   <div className="flex items-center gap-2">
                     <Link
                       href={`/org/${membership.organization.id}`}
-                      className="font-medium text-gray-900 hover:text-blue-600 flex items-center gap-1"
+                      className="font-medium text-[var(--text-primary)] hover:text-[var(--accent)] flex items-center gap-1"
                     >
                       {membership.organization.name}
                       <ExternalLink className="w-3 h-3" />
@@ -177,7 +177,7 @@ export default function OrgMemberships({ userId }: OrgMembershipsProps) {
                     {getRoleIcon(membership.role)}
                     {getStatusBadge(membership.organization.status)}
                   </div>
-                  <p className="text-sm text-gray-500 capitalize">
+                  <p className="text-sm text-[var(--text-secondary)] capitalize">
                     {membership.role.toLowerCase()} · {membership.organization.type.replace('_', ' ').toLowerCase()}
                   </p>
                 </div>
@@ -187,8 +187,8 @@ export default function OrgMemberships({ userId }: OrgMembershipsProps) {
                 onClick={() => toggleVisibility(membership.id, membership.organization.id, membership.showOnProfile)}
                 className={`p-2 rounded-lg transition-colors ${
                   membership.showOnProfile
-                    ? 'text-gray-600 hover:bg-gray-200'
-                    : 'text-gray-400 hover:bg-gray-200'
+                    ? 'text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)]'
+                    : 'text-[var(--text-tertiary)] hover:bg-[var(--bg-elevated)]'
                 }`}
                 title={membership.showOnProfile ? 'Visible on profile' : 'Hidden from profile'}
               >

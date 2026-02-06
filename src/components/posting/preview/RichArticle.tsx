@@ -352,7 +352,7 @@ export function RichArticle({
                     href={credit.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline"
+                    className="text-[var(--accent)] hover:underline"
                   >
                     {credit.name}
                   </a>

@@ -37,7 +37,7 @@ export function TopicCard({ topic, onContribute, className }: TopicCardProps) {
           </h3>
           <div className="flex items-center gap-2 folio-meta text-[var(--text-secondary)]">
             <span className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-blue-500" />
+              <span className="w-2 h-2 rounded-full bg-[var(--accent)]" />
               {topic.contributionCount} voice{topic.contributionCount !== 1 ? 's' : ''}
             </span>
             {targetDateLabel && (

@@ -129,7 +129,7 @@ export default function SelectionEditor(props: SelectionEditorProps) {
       {/* Vendor badge (locked in vendor mode) */}
       {vendorLocked ? (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <span className="px-2 py-1 rounded-full border bg-blue-50 text-blue-700">
+          <span className="px-2 py-1 rounded-full border bg-[var(--accent)]/5 text-[var(--accent-hover)]">
             {vendorCtx!.vendor.name}
           </span>
           <span>•</span>
@@ -273,14 +273,14 @@ export default function SelectionEditor(props: SelectionEditorProps) {
         <button
           type="button"
           onClick={handleSubmit}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          className="px-4 py-2 bg-[var(--accent)] text-white rounded-lg hover:bg-[var(--accent-hover)]"
         >
           {mode === "add" ? "Add Selection" : "Update Selection"}
         </button>
         <button
           type="button"
           onClick={onCancel}
-          className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+          className="px-4 py-2 border border-[var(--ridge-outer)] rounded-lg hover:bg-[var(--bg-elevated)]"
         >
           Cancel
         </button>

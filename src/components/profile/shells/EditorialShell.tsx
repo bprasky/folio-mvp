@@ -28,15 +28,15 @@ export default function EditorialShell({ designer, projects, aesthetic, viewerCo
               {designer.name}
             </h1>
             {designer.title && (
-              <p className="text-xl font-serif text-gray-600 mb-8">{designer.title}</p>
+              <p className="text-xl font-serif text-[var(--text-secondary)] mb-8">{designer.title}</p>
             )}
             {designer.bio && (
-              <div className="border-t border-gray-200 pt-8">
-                <p className="text-base font-serif leading-relaxed text-gray-700">
+              <div className="border-t border-[var(--ridge-outer)] pt-8">
+                <p className="text-base font-serif leading-relaxed text-[var(--text-primary)]">
                   {designer.bio}
                 </p>
                 {designer.location && (
-                  <p className="mt-4 text-sm text-gray-500">{designer.location}</p>
+                  <p className="mt-4 text-sm text-[var(--text-secondary)]">{designer.location}</p>
                 )}
               </div>
             )}
@@ -46,7 +46,7 @@ export default function EditorialShell({ designer, projects, aesthetic, viewerCo
 
       {/* Projects Section */}
       <div className="max-w-7xl mx-auto px-6 py-16">
-        <div className="border-t border-gray-200 pt-12">
+        <div className="border-t border-[var(--ridge-outer)] pt-12">
           <h2 className="text-3xl font-serif font-medium tracking-tight mb-12">
             Selected Work
           </h2>

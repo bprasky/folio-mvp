@@ -120,9 +120,9 @@ export function QuestionCard({
             rows={6}
             className={cn(
               "w-full min-h-[160px] md:min-h-[200px] p-4 md:p-6",
-              "bg-gray-50/50 rounded-xl text-lg",
-              "placeholder:text-gray-400",
-              "border-transparent focus:border-gray-200",
+              "bg-[var(--bg-elevated)]/50 rounded-xl text-lg",
+              "placeholder:text-[var(--text-tertiary)]",
+              "border-transparent focus:border-[var(--ridge-outer)]",
               "focus:outline-none focus:ring-2 focus:ring-gray-200",
               "resize-none leading-relaxed transition-all"
             )}
@@ -131,7 +131,7 @@ export function QuestionCard({
           />
 
           {/* Helper text */}
-          <p className="text-sm text-gray-400 mt-2">
+          <p className="text-sm text-[var(--text-tertiary)] mt-2">
             Write as much or as little as you'd like
           </p>
         </div>
@@ -142,7 +142,7 @@ export function QuestionCard({
             type="button"
             onClick={onSkip}
             disabled={isLoading}
-            className="text-gray-500 hover:text-gray-700 text-sm py-2 px-3 transition-colors disabled:opacity-50"
+            className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-sm py-2 px-3 transition-colors disabled:opacity-50"
           >
             Skip
           </button>
@@ -154,8 +154,8 @@ export function QuestionCard({
             className={cn(
               "py-3 px-6 rounded-lg font-medium transition-all",
               answer.trim() && !isLoading
-                ? "bg-blue-600 text-white hover:bg-blue-700"
-                : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                ? "bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)]"
+                : "bg-[var(--bg-elevated)] text-[var(--text-tertiary)] cursor-not-allowed"
             )}
           >
             {isLoading ? "..." : "Continue →"}

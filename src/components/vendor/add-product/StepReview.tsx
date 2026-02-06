@@ -49,8 +49,8 @@ export function StepReview({ productData, onPublish, onBack }: StepReviewProps) 
     <GlassPanel>
       <div className="p-8">
         <div className="flex items-center gap-3 mb-6">
-          <div className="p-3 rounded-xl bg-blue-100 dark:bg-blue-900">
-            <Eye className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+          <div className="p-3 rounded-xl bg-[var(--accent)]/10 dark:bg-blue-900">
+            <Eye className="w-6 h-6 text-[var(--accent)] dark:text-blue-400" />
           </div>
           <div>
             <h2 className="text-2xl font-medium text-stone-900 dark:text-stone-100">

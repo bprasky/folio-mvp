@@ -519,7 +519,7 @@ export default function OrganizationPage() {
                   <button
                     type="submit"
                     disabled={isSubmitting || !formData.name.trim() || !formData.workEmail.trim()}
-                    className="w-full py-4 px-6 rounded-full bg-folio-ink text-white font-sans font-medium flex items-center justify-center gap-2 hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full py-4 px-6 rounded-full bg-folio-ink text-white font-sans font-medium flex items-center justify-center gap-2 hover:opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isSubmitting ? (
                       <>
@@ -589,7 +589,7 @@ export default function OrganizationPage() {
                 {/* Action Buttons */}
                 <div className="flex flex-col sm:flex-row gap-3">
                   <Link href={`/org/${createdOrg.id}`} className="flex-1">
-                    <button className="w-full py-3.5 px-6 rounded-full bg-folio-ink text-white font-sans font-medium flex items-center justify-center gap-2 hover:bg-gray-800 transition-colors">
+                    <button className="w-full py-3.5 px-6 rounded-full bg-folio-ink text-white font-sans font-medium flex items-center justify-center gap-2 hover:opacity-90 transition-colors">
                       Go to Organization
                       <FaArrowRight className="w-4 h-4" />
                     </button>

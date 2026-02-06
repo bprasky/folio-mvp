@@ -38,7 +38,7 @@ export function RoomPhaseMatrix({ data, onHover }: RoomPhaseMatrixProps) {
     if (rate >= 60) return 'bg-green-500';
     if (rate >= 40) return 'bg-yellow-500';
     if (rate >= 20) return 'bg-orange-500';
-    return 'bg-gray-300';
+    return 'bg-[var(--text-tertiary)]/30';
   };
 
   return (
@@ -85,7 +85,7 @@ export function RoomPhaseMatrix({ data, onHover }: RoomPhaseMatrixProps) {
                         <TooltipTrigger asChild>
                           <div
                             className={`flex-1 p-3 border-r border-[#DAD2CA] cursor-pointer transition-colors ${
-                              isHovered ? 'bg-[#F7F4F1]' : 'hover:bg-gray-50'
+                              isHovered ? 'bg-[#F7F4F1]' : 'hover:bg-[var(--bg-elevated)]'
                             }`}
                             onMouseEnter={() => handleCellHover(cell)}
                             onMouseLeave={() => handleCellHover(null)}
@@ -96,7 +96,7 @@ export function RoomPhaseMatrix({ data, onHover }: RoomPhaseMatrixProps) {
                               </p>
                               
                               {/* Intensity bar */}
-                              <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                              <div className="w-full h-2 bg-[var(--bg-elevated)] rounded-full overflow-hidden">
                                 <div 
                                   className={`h-full ${getIntensityColor(cell.saveToTagRatePct)} transition-all duration-200`}
                                   style={{ width: `${Math.min(cell.saveToTagRatePct, 100)}%` }}

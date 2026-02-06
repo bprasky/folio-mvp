@@ -60,8 +60,8 @@ export default function GeneratedGrid({
 
   if (safeImages.length === 0) {
     return (
-      <div className="text-center py-8 text-gray-500">
-        <FaImage className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+      <div className="text-center py-8 text-[var(--text-secondary)]">
+        <FaImage className="w-12 h-12 mx-auto mb-4 text-[var(--text-tertiary)]" />
         <p className="text-lg font-medium mb-2">No generated images yet</p>
         <p className="text-sm">Generate images using the "Generate Images" button above</p>
       </div>
@@ -142,7 +142,7 @@ export default function GeneratedGrid({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-gray-900">
+        <h3 className="text-lg font-semibold text-[var(--text-primary)]">
           Generated Images ({safeImages.length})
         </h3>
       </div>
@@ -151,7 +151,7 @@ export default function GeneratedGrid({
         {safeImages.map((image) => (
           <div
             key={image.id}
-            className="group relative rounded-lg border border-gray-200 overflow-hidden bg-white hover:shadow-md transition-shadow"
+            className="group relative rounded-lg border border-[var(--ridge-outer)] overflow-hidden bg-white hover:shadow-md transition-shadow"
           >
             {/* Image */}
             <div className="aspect-square relative">
@@ -227,10 +227,10 @@ export default function GeneratedGrid({
             {/* Info */}
             <div className="p-3">
               <div className="flex items-center justify-between">
-                <div className="text-xs text-gray-500">
+                <div className="text-xs text-[var(--text-secondary)]">
                   {image.width} × {image.height}
                   {image.provider && (
-                    <span className="ml-2 text-gray-400">
+                    <span className="ml-2 text-[var(--text-tertiary)]">
                       • {image.provider === 'openai' ? 'OpenAI' : image.provider === 'stability' ? 'Stability' : image.provider}
                     </span>
                   )}
@@ -239,7 +239,7 @@ export default function GeneratedGrid({
                   size="sm"
                   variant="ghost"
                   onClick={() => handleSetAsCover(image)}
-                  className="h-6 w-6 p-0 text-gray-400 hover:text-yellow-500"
+                  className="h-6 w-6 p-0 text-[var(--text-tertiary)] hover:text-yellow-500"
                 >
                   <FaStar className="w-3 h-3" />
                 </Button>
@@ -275,15 +275,15 @@ export default function GeneratedGrid({
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   {/* Prompt */}
                   <div>
-                    <h4 className="font-medium text-gray-900 mb-2">Full Prompt</h4>
-                    <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
+                    <h4 className="font-medium text-[var(--text-primary)] mb-2">Full Prompt</h4>
+                    <p className="text-sm text-[var(--text-secondary)] bg-[var(--bg-elevated)] p-3 rounded-lg">
                       {selectedImage.metadata.promptFull}
                     </p>
                   </div>
 
                   {/* Context */}
                   <div>
-                    <h4 className="font-medium text-gray-900 mb-2">Generation Context</h4>
+                    <h4 className="font-medium text-[var(--text-primary)] mb-2">Generation Context</h4>
                     <div className="space-y-2 text-sm">
                       <div>
                         <span className="font-medium">Provider:</span> {selectedImage.metadata.provider}

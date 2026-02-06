@@ -379,7 +379,7 @@ export default function DesignerProfile() {
             {/* Visibility Badge */}
             <span className={`px-2 py-1 text-xs rounded-full ${
               project.visibility === 'public'
-                ? 'bg-blue-100 text-blue-800'
+                ? 'bg-[var(--accent)]/10 text-[var(--accent-hover)]'
                 : 'bg-[var(--bg-elevated)] text-[var(--text-secondary)]'
             }`}>
               {project.visibility === 'public' ? 'Public' : 'Private'}
@@ -409,7 +409,7 @@ export default function DesignerProfile() {
   );
 
   return (
-    <div className="min-h-screen bg-[var(--bg-base)] p-6">
+    <div className="min-h-screen bg-[var(--bg-elevated)] p-6">
       <div className="max-w-7xl mx-auto">
         {/* Profile Switcher for Designers */}
         {role === 'designer' && (

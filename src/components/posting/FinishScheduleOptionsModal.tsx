@@ -112,7 +112,7 @@ export function FinishScheduleOptionsModal({
         {/* Header */}
         <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-5 text-white">
           <h2 className="text-xl font-bold">Before Your Interview</h2>
-          <p className="text-blue-100 text-sm mt-1">
+          <p className="text-white/90 text-sm mt-1">
             Optionally upload your finish schedule to help generate richer editorial content
           </p>
         </div>
@@ -124,18 +124,18 @@ export function FinishScheduleOptionsModal({
               {/* Upload Option */}
               <button
                 onClick={handleUploadClick}
-                className="w-full p-4 border-2 border-dashed border-blue-300 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition-all group"
+                className="w-full p-4 border-2 border-dashed border-[var(--accent)]/30 rounded-xl hover:border-[var(--accent)] hover:bg-[var(--accent)]/5 transition-all group"
               >
                 <div className="flex items-start gap-4">
-                  <div className="p-3 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors">
-                    <FaFileAlt className="w-6 h-6 text-blue-600" />
+                  <div className="p-3 bg-[var(--accent)]/10 rounded-lg group-hover:bg-[var(--accent)]/20 transition-colors">
+                    <FaFileAlt className="w-6 h-6 text-[var(--accent)]" />
                   </div>
                   <div className="text-left flex-1">
-                    <h3 className="font-semibold text-gray-900">Upload Finish Schedule</h3>
-                    <p className="text-sm text-gray-600 mt-1">
+                    <h3 className="font-semibold text-[var(--text-primary)]">Upload Finish Schedule</h3>
+                    <p className="text-sm text-[var(--text-secondary)] mt-1">
                       PDF, PowerPoint, Excel, or CSV with your product specifications
                     </p>
-                    <p className="text-xs text-blue-600 mt-2">
+                    <p className="text-xs text-[var(--accent)] mt-2">
                       AI will match products to your uploaded images
                     </p>
                   </div>
@@ -145,15 +145,15 @@ export function FinishScheduleOptionsModal({
               {/* Upload Later Option */}
               <button
                 onClick={handleUploadLater}
-                className="w-full p-4 border border-gray-200 rounded-xl hover:border-gray-300 hover:bg-gray-50 transition-all group"
+                className="w-full p-4 border border-[var(--ridge-outer)] rounded-xl hover:border-[var(--ridge-outer)] hover:bg-[var(--bg-elevated)] transition-all group"
               >
                 <div className="flex items-start gap-4">
-                  <div className="p-3 bg-gray-100 rounded-lg group-hover:bg-gray-200 transition-colors">
-                    <FaClock className="w-6 h-6 text-gray-600" />
+                  <div className="p-3 bg-[var(--bg-elevated)] rounded-lg group-hover:bg-[var(--bg-elevated)] transition-colors">
+                    <FaClock className="w-6 h-6 text-[var(--text-secondary)]" />
                   </div>
                   <div className="text-left flex-1">
-                    <h3 className="font-semibold text-gray-900">Upload Later</h3>
-                    <p className="text-sm text-gray-600 mt-1">
+                    <h3 className="font-semibold text-[var(--text-primary)]">Upload Later</h3>
+                    <p className="text-sm text-[var(--text-secondary)] mt-1">
                       Continue with the interview now, add finish schedule anytime
                     </p>
                   </div>
@@ -163,15 +163,15 @@ export function FinishScheduleOptionsModal({
               {/* Skip Option */}
               <button
                 onClick={handleSkip}
-                className="w-full p-4 border border-gray-200 rounded-xl hover:border-gray-300 hover:bg-gray-50 transition-all group"
+                className="w-full p-4 border border-[var(--ridge-outer)] rounded-xl hover:border-[var(--ridge-outer)] hover:bg-[var(--bg-elevated)] transition-all group"
               >
                 <div className="flex items-start gap-4">
-                  <div className="p-3 bg-gray-100 rounded-lg group-hover:bg-gray-200 transition-colors">
-                    <FaForward className="w-6 h-6 text-gray-600" />
+                  <div className="p-3 bg-[var(--bg-elevated)] rounded-lg group-hover:bg-[var(--bg-elevated)] transition-colors">
+                    <FaForward className="w-6 h-6 text-[var(--text-secondary)]" />
                   </div>
                   <div className="text-left flex-1">
-                    <h3 className="font-semibold text-gray-900">Skip - Manual Tagging</h3>
-                    <p className="text-sm text-gray-600 mt-1">
+                    <h3 className="font-semibold text-[var(--text-primary)]">Skip - Manual Tagging</h3>
+                    <p className="text-sm text-[var(--text-secondary)] mt-1">
                       Tag products manually in each image
                     </p>
                   </div>
@@ -188,18 +188,18 @@ export function FinishScheduleOptionsModal({
 
           {(uploadStatus === 'uploading' || uploadStatus === 'processing') && (
             <div className="py-8 text-center">
-              <FaSpinner className="w-12 h-12 text-blue-600 animate-spin mx-auto mb-4" />
-              <h3 className="font-semibold text-gray-900 mb-2">
+              <FaSpinner className="w-12 h-12 text-[var(--accent)] animate-spin mx-auto mb-4" />
+              <h3 className="font-semibold text-[var(--text-primary)] mb-2">
                 {uploadStatus === 'uploading' ? 'Uploading...' : 'Processing finish schedule...'}
               </h3>
-              <p className="text-sm text-gray-600 mb-4">
+              <p className="text-sm text-[var(--text-secondary)] mb-4">
                 {uploadStatus === 'processing'
                   ? 'AI is matching products to your images'
                   : 'Please wait while we upload your file'}
               </p>
-              <div className="w-full bg-gray-200 rounded-full h-2">
+              <div className="w-full bg-[var(--bg-elevated)] rounded-full h-2">
                 <div
-                  className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                  className="bg-[var(--accent)] h-2 rounded-full transition-all duration-300"
                   style={{ width: `${uploadProgress}%` }}
                 />
               </div>
@@ -209,8 +209,8 @@ export function FinishScheduleOptionsModal({
           {uploadStatus === 'complete' && (
             <div className="py-8 text-center">
               <FaCheckCircle className="w-12 h-12 text-green-600 mx-auto mb-4" />
-              <h3 className="font-semibold text-gray-900 mb-2">Processing Complete!</h3>
-              <p className="text-sm text-gray-600">
+              <h3 className="font-semibold text-[var(--text-primary)] mb-2">Processing Complete!</h3>
+              <p className="text-sm text-[var(--text-secondary)]">
                 Products have been matched and tagged. Proceeding to interview...
               </p>
             </div>
@@ -226,7 +226,7 @@ export function FinishScheduleOptionsModal({
                   setUploadStatus('idle');
                   setError(null);
                 }}
-                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                className="px-4 py-2 bg-[var(--bg-elevated)] text-[var(--text-primary)] rounded-lg hover:bg-[var(--bg-elevated)] transition-colors"
               >
                 Try Again
               </button>
@@ -248,7 +248,7 @@ export function FinishScheduleOptionsModal({
           <div className="px-6 pb-6">
             <button
               onClick={() => onOpenChange(false)}
-              className="w-full py-2 text-gray-600 hover:text-gray-900 text-sm transition-colors"
+              className="w-full py-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-sm transition-colors"
             >
               Cancel
             </button>

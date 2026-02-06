@@ -156,7 +156,7 @@ export function PullQuoteBlock({ projectId, index = 0 }: PullQuoteBlockProps) {
               >
                 <Play
                   className={`h-4 w-4 ${
-                    playingId === quote.id ? "text-blue-600" : "text-[var(--text-secondary)]"
+                    playingId === quote.id ? "text-[var(--accent)]" : "text-[var(--text-secondary)]"
                   }`}
                 />
                 <span className="folio-ui text-[var(--text-secondary)]">Listen</span>

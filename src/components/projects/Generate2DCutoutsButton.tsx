@@ -123,7 +123,7 @@ export default function Generate2DCutoutsButton({
         )}
       </button>
       {status && (
-        <div className="absolute top-full right-0 mt-2 p-2 bg-white rounded shadow-lg text-xs text-gray-700 max-w-xs z-50">
+        <div className="absolute top-full right-0 mt-2 p-2 bg-white rounded shadow-lg text-xs text-[var(--text-primary)] max-w-xs z-50">
           {status}
         </div>
       )}

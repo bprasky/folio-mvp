@@ -53,7 +53,7 @@ export default function NewProductPage() {
         <h1 className="text-2xl font-semibold">Add Outside Product</h1>
         <button
           onClick={() => router.back()}
-          className="text-gray-500 hover:text-gray-700"
+          className="text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
         >
           ← Back
         </button>
@@ -66,7 +66,7 @@ export default function NewProductPage() {
               {key === 'priceCents' ? 'Price (cents)' : key.replace(/([A-Z])/g, ' $1').trim()}
             </label>
             <input
-              className="border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
               value={(form as any)[key] || ''}
               onChange={(e) => setForm({ ...form, [key]: e.target.value })}
               placeholder={
@@ -84,7 +84,7 @@ export default function NewProductPage() {
         <button 
           onClick={submit} 
           disabled={saving || !form.name.trim()} 
-          className="w-full rounded bg-blue-600 text-white px-4 py-2 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full rounded bg-[var(--accent)] text-white px-4 py-2 hover:bg-[var(--accent-hover)] disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {saving ? 'Creating Product...' : 'Create Product'}
         </button>
@@ -95,7 +95,7 @@ export default function NewProductPage() {
             <p className="text-green-600 text-sm">Product ID: {createdId}</p>
             <button
               onClick={() => router.push('/designer')}
-              className="mt-2 text-blue-600 hover:text-blue-800 text-sm"
+              className="mt-2 text-[var(--accent)] hover:text-[var(--accent-hover)] text-sm"
             >
               Go to Designer Dashboard →
             </button>

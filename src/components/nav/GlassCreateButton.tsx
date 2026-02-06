@@ -57,7 +57,7 @@ export default function GlassCreateButton() {
         className={clsx(
           'rounded-xl px-3 py-1.5 text-sm font-medium',
           'bg-neutral-900 text-white hover:bg-neutral-800',
-          'focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500'
+          'focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]'
         )}
         aria-haspopup="menu"
         aria-expanded={open}

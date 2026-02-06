@@ -38,8 +38,8 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
         </div>
 
         <div className="flex-1 text-center md:text-left">
-          <h1 className="text-2xl font-bold text-gray-900">{name}</h1>
-          <p className="mt-2 text-gray-600">{bio}</p>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)]">{name}</h1>
+          <p className="mt-2 text-[var(--text-secondary)]">{bio}</p>
 
           {Object.keys(socialLinks).length > 0 && (
             <div className="mt-4 flex justify-center md:justify-start gap-4">
@@ -48,7 +48,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                   href={socialLinks.instagram}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-gray-600 hover:text-gray-900"
+                  className="text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                 >
                   Instagram
                 </a>
@@ -58,7 +58,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                   href={socialLinks.linkedin}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-gray-600 hover:text-gray-900"
+                  className="text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                 >
                   LinkedIn
                 </a>
@@ -68,7 +68,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                   href={socialLinks.website}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-gray-600 hover:text-gray-900"
+                  className="text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                 >
                   Website
                 </a>
@@ -80,26 +80,26 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
             <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
               {metrics.followers !== undefined && (
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-gray-900">{metrics.followers}</p>
-                  <p className="text-sm text-gray-600">Followers</p>
+                  <p className="text-2xl font-bold text-[var(--text-primary)]">{metrics.followers}</p>
+                  <p className="text-sm text-[var(--text-secondary)]">Followers</p>
                 </div>
               )}
               {metrics.following !== undefined && (
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-gray-900">{metrics.following}</p>
-                  <p className="text-sm text-gray-600">Following</p>
+                  <p className="text-2xl font-bold text-[var(--text-primary)]">{metrics.following}</p>
+                  <p className="text-sm text-[var(--text-secondary)]">Following</p>
                 </div>
               )}
               {metrics.products !== undefined && (
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-gray-900">{metrics.products}</p>
-                  <p className="text-sm text-gray-600">Products</p>
+                  <p className="text-2xl font-bold text-[var(--text-primary)]">{metrics.products}</p>
+                  <p className="text-sm text-[var(--text-secondary)]">Products</p>
                 </div>
               )}
               {metrics.events !== undefined && (
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-gray-900">{metrics.events}</p>
-                  <p className="text-sm text-gray-600">Events</p>
+                  <p className="text-2xl font-bold text-[var(--text-primary)]">{metrics.events}</p>
+                  <p className="text-sm text-[var(--text-secondary)]">Events</p>
                 </div>
               )}
             </div>

@@ -31,22 +31,22 @@ export function VoiceInterview({
 }: VoiceInterviewProps) {
   return (
     <div className="flex flex-col items-center justify-center min-h-[400px] px-6 py-8">
-      <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-6">
-        <Mic className="w-8 h-8 text-gray-400" />
+      <div className="w-16 h-16 rounded-full bg-[var(--bg-elevated)] flex items-center justify-center mb-6">
+        <Mic className="w-8 h-8 text-[var(--text-tertiary)]" />
       </div>
 
-      <h2 className="text-xl font-medium text-gray-900 mb-2">
+      <h2 className="text-xl font-medium text-[var(--text-primary)] mb-2">
         Voice Interview
       </h2>
 
-      <p className="text-gray-500 text-center max-w-md mb-8">
+      <p className="text-[var(--text-secondary)] text-center max-w-md mb-8">
         Voice interviews are coming soon. For now, you can use the text
         interview to share your project story.
       </p>
 
       <button
         onClick={onSwitchToText}
-        className="flex items-center gap-2 px-6 py-3 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800 transition-colors"
+        className="flex items-center gap-2 px-6 py-3 bg-[var(--text-primary)] text-white rounded-lg font-medium hover:opacity-90 transition-colors"
       >
         <PenLine className="w-4 h-4" />
         Switch to text interview
