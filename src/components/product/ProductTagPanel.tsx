@@ -27,11 +27,11 @@ export default function ProductTagPanel({
         <div className="flex items-center justify-between p-4 border-b">
           <div className="flex items-center gap-2">
             <FaTag className="text-[var(--accent)]" />
-            <h2 className="text-xl font-semibold text-gray-900">{productName}</h2>
+            <h2 className="text-xl font-semibold text-[var(--text-primary)]">{productName}</h2>
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
+            className="text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
           >
             <FaTimes />
           </button>

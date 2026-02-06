@@ -145,7 +145,7 @@ export default function GlobalHeader() {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -10, scale: 0.95 }}
                 transition={{ duration: 0.2 }}
-                className="absolute right-0 mt-2 w-64 bg-white border border-gray-200 rounded-xl shadow-lg z-50 overflow-hidden"
+                className="absolute right-0 mt-2 w-64 bg-white border border-[var(--ridge-outer)] rounded-xl shadow-lg z-50 overflow-hidden"
               >
                 {/* User Info */}
                 <div className="p-4 border-b border-folio-muted">

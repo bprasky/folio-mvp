@@ -13,7 +13,7 @@ export function CohortBenchmarksMini({ benchmarks }: CohortBenchmarksMiniProps) 
   const getComparisonColor = (you: number, baseline: number) => {
     if (you > baseline) return 'text-green-600';
     if (you < baseline) return 'text-red-600';
-    return 'text-gray-600';
+    return 'text-[var(--text-secondary)]';
   };
 
   const getComparisonIcon = (you: number, baseline: number) => {

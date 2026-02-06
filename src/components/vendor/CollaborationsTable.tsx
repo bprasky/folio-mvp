@@ -112,7 +112,7 @@ export default function CollaborationsTable({ vendorOrgId }: CollaborationsTable
     const colors = {
       PENDING: 'bg-yellow-100 text-yellow-800',
       ACTIVE: 'bg-green-100 text-green-800',
-      PAUSED: 'bg-gray-100 text-gray-800',
+      PAUSED: 'bg-[var(--bg-elevated)] text-[var(--text-primary)]',
       ENDED: 'bg-red-100 text-red-800',
     };
     return (
@@ -128,84 +128,84 @@ export default function CollaborationsTable({ vendorOrgId }: CollaborationsTable
 
   if (collaborations.length === 0) {
     return (
-      <div className="p-8 text-center text-gray-500">
+      <div className="p-8 text-center text-[var(--text-secondary)]">
         <p>No collaborations found. Collaborations are created when vendors participate in designer projects.</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-      <div className="px-6 py-4 border-b border-gray-200">
-        <h2 className="text-lg font-semibold text-gray-900">Discovery Budget Collaborations</h2>
-        <p className="text-sm text-gray-500 mt-1">Manage spend settings for designer collaborations</p>
+    <div className="bg-white rounded-lg shadow-sm border border-[var(--ridge-outer)] overflow-hidden">
+      <div className="px-6 py-4 border-b border-[var(--ridge-outer)]">
+        <h2 className="text-lg font-semibold text-[var(--text-primary)]">Discovery Budget Collaborations</h2>
+        <p className="text-sm text-[var(--text-secondary)] mt-1">Manage spend settings for designer collaborations</p>
       </div>
 
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
+        <table className="min-w-full divide-y divide-[var(--ridge-outer)]">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
                 Project
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
                 Designer
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
                 Status
               </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-right text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
                 Saves
               </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-right text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
                 Clicks
               </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-right text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
                 Spend (month)
               </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-right text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
                 Budget Cap
               </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-right text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
                 % Used
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
                 Last Signal
               </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-right text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
                 Actions
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="bg-white divide-y divide-[var(--ridge-outer)]">
             {collaborations.map((collab) => (
-              <tr key={collab.id} className="hover:bg-gray-50">
+              <tr key={collab.id} className="hover:bg-[var(--bg-elevated)]">
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-gray-900">{collab.project.name}</div>
+                  <div className="text-sm font-medium text-[var(--text-primary)]">{collab.project.name}</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   {collab.designer ? (
-                    <div className="text-sm text-gray-900">{collab.designer.name}</div>
+                    <div className="text-sm text-[var(--text-primary)]">{collab.designer.name}</div>
                   ) : (
-                    <div className="text-sm text-gray-400">—</div>
+                    <div className="text-sm text-[var(--text-tertiary)]">—</div>
                   )}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">{getStatusBadge(collab.status)}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900">
+                <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-[var(--text-primary)]">
                   {collab.signals.savesCount}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900">
+                <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-[var(--text-primary)]">
                   {collab.signals.clicksCount}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-gray-900">
+                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-[var(--text-primary)]">
                   ${collab.signals.spendUsd.toFixed(2)}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-500">
+                <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-[var(--text-secondary)]">
                   {collab.budgetCapUsd ? `$${collab.budgetCapUsd.toFixed(2)}` : '—'}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right">
                   <div className="flex items-center justify-end">
-                    <div className="w-16 bg-gray-200 rounded-full h-2 mr-2">
+                    <div className="w-16 bg-[var(--bg-elevated)] rounded-full h-2 mr-2">
                       <div
                         className={`h-2 rounded-full ${
                           collab.signals.budgetUsedPct > 90
@@ -217,10 +217,10 @@ export default function CollaborationsTable({ vendorOrgId }: CollaborationsTable
                         style={{ width: `${Math.min(100, collab.signals.budgetUsedPct)}%` }}
                       />
                     </div>
-                    <span className="text-sm text-gray-600">{collab.signals.budgetUsedPct.toFixed(1)}%</span>
+                    <span className="text-sm text-[var(--text-secondary)]">{collab.signals.budgetUsedPct.toFixed(1)}%</span>
                   </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--text-secondary)]">
                   {collab.signals.lastSignalAt
                     ? new Date(collab.signals.lastSignalAt).toLocaleDateString()
                     : '—'}
@@ -237,7 +237,7 @@ export default function CollaborationsTable({ vendorOrgId }: CollaborationsTable
                     {(collab.status === 'ACTIVE' || collab.status === 'PAUSED') && (
                       <button
                         onClick={() => handleToggleStatus(collab.id, collab.status)}
-                        className="text-gray-600 hover:text-gray-800"
+                        className="text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                         title={collab.status === 'ACTIVE' ? 'Pause' : 'Resume'}
                       >
                         {collab.status === 'ACTIVE' ? <FaPause /> : <FaPlay />}
@@ -258,7 +258,7 @@ export default function CollaborationsTable({ vendorOrgId }: CollaborationsTable
             <h3 className="text-lg font-semibold mb-4">Edit Discovery Budget Settings</h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">
                   <input
                     type="checkbox"
                     checked={editForm.spendEnabled ?? false}
@@ -269,7 +269,7 @@ export default function CollaborationsTable({ vendorOrgId }: CollaborationsTable
                 </label>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">
                   Spend per Save ($)
                 </label>
                 <input
@@ -280,11 +280,11 @@ export default function CollaborationsTable({ vendorOrgId }: CollaborationsTable
                   onChange={(e) =>
                     setEditForm({ ...editForm, spendPerSaveUsd: e.target.value ? parseFloat(e.target.value) : null })
                   }
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                  className="w-full border border-[var(--ridge-outer)] rounded-lg px-3 py-2"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">
                   Spend per Click ($)
                 </label>
                 <input
@@ -295,11 +295,11 @@ export default function CollaborationsTable({ vendorOrgId }: CollaborationsTable
                   onChange={(e) =>
                     setEditForm({ ...editForm, spendPerClickUsd: e.target.value ? parseFloat(e.target.value) : null })
                   }
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                  className="w-full border border-[var(--ridge-outer)] rounded-lg px-3 py-2"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">
                   Budget Cap ($)
                 </label>
                 <input
@@ -310,15 +310,15 @@ export default function CollaborationsTable({ vendorOrgId }: CollaborationsTable
                   onChange={(e) =>
                     setEditForm({ ...editForm, budgetCapUsd: e.target.value ? parseFloat(e.target.value) : null })
                   }
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                  className="w-full border border-[var(--ridge-outer)] rounded-lg px-3 py-2"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">Status</label>
                 <select
                   value={editForm.collaborationStatus ?? 'PENDING'}
                   onChange={(e) => setEditForm({ ...editForm, collaborationStatus: e.target.value as any })}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                  className="w-full border border-[var(--ridge-outer)] rounded-lg px-3 py-2"
                 >
                   <option value="PENDING">Pending</option>
                   <option value="ACTIVE">Active</option>
@@ -330,7 +330,7 @@ export default function CollaborationsTable({ vendorOrgId }: CollaborationsTable
             <div className="mt-6 flex justify-end gap-2">
               <button
                 onClick={() => setEditingId(null)}
-                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                className="px-4 py-2 border border-[var(--ridge-outer)] rounded-lg text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]"
               >
                 Cancel
               </button>

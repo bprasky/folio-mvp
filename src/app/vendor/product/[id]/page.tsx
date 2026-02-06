@@ -66,7 +66,7 @@ export default function ProductInsightsPage() {
   if (!productData) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[var(--bg-elevated)]">
-        <p className="text-lg text-gray-700">Loading product insights or product not found...</p>
+        <p className="text-lg text-[var(--text-primary)]">Loading product insights or product not found...</p>
       </div>
     );
   }

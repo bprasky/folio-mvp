@@ -33,8 +33,8 @@ export default function TagTrail({
   if (!activeProductIds.length) return null;
 
   return (
-    <div className="sticky top-16 z-30 mx-auto mb-3 w-full max-w-5xl rounded-full border border-gray-200 bg-white/90 px-4 py-2 backdrop-blur shadow-sm">
-      <div className="text-xs text-gray-500 mb-1">Now featuring:</div>
+    <div className="sticky top-16 z-30 mx-auto mb-3 w-full max-w-5xl rounded-full border border-[var(--ridge-outer)] bg-white/90 px-4 py-2 backdrop-blur shadow-sm">
+      <div className="text-xs text-[var(--text-secondary)] mb-1">Now featuring:</div>
       <div className="flex flex-wrap gap-2">
         {activeProductIds.map((id) => {
           const meta = resolveTag(id);

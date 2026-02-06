@@ -82,7 +82,7 @@ export default function ActionItemsList({
 
   if (loading) {
     return (
-      <div className="text-center py-8 text-gray-500">
+      <div className="text-center py-8 text-[var(--text-secondary)]">
         Loading action items...
       </div>
     );
@@ -98,7 +98,7 @@ export default function ActionItemsList({
 
   if (actionItems.length === 0) {
     return (
-      <div className="text-center py-8 text-gray-500">
+      <div className="text-center py-8 text-[var(--text-secondary)]">
         No action items found.
       </div>
     );

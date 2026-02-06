@@ -27,28 +27,28 @@ export default function QuickAddJSON({ projectId }: { projectId: string }) {
 
   return (
     <div className="inline-block">
-      <button className="border border-gray-300 rounded px-3 py-2 text-sm hover:bg-gray-50 transition-colors" onClick={()=>setOpen(true)}>
+      <button className="border border-[var(--ridge-outer)] rounded px-3 py-2 text-sm hover:bg-[var(--bg-elevated)] transition-colors" onClick={()=>setOpen(true)}>
         Quick Add (JSON)
       </button>
       {open && (
         <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl p-4 w-[520px] space-y-3">
-            <h3 className="font-medium text-gray-900">Paste items (JSON array)</h3>
+            <h3 className="font-medium text-[var(--text-primary)]">Paste items (JSON array)</h3>
             <textarea 
-              className="w-full h-48 border border-gray-300 rounded p-2 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+              className="w-full h-48 border border-[var(--ridge-outer)] rounded p-2 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
               value={payload} 
               onChange={e=>setPayload(e.target.value)} 
             />
             {err && <p className="text-sm text-red-600">{err}</p>}
             <div className="flex gap-2 justify-end">
               <button 
-                className="px-3 py-2 text-gray-600 hover:text-gray-800 transition-colors" 
+                className="px-3 py-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors" 
                 onClick={()=>setOpen(false)}
               >
                 Cancel
               </button>
               <button 
-                className="border border-gray-300 rounded px-3 py-2 hover:bg-gray-50 transition-colors" 
+                className="border border-[var(--ridge-outer)] rounded px-3 py-2 hover:bg-[var(--bg-elevated)] transition-colors" 
                 disabled={busy} 
                 onClick={submit}
               >

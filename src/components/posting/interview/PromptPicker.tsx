@@ -71,7 +71,7 @@ export function PromptPicker({
   
   return (
     <div className="space-y-3">
-      <div className="text-sm text-gray-600 mb-4">
+      <div className="text-sm text-[var(--text-secondary)] mb-4">
         Select 3–12 questions to answer. Choose questions that best capture your project's story.
       </div>
 
@@ -98,9 +98,9 @@ export function PromptPicker({
                   className="flex items-start justify-between rounded-lg border border-[var(--accent)]/20 bg-white px-3 py-2 hover:bg-[var(--accent)]/5 transition-colors"
                 >
                   <div className="flex-1">
-                    <div className="font-medium text-sm text-gray-900">{q.prompt}</div>
+                    <div className="font-medium text-sm text-[var(--text-primary)]">{q.prompt}</div>
                     {q.helper && (
-                      <div className="text-xs text-gray-500 mt-1">{q.helper}</div>
+                      <div className="text-xs text-[var(--text-secondary)] mt-1">{q.helper}</div>
                     )}
                   </div>
                   <button
@@ -134,8 +134,8 @@ export function PromptPicker({
             className={`rounded-xl border p-3 ${muted ? "opacity-80" : ""}`}
           >
             <summary className="flex items-center justify-between cursor-pointer list-none">
-              <span className="font-semibold text-gray-900">{SECTION_LABELS[sec]}</span>
-              <span className="text-sm text-gray-500">{selected}/{all.length}</span>
+              <span className="font-semibold text-[var(--text-primary)]">{SECTION_LABELS[sec]}</span>
+              <span className="text-sm text-[var(--text-secondary)]">{selected}/{all.length}</span>
             </summary>
             <ul className="mt-3 grid gap-2">
               {all.map((q) => {
@@ -143,12 +143,12 @@ export function PromptPicker({
                 return (
                   <li
                     key={q.id}
-                    className="flex items-start justify-between rounded-lg border px-3 py-2 hover:bg-gray-50 transition-colors"
+                    className="flex items-start justify-between rounded-lg border px-3 py-2 hover:bg-[var(--bg-elevated)] transition-colors"
                   >
                     <div className="flex-1">
-                      <div className="font-medium text-sm text-gray-900">{q.prompt}</div>
+                      <div className="font-medium text-sm text-[var(--text-primary)]">{q.prompt}</div>
                       {q.helper && (
-                        <div className="text-xs text-gray-500 mt-1">{q.helper}</div>
+                        <div className="text-xs text-[var(--text-secondary)] mt-1">{q.helper}</div>
                       )}
                     </div>
                     <button
@@ -157,7 +157,7 @@ export function PromptPicker({
                       className={`ml-3 px-3 py-1 rounded text-sm font-medium transition-colors ${
                         on
                           ? "bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)]"
-                          : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                          : "bg-[var(--bg-elevated)] text-[var(--text-primary)] hover:bg-[var(--text-tertiary)]/20"
                       }`}
                       disabled={!on && selectedQuestionIds.length >= 12}
                     >
@@ -171,7 +171,7 @@ export function PromptPicker({
         );
       })}
 
-      <div className="text-sm text-gray-500 pt-4 border-t">
+      <div className="text-sm text-[var(--text-secondary)] pt-4 border-t">
         Selected: {selectedQuestionIds.length} / 12
       </div>
     </div>

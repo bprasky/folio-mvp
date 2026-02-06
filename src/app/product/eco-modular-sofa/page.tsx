@@ -58,7 +58,7 @@ export default function EcoModularSofaPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--bg-elevated)] text-gray-800">
+    <div className="min-h-screen bg-[var(--bg-elevated)] text-[var(--text-primary)]">
       {/* Back Button */}
       <div className="p-4 bg-white shadow-sm">
         <Link href="/inspire" className="flex items-center text-[var(--accent)] hover:underline">
@@ -107,27 +107,27 @@ export default function EcoModularSofaPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Swatches */}
               <div>
-                <label htmlFor="swatch" className="block text-lg font-medium text-gray-700 mb-2">Swatches</label>
+                <label htmlFor="swatch" className="block text-lg font-medium text-[var(--text-primary)] mb-2">Swatches</label>
                 <div className="flex flex-wrap gap-3">
                   {product.swatches.map((swatch) => (
                     <button
                       key={swatch.name}
-                      className={`w-12 h-12 rounded-full border-2 ${selectedSwatch === swatch.name ? 'border-[var(--accent)] ring-2 ring-blue-200' : 'border-gray-300'} focus:outline-none focus:ring-2 focus:ring-[var(--accent)]`}
+                      className={`w-12 h-12 rounded-full border-2 ${selectedSwatch === swatch.name ? 'border-[var(--accent)] ring-2 ring-blue-200' : 'border-[var(--ridge-outer)]'} focus:outline-none focus:ring-2 focus:ring-[var(--accent)]`}
                       style={{ backgroundColor: swatch.color }}
                       onClick={() => setSelectedSwatch(swatch.name)}
                       title={swatch.name}
                     ></button>
                   ))}
                 </div>
-                <p className="mt-2 text-sm text-gray-500">Selected: {selectedSwatch}</p>
+                <p className="mt-2 text-sm text-[var(--text-secondary)]">Selected: {selectedSwatch}</p>
               </div>
 
               {/* Dimensions */}
               <div>
-                <label htmlFor="dimensions" className="block text-lg font-medium text-gray-700 mb-2">Dimensions</label>
+                <label htmlFor="dimensions" className="block text-lg font-medium text-[var(--text-primary)] mb-2">Dimensions</label>
                 <select
                   id="dimensions"
-                  className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-[var(--accent)] focus:border-[var(--accent)] sm:text-sm rounded-md"
+                  className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-[var(--ridge-outer)] focus:outline-none focus:ring-[var(--accent)] focus:border-[var(--accent)] sm:text-sm rounded-md"
                   value={selectedDimension}
                   onChange={(e) => setSelectedDimension(e.target.value)}
                 >
@@ -142,13 +142,13 @@ export default function EcoModularSofaPage() {
             <div className="mt-8 border-t pt-6">
               <h3 className="text-xl font-semibold mb-3">Downloads</h3>
               <div className="flex flex-wrap gap-4">
-                <button className="flex items-center bg-gray-200 text-gray-700 px-5 py-2 rounded-full font-medium hover:bg-gray-300 transition">
+                <button className="flex items-center bg-[var(--bg-elevated)] text-[var(--text-primary)] px-5 py-2 rounded-full font-medium hover:bg-[var(--text-tertiary)]/20 transition">
                   <FaDownload className="mr-2" /> 3D Files (.GLB)
                 </button>
-                <button className="flex items-center bg-gray-200 text-gray-700 px-5 py-2 rounded-full font-medium hover:bg-gray-300 transition">
+                <button className="flex items-center bg-[var(--bg-elevated)] text-[var(--text-primary)] px-5 py-2 rounded-full font-medium hover:bg-[var(--text-tertiary)]/20 transition">
                   <FaDownload className="mr-2" /> DWG
                 </button>
-                <button className="flex items-center bg-gray-200 text-gray-700 px-5 py-2 rounded-full font-medium hover:bg-gray-300 transition">
+                <button className="flex items-center bg-[var(--bg-elevated)] text-[var(--text-primary)] px-5 py-2 rounded-full font-medium hover:bg-[var(--text-tertiary)]/20 transition">
                   <FaFilePdf className="mr-2" /> PDF Specs
                 </button>
               </div>
@@ -170,8 +170,8 @@ export default function EcoModularSofaPage() {
           {/* Product Info */}
           <section className="bg-white p-6 rounded-lg shadow-md">
             <h2 className="text-2xl font-semibold mb-4">Product Information</h2>
-            <p className="text-gray-700 leading-relaxed mb-6">{product.marketingCopy}</p>
-            <ul className="list-disc list-inside space-y-2 text-gray-700">
+            <p className="text-[var(--text-primary)] leading-relaxed mb-6">{product.marketingCopy}</p>
+            <ul className="list-disc list-inside space-y-2 text-[var(--text-primary)]">
               {product.specs.map((spec, index) => (
                 <li key={index}>{spec}</li>
               ))}
@@ -231,12 +231,12 @@ export default function EcoModularSofaPage() {
           {/* "Saved to Mood Boards" Badge */}
           <div className="bg-white p-6 rounded-lg shadow-md text-center">
             <p className="text-4xl font-bold text-green-600">{product.savedToMoodBoards}</p>
-            <p className="text-lg text-gray-600 mt-2">Saved to Mood Boards</p>
+            <p className="text-lg text-[var(--text-secondary)] mt-2">Saved to Mood Boards</p>
           </div>
 
           {/* Featured Designer Quote */}
           <div className="bg-[var(--accent)]/5 p-6 rounded-lg shadow-md border-l-4 border-[var(--accent)]">
-            <p className="italic text-lg text-gray-700 mb-4">"{product.featuredDesignerQuote.quote}"</p>
+            <p className="italic text-lg text-[var(--text-primary)] mb-4">"{product.featuredDesignerQuote.quote}"</p>
             <div className="flex items-center">
               <Image
                 src={product.featuredDesignerQuote.designerProfileImage}

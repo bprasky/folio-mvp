@@ -111,10 +111,10 @@ export default async function ProductPage({ params }: ProductPageProps) {
         <div className="mb-8">
           <div className="flex items-start justify-between mb-4">
             <div>
-              <h1 className="text-4xl font-bold text-gray-900 mb-2">
+              <h1 className="text-4xl font-bold text-[var(--text-primary)] mb-2">
                 {product.name}
               </h1>
-              <div className="flex items-center gap-4 text-gray-600">
+              <div className="flex items-center gap-4 text-[var(--text-secondary)]">
                 {product.brand && (
                   <span className="font-medium">{product.brand}</span>
                 )}
@@ -130,7 +130,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
             </div>
             {product.vendorRecord && (
               <div className="text-right">
-                <p className="text-sm text-gray-500">Vendor</p>
+                <p className="text-sm text-[var(--text-secondary)]">Vendor</p>
                 <p className="font-medium">{product.vendorRecord.name}</p>
               </div>
             )}
@@ -173,7 +173,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
             {product.description && (
               <div className="bg-white rounded-lg shadow-sm p-6">
                 <h2 className="text-2xl font-semibold mb-4">Description</h2>
-                <p className="text-gray-700 leading-relaxed">{product.description}</p>
+                <p className="text-[var(--text-primary)] leading-relaxed">{product.description}</p>
               </div>
             )}
 
@@ -184,7 +184,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
                 <dl className="space-y-3">
                   {product.price && (
                     <div>
-                      <dt className="text-sm font-medium text-gray-500">Price</dt>
+                      <dt className="text-sm font-medium text-[var(--text-secondary)]">Price</dt>
                       <dd className="text-lg font-semibold">
                         {product.priceCurrency || "$"}
                         {product.price.toLocaleString()}
@@ -194,20 +194,20 @@ export default async function ProductPage({ params }: ProductPageProps) {
                   )}
                   {specs.dimensions && (
                     <div>
-                      <dt className="text-sm font-medium text-gray-500">Dimensions</dt>
-                      <dd className="text-gray-900">{specs.dimensions}</dd>
+                      <dt className="text-sm font-medium text-[var(--text-secondary)]">Dimensions</dt>
+                      <dd className="text-[var(--text-primary)]">{specs.dimensions}</dd>
                     </div>
                   )}
                   {specs.materials && Array.isArray(specs.materials) && (
                     <div>
-                      <dt className="text-sm font-medium text-gray-500">Materials</dt>
-                      <dd className="text-gray-900">{specs.materials.join(", ")}</dd>
+                      <dt className="text-sm font-medium text-[var(--text-secondary)]">Materials</dt>
+                      <dd className="text-[var(--text-primary)]">{specs.materials.join(", ")}</dd>
                     </div>
                   )}
                   {specs.colors && Array.isArray(specs.colors) && (
                     <div>
-                      <dt className="text-sm font-medium text-gray-500">Colors</dt>
-                      <dd className="text-gray-900">{specs.colors.join(", ")}</dd>
+                      <dt className="text-sm font-medium text-[var(--text-secondary)]">Colors</dt>
+                      <dd className="text-[var(--text-primary)]">{specs.colors.join(", ")}</dd>
                     </div>
                   )}
                 </dl>
@@ -242,7 +242,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
                           {project.title || "Untitled Project"}
                         </h3>
                         {project.designer && (
-                          <p className="text-sm text-gray-600">
+                          <p className="text-sm text-[var(--text-secondary)]">
                             by {project.designer.name}
                           </p>
                         )}
@@ -289,7 +289,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
             {product.sourceUrl && (
               <div className="bg-white rounded-lg shadow-sm p-6">
                 <h3 className="font-semibold mb-4">Source</h3>
-                <p className="text-sm text-gray-600 mb-2">
+                <p className="text-sm text-[var(--text-secondary)] mb-2">
                   {product.sourceType || "Unknown source"}
                 </p>
                 <a
@@ -308,11 +308,11 @@ export default async function ProductPage({ params }: ProductPageProps) {
               <h3 className="font-semibold mb-4">Statistics</h3>
               <div className="space-y-2">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Projects</span>
+                  <span className="text-[var(--text-secondary)]">Projects</span>
                   <span className="font-medium">{uniqueProjects.length}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Tags</span>
+                  <span className="text-[var(--text-secondary)]">Tags</span>
                   <span className="font-medium">{product.projectTags.length}</span>
                 </div>
               </div>

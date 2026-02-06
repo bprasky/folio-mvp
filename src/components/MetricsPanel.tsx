@@ -15,19 +15,19 @@ export const MetricsPanel: React.FC<MetricsPanelProps> = ({
 }) => {
   return (
     <div className={`bg-white rounded-lg shadow-md p-6 ${className}`}>
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">Metrics</h3>
+      <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4">Metrics</h3>
       <div className="grid grid-cols-3 gap-4">
         <div className="text-center">
-          <p className="text-3xl font-bold text-gray-900">{views}</p>
-          <p className="text-sm text-gray-600">Views</p>
+          <p className="text-3xl font-bold text-[var(--text-primary)]">{views}</p>
+          <p className="text-sm text-[var(--text-secondary)]">Views</p>
         </div>
         <div className="text-center">
-          <p className="text-3xl font-bold text-gray-900">{saves}</p>
-          <p className="text-sm text-gray-600">Saves</p>
+          <p className="text-3xl font-bold text-[var(--text-primary)]">{saves}</p>
+          <p className="text-sm text-[var(--text-secondary)]">Saves</p>
         </div>
         <div className="text-center">
-          <p className="text-3xl font-bold text-gray-900">{eventsFeatured}</p>
-          <p className="text-sm text-gray-600">Events Featured</p>
+          <p className="text-3xl font-bold text-[var(--text-primary)]">{eventsFeatured}</p>
+          <p className="text-sm text-[var(--text-secondary)]">Events Featured</p>
         </div>
       </div>
 
@@ -35,12 +35,12 @@ export const MetricsPanel: React.FC<MetricsPanelProps> = ({
         <div className="space-y-4">
           <div>
             <div className="flex justify-between text-sm mb-1">
-              <span className="text-gray-600">Engagement Rate</span>
-              <span className="text-gray-900 font-medium">
+              <span className="text-[var(--text-secondary)]">Engagement Rate</span>
+              <span className="text-[var(--text-primary)] font-medium">
                 {((saves / views) * 100).toFixed(1)}%
               </span>
             </div>
-            <div className="h-2 bg-gray-100 rounded-full">
+            <div className="h-2 bg-[var(--bg-elevated)] rounded-full">
               <div
                 className="h-2 bg-[var(--accent)] rounded-full"
                 style={{ width: `${(saves / views) * 100}%` }}
@@ -50,12 +50,12 @@ export const MetricsPanel: React.FC<MetricsPanelProps> = ({
 
           <div>
             <div className="flex justify-between text-sm mb-1">
-              <span className="text-gray-600">Event Participation</span>
-              <span className="text-gray-900 font-medium">
+              <span className="text-[var(--text-secondary)]">Event Participation</span>
+              <span className="text-[var(--text-primary)] font-medium">
                 {((eventsFeatured / views) * 100).toFixed(1)}%
               </span>
             </div>
-            <div className="h-2 bg-gray-100 rounded-full">
+            <div className="h-2 bg-[var(--bg-elevated)] rounded-full">
               <div
                 className="h-2 bg-green-600 rounded-full"
                 style={{ width: `${(eventsFeatured / views) * 100}%` }}

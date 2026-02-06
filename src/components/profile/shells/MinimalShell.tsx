@@ -25,18 +25,18 @@ export default function MinimalShell({ designer, projects, aesthetic, viewerCont
         <div className="text-center mb-16">
           <h1 className="text-5xl font-light tracking-wide mb-4">{designer.name}</h1>
           {designer.title && (
-            <p className="text-xl font-light tracking-wide text-gray-600">{designer.title}</p>
+            <p className="text-xl font-light tracking-wide text-[var(--text-secondary)]">{designer.title}</p>
           )}
         </div>
 
         {/* Bio - Centered, light tracking */}
         {designer.bio && (
           <div className="mb-20 text-center">
-            <p className="text-lg font-light tracking-wide text-gray-700 leading-relaxed max-w-2xl mx-auto">
+            <p className="text-lg font-light tracking-wide text-[var(--text-primary)] leading-relaxed max-w-2xl mx-auto">
               {designer.bio}
             </p>
             {designer.location && (
-              <p className="mt-6 text-gray-500 font-light tracking-wide">{designer.location}</p>
+              <p className="mt-6 text-[var(--text-secondary)] font-light tracking-wide">{designer.location}</p>
             )}
           </div>
         )}

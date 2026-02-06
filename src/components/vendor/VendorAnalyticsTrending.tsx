@@ -38,7 +38,7 @@ export default function VendorAnalyticsTrending({
       </CardHeader>
       <CardContent>
         {data.length === 0 ? (
-          <p className="text-gray-500 text-sm">No trending products</p>
+          <p className="text-[var(--text-secondary)] text-sm">No trending products</p>
         ) : (
           <div className="space-y-4">
             {data.slice(0, 5).map((product, index) => (
@@ -50,7 +50,7 @@ export default function VendorAnalyticsTrending({
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-sm truncate">{product.name}</p>
-                  <div className="flex items-center gap-2 text-xs text-gray-500">
+                  <div className="flex items-center gap-2 text-xs text-[var(--text-secondary)]">
                     <span>{product.recentSpecs} recent</span>
                     <span>•</span>
                     <span>{product.totalSpecs} total</span>
@@ -67,7 +67,7 @@ export default function VendorAnalyticsTrending({
               </div>
             ))}
             {data.length > 5 && (
-              <p className="text-xs text-gray-500 text-center pt-2">
+              <p className="text-xs text-[var(--text-secondary)] text-center pt-2">
                 +{data.length - 5} more products
               </p>
             )}

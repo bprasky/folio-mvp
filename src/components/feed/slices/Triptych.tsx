@@ -71,7 +71,7 @@ export default function Triptych({ items, onClick, canEdit = false }: TriptychPr
                 TILE ok · {String(item?.title ?? '')}
               </div>
             )}
-            <div className="relative aspect-[4/3] overflow-hidden rounded-xl bg-gray-100">
+            <div className="relative aspect-[4/3] overflow-hidden rounded-xl bg-[var(--bg-elevated)]">
               <SafeImage
                 src={getImageUrl(item)}
                 alt={String(item?.title ?? '')}

@@ -39,7 +39,7 @@ export default function QuoteSelector({
 
   if (quotes.length === 0) {
     return (
-      <div className="text-sm text-gray-500 italic">
+      <div className="text-sm text-[var(--text-secondary)] italic">
         No quotes available from this project's article.
       </div>
     );
@@ -47,14 +47,14 @@ export default function QuoteSelector({
 
   return (
     <div className="space-y-3">
-      <p className="text-sm text-gray-600 mb-4">
+      <p className="text-sm text-[var(--text-secondary)] mb-4">
         Select quotes to include in your carousel (max 4):
       </p>
       <div className="space-y-2 max-h-64 overflow-y-auto">
         {quotes.map((quote, index) => (
           <label
             key={index}
-            className="flex items-start gap-3 p-3 rounded-lg border border-gray-200 hover:border-[var(--accent)]/30 cursor-pointer transition-colors"
+            className="flex items-start gap-3 p-3 rounded-lg border border-[var(--ridge-outer)] hover:border-[var(--accent)]/30 cursor-pointer transition-colors"
           >
             <input
               type="checkbox"
@@ -62,14 +62,14 @@ export default function QuoteSelector({
               onChange={() => handleToggle(quote)}
               className="mt-1 h-4 w-4 text-[var(--accent)] rounded focus:ring-[var(--accent)]"
             />
-            <span className="flex-1 text-sm text-gray-700 italic leading-relaxed">
+            <span className="flex-1 text-sm text-[var(--text-primary)] italic leading-relaxed">
               "{quote}"
             </span>
           </label>
         ))}
       </div>
       {selectedQuotes.length > 0 && (
-        <p className="text-xs text-gray-500 mt-2">
+        <p className="text-xs text-[var(--text-secondary)] mt-2">
           {selectedQuotes.length} quote{selectedQuotes.length !== 1 ? 's' : ''} selected
         </p>
       )}

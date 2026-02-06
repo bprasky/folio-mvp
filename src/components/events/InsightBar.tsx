@@ -36,8 +36,8 @@ export default function InsightBar({ event }: InsightBarProps) {
   const follows = "—";
 
   const Pill = ({ label, value }: { label: string; value: string | number }) => (
-    <div className="px-3 py-1.5 rounded-full border border-gray-300 bg-white text-sm">
-      <span className="font-medium">{value}</span> <span className="text-gray-500">{label}</span>
+    <div className="px-3 py-1.5 rounded-full border border-[var(--ridge-outer)] bg-white text-sm">
+      <span className="font-medium">{value}</span> <span className="text-[var(--text-secondary)]">{label}</span>
     </div>
   );
 

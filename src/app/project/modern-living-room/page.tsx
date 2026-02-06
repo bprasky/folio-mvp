@@ -126,14 +126,14 @@ export default function ModernLivingRoomProjectPage() {
                   className="object-cover"
                 />
               </div>
-              <span className="text-lg md:text-xl text-gray-300 group-hover:text-amber-300 transition-colors">
+              <span className="text-lg md:text-xl text-[var(--text-tertiary)] group-hover:text-amber-300 transition-colors">
                 By {project.designer.name}
               </span>
             </Link>
           </div>
           <div className="flex flex-wrap gap-2 mt-4">
             {project.tags.map(tag => (
-              <span key={tag} className="bg-gray-700 text-gray-200 text-sm px-3 py-1 rounded-full flex items-center">
+              <span key={tag} className="bg-gray-700 text-white/80 text-sm px-3 py-1 rounded-full flex items-center">
                 <FaTag className="mr-1" /> {tag}
               </span>
             ))}

@@ -15,11 +15,11 @@ interface EventMetricsPanelProps {
 export default function EventMetricsPanel({ events }: EventMetricsPanelProps) {
   return (
     <div className="bg-white rounded-lg shadow-lg p-6">
-      <h2 className="text-xl font-semibold text-gray-900 mb-6">Event Performance</h2>
+      <h2 className="text-xl font-semibold text-[var(--text-primary)] mb-6">Event Performance</h2>
       <div className="space-y-6">
         {events.map((event) => (
-          <div key={event.event_name} className="border-b border-gray-200 last:border-0 pb-6 last:pb-0">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">{event.event_name}</h3>
+          <div key={event.event_name} className="border-b border-[var(--ridge-outer)] last:border-0 pb-6 last:pb-0">
+            <h3 className="text-lg font-medium text-[var(--text-primary)] mb-4">{event.event_name}</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="bg-[var(--accent)]/5 p-4 rounded-lg">
                 <div className="text-sm text-[var(--accent)] font-medium">Views</div>

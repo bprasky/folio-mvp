@@ -54,9 +54,9 @@ export default function DefaultShell({ designer, projects, aesthetic, viewerCont
         {/* Bio Section */}
         {designer.bio && (
           <div className="mb-12 max-w-3xl">
-            <p className="text-lg text-gray-700 leading-relaxed">{designer.bio}</p>
+            <p className="text-lg text-[var(--text-primary)] leading-relaxed">{designer.bio}</p>
             {designer.location && (
-              <p className="mt-4 text-gray-600">{designer.location}</p>
+              <p className="mt-4 text-[var(--text-secondary)]">{designer.location}</p>
             )}
           </div>
         )}

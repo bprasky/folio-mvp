@@ -166,7 +166,7 @@ export function InterviewFlow({
             className="h-full flex items-center justify-center"
           >
             <div className="text-center">
-              <p className="text-gray-500 mb-4">
+              <p className="text-[var(--text-secondary)] mb-4">
                 Voice interview coming soon.
               </p>
               <button
@@ -186,8 +186,8 @@ export function InterviewFlow({
             className="h-full flex items-center justify-center"
           >
             <div className="text-center space-y-4">
-              <Loader2 className="w-8 h-8 text-gray-400 animate-spin mx-auto" />
-              <p className="text-gray-600">Creating your editorial draft...</p>
+              <Loader2 className="w-8 h-8 text-[var(--text-tertiary)] animate-spin mx-auto" />
+              <p className="text-[var(--text-secondary)]">Creating your editorial draft...</p>
             </div>
           </motion.div>
         );
@@ -203,7 +203,7 @@ export function InterviewFlow({
       <button
         type="button"
         onClick={onCancel}
-        className="absolute top-4 right-4 z-10 p-2 text-gray-400 hover:text-gray-600 transition-colors"
+        className="absolute top-4 right-4 z-10 p-2 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors"
         aria-label="Close interview"
       >
         <X className="w-5 h-5" />
@@ -221,7 +221,7 @@ export function InterviewFlow({
       {/* Loading overlay for initial session start */}
       {isLoading && session.step === "mode-selection" && (
         <div className="absolute inset-0 bg-white/80 flex items-center justify-center z-20">
-          <Loader2 className="w-6 h-6 text-gray-400 animate-spin" />
+          <Loader2 className="w-6 h-6 text-[var(--text-tertiary)] animate-spin" />
         </div>
       )}
 

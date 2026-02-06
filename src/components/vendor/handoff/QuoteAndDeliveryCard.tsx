@@ -33,7 +33,7 @@ export default function QuoteAndDeliveryCard({ quote, onChange, className }: Pro
   return (
     <div className={`border rounded-2xl p-6 bg-white ${className ?? ''}`}>
       <h3 className="text-lg font-semibold mb-2">Quote & delivery</h3>
-      <p className="text-sm text-gray-500 mb-4">Attach a PDF or enter totals. Versions are tracked automatically.</p>
+      <p className="text-sm text-[var(--text-secondary)] mb-4">Attach a PDF or enter totals. Versions are tracked automatically.</p>
 
       <div className="flex gap-3 mb-4">
         <label className="flex items-center gap-2 text-sm">

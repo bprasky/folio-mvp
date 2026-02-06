@@ -90,9 +90,9 @@ const themeConfigs: Record<AestheticTheme, ThemeConfig> = {
     titleClasses: {
       L: "text-2xl font-medium tracking-normal text-gray-100",
       M: "text-lg font-medium tracking-normal text-gray-100",
-      S: "text-sm font-medium tracking-normal text-gray-200",
+      S: "text-sm font-medium tracking-normal text-white/80",
     },
-    metaClass: "text-gray-400 text-[11px]",
+    metaClass: "text-[var(--text-tertiary)] text-[11px]",
   },
   bold: {
     containerClass: "auto-rows-[10px]",

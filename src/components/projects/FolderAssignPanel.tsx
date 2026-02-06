@@ -164,10 +164,10 @@ export default function FolderAssignPanel({ folderId, onUpdate }: FolderAssignPa
     return (
       <div className="space-y-4">
         <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded-lg w-1/3 mb-4"></div>
+          <div className="h-8 bg-[var(--bg-elevated)] rounded-lg w-1/3 mb-4"></div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="bg-gray-200 rounded-xl h-32"></div>
+              <div key={i} className="bg-[var(--bg-elevated)] rounded-xl h-32"></div>
             ))}
           </div>
         </div>
@@ -178,9 +178,9 @@ export default function FolderAssignPanel({ folderId, onUpdate }: FolderAssignPa
   if (products.length === 0) {
     return (
       <div className="text-center py-12">
-        <Tag className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-        <h3 className="text-lg font-medium text-gray-900 mb-2">No products yet</h3>
-        <p className="text-gray-500 mb-4">Save products from events to get started</p>
+        <Tag className="w-16 h-16 mx-auto text-[var(--text-tertiary)] mb-4" />
+        <h3 className="text-lg font-medium text-[var(--text-primary)] mb-2">No products yet</h3>
+        <p className="text-[var(--text-secondary)] mb-4">Save products from events to get started</p>
       </div>
     );
   }
@@ -190,8 +190,8 @@ export default function FolderAssignPanel({ folderId, onUpdate }: FolderAssignPa
       {/* Header with controls */}
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-gray-900">Organize Products</h2>
-          <p className="text-sm text-gray-600 mt-1">
+          <h2 className="text-xl font-semibold text-[var(--text-primary)]">Organize Products</h2>
+          <p className="text-sm text-[var(--text-secondary)] mt-1">
             {selectedItems.size > 0 
               ? `${selectedItems.size} item${selectedItems.size > 1 ? 's' : ''} selected`
               : `${products.length} product${products.length > 1 ? 's' : ''} in folder`
@@ -203,7 +203,7 @@ export default function FolderAssignPanel({ folderId, onUpdate }: FolderAssignPa
           {/* Select All */}
           <button
             onClick={handleSelectAll}
-            className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            className="px-4 py-2 text-sm border border-[var(--ridge-outer)] rounded-lg hover:bg-[var(--bg-elevated)] transition-colors"
           >
             {selectedItems.size === products.length ? "Deselect All" : "Select All"}
           </button>
@@ -216,7 +216,7 @@ export default function FolderAssignPanel({ folderId, onUpdate }: FolderAssignPa
                 value={newSection}
                 onChange={(e) => setNewSection(e.target.value)}
                 placeholder="Section name..."
-                className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+                className="px-3 py-2 text-sm border border-[var(--ridge-outer)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                 onKeyPress={(e) => e.key === 'Enter' && handleAssignSection()}
               />
               <button
@@ -244,12 +244,12 @@ export default function FolderAssignPanel({ folderId, onUpdate }: FolderAssignPa
       {/* Recent Sections */}
       {recentSections.length > 0 && (
         <div className="flex flex-wrap gap-2">
-          <span className="text-sm text-gray-600 mr-2">Quick assign:</span>
+          <span className="text-sm text-[var(--text-secondary)] mr-2">Quick assign:</span>
           {recentSections.map((section) => (
             <button
               key={section}
               onClick={() => handleQuickAssign(section)}
-              className="px-3 py-1 text-xs bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200 transition-colors"
+              className="px-3 py-1 text-xs bg-[var(--bg-elevated)] text-[var(--text-primary)] rounded-full hover:bg-[var(--bg-elevated)] transition-colors"
             >
               {section}
             </button>
@@ -265,7 +265,7 @@ export default function FolderAssignPanel({ folderId, onUpdate }: FolderAssignPa
             className={`relative group rounded-2xl border-2 transition-all duration-200 hover:shadow-lg ${
               selectedItems.has(item.id)
                 ? "border-[var(--accent)] bg-[var(--accent)]/5 shadow-blue-100"
-                : "border-gray-200 hover:border-gray-300 bg-white"
+                : "border-[var(--ridge-outer)] hover:border-[var(--ridge-outer)] bg-white"
             }`}
           >
             {/* Selection Checkbox */}
@@ -275,7 +275,7 @@ export default function FolderAssignPanel({ folderId, onUpdate }: FolderAssignPa
                 className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
                   selectedItems.has(item.id)
                     ? "bg-[var(--accent)] border-[var(--accent)] text-white"
-                    : "bg-white border-gray-300 hover:border-blue-400"
+                    : "bg-white border-[var(--ridge-outer)] hover:border-blue-400"
                 }`}
               >
                 {selectedItems.has(item.id) && <Check className="w-3 h-3" />}
@@ -283,7 +283,7 @@ export default function FolderAssignPanel({ folderId, onUpdate }: FolderAssignPa
             </div>
 
             {/* Product Image */}
-            <div className="relative h-40 bg-gray-100 rounded-t-2xl overflow-hidden">
+            <div className="relative h-40 bg-[var(--bg-elevated)] rounded-t-2xl overflow-hidden">
               <SafeImage
                 src={item.product.imageUrl || "/images/product-placeholder.jpg"}
                 alt={item.product.name}
@@ -294,7 +294,7 @@ export default function FolderAssignPanel({ folderId, onUpdate }: FolderAssignPa
               {/* Section Badge */}
               {item.section && (
                 <div className="absolute top-2 right-2">
-                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-white/90 backdrop-blur-sm text-xs font-medium text-gray-700">
+                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-white/90 backdrop-blur-sm text-xs font-medium text-[var(--text-primary)]">
                     <Tag className="w-3 h-3" />
                     {item.section}
                     <button
@@ -310,12 +310,12 @@ export default function FolderAssignPanel({ folderId, onUpdate }: FolderAssignPa
 
             {/* Product Info */}
             <div className="p-4">
-              <h3 className="font-medium text-gray-900 mb-1 line-clamp-2">
+              <h3 className="font-medium text-[var(--text-primary)] mb-1 line-clamp-2">
                 {item.product.name}
               </h3>
               
               {item.product.vendor && (
-                <p className="text-sm text-gray-500 mb-2">
+                <p className="text-sm text-[var(--text-secondary)] mb-2">
                   {item.product.vendor.companyName || item.product.vendor.name}
                 </p>
               )}
@@ -332,7 +332,7 @@ export default function FolderAssignPanel({ folderId, onUpdate }: FolderAssignPa
                   <input
                     type="text"
                     placeholder="Add section..."
-                    className="w-full px-2 py-1 text-xs border border-gray-200 rounded focus:ring-1 focus:ring-[var(--accent)] focus:border-[var(--accent)]"
+                    className="w-full px-2 py-1 text-xs border border-[var(--ridge-outer)] rounded focus:ring-1 focus:ring-[var(--accent)] focus:border-[var(--accent)]"
                     onKeyPress={(e) => {
                       if (e.key === 'Enter') {
                         const target = e.target as HTMLInputElement;

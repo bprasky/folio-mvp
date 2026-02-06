@@ -646,10 +646,10 @@ export default function DemoGuidedTour({ role }: DemoGuidedTourProps) {
         >
           <div className="flex items-start justify-between mb-3">
             <div className="flex-1">
-              <h3 className="text-lg font-serif text-gray-900 mb-1">
+              <h3 className="text-lg font-serif text-[var(--text-primary)] mb-1">
                 {currentStep.title}
               </h3>
-              <p className="text-sm text-gray-600 leading-relaxed mb-3">
+              <p className="text-sm text-[var(--text-secondary)] leading-relaxed mb-3">
                 {currentStep.body}
               </p>
               {currentStep.actionHint && (
@@ -660,14 +660,14 @@ export default function DemoGuidedTour({ role }: DemoGuidedTourProps) {
             </div>
           </div>
 
-          <div className="flex items-center justify-between gap-3 pt-3 border-t border-gray-200">
-            <div className="text-xs text-gray-500">
+          <div className="flex items-center justify-between gap-3 pt-3 border-t border-[var(--ridge-outer)]">
+            <div className="text-xs text-[var(--text-secondary)]">
               Step {currentStepIndex + 1} of {steps.length}
             </div>
             <div className="flex items-center gap-2">
               <button
                 onClick={handleSkip}
-                className="px-3 py-1.5 text-xs font-medium text-gray-600 hover:text-gray-900 transition-colors"
+                className="px-3 py-1.5 text-xs font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
               >
                 Skip Tour
               </button>

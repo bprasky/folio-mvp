@@ -124,16 +124,16 @@ export function CampaignWizard({ projectId, projectTitle, onClose }: CampaignWiz
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div className="relative w-full max-w-2xl rounded-lg bg-white shadow-xl">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-gray-200 p-6">
+        <div className="flex items-center justify-between border-b border-[var(--ridge-outer)] p-6">
           <div>
-            <h2 className="text-2xl font-semibold text-gray-900">
+            <h2 className="text-2xl font-semibold text-[var(--text-primary)]">
               Generate Instagram Campaign
             </h2>
-            <p className="mt-1 text-sm text-gray-600">{projectTitle}</p>
+            <p className="mt-1 text-sm text-[var(--text-secondary)]">{projectTitle}</p>
           </div>
           <button
             onClick={onClose}
-            className="rounded-full p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+            className="rounded-full p-2 text-[var(--text-tertiary)] hover:bg-[var(--bg-elevated)] hover:text-[var(--text-secondary)]"
           >
             <FaTimes size={20} />
           </button>
@@ -143,40 +143,40 @@ export function CampaignWizard({ projectId, projectTitle, onClose }: CampaignWiz
         <div className="p-6">
           {/* Preset Selection */}
           <div className="mb-6">
-            <h3 className="mb-3 text-sm font-medium text-gray-700">Campaign Size</h3>
+            <h3 className="mb-3 text-sm font-medium text-[var(--text-primary)]">Campaign Size</h3>
             <div className="grid grid-cols-3 gap-3">
               <button
                 onClick={() => setPreset('compact')}
                 className={`rounded-lg border-2 p-4 text-center transition ${
                   preset === 'compact'
                     ? 'border-[var(--accent)] bg-[var(--accent)]/5'
-                    : 'border-gray-200 hover:border-gray-300'
+                    : 'border-[var(--ridge-outer)] hover:border-[var(--ridge-outer)]'
                 }`}
               >
-                <div className="text-lg font-semibold text-gray-900">Compact</div>
-                <div className="mt-1 text-sm text-gray-600">4-6 posts</div>
+                <div className="text-lg font-semibold text-[var(--text-primary)]">Compact</div>
+                <div className="mt-1 text-sm text-[var(--text-secondary)]">4-6 posts</div>
               </button>
               <button
                 onClick={() => setPreset('standard')}
                 className={`rounded-lg border-2 p-4 text-center transition ${
                   preset === 'standard'
                     ? 'border-[var(--accent)] bg-[var(--accent)]/5'
-                    : 'border-gray-200 hover:border-gray-300'
+                    : 'border-[var(--ridge-outer)] hover:border-[var(--ridge-outer)]'
                 }`}
               >
-                <div className="text-lg font-semibold text-gray-900">Standard</div>
-                <div className="mt-1 text-sm text-gray-600">8-12 posts</div>
+                <div className="text-lg font-semibold text-[var(--text-primary)]">Standard</div>
+                <div className="mt-1 text-sm text-[var(--text-secondary)]">8-12 posts</div>
               </button>
               <button
                 onClick={() => setPreset('complete')}
                 className={`rounded-lg border-2 p-4 text-center transition ${
                   preset === 'complete'
                     ? 'border-[var(--accent)] bg-[var(--accent)]/5'
-                    : 'border-gray-200 hover:border-gray-300'
+                    : 'border-[var(--ridge-outer)] hover:border-[var(--ridge-outer)]'
                 }`}
               >
-                <div className="text-lg font-semibold text-gray-900">Complete</div>
-                <div className="mt-1 text-sm text-gray-600">15-20+ posts</div>
+                <div className="text-lg font-semibold text-[var(--text-primary)]">Complete</div>
+                <div className="mt-1 text-sm text-[var(--text-secondary)]">15-20+ posts</div>
               </button>
             </div>
           </div>
@@ -184,7 +184,7 @@ export function CampaignWizard({ projectId, projectTitle, onClose }: CampaignWiz
           {/* Content Preview */}
           {loading && (
             <div className="flex items-center justify-center py-12">
-              <FaSpinner className="animate-spin text-gray-400" size={32} />
+              <FaSpinner className="animate-spin text-[var(--text-tertiary)]" size={32} />
             </div>
           )}
 
@@ -196,57 +196,57 @@ export function CampaignWizard({ projectId, projectTitle, onClose }: CampaignWiz
 
           {contentSelection && !loading && (
             <div className="space-y-4">
-              <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+              <div className="rounded-lg border border-[var(--ridge-outer)] bg-[var(--bg-elevated)] p-4">
                 <div className="mb-4 flex items-center justify-between">
-                  <h3 className="font-medium text-gray-900">What's Included</h3>
+                  <h3 className="font-medium text-[var(--text-primary)]">What's Included</h3>
                   <span className="text-2xl font-bold text-[var(--accent)]">{totalPosts} posts</span>
                 </div>
 
                 <div className="space-y-3 text-sm">
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-700">✓ Launch Card</span>
-                    <span className="text-gray-500">1</span>
+                    <span className="text-[var(--text-primary)]">✓ Launch Card</span>
+                    <span className="text-[var(--text-secondary)]">1</span>
                   </div>
 
                   {selectedRooms > 0 && (
                     <div className="flex items-center justify-between">
-                      <span className="text-gray-700">✓ Room Spotlights</span>
-                      <span className="text-gray-500">{selectedRooms}</span>
+                      <span className="text-[var(--text-primary)]">✓ Room Spotlights</span>
+                      <span className="text-[var(--text-secondary)]">{selectedRooms}</span>
                     </div>
                   )}
 
                   {selectedProducts > 0 && (
                     <div className="flex items-center justify-between">
-                      <span className="text-gray-700">✓ Product Features</span>
-                      <span className="text-gray-500">{selectedProducts}</span>
+                      <span className="text-[var(--text-primary)]">✓ Product Features</span>
+                      <span className="text-[var(--text-secondary)]">{selectedProducts}</span>
                     </div>
                   )}
 
                   {selectedQuotes > 0 && (
                     <div className="flex items-center justify-between">
-                      <span className="text-gray-700">✓ Story Cards</span>
-                      <span className="text-gray-500">{selectedQuotes}</span>
+                      <span className="text-[var(--text-primary)]">✓ Story Cards</span>
+                      <span className="text-[var(--text-secondary)]">{selectedQuotes}</span>
                     </div>
                   )}
 
                   {contentSelection.details.length > 0 && (
                     <div className="flex items-center justify-between">
-                      <span className="text-gray-700">✓ Detail Moments</span>
-                      <span className="text-gray-500">{contentSelection.details.length}</span>
+                      <span className="text-[var(--text-primary)]">✓ Detail Moments</span>
+                      <span className="text-[var(--text-secondary)]">{contentSelection.details.length}</span>
                     </div>
                   )}
 
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-700">✓ Closer</span>
-                    <span className="text-gray-500">1</span>
+                    <span className="text-[var(--text-primary)]">✓ Closer</span>
+                    <span className="text-[var(--text-secondary)]">1</span>
                   </div>
                 </div>
               </div>
 
               {/* Formats */}
-              <div className="rounded-lg border border-gray-200 bg-white p-4">
-                <h3 className="mb-2 text-sm font-medium text-gray-900">Formats</h3>
-                <div className="space-y-1 text-sm text-gray-600">
+              <div className="rounded-lg border border-[var(--ridge-outer)] bg-white p-4">
+                <h3 className="mb-2 text-sm font-medium text-[var(--text-primary)]">Formats</h3>
+                <div className="space-y-1 text-sm text-[var(--text-secondary)]">
                   <div>✓ Feed (1080×1080, 1080×1350)</div>
                   <div>✓ Stories (1080×1920)</div>
                 </div>
@@ -266,10 +266,10 @@ export function CampaignWizard({ projectId, projectTitle, onClose }: CampaignWiz
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between border-t border-gray-200 bg-gray-50 p-6">
+        <div className="flex items-center justify-between border-t border-[var(--ridge-outer)] bg-[var(--bg-elevated)] p-6">
           <button
             onClick={onClose}
-            className="rounded-lg border border-gray-300 px-6 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-100"
+            className="rounded-lg border border-[var(--ridge-outer)] px-6 py-2.5 text-sm font-medium text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]"
           >
             Cancel
           </button>

@@ -16,7 +16,7 @@ export function TagRail({ tags }: TagRailProps) {
           <Link
             key={tag.id}
             href={tag.productId ? `/products/${tag.productId}` : "#"}
-            className="flex-shrink-0 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-full text-sm text-gray-700 transition-colors"
+            className="flex-shrink-0 px-4 py-2 bg-[var(--bg-elevated)] hover:bg-[var(--bg-elevated)] rounded-full text-sm text-[var(--text-primary)] transition-colors"
           >
             {tag.productName}
           </Link>

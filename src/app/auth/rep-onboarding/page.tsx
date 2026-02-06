@@ -50,7 +50,7 @@ export default function RepOnboardingPage() {
       <div className="min-h-screen flex items-center justify-center bg-[var(--bg-elevated)] px-4">
         <div className="max-w-md w-full bg-white rounded-lg shadow-md p-8">
           <h1 className="text-2xl font-bold mb-4">Join Folio as a Vendor Rep</h1>
-          <p className="text-gray-600 mb-6">
+          <p className="text-[var(--text-secondary)] mb-6">
             You've been invited to join Folio. Please sign in or create an account to continue.
           </p>
           <div className="space-y-4">
@@ -62,7 +62,7 @@ export default function RepOnboardingPage() {
             </Link>
             <Link
               href={`/auth/signup?callbackUrl=/auth/rep-onboarding?inviteId=${inviteId}&token=${token}`}
-              className="block w-full text-center bg-gray-200 text-gray-800 py-2 px-4 rounded hover:bg-gray-300"
+              className="block w-full text-center bg-[var(--bg-elevated)] text-[var(--text-primary)] py-2 px-4 rounded hover:bg-[var(--text-tertiary)]/20"
             >
               Create Account
             </Link>
@@ -116,7 +116,7 @@ export default function RepOnboardingPage() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--accent)] mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+          <p className="mt-4 text-[var(--text-secondary)]">Loading...</p>
         </div>
       </div>
     );
@@ -127,7 +127,7 @@ export default function RepOnboardingPage() {
       <div className="min-h-screen flex items-center justify-center bg-[var(--bg-elevated)] px-4">
         <div className="max-w-md w-full bg-white rounded-lg shadow-md p-8">
           <h1 className="text-2xl font-bold mb-4 text-red-600">Invalid Invite</h1>
-          <p className="text-gray-600 mb-6">{error}</p>
+          <p className="text-[var(--text-secondary)] mb-6">{error}</p>
           <Link
             href="/"
             className="block w-full text-center bg-[var(--accent)] text-white py-2 px-4 rounded hover:bg-[var(--accent-hover)]"
@@ -147,13 +147,13 @@ export default function RepOnboardingPage() {
     <div className="min-h-screen flex items-center justify-center bg-[var(--bg-elevated)] px-4">
       <div className="max-w-md w-full bg-white rounded-lg shadow-md p-8">
         <h1 className="text-2xl font-bold mb-4">Set Up Your Rep Profile</h1>
-        <p className="text-gray-600 mb-6">
+        <p className="text-[var(--text-secondary)] mb-6">
           You were invited using <strong>{inviteData?.email}</strong>. This might be your personal email.
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <p className="text-sm font-medium text-gray-700 mb-3">
+            <p className="text-sm font-medium text-[var(--text-primary)] mb-3">
               Choose your professional email for work notifications:
             </p>
             
@@ -169,7 +169,7 @@ export default function RepOnboardingPage() {
                 />
                 <div>
                   <div className="font-medium">Use this email as my work email</div>
-                  <div className="text-sm text-gray-500">{inviteData?.email}</div>
+                  <div className="text-sm text-[var(--text-secondary)]">{inviteData?.email}</div>
                 </div>
               </label>
 
@@ -214,7 +214,7 @@ export default function RepOnboardingPage() {
           </button>
         </form>
 
-        <p className="mt-6 text-xs text-gray-500 text-center">
+        <p className="mt-6 text-xs text-[var(--text-secondary)] text-center">
           Once set up, you'll automatically follow designers who have tagged your organization.
         </p>
       </div>

@@ -136,21 +136,21 @@ export default function DemoFlowPage() {
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Demo Flow Guide</h1>
-          <p className="text-gray-600">Follow these steps to explore the complete Folio experience</p>
+          <h1 className="text-4xl font-bold text-[var(--text-primary)] mb-2">Demo Flow Guide</h1>
+          <p className="text-[var(--text-secondary)]">Follow these steps to explore the complete Folio experience</p>
         </div>
 
         {/* Progress Bar */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-700">
+            <span className="text-sm font-medium text-[var(--text-primary)]">
               Step {currentStep + 1} of {DEMO_STEPS.length}
             </span>
-            <span className="text-sm text-gray-500">
+            <span className="text-sm text-[var(--text-secondary)]">
               {completedSteps.size} completed
             </span>
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
+          <div className="w-full bg-[var(--bg-elevated)] rounded-full h-2">
             <motion.div
               className="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full"
               initial={{ width: 0 }}
@@ -175,16 +175,16 @@ export default function DemoFlowPage() {
                     ? 'border-[var(--accent)] bg-[var(--accent)]/5'
                     : isStepCompleted
                     ? 'border-green-500 bg-green-50'
-                    : 'border-gray-200 bg-white hover:border-gray-300'
+                    : 'border-[var(--ridge-outer)] bg-white hover:border-[var(--ridge-outer)]'
                 }`}
               >
                 <div className="flex flex-col items-center gap-2">
                   {isStepCompleted ? (
                     <FaCheck className="w-5 h-5 text-green-600" />
                   ) : (
-                    <StepIcon className={`w-5 h-5 ${isStepCurrent ? 'text-[var(--accent)]' : 'text-gray-400'}`} />
+                    <StepIcon className={`w-5 h-5 ${isStepCurrent ? 'text-[var(--accent)]' : 'text-[var(--text-tertiary)]'}`} />
                   )}
-                  <span className={`text-xs font-medium text-center ${isStepCurrent ? 'text-[var(--accent)]' : isStepCompleted ? 'text-green-600' : 'text-gray-500'}`}>
+                  <span className={`text-xs font-medium text-center ${isStepCurrent ? 'text-[var(--accent)]' : isStepCompleted ? 'text-green-600' : 'text-[var(--text-secondary)]'}`}>
                     {step.title}
                   </span>
                 </div>
@@ -209,14 +209,14 @@ export default function DemoFlowPage() {
               </div>
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-3">
-                  <h2 className="text-2xl font-bold text-gray-900">{currentStepData.title}</h2>
+                  <h2 className="text-2xl font-bold text-[var(--text-primary)]">{currentStepData.title}</h2>
                   {isCompleted && (
                     <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
                       Completed
                     </span>
                   )}
                 </div>
-                <p className="text-gray-600 mb-4 text-lg">{currentStepData.description}</p>
+                <p className="text-[var(--text-secondary)] mb-4 text-lg">{currentStepData.description}</p>
                 {currentStepData.note && (
                   <div className="bg-[var(--accent)]/5 border border-[var(--accent)]/20 rounded-lg p-3 mb-4">
                     <p className="text-sm text-[var(--accent-hover)]">
@@ -243,7 +243,7 @@ export default function DemoFlowPage() {
           <button
             onClick={handlePrevious}
             disabled={currentStep === 0}
-            className="px-6 py-3 bg-white border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-[var(--bg-elevated)] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            className="px-6 py-3 bg-white border border-[var(--ridge-outer)] rounded-lg font-medium text-[var(--text-primary)] hover:bg-[var(--bg-elevated)] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
           >
             Previous
           </button>
@@ -258,7 +258,7 @@ export default function DemoFlowPage() {
                     ? 'bg-[var(--accent)] w-8'
                     : completedSteps.has(index)
                     ? 'bg-green-500'
-                    : 'bg-gray-300'
+                    : 'bg-[var(--text-tertiary)]/30'
                 }`}
                 aria-label={`Go to step ${index + 1}`}
               />
@@ -277,35 +277,35 @@ export default function DemoFlowPage() {
 
         {/* Quick Actions */}
         <div className="mt-8 p-6 bg-[var(--bg-elevated)] rounded-xl">
-          <h3 className="font-semibold text-gray-900 mb-4">Quick Links</h3>
+          <h3 className="font-semibold text-[var(--text-primary)] mb-4">Quick Links</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <button
               onClick={() => router.push('/feed')}
-              className="p-3 bg-white rounded-lg border border-gray-200 hover:border-[var(--accent)] hover:shadow-md transition-all text-left"
+              className="p-3 bg-white rounded-lg border border-[var(--ridge-outer)] hover:border-[var(--accent)] hover:shadow-md transition-all text-left"
             >
               <FaHome className="w-5 h-5 text-[var(--accent)] mb-2" />
-              <div className="text-sm font-medium text-gray-900">Feed</div>
+              <div className="text-sm font-medium text-[var(--text-primary)]">Feed</div>
             </button>
             <button
               onClick={() => router.push('/individual')}
-              className="p-3 bg-white rounded-lg border border-gray-200 hover:border-purple-500 hover:shadow-md transition-all text-left"
+              className="p-3 bg-white rounded-lg border border-[var(--ridge-outer)] hover:border-purple-500 hover:shadow-md transition-all text-left"
             >
               <FaBookmark className="w-5 h-5 text-purple-600 mb-2" />
-              <div className="text-sm font-medium text-gray-900">Saved Items</div>
+              <div className="text-sm font-medium text-[var(--text-primary)]">Saved Items</div>
             </button>
             <button
               onClick={() => router.push('/individual/hire')}
-              className="p-3 bg-white rounded-lg border border-gray-200 hover:border-green-500 hover:shadow-md transition-all text-left"
+              className="p-3 bg-white rounded-lg border border-[var(--ridge-outer)] hover:border-green-500 hover:shadow-md transition-all text-left"
             >
               <FaHandshake className="w-5 h-5 text-green-600 mb-2" />
-              <div className="text-sm font-medium text-gray-900">Hire Designer</div>
+              <div className="text-sm font-medium text-[var(--text-primary)]">Hire Designer</div>
             </button>
             <button
               onClick={() => router.push('/events')}
-              className="p-3 bg-white rounded-lg border border-gray-200 hover:border-red-500 hover:shadow-md transition-all text-left"
+              className="p-3 bg-white rounded-lg border border-[var(--ridge-outer)] hover:border-red-500 hover:shadow-md transition-all text-left"
             >
               <FaCalendarAlt className="w-5 h-5 text-red-600 mb-2" />
-              <div className="text-sm font-medium text-gray-900">Events</div>
+              <div className="text-sm font-medium text-[var(--text-primary)]">Events</div>
             </button>
           </div>
         </div>

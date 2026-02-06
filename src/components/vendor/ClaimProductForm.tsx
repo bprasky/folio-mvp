@@ -69,7 +69,7 @@ export default function ClaimProductForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label htmlFor="vendorName" className="block text-sm font-medium text-gray-700 mb-1">
+        <label htmlFor="vendorName" className="block text-sm font-medium text-[var(--text-primary)] mb-1">
           Vendor Name *
         </label>
         <input
@@ -78,13 +78,13 @@ export default function ClaimProductForm({
           value={vendorName}
           onChange={(e) => setVendorName(e.target.value)}
           required
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)]"
+          className="w-full px-4 py-2 border border-[var(--ridge-outer)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)]"
           placeholder="Your company name"
         />
       </div>
 
       <div>
-        <label htmlFor="vendorEmail" className="block text-sm font-medium text-gray-700 mb-1">
+        <label htmlFor="vendorEmail" className="block text-sm font-medium text-[var(--text-primary)] mb-1">
           Email Address *
         </label>
         <input
@@ -93,13 +93,13 @@ export default function ClaimProductForm({
           value={vendorEmail}
           onChange={(e) => setVendorEmail(e.target.value)}
           required
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)]"
+          className="w-full px-4 py-2 border border-[var(--ridge-outer)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)]"
           placeholder="contact@yourcompany.com"
         />
       </div>
 
       <div>
-        <label htmlFor="website" className="block text-sm font-medium text-gray-700 mb-1">
+        <label htmlFor="website" className="block text-sm font-medium text-[var(--text-primary)] mb-1">
           Website (optional)
         </label>
         <input
@@ -107,7 +107,7 @@ export default function ClaimProductForm({
           id="website"
           value={website}
           onChange={(e) => setWebsite(e.target.value)}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)]"
+          className="w-full px-4 py-2 border border-[var(--ridge-outer)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)]"
           placeholder="https://yourcompany.com"
         />
       </div>

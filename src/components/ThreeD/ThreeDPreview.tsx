@@ -25,7 +25,7 @@ function Model({ url }: { url: string }) {
 
 function LoadingSpinner() {
   return (
-    <div className="absolute inset-0 flex items-center justify-center bg-gray-900/50">
+    <div className="absolute inset-0 flex items-center justify-center bg-[var(--text-primary)]/50">
       <div className="flex flex-col items-center gap-3">
         <FaSpinner className="w-8 h-8 text-white animate-spin" />
         <p className="text-white text-sm">Loading 3D model...</p>
@@ -39,7 +39,7 @@ export default function ThreeDPreview({ glbUrl, onClose }: ThreeDPreviewProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
-      <div className="relative w-full h-full max-w-4xl max-h-[90vh] bg-gray-900 rounded-lg overflow-hidden">
+      <div className="relative w-full h-full max-w-4xl max-h-[90vh] bg-[var(--text-primary)] rounded-lg overflow-hidden">
         {/* Close Button */}
         <button
           onClick={onClose}
@@ -55,7 +55,7 @@ export default function ThreeDPreview({ glbUrl, onClose }: ThreeDPreviewProps) {
             <div className="flex items-center justify-center h-full text-white">
               <div className="text-center">
                 <p className="text-lg mb-2">Failed to load 3D model</p>
-                <p className="text-sm text-gray-400">{error}</p>
+                <p className="text-sm text-[var(--text-tertiary)]">{error}</p>
               </div>
             </div>
           ) : (

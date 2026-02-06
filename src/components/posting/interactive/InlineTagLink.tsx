@@ -69,7 +69,7 @@ export default function InlineTagLink({
             animate={{ opacity: 1, y: 8, scale: 1 }}
             exit={{ opacity: 0, y: 6, scale: 0.98 }}
             transition={{ duration: 0.18 }}
-            className="absolute left-0 top-full z-40 mt-2 w-72 rounded-2xl p-3 shadow-xl backdrop-blur bg-white/95 border border-gray-200"
+            className="absolute left-0 top-full z-40 mt-2 w-72 rounded-2xl p-3 shadow-xl backdrop-blur bg-white/95 border border-[var(--ridge-outer)]"
           >
             {data ? (
               <div className="flex gap-3">
@@ -80,11 +80,11 @@ export default function InlineTagLink({
                     className="h-16 w-16 rounded-xl object-cover"
                   />
                 ) : (
-                  <div className="h-16 w-16 rounded-xl bg-gray-200" />
+                  <div className="h-16 w-16 rounded-xl bg-[var(--bg-elevated)]" />
                 )}
                 <div className="min-w-0 flex-1">
                   <div className="text-sm font-semibold truncate">{data.name}</div>
-                  <div className="text-xs text-gray-500 truncate">{data.vendorName}</div>
+                  <div className="text-xs text-[var(--text-secondary)] truncate">{data.vendorName}</div>
                   <div className="mt-2 flex gap-2">
                     <a
                       href={data.slug ? `/product/${data.slug}` : `/products/${productId}`}
@@ -107,7 +107,7 @@ export default function InlineTagLink({
                 </div>
               </div>
             ) : (
-              <div className="text-xs text-gray-500">Loading…</div>
+              <div className="text-xs text-[var(--text-secondary)]">Loading…</div>
             )}
           </motion.div>
         )}

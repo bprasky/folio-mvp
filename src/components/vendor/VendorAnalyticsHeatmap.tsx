@@ -33,7 +33,7 @@ export default function VendorAnalyticsHeatmap({
       </CardHeader>
       <CardContent>
         {entries.length === 0 ? (
-          <p className="text-gray-500 text-sm">No data available</p>
+          <p className="text-[var(--text-secondary)] text-sm">No data available</p>
         ) : (
           <div className="space-y-3">
             {entries.slice(0, 8).map(([region, count]) => {
@@ -41,7 +41,7 @@ export default function VendorAnalyticsHeatmap({
               const bgColor = intensity > 0.7 ? 'bg-[var(--accent)]/10' : 
                              intensity > 0.4 ? 'bg-[var(--accent)]/5' : 'bg-gray-50';
               const textColor = intensity > 0.7 ? 'text-blue-900' : 
-                               intensity > 0.4 ? 'text-[var(--accent-hover)]' : 'text-gray-600';
+                               intensity > 0.4 ? 'text-[var(--accent-hover)]' : 'text-[var(--text-secondary)]';
               
               return (
                 <div key={region} className="flex items-center justify-between">
@@ -61,7 +61,7 @@ export default function VendorAnalyticsHeatmap({
               );
             })}
             {entries.length > 8 && (
-              <p className="text-xs text-gray-500 text-center pt-2">
+              <p className="text-xs text-[var(--text-secondary)] text-center pt-2">
                 +{entries.length - 8} more regions
               </p>
             )}

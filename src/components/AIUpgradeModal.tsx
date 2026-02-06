@@ -50,7 +50,7 @@ export default function AIUpgradeModal({
             </div>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
+              className="text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors"
             >
               <FaTimes className="w-6 h-6" />
             </button>
@@ -63,8 +63,8 @@ export default function AIUpgradeModal({
                 <FaStar className="w-4 h-4 text-purple-600" />
               </div>
               <div>
-                <h3 className="font-semibold text-gray-900">Tailored Design Help</h3>
-                <p className="text-sm text-gray-600">Get personalized recommendations based on your saved items</p>
+                <h3 className="font-semibold text-[var(--text-primary)]">Tailored Design Help</h3>
+                <p className="text-sm text-[var(--text-secondary)]">Get personalized recommendations based on your saved items</p>
               </div>
             </div>
 
@@ -73,8 +73,8 @@ export default function AIUpgradeModal({
                 <FaUsers className="w-4 h-4 text-[var(--accent)]" />
               </div>
               <div>
-                <h3 className="font-semibold text-gray-900">Style Analysis</h3>
-                <p className="text-sm text-gray-600">AI analyzes your taste to match you with perfect designers</p>
+                <h3 className="font-semibold text-[var(--text-primary)]">Style Analysis</h3>
+                <p className="text-sm text-[var(--text-secondary)]">AI analyzes your taste to match you with perfect designers</p>
               </div>
             </div>
 
@@ -83,8 +83,8 @@ export default function AIUpgradeModal({
                 <FaDollarSign className="w-4 h-4 text-green-600" />
               </div>
               <div>
-                <h3 className="font-semibold text-gray-900">Budget Filtering</h3>
-                <p className="text-sm text-gray-600">See products and services within your price range</p>
+                <h3 className="font-semibold text-[var(--text-primary)]">Budget Filtering</h3>
+                <p className="text-sm text-[var(--text-secondary)]">See products and services within your price range</p>
               </div>
             </div>
 
@@ -93,15 +93,15 @@ export default function AIUpgradeModal({
                 <FaFilter className="w-4 h-4 text-orange-600" />
               </div>
               <div>
-                <h3 className="font-semibold text-gray-900">Smart Curation</h3>
-                <p className="text-sm text-gray-600">Skip the overwhelm - see only what fits your project</p>
+                <h3 className="font-semibold text-[var(--text-primary)]">Smart Curation</h3>
+                <p className="text-sm text-[var(--text-secondary)]">Skip the overwhelm - see only what fits your project</p>
               </div>
             </div>
           </div>
 
           {/* Call to Action */}
           <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-4 mb-6">
-            <p className="text-center text-sm text-gray-700 mb-4">
+            <p className="text-center text-sm text-[var(--text-primary)] mb-4">
               <strong>Ready to level up your design process?</strong><br />
               Turn on Folio AI to unlock personalized guidance and designer matches.
             </p>
@@ -111,7 +111,7 @@ export default function AIUpgradeModal({
           <div className="flex gap-3">
             <button
               onClick={onClose}
-              className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors font-medium"
+              className="flex-1 px-6 py-3 border border-[var(--ridge-outer)] text-[var(--text-primary)] rounded-xl hover:bg-[var(--bg-elevated)] transition-colors font-medium"
             >
               Keep browsing
             </button>

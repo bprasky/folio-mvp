@@ -214,10 +214,10 @@ export default function EventFeed({
         
         return (
           <div key={i} className={`bg-white rounded-xl shadow-sm border border-gray-100 animate-pulse overflow-hidden ${spanClass}`}>
-            <div className="w-full h-48 bg-gray-200"></div>
+            <div className="w-full h-48 bg-[var(--bg-elevated)]"></div>
             <div className="p-4 space-y-3">
-              <div className="h-4 bg-gray-200 rounded"></div>
-              <div className="h-3 bg-gray-200 rounded"></div>
+              <div className="h-4 bg-[var(--bg-elevated)] rounded"></div>
+              <div className="h-3 bg-[var(--bg-elevated)] rounded"></div>
             </div>
           </div>
         );
@@ -329,8 +329,8 @@ export default function EventFeed({
         <div className="w-full max-w-7xl mx-auto py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <h2 className="text-lg font-semibold text-gray-900">Events</h2>
-              <span className="text-sm text-gray-500">
+              <h2 className="text-lg font-semibold text-[var(--text-primary)]">Events</h2>
+              <span className="text-sm text-[var(--text-secondary)]">
                 {filteredEvents.length} event{filteredEvents.length !== 1 ? 's' : ''}
               </span>
             </div>
@@ -340,7 +340,7 @@ export default function EventFeed({
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as SortOption)}
-                className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-folio-accent/20"
+                className="px-3 py-2 text-sm border border-[var(--ridge-outer)] rounded-lg focus:outline-none focus:ring-2 focus:ring-folio-accent/20"
               >
                 <option value="default">Most Buzz</option>
                 <option value="trending">Trending</option>
@@ -352,7 +352,7 @@ export default function EventFeed({
               {/* Filter Toggle */}
               <button
                 onClick={() => setFiltersVisible(!filtersVisible)}
-                className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors"
+                className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-[var(--text-primary)] bg-[var(--bg-elevated)] hover:bg-[var(--bg-elevated)] rounded-lg border border-[var(--ridge-outer)] transition-colors"
               >
                 <FaFilter className="w-4 h-4" />
                 <span>Filters</span>
@@ -363,7 +363,7 @@ export default function EventFeed({
           
           {/* Filter Summary */}
           <div className="mt-2">
-            <span className="text-sm text-gray-600">
+            <span className="text-sm text-[var(--text-secondary)]">
               Showing: <span className="font-medium">{getFilterSummary()}</span>
             </span>
           </div>
@@ -394,18 +394,18 @@ export default function EventFeed({
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto px-4">
               {[...Array(6)].map((_, i) => (
                 <div key={i} className="bg-white rounded-xl shadow-sm border border-gray-100 animate-pulse overflow-hidden">
-                  <div className="w-full h-48 bg-gray-200"></div>
+                  <div className="w-full h-48 bg-[var(--bg-elevated)]"></div>
                   <div className="p-6 space-y-3">
                     <div className="flex flex-wrap gap-2 mb-2">
-                      <div className="w-16 h-6 bg-gray-200 rounded-full"></div>
-                      <div className="w-20 h-6 bg-gray-200 rounded-full"></div>
+                      <div className="w-16 h-6 bg-[var(--bg-elevated)] rounded-full"></div>
+                      <div className="w-20 h-6 bg-[var(--bg-elevated)] rounded-full"></div>
                     </div>
-                    <div className="h-6 bg-gray-200 rounded mb-2"></div>
-                    <div className="h-4 bg-gray-200 rounded mb-4"></div>
+                    <div className="h-6 bg-[var(--bg-elevated)] rounded mb-2"></div>
+                    <div className="h-4 bg-[var(--bg-elevated)] rounded mb-4"></div>
                     <div className="space-y-2">
-                      <div className="h-4 bg-gray-200 rounded"></div>
-                      <div className="h-4 bg-gray-200 rounded"></div>
-                      <div className="h-4 bg-gray-200 rounded"></div>
+                      <div className="h-4 bg-[var(--bg-elevated)] rounded"></div>
+                      <div className="h-4 bg-[var(--bg-elevated)] rounded"></div>
+                      <div className="h-4 bg-[var(--bg-elevated)] rounded"></div>
                     </div>
                   </div>
                 </div>
@@ -416,10 +416,10 @@ export default function EventFeed({
           <div className="w-full flex items-center justify-center py-16">
             <div className="max-w-md mx-auto text-center">
               <div className="text-6xl mb-6">🎭</div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-4">
+              <h3 className="text-2xl font-bold text-[var(--text-primary)] mb-4">
                 {eventTypeFilter !== 'all' || festivalFilter ? 'No events match your filters' : 'No events yet'}
               </h3>
-              <p className="text-gray-600 mb-8">
+              <p className="text-[var(--text-secondary)] mb-8">
                 {eventTypeFilter !== 'all' || festivalFilter 
                   ? 'Try widening your search filters or check back soon!'
                   : 'We\'re working hard to bring you amazing design events. Check back soon!'
@@ -443,7 +443,7 @@ export default function EventFeed({
                     Sign In to Get Notified
                   </a>
                 )}
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-[var(--text-secondary)]">
                   Join our community to be the first to know about new events.
                 </p>
               </div>
@@ -452,7 +452,7 @@ export default function EventFeed({
         ) : (
           <>
             {filteredEvents.length === 0 && (
-              <div className="text-gray-500 col-span-full text-center mt-8">
+              <div className="text-[var(--text-secondary)] col-span-full text-center mt-8">
                 No events match your filters.
               </div>
             )}

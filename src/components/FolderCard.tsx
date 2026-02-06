@@ -37,12 +37,12 @@ export const FolderCard: React.FC<FolderCardProps> = ({
             />
           </div>
           <div className="ml-3">
-            <p className="text-sm font-medium text-gray-900">{designer.name}</p>
-            <p className="text-xs text-gray-600">{productCount} products</p>
+            <p className="text-sm font-medium text-[var(--text-primary)]">{designer.name}</p>
+            <p className="text-xs text-[var(--text-secondary)]">{productCount} products</p>
           </div>
         </div>
 
-        <h3 className="text-lg font-semibold text-gray-800 mb-3">{name}</h3>
+        <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-3">{name}</h3>
 
         {previewImages.length > 0 && (
           <div className="grid grid-cols-2 gap-2">

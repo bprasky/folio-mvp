@@ -95,7 +95,7 @@ export default function VendorDashboardV2() {
       <div className="min-h-screen bg-[var(--bg-elevated)] flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--accent)] mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading your command center...</p>
+          <p className="mt-4 text-[var(--text-secondary)]">Loading your command center...</p>
         </div>
       </div>
     );
@@ -108,10 +108,10 @@ export default function VendorDashboardV2() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">
+              <h1 className="text-3xl font-bold text-[var(--text-primary)]">
                 Welcome back, {user?.name}
               </h1>
-              <p className="text-gray-600 mt-1">
+              <p className="text-[var(--text-secondary)] mt-1">
                 Here's your current pipeline at a glance
               </p>
             </div>
@@ -147,8 +147,8 @@ export default function VendorDashboardV2() {
                 <FaChartLine className="text-[var(--accent)]" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Active Projects</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.activeProjects}</p>
+                <p className="text-sm font-medium text-[var(--text-secondary)]">Active Projects</p>
+                <p className="text-2xl font-bold text-[var(--text-primary)]">{stats.activeProjects}</p>
               </div>
             </div>
           </div>
@@ -159,8 +159,8 @@ export default function VendorDashboardV2() {
                 <FaUsers className="text-green-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Sent to Designers</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.projectsSentToDesigners}</p>
+                <p className="text-sm font-medium text-[var(--text-secondary)]">Sent to Designers</p>
+                <p className="text-2xl font-bold text-[var(--text-primary)]">{stats.projectsSentToDesigners}</p>
               </div>
             </div>
           </div>
@@ -171,8 +171,8 @@ export default function VendorDashboardV2() {
                 <FaCheckCircle className="text-purple-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Claimed by Designers</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.projectsClaimedByDesigners}</p>
+                <p className="text-sm font-medium text-[var(--text-secondary)]">Claimed by Designers</p>
+                <p className="text-2xl font-bold text-[var(--text-primary)]">{stats.projectsClaimedByDesigners}</p>
               </div>
             </div>
           </div>
@@ -183,8 +183,8 @@ export default function VendorDashboardV2() {
                 <FaBell className="text-yellow-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Open Follow-ups</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.openFollowUps}</p>
+                <p className="text-sm font-medium text-[var(--text-secondary)]">Open Follow-ups</p>
+                <p className="text-2xl font-bold text-[var(--text-primary)]">{stats.openFollowUps}</p>
               </div>
             </div>
           </div>
@@ -195,8 +195,8 @@ export default function VendorDashboardV2() {
                 <FaCalendarAlt className="text-emerald-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Recent Wins</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.recentWins}</p>
+                <p className="text-sm font-medium text-[var(--text-secondary)]">Recent Wins</p>
+                <p className="text-2xl font-bold text-[var(--text-primary)]">{stats.recentWins}</p>
               </div>
             </div>
           </div>

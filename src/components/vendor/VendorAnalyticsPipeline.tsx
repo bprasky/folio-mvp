@@ -67,18 +67,18 @@ export default function VendorAnalyticsPipeline({
               <div key={stage.key} className="space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <stage.icon className="h-4 w-4 text-gray-600" />
+                    <stage.icon className="h-4 w-4 text-[var(--text-secondary)]" />
                     <span className="text-sm font-medium">{stage.label}</span>
                   </div>
                   <Badge variant="secondary">{stage.count}</Badge>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
+                <div className="w-full bg-[var(--bg-elevated)] rounded-full h-2">
                   <div 
                     className={`h-2 rounded-full ${stage.color} transition-all duration-300`}
                     style={{ width: `${percentage}%` }}
                   />
                 </div>
-                <p className="text-xs text-gray-500">{stage.description}</p>
+                <p className="text-xs text-[var(--text-secondary)]">{stage.description}</p>
               </div>
             );
           })}

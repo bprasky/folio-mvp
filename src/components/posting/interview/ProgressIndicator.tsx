@@ -8,7 +8,7 @@ interface ProgressIndicatorProps {
 export function ProgressIndicator({ current, total }: ProgressIndicatorProps) {
   return (
     <div className="text-center py-2">
-      <p className="text-sm text-gray-400">
+      <p className="text-sm text-[var(--text-tertiary)]">
         Question {current} of {total}
       </p>
     </div>

@@ -264,8 +264,8 @@ const Navigation = () => {
         </div>
         {/* Placeholder for Sign In button slot to avoid layout jump */}
         <div className="mt-6 pt-6 border-t border-folio-border">
-          <div className="p-3 rounded-lg bg-gray-100 animate-pulse">
-            <div className="h-4 bg-gray-200 rounded w-24"></div>
+          <div className="p-3 rounded-lg bg-[var(--bg-elevated)] animate-pulse">
+            <div className="h-4 bg-[var(--bg-elevated)] rounded w-24"></div>
           </div>
         </div>
       </div>
@@ -535,7 +535,7 @@ const Navigation = () => {
               <p className="text-sm font-medium text-folio-text truncate">{session.user.name || session.user.email}</p>
               <p className="text-xs text-folio-system capitalize">{session.user.role}</p>
               {/* Debug role indicator */}
-              <p className="text-xs text-gray-400">Detected: {role}</p>
+              <p className="text-xs text-[var(--text-tertiary)]">Detected: {role}</p>
             </div>
           </Link>
           

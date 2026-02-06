@@ -297,7 +297,7 @@ export default function SaveSelectionToProjectModal({
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
-                  <Package className="h-8 w-8 text-gray-400" />
+                  <Package className="h-8 w-8 text-[var(--text-tertiary)]" />
                 </div>
               )}
             </div>

@@ -165,7 +165,7 @@ export default function VendorVisitCreator({ vendorId }: VisitCreatorProps) {
                 </div>
                 
                 {createdVisit.expiresAt && (
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <div className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
                     <Calendar className="h-4 w-4" />
                     Expires: {new Date(createdVisit.expiresAt).toLocaleString()}
                   </div>

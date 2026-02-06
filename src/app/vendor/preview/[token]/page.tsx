@@ -118,10 +118,10 @@ export default async function VendorPreviewPage({ params }: VendorPreviewPagePro
       <div className="container mx-auto px-4 py-12">
         {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+          <h1 className="text-4xl font-bold text-[var(--text-primary)] mb-4">
             Your Product Was Featured in a Folio Project
           </h1>
-          <p className="text-xl text-gray-600">
+          <p className="text-xl text-[var(--text-secondary)]">
             A verified Folio designer has featured your product in their project
           </p>
         </div>
@@ -132,10 +132,10 @@ export default async function VendorPreviewPage({ params }: VendorPreviewPagePro
             <div className="bg-white rounded-2xl shadow-xl p-8">
               <h2 className="text-2xl font-bold mb-4">{product.name}</h2>
               {product.brand && (
-                <p className="text-gray-600 mb-4">{product.brand}</p>
+                <p className="text-[var(--text-secondary)] mb-4">{product.brand}</p>
               )}
               {product.description && (
-                <p className="text-gray-700 mb-6">{product.description}</p>
+                <p className="text-[var(--text-primary)] mb-6">{product.description}</p>
               )}
 
               {productImages.length > 0 && (
@@ -151,7 +151,7 @@ export default async function VendorPreviewPage({ params }: VendorPreviewPagePro
 
               {product.price && (
                 <div className="mb-4">
-                  <span className="text-sm text-gray-500">Price</span>
+                  <span className="text-sm text-[var(--text-secondary)]">Price</span>
                   <p className="text-2xl font-bold">
                     {product.priceCurrency || "$"}
                     {product.price.toLocaleString()}
@@ -167,7 +167,7 @@ export default async function VendorPreviewPage({ params }: VendorPreviewPagePro
                 {project.title || "Untitled Project"}
               </h3>
               {project.description && (
-                <p className="text-gray-600 mb-6">{project.description}</p>
+                <p className="text-[var(--text-secondary)] mb-6">{project.description}</p>
               )}
 
               {project.designer && (
@@ -185,7 +185,7 @@ export default async function VendorPreviewPage({ params }: VendorPreviewPagePro
                   <div>
                     <p className="font-medium">{project.designer.name}</p>
                     {project.designer.companyName && (
-                      <p className="text-sm text-gray-600">{project.designer.companyName}</p>
+                      <p className="text-sm text-[var(--text-secondary)]">{project.designer.companyName}</p>
                     )}
                   </div>
                 </div>
@@ -212,7 +212,7 @@ export default async function VendorPreviewPage({ params }: VendorPreviewPagePro
           {/* Call to Action Section */}
           <div className="bg-white rounded-2xl shadow-xl p-8">
             <h2 className="text-2xl font-bold mb-4">Next Steps</h2>
-            <p className="text-gray-600 mb-6">
+            <p className="text-[var(--text-secondary)] mb-6">
               Claim this product to complete its specifications and connect with designers using your products.
             </p>
 
@@ -225,7 +225,7 @@ export default async function VendorPreviewPage({ params }: VendorPreviewPagePro
 
             <div className="mt-8 pt-8 border-t">
               <h3 className="font-semibold mb-4">What you can do:</h3>
-              <ul className="space-y-2 text-gray-600">
+              <ul className="space-y-2 text-[var(--text-secondary)]">
                 <li className="flex items-start gap-2">
                   <span className="text-[var(--accent)]">✓</span>
                   <span>Claim the product and complete its specifications</span>
@@ -243,7 +243,7 @@ export default async function VendorPreviewPage({ params }: VendorPreviewPagePro
 
             <div className="mt-6">
               <button
-                className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition"
+                className="px-6 py-3 bg-[var(--bg-elevated)] text-[var(--text-primary)] rounded-lg font-medium hover:bg-[var(--text-tertiary)]/20 transition"
                 disabled
               >
                 Boost this post (Coming soon)

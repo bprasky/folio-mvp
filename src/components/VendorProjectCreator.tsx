@@ -57,36 +57,36 @@ export default function VendorProjectCreator(props: any) {
   return (
     <div className="max-w-2xl mx-auto p-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Create New Project</h1>
-        <p className="text-gray-600">Start a new project and add rooms to organize your work.</p>
+        <h1 className="text-2xl font-bold text-[var(--text-primary)] mb-2">Create New Project</h1>
+        <p className="text-[var(--text-secondary)]">Start a new project and add rooms to organize your work.</p>
       </div>
 
       <form onSubmit={onSubmit} className="space-y-6">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Project name *</label>
+          <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">Project name *</label>
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="e.g., Smith Residence"
-            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+            className="mt-1 w-full rounded-md border border-[var(--ridge-outer)] px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
             required
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Rooms (optional)</label>
+          <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">Rooms (optional)</label>
           <div className="flex gap-2 mt-1">
             <input
               value={newRoom}
               onChange={(e) => setNewRoom(e.target.value)}
               placeholder="e.g., Kitchen"
-              className="flex-1 rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+              className="flex-1 rounded-md border border-[var(--ridge-outer)] px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
               onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addRoom())}
             />
             <button 
               type="button" 
               onClick={addRoom} 
-              className="rounded-md border border-gray-300 px-4 py-2 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+              className="rounded-md border border-[var(--ridge-outer)] px-4 py-2 hover:bg-[var(--bg-elevated)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
             >
               Add
             </button>
@@ -94,7 +94,7 @@ export default function VendorProjectCreator(props: any) {
           {!!rooms.length && (
             <ul className="mt-2 space-y-1">
               {rooms.map((r, i) => (
-                <li key={`${r}-${i}`} className="flex items-center justify-between text-sm bg-gray-50 px-3 py-2 rounded">
+                <li key={`${r}-${i}`} className="flex items-center justify-between text-sm bg-[var(--bg-elevated)] px-3 py-2 rounded">
                   <span>{r}</span>
                   <button 
                     type="button" 
@@ -110,12 +110,12 @@ export default function VendorProjectCreator(props: any) {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Notes (optional)</label>
+          <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">Notes (optional)</label>
           <textarea
             value={note}
             onChange={(e) => setNote(e.target.value)}
             placeholder="Context for the designer"
-            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+            className="mt-1 w-full rounded-md border border-[var(--ridge-outer)] px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
             rows={3}
           />
         </div>
@@ -126,11 +126,11 @@ export default function VendorProjectCreator(props: any) {
           <button
             type="submit"
             disabled={submitting}
-            className="rounded-lg px-6 py-2 bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)] disabled:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+            className="rounded-lg px-6 py-2 bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)] disabled:bg-[var(--text-tertiary)]/40 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
           >
             {submitting ? "Creating…" : "Create Project"}
           </button>
-          <span className="text-xs text-gray-500">
+          <span className="text-xs text-[var(--text-secondary)]">
             You'll add products and hand off after this step.
           </span>
         </div>

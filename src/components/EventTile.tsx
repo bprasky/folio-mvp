@@ -106,7 +106,7 @@ export default function EventTile({
             />
           ) : (
             <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
-              <div className="text-gray-400 text-center">
+              <div className="text-[var(--text-tertiary)] text-center">
                 <div className="text-3xl mb-2">🎭</div>
                 <div className="text-xs">No Image</div>
               </div>
@@ -144,13 +144,13 @@ export default function EventTile({
         {/* Content */}
         <div className="p-4 space-y-3">
           {/* Title */}
-          <h3 className={`${typography.title} text-gray-900 line-clamp-2 leading-tight`}>
+          <h3 className={`${typography.title} text-[var(--text-primary)] line-clamp-2 leading-tight`}>
             {event.title}
           </h3>
 
           {/* Description - only show for larger tiles */}
           {(size === 'XL' || size === 'L') && event.description && (
-            <p className={`${typography.description} text-gray-600 line-clamp-2`}>
+            <p className={`${typography.description} text-[var(--text-secondary)] line-clamp-2`}>
               {event.description}
             </p>
           )}
@@ -158,7 +158,7 @@ export default function EventTile({
           {/* Event Details */}
           <div className="space-y-2">
             {/* Date and Time */}
-            <div className="flex items-center text-gray-500">
+            <div className="flex items-center text-[var(--text-secondary)]">
               <FaCalendarAlt className={`${typography.date} mr-2 flex-shrink-0`} />
               <span className={`${typography.date}`}>
                 {formatDate(event.startDate.toString())}
@@ -167,7 +167,7 @@ export default function EventTile({
             </div>
 
             {/* Location */}
-            <div className="flex items-center text-gray-500">
+            <div className="flex items-center text-[var(--text-secondary)]">
               <FaMapMarkerAlt className={`${typography.location} mr-2 flex-shrink-0`} />
               <span className={`${typography.location} line-clamp-1`}>
                 {event.location}
@@ -176,7 +176,7 @@ export default function EventTile({
 
             {/* RSVP Count */}
             <div className="flex items-center justify-between">
-              <div className="flex items-center text-gray-500">
+              <div className="flex items-center text-[var(--text-secondary)]">
                 <FaUser className={`${typography.date} mr-2 flex-shrink-0`} />
                 <span className={`${typography.date}`}>
                   {rsvpCount} {rsvpCount === 1 ? 'RSVP' : 'RSVPs'}
@@ -184,7 +184,7 @@ export default function EventTile({
               </div>
               
               {/* Event Type Icon */}
-              <div className="flex items-center text-gray-400">
+              <div className="flex items-center text-[var(--text-tertiary)]">
                 <span className={`${typography.date} mr-1`}>
                   {getEventTypeIcon ? getEventTypeIcon(event.eventTypes?.[0] || 'other') : '🎭'}
                 </span>
@@ -215,7 +215,7 @@ export default function EventTile({
         >
           {isHovered && (
             <div className="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-lg shadow-lg">
-              <span className="text-sm font-medium text-gray-900">View Details</span>
+              <span className="text-sm font-medium text-[var(--text-primary)]">View Details</span>
             </div>
           )}
         </div>

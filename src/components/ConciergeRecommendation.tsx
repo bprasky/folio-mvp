@@ -70,7 +70,7 @@ export default function ConciergeRecommendation({
 
   return (
     <div className={clsx(
-      "fixed top-4 right-4 max-w-sm bg-white rounded-lg shadow-lg border border-gray-200 p-4 z-50 animate-in slide-in-from-right duration-300",
+      "fixed top-4 right-4 max-w-sm bg-white rounded-lg shadow-lg border border-[var(--ridge-outer)] p-4 z-50 animate-in slide-in-from-right duration-300",
       className
     )}>
       <div className="flex items-start space-x-3">
@@ -82,18 +82,18 @@ export default function ConciergeRecommendation({
         
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between">
-            <h3 className="text-sm font-semibold text-gray-900 mb-1">
+            <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-1">
               {message.title}
             </h3>
             <button
               onClick={handleDismiss}
-              className="flex-shrink-0 ml-2 text-gray-400 hover:text-gray-600 transition-colors"
+              className="flex-shrink-0 ml-2 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors"
             >
               <FaTimes className="w-4 h-4" />
             </button>
           </div>
           
-          <p className="text-sm text-gray-600 mb-3">
+          <p className="text-sm text-[var(--text-secondary)] mb-3">
             {message.message}
           </p>
           
@@ -109,7 +109,7 @@ export default function ConciergeRecommendation({
             
             <button
               onClick={handleDismiss}
-              className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
+              className="text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
             >
               Maybe later
             </button>
@@ -120,11 +120,11 @@ export default function ConciergeRecommendation({
       {/* Progress indicator for first-time users */}
       {isFirstTimeUser && (
         <div className="mt-3 pt-3 border-t border-gray-100">
-          <div className="flex items-center justify-between text-xs text-gray-500">
+          <div className="flex items-center justify-between text-xs text-[var(--text-secondary)]">
             <span>Getting started with Folio</span>
             <span>1 of 3</span>
           </div>
-          <div className="mt-1 w-full bg-gray-200 rounded-full h-1">
+          <div className="mt-1 w-full bg-[var(--bg-elevated)] rounded-full h-1">
             <div className="bg-folio-accent h-1 rounded-full" style={{ width: '33%' }}></div>
           </div>
         </div>

@@ -74,10 +74,10 @@ export default function EventFilters({
               <input
                 type="text"
                 placeholder="Search events..."
-                className="w-full pl-4 pr-10 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-folio-accent/20 focus:border-folio-accent/30 bg-gray-50"
+                className="w-full pl-4 pr-10 py-2 border border-[var(--ridge-outer)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-folio-accent/20 focus:border-folio-accent/30 bg-gray-50"
               />
               <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-                <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="h-4 w-4 text-[var(--text-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
               </div>
@@ -88,7 +88,7 @@ export default function EventFilters({
           <div className="relative">
             <button
               onClick={() => setIsExpanded(!isExpanded)}
-              className="flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-gray-300 transition-colors focus:outline-none focus:ring-2 focus:ring-folio-accent/20"
+              className="flex items-center px-4 py-2 text-sm font-medium text-[var(--text-primary)] bg-white border border-[var(--ridge-outer)] rounded-lg hover:bg-[var(--bg-elevated)] hover:border-[var(--ridge-outer)] transition-colors focus:outline-none focus:ring-2 focus:ring-folio-accent/20"
             >
               <FaFilter className="mr-2 h-4 w-4" />
               Sort & Filter
@@ -101,17 +101,17 @@ export default function EventFilters({
 
             {/* Dropdown Panel */}
             {isExpanded && (
-              <div className="absolute right-0 top-full mt-1 w-80 bg-white border border-gray-200 rounded-lg shadow-lg z-20">
+              <div className="absolute right-0 top-full mt-1 w-80 bg-white border border-[var(--ridge-outer)] rounded-lg shadow-lg z-20">
                 <div className="p-4 space-y-4">
                   {/* Festival Filter */}
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-2 uppercase tracking-wide">
+                    <label className="block text-xs font-medium text-[var(--text-primary)] mb-2 uppercase tracking-wide">
                       Festival
                     </label>
                     <select
                       value={festivalFilter || ''}
                       onChange={(e) => onFestivalChange(e.target.value || null)}
-                      className="w-full px-3 py-2 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-folio-accent/20 focus:border-folio-accent/30"
+                      className="w-full px-3 py-2 text-sm border border-[var(--ridge-outer)] rounded-md focus:outline-none focus:ring-2 focus:ring-folio-accent/20 focus:border-folio-accent/30"
                     >
                       <option value="">All Festivals</option>
                       {festivals.map((festival) => (
@@ -124,13 +124,13 @@ export default function EventFilters({
 
                   {/* Event Type Filter */}
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-2 uppercase tracking-wide">
+                    <label className="block text-xs font-medium text-[var(--text-primary)] mb-2 uppercase tracking-wide">
                       Event Type
                     </label>
                     <select
                       value={eventTypeFilter}
                       onChange={(e) => onEventTypeChange(e.target.value as EventTypeFilter)}
-                      className="w-full px-3 py-2 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-folio-accent/20 focus:border-folio-accent/30"
+                      className="w-full px-3 py-2 text-sm border border-[var(--ridge-outer)] rounded-md focus:outline-none focus:ring-2 focus:ring-folio-accent/20 focus:border-folio-accent/30"
                     >
                       {eventTypes.map((type) => (
                         <option key={type.value} value={type.value}>
@@ -142,13 +142,13 @@ export default function EventFilters({
 
                   {/* Sort Options */}
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-2 uppercase tracking-wide">
+                    <label className="block text-xs font-medium text-[var(--text-primary)] mb-2 uppercase tracking-wide">
                       Sort By
                     </label>
                     <select
                       value={sortBy}
                       onChange={(e) => onSortChange(e.target.value as SortOption)}
-                      className="w-full px-3 py-2 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-folio-accent/20 focus:border-folio-accent/30"
+                      className="w-full px-3 py-2 text-sm border border-[var(--ridge-outer)] rounded-md focus:outline-none focus:ring-2 focus:ring-folio-accent/20 focus:border-folio-accent/30"
                     >
                       {sortOptions.map((option) => (
                         <option key={option.value} value={option.value}>
@@ -160,7 +160,7 @@ export default function EventFilters({
 
                   {/* Active Filters Summary */}
                   <div className="pt-3 border-t border-gray-100">
-                    <div className="text-xs text-gray-500 space-y-1">
+                    <div className="text-xs text-[var(--text-secondary)] space-y-1">
                       <div>Festival: {getCurrentFestivalLabel()}</div>
                       <div>Type: {getCurrentEventTypeLabel()}</div>
                       <div>Sort: {getCurrentSortLabel()}</div>

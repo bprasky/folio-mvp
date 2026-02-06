@@ -19,7 +19,7 @@ export function DesignerTimelines({ journeys, onActionClick }: DesignerTimelines
       case 'touch': return 'bg-[var(--accent)]/10 text-blue-800 border-[var(--accent)]/20';
       case 'action': return 'bg-green-100 text-green-800 border-green-200';
       case 'outcome': return 'bg-purple-100 text-purple-800 border-purple-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+      default: return 'bg-[var(--bg-elevated)] text-[var(--text-primary)] border-[var(--ridge-outer)]';
     }
   };
 

@@ -87,13 +87,13 @@ export default function FolderPage() {
       <div className="min-h-screen bg-[var(--bg-elevated)] p-6">
         <div className="max-w-7xl mx-auto">
           <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded-lg w-1/3 mb-6"></div>
-            <div className="h-12 bg-gray-200 rounded-xl w-1/2 mb-8"></div>
+            <div className="h-8 bg-[var(--bg-elevated)] rounded-lg w-1/3 mb-6"></div>
+            <div className="h-12 bg-[var(--bg-elevated)] rounded-xl w-1/2 mb-8"></div>
             <div className="space-y-4">
-              <div className="h-6 bg-gray-200 rounded w-1/4"></div>
+              <div className="h-6 bg-[var(--bg-elevated)] rounded w-1/4"></div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className="bg-gray-200 rounded-xl h-32"></div>
+                  <div key={i} className="bg-[var(--bg-elevated)] rounded-xl h-32"></div>
                 ))}
               </div>
             </div>
@@ -107,7 +107,7 @@ export default function FolderPage() {
     return (
       <div className="min-h-screen bg-[var(--bg-elevated)] p-6">
         <div className="max-w-7xl mx-auto text-center py-12">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Folder not found</h1>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] mb-4">Folder not found</h1>
           <button
             onClick={() => router.push("/designer/folders")}
             className="px-4 py-2 bg-[var(--accent)] text-white rounded-lg hover:bg-[var(--accent-hover)] transition-colors"
@@ -122,7 +122,7 @@ export default function FolderPage() {
   return (
     <div className="min-h-screen bg-[var(--bg-elevated)]">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200">
+      <div className="bg-white border-b border-[var(--ridge-outer)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="py-6">
             <div className="flex items-center justify-between">
@@ -131,12 +131,12 @@ export default function FolderPage() {
                   onClick={() => router.push("/designer/folders")}
                   className="p-2 hover:bg-[var(--bg-elevated)] rounded-lg transition-colors"
                 >
-                  <ArrowLeft className="w-5 h-5 text-gray-600" />
+                  <ArrowLeft className="w-5 h-5 text-[var(--text-secondary)]" />
                 </button>
                 
                 <div>
-                  <h1 className="text-2xl font-bold text-gray-900">{folder.name}</h1>
-                  <p className="text-sm text-gray-500">
+                  <h1 className="text-2xl font-bold text-[var(--text-primary)]">{folder.name}</h1>
+                  <p className="text-sm text-[var(--text-secondary)]">
                     Created {new Date(folder.createdAt).toLocaleDateString()} • {folder.productCount} products
                   </p>
                 </div>
@@ -152,11 +152,11 @@ export default function FolderPage() {
                 </button>
 
                 <button className="p-2 hover:bg-[var(--bg-elevated)] rounded-lg transition-colors">
-                  <Share2 className="w-4 h-4 text-gray-600" />
+                  <Share2 className="w-4 h-4 text-[var(--text-secondary)]" />
                 </button>
 
                 <button className="p-2 hover:bg-[var(--bg-elevated)] rounded-lg transition-colors">
-                  <Edit3 className="w-4 h-4 text-gray-600" />
+                  <Edit3 className="w-4 h-4 text-[var(--text-secondary)]" />
                 </button>
 
                 <button

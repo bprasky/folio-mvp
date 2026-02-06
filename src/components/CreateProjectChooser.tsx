@@ -30,7 +30,7 @@ export default function CreateProjectChooser({
 
         <div className="mt-5 flex justify-end">
           <button 
-            className="text-sm text-gray-600 hover:text-gray-800 transition-colors" 
+            className="text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors" 
             onClick={onClose}
           >
             Cancel

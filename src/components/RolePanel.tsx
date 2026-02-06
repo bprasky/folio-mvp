@@ -173,7 +173,7 @@ export default function RolePanel() {
         animate={{ opacity: 1, y: 0 }}
         className="flex items-center justify-center p-12"
       >
-        <div className="flex items-center gap-3 text-gray-500">
+        <div className="flex items-center gap-3 text-[var(--text-secondary)]">
           <motion.div
             animate={{ rotate: 360 }}
             transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
@@ -200,10 +200,10 @@ export default function RolePanel() {
         transition={{ duration: 0.4, delay: 0.1 }}
         className="text-center mb-8"
       >
-        <h2 className="text-3xl font-bold text-gray-900 mb-2">
+        <h2 className="text-3xl font-bold text-[var(--text-primary)] mb-2">
           {currentRoleData.title}
         </h2>
-        <p className="text-gray-600 text-lg">
+        <p className="text-[var(--text-secondary)] text-lg">
           {currentRoleData.subtitle}
         </p>
       </motion.div>
@@ -217,7 +217,7 @@ export default function RolePanel() {
             <motion.button
               key={feature.label}
               onClick={feature.onClick}
-              className="group p-6 rounded-xl border border-gray-200 hover:shadow-lg transition-all duration-300 text-left bg-white hover:bg-gray-50"
+              className="group p-6 rounded-xl border border-[var(--ridge-outer)] hover:shadow-lg transition-all duration-300 text-left bg-white hover:bg-[var(--bg-elevated)]"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: 0.2 + (index * 0.1) }}
@@ -231,11 +231,11 @@ export default function RolePanel() {
                 <Icon className="w-6 h-6 text-white" />
               </motion.div>
               
-              <h3 className="font-semibold text-gray-900 mb-2 group-hover:text-gray-700 transition-colors">
+              <h3 className="font-semibold text-[var(--text-primary)] mb-2 group-hover:text-[var(--text-primary)] transition-colors">
                 {feature.label}
               </h3>
               
-              <p className="text-sm text-gray-600 group-hover:text-gray-500 transition-colors">
+              <p className="text-sm text-[var(--text-secondary)] group-hover:text-[var(--text-secondary)] transition-colors">
                 {feature.description}
               </p>
               
@@ -256,9 +256,9 @@ export default function RolePanel() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.4, delay: 0.6 }}
-        className="mt-8 pt-6 border-t border-gray-200 text-center"
+        className="mt-8 pt-6 border-t border-[var(--ridge-outer)] text-center"
       >
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-[var(--text-secondary)]">
           Your role is determined by your account type. Contact support to change your role.
         </p>
       </motion.div>

@@ -34,7 +34,7 @@ export function ExtractedItemCard({
     <div
       className={`
         border rounded-lg p-4 transition-all
-        ${selected ? 'border-stone-400 bg-stone-50' : 'border-gray-200'}
+        ${selected ? 'border-stone-400 bg-stone-50' : 'border-[var(--ridge-outer)]'}
         ${loading ? 'opacity-60' : ''}
       `}
     >
@@ -46,12 +46,12 @@ export function ExtractedItemCard({
           checked={selected}
           onChange={onToggle}
           disabled={loading}
-          className="mt-1 h-5 w-5 rounded border-gray-300 text-stone-600 focus:ring-stone-500"
+          className="mt-1 h-5 w-5 rounded border-[var(--ridge-outer)] text-stone-600 focus:ring-stone-500"
         />
 
         {/* Image thumbnail */}
         {hasImage && (
-          <div className="w-24 h-24 flex-shrink-0 rounded overflow-hidden bg-gray-100">
+          <div className="w-24 h-24 flex-shrink-0 rounded overflow-hidden bg-[var(--bg-elevated)]">
             <img
               src={`data:image/png;base64,${item.imageData}`}
               alt=""
@@ -68,17 +68,17 @@ export function ExtractedItemCard({
             <div>
               {isSpecification && !showAsInspiration ? (
                 <>
-                  <p className="font-medium text-gray-900">
+                  <p className="font-medium text-[var(--text-primary)]">
                     {item.productName || 'Unknown Product'}
                   </p>
                   {item.brand && (
-                    <p className="text-sm text-gray-600">{item.brand}</p>
+                    <p className="text-sm text-[var(--text-secondary)]">{item.brand}</p>
                   )}
                 </>
               ) : (
                 <>
-                  <p className="font-medium text-gray-900">Inspiration Image</p>
-                  <p className="text-sm text-gray-600 line-clamp-2">
+                  <p className="font-medium text-[var(--text-primary)]">Inspiration Image</p>
+                  <p className="text-sm text-[var(--text-secondary)] line-clamp-2">
                     {item.searchQuery || item.description || 'No description'}
                   </p>
                 </>
@@ -87,7 +87,7 @@ export function ExtractedItemCard({
 
             {/* Price badge */}
             {item.price && (
-              <span className="text-sm font-medium text-gray-900 whitespace-nowrap">
+              <span className="text-sm font-medium text-[var(--text-primary)] whitespace-nowrap">
                 ${(item.price / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
             )}
@@ -117,7 +117,7 @@ export function ExtractedItemCard({
           {/* Confidence indicator */}
           <div className="mt-2">
             <ConfidenceBadge confidence={item.confidence} />
-            <span className="ml-2 text-xs text-gray-500">
+            <span className="ml-2 text-xs text-[var(--text-secondary)]">
               Page {item.page}
             </span>
           </div>
@@ -145,14 +145,14 @@ export function ExtractedItemCard({
             )}
 
             {showAsInspiration && (
-              <span className="text-sm text-gray-500">
+              <span className="text-sm text-[var(--text-secondary)]">
                 Will save as searchable placeholder
               </span>
             )}
 
             <button
               onClick={() => setExpanded(!expanded)}
-              className="text-sm text-gray-500 hover:text-gray-700 ml-auto"
+              className="text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] ml-auto"
             >
               {expanded ? 'Less' : 'Details'}
             </button>
@@ -178,7 +178,7 @@ function FieldBadge({ label, filled }: { label: string; filled: boolean }) {
         text-xs px-2 py-0.5 rounded
         ${filled
           ? 'bg-green-100 text-green-700'
-          : 'bg-gray-100 text-gray-500'
+          : 'bg-[var(--bg-elevated)] text-[var(--text-secondary)]'
         }
       `}
     >
@@ -191,7 +191,7 @@ function ConfidenceBadge({ confidence }: { confidence: ExtractedItem['confidence
   const styles = {
     high: 'bg-green-100 text-green-700',
     medium: 'bg-yellow-100 text-yellow-700',
-    low: 'bg-gray-100 text-gray-600'
+    low: 'bg-[var(--bg-elevated)] text-[var(--text-secondary)]'
   }
 
   const labels = {
@@ -248,8 +248,8 @@ function ItemDetails({ item }: { item: ExtractedItem }) {
       )}
       {item.sourceText.length > 0 && (
         <div className="text-xs">
-          <span className="font-medium text-gray-500">Source text:</span>
-          <pre className="mt-1 p-2 bg-gray-50 rounded text-gray-600 whitespace-pre-wrap text-xs">
+          <span className="font-medium text-[var(--text-secondary)]">Source text:</span>
+          <pre className="mt-1 p-2 bg-[var(--bg-elevated)] rounded text-[var(--text-secondary)] whitespace-pre-wrap text-xs">
             {item.sourceText.join('\n')}
           </pre>
         </div>
@@ -261,8 +261,8 @@ function ItemDetails({ item }: { item: ExtractedItem }) {
 function DetailRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="flex text-sm">
-      <span className="font-medium text-gray-500 w-24 flex-shrink-0">{label}:</span>
-      <span className="text-gray-900">{value}</span>
+      <span className="font-medium text-[var(--text-secondary)] w-24 flex-shrink-0">{label}:</span>
+      <span className="text-[var(--text-primary)]">{value}</span>
     </div>
   )
 }

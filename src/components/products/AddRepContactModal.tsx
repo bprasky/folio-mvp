@@ -106,12 +106,12 @@ export default function AddRepContactModal({
       <div className="relative bg-white rounded-lg shadow-xl w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b">
-          <h3 className="text-lg font-semibold text-gray-900">
+          <h3 className="text-lg font-semibold text-[var(--text-primary)]">
             Add Rep Contact
           </h3>
           <button
             onClick={onClose}
-            className="p-1 text-gray-400 hover:text-gray-600"
+            className="p-1 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
           >
             <FaTimes className="w-5 h-5" />
           </button>
@@ -121,38 +121,38 @@ export default function AddRepContactModal({
         <form onSubmit={handleSubmit} className="p-4 space-y-4">
           {/* Vendor Name (read-only) */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">
               Vendor / Brand
             </label>
             <input
               type="text"
               value={vendorName}
               disabled
-              className="w-full border border-gray-200 bg-gray-50 rounded-md px-3 py-2 text-gray-600"
+              className="w-full border border-[var(--ridge-outer)] bg-[var(--bg-elevated)] rounded-md px-3 py-2 text-[var(--text-secondary)]"
             />
           </div>
 
           {/* Rep Name */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">
               Rep Name *
             </label>
             <div className="relative">
-              <FaUser className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <FaUser className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)] w-4 h-4" />
               <input
                 type="text"
                 value={formData.repName}
                 onChange={(e) => handleInputChange('repName', e.target.value)}
                 placeholder="John Smith"
                 required
-                className="w-full border border-gray-300 rounded-md pl-10 pr-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                className="w-full border border-[var(--ridge-outer)] rounded-md pl-10 pr-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
               />
             </div>
           </div>
 
           {/* Rep Title */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">
               Title
             </label>
             <input
@@ -160,53 +160,53 @@ export default function AddRepContactModal({
               value={formData.repTitle}
               onChange={(e) => handleInputChange('repTitle', e.target.value)}
               placeholder="Territory Sales Rep"
-              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+              className="w-full border border-[var(--ridge-outer)] rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
             />
           </div>
 
           {/* Email */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">
               Email
             </label>
             <div className="relative">
-              <FaEnvelope className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <FaEnvelope className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)] w-4 h-4" />
               <input
                 type="email"
                 value={formData.repEmail}
                 onChange={(e) => handleInputChange('repEmail', e.target.value)}
                 placeholder="john@vendor.com"
-                className="w-full border border-gray-300 rounded-md pl-10 pr-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                className="w-full border border-[var(--ridge-outer)] rounded-md pl-10 pr-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
               />
             </div>
           </div>
 
           {/* Phone */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">
               Phone
             </label>
             <div className="relative">
-              <FaPhone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <FaPhone className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)] w-4 h-4" />
               <input
                 type="tel"
                 value={formData.repPhone}
                 onChange={(e) => handleInputChange('repPhone', e.target.value)}
                 placeholder="(555) 123-4567"
-                className="w-full border border-gray-300 rounded-md pl-10 pr-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                className="w-full border border-[var(--ridge-outer)] rounded-md pl-10 pr-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
               />
             </div>
           </div>
 
           {/* Preferred Contact */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">
               Preferred Contact Method
             </label>
             <select
               value={formData.preferredContact}
               onChange={(e) => handleInputChange('preferredContact', e.target.value)}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+              className="w-full border border-[var(--ridge-outer)] rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
             >
               <option value="email">Email</option>
               <option value="phone">Phone</option>
@@ -221,9 +221,9 @@ export default function AddRepContactModal({
                 type="checkbox"
                 checked={formData.hasTradeAccount}
                 onChange={(e) => handleInputChange('hasTradeAccount', e.target.checked)}
-                className="w-4 h-4 text-amber-600 border-gray-300 rounded focus:ring-amber-500"
+                className="w-4 h-4 text-amber-600 border-[var(--ridge-outer)] rounded focus:ring-amber-500"
               />
-              <span className="text-sm font-medium text-gray-700">
+              <span className="text-sm font-medium text-[var(--text-primary)]">
                 I have a trade account with this vendor
               </span>
             </label>
@@ -231,7 +231,7 @@ export default function AddRepContactModal({
             {formData.hasTradeAccount && (
               <div className="mt-3 space-y-3 pl-6">
                 <div>
-                  <label className="block text-sm text-gray-600 mb-1">
+                  <label className="block text-sm text-[var(--text-secondary)] mb-1">
                     Account Number
                   </label>
                   <input
@@ -239,11 +239,11 @@ export default function AddRepContactModal({
                     value={formData.tradeAccountNumber}
                     onChange={(e) => handleInputChange('tradeAccountNumber', e.target.value)}
                     placeholder="TA-123456"
-                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                    className="w-full border border-[var(--ridge-outer)] rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm text-gray-600 mb-1">
+                  <label className="block text-sm text-[var(--text-secondary)] mb-1">
                     Trade Discount (%)
                   </label>
                   <div className="relative">
@@ -255,9 +255,9 @@ export default function AddRepContactModal({
                       value={formData.tradeDiscount}
                       onChange={(e) => handleInputChange('tradeDiscount', e.target.value)}
                       placeholder="40"
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                      className="w-full border border-[var(--ridge-outer)] rounded-md px-3 py-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                     />
-                    <FaPercent className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-3 h-3" />
+                    <FaPercent className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)] w-3 h-3" />
                   </div>
                 </div>
               </div>
@@ -266,7 +266,7 @@ export default function AddRepContactModal({
 
           {/* Notes */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">
               Notes
             </label>
             <textarea
@@ -274,7 +274,7 @@ export default function AddRepContactModal({
               onChange={(e) => handleInputChange('notes', e.target.value)}
               placeholder="Any notes about this rep or your relationship..."
               rows={2}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+              className="w-full border border-[var(--ridge-outer)] rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
             />
           </div>
 
@@ -290,7 +290,7 @@ export default function AddRepContactModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
+              className="flex-1 px-4 py-2 border border-[var(--ridge-outer)] text-[var(--text-primary)] rounded-md hover:bg-[var(--bg-elevated)]"
             >
               Cancel
             </button>

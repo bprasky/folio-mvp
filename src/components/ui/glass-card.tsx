@@ -14,7 +14,7 @@ const GlassCard = forwardRef<HTMLDivElement, GlassCardProps>(
       default: "bg-white/80 backdrop-blur-lg border border-white/30 shadow-lg",
       subtle: "bg-white/50 backdrop-blur-md border border-white/20 shadow-md",
       strong: "bg-white/90 backdrop-blur-xl border border-white/30 shadow-2xl",
-      solid: "bg-white border border-gray-200/50 shadow-lg",
+      solid: "bg-white border border-[var(--ridge-outer)]/50 shadow-lg",
     };
     
     const paddings = {

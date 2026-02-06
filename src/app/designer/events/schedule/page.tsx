@@ -105,7 +105,7 @@ export default function DesignerEventsSchedule() {
                 </Link>
                 <Link
                   href="/designer"
-                  className="px-6 py-3 bg-[var(--bg-elevated)] text-folio-text rounded-lg hover:bg-gray-200 transition-colors"
+                  className="px-6 py-3 bg-[var(--bg-elevated)] text-folio-text rounded-lg hover:bg-[var(--bg-elevated)] transition-colors"
                 >
                   Designer Dashboard
                 </Link>

@@ -467,7 +467,7 @@ export default function ProductForm({
               placeholder="https://example.com/product"
               value={formData.url}
               onChange={(e) => handleInputChange('url', e.target.value)}
-              className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+              className="flex-1 border border-[var(--ridge-outer)] rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
             />
             <button
               type="button"
@@ -592,7 +592,7 @@ export default function ProductForm({
       {/* Form Fields */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="md:col-span-2">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">
             Product Name *
           </label>
           <input
@@ -601,12 +601,12 @@ export default function ProductForm({
             onChange={(e) => handleInputChange('name', e.target.value)}
             placeholder="Enter product name"
             required
-            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+            className="w-full border border-[var(--ridge-outer)] rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">
             SKU
           </label>
           <input
@@ -614,12 +614,12 @@ export default function ProductForm({
             value={formData.sku}
             onChange={(e) => handleInputChange('sku', e.target.value)}
             placeholder="Product SKU"
-            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+            className="w-full border border-[var(--ridge-outer)] rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">
             Brand
           </label>
           <input
@@ -627,12 +627,12 @@ export default function ProductForm({
             value={formData.brand}
             onChange={(e) => handleInputChange('brand', e.target.value)}
             placeholder="Brand name"
-            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+            className="w-full border border-[var(--ridge-outer)] rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">
             Vendor Name
           </label>
           <input
@@ -640,12 +640,12 @@ export default function ProductForm({
             value={formData.vendorName}
             onChange={(e) => handleInputChange('vendorName', e.target.value)}
             placeholder="Vendor or retailer name"
-            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+            className="w-full border border-[var(--ridge-outer)] rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">
             Price (cents)
           </label>
           <div className="flex gap-2">
@@ -654,12 +654,12 @@ export default function ProductForm({
               value={formData.priceCents}
               onChange={(e) => handleInputChange('priceCents', e.target.value)}
               placeholder="12900"
-              className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+              className="flex-1 border border-[var(--ridge-outer)] rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
             />
             <select
               value={formData.currency}
               onChange={(e) => handleInputChange('currency', e.target.value)}
-              className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+              className="border border-[var(--ridge-outer)] rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
             >
               <option value="USD">USD</option>
               <option value="EUR">EUR</option>
@@ -668,7 +668,7 @@ export default function ProductForm({
             </select>
           </div>
           {formData.priceCents && (
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-[var(--text-secondary)] mt-1">
               {formatPrice(formData.priceCents)}
             </p>
           )}
@@ -676,12 +676,12 @@ export default function ProductForm({
 
         {/* Dimensions Section */}
         <div className="md:col-span-2">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
             Dimensions (inches)
           </label>
           <div className="grid grid-cols-3 gap-3">
             <div>
-              <label className="block text-xs text-gray-500 mb-1">Width</label>
+              <label className="block text-xs text-[var(--text-secondary)] mb-1">Width</label>
               <input
                 type="number"
                 step="0.1"
@@ -691,11 +691,11 @@ export default function ProductForm({
                   widthIn: e.target.value ? Number(e.target.value) : undefined
                 })}
                 placeholder="24"
-                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+                className="w-full border border-[var(--ridge-outer)] rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
               />
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">Depth</label>
+              <label className="block text-xs text-[var(--text-secondary)] mb-1">Depth</label>
               <input
                 type="number"
                 step="0.1"
@@ -705,11 +705,11 @@ export default function ProductForm({
                   depthIn: e.target.value ? Number(e.target.value) : undefined
                 })}
                 placeholder="18"
-                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+                className="w-full border border-[var(--ridge-outer)] rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
               />
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">Height</label>
+              <label className="block text-xs text-[var(--text-secondary)] mb-1">Height</label>
               <input
                 type="number"
                 step="0.1"
@@ -719,7 +719,7 @@ export default function ProductForm({
                   heightIn: e.target.value ? Number(e.target.value) : undefined
                 })}
                 placeholder="30"
-                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+                className="w-full border border-[var(--ridge-outer)] rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
               />
             </div>
           </div>
@@ -730,7 +730,7 @@ export default function ProductForm({
           <>
             {/* Material Type */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">
                 Material Type
               </label>
               <select
@@ -746,7 +746,7 @@ export default function ProductForm({
                     }
                   }
                 }}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+                className="w-full border border-[var(--ridge-outer)] rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
               >
                 <option value="">Select material type...</option>
                 <option value="stone">Stone / Marble / Quartz</option>
@@ -759,20 +759,20 @@ export default function ProductForm({
                 <option value="furniture">Furniture</option>
                 <option value="other">Other</option>
               </select>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-[var(--text-secondary)] mt-1">
                 Helps filter role options to relevant applications
               </p>
             </div>
 
             {/* Role in Room */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">
                 Role in this room
               </label>
               <select
                 value={formData.slotKey || ''}
                 onChange={(e) => handleInputChange('slotKey', e.target.value)}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+                className="w-full border border-[var(--ridge-outer)] rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
               >
                 <option value="">None / Unassigned</option>
                 {roomTemplate.slots
@@ -794,7 +794,7 @@ export default function ProductForm({
 
             {/* Application Notes */}
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">
                 Application Notes
               </label>
               <textarea
@@ -802,9 +802,9 @@ export default function ProductForm({
                 onChange={(e) => handleInputChange('applicationNotes', e.target.value)}
                 placeholder="e.g., 'Use for countertops and backsplash' or 'Entire kitchen including cabinets will be made from this material'"
                 rows={2}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+                className="w-full border border-[var(--ridge-outer)] rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-[var(--text-secondary)] mt-1">
                 Describe how this material should be applied. This will be used when generating room visualizations.
               </p>
             </div>
@@ -812,7 +812,7 @@ export default function ProductForm({
         )}
 
         <div className="md:col-span-2">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">
             Product URL
           </label>
           <input
@@ -820,12 +820,12 @@ export default function ProductForm({
             value={formData.url}
             onChange={(e) => handleInputChange('url', e.target.value)}
             placeholder="https://example.com/product"
-            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+            className="w-full border border-[var(--ridge-outer)] rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
           />
         </div>
 
         <div className="md:col-span-2">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">
             Description
           </label>
           <textarea
@@ -833,12 +833,12 @@ export default function ProductForm({
             onChange={(e) => handleInputChange('description', e.target.value)}
             placeholder="Product description"
             rows={3}
-            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+            className="w-full border border-[var(--ridge-outer)] rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
           />
         </div>
 
         <div className="md:col-span-2">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">
             Image URL
           </label>
           <div className="flex gap-2">
@@ -847,11 +847,11 @@ export default function ProductForm({
               value={formData.imageUrl}
               onChange={(e) => handleInputChange('imageUrl', e.target.value)}
               placeholder="https://example.com/image.jpg"
-              className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+              className="flex-1 border border-[var(--ridge-outer)] rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
             />
             <button
               type="button"
-              className="px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50 text-sm flex items-center gap-2"
+              className="px-3 py-2 border border-[var(--ridge-outer)] rounded-md hover:bg-[var(--bg-elevated)] text-sm flex items-center gap-2"
             >
               <FaUpload className="w-4 h-4" />
               Upload
@@ -877,7 +877,7 @@ export default function ProductForm({
         <button
           type="button"
           onClick={onCancel}
-          className="px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+          className="px-4 py-2 text-[var(--text-primary)] border border-[var(--ridge-outer)] rounded-md hover:bg-[var(--bg-elevated)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
         >
           Cancel
         </button>

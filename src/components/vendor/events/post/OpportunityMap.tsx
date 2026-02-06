@@ -41,8 +41,8 @@ export function OpportunityMap({ opportunities, onHover, onActionClick }: Opport
       case 'Most Underserved': return 'border-red-200 bg-red-50';
       case 'Build': return 'border-green-200 bg-green-50';
       case 'Maintain': return 'border-yellow-200 bg-yellow-50';
-      case 'Watch': return 'border-gray-200 bg-gray-50';
-      default: return 'border-gray-200 bg-gray-50';
+      case 'Watch': return 'border-[var(--ridge-outer)] bg-gray-50';
+      default: return 'border-[var(--ridge-outer)] bg-gray-50';
     }
   };
 

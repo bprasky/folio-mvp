@@ -88,7 +88,7 @@ export default function ProjectHero({ project, images = [], expandedBlocks }: Pr
 
               {/* Dropdown Menu */}
               {showShareDropdown && (
-                <div className="absolute right-0 mt-2 w-64 rounded-lg bg-white border border-gray-200 shadow-lg z-10">
+                <div className="absolute right-0 mt-2 w-64 rounded-lg bg-white border border-[var(--ridge-outer)] shadow-lg z-10">
                   <div className="py-1">
                     <button
                       onClick={() => {
@@ -99,8 +99,8 @@ export default function ProjectHero({ project, images = [], expandedBlocks }: Pr
                     >
                       <MdCampaign className="w-5 h-5 text-[var(--accent)] flex-shrink-0 mt-0.5" />
                       <div>
-                        <div className="font-medium text-gray-900 text-sm">Instagram Campaign</div>
-                        <div className="text-xs text-gray-500 mt-0.5">
+                        <div className="font-medium text-[var(--text-primary)] text-sm">Instagram Campaign</div>
+                        <div className="text-xs text-[var(--text-secondary)] mt-0.5">
                           Generate 8-12 posts with room spotlights
                         </div>
                       </div>
@@ -112,10 +112,10 @@ export default function ProjectHero({ project, images = [], expandedBlocks }: Pr
                       }}
                       className="w-full px-4 py-3 text-left hover:bg-[var(--bg-elevated)] flex items-start gap-3 transition"
                     >
-                      <MdDownload className="w-5 h-5 text-gray-600 flex-shrink-0 mt-0.5" />
+                      <MdDownload className="w-5 h-5 text-[var(--text-secondary)] flex-shrink-0 mt-0.5" />
                       <div>
-                        <div className="font-medium text-gray-900 text-sm">Quick Export</div>
-                        <div className="text-xs text-gray-500 mt-0.5">
+                        <div className="font-medium text-[var(--text-primary)] text-sm">Quick Export</div>
+                        <div className="text-xs text-[var(--text-secondary)] mt-0.5">
                           Single carousel with selected images
                         </div>
                       </div>

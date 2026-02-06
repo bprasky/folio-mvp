@@ -35,11 +35,11 @@ export default function EventFeaturedProducts({ products, canEdit = false, event
   if (products.length === 0 && canEdit) {
     return (
       <div className="mt-6">
-        <div className="border border-dashed border-gray-300 rounded-xl bg-gray-50 p-4 text-center">
-          <p className="text-sm text-gray-500 mb-2">No featured products yet</p>
+        <div className="border border-dashed border-[var(--ridge-outer)] rounded-xl bg-[var(--bg-elevated)] p-4 text-center">
+          <p className="text-sm text-[var(--text-secondary)] mb-2">No featured products yet</p>
           <Link
             href={`/admin/events/new?edit=${eventId}&tab=products`}
-            className="text-xs px-3 py-1 rounded border border-gray-300 bg-white hover:bg-gray-50 text-gray-600"
+            className="text-xs px-3 py-1 rounded border border-[var(--ridge-outer)] bg-white hover:bg-[var(--bg-elevated)] text-[var(--text-secondary)]"
           >
             Add featured products
           </Link>
@@ -55,7 +55,7 @@ export default function EventFeaturedProducts({ products, canEdit = false, event
         {canEdit && (
           <Link
             href={`/admin/events/new?edit=${eventId}&tab=products`}
-            className="text-xs px-2 py-1 rounded border border-gray-300 bg-white hover:bg-gray-50 text-gray-600"
+            className="text-xs px-2 py-1 rounded border border-[var(--ridge-outer)] bg-white hover:bg-[var(--bg-elevated)] text-[var(--text-secondary)]"
           >
             Edit
           </Link>
@@ -78,8 +78,8 @@ export default function EventFeaturedProducts({ products, canEdit = false, event
                   sizes="224px"
                 />
               ) : (
-                <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-                  <span className="text-gray-400 text-sm">No image</span>
+                <div className="w-full h-full bg-[var(--bg-elevated)] flex items-center justify-center">
+                  <span className="text-[var(--text-tertiary)] text-sm">No image</span>
                 </div>
               )}
             </div>
@@ -87,7 +87,7 @@ export default function EventFeaturedProducts({ products, canEdit = false, event
             <div className="p-2">
               <h4 className="font-medium text-sm truncate mb-1">{product.name}</h4>
               {product.vendorName && (
-                <p className="text-xs text-gray-500 truncate mb-2">{product.vendorName}</p>
+                <p className="text-xs text-[var(--text-secondary)] truncate mb-2">{product.vendorName}</p>
               )}
               
               <div className="flex gap-1">
@@ -97,7 +97,7 @@ export default function EventFeaturedProducts({ products, canEdit = false, event
                     onSaveProduct?.(product.id);
                   }}
                   disabled={!onSaveProduct}
-                  className="text-xs px-2 py-1 rounded border border-gray-300 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="text-xs px-2 py-1 rounded border border-[var(--ridge-outer)] bg-white hover:bg-[var(--bg-elevated)] disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Save to project
                 </button>
@@ -105,7 +105,7 @@ export default function EventFeaturedProducts({ products, canEdit = false, event
                 <Link
                   href={`/products/${product.id}`}
                   onClick={() => track('event_featured_product_click', { eventId, productId: product.id })}
-                  className="text-xs px-2 py-1 rounded border border-gray-300 bg-white hover:bg-gray-50 text-center"
+                  className="text-xs px-2 py-1 rounded border border-[var(--ridge-outer)] bg-white hover:bg-[var(--bg-elevated)] text-center"
                 >
                   View
                 </Link>

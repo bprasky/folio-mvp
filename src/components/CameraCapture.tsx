@@ -317,15 +317,15 @@ export default function CameraCapture({
           className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden"
         >
           {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-gray-200">
+          <div className="flex items-center justify-between p-6 border-b border-[var(--ridge-outer)]">
             <div className="flex items-center gap-3">
               <button
                 onClick={handleBack}
-                className="p-2 text-gray-600 hover:text-gray-900 transition-colors"
+                className="p-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
               >
                 <FaArrowLeft className="w-5 h-5" />
               </button>
-              <h2 className="text-xl font-bold text-gray-900">
+              <h2 className="text-xl font-bold text-[var(--text-primary)]">
                 {step === 'capture' && 'Capture Material'}
                 {step === 'specify' && 'Product Specification'}
                 {step === 'assign' && (isProjectLevel ? 'Assign to Room' : 'Assign to Project')}
@@ -333,7 +333,7 @@ export default function CameraCapture({
             </div>
             <button
               onClick={handleClose}
-              className="p-2 text-gray-600 hover:text-gray-900 transition-colors"
+              className="p-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
             >
               <FaTimes className="w-5 h-5" />
             </button>
@@ -349,14 +349,14 @@ export default function CameraCapture({
                 className="space-y-6"
               >
                 <div className="text-center">
-                  <p className="text-gray-600 mb-6">
+                  <p className="text-[var(--text-secondary)] mb-6">
                     Capture product photos during showroom visits or upload existing images
                   </p>
                 </div>
 
                 {/* Camera Interface */}
                 <div className="space-y-4">
-                  <div className="relative aspect-video bg-gray-100 rounded-lg overflow-hidden">
+                  <div className="relative aspect-video bg-[var(--bg-elevated)] rounded-lg overflow-hidden">
                     {!capturedImage ? (
                       <>
                         <video
@@ -373,8 +373,8 @@ export default function CameraCapture({
                         {!isCapturing && (
                           <div className="absolute inset-0 flex items-center justify-center">
                             <div className="text-center">
-                              <FaCamera className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                              <p className="text-gray-600">Camera not active</p>
+                              <FaCamera className="w-16 h-16 text-[var(--text-tertiary)] mx-auto mb-4" />
+                              <p className="text-[var(--text-secondary)]">Camera not active</p>
                             </div>
                           </div>
                         )}
@@ -443,7 +443,7 @@ export default function CameraCapture({
                 className="space-y-6"
               >
                 {capturedImage && (
-                  <div className="aspect-video bg-gray-100 rounded-lg overflow-hidden mb-6">
+                  <div className="aspect-video bg-[var(--bg-elevated)] rounded-lg overflow-hidden mb-6">
                     <img
                       src={capturedImage}
                       alt="Captured"
@@ -455,7 +455,7 @@ export default function CameraCapture({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Vendor Information */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
                       Vendor Name *
                     </label>
                     <input
@@ -463,13 +463,13 @@ export default function CameraCapture({
                       value={formData.vendorName}
                       onChange={(e) => handleInputChange('vendorName', e.target.value)}
                       placeholder="Enter vendor name"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+                      className="w-full px-4 py-3 border border-[var(--ridge-outer)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                       required
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
                       Product Name *
                     </label>
                     <input
@@ -477,13 +477,13 @@ export default function CameraCapture({
                       value={formData.productName}
                       onChange={(e) => handleInputChange('productName', e.target.value)}
                       placeholder="Enter product name"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+                      className="w-full px-4 py-3 border border-[var(--ridge-outer)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                       required
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
                       Color/Finish
                     </label>
                     <input
@@ -491,18 +491,18 @@ export default function CameraCapture({
                       value={formData.colorFinish}
                       onChange={(e) => handleInputChange('colorFinish', e.target.value)}
                       placeholder="e.g., Matte Black, Natural Oak"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+                      className="w-full px-4 py-3 border border-[var(--ridge-outer)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
                       Phase of Use
                     </label>
                     <select
                       value={formData.phaseOfUse}
                       onChange={(e) => handleInputChange('phaseOfUse', e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+                      className="w-full px-4 py-3 border border-[var(--ridge-outer)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                     >
                       {PHASE_OPTIONS.map(option => (
                         <option key={option.value} value={option.value}>
@@ -514,7 +514,7 @@ export default function CameraCapture({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
                     Notes & Application Context
                   </label>
                   <textarea
@@ -522,12 +522,12 @@ export default function CameraCapture({
                     onChange={(e) => handleInputChange('notes', e.target.value)}
                     placeholder="Describe application, install ideas, room context (e.g., 'Perfect for guest bathroom vanity')"
                     rows={4}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent resize-none"
+                    className="w-full px-4 py-3 border border-[var(--ridge-outer)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent resize-none"
                   />
                 </div>
 
                 {gpsLocation && (
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <div className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
                     <FaMapMarkerAlt className="w-4 h-4" />
                     <span>Location captured: {gpsLocation}</span>
                   </div>
@@ -536,7 +536,7 @@ export default function CameraCapture({
                 <div className="flex gap-4 justify-end">
                   <button
                     onClick={handleBack}
-                    className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                    className="px-6 py-3 border border-[var(--ridge-outer)] text-[var(--text-primary)] rounded-lg hover:bg-[var(--bg-elevated)] transition-colors"
                   >
                     Back
                   </button>
@@ -559,10 +559,10 @@ export default function CameraCapture({
                 className="space-y-6"
               >
                 <div className="text-center mb-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-2">
                     {isProjectLevel ? 'Assign to Room' : 'Assign to Project & Room'}
                   </h3>
-                  <p className="text-gray-600">
+                  <p className="text-[var(--text-secondary)]">
                     {isProjectLevel 
                       ? 'Choose which room to assign this selection to, or leave as general project inspiration'
                       : 'Choose where to save this material selection'
@@ -573,7 +573,7 @@ export default function CameraCapture({
                 {/* Project Selection - Only show if not already in project context */}
                 {!currentProjectId && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
                       Project *
                     </label>
                     <select
@@ -582,7 +582,7 @@ export default function CameraCapture({
                         setSelectedProjectId(e.target.value);
                         setSelectedRoomId(''); // Reset room when project changes
                       }}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+                      className="w-full px-4 py-3 border border-[var(--ridge-outer)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                       required
                     >
                       <option value="">Select a project</option>
@@ -598,14 +598,14 @@ export default function CameraCapture({
                 {/* Room Selection */}
                 {(selectedProjectId || currentProjectId) && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
                       Room {isProjectLevel ? '(Optional)' : '*'}
                     </label>
                     <div className="space-y-3">
                       <select
                         value={selectedRoomId}
                         onChange={(e) => setSelectedRoomId(e.target.value)}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+                        className="w-full px-4 py-3 border border-[var(--ridge-outer)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                         required={!isProjectLevel}
                       >
                         <option value="">
@@ -633,7 +633,7 @@ export default function CameraCapture({
                             value={newRoomName}
                             onChange={(e) => setNewRoomName(e.target.value)}
                             placeholder="Enter room name"
-                            className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+                            className="flex-1 px-4 py-3 border border-[var(--ridge-outer)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                           />
                           <button
                             onClick={createNewRoom}
@@ -651,7 +651,7 @@ export default function CameraCapture({
                 <div className="flex gap-4 justify-end">
                   <button
                     onClick={handleBack}
-                    className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                    className="px-6 py-3 border border-[var(--ridge-outer)] text-[var(--text-primary)] rounded-lg hover:bg-[var(--bg-elevated)] transition-colors"
                   >
                     Back
                   </button>

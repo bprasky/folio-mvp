@@ -26,14 +26,14 @@ export function FooterBar({
   isLoadingFollowUps = false,
 }: FooterBarProps) {
   return (
-    <div className="px-8 py-4 border-t border-gray-200/50 bg-white/50">
+    <div className="px-8 py-4 border-t border-[var(--ridge-outer)]/50 bg-white/50">
       <div className="flex items-center justify-between max-w-3xl mx-auto">
         <div>
           {/* Back button - less relevant in sequential flow, but available for navigation */}
           {phase === "question" && onBack && (
             <button
               onClick={onBack}
-              className="px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors"
+              className="px-4 py-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
             >
               Back
             </button>
@@ -83,7 +83,7 @@ export function FooterBar({
                 <button
                   onClick={onSkip}
                   disabled={isGenerating}
-                  className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 disabled:opacity-50 transition-colors"
+                  className="px-4 py-2 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] disabled:opacity-50 transition-colors"
                 >
                   Skip
                 </button>

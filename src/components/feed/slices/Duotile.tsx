@@ -68,7 +68,7 @@ export default function Duotile({ items, onClick, canEdit = false }: DuotileProp
               TILE ok · {String(items[0]?.title ?? '')}
             </div>
           )}
-          <div className="relative aspect-[4/3] overflow-hidden rounded-xl bg-gray-100">
+          <div className="relative aspect-[4/3] overflow-hidden rounded-xl bg-[var(--bg-elevated)]">
             <SafeImage
               src={getImageUrl(items[0])}
               alt={String(items[0]?.title ?? '')}
@@ -144,7 +144,7 @@ export default function Duotile({ items, onClick, canEdit = false }: DuotileProp
                 TILE ok · {String(items[1]?.title ?? '')}
               </div>
             )}
-            <div className="relative aspect-square overflow-hidden rounded-xl bg-gray-100">
+            <div className="relative aspect-square overflow-hidden rounded-xl bg-[var(--bg-elevated)]">
               <SafeImage
                 src={getImageUrl(items[1])}
                 alt={String(items[1]?.title ?? '')}

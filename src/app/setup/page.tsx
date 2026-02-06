@@ -57,12 +57,12 @@ export default function SetupPage() {
     <div className="min-h-screen bg-[var(--bg-elevated)] py-8">
       <div className="max-w-2xl mx-auto px-4">
         <div className="bg-white rounded-lg shadow-md p-6">
-          <h1 className="text-2xl font-bold text-gray-900 mb-6">Database Setup</h1>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] mb-6">Database Setup</h1>
           
           <div className="space-y-6">
             {/* Database Status */}
             <div className="bg-[var(--bg-elevated)] rounded-lg p-4">
-              <h2 className="text-lg font-semibold text-gray-900 mb-2">Database Status</h2>
+              <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-2">Database Status</h2>
               <div className="flex items-center space-x-4">
                 <button
                   onClick={checkDatabase}
@@ -96,8 +96,8 @@ export default function SetupPage() {
             {/* Database Info */}
             {dbStatus && (
               <div className="bg-[var(--bg-elevated)] rounded-lg p-4">
-                <h3 className="text-md font-semibold text-gray-900 mb-2">Database Information</h3>
-                <pre className="text-sm text-gray-700 overflow-auto">
+                <h3 className="text-md font-semibold text-[var(--text-primary)] mb-2">Database Information</h3>
+                <pre className="text-sm text-[var(--text-primary)] overflow-auto">
                   {JSON.stringify(dbStatus, null, 2)}
                 </pre>
               </div>
