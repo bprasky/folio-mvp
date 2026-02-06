@@ -141,12 +141,15 @@ export function useInterviewSession({
       setError(null);
 
       try {
+        const currentQ = questions[currentQuestionIndex];
         const res = await fetch("/api/interview/respond", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             sessionId,
+            projectId,
             questionId,
+            questionText: currentQ?.text,
             answer,
             inputMode: mode,
           }),
@@ -200,7 +203,7 @@ export function useInterviewSession({
         setIsLoading(false);
       }
     },
-    [sessionId, mode, questions, currentQuestionIndex]
+    [sessionId, projectId, mode, questions, currentQuestionIndex]
   );
 
   /**
@@ -236,7 +239,15 @@ export function useInterviewSession({
       const res = await fetch("/api/interview/generate-draft", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sessionId }),
+        body: JSON.stringify({
+          sessionId,
+          projectId,
+          responses: responses.map((r) => ({
+            questionId: r.questionId,
+            questionText: r.questionText,
+            answer: r.answer,
+          })),
+        }),
       });
 
       if (!res.ok) {
@@ -254,7 +265,7 @@ export function useInterviewSession({
     } finally {
       setIsLoading(false);
     }
-  }, [sessionId, onComplete, onError]);
+  }, [sessionId, projectId, responses, onComplete, onError]);
 
   /**
    * Reset the session to initial state

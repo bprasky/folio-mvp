@@ -20,7 +20,11 @@ export async function GET(request: NextRequest) {
       topics,
       count: topics.length,
     });
-  } catch (error) {
+  } catch (error: any) {
+    // Handle missing article_topics table gracefully (P2021 = table does not exist)
+    if (error?.code === 'P2021') {
+      return NextResponse.json({ topics: [], count: 0 });
+    }
     console.error('[GET /api/article-topics] Error:', error);
     return NextResponse.json(
       { error: 'Failed to fetch article topics' },

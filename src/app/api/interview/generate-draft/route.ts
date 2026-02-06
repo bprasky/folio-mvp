@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/options";
+import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { randomUUID } from "crypto";
 import OpenAI from "openai";
@@ -11,10 +12,20 @@ import OpenAI from "openai";
  * POST /api/interview/generate-draft
  *
  * Generate final editorial draft from interview session.
+ * Reads persisted answers from EditorialInterviewAnswer table.
+ * Also accepts responses directly in the request body as a fallback.
  */
+
+const ResponseItemSchema = z.object({
+  questionId: z.string(),
+  questionText: z.string(),
+  answer: z.string(),
+});
 
 const RequestSchema = z.object({
   sessionId: z.string().min(1),
+  projectId: z.string().min(1),
+  responses: z.array(ResponseItemSchema).optional(),
 });
 
 // OpenAI client
@@ -125,12 +136,6 @@ Generate the editorial.`,
   }
 }
 
-// In-memory session storage (matches respond route)
-const sessionResponses = new Map<
-  string,
-  Array<{ questionId: string; questionText: string; answer: string }>
->();
-
 export async function POST(request: NextRequest) {
   try {
     // Authenticate
@@ -149,10 +154,47 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { sessionId } = parsed.data;
+    const { projectId, responses: clientResponses } = parsed.data;
 
-    // Get responses for this session
-    const responses = sessionResponses.get(sessionId) || [];
+    // Get the project title
+    const project = await prisma.project.findUnique({
+      where: { id: projectId },
+      select: { title: true },
+    });
+    const projectName = project?.title || "Your Project";
+
+    // Build the responses array for editorial generation
+    let responses: Array<{ question: string; answer: string }>;
+
+    if (clientResponses && clientResponses.length > 0) {
+      // Primary: use responses sent from the frontend (has question text)
+      responses = clientResponses.map((r) => ({
+        question: r.questionText,
+        answer: r.answer,
+      }));
+    } else {
+      // Fallback: read persisted answers from EditorialInterviewAnswer
+      const interview = await prisma.editorialInterview.findUnique({
+        where: { projectId },
+        include: {
+          answers: {
+            orderBy: { createdAt: "asc" },
+          },
+        },
+      });
+
+      if (!interview || interview.answers.length === 0) {
+        return NextResponse.json(
+          { error: "No responses found for session" },
+          { status: 400 }
+        );
+      }
+
+      responses = interview.answers.map((a) => ({
+        question: "Interview question", // Question text not stored in DB
+        answer: a.answerText,
+      }));
+    }
 
     if (responses.length === 0) {
       return NextResponse.json(
@@ -162,19 +204,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate the editorial
-    const { title, blocks } = await generateEditorial(
-      "Your Project", // Would get actual project name
-      responses.map((r) => ({
-        question: r.questionText,
-        answer: r.answer,
-      }))
-    );
+    const { title, blocks } = await generateEditorial(projectName, responses);
 
     // Generate a draft ID
     const draftId = `draft-${randomUUID()}`;
-
-    // Clean up session data
-    sessionResponses.delete(sessionId);
 
     return NextResponse.json({
       draftId,
