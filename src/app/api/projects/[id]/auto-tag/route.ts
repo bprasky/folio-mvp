@@ -254,13 +254,13 @@ export async function GET(
     const [imageCount, analyzedCount, tagCount, selectionCount] = await Promise.all([
       // Total images
       prisma.projectImage.count({ where: { projectId } }),
-      // Images with analysis (have skeletons or image analysis)
+      // Images with analysis (have AI classification or indexing)
       prisma.projectImage.count({
         where: {
           projectId,
           OR: [
-            { skeletons: { some: {} } },
-            { analysis: { isNot: null } },
+            { indexedAt: { not: null } },
+            { aiClassification: { not: null } },
           ],
         },
       }),
