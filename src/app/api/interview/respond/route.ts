@@ -13,11 +13,15 @@ import OpenAI from "openai";
  *
  * Submit an answer and get follow-up question.
  * Also returns preview draft after 3-4 responses.
+ *
+ * Answers are persisted to EditorialInterviewAnswer for durability.
  */
 
 const RequestSchema = z.object({
   sessionId: z.string().min(1),
+  projectId: z.string().min(1),
   questionId: z.string().min(1),
+  questionText: z.string().optional(),
   answer: z.string().min(1),
   inputMode: z.enum(["voice", "text"]),
 });
@@ -141,12 +145,6 @@ Generate a title and excerpt preview.`,
   }
 }
 
-// In-memory session storage (for demo - in production use Redis or DB)
-const sessionResponses = new Map<
-  string,
-  Array<{ questionId: string; questionText: string; answer: string }>
->();
-
 export async function POST(request: NextRequest) {
   try {
     // Authenticate
@@ -165,21 +163,42 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { sessionId, questionId, answer, inputMode } = parsed.data;
+    const { projectId, questionId, questionText: providedQuestionText, answer, inputMode } = parsed.data;
 
-    // Get existing responses for this session
-    const existingResponses = sessionResponses.get(sessionId) || [];
+    // Find or create EditorialInterview for this project
+    let interview = await prisma.editorialInterview.findUnique({
+      where: { projectId },
+    });
 
-    // Find the question text (would come from session state in production)
-    const questionText =
-      existingResponses.length === 0
-        ? "Tell us about this project and what made it special."
-        : "Follow-up question"; // Placeholder
+    if (!interview) {
+      interview = await prisma.editorialInterview.create({
+        data: {
+          projectId,
+          status: "IN_PROGRESS",
+          selectedQuestionIds: [],
+        },
+      });
+    }
 
-    // Store this response
-    const newResponse = { questionId, questionText, answer };
-    const updatedResponses = [...existingResponses, newResponse];
-    sessionResponses.set(sessionId, updatedResponses);
+    // Store answer in EditorialInterviewAnswer for durability
+    await prisma.editorialInterviewAnswer.create({
+      data: {
+        interviewId: interview.id,
+        questionId,
+        answerText: answer,
+        inputModality: inputMode,
+        questionSource: "base_question",
+      },
+    });
+
+    // Read all answers for this interview to get count and for preview
+    const allAnswers = await prisma.editorialInterviewAnswer.findMany({
+      where: { interviewId: interview.id },
+      orderBy: { createdAt: "asc" },
+    });
+
+    // Use provided question text, or fall back to generic
+    const questionText = providedQuestionText || "Tell us about this project.";
 
     // Generate follow-up question
     let followUpQuestion = null;
@@ -194,16 +213,22 @@ export async function POST(request: NextRequest) {
       };
     }
 
-    // Generate preview after 3-4 responses
-    const shouldShowPreview = updatedResponses.length >= 3;
+    // Generate preview after 3+ responses
+    const shouldShowPreview = allAnswers.length >= 3;
     let previewDraft = null;
 
     if (shouldShowPreview) {
+      // Get project title for the preview
+      const project = await prisma.project.findUnique({
+        where: { id: projectId },
+        select: { title: true },
+      });
+
       previewDraft = await generatePreviewDraft(
-        "Your Project", // Would get actual project name from session
-        updatedResponses.map((r) => ({
-          question: r.questionText,
-          answer: r.answer,
+        project?.title || "Your Project",
+        allAnswers.map((r) => ({
+          question: questionText, // Best effort — question text not stored in DB
+          answer: r.answerText,
         }))
       );
     }
