@@ -248,16 +248,41 @@ export default function ProjectsPageClient({ projectsRaw, operatingAsOrgId }: Pr
   return (
     <div className="min-h-screen w-full bg-[var(--bg-elevated)] -mx-6">
       <div className="relative w-full">
-        {/* Page Header with Context */}
-        <div className="sticky top-0 z-10 bg-[var(--bg-elevated)] border-b border-[var(--border)]">
-          <div className="max-w-7xl mx-auto px-4 md:px-8 py-6">
-            <div className="flex items-center justify-between mb-4">
-              <h1 className="folio-h1 text-[var(--text-primary)]">
-                {pageTitle}
-              </h1>
+        {/* Designer Header */}
+        <div className="bg-[var(--bg-elevated)] border-b border-[var(--border)]">
+          <div className="max-w-7xl mx-auto px-4 md:px-8 py-8">
+            <div className="flex items-center gap-6 mb-6">
+              {/* Designer Avatar */}
+              <div className="relative">
+                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[var(--accent)] to-[var(--accent-hover)] flex items-center justify-center shadow-[var(--neu-raised)] border-2 border-[var(--ridge-outer)]">
+                  {session?.user?.image ? (
+                    <Image
+                      src={session.user.image}
+                      alt={session.user.name || 'Profile'}
+                      width={80}
+                      height={80}
+                      className="rounded-full object-cover"
+                    />
+                  ) : (
+                    <User className="w-10 h-10 text-white" />
+                  )}
+                </div>
+              </div>
+
+              {/* Designer Info */}
+              <div className="flex-1">
+                <h1 className="folio-h1 text-[var(--text-primary)] mb-1">
+                  {pageTitle}
+                </h1>
+                <p className="folio-body text-[var(--text-secondary)]">
+                  {totals.totalProjects} {totals.totalProjects === 1 ? 'project' : 'projects'} in portfolio
+                </p>
+              </div>
+
+              {/* Create Button */}
               <Link
                 href="/projects/new"
-                className="accent-btn px-4 py-2 inline-flex items-center gap-2"
+                className="accent-btn px-5 py-2.5 inline-flex items-center gap-2"
               >
                 <Plus className="h-5 w-5" />
                 <span>Create Project</span>
@@ -577,6 +602,21 @@ interface TopImpactBarProps {
 }
 
 function TopImpactBar({ totals, capabilities }: TopImpactBarProps) {
+  const [isExpanded, setIsExpanded] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('projects-metrics-expanded');
+      return saved !== null ? saved === 'true' : false;
+    }
+    return false;
+  });
+
+  // Persist expanded state
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('projects-metrics-expanded', String(isExpanded));
+    }
+  }, [isExpanded]);
+
   const {
     isIndividual,
     showPublishedStat,
@@ -588,53 +628,98 @@ function TopImpactBar({ totals, capabilities }: TopImpactBarProps) {
   // Individual users see Collections and Saved Products only
   if (isIndividual) {
     return (
-      <div className="sticky top-0 z-10 bg-[var(--bg-elevated)] border-b border-[var(--border)]">
-        <div className="max-w-7xl mx-auto px-4 md:px-8 py-4 grid grid-cols-2 gap-3">
-          <MetricPill icon={Layers} label="COLLECTIONS" value={formatNumber(totals.collectionsCount ?? 0)} />
-          <MetricPill icon={BookOpenText} label="SAVED PRODUCTS" value={formatNumber(totals.savedProductsCount ?? 0)} />
-        </div>
-      </div>
+      <RidgeCard className="mx-4 md:mx-8 mt-4">
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="w-full px-4 py-3 flex items-center justify-between hover:bg-[var(--bg-base)] transition-all duration-150 rounded-2xl"
+        >
+          <div className="flex items-center gap-3">
+            <div className="p-1.5 rounded-lg bg-[var(--bg-base)] border border-[var(--border)]">
+              <TrendingUp className="h-4 w-4 text-[var(--text-secondary)]" />
+            </div>
+            <h3 className="folio-h3 text-[var(--text-primary)]">Portfolio Stats</h3>
+          </div>
+          <div className={cn(
+            "text-[var(--text-secondary)] transition-transform",
+            isExpanded ? "rotate-180" : ""
+          )}>
+            <ChevronDown className="h-4 w-4" />
+          </div>
+        </button>
+
+        {isExpanded && (
+          <div className="px-4 pb-4">
+            <div className="grid grid-cols-2 gap-3">
+              <MetricPill icon={Layers} label="COLLECTIONS" value={formatNumber(totals.collectionsCount ?? 0)} />
+              <MetricPill icon={BookOpenText} label="SAVED PRODUCTS" value={formatNumber(totals.savedProductsCount ?? 0)} />
+            </div>
+          </div>
+        )}
+      </RidgeCard>
     );
   }
 
-  // Designers see the full stats bar
+  // Designers see the full stats bar (collapsible)
   return (
-    <div className="sticky top-0 z-10 bg-[var(--bg-elevated)] border-b border-[var(--border)]">
-      <div className="max-w-7xl mx-auto px-4 md:px-8 py-4">
+    <RidgeCard className="mx-4 md:mx-8 mt-4">
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="w-full px-4 py-3 flex items-center justify-between hover:bg-[var(--bg-base)] transition-all duration-150 rounded-2xl"
+      >
+        <div className="flex items-center gap-3">
+          <div className="p-1.5 rounded-lg bg-[var(--bg-base)] border border-[var(--border)]">
+            <TrendingUp className="h-4 w-4 text-[var(--text-secondary)]" />
+          </div>
+          <h3 className="folio-h3 text-[var(--text-primary)]">Portfolio Stats</h3>
+          <span className="folio-meta text-[var(--text-secondary)]">
+            {formatNumber(totals.totalProjects)} projects, {formatNumber(totals.totalViews)} views
+          </span>
+        </div>
         <div className={cn(
-          "grid gap-3",
-          showAffiliateClicks ? "grid-cols-2 md:grid-cols-5" : "grid-cols-2 md:grid-cols-4"
+          "text-[var(--text-secondary)] transition-transform",
+          isExpanded ? "rotate-180" : ""
         )}>
-          <MetricPill icon={FolderKanban} label="PROJECTS" value={formatNumber(totals.totalProjects)} />
-          {showPublishedStat && (
-            <MetricPill icon={BadgeCheck} label="PUBLISHED" value={formatNumber(totals.totalPublished)} />
-          )}
-          {showProductsTaggedStat && (
-            <MetricPill icon={Layers} label="PRODUCTS TAGGED" value={formatNumber(totals.totalTagged)} />
-          )}
-          <MetricPill icon={Eye} label="TOTAL VIEWS" value={formatNumber(totals.totalViews)} />
-          {showAffiliateClicks && (
-            <MetricPill
-              icon={MousePointerClick}
-              label="AFFILIATE CLICKS"
-              value={formatNumber(totals.affiliateClicks ?? 0)}
-              emphasis={true}
-            />
+          <ChevronDown className="h-4 w-4" />
+        </div>
+      </button>
+
+      {isExpanded && (
+        <div className="px-4 pb-4">
+          <div className={cn(
+            "grid gap-3",
+            showAffiliateClicks ? "grid-cols-2 md:grid-cols-5" : "grid-cols-2 md:grid-cols-4"
+          )}>
+            <MetricPill icon={FolderKanban} label="PROJECTS" value={formatNumber(totals.totalProjects)} />
+            {showPublishedStat && (
+              <MetricPill icon={BadgeCheck} label="PUBLISHED" value={formatNumber(totals.totalPublished)} />
+            )}
+            {showProductsTaggedStat && (
+              <MetricPill icon={Layers} label="PRODUCTS TAGGED" value={formatNumber(totals.totalTagged)} />
+            )}
+            <MetricPill icon={Eye} label="TOTAL VIEWS" value={formatNumber(totals.totalViews)} />
+            {showAffiliateClicks && (
+              <MetricPill
+                icon={MousePointerClick}
+                label="AFFILIATE CLICKS"
+                value={formatNumber(totals.affiliateClicks ?? 0)}
+                emphasis={true}
+              />
+            )}
+          </div>
+          {showDirectoryLink && (
+            <div className="mt-3 flex justify-end">
+              <Link
+                href="/designer/profile"
+                className="inline-flex items-center gap-1.5 folio-meta text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+              >
+                <Users className="h-3.5 w-3.5" />
+                View your directory listing
+              </Link>
+            </div>
           )}
         </div>
-        {showDirectoryLink && (
-          <div className="mt-3 flex justify-end">
-            <Link
-              href="/designer/profile"
-              className="inline-flex items-center gap-1.5 folio-meta text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
-            >
-              <Users className="h-3.5 w-3.5" />
-              View your directory listing
-            </Link>
-          </div>
-        )}
-      </div>
-    </div>
+      )}
+    </RidgeCard>
   );
 }
 
@@ -731,7 +816,7 @@ function SectionBand({
       {projects.length === 0 ? (
         <div className="folio-body text-[var(--text-secondary)] italic py-8 px-2">{config.emptyMessage}</div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {projects.map(p => (
             <ProjectCard
               key={p.id}
@@ -819,7 +904,7 @@ function CollapsibleSectionBand({
           {projects.length === 0 ? (
             <div className="folio-body text-[var(--text-secondary)] italic py-8">{config.emptyMessage}</div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {projects.map(p => (
                 <ProjectCard
                   key={p.id}
@@ -978,9 +1063,9 @@ function ProjectCard({ p, onRename, onDelete, onForceDelete }: {
 
   return (
     <div className="group relative">
-      <article className="relative overflow-hidden rounded-2xl bg-[var(--bg-elevated)] shadow-sm transition-all duration-300 hover:shadow-md border border-[var(--border)]">
+      <article className="relative overflow-hidden rounded-2xl bg-[var(--bg-elevated)] shadow-[var(--neu-raised)] transition-all duration-300 hover:shadow-lg hover:-translate-y-1 border border-[var(--ridge-outer)]">
         <Link href={`/project/${p.id}`} className="block">
-          <div className="relative aspect-[4/3]">
+          <div className="relative aspect-[3/4]">
             {p.coverUrl ? (
               <Image
                 src={p.coverUrl}
@@ -1200,20 +1285,22 @@ function ProjectCard({ p, onRename, onDelete, onForceDelete }: {
 }
 
 function StatusBadge({ status }: { status: string }) {
+  // Simplified status labels: Draft or Published only
+  const displayStatus = status === 'Published' ? 'Published' : 'Draft';
+
   const styles = {
-    'Draft': 'bg-[var(--bg-base)] text-[var(--text-secondary)] border-[var(--border)]',
-    'Ready to Publish': 'bg-[var(--accent)]/10 text-[var(--accent)] border-[var(--accent)]/20',
-    'Published': 'bg-green-100 text-green-800 border-green-200',
+    'Draft': 'bg-[var(--bg-base)]/80 text-[var(--text-secondary)] border-[var(--border)] backdrop-blur-sm',
+    'Published': 'bg-[var(--accent)]/90 text-white border-[var(--accent)] backdrop-blur-sm',
   };
 
-  const style = styles[status as keyof typeof styles] || styles['Draft'];
+  const style = styles[displayStatus as keyof typeof styles] || styles['Draft'];
 
   return (
     <span className={cn(
       "folio-meta uppercase tracking-wider px-2.5 py-1 rounded-full border font-medium",
       style
     )}>
-      {status}
+      {displayStatus}
     </span>
   );
 }
