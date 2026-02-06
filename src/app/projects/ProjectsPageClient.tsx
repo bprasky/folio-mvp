@@ -246,7 +246,7 @@ export default function ProjectsPageClient({ projectsRaw, operatingAsOrgId }: Pr
   }, [projects]);
 
   return (
-    <div className="min-h-screen w-full bg-[var(--bg-base)] -mx-6">
+    <div className="min-h-screen w-full bg-[var(--bg-elevated)] -mx-6">
       <div className="relative w-full">
         {/* Page Header with Context */}
         <div className="sticky top-0 z-10 bg-[var(--bg-elevated)] border-b border-[var(--border)]">

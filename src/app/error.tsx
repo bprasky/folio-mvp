@@ -28,7 +28,7 @@ export default function Error({
             We encountered an unexpected error. Please try refreshing the page or go back to the homepage.
           </p>
           {error.message && (
-            <details className="text-left bg-gray-50 p-4 rounded-lg mb-4">
+            <details className="text-left bg-[var(--bg-elevated)] p-4 rounded-lg mb-4">
               <summary className="cursor-pointer font-medium text-gray-800 mb-2">
                 Error Details
               </summary>
@@ -50,7 +50,7 @@ export default function Error({
           
           <Link
             href="/"
-            className="inline-flex items-center px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+            className="inline-flex items-center px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-[var(--bg-elevated)] transition-colors font-medium"
           >
             <FaHome className="mr-2" />
             Go Home

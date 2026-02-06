@@ -59,14 +59,14 @@ export default function DesignerEventsSchedule() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[var(--bg-elevated)] flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-folio-accent"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[var(--bg-elevated)]">
       <div className="p-6">
         <div className="max-w-7xl mx-auto">
         <div className="p-4 lg:p-8">
@@ -105,7 +105,7 @@ export default function DesignerEventsSchedule() {
                 </Link>
                 <Link
                   href="/designer"
-                  className="px-6 py-3 bg-gray-100 text-folio-text rounded-lg hover:bg-gray-200 transition-colors"
+                  className="px-6 py-3 bg-[var(--bg-elevated)] text-folio-text rounded-lg hover:bg-gray-200 transition-colors"
                 >
                   Designer Dashboard
                 </Link>

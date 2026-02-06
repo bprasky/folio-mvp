@@ -151,7 +151,7 @@ function DestinationOption({
   tokenId: string;
 }) {
   return (
-    <div className="border rounded-lg p-4 hover:bg-gray-50 cursor-pointer">
+    <div className="border rounded-lg p-4 hover:bg-[var(--bg-elevated)] cursor-pointer">
       <h3 className="font-medium mb-1">{title}</h3>
       <p className="text-sm text-gray-600 mb-3">{description}</p>
       <button 

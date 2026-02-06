@@ -47,7 +47,7 @@ export default function RepOnboardingPage() {
   // If not authenticated, show signup/signin prompt
   if (status === 'unauthenticated' && !loading && !error && inviteData) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+      <div className="min-h-screen flex items-center justify-center bg-[var(--bg-elevated)] px-4">
         <div className="max-w-md w-full bg-white rounded-lg shadow-md p-8">
           <h1 className="text-2xl font-bold mb-4">Join Folio as a Vendor Rep</h1>
           <p className="text-gray-600 mb-6">
@@ -124,7 +124,7 @@ export default function RepOnboardingPage() {
 
   if (error && !inviteData) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+      <div className="min-h-screen flex items-center justify-center bg-[var(--bg-elevated)] px-4">
         <div className="max-w-md w-full bg-white rounded-lg shadow-md p-8">
           <h1 className="text-2xl font-bold mb-4 text-red-600">Invalid Invite</h1>
           <p className="text-gray-600 mb-6">{error}</p>
@@ -144,7 +144,7 @@ export default function RepOnboardingPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-[var(--bg-elevated)] px-4">
       <div className="max-w-md w-full bg-white rounded-lg shadow-md p-8">
         <h1 className="text-2xl font-bold mb-4">Set Up Your Rep Profile</h1>
         <p className="text-gray-600 mb-6">
@@ -158,7 +158,7 @@ export default function RepOnboardingPage() {
             </p>
             
             <div className="space-y-3">
-              <label className="flex items-center p-4 border rounded-lg cursor-pointer hover:bg-gray-50">
+              <label className="flex items-center p-4 border rounded-lg cursor-pointer hover:bg-[var(--bg-elevated)]">
                 <input
                   type="radio"
                   name="emailChoice"
@@ -173,7 +173,7 @@ export default function RepOnboardingPage() {
                 </div>
               </label>
 
-              <label className="flex items-center p-4 border rounded-lg cursor-pointer hover:bg-gray-50">
+              <label className="flex items-center p-4 border rounded-lg cursor-pointer hover:bg-[var(--bg-elevated)]">
                 <input
                   type="radio"
                   name="emailChoice"

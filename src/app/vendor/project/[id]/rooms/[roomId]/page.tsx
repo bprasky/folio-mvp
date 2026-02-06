@@ -701,7 +701,7 @@ Total Selections: ${room.selections.length}
                       {selection.tags.map((tag, index) => (
                         <span
                           key={index}
-                          className="inline-block px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded-full"
+                          className="inline-block px-2 py-1 text-xs bg-[var(--bg-elevated)] text-gray-700 rounded-full"
                         >
                           {tag}
                         </span>
@@ -895,14 +895,14 @@ Total Selections: ${room.selections.length}
                 <div className="flex space-x-2">
                   <button
                     onClick={() => setShowCameraCapture(true)}
-                    className="flex items-center px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                    className="flex items-center px-3 py-2 border border-gray-300 rounded-lg hover:bg-[var(--bg-elevated)]"
                   >
                     <FaCamera className="mr-2" />
                     Camera
                   </button>
                   <button
                     onClick={() => setShowUploadModal(true)}
-                    className="flex items-center px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                    className="flex items-center px-3 py-2 border border-gray-300 rounded-lg hover:bg-[var(--bg-elevated)]"
                   >
                     <FaFileUpload className="mr-2" />
                     Upload

@@ -230,7 +230,7 @@ export default function EditorialsPage() {
                       
                       <div className="flex flex-wrap gap-2 mt-4">
                         {editorial.tags.slice(0, 3).map(tag => (
-                          <span key={tag} className="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs">
+                          <span key={tag} className="bg-[var(--bg-elevated)] text-gray-600 px-2 py-1 rounded text-xs">
                             {tag}
                           </span>
                         ))}

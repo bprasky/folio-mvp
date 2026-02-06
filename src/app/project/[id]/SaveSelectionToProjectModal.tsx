@@ -288,7 +288,7 @@ export default function SaveSelectionToProjectModal({
         {/* Preview */}
         <div className="px-6 py-3 border-b border-[var(--ridge-outer,#e5e7eb)] bg-[var(--bg-elevated,#f9fafb)]">
           <div className="flex items-center gap-3">
-            <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+            <div className="w-16 h-16 rounded-lg overflow-hidden bg-[var(--bg-elevated)] flex-shrink-0">
               {selection.photo ? (
                 <img
                   src={selection.photo}

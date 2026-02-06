@@ -84,7 +84,7 @@ export default function FolderPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6">
+      <div className="min-h-screen bg-[var(--bg-elevated)] p-6">
         <div className="max-w-7xl mx-auto">
           <div className="animate-pulse">
             <div className="h-8 bg-gray-200 rounded-lg w-1/3 mb-6"></div>
@@ -105,7 +105,7 @@ export default function FolderPage() {
 
   if (!folder) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6">
+      <div className="min-h-screen bg-[var(--bg-elevated)] p-6">
         <div className="max-w-7xl mx-auto text-center py-12">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Folder not found</h1>
           <button
@@ -120,7 +120,7 @@ export default function FolderPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[var(--bg-elevated)]">
       {/* Header */}
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -129,7 +129,7 @@ export default function FolderPage() {
               <div className="flex items-center gap-4">
                 <button
                   onClick={() => router.push("/designer/folders")}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="p-2 hover:bg-[var(--bg-elevated)] rounded-lg transition-colors"
                 >
                   <ArrowLeft className="w-5 h-5 text-gray-600" />
                 </button>
@@ -151,11 +151,11 @@ export default function FolderPage() {
                   Create Post
                 </button>
 
-                <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                <button className="p-2 hover:bg-[var(--bg-elevated)] rounded-lg transition-colors">
                   <Share2 className="w-4 h-4 text-gray-600" />
                 </button>
 
-                <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                <button className="p-2 hover:bg-[var(--bg-elevated)] rounded-lg transition-colors">
                   <Edit3 className="w-4 h-4 text-gray-600" />
                 </button>
 

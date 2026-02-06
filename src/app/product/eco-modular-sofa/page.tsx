@@ -58,7 +58,7 @@ export default function EcoModularSofaPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 text-gray-800">
+    <div className="min-h-screen bg-[var(--bg-elevated)] text-gray-800">
       {/* Back Button */}
       <div className="p-4 bg-white shadow-sm">
         <Link href="/inspire" className="flex items-center text-[var(--accent)] hover:underline">
@@ -185,7 +185,7 @@ export default function EcoModularSofaPage() {
               {product.seenInDesigns.map((design) => (
                 <div key={design.id} className="relative rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition">
                   <Image src={design.image} alt="Design example" width={400} height={300} className="w-full h-40 object-cover" />
-                  <div className="p-3 bg-gray-50">
+                  <div className="p-3 bg-[var(--bg-elevated)]">
                     <p className="text-sm font-medium">Designed by {design.designer}</p>
                   </div>
                 </div>

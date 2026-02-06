@@ -26,7 +26,7 @@ export default function NotFound() {
           
           <button
             onClick={() => window.history.back()}
-            className="inline-flex items-center px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+            className="inline-flex items-center px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-[var(--bg-elevated)] transition-colors font-medium"
           >
             <FaArrowLeft className="mr-2" />
             Go Back

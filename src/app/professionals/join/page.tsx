@@ -331,7 +331,7 @@ function JoinContent() {
                       </span>
                     )}
                     {org.status === 'UNCLAIMED' && (
-                      <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full">
+                      <span className="px-2 py-0.5 bg-[var(--bg-elevated)] text-gray-600 text-xs rounded-full">
                         Unclaimed
                       </span>
                     )}
@@ -504,7 +504,7 @@ function JoinContent() {
           <Users className="w-4 h-4" />
           <span>{selectedOrg?._count.users} member{selectedOrg?._count.users !== 1 ? 's' : ''}</span>
           {selectedOrg?.status === 'UNCLAIMED' && (
-            <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full ml-2">
+            <span className="px-2 py-0.5 bg-[var(--bg-elevated)] text-gray-600 text-xs rounded-full ml-2">
               Unclaimed
             </span>
           )}

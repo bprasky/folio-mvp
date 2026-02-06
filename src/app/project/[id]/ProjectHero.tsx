@@ -95,7 +95,7 @@ export default function ProjectHero({ project, images = [], expandedBlocks }: Pr
                         setShowCampaignWizard(true);
                         setShowShareDropdown(false);
                       }}
-                      className="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-start gap-3 transition"
+                      className="w-full px-4 py-3 text-left hover:bg-[var(--bg-elevated)] flex items-start gap-3 transition"
                     >
                       <MdCampaign className="w-5 h-5 text-[var(--accent)] flex-shrink-0 mt-0.5" />
                       <div>
@@ -110,7 +110,7 @@ export default function ProjectHero({ project, images = [], expandedBlocks }: Pr
                         setShowInstagramModal(true);
                         setShowShareDropdown(false);
                       }}
-                      className="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-start gap-3 transition"
+                      className="w-full px-4 py-3 text-left hover:bg-[var(--bg-elevated)] flex items-start gap-3 transition"
                     >
                       <MdDownload className="w-5 h-5 text-gray-600 flex-shrink-0 mt-0.5" />
                       <div>

@@ -4,7 +4,7 @@ import { FaArrowLeft } from 'react-icons/fa';
 
 export default function UnrealDocsPage() {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[var(--bg-elevated)]">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Link
           href="/projects"
@@ -33,7 +33,7 @@ export default function UnrealDocsPage() {
 
               <section>
                 <h2 className="text-2xl font-semibold mb-4">Export JSON Structure</h2>
-                <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto text-sm">
+                <pre className="bg-[var(--bg-elevated)] p-4 rounded-lg overflow-x-auto text-sm">
 {`{
   "projectId": "string",
   "projectTitle": "string",
@@ -102,7 +102,7 @@ export default function UnrealDocsPage() {
               <section>
                 <h2 className="text-2xl font-semibold mb-4">Placement Hints</h2>
                 <p className="text-gray-700 mb-3">
-                  The <code className="bg-gray-100 px-1 rounded">placementHint</code> field provides
+                  The <code className="bg-[var(--bg-elevated)] px-1 rounded">placementHint</code> field provides
                   contextual information about where assets should be placed:
                 </p>
                 <ul className="list-disc list-inside space-y-2 text-gray-700">
@@ -118,7 +118,7 @@ export default function UnrealDocsPage() {
               <section>
                 <h2 className="text-2xl font-semibold mb-4">Metadata</h2>
                 <p className="text-gray-700">
-                  The <code className="bg-gray-100 px-1 rounded">meta</code> field contains
+                  The <code className="bg-[var(--bg-elevated)] px-1 rounded">meta</code> field contains
                   additional asset-specific information such as dimensions, scale factors, and
                   material properties. This data can be used to configure materials, lighting,
                   and physics properties in Unreal.

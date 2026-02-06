@@ -243,7 +243,7 @@ export default function DemoFlowPage() {
           <button
             onClick={handlePrevious}
             disabled={currentStep === 0}
-            className="px-6 py-3 bg-white border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            className="px-6 py-3 bg-white border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-[var(--bg-elevated)] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
           >
             Previous
           </button>
@@ -276,7 +276,7 @@ export default function DemoFlowPage() {
         </div>
 
         {/* Quick Actions */}
-        <div className="mt-8 p-6 bg-gray-50 rounded-xl">
+        <div className="mt-8 p-6 bg-[var(--bg-elevated)] rounded-xl">
           <h3 className="font-semibold text-gray-900 mb-4">Quick Links</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <button

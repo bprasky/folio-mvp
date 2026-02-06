@@ -401,7 +401,7 @@ export default function ProjectPostPreviewPage() {
             {post.post.slug && (
               <>
                 {" • "}Slug:{" "}
-                <code className="bg-gray-100 px-2 py-1 rounded">
+                <code className="bg-[var(--bg-elevated)] px-2 py-1 rounded">
                   {post.post.slug}
                 </code>
               </>

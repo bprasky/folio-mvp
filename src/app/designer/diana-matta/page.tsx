@@ -308,7 +308,7 @@ const SMSModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void })
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-[var(--bg-elevated)] transition-colors"
             >
               Cancel
             </button>
@@ -341,7 +341,7 @@ const FibonacciProjectGrid = () => (
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true }}
-          className={`${sizeConfig[project.size as keyof typeof sizeConfig]} group cursor-pointer relative overflow-hidden rounded-xl bg-gray-100`}
+          className={`${sizeConfig[project.size as keyof typeof sizeConfig]} group cursor-pointer relative overflow-hidden rounded-xl bg-[var(--bg-elevated)]`}
           whileHover={{ scale: 1.02 }}
           transition={{ duration: 0.3 }}
         >
@@ -422,7 +422,7 @@ const VideoSection = () => {
       </div>
 
       {videos.length === 0 ? (
-        <div className="text-center py-16 bg-gray-50 rounded-xl">
+        <div className="text-center py-16 bg-[var(--bg-elevated)] rounded-xl">
           <FaVideo className="w-16 h-16 text-gray-300 mx-auto mb-4" />
           <h3 className="text-xl font-semibold text-gray-900 mb-2">No videos yet</h3>
           <p className="text-gray-600 mb-4">Start building your channel by uploading your first video</p>
@@ -479,7 +479,7 @@ const VideoSection = () => {
                 custom={index + 1}
               >
                 <Link href={`/watch/${video.id}`}>
-                  <div className="flex gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors cursor-pointer group">
+                  <div className="flex gap-3 p-3 rounded-xl hover:bg-[var(--bg-elevated)] transition-colors cursor-pointer group">
                     <div className="relative w-24 h-16 flex-shrink-0 rounded-lg overflow-hidden">
                       <div className="w-full h-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center">
                         <FaPlay className="w-4 h-4 text-white" />
@@ -601,7 +601,7 @@ const TeamSection = () => (
           initial="hidden"
           whileInView="visible"
           custom={index + 2}
-          className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors"
+          className="flex items-center gap-3 p-3 rounded-xl hover:bg-[var(--bg-elevated)] transition-colors"
         >
           <div className="relative w-12 h-12 flex-shrink-0 overflow-hidden rounded-full">
             <Image
@@ -670,7 +670,7 @@ const PressSection = () => (
           initial="hidden"
           whileInView="visible"
           custom={index + 1}
-          className="flex gap-4 p-4 rounded-xl hover:bg-gray-50 transition-colors cursor-pointer group"
+          className="flex gap-4 p-4 rounded-xl hover:bg-[var(--bg-elevated)] transition-colors cursor-pointer group"
         >
           <div className="relative w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden">
             <Image
@@ -808,11 +808,11 @@ export default function DesignerProfile() {
                 <motion.div className="grid grid-cols-2 gap-3">
                   <Link
                     href="/schedule-consultation"
-                    className="bg-gray-100 text-gray-900 px-4 py-2 rounded-xl hover:bg-gray-200 transition-colors font-medium text-sm text-center"
+                    className="bg-[var(--bg-elevated)] text-gray-900 px-4 py-2 rounded-xl hover:bg-gray-200 transition-colors font-medium text-sm text-center"
                   >
                     Consult
                   </Link>
-                  <button className="bg-gray-100 text-gray-900 px-4 py-2 rounded-xl hover:bg-gray-200 transition-all duration-150 hover:-translate-y-[0.5px] active:translate-y-[0.5px]">
+                  <button className="bg-[var(--bg-elevated)] text-gray-900 px-4 py-2 rounded-xl hover:bg-gray-200 transition-all duration-150 hover:-translate-y-[0.5px] active:translate-y-[0.5px]">
                     <FaBookmark className="w-4 h-4 mx-auto" />
                   </button>
                 </motion.div>
@@ -865,7 +865,7 @@ export default function DesignerProfile() {
                       className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl transition-all duration-300 ${
                         activeTab === tab.id
                           ? 'bg-[var(--accent)] text-white shadow-lg'
-                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                          : 'text-gray-600 hover:text-gray-900 hover:bg-[var(--bg-elevated)]'
                       }`}
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}

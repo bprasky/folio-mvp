@@ -132,7 +132,7 @@ export default function CreatePostPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6">
+      <div className="min-h-screen bg-[var(--bg-elevated)] p-6">
         <div className="max-w-4xl mx-auto">
           <div className="animate-pulse">
             <div className="h-8 bg-gray-200 rounded-lg w-1/3 mb-6"></div>
@@ -152,7 +152,7 @@ export default function CreatePostPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[var(--bg-elevated)]">
       {/* Header */}
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -160,7 +160,7 @@ export default function CreatePostPage() {
             <div className="flex items-center gap-4">
               <button
                 onClick={() => router.back()}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-2 hover:bg-[var(--bg-elevated)] rounded-lg transition-colors"
               >
                 <ArrowLeft className="w-5 h-5 text-gray-600" />
               </button>
@@ -277,7 +277,7 @@ export default function CreatePostPage() {
                   </div>
 
                   {/* Product Image */}
-                  <div className="relative h-40 bg-gray-100 rounded-t-2xl overflow-hidden">
+                  <div className="relative h-40 bg-[var(--bg-elevated)] rounded-t-2xl overflow-hidden">
                     <SafeImage
                       src={item.product.imageUrl || "/images/product-placeholder.jpg"}
                       alt={item.product.name}
@@ -324,7 +324,7 @@ export default function CreatePostPage() {
             <button
               type="button"
               onClick={() => router.back()}
-              className="px-6 py-3 text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors font-medium"
+              className="px-6 py-3 text-gray-700 bg-[var(--bg-elevated)] rounded-xl hover:bg-gray-200 transition-colors font-medium"
             >
               Cancel
             </button>

@@ -409,7 +409,7 @@ export default function DesignerProfile() {
   );
 
   return (
-    <div className="min-h-screen bg-[var(--bg-base)] p-6">
+    <div className="min-h-screen bg-[var(--bg-elevated)] p-6">
       <div className="max-w-7xl mx-auto">
         {/* Profile Switcher for Designers */}
         {role === 'designer' && (

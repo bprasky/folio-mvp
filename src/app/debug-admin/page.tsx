@@ -5,7 +5,7 @@ export default async function DebugAdminPage() {
   const session = await getServerSession(authOptions);
   
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
+    <div className="min-h-screen bg-[var(--bg-elevated)] p-8">
       <div className="max-w-2xl mx-auto bg-white rounded-lg shadow p-6">
         <h1 className="text-2xl font-bold mb-6">Admin Authentication Debug</h1>
         

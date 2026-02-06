@@ -59,7 +59,7 @@ export default function ProjectTaggingDemo() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-[var(--bg-elevated)] flex">
       {/* Navigation */}
       
       
@@ -157,7 +157,7 @@ export default function ProjectTaggingDemo() {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
-                  <div className="aspect-video bg-gray-100">
+                  <div className="aspect-video bg-[var(--bg-elevated)]">
                     <img
                       src={image.url}
                       alt={image.name}

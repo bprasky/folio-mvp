@@ -78,7 +78,7 @@ export default function RepDashboardPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+      <div className="min-h-screen flex items-center justify-center bg-[var(--bg-elevated)] px-4">
         <div className="max-w-md w-full bg-white rounded-lg shadow-md p-8 text-center">
           <h1 className="text-2xl font-bold mb-4 text-red-600">Error</h1>
           <p className="text-gray-600 mb-6">{error}</p>
@@ -94,7 +94,7 @@ export default function RepDashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[var(--bg-elevated)]">
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="flex gap-8">
           {/* Left Sidebar */}
@@ -109,7 +109,7 @@ export default function RepDashboardPage() {
                     <Link
                       key={designer.id}
                       href={`/designer/${designer.id}`}
-                      className="flex items-center gap-3 p-2 rounded hover:bg-gray-50"
+                      className="flex items-center gap-3 p-2 rounded hover:bg-[var(--bg-elevated)]"
                     >
                       {designer.profileImage ? (
                         <img

@@ -337,7 +337,7 @@ export default function VendorProjectDetailPage() {
               
               <div className="space-y-3">
                 {room.selections.slice(0, 3).map((selection) => (
-                  <div key={selection.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                  <div key={selection.id} className="flex items-center gap-3 p-3 bg-[var(--bg-elevated)] rounded-lg">
                     {selection.photo ? (
                       <img 
                         src={selection.photo} 

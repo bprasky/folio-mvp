@@ -141,7 +141,7 @@ export default function ProfilePage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[var(--bg-elevated)] flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--accent)] mx-auto"></div>
           <p className="mt-4 text-gray-600">Loading profile...</p>
@@ -152,7 +152,7 @@ export default function ProfilePage() {
 
   if (!profile) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[var(--bg-elevated)] flex items-center justify-center">
         <div className="text-center">
           <div className="text-red-500 text-6xl mb-4">⚠️</div>
           <h3 className="text-lg font-medium text-gray-900 mb-2">Profile Not Found</h3>
@@ -169,7 +169,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[var(--bg-elevated)]">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
@@ -242,7 +242,7 @@ export default function ProfilePage() {
                       type="email"
                       value={profile.email}
                       disabled
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md bg-[var(--bg-elevated)] text-gray-500"
                     />
                     <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
                   </div>
@@ -484,7 +484,7 @@ export default function ProfilePage() {
                 {orgMemberships.map((membership) => (
                   <div
                     key={membership.id}
-                    className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
+                    className="flex items-center justify-between p-4 bg-[var(--bg-elevated)] rounded-lg"
                   >
                     <div className="flex items-center gap-4">
                       <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -548,7 +548,7 @@ export default function ProfilePage() {
                         className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm transition-colors ${
                           membership.showOnProfile
                             ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                            : 'bg-[var(--bg-elevated)] text-gray-600 hover:bg-gray-200'
                         } ${togglingVisibility === membership.id ? 'opacity-50 cursor-not-allowed' : ''}`}
                         title={membership.showOnProfile ? 'Visible on public profile' : 'Hidden from public profile'}
                       >
