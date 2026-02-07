@@ -62,8 +62,11 @@ export async function GET(
     }
 
     // Helper: check if an image matches a room by room field OR aiSpaces
+    // Images with no room assignment are available for ANY room
     const roomNameLower = (name: string) => name.toLowerCase();
     const imageMatchesRoom = (img: { room: string | null; aiSpaces: string[] }, roomName: string) => {
+      // No room assignment → available for any room
+      if (!img.room && (!img.aiSpaces || img.aiSpaces.length === 0)) return true;
       const rn = roomNameLower(roomName);
       // Direct room assignment match
       if (img.room && roomNameLower(img.room) === rn) return true;

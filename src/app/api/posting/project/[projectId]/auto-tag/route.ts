@@ -105,7 +105,9 @@ export async function POST(
     const skipped: SkippedSelection[] = [];
 
     // Helper: check if an image matches a room by room field OR aiSpaces
+    // Images with no room assignment are available for ANY room
     const imageMatchesRoom = (img: { room: string | null; aiSpaces: string[] }, roomName: string) => {
+      if (!img.room && (!img.aiSpaces || img.aiSpaces.length === 0)) return true;
       const rn = roomName.toLowerCase();
       if (img.room && img.room.toLowerCase() === rn) return true;
       if (img.aiSpaces?.some((s) => s.toLowerCase() === rn)) return true;
