@@ -7,10 +7,10 @@ import { prisma } from '@/lib/prisma';
  *   0. Direct link via vendorProductId or uiMeta.productId
  *   1. CachedProduct → match Product by URL
  *   2. CachedProduct → match Product by name (case-insensitive, exact)
- *   3. Selection.productName → match Product by name (case-insensitive, contains)
- *   4. Create a new Product from the Selection's denormalized data (last resort)
+ *   3. Selection.productName → match Product by name (exact, case-insensitive)
+ *   4. Selection.productName → match Product by name (fuzzy contains)
  *
- * Returns { productId, matchMethod } or null if no match and no name to create from.
+ * Returns { productId, matchMethod } or null if no match found.
  */
 export async function resolveSelectionToProduct(selection: {
   id: string;
@@ -20,15 +20,7 @@ export async function resolveSelectionToProduct(selection: {
   // 0. Direct link: check vendorProductId or uiMeta.productId on the Selection
   const sel = await prisma.selection.findUnique({
     where: { id: selection.id },
-    select: {
-      vendorProductId: true,
-      uiMeta: true,
-      productName: true,
-      vendorName: true,
-      photo: true,
-      unitPrice: true,
-      productUrl: true,
-    },
+    select: { vendorProductId: true, uiMeta: true, productName: true },
   });
 
   if (sel?.vendorProductId) {
@@ -82,7 +74,7 @@ export async function resolveSelectionToProduct(selection: {
     }
   }
 
-  // 3. Selection.productName → match existing Product by name
+  // 3. Selection.productName → match existing Product by name (exact, case-insensitive)
   const productName = sel?.productName || selection.productName;
   if (productName) {
     const product = await prisma.product.findFirst({
@@ -94,27 +86,15 @@ export async function resolveSelectionToProduct(selection: {
     if (product) return { productId: product.id, matchMethod: 'name_exact' };
   }
 
-  // 4. No existing Product found — create one from the Selection's data.
-  // Most selection creation paths (PDF extraction, import, manual entry) never
-  // create Product records. We create one here so auto-tag can link through
-  // the ProductTag → Product → VendorInvite attribution chain.
+  // 4. Fuzzy fallback — Selection.productName contained in Product.name
   if (productName) {
-    const product = await prisma.product.create({
-      data: {
-        name: productName,
-        brand: sel?.vendorName || selection.vendorName || null,
-        imageUrl: sel?.photo || null,
-        price: sel?.unitPrice ? Number(sel.unitPrice) : null,
-        url: sel?.productUrl || null,
+    const product = await prisma.product.findFirst({
+      where: {
+        name: { contains: productName, mode: 'insensitive' },
       },
       select: { id: true },
     });
-
-    console.log(
-      `[resolveSelectionToProduct] Created Product "${productName}" (${product.id}) from Selection ${selection.id}`
-    );
-
-    return { productId: product.id, matchMethod: 'created_from_selection' };
+    if (product) return { productId: product.id, matchMethod: 'name_fuzzy' };
   }
 
   return null;
