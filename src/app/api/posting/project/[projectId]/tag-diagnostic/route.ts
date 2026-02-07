@@ -94,10 +94,16 @@ export async function GET(
 
         for (const sel of unlinkedSelections) {
           const match = await resolveSelectionToProduct(sel);
-          if (match) withProductMatch++;
+          if (match) {
+            withProductMatch++;
+            console.log(`[tag-diagnostic] Room "${room.name}" selection "${sel.productName}" → Product via ${match.matchMethod}`);
+          } else {
+            console.log(`[tag-diagnostic] Room "${room.name}" selection "${sel.productName}" → NO product match`);
+          }
         }
 
         const autoTaggable = withProductMatch > 0 && untaggedImages.length > 0;
+        console.log(`[tag-diagnostic] Room "${room.name}": ${unlinkedSelections.length} unlinked, ${withProductMatch} resolved, ${untaggedImages.length} untagged images → autoTaggable=${autoTaggable}`);
 
         return {
           roomId: room.id,
