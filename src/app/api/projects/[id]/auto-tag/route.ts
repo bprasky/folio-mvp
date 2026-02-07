@@ -107,7 +107,7 @@ export async function POST(
       },
       select: {
         id: true,
-        projectImageId: true,
+        roomId: true,
         bbox: true,
         predictedCategory: true,
         confidence: true,
@@ -158,8 +158,12 @@ export async function POST(
         const tagKey = `${productId}-${image.id}`;
         if (existingTagSet.has(tagKey)) continue;
 
-        // Find a matching skeleton for this image
-        const imageSkeletons = skeletons.filter(s => s.projectImageId === image.id);
+        // Find a matching skeleton for this image (match via room)
+        const imageRoomName = image.room?.toLowerCase();
+        const imageSkeletons = skeletons.filter(s => {
+          const skeletonRoomName = project.rooms.find(r => r.id === s.roomId)?.name?.toLowerCase();
+          return skeletonRoomName && imageRoomName && skeletonRoomName === imageRoomName;
+        });
 
         // Simple matching: use first unconfirmed skeleton or center of image
         let x = 0.5;
