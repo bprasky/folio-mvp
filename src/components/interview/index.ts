@@ -1,8 +1,6 @@
 // Main exports
 export { InterviewFlow } from "./InterviewFlow";
 export { ModeSelection } from "./ModeSelection";
-export { PreInterviewChecklist } from "./PreInterviewChecklist";
-
 // TextInterview exports
 export { TextInterview, QuestionCard, FollowUpTransition } from "./TextInterview";
 

@@ -15,6 +15,29 @@ export async function resolveSelectionToProduct(selection: {
   productName?: string | null;
   vendorName?: string | null;
 }): Promise<{ productId: string; matchMethod: string } | null> {
+  // 0. Direct link: check vendorProductId or uiMeta.productId on the Selection
+  const sel = await prisma.selection.findUnique({
+    where: { id: selection.id },
+    select: { vendorProductId: true, uiMeta: true },
+  });
+
+  if (sel?.vendorProductId) {
+    const product = await prisma.product.findUnique({
+      where: { id: sel.vendorProductId },
+      select: { id: true },
+    });
+    if (product) return { productId: product.id, matchMethod: 'vendor_product_id' };
+  }
+
+  const uiProductId = (sel?.uiMeta as any)?.productId;
+  if (uiProductId) {
+    const product = await prisma.product.findUnique({
+      where: { id: uiProductId },
+      select: { id: true },
+    });
+    if (product) return { productId: product.id, matchMethod: 'ui_meta_product_id' };
+  }
+
   // 1. Try SelectionCachedProduct → CachedProduct → Product by URL
   const cachedLinks = await prisma.selectionCachedProduct.findMany({
     where: { selectionId: selection.id },
