@@ -49,6 +49,7 @@ export async function GET(
           select: {
             id: true,
             room: true,
+            name: true,
             aiSpaces: true,
             tags: { select: { id: true } },
             aiClassification: true,
@@ -123,6 +124,11 @@ export async function GET(
     const autoTaggableRooms = roomDiagnostics.filter((r) => r.autoTaggable).length;
     // Also count images without a room assignment (can't be matched to selections)
     const imagesWithoutRoom = project.images.filter((img) => !img.room).length;
+    // Detect generated images (planning-stage indicator)
+    const generatedImages = project.images.filter((img) => {
+      if (!img.name) return false;
+      try { return JSON.parse(img.name).type === 'GENERATED'; } catch { return false; }
+    }).length;
 
     // needsAttention is true when the project has gaps that hurt interview quality:
     // 1. Auto-taggable rooms exist (selections can become tags)
@@ -140,11 +146,13 @@ export async function GET(
         classifiedImages,
         autoTaggableRooms,
         imagesWithoutRoom,
+        generatedImages,
         needsAttention: autoTaggableRooms > 0 || hasNoTags,
         // Separate flags so the UI can show specific guidance
         hasNoTags,
         hasNoClassifications,
         hasAutoTaggable: autoTaggableRooms > 0,
+        hasGeneratedImages: generatedImages > 0,
       },
     });
   } catch (error: any) {

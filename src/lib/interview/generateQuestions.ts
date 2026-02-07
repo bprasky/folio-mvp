@@ -35,7 +35,8 @@ export type QuestionType =
   | 'sightlines'
   | 'decision_journey'
   | 'promoted_win'
-  | 'conviction_piece';
+  | 'conviction_piece'
+  | 'prospective_vision';
 
 export interface GeneratedQuestion {
   id: string;
@@ -104,6 +105,114 @@ const LEVEL_0_QUESTIONS = {
     },
   ],
 };
+
+// Prospective project questions — for projects in the planning/design phase.
+// Tone: invite the designer to share the evolving story naturally.
+// Never ask about budget, alternatives, or anything that sounds judgmental when published.
+const PROSPECTIVE_QUESTIONS = {
+  layer1: [
+    {
+      text: 'Tell us about the vision for this project and what inspired it.',
+      helper: 'Share what drew you to this direction — the story behind the concept.',
+    },
+    {
+      text: 'How do you envision the finished space feeling when it all comes together?',
+      helper: 'Describe the mood, the atmosphere, the experience you\'re designing toward.',
+    },
+    {
+      text: 'Walk us through how you arrived at these selections.',
+      helper: 'Share the story of what drew you to these particular pieces.',
+    },
+    {
+      text: 'Has the project evolved from the original vision at all?',
+      helper: 'Let the story of the design journey unfold naturally.',
+    },
+  ],
+  layer2: [
+    {
+      text: 'What\'s the anchor piece that the rest of the design revolves around?',
+      helper: 'Think about which selection set the tone for everything else.',
+    },
+    {
+      text: 'How are you thinking about the relationship between the rooms?',
+      helper: 'Describe the flow and continuity you\'re creating across spaces.',
+    },
+    {
+      text: 'What do you want your client to feel the first time they walk in?',
+      helper: 'Describe the arrival moment you\'re designing.',
+    },
+    {
+      text: 'Is there a material or finish that became the thread tying this project together?',
+      helper: 'Think about the unifying elements that create coherence.',
+    },
+  ],
+};
+
+/**
+ * Generate prospective project questions (planning/design phase).
+ * These replace generic questions when the project has generated images.
+ */
+function generateProspectiveQuestions(context: ProjectContext): GeneratedQuestion[] {
+  const questions: GeneratedQuestion[] = [];
+
+  for (const q of PROSPECTIVE_QUESTIONS.layer1) {
+    questions.push({
+      id: `prospective-${randomUUID()}`,
+      text: q.text,
+      helper: q.helper,
+      contextLevel: 1,
+      type: 'prospective_vision',
+      boostable: false,
+      pullQuotePotential: 'medium',
+    });
+  }
+
+  for (const q of PROSPECTIVE_QUESTIONS.layer2) {
+    questions.push({
+      id: `prospective-${randomUUID()}`,
+      text: q.text,
+      helper: q.helper,
+      contextLevel: 1,
+      type: 'prospective_vision',
+      boostable: false,
+      pullQuotePotential: 'high',
+    });
+  }
+
+  // Room-specific prospective questions
+  for (const room of context.rooms) {
+    if (room.selectionCount > 0) {
+      questions.push({
+        id: `prospective-room-${room.id}`,
+        text: `Tell us the story behind the ${room.name}. What are you building toward in this space?`,
+        contextLevel: 1,
+        type: 'prospective_vision',
+        rooms: [room.name],
+        boostable: false,
+        pullQuotePotential: 'high',
+        roomContext: room.name,
+      });
+    }
+  }
+
+  // Vendor-specific prospective questions
+  for (const vendor of context.dominantVendors) {
+    if (vendor.selectionCount >= 2) {
+      questions.push({
+        id: `prospective-vendor-${vendor.name.replace(/\s+/g, '-').toLowerCase()}`,
+        text: `You've chosen ${vendor.name} for several pieces. What draws you to their work?`,
+        contextLevel: 1,
+        type: 'prospective_vision',
+        vendors: [vendor.name],
+        rooms: vendor.rooms,
+        boostable: true,
+        pullQuotePotential: 'high',
+      });
+    }
+  }
+
+  return questions;
+}
 
 /**
  * Generate Level 0 generic questions
@@ -679,8 +788,12 @@ export async function generateInterviewQuestions(
 
   let questions: GeneratedQuestion[] = [];
 
-  // Always start with level 0 as fallback foundation (if requested)
-  if (includeGeneric) {
+  // For prospective projects, use prospective-tone questions instead of generic ones.
+  // These invite the designer to share their evolving vision naturally.
+  if (context.isProspective) {
+    questions.push(...generateProspectiveQuestions(context));
+  } else if (includeGeneric) {
+    // Completed projects get standard generic fallback questions
     questions.push(...generateLevel0Questions());
   }
 

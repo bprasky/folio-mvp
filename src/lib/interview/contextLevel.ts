@@ -94,6 +94,8 @@ export interface ProjectContext {
 
   // What's available
   hasPhotos: boolean;
+  hasGeneratedImages: boolean;
+  isProspective: boolean;
   hasMaterialSchedule: boolean;
   hasConceptPresentation: boolean;
   hasFloorPlan: boolean;
@@ -354,6 +356,23 @@ export async function assessProjectContext(projectId: string): Promise<ProjectCo
 
   // Determine what data is available
   const hasPhotos = project.images.length > 0;
+
+  // Detect generated images (metadata stored as JSON in name field)
+  const generatedImageCount = project.images.filter((img) => {
+    if (!img.name) return false;
+    try {
+      const meta = JSON.parse(img.name);
+      return meta.type === 'GENERATED';
+    } catch {
+      return false;
+    }
+  }).length;
+  const hasGeneratedImages = generatedImageCount > 0;
+
+  // A project is prospective when it has generated images — the designer is
+  // still in the planning/design phase, not documenting a completed project.
+  const isProspective = hasGeneratedImages;
+
   const hasMaterialSchedule = project.files.some(
     (f) => f.fileType === 'material_schedule'
   );
@@ -460,6 +479,8 @@ export async function assessProjectContext(projectId: string): Promise<ProjectCo
   return {
     level,
     hasPhotos,
+    hasGeneratedImages,
+    isProspective,
     hasMaterialSchedule,
     hasConceptPresentation,
     hasFloorPlan,
