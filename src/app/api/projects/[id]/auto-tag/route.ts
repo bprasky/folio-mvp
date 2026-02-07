@@ -108,9 +108,6 @@ export async function POST(
       select: {
         id: true,
         roomId: true,
-        bbox: true,
-        predictedCategory: true,
-        confidence: true,
       },
     });
 
@@ -165,18 +162,13 @@ export async function POST(
           return skeletonRoomName && imageRoomName && skeletonRoomName === imageRoomName;
         });
 
-        // Simple matching: use first unconfirmed skeleton or center of image
-        let x = 0.5;
-        let y = 0.5;
+        // Place tag at center of image (skeletons don't store bounding boxes)
+        const x = 0.5;
+        const y = 0.5;
 
+        // If there's a matching skeleton, mark it as confirmed
         if (imageSkeletons.length > 0) {
-          // Use the first unconfirmed skeleton's center
           const skeleton = imageSkeletons[0];
-          const bbox = skeleton.bbox as { x: number; y: number; w: number; h: number };
-          x = bbox.x + bbox.w / 2;
-          y = bbox.y + bbox.h / 2;
-
-          // Mark skeleton as confirmed
           await prisma.skeletonItem.update({
             where: { id: skeleton.id },
             data: {
@@ -287,7 +279,7 @@ export async function GET(
       },
       tags: tagCount,
       selections: selectionCount,
-      canAutoTag: selectionCount > 0 && tagCount === 0,
+      canAutoTag: selectionCount > 0,
     });
 
   } catch (error: any) {

@@ -70,10 +70,9 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Get bbox center for x,y coordinates
-    const bbox = skeleton.bbox as { x: number; y: number; w: number; h: number };
-    const x = bbox.x + bbox.w / 2;
-    const y = bbox.y + bbox.h / 2;
+    // Place tag at center of image (skeletons don't store bounding boxes)
+    const x = 0.5;
+    const y = 0.5;
 
     // Find the best image in this room to place the tag on
     const roomName = skeleton.room?.name?.toLowerCase();
