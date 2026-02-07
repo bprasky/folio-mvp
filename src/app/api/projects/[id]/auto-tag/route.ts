@@ -122,7 +122,7 @@ export async function POST(
     for (const selection of allSelections) {
       let productId = selection.vendorProductId;
 
-      // If no vendorProductId, create a Product record from ANY available selection data
+      // If no vendorProductId, create a minimal Product so we can still tag
       if (!productId) {
         const newProduct = await prisma.product.create({
           data: {

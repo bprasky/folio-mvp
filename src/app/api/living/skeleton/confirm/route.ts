@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Load skeleton with project for authorization
+    // Load skeleton with project and room for authorization
     const skeleton = await prisma.skeletonItem.findUnique({
       where: { id: skeletonId },
       include: {
@@ -42,7 +42,13 @@ export async function POST(request: NextRequest) {
             id: true,
             ownerId: true,
             designerId: true,
+            images: {
+              select: { id: true, room: true },
+            },
           },
+        },
+        room: {
+          select: { name: true },
         },
       },
     });
@@ -69,18 +75,23 @@ export async function POST(request: NextRequest) {
     const x = bbox.x + bbox.w / 2;
     const y = bbox.y + bbox.h / 2;
 
-    // Create ProjectProductTag
-    await prisma.projectProductTag.create({
-      data: {
-        projectId: skeleton.projectId,
-        projectImageId: skeleton.projectImageId,
-        productId: productId || undefined,
-        x,
-        y,
-        roomName: skeleton.roomName || undefined,
-        notes: 'confirmed from skeleton',
-      },
-    });
+    // Find the best image in this room to place the tag on
+    const roomName = skeleton.room?.name?.toLowerCase();
+    const targetImage = skeleton.project.images.find(
+      img => img.room?.toLowerCase() === roomName
+    ) || skeleton.project.images[0];
+
+    // Create ProductTag on the matching image
+    if (targetImage && productId) {
+      await prisma.productTag.create({
+        data: {
+          productId,
+          imageId: targetImage.id,
+          x,
+          y,
+        },
+      });
+    }
 
     // Update skeleton status
     await prisma.skeletonItem.update({
@@ -88,7 +99,7 @@ export async function POST(request: NextRequest) {
       data: {
         status: 'CONFIRMED',
         confirmedProductId: productId || null,
-        confirmedLabel: label || null,
+        description: label || undefined,
       },
     });
 
