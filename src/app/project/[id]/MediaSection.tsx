@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { FaUpload, FaImages, FaPlus, FaTag, FaRocket, FaCheckCircle, FaCloudUploadAlt, FaFileImport, FaTrash } from 'react-icons/fa';
 import ProjectCreationModal from '@/components/ProjectCreationModal';
-import { InterviewFlow, PreInterviewChecklist } from '@/components/interview';
+import { InterviewFlow } from '@/components/interview';
 import { TagDiagnosticModal } from '@/components/posting/interview/TagDiagnosticModal';
 import { FinishScheduleOptionsModal } from '@/components/posting/FinishScheduleOptionsModal';
 import { PresentationImportModal } from '@/components/import/PresentationImportModal';
@@ -46,7 +46,6 @@ export default function MediaSection({ project, isOwner, images, projectPost }: 
   const router = useRouter();
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showFinishScheduleModal, setShowFinishScheduleModal] = useState(false);
-  const [showPreInterviewChecklist, setShowPreInterviewChecklist] = useState(false);
   const [showInterviewModal, setShowInterviewModal] = useState(false);
   const [showTagDiagnostic, setShowTagDiagnostic] = useState(false);
   const [selectedHeroImageId, setSelectedHeroImageId] = useState<string | null>(null);
@@ -615,28 +614,6 @@ export default function MediaSection({ project, isOwner, images, projectPost }: 
             setShowInterviewModal(true);
           }}
         />
-      )}
-
-      {/* Pre-Interview Checklist */}
-      {showPreInterviewChecklist && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          {/* Backdrop */}
-          <div
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-            onClick={() => setShowPreInterviewChecklist(false)}
-          />
-          {/* Modal */}
-          <div className="relative">
-            <PreInterviewChecklist
-              projectId={project.id}
-              onStartInterview={() => {
-                setShowPreInterviewChecklist(false);
-                setShowInterviewModal(true);
-              }}
-              onCancel={() => setShowPreInterviewChecklist(false)}
-            />
-          </div>
-        </div>
       )}
 
       {/* New Interview Flow */}
