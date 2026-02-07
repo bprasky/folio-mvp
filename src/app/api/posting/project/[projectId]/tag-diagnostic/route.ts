@@ -41,6 +41,7 @@ export async function GET(
                 productName: true,
                 vendorName: true,
                 productTagId: true,
+                uiMeta: true,
               },
             },
           },
@@ -78,9 +79,68 @@ export async function GET(
       return false;
     };
 
+    // Backfill: ensure Product records exist for selections created before
+    // the product-upload flow started creating them.  This runs once per
+    // diagnostic check and is idempotent (findFirst before create).
+    for (const room of project.rooms) {
+      for (const sel of room.selections) {
+        if (!sel.productName) continue;
+
+        // Already linked via uiMeta.productId?
+        const selMeta = sel.uiMeta as Record<string, unknown> | null;
+        if (selMeta?.productId) continue;
+
+        // Check if a Product already exists for this name
+        const existing = await prisma.product.findFirst({
+          where: { name: { equals: sel.productName, mode: 'insensitive' } },
+          select: { id: true },
+        });
+
+        const productId = existing?.id ?? (
+          await prisma.product.create({
+            data: {
+              name: sel.productName,
+              brand: sel.vendorName || null,
+            },
+            select: { id: true },
+          })
+        ).id;
+
+        if (!existing) {
+          console.log(`[tag-diagnostic] Backfilled Product "${sel.productName}" (${productId}) for Selection ${sel.id}`);
+        }
+
+        // Persist the link so future calls skip this backfill
+        const currentMeta = (selMeta as Record<string, unknown>) || {};
+        await prisma.selection.update({
+          where: { id: sel.id },
+          data: { uiMeta: { ...currentMeta, productId } },
+        });
+      }
+    }
+
+    // Re-fetch selections after backfill so resolution can use the updated uiMeta
+    const refreshedProject = await prisma.project.findUnique({
+      where: { id: projectId },
+      include: {
+        rooms: {
+          include: {
+            selections: {
+              select: {
+                id: true,
+                productName: true,
+                vendorName: true,
+                productTagId: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
     // Build room diagnostics
     const roomDiagnostics = await Promise.all(
-      project.rooms.map(async (room) => {
+      (refreshedProject?.rooms ?? project.rooms).map(async (room) => {
         // Match images to this room by room ID, room name, or AI-detected spaces
         const roomImages = project.images.filter((img) => imageMatchesRoom(img, room.id, room.name));
 
@@ -94,10 +154,16 @@ export async function GET(
 
         for (const sel of unlinkedSelections) {
           const match = await resolveSelectionToProduct(sel);
-          if (match) withProductMatch++;
+          if (match) {
+            withProductMatch++;
+            console.log(`[tag-diagnostic] Room "${room.name}" selection "${sel.productName}" → Product via ${match.matchMethod}`);
+          } else {
+            console.log(`[tag-diagnostic] Room "${room.name}" selection "${sel.productName}" → NO product match`);
+          }
         }
 
         const autoTaggable = withProductMatch > 0 && untaggedImages.length > 0;
+        console.log(`[tag-diagnostic] Room "${room.name}": ${unlinkedSelections.length} unlinked, ${withProductMatch} resolved, ${untaggedImages.length} untagged images → autoTaggable=${autoTaggable}`);
 
         return {
           roomId: room.id,

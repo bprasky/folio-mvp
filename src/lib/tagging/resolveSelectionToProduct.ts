@@ -4,11 +4,13 @@ import { prisma } from '@/lib/prisma';
  * Resolve a Selection to a Product.id suitable for creating a ProductTag.
  *
  * Resolution strategy (in priority order):
+ *   0. Direct link via vendorProductId or uiMeta.productId
  *   1. CachedProduct → match Product by URL
  *   2. CachedProduct → match Product by name (case-insensitive, exact)
- *   3. Selection.productName → match Product by name (case-insensitive, contains)
+ *   3. Selection.productName → match Product by name (exact, case-insensitive)
+ *   4. Selection.productName → match Product by name (fuzzy contains)
  *
- * Returns { productId, matchMethod } or null if no match.
+ * Returns { productId, matchMethod } or null if no match found.
  */
 export async function resolveSelectionToProduct(selection: {
   id: string;
@@ -18,7 +20,7 @@ export async function resolveSelectionToProduct(selection: {
   // 0. Direct link: check vendorProductId or uiMeta.productId on the Selection
   const sel = await prisma.selection.findUnique({
     where: { id: selection.id },
-    select: { vendorProductId: true, uiMeta: true },
+    select: { vendorProductId: true, uiMeta: true, productName: true },
   });
 
   if (sel?.vendorProductId) {
@@ -72,11 +74,23 @@ export async function resolveSelectionToProduct(selection: {
     }
   }
 
-  // 3. Selection.productName → Product by name (contains, case-insensitive)
-  if (selection.productName) {
+  // 3. Selection.productName → match existing Product by name (exact, case-insensitive)
+  const productName = sel?.productName || selection.productName;
+  if (productName) {
     const product = await prisma.product.findFirst({
       where: {
-        name: { contains: selection.productName, mode: 'insensitive' },
+        name: { equals: productName, mode: 'insensitive' },
+      },
+      select: { id: true },
+    });
+    if (product) return { productId: product.id, matchMethod: 'name_exact' };
+  }
+
+  // 4. Fuzzy fallback — Selection.productName contained in Product.name
+  if (productName) {
+    const product = await prisma.product.findFirst({
+      where: {
+        name: { contains: productName, mode: 'insensitive' },
       },
       select: { id: true },
     });

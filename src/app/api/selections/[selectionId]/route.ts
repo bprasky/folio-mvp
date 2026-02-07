@@ -52,17 +52,49 @@ export async function PATCH(
     const { access, selection } = await assertSelectionView(session.user.id, params.selectionId);
     
     const body = await request.json();
-            const { 
-              productName, 
-              vendorName, 
-              productUrl, 
-              photo, 
-              notes, 
-              unitPrice, 
+            const {
+              productName,
+              vendorName,
+              productUrl,
+              photo,
+              notes,
+              unitPrice,
               vendorProductId,
               slotKey,
               uiMeta
             } = body;
+
+            // Ensure a Product record exists when productName is provided
+            let linkedProductId: string | null = null;
+            const nameToLink = productName ?? selection.productName;
+            if (nameToLink) {
+              const existing = await prisma.product.findFirst({
+                where: { name: { equals: nameToLink, mode: 'insensitive' } },
+                select: { id: true },
+              });
+              if (existing) {
+                linkedProductId = existing.id;
+              } else {
+                const product = await prisma.product.create({
+                  data: {
+                    name: nameToLink,
+                    brand: (vendorName ?? selection.vendorName) || null,
+                    imageUrl: (photo ?? selection.photo) || null,
+                    price: unitPrice != null ? Number(unitPrice) : (selection.unitPrice ? Number(selection.unitPrice) : null),
+                    url: (productUrl ?? selection.productUrl) || null,
+                  },
+                  select: { id: true },
+                });
+                linkedProductId = product.id;
+                console.log(`[selections/PATCH] Created Product "${nameToLink}" (${product.id})`);
+              }
+            }
+
+            // Merge productId into uiMeta
+            const existingUiMeta = (selection.uiMeta as Record<string, unknown>) || {};
+            const mergedUiMeta = uiMeta !== undefined
+              ? { ...uiMeta, ...(linkedProductId ? { productId: linkedProductId } : {}) }
+              : (linkedProductId ? { ...existingUiMeta, productId: linkedProductId } : undefined);
 
             // Update the selection
             const updatedSelection = await prisma.selection.update({
@@ -76,7 +108,7 @@ export async function PATCH(
                 ...(unitPrice !== undefined && { unitPrice }),
                 ...(vendorProductId !== undefined && { vendorProductId }),
                 ...(slotKey !== undefined && { slotKey }),
-                ...(uiMeta !== undefined && { uiMeta })
+                ...(mergedUiMeta !== undefined && { uiMeta: mergedUiMeta })
               }
             });
 
