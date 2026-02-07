@@ -49,6 +49,7 @@ export async function GET(
           select: {
             id: true,
             room: true,
+            name: true,
             aiSpaces: true,
             tags: { select: { id: true } },
             aiClassification: true,
@@ -61,22 +62,27 @@ export async function GET(
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
 
-    // Helper: check if an image matches a room by room field OR aiSpaces
-    const roomNameLower = (name: string) => name.toLowerCase();
-    const imageMatchesRoom = (img: { room: string | null; aiSpaces: string[] }, roomName: string) => {
-      const rn = roomNameLower(roomName);
-      // Direct room assignment match
-      if (img.room && roomNameLower(img.room) === rn) return true;
+    // Helper: check if an image matches a room by room field, room ID, or aiSpaces
+    // Generated images store roomId in the room field; uploaded photos store the room name
+    // Images with no room assignment are available for ANY room
+    const imageMatchesRoom = (img: { room: string | null; aiSpaces: string[] }, roomId: string, roomName: string) => {
+      // No room assignment → available for any room
+      if (!img.room && (!img.aiSpaces || img.aiSpaces.length === 0)) return true;
+      // Generated images store the room UUID in img.room
+      if (img.room && img.room === roomId) return true;
+      // Uploaded photos store the room name string in img.room
+      const rn = roomName.toLowerCase();
+      if (img.room && img.room.toLowerCase() === rn) return true;
       // AI-detected spaces match (e.g., aiSpaces: ["kitchen"] matches Room "Kitchen")
-      if (img.aiSpaces?.some((s) => roomNameLower(s) === rn)) return true;
+      if (img.aiSpaces?.some((s) => s.toLowerCase() === rn)) return true;
       return false;
     };
 
     // Build room diagnostics
     const roomDiagnostics = await Promise.all(
       project.rooms.map(async (room) => {
-        // Match images to this room by room field OR AI-detected spaces
-        const roomImages = project.images.filter((img) => imageMatchesRoom(img, room.name));
+        // Match images to this room by room ID, room name, or AI-detected spaces
+        const roomImages = project.images.filter((img) => imageMatchesRoom(img, room.id, room.name));
 
         const taggedImages = roomImages.filter((img) => img.tags.length > 0);
         const untaggedImages = roomImages.filter((img) => img.tags.length === 0);
@@ -118,6 +124,11 @@ export async function GET(
     const autoTaggableRooms = roomDiagnostics.filter((r) => r.autoTaggable).length;
     // Also count images without a room assignment (can't be matched to selections)
     const imagesWithoutRoom = project.images.filter((img) => !img.room).length;
+    // Detect generated images (planning-stage indicator)
+    const generatedImages = project.images.filter((img) => {
+      if (!img.name) return false;
+      try { return JSON.parse(img.name).type === 'GENERATED'; } catch { return false; }
+    }).length;
 
     // needsAttention is true when the project has gaps that hurt interview quality:
     // 1. Auto-taggable rooms exist (selections can become tags)
@@ -135,11 +146,13 @@ export async function GET(
         classifiedImages,
         autoTaggableRooms,
         imagesWithoutRoom,
+        generatedImages,
         needsAttention: autoTaggableRooms > 0 || hasNoTags,
         // Separate flags so the UI can show specific guidance
         hasNoTags,
         hasNoClassifications,
         hasAutoTaggable: autoTaggableRooms > 0,
+        hasGeneratedImages: generatedImages > 0,
       },
     });
   } catch (error: any) {

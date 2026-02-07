@@ -24,6 +24,23 @@ type SkippedSelection = {
 };
 
 /**
+ * Parse generated image metadata from the name field.
+ * Generated images store JSON in `name` with type, selectionIds, etc.
+ */
+function parseGeneratedMetadata(name: string | null): { type: string; selectionIds: string[] } | null {
+  if (!name) return null;
+  try {
+    const meta = JSON.parse(name);
+    if (meta.type === 'GENERATED' && Array.isArray(meta.selectionIds)) {
+      return meta;
+    }
+  } catch {
+    // Not JSON metadata, just a regular filename
+  }
+  return null;
+}
+
+/**
  * Compute evenly-distributed tag coordinates for N tags on an image.
  * Returns percentage-based (0-100) positions in a grid layout.
  */
@@ -90,6 +107,7 @@ export async function POST(
           select: {
             id: true,
             room: true,
+            name: true,
             aiSpaces: true,
             tags: { select: { id: true } },
           },
@@ -104,8 +122,12 @@ export async function POST(
     const created: CreatedTag[] = [];
     const skipped: SkippedSelection[] = [];
 
-    // Helper: check if an image matches a room by room field OR aiSpaces
-    const imageMatchesRoom = (img: { room: string | null; aiSpaces: string[] }, roomName: string) => {
+    // Helper: check if an image matches a room by room field, room ID, or aiSpaces
+    // Generated images store roomId in the room field; uploaded photos store the room name
+    // Images with no room assignment are available for ANY room
+    const imageMatchesRoom = (img: { room: string | null; aiSpaces: string[] }, roomId: string, roomName: string) => {
+      if (!img.room && (!img.aiSpaces || img.aiSpaces.length === 0)) return true;
+      if (img.room && img.room === roomId) return true;
       const rn = roomName.toLowerCase();
       if (img.room && img.room.toLowerCase() === rn) return true;
       if (img.aiSpaces?.some((s) => s.toLowerCase() === rn)) return true;
@@ -113,9 +135,9 @@ export async function POST(
     };
 
     for (const room of project.rooms) {
-      // Get untagged images that belong to this room (room field OR AI-detected spaces)
+      // Get untagged images that belong to this room (room ID, room name, or AI-detected spaces)
       const untaggedImages = project.images.filter(
-        (img) => imageMatchesRoom(img, room.name) && img.tags.length === 0
+        (img) => imageMatchesRoom(img, room.id, room.name) && img.tags.length === 0
       );
 
       // Get unlinked selections
@@ -141,36 +163,50 @@ export async function POST(
         continue;
       }
 
-      // Resolve selections to Products
-      const resolved: Array<{
-        selectionId: string;
-        productId: string;
-        productName: string | null;
-      }> = [];
-
+      // Pre-resolve all unlinked selections to Products (cached for reuse across images)
+      const resolutionCache = new Map<string, { productId: string; matchMethod: string } | null>();
       for (const sel of unlinkedSelections) {
         const match = await resolveSelectionToProduct(sel);
-        if (match) {
-          resolved.push({
-            selectionId: sel.id,
-            productId: match.productId,
-            productName: sel.productName,
-          });
-        } else {
-          skipped.push({
-            selectionId: sel.id,
-            productName: sel.productName,
-            reason: 'no_product_match',
-          });
-        }
+        resolutionCache.set(sel.id, match);
       }
 
-      if (resolved.length === 0) continue;
+      // Track which selections have been linked to avoid double-linking
+      const linkedSelectionIds = new Set<string>();
 
-      // Distribute resolved selections across untagged images.
-      // Strategy: assign all resolved products to each untagged image
-      // (each image gets tagged with all room products).
+      // Process each untagged image
       for (const image of untaggedImages) {
+        // For generated images, only tag the specific selections from metadata.
+        // For uploaded photos, tag all room selections.
+        const genMeta = parseGeneratedMetadata(image.name);
+        const candidateSelections = genMeta?.selectionIds
+          ? unlinkedSelections.filter((s) => genMeta.selectionIds.includes(s.id))
+          : unlinkedSelections;
+
+        // Filter out already-linked selections (linked on a previous image)
+        const selectionsForImage = candidateSelections.filter(
+          (s) => !linkedSelectionIds.has(s.id)
+        );
+
+        // Resolve to products
+        const resolved: Array<{
+          selectionId: string;
+          productId: string;
+          productName: string | null;
+        }> = [];
+
+        for (const sel of selectionsForImage) {
+          const match = resolutionCache.get(sel.id);
+          if (match) {
+            resolved.push({
+              selectionId: sel.id,
+              productId: match.productId,
+              productName: sel.productName,
+            });
+          }
+        }
+
+        if (resolved.length === 0) continue;
+
         const positions = computeTagPositions(resolved.length);
 
         for (let i = 0; i < resolved.length; i++) {
@@ -188,7 +224,6 @@ export async function POST(
               y,
             });
           } else {
-            // Wrap each tag + link in a transaction
             const result = await prisma.$transaction(async (tx) => {
               const tag = await tx.productTag.create({
                 data: { x, y, productId, imageId: image.id },
@@ -210,6 +245,19 @@ export async function POST(
               y,
             });
           }
+
+          linkedSelectionIds.add(selectionId);
+        }
+      }
+
+      // Track unresolved selections as skipped
+      for (const sel of unlinkedSelections) {
+        if (!resolutionCache.get(sel.id) && !linkedSelectionIds.has(sel.id)) {
+          skipped.push({
+            selectionId: sel.id,
+            productName: sel.productName,
+            reason: 'no_product_match',
+          });
         }
       }
     }
