@@ -346,8 +346,8 @@ export default function MediaSection({ project, isOwner, images, projectPost }: 
             {isOwner && POSTING_V1_ENABLED && (
               <button
                 onClick={() => {
-                  // Show pre-interview checklist first (includes auto-tag option)
-                  setShowPreInterviewChecklist(true);
+                  // Show tag diagnostic modal (uses same data path as design boards)
+                  setShowTagDiagnostic(true);
                 }}
                 className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
               >
