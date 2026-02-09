@@ -15,6 +15,7 @@ import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 import { ExtractionResult, ExtractedItem, getAllItems } from '@/lib/pdf'
 import { uploadDataUrlToSupabase } from '@/lib/uploadToSupabase'
+import { ensureProductForSelection } from '@/lib/tagging/ensureProductForSelection'
 
 interface ConfirmRequest {
   selectedItems: string[]  // Item IDs to import
@@ -181,6 +182,15 @@ async function createSelection(
     }
   }
 
+  // Ensure a Product record exists for the attribution chain
+  const linkedProductId = await ensureProductForSelection({
+    productName: item.productName,
+    vendorName: item.vendor || item.brand,
+    photo: imageUrl,
+    unitPrice: item.price ? item.price / 100 : null,
+    productUrl: item.productUrl,
+  })
+
   // Create the selection
   const selection = await prisma.selection.create({
     data: {
@@ -200,7 +210,8 @@ async function createSelection(
         extractionId,
         extractedItemId: item.id,
         confidence: item.confidence,
-        dimensions: item.dimensions
+        dimensions: item.dimensions,
+        ...(linkedProductId ? { productId: linkedProductId } : {}),
       }
     }
   })

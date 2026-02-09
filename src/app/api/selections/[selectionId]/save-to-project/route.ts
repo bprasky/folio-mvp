@@ -5,6 +5,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
 import { assertProjectAccess } from '@/lib/permissions';
+import { ensureProductForSelection } from '@/lib/tagging/ensureProductForSelection';
 
 /**
  * POST /api/selections/[selectionId]/save-to-project
@@ -93,6 +94,15 @@ export async function POST(
       console.warn('[save-to-project] Could not create Unsorted room:', e);
     }
 
+    // Ensure a Product record exists for the attribution chain
+    const linkedProductId = await ensureProductForSelection({
+      productName: sourceSelection.productName,
+      vendorName: sourceSelection.vendorName,
+      photo: sourceSelection.photo,
+      unitPrice: sourceSelection.unitPrice ? Number(sourceSelection.unitPrice) : null,
+      productUrl: sourceSelection.productUrl,
+    });
+
     // Copy the selection to target project
     // Exclude: id, projectId, roomId, createdAt, updatedAt, productTagId (unique constraint)
     const newSelection = await prisma.selection.create({
@@ -116,7 +126,7 @@ export async function POST(
         vendorRepId: sourceSelection.vendorRepId,
         productUrl: sourceSelection.productUrl,
         tags: sourceSelection.tags,
-        // Don't copy slotKey (room-specific), uiMeta (layout-specific), productTagId (unique)
+        ...(linkedProductId ? { uiMeta: { productId: linkedProductId } } : {}),
       },
       select: {
         id: true,

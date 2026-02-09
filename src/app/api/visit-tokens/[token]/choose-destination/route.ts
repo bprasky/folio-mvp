@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { canDesignerClaimVisit } from "@/lib/permissions";
 import { track } from "@/lib/analytics";
 import { createProjectParticipant } from "@/lib/authz/access";
+import { ensureProductForSelection } from '@/lib/tagging/ensureProductForSelection';
 
 type Params = { params: { token: string } };
 
@@ -99,17 +100,27 @@ export async function POST(req: Request, { params }: Params) {
     let attachedCount = 0;
 
     for (const item of items) {
+      const productName = item.sku || item.productName || 'Unknown Product';
+
+      // Ensure a Product record exists for the attribution chain
+      const linkedProductId = await ensureProductForSelection({
+        productName,
+        vendorName: 'Vendor',
+        photo: item.imageUrl || null,
+      });
+
       await prisma.selection.create({
         data: {
           projectId: chosenProjectId,
-          productName: item.sku || item.productName || 'Unknown Product',
-          vendorName: 'Vendor', // You might want to fetch the actual vendor name
+          productName,
+          vendorName: 'Vendor',
           colorFinish: item.finish || '',
           quantity: item.quantity || 1,
           notes: item.note || '',
           photo: item.imageUrl || null,
           vendorRepId: visit.vendorId,
           vendorOrgId: visit.vendorId, // Ensure vendor attribution
+          ...(linkedProductId ? { uiMeta: { productId: linkedProductId } } : {}),
         },
       });
       attachedCount++;

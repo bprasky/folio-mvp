@@ -5,15 +5,17 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
+import { ensureProductForSelection } from '@/lib/tagging/ensureProductForSelection';
+
 export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
     const body = await request.json();
-    const { 
-      photo, 
-      notes, 
+    const {
+      photo,
+      notes,
       vendorId,
       vendorName,
       productName,
@@ -39,7 +41,7 @@ export async function POST(
     // If roomId is provided, verify room exists and belongs to the project
     if (roomId) {
       const room = await prisma.room.findUnique({
-        where: { 
+        where: {
           id: roomId,
           projectId: params.id
         }
@@ -53,8 +55,14 @@ export async function POST(
       }
     }
 
+    // Ensure a Product record exists for the attribution chain
+    const linkedProductId = await ensureProductForSelection({
+      productName,
+      vendorName,
+      photo,
+    });
+
     // Create the selection with current schema fields
-    // Note: This is a temporary fix until database schema is updated
     const selectionData: any = {
       photo: photo || null,
       notes: notes || null,
@@ -70,6 +78,7 @@ export async function POST(
     if (gpsLocation !== undefined) selectionData.gpsLocation = gpsLocation;
     if (source !== undefined) selectionData.source = source;
     if (params.id !== undefined) selectionData.projectId = params.id;
+    if (linkedProductId) selectionData.uiMeta = { productId: linkedProductId };
 
     const selection = await prisma.selection.create({
       data: selectionData

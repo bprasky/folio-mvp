@@ -8,26 +8,28 @@ import { authOptions } from "@/lib/auth";
 
 const prisma = new PrismaClient();
 
+import { ensureProductForSelection } from '@/lib/tagging/ensureProductForSelection';
+
 export async function POST(
   request: NextRequest,
   { params }: { params: { id: string; roomId: string } }
 ) {
   try {
     const { id: projectId, roomId } = params;
-    
+
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     const access = await assertProjectView(session.user.id, projectId);
     const body = await request.json();
-    const { 
-      productName, 
-      photo, 
-      notes, 
-      unitPrice, 
-      quantity, 
-      vendorRepId, 
+    const {
+      productName,
+      photo,
+      notes,
+      unitPrice,
+      quantity,
+      vendorRepId,
       vendorProductId,
       colorFinish,
       vendorName,
@@ -65,7 +67,16 @@ export async function POST(
       );
     }
 
-    // Create selection
+    // Ensure a Product record exists for the attribution chain
+    const productId = await ensureProductForSelection({
+      productName,
+      vendorName,
+      photo,
+      unitPrice: unitPrice ? parseFloat(unitPrice) : null,
+      productUrl: null,
+    });
+
+    // Create selection with productId linked via uiMeta
     const selection = await prisma.selection.create({
       data: {
         productName,
@@ -81,6 +92,7 @@ export async function POST(
         specSheetFileName,
         roomId,
         projectId,
+        ...(productId ? { uiMeta: { productId } } : {}),
       },
     });
 

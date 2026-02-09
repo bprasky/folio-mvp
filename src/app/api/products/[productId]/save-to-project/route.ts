@@ -66,6 +66,7 @@ export async function POST(
       photo: product.imageUrl || undefined,
       roomId: roomId ?? undefined,
       notes: notes ?? null,
+      uiMeta: { productId: product.id },
     },
   });
 
