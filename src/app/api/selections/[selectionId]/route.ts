@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { assertSelectionView } from "@/lib/authz/access";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { ensureProductForSelection } from '@/lib/tagging/ensureProductForSelection';
 
 export async function GET(
   request: NextRequest,
@@ -65,30 +66,14 @@ export async function PATCH(
             } = body;
 
             // Ensure a Product record exists when productName is provided
-            let linkedProductId: string | null = null;
             const nameToLink = productName ?? selection.productName;
-            if (nameToLink) {
-              const existing = await prisma.product.findFirst({
-                where: { name: { equals: nameToLink, mode: 'insensitive' } },
-                select: { id: true },
-              });
-              if (existing) {
-                linkedProductId = existing.id;
-              } else {
-                const product = await prisma.product.create({
-                  data: {
-                    name: nameToLink,
-                    brand: (vendorName ?? selection.vendorName) || null,
-                    imageUrl: (photo ?? selection.photo) || null,
-                    price: unitPrice != null ? Number(unitPrice) : (selection.unitPrice ? Number(selection.unitPrice) : null),
-                    url: (productUrl ?? selection.productUrl) || null,
-                  },
-                  select: { id: true },
-                });
-                linkedProductId = product.id;
-                console.log(`[selections/PATCH] Created Product "${nameToLink}" (${product.id})`);
-              }
-            }
+            const linkedProductId = await ensureProductForSelection({
+              productName: nameToLink,
+              vendorName: (vendorName ?? selection.vendorName) || null,
+              photo: (photo ?? selection.photo) || null,
+              unitPrice: unitPrice != null ? Number(unitPrice) : (selection.unitPrice ? Number(selection.unitPrice) : null),
+              productUrl: (productUrl ?? selection.productUrl) || null,
+            });
 
             // Merge productId into uiMeta
             const existingUiMeta = (selection.uiMeta as Record<string, unknown>) || {};

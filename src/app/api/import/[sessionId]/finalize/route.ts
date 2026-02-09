@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
+import { ensureProductForSelection } from '@/lib/tagging/ensureProductForSelection';
 
 export const runtime = 'nodejs';
 
@@ -159,6 +160,18 @@ export async function POST(
       const hasPrice = !!(extractedPrice || suggestion?.price);
       const specConfidence = hasVendor && hasPrice ? 'high' : (hasVendor || hasPrice ? 'partial' : 'visual_only');
 
+      // Ensure a Product record exists for the attribution chain
+      const selProductName = suggestion?.productName || pendingTag.description;
+      const selVendorName = extractedVendor || suggestion?.vendorName || null;
+      const selUnitPrice = extractedPrice ? (extractedPrice / 100) : (suggestion?.price ? parseFloat(suggestion.price) : null);
+      const linkedProductId = await ensureProductForSelection({
+        productName: selProductName,
+        vendorName: selVendorName,
+        photo: pendingTag.tempImageUrl || suggestion?.imageUrl || null,
+        unitPrice: selUnitPrice,
+        productUrl: extractedProductUrl || suggestion?.productUrl || null,
+      });
+
       // Create a Selection (this is what Designer Board displays)
       // Priority: extracted specs > suggestion data > defaults
       const selection = await prisma.selection.create({
@@ -166,11 +179,11 @@ export async function POST(
           projectId,
           roomId,
           photo: pendingTag.tempImageUrl || suggestion?.imageUrl || null,
-          productName: suggestion?.productName || pendingTag.description,
-          vendorName: extractedVendor || suggestion?.vendorName || null,
+          productName: selProductName,
+          vendorName: selVendorName,
           productUrl: extractedProductUrl || suggestion?.productUrl || null,
           vendorProductId: extractedSku || null,
-          unitPrice: extractedPrice ? (extractedPrice / 100) : (suggestion?.price ? parseFloat(suggestion.price) : null),
+          unitPrice: selUnitPrice,
           tags: [pendingTag.category.toLowerCase()], // e.g., ["furniture", "lighting"]
           source: 'import',
           notes,
@@ -178,6 +191,7 @@ export async function POST(
             dimensions: dimensionsObj,
             specConfidence,
             importedAt: new Date().toISOString(),
+            ...(linkedProductId ? { productId: linkedProductId } : {}),
           },
         },
       });

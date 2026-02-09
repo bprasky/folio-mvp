@@ -6,6 +6,7 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
 import { assertProjectView } from '@/lib/authz/access';
 import { resolveSelectionToProduct } from '@/lib/tagging/resolveSelectionToProduct';
+import { ensureProductForSelection } from '@/lib/tagging/ensureProductForSelection';
 
 type CreatedTag = {
   productTagId: string;
@@ -121,8 +122,7 @@ export async function POST(
     }
 
     // Backfill: ensure Product records exist for selections that don't have one.
-    // This matches the same backfill in tag-diagnostic so auto-tag works even
-    // when called before the diagnostic has run (e.g., from gen-image inline).
+    // Uses shared ensureProductForSelection utility for consistency.
     for (const room of project.rooms) {
       for (const sel of room.selections) {
         if (!sel.productName) continue;
@@ -137,25 +137,19 @@ export async function POST(
           console.log(`[auto-tag] Dangling uiMeta.productId ${selMeta.productId} for "${sel.productName}" — will backfill`);
         }
 
-        // Find or create the Product
-        const existing = await prisma.product.findFirst({
-          where: { name: { equals: sel.productName, mode: 'insensitive' } },
-          select: { id: true },
+        const productId = await ensureProductForSelection({
+          productName: sel.productName,
+          vendorName: sel.vendorName,
         });
-        const productId = existing?.id ?? (
-          await prisma.product.create({
-            data: { name: sel.productName, brand: sel.vendorName || null },
-            select: { id: true },
-          })
-        ).id;
 
-        // Persist the link
-        const currentMeta = (selMeta as Record<string, unknown>) || {};
-        await prisma.selection.update({
-          where: { id: sel.id },
-          data: { uiMeta: { ...currentMeta, productId } },
-        });
-        console.log(`[auto-tag] Backfilled Product "${sel.productName}" (${productId}) for Selection ${sel.id}`);
+        if (productId) {
+          const currentMeta = (selMeta as Record<string, unknown>) || {};
+          await prisma.selection.update({
+            where: { id: sel.id },
+            data: { uiMeta: { ...currentMeta, productId } },
+          });
+          console.log(`[auto-tag] Backfilled Product "${sel.productName}" (${productId}) for Selection ${sel.id}`);
+        }
       }
     }
 
