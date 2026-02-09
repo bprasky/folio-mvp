@@ -9,6 +9,7 @@ import { buildBasePrompt, mergeModifiers } from '@/lib/boards/prompt';
 import { getImageGenProvider } from '@/lib/ai/imageGen';
 import { saveBufferToProjectStorage } from '@/lib/storage';
 import { logPassiveEvent } from '@/lib/analytics';
+import { resolveSelectionToProduct } from '@/lib/tagging/resolveSelectionToProduct';
 
 export async function POST(
   request: NextRequest,
@@ -178,6 +179,52 @@ export async function POST(
         },
         select: { id: true, url: true },
       }).catch(async () => null);
+
+      // Auto-tag: create ProductTags from selections used in this generated image
+      if (rec?.id && selectionIds.length > 0) {
+        try {
+          // Fetch selections that don't already have a productTagId
+          const selsToTag = await prisma.selection.findMany({
+            where: { id: { in: selectionIds }, productTagId: null },
+            select: { id: true, productName: true, vendorName: true },
+          });
+
+          // Resolve each selection to a Product
+          const resolved: Array<{ selectionId: string; productId: string }> = [];
+          for (const sel of selsToTag) {
+            const match = await resolveSelectionToProduct(sel);
+            if (match) resolved.push({ selectionId: sel.id, productId: match.productId });
+          }
+
+          if (resolved.length > 0) {
+            // Compute grid positions for tags
+            const padding = 15;
+            const span = 100 - 2 * padding;
+            const positions = resolved.map((_, i) => ({
+              x: resolved.length === 1 ? 50 : Math.round((padding + (span * i) / (resolved.length - 1)) * 100) / 100,
+              y: 50,
+            }));
+
+            // Create tags + backlinks in a transaction
+            await prisma.$transaction(async (tx) => {
+              for (let i = 0; i < resolved.length; i++) {
+                const tag = await tx.productTag.create({
+                  data: { x: positions[i].x, y: positions[i].y, productId: resolved[i].productId, imageId: rec.id },
+                });
+                await tx.selection.update({
+                  where: { id: resolved[i].selectionId },
+                  data: { productTagId: tag.id },
+                });
+              }
+            });
+
+            console.log(`[gen-image][auto-tag] Created ${resolved.length} tags for image ${rec.id}`);
+          }
+        } catch (tagErr) {
+          // Don't fail image generation if auto-tagging fails
+          console.warn('[gen-image][auto-tag] Failed:', tagErr);
+        }
+      }
 
       // Return both DB record and storage info
       saved.push({
