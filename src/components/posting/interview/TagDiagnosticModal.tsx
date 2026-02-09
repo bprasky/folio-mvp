@@ -121,7 +121,7 @@ export function TagDiagnosticModal({
     }
   }, [projectId]);
 
-  // On open: fetch diagnostic, then auto-classify if needed
+  // On open: fetch diagnostic, auto-classify if needed, then auto-tag if possible
   useEffect(() => {
     if (!open) return;
     setAutoTagDone(false);
@@ -130,7 +130,7 @@ export function TagDiagnosticModal({
     setLoading(true);
 
     (async () => {
-      const data = await fetchDiagnostic();
+      let data = await fetchDiagnostic();
       setLoading(false);
 
       // Gate: if photos exist but aren't classified, classify them now
@@ -144,12 +144,43 @@ export function TagDiagnosticModal({
           if (res.ok) {
             setClassifyDone(true);
             // Re-fetch diagnostic with updated classification data
-            await fetchDiagnostic();
+            data = await fetchDiagnostic();
           }
         } catch {
           // Silent — checklist will still show unchecked
         } finally {
           setClassifying(false);
+        }
+      }
+
+      // Auto-tag: if there are auto-taggable rooms, tag them immediately
+      // instead of waiting for the user to click the button
+      if (data?.summary.hasAutoTaggable) {
+        const autoTaggableRoomIds = data.rooms
+          .filter((r) => r.autoTaggable)
+          .map((r) => r.roomId);
+
+        if (autoTaggableRoomIds.length > 0) {
+          setAutoTagging(true);
+          try {
+            const res = await fetch(
+              `/api/posting/project/${projectId}/auto-tag`,
+              {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ roomIds: autoTaggableRoomIds }),
+              }
+            );
+            if (res.ok) {
+              setAutoTagDone(true);
+              onAutoTagComplete?.();
+              await fetchDiagnostic();
+            }
+          } catch {
+            // Silent — user can still trigger manually
+          } finally {
+            setAutoTagging(false);
+          }
         }
       }
     })();
