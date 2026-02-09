@@ -383,10 +383,19 @@ export async function assessProjectContext(projectId: string): Promise<ProjectCo
   const hasProgressPresentations =
     project.files.filter((f) => f.fileType === 'progress_presentation').length > 0;
 
+  // For prospective projects, rich selections (3+ named products) serve the
+  // same role as an uploaded material schedule — the system already knows the
+  // products, vendors, and pricing. Treat them as equivalent so Level 2
+  // product-specific questions unlock without requiring a separate file upload.
+  const richSelectionCount = project.selections.filter(
+    (s) => s.productName && s.vendorName
+  ).length;
+  const hasSelectionsAsSchedule = isProspective && richSelectionCount >= 3;
+
   // Calculate context level (sequential - each level requires previous levels)
   let level: ContextLevel = 0;
   if (hasPhotos) level = 1;
-  if (level >= 1 && hasMaterialSchedule) level = 2;
+  if (level >= 1 && (hasMaterialSchedule || hasSelectionsAsSchedule)) level = 2;
   if (level >= 2 && hasConceptPresentation) level = 3;
   if (level >= 3 && hasFloorPlan) level = 4;
   if (level >= 4 && hasProgressPresentations) level = 5;

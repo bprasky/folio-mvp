@@ -211,6 +211,26 @@ function generateProspectiveQuestions(context: ProjectContext): GeneratedQuestio
     }
   }
 
+  // Product-specific prospective questions — hero pieces anchor the design story.
+  // For prospective projects with selections, surface individual products without
+  // requiring a material_schedule file (which gates Level 2).
+  const heroPieces = context.selections.filter((s) => s.isHeroPiece);
+  for (const selection of heroPieces.slice(0, 3)) {
+    questions.push({
+      id: `prospective-hero-${selection.id}`,
+      text: `The ${selection.productName} is a statement piece for the ${selection.room}. What drew you to it?`,
+      contextLevel: 1,
+      type: 'hero_piece',
+      products: [selection.id],
+      vendors: [selection.brand],
+      rooms: [selection.room],
+      boostable: true,
+      pullQuotePotential: 'high',
+      linkedProductId: selection.id,
+      roomContext: selection.room,
+    });
+  }
+
   return questions;
 }
 
