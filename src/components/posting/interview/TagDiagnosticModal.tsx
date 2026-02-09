@@ -153,14 +153,19 @@ export function TagDiagnosticModal({
         }
       }
 
-      // Auto-tag: if there are auto-taggable rooms, tag them immediately
-      // instead of waiting for the user to click the button
-      if (data?.summary.hasAutoTaggable) {
-        const autoTaggableRoomIds = data.rooms
-          .filter((r) => r.autoTaggable)
-          .map((r) => r.roomId);
+      // Auto-tag: always attempt if there are rooms with selections AND
+      // untagged images. The diagnostic's hasAutoTaggable flag can be
+      // stale because the backfill above may have just created Products.
+      // The auto-tag endpoint re-resolves selections itself, so it's
+      // safe to call even when the diagnostic thinks it won't work.
+      const hasUntaggedImages = (data?.summary.totalImages ?? 0) > (data?.summary.taggedImages ?? 0);
+      const hasSelections = (data?.summary.totalSelections ?? 0) > 0;
 
-        if (autoTaggableRoomIds.length > 0) {
+      if (hasUntaggedImages && hasSelections) {
+        // Send all room IDs — the auto-tag endpoint filters internally
+        const allRoomIds = data?.rooms.map((r) => r.roomId) ?? [];
+
+        if (allRoomIds.length > 0) {
           setAutoTagging(true);
           try {
             const res = await fetch(
@@ -168,12 +173,16 @@ export function TagDiagnosticModal({
               {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ roomIds: autoTaggableRoomIds }),
+                body: JSON.stringify({ roomIds: allRoomIds }),
               }
             );
             if (res.ok) {
-              setAutoTagDone(true);
-              onAutoTagComplete?.();
+              const result = await res.json();
+              if (result.summary?.created > 0) {
+                setAutoTagDone(true);
+                onAutoTagComplete?.();
+              }
+              // Re-fetch diagnostic to show updated state
               await fetchDiagnostic();
             }
           } catch {

@@ -99,6 +99,7 @@ export async function POST(
                 productName: true,
                 vendorName: true,
                 productTagId: true,
+                uiMeta: true,
               },
             },
           },
@@ -117,6 +118,56 @@ export async function POST(
 
     if (!project) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+    }
+
+    // Backfill: ensure Product records exist for selections that don't have one.
+    // This matches the same backfill in tag-diagnostic so auto-tag works even
+    // when called before the diagnostic has run (e.g., from gen-image inline).
+    for (const room of project.rooms) {
+      for (const sel of room.selections) {
+        if (!sel.productName) continue;
+        const selMeta = sel.uiMeta as Record<string, unknown> | null;
+        if (selMeta?.productId) {
+          // Verify the Product actually exists (guard against dangling refs)
+          const exists = await prisma.product.findUnique({
+            where: { id: selMeta.productId as string },
+            select: { id: true },
+          });
+          if (exists) continue;
+          console.log(`[auto-tag] Dangling uiMeta.productId ${selMeta.productId} for "${sel.productName}" — will backfill`);
+        }
+
+        // Find or create the Product
+        const existing = await prisma.product.findFirst({
+          where: { name: { equals: sel.productName, mode: 'insensitive' } },
+          select: { id: true },
+        });
+        const productId = existing?.id ?? (
+          await prisma.product.create({
+            data: { name: sel.productName, brand: sel.vendorName || null },
+            select: { id: true },
+          })
+        ).id;
+
+        // Persist the link
+        const currentMeta = (selMeta as Record<string, unknown>) || {};
+        await prisma.selection.update({
+          where: { id: sel.id },
+          data: { uiMeta: { ...currentMeta, productId } },
+        });
+        console.log(`[auto-tag] Backfilled Product "${sel.productName}" (${productId}) for Selection ${sel.id}`);
+      }
+    }
+
+    console.log(`[auto-tag] Project ${projectId}: ${project.rooms.length} rooms, ${project.images.length} images`);
+    for (const img of project.images) {
+      let isGen = false;
+      try { isGen = JSON.parse(img.name || '').type === 'GENERATED'; } catch {}
+      console.log(`[auto-tag]   Image ${img.id.slice(0, 8)}... room="${img.room}" gen=${isGen} tags=${img.tags.length}`);
+    }
+    for (const room of project.rooms) {
+      const unlinked = room.selections.filter((s) => s.productTagId == null);
+      console.log(`[auto-tag]   Room "${room.name}" (${room.id.slice(0, 8)}...): ${room.selections.length} sels, ${unlinked.length} unlinked`);
     }
 
     const created: CreatedTag[] = [];
@@ -139,6 +190,8 @@ export async function POST(
       const untaggedImages = project.images.filter(
         (img) => imageMatchesRoom(img, room.id, room.name) && img.tags.length === 0
       );
+
+      console.log(`[auto-tag]   Room "${room.name}" (${room.id.slice(0, 8)}...): ${untaggedImages.length} untagged images match`);
 
       // Get unlinked selections
       const unlinkedSelections = room.selections.filter((s) => s.productTagId == null);
@@ -168,6 +221,7 @@ export async function POST(
       for (const sel of unlinkedSelections) {
         const match = await resolveSelectionToProduct(sel);
         resolutionCache.set(sel.id, match);
+        console.log(`[auto-tag]     Resolve "${sel.productName}" → ${match ? `${match.matchMethod} (${match.productId.slice(0, 8)})` : 'NULL'}`);
       }
 
       // Track which selections have been linked to avoid double-linking

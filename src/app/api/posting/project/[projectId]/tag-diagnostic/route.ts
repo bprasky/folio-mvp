@@ -139,10 +139,16 @@ export async function GET(
     });
 
     // Build room diagnostics
+    const allImages = project.images;
+    console.log(`[tag-diagnostic] Project ${projectId}: ${allImages.length} images, ${(refreshedProject?.rooms ?? project.rooms).length} rooms`);
+    for (const img of allImages) {
+      console.log(`[tag-diagnostic]   Image ${img.id.slice(0, 8)}... room="${img.room}" aiSpaces=${JSON.stringify(img.aiSpaces)} tags=${img.tags.length}`);
+    }
+
     const roomDiagnostics = await Promise.all(
       (refreshedProject?.rooms ?? project.rooms).map(async (room) => {
         // Match images to this room by room ID, room name, or AI-detected spaces
-        const roomImages = project.images.filter((img) => imageMatchesRoom(img, room.id, room.name));
+        const roomImages = allImages.filter((img) => imageMatchesRoom(img, room.id, room.name));
 
         const taggedImages = roomImages.filter((img) => img.tags.length > 0);
         const untaggedImages = roomImages.filter((img) => img.tags.length === 0);
@@ -151,19 +157,22 @@ export async function GET(
         // Resolve each unlinked selection to a Product
         const unlinkedSelections = room.selections.filter((s) => s.productTagId == null);
         let withProductMatch = 0;
+        const selectionDebug: Array<{ id: string; name: string | null; resolved: string | null }> = [];
 
         for (const sel of unlinkedSelections) {
           const match = await resolveSelectionToProduct(sel);
           if (match) {
             withProductMatch++;
+            selectionDebug.push({ id: sel.id, name: sel.productName, resolved: match.matchMethod });
             console.log(`[tag-diagnostic] Room "${room.name}" selection "${sel.productName}" → Product via ${match.matchMethod}`);
           } else {
+            selectionDebug.push({ id: sel.id, name: sel.productName, resolved: null });
             console.log(`[tag-diagnostic] Room "${room.name}" selection "${sel.productName}" → NO product match`);
           }
         }
 
         const autoTaggable = withProductMatch > 0 && untaggedImages.length > 0;
-        console.log(`[tag-diagnostic] Room "${room.name}": ${unlinkedSelections.length} unlinked, ${withProductMatch} resolved, ${untaggedImages.length} untagged images → autoTaggable=${autoTaggable}`);
+        console.log(`[tag-diagnostic] Room "${room.name}" (${room.id.slice(0, 8)}...): sels=${room.selections.length} unlinked=${unlinkedSelections.length} resolved=${withProductMatch} matchedImgs=${roomImages.length} untagged=${untaggedImages.length} → autoTaggable=${autoTaggable}`);
 
         return {
           roomId: room.id,
@@ -172,6 +181,7 @@ export async function GET(
             total: room.selections.length,
             withProductMatch,
             alreadyLinkedToTag: alreadyLinked.length,
+            _debug: selectionDebug,
           },
           images: {
             total: roomImages.length,
