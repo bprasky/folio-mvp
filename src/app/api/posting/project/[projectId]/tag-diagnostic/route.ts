@@ -86,9 +86,16 @@ export async function GET(
       for (const sel of room.selections) {
         if (!sel.productName) continue;
 
-        // Already linked via uiMeta.productId?
+        // Check if uiMeta.productId points to a real Product
         const selMeta = sel.uiMeta as Record<string, unknown> | null;
-        if (selMeta?.productId) continue;
+        if (selMeta?.productId) {
+          const exists = await prisma.product.findUnique({
+            where: { id: selMeta.productId as string },
+            select: { id: true },
+          });
+          if (exists) continue; // Product is valid, skip backfill
+          console.log(`[tag-diagnostic] Dangling uiMeta.productId "${selMeta.productId}" for "${sel.productName}" — will backfill`);
+        }
 
         // Check if a Product already exists for this name
         const existing = await prisma.product.findFirst({
