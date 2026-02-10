@@ -310,16 +310,84 @@ export async function POST(
       }
     }
 
+    // Second pass: handle generated images that weren't matched to any room.
+    // Generated images embed their selectionIds in metadata, so we can create
+    // tags directly without relying on room-image matching.
+    const allLinkedSelIds = new Set(created.map((t) => t.selectionId));
+    const allSelections = project.rooms.flatMap((r) => r.selections);
+
+    for (const image of project.images) {
+      if (image.tags.length > 0) continue; // already tagged
+      if (created.some((t) => t.imageId === image.id)) continue; // tagged in first pass
+
+      const genMeta = parseGeneratedMetadata(image.name);
+      if (!genMeta?.selectionIds?.length) continue;
+
+      console.log(`[auto-tag] Second pass: generated image ${image.id.slice(0, 8)} has ${genMeta.selectionIds.length} selectionIds`);
+
+      // Find unlinked selections from metadata
+      const metaSelections = allSelections.filter(
+        (s) => genMeta.selectionIds.includes(s.id) && s.productTagId == null && !allLinkedSelIds.has(s.id)
+      );
+
+      // Resolve to products
+      const resolved: Array<{ selectionId: string; productId: string; productName: string | null }> = [];
+      for (const sel of metaSelections) {
+        const match = await resolveSelectionToProduct(sel);
+        if (match) {
+          resolved.push({ selectionId: sel.id, productId: match.productId, productName: sel.productName });
+          console.log(`[auto-tag]   "${sel.productName}" → ${match.matchMethod}`);
+        }
+      }
+
+      if (resolved.length === 0) continue;
+
+      const positions = computeTagPositions(resolved.length);
+      for (let i = 0; i < resolved.length; i++) {
+        const { selectionId, productId, productName } = resolved[i];
+        const { x, y } = positions[i];
+
+        if (dryRun) {
+          created.push({
+            productTagId: `dry-run-${selectionId}-${image.id}`,
+            selectionId, imageId: image.id, productId,
+            productName: productName ?? '', x, y,
+          });
+        } else {
+          const result = await prisma.$transaction(async (tx) => {
+            const tag = await tx.productTag.create({
+              data: { x, y, productId, imageId: image.id },
+            });
+            await tx.selection.update({
+              where: { id: selectionId },
+              data: { productTagId: tag.id },
+            });
+            return tag;
+          });
+          created.push({
+            productTagId: result.id,
+            selectionId, imageId: image.id, productId,
+            productName: productName ?? '', x, y,
+          });
+        }
+        allLinkedSelIds.add(selectionId);
+      }
+      console.log(`[auto-tag] Second pass: created ${resolved.length} tags for image ${image.id.slice(0, 8)}`);
+    }
+
+    // Remove skipped entries for selections that were resolved in the second pass
+    const finalSkipped = skipped.filter((s) => !allLinkedSelIds.has(s.selectionId));
+
     console.log(
-      `[auto-tag] project=${projectId} created=${created.length} skipped=${skipped.length} dryRun=${dryRun}`
+      `[auto-tag] project=${projectId} created=${created.length} skipped=${finalSkipped.length} dryRun=${dryRun}`
     );
 
     return NextResponse.json({
       created,
-      skipped,
+      skipped: finalSkipped,
       summary: {
         created: created.length,
-        skipped: skipped.length,
+        skipped: finalSkipped.length,
       },
     });
   } catch (error: any) {
