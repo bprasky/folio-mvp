@@ -201,7 +201,17 @@ export async function POST(request: NextRequest) {
 
     if (responses.length === 0) {
       return NextResponse.json(
-        { error: "No responses found for session" },
+        {
+          error: "No responses found for session",
+          debug: {
+            projectId,
+            interviewFound: !!interview,
+            interviewId: interview?.id || null,
+            dbAnswerCount: interview?.answers?.length ?? 0,
+            clientResponseCount: clientResponses?.length ?? 0,
+            codeVersion: "2024-02-14-db-first",
+          },
+        },
         { status: 400 }
       );
     }
