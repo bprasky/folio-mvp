@@ -164,35 +164,38 @@ export async function POST(request: NextRequest) {
     const projectName = project?.title || "Your Project";
 
     // Build the responses array for editorial generation
-    let responses: Array<{ question: string; answer: string }>;
+    // ALWAYS prefer DB as source of truth — client state can be incomplete
+    // due to API errors or React state sync issues
+    let responses: Array<{ question: string; answer: string }> = [];
 
-    if (clientResponses && clientResponses.length > 0) {
-      // Primary: use responses sent from the frontend (has question text)
-      responses = clientResponses.map((r) => ({
-        question: r.questionText,
-        answer: r.answer,
-      }));
-    } else {
-      // Fallback: read persisted answers from EditorialInterviewAnswer
-      const interview = await prisma.editorialInterview.findUnique({
-        where: { projectId },
-        include: {
-          answers: {
-            orderBy: { createdAt: "asc" },
-          },
+    // 1. Try DB first (durable source of truth)
+    const interview = await prisma.editorialInterview.findUnique({
+      where: { projectId },
+      include: {
+        answers: {
+          orderBy: { createdAt: "asc" },
         },
-      });
+      },
+    });
 
-      if (!interview || interview.answers.length === 0) {
-        return NextResponse.json(
-          { error: "No responses found for session" },
-          { status: 400 }
-        );
+    if (interview && interview.answers.length > 0) {
+      // Build a map of questionId → questionText from client responses for enrichment
+      const questionTextMap = new Map<string, string>();
+      if (clientResponses) {
+        for (const r of clientResponses) {
+          questionTextMap.set(r.questionId, r.questionText);
+        }
       }
 
       responses = interview.answers.map((a) => ({
-        question: "Interview question", // Question text not stored in DB
+        question: a.questionText || questionTextMap.get(a.questionId) || "Interview question",
         answer: a.answerText,
+      }));
+    } else if (clientResponses && clientResponses.length > 0) {
+      // 2. Fallback: use client-provided responses if DB has nothing
+      responses = clientResponses.map((r) => ({
+        question: r.questionText,
+        answer: r.answer,
       }));
     }
 
