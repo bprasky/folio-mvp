@@ -180,11 +180,15 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // Use provided question text, or fall back to generic
+    const questionText = providedQuestionText || "Tell us about this project.";
+
     // Store answer in EditorialInterviewAnswer for durability
     await prisma.editorialInterviewAnswer.create({
       data: {
         interviewId: interview.id,
         questionId,
+        questionText, // Persist question text for editorial generation
         answerText: answer,
         inputModality: inputMode,
         questionSource: "base_question",
@@ -197,40 +201,43 @@ export async function POST(request: NextRequest) {
       orderBy: { createdAt: "asc" },
     });
 
-    // Use provided question text, or fall back to generic
-    const questionText = providedQuestionText || "Tell us about this project.";
-
-    // Generate follow-up question
+    // AI-powered follow-up and preview — errors here should NOT fail the response
+    // since the answer is already safely persisted in the database
     let followUpQuestion = null;
-    const followUp = await generateFollowUp(questionText, answer);
-    if (followUp?.text) {
-      followUpQuestion = {
-        id: `followup-${randomUUID()}`,
-        text: followUp.text,
-        source: "ai-followup" as const,
-        followUpTo: questionId,
-        context: followUp.context || undefined,
-      };
-    }
-
-    // Generate preview after 3+ responses
-    const shouldShowPreview = allAnswers.length >= 3;
     let previewDraft = null;
+    const shouldShowPreview = allAnswers.length >= 3;
 
-    if (shouldShowPreview) {
-      // Get project title for the preview
-      const project = await prisma.project.findUnique({
-        where: { id: projectId },
-        select: { title: true },
-      });
+    try {
+      // Generate follow-up question
+      const followUp = await generateFollowUp(questionText, answer);
+      if (followUp?.text) {
+        followUpQuestion = {
+          id: `followup-${randomUUID()}`,
+          text: followUp.text,
+          source: "ai-followup" as const,
+          followUpTo: questionId,
+          context: followUp.context || undefined,
+        };
+      }
 
-      previewDraft = await generatePreviewDraft(
-        project?.title || "Your Project",
-        allAnswers.map((r) => ({
-          question: questionText, // Best effort — question text not stored in DB
-          answer: r.answerText,
-        }))
-      );
+      // Generate preview after 3+ responses
+      if (shouldShowPreview) {
+        const project = await prisma.project.findUnique({
+          where: { id: projectId },
+          select: { title: true },
+        });
+
+        previewDraft = await generatePreviewDraft(
+          project?.title || "Your Project",
+          allAnswers.map((r) => ({
+            question: r.questionText || questionText,
+            answer: r.answerText,
+          }))
+        );
+      }
+    } catch (aiError) {
+      // Log but don't fail — the answer is already persisted
+      console.error("[/api/interview/respond] AI generation error (non-fatal):", aiError);
     }
 
     return NextResponse.json({

@@ -1363,6 +1363,7 @@ model EditorialInterviewAnswer {
   interview   EditorialInterview @relation(fields: [interviewId], references: [id], onDelete: Cascade)
 
   questionId     String  @map("question_id")
+  questionText   String? @map("question_text") // The actual question text for editorial generation
   isFollowUp     Boolean @default(false) @map("is_follow_up")
   parentAnswerId String?  @map("parent_answer_id") // For follow-ups, links to Layer 1 answer
 

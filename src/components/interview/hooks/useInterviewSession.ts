@@ -142,6 +142,8 @@ export function useInterviewSession({
 
       try {
         const currentQ = questions[currentQuestionIndex];
+        const questionText = currentQ?.text || "Interview question";
+
         const res = await fetch("/api/interview/respond", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -149,9 +151,9 @@ export function useInterviewSession({
             sessionId,
             projectId,
             questionId,
-            questionText: currentQ?.text,
+            questionText,
             answer,
-            inputMode: mode,
+            inputMode: mode || "text",
           }),
         });
 
@@ -161,20 +163,17 @@ export function useInterviewSession({
 
         const data: RespondResponse = await res.json();
 
-        // Store the response
-        const currentQuestion = questions[currentQuestionIndex];
-        if (currentQuestion) {
-          setResponses((prev) => [
-            ...prev,
-            {
-              questionId,
-              questionText: currentQuestion.text,
-              answer,
-              timestamp: new Date(),
-              inputMode: mode as "voice" | "text",
-            },
-          ]);
-        }
+        // Always store the response in state — don't guard on currentQuestion
+        setResponses((prev) => [
+          ...prev,
+          {
+            questionId,
+            questionText,
+            answer,
+            timestamp: new Date(),
+            inputMode: (mode || "text") as "voice" | "text",
+          },
+        ]);
 
         // Update preview if available
         if (data.shouldShowPreview && data.previewDraft) {
