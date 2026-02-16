@@ -195,6 +195,7 @@ const PROSPECTIVE_QUESTIONS = {
  */
 function generateProspectiveQuestions(context: ProjectContext): GeneratedQuestion[] {
   const questions: GeneratedQuestion[] = [];
+  const roomCount = context.rooms.length;
 
   for (const q of PROSPECTIVE_QUESTIONS.layer1) {
     questions.push({
@@ -210,6 +211,8 @@ function generateProspectiveQuestions(context: ProjectContext): GeneratedQuestio
   }
 
   for (const q of PROSPECTIVE_QUESTIONS.layer2) {
+    // Skip questions that require multiple rooms on single-room projects
+    if (q.topic === TOPICS.ROOM_RELATIONSHIPS && roomCount <= 1) continue;
     questions.push({
       id: `prospective-${randomUUID()}`,
       text: q.text,
