@@ -3,10 +3,18 @@ import { InterviewQuestion } from '@/types/interview';
 
 export type ContextLevel = 0 | 1 | 2 | 3 | 4 | 5;
 
+export interface ProjectSizeInfo {
+  size: 'focused' | 'medium' | 'large' | 'showcase';
+  targetQuestionCount: number;
+  roomCount: number;
+  selectionCount: number;
+}
+
 export interface InterviewQuestionsContext {
   contextLevel: ContextLevel;
   contextDescription: string;
   upgradeSuggestion: string | null;
+  projectSize: ProjectSizeInfo;
 }
 
 export function useInterviewQuestions(projectId: string) {
@@ -17,6 +25,7 @@ export function useInterviewQuestions(projectId: string) {
     contextLevel: 0,
     contextDescription: 'No project context available',
     upgradeSuggestion: 'Add project photos to unlock personalized questions',
+    projectSize: { size: 'focused', targetQuestionCount: 6, roomCount: 0, selectionCount: 0 },
   });
 
   useEffect(() => {
@@ -43,6 +52,7 @@ export function useInterviewQuestions(projectId: string) {
             contextLevel: data.contextLevel as ContextLevel,
             contextDescription: data.contextDescription || 'No project context available',
             upgradeSuggestion: data.upgradeSuggestion || null,
+            projectSize: data.projectSize || { size: 'focused', targetQuestionCount: 6, roomCount: 0, selectionCount: 0 },
           });
         }
       } catch (err) {

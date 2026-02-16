@@ -34,6 +34,7 @@ export async function GET(
       contextLevel: result.contextLevel,
       contextDescription: result.contextDescription,
       upgradeSuggestion: result.upgradeSuggestion,
+      projectSize: result.projectSize,
     });
   } catch (error) {
     console.error('Error fetching interview questions:', error);

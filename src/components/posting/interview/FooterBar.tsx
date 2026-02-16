@@ -1,7 +1,7 @@
 "use client";
 
 interface FooterBarProps {
-  phase: "pick" | "question" | "followup" | "complete";
+  phase: "question" | "followup" | "complete";
   onBack?: () => void;
   onNext?: () => void;
   onSubmit?: () => void;
@@ -40,15 +40,6 @@ export function FooterBar({
           )}
         </div>
         <div className="flex gap-3">
-          {phase === "pick" && onNext && (
-            <button
-              onClick={onNext}
-              disabled={!canProceed}
-              className="px-6 py-2 text-sm font-medium text-white bg-[var(--accent)] rounded-full hover:bg-[var(--accent-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              Begin Interview
-            </button>
-          )}
           {phase === "question" && (
             <>
               {onSubmit && (

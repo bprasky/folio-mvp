@@ -89,6 +89,56 @@ export interface AmbiencePattern {
   source: 'ai_classification' | 'concept_presentation';
 }
 
+// Project size classification — scales interview depth with project scope
+export type ProjectSize = 'focused' | 'medium' | 'large' | 'showcase';
+
+export interface ProjectSizeClassification {
+  size: ProjectSize;
+  targetQuestionCount: number;
+  roomCount: number;
+  selectionCount: number;
+}
+
+/**
+ * Classify project size by room count and selection density.
+ * Determines how many interview questions to generate.
+ *
+ * - focused (1 room):     6 questions — kitchen reno, single bath
+ * - medium  (2-3 rooms):  8-10 — apartment, condo
+ * - large   (4-6 rooms):  12-14 — full home
+ * - showcase (7+ rooms):  15-18 — estate, multi-floor
+ */
+export function classifyProjectSize(
+  roomCount: number,
+  selectionCount: number
+): ProjectSizeClassification {
+  if (roomCount <= 1) {
+    return { size: 'focused', targetQuestionCount: 6, roomCount, selectionCount };
+  }
+  if (roomCount <= 3) {
+    return {
+      size: 'medium',
+      targetQuestionCount: selectionCount > 15 ? 10 : 8,
+      roomCount,
+      selectionCount,
+    };
+  }
+  if (roomCount <= 6) {
+    return {
+      size: 'large',
+      targetQuestionCount: selectionCount > 25 ? 14 : 12,
+      roomCount,
+      selectionCount,
+    };
+  }
+  return {
+    size: 'showcase',
+    targetQuestionCount: Math.min(18, 15 + Math.floor((roomCount - 7) / 2)),
+    roomCount,
+    selectionCount,
+  };
+}
+
 export interface ProjectContext {
   level: ContextLevel;
 
@@ -100,6 +150,9 @@ export interface ProjectContext {
   hasConceptPresentation: boolean;
   hasFloorPlan: boolean;
   hasProgressPresentations: boolean;
+
+  // Project size (determines question count)
+  projectSize: ProjectSizeClassification;
 
   // Extracted data
   rooms: RoomContext[];
@@ -485,6 +538,8 @@ export async function assessProjectContext(projectId: string): Promise<ProjectCo
     designNarrative = `A project featuring ${roomList}${rooms.length > 3 ? ' and more' : ''}.`;
   }
 
+  const projectSize = classifyProjectSize(rooms.length, selections.length);
+
   return {
     level,
     hasPhotos,
@@ -494,6 +549,7 @@ export async function assessProjectContext(projectId: string): Promise<ProjectCo
     hasConceptPresentation,
     hasFloorPlan,
     hasProgressPresentations,
+    projectSize,
     rooms,
     selections,
     aspirationalItems: [], // Would require parsing concept presentations

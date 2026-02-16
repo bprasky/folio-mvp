@@ -34,11 +34,14 @@ export {
   assessProjectContext,
   getContextLevelDescription,
   getContextUpgradeSuggestion,
+  classifyProjectSize,
 } from './contextLevel';
 
 export type {
   ContextLevel,
   ProjectContext,
+  ProjectSize,
+  ProjectSizeClassification,
   RoomContext,
   RoomType,
   SelectionContext,
