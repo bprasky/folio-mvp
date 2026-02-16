@@ -21,6 +21,10 @@ const lastGoodFollowups = new Map<string, Array<{ id: string; prompt: string }>>
 const SingleFollowUpRequestSchema = z.object({
   questionId: z.string(),
   answer: z.string(),
+  previousAnswers: z.array(z.object({
+    question: z.string(),
+    answer: z.string(),
+  })).optional(),
 });
 
 const POSTING_V1_ENABLED =
@@ -30,7 +34,7 @@ const POSTING_V1_ENABLED =
 const OPENAI_ENABLED =
   !!process.env.OPENAI_API_KEY && process.env.OPENAI_ENABLED !== "false";
 
-const SYSTEM_PROMPT = `You are an editorial interviewer for Folio. Based on the designer's answer below, suggest up to two open-ended follow-up questions that could draw out a richer narrative. Only ask when something is interesting or vague. Keep each under 120 characters. Do not repeat or rephrase the original question.
+const SYSTEM_PROMPT = `You are an editorial interviewer for Folio. Based on the designer's answer below, suggest up to two open-ended follow-up questions that could draw out a richer narrative. Only ask when something is interesting or vague. Keep each under 120 characters. Do not repeat or rephrase the original question. Do NOT ask about topics the designer has already covered in previous answers.
 
 Optionally, provide a brief acknowledgment sentence (1-2 sentences, under 150 characters) that naturally transitions to the follow-up questions. This should feel conversational and acknowledge what the designer shared. Examples:
 - "That's interesting. Could you tell me more about..."
@@ -244,7 +248,15 @@ export async function POST(
       prompt += `\n${productsCompact}`;
     }
     
-    prompt += `\n\nGenerate 0-2 follow-up questions that would help draw out a richer narrative from this answer. Only ask when something is interesting or vague. Keep each under 120 characters.`;
+    // Include previous answers so follow-ups don't repeat covered topics
+    if (validated.previousAnswers?.length) {
+      prompt += `\n\nTopics already discussed (do NOT repeat these):\n`;
+      for (const prev of validated.previousAnswers.slice(-5)) {
+        prompt += `- "${prev.question}": ${prev.answer.slice(0, 150)}\n`;
+      }
+    }
+
+    prompt += `\n\nGenerate 0-2 follow-up questions that would help draw out a richer narrative from this answer. Only ask when something is interesting or vague. Keep each under 120 characters. Build on what the designer said — reference specific details from their answer.`;
 
     // Enforce budget
     const MAX_TOKENS = 4000;
