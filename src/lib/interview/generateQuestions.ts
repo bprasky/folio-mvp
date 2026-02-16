@@ -58,6 +58,9 @@ export interface GeneratedQuestion {
   // Helper text (optional)
   helper?: string;
 
+  /** Semantic topic for dedup — questions sharing a topic compete, most specific wins */
+  topic?: string;
+
   // Original question metadata (for compatibility with existing system)
   linkedImageId?: string;
   linkedProductId?: string;
@@ -66,42 +69,72 @@ export interface GeneratedQuestion {
   roomContext?: string;
 }
 
+/**
+ * Semantic topics for question deduplication.
+ * Questions sharing a topic compete — the most specific version wins.
+ */
+const TOPICS = {
+  PROJECT_STORY: 'project_story',
+  PROJECT_VISION: 'project_vision',
+  OVERALL_AESTHETIC: 'overall_aesthetic',
+  EMOTIONAL_IMPACT: 'emotional_impact',
+  ANCHOR_PIECE: 'anchor_piece',
+  MATERIAL_THREAD: 'material_thread',
+  VENDOR_LOYALTY: 'vendor_loyalty',
+  ROOM_STORY: 'room_story',
+  DESIGN_EVOLUTION: 'design_evolution',
+  FAVORITE_MOMENT: 'favorite_moment',
+  CLIENT_INFLUENCE: 'client_influence',
+  CHALLENGES: 'challenges',
+  SELECTION_JOURNEY: 'selection_journey',
+  ROOM_RELATIONSHIPS: 'room_relationships',
+  DECISION_JOURNEY: 'decision_journey',
+} as const;
+
 // Level 0: Generic fallback questions (current state)
 const LEVEL_0_QUESTIONS = {
   layer1: [
     {
       text: 'Tell us about this project and what made it special.',
       helper: 'Share what drew you to this project or made it meaningful.',
+      topic: TOPICS.PROJECT_STORY,
     },
     {
       text: 'What was the initial vision for this space?',
       helper: 'Describe the concept or direction from the beginning.',
+      topic: TOPICS.PROJECT_VISION,
     },
     {
       text: 'How would you describe the overall aesthetic?',
       helper: 'Think about the feeling, style, and mood of the space.',
+      topic: TOPICS.OVERALL_AESTHETIC,
     },
     {
       text: 'What was your favorite part of this project?',
       helper: 'Share a moment, detail, or outcome that stands out.',
+      topic: TOPICS.FAVORITE_MOMENT,
     },
   ],
   layer2: [
     {
       text: 'Who is this home for and how did that influence your decisions?',
       helper: 'Consider how the client shaped the design direction.',
+      topic: TOPICS.CLIENT_INFLUENCE,
     },
     {
       text: 'What challenges did you navigate during this project?',
       helper: 'Focus on how you solved problems creatively.',
+      topic: TOPICS.CHALLENGES,
     },
     {
       text: 'Is there a piece in this project that anchors the whole design?',
       helper: 'Think about a signature element that ties everything together.',
+      topic: TOPICS.ANCHOR_PIECE,
     },
     {
       text: 'What do you hope people feel when they walk into this space?',
       helper: 'Describe the emotional impact you were aiming for.',
+      topic: TOPICS.EMOTIONAL_IMPACT,
     },
   ],
 };
@@ -114,36 +147,44 @@ const PROSPECTIVE_QUESTIONS = {
     {
       text: 'Tell us about the vision for this project and what inspired it.',
       helper: 'Share what drew you to this direction — the story behind the concept.',
+      topic: TOPICS.PROJECT_VISION,
     },
     {
       text: 'How do you envision the finished space feeling when it all comes together?',
       helper: 'Describe the mood, the atmosphere, the experience you\'re designing toward.',
+      topic: TOPICS.EMOTIONAL_IMPACT,
     },
     {
       text: 'Walk us through how you arrived at these selections.',
       helper: 'Share the story of what drew you to these particular pieces.',
+      topic: TOPICS.SELECTION_JOURNEY,
     },
     {
       text: 'Has the project evolved from the original vision at all?',
       helper: 'Let the story of the design journey unfold naturally.',
+      topic: TOPICS.DESIGN_EVOLUTION,
     },
   ],
   layer2: [
     {
       text: 'What\'s the anchor piece that the rest of the design revolves around?',
       helper: 'Think about which selection set the tone for everything else.',
+      topic: TOPICS.ANCHOR_PIECE,
     },
     {
       text: 'How are you thinking about the relationship between the rooms?',
       helper: 'Describe the flow and continuity you\'re creating across spaces.',
+      topic: TOPICS.ROOM_RELATIONSHIPS,
     },
     {
       text: 'What do you want your client to feel the first time they walk in?',
       helper: 'Describe the arrival moment you\'re designing.',
+      topic: TOPICS.EMOTIONAL_IMPACT,
     },
     {
       text: 'Is there a material or finish that became the thread tying this project together?',
       helper: 'Think about the unifying elements that create coherence.',
+      topic: TOPICS.MATERIAL_THREAD,
     },
   ],
 };
@@ -160,6 +201,7 @@ function generateProspectiveQuestions(context: ProjectContext): GeneratedQuestio
       id: `prospective-${randomUUID()}`,
       text: q.text,
       helper: q.helper,
+      topic: q.topic,
       contextLevel: 1,
       type: 'prospective_vision',
       boostable: false,
@@ -172,6 +214,7 @@ function generateProspectiveQuestions(context: ProjectContext): GeneratedQuestio
       id: `prospective-${randomUUID()}`,
       text: q.text,
       helper: q.helper,
+      topic: q.topic,
       contextLevel: 1,
       type: 'prospective_vision',
       boostable: false,
@@ -185,6 +228,7 @@ function generateProspectiveQuestions(context: ProjectContext): GeneratedQuestio
       questions.push({
         id: `prospective-room-${room.id}`,
         text: `Tell us the story behind the ${room.name}. What are you building toward in this space?`,
+        topic: TOPICS.ROOM_STORY,
         contextLevel: 1,
         type: 'prospective_vision',
         rooms: [room.name],
@@ -201,6 +245,7 @@ function generateProspectiveQuestions(context: ProjectContext): GeneratedQuestio
       questions.push({
         id: `prospective-vendor-${vendor.name.replace(/\s+/g, '-').toLowerCase()}`,
         text: `You've chosen ${vendor.name} for several pieces. What draws you to their work?`,
+        topic: TOPICS.VENDOR_LOYALTY,
         contextLevel: 1,
         type: 'prospective_vision',
         vendors: [vendor.name],
@@ -219,6 +264,7 @@ function generateProspectiveQuestions(context: ProjectContext): GeneratedQuestio
     questions.push({
       id: `prospective-hero-${selection.id}`,
       text: `The ${selection.productName} is a statement piece for the ${selection.room}. What drew you to it?`,
+      topic: TOPICS.ANCHOR_PIECE,
       contextLevel: 1,
       type: 'hero_piece',
       products: [selection.id],
@@ -245,6 +291,7 @@ function generateLevel0Questions(): GeneratedQuestion[] {
       id: `l0-${randomUUID()}`,
       text: q.text,
       helper: q.helper,
+      topic: q.topic,
       contextLevel: 0,
       type: 'generic',
       boostable: false,
@@ -257,6 +304,7 @@ function generateLevel0Questions(): GeneratedQuestion[] {
       id: `l0-${randomUUID()}`,
       text: q.text,
       helper: q.helper,
+      topic: q.topic,
       contextLevel: 0,
       type: 'generic',
       boostable: false,
@@ -282,6 +330,7 @@ function generateLevel1Questions(context: ProjectContext): GeneratedQuestion[] {
       questions.push({
         id: `l1-kitchen-${room.id}`,
         text: `The kitchen feels like the heart of this home. What was your approach to making it both functional and beautiful?`,
+        topic: TOPICS.ROOM_STORY,
         contextLevel: 1,
         type: 'room_specific',
         rooms: [room.name],
@@ -295,6 +344,7 @@ function generateLevel1Questions(context: ProjectContext): GeneratedQuestion[] {
       questions.push({
         id: `l1-primary-${room.id}`,
         text: `Walk us through creating a primary suite that feels like a retreat.`,
+        topic: TOPICS.ROOM_STORY,
         contextLevel: 1,
         type: 'room_specific',
         rooms: [room.name],
@@ -308,6 +358,7 @@ function generateLevel1Questions(context: ProjectContext): GeneratedQuestion[] {
       questions.push({
         id: `l1-bath-${room.id}`,
         text: `The bathroom has a spa-like quality. How did you balance luxury with everyday livability?`,
+        topic: TOPICS.ROOM_STORY,
         contextLevel: 1,
         type: 'room_specific',
         rooms: [room.name],
@@ -321,6 +372,7 @@ function generateLevel1Questions(context: ProjectContext): GeneratedQuestion[] {
       questions.push({
         id: `l1-living-${room.id}`,
         text: `The living room sets the tone for the whole house. What drove the key decisions here?`,
+        topic: TOPICS.ROOM_STORY,
         contextLevel: 1,
         type: 'room_specific',
         rooms: [room.name],
@@ -334,6 +386,7 @@ function generateLevel1Questions(context: ProjectContext): GeneratedQuestion[] {
       questions.push({
         id: `l1-dining-${room.id}`,
         text: `Tell us about creating a dining space that invites people to linger.`,
+        topic: TOPICS.ROOM_STORY,
         contextLevel: 1,
         type: 'room_specific',
         rooms: [room.name],
@@ -347,6 +400,7 @@ function generateLevel1Questions(context: ProjectContext): GeneratedQuestion[] {
       questions.push({
         id: `l1-entry-${room.id}`,
         text: `The entry makes a strong first impression. How did you design that arrival moment?`,
+        topic: TOPICS.ROOM_STORY,
         contextLevel: 1,
         type: 'room_specific',
         rooms: [room.name],
@@ -362,6 +416,7 @@ function generateLevel1Questions(context: ProjectContext): GeneratedQuestion[] {
     questions.push({
       id: `l1-warmth-${randomUUID()}`,
       text: `There's a beautiful warmth throughout this project. Tell us about developing that palette.`,
+      topic: TOPICS.OVERALL_AESTHETIC,
       contextLevel: 1,
       type: 'aesthetic',
       boostable: false,
@@ -373,6 +428,7 @@ function generateLevel1Questions(context: ProjectContext): GeneratedQuestion[] {
     questions.push({
       id: `l1-airy-${randomUUID()}`,
       text: `The space feels light and airy. How did you achieve that sense of openness?`,
+      topic: TOPICS.OVERALL_AESTHETIC,
       contextLevel: 1,
       type: 'aesthetic',
       boostable: false,
@@ -384,6 +440,7 @@ function generateLevel1Questions(context: ProjectContext): GeneratedQuestion[] {
     questions.push({
       id: `l1-dramatic-${randomUUID()}`,
       text: `You've embraced a dramatic, moody palette. What led you in that direction?`,
+      topic: TOPICS.OVERALL_AESTHETIC,
       contextLevel: 1,
       type: 'aesthetic',
       boostable: false,
@@ -408,6 +465,7 @@ function generateLevel2Questions(context: ProjectContext): GeneratedQuestion[] {
       questions.push({
         id: `l2-vendor-${vendor.name.replace(/\s+/g, '-').toLowerCase()}`,
         text: `${vendor.name} appears throughout this project${roomList ? `—in the ${roomList}` : ''}. What keeps you coming back to them?`,
+        topic: TOPICS.VENDOR_LOYALTY,
         contextLevel: 2,
         type: 'vendor_loyalty',
         vendors: [vendor.name],
@@ -424,6 +482,7 @@ function generateLevel2Questions(context: ProjectContext): GeneratedQuestion[] {
     questions.push({
       id: `l2-hero-${selection.id}`,
       text: `The ${selection.productName} in the ${selection.room} really anchors the space. Tell us about selecting this piece.`,
+      topic: TOPICS.ANCHOR_PIECE,
       contextLevel: 2,
       type: 'hero_piece',
       products: [selection.id],
@@ -441,6 +500,7 @@ function generateLevel2Questions(context: ProjectContext): GeneratedQuestion[] {
     questions.push({
       id: `l2-stone-${randomUUID()}`,
       text: `Natural stone plays a significant role here. Walk us through how you approached the stone selections.`,
+      topic: TOPICS.MATERIAL_THREAD,
       contextLevel: 2,
       type: 'material_theme',
       boostable: false,
@@ -454,6 +514,7 @@ function generateLevel2Questions(context: ProjectContext): GeneratedQuestion[] {
     questions.push({
       id: `l2-brass-${randomUUID()}`,
       text: `The brass hardware creates continuity throughout. Was that an early decision or did it emerge?`,
+      topic: TOPICS.MATERIAL_THREAD,
       contextLevel: 2,
       type: 'material_theme',
       boostable: false,
@@ -467,6 +528,7 @@ function generateLevel2Questions(context: ProjectContext): GeneratedQuestion[] {
     questions.push({
       id: `l2-wood-${randomUUID()}`,
       text: `Wood brings such warmth to this project. Tell us about selecting the species and finishes.`,
+      topic: TOPICS.MATERIAL_THREAD,
       contextLevel: 2,
       type: 'material_theme',
       boostable: false,
@@ -480,6 +542,7 @@ function generateLevel2Questions(context: ProjectContext): GeneratedQuestion[] {
     questions.push({
       id: `l2-textiles-${randomUUID()}`,
       text: `The textiles feel luxurious and considered. How did you approach the soft goods?`,
+      topic: TOPICS.MATERIAL_THREAD,
       contextLevel: 2,
       type: 'material_theme',
       boostable: false,
@@ -503,6 +566,7 @@ function generateLevel3Questions(context: ProjectContext): GeneratedQuestion[] {
   questions.push({
     id: `l3-vision-${randomUUID()}`,
     text: `Looking at where this project started and where it landed, what are you most proud of achieving?`,
+    topic: TOPICS.FAVORITE_MOMENT,
     contextLevel: 3,
     type: 'vision_realization',
     boostable: false,
@@ -521,6 +585,7 @@ function generateLevel3Questions(context: ProjectContext): GeneratedQuestion[] {
       questions.push({
         id: `l3-aspirational-${matchingSelection.id}`,
         text: `The ${matchingSelection.productName} was part of your original vision and made it to the final design. What made this one worth prioritizing?`,
+        topic: TOPICS.ANCHOR_PIECE,
         contextLevel: 3,
         type: 'vision_achieved',
         products: [matchingSelection.id],
@@ -538,6 +603,7 @@ function generateLevel3Questions(context: ProjectContext): GeneratedQuestion[] {
     questions.push({
       id: `l3-ambience-${randomUUID()}`,
       text: `There's a ${dominantMood.description} quality throughout this project. How did you maintain that thread from concept to completion?`,
+      topic: TOPICS.OVERALL_AESTHETIC,
       contextLevel: 3,
       type: 'aesthetic_continuity',
       boostable: false,
@@ -551,6 +617,7 @@ function generateLevel3Questions(context: ProjectContext): GeneratedQuestion[] {
   questions.push({
     id: `l3-concept-evolution-${randomUUID()}`,
     text: `How did the concept evolve from your initial presentation to the finished space?`,
+    topic: TOPICS.DESIGN_EVOLUTION,
     contextLevel: 3,
     type: 'vision_realization',
     boostable: false,
@@ -573,6 +640,7 @@ function generateLevel4Questions(context: ProjectContext): GeneratedQuestion[] {
       questions.push({
         id: `l4-reveal-${flow.fromRoom}-${flow.toRoom}`,
         text: `The ${flow.fromRoom} leads ${flow.description || 'around'} to the ${flow.toRoom} in what feels like a reveal moment. Was that drama intentional?`,
+        topic: TOPICS.ROOM_RELATIONSHIPS,
         contextLevel: 4,
         type: 'spatial_narrative',
         rooms: [flow.fromRoom, flow.toRoom],
@@ -585,6 +653,7 @@ function generateLevel4Questions(context: ProjectContext): GeneratedQuestion[] {
       questions.push({
         id: `l4-flow-${flow.fromRoom}-${flow.toRoom}`,
         text: `There's a beautiful continuity as the ${flow.fromRoom} flows into the ${flow.toRoom}. How did you think about that transition?`,
+        topic: TOPICS.ROOM_RELATIONSHIPS,
         contextLevel: 4,
         type: 'spatial_flow',
         rooms: [flow.fromRoom, flow.toRoom],
@@ -597,6 +666,7 @@ function generateLevel4Questions(context: ProjectContext): GeneratedQuestion[] {
       questions.push({
         id: `l4-intimate-${flow.fromRoom}-${flow.toRoom}`,
         text: `The shift from the ${flow.fromRoom} to the ${flow.toRoom} feels like moving into a more private world. Talk to us about creating that sense of retreat.`,
+        topic: TOPICS.ROOM_RELATIONSHIPS,
         contextLevel: 4,
         type: 'spatial_narrative',
         rooms: [flow.fromRoom, flow.toRoom],
@@ -612,6 +682,7 @@ function generateLevel4Questions(context: ProjectContext): GeneratedQuestion[] {
     questions.push({
       id: `l4-sightlines-${room.id}`,
       text: `From the ${room.name}, you can see into the ${room.adjacentRooms.join(' and ')}. How did you approach materials and palette to make that work?`,
+      topic: TOPICS.ROOM_RELATIONSHIPS,
       contextLevel: 4,
       type: 'sightlines',
       rooms: [room.name, ...room.adjacentRooms],
@@ -625,6 +696,7 @@ function generateLevel4Questions(context: ProjectContext): GeneratedQuestion[] {
     questions.push({
       id: `l4-journey-${randomUUID()}`,
       text: `Walk us through the journey through this space. How did you think about the sequence of rooms and experiences?`,
+      topic: TOPICS.ROOM_RELATIONSHIPS,
       contextLevel: 4,
       type: 'spatial_flow',
       boostable: false,
@@ -634,6 +706,7 @@ function generateLevel4Questions(context: ProjectContext): GeneratedQuestion[] {
     questions.push({
       id: `l4-transitions-${randomUUID()}`,
       text: `How did you create continuity between spaces while giving each room its own character?`,
+      topic: TOPICS.ROOM_RELATIONSHIPS,
       contextLevel: 4,
       type: 'spatial_flow',
       boostable: false,
@@ -657,6 +730,7 @@ function generateLevel5Questions(context: ProjectContext): GeneratedQuestion[] {
       questions.push({
         id: `l5-evolved-${decision.productId || randomUUID()}`,
         text: `The ${decision.productName} in the ${decision.room} went through a few rounds before you landed on it. Walk us through what made this the right choice.`,
+        topic: TOPICS.DECISION_JOURNEY,
         contextLevel: 5,
         type: 'decision_journey',
         products: decision.productId ? [decision.productId] : undefined,
@@ -673,6 +747,7 @@ function generateLevel5Questions(context: ProjectContext): GeneratedQuestion[] {
       questions.push({
         id: `l5-promoted-${decision.productId || randomUUID()}`,
         text: `The ${decision.productName} started as an aspiration and made it to the final specification. What was the moment you knew it had to be in this project?`,
+        topic: TOPICS.DECISION_JOURNEY,
         contextLevel: 5,
         type: 'promoted_win',
         products: decision.productId ? [decision.productId] : undefined,
@@ -690,6 +765,7 @@ function generateLevel5Questions(context: ProjectContext): GeneratedQuestion[] {
     questions.push({
       id: `l5-foughtfor-${selection.id}`,
       text: `Tell us about the ${selection.productName}. It feels like a piece that required some conviction to get into the project.`,
+      topic: TOPICS.ANCHOR_PIECE,
       contextLevel: 5,
       type: 'conviction_piece',
       products: [selection.id],
@@ -705,6 +781,7 @@ function generateLevel5Questions(context: ProjectContext): GeneratedQuestion[] {
     questions.push({
       id: `l5-landing-${randomUUID()}`,
       text: `Tell us about a selection that took several rounds to land on. What made you finally commit?`,
+      topic: TOPICS.DECISION_JOURNEY,
       contextLevel: 5,
       type: 'decision_journey',
       boostable: false,
@@ -714,6 +791,7 @@ function generateLevel5Questions(context: ProjectContext): GeneratedQuestion[] {
     questions.push({
       id: `l5-conviction-${randomUUID()}`,
       text: `Was there a piece you had to fight for—one that required conviction to get into the project?`,
+      topic: TOPICS.ANCHOR_PIECE,
       contextLevel: 5,
       type: 'conviction_piece',
       boostable: false,
@@ -764,24 +842,104 @@ function prioritizeQuestions(
 }
 
 /**
- * Remove duplicate or very similar questions
+ * Score a question's specificity. Higher = more grounded in project data.
+ * Used to determine which question wins within a topic group.
+ */
+function specificityScore(q: GeneratedQuestion): number {
+  let score = 0;
+  if (q.linkedProductId || q.products?.length) score += 4;
+  if (q.rooms?.length) score += 2;
+  if (q.vendors?.length) score += 1;
+  if (q.boostable) score += 1;
+  score += q.contextLevel;
+  const pqRank: Record<string, number> = { high: 3, medium: 2, low: 1 };
+  score += pqRank[q.pullQuotePotential] || 0;
+  return score;
+}
+
+/**
+ * Produce a qualifier that distinguishes questions within the same topic.
+ * 'generic' means the question has no specific product/vendor/room grounding.
+ */
+function topicQualifier(q: GeneratedQuestion): string {
+  if (q.linkedProductId) return `product:${q.linkedProductId}`;
+  if (q.products?.length) return `product:${q.products[0]}`;
+  if (q.vendors?.length) return `vendor:${q.vendors.slice().sort().join('+')}`;
+  if (q.rooms?.length) return `room:${q.rooms.slice().sort().join('+')}`;
+  return 'generic';
+}
+
+/**
+ * Remove semantically overlapping questions using topic tags.
+ * Within each topic group, keeps only the most specific version(s).
+ * Questions without topics still go through legacy text-based dedup.
  */
 function deduplicateSimilar(questions: GeneratedQuestion[]): GeneratedQuestion[] {
+  // Phase 1: Topic-based semantic dedup
+  const topicGroups = new Map<string, GeneratedQuestion[]>();
+  const noTopic: GeneratedQuestion[] = [];
+
+  for (const q of questions) {
+    if (q.topic) {
+      const group = topicGroups.get(q.topic) || [];
+      group.push(q);
+      topicGroups.set(q.topic, group);
+    } else {
+      noTopic.push(q);
+    }
+  }
+
+  const afterTopicDedup: GeneratedQuestion[] = [];
+
+  for (const [, group] of topicGroups) {
+    if (group.length === 1) {
+      afterTopicDedup.push(group[0]);
+      continue;
+    }
+
+    // Sort by specificity descending — most grounded question first
+    group.sort((a, b) => specificityScore(b) - specificityScore(a));
+
+    const keptKeys = new Set<string>();
+
+    for (const q of group) {
+      const key = topicQualifier(q);
+
+      if (keptKeys.size === 0) {
+        // Always keep the top scorer
+        afterTopicDedup.push(q);
+        keptKeys.add(key);
+        continue;
+      }
+
+      // 'generic' questions are subsumed when any specific question exists
+      if (key === 'generic') continue;
+
+      // Specific questions with a new qualifier survive (e.g., different products)
+      if (!keptKeys.has(key)) {
+        afterTopicDedup.push(q);
+        keptKeys.add(key);
+      }
+    }
+  }
+
+  // Add untagged questions
+  afterTopicDedup.push(...noTopic);
+
+  // Phase 2: Legacy text-based dedup for anything that slipped through
   const seen = new Set<string>();
   const result: GeneratedQuestion[] = [];
 
-  for (const question of questions) {
-    // Create a rough deduplication key
-    const key = question.text
+  for (const question of afterTopicDedup) {
+    const textKey = question.text
       .toLowerCase()
       .replace(/[^a-z0-9]/g, '')
       .slice(0, 50);
 
-    // Also dedupe by type + room combination
     const typeRoomKey = `${question.type}-${question.rooms?.join('-') || 'none'}`;
 
-    if (!seen.has(key) && !seen.has(typeRoomKey)) {
-      seen.add(key);
+    if (!seen.has(textKey) && !seen.has(typeRoomKey)) {
+      seen.add(textKey);
       seen.add(typeRoomKey);
       result.push(question);
     }
