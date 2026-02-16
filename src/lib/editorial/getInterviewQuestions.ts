@@ -101,7 +101,7 @@ export async function getInterviewQuestionsWithContext(
 
     // Generate contextual questions based on available data
     const contextualQuestions = await generateInterviewQuestions(context, {
-      maxQuestions: options?.maxQuestions || 15,
+      maxQuestions: 8, // Leave room for base questions within the total cap
       prioritizeBoostable: options?.prioritizeBoostable ?? true,
       includeGeneric: options?.includeGeneric ?? false, // Don't include generic by default, we add base questions
     });
@@ -146,14 +146,20 @@ export async function getInterviewQuestionsWithContext(
       contextLevel: 1 as ContextLevel,
     }));
 
+    // Semantic dedup: check keyword overlap between two question texts
+    const questionOverlaps = (a: string, b: string): boolean => {
+      const stop = new Set(['the','a','an','is','was','what','how','why','tell','us','about','your','you','this','that','for','and','or','in','of','to','do','did','can','could','would']);
+      const extract = (s: string) => s.toLowerCase().replace(/[^a-z\s]/g, '').split(/\s+/).filter(w => w.length > 2 && !stop.has(w));
+      const ta = extract(a), tb = extract(b);
+      const overlap = ta.filter(t => tb.includes(t)).length;
+      return Math.min(ta.length, tb.length) > 0 && overlap / Math.min(ta.length, tb.length) > 0.4;
+    };
+
     // Deduplicate legacy questions that overlap with new contextual questions
     const contextualIds = new Set(contextualInterviewQuestions.map(q => q.id));
-    const contextualTexts = new Set(
-      contextualInterviewQuestions.map(q => q.questionText.toLowerCase().slice(0, 50))
-    );
     const uniqueLegacy = legacyInterviewQuestions.filter(q =>
       !contextualIds.has(q.id) &&
-      !contextualTexts.has(q.questionText.toLowerCase().slice(0, 50))
+      !contextualInterviewQuestions.some(cq => questionOverlaps(cq.questionText, q.questionText))
     );
 
     // Build merged list: prioritize contextual, then legacy, then base
@@ -165,23 +171,39 @@ export async function getInterviewQuestionsWithContext(
     // Add unique legacy contextual questions
     merged.push(...uniqueLegacy);
 
-    // Add base questions at the end
-    for (const bq of BASE_QUESTIONS) {
-      merged.push({
-        id: bq.id,
-        questionText: bq.questionText,
-        questionType: bq.questionType,
-        source: bq.source,
-        category: bq.category,
-        contextLevel: 0,
-      });
+    // Only add base questions for topics not already covered by contextual questions
+    const coveredCategories = new Set<string>();
+    for (const q of merged) {
+      const t = q.questionText.toLowerCase();
+      if (t.includes('vision') || t.includes('brief') || t.includes('direction') || t.includes('initial')) coveredCategories.add('brief');
+      if (t.includes('challenge') || t.includes('obstacle') || t.includes('constraint')) coveredCategories.add('process');
+      if (t.includes('proud') || t.includes('favorite') || t.includes('detail') || t.includes('moment')) coveredCategories.add('highlight');
+      if (t.includes('aesthetic') || t.includes('style') || t.includes('look')) coveredCategories.add('aesthetic');
+      if (t.includes('feel') || t.includes('experience') || t.includes('emotion') || t.includes('hope')) coveredCategories.add('emotion');
     }
+
+    for (const bq of BASE_QUESTIONS) {
+      if (!coveredCategories.has(bq.category)) {
+        merged.push({
+          id: bq.id,
+          questionText: bq.questionText,
+          questionType: bq.questionType,
+          source: bq.source,
+          category: bq.category,
+          contextLevel: 0,
+        });
+      }
+    }
+
+    // Hard cap total questions to prevent interview fatigue
+    const maxTotal = options?.maxQuestions || 10;
+    const capped = merged.slice(0, maxTotal);
 
     // Get context description and upgrade suggestion
     const { getContextLevelDescription, getContextUpgradeSuggestion } = await import('@/lib/interview');
 
     return {
-      questions: merged,
+      questions: capped,
       contextLevel: context.level,
       contextDescription: getContextLevelDescription(context.level),
       upgradeSuggestion: getContextUpgradeSuggestion(context.level),

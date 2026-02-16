@@ -441,12 +441,21 @@ export function InterviewModal({
     logClient('followups-single:request:begin', { projectId, questionId });
 
     try {
+      // Include previous answers so follow-ups build on context and don't repeat topics
+      const previousAnswers = baseAnswers
+        .filter(a => a.questionId !== questionId && a.answer?.trim())
+        .map(a => ({
+          question: allQuestions.find(q => q.id === a.questionId)?.prompt || a.questionId,
+          answer: a.answer,
+        }));
+
       const resp = await fetch(`/api/posting/project/${projectId}/interview/followups/single`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           questionId,
           answer: answerText,
+          previousAnswers,
         }),
       });
 
@@ -489,7 +498,7 @@ export function InterviewModal({
     } finally {
       setIsLoadingFollowUps(false);
     }
-  }, [projectId]);
+  }, [projectId, baseAnswers, allQuestions]);
 
   // Handle sequential question answer submission
   const handleQuestionAnswerSubmit = useCallback(async () => {
@@ -733,7 +742,8 @@ export function InterviewModal({
 
       // Ensure all answers are saved first - but only if we haven't already saved in handleAnswerStepComplete
       // Check if answers were just saved by checking if we're coming from the answer step
-      const needsSave = step === "answer" || step === "followups";
+      // Always save when we have answers — ensures provenance is up to date
+      const needsSave = baseAnswers.length > 0;
       
       if (needsSave) {
         try {
@@ -783,12 +793,36 @@ export function InterviewModal({
 
       logClient('generate:request:begin', { projectId });
 
+      // Send answers directly in the request body via answersOverride
+      // This bypasses the provenance race condition where concurrent writes
+      // from answer save and follow-up endpoints can corrupt provenance state
       let res = await fetch(
         `/api/posting/project/${projectId}/interview/generate?forceOverwriteDraft=true&mode=recomposition`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ forceOverwriteDraft: true, mode: 'recomposition' }), // Always overwrite existing drafts
+          body: JSON.stringify({
+            forceOverwriteDraft: true,
+            mode: 'recomposition',
+            answersOverride: baseAnswers.map(a => ({
+              questionId: a.questionId,
+              section: a.section,
+              prompt: a.prompt || a.questionId,
+              answer: a.answer,
+              role: a.role || 'DESIGNER',
+              isFollowUp: false,
+            })),
+            followupsOverride: followUpAnswersState
+              .filter(a => a.answer?.trim())
+              .map(a => ({
+                questionId: a.questionId,
+                section: a.section,
+                prompt: a.prompt || a.questionId,
+                answer: a.answer,
+                role: a.role || 'DESIGNER',
+                isFollowUp: true,
+              })),
+          }),
         }
       );
 
@@ -824,13 +858,34 @@ export function InterviewModal({
         // Wait a bit longer to ensure database transaction has committed
         await new Promise(resolve => setTimeout(resolve, 1500));
         
-        // Retry with force=true to overwrite existing draft
+        // Retry with force=true to overwrite existing draft, include answers
         const retry = await fetch(
           `/api/posting/project/${projectId}/interview/generate?forceOverwriteDraft=true&mode=recomposition`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ forceOverwriteDraft: true, mode: 'recomposition' }),
+            body: JSON.stringify({
+              forceOverwriteDraft: true,
+              mode: 'recomposition',
+              answersOverride: baseAnswers.map(a => ({
+                questionId: a.questionId,
+                section: a.section,
+                prompt: a.prompt || a.questionId,
+                answer: a.answer,
+                role: a.role || 'DESIGNER',
+                isFollowUp: false,
+              })),
+              followupsOverride: followUpAnswersState
+                .filter(a => a.answer?.trim())
+                .map(a => ({
+                  questionId: a.questionId,
+                  section: a.section,
+                  prompt: a.prompt || a.questionId,
+                  answer: a.answer,
+                  role: a.role || 'DESIGNER',
+                  isFollowUp: true,
+                })),
+            }),
           }
         );
         logClient('generate:conflict_retry:status', { status: retry.status });

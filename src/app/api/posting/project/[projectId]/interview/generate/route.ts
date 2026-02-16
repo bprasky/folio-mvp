@@ -1520,8 +1520,9 @@ export async function POST(
     let provenance = (post.provenance as any) || {};
     let interview = provenance.interview;
     
-    // If force=true and no answers found, wait a bit and refetch (handles race condition)
-    if (force && (!interview || !interview.payload?.answers || interview.payload.answers.length === 0)) {
+    // If force=true and no answers found (and no overrides), wait a bit and refetch (handles race condition)
+    const hasOverrideAnswers = Array.isArray(answersOverride) && answersOverride.length > 0;
+    if (force && !hasOverrideAnswers && (!interview || !interview.payload?.answers || interview.payload.answers.length === 0)) {
       console.warn("[posting/interview/generate] No answers found on force retry, waiting and refetching...", { _cid });
       await new Promise(resolve => setTimeout(resolve, 1000));
       
@@ -1547,7 +1548,7 @@ export async function POST(
       force,
     });
 
-    if (!interview || !interview.payload?.answers || interview.payload.answers.length === 0) {
+    if (!hasOverrideAnswers && (!interview || !interview.payload?.answers || interview.payload.answers.length === 0)) {
       console.error("[posting/interview/generate] Missing interview data:", {
         _cid,
         interview: !!interview,
@@ -1555,6 +1556,7 @@ export async function POST(
         answers: interview?.payload?.answers,
         alternativeAnswers: interview?.answers,
         provenanceKeys: Object.keys(provenance),
+        hasOverrideAnswers,
       });
       return NextResponse.json(
         { error: "No interview answers found. Please complete the interview first." },
