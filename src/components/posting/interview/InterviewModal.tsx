@@ -22,6 +22,7 @@ import type {
   SixWCategory,
 } from "@/lib/posting/interviewSchemas";
 import { useInterviewQuestions } from "@/hooks/useInterviewQuestions";
+import { useBackgroundEvaluation } from "@/hooks/useBackgroundEvaluation";
 import { LinkedImagePreview } from "@/components/editorial/LinkedImagePreview";
 import type { InterviewQuestion as ContextualQuestion } from "@/types/interview";
 
@@ -56,11 +57,18 @@ type FollowupsApiResponse = {
   error?: 'llm_unavailable' | 'llm_error' | 'disabled' | string;
 };
 
+type QuestionUpdate = {
+  id: string;
+  status: 'covered' | 'morphed';
+  morphedText?: string;
+};
+
 type SingleFollowUpApiResponse = {
   ok: boolean;
   followups: Array<{ id: string; text: string; source?: string; dedupeKey?: string; questionId: string }>;
   acknowledgment?: string;
   coveredQuestionIds?: string[];
+  questionUpdates?: QuestionUpdate[];
   error?: string;
 };
 
@@ -121,6 +129,12 @@ export function InterviewModal({
   const [cachedFollowups, setCachedFollowups] = useState<
     Array<{ questionId: string; acknowledgment?: string; followUps: Array<{ id: string; prompt: string }> }>
   >([]);
+
+  // Morphed question texts — dynamically rewritten based on prior answers
+  const [morphedQuestions, setMorphedQuestions] = useState<Map<string, string>>(new Map());
+
+  // Background evaluation: pre-compute morphed questions while user types
+  const { evaluate: bgEvaluate, flush: bgFlush, cancel: bgCancel } = useBackgroundEvaluation(projectId);
 
   const saveAbortRef = useRef<AbortController | null>(null);
   const bannerTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -438,8 +452,47 @@ export function InterviewModal({
     return answer?.answer || "";
   }, [currentQuestion, baseAnswers]);
 
-  // Phase B: Generate follow-ups for a single question + evaluate coverage of remaining questions
-  const generateSingleFollowUp = useCallback(async (questionId: string, answerText: string): Promise<{ followUps: Array<{ id: string; prompt: string }>; coveredQuestionIds: string[] }> => {
+  // Display question with morphed text overlay (if LLM rewrote it based on prior answers)
+  const displayQuestion = useMemo(() => {
+    if (!currentQuestion) return null;
+    const morphedText = morphedQuestions.get(currentQuestion.id);
+    if (morphedText) {
+      return { ...currentQuestion, prompt: morphedText };
+    }
+    return currentQuestion;
+  }, [currentQuestion, morphedQuestions]);
+
+  // Background evaluation: trigger when user types 50+ chars
+  useEffect(() => {
+    if (!currentQuestion || currentAnswer.trim().length < 50) return;
+
+    const answeredIds = new Set(baseAnswers.map(a => a.questionId));
+    answeredIds.add(currentQuestion.id);
+    const remaining = selectedQuestions
+      .filter(q => !answeredIds.has(q.id))
+      .map(q => ({ id: q.id, question: morphedQuestions.get(q.id) || q.prompt }));
+
+    if (!remaining.length) return;
+
+    // Build summaries from completed answers + current in-progress answer
+    const summaries = [
+      ...baseAnswers
+        .filter(a => a.answer?.trim())
+        .map(a => ({ questionId: a.questionId, summary: a.answer.slice(0, 200) })),
+      { questionId: currentQuestion.id, summary: currentAnswer.trim().slice(0, 200) },
+    ];
+
+    bgEvaluate(summaries, remaining);
+  }, [currentAnswer, currentQuestion, baseAnswers, selectedQuestions, morphedQuestions, bgEvaluate]);
+
+  // Cancel background evaluation on unmount or modal close
+  useEffect(() => {
+    if (!open) bgCancel();
+    return () => bgCancel();
+  }, [open, bgCancel]);
+
+  // Phase B: Generate follow-ups + evaluate/morph remaining questions
+  const generateSingleFollowUp = useCallback(async (questionId: string, answerText: string): Promise<{ followUps: Array<{ id: string; prompt: string }>; questionUpdates: QuestionUpdate[] }> => {
     setIsLoadingFollowUps(true);
     logClient('followups-single:request:begin', { projectId, questionId });
 
@@ -452,12 +505,12 @@ export function InterviewModal({
           answer: a.answer,
         }));
 
-      // Build remaining questions list for coverage evaluation
+      // Build remaining questions list — use morphed text if available
       const answeredIds = new Set(baseAnswers.map(a => a.questionId));
-      answeredIds.add(questionId); // Current question is being answered now
+      answeredIds.add(questionId);
       const remainingQuestions = selectedQuestions
         .filter(q => !answeredIds.has(q.id))
-        .map(q => ({ id: q.id, question: q.prompt }));
+        .map(q => ({ id: q.id, question: morphedQuestions.get(q.id) || q.prompt }));
 
       const resp = await fetch(`/api/posting/project/${projectId}/interview/followups/single`, {
         method: 'POST',
@@ -472,11 +525,15 @@ export function InterviewModal({
 
       logClient('followups-single:response:status', { status: resp.status });
       const data = await resp.json() as SingleFollowUpApiResponse;
-      logClient('followups-single:response:body', { ok: data?.ok, error: data?.error, count: (data?.followups || []).length, covered: data?.coveredQuestionIds?.length || 0 });
+      logClient('followups-single:response:body', {
+        ok: data?.ok, error: data?.error,
+        followups: (data?.followups || []).length,
+        updates: data?.questionUpdates?.length || 0,
+      });
 
       if (!resp.ok || data?.ok === false) {
         console.warn('[followups-single] Failed to generate follow-ups:', data?.error);
-        return { followUps: [], coveredQuestionIds: [] };
+        return { followUps: [], questionUpdates: [] };
       }
 
       // Transform to format expected by followUps state (with acknowledgment)
@@ -491,7 +548,7 @@ export function InterviewModal({
         followUpsGroup.acknowledgment = data.acknowledgment;
       }
 
-      // Update followUps state with new follow-ups for this question
+      // Update followUps state
       setFollowUps((prev) => {
         const filtered = prev.filter((group) => group.questionId !== questionId);
         if (followUpsGroup.followUps.length > 0) {
@@ -502,15 +559,15 @@ export function InterviewModal({
 
       return {
         followUps: followUpsGroup.followUps,
-        coveredQuestionIds: data.coveredQuestionIds || [],
+        questionUpdates: data.questionUpdates || [],
       };
     } catch (error: any) {
       console.error('[followups-single] Error:', error);
-      return { followUps: [], coveredQuestionIds: [] };
+      return { followUps: [], questionUpdates: [] };
     } finally {
       setIsLoadingFollowUps(false);
     }
-  }, [projectId, baseAnswers, allQuestions, selectedQuestions]);
+  }, [projectId, baseAnswers, allQuestions, selectedQuestions, morphedQuestions]);
 
   // Handle sequential question answer submission
   const handleQuestionAnswerSubmit = useCallback(async () => {
@@ -542,23 +599,56 @@ export function InterviewModal({
       // Save answer
       await persistAnswers([answerData], { includeFollowUps: false });
 
-      // Phase B: Generate follow-ups + evaluate coverage of remaining questions
-      const { coveredQuestionIds } = await generateSingleFollowUp(currentQuestion.id, answerData.answer);
+      // Flush background evaluation results first (speculative, pre-computed while user typed)
+      const bgUpdates = bgFlush();
 
-      // Skip covered questions — remove them from selectedQuestionIds
-      if (coveredQuestionIds.length > 0) {
-        const coveredSet = new Set(coveredQuestionIds);
-        logClient('coverage:skip', { covered: coveredQuestionIds });
-        setSelectedQuestionIds((prev) => prev.filter(id => !coveredSet.has(id)));
+      // Phase B: Generate follow-ups + evaluate/morph remaining questions (authoritative)
+      const { questionUpdates } = await generateSingleFollowUp(currentQuestion.id, answerData.answer);
+
+      // Merge: background updates first, then submit-time overwrites (submit-time wins)
+      const mergedMap = new Map<string, QuestionUpdate>();
+      for (const u of bgUpdates) mergedMap.set(u.id, u);
+      for (const u of questionUpdates) mergedMap.set(u.id, u);
+      const mergedUpdates = Array.from(mergedMap.values());
+
+      // Process question updates: morph partially-covered, skip fully-covered
+      let skippedCount = 0;
+      if (mergedUpdates.length > 0) {
+        const coveredIds = new Set<string>();
+        const newMorphs = new Map<string, string>();
+
+        for (const update of mergedUpdates) {
+          if (update.status === 'covered') {
+            coveredIds.add(update.id);
+          } else if (update.status === 'morphed' && update.morphedText) {
+            newMorphs.set(update.id, update.morphedText);
+          }
+        }
+
+        // Apply morphed question texts
+        if (newMorphs.size > 0) {
+          logClient('morph:apply', { morphed: Array.from(newMorphs.keys()) });
+          setMorphedQuestions(prev => {
+            const next = new Map(prev);
+            for (const [id, text] of newMorphs) {
+              next.set(id, text);
+            }
+            return next;
+          });
+        }
+
+        // Only skip fully covered questions
+        if (coveredIds.size > 0) {
+          skippedCount = coveredIds.size;
+          logClient('coverage:skip', { covered: Array.from(coveredIds) });
+          setSelectedQuestionIds(prev => prev.filter(id => !coveredIds.has(id)));
+        }
       }
 
       // Move to next question or complete
-      // Note: totalQuestions may have changed due to coverage skipping,
-      // so we check against the current selectedQuestions length
-      if (currentQuestionIndex < totalQuestions - 1 - coveredQuestionIds.length) {
+      if (currentQuestionIndex < totalQuestions - 1 - skippedCount) {
         setCurrentQuestionIndex((prev) => prev + 1);
       } else {
-        // All questions answered (or remaining were covered)
         setPhase("complete");
       }
     } catch (error: any) {
@@ -1292,17 +1382,17 @@ export function InterviewModal({
         )}
 
         {/* Phase A: Sequential flow - question phase */}
-        {phase === "question" && currentQuestion ? (
+        {phase === "question" && displayQuestion ? (
           <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
             <QuestionCard
-              question={currentQuestion}
+              question={displayQuestion}
               answer={currentAnswer}
               onAnswerChange={handleCurrentAnswerChange}
               onSubmit={handleQuestionAnswerSubmit}
               isSubmitting={isSubmitting || isLoadingFollowUps}
-              fieldError={fieldErrors[currentQuestion.id]}
+              fieldError={fieldErrors[currentQuestion?.id || ""]}
               projectId={projectId}
-              questionMetadata={questionMetadataMap.get(currentQuestion.id)}
+              questionMetadata={questionMetadataMap.get(currentQuestion?.id || "")}
               images={images}
             />
           </div>

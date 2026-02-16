@@ -848,8 +848,58 @@ export async function generateInterviewQuestions(
   // Deduplicate similar questions
   questions = deduplicateSimilar(questions);
 
+  // Group by room for mental coherence (kitchen → living → dining → cross-room)
+  questions = orderByRoom(questions, context.rooms);
+
   // Return top N
   return questions.slice(0, maxQuestions);
+}
+
+/**
+ * Group questions loosely by room so the designer's mental model stays coherent.
+ * Order: 1-2 generic openers → Room 1 questions → Room 2 → ... → cross-room/spatial.
+ */
+function orderByRoom(
+  questions: GeneratedQuestion[],
+  rooms: RoomContext[]
+): GeneratedQuestion[] {
+  const opening: GeneratedQuestion[] = [];
+  const roomBuckets = new Map<string, GeneratedQuestion[]>();
+  const crossRoom: GeneratedQuestion[] = [];
+
+  // Initialize buckets in room order
+  for (const room of rooms) {
+    roomBuckets.set(room.name, []);
+  }
+
+  for (const q of questions) {
+    const qRooms = q.rooms || [];
+    if (qRooms.length === 0) {
+      if (q.type === 'generic' || q.type === 'prospective_vision' || q.contextLevel === 0) {
+        opening.push(q);
+      } else {
+        crossRoom.push(q);
+      }
+    } else if (qRooms.length === 1 && roomBuckets.has(qRooms[0])) {
+      roomBuckets.get(qRooms[0])!.push(q);
+    } else {
+      crossRoom.push(q);
+    }
+  }
+
+  const result: GeneratedQuestion[] = [];
+  // Start with 1-2 openers to ease in
+  result.push(...opening.slice(0, 2));
+  // Then room-by-room
+  for (const [, bucket] of roomBuckets) {
+    result.push(...bucket);
+  }
+  // Cross-room and spatial at the end
+  result.push(...crossRoom);
+  // Overflow openers
+  result.push(...opening.slice(2));
+
+  return result;
 }
 
 /**

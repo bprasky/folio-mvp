@@ -5,6 +5,7 @@ import {
   toInterviewQuestion,
   type ContextLevel,
   type GeneratedQuestion,
+  type ProjectSizeClassification,
 } from '@/lib/interview';
 
 // Base questions from existing question bank (Level 0 fallback)
@@ -72,6 +73,7 @@ export interface InterviewQuestionsResult {
   contextLevel: ContextLevel;
   contextDescription: string;
   upgradeSuggestion: string | null;
+  projectSize: ProjectSizeClassification;
 }
 
 /**
@@ -99,10 +101,10 @@ export async function getInterviewQuestionsWithContext(
     // Assess project context to determine what data is available
     const context = await assessProjectContext(projectId);
 
-    // Generate contextual questions based on available data
-    // Include generic fallbacks so we always have enough questions
+    // Generate contextual questions scaled to project size
+    const targetCount = context.projectSize.targetQuestionCount;
     const contextualQuestions = await generateInterviewQuestions(context, {
-      maxQuestions: 6,
+      maxQuestions: targetCount,
       prioritizeBoostable: options?.prioritizeBoostable ?? true,
       includeGeneric: true, // Include generic as fallback for low-context projects
     });
@@ -146,7 +148,7 @@ export async function getInterviewQuestionsWithContext(
       }
 
       for (const bq of BASE_QUESTIONS) {
-        if (!coveredCategories.has(bq.category) && merged.length < 6) {
+        if (!coveredCategories.has(bq.category) && merged.length < targetCount) {
           merged.push({
             id: bq.id,
             questionText: bq.questionText,
@@ -159,8 +161,8 @@ export async function getInterviewQuestionsWithContext(
       }
     }
 
-    // Hard cap — 6 smart questions is the sweet spot for a focused editorial interview
-    const maxTotal = options?.maxQuestions || 6;
+    // Hard cap — scaled to project size
+    const maxTotal = options?.maxQuestions || targetCount;
     const capped = merged.slice(0, maxTotal);
 
     // Get context description and upgrade suggestion
@@ -171,6 +173,7 @@ export async function getInterviewQuestionsWithContext(
       contextLevel: context.level,
       contextDescription: getContextLevelDescription(context.level),
       upgradeSuggestion: getContextUpgradeSuggestion(context.level),
+      projectSize: context.projectSize,
     };
   } catch (error) {
     console.error('[getInterviewQuestions] Error generating contextual questions:', error);
@@ -241,5 +244,6 @@ async function fallbackToLegacyQuestions(projectId: string): Promise<InterviewQu
       ? 'Questions based on project photos'
       : 'No project context available',
     upgradeSuggestion: 'Upload more project files to unlock personalized questions',
+    projectSize: { size: 'focused' as const, targetQuestionCount: 6, roomCount: 0, selectionCount: 0 },
   };
 }

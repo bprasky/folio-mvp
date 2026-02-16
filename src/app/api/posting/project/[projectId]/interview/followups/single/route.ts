@@ -40,27 +40,35 @@ const OPENAI_ENABLED =
 
 const SYSTEM_PROMPT = `You are an editorial interviewer for Folio. Based on the designer's answer below, suggest up to two open-ended follow-up questions that could draw out a richer narrative. Only ask when something is interesting or vague. Keep each under 120 characters. Do not repeat or rephrase the original question. Do NOT ask about topics the designer has already covered in previous answers.
 
-Optionally, provide a brief acknowledgment sentence (1-2 sentences, under 150 characters) that naturally transitions to the follow-up questions. This should feel conversational and acknowledge what the designer shared. Examples:
-- "That's interesting. Could you tell me more about..."
-- "Thanks for sharing that. I'm curious about..."
-- "That sounds important. What led you to..."
+Optionally, provide a brief acknowledgment sentence (1-2 sentences, under 150 characters) that naturally transitions to the follow-up questions. This should feel conversational and acknowledge what the designer shared.
 
-If a list of remaining questions is provided, evaluate whether the designer's answers so far already cover any of them (fully or substantially). Return the IDs of any covered questions in "coveredQuestionIds".
+If a list of remaining questions is provided, evaluate whether the designer's answers so far already cover any of them. For each affected question:
+- If FULLY covered (nothing meaningful left to ask): mark as "covered"
+- If PARTIALLY covered (designer touched on the topic but from a different room or angle): return a "morphed" version that references what they already said and asks about the new angle
+
+Morphed questions should:
+- Be under 200 characters
+- Reference what the designer said ("You mentioned X...")
+- Bridge to the new context ("...how does that carry into the living room?")
+- Feel natural and insightful, not mechanical
 
 Return a JSON object with:
 - acknowledgment: string (optional, 1-2 sentences transitioning to follow-ups)
 - followUps: array of { id: string, prompt: string }
-- coveredQuestionIds: array of string (IDs of remaining questions already answered)
+- questionUpdates: array of { id: string, status: "covered" | "morphed", morphedText?: string }
 
-Only include follow-ups if the answer would benefit from deeper exploration. Skip if the answer is already rich and complete. The acknowledgment is optional but encouraged when follow-ups are provided.
+Only include follow-ups if the answer would benefit from deeper exploration. Skip if the answer is already rich and complete. Most remaining questions will NOT be affected — only include ones where answers clearly overlap.
 
-Example format:
+Example:
 {
   "acknowledgment": "That's a beautiful detail about the marble selection.",
   "followUps": [
     { "id": "fu-1", "prompt": "What made that direction feel right emotionally?" }
   ],
-  "coveredQuestionIds": ["q_materials_3"]
+  "questionUpdates": [
+    { "id": "q_materials_3", "status": "covered" },
+    { "id": "q_living_1", "status": "morphed", "morphedText": "You mentioned the warm wood tones in the kitchen — how did you carry that warmth into the living room?" }
+  ]
 }`;
 
 export async function POST(
@@ -263,13 +271,13 @@ export async function POST(
       }
     }
 
-    // Include remaining questions for coverage evaluation
+    // Include remaining questions for coverage evaluation + morphing
     if (validated.remainingQuestions?.length) {
       prompt += `\n\nRemaining questions not yet asked:\n`;
       for (const rq of validated.remainingQuestions) {
         prompt += `- [${rq.id}]: "${rq.question}"\n`;
       }
-      prompt += `\nIf any of these are already fully or substantially covered by the answers so far, include their IDs in "coveredQuestionIds".`;
+      prompt += `\nFor each remaining question affected by prior answers, add to "questionUpdates": { id, status: "covered"|"morphed", morphedText? }. Morph (don't skip) questions the designer partially addressed — reference what they said and ask about the new angle.`;
     }
 
     prompt += `\n\nGenerate 0-2 follow-up questions that would help draw out a richer narrative from this answer. Only ask when something is interesting or vague. Keep each under 120 characters. Build on what the designer said — reference specific details from their answer.`;
@@ -353,10 +361,28 @@ export async function POST(
       ? json.acknowledgment.trim().slice(0, 150)
       : undefined;
 
-    // Extract covered question IDs (optional)
-    const coveredQuestionIds: string[] = Array.isArray(json.coveredQuestionIds)
-      ? json.coveredQuestionIds.filter((id: unknown) => typeof id === "string")
+    // Extract question updates (morphed or covered)
+    interface QuestionUpdate {
+      id: string;
+      status: 'covered' | 'morphed';
+      morphedText?: string;
+    }
+    const questionUpdates: QuestionUpdate[] = Array.isArray(json.questionUpdates)
+      ? json.questionUpdates
+          .filter((u: any) => u?.id && (u.status === 'covered' || u.status === 'morphed'))
+          .map((u: any) => ({
+            id: String(u.id),
+            status: u.status as 'covered' | 'morphed',
+            morphedText: u.status === 'morphed' && typeof u.morphedText === 'string'
+              ? u.morphedText.trim().slice(0, 200)
+              : undefined,
+          }))
       : [];
+
+    // Backward compat: derive coveredQuestionIds from questionUpdates
+    const coveredQuestionIds: string[] = questionUpdates
+      .filter(u => u.status === 'covered')
+      .map(u => u.id);
 
     // Validate response structure
     let followUpsRaw: Array<{ id: string; prompt: string }> = [];
@@ -404,6 +430,7 @@ export async function POST(
       followups: followupsWithKeys,
       ...(acknowledgment && { acknowledgment }),
       ...(coveredQuestionIds.length > 0 && { coveredQuestionIds }),
+      ...(questionUpdates.length > 0 && { questionUpdates }),
     };
 
     // Cache successful follow-ups for this question
