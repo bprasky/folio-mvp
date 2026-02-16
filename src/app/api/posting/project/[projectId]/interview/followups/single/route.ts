@@ -25,6 +25,10 @@ const SingleFollowUpRequestSchema = z.object({
     question: z.string(),
     answer: z.string(),
   })).optional(),
+  remainingQuestions: z.array(z.object({
+    id: z.string(),
+    question: z.string(),
+  })).optional(),
 });
 
 const POSTING_V1_ENABLED =
@@ -41,19 +45,22 @@ Optionally, provide a brief acknowledgment sentence (1-2 sentences, under 150 ch
 - "Thanks for sharing that. I'm curious about..."
 - "That sounds important. What led you to..."
 
+If a list of remaining questions is provided, evaluate whether the designer's answers so far already cover any of them (fully or substantially). Return the IDs of any covered questions in "coveredQuestionIds".
+
 Return a JSON object with:
 - acknowledgment: string (optional, 1-2 sentences transitioning to follow-ups)
 - followUps: array of { id: string, prompt: string }
+- coveredQuestionIds: array of string (IDs of remaining questions already answered)
 
 Only include follow-ups if the answer would benefit from deeper exploration. Skip if the answer is already rich and complete. The acknowledgment is optional but encouraged when follow-ups are provided.
 
 Example format:
 {
-  "acknowledgment": "That's interesting. Could you tell me more about how that decision shaped the final design?",
+  "acknowledgment": "That's a beautiful detail about the marble selection.",
   "followUps": [
-    { "id": "fu-1", "prompt": "What made that direction feel right emotionally?" },
-    { "id": "fu-2", "prompt": "How did that decision impact the final design?" }
-  ]
+    { "id": "fu-1", "prompt": "What made that direction feel right emotionally?" }
+  ],
+  "coveredQuestionIds": ["q_materials_3"]
 }`;
 
 export async function POST(
@@ -256,6 +263,15 @@ export async function POST(
       }
     }
 
+    // Include remaining questions for coverage evaluation
+    if (validated.remainingQuestions?.length) {
+      prompt += `\n\nRemaining questions not yet asked:\n`;
+      for (const rq of validated.remainingQuestions) {
+        prompt += `- [${rq.id}]: "${rq.question}"\n`;
+      }
+      prompt += `\nIf any of these are already fully or substantially covered by the answers so far, include their IDs in "coveredQuestionIds".`;
+    }
+
     prompt += `\n\nGenerate 0-2 follow-up questions that would help draw out a richer narrative from this answer. Only ask when something is interesting or vague. Keep each under 120 characters. Build on what the designer said — reference specific details from their answer.`;
 
     // Enforce budget
@@ -333,9 +349,14 @@ export async function POST(
     const json = JSON.parse(raw);
 
     // Extract acknowledgment (optional)
-    const acknowledgment = typeof json.acknowledgment === "string" 
-      ? json.acknowledgment.trim().slice(0, 150) 
+    const acknowledgment = typeof json.acknowledgment === "string"
+      ? json.acknowledgment.trim().slice(0, 150)
       : undefined;
+
+    // Extract covered question IDs (optional)
+    const coveredQuestionIds: string[] = Array.isArray(json.coveredQuestionIds)
+      ? json.coveredQuestionIds.filter((id: unknown) => typeof id === "string")
+      : [];
 
     // Validate response structure
     let followUpsRaw: Array<{ id: string; prompt: string }> = [];
@@ -378,10 +399,11 @@ export async function POST(
       };
     });
 
-    // Include acknowledgment in response if provided
-    const responseWithAcknowledgment = {
+    // Build response with optional fields
+    const responsePayload = {
       followups: followupsWithKeys,
       ...(acknowledgment && { acknowledgment }),
+      ...(coveredQuestionIds.length > 0 && { coveredQuestionIds }),
     };
 
     // Cache successful follow-ups for this question
@@ -451,7 +473,7 @@ export async function POST(
         console.warn("Analytics logging failed (non-blocking):", analyticsError);
       });
 
-      return NextResponse.json({ ok: true, ...responseWithAcknowledgment, _cid }, { status: 200 });
+      return NextResponse.json({ ok: true, ...responsePayload, _cid }, { status: 200 });
   } catch (error: any) {
     if (error.name === "ZodError") {
       return NextResponse.json(

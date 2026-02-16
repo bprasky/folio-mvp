@@ -9,11 +9,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { PromptPicker } from "./PromptPicker";
-import { AnswerForm } from "./AnswerForm";
 import { FollowUpsForm } from "./FollowUpsForm";
 import { FooterBar } from "./FooterBar";
-import { TagPreview } from "./TagPreview";
 import { QuestionCard } from "./QuestionCard";
 import { ProgressIndicator } from "./ProgressIndicator";
 import { InterviewModeSelector } from "./InterviewModeSelector";
@@ -63,6 +60,7 @@ type SingleFollowUpApiResponse = {
   ok: boolean;
   followups: Array<{ id: string; text: string; source?: string; dedupeKey?: string; questionId: string }>;
   acknowledgment?: string;
+  coveredQuestionIds?: string[];
   error?: string;
 };
 
@@ -101,11 +99,11 @@ export function InterviewModal({
   const [interviewMode, setInterviewMode] = useState<"select" | "realtime" | "text">(
     flags.realtimeInterview && realtimeInterviewConfig.enabled ? "select" : "text"
   );
-  // Phase A: Sequential flow - new phase system
-  const [phase, setPhase] = useState<"pick" | "question" | "followup" | "complete">("pick");
+  // Phase: question → followup → complete (pick phase removed — all questions auto-selected)
+  const [phase, setPhase] = useState<"question" | "followup" | "complete">("question");
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   // Keep step for backward compatibility during transition
-  const [step, setStep] = useState<"pick" | "answer" | "followups">("pick");
+  const [step, setStep] = useState<"answer" | "followups">("answer");
   const [selectedQuestionIds, setSelectedQuestionIds] = useState<string[]>([]);
   const [answers, setAnswers] = useState<InterviewAnswer[]>([]);
   const [followUps, setFollowUps] = useState<
@@ -297,17 +295,12 @@ export function InterviewModal({
             currentStep: step,
           });
 
-          // If no answers exist, always start from pick phase
-          // This handles "Start Over" correctly - even if selectedQuestionIds exist,
-          // we want to let user re-select questions
+          // If no answers exist, start in question phase (all questions auto-selected)
           if (!hasBaseAnswers && !hasFollowUps && !cancelled) {
-            setStep("pick");
-            setPhase("pick");
-            // Clear any stale selectedQuestionIds to ensure fresh start
-            if (serverAnswers.length === 0) {
-              setSelectedQuestionIds([]);
-            }
-            console.log('[InterviewModal] Reset to pick phase - no answers found');
+            setStep("answer");
+            setPhase("question");
+            setCurrentQuestionIndex(0);
+            console.log('[InterviewModal] Starting fresh in question phase');
           } else if (hasBaseAnswers && !cancelled) {
             setStep("answer");
             setPhase("question");
@@ -349,23 +342,23 @@ export function InterviewModal({
     }
   }, [open]);
 
-  // Reset to pick phase when modal opens with no answers
+  // Reset to question phase when modal opens with no answers
   useEffect(() => {
     if (!open) return;
-    
+
     // Give a small delay to let data load, then check if we should reset
     const timer = setTimeout(() => {
       const hasAnswers = answers.filter(a => !a.isFollowUp).length > 0;
       const hasFollowUps = answers.filter(a => a.isFollowUp).length > 0;
-      
+
       if (!hasAnswers && !hasFollowUps) {
-        console.log('[InterviewModal] Modal opened with no answers - resetting to pick');
-        setStep("pick");
-        setPhase("pick");
-        setSelectedQuestionIds([]);
+        console.log('[InterviewModal] Modal opened with no answers - starting question phase');
+        setStep("answer");
+        setPhase("question");
+        setCurrentQuestionIndex(0);
       }
     }, 100);
-    
+
     return () => clearTimeout(timer);
   }, [open]); // Only depend on open, not answers (to avoid loops)
 
@@ -412,10 +405,20 @@ export function InterviewModal({
     return map;
   }, [fetchedQuestions]);
   
-  // Merge DEFAULT_QUESTION_BANK with contextual questions
+  // Use contextual questions only — no generic DEFAULT_QUESTION_BANK.
+  // The contextual system already includes base fallbacks for low-context projects.
   const allQuestions = useMemo(() => {
-    return [...DEFAULT_QUESTION_BANK, ...contextualQuestions];
+    return contextualQuestions.length > 0 ? contextualQuestions : DEFAULT_QUESTION_BANK;
   }, [contextualQuestions]);
+
+  // Auto-select all questions when they load (no pick phase)
+  useEffect(() => {
+    if (allQuestions.length > 0 && selectedQuestionIds.length === 0) {
+      const ids = allQuestions.map(q => q.id);
+      setSelectedQuestionIds(ids);
+      console.log('[InterviewModal] Auto-selected all questions:', ids.length);
+    }
+  }, [allQuestions, selectedQuestionIds.length]);
   
   // Phase A: Sequential flow helpers
   // Derive selected questions from merged question bank
@@ -435,8 +438,8 @@ export function InterviewModal({
     return answer?.answer || "";
   }, [currentQuestion, baseAnswers]);
 
-  // Phase B: Generate follow-ups for a single question
-  const generateSingleFollowUp = useCallback(async (questionId: string, answerText: string) => {
+  // Phase B: Generate follow-ups for a single question + evaluate coverage of remaining questions
+  const generateSingleFollowUp = useCallback(async (questionId: string, answerText: string): Promise<{ followUps: Array<{ id: string; prompt: string }>; coveredQuestionIds: string[] }> => {
     setIsLoadingFollowUps(true);
     logClient('followups-single:request:begin', { projectId, questionId });
 
@@ -449,6 +452,13 @@ export function InterviewModal({
           answer: a.answer,
         }));
 
+      // Build remaining questions list for coverage evaluation
+      const answeredIds = new Set(baseAnswers.map(a => a.questionId));
+      answeredIds.add(questionId); // Current question is being answered now
+      const remainingQuestions = selectedQuestions
+        .filter(q => !answeredIds.has(q.id))
+        .map(q => ({ id: q.id, question: q.prompt }));
+
       const resp = await fetch(`/api/posting/project/${projectId}/interview/followups/single`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -456,17 +466,17 @@ export function InterviewModal({
           questionId,
           answer: answerText,
           previousAnswers,
+          remainingQuestions,
         }),
       });
 
       logClient('followups-single:response:status', { status: resp.status });
       const data = await resp.json() as SingleFollowUpApiResponse;
-      logClient('followups-single:response:body', { ok: data?.ok, error: data?.error, count: (data?.followups || []).length });
+      logClient('followups-single:response:body', { ok: data?.ok, error: data?.error, count: (data?.followups || []).length, covered: data?.coveredQuestionIds?.length || 0 });
 
       if (!resp.ok || data?.ok === false) {
         console.warn('[followups-single] Failed to generate follow-ups:', data?.error);
-        // Non-blocking: continue even if follow-ups fail
-        return [];
+        return { followUps: [], coveredQuestionIds: [] };
       }
 
       // Transform to format expected by followUps state (with acknowledgment)
@@ -490,15 +500,17 @@ export function InterviewModal({
         return filtered;
       });
 
-      return followUpsGroup.followUps;
+      return {
+        followUps: followUpsGroup.followUps,
+        coveredQuestionIds: data.coveredQuestionIds || [],
+      };
     } catch (error: any) {
       console.error('[followups-single] Error:', error);
-      // Non-blocking: continue even if follow-ups fail
-      return [];
+      return { followUps: [], coveredQuestionIds: [] };
     } finally {
       setIsLoadingFollowUps(false);
     }
-  }, [projectId, baseAnswers, allQuestions]);
+  }, [projectId, baseAnswers, allQuestions, selectedQuestions]);
 
   // Handle sequential question answer submission
   const handleQuestionAnswerSubmit = useCallback(async () => {
@@ -530,17 +542,24 @@ export function InterviewModal({
       // Save answer
       await persistAnswers([answerData], { includeFollowUps: false });
 
-      // Phase B: Generate follow-ups immediately after saving answer
-      const generatedFollowUps = await generateSingleFollowUp(currentQuestion.id, answerData.answer);
+      // Phase B: Generate follow-ups + evaluate coverage of remaining questions
+      const { coveredQuestionIds } = await generateSingleFollowUp(currentQuestion.id, answerData.answer);
+
+      // Skip covered questions — remove them from selectedQuestionIds
+      if (coveredQuestionIds.length > 0) {
+        const coveredSet = new Set(coveredQuestionIds);
+        logClient('coverage:skip', { covered: coveredQuestionIds });
+        setSelectedQuestionIds((prev) => prev.filter(id => !coveredSet.has(id)));
+      }
 
       // Move to next question or complete
-      if (currentQuestionIndex < totalQuestions - 1) {
+      // Note: totalQuestions may have changed due to coverage skipping,
+      // so we check against the current selectedQuestions length
+      if (currentQuestionIndex < totalQuestions - 1 - coveredQuestionIds.length) {
         setCurrentQuestionIndex((prev) => prev + 1);
       } else {
-        // All questions answered
+        // All questions answered (or remaining were covered)
         setPhase("complete");
-        // Skip batch follow-up generation (already generated per-question)
-        // Just allow user to generate editorial
       }
     } catch (error: any) {
       console.error("[InterviewModal] handleQuestionAnswerSubmit error:", error);
@@ -1133,7 +1152,6 @@ export function InterviewModal({
     await handleGenerate();
   }, [baseAnswers, projectId, cachedFollowups, persistBaseAnswers, handleBanner, handleGenerate]);
 
-  const canProceedFromPick = selectedQuestionIds.length >= 1;
   const canProceedFromAnswer =
     baseAnswers.length >= 1 &&
     baseAnswers.every((answer) => answer.answer.trim().length > 0);
@@ -1151,14 +1169,6 @@ export function InterviewModal({
 
   const hasTaggedProducts = materials.length > 0;
 
-  // Handle phase transition from pick to question
-  const handleBeginInterview = useCallback(() => {
-    if (selectedQuestionIds.length === 0) return;
-    setPhase("question");
-    setStep("answer"); // Keep step for backward compatibility
-    setCurrentQuestionIndex(0);
-  }, [selectedQuestionIds.length]);
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
@@ -1169,7 +1179,7 @@ export function InterviewModal({
         }
       >
         {/* Interview Mode Selection */}
-        {interviewMode === "select" && phase === "pick" && (
+        {interviewMode === "select" && phase === "question" && currentQuestionIndex === 0 && !baseAnswers.length && (
           <InterviewModeSelector
             projectName={projectName}
             onSelectMode={(mode) => {
@@ -1210,17 +1220,18 @@ export function InterviewModal({
         {interviewMode === "text" && (
           <>
             {/* Loading state for questions */}
-            {questionsLoading && phase === "pick" && (
+            {questionsLoading && (
               <div className="flex items-center justify-center p-12">
                 <div className="animate-spin h-8 w-8 border-2 border-stone-900 border-t-transparent rounded-full" />
+                <span className="ml-3 text-sm text-stone-500">Preparing your interview...</span>
               </div>
             )}
 
             {/* Error state for questions */}
-            {!questionsLoading && fetchedQuestions.length === 0 && phase === "pick" && (
+            {!questionsLoading && fetchedQuestions.length === 0 && phase === "question" && (
           <div className="p-8 text-center">
             <p className="text-stone-600 mb-4">
-              No questions available for this project. Please ensure your project has images with AI classifications.
+              No questions available for this project. Please ensure your project has images or product selections.
             </p>
             <button onClick={() => onOpenChange(false)} className="text-stone-900 underline">
               Close
@@ -1259,59 +1270,7 @@ export function InterviewModal({
           <DialogTitle className="text-2xl font-serif">
             Project Interview
           </DialogTitle>
-          {phase !== "question" && phase !== "followup" && (
-            <p className="text-sm text-[var(--text-secondary)] mt-2">
-              Answer a few questions to generate your editorial draft.
-              {hasTaggedProducts && (
-                <span className="block mt-1 text-xs">
-                  Tagged products will be included automatically. Use these prompts
-                  to explain intent, decisions, and collaboration.
-                </span>
-              )}
-            </p>
-          )}
         </DialogHeader>
-
-        {/* Context level indicator - shows how personalized questions are */}
-        {phase === "pick" && !questionsLoading && questionsContext.contextLevel > 0 && (
-          <div className="mx-6 mb-4 p-4 bg-gradient-to-r from-stone-50 to-stone-100 border border-stone-200 rounded-lg">
-            <div className="flex items-center gap-2 text-sm text-stone-700">
-              <svg className="w-4 h-4 text-stone-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-              <span className="font-medium">{questionsContext.contextDescription}</span>
-            </div>
-            {questionsContext.upgradeSuggestion && (
-              <p className="mt-1 text-xs text-stone-500">
-                {questionsContext.upgradeSuggestion}
-              </p>
-            )}
-            <div className="mt-2 flex items-center gap-1">
-              {[0, 1, 2, 3, 4, 5].map((level) => (
-                <div
-                  key={level}
-                  className={`h-1.5 flex-1 rounded-full ${
-                    level <= questionsContext.contextLevel
-                      ? 'bg-stone-600'
-                      : 'bg-stone-200'
-                  }`}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Show upgrade suggestion when context is low */}
-        {phase === "pick" && !questionsLoading && questionsContext.contextLevel === 0 && (
-          <div className="mx-6 mb-4 p-4 bg-stone-50 border border-stone-200 rounded-lg">
-            <div className="flex items-center gap-2 text-sm text-stone-600">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span>Add project photos to unlock personalized questions</span>
-            </div>
-          </div>
-        )}
 
         {banner && (
           <div className={`mx-8 mt-4 mb-4 rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-3 text-xs text-yellow-800 ${phase === "question" || phase === "followup" ? "" : ""}`}>
@@ -1319,7 +1278,7 @@ export function InterviewModal({
           </div>
         )}
 
-        {llmAvailable === false && phase !== "question" && phase !== "followup" && (
+        {llmAvailable === false && phase === "complete" && (
           <div className="mx-6 mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-800">
             AI not configured — we'll use a clean template. You can publish now
             and refine later.
@@ -1348,31 +1307,9 @@ export function InterviewModal({
             />
           </div>
         ) : (
-          /* Batch flow - pick and followups (backward compatibility) */
-          <div className={`mt-6 md:flex md:items-start md:gap-6 ${phase === "question" || phase === "followup" ? "flex-1 min-h-0 px-6 pb-6" : ""}`}>
+          /* Followup phase (batch flow for backward compatibility) */
+          <div className={`mt-6 md:flex md:items-start md:gap-6 ${phase === "followup" ? "flex-1 min-h-0 px-6 pb-6" : ""}`}>
             <div className="flex-1 min-w-0">
-              {phase === "pick" && step === "pick" && (
-                <PromptPicker
-                  selectedQuestionIds={selectedQuestionIds}
-                  onSelectionChange={setSelectedQuestionIds}
-                  roleFilter={hasVendors ? "ANY" : "DESIGNER"}
-                  hasTaggedProducts={hasTaggedProducts}
-                  contextualQuestions={contextualQuestions}
-                />
-              )}
-
-              {phase !== "question" && step === "answer" && (
-                <AnswerForm
-                  selectedQuestionIds={selectedQuestionIds}
-                  answers={baseAnswers}
-                  onAnswersChange={handleBaseAnswersChange}
-                  roleFilter={hasVendors ? "ANY" : "DESIGNER"}
-                  onSave={persistBaseAnswers}
-                  contextualQuestions={contextualQuestions}
-                  fieldErrors={fieldErrors}
-                />
-              )}
-
               {phase === "followup" || step === "followups" ? (
                 <FollowUpsForm
                   initialAnswers={answers}
@@ -1383,29 +1320,19 @@ export function InterviewModal({
                 />
               ) : null}
             </div>
-            {phase === "pick" && step === "pick" && <TagPreview materials={materials} />}
           </div>
         )}
 
             <FooterBar
               phase={phase}
               onBack={
-                phase === "question"
-                  ? () => {
-                      if (currentQuestionIndex > 0) {
-                        setCurrentQuestionIndex((prev) => prev - 1);
-                      } else {
-                        setPhase("pick");
-                        setStep("pick");
-                      }
-                    }
-                  : step === "answer"
-                  ? () => setStep("pick")
+                phase === "question" && currentQuestionIndex > 0
+                  ? () => setCurrentQuestionIndex((prev) => prev - 1)
                   : step === "followups"
                   ? () => setStep("answer")
                   : undefined
               }
-              onNext={handleBeginInterview}
+              onNext={undefined}
               onSubmit={phase === "question" ? handleQuestionAnswerSubmit : undefined}
               onGenerate={phase === "complete" || step === "followups" ? handleGenerate : undefined}
               onSkip={
@@ -1418,9 +1345,7 @@ export function InterviewModal({
                   : undefined
               }
               canProceed={
-                phase === "pick"
-                  ? canProceedFromPick
-                  : phase === "question"
+                phase === "question"
                   ? canProceedFromQuestion
                   : step === "answer"
                   ? canProceedFromAnswer

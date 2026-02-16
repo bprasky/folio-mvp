@@ -100,14 +100,12 @@ export async function getInterviewQuestionsWithContext(
     const context = await assessProjectContext(projectId);
 
     // Generate contextual questions based on available data
+    // Include generic fallbacks so we always have enough questions
     const contextualQuestions = await generateInterviewQuestions(context, {
-      maxQuestions: 8, // Leave room for base questions within the total cap
+      maxQuestions: 6,
       prioritizeBoostable: options?.prioritizeBoostable ?? true,
-      includeGeneric: options?.includeGeneric ?? false, // Don't include generic by default, we add base questions
+      includeGeneric: true, // Include generic as fallback for low-context projects
     });
-
-    // Also get legacy contextual questions from AI classification (for backward compatibility)
-    const legacyContextualQuestions = await generateContextualQuestions(projectId, 2, 4);
 
     // Convert generated questions to interview format
     const contextualInterviewQuestions: InterviewQuestion[] = contextualQuestions.map((q) => {
@@ -132,71 +130,37 @@ export async function getInterviewQuestionsWithContext(
       };
     });
 
-    // Convert legacy contextual questions
-    const legacyInterviewQuestions: InterviewQuestion[] = legacyContextualQuestions.map(cq => ({
-      id: cq.id,
-      questionText: cq.questionText,
-      questionType: 'contextual' as const,
-      source: 'ai_classification' as const,
-      linkedImageId: cq.linkedImageId,
-      linkedProductId: cq.linkedProductId,
-      attributeType: cq.attributeType,
-      attributeValue: cq.attributeValue,
-      roomContext: cq.roomContext,
-      contextLevel: 1 as ContextLevel,
-    }));
+    // Build final list — contextual questions only, no legacy template system
+    const merged: InterviewQuestion[] = [...contextualInterviewQuestions];
 
-    // Semantic dedup: check keyword overlap between two question texts
-    const questionOverlaps = (a: string, b: string): boolean => {
-      const stop = new Set(['the','a','an','is','was','what','how','why','tell','us','about','your','you','this','that','for','and','or','in','of','to','do','did','can','could','would']);
-      const extract = (s: string) => s.toLowerCase().replace(/[^a-z\s]/g, '').split(/\s+/).filter(w => w.length > 2 && !stop.has(w));
-      const ta = extract(a), tb = extract(b);
-      const overlap = ta.filter(t => tb.includes(t)).length;
-      return Math.min(ta.length, tb.length) > 0 && overlap / Math.min(ta.length, tb.length) > 0.4;
-    };
+    // Only add base questions as fallback if contextual system produced very few
+    if (merged.length < 4) {
+      const coveredCategories = new Set<string>();
+      for (const q of merged) {
+        const t = q.questionText.toLowerCase();
+        if (t.includes('vision') || t.includes('brief') || t.includes('direction') || t.includes('initial')) coveredCategories.add('brief');
+        if (t.includes('challenge') || t.includes('obstacle') || t.includes('constraint')) coveredCategories.add('process');
+        if (t.includes('proud') || t.includes('favorite') || t.includes('detail') || t.includes('moment')) coveredCategories.add('highlight');
+        if (t.includes('aesthetic') || t.includes('style') || t.includes('look')) coveredCategories.add('aesthetic');
+        if (t.includes('feel') || t.includes('experience') || t.includes('emotion') || t.includes('hope')) coveredCategories.add('emotion');
+      }
 
-    // Deduplicate legacy questions that overlap with new contextual questions
-    const contextualIds = new Set(contextualInterviewQuestions.map(q => q.id));
-    const uniqueLegacy = legacyInterviewQuestions.filter(q =>
-      !contextualIds.has(q.id) &&
-      !contextualInterviewQuestions.some(cq => questionOverlaps(cq.questionText, q.questionText))
-    );
-
-    // Build merged list: prioritize contextual, then legacy, then base
-    const merged: InterviewQuestion[] = [];
-
-    // Add contextual questions first (they're already sorted by priority)
-    merged.push(...contextualInterviewQuestions);
-
-    // Add unique legacy contextual questions
-    merged.push(...uniqueLegacy);
-
-    // Only add base questions for topics not already covered by contextual questions
-    const coveredCategories = new Set<string>();
-    for (const q of merged) {
-      const t = q.questionText.toLowerCase();
-      if (t.includes('vision') || t.includes('brief') || t.includes('direction') || t.includes('initial')) coveredCategories.add('brief');
-      if (t.includes('challenge') || t.includes('obstacle') || t.includes('constraint')) coveredCategories.add('process');
-      if (t.includes('proud') || t.includes('favorite') || t.includes('detail') || t.includes('moment')) coveredCategories.add('highlight');
-      if (t.includes('aesthetic') || t.includes('style') || t.includes('look')) coveredCategories.add('aesthetic');
-      if (t.includes('feel') || t.includes('experience') || t.includes('emotion') || t.includes('hope')) coveredCategories.add('emotion');
-    }
-
-    for (const bq of BASE_QUESTIONS) {
-      if (!coveredCategories.has(bq.category)) {
-        merged.push({
-          id: bq.id,
-          questionText: bq.questionText,
-          questionType: bq.questionType,
-          source: bq.source,
-          category: bq.category,
-          contextLevel: 0,
-        });
+      for (const bq of BASE_QUESTIONS) {
+        if (!coveredCategories.has(bq.category) && merged.length < 6) {
+          merged.push({
+            id: bq.id,
+            questionText: bq.questionText,
+            questionType: bq.questionType,
+            source: bq.source,
+            category: bq.category,
+            contextLevel: 0,
+          });
+        }
       }
     }
 
-    // Hard cap total questions to prevent interview fatigue
-    const maxTotal = options?.maxQuestions || 10;
+    // Hard cap — 6 smart questions is the sweet spot for a focused editorial interview
+    const maxTotal = options?.maxQuestions || 6;
     const capped = merged.slice(0, maxTotal);
 
     // Get context description and upgrade suggestion
