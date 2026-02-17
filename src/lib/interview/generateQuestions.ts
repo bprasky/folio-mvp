@@ -166,28 +166,8 @@ const PROSPECTIVE_QUESTIONS = {
       topic: TOPICS.DESIGN_EVOLUTION,
     },
   ],
-  layer2: [
-    {
-      text: 'What\'s the anchor piece that the rest of the design revolves around?',
-      helper: 'Think about which selection set the tone for everything else.',
-      topic: TOPICS.ANCHOR_PIECE,
-    },
-    {
-      text: 'How are you thinking about the relationship between the rooms?',
-      helper: 'Describe the flow and continuity you\'re creating across spaces.',
-      topic: TOPICS.ROOM_RELATIONSHIPS,
-    },
-    {
-      text: 'What do you want your client to feel the first time they walk in?',
-      helper: 'Describe the arrival moment you\'re designing.',
-      topic: TOPICS.EMOTIONAL_IMPACT,
-    },
-    {
-      text: 'Is there a material or finish that became the thread tying this project together?',
-      helper: 'Think about the unifying elements that create coherence.',
-      topic: TOPICS.MATERIAL_THREAD,
-    },
-  ],
+  // layer2 templates are generated dynamically in generateProspectiveQuestions()
+  // to inject room names and material data instead of staying generic
 };
 
 /**
@@ -211,14 +191,66 @@ function generateProspectiveQuestions(context: ProjectContext): GeneratedQuestio
     });
   }
 
-  for (const q of PROSPECTIVE_QUESTIONS.layer2) {
-    // Skip questions that require multiple rooms on single-room projects
-    if (q.topic === TOPICS.ROOM_RELATIONSHIPS && roomCount <= 1) continue;
+  // Layer 2: Dynamic prospective questions using project data
+  // Anchor piece — use hero piece name if available
+  const heroPiece = context.selections.find((s) => s.isHeroPiece);
+  if (heroPiece) {
     questions.push({
       id: `prospective-${randomUUID()}`,
-      text: q.text,
-      helper: q.helper,
-      topic: q.topic,
+      text: `The ${heroPiece.productName}${heroPiece.brand ? ` from ${heroPiece.brand}` : ''} feels like it could anchor the ${heroPiece.room} — is that the piece the rest of the design revolves around?`,
+      topic: TOPICS.ANCHOR_PIECE,
+      contextLevel: 1,
+      type: 'prospective_vision',
+      rooms: [heroPiece.room],
+      products: [heroPiece.productName],
+      vendors: heroPiece.brand ? [heroPiece.brand] : [],
+      boostable: !!heroPiece.brand,
+      pullQuotePotential: 'high',
+    });
+  } else {
+    questions.push({
+      id: `prospective-${randomUUID()}`,
+      text: 'What\'s the anchor piece that the rest of the design revolves around?',
+      topic: TOPICS.ANCHOR_PIECE,
+      contextLevel: 1,
+      type: 'prospective_vision',
+      boostable: false,
+      pullQuotePotential: 'high',
+    });
+  }
+
+  // Room relationships — only for multi-room, use actual room names
+  if (roomCount >= 2) {
+    const roomNames = context.rooms.slice(0, 3).map((r) => r.name);
+    questions.push({
+      id: `prospective-${randomUUID()}`,
+      text: `How are you thinking about the flow between the ${roomNames.join(' and the ')}? Is there a material or palette that carries across?`,
+      topic: TOPICS.ROOM_RELATIONSHIPS,
+      contextLevel: 1,
+      type: 'prospective_vision',
+      rooms: roomNames,
+      boostable: false,
+      pullQuotePotential: 'high',
+    });
+  }
+
+  // Material thread — use actual materials if available
+  if (context.materialThemes.length > 0) {
+    const materialName = context.materialThemes[0].replace(/_/g, ' ');
+    questions.push({
+      id: `prospective-${randomUUID()}`,
+      text: `There's a clear ${materialName} thread running through the project. Is that intentional, or did it emerge as you went?`,
+      topic: TOPICS.MATERIAL_THREAD,
+      contextLevel: 1,
+      type: 'prospective_vision',
+      boostable: false,
+      pullQuotePotential: 'high',
+    });
+  } else {
+    questions.push({
+      id: `prospective-${randomUUID()}`,
+      text: 'Is there a material or finish that became the thread tying this project together?',
+      topic: TOPICS.MATERIAL_THREAD,
       contextLevel: 1,
       type: 'prospective_vision',
       boostable: false,
