@@ -92,38 +92,54 @@ export default function DraftsPanel({ projectId }: { projectId: string }) {
         });
         
         // Sync answers and followups with auto-dedupe
-        if (result.interview?.answers && result.interview.answers.length > 0) {
-          const mappedAnswers = result.interview.answers.map((a: any) => ({
-            q: a.question || a.q || '',
+        let answersFromDrafts = result.interview?.answers || [];
+        let followUpsFromDrafts = result.interview?.followUps || [];
+
+        // Fallback: if drafts API returned no answers, try the interview GET endpoint directly
+        // This handles the case where provenance data was lost due to race conditions
+        if (answersFromDrafts.length === 0) {
+          console.log('[DraftsPanel] No answers from drafts API - trying interview GET endpoint as fallback');
+          try {
+            const interviewRes = await fetch(`/api/posting/project/${projectId}/interview`);
+            if (interviewRes.ok) {
+              const interviewData = await interviewRes.json();
+              if (interviewData.answers?.length > 0) {
+                answersFromDrafts = interviewData.answers;
+                console.log('[DraftsPanel] Recovered answers from interview GET endpoint:', answersFromDrafts.length);
+              }
+              if (interviewData.followUps?.length > 0 && followUpsFromDrafts.length === 0) {
+                followUpsFromDrafts = interviewData.followUps;
+              }
+            }
+          } catch (fallbackErr) {
+            console.warn('[DraftsPanel] Fallback interview fetch failed:', fallbackErr);
+          }
+        }
+
+        if (answersFromDrafts.length > 0) {
+          const mappedAnswers = answersFromDrafts.map((a: any) => ({
+            q: a.question || a.q || a.prompt || '',
             a: a.answer || a.a || '',
-            question: a.question || a.q || '',
+            question: a.question || a.q || a.prompt || '',
             answer: a.answer || a.a || '',
             questionId: a.questionId || a.id,
+            section: a.section,
           }));
-          
-          // Log data structure for debugging
-          console.log("Answer data:", mappedAnswers.map(a => ({ 
-            questionId: a.questionId, 
-            q: a.q, 
-            question: a.question,
-            a: a.a,
-            answer: a.answer 
-          })));
-          
+
+          console.log('[DraftsPanel] Setting answers:', mappedAnswers.length);
           setAnswers(dedupeAnswers(mappedAnswers));
         } else {
-          console.log('[DraftsPanel] No answers found in fetched data - clearing local state');
+          console.log('[DraftsPanel] No answers found from any source');
           setAnswers([]);
         }
-        if (result.interview?.followUps && result.interview.followUps.length > 0) {
-          setFollowups(result.interview.followUps.map((f: any) => ({
+        if (followUpsFromDrafts.length > 0) {
+          setFollowups(followUpsFromDrafts.map((f: any) => ({
             q: f.question || f.q || f.prompt || '',
             a: f.answer || f.a || '',
             question: f.question || f.q || f.prompt || '',
             answer: f.answer || f.a || '',
           })));
         } else {
-          console.log('[DraftsPanel] No followUps found in fetched data - clearing local state');
           setFollowups([]);
         }
       } else {
@@ -229,18 +245,53 @@ export default function DraftsPanel({ projectId }: { projectId: string }) {
 
       // Always send answersOverride to avoid relying solely on provenance
       // (provenance can be stale due to race conditions with concurrent writes)
-      if (filteredAnswers.length > 0) {
-        payload.answersOverride = filteredAnswers.map((qa) => ({
+      let answersToSend = filteredAnswers;
+      let followupsToSend = filteredFollowups;
+
+      // Last-resort fallback: if we STILL have no answers, try fetching from the interview GET endpoint
+      if (answersToSend.length === 0) {
+        console.log('[DraftsPanel] No local answers for regenerate - fetching from interview endpoint');
+        try {
+          const interviewRes = await fetch(`/api/posting/project/${projectId}/interview`);
+          if (interviewRes.ok) {
+            const interviewData = await interviewRes.json();
+            if (interviewData.answers?.length > 0) {
+              answersToSend = interviewData.answers.map((a: any) => ({
+                q: a.question || a.prompt || a.questionId || '',
+                a: a.answer || '',
+                question: a.question || a.prompt || '',
+                answer: a.answer || '',
+                questionId: a.questionId || a.id,
+                section: a.section,
+              }));
+              console.log('[DraftsPanel] Recovered', answersToSend.length, 'answers from interview endpoint');
+            }
+            if (interviewData.followUps?.length > 0 && followupsToSend.length === 0) {
+              followupsToSend = interviewData.followUps.map((f: any) => ({
+                q: f.question || f.prompt || '',
+                a: f.answer || '',
+                question: f.question || f.prompt || '',
+                answer: f.answer || '',
+              }));
+            }
+          }
+        } catch (fetchErr) {
+          console.warn('[DraftsPanel] Fallback interview fetch failed:', fetchErr);
+        }
+      }
+
+      if (answersToSend.length > 0) {
+        payload.answersOverride = answersToSend.map((qa: any) => ({
           questionId: qa.questionId || qa.q || qa.question,
           answer: qa.a || qa.answer || '',
           question: qa.q || qa.question || '',
-          section: (qa as any).section,
+          section: qa.section,
           role: 'DESIGNER',
           isFollowUp: false,
         }));
       }
-      if (filteredFollowups.length > 0) {
-        payload.followupsOverride = filteredFollowups.map((qa) => ({
+      if (followupsToSend.length > 0) {
+        payload.followupsOverride = followupsToSend.map((qa: any) => ({
           questionId: qa.questionId || qa.q || qa.question,
           question: qa.q || qa.question || '',
           answer: qa.a || qa.answer || '',
