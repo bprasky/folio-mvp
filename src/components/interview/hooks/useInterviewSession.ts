@@ -190,17 +190,34 @@ export function useInterviewSession({
    */
   const submitResponse = useCallback(
     async (questionId: string, answer: string): Promise<RespondResponse> => {
+      const currentQ = questions[currentQuestionIndex];
+      const questionText = currentQ?.text || "Interview question";
+
+      // Record response optimistically BEFORE API call so draft saves work
+      // even if the API fails (network error, auth issue, no session, etc.)
+      setResponses((prev) => [
+        ...prev,
+        {
+          questionId,
+          questionText,
+          answer,
+          timestamp: new Date(),
+          inputMode: (mode || "text") as "voice" | "text",
+        },
+      ]);
+
       if (!sessionId) {
-        throw new Error("No active session");
+        console.warn("[useInterviewSession] No active session — answer saved locally only");
+        if (currentQuestionIndex < questions.length - 1) {
+          setCurrentQuestionIndex((prev) => prev + 1);
+        }
+        return { followUpQuestion: null, shouldShowPreview: false, previewDraft: null };
       }
 
       setIsLoading(true);
       setError(null);
 
       try {
-        const currentQ = questions[currentQuestionIndex];
-        const questionText = currentQ?.text || "Interview question";
-
         const res = await fetch("/api/interview/respond", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -215,22 +232,12 @@ export function useInterviewSession({
         });
 
         if (!res.ok) {
-          throw new Error(`Failed to submit response: ${res.status}`);
+          console.warn(`[useInterviewSession] API respond failed: ${res.status} — answer saved locally`);
         }
 
-        const data: RespondResponse = await res.json();
-
-        // Always store the response in state — don't guard on currentQuestion
-        setResponses((prev) => [
-          ...prev,
-          {
-            questionId,
-            questionText,
-            answer,
-            timestamp: new Date(),
-            inputMode: (mode || "text") as "voice" | "text",
-          },
-        ]);
+        const data: RespondResponse = res.ok
+          ? await res.json()
+          : { followUpQuestion: null, shouldShowPreview: false, previewDraft: null };
 
         // Update preview if available
         if (data.shouldShowPreview && data.previewDraft) {
@@ -252,9 +259,14 @@ export function useInterviewSession({
 
         return data;
       } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : "Failed to submit response";
-        setError(errorMessage);
-        throw err;
+        // Don't throw — response is already saved locally for draft purposes.
+        // Log the error but let the interview continue gracefully.
+        console.error("[useInterviewSession] submitResponse error:", err);
+        // Still advance to next question so the user isn't stuck
+        if (currentQuestionIndex < questions.length - 1) {
+          setCurrentQuestionIndex((prev) => prev + 1);
+        }
+        return { followUpQuestion: null, shouldShowPreview: false, previewDraft: null };
       } finally {
         setIsLoading(false);
       }
@@ -280,25 +292,23 @@ export function useInterviewSession({
     }
   }, [currentQuestionIndex]);
 
-  // Draft persistence — save progress to localStorage
+  // Draft persistence — save progress to localStorage immediately (no debounce)
+  // localStorage.setItem is synchronous and fast (<1ms for small payloads)
   useEffect(() => {
     if (!sessionId || responses.length === 0) return;
 
-    const timer = setTimeout(() => {
-      try {
-        localStorage.setItem(draftKeyRef.current, JSON.stringify({
-          sessionId,
-          questions,
-          responses,
-          currentQuestionIndex,
-          step,
-          mode,
-          projectContext,
-        }));
-      } catch { /* localStorage full or unavailable */ }
-    }, 500);
-
-    return () => clearTimeout(timer);
+    try {
+      localStorage.setItem(draftKeyRef.current, JSON.stringify({
+        sessionId,
+        questions,
+        responses,
+        currentQuestionIndex,
+        step,
+        mode,
+        projectContext,
+      }));
+      console.log('[useInterviewSession] Draft saved:', { responses: responses.length, questionIndex: currentQuestionIndex });
+    } catch { /* localStorage full or unavailable */ }
   }, [sessionId, questions, responses, currentQuestionIndex, step, mode, projectContext]);
 
   /**
