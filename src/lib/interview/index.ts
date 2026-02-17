@@ -105,3 +105,31 @@ export type {
   VendorSentiment,
   Sentiment,
 } from './answerAnalysis';
+
+// Answer Digestion
+export {
+  digestInterviewAnswer,
+} from './digestInterviewAnswer';
+
+export type {
+  AnswerDigest,
+  QuestionContext,
+  VendorSentimentDigest,
+  PairingSignal,
+  VendorLoyaltySignal,
+} from './digestInterviewAnswer';
+
+// Pre-Interview Intelligence Brief
+export {
+  buildInterviewBrief,
+} from './buildInterviewBrief';
+
+export type {
+  InterviewBrief,
+  NarrativeBrief,
+  AIGeneratedQuestion,
+  VendorMapEntry,
+  HeroMoment,
+  EditorialLayoutHints,
+  PriorWorkConnection,
+} from './buildInterviewBrief';

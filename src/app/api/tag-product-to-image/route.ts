@@ -243,7 +243,7 @@ export async function POST(request: NextRequest) {
         await recordAtelierSignal({
           ownerType: AtelierOwnerType.DESIGNER,
           designerId,
-          sourceType: AtelierSignalSourceType.PRODUCT_TAG,
+          sourceType: AtelierSignalSourceType.TAG,
           sourceId: tag.id,
           key: 'product_tagged',
           value: productId,
@@ -255,7 +255,7 @@ export async function POST(request: NextRequest) {
           await recordAtelierSignal({
             ownerType: AtelierOwnerType.DESIGNER,
             designerId,
-            sourceType: AtelierSignalSourceType.PRODUCT_TAG,
+            sourceType: AtelierSignalSourceType.TAG,
             sourceId: tag.id,
             key: `category:${product.category}`,
             value: productId,
@@ -268,7 +268,7 @@ export async function POST(request: NextRequest) {
           await recordAtelierSignal({
             ownerType: AtelierOwnerType.DESIGNER,
             designerId,
-            sourceType: AtelierSignalSourceType.PRODUCT_TAG,
+            sourceType: AtelierSignalSourceType.TAG,
             sourceId: tag.id,
             key: `vendor:${product.vendorId}`,
             value: productId,
@@ -281,7 +281,7 @@ export async function POST(request: NextRequest) {
           await recordAtelierSignal({
             ownerType: AtelierOwnerType.DESIGNER,
             designerId,
-            sourceType: AtelierSignalSourceType.PRODUCT_TAG,
+            sourceType: AtelierSignalSourceType.TAG,
             sourceId: tag.id,
             key: 'decision_reasoning',
             value: decisionReasoning,
@@ -293,7 +293,7 @@ export async function POST(request: NextRequest) {
           await recordAtelierSignal({
             ownerType: AtelierOwnerType.DESIGNER,
             designerId,
-            sourceType: AtelierSignalSourceType.PRODUCT_TAG,
+            sourceType: AtelierSignalSourceType.TAG,
             sourceId: tag.id,
             key: 'alternatives_considered',
             value: JSON.stringify(alternativesConsidered),
@@ -305,7 +305,7 @@ export async function POST(request: NextRequest) {
           await recordAtelierSignal({
             ownerType: AtelierOwnerType.DESIGNER,
             designerId,
-            sourceType: AtelierSignalSourceType.PRODUCT_TAG,
+            sourceType: AtelierSignalSourceType.TAG,
             sourceId: tag.id,
             key: 'tradeoffs',
             value: tradeoffs,
@@ -317,7 +317,7 @@ export async function POST(request: NextRequest) {
           await recordAtelierSignal({
             ownerType: AtelierOwnerType.DESIGNER,
             designerId,
-            sourceType: AtelierSignalSourceType.PRODUCT_TAG,
+            sourceType: AtelierSignalSourceType.TAG,
             sourceId: tag.id,
             key: 'conviction_level',
             value: String(convictionLevel),

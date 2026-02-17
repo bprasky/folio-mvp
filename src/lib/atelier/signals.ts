@@ -13,10 +13,11 @@ type SignalInput = BaseSignalContext & {
   key: string;
   value?: string;
   weight?: number;
+  metadata?: Record<string, unknown>;
 };
 
 export async function recordAtelierSignal(input: SignalInput) {
-  const { ownerType, designerId, vendorId, sourceType, sourceId, key, value, weight } = input;
+  const { ownerType, designerId, vendorId, sourceType, sourceId, key, value, weight, metadata } = input;
 
   // Basic guard – we expect either designer OR vendor right now
   if (!designerId && !vendorId) {
@@ -33,8 +34,8 @@ export async function recordAtelierSignal(input: SignalInput) {
         sourceType,
         sourceId,
         key,
-        value,
         weight: weight ?? 1.0,
+        metadata: { ...(value !== undefined ? { value } : {}), ...(metadata ?? {}) },
       },
     });
   } catch (error) {

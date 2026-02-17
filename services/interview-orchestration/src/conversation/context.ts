@@ -2,17 +2,92 @@ import Anthropic from '@anthropic-ai/sdk';
 import type { ConversationContext, ConversationExchange } from '../types.js';
 
 /**
+ * Brief data loaded from ProjectPost.provenance.interviewBrief.
+ * This is a subset of the full InterviewBrief type from the main app.
+ */
+interface NarrativeBriefData {
+  visualImpression?: string;
+  researchNotes?: string[];
+  suggestedAngles?: string[];
+  heroMoments?: Array<{
+    description: string;
+    roomName: string;
+    relatedProducts: string[];
+    whyNotable: string;
+  }>;
+  priorWorkConnections?: Array<{
+    observation: string;
+    currentDetail: string;
+    priorDetail: string;
+  }> | null;
+}
+
+interface BriefData {
+  vendorMap?: Array<{
+    name: string;
+    productCount: number;
+    rooms: string[];
+    heroProducts: string[];
+    isRepeatVendor: boolean;
+  }>;
+  designerContext?: {
+    name: string;
+    statedApproach?: string | null;
+    knownPhilosophy?: string[];
+  } | null;
+  narrativeBrief?: NarrativeBriefData;
+}
+
+/**
  * Manages conversation context for real-time interviews
- * Handles rolling summaries and extraction accumulation
+ * Handles rolling summaries, extraction accumulation, and angle tracking
  */
 export class ContextManager {
   private context: ConversationContext;
   private anthropic: Anthropic;
   private maxRecentExchanges = 5;
 
+  // Angle tracking for narrative coverage
+  private coveredAngles: string[] = [];
+  private coveredRooms: string[] = [];
+  private briefData: BriefData | null = null;
+
   constructor(initialContext: ConversationContext, anthropic: Anthropic) {
     this.context = initialContext;
     this.anthropic = anthropic;
+  }
+
+  /**
+   * Load narrative brief data for enriched context
+   */
+  loadBrief(brief: BriefData): void {
+    this.briefData = brief;
+  }
+
+  /**
+   * Mark a story angle as covered
+   */
+  markAngleCovered(angle: string): void {
+    if (!this.coveredAngles.includes(angle)) {
+      this.coveredAngles.push(angle);
+    }
+  }
+
+  /**
+   * Mark a room as covered
+   */
+  markRoomCovered(roomName: string): void {
+    if (!this.coveredRooms.includes(roomName)) {
+      this.coveredRooms.push(roomName);
+    }
+  }
+
+  /**
+   * Get angles not yet explored
+   */
+  getUnexploredAngles(): string[] {
+    const allAngles = this.briefData?.narrativeBrief?.suggestedAngles || [];
+    return allAngles.filter((a) => !this.coveredAngles.includes(a));
   }
 
   /**
@@ -40,6 +115,11 @@ export class ContextManager {
         !this.context.extractedThemes.includes(exchange.extractions.theme)
       ) {
         this.context.extractedThemes.push(exchange.extractions.theme);
+      }
+
+      // Track room coverage
+      if (exchange.extractions.roomFocus) {
+        this.markRoomCovered(exchange.extractions.roomFocus);
       }
     }
 
@@ -87,9 +167,16 @@ Return ONLY the updated summary, incorporating the new exchanges.`;
   }
 
   /**
-   * Build project context string for Sofia's prompt
+   * Build project context string for Sofia's prompt.
+   * Uses narrative brief when available, falls back to raw data.
    */
   buildPromptContext(): { projectContext: string; designerContext: string } {
+    // If we have a narrative brief, use the enriched format
+    if (this.briefData?.narrativeBrief) {
+      return this.buildNarrativePromptContext();
+    }
+
+    // Fallback: raw data format (backward compatible)
     const projectContext = `
 PROJECT: ${this.context.projectName}
 ROOMS: ${this.context.rooms.join(', ') || 'Not specified'}
@@ -98,6 +185,81 @@ KEY PRODUCTS: ${this.context.products.slice(0, 10).map((p) => `${p.productName}$
 VISUAL NOTES: ${this.context.images.slice(0, 5).map((i) => i.aiClassification ? `${i.roomName || 'Space'}: ${i.aiClassification.style || ''} ${i.aiClassification.mood || ''}`.trim() : null).filter(Boolean).join('; ') || 'None available'}`;
 
     const designerContext = `
+NAME: ${this.context.designerName}
+${this.context.designerBio ? `BACKGROUND: ${this.context.designerBio}` : ''}`;
+
+    return { projectContext, designerContext };
+  }
+
+  /**
+   * Build enriched prompt context from narrative brief
+   */
+  private buildNarrativePromptContext(): { projectContext: string; designerContext: string } {
+    const nb = this.briefData!.narrativeBrief!;
+    const dc = this.briefData!.designerContext;
+    const vm = this.briefData!.vendorMap || [];
+
+    // Vendor map formatted
+    const vendorMapStr = vm
+      .map((v) => {
+        const parts = [`- ${v.name}: ${v.productCount} piece${v.productCount > 1 ? 's' : ''}`];
+        if (v.rooms.length) parts.push(`(${v.rooms.join(', ')})`);
+        if (v.heroProducts.length) parts.push(`— hero: ${v.heroProducts.join(', ')}`);
+        if (v.isRepeatVendor) parts.push('— REPEAT VENDOR from prior projects');
+        return parts.join(' ');
+      })
+      .join('\n') || 'No vendor data';
+
+    // Hero moments
+    const heroStr = (nb.heroMoments || [])
+      .map((h) => `- ${h.description} (${h.roomName}) — ${h.whyNotable}`)
+      .join('\n') || 'None identified';
+
+    // Prior work connections
+    const priorStr = nb.priorWorkConnections
+      ? nb.priorWorkConnections
+          .map((p) => `- ${p.observation}`)
+          .join('\n')
+      : 'None';
+
+    // Angle tracking
+    const unexploredAngles = this.getUnexploredAngles();
+    const angleTrackingStr = this.coveredAngles.length > 0
+      ? `\nANGLES ALREADY EXPLORED:\n${this.coveredAngles.map((a) => `- ${a}`).join('\n')}\n\nSUGGESTED NEXT TERRITORY: ${unexploredAngles[0] || 'Wrap up — all angles covered'}`
+      : '';
+
+    const projectContext = `PROJECT BRIEF — FOR YOUR EYES ONLY:
+
+VISUAL IMPRESSION:
+${nb.visualImpression || 'Not available'}
+
+YOUR RESEARCH NOTES (observations that will impress the designer):
+${(nb.researchNotes || []).map((n) => `- ${n}`).join('\n') || '- None available'}
+
+VENDOR MAP:
+${vendorMapStr}
+
+STORY ANGLES TO PURSUE:
+${(nb.suggestedAngles || []).map((a) => `- ${a}`).join('\n') || '- None identified'}
+
+HERO MOMENTS (these define the project):
+${heroStr}
+
+PRIOR WORK CONNECTIONS (use only if natural):
+${priorStr}
+
+RULES:
+- Reference specific products, vendors, and rooms by name — you studied this project
+- Prior work references must connect to something specific in THIS project
+- Track which suggested angles you've explored. Move to new territory, don't circle.
+${angleTrackingStr}`;
+
+    const designerContext = dc
+      ? `
+DESIGNER: ${dc.name}
+${dc.statedApproach ? `Known approach: ${dc.statedApproach}` : ''}
+${dc.knownPhilosophy && dc.knownPhilosophy.length > 0 ? `Known philosophy from prior interviews: ${dc.knownPhilosophy.join('; ')}` : ''}`
+      : `
 NAME: ${this.context.designerName}
 ${this.context.designerBio ? `BACKGROUND: ${this.context.designerBio}` : ''}`;
 
@@ -122,7 +284,17 @@ QUOTES CAPTURED: ${this.context.extractedQuotes.length}
 PRODUCTS DISCUSSED: ${this.context.extractedProducts.map((p) => p.name).join(', ') || 'None yet'}
 THEMES EMERGING: ${this.context.extractedThemes.join(', ') || 'None yet'}`;
 
-    return `${summary}${recent}\n\n${extractions}`;
+    // Add angle tracking to continuation context
+    let angleTracking = '';
+    if (this.coveredAngles.length > 0) {
+      const unexplored = this.getUnexploredAngles();
+      angleTracking = `\nANGLES EXPLORED: ${this.coveredAngles.length}/${(this.briefData?.narrativeBrief?.suggestedAngles || []).length}`;
+      if (unexplored.length > 0) {
+        angleTracking += `\nNEXT TERRITORY: ${unexplored[0]}`;
+      }
+    }
+
+    return `${summary}${recent}\n\n${extractions}${angleTracking}`;
   }
 
   /**
@@ -142,7 +314,13 @@ THEMES EMERGING: ${this.context.extractedThemes.join(', ') || 'None yet'}`;
     const hasEnoughTurns = this.context.turnCount >= 12;
     const hasGoodCoverage = this.context.extractedThemes.length >= 3;
 
-    return hasEnoughTurns && (hasEnoughQuotes || hasGoodCoverage);
+    // Also consider angle coverage
+    const unexploredAngles = this.getUnexploredAngles();
+    const allAnglesCovered = this.briefData?.narrativeBrief?.suggestedAngles
+      ? unexploredAngles.length === 0
+      : false;
+
+    return (hasEnoughTurns && (hasEnoughQuotes || hasGoodCoverage)) || allAnglesCovered;
   }
 
   /**
