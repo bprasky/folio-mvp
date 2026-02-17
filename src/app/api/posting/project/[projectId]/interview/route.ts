@@ -218,6 +218,9 @@ export async function GET(
       answerCount: answers.length,
       followUpsCount: followUps.length,
       selectedQuestionIdsCount: selectedQuestionIds.length,
+      source: payload.answers?.length > 0 ? 'payload.answers' : (interview.answers?.length > 0 ? 'interview.answers' : 'empty'),
+      provenanceKeys: Object.keys(provenance),
+      interviewKeys: Object.keys(interview),
     });
 
     return NextResponse.json({
@@ -525,6 +528,25 @@ export async function POST(
       where: { projectId },
       data: { provenance: nextProvenance as any },
     });
+
+    // Verify the write by reading back (diagnostic - helps catch silent write failures)
+    try {
+      const verifyPost = await prisma.projectPost.findUnique({
+        where: { projectId },
+        select: { provenance: true },
+      });
+      const verifyAnswers = (verifyPost?.provenance as any)?.interview?.payload?.answers;
+      const verifyLegacy = (verifyPost?.provenance as any)?.interview?.answers;
+      console.log('[interview/POST] Write verification:', {
+        requestId,
+        writtenPayloadAnswers: nextInterviewPayload.answers.length,
+        readBackPayloadAnswers: Array.isArray(verifyAnswers) ? verifyAnswers.length : 'missing',
+        readBackLegacyAnswers: Array.isArray(verifyLegacy) ? verifyLegacy.length : 'missing',
+        match: Array.isArray(verifyAnswers) && verifyAnswers.length === nextInterviewPayload.answers.length,
+      });
+    } catch (verifyErr) {
+      console.warn('[interview/POST] Write verification failed (non-blocking):', verifyErr);
+    }
 
     // Sync answers to EditorialInterviewAnswer if new fields are present
     try {

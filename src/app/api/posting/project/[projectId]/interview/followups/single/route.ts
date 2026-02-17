@@ -482,16 +482,19 @@ export async function POST(
     }
 
     // Save to ProjectPost.provenance.interview.followUps (persist per question)
+    // IMPORTANT: Re-read provenance FRESH before writing to avoid overwriting
+    // concurrent answer saves that happened during the LLM call.
     try {
-      const post = await prisma.projectPost.findUnique({
+      const freshPost = await prisma.projectPost.findUnique({
         where: { projectId },
+        select: { provenance: true },
       });
 
-      if (post) {
-        const provenance = (post.provenance as any) || {};
-        const interview = provenance.interview || {};
-        const existingFollowUps = interview.followUps || [];
-        
+      if (freshPost) {
+        const freshProvenance = (freshPost.provenance as any) || {};
+        const freshInterview = { ...(freshProvenance.interview || {}) };
+        const existingFollowUps = freshInterview.followUps || [];
+
         // Update or add follow-ups for this question
         const filtered = existingFollowUps.filter(
           (group: any) => group.questionId !== validated.questionId
@@ -503,15 +506,15 @@ export async function POST(
             prompt: fu.text,
           })),
         };
-        
-        interview.followUps = [...filtered, newGroup];
+
+        freshInterview.followUps = [...filtered, newGroup];
 
         await prisma.projectPost.update({
           where: { projectId },
           data: {
             provenance: {
-              ...provenance,
-              interview,
+              ...freshProvenance,
+              interview: freshInterview,
             },
           },
         });

@@ -1548,20 +1548,52 @@ export async function POST(
       force,
     });
 
+    // Try to recover answers from alternative provenance paths before giving up
     if (!hasOverrideAnswers && (!interview || !interview.payload?.answers || interview.payload.answers.length === 0)) {
-      console.error("[posting/interview/generate] Missing interview data:", {
-        _cid,
-        interview: !!interview,
-        payload: !!interview?.payload,
-        answers: interview?.payload?.answers,
-        alternativeAnswers: interview?.answers,
-        provenanceKeys: Object.keys(provenance),
-        hasOverrideAnswers,
-      });
-      return NextResponse.json(
-        { error: "No interview answers found. Please complete the interview first." },
-        { status: 400 }
-      );
+      // Check legacy mirror path: interview.answers (set by POST /interview endpoint)
+      const legacyAnswers = interview?.answers;
+      if (Array.isArray(legacyAnswers) && legacyAnswers.length > 0) {
+        console.warn("[posting/interview/generate] Recovered answers from legacy mirror (interview.answers)", {
+          _cid, count: legacyAnswers.length,
+        });
+        // Inject into interview.payload so downstream code finds them
+        if (!interview.payload) interview.payload = {};
+        interview.payload.answers = legacyAnswers;
+      } else {
+        // Last-resort: re-read provenance one more time (handles write-lag from eventual consistency)
+        const lastResortPost = await prisma.projectPost.findUnique({
+          where: { projectId },
+          select: { provenance: true },
+        });
+        const lastResortProv = (lastResortPost?.provenance as any) || {};
+        const lastResortInterview = lastResortProv.interview || {};
+        const lastResortAnswers = lastResortInterview.payload?.answers || lastResortInterview.answers || [];
+
+        if (Array.isArray(lastResortAnswers) && lastResortAnswers.length > 0) {
+          console.warn("[posting/interview/generate] Recovered answers from last-resort DB re-read", {
+            _cid, count: lastResortAnswers.length,
+          });
+          provenance = lastResortProv;
+          interview = lastResortInterview;
+          if (!interview.payload) interview.payload = {};
+          interview.payload.answers = lastResortAnswers;
+        } else {
+          console.error("[posting/interview/generate] Missing interview data after all recovery attempts:", {
+            _cid,
+            interview: !!interview,
+            payload: !!interview?.payload,
+            payloadAnswers: interview?.payload?.answers?.length ?? 0,
+            legacyAnswers: interview?.answers?.length ?? 0,
+            provenanceKeys: Object.keys(provenance),
+            interviewKeys: interview ? Object.keys(interview) : [],
+            hasOverrideAnswers,
+          });
+          return NextResponse.json(
+            { error: "No interview answers found. Please complete the interview first.", code: "NO_ANSWERS" },
+            { status: 400 }
+          );
+        }
+      }
     }
 
     // Extract vendors from product tags
