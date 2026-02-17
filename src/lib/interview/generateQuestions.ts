@@ -18,6 +18,7 @@ import type {
   DecisionEvent,
   ContextLevel,
 } from './contextLevel';
+import { buildInterviewBrief, type AIGeneratedQuestion, type InterviewBrief } from './buildInterviewBrief';
 
 // Question types that can be generated
 export type QuestionType =
@@ -955,10 +956,63 @@ export interface GenerateQuestionsOptions {
   maxQuestions?: number;
   prioritizeBoostable?: boolean;
   includeGeneric?: boolean;
+  projectId?: string;
+  useAI?: boolean;
+}
+
+// ---------------------------------------------------------------------------
+// AI Question Quality Gate
+// ---------------------------------------------------------------------------
+
+function validateAIQuestion(q: AIGeneratedQuestion): boolean {
+  // Must reference at least one specific entity
+  const hasSpecific = q.vendors.length > 0 || q.products.length > 0 || q.rooms.length > 0;
+
+  // Must not reference unknown vendors
+  const noUnknownVendor = !q.text.includes('Unknown Brand');
+
+  // Must not ask about negatives
+  const noNegatives = !/(regret|compromise|sacrifice|didn't make|cut|lost|wish you had)/i.test(q.text);
+
+  // Must not be generic
+  const notGeneric = !/(tell us about your|what inspired the|describe the overall)/i.test(q.text);
+
+  return hasSpecific && noUnknownVendor && noNegatives && notGeneric;
+}
+
+function convertAIQuestionToGenerated(
+  aiQ: AIGeneratedQuestion,
+  contextLevel: ContextLevel
+): GeneratedQuestion {
+  const typeMap: Record<string, QuestionType> = {
+    opening: 'generic',
+    deep_dive: 'hero_piece',
+    vendor_loyalty: 'vendor_loyalty',
+    material_thread: 'material_theme',
+    spatial_narrative: 'spatial_narrative',
+    philosophy: 'generic',
+  };
+
+  return {
+    id: randomUUID(),
+    text: aiQ.text,
+    contextLevel,
+    type: typeMap[aiQ.type] || 'generic',
+    rooms: aiQ.rooms,
+    products: aiQ.products,
+    vendors: aiQ.vendors,
+    boostable: aiQ.boostable,
+    pullQuotePotential: aiQ.type === 'philosophy' || aiQ.type === 'vendor_loyalty' ? 'high' : 'medium',
+    topic: aiQ.topic,
+  };
 }
 
 /**
- * Main function to generate interview questions based on project context
+ * Main function to generate interview questions based on project context.
+ *
+ * When `options.useAI` is true (or INTERVIEW_AI_QUESTIONS env var is set),
+ * attempts AI question generation via the interview brief. Falls back to
+ * template-based questions on failure or when AI is disabled.
  */
 export async function generateInterviewQuestions(
   context: ProjectContext,
@@ -966,38 +1020,50 @@ export async function generateInterviewQuestions(
 ): Promise<GeneratedQuestion[]> {
   const maxQuestions = options?.maxQuestions || 10;
   const includeGeneric = options?.includeGeneric !== false;
+  const useAI = options?.useAI ?? (process.env.INTERVIEW_AI_QUESTIONS === 'true');
 
-  let questions: GeneratedQuestion[] = [];
+  // Try AI question generation first
+  if (useAI && options?.projectId) {
+    try {
+      const brief = await buildInterviewBrief(options.projectId, {
+        generateQuestions: true,
+        questionCount: maxQuestions,
+      });
 
-  // For prospective projects, use prospective-tone questions instead of generic ones.
-  // These invite the designer to share their evolving vision naturally.
-  if (context.isProspective) {
-    questions.push(...generateProspectiveQuestions(context));
-  } else if (includeGeneric) {
-    // Completed projects get standard generic fallback questions
-    questions.push(...generateLevel0Questions());
+      if (brief.aiQuestions && brief.aiQuestions.length > 0) {
+        // Validate and convert AI questions
+        const validAIQuestions = brief.aiQuestions
+          .filter(validateAIQuestion)
+          .map((q) => convertAIQuestionToGenerated(q, context.level));
+
+        if (validAIQuestions.length >= Math.floor(maxQuestions * 0.5)) {
+          // AI produced enough valid questions — use them
+          let questions = deduplicateSimilar(validAIQuestions);
+          questions = orderByRoom(questions, context.rooms);
+
+          // Supplement with template questions if AI returned fewer than target
+          if (questions.length < maxQuestions) {
+            const templateQuestions = generateTemplateQuestions(context, includeGeneric);
+            const supplemental = templateQuestions.filter((tq) => {
+              // Don't duplicate rooms already covered by AI
+              const aiRooms = new Set(questions.flatMap((q) => q.rooms || []));
+              return !(tq.rooms?.length === 1 && aiRooms.has(tq.rooms[0]));
+            });
+            questions.push(...supplemental);
+            questions = deduplicateSimilar(questions);
+            questions = orderByRoom(questions, context.rooms);
+          }
+
+          return questions.slice(0, maxQuestions);
+        }
+      }
+    } catch (error) {
+      console.warn('[generateInterviewQuestions] AI question generation failed, falling back to templates:', error);
+    }
   }
 
-  // Add questions for each available level
-  if (context.level >= 1) {
-    questions.push(...generateLevel1Questions(context));
-  }
-
-  if (context.level >= 2) {
-    questions.push(...generateLevel2Questions(context));
-  }
-
-  if (context.level >= 3) {
-    questions.push(...generateLevel3Questions(context));
-  }
-
-  if (context.level >= 4) {
-    questions.push(...generateLevel4Questions(context));
-  }
-
-  if (context.level >= 5) {
-    questions.push(...generateLevel5Questions(context));
-  }
+  // Template-based fallback
+  let questions = generateTemplateQuestions(context, includeGeneric);
 
   // Sort and select
   questions = prioritizeQuestions(questions, {
@@ -1014,6 +1080,31 @@ export async function generateInterviewQuestions(
 
   // Return top N
   return questions.slice(0, maxQuestions);
+}
+
+/**
+ * Generate questions using the template system (Levels 0-5).
+ * Extracted to allow fallback from AI generation.
+ */
+function generateTemplateQuestions(
+  context: ProjectContext,
+  includeGeneric: boolean
+): GeneratedQuestion[] {
+  const questions: GeneratedQuestion[] = [];
+
+  if (context.isProspective) {
+    questions.push(...generateProspectiveQuestions(context));
+  } else if (includeGeneric) {
+    questions.push(...generateLevel0Questions());
+  }
+
+  if (context.level >= 1) questions.push(...generateLevel1Questions(context));
+  if (context.level >= 2) questions.push(...generateLevel2Questions(context));
+  if (context.level >= 3) questions.push(...generateLevel3Questions(context));
+  if (context.level >= 4) questions.push(...generateLevel4Questions(context));
+  if (context.level >= 5) questions.push(...generateLevel5Questions(context));
+
+  return questions;
 }
 
 /**
