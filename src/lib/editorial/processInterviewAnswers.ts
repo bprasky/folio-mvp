@@ -145,14 +145,12 @@ async function processContextualAnswer(
   }
   
   // Record Atelier signal for verified attributes
-  // Note: Using PROJECT as sourceType since INTERVIEW may not exist in enum
-  // The sourceId links to the answer, and we can identify it via the key pattern
   if (verification.verified !== null) {
     try {
       await recordAtelierSignal({
         ownerType: AtelierOwnerType.DESIGNER,
         designerId,
-        sourceType: AtelierSignalSourceType.PROJECT, // Using PROJECT as fallback
+        sourceType: AtelierSignalSourceType.INTERVIEW,
         sourceId: answer.answerId,
         key: `interview_verified_${answer.attributeType}`,
         value: verification.correctedValue || answer.attributeValue,

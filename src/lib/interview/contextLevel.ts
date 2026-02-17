@@ -456,15 +456,20 @@ export async function assessProjectContext(projectId: string): Promise<ProjectCo
   // Extract selection context
   const selections: SelectionContext[] = project.selections
     .filter((s) => s.productName || s.vendorName)
-    .map((s) => ({
-      id: s.id,
-      productName: s.productName || 'Unknown Product',
-      brand: s.vendorName || 'Unknown Brand',
-      room: s.room?.name || 'Unassigned',
-      roomId: s.roomId || undefined,
-      isHeroPiece: Boolean(s.unitPrice && Number(s.unitPrice) > 1000),
-      vendorLoyalty: false, // Will be computed below
-    }));
+    .map((s) => {
+      if (!s.vendorName) {
+        console.warn(`[Interview Context] Missing vendor for selection ${s.id} (product: ${s.productName}) — data quality issue`);
+      }
+      return {
+        id: s.id,
+        productName: s.productName || s.colorFinish || 'Product',
+        brand: s.vendorName || '',
+        room: s.room?.name || 'Unassigned',
+        roomId: s.roomId || undefined,
+        isHeroPiece: Boolean(s.unitPrice && Number(s.unitPrice) > 1000),
+        vendorLoyalty: false, // Will be computed below
+      };
+    });
 
   // Compute vendor loyalty
   const vendorCounts = new Map<string, number>();
