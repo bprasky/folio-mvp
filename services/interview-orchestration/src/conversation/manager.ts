@@ -48,6 +48,13 @@ export class ConversationManager {
 
   private config: ConversationManagerConfig;
 
+  // Cached brief data for enriched context
+  private cachedBriefData: {
+    vendorMap?: unknown;
+    designerContext?: unknown;
+    narrativeBrief?: unknown;
+  } | null = null;
+
   // Configurable thresholds
   private readonly SILENCE_THRESHOLD_MS = 1500;
   private readonly MIN_UTTERANCE_LENGTH = 10;
@@ -75,6 +82,11 @@ export class ConversationManager {
       const context = await this.loadProjectContext();
       this.contextManager = new ContextManager(context, this.claude.getClient());
 
+      // Load interview brief into context manager if available
+      if (this.cachedBriefData) {
+        this.contextManager.loadBrief(this.cachedBriefData as any);
+      }
+
       // Connect to LiveKit
       await this.livekit.connect(this.roomName);
       this.setupAudioPipeline();
@@ -94,7 +106,8 @@ export class ConversationManager {
   }
 
   /**
-   * Load project context from database
+   * Load project context from database.
+   * Also loads cached interview brief for enriched Sofia context.
    */
   private async loadProjectContext(): Promise<ConversationContext> {
     const project = await prisma.project.findUnique({
@@ -115,6 +128,9 @@ export class ConversationManager {
             },
           },
         },
+        post: {
+          select: { provenance: true },
+        },
       },
     });
 
@@ -132,6 +148,19 @@ export class ConversationManager {
         roomName: r.name,
       }))
     );
+
+    // Load cached interview brief if available
+    const provenance = (project as any).post?.provenance as Record<string, unknown> | null;
+    const interviewBrief = provenance?.interviewBrief as Record<string, unknown> | undefined;
+
+    // Store brief data for later use by ContextManager
+    if (interviewBrief) {
+      this.cachedBriefData = {
+        vendorMap: interviewBrief.vendorMap as any,
+        designerContext: interviewBrief.designerContext as any,
+        narrativeBrief: interviewBrief.narrativeBrief as any,
+      };
+    }
 
     return {
       projectId: project.id,
