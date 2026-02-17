@@ -93,13 +93,10 @@ const TOPICS = {
 } as const;
 
 // Level 0: Generic fallback questions (current state)
+// NOTE: The first opener is now generated dynamically by generateContextualOpener().
+// These are used only as subsequent generic questions.
 const LEVEL_0_QUESTIONS = {
   layer1: [
-    {
-      text: 'Tell us about this project and what made it special.',
-      helper: 'Share what drew you to this project or made it meaningful.',
-      topic: TOPICS.PROJECT_STORY,
-    },
     {
       text: 'What was the initial vision for this space?',
       helper: 'Describe the concept or direction from the beginning.',
@@ -143,13 +140,9 @@ const LEVEL_0_QUESTIONS = {
 // Prospective project questions — for projects in the planning/design phase.
 // Tone: invite the designer to share the evolving story naturally.
 // Never ask about budget, alternatives, or anything that sounds judgmental when published.
+// NOTE: The first opener is now generated dynamically by generateContextualOpener().
 const PROSPECTIVE_QUESTIONS = {
   layer1: [
-    {
-      text: 'Tell us about the vision for this project and what inspired it.',
-      helper: 'Share what drew you to this direction — the story behind the concept.',
-      topic: TOPICS.PROJECT_VISION,
-    },
     {
       text: 'How do you envision the finished space feeling when it all comes together?',
       helper: 'Describe the mood, the atmosphere, the experience you\'re designing toward.',
@@ -171,12 +164,58 @@ const PROSPECTIVE_QUESTIONS = {
 };
 
 /**
+ * Generate a contextual opener that acknowledges the project before asking.
+ * Uses available project data (rooms, products, materials, vendors) to show
+ * the designer that Folio actually looked at their work.
+ */
+function generateContextualOpener(context: ProjectContext): GeneratedQuestion {
+  const heroPiece = context.selections.find((s) => s.isHeroPiece);
+  const mainRoom = context.rooms[0];
+  const materials = context.materialThemes.slice(0, 2).map((m) => m.replace(/_/g, ' '));
+  const topVendor = context.dominantVendors.find((v) => v.selectionCount >= 2);
+
+  let observation = '';
+
+  if (heroPiece && mainRoom) {
+    const brand = heroPiece.brand ? ` from ${heroPiece.brand}` : '';
+    observation = `The ${mainRoom.name.toLowerCase()} has some striking selections — the ${heroPiece.productName}${brand} really sets the tone`;
+  } else if (mainRoom && materials.length > 0) {
+    observation = `The ${mainRoom.name.toLowerCase()} with its ${materials.join(' and ')} feels very intentional`;
+  } else if (topVendor && mainRoom) {
+    observation = `We can see ${topVendor.name} appearing across the ${mainRoom.name.toLowerCase()} — there's a clear point of view here`;
+  } else if (mainRoom && mainRoom.selectionCount > 0) {
+    observation = `The ${mainRoom.name.toLowerCase()} is already taking shape with some beautiful selections`;
+  } else if (context.rooms.length > 1) {
+    const roomList = context.rooms.slice(0, 2).map((r) => r.name.toLowerCase()).join(' and ');
+    observation = `The ${roomList} already show a strong direction`;
+  }
+
+  const prefix = observation
+    ? `Thanks for sharing this. ${observation}.`
+    : 'Thanks for sharing this — we can already see the direction taking shape.';
+
+  return {
+    id: `opener-${randomUUID()}`,
+    text: `${prefix} Tell us about the vision for this project and what inspired it.`,
+    helper: 'Share what drew you to this direction — the story behind the concept.',
+    topic: TOPICS.PROJECT_VISION,
+    contextLevel: 0 as ContextLevel,
+    type: context.isProspective ? 'prospective_vision' : 'generic',
+    boostable: false,
+    pullQuotePotential: 'medium',
+  };
+}
+
+/**
  * Generate prospective project questions (planning/design phase).
  * These replace generic questions when the project has generated images.
  */
 function generateProspectiveQuestions(context: ProjectContext): GeneratedQuestion[] {
   const questions: GeneratedQuestion[] = [];
   const roomCount = context.rooms.length;
+
+  // Contextual opener as the first question
+  questions.push(generateContextualOpener(context));
 
   for (const q of PROSPECTIVE_QUESTIONS.layer1) {
     questions.push({
@@ -319,8 +358,13 @@ function generateProspectiveQuestions(context: ProjectContext): GeneratedQuestio
 /**
  * Generate Level 0 generic questions
  */
-function generateLevel0Questions(): GeneratedQuestion[] {
+function generateLevel0Questions(context?: ProjectContext): GeneratedQuestion[] {
   const questions: GeneratedQuestion[] = [];
+
+  // Contextual opener as the first question (if context available)
+  if (context) {
+    questions.push(generateContextualOpener(context));
+  }
 
   for (const q of LEVEL_0_QUESTIONS.layer1) {
     questions.push({
@@ -1091,21 +1135,26 @@ export async function generateInterviewQuestions(
         });
 
         if (validAIQuestions.length >= Math.floor(maxQuestions * 0.5)) {
-          // AI produced enough valid questions — use them
+          // AI produced enough valid questions — preserve their conversational arc
+          // (warm opening → deep dives → material threads → philosophy close)
           let questions = deduplicateSimilar(validAIQuestions);
-          questions = orderByRoom(questions, context.rooms);
 
           // Supplement with template questions if AI returned fewer than target
           if (questions.length < maxQuestions) {
             const templateQuestions = generateTemplateQuestions(context, includeGeneric);
+            const aiRooms = new Set(questions.flatMap((q) => q.rooms || []));
             const supplemental = templateQuestions.filter((tq) => {
+              // Don't add template openers — AI provides its own opening questions
+              if (tq.type === 'generic' || tq.type === 'prospective_vision') {
+                if (!tq.rooms || tq.rooms.length === 0) return false;
+              }
               // Don't duplicate rooms already covered by AI
-              const aiRooms = new Set(questions.flatMap((q) => q.rooms || []));
               return !(tq.rooms?.length === 1 && aiRooms.has(tq.rooms[0]));
             });
-            questions.push(...supplemental);
+            // Order supplemental by room, then append after AI questions
+            const orderedSupplemental = orderByRoom(supplemental, context.rooms);
+            questions.push(...orderedSupplemental);
             questions = deduplicateSimilar(questions);
-            questions = orderByRoom(questions, context.rooms);
           }
 
           return questions.slice(0, maxQuestions);
@@ -1152,7 +1201,7 @@ function generateTemplateQuestions(
   if (context.isProspective) {
     questions.push(...generateProspectiveQuestions(context));
   } else if (includeGeneric) {
-    questions.push(...generateLevel0Questions());
+    questions.push(...generateLevel0Questions(context));
   }
 
   if (context.level >= 1) questions.push(...generateLevel1Questions(context));

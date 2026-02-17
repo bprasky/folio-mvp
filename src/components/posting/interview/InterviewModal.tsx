@@ -110,6 +110,9 @@ export function InterviewModal({
   // Phase: question → followup → complete (pick phase removed — all questions auto-selected)
   const [phase, setPhase] = useState<"question" | "followup" | "complete">("question");
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  // Draft resume: when reopening with an existing draft, show a choice
+  const [showDraftResume, setShowDraftResume] = useState(false);
+  const [draftAnswerCount, setDraftAnswerCount] = useState(0);
   // Keep step for backward compatibility during transition
   const [step, setStep] = useState<"answer" | "followups">("answer");
   const [selectedQuestionIds, setSelectedQuestionIds] = useState<string[]>([]);
@@ -184,6 +187,8 @@ export function InterviewModal({
         localStorage.setItem(draftKey, JSON.stringify({
           answers: answers.filter(a => a.answer.trim().length > 0),
           followups: followUps,
+          currentQuestionIndex,
+          phase,
         }));
       } catch (error) {
         console.warn('[InterviewModal] Failed to autosave to localStorage', error);
@@ -195,7 +200,7 @@ export function InterviewModal({
         clearTimeout(autosaveTimeoutRef.current);
       }
     };
-  }, [open, projectId, answers, followUps]);
+  }, [open, projectId, answers, followUps, currentQuestionIndex, phase]);
 
   // Preload answers from server and localStorage on open
   useEffect(() => {
@@ -300,12 +305,29 @@ export function InterviewModal({
           const hasBaseAnswers = finalAnswers.filter((a: any) => !a.isFollowUp).length > 0;
           const hasFollowUps = finalAnswers.filter((a: any) => a.isFollowUp).length > 0 || serverFollowUps.length > 0;
 
+          // Restore saved question index from draft
+          let savedQuestionIndex = 0;
+          let savedPhase: "question" | "followup" | "complete" | null = null;
+          if (draft) {
+            try {
+              const parsed = JSON.parse(draft);
+              if (typeof parsed.currentQuestionIndex === 'number') {
+                savedQuestionIndex = parsed.currentQuestionIndex;
+              }
+              if (parsed.phase === 'question' || parsed.phase === 'followup' || parsed.phase === 'complete') {
+                savedPhase = parsed.phase;
+              }
+            } catch { /* ignore */ }
+          }
+
           console.log('[InterviewModal] Step decision:', {
             finalAnswersCount: finalAnswers.length,
             hasBaseAnswers,
             hasFollowUps,
             selectedQuestionIdsCount: allQuestionIds.length,
             serverAnswersCount: serverAnswers.length,
+            savedQuestionIndex,
+            savedPhase,
             currentStep: step,
           });
 
@@ -314,14 +336,29 @@ export function InterviewModal({
             setStep("answer");
             setPhase("question");
             setCurrentQuestionIndex(0);
+            setShowDraftResume(false);
             console.log('[InterviewModal] Starting fresh in question phase');
           } else if (hasBaseAnswers && !cancelled) {
+            // Show draft resume prompt so user can choose: continue or start over
+            const baseCount = finalAnswers.filter((a: any) => !a.isFollowUp).length;
+            setDraftAnswerCount(baseCount);
+            setShowDraftResume(true);
+            // Pre-set the resume state (will be used if user chooses "Continue")
             setStep("answer");
-            setPhase("question");
-            console.log('[InterviewModal] Resuming at answer phase');
+            if (savedPhase === 'complete') {
+              setPhase("complete");
+            } else if (savedPhase === 'followup') {
+              setStep("followups");
+              setPhase("followup");
+            } else {
+              setPhase("question");
+              setCurrentQuestionIndex(savedQuestionIndex);
+            }
+            console.log('[InterviewModal] Showing draft resume prompt:', { baseCount, savedQuestionIndex, savedPhase });
           } else if (hasFollowUps && !cancelled) {
             setStep("followups");
             setPhase("followup");
+            setShowDraftResume(false);
             console.log('[InterviewModal] Resuming at followups phase');
           }
         } else {
@@ -356,7 +393,7 @@ export function InterviewModal({
     }
   }, [open]);
 
-  // Reset to question phase when modal opens with no answers
+  // Reset to question phase when modal opens with no answers AND no draft
   useEffect(() => {
     if (!open) return;
 
@@ -364,9 +401,12 @@ export function InterviewModal({
     const timer = setTimeout(() => {
       const hasAnswers = answers.filter(a => !a.isFollowUp).length > 0;
       const hasFollowUps = answers.filter(a => a.isFollowUp).length > 0;
+      const draftKey = `interviewDraft:${projectId}`;
+      const hasDraft = !!localStorage.getItem(draftKey);
 
-      if (!hasAnswers && !hasFollowUps) {
-        console.log('[InterviewModal] Modal opened with no answers - starting question phase');
+      // Only reset if truly fresh — no answers AND no localStorage draft
+      if (!hasAnswers && !hasFollowUps && !hasDraft) {
+        console.log('[InterviewModal] Modal opened with no answers and no draft - starting fresh');
         setStep("answer");
         setPhase("question");
         setCurrentQuestionIndex(0);
@@ -374,7 +414,7 @@ export function InterviewModal({
     }, 100);
 
     return () => clearTimeout(timer);
-  }, [open]); // Only depend on open, not answers (to avoid loops)
+  }, [open, projectId]); // Only depend on open and projectId, not answers (to avoid loops)
 
   const handleBaseAnswersChange = useCallback((nextBase: InterviewAnswer[]) => {
     setAnswers((prev) => {
@@ -1339,7 +1379,7 @@ export function InterviewModal({
               <X className="w-6 h-6" />
             </button>
             
-            {phase === "question" && currentQuestion && (
+            {phase === "question" && currentQuestion && !showDraftResume && (
               <span className="text-sm text-[var(--text-secondary)]">
                 Question {currentQuestionIndex + 1} of {totalQuestions}
               </span>
@@ -1350,7 +1390,7 @@ export function InterviewModal({
         )}
 
         {/* Phase A: Sequential flow - show progress indicator for question phase (if not in header) */}
-        {phase === "question" && currentQuestion && (
+        {phase === "question" && currentQuestion && !showDraftResume && (
           <div className="px-8 pt-6">
             <ProgressIndicator current={currentQuestionIndex + 1} total={totalQuestions} />
           </div>
@@ -1381,8 +1421,52 @@ export function InterviewModal({
           </div>
         )}
 
-        {/* Phase A: Sequential flow - question phase */}
-        {phase === "question" && displayQuestion ? (
+        {/* Draft resume prompt */}
+        {showDraftResume ? (
+          <div className="flex-1 flex flex-col items-center justify-center px-8 py-12">
+            <div className="max-w-md text-center space-y-6">
+              <h3 className="text-xl font-serif text-[var(--text-primary)]">
+                Welcome back
+              </h3>
+              <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
+                You have a draft in progress with {draftAnswerCount} answer{draftAnswerCount !== 1 ? 's' : ''} saved.
+                Would you like to pick up where you left off?
+              </p>
+              <div className="flex flex-col gap-3 pt-2">
+                <button
+                  onClick={() => {
+                    setShowDraftResume(false);
+                    // Phase/index already set from preload — just dismiss the prompt
+                    console.log('[InterviewModal] Resuming draft at index:', currentQuestionIndex);
+                  }}
+                  className="px-6 py-3 text-sm font-medium text-white bg-[var(--accent)] rounded-full hover:bg-[var(--accent-hover)] transition-colors"
+                >
+                  Continue where I left off
+                </button>
+                <button
+                  onClick={() => {
+                    // Clear draft and start fresh
+                    const draftKey = `interviewDraft:${projectId}`;
+                    localStorage.removeItem(draftKey);
+                    setAnswers([]);
+                    setFollowUps([]);
+                    setMorphedQuestions(new Map());
+                    setSelectedQuestionIds([]);
+                    setCurrentQuestionIndex(0);
+                    setPhase("question");
+                    setStep("answer");
+                    setShowDraftResume(false);
+                    console.log('[InterviewModal] Starting over — draft cleared');
+                  }}
+                  className="px-6 py-3 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+                >
+                  Start over
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : phase === "question" && displayQuestion ? (
+          /* Phase A: Sequential flow - question phase */
           <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
             <QuestionCard
               question={displayQuestion}
@@ -1413,7 +1497,7 @@ export function InterviewModal({
           </div>
         )}
 
-            <FooterBar
+            {!showDraftResume && <FooterBar
               phase={phase}
               onBack={
                 phase === "question" && currentQuestionIndex > 0
@@ -1444,7 +1528,7 @@ export function InterviewModal({
               isSubmitting={isSubmitting}
               isGenerating={isGenerating}
               isLoadingFollowUps={isLoadingFollowUps}
-            />
+            />}
           </>
         )}
       </DialogContent>
