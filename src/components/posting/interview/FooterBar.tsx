@@ -29,13 +29,16 @@ export function FooterBar({
     <div className="px-8 py-4 border-t border-[var(--ridge-outer)]/50 bg-white/50">
       <div className="flex items-center justify-between max-w-3xl mx-auto">
         <div>
-          {/* Back button - less relevant in sequential flow, but available for navigation */}
+          {/* Back button — go to previous question to review/revise */}
           {phase === "question" && onBack && (
             <button
               onClick={onBack}
-              className="px-4 py-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+              className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-[var(--ridge-outer)]/30 rounded-full hover:border-[var(--ridge-outer)]/60 transition-colors"
             >
-              Back
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="opacity-70">
+                <path d="M10 12L6 8L10 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              Previous
             </button>
           )}
         </div>
