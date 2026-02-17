@@ -495,6 +495,12 @@ export async function assessProjectContext(projectId: string): Promise<ProjectCo
   // Build room context
   const roomMap = new Map<string, RoomContext>();
 
+  // Build room ID → name lookup for resolving image.room UUIDs
+  const roomIdToName = new Map<string, string>();
+  for (const room of project.rooms) {
+    roomIdToName.set(room.id, room.name);
+  }
+
   // First, add rooms from project.rooms
   for (const room of project.rooms) {
     const roomSelections = selections.filter((s) => s.roomId === room.id);
@@ -518,18 +524,33 @@ export async function assessProjectContext(projectId: string): Promise<ProjectCo
   }
 
   // Also add rooms from image room assignments
+  // image.room may be a room ID (UUID) or a room name string
   for (const image of project.images) {
-    if (image.room && !roomMap.has(image.room)) {
-      const roomSelections = selections.filter((s) => s.room === image.room);
-      roomMap.set(image.room, {
-        id: `image-room-${image.room}`,
-        name: image.room,
-        type: normalizeRoomType(image.room),
-        selectionCount: roomSelections.length,
-        keyPieces: roomSelections.filter((s) => s.isHeroPiece),
-        adjacentRooms: [],
-      });
+    if (!image.room) continue;
+
+    // Resolve: image.room may be a room ID (UUID) or a room name
+    const resolvedName = roomIdToName.get(image.room) || image.room;
+
+    // Skip if this room is already in the map (by resolved name)
+    if (roomMap.has(resolvedName)) continue;
+
+    // Skip UUIDs that don't resolve to a known room
+    // (stale/orphaned references — not useful for question generation)
+    const looksLikeUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(resolvedName);
+    if (looksLikeUUID) {
+      console.warn(`[Interview Context] Skipping unresolved room ID: ${resolvedName}`);
+      continue;
     }
+
+    const roomSelections = selections.filter((s) => s.room === resolvedName);
+    roomMap.set(resolvedName, {
+      id: `image-room-${image.room}`,
+      name: resolvedName,
+      type: normalizeRoomType(resolvedName),
+      selectionCount: roomSelections.length,
+      keyPieces: roomSelections.filter((s) => s.isHeroPiece),
+      adjacentRooms: [],
+    });
   }
 
   const rooms = Array.from(roomMap.values());
