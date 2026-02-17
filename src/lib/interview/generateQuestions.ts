@@ -1052,14 +1052,30 @@ export async function generateInterviewQuestions(
 ): Promise<GeneratedQuestion[]> {
   const maxQuestions = options?.maxQuestions || 10;
   const includeGeneric = options?.includeGeneric !== false;
-  const useAI = options?.useAI ?? (process.env.INTERVIEW_AI_QUESTIONS === 'true');
+  const useAI = options?.useAI ?? (process.env.INTERVIEW_AI_QUESTIONS !== 'false' && !!process.env.ANTHROPIC_API_KEY);
+
+  console.info('[generateInterviewQuestions]', {
+    useAI,
+    hasProjectId: !!options?.projectId,
+    contextLevel: context.level,
+    isProspective: context.isProspective,
+    roomCount: context.rooms.length,
+    selectionCount: context.selections.length,
+    maxQuestions,
+  });
 
   // Try AI question generation first
   if (useAI && options?.projectId) {
     try {
+      console.info('[generateInterviewQuestions] attempting AI question generation');
       const brief = await buildInterviewBrief(options.projectId, {
         generateQuestions: true,
         questionCount: maxQuestions,
+      });
+
+      console.info('[generateInterviewQuestions] brief returned', {
+        hasNarrative: !!brief.narrativeBrief?.visualImpression,
+        aiQuestionCount: brief.aiQuestions?.length ?? 0,
       });
 
       if (brief.aiQuestions && brief.aiQuestions.length > 0) {
@@ -1067,6 +1083,12 @@ export async function generateInterviewQuestions(
         const validAIQuestions = brief.aiQuestions
           .filter(validateAIQuestion)
           .map((q) => convertAIQuestionToGenerated(q, context.level));
+
+        console.info('[generateInterviewQuestions] AI questions validated', {
+          total: brief.aiQuestions.length,
+          valid: validAIQuestions.length,
+          threshold: Math.floor(maxQuestions * 0.5),
+        });
 
         if (validAIQuestions.length >= Math.floor(maxQuestions * 0.5)) {
           // AI produced enough valid questions — use them
@@ -1095,6 +1117,9 @@ export async function generateInterviewQuestions(
   }
 
   // Template-based fallback
+  console.info('[generateInterviewQuestions] using template fallback', {
+    reason: !useAI ? 'AI disabled' : !options?.projectId ? 'no projectId' : 'AI produced insufficient questions',
+  });
   let questions = generateTemplateQuestions(context, includeGeneric);
 
   // Sort and select
