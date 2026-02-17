@@ -9,6 +9,7 @@
  */
 
 import { randomUUID } from 'crypto';
+import Anthropic from '@anthropic-ai/sdk';
 import type {
   ProjectContext,
   RoomContext,
@@ -18,6 +19,7 @@ import type {
   DecisionEvent,
   ContextLevel,
 } from './contextLevel';
+import type { InterviewBrief } from './buildInterviewBrief';
 
 // Question types that can be generated
 export type QuestionType =
@@ -955,10 +957,210 @@ export interface GenerateQuestionsOptions {
   maxQuestions?: number;
   prioritizeBoostable?: boolean;
   includeGeneric?: boolean;
+  /** Pre-interview intelligence brief for AI question generation */
+  brief?: InterviewBrief;
+}
+
+// ── AI Question Generation ───────────────────────────────────────────────────
+
+const AI_QUESTIONS_ENABLED =
+  (process.env.INTERVIEW_AI_QUESTIONS ?? '').toLowerCase() === 'true';
+
+function isAnthropicEnabled(): boolean {
+  return (
+    process.env.ANTHROPIC_ENABLED === 'true' &&
+    Boolean(process.env.ANTHROPIC_API_KEY)
+  );
 }
 
 /**
- * Main function to generate interview questions based on project context
+ * Build the prompt for Claude to generate interview questions.
+ */
+function buildQuestionGenerationPrompt(
+  brief: InterviewBrief,
+  context: ProjectContext,
+  maxQuestions: number,
+): string {
+  const lines: string[] = [];
+
+  lines.push('You are generating interview questions for an editorial feature on an interior design project.');
+  lines.push('You are Sofia, a senior editorial journalist with 20 years of experience covering design.');
+  lines.push('These questions should demonstrate that you studied this project carefully.');
+  lines.push('');
+
+  // Brief narrative
+  lines.push('PROJECT BRIEF:');
+  lines.push(brief.visualNotes);
+  lines.push('');
+
+  // Research notes
+  if (brief.researchNotes.length > 0) {
+    lines.push('RESEARCH NOTES:');
+    for (const note of brief.researchNotes) {
+      lines.push(`• ${note}`);
+    }
+    lines.push('');
+  }
+
+  // Rooms with products
+  lines.push('ROOMS & KEY PRODUCTS:');
+  for (const room of context.rooms) {
+    const products = room.keyPieces.map((p) => `${p.productName} (${p.brand})`).join(', ');
+    lines.push(`• ${room.name}${products ? `: ${products}` : ''}`);
+  }
+  lines.push('');
+
+  // Vendor map
+  if (brief.vendorMap.length > 0) {
+    lines.push('VENDOR MAP:');
+    for (const v of brief.vendorMap) {
+      const heroes = v.heroProducts.length > 0 ? ` — hero: ${v.heroProducts.join(', ')}` : '';
+      lines.push(`• ${v.name}: ${v.count} piece${v.count > 1 ? 's' : ''} (${v.rooms.join(', ')})${heroes}`);
+    }
+    lines.push('');
+  }
+
+  // Suggested angles
+  if (brief.suggestedAngles.length > 0) {
+    lines.push('STORY ANGLES TO EXPLORE:');
+    for (const angle of brief.suggestedAngles) {
+      lines.push(`• ${angle}`);
+    }
+    lines.push('');
+  }
+
+  // Designer context
+  if (brief.designerContext) {
+    lines.push(`DESIGNER: ${brief.designerContext.name}`);
+    if (brief.designerContext.statedApproach) {
+      lines.push(`APPROACH: ${brief.designerContext.statedApproach}`);
+    }
+    lines.push('');
+  }
+
+  // Instructions
+  lines.push('---');
+  lines.push('');
+  lines.push(`Generate exactly ${maxQuestions} interview questions. Follow this arc:`);
+  lines.push('1. Opening (1-2): Warm, about the project\'s spirit/vision. Show you\'ve done your homework.');
+  lines.push('2. Room deep dives (3-5): Specific product, material, or room decisions. Name products by name.');
+  lines.push('3. Vendor/material stories (2-3): Vendor loyalty, material choices, craft appreciation.');
+  lines.push('4. Philosophy (1-2): What drives their decisions. What they want readers to know.');
+  lines.push('');
+  lines.push('RULES:');
+  lines.push('1. Every question MUST reference a specific product, vendor, room, or material BY NAME');
+  lines.push('2. Every question sets up an answer the designer would be PROUD to publish');
+  lines.push('3. Ask about arrivals, not departures. Wins, not compromises. Never ask about regrets.');
+  lines.push('4. No generic questions that could be asked about any project');
+  lines.push('5. When a vendor has 2+ products, ask about the relationship (mark boostable: true)');
+  lines.push('6. Questions should flow conversationally — each feels like a natural follow to the last');
+  lines.push('');
+  lines.push('Return a JSON array of objects:');
+  lines.push('[{');
+  lines.push('  "text": "The question text",');
+  lines.push('  "type": "room_story" | "vendor_loyalty" | "hero_piece" | "material_theme" | "design_philosophy" | "spatial_narrative" | "vision_realization",');
+  lines.push('  "rooms": ["Room Name"],');
+  lines.push('  "vendors": ["Vendor Name"],');
+  lines.push('  "products": ["Product Name"],');
+  lines.push('  "boostable": false,');
+  lines.push('  "pullQuotePotential": "high" | "medium" | "low",');
+  lines.push('  "topic": "topic_tag_for_dedup"');
+  lines.push('}]');
+  lines.push('');
+  lines.push('Return ONLY valid JSON, no other text.');
+
+  return lines.join('\n');
+}
+
+/**
+ * Map AI question type strings to our QuestionType enum.
+ */
+function mapAIQuestionType(type: string): QuestionType {
+  const mapping: Record<string, QuestionType> = {
+    room_story: 'room_specific',
+    vendor_loyalty: 'vendor_loyalty',
+    hero_piece: 'hero_piece',
+    material_theme: 'material_theme',
+    design_philosophy: 'generic',
+    spatial_narrative: 'spatial_narrative',
+    vision_realization: 'vision_realization',
+  };
+  return mapping[type] || 'generic';
+}
+
+/**
+ * Generate interview questions via Claude API using the interview brief.
+ * Falls back gracefully — returns empty array on any failure.
+ */
+async function generateAIQuestions(
+  brief: InterviewBrief,
+  context: ProjectContext,
+  maxQuestions: number,
+): Promise<GeneratedQuestion[]> {
+  if (!AI_QUESTIONS_ENABLED || !isAnthropicEnabled()) {
+    return [];
+  }
+
+  try {
+    const anthropic = new Anthropic();
+    const prompt = buildQuestionGenerationPrompt(brief, context, maxQuestions);
+
+    const response = await anthropic.messages.create({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 2048,
+      messages: [{ role: 'user', content: prompt }],
+    });
+
+    const content = response.content[0];
+    if (content.type !== 'text') return [];
+
+    let jsonText = content.text.trim();
+    if (jsonText.startsWith('```')) {
+      jsonText = jsonText.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '');
+    }
+
+    const parsed = JSON.parse(jsonText) as Array<{
+      text?: string;
+      type?: string;
+      rooms?: string[];
+      vendors?: string[];
+      products?: string[];
+      boostable?: boolean;
+      pullQuotePotential?: string;
+      topic?: string;
+    }>;
+
+    if (!Array.isArray(parsed)) return [];
+
+    return parsed
+      .filter((q) => typeof q.text === 'string' && q.text.length > 20)
+      .map((q, i) => ({
+        id: `ai-${randomUUID()}`,
+        text: q.text!,
+        contextLevel: context.level,
+        type: mapAIQuestionType(q.type || 'generic'),
+        rooms: Array.isArray(q.rooms) ? q.rooms : undefined,
+        products: Array.isArray(q.products) ? q.products : undefined,
+        vendors: Array.isArray(q.vendors) ? q.vendors : undefined,
+        boostable: q.boostable === true,
+        pullQuotePotential: (['high', 'medium', 'low'].includes(q.pullQuotePotential || '')
+          ? q.pullQuotePotential
+          : 'medium') as 'high' | 'medium' | 'low',
+        topic: q.topic || undefined,
+      }));
+  } catch (error) {
+    console.error('[generateAIQuestions] AI question generation failed:', error);
+    return [];
+  }
+}
+
+/**
+ * Main function to generate interview questions based on project context.
+ *
+ * When AI questions are enabled (INTERVIEW_AI_QUESTIONS=true) and a brief is
+ * available, uses Claude to generate project-specific questions. Falls back
+ * to template-based generation if AI is disabled, unavailable, or returns
+ * insufficient questions.
  */
 export async function generateInterviewQuestions(
   context: ProjectContext,
@@ -967,6 +1169,26 @@ export async function generateInterviewQuestions(
   const maxQuestions = options?.maxQuestions || 10;
   const includeGeneric = options?.includeGeneric !== false;
 
+  // ── Try AI-generated questions first ─────────────────────────────────
+  if (options?.brief) {
+    const aiQuestions = await generateAIQuestions(options.brief, context, maxQuestions);
+
+    if (aiQuestions.length >= 4) {
+      // AI produced enough questions — apply dedup and ordering
+      let questions = deduplicateSimilar(aiQuestions);
+      questions = orderByRoom(questions, context.rooms);
+      return questions.slice(0, maxQuestions);
+    }
+
+    // AI produced too few — fall through to template system
+    if (aiQuestions.length > 0) {
+      console.info(
+        `[generateInterviewQuestions] AI produced ${aiQuestions.length} questions (below threshold of 4), supplementing with templates`,
+      );
+    }
+  }
+
+  // ── Template-based generation (existing system) ──────────────────────
   let questions: GeneratedQuestion[] = [];
 
   // For prospective projects, use prospective-tone questions instead of generic ones.

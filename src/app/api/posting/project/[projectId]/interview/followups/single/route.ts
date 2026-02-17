@@ -14,6 +14,7 @@ import { compactImages, compactProducts, softModerate } from "@/lib/posting/prom
 import { cid } from "@/lib/utils/correlation";
 import { z } from "zod";
 import { randomUUID } from "crypto";
+import { digestInterviewAnswer, buildDigestContext } from "@/lib/interview/digestInterviewAnswer";
 
 // Cache last good follow-ups per question (dev/runtime only)
 const lastGoodFollowups = new Map<string, Array<{ id: string; prompt: string }>>();
@@ -278,6 +279,37 @@ export async function POST(
         prompt += `- [${rq.id}]: "${rq.question}"\n`;
       }
       prompt += `\nFor each remaining question affected by prior answers, add to "questionUpdates": { id, status: "covered"|"morphed", morphedText? }. Morph (don't skip) questions the designer partially addressed — reference what they said and ask about the new angle.`;
+    }
+
+    // ── Follow-up intelligence: digest the answer for quality signals ──
+    const vendorNames = taggedProducts
+      .map((p: any) => p.vendor)
+      .filter((v: string | null): v is string => !!v);
+    const productNames = taggedProducts
+      .map((p: any) => p.name)
+      .filter((n: string | null): n is string => !!n);
+    const digestCtx = buildDigestContext({
+      vendors: [...new Set(vendorNames)],
+      products: [...new Set(productNames)],
+    });
+    const digest = digestInterviewAnswer(normalizedAnswer.answer, digestCtx);
+
+    // Inject intelligence signals to guide follow-up generation
+    if (digest.isThin) {
+      prompt += `\n\nNOTE: The designer's answer was brief. Generate a warm follow-up that invites them to elaborate using a specific detail from the project.`;
+    } else if (digest.richnessScore > 0.7 && !digest.hasStoryThread) {
+      prompt += `\n\nNOTE: This answer is already rich and complete. Only follow up if there's a clear thread worth pulling. Consider marking remaining questions as covered if the answer overlaps.`;
+    }
+
+    if (digest.vendorSentiments.some((v) => v.sentiment === 'positive')) {
+      const positiveVendor = digest.vendorSentiments.find((v) => v.sentiment === 'positive');
+      if (positiveVendor) {
+        prompt += `\n\nNOTE: The designer spoke positively about ${positiveVendor.vendorName}. A deeper quote about this vendor relationship has boost potential.`;
+      }
+    }
+
+    if (digest.hasStoryThread) {
+      prompt += `\n\nNOTE: The designer hinted at an untold story. Follow up to draw it out — there may be a compelling narrative here.`;
     }
 
     prompt += `\n\nGenerate 0-2 follow-up questions that would help draw out a richer narrative from this answer. Only ask when something is interesting or vague. Keep each under 120 characters. Build on what the designer said — reference specific details from their answer.`;

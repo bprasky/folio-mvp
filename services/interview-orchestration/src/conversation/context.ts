@@ -87,9 +87,78 @@ Return ONLY the updated summary, incorporating the new exchanges.`;
   }
 
   /**
-   * Build project context string for Sofia's prompt
+   * Build project context string for Sofia's prompt.
+   * When an interview brief is available, uses the narrative version
+   * which is richer and more specific than the raw data dump.
    */
   buildPromptContext(): { projectContext: string; designerContext: string } {
+    const brief = this.context.interviewBrief;
+
+    // If we have a cached interview brief, use the narrative version
+    if (brief && brief.visualNotes) {
+      const lines: string[] = [];
+
+      lines.push('PROJECT BRIEF:');
+      lines.push(brief.visualNotes);
+      lines.push('');
+
+      if (brief.researchNotes.length > 0) {
+        lines.push('KEY OBSERVATIONS:');
+        for (const note of brief.researchNotes) {
+          lines.push(`• ${note}`);
+        }
+        lines.push('');
+      }
+
+      if (brief.vendorMap.length > 0) {
+        lines.push('VENDOR MAP:');
+        for (const v of brief.vendorMap) {
+          const heroes = v.heroProducts.length > 0 ? ` — hero: ${v.heroProducts.join(', ')}` : '';
+          lines.push(
+            `• ${v.name}: ${v.count} piece${v.count > 1 ? 's' : ''} (${v.rooms.join(', ')})${heroes}`,
+          );
+        }
+        lines.push('');
+      }
+
+      // Show suggested angles that haven't been covered yet
+      const uncoveredAngles = brief.suggestedAngles.filter(
+        (a) => !this.context.coveredAngles.includes(a),
+      );
+      if (uncoveredAngles.length > 0) {
+        lines.push('SUGGESTED ANGLES (not yet explored):');
+        for (const angle of uncoveredAngles) {
+          lines.push(`• ${angle}`);
+        }
+        lines.push('');
+      }
+
+      if (this.context.coveredAngles.length > 0) {
+        lines.push(`ANGLES ALREADY EXPLORED: ${this.context.coveredAngles.length} of ${brief.suggestedAngles.length}`);
+        lines.push('');
+      }
+
+      const projectContext = lines.join('\n');
+
+      // Designer context
+      const designerLines: string[] = [];
+      designerLines.push(`NAME: ${this.context.designerName}`);
+      if (brief.designerContext?.statedApproach) {
+        designerLines.push(`APPROACH: ${brief.designerContext.statedApproach}`);
+      }
+      if (this.context.designerBio) {
+        designerLines.push(`BACKGROUND: ${this.context.designerBio}`);
+      }
+      if (brief.designerContext && brief.designerContext.priorProjectCount > 1) {
+        designerLines.push(
+          `NOTE: This is project #${brief.designerContext.priorProjectCount}. ${brief.designerContext.priorInterviewCount} prior interview(s) completed.`,
+        );
+      }
+
+      return { projectContext, designerContext: designerLines.join('\n') };
+    }
+
+    // Fallback: raw data dump (original behavior)
     const projectContext = `
 PROJECT: ${this.context.projectName}
 ROOMS: ${this.context.rooms.join(', ') || 'Not specified'}
@@ -102,6 +171,15 @@ NAME: ${this.context.designerName}
 ${this.context.designerBio ? `BACKGROUND: ${this.context.designerBio}` : ''}`;
 
     return { projectContext, designerContext };
+  }
+
+  /**
+   * Mark a suggested angle as covered so Sofia moves to new territory.
+   */
+  markAngleCovered(angle: string): void {
+    if (!this.context.coveredAngles.includes(angle)) {
+      this.context.coveredAngles.push(angle);
+    }
   }
 
   /**

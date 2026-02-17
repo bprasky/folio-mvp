@@ -94,29 +94,38 @@ export class ConversationManager {
   }
 
   /**
-   * Load project context from database
+   * Load project context from database, including cached interview brief
    */
   private async loadProjectContext(): Promise<ConversationContext> {
-    const project = await prisma.project.findUnique({
-      where: { id: this.projectId },
-      include: {
-        designer: true,
-        images: {
-          orderBy: { displayOrder: 'asc' },
-        },
-        rooms: {
-          include: {
-            tags: {
-              include: {
-                product: {
-                  include: { vendor: true },
+    const [project, post] = await Promise.all([
+      prisma.project.findUnique({
+        where: { id: this.projectId },
+        include: {
+          designer: true,
+          images: {
+            orderBy: { displayOrder: 'asc' },
+          },
+          rooms: {
+            include: {
+              tags: {
+                include: {
+                  product: {
+                    include: { vendor: true },
+                  },
                 },
               },
             },
           },
         },
-      },
-    });
+      }),
+      // Load cached interview brief from ProjectPost.provenance
+      prisma.projectPost
+        .findUnique({
+          where: { projectId: this.projectId },
+          select: { provenance: true },
+        })
+        .catch(() => null),
+    ]);
 
     if (!project) {
       throw new Error(`Project not found: ${this.projectId}`);
@@ -133,6 +142,26 @@ export class ConversationManager {
       }))
     );
 
+    // Extract cached interview brief if available
+    let interviewBrief = null;
+    try {
+      const provenance = post?.provenance as Record<string, unknown> | null;
+      if (provenance?.interviewBrief) {
+        const cached = provenance.interviewBrief as any;
+        if (cached.visualNotes && Array.isArray(cached.researchNotes)) {
+          interviewBrief = {
+            visualNotes: cached.visualNotes,
+            researchNotes: cached.researchNotes,
+            suggestedAngles: cached.suggestedAngles || [],
+            vendorMap: cached.vendorMap || [],
+            designerContext: cached.designerContext || null,
+          };
+        }
+      }
+    } catch {
+      // Brief parsing failed — will use fallback raw context
+    }
+
     return {
       projectId: project.id,
       projectName: project.title || 'Untitled Project',
@@ -146,11 +175,13 @@ export class ConversationManager {
       })),
       products,
       rooms,
+      interviewBrief,
       summary: '',
       turnCount: 0,
       extractedQuotes: [],
       extractedProducts: [],
       extractedThemes: [],
+      coveredAngles: [],
       recentExchanges: [],
     };
   }

@@ -105,3 +105,28 @@ export type {
   VendorSentiment,
   Sentiment,
 } from './answerAnalysis';
+
+// Answer Digestion (heuristic scoring)
+export {
+  digestInterviewAnswer,
+  buildDigestContext,
+} from './digestInterviewAnswer';
+
+export type {
+  AnswerDigest,
+  VendorSentimentSignal,
+  DigestContext,
+} from './digestInterviewAnswer';
+
+// Pre-Interview Intelligence Brief
+export {
+  buildInterviewBrief,
+  formatBriefAsNarrative,
+} from './buildInterviewBrief';
+
+export type {
+  InterviewBrief,
+  VendorBriefEntry,
+  HeroSelectionEntry,
+  DesignerBriefContext,
+} from './buildInterviewBrief';

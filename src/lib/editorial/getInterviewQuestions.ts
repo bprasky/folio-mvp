@@ -7,6 +7,7 @@ import {
   type GeneratedQuestion,
   type ProjectSizeClassification,
 } from '@/lib/interview';
+import { buildInterviewBrief, type InterviewBrief } from '@/lib/interview/buildInterviewBrief';
 
 // Base questions from existing question bank (Level 0 fallback)
 const BASE_QUESTIONS = [
@@ -74,6 +75,8 @@ export interface InterviewQuestionsResult {
   contextDescription: string;
   upgradeSuggestion: string | null;
   projectSize: ProjectSizeClassification;
+  /** Pre-interview intelligence brief (cached) */
+  brief?: InterviewBrief;
 }
 
 /**
@@ -101,12 +104,21 @@ export async function getInterviewQuestionsWithContext(
     // Assess project context to determine what data is available
     const context = await assessProjectContext(projectId);
 
+    // Build pre-interview intelligence brief (cached, non-blocking if AI unavailable)
+    let brief: InterviewBrief | undefined;
+    try {
+      brief = await buildInterviewBrief(projectId);
+    } catch (briefError) {
+      console.warn('[getInterviewQuestions] Brief generation failed (non-blocking):', briefError);
+    }
+
     // Generate contextual questions scaled to project size
     const targetCount = context.projectSize.targetQuestionCount;
     const contextualQuestions = await generateInterviewQuestions(context, {
       maxQuestions: targetCount,
       prioritizeBoostable: options?.prioritizeBoostable ?? true,
       includeGeneric: true, // Include generic as fallback for low-context projects
+      brief, // Pass brief for AI question generation (Phase 3)
     });
 
     // Convert generated questions to interview format
@@ -174,6 +186,7 @@ export async function getInterviewQuestionsWithContext(
       contextDescription: getContextLevelDescription(context.level),
       upgradeSuggestion: getContextUpgradeSuggestion(context.level),
       projectSize: context.projectSize,
+      brief,
     };
   } catch (error) {
     console.error('[getInterviewQuestions] Error generating contextual questions:', error);

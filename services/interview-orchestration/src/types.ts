@@ -41,6 +41,25 @@ export interface ConversationExchange {
   };
 }
 
+/** Cached interview brief from the main app (stored in ProjectPost.provenance) */
+export interface CachedInterviewBrief {
+  visualNotes: string;
+  researchNotes: string[];
+  suggestedAngles: string[];
+  vendorMap: Array<{
+    name: string;
+    count: number;
+    rooms: string[];
+    heroProducts: string[];
+  }>;
+  designerContext?: {
+    name: string;
+    statedApproach: string | null;
+    priorProjectCount: number;
+    priorInterviewCount: number;
+  } | null;
+}
+
 export interface ConversationContext {
   // Static context (loaded once)
   projectId: string;
@@ -51,12 +70,18 @@ export interface ConversationContext {
   products: ProductTag[];
   rooms: string[];
 
+  /** Pre-interview intelligence brief (loaded from ProjectPost.provenance if available) */
+  interviewBrief: CachedInterviewBrief | null;
+
   // Rolling context (updated each turn)
   summary: string;
   turnCount: number;
   extractedQuotes: string[];
   extractedProducts: Array<{ name: string; context: string }>;
   extractedThemes: string[];
+
+  /** Suggested angles from the brief that have been explored */
+  coveredAngles: string[];
 
   // Recent exchanges (last 5, full text)
   recentExchanges: ConversationExchange[];
