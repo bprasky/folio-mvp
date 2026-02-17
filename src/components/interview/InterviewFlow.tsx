@@ -204,6 +204,8 @@ export function InterviewFlow({
               onComplete={handleComplete}
               onSwitchToVoice={handleSwitchToVoice}
               voiceAvailable={voiceAvailable}
+              startingQuestionIndex={progress.current}
+              previousResponses={responses}
             />
           </motion.div>
         );

@@ -31,6 +31,10 @@ interface TextInterviewProps {
   onComplete: (responses: InterviewResponse[]) => void;
   onSwitchToVoice: () => void;
   voiceAvailable?: boolean;
+  /** Starting question index when resuming from a draft */
+  startingQuestionIndex?: number;
+  /** Previously recorded responses when resuming from a draft */
+  previousResponses?: InterviewResponse[];
 }
 
 type TextInterviewState = "question" | "transition" | "preview-interstitial";
@@ -57,10 +61,12 @@ export function TextInterview({
   onComplete,
   onSwitchToVoice,
   voiceAvailable = false,
+  startingQuestionIndex = 0,
+  previousResponses = [],
 }: TextInterviewProps) {
   const [questions, setQuestions] = useState<InterviewQuestion[]>(initialQuestions);
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [responses, setResponses] = useState<InterviewResponse[]>([]);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(startingQuestionIndex);
+  const [responses, setResponses] = useState<InterviewResponse[]>(previousResponses);
   const [state, setState] = useState<TextInterviewState>("question");
   const [isLoading, setIsLoading] = useState(false);
   const [lastAnswer, setLastAnswer] = useState("");
