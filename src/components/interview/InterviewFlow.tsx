@@ -63,6 +63,9 @@ export function InterviewFlow({
     switchMode,
     endInterview,
     resetSession,
+    hasDraft,
+    restoreDraft,
+    clearDraft,
     progress,
     shouldShowPreview,
     previewDraft,
@@ -72,12 +75,25 @@ export function InterviewFlow({
     onError: (err) => console.error("[InterviewFlow] Error:", err),
   });
 
-  // If initialMode is set, start session immediately
+  const [showDraftResume, setShowDraftResume] = useState(false);
+  const [draftChecked, setDraftChecked] = useState(false);
+
+  // Check for existing draft on mount
   useEffect(() => {
-    if (initialMode && session.step === "mode-selection") {
+    if (!draftChecked && session.step === "mode-selection") {
+      setDraftChecked(true);
+      if (hasDraft()) {
+        setShowDraftResume(true);
+      }
+    }
+  }, [draftChecked, session.step, hasDraft]);
+
+  // If initialMode is set and no draft prompt, start session immediately
+  useEffect(() => {
+    if (initialMode && session.step === "mode-selection" && !showDraftResume) {
       startSession(initialMode);
     }
-  }, [initialMode, session.step, startSession]);
+  }, [initialMode, session.step, startSession, showDraftResume]);
 
   // Voice availability: check feature flags
   const [voiceAvailable] = useState(
@@ -119,6 +135,43 @@ export function InterviewFlow({
 
   // Render content based on step
   const renderContent = () => {
+    // Show draft resume prompt before anything else
+    if (showDraftResume) {
+      return (
+        <motion.div {...modeToInterviewTransition} className="h-full flex items-center justify-center">
+          <div className="max-w-md text-center space-y-6 px-8">
+            <h3 className="text-xl font-serif text-[var(--text-primary)]">
+              Welcome back
+            </h3>
+            <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
+              You have an interview in progress. Would you like to pick up where you left off?
+            </p>
+            <div className="flex flex-col gap-3 pt-2">
+              <button
+                onClick={() => {
+                  restoreDraft();
+                  setShowDraftResume(false);
+                }}
+                className="px-6 py-3 text-sm font-medium text-white bg-[var(--accent)] rounded-lg hover:bg-[var(--accent-hover)] transition-colors"
+              >
+                Continue where I left off
+              </button>
+              <button
+                onClick={() => {
+                  clearDraft();
+                  setShowDraftResume(false);
+                  // If initialMode was set, startSession will fire via useEffect
+                }}
+                className="px-6 py-3 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+              >
+                Start over
+              </button>
+            </div>
+          </div>
+        </motion.div>
+      );
+    }
+
     switch (session.step) {
       case "mode-selection":
         return (

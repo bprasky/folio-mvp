@@ -140,6 +140,18 @@ export function TextInterview({
     }
   }, [currentQuestionIndex, questions.length, onComplete, responses]);
 
+  const handleGoBack = useCallback(() => {
+    if (currentQuestionIndex > 0) {
+      setCurrentQuestionIndex((prev) => prev - 1);
+      setState("question");
+    }
+  }, [currentQuestionIndex]);
+
+  // Find the previous answer for the current question (if going back to revise)
+  const previousAnswerForCurrent = responses.find(
+    (r) => r.questionId === currentQuestion?.id
+  )?.answer;
+
   if (!currentQuestion) {
     return null;
   }
@@ -184,10 +196,12 @@ export function TextInterview({
               totalQuestions={totalQuestions}
               onSubmit={handleSubmit}
               onSkip={handleSkip}
+              onGoBack={currentQuestionIndex > 0 ? handleGoBack : undefined}
               onSwitchToVoice={onSwitchToVoice}
               isLoading={isLoading}
               images={images}
               voiceAvailable={voiceAvailable}
+              previousAnswer={previousAnswerForCurrent}
             />
           </motion.div>
         )}

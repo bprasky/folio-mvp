@@ -15,10 +15,12 @@ interface QuestionCardProps {
   totalQuestions: number;
   onSubmit: (answer: string) => void;
   onSkip: () => void;
+  onGoBack?: () => void;
   onSwitchToVoice: () => void;
   isLoading: boolean;
   images?: Array<{ id: string; url: string; name?: string }>;
   voiceAvailable?: boolean;
+  previousAnswer?: string;
 }
 
 /**
@@ -44,18 +46,25 @@ export function QuestionCard({
   totalQuestions,
   onSubmit,
   onSkip,
+  onGoBack,
   onSwitchToVoice,
   isLoading,
   images = [],
   voiceAvailable = false,
+  previousAnswer,
 }: QuestionCardProps) {
-  const [answer, setAnswer] = useState("");
+  const [answer, setAnswer] = useState(previousAnswer || "");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Find related image if present
   const relatedImage = question.relatedImageId
     ? images.find((img) => img.id === question.relatedImageId)
     : undefined;
+
+  // Reset answer when question changes (previousAnswer supplies saved text when going back)
+  useEffect(() => {
+    setAnswer(previousAnswer || "");
+  }, [question.id, previousAnswer]);
 
   // Auto-focus textarea on mount
   useEffect(() => {
@@ -138,14 +147,29 @@ export function QuestionCard({
 
         {/* Action row */}
         <div className="flex items-center justify-between max-w-2xl mx-auto w-full">
-          <button
-            type="button"
-            onClick={onSkip}
-            disabled={isLoading}
-            className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-sm py-2 px-3 transition-colors disabled:opacity-50"
-          >
-            Skip
-          </button>
+          <div className="flex items-center gap-3">
+            {onGoBack && (
+              <button
+                type="button"
+                onClick={onGoBack}
+                disabled={isLoading}
+                className="flex items-center gap-1.5 text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-sm py-2 px-3 border border-[var(--text-tertiary)]/20 rounded-lg hover:border-[var(--text-tertiary)]/40 transition-colors disabled:opacity-50"
+              >
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" className="opacity-70">
+                  <path d="M10 12L6 8L10 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                Previous
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={onSkip}
+              disabled={isLoading}
+              className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-sm py-2 px-3 transition-colors disabled:opacity-50"
+            >
+              Skip
+            </button>
+          </div>
 
           <button
             type="button"
