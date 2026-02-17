@@ -1945,11 +1945,25 @@ export async function POST(
       slug = makeSlug(projectData.title || undefined, projectId);
     }
     
-    // Preserve interview data from existing post
-    const existingProvenance = (post?.provenance as any) || {};
+    // Re-read provenance fresh to avoid overwriting concurrent writes (e.g., answer saves
+    // that happened during the LLM composition call, which can take 30-60 seconds)
+    const freshPostForSave = await prisma.projectPost.findUnique({
+      where: { projectId },
+      select: { provenance: true },
+    });
+    const existingProvenance = (freshPostForSave?.provenance as any) || (post?.provenance as any) || {};
     const existingInterview = existingProvenance.interview || {};
     const existingPayload = existingInterview.payload || {};
-    
+
+    // Use the freshest answers: prefer what's in the DB (may have been updated during composition),
+    // fall back to what the generate endpoint read at request start, then to overrides
+    const freshAnswers = existingPayload.answers?.length > 0
+      ? existingPayload.answers
+      : (interview?.payload?.answers?.length > 0 ? interview.payload.answers : (answersOverride ?? []));
+    const freshFollowups = existingPayload.followups?.length > 0
+      ? existingPayload.followups
+      : (interview?.payload?.followups ?? []);
+
     // Auto-populate heroAssetId, excerpt, and credits if missing
     // 1. heroAssetId: use first image from galleryChapters[0].imageIds or projectData.images[0]
     let heroAssetId = post ? post.heroAssetId : null;
@@ -2012,10 +2026,10 @@ export async function POST(
             // Keep all original answers and followups intact
             payload: {
               ...existingPayload,
-              answers: interview.payload.answers, // Preserve original answers
-              followups: interview.payload.followups, // Preserve original followups
-              selectedQuestionIds: interview.payload.selectedQuestionIds,
-              imageOrder: interview.payload.imageOrder,
+              answers: freshAnswers, // Preserve original answers (re-read fresh)
+              followups: freshFollowups, // Preserve original followups (re-read fresh)
+              selectedQuestionIds: existingPayload.selectedQuestionIds || interview?.payload?.selectedQuestionIds || [],
+              imageOrder: existingPayload.imageOrder || interview?.payload?.imageOrder,
             },
             // Clear generating status if it exists (only if we acquired lock)
             status: acquireLock ? { phase: 'idle', endedAt: Date.now() } : existingInterview.status,
@@ -2091,7 +2105,7 @@ export async function POST(
 
     return NextResponse.json({ ok: true }, { status: 200 });
   } catch (error: any) {
-    // Ensure unlock on all error paths
+    // Ensure unlock on all error paths — but only write if we actually need to clear a lock
     try {
       console.log("[AUDIT] finally: unlock", { projectId, ok: false, _cid });
       const fresh = await prisma.projectPost.findUnique({ where: { projectId }, select: { provenance: true } });
@@ -2101,8 +2115,9 @@ export async function POST(
         const lockStarted = prov.interview.status.startedAt;
         const lockDuration = lockStarted ? Date.now() - lockStarted : undefined;
         prov.interview.status = { phase: 'idle', endedAt: Date.now(), lastDurationMs: lockDuration };
+        // Only write back if we actually changed the lock status
+        await prisma.projectPost.update({ where: { projectId }, data: { provenance: prov as any } });
       }
-      await prisma.projectPost.update({ where: { projectId }, data: { provenance: prov as any } });
     } catch (unlockErr) {
       console.error("[posting/interview/generate] Unlock failed in catch", { _cid, unlockErr });
     }

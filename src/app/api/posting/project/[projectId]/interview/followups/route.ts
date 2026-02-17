@@ -390,15 +390,15 @@ export async function POST(
       }
 
       // Save to ProjectPost.provenance.interview.followUps (optional persistence)
+      // IMPORTANT: Read-then-write must be atomic to avoid overwriting concurrent answer saves.
+      // We re-read provenance immediately before writing to minimize the race window.
       try {
-        const post = await prisma.projectPost.findUnique({
+        const freshPost = await prisma.projectPost.findUnique({
           where: { projectId },
+          select: { provenance: true },
         });
 
-        if (post) {
-          const provenance = (post.provenance as any) || {};
-          const interview = provenance.interview || {};
-          
+        if (freshPost) {
           // Store in the format expected by client (grouped by questionId)
           const groupedFollowUps = followUpsRaw.map((group) => ({
             questionId: group.questionId,
@@ -408,14 +408,17 @@ export async function POST(
             })),
           }));
 
-          interview.followUps = groupedFollowUps;
+          // Re-read provenance fresh to avoid overwriting concurrent writes (e.g., answer saves)
+          const freshProvenance = (freshPost.provenance as any) || {};
+          const freshInterview = { ...(freshProvenance.interview || {}) };
+          freshInterview.followUps = groupedFollowUps;
 
           await prisma.projectPost.update({
             where: { projectId },
             data: {
               provenance: {
-                ...provenance,
-                interview,
+                ...freshProvenance,
+                interview: freshInterview,
               },
             },
           });

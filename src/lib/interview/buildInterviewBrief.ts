@@ -440,19 +440,22 @@ export async function buildInterviewBrief(
   // -------------------------------------------------------------------------
   // 9. Cache in ProjectPost.provenance
   // -------------------------------------------------------------------------
+  // IMPORTANT: Re-read provenance immediately before writing to avoid overwriting
+  // concurrent interview answer saves. The Claude API call above can take 5-30s,
+  // during which the user may be saving answers.
   try {
-    const post = await prisma.projectPost.findUnique({
+    const freshPost = await prisma.projectPost.findUnique({
       where: { projectId },
       select: { provenance: true },
     });
 
-    if (post) {
-      const provenance = (post.provenance as Record<string, unknown>) || {};
-      provenance.interviewBrief = brief;
+    if (freshPost) {
+      const freshProvenance = (freshPost.provenance as Record<string, unknown>) || {};
+      freshProvenance.interviewBrief = brief;
 
       await prisma.projectPost.update({
         where: { projectId },
-        data: { provenance },
+        data: { provenance: freshProvenance },
       });
     }
   } catch (error) {
