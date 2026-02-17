@@ -210,7 +210,8 @@ export default function DraftsPanel({ projectId }: { projectId: string }) {
       setRegenBusy(true);
       
       // Save answers first (don't show error if this fails, just proceed)
-      if (!debugMode) {
+      // Only save if we actually have answers — saving empty arrays would CLEAR the database
+      if (!debugMode && (filteredAnswers.length > 0 || filteredFollowups.length > 0)) {
         try {
           await saveAnswers();
         } catch (saveError) {
@@ -225,18 +226,31 @@ export default function DraftsPanel({ projectId }: { projectId: string }) {
         forceOverwriteDraft: true, // also in body, redundant on purpose
         mode: 'recomposition', // Default to recomposition mode
       };
-      
+
+      // Always send answersOverride to avoid relying solely on provenance
+      // (provenance can be stale due to race conditions with concurrent writes)
+      if (filteredAnswers.length > 0) {
+        payload.answersOverride = filteredAnswers.map((qa) => ({
+          questionId: qa.questionId || qa.q || qa.question,
+          answer: qa.a || qa.answer || '',
+          question: qa.q || qa.question || '',
+          section: (qa as any).section,
+          role: 'DESIGNER',
+          isFollowUp: false,
+        }));
+      }
+      if (filteredFollowups.length > 0) {
+        payload.followupsOverride = filteredFollowups.map((qa) => ({
+          questionId: qa.questionId || qa.q || qa.question,
+          question: qa.q || qa.question || '',
+          answer: qa.a || qa.answer || '',
+          role: 'DESIGNER',
+          isFollowUp: true,
+        }));
+      }
+
       if (debugMode) {
         payload.debugEcho = true;
-        payload.answersOverride = filteredAnswers.map((qa) => ({
-          questionId: qa.questionId || qa.q,
-          answer: qa.a,
-          question: qa.q,
-        }));
-        payload.followupsOverride = filteredFollowups.map((qa) => ({
-          question: qa.q,
-          answer: qa.a,
-        }));
         // Remove forceOverwriteDraft in debug mode (dry-run)
         delete payload.forceOverwriteDraft;
       }

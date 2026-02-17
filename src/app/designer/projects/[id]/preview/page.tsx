@@ -180,12 +180,49 @@ export default function ProjectPostPreviewPage() {
     setGenerating(true);
     setGenerateError(null);
     try {
+      // Fetch current answers from the interview endpoint so we can send them as overrides
+      // This avoids relying solely on provenance which can be stale from race conditions
+      let answersOverride: any[] | undefined;
+      let followupsOverride: any[] | undefined;
+      try {
+        const interviewRes = await fetch(`/api/posting/project/${projectId}/interview`, { method: 'GET' });
+        if (interviewRes.ok) {
+          const interviewData = await interviewRes.json();
+          if (interviewData.answers?.length > 0) {
+            answersOverride = interviewData.answers.map((a: any) => ({
+              questionId: a.questionId || a.id,
+              answer: a.answer || '',
+              section: a.section,
+              prompt: a.prompt || a.question || a.questionId,
+              role: a.role || 'DESIGNER',
+              isFollowUp: false,
+            }));
+          }
+          if (interviewData.followUps?.length > 0) {
+            followupsOverride = interviewData.followUps.map((a: any) => ({
+              questionId: a.questionId || a.id,
+              answer: a.answer || '',
+              question: a.question || a.prompt || '',
+              role: a.role || 'DESIGNER',
+              isFollowUp: true,
+            }));
+          }
+        }
+      } catch (fetchErr) {
+        console.warn("[preview] Failed to fetch interview answers for override, continuing with provenance", fetchErr);
+      }
+
       const res = await fetch(
         `/api/posting/project/${projectId}/interview/generate`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ force: true }), // Always overwrite existing drafts
+          body: JSON.stringify({
+            force: true,
+            forceOverwriteDraft: true,
+            ...(answersOverride ? { answersOverride } : {}),
+            ...(followupsOverride ? { followupsOverride } : {}),
+          }),
         }
       );
 

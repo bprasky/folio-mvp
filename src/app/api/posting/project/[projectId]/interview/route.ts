@@ -17,7 +17,7 @@ import { z } from "zod";
 import { randomUUID } from "crypto";
 
 // Helper types and functions for tolerant normalization
-type QA = { id?: string; question?: string; prompt?: string; answer: string; isFollowUp?: boolean };
+type QA = { id?: string; question?: string; prompt?: string; answer: string; isFollowUp?: boolean; section?: string; category?: string };
 
 function pickStr(obj: any, keys: string[]): string | undefined {
   for (const k of keys) {
@@ -37,9 +37,12 @@ function normalizeQA(input: any): QA[] {
         if (v && typeof v === 'object') {
           const ans = pickStr(v, ['answer','a','value','text']);
           const q   = pickStr(v, ['question','q','prompt','label']);
-          const id  = pickStr(v, ['id','key']);
+          const id  = pickStr(v, ['questionId','id','key']);
           const fu  = !!(v as any).isFollowUp;
-          return ans ? { id, question: q, prompt: (v as any).prompt ?? q, answer: ans, isFollowUp: fu } : null;
+          // Preserve section and category from the original object
+          const section = pickStr(v, ['section']);
+          const category = pickStr(v, ['category']);
+          return ans ? { id, question: q, prompt: (v as any).prompt ?? q, answer: ans, isFollowUp: fu, section, category } : null;
         }
         return null;
       })
@@ -60,9 +63,11 @@ function normalizeQA(input: any): QA[] {
       } else if (v && typeof v === 'object') {
         const ans = pickStr(v, ['answer','a','value','text']);
         const q   = pickStr(v, ['question','q','prompt','label']) ?? k;
-        const id  = pickStr(v, ['id','key']) ?? k;
+        const id  = pickStr(v, ['questionId','id','key']) ?? k;
         const fu  = !!(v as any).isFollowUp;
-        if (ans) out.push({ id, question: q, prompt: (v as any).prompt ?? q, answer: ans, isFollowUp: fu });
+        const section = pickStr(v, ['section']);
+        const category = pickStr(v, ['category']);
+        if (ans) out.push({ id, question: q, prompt: (v as any).prompt ?? q, answer: ans, isFollowUp: fu, section, category });
       }
     }
     return out;
@@ -105,10 +110,12 @@ function ensureAnswerShape(a: any, idx: number) {
   const answer = (typeof a === 'string') ? a : (a?.answer ?? a?.text ?? a?.value ?? '');
   const prompt = (a?.prompt ?? a?.question ?? '');
   const qid = (a?.id ?? a?.questionId ?? (slugify(prompt) || `auto-${idx}`));
-  const section = deriveSection(String(qid), String(prompt));
+  // Prefer the original section/category from the frontend if present
+  const section = (a?.section && ALLOWED_SECTIONS.has(a.section)) ? a.section : deriveSection(String(qid), String(prompt));
   return {
     questionId: String(qid || `auto-${idx}`),
     section,
+    category: a?.category,
     prompt: String(prompt || qid),
     answer: String(answer ?? '').trim(),
     isFollowUp: !!a?.isFollowUp
