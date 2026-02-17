@@ -107,6 +107,7 @@ export async function getInterviewQuestionsWithContext(
       maxQuestions: targetCount,
       prioritizeBoostable: options?.prioritizeBoostable ?? true,
       includeGeneric: true, // Include generic as fallback for low-context projects
+      projectId,
     });
 
     // Convert generated questions to interview format
