@@ -14,6 +14,7 @@ import { compactImages, compactProducts, softModerate } from "@/lib/posting/prom
 import { cid } from "@/lib/utils/correlation";
 import { z } from "zod";
 import { randomUUID } from "crypto";
+import { digestInterviewAnswer } from "@/lib/interview/digestInterviewAnswer";
 
 // Cache last good follow-ups per question (dev/runtime only)
 const lastGoodFollowups = new Map<string, Array<{ id: string; prompt: string }>>();
@@ -281,6 +282,43 @@ export async function POST(
     }
 
     prompt += `\n\nGenerate 0-2 follow-up questions that would help draw out a richer narrative from this answer. Only ask when something is interesting or vague. Keep each under 120 characters. Build on what the designer said — reference specific details from their answer.`;
+
+    // Run answer digestion for adaptive follow-up context
+    const vendorNames = taggedProducts
+      .map((p: any) => p.vendor)
+      .filter((v: string | null): v is string => !!v);
+    const productNamesList = taggedProducts
+      .map((p: any) => p.name)
+      .filter((n: string | null): n is string => !!n);
+
+    const digest = digestInterviewAnswer(validated.answer, {
+      vendorNames,
+      productNames: productNamesList,
+    });
+
+    // Inject digest context into prompt
+    if (digest.isThin) {
+      prompt += `\n\nNOTE: The designer's answer was brief (${digest.thinReason}). Generate a warm follow-up that invites them to elaborate with a specific detail. Frame it as "Walk us through..." or "Tell us about the moment when..." rather than repeating the question.`;
+    }
+
+    if (digest.hasUnpulledThread && digest.threadHint) {
+      prompt += `\n\nNOTE: The designer hinted at a story ("${digest.threadHint.slice(0, 100)}"). Follow up on this specific thread — they started something interesting.`;
+    }
+
+    if (digest.vendorSentiments.some((v) => v.sentiment === 'positive')) {
+      const posVendor = digest.vendorSentiments.find((v) => v.sentiment === 'positive');
+      if (posVendor) {
+        prompt += `\n\nNOTE: The designer spoke positively about ${posVendor.vendorName}. A deeper quote about this relationship has editorial boost potential. Lean in gently.`;
+      }
+    }
+
+    if (digest.philosophySignals.length > 0) {
+      prompt += `\n\nNOTE: The designer expressed a design belief: "${digest.philosophySignals[0].slice(0, 120)}". This is valuable fingerprint data. If natural, invite them to expand on how this philosophy shaped specific decisions in this project.`;
+    }
+
+    if (digest.richnessScore > 0.7 && !digest.hasUnpulledThread) {
+      prompt += `\n\nNOTE: This answer is already rich and complete. Only generate a follow-up if there's a clear new thread worth pulling. It's fine to return no follow-up.`;
+    }
 
     // Enforce budget
     const MAX_TOKENS = 4000;
