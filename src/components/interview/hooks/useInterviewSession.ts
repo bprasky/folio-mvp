@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import type {
   InterviewState,
   InterviewStep,
@@ -41,9 +41,13 @@ interface UseInterviewSessionReturn {
     answer: string
   ) => Promise<RespondResponse>;
   skipQuestion: () => void;
+  goBack: () => void;
   switchMode: (newMode: "voice" | "text") => void;
   endInterview: () => Promise<string | null>; // Returns draft ID
   resetSession: () => void;
+  hasDraft: () => boolean;
+  restoreDraft: () => boolean;
+  clearDraft: () => void;
 
   // Computed
   progress: { current: number; total: number };
@@ -79,6 +83,59 @@ export function useInterviewSession({
 
   // Abort controller for cleanup
   const abortRef = useRef<AbortController | null>(null);
+
+  // Draft key for localStorage
+  const draftKeyRef = useRef(`interviewDraft:v2:${projectId}`);
+
+  /**
+   * Check if there's a saved draft for this project
+   */
+  const hasDraft = useCallback((): boolean => {
+    try {
+      const saved = localStorage.getItem(draftKeyRef.current);
+      if (!saved) return false;
+      const draft = JSON.parse(saved);
+      return !!(draft.sessionId && draft.responses?.length > 0);
+    } catch {
+      return false;
+    }
+  }, []);
+
+  /**
+   * Restore a saved draft (returns true if restored)
+   */
+  const restoreDraft = useCallback((): boolean => {
+    try {
+      const saved = localStorage.getItem(draftKeyRef.current);
+      if (!saved) return false;
+      const draft = JSON.parse(saved);
+      if (!draft.sessionId || !draft.responses?.length) return false;
+
+      setSessionId(draft.sessionId);
+      setQuestions(draft.questions || []);
+      setResponses(draft.responses || []);
+      setCurrentQuestionIndex(draft.currentQuestionIndex || 0);
+      setMode(draft.mode || "text");
+      setStep(draft.step || "text-interview");
+      setProjectContext(draft.projectContext || null);
+      console.log('[useInterviewSession] Restored draft:', {
+        responses: draft.responses.length,
+        questionIndex: draft.currentQuestionIndex,
+      });
+      return true;
+    } catch {
+      return false;
+    }
+  }, []);
+
+  /**
+   * Clear saved draft
+   */
+  const clearDraft = useCallback(() => {
+    try {
+      localStorage.removeItem(draftKeyRef.current);
+    } catch { /* noop */ }
+  }, []);
 
   /**
    * Start a new interview session
@@ -215,6 +272,36 @@ export function useInterviewSession({
   }, [currentQuestionIndex, questions.length]);
 
   /**
+   * Go back to the previous question
+   */
+  const goBack = useCallback(() => {
+    if (currentQuestionIndex > 0) {
+      setCurrentQuestionIndex((prev) => prev - 1);
+    }
+  }, [currentQuestionIndex]);
+
+  // Draft persistence — save progress to localStorage
+  useEffect(() => {
+    if (!sessionId || responses.length === 0) return;
+
+    const timer = setTimeout(() => {
+      try {
+        localStorage.setItem(draftKeyRef.current, JSON.stringify({
+          sessionId,
+          questions,
+          responses,
+          currentQuestionIndex,
+          step,
+          mode,
+          projectContext,
+        }));
+      } catch { /* localStorage full or unavailable */ }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [sessionId, questions, responses, currentQuestionIndex, step, mode, projectContext]);
+
+  /**
    * Switch between voice and text mode
    */
   const switchMode = useCallback((newMode: "voice" | "text") => {
@@ -254,6 +341,7 @@ export function useInterviewSession({
       }
 
       const data: GenerateDraftResponse = await res.json();
+      clearDraft(); // Interview complete — remove draft
       onComplete?.(data.draftId);
       return data.draftId;
     } catch (err) {
@@ -264,7 +352,7 @@ export function useInterviewSession({
     } finally {
       setIsLoading(false);
     }
-  }, [sessionId, projectId, responses, onComplete, onError]);
+  }, [sessionId, projectId, responses, onComplete, onError, clearDraft]);
 
   /**
    * Reset the session to initial state
@@ -273,6 +361,7 @@ export function useInterviewSession({
     if (abortRef.current) {
       abortRef.current.abort();
     }
+    clearDraft();
     setSessionId(null);
     setStep("mode-selection");
     setMode(null);
@@ -283,7 +372,7 @@ export function useInterviewSession({
     setPreviewDraft(null);
     setIsLoading(false);
     setError(null);
-  }, []);
+  }, [clearDraft]);
 
   // Current question
   const currentQuestion = questions[currentQuestionIndex] ?? null;
@@ -312,9 +401,13 @@ export function useInterviewSession({
     startSession,
     submitResponse,
     skipQuestion,
+    goBack,
     switchMode,
     endInterview,
     resetSession,
+    hasDraft,
+    restoreDraft,
+    clearDraft,
 
     // Computed
     progress,
