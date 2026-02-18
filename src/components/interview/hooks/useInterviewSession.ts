@@ -51,6 +51,7 @@ interface UseInterviewSessionReturn {
 
   // Computed
   progress: { current: number; total: number };
+  currentQuestionIndex: number; // raw 0-based index for draft resume
   shouldShowPreview: boolean;
   previewDraft: DraftPreview | null;
 }
@@ -232,7 +233,8 @@ export function useInterviewSession({
         });
 
         if (!res.ok) {
-          console.warn(`[useInterviewSession] API respond failed: ${res.status} — answer saved locally`);
+          const errBody = await res.json().catch(() => ({}));
+          console.error(`[useInterviewSession] API respond failed: ${res.status}`, errBody);
         }
 
         const data: RespondResponse = res.ok
@@ -421,6 +423,7 @@ export function useInterviewSession({
 
     // Computed
     progress,
+    currentQuestionIndex,
     shouldShowPreview,
     previewDraft,
   };

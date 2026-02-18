@@ -184,16 +184,30 @@ export async function POST(request: NextRequest) {
     const questionText = providedQuestionText || "Tell us about this project.";
 
     // Store answer in EditorialInterviewAnswer for durability
-    await prisma.editorialInterviewAnswer.create({
-      data: {
-        interviewId: interview.id,
-        questionId,
-        questionText, // Persist question text for editorial generation
-        answerText: answer,
-        inputModality: inputMode,
-        questionSource: "base_question",
-      },
-    });
+    // Try with questionText first; if the column doesn't exist yet, retry without it
+    try {
+      await prisma.editorialInterviewAnswer.create({
+        data: {
+          interviewId: interview.id,
+          questionId,
+          questionText, // Persist question text for editorial generation
+          answerText: answer,
+          inputModality: inputMode,
+          questionSource: "base_question",
+        },
+      });
+    } catch (insertError: any) {
+      console.warn("[/api/interview/respond] Insert with questionText failed, retrying without:", insertError?.message);
+      // Fallback: save without questionText (column may not exist in DB yet)
+      await prisma.editorialInterviewAnswer.create({
+        data: {
+          interviewId: interview.id,
+          questionId,
+          answerText: answer,
+          inputModality: inputMode,
+        },
+      });
+    }
 
     // Read all answers for this interview to get count and for preview
     const allAnswers = await prisma.editorialInterviewAnswer.findMany({
@@ -245,10 +259,11 @@ export async function POST(request: NextRequest) {
       shouldShowPreview,
       previewDraft,
     });
-  } catch (error) {
-    console.error("[/api/interview/respond] Error:", error);
+  } catch (error: any) {
+    const msg = error?.message || "Unknown error";
+    console.error("[/api/interview/respond] Error:", msg, error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: msg, detail: error?.code || null },
       { status: 500 }
     );
   }

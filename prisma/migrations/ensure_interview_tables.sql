@@ -74,6 +74,11 @@ END $$;
 
 -- Add columns that may be missing from original migration
 DO $$ BEGIN
+  ALTER TABLE "editorial_interview_answers" ADD COLUMN "question_text" TEXT;
+EXCEPTION WHEN duplicate_column THEN NULL;
+END $$;
+
+DO $$ BEGIN
   ALTER TABLE "editorial_interview_answers" ADD COLUMN "linked_image_id" TEXT;
 EXCEPTION WHEN duplicate_column THEN NULL;
 END $$;
