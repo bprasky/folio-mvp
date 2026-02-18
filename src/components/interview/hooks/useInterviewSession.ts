@@ -322,10 +322,15 @@ export function useInterviewSession({
   }, []);
 
   /**
-   * End the interview and generate the draft
+   * End the interview and generate the draft via the full editorial pipeline.
+   *
+   * Flow:
+   * 1. POST /api/interview/complete — sync answers to provenance + get overrides
+   * 2. POST /api/posting/project/{id}/interview/generate — full Claude editorial
+   * 3. Clear draft + call onComplete → navigates to preview page
    */
   const endInterview = useCallback(async (): Promise<string | null> => {
-    if (!sessionId) {
+    if (!sessionId && responses.length === 0) {
       return null;
     }
 
@@ -334,30 +339,57 @@ export function useInterviewSession({
     setError(null);
 
     try {
-      const res = await fetch("/api/interview/generate-draft", {
+      // Step 1: Sync answers to provenance and get formatted overrides
+      console.log("[useInterviewSession] Completing interview...", { projectId, responses: responses.length });
+      const completeRes = await fetch("/api/interview/complete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ projectId }),
+      });
+
+      if (!completeRes.ok) {
+        const errBody = await completeRes.json().catch(() => ({}));
+        throw new Error(errBody.error || `Failed to complete interview: ${completeRes.status}`);
+      }
+
+      const { answers, followups } = await completeRes.json();
+      console.log("[useInterviewSession] Answers synced, triggering generation...", {
+        answers: answers?.length,
+        followups: followups?.length,
+      });
+
+      // Step 2: Trigger the full editorial generation pipeline
+      const generateRes = await fetch(`/api/posting/project/${projectId}/interview/generate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          sessionId,
-          projectId,
-          responses: responses.map((r) => ({
-            questionId: r.questionId,
-            questionText: r.questionText,
-            answer: r.answer,
-          })),
+          forceOverwriteDraft: true,
+          mode: "recomposition",
+          force: true,
+          answersOverride: answers,
+          followupsOverride: followups,
         }),
       });
 
-      if (!res.ok) {
-        throw new Error(`Failed to generate draft: ${res.status}`);
+      if (!generateRes.ok) {
+        const errBody = await generateRes.json().catch(() => ({}));
+        // 202 means generation already in progress or draft exists — still a success
+        if (generateRes.status === 202) {
+          console.log("[useInterviewSession] Generation already in progress or draft exists", errBody);
+        } else {
+          throw new Error(errBody.error || errBody.message || `Editorial generation failed: ${generateRes.status}`);
+        }
+      } else {
+        console.log("[useInterviewSession] Editorial generated successfully");
       }
 
-      const data: GenerateDraftResponse = await res.json();
-      clearDraft(); // Interview complete — remove draft
-      onComplete?.(data.draftId);
-      return data.draftId;
+      clearDraft();
+      // draftId is not meaningful for the posting pipeline — onComplete just navigates
+      onComplete?.("generated");
+      return "generated";
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Failed to generate draft";
+      console.error("[useInterviewSession] endInterview error:", err);
       setError(errorMessage);
       onError?.(err instanceof Error ? err : new Error(errorMessage));
       return null;
