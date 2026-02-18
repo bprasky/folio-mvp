@@ -259,10 +259,11 @@ export async function POST(request: NextRequest) {
       shouldShowPreview,
       previewDraft,
     });
-  } catch (error) {
-    console.error("[/api/interview/respond] Error:", error);
+  } catch (error: any) {
+    const msg = error?.message || "Unknown error";
+    console.error("[/api/interview/respond] Error:", msg, error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: msg, detail: error?.code || null },
       { status: 500 }
     );
   }

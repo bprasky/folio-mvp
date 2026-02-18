@@ -67,6 +67,7 @@ export function InterviewFlow({
     restoreDraft,
     clearDraft,
     progress,
+    currentQuestionIndex,
     shouldShowPreview,
     previewDraft,
   } = useInterviewSession({
@@ -204,7 +205,7 @@ export function InterviewFlow({
               onComplete={handleComplete}
               onSwitchToVoice={handleSwitchToVoice}
               voiceAvailable={voiceAvailable}
-              startingQuestionIndex={progress.current}
+              startingQuestionIndex={currentQuestionIndex}
               previousResponses={responses}
             />
           </motion.div>
