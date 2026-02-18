@@ -1518,22 +1518,73 @@ export async function POST(
     // Get interview data from provenance
     // If force=true, retry fetching the post in case of recent saves
     let provenance = (post.provenance as any) || {};
-    let interview = provenance.interview;
-    
+    let interview = provenance.interview || {};
+
     // If force=true and no answers found (and no overrides), wait a bit and refetch (handles race condition)
     const hasOverrideAnswers = Array.isArray(answersOverride) && answersOverride.length > 0;
     if (force && !hasOverrideAnswers && (!interview || !interview.payload?.answers || interview.payload.answers.length === 0)) {
       console.warn("[posting/interview/generate] No answers found on force retry, waiting and refetching...", { _cid });
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
+
       const refreshedPost = await prisma.projectPost.findUnique({
         where: { projectId },
         select: { provenance: true },
       });
-      
+
       if (refreshedPost) {
         provenance = (refreshedPost.provenance as any) || {};
-        interview = provenance.interview;
+        interview = provenance.interview || {};
+      }
+    }
+
+    // Bridge: If no answers in provenance, check EditorialInterviewAnswer table
+    // (The new InterviewFlow writes to EditorialInterviewAnswer, not provenance)
+    const provenanceAnswerCount = interview?.payload?.answers?.length || 0;
+    if (!hasOverrideAnswers && provenanceAnswerCount === 0) {
+      console.log("[posting/interview/generate] No provenance answers, checking EditorialInterviewAnswer table...", { _cid });
+
+      try {
+        const editorialInterview = await prisma.editorialInterview.findUnique({
+          where: { projectId },
+          include: {
+            answers: {
+              orderBy: { createdAt: "asc" },
+            },
+          },
+        });
+
+        if (editorialInterview && editorialInterview.answers.length > 0) {
+          const dbAnswers = editorialInterview.answers.map((a) => ({
+            questionId: a.questionId,
+            prompt: a.questionText || a.questionId,
+            answer: a.answerText,
+            role: "DESIGNER",
+            isFollowUp: a.isFollowUp,
+            section: a.questionSource || "base_question",
+          }));
+
+          const baseDbAnswers = dbAnswers.filter((a) => !a.isFollowUp);
+          const followUpDbAnswers = dbAnswers.filter((a) => a.isFollowUp);
+
+          console.log("[posting/interview/generate] Found answers in EditorialInterviewAnswer table", {
+            _cid,
+            total: dbAnswers.length,
+            base: baseDbAnswers.length,
+            followUps: followUpDbAnswers.length,
+          });
+
+          // Populate interview structure so the rest of the handler works
+          if (!interview) interview = {};
+          if (!interview.payload) interview.payload = {};
+          interview.payload.answers = baseDbAnswers;
+          interview.payload.followups = followUpDbAnswers;
+          // Use project images as imageOrder if not set
+          if (!interview.payload.imageOrder) {
+            interview.payload.imageOrder = projectData.images.map((img) => img.id);
+          }
+        }
+      } catch (bridgeErr: any) {
+        console.warn("[posting/interview/generate] EditorialInterviewAnswer bridge failed:", bridgeErr?.message, { _cid });
       }
     }
 
@@ -1736,13 +1787,14 @@ export async function POST(
     }
 
     // Normalize answers and followups for composition
+    // Use prompt/questionText for the question text (not questionId which is an opaque ID)
     const normalizedAnswers = answers.map((a: any) => ({
-      q: a.questionId || 'Question',
+      q: a.prompt || a.questionText || a.questionId || 'Question',
       a: a.answer || '',
     })).filter((x: { q: string; a: string }) => x.a.trim());
 
     const normalizedFollowUps = followupsArray.map((f: any) => ({
-      q: f.question || 'Follow-up',
+      q: f.question || f.prompt || 'Follow-up',
       a: f.answer || '',
     })).filter((x: { q: string; a: string }) => x.a.trim());
 
