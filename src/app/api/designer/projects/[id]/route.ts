@@ -18,6 +18,14 @@ export async function GET(
             selections: true
           }
         },
+        images: {
+          select: {
+            id: true,
+            url: true,
+            room: true,
+          },
+          orderBy: { displayOrder: 'asc' },
+        },
         designer: {
           select: {
             id: true,

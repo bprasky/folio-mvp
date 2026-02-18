@@ -12,6 +12,7 @@ import { ROOM_TEMPLATES } from '../../../project/[id]/roomTemplates';
 import { RidgeCard } from '@/components/ui/ridge-card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { ProjectImageTagger } from '@/components/project/ProjectImageTagger';
 
 interface Project {
   id: string;
@@ -54,6 +55,7 @@ export default function ProjectDashboard() {
   const [showCameraCapture, setShowCameraCapture] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [projects, setProjects] = useState<any[]>([]);
+  const [showImageTagger, setShowImageTagger] = useState(false);
 
   const projectId = params.id as string;
 
@@ -290,6 +292,15 @@ export default function ProjectDashboard() {
 
               <Button
                 variant="ridge"
+                onClick={() => setShowImageTagger(true)}
+                className="flex items-center gap-2"
+              >
+                <FaTag className="w-4 h-4" />
+                Tag Products
+              </Button>
+
+              <Button
+                variant="ridge"
                 onClick={handleExportSpecSheet}
                 className="flex items-center gap-2"
               >
@@ -481,6 +492,14 @@ export default function ProjectDashboard() {
         projects={projects}
         isProjectLevel={true}
       />
+
+      {/* Manual Image Tagger */}
+      {showImageTagger && (
+        <ProjectImageTagger
+          projectId={projectId}
+          onClose={() => setShowImageTagger(false)}
+        />
+      )}
     </div>
   );
 } 
