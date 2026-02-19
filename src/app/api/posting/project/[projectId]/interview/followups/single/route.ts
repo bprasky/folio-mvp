@@ -39,7 +39,9 @@ const POSTING_V1_ENABLED =
 const OPENAI_ENABLED =
   !!process.env.OPENAI_API_KEY && process.env.OPENAI_ENABLED !== "false";
 
-const SYSTEM_PROMPT = `You are an editorial interviewer for Folio. Based on the designer's answer below, suggest up to two open-ended follow-up questions that could draw out a richer narrative. Only ask when something is interesting or vague. Keep each under 120 characters. Do not repeat or rephrase the original question. Do NOT ask about topics the designer has already covered in previous answers.
+const SYSTEM_PROMPT = `You are an editorial interviewer for a design magazine. Based on the designer's answer below, generate follow-up questions that dig deeper into the most interesting aspects of their work.
+
+Focus on: specific design decisions that reveal process, material relationships that tell a story, moments of evolution during the project, and spatial experiences. Ask about ARRIVALS, not departures — "What clicked?" not "Why did you reject alternatives?" Frame questions to elicit quotable, publishable answers. Be specific — reference actual products, rooms, or details. Keep each under 180 characters. Do not repeat or rephrase the original question. Do NOT ask about topics the designer has already covered in previous answers.
 
 Optionally, provide a brief acknowledgment sentence (1-2 sentences, under 150 characters) that naturally transitions to the follow-up questions. This should feel conversational and acknowledge what the designer shared.
 
@@ -281,7 +283,7 @@ export async function POST(
       prompt += `\nFor each remaining question affected by prior answers, add to "questionUpdates": { id, status: "covered"|"morphed", morphedText? }. Morph (don't skip) questions the designer partially addressed — reference what they said and ask about the new angle.`;
     }
 
-    prompt += `\n\nGenerate 0-2 follow-up questions that would help draw out a richer narrative from this answer. Only ask when something is interesting or vague. Keep each under 120 characters. Build on what the designer said — reference specific details from their answer.`;
+    prompt += `\n\nGenerate 0-2 follow-up questions that dig deeper into the most interesting aspects of this answer. Reference specific products, rooms, or details from what the designer said. Frame questions to elicit quotable, publishable answers. Ask about arrivals ("What clicked?"), not departures ("Why not X?"). Keep each under 180 characters.`;
 
     // Run answer digestion for adaptive follow-up context
     const vendorNames = taggedProducts
@@ -441,7 +443,7 @@ export async function POST(
           prompt: typeof fu?.prompt === "string" ? fu.prompt.trim() : "",
         }))
         .filter((fu: any) => {
-          return fu.prompt.length > 0 && fu.prompt.length <= 120;
+          return fu.prompt.length > 0 && fu.prompt.length <= 180;
         })
         .slice(0, 2); // Hard cap at 2 follow-ups
     }

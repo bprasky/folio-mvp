@@ -274,40 +274,31 @@ function formatAnswers(qaList: Array<{ q: string; a: string }>): string {
 // IMPROVED PROMPTS
 // ============================================================================
 
-const EDITORIAL_SYSTEM_PROMPT = `You are an expert interior design editorial writer for a prestigious design publication.
+const EDITORIAL_SYSTEM_PROMPT = `You are a senior writer for a prestigious design magazine, writing a feature article about an interior design project. Your writing style is:
 
-YOUR EXPERTISE:
-- Writing compelling narratives about residential interior design
-- Understanding spatial flow and room relationships
-- Connecting design decisions to lived experience
-- Weaving product selections naturally into storytelling
-- Creating room-by-room narratives that flow cohesively
+- Observational and immersive, like walking through the space with the designer
+- Focused on design DECISIONS and the reasoning behind them, not product specifications
+- Weaving products into narrative naturally — they emerge in context, not as a list
+- Creating a sense of place: how the space feels, how elements relate to each other
+- Finding the story arc: what was the challenge, what was the breakthrough, what makes this space singular
+- Respectful of craft, focused on work not personality
 
-WRITING STYLE:
-- Professional yet warm and engaging
-- Specific and detail-oriented (mention materials, colors, textures)
-- Context-driven (explain WHY design choices were made)
-- Story-focused (how the space serves the people who live there)
-- Avoid generic phrases like "creates a dynamic flow" or "transforms the space"
-- Use concrete, sensory details instead of abstract descriptors
+You must AVOID:
+- The pattern of "Product X does Y because Z" repeated for each item
+- Sequential product descriptions (product → explanation → next product → explanation)
+- Generic design language ("thoughtfully curated", "deliberately chosen", "seamlessly blends", "creates a dynamic flow", "transforms the space")
+- Treating the article as a specification document
+- Mentioning every single tagged product — only include products that serve the narrative
+- Promotional or inflated language — be observational, not promotional
 
-STRUCTURAL REQUIREMENTS:
-- Lead (kicker + deck): Set the overall design philosophy and main narrative
-- Room-by-room narrative: Organize content by spatial progression
-- Each room section should include:
-  * The room's purpose and how it's used
-  * Key design decisions and materials
-  * Specific products and why they were chosen
-  * How the room connects to adjacent spaces
-- Pull quotes: Extract 1-2 meaningful designer quotes about philosophy or key decisions
-- Materials ledger: Comprehensive list of tagged products
+NARRATIVE STRUCTURE:
+- Open with the space's defining tension or idea (not a product list)
+- Build through the design logic: how decisions cascaded from one to the next
+- Let products appear naturally as supporting evidence for design decisions
+- Close with the emotional or experiential quality of the finished space
+- Organize by room/space, but let the narrative flow between rooms naturally
 
-CRITICAL RULES:
-- ALWAYS organize narrative by room/space
-- ALWAYS attribute products to their specific room context
-- ALWAYS explain the reasoning behind design choices
-- NEVER use generic filler phrases
-- NEVER separate products from their spatial context`;
+The article should make a reader want to visit this space, not inventory it.`;
 
 function buildEditorialPrompt({
   project,
@@ -326,136 +317,112 @@ function buildEditorialPrompt({
   imageOrder: string[];
   materialsLedger?: { items: Array<{ name: string; productId?: string }> };
 }): string {
-  // Organize answers by category
-  const answersByCategory = groupAnswersByCategory(answers, followups);
-  
+  // Separate Layer 1 (base) and Layer 2 (follow-up/deeper) answers
+  const hasFollowups = followups && followups.length > 0;
+
   // Build room-based context
   const roomContexts = Object.entries(imagesByRoom).map(([room, images]) => {
     const products = productsByRoom[room] || [];
     return {
       room,
       images: images.length,
-      products: products.map(p => p.name),
+      products: products.map(p => `${p.name}${p.vendor ? ` (${p.vendor})` : ''}`),
       imageIds: images.map(img => img.id),
     };
   });
 
   const materialsList = (materialsLedger?.items ?? []).map(i => i.name).join(', ');
 
-  return `# Project: ${project.title}
+  // Format all interview responses as a conversation, not categorized
+  const allQA = [...answers, ...(followups || [])];
+  const interviewText = allQA.map(qa => `Q: ${qa.q}\nA: ${qa.a}`).join('\n\n');
 
-## Designer Interview Responses
+  // Determine narrative depth instruction based on interview depth
+  const depthInstruction = hasFollowups
+    ? `The designer provided both initial responses and deeper follow-up answers. Use the follow-up answers for richer material — they contain the specific stories, reasoning, and evolution behind decisions. Write a full-depth feature.`
+    : `Only initial interview responses are available. Write a tighter, more observational piece — focus on what the space achieves and let the design decisions speak through specific details rather than extended backstory.`;
 
-### Design Philosophy & Vision
-${formatAnswers(answersByCategory.philosophy)}
+  return `Write a feature article about this project.
 
-### Client & Project Context  
-${formatAnswers(answersByCategory.client)}
+## Designer's Interview Responses
+${interviewText}
 
-### Material & Color Choices
-${formatAnswers(answersByCategory.materials)}
+## Project Details
+- Project: ${project.title}
+- Rooms: ${roomContexts.map(r => r.room).join(', ')}
+- Products tagged: ${materialsList || 'None'}
 
-### Spatial Decisions
-${formatAnswers(answersByCategory.spatial)}
-
-### Additional Context
-${formatAnswers(answersByCategory.other)}
-
-## Project Organization
-
-### Rooms/Spaces:
-${roomContexts.map(r => `
-**${r.room}**
-- Images: ${r.images}
-- Featured products: ${r.products.length > 0 ? r.products.join(', ') : 'None'}
-- Image IDs: ${r.imageIds.join(', ')}
-`).join('\n')}
+### Room Organization
+${roomContexts.map(r => `**${r.room}** — ${r.images} images, products: ${r.products.length > 0 ? r.products.join(', ') : 'none'}\n  Image IDs: ${r.imageIds.join(', ')}`).join('\n')}
 
 ### Available Images (in order):
 ${imageOrder.join(', ')}
 
-### All Tagged Products:
-${materialsList || 'None'}
+## Narrative Depth
+${depthInstruction}
 
-## Output Requirements
+## What to Generate
 
-Generate a structured editorial in this EXACT format:
+Produce a JSON object with this structure:
 
 {
   "lead": {
-    "kicker": "One-line project essence (8-12 words)",
-    "deck": "2-3 sentence introduction setting up the overall narrative"
+    "kicker": "A headline capturing the project's singular idea — not generic (8-12 words)",
+    "deck": "1-2 sentences that set up the story. What makes this project worth reading about?"
   },
   "sections": [
-    {
-      "type": "narrative",
-      "body": "First narrative paragraph about the overall design approach..."
-    },
-    {
-      "type": "narrative", 
-      "body": "Second narrative paragraph about key materials and selections..."
-    },
-    {
-      "type": "pullquote",
-      "quote": "Meaningful designer quote about philosophy or key decision"
-    },
-    {
-      "type": "narrative",
-      "body": "Third narrative paragraph about spatial flow and room relationships..."
-    }
+    { "type": "narrative", "body": "..." },
+    { "type": "pullquote", "quote": "..." },
+    { "type": "narrative", "body": "..." }
   ],
   "galleryChapters": [
     {
-      "title": "Room/Space Name",
-      "imageIds": ["uuid1", "uuid2"],
-      "body": [
-        "First paragraph: Introduce the room and its purpose",
-        "Second paragraph: Describe key design moves and materials", 
-        "Third paragraph: Explain specific product choices and why they work",
-        "Additional paragraphs as needed to fully tell the room's story"
-      ]
+      "title": "Room Name",
+      "imageIds": ["exact-uuid-from-list"],
+      "body": ["paragraph1", "paragraph2", "paragraph3"]
     }
-    // One chapter per room/major space
   ],
-  "pullQuotes": [
-    "Meaningful designer quote about philosophy or key decision"
-  ],
-  "credits": [
-    { "role": "Designer", "name": "Designer Name" },
-    { "role": "Photographer", "name": null }
-  ],
+  "pullQuotes": ["1-2 quotes that stand alone as insights — no context needed"],
+  "credits": [{ "role": "Designer", "name": "Designer Name" }, { "role": "Photographer", "name": null }],
   "materialsLedger": {
-    "items": [
-      {
-        "name": "Product Name",
-        "finish": "finish/color",
-        "note": "Vendor: Vendor Name | Used in: Room Name",
-        "productId": "uuid",
-        "vendorId": "uuid"
-      }
-    ]
+    "items": [{ "name": "Product Name", "finish": "finish/color", "note": "Vendor: Name | Used in: Room", "productId": "uuid", "vendorId": "uuid" }]
   },
   "mode": "recomposition"
 }
 
-CRITICAL INSTRUCTIONS:
-1. Create 3-7 narrative sections in the "sections" array (these provide overall context)
-2. Create ONE galleryChapter per room/space listed above
-3. Title each chapter with the room name (exactly as shown)
-4. In each chapter's body array, include 2-4 paragraphs that explain:
-   - How the room is used
-   - Key design decisions
-   - Materials and finishes
-   - Specific products and their role (mention them by exact name)
-5. Assign imageIds to the relevant room chapter (use EXACT IDs from the room's Image IDs list)
-6. Ensure narrative flows logically through the space
-7. Ground every product mention in its spatial context
-8. Make the deck and body engaging and specific (no generic phrases)
-9. Pull quotes should be actual designer insights from the interview
-10. Ensure materials ledger includes room context in notes (format: "Vendor: [name] | Used in: [room]")
-11. Write 600-900 words total across all sections and chapters (approximately 150-200 words per room chapter)
+## Writing Instructions
 
-Begin generation now.`;
+FOR THE SECTIONS ARRAY (3-5 narrative sections + 1-2 pullquotes):
+- Open with the space's defining tension, challenge, or idea — NOT with a product
+- Build through design logic: how one decision led to the next
+- Let products emerge as evidence within the story, not as items in a catalog
+- Close with the experiential quality of the finished space
+- Every paragraph should have a POINT — a design insight, a tension resolved, a relationship revealed
+- Do NOT follow the pattern: name product → explain product → next product
+
+FOR GALLERY CHAPTERS (one per room):
+- 2-4 paragraphs per room telling that room's story
+- How the room is experienced, what decisions shaped it, how it connects to adjacent spaces
+- Products appear in context of decisions, not as standalone descriptions
+- Use EXACT image IDs from the room's list above
+
+FOR PULL QUOTES:
+- Must stand alone without context and sound insightful
+- Prefer the designer's actual words from the interview when possible
+- If paraphrasing, capture their voice and specific reasoning
+
+FOR THE MATERIALS LEDGER:
+- Comprehensive product list separate from the narrative
+- Include vendor and room context in notes (format: "Vendor: [name] | Used in: [room]")
+
+CRITICAL RULES:
+- 600-900 words total across sections and chapters
+- Title each gallery chapter with the room name exactly as listed
+- Products serve the narrative — the narrative does not serve the products
+- No generic design language: ban "thoughtfully curated", "seamlessly blends", "creates a dynamic flow"
+- The article should read like a magazine feature, not a product specification sheet
+
+Begin.`;
 }
 
 function validateRoomStructure(

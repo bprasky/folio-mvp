@@ -47,9 +47,8 @@ export function frameFollowupsPrompt(ctx: {
     `Project: ${ctx.projectTitle}${ctx.city ? ` (${ctx.city})` : ''}${ctx.clientType ? ` – ${ctx.clientType}` : ''}`,
     `Images:\n${ctx.imagesCompact}`,
     `Tagged Products:\n${ctx.productsCompact}`,
-    `Designer Answers:\n${ctx.baseAnswers}`,
-    `Task: Generate 4–6 targeted, optional follow-up questions to clarify narrative, sourcing decisions, constraints, and craft.`,
-    `Format: JSON array of { id, prompt } with concise, neutral tone.`,
+    `Designer's Initial Answers:\n${ctx.baseAnswers}`,
+    `Task: Based on these answers, generate follow-up questions that dig into the most interesting threads. Reference specific products, rooms, materials, or decisions from the answers. Each question should set up an answer the designer would be proud to publish.`,
   ].join('\n\n');
 }
 
