@@ -7,6 +7,7 @@ import { prisma } from '@/lib/prisma';
 import { assertProjectView } from '@/lib/authz/access';
 import { resolveSelectionToProduct } from '@/lib/tagging/resolveSelectionToProduct';
 import { ensureProductForSelection } from '@/lib/tagging/ensureProductForSelection';
+import { estimateProductCoordinates, matchProductsToLocations } from '@/lib/tagging/estimateProductCoordinates';
 
 type CreatedTag = {
   productTagId: string;
@@ -108,6 +109,7 @@ export async function POST(
         images: {
           select: {
             id: true,
+            url: true,
             room: true,
             name: true,
             aiSpaces: true,
@@ -255,7 +257,17 @@ export async function POST(
 
         if (resolved.length === 0) continue;
 
-        const positions = computeTagPositions(resolved.length);
+        // Use vision API to estimate product coordinates on this image
+        const productNamesForImage = resolved.map((r) => r.productName ?? 'unknown product');
+        let positions: Array<{ x: number; y: number }>;
+        try {
+          const detections = await estimateProductCoordinates(image.url, productNamesForImage);
+          positions = matchProductsToLocations(productNamesForImage, detections);
+          console.log(`[auto-tag] Vision estimated ${detections.length} detections for image ${image.id.slice(0, 8)}`);
+        } catch (visionErr) {
+          console.warn('[auto-tag] Vision estimation failed, using fallback positions:', visionErr);
+          positions = computeTagPositions(resolved.length);
+        }
 
         for (let i = 0; i < resolved.length; i++) {
           const { selectionId, productId, productName } = resolved[i];
@@ -342,7 +354,17 @@ export async function POST(
 
       if (resolved.length === 0) continue;
 
-      const positions = computeTagPositions(resolved.length);
+      // Use vision API for second-pass generated images too
+      const productNamesForGen = resolved.map((r) => r.productName ?? 'unknown product');
+      let positions: Array<{ x: number; y: number }>;
+      try {
+        const detections = await estimateProductCoordinates(image.url, productNamesForGen);
+        positions = matchProductsToLocations(productNamesForGen, detections);
+        console.log(`[auto-tag] Second pass: vision estimated ${detections.length} detections for image ${image.id.slice(0, 8)}`);
+      } catch (visionErr) {
+        console.warn('[auto-tag] Second pass: vision estimation failed, using fallback:', visionErr);
+        positions = computeTagPositions(resolved.length);
+      }
       for (let i = 0; i < resolved.length; i++) {
         const { selectionId, productId, productName } = resolved[i];
         const { x, y } = positions[i];
