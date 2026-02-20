@@ -204,6 +204,13 @@ export async function PATCH(
       }
       
       // 3. Auto-populate credits if missing or incomplete
+      // Note: Credits now use the CreditEntry schema from creditsSchema.ts which supports
+      // multi-party credits (architect, contractor, photographer, stylist, etc.).
+      // The CreditsEditor on the preview page allows designers to add credits before/after
+      // generation. This auto-population is a fallback for posts that go through publish
+      // without any credits being set.
+      // Future (Super Articles): Credits will include userId linking to contributor
+      // InterviewSessions and contributionStatus tracking.
       let currentCredits = post.credits;
       if (!currentCredits) {
         // Try to get credits from expandedBlocks first

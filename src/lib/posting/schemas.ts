@@ -124,6 +124,10 @@ export const BlocksSchema = z.object({
     role: z.enum(["DESIGNER","VENDOR"]).default("DESIGNER"),
   })).max(8).optional(),
   data: z.record(z.string(), z.any()).optional(),
+  // Note: This is the AI-generated credits within expandedBlocks. The canonical credits
+  // source is ProjectPost.credits (Json field) which uses the richer CreditEntry schema
+  // from creditsSchema.ts (with userId, organizationId, url). Rendering components
+  // should prefer ProjectPost.credits over expandedBlocks.credits.
   credits: z.array(z.object({
     role: z.string().max(60),
     name: z.string().max(100).nullable().optional(),
