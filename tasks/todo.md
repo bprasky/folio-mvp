@@ -1,83 +1,44 @@
-# Interview Flow Implementation
+# Align Article Format to Luca's House Canonical Layout
 
-## Completed
-- [x] Created interview component directory structure (`src/components/interview/`)
-- [x] Implemented types (`types.ts`)
-- [x] Implemented shared components:
-  - InterviewQuestion.tsx (italic styling user likes)
-  - ProgressIndicator.tsx (dots, not counters)
-  - ModeSwitcher.tsx
-  - EditorialPreview.tsx
-- [x] Implemented ModeSelection.tsx (voice vs text cards)
-- [x] Implemented TextInterview flow:
-  - TextInterview.tsx (container)
-  - QuestionCard.tsx (single question per screen)
-  - FollowUpTransition.tsx (AI thinking state)
-- [x] Implemented useInterviewSession hook
-- [x] Created API routes:
-  - POST /api/interview/start
-  - POST /api/interview/respond
-  - POST /api/interview/generate-draft
-- [x] Implemented InterviewFlow.tsx (main orchestrator)
-- [x] Created VoiceInterview placeholder components (Phase 2)
+## Problem
+The `generateEditorialDraft.ts` (old path used by `getOrCreateEditorialDraft.ts`) produces a flat, impoverished block structure compared to the canonical format produced by `composeEditorialHard()` in the generate route.
 
-## Phase 2 (Voice Interview)
-- [ ] Implement actual voice recording
-- [ ] Integrate with LiveKit or similar
-- [ ] Implement TTS for AI questions
-- [ ] Real-time transcription
+### Canonical Format (Luca's House / composeEditorialHard output):
+- `lead: { kicker, deck }` — proper headline + subtitle
+- Multiple `galleryChapters` organized by room, each with title, body[], imageIds[], optional pullQuote
+- `pullQuotes: string[]`
+- `credits: [{ role, name }]`
+- `materialsLedger: { items: [{ name, finish?, note?, productId?, vendorId? }] }`
+- `mode: 'recomposition'`
 
-## Interview Intelligence System (Feb 2026)
+### Broken Format (old generateEditorialDraft / parseNarrativeToBlocks):
+- `lead: { deck }` — NO kicker, no title
+- Single flat `galleryChapter` with project title, only 3 paragraphs, max 4 images
+- `method: string[]` — raw truncated answers as method items
+- `qa: [{ q: "Q", a: ... }]` — bare "Q" placeholder
+- Empty `credits: []`
+- No `mode` set
 
-### Completed
-- [x] **Phase 0A**: Fix `recordAtelierSignal()` — `value` → `metadata: { value }` (schema mismatch)
-- [x] **Phase 0B**: Fix all 8 signal callers — `PRODUCT_TAG` → `TAG`, `PROJECT` → `INTERVIEW`
-- [x] **Phase 0D**: Remove "Unknown Brand" fallbacks from interview context, add warning logs
-- [x] **Phase 1A**: Create `digestInterviewAnswer.ts` — heuristic richness scoring, philosophy/pairing/vendor/client detection
-- [x] **Phase 1B**: Integrate digestion into `processInterviewAnswers.ts` — process ALL answers, emit Atelier signals
-- [x] **Phase 1C**: Plug digestion into `followups/single` — inject thin/thread/philosophy/vendor context into LLM prompt
-- [x] **Phase 2**: Create `buildInterviewBrief.ts` — project-level aesthetic aggregation, designer context, Claude vision narrative synthesis, caching
-- [x] **Phase 3**: AI question generation — quality gate, template fallback, feature-gated via `INTERVIEW_AI_QUESTIONS=true`
-- [x] **Phase 5**: Voice mode enrichment — ContextManager narrative brief, angle tracking, ConversationManager brief loading
-- [x] **Phase 6**: Cross-interview learning signals — per-answer + completion summary signals (query/aggregation deferred)
+## Fixes
 
-### Pending
-- [ ] **Phase 0D (remaining)**: Vendor data backfill script (diagnose null vendor pipeline, re-extract from sourceUrl)
-- [ ] Cross-interview learning loop (deferred until 10+ interviews accumulated)
-- [ ] Verification: end-to-end test with real project data
+### Fix 1: `generateEditorialDraft.ts` - `toFallbackBlocks()`
+- [x] Add `kicker` to lead block (use project title or designer name)
+- [x] Generate multiple gallery chapters (group images by room if available)
+- [x] Set `mode: 'recomposition'`
+- [x] Populate credits with designer info
+- [x] Don't put raw answers in method/qa
 
-### New Files
-- `src/lib/interview/digestInterviewAnswer.ts`
-- `src/lib/interview/buildInterviewBrief.ts`
+### Fix 2: `generateEditorialDraft.ts` - `parseNarrativeToBlocks()`
+- [x] Extract kicker from article headline
+- [x] Distribute images across multiple chapters instead of stuffing all into one
+- [x] Generate proper credits from input.designer
+- [x] Set `mode: 'recomposition'`
+- [x] Remove placeholder "Q" in qa items
 
-### Modified Files
-- `src/lib/atelier/signals.ts`
-- `src/app/api/tag-product-to-image/route.ts`
-- `src/lib/editorial/processInterviewAnswers.ts`
-- `src/app/api/posting/project/[projectId]/interview/followups/single/route.ts`
-- `src/lib/interview/generateQuestions.ts`
-- `src/lib/interview/index.ts`
-- `src/lib/interview/contextLevel.ts`
-- `services/interview-orchestration/src/conversation/context.ts`
-- `services/interview-orchestration/src/conversation/manager.ts`
+### Fix 3: `getOrCreateEditorialDraft.ts` - fallback block generation
+- [x] Add kicker to lead block
+- [x] Set `mode: 'recomposition'`
 
-## Integration Notes
-- Feature flag: Check for `INTERVIEW_V2` to enable new flow
-- The new components are in `src/components/interview/`
-- Existing interview code is in `src/components/posting/interview/` (not modified)
-- API routes use in-memory session storage (demo) - production should use Redis/DB
-
-## Usage
-
-```tsx
-import { InterviewFlow } from "@/components/interview";
-
-<InterviewFlow
-  projectId={projectId}
-  projectName="My Project"
-  images={images}
-  onComplete={(draftId) => console.log("Draft created:", draftId)}
-  onCancel={() => setOpen(false)}
-  initialMode="text" // optional, skips mode selection
-/>
-```
+## Verification
+- [x] Build passes
+- [x] Blocks from both paths match canonical schema shape

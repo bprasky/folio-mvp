@@ -5,7 +5,10 @@ type CreditsSectionProps = {
 };
 
 export function CreditsSection({ post }: CreditsSectionProps) {
-  const credits = post?.credits && Array.isArray(post.credits) ? post.credits : [];
+  // Check both top-level credits and expandedBlocks.credits for compatibility
+  const topCredits = post?.credits && Array.isArray(post.credits) ? post.credits : [];
+  const blockCredits = post?.expandedBlocks?.credits && Array.isArray(post.expandedBlocks.credits) ? post.expandedBlocks.credits : [];
+  const credits = topCredits.length > 0 ? topCredits : blockCredits;
   const author = post?.project?.designer;
 
   if (credits.length === 0 && !author?.name) return null;
