@@ -22,7 +22,6 @@ import { CREDIT_ROLE_OPTIONS, type CreditEntry } from "@/lib/posting/creditsSche
 interface CreditsEditorProps {
   credits: CreditEntry[];
   onChange: (credits: CreditEntry[]) => void;
-  designerName?: string;
   saving?: boolean;
 }
 
@@ -40,7 +39,7 @@ type EditingCredit = {
 
 const emptyForm: EditingCredit = { role: "", customRole: "", name: "", url: "" };
 
-export function CreditsEditor({ credits, onChange, designerName, saving }: CreditsEditorProps) {
+export function CreditsEditor({ credits, onChange, saving }: CreditsEditorProps) {
   const [adding, setAdding] = useState(false);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [form, setForm] = useState<EditingCredit>({ ...emptyForm });
@@ -265,7 +264,7 @@ function CreditForm({
         value={form.url}
         onChange={(e) => onChange({ ...form, url: e.target.value })}
         placeholder="Website URL (optional)"
-        className="w-full rounded-md border border-[var(--ridge-outer)] bg-white px-2 py-1.5 text-sm text-[var(--text-tertiary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
+        className="w-full rounded-md border border-[var(--ridge-outer)] bg-white px-2 py-1.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
       />
       <div className="flex justify-end gap-2">
         <button

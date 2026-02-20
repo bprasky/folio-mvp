@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/options";
 import { prisma } from "@/lib/prisma";
-import { assertProjectEdit } from "@/lib/authz/access";
+import { assertProjectView, assertProjectEdit } from "@/lib/authz/access";
 import { CreditsArraySchema, parseCredits } from "@/lib/posting/creditsSchema";
 
 /**
@@ -20,6 +20,7 @@ export async function GET(
     }
 
     const { projectId } = params;
+    await assertProjectView(session.user.id, projectId);
 
     const post = await prisma.projectPost.findUnique({
       where: { projectId },
@@ -44,6 +45,9 @@ export async function GET(
 
     return NextResponse.json({ credits, designerName });
   } catch (error: any) {
+    if (error.message === "Forbidden") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
     console.error("[credits/GET] Error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }

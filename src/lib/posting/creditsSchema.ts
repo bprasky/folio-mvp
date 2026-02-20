@@ -31,7 +31,7 @@ export const CreditEntrySchema = z.object({
   name: z.string().min(1).max(100),
   userId: z.string().optional(),
   organizationId: z.string().optional(),
-  url: z.string().url().optional().or(z.literal("")),
+  url: z.string().url().optional(),
 });
 
 export const CreditsArraySchema = z.array(CreditEntrySchema);
@@ -42,12 +42,20 @@ export type Credits = CreditEntry[];
 /**
  * Validate and clean credits array from unknown input (e.g. Json field).
  * Returns only valid entries; silently drops malformed ones.
+ *
+ * Legacy credits from the auto-populate logic may have `name: null` — these
+ * are placeholder entries (e.g. "Photographer: null") and are intentionally
+ * dropped since they have no display value.
  */
 export function parseCredits(raw: unknown): Credits {
   if (!Array.isArray(raw)) return [];
   const result: Credits = [];
   for (const item of raw) {
-    const parsed = CreditEntrySchema.safeParse(item);
+    if (!item || typeof item !== "object") continue;
+    // Normalize: strip empty-string urls before validation
+    const cleaned = { ...item };
+    if (cleaned.url === "") delete cleaned.url;
+    const parsed = CreditEntrySchema.safeParse(cleaned);
     if (parsed.success) {
       result.push(parsed.data);
     }

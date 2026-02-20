@@ -330,6 +330,7 @@ export default function ProjectPostPreviewPage() {
   }
 
   const handleCreditsChange = useCallback(async (updated: CreditEntry[]) => {
+    const previous = credits;
     setCredits(updated);
     setCreditsSaving(true);
     try {
@@ -348,13 +349,16 @@ export default function ProjectPostPreviewPage() {
         } : prev);
       } else {
         console.error("[preview] Failed to save credits", res.status);
+        // Revert optimistic update on failure
+        setCredits(previous);
       }
     } catch (err) {
       console.error("[preview] Error saving credits:", err);
+      setCredits(previous);
     } finally {
       setCreditsSaving(false);
     }
-  }, [projectId]);
+  }, [projectId, credits]);
 
   if (!POSTING_V1_ENABLED) {
     return (
@@ -453,7 +457,6 @@ export default function ProjectPostPreviewPage() {
         <CreditsEditor
           credits={credits}
           onChange={handleCreditsChange}
-          designerName={post.designer?.name}
           saving={creditsSaving}
         />
       </div>
