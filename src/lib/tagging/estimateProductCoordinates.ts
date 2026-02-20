@@ -139,7 +139,7 @@ export function matchProductsToLocations(
 }
 
 /** Evenly-distributed fallback positions (same logic as original computeTagPositions) */
-function computeFallbackPositions(count: number): Array<{ x: number; y: number }> {
+export function computeFallbackPositions(count: number): Array<{ x: number; y: number }> {
   if (count === 1) return [{ x: 50, y: 50 }];
 
   const yCenter = 50;

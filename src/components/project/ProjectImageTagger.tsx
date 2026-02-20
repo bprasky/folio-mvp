@@ -171,13 +171,9 @@ export function ProjectImageTagger({ projectId, onClose }: Props) {
         setPendingDot(null);
         setShowProductSearch(false);
         setSelectedProduct(null);
-        // Refresh image data
+        // Refresh image data — the useEffect watching `images` will
+        // re-sync activeImage on the next render, so no need to do it here.
         await fetchImages();
-        // Re-select the active image from the refreshed list
-        setActiveImage((prev) => {
-          if (!prev) return null;
-          return images.find((img) => img.id === prev.id) ?? prev;
-        });
       }
     } catch (err) {
       console.error("[ProjectImageTagger] save error:", err);

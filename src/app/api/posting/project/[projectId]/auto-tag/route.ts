@@ -7,7 +7,7 @@ import { prisma } from '@/lib/prisma';
 import { assertProjectView } from '@/lib/authz/access';
 import { resolveSelectionToProduct } from '@/lib/tagging/resolveSelectionToProduct';
 import { ensureProductForSelection } from '@/lib/tagging/ensureProductForSelection';
-import { estimateProductCoordinates, matchProductsToLocations } from '@/lib/tagging/estimateProductCoordinates';
+import { estimateProductCoordinates, matchProductsToLocations, computeFallbackPositions } from '@/lib/tagging/estimateProductCoordinates';
 
 type CreatedTag = {
   productTagId: string;
@@ -40,26 +40,6 @@ function parseGeneratedMetadata(name: string | null): { type: string; selectionI
     // Not JSON metadata, just a regular filename
   }
   return null;
-}
-
-/**
- * Compute evenly-distributed tag coordinates for N tags on an image.
- * Returns percentage-based (0-100) positions in a grid layout.
- */
-function computeTagPositions(count: number): Array<{ x: number; y: number }> {
-  if (count === 1) return [{ x: 50, y: 50 }];
-
-  // Spread tags in a horizontal row at the center, spaced evenly
-  const yCenter = 50;
-  const positions: Array<{ x: number; y: number }> = [];
-  const padding = 15; // percent from edges
-  const span = 100 - 2 * padding;
-
-  for (let i = 0; i < count; i++) {
-    const x = count === 1 ? 50 : padding + (span * i) / (count - 1);
-    positions.push({ x: Math.round(x * 100) / 100, y: yCenter });
-  }
-  return positions;
 }
 
 /**
@@ -266,7 +246,7 @@ export async function POST(
           console.log(`[auto-tag] Vision estimated ${detections.length} detections for image ${image.id.slice(0, 8)}`);
         } catch (visionErr) {
           console.warn('[auto-tag] Vision estimation failed, using fallback positions:', visionErr);
-          positions = computeTagPositions(resolved.length);
+          positions = computeFallbackPositions(resolved.length);
         }
 
         for (let i = 0; i < resolved.length; i++) {
@@ -363,7 +343,7 @@ export async function POST(
         console.log(`[auto-tag] Second pass: vision estimated ${detections.length} detections for image ${image.id.slice(0, 8)}`);
       } catch (visionErr) {
         console.warn('[auto-tag] Second pass: vision estimation failed, using fallback:', visionErr);
-        positions = computeTagPositions(resolved.length);
+        positions = computeFallbackPositions(resolved.length);
       }
       for (let i = 0; i < resolved.length; i++) {
         const { selectionId, productId, productName } = resolved[i];
