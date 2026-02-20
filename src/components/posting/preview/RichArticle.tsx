@@ -1,6 +1,6 @@
 "use client";
 
-import { Blocks } from "@/lib/posting/schemas";
+import { Blocks, normalizePullQuote } from "@/lib/posting/schemas";
 import Image from "next/image";
 import { useMemo, useState, useEffect } from "react";
 import InlineTagLink from '@/components/posting/interactive/InlineTagLink';
@@ -135,7 +135,11 @@ export function RichArticle({
 
   // Extract narrative paragraphs and pull quotes from galleryChapters[0].body
   const narrativeParagraphs = article.galleryChapters?.[0]?.body || [];
-  const pullQuotes = article.pullQuotes || [];
+  // Normalize and deduplicate pull quotes (handles both string and {text, context} formats)
+  const pullQuotes = (article.pullQuotes || [])
+    .map((q: any) => normalizePullQuote(q))
+    .filter((q) => q.text?.trim())
+    .filter((q, i, arr) => arr.findIndex(other => other.text.trim() === q.text.trim()) === i);
 
   // Check if we have any content to show
   const hasContent = narrativeParagraphs.length > 0 || pullQuotes.length > 0;
@@ -203,8 +207,13 @@ export function RichArticle({
           {pullQuotes.length > 0 && (
             <div className="space-y-6 my-8">
               {pullQuotes.map((quote, idx) => (
-                <blockquote key={`quote-${idx}`} className="border-l-4 border-[var(--ridge-outer)] pl-6 italic text-lg text-[var(--text-secondary)]">
-                  "{quote}"
+                <blockquote key={`quote-${idx}`} className="border-l-4 border-[var(--ridge-outer)] pl-6 text-lg text-[var(--text-secondary)]">
+                  {quote.context && (
+                    <span className="block text-xs uppercase tracking-wider text-[var(--text-tertiary)] mb-2 not-italic">
+                      {quote.context}
+                    </span>
+                  )}
+                  <span className="italic">&ldquo;{quote.text}&rdquo;</span>
                 </blockquote>
               ))}
             </div>
