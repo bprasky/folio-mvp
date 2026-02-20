@@ -5,7 +5,7 @@ type LLMResult<T> =
 const FORCE_FALLBACK = (process.env.POSTING_FORCE_FALLBACK ?? '').toLowerCase() === 'true';
 
 export async function callLLM<T>(
-  fn: () => Promise<T>, // your actual OpenAI call
+  fn: () => Promise<T>, // your actual LLM call
   opts: {
     modelName: string;
     maxRetries?: number;

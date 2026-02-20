@@ -3,7 +3,7 @@
  * Produces expandedBlocks format compatible with ProjectPost
  */
 
-import OpenAI from 'openai';
+import Anthropic from '@anthropic-ai/sdk';
 import { callLLM } from '@/lib/posting/llmClient';
 import { Round1Response, CollaborationQuestion } from '../questions/round1';
 import { Round2Question } from '../questions/generateRound2';
@@ -79,9 +79,7 @@ Output JSON with:
 - suggestedTags: Array of relevant topic tags`;
 
 async function generateNarrativeWithLLM(data: InterviewData): Promise<GeneratedNarrative> {
-  const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-  });
+  const anthropic = new Anthropic();
 
   // Compile all Q&A into a structured context
   const formatQA = (
@@ -128,24 +126,24 @@ Craft a compelling narrative that weaves both perspectives into a cohesive story
 
   const result = await callLLM(
     async () => {
-      const completion = await openai.chat.completions.create({
-        model: 'gpt-4o',
+      const message = await anthropic.messages.create({
+        model: 'claude-sonnet-4-20250514',
+        system: NARRATIVE_SYSTEM_PROMPT,
         messages: [
-          { role: 'system', content: NARRATIVE_SYSTEM_PROMPT },
           { role: 'user', content: userPrompt },
         ],
-        response_format: { type: 'json_object' },
         temperature: 0.8,
         max_tokens: 4000,
       });
 
-      const content = completion.choices[0]?.message?.content;
+      const content = message.content[0]?.type === 'text' ? message.content[0].text : null;
       if (!content) throw new Error('No content in response');
 
-      return JSON.parse(content);
+      const cleaned = content.replace(/```json\n?|\n?```/g, '').trim();
+      return JSON.parse(cleaned);
     },
     {
-      modelName: 'gpt-4o',
+      modelName: 'claude-sonnet-4-20250514',
       maxRetries: 2,
       contextHint: 'collaboration_narrative_assembly',
     }
@@ -266,9 +264,7 @@ export async function generateStoryMeta(
   vendorResponses: Round1Response[],
   designerResponses: Round1Response[]
 ): Promise<{ title: string; excerpt: string }> {
-  const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-  });
+  const anthropic = new Anthropic();
 
   // Get key quotes
   const vendorQuote = vendorResponses[0]?.answer?.slice(0, 200) || '';
@@ -276,13 +272,10 @@ export async function generateStoryMeta(
 
   const result = await callLLM(
     async () => {
-      const completion = await openai.chat.completions.create({
-        model: 'gpt-4o-mini',
+      const message = await anthropic.messages.create({
+        model: 'claude-sonnet-4-20250514',
+        system: 'Generate a compelling title and excerpt for a design collaboration story. Return JSON with "title" (max 80 chars) and "excerpt" (max 200 chars).',
         messages: [
-          {
-            role: 'system',
-            content: 'Generate a compelling title and excerpt for a design collaboration story. Return JSON with "title" (max 80 chars) and "excerpt" (max 200 chars).',
-          },
           {
             role: 'user',
             content: `Collaboration between ${vendorOrgName} (vendor) and ${designerName} (designer).
@@ -291,17 +284,17 @@ Vendor's perspective: "${vendorQuote}"
 Designer's perspective: "${designerQuote}"`,
           },
         ],
-        response_format: { type: 'json_object' },
         temperature: 0.7,
         max_tokens: 300,
       });
 
-      const content = completion.choices[0]?.message?.content;
+      const content = message.content[0]?.type === 'text' ? message.content[0].text : null;
       if (!content) throw new Error('No content');
-      return JSON.parse(content);
+      const cleaned = content.replace(/```json\n?|\n?```/g, '').trim();
+      return JSON.parse(cleaned);
     },
     {
-      modelName: 'gpt-4o-mini',
+      modelName: 'claude-sonnet-4-20250514',
       maxRetries: 1,
       contextHint: 'collaboration_story_meta',
     }

@@ -1,9 +1,9 @@
-import OpenAI from "openai";
+import Anthropic from "@anthropic-ai/sdk";
 import { BlocksSchema } from "./schemas";
 import { z } from "zod";
 import { callLLM } from "./llmClient";
 
-const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const client = new Anthropic();
 
 export const FOLIO_TONE = `
 Warm, confident, minimalist, design-literate. 
@@ -32,9 +32,7 @@ type GenInput = {
   correlationId?: string;
 };
 
-const OPENAI_ENABLED = !!process.env.OPENAI_API_KEY && process.env.OPENAI_ENABLED !== "false";
-const OPENAI_MAX_TOKENS = Number(process.env.OPENAI_MAX_TOKENS ?? 2000);
-const OPENAI_TIMEOUT_MS = Number(process.env.OPENAI_TIMEOUT_MS ?? 7000);
+const ANTHROPIC_ENABLED = !!process.env.ANTHROPIC_API_KEY && process.env.ANTHROPIC_ENABLED !== "false";
 
 // De-duplicate answers by content
 function deduplicateAnswers(answers: GenInput['answers']) {
@@ -209,7 +207,7 @@ ${contextText}
   let blocks: z.infer<typeof BlocksSchema>;
   let usedFallback = false;
 
-  if (!OPENAI_ENABLED) {
+  if (!ANTHROPIC_ENABLED) {
     console.warn('[posting/generate] LLM disabled, using fallback blocks', {
       projectId: input.project?.id,
       _cid,
@@ -217,21 +215,16 @@ ${contextText}
     blocks = toFallbackBlocks({ ...input, answers: uniqueAnswers });
     usedFallback = true;
   } else {
-    const modelName = process.env.OPENAI_MODEL || 'gpt-4o-mini';
-    
-    // Model sanity check
-    if (!/gpt|o\d|4|mini|omni/i.test(modelName)) {
-      console.warn('[posting] suspicious model name', { modelName, _cid });
-    }
+    const modelName = 'claude-sonnet-4-20250514';
 
     const llmResult = await callLLM(
       async () => {
-        return await client.chat.completions.create({
+        return await client.messages.create({
           model: modelName,
           temperature: 0.8,
-          max_tokens: OPENAI_MAX_TOKENS,
+          max_tokens: 2000,
+          system: `You are Folio, the voice of modern design storytelling. ${FOLIO_TONE}`,
           messages: [
-            { role: "system", content: `You are Folio, the voice of modern design storytelling. ${FOLIO_TONE}` },
             { role: "user", content: prompt },
           ],
         });
@@ -256,7 +249,7 @@ ${contextText}
       }
     } else {
       console.info('[generate] llm_ok', { _cid, model: llmResult.usedModel });
-      const article = llmResult.data.choices?.[0]?.message?.content ?? "";
+      const article = llmResult.data.content[0]?.type === 'text' ? llmResult.data.content[0].text : "";
       
       if (!article || article.trim().length === 0) {
         console.warn('[generate] empty_article; using fallback', { _cid });
