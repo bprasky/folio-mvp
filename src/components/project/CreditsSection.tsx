@@ -13,12 +13,15 @@
  * - Credits with contributionStatus === "contributed" could show a badge or icon.
  */
 
+import { parseCredits } from "@/lib/posting/creditsSchema";
+import type { CreditEntry } from "@/lib/posting/creditsSchema";
+
 type CreditsSectionProps = {
   post: any;
 };
 
 export function CreditsSection({ post }: CreditsSectionProps) {
-  const credits = post?.credits && Array.isArray(post.credits) ? post.credits : [];
+  const credits = parseCredits(post?.credits);
   const author = post?.project?.designer;
 
   if (credits.length === 0 && !author?.name) return null;
@@ -28,7 +31,7 @@ export function CreditsSection({ post }: CreditsSectionProps) {
       <div className="ridge-card px-6 py-5 md:px-8 md:py-6 space-y-4">
         {credits.length > 0 && (
           <div className="flex flex-wrap gap-x-6 gap-y-2 folio-meta text-[var(--text-secondary)]">
-            {credits.map((credit: any, idx: number) => {
+            {credits.map((credit: CreditEntry, idx: number) => {
               const href = credit.userId
                 ? `/designer/${credit.userId}`
                 : credit.url || undefined;
