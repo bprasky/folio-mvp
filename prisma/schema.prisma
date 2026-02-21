@@ -156,6 +156,7 @@ model User {
   // Contributor/Voice System relations
   contributions                  Contribution[]        @relation("UserContributions")
   contributorBadges              ContributorBadge[]    @relation("UserContributorBadges")
+  supplementalQuotes             SupplementalQuote[]   @relation("UserSupplementalQuotes")
   contributionCount              Int                   @default(0)
   publishedContributionCount     Int                   @default(0)
   contributorLevel               BadgeLevel?
@@ -3667,19 +3668,26 @@ model UserTasteProfile {
   @@map("user_taste_profiles")
 }
 
-// Layer 6: Supplemental Quotes - Designer micro-answers
+// Layer 6: Supplemental Quotes - Per-product, per-contributor commentary
+// These preserve the full uncompressed interview answers about specific products.
+// The AI editorial is the highlight reel; these are the director's commentary.
 model SupplementalQuote {
   id              String   @id @default(cuid())
   projectPostId   String
   productTagId    String?  // If quote is about a specific product
 
+  // Multi-party attribution
+  userId          String?  // Contributor who said this (designer, architect, contractor, vendor)
+  contributorRole String?  // Role at time of contribution: "Designer", "Architect", "Contractor", "Vendor"
+  user            User?    @relation("UserSupplementalQuotes", fields: [userId], references: [id], onDelete: SetNull)
+
   question        String
   answer          String   @db.Text
-  source          String   // 'welcome_back', 'trend_interview', 'user_question'
+  source          String   // 'interview', 'welcome_back', 'trend_interview', 'user_question'
 
   // Display control
   pinned          Boolean  @default(false)
-  displayLocation String?  // 'near_product', 'sidebar', 'end_of_post'
+  displayLocation String?  // 'near_product', 'sidebar', 'end_of_post', 'vendor_tab'
 
   createdAt       DateTime @default(now())
 
@@ -3688,6 +3696,7 @@ model SupplementalQuote {
 
   @@index([projectPostId])
   @@index([productTagId])
+  @@index([userId])
   @@map("supplemental_quotes")
 }
 

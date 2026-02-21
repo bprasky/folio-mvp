@@ -41,6 +41,21 @@ export async function getPostBySlug(slug: string) {
           },
         },
       },
+      // Per-product, per-contributor commentary for the Product Bank
+      supplementalQuotes: {
+        select: {
+          id: true,
+          question: true,
+          answer: true,
+          contributorRole: true,
+          userId: true,
+          productTagId: true,
+          pinned: true,
+          displayLocation: true,
+          source: true,
+        },
+        orderBy: { createdAt: "asc" },
+      },
     },
   });
 

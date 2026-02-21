@@ -3,9 +3,8 @@
 import { useMemo } from "react";
 import { SmartEditorialLayout } from "@/components/project/SmartEditorialLayout";
 import { ProjectAiFilmPanel } from "@/components/project/ProjectAiFilmPanel";
-import { MaterialsSection } from "@/components/project/MaterialsSection";
 import { CreditsSection } from "@/components/project/CreditsSection";
-import { ShopTheSpaceSection } from "@/components/project/ShopTheSpaceSection";
+import { ProductBank } from "@/components/project/ProductBank";
 import { ProjectImageGallery } from "@/components/project/ProjectImageGallery";
 import { ImageTagDots } from "@/components/project/ImageTagDots";
 
@@ -69,11 +68,13 @@ export function ImmersiveProjectPage({ post, modules }: Props) {
           {/* SMART EDITORIAL LAYOUT (CHAPTERS A–D) */}
           <SmartEditorialLayout post={post} />
 
-          {/* GLOBAL SHOP / GALLERY / MATERIALS / CREDITS */}
+          {/* GALLERY / PRODUCT BANK / CREDITS */}
           <div className="mt-8 flex flex-col gap-12">
-            <ShopTheSpaceSection post={post} />
             <ProjectImageGallery project={post.project} />
-            <MaterialsSection post={post} />
+            <ProductBank
+              post={post}
+              supplementalQuotes={post.supplementalQuotes}
+            />
             <CreditsSection post={post} />
           </div>
         </div>
