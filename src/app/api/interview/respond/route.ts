@@ -6,7 +6,7 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/options";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { randomUUID } from "crypto";
-import OpenAI from "openai";
+import Anthropic from "@anthropic-ai/sdk";
 
 /**
  * POST /api/interview/respond
@@ -26,10 +26,10 @@ const RequestSchema = z.object({
   inputMode: z.enum(["voice", "text"]),
 });
 
-// OpenAI client - only instantiate if API key is available
-let openai: OpenAI | null = null;
-if (process.env.OPENAI_API_KEY) {
-  openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+// Anthropic client - only instantiate if API key is available
+let anthropic: Anthropic | null = null;
+if (process.env.ANTHROPIC_API_KEY) {
+  anthropic = new Anthropic();
 }
 
 /**
@@ -39,17 +39,14 @@ async function generateFollowUp(
   questionText: string,
   answer: string
 ): Promise<{ text: string; context: string } | null> {
-  if (!openai) {
+  if (!anthropic) {
     return null;
   }
 
   try {
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        {
-          role: "system",
-          content: `You are an interviewer for an interior design publication. Based on a designer's answer, generate one thoughtful follow-up question that will elicit a more detailed, quotable response.
+    const message = await anthropic.messages.create({
+      model: "claude-sonnet-4-20250514",
+      system: `You are an interviewer for an interior design publication. Based on a designer's answer, generate one thoughtful follow-up question that will elicit a more detailed, quotable response.
 
 Guidelines:
 - Ask about the "why" behind their decisions
@@ -60,7 +57,7 @@ Guidelines:
 
 Return JSON: { "question": "...", "context": "..." }
 The context is a brief lead-in phrase like "You mentioned the light." (optional, can be empty string)`,
-        },
+      messages: [
         {
           role: "user",
           content: `Original question: "${questionText}"
@@ -70,13 +67,13 @@ Designer's answer: "${answer}"
 Generate a follow-up question.`,
         },
       ],
-      response_format: { type: "json_object" },
       max_tokens: 150,
       temperature: 0.7,
     });
 
-    const content = response.choices[0]?.message?.content;
-    if (!content) return null;
+    const rawContent = message.content[0]?.type === "text" ? message.content[0].text : null;
+    if (!rawContent) return null;
+    const content = rawContent.replace(/```json\n?|\n?```/g, "").trim();
 
     const parsed = JSON.parse(content);
     return {
@@ -96,17 +93,14 @@ async function generatePreviewDraft(
   projectName: string,
   responses: Array<{ question: string; answer: string }>
 ): Promise<{ title: string; excerpt: string } | null> {
-  if (!openai || responses.length < 3) {
+  if (!anthropic || responses.length < 3) {
     return null;
   }
 
   try {
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        {
-          role: "system",
-          content: `You are writing a preview excerpt for an interior design editorial. Based on interview responses, generate a compelling title and first paragraph.
+    const message = await anthropic.messages.create({
+      model: "claude-sonnet-4-20250514",
+      system: `You are writing a preview excerpt for an interior design editorial. Based on interview responses, generate a compelling title and first paragraph.
 
 Guidelines:
 - Title should be evocative, not literal (e.g., "Where Light Meets History" not "A Modern Renovation")
@@ -115,7 +109,7 @@ Guidelines:
 - Write in third person
 
 Return JSON: { "title": "...", "excerpt": "..." }`,
-        },
+      messages: [
         {
           role: "user",
           content: `Project: ${projectName}
@@ -126,13 +120,13 @@ ${responses.map((r, i) => `Q${i + 1}: ${r.question}\nA${i + 1}: ${r.answer}`).jo
 Generate a title and excerpt preview.`,
         },
       ],
-      response_format: { type: "json_object" },
       max_tokens: 300,
       temperature: 0.8,
     });
 
-    const content = response.choices[0]?.message?.content;
-    if (!content) return null;
+    const rawContent = message.content[0]?.type === "text" ? message.content[0].text : null;
+    if (!rawContent) return null;
+    const content = rawContent.replace(/```json\n?|\n?```/g, "").trim();
 
     const parsed = JSON.parse(content);
     return {

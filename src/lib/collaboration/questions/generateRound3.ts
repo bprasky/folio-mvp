@@ -4,7 +4,7 @@
  * Creates a dialogue effect in the final narrative
  */
 
-import OpenAI from 'openai';
+import Anthropic from '@anthropic-ai/sdk';
 import { callLLM } from '@/lib/posting/llmClient';
 import { Round1Response, CollaborationQuestion } from './round1';
 import { Round2Question } from './generateRound2';
@@ -48,9 +48,7 @@ async function generateCrossPollinated(
   otherPartyResponses: AllResponses,
   otherPartyQuestions: (CollaborationQuestion | Round2Question)[]
 ): Promise<Round3Question[]> {
-  const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-  });
+  const anthropic = new Anthropic();
 
   const otherRole = targetRole === 'VENDOR' ? 'DESIGNER' : 'VENDOR';
 
@@ -89,25 +87,25 @@ Return a JSON array of 3-4 questions.`;
 
   const result = await callLLM(
     async () => {
-      const completion = await openai.chat.completions.create({
-        model: 'gpt-4o',
+      const message = await anthropic.messages.create({
+        model: 'claude-sonnet-4-20250514',
+        system: ROUND3_SYSTEM_PROMPT,
         messages: [
-          { role: 'system', content: ROUND3_SYSTEM_PROMPT },
           { role: 'user', content: userPrompt },
         ],
-        response_format: { type: 'json_object' },
         temperature: 0.7,
         max_tokens: 2000,
       });
 
-      const content = completion.choices[0]?.message?.content;
+      const content = message.content[0]?.type === 'text' ? message.content[0].text : null;
       if (!content) throw new Error('No content in response');
 
-      const parsed = JSON.parse(content);
+      const cleaned = content.replace(/```json\n?|\n?```/g, '').trim();
+      const parsed = JSON.parse(cleaned);
       return parsed.questions || parsed;
     },
     {
-      modelName: 'gpt-4o',
+      modelName: 'claude-sonnet-4-20250514',
       maxRetries: 2,
       contextHint: 'collaboration_round3_generation',
     }

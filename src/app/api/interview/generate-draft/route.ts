@@ -6,7 +6,7 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/options";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { randomUUID } from "crypto";
-import OpenAI from "openai";
+import Anthropic from "@anthropic-ai/sdk";
 
 /**
  * POST /api/interview/generate-draft
@@ -28,10 +28,10 @@ const RequestSchema = z.object({
   responses: z.array(ResponseItemSchema).optional(),
 });
 
-// OpenAI client
-let openai: OpenAI | null = null;
-if (process.env.OPENAI_API_KEY) {
-  openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+// Anthropic client
+let anthropic: Anthropic | null = null;
+if (process.env.ANTHROPIC_API_KEY) {
+  anthropic = new Anthropic();
 }
 
 // Editorial block types (matching existing schema)
@@ -48,7 +48,7 @@ async function generateEditorial(
   projectName: string,
   responses: Array<{ question: string; answer: string }>
 ): Promise<{ title: string; blocks: EditorialBlock[] }> {
-  if (!openai) {
+  if (!anthropic) {
     // Return basic draft if AI unavailable
     return {
       title: projectName,
@@ -63,12 +63,9 @@ async function generateEditorial(
   }
 
   try {
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [
-        {
-          role: "system",
-          content: `You are an editor for a prestigious interior design publication. Create a polished editorial from designer interview responses.
+    const message = await anthropic.messages.create({
+      model: "claude-sonnet-4-20250514",
+      system: `You are an editor for a prestigious interior design publication. Create a polished editorial from designer interview responses.
 
 Structure:
 1. A compelling, evocative headline
@@ -92,7 +89,7 @@ Guidelines:
 - Write in third person
 - Focus on intention, emotion, and craft
 - Magazine-quality prose`,
-        },
+      messages: [
         {
           role: "user",
           content: `Project: ${projectName}
@@ -103,13 +100,13 @@ ${responses.map((r, i) => `Q: ${r.question}\nA: ${r.answer}`).join("\n\n")}
 Generate the editorial.`,
         },
       ],
-      response_format: { type: "json_object" },
       max_tokens: 2000,
       temperature: 0.7,
     });
 
-    const content = response.choices[0]?.message?.content;
-    if (!content) throw new Error("No content returned");
+    const rawContent = message.content[0]?.type === "text" ? message.content[0].text : null;
+    if (!rawContent) throw new Error("No content returned");
+    const content = rawContent.replace(/```json\n?|\n?```/g, "").trim();
 
     const parsed = JSON.parse(content);
     const blocks = Array.isArray(parsed) ? parsed : parsed.blocks || [];

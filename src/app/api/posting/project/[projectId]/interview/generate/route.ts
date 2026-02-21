@@ -13,7 +13,6 @@ import { logPassiveEvent } from "@/lib/analytics";
 import { cid } from "@/lib/utils/correlation";
 import { summarizeBudget, ensureUnder } from "@/lib/posting/contextBudget";
 import { compactImages, compactProducts, frameNarrativePrompt, softModerate } from "@/lib/posting/promptBuilders";
-import OpenAI from "openai";
 import Anthropic from '@anthropic-ai/sdk';
 import { callLLM } from "@/lib/posting/llmClient";
 import { z } from "zod";
@@ -1039,9 +1038,9 @@ async function composeEditorial(input: {
   mode?: 'recomposition' | 'verbatim';
 }): Promise<any> {
   const _cid = input.correlationId || 'compose';
-  const OPENAI_ENABLED = !!process.env.OPENAI_API_KEY && process.env.OPENAI_ENABLED !== "false";
-  
-  if (!OPENAI_ENABLED) {
+  const ANTHROPIC_ENABLED = !!process.env.ANTHROPIC_API_KEY && process.env.ANTHROPIC_ENABLED !== "false";
+
+  if (!ANTHROPIC_ENABLED) {
     console.warn('[composeEditorial] LLM disabled, returning minimal structure', { _cid });
     return {
       lead: { deck: input.answers[0]?.a?.slice(0, 240) || `${input.project.title} represents a thoughtful approach to design.` },
@@ -1132,33 +1131,35 @@ async function composeEditorial(input: {
     `- Pull 1–2 designer quotes verbatim when they're strong; otherwise paraphrase naturally.`
   ].join("\n");
 
-  const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-  const modelName = process.env.OPENAI_MODEL || 'gpt-4o-mini';
+  const anthropicClient = new Anthropic();
+  const modelName = 'claude-sonnet-4-20250514';
 
   const llmResult = await callLLM(
     async () => {
-      return await client.chat.completions.create({
+      return await anthropicClient.messages.create({
         model: modelName,
         temperature: 0.55,
-        max_tokens: 4000, // Increased from 3500 to 4000 to allow for longer natural content (600-900 words ≈ 2400-3600 tokens, 4000 gives buffer) // Increased for 4-6 narrative sections (600-900 words)
+        max_tokens: 4000,
+        system: sys,
         messages: [
-          { role: 'system', content: sys },
-          { role: 'user', content: JSON.stringify(userPrompt, null, 2) },
-          { role: 'user', content: prompt }
+          { role: 'user', content: JSON.stringify(userPrompt, null, 2) + "\n\n" + prompt },
         ],
-        response_format: { type: "json_object" },
       });
     },
     { modelName, contextHint: `compose:${input.project.title}`, baseDelayMs: 500 }
   );
 
-  console.log("[composeEditorial] raw.preview", llmResult.ok ? (llmResult.data.choices?.[0]?.message?.content ?? '{}').slice(0, 800) : 'LLM call failed');
-  
+  const rawPreview = llmResult.ok
+    ? (llmResult.data.content[0]?.type === 'text' ? llmResult.data.content[0].text : '{}').slice(0, 800)
+    : 'LLM call failed';
+  console.log("[composeEditorial] raw.preview", rawPreview);
+
   let rawJsonString = '{}';
   let composed: any = {};
-  
+
   if (llmResult.ok) {
-    rawJsonString = llmResult.data.choices?.[0]?.message?.content ?? '{}';
+    const rawText = llmResult.data.content[0]?.type === 'text' ? llmResult.data.content[0].text : '{}';
+    rawJsonString = rawText.replace(/```json\n?|\n?```/g, '').trim();
     try {
       composed = JSON.parse(rawJsonString);
     } catch (parseError) {
@@ -1657,8 +1658,8 @@ export async function POST(
     ).map((vendorId) => ({ id: vendorId, name: "Vendor" })); // Simplified; enhance if vendor data available
 
     const started = Date.now();
-    const aiAvailable = !!process.env.OPENAI_API_KEY && process.env.OPENAI_ENABLED !== "false";
-    const provider = aiAvailable ? "openai" : "fallback";
+    const aiAvailable = !!process.env.ANTHROPIC_API_KEY && process.env.ANTHROPIC_ENABLED !== "false";
+    const provider = aiAvailable ? "anthropic" : "fallback";
 
     // Get follow-ups count from interview data
     // Structure: interview.followUps is Array<{ questionId: string, followUps: Array<{ id, prompt }> }>
@@ -2166,7 +2167,7 @@ export async function POST(
       actorId: session.user.id,
       payload: {
         postId: saved.id,
-        provider: 'openai',
+        provider: 'anthropic',
         duration_ms: duration,
         mode: 'recomposition',
       },

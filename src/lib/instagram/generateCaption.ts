@@ -3,7 +3,7 @@
  * Returns caption text and hashtags array
  */
 
-import OpenAI from 'openai';
+import Anthropic from '@anthropic-ai/sdk';
 import { Blocks } from '@/lib/posting/schemas';
 
 interface CaptionInput {
@@ -21,8 +21,8 @@ interface CaptionOutput {
   hashtags: string[];
 }
 
-const openai = process.env.OPENAI_API_KEY
-  ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+const anthropic = process.env.ANTHROPIC_API_KEY
+  ? new Anthropic()
   : null;
 
 export async function generateCaption(input: CaptionInput): Promise<CaptionOutput> {
@@ -97,10 +97,10 @@ export async function generateCaption(input: CaptionInput): Promise<CaptionOutpu
   // Limit to 20 hashtags total
   const finalHashtags = hashtags.slice(0, 20);
 
-  // Generate caption using OpenAI if available
-  if (openai && sourceText) {
+  // Generate caption using Anthropic if available
+  if (anthropic && sourceText) {
     try {
-      const prompt = `Write a concise, elegant Instagram caption (max 2000 characters) for a design project. 
+      const prompt = `Write a concise, elegant Instagram caption (max 2000 characters) for a design project.
 
 Project: ${projectTitle}
 ${city ? `Location: ${city}${regionState ? `, ${regionState}` : ''}` : ''}
@@ -117,13 +117,10 @@ Requirements:
 - Do NOT include hashtags in the caption (they'll be added separately on a new line)
 - Keep it under 2000 characters`;
 
-      const completion = await openai.chat.completions.create({
-        model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
+      const message = await anthropic.messages.create({
+        model: 'claude-sonnet-4-20250514',
+        system: 'You are a copywriter for Folio, a premium interior design platform. Write elegant, concise captions that match the brand\'s quiet sophistication.',
         messages: [
-          {
-            role: 'system',
-            content: 'You are a copywriter for Folio, a premium interior design platform. Write elegant, concise captions that match the brand\'s quiet sophistication.',
-          },
           {
             role: 'user',
             content: prompt,
@@ -133,7 +130,7 @@ Requirements:
         temperature: 0.7,
       });
 
-      let generatedCaption = completion.choices[0]?.message?.content?.trim() || '';
+      let generatedCaption = (message.content[0]?.type === 'text' ? message.content[0].text : '').trim();
       
       // Ensure caption ends with proper CTA if not already present
       if (generatedCaption && !generatedCaption.includes('link in bio') && !generatedCaption.includes('Folio')) {
@@ -149,7 +146,7 @@ Requirements:
         };
       }
     } catch (error) {
-      console.warn('[generateCaption] OpenAI error, using fallback:', error);
+      console.warn('[generateCaption] Anthropic error, using fallback:', error);
     }
   }
 

@@ -1,4 +1,4 @@
-import OpenAI from "openai";
+import Anthropic from "@anthropic-ai/sdk";
 import { prisma } from "../prisma";
 import { logPassiveEvent } from "../analytics";
 import {
@@ -53,7 +53,7 @@ async function generateEditionCopy(payload: {
   regionLabels: string[];
   trendKeywords: string[];
 }): Promise<EditionCopy> {
-  if (!process.env.OPENAI_API_KEY) {
+  if (!process.env.ANTHROPIC_API_KEY) {
     return {
       title: `${payload.categoryLabels[0] ?? "Folio"} Edition`,
       intro:
@@ -61,29 +61,25 @@ async function generateEditionCopy(payload: {
     };
   }
 
-  const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  const client = new Anthropic();
   const prompt = fillSchedulerPrompt(payload);
 
   try {
-    const res = await client.chat.completions.create({
-      model: "gpt-4o-mini",
+    const res = await client.messages.create({
+      model: "claude-sonnet-4-20250514",
       temperature: 0.4,
       max_tokens: 320,
+      system: "You are Folio's Editorial Edition curator. Maintain an elegant, professional, timeless tone. Respond with JSON only.",
       messages: [
-        {
-          role: "system",
-          content:
-            "You are Folio’s Editorial Edition curator. Maintain an elegant, professional, timeless tone. Respond with JSON only.",
-        },
         {
           role: "user",
           content: prompt,
         },
       ],
-      response_format: { type: "json_object" },
     });
 
-    const payloadText = res.choices?.[0]?.message?.content ?? "{}";
+    const rawText = res.content[0]?.type === "text" ? res.content[0].text : "{}";
+    const payloadText = rawText.replace(/```json\n?|\n?```/g, "").trim();
     const parsed = JSON.parse(payloadText);
     if (typeof parsed?.title === "string" && typeof parsed?.intro === "string") {
       return {
@@ -92,7 +88,7 @@ async function generateEditionCopy(payload: {
       };
     }
   } catch (error) {
-    console.warn("[EditorialScheduler] OpenAI generation failed:", error);
+    console.warn("[EditorialScheduler] Anthropic generation failed:", error);
   }
 
   return {
