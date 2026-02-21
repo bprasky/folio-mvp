@@ -12,12 +12,13 @@ export async function GET() {
       env: {
         NODE_ENV: process.env.NODE_ENV,
         POSTING_V1: process.env.POSTING_V1,
-        OPENAI_ENABLED: process.env.OPENAI_ENABLED ?? 'unset',
+        ANTHROPIC_ENABLED: process.env.ANTHROPIC_ENABLED ?? 'unset',
+        ANTHROPIC_API_KEY: redacted(process.env.ANTHROPIC_API_KEY),
         OPENAI_API_KEY: redacted(process.env.OPENAI_API_KEY),
-        OPENAI_MODEL: process.env.OPENAI_MODEL ?? 'default',
       },
       tips: [
-        'If OPENAI_ENABLED is "false" or key is unset → followups/generate will fallback.',
+        'If ANTHROPIC_ENABLED is "false" or key is unset → followups/generate will fallback.',
+        'OPENAI_API_KEY still needed for embeddings, Whisper transcription, and moderation.',
         'If rate-limited → expect 429 classification and backoff logs.',
         'Moderation issues classify as "moderation_block" (422)',
       ],

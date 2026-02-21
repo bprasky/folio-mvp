@@ -3,6 +3,7 @@
 import clsx from "clsx";
 import { buildEditorialChapters, EditorialChapter } from "@/lib/editorial/buildEditorialChapters";
 import { SceneShopStrip } from "@/components/project/SceneShopStrip";
+import { ImageTagDots } from "@/components/project/ImageTagDots";
 
 export function SmartEditorialLayout({ post }: { post: any }) {
   const chapters = buildEditorialChapters(post);
@@ -118,6 +119,7 @@ function CinemaSpread({ chapter }: { chapter: EditorialChapter }) {
             alt={chapter.title ?? ""}
             className="h-full w-full object-cover"
           />
+          <ImageTagDots image={chapter.primaryImage} />
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-black/5 to-transparent" />
           <div className="absolute bottom-6 left-6 right-6 flex flex-wrap items-end justify-between gap-3">
             <div className="rounded-full bg-[var(--bg-base)]/90 backdrop-blur-sm px-3 py-1 folio-meta uppercase tracking-[0.18em] text-[var(--text-secondary)]">
@@ -160,7 +162,7 @@ function DetailGridSpread({ chapter }: { chapter: EditorialChapter }) {
           <div
             key={img.id ?? idx}
             className={clsx(
-              "overflow-hidden ridge-card",
+              "relative overflow-hidden ridge-card",
               idx === 0 && "col-span-2"
             )}
           >
@@ -170,6 +172,7 @@ function DetailGridSpread({ chapter }: { chapter: EditorialChapter }) {
               alt={chapter.title ?? ""}
               className="h-full w-full object-cover"
             />
+            <ImageTagDots image={img} />
           </div>
         ))}
       </div>
@@ -199,13 +202,14 @@ function FigureImage({ image, title }: { image: any; title?: string | null }) {
   if (!image?.url) return null;
 
   return (
-    <figure className="overflow-hidden ridge-card ridge-card-lg">
+    <figure className="relative overflow-hidden ridge-card ridge-card-lg">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={image.url}
         alt={title ?? ""}
         className="h-full w-full object-cover"
       />
+      <ImageTagDots image={image} />
     </figure>
   );
 }

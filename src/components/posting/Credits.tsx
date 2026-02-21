@@ -1,5 +1,15 @@
 "use client";
 
+/**
+ * Credits — Grid-based display of multi-party credits.
+ * Used in the PostExpanded (legacy expanded view) component.
+ *
+ * Supports userId-based Folio profile links and external URLs.
+ *
+ * --- Future: Super Articles (see docs/15_SUPER_ARTICLES.md) ---
+ * - userId will link to contributor's perspective tab in Super-Articles.
+ */
+
 interface CreditsProps {
   credits: any;
 }
@@ -17,25 +27,29 @@ export function Credits({ credits }: CreditsProps) {
         Credits
       </h3>
       <div className="grid grid-cols-2 gap-4 text-sm">
-        {creditsArray.map((credit: any, idx: number) => (
-          <div key={idx}>
-            <span className="font-medium text-[var(--text-primary)]">{credit.role}</span>
-            {credit.url ? (
-              <a
-                href={credit.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="ml-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] underline"
-              >
-                {credit.name}
-              </a>
-            ) : (
-              <span className="ml-2 text-[var(--text-secondary)]">{credit.name}</span>
-            )}
-          </div>
-        ))}
+        {creditsArray.map((credit: any, idx: number) => {
+          const href = credit.userId
+            ? `/designer/${credit.userId}`
+            : credit.url || undefined;
+          return (
+            <div key={idx}>
+              <span className="font-medium text-[var(--text-primary)]">{credit.role}</span>
+              {href ? (
+                <a
+                  href={href}
+                  target={credit.userId ? undefined : "_blank"}
+                  rel={credit.userId ? undefined : "noopener noreferrer"}
+                  className="ml-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] underline"
+                >
+                  {credit.name}
+                </a>
+              ) : (
+                <span className="ml-2 text-[var(--text-secondary)]">{credit.name}</span>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
 }
-

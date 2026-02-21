@@ -6,6 +6,7 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/options";
 import { prisma } from "@/lib/prisma";
 import { callLLM } from "@/lib/posting/llmClient";
 import OpenAI from "openai";
+import Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
 
 export async function POST(
@@ -237,19 +238,19 @@ Return JSON array:
   }
 ]`;
 
-      const modelName = process.env.OPENAI_MODEL || "gpt-4o-mini";
+      const anthropic = new Anthropic();
+      const modelName = "claude-sonnet-4-20250514";
 
       const extractionResult = await callLLM(
         async () => {
-          return await openai.chat.completions.create({
+          return await anthropic.messages.create({
             model: modelName,
             temperature: 0.7,
             max_tokens: 2000,
+            system: systemPrompt,
             messages: [
-              { role: "system", content: systemPrompt },
               { role: "user", content: userPrompt },
             ],
-            response_format: { type: "json_object" },
           });
         },
         { modelName, contextHint: `extract:${interviewId}`, baseDelayMs: 500 }
@@ -261,7 +262,8 @@ Return JSON array:
       }
 
       // Parse extraction response
-      const extractionContent = extractionResult.data.choices?.[0]?.message?.content;
+      const rawExtraction = extractionResult.data.content[0]?.type === "text" ? extractionResult.data.content[0].text : null;
+      const extractionContent = rawExtraction ? rawExtraction.replace(/```json\n?|\n?```/g, "").trim() : null;
       if (!extractionContent) {
         throw new Error("No extraction content returned");
       }

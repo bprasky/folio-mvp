@@ -13,7 +13,6 @@ import { logPassiveEvent } from "@/lib/analytics";
 import { cid } from "@/lib/utils/correlation";
 import { summarizeBudget, ensureUnder } from "@/lib/posting/contextBudget";
 import { compactImages, compactProducts, frameNarrativePrompt, softModerate } from "@/lib/posting/promptBuilders";
-import OpenAI from "openai";
 import Anthropic from '@anthropic-ai/sdk';
 import { callLLM } from "@/lib/posting/llmClient";
 import { z } from "zod";
@@ -298,6 +297,13 @@ NARRATIVE STRUCTURE:
 - Close with the emotional or experiential quality of the finished space
 - Organize by room/space, but let the narrative flow between rooms naturally
 
+PULL QUOTE RULES:
+- Each pull quote MUST be self-contained — a reader should understand the point without seeing the interview question
+- If a raw interview answer is context-dependent, rephrase it so it stands alone as an insight
+- Add a brief contextual lead-in prefix like "On choosing materials:" or "On the kitchen's design philosophy:" when needed
+- Bad: "Contrast. The painted perimeter lets the appliances breathe..." (reader asks: contrast with what?)
+- Good: "A kitchen island should feel like a piece of furniture you chose, not cabinetry that came with the house."
+
 The article should make a reader want to visit this space, not inventory it.`;
 
 function buildEditorialPrompt({
@@ -372,7 +378,7 @@ Produce a JSON object with this structure:
   },
   "sections": [
     { "type": "narrative", "body": "..." },
-    { "type": "pullquote", "quote": "..." },
+    { "type": "pullquote", "quote": "Self-contained insight that makes sense without the interview question" },
     { "type": "narrative", "body": "..." }
   ],
   "galleryChapters": [
@@ -382,7 +388,9 @@ Produce a JSON object with this structure:
       "body": ["paragraph1", "paragraph2", "paragraph3"]
     }
   ],
-  "pullQuotes": ["1-2 quotes that stand alone as insights — no context needed"],
+  "pullQuotes": [
+    {"text": "Self-contained designer insight that reads clearly without the interview question", "context": "On the design philosophy:"}
+  ],
   "credits": [{ "role": "Designer", "name": "Designer Name" }, { "role": "Photographer", "name": null }],
   "materialsLedger": {
     "items": [{ "name": "Product Name", "finish": "finish/color", "note": "Vendor: Name | Used in: Room", "productId": "uuid", "vendorId": "uuid" }]
@@ -407,9 +415,11 @@ FOR GALLERY CHAPTERS (one per room):
 - Use EXACT image IDs from the room's list above
 
 FOR PULL QUOTES:
-- Must stand alone without context and sound insightful
-- Prefer the designer's actual words from the interview when possible
-- If paraphrasing, capture their voice and specific reasoning
+- Each must be self-contained — a reader should understand the point without seeing the interview question
+- If a raw interview answer is context-dependent, rephrase it so it stands alone as an insight
+- Include a short "context" prefix (e.g. "On the kitchen's palette:") if the quote needs framing
+- Return each pull quote as {"text": "...", "context": "..."}
+- Prefer the designer's actual words when possible; if paraphrasing, capture their voice
 
 FOR THE MATERIALS LEDGER:
 - Comprehensive product list separate from the narrative
@@ -647,19 +657,31 @@ async function composeEditorialHard({
 
   // Process gallery chapters - prioritize body arrays if present, otherwise use sections
   const finalChapters: Array<{ title?: string; imageIds: string[]; body: string[] }> = [];
-  const pulls: string[] = [];
+  const rawPulls: Array<{ text: string; context?: string }> = [];
 
   // Extract pull quotes from both pullQuotes array and pullquote sections
+  // Handle both string format and {text, context} object format from LLM
   if (Array.isArray(composed.pullQuotes)) {
-    pulls.push(...composed.pullQuotes.map((q: string) => q.trim()).filter(Boolean));
+    for (const q of composed.pullQuotes) {
+      if (typeof q === 'string' && q.trim()) {
+        rawPulls.push({ text: q.trim() });
+      } else if (q && typeof q === 'object' && typeof (q as any).text === 'string' && (q as any).text.trim()) {
+        rawPulls.push({ text: (q as any).text.trim(), context: (q as any).context?.trim() || undefined });
+      }
+    }
   }
   if (Array.isArray(composed.sections)) {
     for (const s of composed.sections) {
       if (s.type === "pullquote" && s.quote) {
-        pulls.push(s.quote.trim());
+        rawPulls.push({ text: s.quote.trim() });
       }
     }
   }
+
+  // Deduplicate pull quotes by text (LLM often puts the same quote in both pullQuotes[] and sections[])
+  const pulls = rawPulls.filter((quote, index, arr) =>
+    arr.findIndex(q => q.text.trim() === quote.text.trim()) === index
+  );
 
   // Process each gallery chapter
   if (Array.isArray(composed.galleryChapters)) {
@@ -1006,9 +1028,9 @@ async function composeEditorial(input: {
   mode?: 'recomposition' | 'verbatim';
 }): Promise<any> {
   const _cid = input.correlationId || 'compose';
-  const OPENAI_ENABLED = !!process.env.OPENAI_API_KEY && process.env.OPENAI_ENABLED !== "false";
-  
-  if (!OPENAI_ENABLED) {
+  const ANTHROPIC_ENABLED = !!process.env.ANTHROPIC_API_KEY && process.env.ANTHROPIC_ENABLED !== "false";
+
+  if (!ANTHROPIC_ENABLED) {
     console.warn('[composeEditorial] LLM disabled, returning minimal structure', { _cid });
     return {
       lead: { deck: input.answers[0]?.a?.slice(0, 240) || `${input.project.title} represents a thoughtful approach to design.` },
@@ -1099,33 +1121,35 @@ async function composeEditorial(input: {
     `- Pull 1–2 designer quotes verbatim when they're strong; otherwise paraphrase naturally.`
   ].join("\n");
 
-  const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-  const modelName = process.env.OPENAI_MODEL || 'gpt-4o-mini';
+  const anthropicClient = new Anthropic();
+  const modelName = 'claude-sonnet-4-20250514';
 
   const llmResult = await callLLM(
     async () => {
-      return await client.chat.completions.create({
+      return await anthropicClient.messages.create({
         model: modelName,
         temperature: 0.55,
-        max_tokens: 4000, // Increased from 3500 to 4000 to allow for longer natural content (600-900 words ≈ 2400-3600 tokens, 4000 gives buffer) // Increased for 4-6 narrative sections (600-900 words)
+        max_tokens: 4000,
+        system: sys,
         messages: [
-          { role: 'system', content: sys },
-          { role: 'user', content: JSON.stringify(userPrompt, null, 2) },
-          { role: 'user', content: prompt }
+          { role: 'user', content: JSON.stringify(userPrompt, null, 2) + "\n\n" + prompt },
         ],
-        response_format: { type: "json_object" },
       });
     },
     { modelName, contextHint: `compose:${input.project.title}`, baseDelayMs: 500 }
   );
 
-  console.log("[composeEditorial] raw.preview", llmResult.ok ? (llmResult.data.choices?.[0]?.message?.content ?? '{}').slice(0, 800) : 'LLM call failed');
-  
+  const rawPreview = llmResult.ok
+    ? (llmResult.data.content[0]?.type === 'text' ? llmResult.data.content[0].text : '{}').slice(0, 800)
+    : 'LLM call failed';
+  console.log("[composeEditorial] raw.preview", rawPreview);
+
   let rawJsonString = '{}';
   let composed: any = {};
-  
+
   if (llmResult.ok) {
-    rawJsonString = llmResult.data.choices?.[0]?.message?.content ?? '{}';
+    const rawText = llmResult.data.content[0]?.type === 'text' ? llmResult.data.content[0].text : '{}';
+    rawJsonString = rawText.replace(/```json\n?|\n?```/g, '').trim();
     try {
       composed = JSON.parse(rawJsonString);
     } catch (parseError) {
@@ -1624,8 +1648,8 @@ export async function POST(
     ).map((vendorId) => ({ id: vendorId, name: "Vendor" })); // Simplified; enhance if vendor data available
 
     const started = Date.now();
-    const aiAvailable = !!process.env.OPENAI_API_KEY && process.env.OPENAI_ENABLED !== "false";
-    const provider = aiAvailable ? "openai" : "fallback";
+    const aiAvailable = !!process.env.ANTHROPIC_API_KEY && process.env.ANTHROPIC_ENABLED !== "false";
+    const provider = aiAvailable ? "anthropic" : "fallback";
 
     // Get follow-ups count from interview data
     // Structure: interview.followUps is Array<{ questionId: string, followUps: Array<{ id, prompt }> }>
@@ -2133,7 +2157,7 @@ export async function POST(
       actorId: session.user.id,
       payload: {
         postId: saved.id,
-        provider: 'openai',
+        provider: 'anthropic',
         duration_ms: duration,
         mode: 'recomposition',
       },

@@ -36,8 +36,8 @@ const POSTING_V1_ENABLED =
   (process.env.POSTING_V1 ?? "").toLowerCase() === "true" ||
   (process.env.NEXT_PUBLIC_POSTING_V1 ?? "").toLowerCase() === "true" ||
   process.env.NODE_ENV !== "production";
-const OPENAI_ENABLED =
-  !!process.env.OPENAI_API_KEY && process.env.OPENAI_ENABLED !== "false";
+const ANTHROPIC_ENABLED =
+  !!process.env.ANTHROPIC_API_KEY && process.env.ANTHROPIC_ENABLED !== "false";
 
 const SYSTEM_PROMPT = `You are an editorial interviewer for a design magazine. Based on the designer's answer below, generate follow-up questions that dig deeper into the most interesting aspects of their work.
 
@@ -206,8 +206,8 @@ export async function POST(
       console.warn("[followups-single] Moderation failed (non-blocking):", modError);
     }
 
-    // If OpenAI not available, return explicit error
-    if (!OPENAI_ENABLED) {
+    // If Anthropic not available, return explicit error
+    if (!ANTHROPIC_ENABLED) {
       console.warn('[followups-single] LLM disabled/unavailable');
       // Check cache before returning error
       const cacheKey = `${projectId}:${validated.questionId}`;
@@ -330,31 +330,23 @@ export async function POST(
     const budget = summarizeBudget({ system: SYSTEM_PROMPT, user: prompt, full: `${SYSTEM_PROMPT}\n\n${prompt}` });
     console.info('[followups-single] budget(tokens)', { _cid, budget });
 
-    // Call OpenAI with LLM client wrapper
-    const modelName = process.env.OPENAI_MODEL || 'gpt-4o-mini';
-    
-    if (!/gpt|o\d|4|mini|omni/i.test(modelName)) {
-      console.warn('[followups-single] suspicious model name', { modelName, _cid });
-    }
-    
-    const openai = await import("openai").then((m) =>
-      new m.default({ apiKey: process.env.OPENAI_API_KEY })
-    );
+    // Call Anthropic with LLM client wrapper
+    const modelName = 'claude-sonnet-4-20250514';
+
+    const { default: Anthropic } = await import("@anthropic-ai/sdk");
+    const anthropic = new Anthropic();
 
     const llmResult = await callLLM(
       async () => {
-        return await openai.chat.completions.create(
-          {
-            model: modelName,
-            messages: [
-              { role: "system", content: SYSTEM_PROMPT },
-              { role: "user", content: prompt },
-            ],
-            temperature: 0.7,
-            max_tokens: 300,
-            response_format: { type: "json_object" },
-          }
-        );
+        return await anthropic.messages.create({
+          model: modelName,
+          system: SYSTEM_PROMPT,
+          messages: [
+            { role: "user", content: prompt },
+          ],
+          temperature: 0.7,
+          max_tokens: 300,
+        });
       },
       { modelName, contextHint: `followups-single:${projectId}:${validated.questionId}` }
     );
@@ -393,7 +385,8 @@ export async function POST(
 
     console.info('[followups-single] llm_ok', { _cid, model: llmResult.usedModel });
 
-    const raw = llmResult.data.choices?.[0]?.message?.content || "{}";
+    const rawText = llmResult.data.content[0]?.type === 'text' ? llmResult.data.content[0].text : '{}';
+    const raw = rawText.replace(/```json\n?|\n?```/g, '').trim();
     const json = JSON.parse(raw);
 
     // Extract acknowledgment (optional)
