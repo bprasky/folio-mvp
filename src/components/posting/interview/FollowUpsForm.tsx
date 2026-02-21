@@ -176,12 +176,13 @@ export function FollowUpsForm({
 
       <div className="text-sm text-[var(--text-secondary)] mb-6">
         <p className="font-medium mb-2">
-          Let's go a little deeper — these are optional.
+          Let's dig deeper
         </p>
         <p className="text-xs">
-          AI found{" "}
+          Based on your answers, we spotted{" "}
           {followUps.reduce((sum, group) => sum + group.followUps.length, 0)}{" "}
-          intriguing answers. Answer what interests you, or skip to continue.
+          threads worth pulling on. These are the details that make a feature article
+          sing — answer what resonates, skip what doesn't.
         </p>
       </div>
 
@@ -227,7 +228,7 @@ export function FollowUpsForm({
                   <label className="block text-sm font-medium text-[var(--text-primary)]">
                     {followUp.prompt}
                     <span className="ml-2 text-xs text-[var(--text-secondary)] italic">
-                      AI-suggested
+                      follow-up
                     </span>
                   </label>
                   <textarea

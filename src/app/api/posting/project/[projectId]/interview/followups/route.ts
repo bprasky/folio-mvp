@@ -34,13 +34,35 @@ const POSTING_V1_ENABLED =
   process.env.NODE_ENV !== "production";
 const ANTHROPIC_ENABLED =
   !!process.env.ANTHROPIC_API_KEY && process.env.ANTHROPIC_ENABLED !== "false";
-const SYSTEM_PROMPT = `You are an editorial interviewer for Folio. For each designer answer below, suggest up to two open-ended follow-up questions that could draw out a richer narrative. Only ask when something is interesting or vague. Keep each under 120 characters. Do not repeat or rephrase the original question.
+const SYSTEM_PROMPT = `You are an editorial interviewer for a design magazine. Based on the designer's initial answers about their project, generate follow-up questions that dig deeper into the most interesting aspects of their work.
+
+Focus on:
+- Specific design decisions that reveal creative process (not just product selection)
+- Material relationships that tell a story (why these things work together)
+- Moments of surprise, change, or evolution during the project
+- Vendor/product choices that have genuine reasoning behind them
+- Spatial experiences: how does moving through the space feel? What reveals itself?
+
+Rules:
+- Ask about ARRIVALS, not departures. "What clicked about this choice?" not "Why did you reject the alternatives?"
+- Frame questions to elicit quotable, publishable answers
+- Be specific — reference actual products, rooms, or details from their answers
+- Avoid generic questions like "What inspired you?" — dig into specifics
+- Keep each question under 180 characters
+- Generate 1-2 follow-ups per answer, only where something interesting can be drawn out
+- Skip answers that are already rich and complete
+
+Examples of good follow-up questions:
+- "The sofa went through a few rounds before you landed on the RH Cloud. What clicked about this one?"
+- "Waterworks appears throughout the bathrooms. What keeps you coming back to them?"
+- "You mentioned the island needed to feel like furniture. How did you get there — was that always the plan or did it evolve?"
+- "The copper pendant is the only warm metal in the space. Was that a deliberate anchor point, or did it emerge?"
 
 Return a JSON object with a "followUps" array where each item has:
 - questionId: the original question ID
 - followUps: array of { id: string, prompt: string }
 
-Only include items where you have meaningful follow-ups. Skip answers that are already rich and complete.
+Only include items where you have meaningful follow-ups.
 
 Example format:
 {
@@ -48,7 +70,7 @@ Example format:
     {
       "questionId": "why-2",
       "followUps": [
-        { "id": "fu-why-2-1", "prompt": "What made that direction feel right emotionally?" }
+        { "id": "fu-why-2-1", "prompt": "You mentioned the marble was a late decision. What changed your mind — was there a moment it clicked?" }
       ]
     }
   ]
@@ -258,7 +280,7 @@ export async function POST(
             { role: "user", content: prompt },
           ],
           temperature: 0.7,
-          max_tokens: 500,
+          max_tokens: 800,
         });
       },
       { modelName, contextHint: `followups:${projectId}` }
@@ -331,7 +353,7 @@ export async function POST(
                 prompt: typeof fu?.prompt === "string" ? fu.prompt.trim() : "",
               }))
               .filter((fu: any) => {
-                return fu.prompt.length > 0 && fu.prompt.length <= 120;
+                return fu.prompt.length > 0 && fu.prompt.length <= 180;
               });
             return {
               questionId: item.questionId,
