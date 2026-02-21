@@ -65,28 +65,92 @@ function buildMaterialContext(tags: any[]) {
   return Array.from(map.values());
 }
 
-// Fallback blocks generator
+// Group images into chapters by room (or evenly if no room data)
+function groupImagesIntoChapters(
+  images: { id: string; caption?: string }[],
+  imageOrder?: string[]
+): Array<{ title: string; imageIds: string[] }> {
+  const ordered = imageOrder
+    ? imageOrder.map(id => images.find(i => i.id === id)).filter(Boolean) as typeof images
+    : images;
+
+  // Try grouping by room first
+  const byRoom = new Map<string, string[]>();
+  for (const img of ordered) {
+    const room = (img as any).room || 'General';
+    const list = byRoom.get(room) || [];
+    list.push(img.id);
+    byRoom.set(room, list);
+  }
+
+  // If we have named rooms (not just "General"), use room-based chapters
+  if (byRoom.size > 1 || (byRoom.size === 1 && !byRoom.has('General'))) {
+    return Array.from(byRoom.entries()).map(([room, ids]) => ({
+      title: room,
+      imageIds: ids.slice(0, 8),
+    }));
+  }
+
+  // No room data: split images evenly into 2-3 chapters
+  const allIds = ordered.map(i => i.id);
+  if (allIds.length <= 3) {
+    return [{ title: 'The Space', imageIds: allIds }];
+  }
+  const chunkSize = Math.ceil(allIds.length / Math.min(3, Math.ceil(allIds.length / 3)));
+  const chapters: Array<{ title: string; imageIds: string[] }> = [];
+  const chapterTitles = ['The Vision', 'The Details', 'The Finish'];
+  for (let i = 0; i < allIds.length; i += chunkSize) {
+    chapters.push({
+      title: chapterTitles[chapters.length] || `Chapter ${chapters.length + 1}`,
+      imageIds: allIds.slice(i, i + chunkSize),
+    });
+  }
+  return chapters;
+}
+
+// Build credits array from input designer/vendor data
+function buildCredits(input: GenInput): Array<{ role: string; name: string }> {
+  const credits: Array<{ role: string; name: string }> = [];
+  if (input.designer?.name) {
+    credits.push({ role: 'Designer', name: input.designer.name });
+  }
+  if (input.designer?.studio && input.designer.studio !== input.designer?.name) {
+    credits.push({ role: 'Studio', name: input.designer.studio });
+  }
+  return credits;
+}
+
+// Fallback blocks generator — produces canonical format matching composeEditorialHard output
 export function toFallbackBlocks(input: GenInput) {
   const uniqueAnswers = deduplicateAnswers(input.answers);
-  const chosen = (input.imageOrder && input.imageOrder.map(id => input.images.find(i => i.id === id)).filter(Boolean) as any[]) || input.images.slice(0, 4);
   const ledger = buildMaterialContext(input.tags);
-  
-  const deck = (uniqueAnswers[0]?.answer || input.project?.title || "A considered composition").slice(0, 180);
-  
+
+  const kicker = input.project?.title || 'A Considered Composition';
+  const deck = (uniqueAnswers[0]?.answer || input.project?.description || "A thoughtfully designed space.").slice(0, 400);
+
+  // Build room-organized chapters (matching canonical galleryChapters structure)
+  const chapters = groupImagesIntoChapters(input.images, input.imageOrder);
+
+  // Distribute answer text across chapters as body paragraphs
+  const answerTexts = uniqueAnswers.map(a => a.answer).filter(Boolean);
+  const galleryChapters = chapters.map((ch, idx) => ({
+    title: ch.title,
+    body: answerTexts.length > 0
+      ? answerTexts.slice(idx * 2, idx * 2 + 2).map(t => t.slice(0, 5000))
+      : ['A thoughtfully designed space that balances intention and function.'],
+    imageIds: ch.imageIds,
+  }));
+
+  // Extract genuine pull quotes from answers of appropriate length
+  const pullQuotes = uniqueAnswers
+    .filter(a => a.answer.length > 80 && a.answer.length < 300)
+    .slice(0, 2)
+    .map(a => a.answer.slice(0, 300));
+
   const blocks = {
-    lead: { deck },
-    galleryChapters: chosen.length ? [{
-      title: input.project?.title || "Project Feature",
-      body: [uniqueAnswers[0]?.answer?.slice(0, 400) || "The composition balances intention and function with a restrained material palette."],
-      imageIds: chosen.slice(0, 4).map(i => i.id),
-    }] : undefined,
-    pullQuotes: uniqueAnswers.slice(0, 2).map(a => a.answer.slice(0, 200)).filter(Boolean),
-    method: uniqueAnswers.slice(0, 6).map(a => a.answer.slice(0, 200)).filter(Boolean),
-    qa: uniqueAnswers.slice(0, 5).map(q => ({
-      q: "Q",
-      a: q.answer.slice(0, 800),
-      role: q.role === "VENDOR" ? "VENDOR" : "DESIGNER",
-    })),
+    lead: { kicker, deck },
+    galleryChapters: galleryChapters.length > 0 ? galleryChapters : undefined,
+    pullQuotes: pullQuotes.length > 0 ? pullQuotes : undefined,
     materialsLedger: ledger.length ? {
       items: ledger.map(l => ({
         name: l.name,
@@ -94,59 +158,64 @@ export function toFallbackBlocks(input: GenInput) {
         note: l.vendor ? `Vendor: ${l.vendor}` : undefined,
       }))
     } : undefined,
-    credits: []
+    credits: buildCredits(input),
+    mode: 'recomposition' as const,
   };
 
   return BlocksSchema.parse(blocks);
 }
 
-// Extract structured blocks from narrative article
+// Extract structured blocks from narrative article — produces canonical format
 function parseNarrativeToBlocks(article: string, input: GenInput): z.infer<typeof BlocksSchema> {
   const lines = article.split('\n').map(l => l.trim()).filter(Boolean);
-  
-  // Extract dek (first 1-2 sentences)
-  const firstParagraph = lines[0] || '';
-  const dek = firstParagraph.slice(0, 240);
-  
-  // Extract narrative paragraphs (skip first if it's the dek)
-  const narrativeParagraphs = lines.slice(1).filter(l => l.length > 50);
-  
-  // Extract method section (look for "Method" or bullet points)
-  const methodStart = narrativeParagraphs.findIndex(p => /method|process|approach/i.test(p));
-  const method = methodStart >= 0 
-    ? narrativeParagraphs.slice(methodStart, methodStart + 6).map(p => p.slice(0, 200))
-    : narrativeParagraphs.slice(0, 6).map(p => p.slice(0, 200));
-  
-  // Extract pull quotes (look for quoted text)
+
+  // Extract kicker (headline) — use first short line, or strip markdown heading markers
+  let kicker = input.project?.title || '';
+  const headlineCandidate = lines[0] || '';
+  if (headlineCandidate.length < 80) {
+    kicker = headlineCandidate.replace(/^#+\s*/, '').trim() || kicker;
+  }
+
+  // Extract deck from second line or first substantial paragraph
+  const deckCandidate = lines.find((l, i) => i > 0 && l.length > 30 && l.length < 400) || lines[1] || '';
+  const deck = deckCandidate.slice(0, 400);
+
+  // Extract narrative paragraphs (skip headline/deck)
+  const startIdx = lines.indexOf(deckCandidate) + 1 || 2;
+  const narrativeParagraphs = lines.slice(startIdx).filter(l => l.length > 50);
+
+  // Extract pull quotes (look for quoted text with proper quote marks)
   const pullQuotes = narrativeParagraphs
-    .filter(p => /["']/.test(p) || p.length < 200)
-    .slice(0, 3)
-    .map(p => p.replace(/["']/g, '').slice(0, 200));
-  
-  // Use provided images
-  const chosen = (input.imageOrder && input.imageOrder.map(id => input.images.find(i => i.id === id)).filter(Boolean) as any[]) || input.images.slice(0, 4);
-  
+    .filter(p => /[""\u201C\u201D]/.test(p) && p.length < 300)
+    .slice(0, 2)
+    .map(p => p.replace(/["""\u201C\u201D]/g, '').trim().slice(0, 300))
+    .filter(q => q.length > 20);
+
+  // Build room-organized gallery chapters with images distributed across them
+  const chapters = groupImagesIntoChapters(input.images, input.imageOrder);
+
+  // Distribute narrative paragraphs across chapters
+  const parasPerChapter = Math.max(2, Math.ceil(narrativeParagraphs.length / Math.max(1, chapters.length)));
+  const galleryChapters = chapters.map((ch, idx) => ({
+    title: ch.title,
+    body: narrativeParagraphs
+      .slice(idx * parasPerChapter, (idx + 1) * parasPerChapter)
+      .map(p => p.slice(0, 5000)),
+    imageIds: ch.imageIds,
+  })).filter(ch => ch.body.length > 0 || ch.imageIds.length > 0);
+
+  // Ensure at least one chapter has body content
+  if (galleryChapters.length > 0 && galleryChapters.every(ch => ch.body.length === 0)) {
+    galleryChapters[0].body = narrativeParagraphs.slice(0, 3).map(p => p.slice(0, 5000));
+  }
+
   // Build materials ledger
   const ledger = buildMaterialContext(input.tags);
-  
-  // Build Q&A from unique answers
-  const uniqueAnswers = deduplicateAnswers(input.answers);
-  const qa = uniqueAnswers.slice(0, 5).map(q => ({
-    q: "Q",
-    a: q.answer.slice(0, 800),
-    role: q.role === "VENDOR" ? "VENDOR" : "DESIGNER",
-  }));
-  
+
   const blocks = {
-    lead: dek ? { deck } : undefined,
-    galleryChapters: chosen.length ? [{
-      title: input.project?.title || "Project Feature",
-      body: narrativeParagraphs.slice(0, 3).map(p => p.slice(0, 400)),
-      imageIds: chosen.slice(0, 4).map(i => i.id),
-    }] : undefined,
+    lead: { kicker, deck },
+    galleryChapters: galleryChapters.length > 0 ? galleryChapters : undefined,
     pullQuotes: pullQuotes.length > 0 ? pullQuotes : undefined,
-    method: method.length > 0 ? method : undefined,
-    qa: qa.length > 0 ? qa : undefined,
     materialsLedger: ledger.length ? {
       items: ledger.map(l => ({
         name: l.name,
@@ -154,9 +223,10 @@ function parseNarrativeToBlocks(article: string, input: GenInput): z.infer<typeo
         note: l.vendor ? `Vendor: ${l.vendor}` : undefined,
       }))
     } : undefined,
-    credits: []
+    credits: buildCredits(input),
+    mode: 'recomposition' as const,
   };
-  
+
   return BlocksSchema.parse(blocks);
 }
 

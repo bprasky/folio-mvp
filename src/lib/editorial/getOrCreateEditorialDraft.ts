@@ -186,16 +186,25 @@ export async function getOrCreateEditorialDraft(projectId: string): Promise<{
       projectId,
       error: error instanceof Error ? error.message : String(error),
     });
-    // Return minimal fallback blocks
+    // Return fallback blocks in canonical format (matching composeEditorialHard output)
+    const designerName = project.designer?.name;
+    const studioName = project.designer?.studio;
+    const credits: Array<{ role: string; name: string }> = [];
+    if (designerName) credits.push({ role: 'Designer', name: designerName });
+    if (studioName && studioName !== designerName) credits.push({ role: 'Studio', name: studioName });
+
     blocks = {
       lead: {
+        kicker: project.title || 'A Considered Composition',
         deck: project.description || `A curated look at ${project.title || 'this project'}.`,
       },
       galleryChapters: project.images.length > 0 ? [{
-        title: project.title || 'Project Feature',
+        title: project.title || 'The Space',
         body: [project.description || 'A thoughtfully designed space.'],
-        imageIds: project.images.slice(0, 4).map(img => img.id),
+        imageIds: project.images.slice(0, 8).map(img => img.id),
       }] : undefined,
+      credits,
+      mode: 'recomposition' as const,
     };
     usedFallback = true;
   }
