@@ -8,6 +8,7 @@ import CinematicHero from "@/components/article/CinematicHero";
 import { DesignerSignature } from "@/components/article/DesignerSignature";
 import { ProductGrid } from "@/components/article/ProductGrid";
 import { MotionPullQuote } from "@/components/article/MotionPullQuote";
+import { normalizePullQuote } from "@/lib/posting/schemas";
 import { RelatedProjects } from "@/components/article/RelatedProjects";
 import ScrollSyncPanel from "@/components/posting/interactive/ScrollSyncPanel";
 import {
@@ -46,12 +47,16 @@ export function PostExpanded({ payload }: PostExpandedProps) {
   // Extract editorial content
   const leadTitle = blocks?.lead?.title || blocks?.lead?.kicker || project.title || "";
   const leadDeck = blocks?.lead?.deck || post.excerpt || null;
-  const pullquoteText =
-    (blocks?.pullQuotes?.[0] as string) ||
-    (Array.isArray(blocks?.pullQuotes) && blocks.pullQuotes[0]
-      ? String(blocks.pullQuotes[0])
-      : null) ||
-    null;
+  // Normalize and deduplicate pull quotes
+  const normalizedQuotes = Array.isArray(blocks?.pullQuotes)
+    ? blocks.pullQuotes
+        .map((q: any) => normalizePullQuote(q))
+        .filter((q: { text: string }) => q.text?.trim())
+        .filter((q: { text: string }, i: number, arr: { text: string }[]) =>
+          arr.findIndex(other => other.text.trim() === q.text.trim()) === i
+        )
+    : [];
+  const firstQuote = normalizedQuotes[0] ?? null;
 
   // Build product grid items from materials ledger
   const projectImages = images || [];
@@ -233,8 +238,8 @@ export function PostExpanded({ payload }: PostExpandedProps) {
                   </div>
                 )}
                 {/* Motion pull quote */}
-                {idx === 0 && pullquoteText && (
-                  <MotionPullQuote text={pullquoteText} />
+                {idx === 0 && firstQuote && (
+                  <MotionPullQuote text={firstQuote.text} context={firstQuote.context} />
                 )}
                 {/* Chapter gallery if chapter has images */}
                 {chapter.imageIds && Array.isArray(chapter.imageIds) && (
@@ -283,7 +288,7 @@ export function PostExpanded({ payload }: PostExpandedProps) {
                     </p>
                   </div>
                 ))}
-              {pullquoteText && <MotionPullQuote text={pullquoteText} />}
+              {firstQuote && <MotionPullQuote text={firstQuote.text} context={firstQuote.context} />}
             </div>
             {galleryImages.length > 0 && (
               <div className="sticky top-24 hidden lg:block h-fit">

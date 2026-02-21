@@ -299,6 +299,11 @@ STRUCTURAL REQUIREMENTS:
   * Specific products and why they were chosen
   * How the room connects to adjacent spaces
 - Pull quotes: Extract 1-2 meaningful designer quotes about philosophy or key decisions
+  * Each pull quote MUST be self-contained — a reader should understand the point without seeing the interview question
+  * If a raw interview answer is context-dependent, rephrase it so it stands alone as an insight
+  * Add a brief contextual lead-in prefix like "On choosing materials:" or "On the kitchen's design philosophy:" when needed
+  * Bad: "Contrast. The painted perimeter lets the appliances breathe..." (reader asks: contrast with what?)
+  * Good: "A kitchen island should feel like a piece of furniture you chose, not cabinetry that came with the house."
 - Materials ledger: Comprehensive list of tagged products
 
 CRITICAL RULES:
@@ -396,7 +401,7 @@ Generate a structured editorial in this EXACT format:
     },
     {
       "type": "pullquote",
-      "quote": "Meaningful designer quote about philosophy or key decision"
+      "quote": "Self-contained designer insight that makes sense without the original question. Rephrase if needed so a cold reader understands the point."
     },
     {
       "type": "narrative",
@@ -417,7 +422,7 @@ Generate a structured editorial in this EXACT format:
     // One chapter per room/major space
   ],
   "pullQuotes": [
-    "Meaningful designer quote about philosophy or key decision"
+    {"text": "Self-contained designer insight that reads clearly without the interview question", "context": "On the design philosophy:"}
   ],
   "credits": [
     { "role": "Designer", "name": "Designer Name" },
@@ -450,7 +455,7 @@ CRITICAL INSTRUCTIONS:
 6. Ensure narrative flows logically through the space
 7. Ground every product mention in its spatial context
 8. Make the deck and body engaging and specific (no generic phrases)
-9. Pull quotes should be actual designer insights from the interview
+9. Pull quotes must be self-contained insights from the interview — each should make sense to a reader who never saw the question. Include a short "context" prefix (e.g. "On the kitchen's palette:") if the quote needs framing. Return each pull quote as {"text": "...", "context": "..."}
 10. Ensure materials ledger includes room context in notes (format: "Vendor: [name] | Used in: [room]")
 11. Write 600-900 words total across all sections and chapters (approximately 150-200 words per room chapter)
 
@@ -679,19 +684,31 @@ async function composeEditorialHard({
 
   // Process gallery chapters - prioritize body arrays if present, otherwise use sections
   const finalChapters: Array<{ title?: string; imageIds: string[]; body: string[] }> = [];
-  const pulls: string[] = [];
+  const rawPulls: Array<{ text: string; context?: string }> = [];
 
   // Extract pull quotes from both pullQuotes array and pullquote sections
+  // Handle both string format and {text, context} object format from LLM
   if (Array.isArray(composed.pullQuotes)) {
-    pulls.push(...composed.pullQuotes.map((q: string) => q.trim()).filter(Boolean));
+    for (const q of composed.pullQuotes) {
+      if (typeof q === 'string' && q.trim()) {
+        rawPulls.push({ text: q.trim() });
+      } else if (q && typeof q === 'object' && typeof (q as any).text === 'string' && (q as any).text.trim()) {
+        rawPulls.push({ text: (q as any).text.trim(), context: (q as any).context?.trim() || undefined });
+      }
+    }
   }
   if (Array.isArray(composed.sections)) {
     for (const s of composed.sections) {
       if (s.type === "pullquote" && s.quote) {
-        pulls.push(s.quote.trim());
+        rawPulls.push({ text: s.quote.trim() });
       }
     }
   }
+
+  // Deduplicate pull quotes by text (LLM often puts the same quote in both pullQuotes[] and sections[])
+  const pulls = rawPulls.filter((quote, index, arr) =>
+    arr.findIndex(q => q.text.trim() === quote.text.trim()) === index
+  );
 
   // Process each gallery chapter
   if (Array.isArray(composed.galleryChapters)) {

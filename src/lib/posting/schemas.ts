@@ -32,7 +32,7 @@ export const ComposedDraftSchema = z.object({
     imageIds: z.array(z.string()).min(1),
     body: z.array(z.string()).optional(),
   })).min(1),
-  pullQuotes: z.array(z.string()).optional(),
+  pullQuotes: z.array(z.union([z.string(), z.object({ text: z.string(), context: z.string().optional() })])).optional(),
   credits: z.array(z.object({ role: z.string(), name: z.string().nullable().optional() })).optional(),
   materialsLedger: z.object({ 
     items: z.array(z.object({
@@ -82,7 +82,7 @@ export const LlmComposedLooseSchema = z.object({
     }))
   }).optional(),
 
-  pullQuotes: z.array(z.string()).optional(),
+  pullQuotes: z.array(z.union([z.string(), z.object({ text: z.string(), context: z.string().optional() })])).optional(),
   method: z.array(z.string()).optional(),
 }).passthrough();
 
@@ -107,7 +107,15 @@ export const BlocksSchema = z.object({
     imageIds: z.array(z.string().uuid()).min(1).max(8),
     pullQuote: z.string().max(300).optional(), // Increased from 200 to 300 for longer quotes
   })).optional(),
-  pullQuotes: z.array(z.string().max(300)).max(5).optional(), // Increased from 200 to 300 for longer quotes
+  pullQuotes: z.array(
+    z.union([
+      z.string().max(300),
+      z.object({
+        text: z.string().max(300),
+        context: z.string().max(80).optional(),
+      }),
+    ])
+  ).max(5).optional(),
   materialsLedger: z.object({
     items: z.array(z.object({
       productId: z.string().uuid().nullable().optional(),
@@ -137,3 +145,12 @@ export const BlocksSchema = z.object({
 }).strict();
 
 export type Blocks = z.infer<typeof BlocksSchema>;
+
+/** Normalized pull quote with optional context */
+export type NormalizedPullQuote = { text: string; context?: string };
+
+/** Normalize a pull quote entry (string or {text, context}) to a consistent shape */
+export function normalizePullQuote(q: string | { text: string; context?: string }): NormalizedPullQuote {
+  if (typeof q === 'string') return { text: q };
+  return { text: q.text, context: q.context || undefined };
+}
