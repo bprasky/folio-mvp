@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useMemo, useState, useEffect } from "react";
 import InlineTagLink from '@/components/posting/interactive/InlineTagLink';
 import InTheDetails from '@/components/posting/interactive/InTheDetails';
+import type { CreditEntry } from "@/lib/posting/creditsSchema";
 
 interface RichArticleProps {
   article: Blocks;
@@ -12,6 +13,11 @@ interface RichArticleProps {
   tags?: Array<{ id: string; productName: string; productId?: string }>;
   author?: { name?: string };
   projectTitle?: string;
+  /**
+   * Structured credits from ProjectPost.credits — preferred over article.credits
+   * when rendering. Supports multi-party credits with optional profile links.
+   */
+  credits?: CreditEntry[];
   images?: Array<{ id: string; url: string; caption?: string }>;
 }
 
@@ -69,6 +75,7 @@ export function RichArticle({
   tags = [],
   author,
   projectTitle,
+  credits: creditsProp,
   images = [],
 }: RichArticleProps) {
   const title = article.lead?.kicker || projectTitle || "Untitled Project";
@@ -340,35 +347,48 @@ export function RichArticle({
         </section>
       )}
 
-      {/* Credits */}
-      {article.credits && article.credits.length > 0 && (
-        <footer className="mt-12 pt-8 border-t border-[var(--ridge-outer)]">
-          <div className="flex flex-wrap gap-4 text-sm text-[var(--text-secondary)]">
-            {article.credits.map((credit, idx) => (
-              <div key={idx}>
-                <span className="font-medium">{credit.role}:</span>{" "}
-                {credit.url ? (
-                  <a
-                    href={credit.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-[var(--accent)] hover:underline"
-                  >
-                    {credit.name}
-                  </a>
-                ) : (
-                  <span>{credit.name}</span>
-                )}
-              </div>
-            ))}
-          </div>
-          {author?.name && (
-            <div className="mt-4 text-sm text-[var(--text-tertiary)]">
-              By {author.name}
+      {/* Credits — prefer structured credits prop over article.credits */}
+      {(() => {
+        const displayCredits = (creditsProp && creditsProp.length > 0)
+          ? creditsProp
+          : article.credits;
+        if (!displayCredits || displayCredits.length === 0) return null;
+        return (
+          <footer className="mt-12 pt-8 border-t border-[var(--ridge-outer)]">
+            <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-[var(--text-secondary)]">
+              {displayCredits.map((credit, idx) => {
+                // Build link: prefer Folio profile if userId present, then url
+                const userId = (credit as CreditEntry).userId;
+                const href = userId
+                  ? `/designer/${userId}`
+                  : credit.url || undefined;
+                return (
+                  <div key={idx}>
+                    <span className="font-medium">{credit.role}:</span>{" "}
+                    {href ? (
+                      <a
+                        href={href}
+                        target={userId ? undefined : "_blank"}
+                        rel={userId ? undefined : "noopener noreferrer"}
+                        className="text-[var(--accent)] hover:underline"
+                      >
+                        {credit.name}
+                      </a>
+                    ) : (
+                      <span>{credit.name}</span>
+                    )}
+                  </div>
+                );
+              })}
             </div>
-          )}
-        </footer>
-      )}
+            {author?.name && (
+              <div className="mt-4 text-sm text-[var(--text-tertiary)]">
+                By {author.name}
+              </div>
+            )}
+          </footer>
+        );
+      })()}
     </article>
   );
 }
