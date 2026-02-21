@@ -2,9 +2,9 @@ export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import OpenAI from "openai";
+import Anthropic from "@anthropic-ai/sdk";
 
-const OPENAI_ENABLED = !!process.env.OPENAI_API_KEY && process.env.OPENAI_ENABLED !== "false";
+const ANTHROPIC_ENABLED = !!process.env.ANTHROPIC_API_KEY && process.env.ANTHROPIC_ENABLED !== "false";
 
 interface OrbAgentRequest {
   question: string;
@@ -95,39 +95,39 @@ async function mockLLMResponse(question: string, nodeId?: string): Promise<OrbAg
   return { text, nodes, edges: [], action };
 }
 
-// Real LLM call using OpenAI
+// Real LLM call using Anthropic
 async function callLLM(question: string, nodeId?: string): Promise<OrbAgentResponse> {
-  if (!OPENAI_ENABLED) {
+  if (!ANTHROPIC_ENABLED) {
     return mockLLMResponse(question, nodeId);
   }
 
   try {
-    const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-    
-    const userMessage = nodeId 
+    const client = new Anthropic();
+
+    const userMessage = nodeId
       ? `Context: User is viewing the "${nodeId}" node. Question: ${question}`
       : question;
 
-    const completion = await client.chat.completions.create({
-      model: process.env.OPENAI_MODEL || "gpt-4o-mini",
+    const message = await client.messages.create({
+      model: "claude-sonnet-4-20250514",
+      system: SYSTEM_PROMPT,
       messages: [
-        { role: "system", content: SYSTEM_PROMPT },
         { role: "user", content: userMessage },
       ],
-      response_format: { type: "json_object" },
       temperature: 0.7,
       max_tokens: 500,
     });
 
-    const content = completion.choices[0]?.message?.content;
-    if (!content) {
-      throw new Error("No response from OpenAI");
+    const rawContent = message.content[0]?.type === "text" ? message.content[0].text : null;
+    if (!rawContent) {
+      throw new Error("No response from Anthropic");
     }
 
+    const content = rawContent.replace(/```json\n?|\n?```/g, "").trim();
     const parsed = JSON.parse(content) as OrbAgentResponse;
     return parsed;
   } catch (error) {
-    console.error("[orb-agent] OpenAI error:", error);
+    console.error("[orb-agent] Anthropic error:", error);
     // Fallback to mock
     return mockLLMResponse(question, nodeId);
   }

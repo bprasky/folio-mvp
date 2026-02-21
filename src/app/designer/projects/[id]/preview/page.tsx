@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { PostCard } from "@/components/posting/PostCard";
 import { PostCondensed } from "@/components/posting/PostCondensed";
@@ -8,6 +8,8 @@ import { PostExpanded } from "@/components/posting/PostExpanded";
 import { InterviewModal } from "@/components/posting/interview/InterviewModal";
 import { TagDiagnosticModal } from "@/components/posting/interview/TagDiagnosticModal";
 import { RichArticle } from "@/components/posting/preview/RichArticle";
+import { CreditsEditor } from "@/components/posting/CreditsEditor";
+import { parseCredits, type CreditEntry } from "@/lib/posting/creditsSchema";
 import { Blocks } from "@/lib/posting/schemas";
 
 const POSTING_V1_ENABLED = process.env.NEXT_PUBLIC_POSTING_V1 === "true";
@@ -26,6 +28,8 @@ export default function ProjectPostPreviewPage() {
   const [generateError, setGenerateError] = useState<string | null>(null);
   const [showRegenerateConfirm, setShowRegenerateConfirm] = useState(false);
   const [showTagDiagnostic, setShowTagDiagnostic] = useState(false);
+  const [credits, setCredits] = useState<CreditEntry[]>([]);
+  const [creditsSaving, setCreditsSaving] = useState(false);
   const hasProcessedStartInterview = useRef(false);
   const hasCheckedDiagnostic = useRef(false);
 
@@ -119,6 +123,17 @@ export default function ProjectPostPreviewPage() {
         const heroImage = postData.heroAssetId
           ? projectData.images?.find((img: any) => img.id === postData.heroAssetId)
           : projectData.images?.[0];
+
+        const designerName = projectData.designer?.name || "Designer";
+        const parsedCredits = parseCredits(postData.credits);
+        // Auto-populate Designer credit if not present
+        const hasDesigner = parsedCredits.some(
+          (c: CreditEntry) => c.role.toLowerCase() === "designer"
+        );
+        if (!hasDesigner) {
+          parsedCredits.unshift({ role: "Designer", name: designerName });
+        }
+        setCredits(parsedCredits);
 
         setPost({
           post: {
@@ -314,6 +329,37 @@ export default function ProjectPostPreviewPage() {
     }
   }
 
+  const handleCreditsChange = useCallback(async (updated: CreditEntry[]) => {
+    const previous = credits;
+    setCredits(updated);
+    setCreditsSaving(true);
+    try {
+      const res = await fetch(`/api/posting/project/${projectId}/credits`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ credits: updated }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setCredits(data.credits);
+        // Also update credits in the local post state so article view reflects changes
+        setPost((prev: any) => prev ? {
+          ...prev,
+          post: { ...prev.post, credits: data.credits },
+        } : prev);
+      } else {
+        console.error("[preview] Failed to save credits", res.status);
+        // Revert optimistic update on failure
+        setCredits(previous);
+      }
+    } catch (err) {
+      console.error("[preview] Error saving credits:", err);
+      setCredits(previous);
+    } finally {
+      setCreditsSaving(false);
+    }
+  }, [projectId, credits]);
+
   if (!POSTING_V1_ENABLED) {
     return (
       <div className="p-8 text-center text-[var(--text-secondary)]">
@@ -406,6 +452,15 @@ export default function ProjectPostPreviewPage() {
         </div>
       )}
 
+      {/* Credits Editor — editable both before and after article generation */}
+      <div className="mb-8 rounded-lg border border-[var(--ridge-outer)] bg-white p-5">
+        <CreditsEditor
+          credits={credits}
+          onChange={handleCreditsChange}
+          saving={creditsSaving}
+        />
+      </div>
+
       {/* Generate button or error message */}
       {!post.post.expandedBlocks && (
         <div className="mb-6 text-center py-8">
@@ -430,6 +485,7 @@ export default function ProjectPostPreviewPage() {
           tags={post.tags}
           author={post.designer}
           projectTitle={post.project.title}
+          credits={credits}
           images={post.images?.map((img: any) => ({
             id: img.id,
             url: img.url,

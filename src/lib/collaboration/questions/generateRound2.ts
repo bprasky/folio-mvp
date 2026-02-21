@@ -3,7 +3,7 @@
  * These questions dig deeper into the themes and stories that emerged
  */
 
-import OpenAI from 'openai';
+import Anthropic from '@anthropic-ai/sdk';
 import { callLLM } from '@/lib/posting/llmClient';
 import { Round1Response, CollaborationQuestion, getRound1Questions } from './round1';
 
@@ -40,9 +40,7 @@ async function generateFollowUpsWithLLM(
   round1Questions: CollaborationQuestion[],
   round1Responses: Round1Response[]
 ): Promise<Round2Question[]> {
-  const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-  });
+  const anthropic = new Anthropic();
 
   // Build context from Round 1 Q&A
   const qaContext = round1Responses.map(response => {
@@ -72,25 +70,25 @@ Return a JSON array of 4-6 questions.`;
 
   const result = await callLLM(
     async () => {
-      const completion = await openai.chat.completions.create({
-        model: 'gpt-4o',
+      const message = await anthropic.messages.create({
+        model: 'claude-sonnet-4-20250514',
+        system: ROUND2_SYSTEM_PROMPT,
         messages: [
-          { role: 'system', content: ROUND2_SYSTEM_PROMPT },
           { role: 'user', content: userPrompt },
         ],
-        response_format: { type: 'json_object' },
         temperature: 0.7,
         max_tokens: 2000,
       });
 
-      const content = completion.choices[0]?.message?.content;
+      const content = message.content[0]?.type === 'text' ? message.content[0].text : null;
       if (!content) throw new Error('No content in response');
 
-      const parsed = JSON.parse(content);
+      const cleaned = content.replace(/```json\n?|\n?```/g, '').trim();
+      const parsed = JSON.parse(cleaned);
       return parsed.questions || parsed;
     },
     {
-      modelName: 'gpt-4o',
+      modelName: 'claude-sonnet-4-20250514',
       maxRetries: 2,
       contextHint: 'collaboration_round2_generation',
     }

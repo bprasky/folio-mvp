@@ -11,7 +11,7 @@ import { z } from "zod";
 
 /**
  * Lightweight background evaluation endpoint.
- * Uses gpt-4o-mini to pre-evaluate whether in-progress answers
+ * Uses Claude to pre-evaluate whether in-progress answers
  * cover or partially address remaining questions. Results let the
  * frontend pre-compute morphed questions so they appear instantly
  * on submit.
@@ -28,8 +28,8 @@ const EvaluateRequestSchema = z.object({
   })),
 });
 
-const OPENAI_ENABLED =
-  !!process.env.OPENAI_API_KEY && process.env.OPENAI_ENABLED !== "false";
+const ANTHROPIC_ENABLED =
+  !!process.env.ANTHROPIC_API_KEY && process.env.ANTHROPIC_ENABLED !== "false";
 
 const SYSTEM_PROMPT = `You evaluate whether a designer's interview answers already cover upcoming questions. For each remaining question, decide:
 - "none": answers don't touch this topic
@@ -88,7 +88,7 @@ export async function POST(
       return NextResponse.json({ ok: true, updates: [] }, { status: 200 });
     }
 
-    if (!OPENAI_ENABLED) {
+    if (!ANTHROPIC_ENABLED) {
       return NextResponse.json({ ok: true, updates: [] }, { status: 200 });
     }
 
@@ -103,23 +103,21 @@ export async function POST(
     }
     prompt += `\nReturn only questions that are "covered" or "morphed". Omit unaffected questions.`;
 
-    const modelName = 'gpt-4o-mini';
+    const modelName = 'claude-sonnet-4-20250514';
 
-    const openai = await import("openai").then((m) =>
-      new m.default({ apiKey: process.env.OPENAI_API_KEY })
-    );
+    const { default: Anthropic } = await import("@anthropic-ai/sdk");
+    const anthropic = new Anthropic();
 
     const llmResult = await callLLM(
       async () => {
-        return await openai.chat.completions.create({
+        return await anthropic.messages.create({
           model: modelName,
+          system: SYSTEM_PROMPT,
           messages: [
-            { role: "system", content: SYSTEM_PROMPT },
             { role: "user", content: prompt },
           ],
           temperature: 0.3,
           max_tokens: 400,
-          response_format: { type: "json_object" },
         });
       },
       { modelName, maxRetries: 1, baseDelayMs: 200, contextHint: `evaluate:${projectId}` }
@@ -130,7 +128,8 @@ export async function POST(
       return NextResponse.json({ ok: true, updates: [] }, { status: 200 });
     }
 
-    const raw = llmResult.data.choices?.[0]?.message?.content || "{}";
+    const rawText = llmResult.data.content[0]?.type === 'text' ? llmResult.data.content[0].text : '{}';
+    const raw = rawText.replace(/```json\n?|\n?```/g, '').trim();
     let json: any;
     try {
       json = JSON.parse(raw);

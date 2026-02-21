@@ -204,6 +204,13 @@ export async function PATCH(
       }
       
       // 3. Auto-populate credits if missing or incomplete
+      // Note: Credits now use the CreditEntry schema from creditsSchema.ts which supports
+      // multi-party credits (architect, contractor, photographer, stylist, etc.).
+      // The CreditsEditor on the preview page allows designers to add credits before/after
+      // generation. This auto-population is a fallback for posts that go through publish
+      // without any credits being set.
+      // Future (Super Articles): Credits will include userId linking to contributor
+      // InterviewSessions and contributionStatus tracking.
       let currentCredits = post.credits;
       if (!currentCredits) {
         // Try to get credits from expandedBlocks first
@@ -239,34 +246,21 @@ export async function PATCH(
         }
       }
       
-      // Check and auto-fill missing required roles
+      // Check and auto-fill missing Designer credit only.
+      // We no longer auto-add null-name placeholders (e.g. "Photographer: null")
+      // because the CreditsEditor lets designers explicitly choose who to credit.
+      // Adding null-name entries overwrites that intentional choice.
       if (currentCredits && typeof currentCredits === "object") {
         const credits = Array.isArray(currentCredits) ? [...currentCredits] : [];
         const hasDesigner = credits.some(
           (c: any) => c.role?.toLowerCase().includes("designer")
         );
-        const hasPhotoOrCGI = credits.some(
-          (c: any) =>
-            c.role?.toLowerCase().includes("photograph") ||
-            c.role?.toLowerCase().includes("cgi") ||
-            c.role?.toLowerCase().includes("render")
-        );
-        
-        let creditsUpdated = false;
+
         if (!hasDesigner) {
           credits.push({ role: "Designer", name: null });
-          creditsUpdated = true;
-          console.log(`[${correlationId}] Auto-filled missing designer credit`);
-        }
-        if (!hasPhotoOrCGI) {
-          credits.push({ role: "Photographer", name: null });
-          creditsUpdated = true;
-          console.log(`[${correlationId}] Auto-filled missing photography/CGI credit`);
-        }
-        
-        if (creditsUpdated) {
           updateData.credits = credits;
           needsUpdate = true;
+          console.log(`[${correlationId}] Auto-filled missing designer credit`);
         }
       }
       

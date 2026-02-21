@@ -63,14 +63,21 @@ Anyone can be credited. Only subscribers can have a voice.
 ## Super-Article Architecture
 
 ### Conceptual Model
-A Super-Article is a unified project narrative with multiple professional lenses. It has:
+A Super-Article has two layers:
 
-1. **Shared Umbrella** - Hero image, project name, location, and full credits visible to all
-2. **Perspective Tabs** - Horizontal navigation between Designer, Architect, Contractor, and Featured Vendors
-3. **Individual Editorials** - Each contributing party's perspective is a complete editorial in itself
-4. **Progressive Assembly** - The Super-Article builds over time as parties contribute
+1. **Compiled Article (default view)** — The AI-composed editorial that weaves together the best of all contributor perspectives into one unified narrative. This is what every viewer sees first when arriving from feeds, search, or direct links. It's the sum of all parts — the reason a casual viewer stays.
+2. **Contributor Lenses (tabs)** — Each contributing party gets their own complete editorial perspective, accessible via tabs below the hero. These are individual media opportunities — each contributor's full story told in their voice.
+3. **Product Bank** — All products tagged in the project, expandable to reveal what each contributor said about them. This is where the uncompressed, per-product commentary lives.
+4. **Progressive Assembly** — The Super-Article builds over time as parties contribute. Each new perspective enriches the compiled article and adds a new lens tab.
 
-### Visual Structure
+### Default View: The Compiled Article
+When a user arrives at a Super-Article from any feed, search result, or shared link, they land on the **compiled article** — the unified editorial that draws from all contributor perspectives. This is NOT any single person's lens; it's the AI-curated best-of-everything version.
+
+**The compiled article only names products from paying vendors in the body text.** All other products appear in the product bank below but don't get editorial ink. This is the core vendor monetization lever.
+
+### Contributor Lens Tabs
+Below the hero, horizontal tabs let users switch to individual contributor perspectives:
+
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │  [HERO IMAGE - Full bleed]                                  │
@@ -85,28 +92,74 @@ A Super-Article is a unified project narrative with multiple professional lenses
 └─────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────┐
-│  [DESIGNER]    [ARCHITECT]    [BUILDER]    [VENDORS ▾]      │
-│      ●             ○              ○             ○            │
+│  [ALL ●]  [DESIGNER]  [ARCHITECT]  [BUILDER]  [VENDORS ▾]  │
 └─────────────────────────────────────────────────────────────┘
 
-[Selected perspective's editorial content flows below]
+"ALL" = compiled article (default, active on load)
+Each other tab = that contributor's individual editorial lens
 ```
 
+**Deep-linking rule:** If a user navigates to the article through a specific contributor's profile or link, they land on that contributor's lens tab first — but the compiled article tab is always available.
+
+**Each contributor gets their own media opportunity.** Their lens tab is a complete editorial in itself — their images, their narrative, their pull quotes. This is what they share on social, embed on their website, and use for their portfolio.
+
 ### Hero Image Hierarchy
-The Super-Article hero image follows a priority hierarchy:
+The compiled article hero image follows a priority hierarchy:
 
-1. **Architect** (first priority) - Architectural photography tends toward grand, structural shots that establish context
-2. **Designer** (second priority) - Interior photography with styling and detail
-3. **Contractor** (third priority) - Process or completion documentation
+1. **Architect** (first priority) — Architectural photography tends toward grand, structural shots that establish context
+2. **Designer** (second priority) — Interior photography with styling and detail
+3. **Contractor** (third priority) — Process or completion documentation
 
-**Rule:** Hero image is determined by hierarchy, but each party chooses their OWN hero for their individual editorial view and profile display.
+**Rule:** The compiled article uses the hierarchy hero. Each contributor chooses their OWN hero for their individual lens tab and profile display.
 
 ### Tab Navigation Behavior
+- "ALL" tab is active by default (compiled article)
 - Swiping left/right moves between perspectives
-- The tab indicator shows which perspective is active
-- Each perspective is a complete editorial experience
-- Users in specific roles (e.g., architects) may see content defaulting to their professional lens
+- Each contributor lens is a complete editorial experience
+- VENDORS tab is a dropdown listing contributing vendors
 - Clicking a credited but non-contributing party shows: "Morphosis Partners contributed to this project. [Their perspective coming soon]" or "[Claim your profile to add your story]"
+
+### Product Bank (Below the Article)
+All tagged products appear in an expandable product bank at the bottom of the article. When a user expands a product card, they see:
+
+- Product image, name, vendor, finish/spec
+- What each contributor said about this product (uncompressed interview quotes)
+- Contributor role and name attributed to each quote
+
+**No content is lost.** The AI editorial is the highlight reel; the product bank is the director's commentary. Every word every contributor said about every product is preserved and accessible — just tucked into the right place rather than bloating the article.
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  PRODUCT BANK                                                │
+│                                                              │
+│  ┌──────────────────────────────────────┐                    │
+│  │ [img] Heath Ceramics Tile  ▸         │  ← collapsed      │
+│  │       Matte White · Heath Ceramics   │                    │
+│  └──────────────────────────────────────┘                    │
+│                                                              │
+│  ┌──────────────────────────────────────┐                    │
+│  │ [img] Apparatus Cloud Chandelier  ▾  │  ← expanded       │
+│  │       Brass · Apparatus Studio       │                    │
+│  │                                      │                    │
+│  │  Designer — Sarah Chen               │                    │
+│  │  "The scale of this piece anchors    │                    │
+│  │  the double-height entry. We wanted  │                    │
+│  │  something that reads as sculpture   │                    │
+│  │  from the second floor landing..."   │                    │
+│  │                                      │                    │
+│  │  Architect — James Park              │                    │
+│  │  "We designed the ceiling recess     │                    │
+│  │  specifically for this fixture. The  │                    │
+│  │  structural support had to account   │                    │
+│  │  for 40 lbs suspended at 18 feet..." │                    │
+│  │                                      │                    │
+│  │  Vendor — Apparatus Studio           │                    │
+│  │  "This is a custom brass finish we   │                    │
+│  │  developed with the designer. The    │                    │
+│  │  patina will develop over time..."   │                    │
+│  └──────────────────────────────────────┘                    │
+└─────────────────────────────────────────────────────────────┘
+```
 
 ---
 
@@ -127,14 +180,22 @@ The Super-Article hero image follows a priority hierarchy:
 
 This creates **natural subscription pressure** without gatekeeping recognition.
 
-### Vendor Credit Model
-Vendors operate slightly differently:
-- **Tagged vendors** appear in product tags throughout the editorial
-- **Featured vendors** (limited slots) can have perspective blurbs in the Super-Article
-- **Boost option** - Vendors can pay to boost their feature in the article
-- Vendor perspective articles are shorter (blurbs, not full editorials)
-- On vendor profile, they can link to projects where they're credited
-- Full vendor-perspective article for their product page requires subscription or boost
+### Vendor Credit & Monetization Model
+Vendors operate on a tiered monetary contribution model that controls visibility:
+
+| Tier | Cost | In-Article Text | Product Bank | Vendor Tab | Media Ordering |
+|------|------|-----------------|--------------|------------|----------------|
+| **Tagged** | Free | No — product in bank only | Yes, with product info | No | Last |
+| **Featured** | Subscription | No — product in bank only | Yes, with contributor quotes | Yes — perspective blurb | After boosted |
+| **Boosted** | Pay per project | **Yes — product named in editorial body** | Yes, prominent placement | Yes — top of vendor list | First |
+
+**Key rules:**
+- Only **boosted** vendor products are named in the compiled article's body text. This is the premium placement — the AI weaves the product naturally into the narrative.
+- **Featured** vendors (subscribers) get a perspective blurb in the Vendors tab and their products show contributor commentary in the product bank, but no in-article text mention.
+- **Tagged** vendors appear in the product bank with basic info. Free, but no editorial presence.
+- Vendor ordering everywhere (Vendors tab dropdown, product bank sort, media generation priority) is determined by monetary contribution tier.
+- On vendor profile, they can link to projects where they're tagged/featured/boosted.
+- Vendors can contribute their own commentary on product usage via interview prompts, which appears in the product bank and (if featured/boosted) in the Vendors tab.
 
 ---
 
@@ -164,17 +225,21 @@ Vendors operate slightly differently:
 - Project re-surfaces with "Complete Build Story" flag
 
 **Stage 4: Vendor Features**
-- Tagged vendors can boost for featured blurb
-- Featured vendors shown in Vendors tab dropdown
-- Each vendor blurb links to product pages
+- Tagged vendors appear in product bank automatically (free)
+- Featured vendors (subscribers) can add perspective commentary and appear in Vendors tab
+- Boosted vendors get products named in compiled article body text + top placement in Vendors tab
+- Vendor ordering in tab, product bank, and media determined by monetary contribution tier
+- Each vendor entry links to product pages
 
 ### Regeneration Behavior
 Each new contribution triggers:
-1. AI regeneration that optimizes overall narrative quality
-2. Slight length increase (not exponential—we don't want novels)
+1. **Compiled article regenerates** — AI reweaves the unified narrative with the new perspective, optimizing overall quality
+2. Slight length increase (not exponential — we don't want novels)
 3. Cross-referencing between perspectives where relevant
-4. Re-surface to feed for users who previously engaged
-5. New surface to users who haven't seen it but follow the new contributor
+4. **New contributor lens tab appears** — their individual editorial goes live
+5. **Product bank updates** — new contributor quotes added to relevant products (no content lost)
+6. Re-surface to feed for users who previously engaged
+7. New surface to users who haven't seen it but follow the new contributor
 
 ---
 
@@ -238,25 +303,28 @@ Generated AFTER designer/architect interviews, referencing specific elements men
 - Problem-solving moments
 - Craft details viewers might miss
 
-### Vendor Prompts (For Boosted Features)
-Brief, product-focused:
+### Vendor Prompts (Featured & Boosted)
+Brief, product-focused. Commentary appears in product bank for all featured/boosted vendors, and in the Vendors tab:
 - Why this product for this space?
 - Designer collaboration story
 - Technical specifications that mattered
 - Behind-the-scenes of the specification
+- How the material/finish was selected
+
+**Note:** Vendor commentary is stored as `SupplementalQuote` records linked to the product tag, just like designer/architect/contractor quotes. The only difference is visibility: boosted vendors get their products named in the compiled article text.
 
 ---
 
 ## Feed & Discovery Behavior
 
 ### User Role Lens
-When viewing editorials and Super-Articles, content can be filtered by user role:
-- **Architects** see architectural perspective prioritized
-- **Designers** see design perspective prioritized
-- **Contractors** see build perspective prioritized
-- **Individuals** see the unified Super-Article experience
+Everyone lands on the **compiled article** by default. Role-based behavior affects how they *arrive*, not what they see first:
 
-This doesn't hide content—it adjusts default view and surfacing priority.
+- **From feeds/search/shared links:** Always land on compiled article (ALL tab)
+- **From a contributor's profile:** Land on that contributor's lens tab, with ALL tab available
+- **Feed surfacing priority:** Users in specific roles (architects, designers, contractors) see projects with their profession's contribution weighted higher in feed ranking
+
+This doesn't hide content or change the default view — it adjusts discovery priority and entry points.
 
 ### Re-Surfacing Logic
 Super-Articles re-appear in feed when:
@@ -274,13 +342,29 @@ Flag indicators:
 
 ## Media Generation Possibilities
 
+### Content Storage: Nothing Gets Lost
+The AI editorial (compiled article + individual lenses) is the curated highlight reel — it has tight token budgets and character limits by design. But the raw interview content is **never discarded**. Here's where everything lives:
+
+| Content Type | Where It's Stored | Where It's Displayed |
+|---|---|---|
+| Compiled narrative | `expandedBlocks` (4096 token budget) | Compiled article body (ALL tab) |
+| Individual lens narratives | Per-contributor `expandedBlocks` | Contributor lens tabs |
+| Per-product commentary | `SupplementalQuote` (unlimited, per contributor) | Product bank expanded cards |
+| Pull quotes | `expandedBlocks.pullQuotes` + `SupplementalQuote` (pinned) | Article body + product bank |
+| Raw interview answers | `EditorialInterviewAnswer` (unlimited) | Never displayed directly — source of truth for regeneration |
+| Vendor commentary | `SupplementalQuote` (with vendor userId) | Product bank + Vendors tab |
+
+**Principle:** The AI compresses for the editorial. The product bank preserves everything. No interview answer about a product is ever summarized, truncated, or dropped — it's stored as a `SupplementalQuote` linked to the product tag and attributed to the contributor.
+
 ### The Data Wealth
 A complete Super-Article contains:
 - 10-30+ high-quality images from multiple perspectives
-- Designer narrative (500-1500 words)
-- Architect narrative (500-1500 words)
-- Contractor narrative (300-800 words)
-- Vendor blurbs (100-300 words each)
+- Compiled narrative (AI-curated best-of, 800-2000 words)
+- Designer lens narrative (500-1500 words)
+- Architect lens narrative (500-1500 words)
+- Contractor lens narrative (300-800 words)
+- Vendor commentary blurbs (100-300 words each)
+- Per-product contributor quotes (unlimited, in product bank)
 - Product tags with spatial coordinates
 - Pull quotes from each party
 - Project metadata (location, timeline, budget band, style)
@@ -391,10 +475,12 @@ If a credited party disputes published content:
 - Regeneration on new contributions
 - Tab navigation UI
 
-### Phase 2B: Vendor Features
-- Vendor perspective blurbs
-- Boost functionality for featured status
-- Vendor tab in Super-Article dropdown
+### Phase 2B: Vendor Features & Product Bank
+- Product bank UI with expandable per-contributor commentary
+- Vendor tiered monetization (tagged → featured → boosted)
+- Boosted vendor products named in compiled article body text
+- Vendor tab in Super-Article with ordering by monetary contribution
+- Vendor commentary interview flow
 
 ### Phase 3: Media Generation
 - Automated promo video generation
