@@ -270,8 +270,8 @@ export default function SaveSelectionToProjectModal({
   const hasOrgs = userOrgs.length > 0;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-[var(--bg-base,#fff)] rounded-xl shadow-xl max-w-md w-full max-h-[80vh] flex flex-col">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="ridge-card max-w-md w-full max-h-[80vh] flex flex-col overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--ridge-outer,#e5e7eb)]">
           <h2 className="text-lg font-semibold text-[var(--text-primary,#111)]">
@@ -286,7 +286,7 @@ export default function SaveSelectionToProjectModal({
         </div>
 
         {/* Preview */}
-        <div className="px-6 py-3 border-b border-[var(--ridge-outer,#e5e7eb)] bg-[var(--bg-elevated,#f9fafb)]">
+        <div className="px-6 py-3 border-b border-[var(--ridge-outer,#e5e7eb)] bg-[var(--bg-elevated,#f9fafb)] shadow-sm">
           <div className="flex items-center gap-3">
             <div className="w-16 h-16 rounded-lg overflow-hidden bg-[var(--bg-elevated)] flex-shrink-0">
               {selection.photo ? (
@@ -392,7 +392,7 @@ export default function SaveSelectionToProjectModal({
                           type="text"
                           value={newProjectTitle}
                           onChange={(e) => setNewProjectTitle(e.target.value)}
-                          className="w-full px-3 py-2 border border-[var(--ridge-outer,#e5e7eb)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--text-primary,#111)]/20 bg-[var(--bg-base,#fff)]"
+                          className="ridge-input w-full px-3 py-2 text-sm"
                           placeholder="Project name"
                           autoFocus
                         />
@@ -459,14 +459,14 @@ export default function SaveSelectionToProjectModal({
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 px-4 py-2 border border-[var(--ridge-outer,#e5e7eb)] rounded-lg text-[var(--text-primary,#111)] hover:bg-[var(--bg-elevated,#f3f4f6)] transition-colors text-sm font-medium"
+                className="ridge-btn flex-1 px-4 py-2 folio-ui font-medium"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={saving || (!selectedProjectId && !createNew)}
-                className="flex-1 px-4 py-2 bg-[var(--text-primary,#111)] text-[var(--bg-base,#fff)] rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium"
+                className="accent-btn flex-1 px-4 py-2 folio-ui font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {saving ? (
                   <span className="flex items-center justify-center gap-2">

@@ -348,7 +348,7 @@ export default function StoryPanel({ projectId, project, images, isOwner }: Stor
           {filteredAnswers.map((qa, i) => (
             <div
               key={i}
-              className="border border-[var(--border-default)] rounded-lg p-4 mb-3"
+              className="border border-[var(--border-default)] rounded-lg p-4 mb-3 shadow-sm"
             >
               <label className="block folio-ui font-medium text-[var(--text-primary)] mb-2">
                 {qa.q || qa.question || "Your reflection"}
@@ -356,7 +356,7 @@ export default function StoryPanel({ projectId, project, images, isOwner }: Stor
               <textarea
                 value={qa.a || qa.answer || ""}
                 onChange={(e) => setAnswer(i, "a", e.target.value)}
-                className="w-full min-h-[80px] p-2 border border-[var(--border-default)] rounded folio-ui resize-y bg-[var(--bg-base)] focus:ring-1 focus:ring-[var(--accent)] focus:border-[var(--accent)]"
+                className="ridge-input w-full min-h-[80px] p-2 folio-ui resize-y"
                 placeholder="Share your thoughts..."
               />
               <div className="flex justify-end mt-2">
@@ -401,16 +401,16 @@ export default function StoryPanel({ projectId, project, images, isOwner }: Stor
           {filteredFollowups.map((qa, i) => (
             <div
               key={i}
-              className="grid grid-cols-12 gap-3 items-start p-3 rounded-lg border border-[var(--border-default)] hover:border-[var(--accent)] transition-colors"
+              className="grid grid-cols-12 gap-3 items-start p-3 rounded-lg border border-[var(--border-default)] shadow-sm hover:border-[var(--accent)] transition-colors"
             >
               <input
-                className="col-span-5 px-3 py-2 folio-ui border border-[var(--border-default)] rounded-lg focus:ring-1 focus:ring-[var(--accent)] focus:border-[var(--accent)] min-w-0 bg-[var(--bg-base)]"
+                className="ridge-input col-span-5 px-3 py-2 folio-ui min-w-0"
                 value={qa.q || qa.question || ""}
                 placeholder="Follow-up Question"
                 onChange={(e) => setFollowup(i, "q", e.target.value)}
               />
               <textarea
-                className="col-span-6 px-3 py-2 folio-ui border border-[var(--border-default)] rounded-lg focus:ring-1 focus:ring-[var(--accent)] focus:border-[var(--accent)] resize-none bg-[var(--bg-base)]"
+                className="ridge-input col-span-6 px-3 py-2 folio-ui resize-none"
                 value={qa.a || qa.answer || ""}
                 placeholder="Answer"
                 rows={2}

@@ -227,7 +227,7 @@ export default function MediaSection({ project, isOwner, images, projectPost }: 
           {/* Photos Card */}
           <button
             onClick={() => setShowUploadModal(true)}
-            className="group text-left rounded-2xl border border-[var(--border-default)] bg-[var(--bg-elevated)] p-5 hover:border-[var(--accent)] hover:shadow-sm transition-all"
+            className="group text-left rounded-2xl border border-[var(--border-default)] bg-[var(--bg-elevated)] p-5 shadow-sm hover:border-[var(--accent)] hover:shadow-md transition-all"
           >
             <Camera className="w-6 h-6 text-[var(--accent)] mb-3" />
             <h3 className="folio-ui font-semibold text-[var(--text-primary)] mb-1">Photos</h3>
@@ -248,7 +248,7 @@ export default function MediaSection({ project, isOwner, images, projectPost }: 
           {/* Presentation Card */}
           <button
             onClick={handleImportPresentation}
-            className="group text-left rounded-2xl border border-[var(--border-default)] bg-[var(--bg-elevated)] p-5 hover:border-[var(--accent)] hover:shadow-sm transition-all"
+            className="group text-left rounded-2xl border border-[var(--border-default)] bg-[var(--bg-elevated)] p-5 shadow-sm hover:border-[var(--accent)] hover:shadow-md transition-all"
           >
             <Presentation className="w-6 h-6 text-[var(--accent)] mb-3" />
             <h3 className="folio-ui font-semibold text-[var(--text-primary)] mb-1">Presentation</h3>
@@ -269,7 +269,7 @@ export default function MediaSection({ project, isOwner, images, projectPost }: 
           {/* Material Schedule Card */}
           <button
             onClick={handleImportPdfSpecs}
-            className="group text-left rounded-2xl border border-[var(--border-default)] bg-[var(--bg-elevated)] p-5 hover:border-[var(--accent)] hover:shadow-sm transition-all"
+            className="group text-left rounded-2xl border border-[var(--border-default)] bg-[var(--bg-elevated)] p-5 shadow-sm hover:border-[var(--accent)] hover:shadow-md transition-all"
           >
             <FileSpreadsheet className="w-6 h-6 text-[var(--accent)] mb-3" />
             <h3 className="folio-ui font-semibold text-[var(--text-primary)] mb-1">Material Schedule</h3>
@@ -404,9 +404,9 @@ export default function MediaSection({ project, isOwner, images, projectPost }: 
               return (
                 <div
                   key={image.id}
-                  className={`relative group aspect-[4/3] bg-[var(--bg-base)] rounded-lg overflow-hidden border-2 ${
+                  className={`relative group aspect-[4/3] bg-[var(--bg-base)] rounded-lg overflow-hidden shadow-sm border-2 ${
                     isCover ? 'border-[var(--accent)]' : 'border-[var(--border-default)] hover:border-[var(--accent)]'
-                  } transition-all`}
+                  } hover:shadow-md transition-all`}
                 >
                   <Image
                     src={image.url}

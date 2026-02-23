@@ -75,7 +75,7 @@ export default function BoardTileMenu({
               setIsOpen(false);
               onEdit(selection.id, product?.id);
             }}
-            className="w-full text-left px-3 py-2 folio-ui hover:bg-[var(--bg-base)] text-[var(--text-primary)] flex items-center gap-2"
+            className="w-full text-left px-3 py-2 folio-ui hover:bg-[var(--bg-base)] hover:translate-x-0.5 text-[var(--text-primary)] flex items-center gap-2 transition-all"
           >
             <FaEdit className="w-3 h-3" />
             Edit
@@ -88,7 +88,7 @@ export default function BoardTileMenu({
                 setIsOpen(false);
                 onReplaceImage(selection.id);
               }}
-              className="w-full text-left px-3 py-2 folio-ui hover:bg-[var(--bg-base)] text-[var(--text-primary)] flex items-center gap-2"
+              className="w-full text-left px-3 py-2 folio-ui hover:bg-[var(--bg-base)] hover:translate-x-0.5 text-[var(--text-primary)] flex items-center gap-2 transition-all"
             >
               <FaImage className="w-3 h-3" />
               Replace Image
@@ -102,7 +102,7 @@ export default function BoardTileMenu({
                 setIsOpen(false);
                 onSaveToProject(selection);
               }}
-              className="w-full text-left px-3 py-2 folio-ui hover:bg-[var(--bg-base)] text-[var(--text-primary)] flex items-center gap-2"
+              className="w-full text-left px-3 py-2 folio-ui hover:bg-[var(--bg-base)] hover:translate-x-0.5 text-[var(--text-primary)] flex items-center gap-2 transition-all"
             >
               <FaFolderPlus className="w-3 h-3" />
               Save to Another Project
@@ -119,7 +119,7 @@ export default function BoardTileMenu({
                   onOverrideSize(selection.id, 'large');
                 }}
                 className={clsx(
-                  "w-full text-left px-3 py-2 folio-ui hover:bg-[var(--bg-base)]",
+                  "w-full text-left px-3 py-2 folio-ui hover:bg-[var(--bg-base)] hover:translate-x-0.5 transition-all",
                   currentOverride === 'L' ? "text-[var(--accent)] font-medium" : "text-[var(--text-primary)]"
                 )}
               >
@@ -132,7 +132,7 @@ export default function BoardTileMenu({
                   onOverrideSize(selection.id, 'small');
                 }}
                 className={clsx(
-                  "w-full text-left px-3 py-2 folio-ui hover:bg-[var(--bg-base)]",
+                  "w-full text-left px-3 py-2 folio-ui hover:bg-[var(--bg-base)] hover:translate-x-0.5 transition-all",
                   currentOverride === 'S' ? "text-[var(--accent)] font-medium" : "text-[var(--text-primary)]"
                 )}
               >
@@ -145,7 +145,7 @@ export default function BoardTileMenu({
                   onOverrideSize(selection.id, 'auto');
                 }}
                 className={clsx(
-                  "w-full text-left px-3 py-2 folio-ui hover:bg-[var(--bg-base)]",
+                  "w-full text-left px-3 py-2 folio-ui hover:bg-[var(--bg-base)] hover:translate-x-0.5 transition-all",
                   !currentOverride ? "text-[var(--accent)] font-medium" : "text-[var(--text-primary)]"
                 )}
               >

@@ -320,15 +320,15 @@ export default function DesignerBoard({
       )}
 
       {filteredRooms.length === 0 && project.rooms.length > 0 && (
-        <div className="text-center py-12 text-[var(--text-secondary)]">
-          <p className="folio-body">No rooms match your filter</p>
-          <p className="folio-ui mt-2">Try selecting a different room or "All Rooms"</p>
+        <div className="ridge-card text-center py-12 px-6">
+          <p className="folio-body text-[var(--text-secondary)]">No rooms match your filter</p>
+          <p className="folio-ui mt-2 text-[var(--text-tertiary)]">Try selecting a different room or &ldquo;All Rooms&rdquo;</p>
         </div>
       )}
 
       {/* Generated Images Section */}
       {selectedRoomId && (
-        <div className="mt-8 pt-8 border-t border-[var(--border-default)]">
+        <div className="mt-8 ridge-card p-5">
           <GeneratedGrid
             projectId={projectId}
             roomId={selectedRoomId}

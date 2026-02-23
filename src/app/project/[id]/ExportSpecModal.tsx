@@ -43,19 +43,19 @@ export default function ExportSpecModal({
     <div className="fixed inset-0 z-50 overflow-hidden">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black bg-opacity-50"
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
         onClick={onClose}
       />
 
       {/* Modal */}
       <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-md">
-        <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-elevated)] shadow-lg p-6">
+        <div className="ridge-card ridge-card-lg p-6">
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <h3 className="folio-h3 text-[var(--text-primary)]">Export Spec</h3>
             <button
               onClick={onClose}
-              className="p-1 hover:bg-[var(--bg-base)] rounded-full transition-colors"
+              className="p-1 hover:bg-[var(--bg-base)] hover:shadow-sm rounded-full transition-all"
             >
               <FaTimes className="w-4 h-4 text-[var(--text-tertiary)]" />
             </button>
@@ -126,14 +126,14 @@ export default function ExportSpecModal({
             <button
               onClick={onClose}
               disabled={isExporting}
-              className="px-4 py-2 folio-ui font-medium text-[var(--text-primary)] border border-[var(--border-default)] rounded-lg hover:bg-[var(--bg-base)] transition-colors disabled:opacity-50"
+              className="ridge-btn px-4 py-2 folio-ui font-medium disabled:opacity-50"
             >
               Cancel
             </button>
             <button
               onClick={handleExport}
               disabled={isExporting}
-              className="px-4 py-2 folio-ui font-medium text-white bg-[var(--accent)] rounded-lg hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-50"
+              className="accent-btn px-4 py-2 folio-ui font-medium disabled:opacity-50"
             >
               {isExporting ? 'Exporting...' : 'Export'}
             </button>

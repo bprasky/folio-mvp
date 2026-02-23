@@ -313,7 +313,7 @@ export default function PublishPanel({ projectId, project, images, isOwner }: Pu
             {currentPost?.status && (
               <div className="mb-3">
                 <span
-                  className={`px-2 py-1 rounded folio-meta font-medium ${
+                  className={`px-2 py-1 rounded folio-meta font-medium shadow-sm ${
                     currentPost.status === "PUBLISHED"
                       ? "bg-[var(--accent)]/10 text-[var(--accent)]"
                       : "bg-[var(--bg-base)] text-[var(--text-secondary)]"
