@@ -1,9 +1,9 @@
 'use client';
 
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
-import { LayoutGrid, FolderOpen, Share2 } from 'lucide-react';
+import { LayoutGrid, ImageIcon, MessageSquare, Share2 } from 'lucide-react';
 
-type TabView = 'overview' | 'media' | 'boards' | 'drafts' | 'files' | 'publish';
+type TabView = 'overview' | 'media' | 'boards' | 'drafts' | 'files' | 'publish' | 'story';
 
 interface ProjectTabsProps {
   project: {
@@ -37,7 +37,7 @@ export default function ProjectTabs({ project, currentView }: ProjectTabsProps) 
     return sum + (room.selections?.length || 0);
   }, 0) || 0;
 
-  // New tab structure: BOARDS | FILES | PUBLISH
+  // Tab structure: BOARDS | MEDIA | STORY | PUBLISH
   const tabs = [
     {
       id: 'boards' as TabView,
@@ -46,9 +46,14 @@ export default function ProjectTabs({ project, currentView }: ProjectTabsProps) 
       badge: totalSelections > 0 ? totalSelections : undefined,
     },
     {
-      id: 'files' as TabView,
-      label: 'Files',
-      icon: FolderOpen,
+      id: 'media' as TabView,
+      label: 'Media',
+      icon: ImageIcon,
+    },
+    {
+      id: 'story' as TabView,
+      label: 'Story',
+      icon: MessageSquare,
     },
     {
       id: 'publish' as TabView,
