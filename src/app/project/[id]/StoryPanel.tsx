@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { X, Mic } from "lucide-react";
+import { X, Mic, Quote } from "lucide-react";
 import { CreditsEditor } from "@/components/posting/CreditsEditor";
 import type { CreditEntry } from "@/lib/posting/creditsSchema";
 import { TagDiagnosticModal } from "@/components/posting/interview/TagDiagnosticModal";
@@ -16,6 +16,7 @@ type QA = {
   questionId?: string;
   id?: string;
   section?: string;
+  isFeatured?: boolean;
 };
 
 type Interview = {
@@ -111,6 +112,7 @@ export default function StoryPanel({ projectId, project, images, isOwner }: Stor
             answer: a.answer || a.a || "",
             questionId: a.questionId || a.id,
             section: a.section,
+            isFeatured: !!a.isFeatured,
           }));
           setAnswers(dedupeAnswers(mappedAnswers));
         } else {
@@ -173,6 +175,7 @@ export default function StoryPanel({ projectId, project, images, isOwner }: Stor
             questionId: qa.questionId || qa.q || qa.question,
             answer: qa.a || qa.answer || "",
             question: qa.q || qa.question || "",
+            isFeatured: !!qa.isFeatured,
           })),
           followUps: filteredFollowups.map((qa) => ({
             question: qa.q || qa.question || "",
@@ -269,6 +272,12 @@ export default function StoryPanel({ projectId, project, images, isOwner }: Stor
     setAnswers(answers.filter((_, idx) => idx !== i));
   }
 
+  function toggleFeatured(i: number) {
+    const next = [...answers];
+    next[i] = { ...next[i], isFeatured: !next[i].isFeatured };
+    setAnswers(next);
+  }
+
   function setFollowup(i: number, key: "q" | "a", value: string) {
     const next = [...followups];
     next[i] = {
@@ -348,18 +357,51 @@ export default function StoryPanel({ projectId, project, images, isOwner }: Stor
           {filteredAnswers.map((qa, i) => (
             <div
               key={i}
-              className="border border-[var(--border-default)] rounded-lg p-4 mb-3"
+              className={`rounded-lg p-4 mb-3 transition-colors ${
+                qa.isFeatured
+                  ? "border-l-4 border-l-[var(--accent)] border border-[var(--accent)]/30 bg-[var(--accent)]/5"
+                  : "border border-[var(--border-default)]"
+              }`}
             >
-              <label className="block folio-ui font-medium text-[var(--text-primary)] mb-2">
-                {qa.q || qa.question || "Your reflection"}
-              </label>
+              <div className="flex items-start justify-between gap-2 mb-2">
+                <label className="block folio-ui font-medium text-[var(--text-primary)]">
+                  {qa.q || qa.question || "Your reflection"}
+                </label>
+                <button
+                  onClick={() => toggleFeatured(i)}
+                  className={`shrink-0 p-1.5 rounded transition-colors ${
+                    qa.isFeatured
+                      ? "text-[var(--accent)] bg-[var(--accent)]/10"
+                      : "text-[var(--text-tertiary)] hover:text-[var(--accent)] hover:bg-[var(--accent)]/5"
+                  }`}
+                  aria-label={qa.isFeatured ? "Remove from featured quotes" : "Mark as featured quote"}
+                  title={qa.isFeatured ? "Featured quote" : "Feature this quote"}
+                >
+                  <Quote className="w-4 h-4" />
+                </button>
+              </div>
+              {qa.isFeatured && (
+                <div className="mb-2 pl-3 border-l-2 border-[var(--accent)]/40">
+                  <p className="folio-ui italic text-[var(--text-secondary)] leading-relaxed">
+                    {qa.a || qa.answer || ""}
+                  </p>
+                </div>
+              )}
               <textarea
                 value={qa.a || qa.answer || ""}
                 onChange={(e) => setAnswer(i, "a", e.target.value)}
-                className="w-full min-h-[80px] p-2 border border-[var(--border-default)] rounded folio-ui resize-y bg-[var(--bg-base)] focus:ring-1 focus:ring-[var(--accent)] focus:border-[var(--accent)]"
+                className={`w-full min-h-[80px] p-2 border border-[var(--border-default)] rounded folio-ui resize-y bg-[var(--bg-base)] focus:ring-1 focus:ring-[var(--accent)] focus:border-[var(--accent)] ${
+                  qa.isFeatured ? "min-h-[60px]" : ""
+                }`}
                 placeholder="Share your thoughts..."
               />
-              <div className="flex justify-end mt-2">
+              <div className="flex items-center justify-between mt-2">
+                {qa.isFeatured && (
+                  <span className="folio-meta text-[var(--accent)] font-medium">
+                    Pull quote
+                  </span>
+                )}
+                <div className="flex-1" />
                 <button
                   onClick={() => removeAnswer(i)}
                   className="text-[var(--text-tertiary)] hover:text-red-500"
