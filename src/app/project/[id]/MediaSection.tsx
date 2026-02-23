@@ -3,11 +3,9 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { FaUpload, FaImages, FaPlus, FaTag, FaRocket, FaCheckCircle, FaCloudUploadAlt, FaFileImport, FaTrash } from 'react-icons/fa';
+import { FaUpload, FaImages, FaTag, FaCheckCircle, FaCloudUploadAlt, FaFileImport, FaTrash } from 'react-icons/fa';
+import { Camera, FileSpreadsheet, Presentation } from 'lucide-react';
 import ProjectCreationModal from '@/components/ProjectCreationModal';
-import { InterviewFlow } from '@/components/interview';
-import { TagDiagnosticModal } from '@/components/posting/interview/TagDiagnosticModal';
-import { FinishScheduleOptionsModal } from '@/components/posting/FinishScheduleOptionsModal';
 import { PresentationImportModal } from '@/components/import/PresentationImportModal';
 import { PdfSpecImportModal } from '@/components/import/PdfSpecImportModal';
 
@@ -40,24 +38,11 @@ interface MediaSectionProps {
   projectPost?: any;
 }
 
-const POSTING_V1_ENABLED = process.env.NEXT_PUBLIC_POSTING_V1 === 'true';
-
 export default function MediaSection({ project, isOwner, images, projectPost }: MediaSectionProps) {
   const router = useRouter();
   const [showUploadModal, setShowUploadModal] = useState(false);
-  const [showFinishScheduleModal, setShowFinishScheduleModal] = useState(false);
-  const [showInterviewModal, setShowInterviewModal] = useState(false);
-  const [showTagDiagnostic, setShowTagDiagnostic] = useState(false);
   const [selectedHeroImageId, setSelectedHeroImageId] = useState<string | null>(null);
   const [existingPost, setExistingPost] = useState<any>(null);
-  const [isPublishing, setIsPublishing] = useState(false);
-  const [publishError, setPublishError] = useState<string | null>(null);
-  const [llmWarning, setLlmWarning] = useState<string | null>(null);
-  const [checklistBanner, setChecklistBanner] = useState<{
-    hasImages: boolean;
-    hasTags: boolean;
-    hasCover: boolean;
-  } | null>(null);
 
   // Drag and drop state
   const [isDragOver, setIsDragOver] = useState(false);
@@ -193,7 +178,7 @@ export default function MediaSection({ project, isOwner, images, projectPost }: 
 
   // Load existing ProjectPost to check heroAssetId
   useEffect(() => {
-    if (!POSTING_V1_ENABLED || !isOwner) return;
+    if (!isOwner) return;
 
     async function loadPost() {
       try {
@@ -225,180 +210,104 @@ export default function MediaSection({ project, isOwner, images, projectPost }: 
     }
   }, [projectPost]);
 
-  // Compute checklist state
-  useEffect(() => {
-    if (!POSTING_V1_ENABLED) return;
-
-    const hasImages = images.length > 0;
-    const hasAtLeastOneTag = images.some(img => img.tags.length > 0);
-    const hasCover = !!selectedHeroImageId || !!existingPost?.heroAssetId;
-
-    setChecklistBanner({
-      hasImages,
-      hasTags: hasAtLeastOneTag,
-      hasCover,
-    });
-  }, [images, selectedHeroImageId, existingPost, POSTING_V1_ENABLED]);
-
-  async function handlePublish() {
-    if (!POSTING_V1_ENABLED) return;
-
-    setIsPublishing(true);
-    setPublishError(null);
-
-    try {
-      // 1. Check if ProjectPost exists, create if not
-      let postRes = await fetch(`/api/posting/project/${project.id}`);
-      
-      if (postRes.status === 404) {
-        // Init post
-        const initRes = await fetch(`/api/posting/project/${project.id}/init`, {
-          method: 'POST',
-        });
-        if (!initRes.ok) {
-          const error = await initRes.json();
-          throw new Error(error.error || 'Failed to initialize post');
-        }
-        postRes = await fetch(`/api/posting/project/${project.id}`);
-      }
-
-      if (!postRes.ok) {
-        throw new Error('Failed to fetch post');
-      }
-
-      const postData = await postRes.json();
-      const post = postData.post;
-
-      // 2. Set heroAssetId
-      const heroImageId = selectedHeroImageId || images[0]?.id;
-      if (heroImageId) {
-        const metaRes = await fetch(`/api/posting/project/${project.id}/meta`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ heroAssetId: heroImageId }),
-        });
-
-        if (!metaRes.ok) {
-          const error = await metaRes.json();
-          throw new Error(error.error || 'Failed to set cover image');
-        }
-      }
-
-      // 3. Log analytics (non-blocking)
-      // Note: Analytics is logged server-side when ProjectPost is created/updated
-      // Client-side logging can be added via a server action if needed
-
-      // 4. Redirect to preview
-      router.push(`/designer/projects/${project.id}/preview`);
-    } catch (error: any) {
-      console.error('Publish error:', error);
-      setPublishError(error.message || 'Failed to publish');
-      setIsPublishing(false);
-    }
-  }
+  // Count uploaded media by type
+  const photoCount = images.filter(img => !img.name?.match(/\.(pdf|pptx|xlsx|csv)$/i)).length;
+  const presentationCount = images.filter(img => img.name?.match(/\.(pdf|pptx)$/i)).length;
 
   return (
     <div className="space-y-6">
-      {/* Header with Actions */}
+      {/* Intro */}
+      <p className="folio-body text-[var(--text-secondary)]">
+        Upload your project materials. We'll extract products, rooms, and specifications automatically.
+      </p>
+
+      {/* Media Type Skeleton Cards */}
+      {isOwner && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Photos Card */}
+          <button
+            onClick={() => setShowUploadModal(true)}
+            className="group text-left rounded-2xl border border-[var(--border-default)] bg-[var(--bg-elevated)] p-5 hover:border-[var(--accent)] hover:shadow-sm transition-all"
+          >
+            <Camera className="w-6 h-6 text-[var(--accent)] mb-3" />
+            <h3 className="folio-ui font-semibold text-[var(--text-primary)] mb-1">Photos</h3>
+            <p className="folio-meta text-[var(--text-tertiary)] mb-3">
+              JPG, PNG, HEIC, WebP
+            </p>
+            {photoCount > 0 ? (
+              <span className="folio-meta text-green-700 flex items-center gap-1">
+                <FaCheckCircle className="w-3 h-3" /> {photoCount} photos uploaded
+              </span>
+            ) : (
+              <span className="folio-meta text-[var(--accent)] group-hover:text-[var(--accent-hover)]">
+                Upload
+              </span>
+            )}
+          </button>
+
+          {/* Presentation Card */}
+          <button
+            onClick={handleImportPresentation}
+            className="group text-left rounded-2xl border border-[var(--border-default)] bg-[var(--bg-elevated)] p-5 hover:border-[var(--accent)] hover:shadow-sm transition-all"
+          >
+            <Presentation className="w-6 h-6 text-[var(--accent)] mb-3" />
+            <h3 className="folio-ui font-semibold text-[var(--text-primary)] mb-1">Presentation</h3>
+            <p className="folio-meta text-[var(--text-tertiary)] mb-3">
+              PPTX, PDF, Keynote
+            </p>
+            {presentationCount > 0 ? (
+              <span className="folio-meta text-green-700 flex items-center gap-1">
+                <FaCheckCircle className="w-3 h-3" /> {presentationCount} imported
+              </span>
+            ) : (
+              <span className="folio-meta text-[var(--accent)] group-hover:text-[var(--accent-hover)]">
+                Import
+              </span>
+            )}
+          </button>
+
+          {/* Material Schedule Card */}
+          <button
+            onClick={handleImportPdfSpecs}
+            className="group text-left rounded-2xl border border-[var(--border-default)] bg-[var(--bg-elevated)] p-5 hover:border-[var(--accent)] hover:shadow-sm transition-all"
+          >
+            <FileSpreadsheet className="w-6 h-6 text-[var(--accent)] mb-3" />
+            <h3 className="folio-ui font-semibold text-[var(--text-primary)] mb-1">Material Schedule</h3>
+            <p className="folio-meta text-[var(--text-tertiary)] mb-3">
+              XLSX, CSV, PDF specs
+            </p>
+            <span className="folio-meta text-[var(--accent)] group-hover:text-[var(--accent-hover)]">
+              Import
+            </span>
+          </button>
+        </div>
+      )}
+
+      {/* Uploaded Media Section */}
       <section
         ref={images.length > 0 ? dropZoneRef : undefined}
         onDragEnter={images.length > 0 ? handleDragEnter : undefined}
         onDragLeave={images.length > 0 ? handleDragLeave : undefined}
         onDragOver={images.length > 0 ? handleDragOver : undefined}
         onDrop={images.length > 0 ? handleDrop : undefined}
-        className={`bg-[var(--bg-elevated)] p-6 rounded-lg shadow-md transition-all ${
-          images.length > 0 && isDragOver ? 'ring-2 ring-[var(--accent)] ring-offset-2' : ''
+        className={`transition-all ${
+          images.length > 0 && isDragOver ? 'ring-2 ring-[var(--accent)] ring-offset-2 rounded-xl' : ''
         }`}
       >
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="folio-h2 flex items-center gap-3">
-            <FaImages className="w-8 h-8 text-[var(--accent)]" />
-            Project Files
-          </h2>
-          <div className="flex items-center gap-3">
+        {images.length > 0 && (
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="folio-ui font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
+              Uploaded Media
+            </h3>
             {isOwner && (
-              <>
-                <button
-                  onClick={() => setShowUploadModal(true)}
-                  className="flex items-center gap-2 px-4 py-2 bg-[var(--accent)] text-white rounded-lg hover:bg-[var(--accent-hover)] transition-colors"
-                >
-                  <FaUpload className="w-4 h-4" />
-                  Upload Media
-                </button>
-                <button
-                  onClick={handleImportPresentation}
-                  className="flex items-center gap-2 px-4 py-2 border border-[var(--border-default)] text-[var(--text-primary)] rounded-lg hover:bg-[var(--bg-base)] transition-colors"
-                >
-                  <FaFileImport className="w-4 h-4" />
-                  Import Presentation
-                </button>
-                <button
-                  onClick={handleImportPdfSpecs}
-                  className="flex items-center gap-2 px-4 py-2 border border-[var(--border-default)] text-[var(--text-primary)] rounded-lg hover:bg-[var(--bg-base)] transition-colors"
-                  title="Extract product specs from PDF (brand, price, dimensions)"
-                >
-                  <FaTag className="w-4 h-4" />
-                  Import PDF Specs
-                </button>
-              </>
-            )}
-            {isOwner && POSTING_V1_ENABLED && (
               <button
-                onClick={() => {
-                  // Show tag diagnostic modal (uses same data path as design boards)
-                  setShowTagDiagnostic(true);
-                }}
-                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                onClick={() => setShowUploadModal(true)}
+                className="flex items-center gap-2 px-3 py-1.5 folio-meta font-medium text-[var(--accent)] hover:text-[var(--accent-hover)] border border-[var(--border-default)] rounded-lg hover:bg-[var(--bg-elevated)] transition-colors"
               >
-                <FaRocket className="w-4 h-4" />
-                Continue to Interview
+                <FaUpload className="w-3 h-3" />
+                Add More
               </button>
             )}
-          </div>
-        </div>
-
-        {/* Draft Checklist Banner */}
-        {POSTING_V1_ENABLED && checklistBanner && (
-          <div className={`mb-6 p-4 rounded-lg border ${
-            checklistBanner.hasImages && checklistBanner.hasTags && checklistBanner.hasCover
-              ? 'bg-green-50 border-green-200'
-              : 'bg-[var(--accent)]/10 border-[var(--accent)]/20'
-          }`}>
-            <div className="flex items-start gap-3">
-              <FaCheckCircle className={`w-5 h-5 mt-0.5 ${
-                checklistBanner.hasImages && checklistBanner.hasTags && checklistBanner.hasCover
-                  ? 'text-green-600'
-                  : 'text-[var(--accent)]'
-              }`} />
-              <div className="flex-1">
-                <h3 className="font-medium mb-2 text-[var(--text-primary)]">Publish Checklist</h3>
-                <ul className="space-y-1 folio-ui">
-                  <li className={checklistBanner.hasImages ? 'text-green-700' : 'text-[var(--accent)]'}>
-                    {checklistBanner.hasImages ? '✓' : '○'} At least 1 image uploaded
-                  </li>
-                  <li className={checklistBanner.hasTags ? 'text-green-700' : 'text-[var(--accent)]'}>
-                    {checklistBanner.hasTags ? '✓' : '○'} At least 1 product tagged
-                  </li>
-                  <li className={checklistBanner.hasCover ? 'text-green-700' : 'text-[var(--accent)]'}>
-                    {checklistBanner.hasCover ? '✓' : '○'} Cover image selected
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Error Message */}
-        {publishError && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
-            {publishError}
-          </div>
-        )}
-
-        {/* LLM Warning */}
-        {llmWarning && (
-          <div className="mb-6 p-4 bg-[var(--accent)]/10 border border-[var(--accent)]/20 text-[var(--accent)] rounded-lg folio-ui">
-            {llmWarning}
           </div>
         )}
 
@@ -559,86 +468,10 @@ export default function MediaSection({ project, isOwner, images, projectPost }: 
           onClose={() => setShowUploadModal(false)}
           onProjectCreated={(updatedProject) => {
             setShowUploadModal(false);
-            // Refresh page to show new images
             router.refresh();
           }}
           editingProject={project}
         />
-      )}
-
-      {/* Finish Schedule Options Modal */}
-      {showFinishScheduleModal && (
-        <FinishScheduleOptionsModal
-          open={showFinishScheduleModal}
-          onOpenChange={setShowFinishScheduleModal}
-          projectId={project.id}
-          onComplete={async (option) => {
-            setShowFinishScheduleModal(false);
-
-            // Check LLM availability before opening interview modal
-            try {
-              const res = await fetch("/api/health/llm");
-              const data = await res.json();
-              if (!data.ok) {
-                setLlmWarning("AI not configured—using clean template.");
-              }
-            } catch {
-              // Ignore health check failures
-            }
-
-            // If they uploaded a finish schedule, refresh to show new tags
-            if (option === 'uploaded') {
-              router.refresh();
-            }
-
-            // Proceed to interview
-            setShowInterviewModal(true);
-          }}
-        />
-      )}
-
-      {/* Tag Diagnostic Modal */}
-      {showTagDiagnostic && (
-        <TagDiagnosticModal
-          open={showTagDiagnostic}
-          onOpenChange={(open) => {
-            setShowTagDiagnostic(open);
-          }}
-          projectId={project.id}
-          onAutoTagComplete={() => {
-            // Refresh page to pick up new tags
-            router.refresh();
-          }}
-          onStartInterview={() => {
-            setShowTagDiagnostic(false);
-            setShowInterviewModal(true);
-          }}
-        />
-      )}
-
-      {/* New Interview Flow */}
-      {showInterviewModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          {/* Backdrop */}
-          <div
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-            onClick={() => setShowInterviewModal(false)}
-          />
-          {/* Modal */}
-          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-3xl mx-4 max-h-[90vh] overflow-hidden">
-            <InterviewFlow
-              projectId={project.id}
-              projectName={project.title}
-              images={images.map(img => ({ id: img.id, url: img.url, name: img.name }))}
-              onComplete={(draftId) => {
-                setShowInterviewModal(false);
-                // Navigate to preview or editorial page
-                router.push(`/designer/projects/${project.id}/preview`);
-              }}
-              onCancel={() => setShowInterviewModal(false)}
-            />
-          </div>
-        </div>
       )}
 
       {/* Presentation Import Modal */}

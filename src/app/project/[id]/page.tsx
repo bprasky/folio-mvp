@@ -10,10 +10,12 @@ import DesignerBoard from './DesignerBoard';
 import ProjectHero from './ProjectHero';
 import ProjectMediaManager from './ProjectMediaManager';
 import DraftsPanel from './DraftsPanel';
+import StoryPanel from './StoryPanel';
+import PublishPanel from './PublishPanel';
 import ProjectEmptyState from './ProjectEmptyState';
 import ProjectEmptyStateDiscovery from './ProjectEmptyStateDiscovery';
 
-type TabView = 'overview' | 'media' | 'boards' | 'drafts' | 'files' | 'publish';
+type TabView = 'overview' | 'media' | 'boards' | 'drafts' | 'files' | 'publish' | 'story';
 
 export default async function ProjectPage({ 
   params, 
@@ -111,15 +113,15 @@ export default async function ProjectPage({
   let currentView: TabView = (searchParams.view as TabView) || 'boards';
 
   // Handle redirects from old tab names
-  // media → files, drafts → publish
-  if (currentView === 'media') {
-    currentView = 'files';
+  // files → media, drafts → publish
+  if (currentView === 'files') {
+    currentView = 'media';
   } else if (currentView === 'drafts') {
     currentView = 'publish';
   }
 
   // Validate view parameter
-  const validViews: TabView[] = ['overview', 'media', 'boards', 'drafts', 'files', 'publish'];
+  const validViews: TabView[] = ['overview', 'media', 'boards', 'drafts', 'files', 'publish', 'story'];
   const view = validViews.includes(currentView) ? currentView : 'boards';
 
   // Convert Prisma Decimal objects to numbers for client components
@@ -222,14 +224,29 @@ export default async function ProjectPage({
 
       {/* Main Content - Full Width */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* FILES tab (replaces Media) */}
-        {(view === 'files' || view === 'media') && (
+        {/* MEDIA tab */}
+        {view === 'media' && (
           <MediaSection project={sanitizedProject} isOwner={isOwner} images={base.images} />
         )}
 
-        {/* PUBLISH tab (replaces Story/Drafts) */}
-        {(view === 'publish' || view === 'drafts') && (
-          <DraftsPanel projectId={sanitizedProject.id} />
+        {/* STORY tab */}
+        {view === 'story' && (
+          <StoryPanel
+            projectId={sanitizedProject.id}
+            project={sanitizedProject}
+            images={base.images.map(img => ({ id: img.id, url: img.url, name: img.name }))}
+            isOwner={isOwner}
+          />
+        )}
+
+        {/* PUBLISH tab */}
+        {view === 'publish' && (
+          <PublishPanel
+            projectId={sanitizedProject.id}
+            project={sanitizedProject}
+            images={base.images}
+            isOwner={isOwner}
+          />
         )}
 
         {/* BOARDS tab - default view */}
