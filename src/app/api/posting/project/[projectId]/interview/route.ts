@@ -118,7 +118,8 @@ function ensureAnswerShape(a: any, idx: number) {
     category: a?.category,
     prompt: String(prompt || qid),
     answer: String(answer ?? '').trim(),
-    isFollowUp: !!a?.isFollowUp
+    isFollowUp: !!a?.isFollowUp,
+    isFeatured: !!a?.isFeatured,
   };
 }
 
