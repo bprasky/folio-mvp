@@ -315,7 +315,7 @@ export default function PublishPanel({ projectId, project, images, isOwner }: Pu
                 <span
                   className={`px-2 py-1 rounded folio-meta font-medium ${
                     currentPost.status === "PUBLISHED"
-                      ? "bg-green-100 text-green-800"
+                      ? "bg-[var(--accent)]/10 text-[var(--accent)]"
                       : "bg-[var(--bg-base)] text-[var(--text-secondary)]"
                   }`}
                 >
@@ -409,10 +409,10 @@ export default function PublishPanel({ projectId, project, images, isOwner }: Pu
 
       {/* Publish Actions */}
       {publishSuccess ? (
-        <div className="rounded-2xl border border-green-200 bg-green-50 p-6 shadow-sm text-center">
-          <CheckCircle2 className="w-8 h-8 text-green-600 mx-auto mb-3" />
-          <h3 className="folio-h3 text-green-800 mb-2">Published!</h3>
-          <p className="folio-body text-green-700 mb-4">
+        <div className="rounded-2xl border border-[var(--ridge-outer)] bg-[var(--bg-elevated)] p-6 shadow-sm text-center">
+          <CheckCircle2 className="w-8 h-8 text-[var(--accent)] mx-auto mb-3" />
+          <h3 className="folio-h3 text-[var(--text-primary)] mb-2">Published!</h3>
+          <p className="folio-body text-[var(--text-secondary)] mb-4">
             Your project post is now live.
           </p>
           {publishedSlug && (
@@ -431,7 +431,7 @@ export default function PublishPanel({ projectId, project, images, isOwner }: Pu
           <button
             onClick={handlePublish}
             disabled={isPublishing || !currentPost}
-            className="w-full px-6 py-3 folio-ui font-semibold text-white bg-green-600 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="w-full px-6 py-3 folio-ui font-semibold text-white bg-[var(--accent)] rounded-lg hover:bg-[var(--accent-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {isPublishing ? "Publishing..." : "Publish to Folio"}
           </button>
@@ -460,13 +460,13 @@ function ReadinessItem({
   return (
     <div className="flex items-center gap-2 py-1">
       {done ? (
-        <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
+        <CheckCircle2 className="w-4 h-4 text-[var(--accent)] shrink-0" />
       ) : (
         <Circle className="w-4 h-4 text-[var(--text-tertiary)] shrink-0" />
       )}
       <span
         className={`folio-ui ${
-          done ? "text-green-700" : "text-[var(--text-secondary)]"
+          done ? "text-[var(--text-primary)]" : "text-[var(--text-secondary)]"
         }`}
       >
         {label}

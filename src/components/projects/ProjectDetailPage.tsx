@@ -189,7 +189,7 @@ export function ProjectDetailPage({ project, isOwner }: ProjectDetailPageProps) 
                 <>
                   <button
                     onClick={handleSave}
-                    className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 bg-[var(--accent)] text-white rounded-lg hover:bg-[var(--accent-hover)] transition-colors"
                   >
                     <FaSave className="w-4 h-4" />
                     Save Changes
@@ -199,7 +199,7 @@ export function ProjectDetailPage({ project, isOwner }: ProjectDetailPageProps) 
                       setIsEditing(false);
                       setEditedProject(project);
                     }}
-                    className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                    className="ridge-btn px-4 py-2 transition-colors"
                   >
                     Cancel
                   </button>
@@ -220,26 +220,25 @@ export function ProjectDetailPage({ project, isOwner }: ProjectDetailPageProps) 
 
       {/* Project Hero Section */}
       <section className="relative w-full h-96 md:h-[600px] overflow-hidden flex items-end p-8">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-purple-700"></div>
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent opacity-80"></div>
+        <div className="absolute inset-0 bg-[var(--bg-elevated)]"></div>
         
-        <div className="relative z-10 text-white w-full">
+        <div className="relative z-10 text-[var(--text-primary)] w-full">
           {isEditing ? (
             <input
               type="text"
               value={currentProject.title}
               onChange={(e) => setEditedProject({ ...currentProject, title: e.target.value })}
-              className="text-5xl md:text-7xl font-bold mb-4 bg-transparent border-b-2 border-white/50 text-white placeholder-white/70 w-full"
+              className="text-5xl md:text-7xl font-bold mb-4 bg-transparent border-b-2 border-[var(--ridge-outer)] text-[var(--text-primary)] placeholder-[var(--text-tertiary)] w-full"
               placeholder="Project Title"
             />
           ) : (
-            <h1 className="text-5xl md:text-7xl font-bold mb-4">{currentProject.title}</h1>
+            <h1 className="folio-h1 font-serif italic tracking-tight mb-4">{currentProject.title}</h1>
           )}
-          
+
           <div className="flex items-center gap-3 mb-4">
             <div className="flex items-center gap-3 group">
-              <div className="relative w-12 h-12 rounded-full overflow-hidden bg-white/20">
-                <div className="w-full h-full flex items-center justify-center text-white text-lg font-bold">
+              <div className="relative w-12 h-12 rounded-full overflow-hidden bg-[var(--accent)]/10">
+                <div className="w-full h-full flex items-center justify-center text-[var(--accent)] text-lg font-bold">
                   {currentProject.title.charAt(0).toUpperCase()}
                 </div>
               </div>
@@ -248,16 +247,16 @@ export function ProjectDetailPage({ project, isOwner }: ProjectDetailPageProps) 
               </span>
             </div>
           </div>
-          
+
           <div className="flex flex-wrap gap-2 mt-4">
-            <span className="bg-gray-700 text-white/80 text-sm px-3 py-1 rounded-full flex items-center">
+            <span className="bg-[var(--bg-base)] text-[var(--text-secondary)] text-sm px-3 py-1 rounded-full flex items-center border border-[var(--ridge-outer)]">
               <FaTag className="mr-1" /> {getStageLabel(currentProject.stage)}
             </span>
-            <span className="bg-gray-700 text-white/80 text-sm px-3 py-1 rounded-full flex items-center">
+            <span className="bg-[var(--bg-base)] text-[var(--text-secondary)] text-sm px-3 py-1 rounded-full flex items-center border border-[var(--ridge-outer)]">
               <FaTag className="mr-1" /> {getProjectTypeLabel(currentProject.projectType)}
             </span>
             {currentProject.city && (
-              <span className="bg-gray-700 text-white/80 text-sm px-3 py-1 rounded-full flex items-center">
+              <span className="bg-[var(--bg-base)] text-[var(--text-secondary)] text-sm px-3 py-1 rounded-full flex items-center border border-[var(--ridge-outer)]">
                 <FaTag className="mr-1" /> {currentProject.city}
               </span>
             )}
@@ -375,12 +374,12 @@ export function ProjectDetailPage({ project, isOwner }: ProjectDetailPageProps) 
                 <div className="text-3xl font-bold text-[var(--accent)]">{currentProject.views.toLocaleString()}</div>
                 <div className="text-[var(--text-secondary)]">Views</div>
               </div>
-              <div className="text-center p-4 bg-green-50 rounded-lg">
-                <div className="text-3xl font-bold text-green-600">{currentProject.saves.toLocaleString()}</div>
+              <div className="text-center p-4 bg-[var(--accent)]/5 rounded-lg">
+                <div className="text-3xl font-bold text-[var(--accent)]">{currentProject.saves.toLocaleString()}</div>
                 <div className="text-[var(--text-secondary)]">Saves</div>
               </div>
-              <div className="text-center p-4 bg-purple-50 rounded-lg">
-                <div className="text-3xl font-bold text-purple-600">{currentProject.shares.toLocaleString()}</div>
+              <div className="text-center p-4 bg-[var(--text-tertiary)]/5 rounded-lg">
+                <div className="text-3xl font-bold text-[var(--text-secondary)]">{currentProject.shares.toLocaleString()}</div>
                 <div className="text-[var(--text-secondary)]">Shares</div>
               </div>
             </div>
@@ -431,11 +430,11 @@ export function ProjectDetailPage({ project, isOwner }: ProjectDetailPageProps) 
               </button>
               <button 
                 onClick={handleExportHTML}
-                className="flex items-center w-full bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700 transition"
+                className="flex items-center w-full bg-[var(--accent)] text-white px-4 py-2 rounded-lg font-medium hover:bg-[var(--accent-hover)] transition"
               >
                 <FaPrint className="mr-2" /> Export Spec (HTML)
               </button>
-              <button className="flex items-center w-full bg-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-purple-700 transition">
+              <button className="ridge-btn flex items-center w-full px-4 py-2 font-medium transition">
                 <FaShareAlt className="mr-2" /> Share Project
               </button>
             </div>
@@ -464,7 +463,7 @@ export function ProjectDetailPage({ project, isOwner }: ProjectDetailPageProps) 
               <div className="flex justify-between items-center">
                 <span>Visibility:</span>
                 <span className={`px-2 py-1 rounded text-xs font-medium ${
-                  currentProject.isPublic ? 'bg-green-100 text-green-800' : 'bg-[var(--bg-elevated)] text-[var(--text-primary)]'
+                  currentProject.isPublic ? 'bg-[var(--accent)]/10 text-[var(--accent)]' : 'bg-[var(--bg-elevated)] text-[var(--text-primary)]'
                 }`}>
                   {currentProject.isPublic ? 'Public' : 'Private'}
                 </span>

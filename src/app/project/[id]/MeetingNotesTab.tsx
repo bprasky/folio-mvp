@@ -367,7 +367,7 @@ export default function MeetingNotesTab({ projectId }: MeetingNotesTabProps) {
                     {/* Create Action Item button */}
                     <button
                       onClick={() => setCreateActionItemNoteId(note.id)}
-                      className="inline-flex items-center gap-1 folio-meta px-2 py-1 bg-green-50 text-green-600 rounded hover:bg-green-100"
+                      className="inline-flex items-center gap-1 folio-meta px-2 py-1 bg-[var(--accent)]/10 text-[var(--accent)] rounded hover:bg-[var(--accent)]/20"
                     >
                       <FaCheckSquare />
                       Create Action Item

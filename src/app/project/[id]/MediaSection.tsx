@@ -235,7 +235,7 @@ export default function MediaSection({ project, isOwner, images, projectPost }: 
               JPG, PNG, HEIC, WebP
             </p>
             {photoCount > 0 ? (
-              <span className="folio-meta text-green-700 flex items-center gap-1">
+              <span className="folio-meta text-[var(--accent)] flex items-center gap-1">
                 <FaCheckCircle className="w-3 h-3" /> {photoCount} photos uploaded
               </span>
             ) : (
@@ -256,7 +256,7 @@ export default function MediaSection({ project, isOwner, images, projectPost }: 
               PPTX, PDF, Keynote
             </p>
             {presentationCount > 0 ? (
-              <span className="folio-meta text-green-700 flex items-center gap-1">
+              <span className="folio-meta text-[var(--accent)] flex items-center gap-1">
                 <FaCheckCircle className="w-3 h-3" /> {presentationCount} imported
               </span>
             ) : (
@@ -405,7 +405,7 @@ export default function MediaSection({ project, isOwner, images, projectPost }: 
                 <div
                   key={image.id}
                   className={`relative group aspect-[4/3] bg-[var(--bg-base)] rounded-lg overflow-hidden border-2 ${
-                    isCover ? 'border-green-500' : 'border-[var(--border-default)] hover:border-[var(--accent)]'
+                    isCover ? 'border-[var(--accent)]' : 'border-[var(--border-default)] hover:border-[var(--accent)]'
                   } transition-all`}
                 >
                   <Image
@@ -426,7 +426,7 @@ export default function MediaSection({ project, isOwner, images, projectPost }: 
 
                   {/* Cover Badge */}
                   {isCover && (
-                    <div className="absolute top-2 left-2 bg-green-600 text-white px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1">
+                    <div className="absolute top-2 left-2 bg-[var(--accent)] text-white px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1">
                       <FaCheckCircle className="w-3 h-3" />
                       Cover
                     </div>
@@ -439,7 +439,7 @@ export default function MediaSection({ project, isOwner, images, projectPost }: 
                         onClick={() => setSelectedHeroImageId(image.id)}
                         className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                           isCover
-                            ? 'bg-green-600 text-white'
+                            ? 'bg-[var(--accent)] text-white'
                             : 'bg-[var(--bg-base)] text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]'
                         }`}
                       >

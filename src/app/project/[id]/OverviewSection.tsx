@@ -120,7 +120,7 @@ export default function OverviewSection({ project, isOwner }: OverviewSectionPro
                 <>
                   <button
                     onClick={handleSave}
-                    className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 bg-[var(--accent)] text-white rounded-lg hover:bg-[var(--accent-hover)] transition-colors"
                   >
                     <FaSave className="w-4 h-4" />
                     Save Changes
@@ -216,12 +216,12 @@ export default function OverviewSection({ project, isOwner }: OverviewSectionPro
             <div className="text-3xl font-bold text-[var(--accent)]">{currentProject.views.toLocaleString()}</div>
             <div className="text-[var(--text-secondary)]">Views</div>
           </div>
-          <div className="text-center p-4 bg-green-50 rounded-lg">
-            <div className="text-3xl font-bold text-green-600">{currentProject.saves.toLocaleString()}</div>
+          <div className="text-center p-4 bg-[var(--accent)]/5 rounded-lg">
+            <div className="text-3xl font-bold text-[var(--accent)]">{currentProject.saves.toLocaleString()}</div>
             <div className="text-[var(--text-secondary)]">Saves</div>
           </div>
-          <div className="text-center p-4 bg-purple-50 rounded-lg">
-            <div className="text-3xl font-bold text-purple-600">{currentProject.shares.toLocaleString()}</div>
+          <div className="text-center p-4 bg-[var(--text-tertiary)]/5 rounded-lg">
+            <div className="text-3xl font-bold text-[var(--text-secondary)]">{currentProject.shares.toLocaleString()}</div>
             <div className="text-[var(--text-secondary)]">Shares</div>
           </div>
         </div>

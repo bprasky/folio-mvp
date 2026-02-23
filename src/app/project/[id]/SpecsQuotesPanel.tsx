@@ -155,7 +155,7 @@ export default function SpecsQuotesPanel({ projectId, userId, userRole }: SpecsQ
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'ACCEPTED':
-        return <CheckCircle className="h-4 w-4 text-green-500" />;
+        return <CheckCircle className="h-4 w-4 text-[var(--accent)]" />;
       case 'REJECTED':
         return <XCircle className="h-4 w-4 text-red-500" />;
       case 'SENT':
@@ -170,7 +170,7 @@ export default function SpecsQuotesPanel({ projectId, userId, userRole }: SpecsQ
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'ACCEPTED':
-        return 'bg-green-100 text-green-800';
+        return 'bg-[var(--accent)]/10 text-[var(--accent)]';
       case 'REJECTED':
         return 'bg-red-100 text-red-800';
       case 'SENT':

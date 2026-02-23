@@ -39,6 +39,7 @@
 
   /* Border - unified border color for components */
   --border: rgba(0, 0, 0, 0.08);
+  --border-default: var(--ridge-outer);
 
   /* Ridge border system - more visible borders */
   --ridge-outer: rgba(0, 0, 0, 0.08);
