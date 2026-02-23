@@ -44,11 +44,11 @@ const APPROVAL_BUTTON_LABELS: Record<string, string> = {
 // Approval type accent colors
 const APPROVAL_ACCENT_COLORS: Record<string, string> = {
   TAGGABLE_ITEMS_READY: 'bg-[var(--accent)]',
-  DRAFT_EDITORIAL: 'bg-emerald-500',
-  PUBLISH_EDITORIAL: 'bg-green-500',
-  CREATE_ROOM: 'bg-purple-500',
-  GENERATE_SKELETONS: 'bg-indigo-500',
-  GENERATE_CONCEPT_IMAGE: 'bg-cyan-500',
+  DRAFT_EDITORIAL: 'bg-[var(--accent)]',
+  PUBLISH_EDITORIAL: 'bg-[var(--accent)]',
+  CREATE_ROOM: 'bg-[var(--text-secondary)]',
+  GENERATE_SKELETONS: 'bg-[var(--text-secondary)]',
+  GENERATE_CONCEPT_IMAGE: 'bg-[var(--text-tertiary)]',
 };
 
 // Value lines for key approvals

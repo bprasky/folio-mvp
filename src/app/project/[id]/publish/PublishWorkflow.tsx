@@ -224,7 +224,7 @@ export default function PublishWorkflow({
               {/* Readiness Stats */}
               <div className="p-6 grid grid-cols-3 gap-4">
                 <div className="text-center">
-                  <div className={`text-2xl font-bold ${readiness.imageCount > 0 ? 'text-green-600' : 'text-[var(--text-tertiary)]'}`}>
+                  <div className={`text-2xl font-bold ${readiness.imageCount > 0 ? 'text-[var(--accent)]' : 'text-[var(--text-tertiary)]'}`}>
                     {readiness.imageCount}
                   </div>
                   <div className="folio-ui text-[var(--text-secondary)] flex items-center justify-center gap-1">
@@ -232,7 +232,7 @@ export default function PublishWorkflow({
                   </div>
                 </div>
                 <div className="text-center">
-                  <div className={`text-2xl font-bold ${readiness.tagCount > 0 ? 'text-green-600' : 'text-[var(--text-tertiary)]'}`}>
+                  <div className={`text-2xl font-bold ${readiness.tagCount > 0 ? 'text-[var(--accent)]' : 'text-[var(--text-tertiary)]'}`}>
                     {readiness.tagCount}
                   </div>
                   <div className="folio-ui text-[var(--text-secondary)] flex items-center justify-center gap-1">
@@ -342,15 +342,15 @@ export default function PublishWorkflow({
                 <h3 className="folio-ui font-medium text-[var(--text-primary)] mb-3">What will be published:</h3>
                 <ul className="space-y-2 folio-ui text-[var(--text-secondary)]">
                   <li className="flex items-center gap-2">
-                    <FaCheckCircle className="w-4 h-4 text-green-500" />
+                    <FaCheckCircle className="w-4 h-4 text-[var(--accent)]" />
                     {readiness.imageCount} images across {readiness.roomCount} room(s)
                   </li>
                   <li className="flex items-center gap-2">
-                    <FaCheckCircle className="w-4 h-4 text-green-500" />
+                    <FaCheckCircle className="w-4 h-4 text-[var(--accent)]" />
                     {readiness.tagCount} tagged product(s) visible in editorial
                   </li>
                   <li className="flex items-center gap-2">
-                    <FaCheckCircle className="w-4 h-4 text-green-500" />
+                    <FaCheckCircle className="w-4 h-4 text-[var(--accent)]" />
                     Project will appear in the community feed
                   </li>
                 </ul>
@@ -378,7 +378,7 @@ export default function PublishWorkflow({
               <button
                 onClick={handlePublish}
                 disabled={isPublishing}
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-green-600 hover:bg-green-700 text-white font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <FaRocket className="w-4 h-4" />
                 {isPublishing ? 'Publishing...' : 'Publish Now'}
@@ -389,8 +389,8 @@ export default function PublishWorkflow({
 
         {step === 'publishing' && (
           <div className="text-center py-20">
-            <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-6">
-              <div className="animate-spin rounded-full h-8 w-8 border-2 border-green-600 border-t-transparent" />
+            <div className="w-16 h-16 rounded-full bg-[var(--accent)]/10 flex items-center justify-center mx-auto mb-6">
+              <div className="animate-spin rounded-full h-8 w-8 border-2 border-[var(--accent)] border-t-transparent" />
             </div>
             <h2 className="folio-h2 text-[var(--text-primary)] mb-2">Publishing...</h2>
             <p className="folio-body text-[var(--text-secondary)]">Sharing your project with the community.</p>
@@ -399,14 +399,14 @@ export default function PublishWorkflow({
 
         {step === 'done' && (
           <div className="text-center py-20">
-            <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-6">
-              <FaCheckCircle className="w-10 h-10 text-green-600" />
+            <div className="w-16 h-16 rounded-full bg-[var(--accent)]/10 flex items-center justify-center mx-auto mb-6">
+              <FaCheckCircle className="w-10 h-10 text-[var(--accent)]" />
             </div>
             <h2 className="folio-h2 text-[var(--text-primary)] mb-2">Published!</h2>
             <p className="folio-body text-[var(--text-secondary)] mb-6">Your project is now live. Redirecting to your editorial...</p>
             <Link
               href={`/project/${project.id}?view=editorial`}
-              className="inline-flex items-center gap-2 text-green-600 hover:text-green-700 font-medium"
+              className="inline-flex items-center gap-2 text-[var(--accent)] hover:text-[var(--accent-hover)] font-medium"
             >
               View Editorial <FaArrowRight className="w-4 h-4" />
             </Link>

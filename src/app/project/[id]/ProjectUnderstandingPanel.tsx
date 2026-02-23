@@ -146,7 +146,7 @@ export default function ProjectUnderstandingPanel({
                 {projectIntent.styleTags.map((tag, idx) => (
                   <span
                     key={idx}
-                    className="inline-block px-2 py-1 bg-purple-100 text-purple-700 folio-meta rounded"
+                    className="inline-block px-2 py-1 bg-[var(--accent)]/10 text-[var(--accent)] folio-meta rounded"
                   >
                     {tag}
                   </span>
@@ -161,7 +161,7 @@ export default function ProjectUnderstandingPanel({
               <h3 className="folio-ui font-medium text-[var(--text-primary)] mb-2">
                 Budget Level
               </h3>
-              <span className="inline-block px-2 py-1 bg-green-100 text-green-700 folio-meta rounded">
+              <span className="inline-block px-2 py-1 bg-[var(--accent)]/10 text-[var(--accent)] folio-meta rounded">
                 {projectIntent.budgetLevel}
               </span>
             </div>
