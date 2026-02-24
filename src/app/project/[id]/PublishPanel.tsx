@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ExternalLink, ChevronDown, ChevronUp, CheckCircle2, Circle } from "lucide-react";
+import { usePublishFlow } from "@/hooks/usePublishFlow";
 
 interface ProductTag {
   id: string;
@@ -23,24 +24,6 @@ interface ProjectImage {
   tags: ProductTag[];
 }
 
-type QA = {
-  q?: string;
-  a?: string;
-  question?: string;
-  answer?: string;
-  questionId?: string;
-  section?: string;
-};
-
-type DraftVersion = {
-  id: string;
-  createdAt: string;
-  status: string;
-  slug?: string;
-  lead?: { kicker?: string; title?: string; deck?: string };
-  sections?: any[];
-};
-
 interface PublishPanelProps {
   projectId: string;
   project: { id: string; title: string };
@@ -50,80 +33,25 @@ interface PublishPanelProps {
 
 export default function PublishPanel({ projectId, project, images, isOwner }: PublishPanelProps) {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(true);
-  const [data, setData] = useState<{
-    interview: any;
-    drafts: DraftVersion[];
-  } | null>(null);
-  const [regenBusy, setRegenBusy] = useState(false);
-  const [isPublishing, setIsPublishing] = useState(false);
-  const [publishSuccess, setPublishSuccess] = useState(false);
-  const [publishedSlug, setPublishedSlug] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    data,
+    currentPost,
+    currentLead,
+    currentSections,
+    heroAssetId,
+    hasCredits,
+    isLoading,
+    generateDraft,
+    publish,
+    refetch,
+    regenBusy,
+    isPublishing,
+    publishSuccess,
+    publishedSlug,
+    error,
+  } = usePublishFlow(projectId);
 
-  // Readiness state
-  const [heroAssetId, setHeroAssetId] = useState<string | null>(null);
-  const [hasCredits, setHasCredits] = useState(false);
   const [checklistExpanded, setChecklistExpanded] = useState(true);
-
-  // Fetch draft data
-  const fetchData = async () => {
-    try {
-      setIsLoading(true);
-      const res = await fetch(`/api/posting/project/${projectId}/drafts`);
-      if (res.ok) {
-        const result = await res.json();
-        setData(result);
-      }
-    } catch (err) {
-      console.error("[PublishPanel] Fetch failed", err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Fetch hero asset and credits for readiness checks
-  const fetchReadiness = async () => {
-    try {
-      // Fetch post meta for heroAssetId
-      const postRes = await fetch(`/api/posting/project/${projectId}`);
-      if (postRes.ok) {
-        const postData = await postRes.json();
-        setHeroAssetId(postData.post?.heroAssetId || null);
-        // If post is already published, show success state
-        if (postData.post?.status === "PUBLISHED") {
-          setPublishSuccess(true);
-          setPublishedSlug(postData.post?.slug || null);
-        }
-      }
-
-      // Fetch credits
-      const creditsRes = await fetch(`/api/posting/project/${projectId}/credits`);
-      if (creditsRes.ok) {
-        const creditsData = await creditsRes.json();
-        // Has credits if there are non-Designer credits
-        setHasCredits(
-          (creditsData.credits || []).some(
-            (c: any) => c.role.toLowerCase() !== "designer"
-          )
-        );
-      }
-    } catch (err) {
-      console.error("[PublishPanel] Readiness fetch failed:", err);
-    }
-  };
-
-  useEffect(() => {
-    fetchData();
-    fetchReadiness();
-  }, [projectId]);
-
-  const currentPost = useMemo(() => data?.drafts?.[0], [data]);
-  const currentLead = useMemo(() => currentPost?.lead, [currentPost]);
-  const currentSections = useMemo(() => {
-    const sections = currentPost?.sections ?? [];
-    return Array.isArray(sections) ? sections : [];
-  }, [currentPost]);
 
   // Readiness checks
   const hasImages = images.length > 0;
@@ -142,111 +70,13 @@ export default function PublishPanel({ projectId, project, images, isOwner }: Pu
   }, [allRequired, hasReflections, hasCredits]);
 
   async function handleGenerateDraft() {
-    try {
-      setRegenBusy(true);
-      setError(null);
-
-      // Fetch latest answers to send as override
-      let answersToSend: any[] = [];
-      let followupsToSend: any[] = [];
-
-      try {
-        const interviewRes = await fetch(`/api/posting/project/${projectId}/interview`);
-        if (interviewRes.ok) {
-          const interviewData = await interviewRes.json();
-          if (interviewData.answers?.length > 0) {
-            answersToSend = interviewData.answers.map((a: any) => ({
-              questionId: a.questionId || a.id,
-              answer: a.answer || "",
-              question: a.question || a.prompt || "",
-              section: a.section,
-              role: "DESIGNER",
-              isFollowUp: false,
-            }));
-          }
-          if (interviewData.followUps?.length > 0) {
-            followupsToSend = interviewData.followUps.map((f: any) => ({
-              questionId: f.questionId || f.id,
-              question: f.question || f.prompt || "",
-              answer: f.answer || "",
-              role: "DESIGNER",
-              isFollowUp: true,
-            }));
-          }
-        }
-      } catch (fetchErr) {
-        console.warn("[PublishPanel] Interview fetch failed:", fetchErr);
-      }
-
-      const url = `/api/posting/project/${projectId}/interview/generate?forceOverwriteDraft=true&mode=recomposition`;
-      const payload: any = {
-        source: "publish_tab",
-        forceOverwriteDraft: true,
-        mode: "recomposition",
-      };
-
-      if (answersToSend.length > 0) {
-        payload.answersOverride = answersToSend;
-      }
-      if (followupsToSend.length > 0) {
-        payload.followupsOverride = followupsToSend;
-      }
-
-      const res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        cache: "no-store",
-        body: JSON.stringify(payload),
-      });
-
-      if (res.status === 202) {
-        const data = await res.json().catch(() => ({}));
-        alert(data.message || "Draft already exists.");
-        return;
-      }
-
-      if (!res.ok) {
-        const json = await res.json().catch(() => ({}));
-        const errorMessage = json?.error || json?.message || `Generation failed (${res.status})`;
-        setError(errorMessage);
-        return;
-      }
-
-      router.refresh();
-      fetchData().catch(console.error);
-    } catch (err: any) {
-      console.error("[PublishPanel] Generate failed", err);
-      setError(err.message || "Failed to generate draft");
-    } finally {
-      setRegenBusy(false);
-    }
+    await generateDraft();
+    router.refresh();
   }
 
   async function handlePublish() {
-    try {
-      setIsPublishing(true);
-      setError(null);
-
-      const res = await fetch(`/api/projects/${projectId}/approvals/publish-editorial`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-      });
-
-      if (!res.ok) {
-        const json = await res.json().catch(() => ({}));
-        throw new Error(json.error || "Failed to publish");
-      }
-
-      const result = await res.json();
-      setPublishSuccess(true);
-      setPublishedSlug(result.slug || null);
-      router.refresh();
-    } catch (err: any) {
-      console.error("[PublishPanel] Publish failed:", err);
-      setError(err.message || "Failed to publish");
-    } finally {
-      setIsPublishing(false);
-    }
+    await publish();
+    router.refresh();
   }
 
   if (isLoading) {

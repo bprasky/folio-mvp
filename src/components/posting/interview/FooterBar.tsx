@@ -106,7 +106,7 @@ export function FooterBar({
                   Generating...
                 </>
               ) : (
-                "Generate Editorial"
+                "Create Story"
               )}
             </button>
           )}

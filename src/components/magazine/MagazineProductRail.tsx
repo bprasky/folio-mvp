@@ -21,7 +21,7 @@ export default function MagazineProductRail({ products }: Props) {
     <section className="space-y-3">
       <div className="flex items-center justify-between">
         <h3 className="folio-ui text-sm font-medium text-[var(--text-primary)]">
-          Products from this editorial
+          Products from this story
         </h3>
       </div>
       <div className="flex gap-3 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' } as React.CSSProperties}>

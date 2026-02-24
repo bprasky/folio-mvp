@@ -719,7 +719,7 @@ export default function DraftsPanel({ projectId }: { projectId: string }) {
             </div>
           ) : (
             <p className="folio-ui text-[var(--text-tertiary)] italic">
-              No editorial draft yet. Save your reflections and click "Generate Editorial" to create one.
+              No story draft yet. Save your reflections and click &quot;Create Story&quot; to generate one.
             </p>
           )}
           {data?.drafts && data.drafts.length > 0 && (
