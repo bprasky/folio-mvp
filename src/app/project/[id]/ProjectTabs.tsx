@@ -12,9 +12,10 @@ interface ProjectTabsProps {
     rooms?: any[];
   };
   currentView: TabView;
+  isPublished: boolean;
 }
 
-export default function ProjectTabs({ project, currentView }: ProjectTabsProps) {
+export default function ProjectTabs({ project, currentView, isPublished }: ProjectTabsProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -37,30 +38,37 @@ export default function ProjectTabs({ project, currentView }: ProjectTabsProps) 
     return sum + (room.selections?.length || 0);
   }, 0) || 0;
 
-  // Tab structure: BOARDS | MEDIA | STORY | PUBLISH
-  const tabs = [
+  // Tab structure: BOARDS | MEDIA | (STORY) | (PUBLISH)
+  // Story and Publish tabs only appear after project is published
+  const allTabs = [
     {
       id: 'boards' as TabView,
       label: 'Boards',
       icon: LayoutGrid,
       badge: totalSelections > 0 ? totalSelections : undefined,
+      requiresPublished: false,
     },
     {
       id: 'media' as TabView,
       label: 'Media',
       icon: ImageIcon,
+      requiresPublished: false,
     },
     {
       id: 'story' as TabView,
       label: 'Story',
       icon: MessageSquare,
+      requiresPublished: true,
     },
     {
       id: 'publish' as TabView,
       label: 'Publish',
       icon: Share2,
+      requiresPublished: true,
     },
   ];
+
+  const tabs = allTabs.filter(tab => !tab.requiresPublished || isPublished);
 
   return (
     <div className="bg-[var(--bg-elevated)] py-4">
