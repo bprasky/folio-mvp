@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronDown, ChevronUp, Sparkles, MapPin, ImageIcon, LayoutGrid } from "lucide-react";
 import { usePublishFlow } from "@/hooks/usePublishFlow";
+import { InterviewModal } from "@/components/posting/interview/InterviewModal";
 import PublishPreviewModal from "./PublishPreviewModal";
 
 interface GuidedPublishFlowProps {
@@ -16,6 +17,8 @@ interface GuidedPublishFlowProps {
     rooms?: any[];
   };
   imageCount: number;
+  images: Array<{ id: string; url: string; name?: string }>;
+  projectPost?: any;
 }
 
 const PROJECT_TYPE_LABELS: Record<string, string> = {
@@ -33,22 +36,24 @@ const PROJECT_TYPE_LABELS: Record<string, string> = {
   ARCHITECTURAL: "Architectural",
 };
 
-export default function GuidedPublishFlow({ project, imageCount }: GuidedPublishFlowProps) {
+export default function GuidedPublishFlow({ project, imageCount, images, projectPost }: GuidedPublishFlowProps) {
   const router = useRouter();
   const flow = usePublishFlow(project.id);
   const [summaryExpanded, setSummaryExpanded] = useState(true);
+  const [showInterviewModal, setShowInterviewModal] = useState(false);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
 
-  const hasExistingDraft = !!flow.currentPost;
   const roomCount = project.rooms?.length || 0;
   const location = [project.city, project.regionState].filter(Boolean).join(", ");
   const typeLabel = PROJECT_TYPE_LABELS[project.projectType || ""] || project.projectType || "";
 
-  async function handlePreviewAndPublish() {
-    if (!hasExistingDraft) {
-      // Generate draft first, then open modal
-      await flow.generateDraft();
-    }
+  function handleProceedToPublish() {
+    setShowInterviewModal(true);
+  }
+
+  async function handleDraftGenerated() {
+    // Interview completed and draft was generated — refetch draft data, then show preview
+    await flow.refetch();
     setShowPreviewModal(true);
   }
 
@@ -131,13 +136,12 @@ export default function GuidedPublishFlow({ project, imageCount }: GuidedPublish
         )}
       </div>
 
-      {/* Preview & Publish CTA */}
+      {/* Proceed to Publish CTA */}
       <button
-        onClick={handlePreviewAndPublish}
-        disabled={flow.regenBusy}
-        className="w-full px-6 py-4 folio-ui font-semibold text-white bg-[var(--accent)] rounded-2xl hover:bg-[var(--accent-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+        onClick={handleProceedToPublish}
+        className="w-full px-6 py-4 folio-ui font-semibold text-white bg-[var(--accent)] rounded-2xl hover:bg-[var(--accent-hover)] transition-colors shadow-sm"
       >
-        {flow.regenBusy ? "Preparing preview..." : "Preview & Publish"}
+        Proceed to Publish
       </button>
 
       {/* Error */}
@@ -147,7 +151,18 @@ export default function GuidedPublishFlow({ project, imageCount }: GuidedPublish
         </div>
       )}
 
-      {/* Preview Modal */}
+      {/* Interview Modal — the guided interview is the path to publishing */}
+      <InterviewModal
+        open={showInterviewModal}
+        onOpenChange={(open) => setShowInterviewModal(open)}
+        projectId={project.id}
+        projectName={project.title}
+        images={images}
+        post={projectPost}
+        onDraftGenerated={handleDraftGenerated}
+      />
+
+      {/* Preview Modal — shown after interview completes and draft is generated */}
       {showPreviewModal && (
         <PublishPreviewModal
           projectId={project.id}
