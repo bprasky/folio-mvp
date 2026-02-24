@@ -162,7 +162,7 @@ export default function OverviewTab({ projectId, project, isOwner }: OverviewTab
         if (approval.type === 'DRAFT_EDITORIAL') {
           toast.success('Draft created! Taking you to review...');
         } else if (approval.type === 'PUBLISH_EDITORIAL') {
-          toast.success('Editorial published! It will appear in the feed.');
+          toast.success('Published! It will appear in the feed.');
         } else {
           toast.success(`${APPROVAL_BUTTON_LABELS[approval.type]} completed!`);
         }
@@ -230,7 +230,7 @@ export default function OverviewTab({ projectId, project, isOwner }: OverviewTab
     const draftApproval = approvals.find(a => a.type === 'DRAFT_EDITORIAL');
     if (draftApproval) {
       return {
-        label: 'Resume: Create editorial draft',
+        label: 'Resume: Create story',
         href: `/project/${projectId}/publish`,
       };
     }

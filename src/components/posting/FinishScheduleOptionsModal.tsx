@@ -113,7 +113,7 @@ export function FinishScheduleOptionsModal({
         <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-5 text-white">
           <h2 className="text-xl font-bold">Before Your Interview</h2>
           <p className="text-white/90 text-sm mt-1">
-            Optionally upload your finish schedule to help generate richer editorial content
+            Optionally upload your finish schedule to help generate richer story content
           </p>
         </div>
 

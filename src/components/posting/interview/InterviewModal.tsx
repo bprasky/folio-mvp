@@ -386,7 +386,7 @@ export function InterviewModal({
         .then((ok) => {
           setLlmAvailable(ok);
           if (!ok) {
-            setBanner('AI editorial assistant is currently unavailable. You can continue and Folio will create a base editorial draft.');
+            setBanner('AI assistant is currently unavailable. You can continue and Folio will create a base story draft.');
           }
         })
         .finally(() => setIsChecking(false));
@@ -990,11 +990,11 @@ export function InterviewModal({
       if (!res.ok && res.status >= 400) {
         const errData = await res.json().catch(() => ({}));
         const errorCode = errData?.code || 'COMPOSE_ERROR';
-        const errorMessage = errData?.error || `Editorial generation failed (${res.status})`;
+        const errorMessage = errData?.error || `Story generation failed (${res.status})`;
         logClient('generate:hard-fail', { status: res.status, code: errorCode, message: errorMessage });
         
         // Show user-friendly error message
-        handleBanner(`Editorial generation failed: ${errorMessage}. The AI didn't return a valid magazine article. Nothing was saved. Error code: ${errorCode}. Try Regenerate.`);
+        handleBanner(`Story generation failed: ${errorMessage}. Nothing was saved. Error code: ${errorCode}. Try Regenerate.`);
         setIsGenerating(false);
         return;
       }
@@ -1042,12 +1042,12 @@ export function InterviewModal({
         if (!retry.ok) {
           const errData = await retry.json().catch(() => ({}));
           const errorCode = errData?.code || 'COMPOSE_ERROR';
-          const errorMessage = errData?.error || `Editorial generation failed (${retry.status})`;
+          const errorMessage = errData?.error || `Story generation failed (${retry.status})`;
           logClient('generate:conflict_retry:error', { code: errorCode, message: errorMessage });
           
           // Handle hard-fail errors (502, 400)
           if (retry.status >= 400) {
-            handleBanner(`Editorial generation failed: ${errorMessage}. The AI didn't return a valid magazine article. Nothing was saved. Error code: ${errorCode}. Try Regenerate.`);
+            handleBanner(`Story generation failed: ${errorMessage}. Nothing was saved. Error code: ${errorCode}. Try Regenerate.`);
             setIsGenerating(false);
             return;
           }
@@ -1084,7 +1084,7 @@ export function InterviewModal({
         
         // Optionally show subtle banner if fallback used
         if (retryData?.metadata?.usedFallback) {
-          setBanner('Generated a base editorial draft while AI was unavailable. You can refine this later.');
+          setBanner('Generated a base story draft while AI was unavailable. You can refine this later.');
         }
         
         onOpenChange(false);
@@ -1122,7 +1122,7 @@ export function InterviewModal({
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         logClient('generate:error', err);
-        setBanner('We couldn\'t create the editorial just now. Please try again.');
+        setBanner('We couldn\'t create your story just now. Please try again.');
         return;
       }
 
@@ -1194,7 +1194,7 @@ export function InterviewModal({
         setIsLoadingFollowUps(false);
         return;
       }
-      setBanner('We couldn\'t reach the AI follow-ups service. You can retry or continue with a base editorial draft.');
+      setBanner('We couldn\'t reach the AI follow-ups service. You can retry or continue with a base story draft.');
       setIsLoadingFollowUps(false);
       return;
     }
@@ -1221,9 +1221,9 @@ export function InterviewModal({
       } else if (resp.status === 409) {
         setBanner("Conflict detected. Please refresh and try again.");
       } else if (resp.status === 503 || resp.status === 502) {
-        setBanner('AI follow-ups failed to generate. You can retry or continue with a base editorial draft.');
+        setBanner('AI follow-ups failed to generate. You can retry or continue with a base story draft.');
       } else {
-        setBanner('AI follow-ups failed to generate. You can retry or continue with a base editorial draft.');
+        setBanner('AI follow-ups failed to generate. You can retry or continue with a base story draft.');
       }
       setIsLoadingFollowUps(false);
       return;
@@ -1241,7 +1241,7 @@ export function InterviewModal({
         setIsLoadingFollowUps(false);
         return;
       }
-      setBanner('AI editorial assistant is temporarily unavailable. You can continue now; you\'ll still be able to refine later.');
+      setBanner('AI assistant is temporarily unavailable. You can continue now; you\'ll still be able to refine later.');
       setIsLoadingFollowUps(false);
       return;
     }

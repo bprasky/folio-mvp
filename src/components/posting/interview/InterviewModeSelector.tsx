@@ -65,7 +65,7 @@ export function InterviewModeSelector({
                 </span>
               </div>
               <p className="text-sm text-stone-600 mb-2">
-                Have a natural conversation about your project. Our editorial AI
+                Have a natural conversation about your project. Our story AI
                 will guide you through the story with questions tailored to your
                 work.
               </p>

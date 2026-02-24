@@ -240,7 +240,7 @@ export function InterviewFlow({
           >
             <div className="text-center space-y-4">
               <Loader2 className="w-8 h-8 text-[var(--text-tertiary)] animate-spin mx-auto" />
-              <p className="text-[var(--text-secondary)]">Creating your editorial draft...</p>
+              <p className="text-[var(--text-secondary)]">Creating your story...</p>
             </div>
           </motion.div>
         );

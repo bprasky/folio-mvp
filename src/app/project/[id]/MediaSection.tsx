@@ -8,6 +8,7 @@ import { Camera, FileSpreadsheet, Presentation } from 'lucide-react';
 import ProjectCreationModal from '@/components/ProjectCreationModal';
 import { PresentationImportModal } from '@/components/import/PresentationImportModal';
 import { PdfSpecImportModal } from '@/components/import/PdfSpecImportModal';
+import GuidedPublishFlow from './GuidedPublishFlow';
 
 interface ProductTag {
   id: string;
@@ -32,13 +33,18 @@ interface MediaSectionProps {
   project: {
     id: string;
     title: string;
+    projectType?: string;
+    city?: string | null;
+    regionState?: string | null;
+    rooms?: any[];
   };
   isOwner: boolean;
   images: ProjectImage[];
   projectPost?: any;
+  isPublished?: boolean;
 }
 
-export default function MediaSection({ project, isOwner, images, projectPost }: MediaSectionProps) {
+export default function MediaSection({ project, isOwner, images, projectPost, isPublished }: MediaSectionProps) {
   const router = useRouter();
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [selectedHeroImageId, setSelectedHeroImageId] = useState<string | null>(null);
@@ -460,6 +466,11 @@ export default function MediaSection({ project, isOwner, images, projectPost }: 
           </div>
         )}
       </section>
+
+      {/* Guided Publish Flow — inline below image grid for unpublished projects with images */}
+      {images.length > 0 && !isPublished && isOwner && (
+        <GuidedPublishFlow project={project} imageCount={images.length} />
+      )}
 
       {/* Upload Modal */}
       {showUploadModal && (

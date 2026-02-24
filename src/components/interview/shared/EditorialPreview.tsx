@@ -37,7 +37,7 @@ export function EditorialPreview({
   return (
     <div className="space-y-4">
       <p className="text-center text-sm text-[var(--text-secondary)]">
-        Your editorial is taking shape
+        Your story is taking shape
       </p>
 
       <div className="bg-white rounded-xl shadow-lg overflow-hidden max-w-md mx-auto">

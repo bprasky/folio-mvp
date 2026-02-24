@@ -124,11 +124,11 @@ const DESIGNER_TOUR_STEPS: TourStep[] = [
   {
     id: 'designer-5',
     route: '/project/*',
-    title: 'Draft an Editorial',
-    body: 'Once you have images and selections, you can draft an editorial that will appear in the feed.',
-    highlightSelector: 'button[aria-label*="Draft Editorial"]',
+    title: 'Create Your Story',
+    body: 'Once you have images and selections, you can create a story that will appear in the feed.',
+    highlightSelector: 'button[aria-label*="Create Story"]',
     position: 'top',
-    actionHint: 'Click "Draft Editorial"',
+    actionHint: 'Click "Create Story"',
     waitForClick: true,
   },
   {

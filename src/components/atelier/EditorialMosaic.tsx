@@ -65,7 +65,7 @@ export default function EditorialMosaic({ projects }: EditorialMosaicProps) {
             <Link
               href={href}
               className="absolute inset-0 z-10"
-              aria-label={published ? `View editorial: ${project.title}` : `View project: ${project.title}`}
+              aria-label={published ? `View story: ${project.title}` : `View project: ${project.title}`}
             >
               <div className="relative w-full h-full">
                 <Image
@@ -87,7 +87,7 @@ export default function EditorialMosaic({ projects }: EditorialMosaicProps) {
                     </div>
                     <div className="mt-3 pt-3 border-t border-white/20">
                       <span className="text-xs text-white/60 font-sans uppercase tracking-wide">
-                        {published ? 'View Editorial' : 'View Project'}
+                        {published ? 'View Story' : 'View Project'}
                       </span>
                     </div>
                   </div>
@@ -96,7 +96,7 @@ export default function EditorialMosaic({ projects }: EditorialMosaicProps) {
                 {/* Published badge */}
                 {published && (
                   <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm text-folio-ink text-xs px-2 py-1 rounded-full font-sans font-medium z-20">
-                    Editorial
+                    Story
                   </div>
                 )}
               </div>
