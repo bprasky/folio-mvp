@@ -66,10 +66,11 @@ export default async function ProjectPage({
         // Note: We'll sort in memory to handle nulls properly
         orderBy: { createdAt: 'desc' },
       },
-      // Include ProjectPost for Instagram export
+      // Include ProjectPost for Instagram export + publish state detection
       post: {
         select: {
           expandedBlocks: true,
+          status: true,
         },
       },
       // Include rooms and selections for Designer Board
@@ -109,8 +110,13 @@ export default async function ProjectPage({
     notFound();
   }
 
-  // Determine current view from search params - default to 'boards'
-  let currentView: TabView = (searchParams.view as TabView) || 'boards';
+  // Determine publish state from ProjectPost status OR Project.publishedAt
+  const isPublished = base.post?.status === 'PUBLISHED' || !!base.publishedAt;
+
+  // Determine current view from search params
+  // Default: 'media' for unpublished (primary workspace), 'boards' for published
+  const defaultView: TabView = isPublished ? 'boards' : 'media';
+  let currentView: TabView = (searchParams.view as TabView) || defaultView;
 
   // Handle redirects from old tab names
   // files → media, drafts → publish
@@ -120,9 +126,14 @@ export default async function ProjectPage({
     currentView = 'publish';
   }
 
+  // Redirect story/publish tabs to media when project is not published
+  if (!isPublished && (currentView === 'story' || currentView === 'publish')) {
+    currentView = 'media';
+  }
+
   // Validate view parameter
   const validViews: TabView[] = ['overview', 'media', 'boards', 'drafts', 'files', 'publish', 'story'];
-  const view = validViews.includes(currentView) ? currentView : 'boards';
+  const view = validViews.includes(currentView) ? currentView : defaultView;
 
   // Convert Prisma Decimal objects to numbers for client components
   const sanitizedProject = {
@@ -220,13 +231,13 @@ export default async function ProjectPage({
       />
 
       {/* Tab Navigation */}
-      <ProjectTabs project={sanitizedProject} currentView={view} />
+      <ProjectTabs project={sanitizedProject} currentView={view} isPublished={isPublished} />
 
       {/* Main Content - Full Width */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* MEDIA tab */}
         {view === 'media' && (
-          <MediaSection project={sanitizedProject} isOwner={isOwner} images={base.images} />
+          <MediaSection project={sanitizedProject} isOwner={isOwner} images={base.images} isPublished={isPublished} />
         )}
 
         {/* STORY tab */}
