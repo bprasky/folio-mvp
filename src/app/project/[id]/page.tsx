@@ -265,6 +265,7 @@ export default async function ProjectPage({
           <DesignerBoard
             projectId={sanitizedProject.id}
             project={sanitizedProject}
+            imageCount={base.images.length}
           />
         )}
       </main>

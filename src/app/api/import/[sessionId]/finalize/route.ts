@@ -3,23 +3,9 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
 import { ensureProductForSelection } from '@/lib/tagging/ensureProductForSelection';
+import { ROOM_TYPE_TO_ENUM } from '@/lib/import-agent/roomTypes';
 
 export const runtime = 'nodejs';
-
-const ROOM_TYPE_TO_ENUM: Record<string, string> = {
-  'living_room': 'LIVING',
-  'bedroom': 'BEDROOM',
-  'kitchen': 'KITCHEN',
-  'bathroom': 'BATHROOM',
-  'dining_room': 'DINING',
-  'office': 'OFFICE',
-  'entry': 'ENTRY',
-  'outdoor': 'OUTDOOR',
-  'hallway': 'HALLWAY',
-  'laundry': 'LAUNDRY',
-  'closet': 'CLOSET',
-  'other': 'OTHER',
-};
 
 /**
  * POST /api/import/[sessionId]/finalize

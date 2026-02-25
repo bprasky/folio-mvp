@@ -509,6 +509,10 @@ export function InterviewModal({
   const currentQuestion = selectedQuestions[currentQuestionIndex];
   const totalQuestions = selectedQuestions.length;
   const displayTotal = lockedTotal ?? totalQuestions;
+  const isLastQuestion = currentQuestionIndex >= totalQuestions - 1;
+
+  // Auto-generate: when the last question answer is saved, trigger generation automatically
+  const autoGenerateRef = useRef(false);
 
   // Lock the question count denominator on first population
   useEffect(() => {
@@ -742,6 +746,7 @@ export function InterviewModal({
       if (currentQuestionIndex < totalQuestions - 1 - skippedCount) {
         setCurrentQuestionIndex((prev) => prev + 1);
       } else {
+        autoGenerateRef.current = true;
         setPhase("complete");
       }
     } catch (error: any) {
@@ -1217,6 +1222,14 @@ export function InterviewModal({
     }
   }, [projectId, isGenerating, baseAnswers, followUpAnswersState, step, router, onOpenChange, onDraftGenerated, handleBanner, persistAnswers]);
 
+  // Auto-trigger generation when phase transitions to "complete" from the last question
+  useEffect(() => {
+    if (phase === "complete" && autoGenerateRef.current && !isGenerating) {
+      autoGenerateRef.current = false;
+      handleGenerate();
+    }
+  }, [phase, handleGenerate, isGenerating]);
+
   const handleAnswerStepComplete = useCallback(async () => {
     setFieldErrors({});
     try {
@@ -1437,7 +1450,7 @@ export function InterviewModal({
           </div>
         )}
         {/* Modal header with close button and progress */}
-        {(phase === "question" || phase === "followup") && (
+        {(phase === "question" || phase === "followup" || phase === "complete") && (
           <div className="flex items-center justify-between px-8 py-4 border-b border-[var(--ridge-outer)]/50 bg-white/50">
             <button 
               onClick={() => onOpenChange(false)}
@@ -1449,7 +1462,7 @@ export function InterviewModal({
             
             {phase === "question" && currentQuestion && !showDraftResume && (
               <span className="text-sm text-[var(--text-secondary)]">
-                Question {currentQuestionIndex + 1} of {totalQuestions}
+                Question {currentQuestionIndex + 1} of {displayTotal}
               </span>
             )}
             
@@ -1464,7 +1477,7 @@ export function InterviewModal({
           </div>
         )}
 
-        <DialogHeader className={phase === "question" || phase === "followup" ? "hidden" : ""}>
+        <DialogHeader className="hidden">
           <DialogTitle className="text-2xl font-serif">
             Project Interview
           </DialogTitle>
@@ -1553,6 +1566,36 @@ export function InterviewModal({
               images={images}
             />
           </div>
+        ) : phase === "complete" ? (
+          /* Generation in progress — auto-triggered after last question */
+          <div className="flex-1 flex flex-col items-center justify-center px-8 py-16">
+            <div className="text-center space-y-6">
+              {isGenerating ? (
+                <>
+                  <div className="animate-spin rounded-full h-8 w-8 border-2 border-[var(--accent)] border-t-transparent mx-auto" />
+                  <div>
+                    <h3 className="text-xl font-serif text-[var(--text-primary)] mb-2">
+                      Creating your story...
+                    </h3>
+                    <p className="text-sm text-[var(--text-secondary)]">
+                      {GENERATION_MESSAGES[generationStep]}
+                    </p>
+                  </div>
+                </>
+              ) : error ? (
+                <div>
+                  <h3 className="text-xl font-serif text-[var(--text-primary)] mb-2">
+                    Something went wrong
+                  </h3>
+                  <p className="text-sm text-[var(--text-secondary)]">
+                    Generation failed. You can try again below.
+                  </p>
+                </div>
+              ) : (
+                <div className="animate-spin rounded-full h-8 w-8 border-2 border-[var(--accent)] border-t-transparent mx-auto" />
+              )}
+            </div>
+          </div>
         ) : (
           /* Followup phase (batch flow for backward compatibility) */
           <div className={`mt-6 md:flex md:items-start md:gap-6 ${phase === "followup" ? "flex-1 min-h-0 px-6 pb-6" : ""}`}>
@@ -1570,7 +1613,7 @@ export function InterviewModal({
           </div>
         )}
 
-            {!showDraftResume && <FooterBar
+            {!showDraftResume && !(phase === "complete" && isGenerating) && <FooterBar
               phase={phase}
               onBack={
                 phase === "question" && currentQuestionIndex > 0
@@ -1601,6 +1644,7 @@ export function InterviewModal({
               isSubmitting={isSubmitting}
               isGenerating={isGenerating}
               isLoadingFollowUps={isLoadingFollowUps}
+              isLastQuestion={isLastQuestion}
               generationProgressMessage={isGenerating ? GENERATION_MESSAGES[generationStep] : undefined}
             />}
           </>
