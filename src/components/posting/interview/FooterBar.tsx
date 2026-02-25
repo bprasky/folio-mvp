@@ -12,6 +12,7 @@ interface FooterBarProps {
   isGenerating?: boolean;
   isLoadingFollowUps?: boolean;
   isLastQuestion?: boolean;
+  generationProgressMessage?: string;
 }
 
 export function FooterBar({
@@ -26,6 +27,7 @@ export function FooterBar({
   isGenerating = false,
   isLoadingFollowUps = false,
   isLastQuestion = false,
+  generationProgressMessage,
 }: FooterBarProps) {
   return (
     <div className="px-8 py-4 border-t border-[var(--ridge-outer)]/50 bg-white/50">

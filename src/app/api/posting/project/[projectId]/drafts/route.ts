@@ -80,7 +80,13 @@ export async function GET(
         status: d.status,
         slug: d.slug,
         lead: b?.lead ?? null,
-        sections: (b?.data?.sections || b?.sections || []).slice(0, 3), // Preview first 3 sections
+        sections: (b?.galleryChapters || []).flatMap((ch: any) =>
+          (ch.body || []).map((para: string) => ({
+            type: "narrative",
+            body: para,
+            chapterTitle: ch.title,
+          }))
+        ).slice(0, 3),
       };
     });
 
