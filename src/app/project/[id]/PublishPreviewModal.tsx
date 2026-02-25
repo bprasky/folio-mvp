@@ -36,7 +36,7 @@ export default function PublishPreviewModal({
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const isGenerating = flow.regenBusy;
-  const hasDraft = !!flow.currentPost && !!flow.currentLead?.title;
+  const hasDraft = !!flow.currentPost && !!(flow.currentLead?.title || flow.currentLead?.kicker);
 
   // Advance progress messages while generating
   useEffect(() => {
@@ -137,7 +137,7 @@ export default function PublishPreviewModal({
           {hasDraft && !justPublished && (
             <div className="space-y-6">
               {/* Title / Kicker */}
-              {flow.currentLead?.kicker && (
+              {flow.currentLead?.kicker && flow.currentLead.kicker !== flow.currentLead.title && (
                 <p
                   className="text-sm uppercase tracking-widest text-[var(--accent)]"
                   style={{ fontFamily: "var(--font-headline)" }}
