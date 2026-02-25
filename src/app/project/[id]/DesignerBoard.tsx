@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import clsx from 'clsx';
 import { useRouter } from 'next/navigation';
 import DesignerBoardRoom from './DesignerBoardRoom';
@@ -107,6 +107,34 @@ export default function DesignerBoard({
     metadata?: any;
   }>>([]);
   const [loadingImages, setLoadingImages] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const analysisTriggeredRef = useRef(false);
+
+  // Auto-trigger image analysis when images exist but no rooms have been created yet
+  useEffect(() => {
+    if (imageCount > 0 && project.rooms.length === 0 && !analysisTriggeredRef.current) {
+      analysisTriggeredRef.current = true;
+      setIsAnalyzing(true);
+
+      fetch(`/api/projects/${projectId}/analyze-images`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      })
+        .then(res => res.json())
+        .then(data => {
+          console.log('[DesignerBoard] Analysis complete:', data);
+          if (data.roomsCreated > 0 || data.analyzed > 0) {
+            router.refresh();
+          }
+          setIsAnalyzing(false);
+        })
+        .catch(err => {
+          console.error('[DesignerBoard] Analysis failed:', err);
+          setIsAnalyzing(false);
+        });
+    }
+  }, [imageCount, project.rooms.length, projectId, router]);
 
   // Filter rooms based on selection
   const filteredRooms = useMemo(() => {
@@ -315,16 +343,32 @@ export default function DesignerBoard({
 
       {filteredRooms.length === 0 && project.rooms.length === 0 && imageCount > 0 && (
         <div className="max-w-md mx-auto py-16 text-center">
-          <FaSpinner className="w-8 h-8 mx-auto mb-4 text-[var(--accent)] animate-spin" />
-          <h3 className="folio-ui font-semibold text-[var(--text-primary)] mb-2">
-            Analyzing your photos
-          </h3>
-          <p className="folio-body text-[var(--text-secondary)] mb-6">
-            AI is detecting rooms and products from your uploaded images.
-            This usually takes 30-60 seconds.
-          </p>
+          {isAnalyzing ? (
+            <>
+              <FaSpinner className="w-8 h-8 mx-auto mb-4 text-[var(--accent)] animate-spin" />
+              <h3 className="folio-ui font-semibold text-[var(--text-primary)] mb-2">
+                Analyzing your photos
+              </h3>
+              <p className="folio-body text-[var(--text-secondary)] mb-6">
+                AI is detecting rooms and products from your {imageCount} image{imageCount !== 1 ? 's' : ''}.
+                This usually takes 30-60 seconds.
+              </p>
+            </>
+          ) : (
+            <>
+              <h3 className="folio-ui font-semibold text-[var(--text-primary)] mb-2">
+                Analysis complete
+              </h3>
+              <p className="folio-body text-[var(--text-secondary)] mb-6">
+                No rooms were detected. Try uploading more interior photos.
+              </p>
+            </>
+          )}
           <button
-            onClick={() => router.refresh()}
+            onClick={() => {
+              analysisTriggeredRef.current = false;
+              router.refresh();
+            }}
             className="ridge-btn px-4 py-2"
           >
             Refresh
