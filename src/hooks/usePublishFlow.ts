@@ -7,7 +7,7 @@ export type DraftVersion = {
   createdAt: string;
   status: string;
   slug?: string;
-  lead?: { kicker?: string; title?: string; deck?: string };
+  lead?: { kicker?: string; title?: string; deck?: string; dek?: string };
   sections?: any[];
 };
 
@@ -15,7 +15,7 @@ export interface UsePublishFlowReturn {
   // Data
   data: { interview: any; drafts: DraftVersion[] } | null;
   currentPost: DraftVersion | undefined;
-  currentLead: { kicker?: string; title?: string; deck?: string } | undefined;
+  currentLead: { kicker?: string; title?: string; deck?: string; dek?: string } | undefined;
   currentSections: any[];
 
   // Readiness
@@ -101,7 +101,18 @@ export function usePublishFlow(projectId: string): UsePublishFlowReturn {
   }, [fetchData, fetchReadiness]);
 
   const currentPost = useMemo(() => data?.drafts?.[0], [data]);
-  const currentLead = useMemo(() => currentPost?.lead, [currentPost]);
+  // Normalize lead: composeEditorialHard generates { kicker, deck } but
+  // downstream consumers (PublishPreviewModal) expect { title, deck }.
+  // Map kicker → title and dek → deck so hasDraft checks work correctly.
+  const currentLead = useMemo(() => {
+    const lead = currentPost?.lead;
+    if (!lead) return lead;
+    return {
+      ...lead,
+      title: lead.title || lead.kicker,
+      deck: lead.deck || lead.dek,
+    };
+  }, [currentPost]);
   const currentSections = useMemo(() => {
     const sections = currentPost?.sections ?? [];
     return Array.isArray(sections) ? sections : [];
