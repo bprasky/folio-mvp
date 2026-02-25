@@ -11,6 +11,7 @@ interface FooterBarProps {
   isSubmitting?: boolean;
   isGenerating?: boolean;
   isLoadingFollowUps?: boolean;
+  isLastQuestion?: boolean;
 }
 
 export function FooterBar({
@@ -24,6 +25,7 @@ export function FooterBar({
   isSubmitting = false,
   isGenerating = false,
   isLoadingFollowUps = false,
+  isLastQuestion = false,
 }: FooterBarProps) {
   return (
     <div className="px-8 py-4 border-t border-[var(--ridge-outer)]/50 bg-white/50">
@@ -61,6 +63,11 @@ export function FooterBar({
                       <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
                       Saving...
                     </>
+                  ) : isLastQuestion ? (
+                    <>
+                      Finish & Generate Story
+                      <span className="text-xs opacity-75 ml-1">(⌘+Enter)</span>
+                    </>
                   ) : (
                     <>
                       Continue
@@ -93,21 +100,13 @@ export function FooterBar({
               )}
             </>
           )}
-          {phase === "complete" && onGenerate && (
+          {phase === "complete" && onGenerate && !isGenerating && (
             <button
               onClick={onGenerate}
-              disabled={isGenerating}
-              className="px-6 py-2 text-sm font-medium text-white bg-green-600 rounded-full hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+              className="px-6 py-2 text-sm font-medium text-white bg-[var(--accent)] rounded-full hover:bg-[var(--accent-hover)] transition-colors"
               type="button"
             >
-              {isGenerating ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                  Generating...
-                </>
-              ) : (
-                "Create Story"
-              )}
+              Retry Generation
             </button>
           )}
         </div>
