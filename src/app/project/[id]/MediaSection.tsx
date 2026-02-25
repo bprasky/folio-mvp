@@ -469,7 +469,12 @@ export default function MediaSection({ project, isOwner, images, projectPost, is
 
       {/* Guided Publish Flow — inline below image grid for unpublished projects with images */}
       {images.length > 0 && !isPublished && isOwner && (
-        <GuidedPublishFlow project={project} imageCount={images.length} />
+        <GuidedPublishFlow
+          project={project}
+          imageCount={images.length}
+          images={images.map(img => ({ id: img.id, url: img.url, name: img.name }))}
+          projectPost={projectPost}
+        />
       )}
 
       {/* Upload Modal */}

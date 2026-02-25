@@ -44,6 +44,8 @@ interface InterviewModalProps {
       };
     };
   }>;
+  /** When provided, called instead of router.push on successful draft generation. */
+  onDraftGenerated?: () => void;
 }
 
 const SIX_W_SECTIONS = new Set(["why", "who", "what", "where", "when", "how"]);
@@ -101,6 +103,7 @@ export function InterviewModal({
   post,
   hasVendors = false,
   tags = [],
+  onDraftGenerated,
 }: InterviewModalProps) {
   const router = useRouter();
   // Interview mode: 'select' shows mode picker, 'realtime' for voice, 'text' for traditional
@@ -1086,9 +1089,13 @@ export function InterviewModal({
         if (retryData?.metadata?.usedFallback) {
           setBanner('Generated a base story draft while AI was unavailable. You can refine this later.');
         }
-        
+
         onOpenChange(false);
-        router.push(`/designer/projects/${projectId}/preview`);
+        if (onDraftGenerated) {
+          onDraftGenerated();
+        } else {
+          router.push(`/designer/projects/${projectId}/preview`);
+        }
         return;
       }
 
@@ -1138,7 +1145,11 @@ export function InterviewModal({
       }
 
       onOpenChange(false);
-      router.push(`/designer/projects/${projectId}/preview`);
+      if (onDraftGenerated) {
+        onDraftGenerated();
+      } else {
+        router.push(`/designer/projects/${projectId}/preview`);
+      }
     } catch (err: any) {
       console.error("[InterviewModal] handleGenerate error:", err);
       if (err?.message !== "validation_failed") {
@@ -1147,7 +1158,7 @@ export function InterviewModal({
     } finally {
       setIsGenerating(false);
     }
-  }, [projectId, isGenerating, baseAnswers, followUpAnswersState, step, router, onOpenChange, handleBanner, persistAnswers]);
+  }, [projectId, isGenerating, baseAnswers, followUpAnswersState, step, router, onOpenChange, onDraftGenerated, handleBanner, persistAnswers]);
 
   const handleAnswerStepComplete = useCallback(async () => {
     setFieldErrors({});
