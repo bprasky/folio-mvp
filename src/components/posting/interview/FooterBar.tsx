@@ -11,6 +11,7 @@ interface FooterBarProps {
   isSubmitting?: boolean;
   isGenerating?: boolean;
   isLoadingFollowUps?: boolean;
+  generationProgressMessage?: string;
 }
 
 export function FooterBar({
@@ -24,6 +25,7 @@ export function FooterBar({
   isSubmitting = false,
   isGenerating = false,
   isLoadingFollowUps = false,
+  generationProgressMessage,
 }: FooterBarProps) {
   return (
     <div className="px-8 py-4 border-t border-[var(--ridge-outer)]/50 bg-white/50">
@@ -103,7 +105,7 @@ export function FooterBar({
               {isGenerating ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                  Generating...
+                  {generationProgressMessage || "Generating..."}
                 </>
               ) : (
                 "Create Story"

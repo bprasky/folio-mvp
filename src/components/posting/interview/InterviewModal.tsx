@@ -124,6 +124,9 @@ export function InterviewModal({
     Array<{ questionId: string; acknowledgment?: string; followUps: Array<{ id: string; prompt: string }> }>
   >([]);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [lockedTotal, setLockedTotal] = useState<number | null>(null);
+  const [generationStep, setGenerationStep] = useState(0);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [isLoadingFollowUps, setIsLoadingFollowUps] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false); // Phase A: Sequential flow
   const [llmAvailable, setLlmAvailable] = useState<boolean | null>(null);
@@ -505,6 +508,35 @@ export function InterviewModal({
 
   const currentQuestion = selectedQuestions[currentQuestionIndex];
   const totalQuestions = selectedQuestions.length;
+  const displayTotal = lockedTotal ?? totalQuestions;
+
+  // Lock the question count denominator on first population
+  useEffect(() => {
+    if (selectedQuestions.length > 0 && lockedTotal === null) {
+      setLockedTotal(selectedQuestions.length);
+    }
+  }, [selectedQuestions.length, lockedTotal]);
+
+  // Scroll to top when question changes
+  useEffect(() => {
+    scrollContainerRef.current?.scrollTo({ top: 0 });
+  }, [currentQuestionIndex]);
+
+  // Sequential generation progress messages
+  const GENERATION_MESSAGES = useMemo(() => [
+    "Analyzing your images…",
+    "Detecting rooms and products…",
+    "Writing your story…",
+    "Finalizing draft…",
+  ], []);
+
+  useEffect(() => {
+    if (!isGenerating) { setGenerationStep(0); return; }
+    const interval = setInterval(() => {
+      setGenerationStep(prev => Math.min(prev + 1, GENERATION_MESSAGES.length - 1));
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [isGenerating, GENERATION_MESSAGES.length]);
 
   // Get current answer for the current question
   const currentAnswer = useMemo(() => {
@@ -1428,7 +1460,7 @@ export function InterviewModal({
         {/* Phase A: Sequential flow - show progress indicator for question phase (if not in header) */}
         {phase === "question" && currentQuestion && !showDraftResume && (
           <div className="px-8 pt-6">
-            <ProgressIndicator current={currentQuestionIndex + 1} total={totalQuestions} />
+            <ProgressIndicator current={currentQuestionIndex + 1} total={displayTotal} />
           </div>
         )}
 
@@ -1508,7 +1540,7 @@ export function InterviewModal({
           </div>
         ) : phase === "question" && displayQuestion ? (
           /* Phase A: Sequential flow - question phase */
-          <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
+          <div ref={scrollContainerRef} className="flex-1 flex flex-col min-h-0 overflow-y-auto">
             <QuestionCard
               question={displayQuestion}
               answer={currentAnswer}
@@ -1569,6 +1601,7 @@ export function InterviewModal({
               isSubmitting={isSubmitting}
               isGenerating={isGenerating}
               isLoadingFollowUps={isLoadingFollowUps}
+              generationProgressMessage={isGenerating ? GENERATION_MESSAGES[generationStep] : undefined}
             />}
           </>
         )}
