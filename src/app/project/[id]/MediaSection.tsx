@@ -173,6 +173,28 @@ export default function MediaSection({ project, isOwner, images, projectPost, is
     input.click();
   }, []);
 
+  const handleSetCover = useCallback(async (imageId: string) => {
+    setSelectedHeroImageId(imageId);
+    try {
+      const res = await fetch(`/api/posting/project/${project.id}/meta`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ heroAssetId: imageId }),
+      });
+      if (!res.ok) {
+        console.error('Failed to set cover image:', res.status);
+        // Revert on failure
+        setSelectedHeroImageId(existingPost?.heroAssetId ?? null);
+        return;
+      }
+      const data = await res.json();
+      setExistingPost(data.post);
+    } catch (error) {
+      console.error('Error setting cover image:', error);
+      setSelectedHeroImageId(existingPost?.heroAssetId ?? null);
+    }
+  }, [project.id, existingPost]);
+
   const handleDeleteImage = useCallback(async (imageId: string) => {
     if (!confirm('Delete this image?')) return;
 
@@ -452,7 +474,7 @@ export default function MediaSection({ project, isOwner, images, projectPost, is
                   {isOwner && (
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-all flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
                       <button
-                        onClick={() => setSelectedHeroImageId(image.id)}
+                        onClick={() => handleSetCover(image.id)}
                         className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                           isCover
                             ? 'bg-[var(--accent)] text-white'
