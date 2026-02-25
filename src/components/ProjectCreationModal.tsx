@@ -171,8 +171,8 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
     try {
       const response = await fetch('/api/products');
       const data = await response.json();
-      // API returns products directly as an array, not wrapped in an object
-      const productsArray = Array.isArray(data) ? data : [];
+      // API returns { success, products, total } — extract products array
+      const productsArray = Array.isArray(data) ? data : (data?.products || []);
       setProducts(productsArray);
       setFilteredProducts(productsArray);
     } catch (error) {
@@ -300,7 +300,7 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
     setScrapedProduct(null);
 
     try {
-      const response = await fetch('/api/scrape-product', {
+      const response = await fetch('/api/import/product', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -309,15 +309,25 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Failed to scrape product' }));
-        throw new Error(errorData.error || 'Failed to scrape product');
+        const errorData = await response.json().catch(() => ({ error: 'Failed to extract product data' }));
+        throw new Error(errorData.error || 'Failed to extract product data');
       }
 
-      const productData = await response.json();
+      const result = await response.json();
+      if (!result.ok || !result.data) {
+        throw new Error('Could not extract product information from this URL');
+      }
+      const productData = result.data;
       setScrapedProduct({
-        ...productData,
         id: `pending-${Date.now()}`,
-        isPending: true
+        name: productData.title || 'Untitled Product',
+        price: productData.price ? `$${Number(productData.price).toFixed(2)}` : '$0.00',
+        image: productData.imageUrl || '',
+        description: productData.description || '',
+        brand: productData.brand || productData.vendorName || '',
+        category: productData.materialType || 'Decor',
+        tags: [],
+        isPending: true,
       });
       setScrapingError(''); // Clear any previous errors
     } catch (error) {
@@ -684,8 +694,15 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
           console.error('Error uploading images:', imageError);
           // Don't fail the whole operation if image upload fails
         }
+
+        // Fire AI analysis in the background — don't await, let user proceed immediately
+        fetch(`/api/projects/${projectId}/analyze-images`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({}),
+        }).catch(err => console.error('[ProjectCreation] Background analysis failed:', err));
       }
-      
+
       // Clear the draft since project was created/updated successfully
       clearDraft();
       
