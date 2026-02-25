@@ -469,11 +469,29 @@ export function InterviewModal({
   }, [contextualQuestions]);
 
   // Auto-select all questions when they load (no pick phase)
+  // Also re-select when the question set changes (e.g. contextual questions load
+  // after DEFAULT_QUESTION_BANK was initially used) to avoid a stale-ID mismatch
+  // that leaves selectedQuestions empty and the modal blank.
   useEffect(() => {
-    if (allQuestions.length > 0 && selectedQuestionIds.length === 0) {
+    if (allQuestions.length === 0) return;
+
+    if (selectedQuestionIds.length === 0) {
+      // Fresh start — select all
       const ids = allQuestions.map(q => q.id);
       setSelectedQuestionIds(ids);
       console.log('[InterviewModal] Auto-selected all questions:', ids.length);
+      return;
+    }
+
+    // Validate existing selection against available questions
+    const availableIds = new Set(allQuestions.map(q => q.id));
+    const validCount = selectedQuestionIds.filter(id => availableIds.has(id)).length;
+    if (validCount === 0) {
+      // All selected IDs are from a stale question set — re-select
+      const ids = allQuestions.map(q => q.id);
+      setSelectedQuestionIds(ids);
+      setCurrentQuestionIndex(0);
+      console.log('[InterviewModal] Re-selected all questions (question set changed):', ids.length);
     }
   }, [allQuestions, selectedQuestionIds.length]);
   
@@ -878,10 +896,17 @@ export function InterviewModal({
 
   const handleGenerate = useCallback(async () => {
     const now = Date.now();
-    if (now - lastClickRef.current < DEBOUNCE_MS) return;
+    if (now - lastClickRef.current < DEBOUNCE_MS) {
+      logClient('generate:blocked:debounce');
+      return;
+    }
     lastClickRef.current = now;
 
-    if (isGenerating) return;
+    if (isGenerating) {
+      logClient('generate:blocked:already-generating');
+      return;
+    }
+    logClient('generate:start', { baseAnswers: baseAnswers.length, followUps: followUpAnswersState.length });
     setIsGenerating(true);
     setError(null);
     setFieldErrors({});
@@ -1475,6 +1500,11 @@ export function InterviewModal({
                 </button>
               </div>
             </div>
+          </div>
+        ) : phase === "question" && !displayQuestion && allQuestions.length > 0 ? (
+          /* Question set loading / resolving — prevents blank screen during ID realignment */
+          <div className="flex-1 flex items-center justify-center py-16">
+            <div className="animate-spin rounded-full h-5 w-5 border-2 border-[var(--accent)] border-t-transparent" />
           </div>
         ) : phase === "question" && displayQuestion ? (
           /* Phase A: Sequential flow - question phase */
