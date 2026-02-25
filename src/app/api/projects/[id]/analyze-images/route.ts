@@ -5,7 +5,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
 import { assertProjectView } from '@/lib/authz/access';
-import { analyzeImage, shouldAnalyzeImage } from '@/lib/import-agent/analyze';
+import { analyzeImagesBatch } from '@/lib/import-agent/analyze';
 import { ensureProductForSelection } from '@/lib/tagging/ensureProductForSelection';
 import { ROOM_TYPE_TO_ENUM, ROOM_TYPE_DISPLAY_NAMES } from '@/lib/import-agent/roomTypes';
 import type { RoomAnalysis, DetectedProduct } from '@/lib/import-agent/types';
@@ -98,25 +98,26 @@ export async function POST(
       });
     }
 
-    console.log(`[analyze-images] Project ${projectId}: analyzing ${targetImages.length} of ${project.images.length} images`);
+    console.log(`[analyze-images] Project ${projectId}: analyzing ${targetImages.length} of ${project.images.length} images (batch mode)`);
 
-    // ── Phase 1: Image Analysis ──
+    // ── Phase 1: Batch Image Analysis ──
+    // Uses a single Claude API call per batch of images instead of 2 calls per image
     const results: AnalysisResult[] = [];
     const errors: ImageError[] = [];
     let skipped = 0;
 
-    for (const image of targetImages) {
-      try {
-        // Check if image should be analyzed (skip title slides, etc.)
-        const check = await shouldAnalyzeImage({ type: 'url', url: image.url });
-        if (!check.shouldAnalyze) {
-          console.log(`[analyze-images] Skipping ${image.id.slice(0, 8)}: ${check.reason}`);
+    try {
+      const batchImages = targetImages.map(img => ({ id: img.id, url: img.url }));
+      const analysisMap = await analyzeImagesBatch(batchImages);
+
+      for (const image of targetImages) {
+        const analysis = analysisMap.get(image.id);
+        if (!analysis) {
+          console.log(`[analyze-images] Skipping ${image.id.slice(0, 8)}: not an interior photo or batch skipped`);
           skipped++;
           continue;
         }
 
-        // Analyze with Claude vision
-        const analysis = await analyzeImage({ type: 'url', url: image.url });
         console.log(`[analyze-images] Image ${image.id.slice(0, 8)}: ${analysis.roomType}, ${analysis.products.length} products`);
 
         // Update ProjectImage with analysis metadata
@@ -137,9 +138,12 @@ export async function POST(
           analysis,
           products: analysis.products,
         });
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : 'Unknown error';
-        console.error(`[analyze-images] Image ${image.id.slice(0, 8)} failed:`, msg);
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Unknown error';
+      console.error(`[analyze-images] Batch analysis failed:`, msg);
+      // Record error for all images
+      for (const image of targetImages) {
         errors.push({ imageId: image.id, error: msg });
       }
     }

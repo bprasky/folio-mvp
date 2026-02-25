@@ -516,6 +516,7 @@ export default function MediaSection({ project, isOwner, images, projectPost, is
           onClose={() => setShowUploadModal(false)}
           onProjectCreated={(updatedProject) => {
             setShowUploadModal(false);
+            triggerBackgroundAnalysis();
             router.refresh();
           }}
           editingProject={project}

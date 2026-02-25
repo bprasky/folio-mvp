@@ -185,6 +185,137 @@ Skip title slides, text-only slides, floor plans, mood boards without real produ
   }
 }
 
+/**
+ * Analyze multiple interior design images in a single Claude API call.
+ * Dramatically reduces API calls vs per-image analysis (1 call per batch vs 2N calls).
+ * Images are processed in batches of IMPORT_AGENT_CONFIG.maxImagesPerBatch.
+ */
+export async function analyzeImagesBatch(
+  images: Array<{ id: string; url: string }>,
+  context?: AnalysisContext
+): Promise<Map<string, RoomAnalysis>> {
+  const resultMap = new Map<string, RoomAnalysis>();
+  if (images.length === 0) return resultMap;
+
+  // For a single image, use regular function
+  if (images.length === 1) {
+    const analysis = await analyzeImage({ type: 'url', url: images[0].url }, context);
+    resultMap.set(images[0].id, analysis);
+    return resultMap;
+  }
+
+  // Process in batches
+  const batchSize = IMPORT_AGENT_CONFIG.maxImagesPerBatch;
+  for (let i = 0; i < images.length; i += batchSize) {
+    const batch = images.slice(i, i + batchSize);
+
+    try {
+      const batchResults = await _analyzeImageBatchSingle(batch, context);
+      for (const [id, analysis] of batchResults) {
+        resultMap.set(id, analysis);
+      }
+    } catch (error) {
+      console.error(`[analyzeImagesBatch] Batch ${Math.floor(i / batchSize) + 1} failed:`, error);
+      // Continue with next batch rather than failing everything
+    }
+  }
+
+  return resultMap;
+}
+
+/**
+ * Internal: analyze a single batch of images (up to maxImagesPerBatch) in one Claude call.
+ */
+async function _analyzeImageBatchSingle(
+  images: Array<{ id: string; url: string }>,
+  context?: AnalysisContext
+): Promise<Map<string, RoomAnalysis>> {
+  const resultMap = new Map<string, RoomAnalysis>();
+
+  const content: Array<
+    | { type: 'image'; source: { type: 'url'; url: string } }
+    | { type: 'text'; text: string }
+  > = [];
+
+  for (let i = 0; i < images.length; i++) {
+    content.push({
+      type: 'image' as const,
+      source: { type: 'url' as const, url: images[i].url },
+    });
+    content.push({
+      type: 'text' as const,
+      text: `[Image ${i + 1}]`,
+    });
+  }
+
+  content.push({
+    type: 'text' as const,
+    text: `Analyze all ${images.length} interior design images above.
+${context?.projectStyle ? `Project style: ${context.projectStyle}` : ''}
+
+For EACH image, detect the room type and products. If an image is NOT an interior design photo (e.g. title slide, text-only, floor plan, mood board), set "skip": true.
+
+Return ONLY a valid JSON object:
+{
+  "images": [
+    {
+      "index": 1,
+      "skip": false,
+      "roomType": "living_room" | "bedroom" | "kitchen" | "bathroom" | "dining_room" | "office" | "entry" | "outdoor" | "hallway" | "laundry" | "closet" | "other",
+      "products": [
+        {
+          "description": "detailed description (e.g., 'Navy velvet sofa with brass legs')",
+          "category": "FURNITURE" | "LIGHTING" | "RUG" | "ART" | "FIXTURES" | "MATERIALS" | "TEXTILES" | "ACCESSORIES" | "HARDWARE" | "APPLIANCES" | "OTHER",
+          "position": { "x": 0.0-1.0, "y": 0.0-1.0 },
+          "confidence": "high" | "medium" | "low",
+          "searchQuery": "optimized search terms for finding this product"
+        }
+      ],
+      "styleIndicators": ["style1", "style2"],
+      "dominantColors": ["color1", "color2"],
+      "materials": ["material1", "material2"]
+    }
+  ]
+}
+
+Focus on major furniture, lighting, rugs, art, and notable design elements.
+Position coordinates: normalized 0-1, representing center of where tag should appear.
+Maximum ${IMPORT_AGENT_CONFIG.maxProductsPerImage} products per image.
+Be conservative with confidence - only use "high" when clearly identifiable.`,
+  });
+
+  const response = await anthropic.messages.create({
+    model: IMPORT_AGENT_CONFIG.model,
+    max_tokens: Math.min(IMPORT_AGENT_CONFIG.maxTokens * images.length, 16384),
+    system: IMPORT_AGENT_SYSTEM,
+    messages: [{ role: 'user', content }],
+  });
+
+  const text = response.content[0].type === 'text' ? response.content[0].text : '';
+  const jsonMatch = text.match(/\{[\s\S]*\}/);
+
+  if (jsonMatch) {
+    const parsed = JSON.parse(jsonMatch[0]);
+    const imageResults = parsed.images || [];
+
+    for (const result of imageResults) {
+      const imageIndex = (result.index || 1) - 1;
+      const image = images[imageIndex];
+      if (!image || result.skip) continue;
+
+      resultMap.set(image.id, {
+        roomType: validateRoomType(result.roomType),
+        products: (result.products || []).map(validateProduct).filter(Boolean) as DetectedProduct[],
+        styleIndicators: result.styleIndicators || [],
+        dominantColors: result.dominantColors || [],
+        materials: result.materials || [],
+      });
+    }
+  }
+
+  return resultMap;
+}
+
 // Validation helpers
 function validateRoomType(value: unknown): RoomType {
   const validTypes: RoomType[] = [
