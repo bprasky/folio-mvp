@@ -140,9 +140,19 @@ export default function MediaSection({ project, isOwner, images, projectPost, is
     input.click();
   }, []);
 
+  // Fire background analysis for any new unanalyzed images
+  const triggerBackgroundAnalysis = useCallback(() => {
+    fetch(`/api/projects/${project.id}/analyze-images`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    }).catch(err => console.error('[MediaSection] Background analysis failed:', err));
+  }, [project.id]);
+
   const handlePresentationImportComplete = useCallback(() => {
+    triggerBackgroundAnalysis();
     router.refresh();
-  }, [router]);
+  }, [router, triggerBackgroundAnalysis]);
 
   const handlePdfSpecImportComplete = useCallback(() => {
     router.refresh();

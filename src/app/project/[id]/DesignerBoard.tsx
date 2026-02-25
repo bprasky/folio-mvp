@@ -72,6 +72,7 @@ type DesignerBoardProps = {
   projectId: string;
   project: Project;
   showAll?: boolean; // default true
+  imageCount?: number; // number of images in the project (for analyzing state)
 };
 
 // Reuse the Festival sizing logic
@@ -86,7 +87,8 @@ function computeTileSize(sel: Selection): Size {
 export default function DesignerBoard({
   projectId,
   project,
-  showAll = true
+  showAll = true,
+  imageCount = 0,
 }: DesignerBoardProps) {
   const router = useRouter();
   const capabilities = useUserCapabilities();
@@ -311,7 +313,26 @@ export default function DesignerBoard({
         ))}
       </div>
 
-      {filteredRooms.length === 0 && project.rooms.length === 0 && (
+      {filteredRooms.length === 0 && project.rooms.length === 0 && imageCount > 0 && (
+        <div className="max-w-md mx-auto py-16 text-center">
+          <FaSpinner className="w-8 h-8 mx-auto mb-4 text-[var(--accent)] animate-spin" />
+          <h3 className="folio-ui font-semibold text-[var(--text-primary)] mb-2">
+            Analyzing your photos
+          </h3>
+          <p className="folio-body text-[var(--text-secondary)] mb-6">
+            AI is detecting rooms and products from your uploaded images.
+            This usually takes 30-60 seconds.
+          </p>
+          <button
+            onClick={() => router.refresh()}
+            className="ridge-btn px-4 py-2"
+          >
+            Refresh
+          </button>
+        </div>
+      )}
+
+      {filteredRooms.length === 0 && project.rooms.length === 0 && imageCount === 0 && (
         <BoardsEmptyState
           projectId={projectId}
           projectName={project.title}

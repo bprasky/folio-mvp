@@ -53,20 +53,36 @@ export default function ProductUploader({ onProductAdded, onClose }: ProductUplo
     setError('');
 
     try {
-      const response = await fetch('/api/scrape-product', {
+      const response = await fetch('/api/import/product', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: url.trim() })
       });
 
-      const data = await response.json();
+      const result = await response.json();
 
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to scrape product data');
+      if (!response.ok || !result.ok) {
+        throw new Error(result.error || 'Failed to extract product data');
       }
 
-      setScrapedData(data);
-      setFormData(data);
+      // Map import/product response format to component's expected format
+      const productData = result.data;
+      const mapped = {
+        name: productData.title || 'Untitled Product',
+        price: productData.price ? `$${Number(productData.price).toFixed(2)}` : '$0.00',
+        image: productData.imageUrl || '',
+        description: productData.description || '',
+        brand: productData.brand || productData.vendorName || '',
+        category: productData.materialType || 'Decor',
+        tags: [],
+        materials: productData.materialType ? [productData.materialType] : [],
+        dimensions: productData.dimensions
+          ? `${productData.dimensions.width || ''}W x ${productData.dimensions.depth || ''}D x ${productData.dimensions.height || ''}H`
+          : '',
+        colors: [],
+      };
+      setScrapedData(mapped);
+      setFormData(mapped);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch product data');
     } finally {

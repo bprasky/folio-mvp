@@ -63,7 +63,7 @@ export default function AdvancedTagProducts({
         const res = await fetch("/api/products");
         if (res.ok) {
           const data = await res.json();
-          const productsArray = Array.isArray(data) ? data : [];
+          const productsArray = Array.isArray(data) ? data : (data?.products || []);
           setProducts(productsArray);
           setFilteredProducts(productsArray);
         }
