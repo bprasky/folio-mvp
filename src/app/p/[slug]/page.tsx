@@ -17,7 +17,9 @@ export async function generateMetadata({
   }
 
   const { project, excerpt } = post;
-  const title = `${project.title} | ${project.designer.studio || project.designer.name} on Folio`;
+  const designer = project.designer;
+  const designerLabel = designer?.studio || designer?.name || "Folio";
+  const title = `${project.title} | ${designerLabel} on Folio`;
   const description = excerpt || project.description || "Every room. Every source. The story behind the design.";
   const ogImageUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://folio.ad'}/api/og/project/${params.slug}`;
 
@@ -32,7 +34,7 @@ export async function generateMetadata({
           url: ogImageUrl,
           width: 1200,
           height: 630,
-          alt: `${project.title} by ${project.designer.name}`,
+          alt: `${project.title}${designer?.name ? ` by ${designer.name}` : ''}`,
         },
       ],
       type: 'article',

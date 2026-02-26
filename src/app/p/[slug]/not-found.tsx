@@ -1,0 +1,38 @@
+'use client';
+
+import Link from 'next/link';
+import { FaHome, FaArrowLeft } from 'react-icons/fa';
+
+export default function PostNotFound() {
+  return (
+    <div className="min-h-screen bg-primary flex items-center justify-center px-4">
+      <div className="text-center">
+        <div className="mb-8">
+          <h1 className="text-6xl font-bold text-secondary mb-4">404</h1>
+          <h2 className="text-2xl font-semibold text-[var(--text-primary)] mb-2">Project Not Found</h2>
+          <p className="text-[var(--text-secondary)] max-w-md mx-auto">
+            This project may have been removed or is no longer published.
+          </p>
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <Link
+            href="/"
+            className="inline-flex items-center px-6 py-3 bg-secondary text-primary rounded-lg hover:bg-secondary/90 transition-colors font-medium"
+          >
+            <FaHome className="mr-2" />
+            Go Home
+          </Link>
+
+          <button
+            onClick={() => window.history.back()}
+            className="inline-flex items-center px-6 py-3 border border-[var(--ridge-outer)] text-[var(--text-primary)] rounded-lg hover:bg-[var(--bg-elevated)] transition-colors font-medium"
+          >
+            <FaArrowLeft className="mr-2" />
+            Go Back
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
