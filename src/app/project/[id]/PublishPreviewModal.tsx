@@ -203,7 +203,7 @@ export default function PublishPreviewModal({
                 Your project is live
               </h3>
               <p className="folio-body text-[var(--text-secondary)] text-center">
-                Your Story and Publish tabs are now available for editing.
+                Your Story tab is now available for editing.
               </p>
               {publishedSlug && (
                 <a

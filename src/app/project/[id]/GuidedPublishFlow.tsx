@@ -47,8 +47,16 @@ export default function GuidedPublishFlow({ project, imageCount, images, project
   const location = [project.city, project.regionState].filter(Boolean).join(", ");
   const typeLabel = PROJECT_TYPE_LABELS[project.projectType || ""] || project.projectType || "";
 
+  // Does a draft already exist from a previous session?
+  const hasDraft = !!flow.currentPost && !!(flow.currentLead?.title || flow.currentLead?.kicker);
+
   function handleProceedToPublish() {
     setShowInterviewModal(true);
+  }
+
+  function handlePreviewAndPublish() {
+    // Skip interview — go straight to preview modal with existing draft
+    setShowPreviewModal(true);
   }
 
   async function handleDraftGenerated() {
@@ -136,13 +144,30 @@ export default function GuidedPublishFlow({ project, imageCount, images, project
         )}
       </div>
 
-      {/* Proceed to Publish CTA */}
-      <button
-        onClick={handleProceedToPublish}
-        className="w-full px-6 py-4 folio-ui font-semibold text-white bg-[var(--accent)] rounded-2xl hover:bg-[var(--accent-hover)] transition-colors shadow-sm"
-      >
-        Proceed to Publish
-      </button>
+      {/* Publish CTAs */}
+      {hasDraft ? (
+        <div className="flex gap-3">
+          <button
+            onClick={handlePreviewAndPublish}
+            className="flex-1 px-6 py-4 folio-ui font-semibold text-white bg-[var(--accent)] rounded-2xl hover:bg-[var(--accent-hover)] transition-colors shadow-sm"
+          >
+            Preview &amp; Publish
+          </button>
+          <button
+            onClick={handleProceedToPublish}
+            className="px-6 py-4 folio-ui font-medium text-[var(--text-secondary)] bg-[var(--bg-base)] border border-[var(--border-default)] rounded-2xl hover:bg-[var(--bg-elevated)] transition-colors"
+          >
+            Redo Interview
+          </button>
+        </div>
+      ) : (
+        <button
+          onClick={handleProceedToPublish}
+          className="w-full px-6 py-4 folio-ui font-semibold text-white bg-[var(--accent)] rounded-2xl hover:bg-[var(--accent-hover)] transition-colors shadow-sm"
+        >
+          Proceed to Publish
+        </button>
+      )}
 
       {/* Error */}
       {flow.error && (

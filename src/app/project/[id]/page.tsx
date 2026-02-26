@@ -117,7 +117,7 @@ export default async function ProjectPage({
 
   // Determine current view from search params
   // Default: 'media' for unpublished (primary workspace), 'boards' for published
-  const defaultView: TabView = hasDraftOrPublished ? 'boards' : 'media';
+  const defaultView: TabView = isPublished ? 'boards' : 'media';
   let currentView: TabView = (searchParams.view as TabView) || defaultView;
 
   // Handle redirects from old tab names
@@ -128,8 +128,8 @@ export default async function ProjectPage({
     currentView = 'publish';
   }
 
-  // Redirect story/publish tabs to media when no editorial content exists
-  if (!hasDraftOrPublished && (currentView === 'story' || currentView === 'publish')) {
+  // Redirect story/publish tabs to media when project is not yet published
+  if (!isPublished && (currentView === 'story' || currentView === 'publish')) {
     currentView = 'media';
   }
 
@@ -233,7 +233,7 @@ export default async function ProjectPage({
       />
 
       {/* Tab Navigation */}
-      <ProjectTabs project={sanitizedProject} currentView={view} isPublished={hasDraftOrPublished} />
+      <ProjectTabs project={sanitizedProject} currentView={view} isPublished={isPublished} />
 
       {/* Main Content - Full Width */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

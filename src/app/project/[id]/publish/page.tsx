@@ -76,9 +76,9 @@ export default async function PublishPage({
     notFound();
   }
 
-  // If already published, redirect to editorial view
+  // If already published, redirect to story view
   if (project.isPublic && project.publishedAt) {
-    redirect(`/project/${params.id}?view=editorial`);
+    redirect(`/project/${params.id}?view=story`);
   }
 
   // Calculate readiness

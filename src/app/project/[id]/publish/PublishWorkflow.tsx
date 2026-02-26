@@ -116,7 +116,7 @@ export default function PublishWorkflow({
       
       if (response.ok && result.success) {
         setStep('done');
-        toast.success('Editorial published successfully!');
+        toast.success('Published successfully!');
 
         console.log('[publish_workflow] Published:', {
           projectId: project.id,
@@ -124,9 +124,9 @@ export default function PublishWorkflow({
           tagCount: readiness.tagCount,
         });
 
-        // Redirect to editorial view after short delay
+        // Redirect to story view after short delay
         setTimeout(() => {
-          router.push(`/project/${project.id}?view=editorial`);
+          router.push(`/project/${project.id}?view=story`);
         }, 2000);
       } else {
         throw new Error(result.error || 'Failed to publish');
@@ -301,7 +301,7 @@ export default function PublishWorkflow({
                 Draft Ready for Review
               </h1>
               <p className="folio-body text-[var(--text-secondary)]">
-                Your editorial draft is saved. Review the details below, then publish when ready.
+                Your draft is saved. Review the details below, then publish when ready.
               </p>
             </div>
 
@@ -347,7 +347,7 @@ export default function PublishWorkflow({
                   </li>
                   <li className="flex items-center gap-2">
                     <FaCheckCircle className="w-4 h-4 text-[var(--accent)]" />
-                    {readiness.tagCount} tagged product(s) visible in editorial
+                    {readiness.tagCount} tagged product(s) visible in your post
                   </li>
                   <li className="flex items-center gap-2">
                     <FaCheckCircle className="w-4 h-4 text-[var(--accent)]" />
@@ -403,12 +403,12 @@ export default function PublishWorkflow({
               <FaCheckCircle className="w-10 h-10 text-[var(--accent)]" />
             </div>
             <h2 className="folio-h2 text-[var(--text-primary)] mb-2">Published!</h2>
-            <p className="folio-body text-[var(--text-secondary)] mb-6">Your project is now live. Redirecting to your editorial...</p>
+            <p className="folio-body text-[var(--text-secondary)] mb-6">Your project is now live. Redirecting to your post...</p>
             <Link
-              href={`/project/${project.id}?view=editorial`}
+              href={`/project/${project.id}?view=story`}
               className="inline-flex items-center gap-2 text-[var(--accent)] hover:text-[var(--accent-hover)] font-medium"
             >
-              View Editorial <FaArrowRight className="w-4 h-4" />
+              View Post <FaArrowRight className="w-4 h-4" />
             </Link>
           </div>
         )}
