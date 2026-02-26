@@ -50,6 +50,10 @@ interface InterviewModalProps {
 
 const SIX_W_SECTIONS = new Set(["why", "who", "what", "where", "when", "how"]);
 
+// Minimum number of questions before coverage-based skipping is allowed
+const MIN_QUESTIONS = 5;
+const MAX_GENERATION_ATTEMPTS = 3;
+
 type SaveResult = { ok: boolean; savedCount: number; totalCount: number };
 
 // --- Editorial v1 hardening: helpers ---
@@ -126,6 +130,7 @@ export function InterviewModal({
   const [isGenerating, setIsGenerating] = useState(false);
   const [lockedTotal, setLockedTotal] = useState<number | null>(null);
   const [generationStep, setGenerationStep] = useState(0);
+  const [generationAttempts, setGenerationAttempts] = useState(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [isLoadingFollowUps, setIsLoadingFollowUps] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false); // Phase A: Sequential flow
@@ -709,6 +714,8 @@ export function InterviewModal({
       const mergedUpdates = Array.from(mergedMap.values());
 
       // Process question updates: morph partially-covered, skip fully-covered
+      // Enforce minimum question count before allowing coverage-based skipping
+      const answeredCount = baseAnswers.length + 1; // +1 for the question just answered
       let skippedCount = 0;
       if (mergedUpdates.length > 0) {
         const coveredIds = new Set<string>();
@@ -720,6 +727,15 @@ export function InterviewModal({
           } else if (update.status === 'morphed' && update.morphedText) {
             newMorphs.set(update.id, update.morphedText);
           }
+        }
+
+        // If we haven't hit MIN_QUESTIONS yet, convert covered → morphed (keep in queue)
+        // This ensures designers get at least MIN_QUESTIONS substantive questions
+        if (answeredCount < MIN_QUESTIONS && coveredIds.size > 0) {
+          logClient('coverage:deferred', { answeredCount, minRequired: MIN_QUESTIONS, coveredCount: coveredIds.size });
+          // Don't skip — just let the LLM morph them if it provided morphed text,
+          // otherwise keep the original question
+          coveredIds.clear();
         }
 
         // Apply morphed question texts
@@ -734,11 +750,13 @@ export function InterviewModal({
           });
         }
 
-        // Only skip fully covered questions
+        // Only skip fully covered questions (after MIN_QUESTIONS threshold met)
         if (coveredIds.size > 0) {
           skippedCount = coveredIds.size;
-          logClient('coverage:skip', { covered: Array.from(coveredIds) });
+          logClient('coverage:skip', { covered: Array.from(coveredIds), answeredCount });
           setSelectedQuestionIds(prev => prev.filter(id => !coveredIds.has(id)));
+          // Update locked total so progress indicator stays accurate
+          setLockedTotal(prev => prev !== null ? prev - skippedCount : null);
         }
       }
 
@@ -822,6 +840,9 @@ export function InterviewModal({
             .filter((item): item is NonNullable<typeof item> => item !== null)
             .map((item) => {
               const questionMeta = questionMetadataMap.get(item.questionId);
+              // Look up question text to persist alongside the answer
+              const questionDef = allQuestions.find(q => q.id === item.questionId);
+              const morphedText = morphedQuestions.get(item.questionId);
               return {
                 questionId: item.questionId,
                 role: item.role,
@@ -829,7 +850,9 @@ export function InterviewModal({
                 category: item.category,
                 answer: item.answer,
                 isFollowUp: item.isFollowUp,
-                // NEW FIELDS - include metadata if available
+                // Include question text so it persists in provenance (prevents UUID display)
+                prompt: morphedText || questionDef?.prompt || '',
+                // Metadata fields
                 linkedImageId: questionMeta?.linkedImageId || null,
                 linkedProductId: questionMeta?.linkedProductId || null,
                 questionSource: questionMeta?.source || (item.isFollowUp ? 'follow_up' : 'base_question'),
@@ -943,7 +966,9 @@ export function InterviewModal({
       logClient('generate:blocked:already-generating');
       return;
     }
-    logClient('generate:start', { baseAnswers: baseAnswers.length, followUps: followUpAnswersState.length });
+    const currentAttempt = generationAttempts + 1;
+    setGenerationAttempts(currentAttempt);
+    logClient('generate:start', { baseAnswers: baseAnswers.length, followUps: followUpAnswersState.length, attempt: currentAttempt });
     setIsGenerating(true);
     setError(null);
     setFieldErrors({});
@@ -1215,12 +1240,16 @@ export function InterviewModal({
     } catch (err: any) {
       console.error("[InterviewModal] handleGenerate error:", err);
       if (err?.message !== "validation_failed") {
-        setError(err?.message || "Failed to generate draft");
+        if (currentAttempt >= MAX_GENERATION_ATTEMPTS) {
+          setError("We're having trouble generating your story. Your interview answers are saved — you can try again later or contact support.");
+        } else {
+          setError(`Generation failed (attempt ${currentAttempt} of ${MAX_GENERATION_ATTEMPTS}). ${err?.message || "Please try again."}`);
+        }
       }
     } finally {
       setIsGenerating(false);
     }
-  }, [projectId, isGenerating, baseAnswers, followUpAnswersState, step, router, onOpenChange, onDraftGenerated, handleBanner, persistAnswers]);
+  }, [projectId, isGenerating, generationAttempts, baseAnswers, followUpAnswersState, step, router, onOpenChange, onDraftGenerated, handleBanner, persistAnswers]);
 
   // Auto-trigger generation when phase transitions to "complete" from the last question
   useEffect(() => {
@@ -1585,10 +1614,12 @@ export function InterviewModal({
               ) : error ? (
                 <div>
                   <h3 className="text-xl font-serif text-[var(--text-primary)] mb-2">
-                    Something went wrong
+                    {generationAttempts >= MAX_GENERATION_ATTEMPTS
+                      ? "Generation unavailable"
+                      : `Generation failed — attempt ${generationAttempts} of ${MAX_GENERATION_ATTEMPTS}`}
                   </h3>
-                  <p className="text-sm text-[var(--text-secondary)]">
-                    Generation failed. You can try again below.
+                  <p className="text-sm text-[var(--text-secondary)] max-w-md mx-auto">
+                    {error}
                   </p>
                 </div>
               ) : (
@@ -1646,6 +1677,7 @@ export function InterviewModal({
               isLoadingFollowUps={isLoadingFollowUps}
               isLastQuestion={isLastQuestion}
               generationProgressMessage={isGenerating ? GENERATION_MESSAGES[generationStep] : undefined}
+              generationAttempts={generationAttempts}
             />}
           </>
         )}

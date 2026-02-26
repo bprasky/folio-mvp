@@ -120,10 +120,10 @@ export async function publishEditorial({ projectId }: { projectId: string }) {
     revalidatePath(`/project/${projectId}`);
     revalidatePath('/editorial');
 
-    return { ok: true, message: 'Editorial published', projectPostId: updated.id };
+    return { ok: true, message: 'Published successfully', projectPostId: updated.id, slug: updated.slug };
   } catch (error) {
     console.error('[publishEditorial] Error:', error);
-    return { ok: false, message: 'Failed to publish editorial' };
+    return { ok: false, message: 'Failed to publish. Please try again.' };
   }
 }
 

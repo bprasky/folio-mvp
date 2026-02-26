@@ -116,7 +116,7 @@ function ensureAnswerShape(a: any, idx: number) {
     questionId: String(qid || `auto-${idx}`),
     section,
     category: a?.category,
-    prompt: String(prompt || qid),
+    prompt: String(prompt || ''),
     answer: String(answer ?? '').trim(),
     isFollowUp: !!a?.isFollowUp,
     isFeatured: !!a?.isFeatured,

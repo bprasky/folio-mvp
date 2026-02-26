@@ -1,5 +1,7 @@
 "use client";
 
+const MAX_GENERATION_ATTEMPTS = 3;
+
 interface FooterBarProps {
   phase: "question" | "followup" | "complete";
   onBack?: () => void;
@@ -13,6 +15,7 @@ interface FooterBarProps {
   isLoadingFollowUps?: boolean;
   isLastQuestion?: boolean;
   generationProgressMessage?: string;
+  generationAttempts?: number;
 }
 
 export function FooterBar({
@@ -28,7 +31,10 @@ export function FooterBar({
   isLoadingFollowUps = false,
   isLastQuestion = false,
   generationProgressMessage,
+  generationAttempts = 0,
 }: FooterBarProps) {
+  const maxAttemptsReached = generationAttempts >= MAX_GENERATION_ATTEMPTS;
+
   return (
     <div className="px-8 py-4 border-t border-[var(--ridge-outer)]/50 bg-white/50">
       <div className="flex items-center justify-between max-w-3xl mx-auto">
@@ -104,11 +110,20 @@ export function FooterBar({
           )}
           {phase === "complete" && onGenerate && !isGenerating && (
             <button
-              onClick={onGenerate}
-              className="px-6 py-2 text-sm font-medium text-white bg-[var(--accent)] rounded-full hover:bg-[var(--accent-hover)] transition-colors"
+              onClick={maxAttemptsReached ? undefined : onGenerate}
+              disabled={maxAttemptsReached}
+              className={`px-6 py-2 text-sm font-medium rounded-full transition-colors ${
+                maxAttemptsReached
+                  ? "text-[var(--text-tertiary)] bg-[var(--bg-base)] border border-[var(--border-default)] cursor-not-allowed"
+                  : "text-white bg-[var(--accent)] hover:bg-[var(--accent-hover)]"
+              }`}
               type="button"
             >
-              Retry Generation
+              {maxAttemptsReached
+                ? "Contact Support"
+                : generationAttempts > 0
+                ? `Retry Generation (${generationAttempts}/${MAX_GENERATION_ATTEMPTS})`
+                : "Retry Generation"}
             </button>
           )}
         </div>
@@ -116,4 +131,3 @@ export function FooterBar({
     </div>
   );
 }
-
