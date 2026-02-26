@@ -328,7 +328,7 @@ export default function DraftsPanel({ projectId }: { projectId: string }) {
       if (!res.ok) {
         const json = await res.json().catch(() => ({}));
         const errorCode = json?.code || 'COMPOSE_ERROR';
-        const errorMessage = json?.error || json?.message || `Editorial generation failed (${res.status})`;
+        const errorMessage = json?.error || json?.message || `Story generation failed (${res.status})`;
         const errorDetails = json?.issues ? `\n\nValidation errors:\n${JSON.stringify(json.issues, null, 2)}` : '';
         console.error("[DraftsPanel] Regenerate failed", { 
           status: res.status, 
@@ -338,7 +338,7 @@ export default function DraftsPanel({ projectId }: { projectId: string }) {
         });
         
         // Show user-friendly error message with validation details
-        alert(`Editorial generation failed\n\nThe AI didn't return a valid magazine article. Nothing was saved.\n\nError code: ${errorCode}\nError: ${errorMessage}${errorDetails}\n\nTry Regenerate.`);
+        alert(`Story generation failed\n\nThe AI didn't return a valid article. Nothing was saved.\n\nError code: ${errorCode}\nError: ${errorMessage}${errorDetails}\n\nTry Regenerate.`);
         return;
       }
 
@@ -642,7 +642,7 @@ export default function DraftsPanel({ projectId }: { projectId: string }) {
             disabled={regenBusy}
             onClick={() => regenerate({ overwrite: true })}
           >
-            {regenBusy ? "Generating..." : "Generate Editorial"}
+            {regenBusy ? "Generating..." : "Generate Story"}
           </button>
         </div>
         <div className="mt-6 text-center">
@@ -657,10 +657,10 @@ export default function DraftsPanel({ projectId }: { projectId: string }) {
 
       {/* Sidebar */}
       <div className="col-span-4 space-y-6">
-        {/* Editorial Draft Preview */}
+        {/* Story Draft Preview */}
         <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-elevated)] p-6 shadow-sm">
           <h3 className="font-semibold folio-h3 text-[var(--text-primary)] mb-4">
-            Editorial Draft
+            Story Draft
           </h3>
           {currentLead?.kicker || currentLead?.title ? (
             <div className="space-y-3">

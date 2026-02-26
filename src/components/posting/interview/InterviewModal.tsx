@@ -1203,7 +1203,7 @@ export function InterviewModal({
       });
       
       if (data?.metadata?.usedFallback) {
-        setBanner('Generated a base editorial draft while AI was unavailable. You can refine this later.');
+        setBanner('Generated a base draft while AI was unavailable. You can refine this later.');
       }
 
       onOpenChange(false);
