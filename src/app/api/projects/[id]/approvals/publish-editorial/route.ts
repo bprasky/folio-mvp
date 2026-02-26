@@ -34,14 +34,14 @@ export async function POST(
       });
     } else {
       return NextResponse.json(
-        { error: 'Failed to publish editorial' },
+        { error: 'Failed to publish. Please try again.' },
         { status: 500 }
       );
     }
   } catch (error: any) {
     console.error('[publish-editorial] Error:', error);
     return NextResponse.json(
-      { error: error.message || 'Failed to publish editorial' },
+      { error: error.message || 'Failed to publish. Please try again.' },
       { status: 500 }
     );
   }

@@ -38,7 +38,7 @@ export async function GET(
     // Extract interview data - normalize answers and followUps to consistent format
     const normalizeQA = (items: any[]): Array<{ q: string; a: string; isFeatured: boolean }> => {
       return (items || []).map((item: any) => ({
-        q: item.question || item.q || item.prompt || item.questionId || '',
+        q: item.question || item.q || item.prompt || '',
         a: item.answer || item.a || '',
         isFeatured: !!item.isFeatured,
       })).filter((qa: any) => qa.q || qa.a);
