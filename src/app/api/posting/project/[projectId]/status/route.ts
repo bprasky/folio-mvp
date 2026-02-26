@@ -10,22 +10,22 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { notifyTaggedVendors } from "@/lib/email/notifyVendorTagged";
 
-// Accept both {action:"publish"} and {status:"PUBLISHED"} or legacy {to:"PUBLISHED"}
+// Accept {action:"publish"}, {action:"unpublish"}, {status:...}, or legacy {to:...}
 const BodySchema = z
   .object({
-    action: z.enum(["publish"]).optional(),
+    action: z.enum(["publish", "unpublish"]).optional(),
     status: z.enum(["PUBLISHED", "DRAFT", "REVIEW", "ARCHIVED"]).optional(),
-    to: z.enum(["REVIEW", "PUBLISHED", "ARCHIVED"]).optional(), // Legacy support
+    to: z.enum(["REVIEW", "PUBLISHED", "ARCHIVED", "DRAFT"]).optional(), // Legacy support
   })
   .refine(
-    (b) => b.action === "publish" || b.status === "PUBLISHED" || b.to === "PUBLISHED",
-    { message: 'Use {action:"publish"}, {status:"PUBLISHED"}, or {to:"PUBLISHED"}' }
+    (b) => b.action === "publish" || b.action === "unpublish" || b.status || b.to,
+    { message: 'Provide action, status, or to field' }
   );
 
 const STATUS_FLOW: Record<string, string[]> = {
   DRAFT: ["REVIEW", "PUBLISHED", "ARCHIVED"], // Allow direct publish from DRAFT
   REVIEW: ["PUBLISHED", "ARCHIVED"],
-  PUBLISHED: ["ARCHIVED"],
+  PUBLISHED: ["DRAFT", "ARCHIVED"],
   ARCHIVED: [], // No forward transitions from archived
 };
 
@@ -106,6 +106,8 @@ export async function PATCH(
     const targetStatus =
       parsed.data.action === "publish" || parsed.data.status === "PUBLISHED" || parsed.data.to === "PUBLISHED"
         ? "PUBLISHED"
+        : parsed.data.action === "unpublish"
+        ? "DRAFT"
         : parsed.data.to || parsed.data.status || "DRAFT";
 
     // Get current post with expandedBlocks
@@ -462,6 +464,48 @@ export async function PATCH(
           status: updated.status,
           publishedAt: updated.publishedAt,
         },
+        { status: 200 }
+      );
+    }
+
+    // Handle unpublish: PUBLISHED -> DRAFT
+    if (targetStatus === "DRAFT" && post.status === "PUBLISHED") {
+      const updated = await prisma.projectPost.update({
+        where: { projectId },
+        data: { status: "DRAFT" },
+        select: { id: true, status: true, slug: true, publishedAt: true },
+      });
+
+      await prisma.project.update({
+        where: { id: projectId },
+        data: { isPublic: false, publishedAt: null },
+      });
+
+      try {
+        const { logPassiveEvent } = await import("@/lib/analytics");
+        await logPassiveEvent({
+          projectId,
+          type: "project_unpublish_success",
+          actorId: session.user.id,
+          payload: { postId: post.id },
+        });
+      } catch (analyticsError) {
+        console.warn(`[${correlationId}] Analytics logging failed:`, analyticsError);
+      }
+
+      try {
+        revalidatePath(`/p/${updated.slug}`);
+        revalidatePath(`/project/${projectId}`);
+        revalidatePath(`/designer/projects/${projectId}/preview`);
+        revalidatePath(`/designer/projects/${projectId}`);
+      } catch (revalidateError) {
+        console.warn(`[${correlationId}] Revalidation failed:`, revalidateError);
+      }
+
+      console.log(`[${correlationId}] Unpublished successfully:`, { slug: updated.slug, status: updated.status });
+
+      return NextResponse.json(
+        { ok: true, slug: updated.slug, status: updated.status },
         { status: 200 }
       );
     }
