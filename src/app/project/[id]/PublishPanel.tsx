@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ExternalLink, ChevronDown, ChevronUp, CheckCircle2, Circle } from "lucide-react";
 import { usePublishFlow } from "@/hooks/usePublishFlow";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 
 interface ProductTag {
   id: string;
@@ -46,12 +47,15 @@ export default function PublishPanel({ projectId, project, images, isOwner }: Pu
     refetch,
     regenBusy,
     isPublishing,
+    isUnpublishing,
     publishSuccess,
     publishedSlug,
+    unpublish,
     error,
   } = usePublishFlow(projectId);
 
   const [checklistExpanded, setChecklistExpanded] = useState(true);
+  const [showUnpublishDialog, setShowUnpublishDialog] = useState(false);
 
   // Readiness checks
   const hasImages = images.length > 0;
@@ -77,6 +81,14 @@ export default function PublishPanel({ projectId, project, images, isOwner }: Pu
   async function handlePublish() {
     await publish();
     router.refresh();
+  }
+
+  async function handleUnpublish() {
+    setShowUnpublishDialog(false);
+    const result = await unpublish();
+    if (result.ok) {
+      router.refresh();
+    }
   }
 
   if (isLoading) {
@@ -255,6 +267,26 @@ export default function PublishPanel({ projectId, project, images, isOwner }: Pu
               View Post <ExternalLink className="w-4 h-4" />
             </a>
           )}
+
+          <div className="mt-6 pt-4 border-t border-[var(--border-default)]">
+            <button
+              onClick={() => setShowUnpublishDialog(true)}
+              disabled={isUnpublishing}
+              className="folio-ui text-sm font-medium text-red-600 hover:text-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {isUnpublishing ? "Unpublishing..." : "Unpublish"}
+            </button>
+          </div>
+
+          <ConfirmDialog
+            open={showUnpublishDialog}
+            title="Unpublish this post?"
+            description="This will take your post offline. Your story and interview answers are preserved and you can republish anytime."
+            confirmText={isUnpublishing ? "Unpublishing..." : "Unpublish"}
+            confirmVariant="destructive"
+            onCancel={() => setShowUnpublishDialog(false)}
+            onConfirm={handleUnpublish}
+          />
         </div>
       ) : (
         <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-elevated)] p-6 shadow-sm">

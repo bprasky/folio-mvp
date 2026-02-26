@@ -26,11 +26,13 @@ export interface UsePublishFlowReturn {
   // Actions
   generateDraft: () => Promise<void>;
   publish: () => Promise<{ slug: string | null }>;
+  unpublish: () => Promise<{ ok: boolean }>;
   refetch: () => Promise<void>;
 
   // Action state
   regenBusy: boolean;
   isPublishing: boolean;
+  isUnpublishing: boolean;
   publishSuccess: boolean;
   publishedSlug: string | null;
   error: string | null;
@@ -44,6 +46,7 @@ export function usePublishFlow(projectId: string): UsePublishFlowReturn {
   } | null>(null);
   const [regenBusy, setRegenBusy] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
+  const [isUnpublishing, setIsUnpublishing] = useState(false);
   const [publishSuccess, setPublishSuccess] = useState(false);
   const [publishedSlug, setPublishedSlug] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -231,6 +234,37 @@ export function usePublishFlow(projectId: string): UsePublishFlowReturn {
     }
   }, [projectId]);
 
+  const unpublish = useCallback(async (): Promise<{ ok: boolean }> => {
+    try {
+      setIsUnpublishing(true);
+      setError(null);
+
+      const res = await fetch(
+        `/api/posting/project/${projectId}/status`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "unpublish" }),
+        }
+      );
+
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}));
+        throw new Error(json.error || json.message || "Failed to unpublish");
+      }
+
+      setPublishSuccess(false);
+      setPublishedSlug(null);
+      return { ok: true };
+    } catch (err: any) {
+      console.error("[usePublishFlow] Unpublish failed:", err);
+      setError(err.message || "Failed to unpublish");
+      return { ok: false };
+    } finally {
+      setIsUnpublishing(false);
+    }
+  }, [projectId]);
+
   const refetch = useCallback(async () => {
     await Promise.all([fetchData(), fetchReadiness()]);
   }, [fetchData, fetchReadiness]);
@@ -245,9 +279,11 @@ export function usePublishFlow(projectId: string): UsePublishFlowReturn {
     isLoading,
     generateDraft,
     publish,
+    unpublish,
     refetch,
     regenBusy,
     isPublishing,
+    isUnpublishing,
     publishSuccess,
     publishedSlug,
     error,
