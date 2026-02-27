@@ -13,9 +13,10 @@ interface ProjectTabsProps {
   };
   currentView: TabView;
   isPublished: boolean;
+  hasDraftOrPublished?: boolean;
 }
 
-export default function ProjectTabs({ project, currentView, isPublished }: ProjectTabsProps) {
+export default function ProjectTabs({ project, currentView, isPublished, hasDraftOrPublished }: ProjectTabsProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -64,11 +65,16 @@ export default function ProjectTabs({ project, currentView, isPublished }: Proje
       id: 'publish' as TabView,
       label: 'Publish',
       icon: Share2,
-      requiresPublished: true,
+      requiresPublished: false,
+      requiresDraftOrPublished: true,
     },
   ];
 
-  const tabs = allTabs.filter(tab => !tab.requiresPublished || isPublished);
+  const tabs = allTabs.filter(tab => {
+    if (tab.requiresDraftOrPublished) return !!hasDraftOrPublished;
+    if (tab.requiresPublished) return isPublished;
+    return true;
+  });
 
   return (
     <div className="bg-[var(--bg-elevated)] py-4">
