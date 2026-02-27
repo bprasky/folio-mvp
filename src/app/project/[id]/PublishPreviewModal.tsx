@@ -69,7 +69,7 @@ export default function PublishPreviewModal({
 
   function handleDone() {
     onPublishSuccess();
-    router.refresh();
+    router.push(`/project/${projectId}?view=publish`);
   }
 
   return (

@@ -55,6 +55,7 @@ export default function StagingPublishPanel({
   const router = useRouter();
   const {
     data,
+    currentLead,
     heroAssetId,
     hasCredits,
     isLoading: flowLoading,
@@ -169,6 +170,31 @@ export default function StagingPublishPanel({
             <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
             <span>{error}</span>
           </div>
+        </div>
+      )}
+
+      {/* GENERATED STORY TITLE — surfaced above the preview */}
+      {(currentLead?.kicker || currentLead?.title) && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-2">
+          {currentLead?.kicker && currentLead.kicker !== currentLead.title && (
+            <p
+              className="text-sm uppercase tracking-widest text-[var(--accent)] mb-1"
+              style={{ fontFamily: "var(--font-headline)" }}
+            >
+              {currentLead.kicker}
+            </p>
+          )}
+          <h2
+            className="text-3xl font-medium text-[var(--text-primary)] leading-tight"
+            style={{ fontFamily: "var(--font-headline)" }}
+          >
+            {currentLead.title}
+          </h2>
+          {(currentLead.deck || currentLead.dek) && (
+            <p className="mt-2 folio-body text-[var(--text-secondary)] leading-relaxed max-w-3xl">
+              {currentLead.deck || currentLead.dek}
+            </p>
+          )}
         </div>
       )}
 

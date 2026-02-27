@@ -14,6 +14,7 @@ interface FooterBarProps {
   isGenerating?: boolean;
   isLoadingFollowUps?: boolean;
   isLastQuestion?: boolean;
+  isNearFinish?: boolean;
   generationProgressMessage?: string;
   generationAttempts?: number;
 }
@@ -30,6 +31,7 @@ export function FooterBar({
   isGenerating = false,
   isLoadingFollowUps = false,
   isLastQuestion = false,
+  isNearFinish = false,
   generationProgressMessage,
   generationAttempts = 0,
 }: FooterBarProps) {
@@ -37,6 +39,15 @@ export function FooterBar({
 
   return (
     <div className="px-8 py-4 border-t border-[var(--ridge-outer)]/50 bg-white/50">
+      {/* Near-finish hint — one question before "Finish & Generate Story" appears */}
+      {phase === "question" && isNearFinish && (
+        <p
+          className="text-xs text-[var(--text-secondary)] text-center mb-3 max-w-md mx-auto"
+          style={{ fontFamily: "var(--font-headline)", fontStyle: "italic" }}
+        >
+          You&apos;ve answered enough for a great story. One more question, then you can finish or keep going for more depth.
+        </p>
+      )}
       <div className="flex items-center justify-between max-w-3xl mx-auto">
         <div>
           {/* Back button — go to previous question to review/revise */}

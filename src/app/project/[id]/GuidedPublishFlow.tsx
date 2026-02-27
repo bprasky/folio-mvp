@@ -66,7 +66,7 @@ export default function GuidedPublishFlow({ project, imageCount, images, project
 
   function handlePublishSuccess() {
     setShowPreviewModal(false);
-    router.refresh();
+    router.push(`/project/${project.id}?view=publish`);
   }
 
   return (

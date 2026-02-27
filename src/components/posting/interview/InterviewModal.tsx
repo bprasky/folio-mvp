@@ -515,6 +515,7 @@ export function InterviewModal({
   const totalQuestions = selectedQuestions.length;
   const displayTotal = lockedTotal ?? totalQuestions;
   const isLastQuestion = currentQuestionIndex >= totalQuestions - 1;
+  const isNearFinish = !isLastQuestion && totalQuestions > 1 && currentQuestionIndex >= totalQuestions - 2;
 
   // Auto-generate: when the last question answer is saved, trigger generation automatically
   const autoGenerateRef = useRef(false);
@@ -1680,6 +1681,7 @@ export function InterviewModal({
               isGenerating={isGenerating}
               isLoadingFollowUps={isLoadingFollowUps}
               isLastQuestion={isLastQuestion}
+              isNearFinish={isNearFinish}
               generationProgressMessage={isGenerating ? GENERATION_MESSAGES[generationStep] : undefined}
               generationAttempts={generationAttempts}
             />}

@@ -62,8 +62,8 @@ export function ImmersiveProjectPage({ post, modules }: Props) {
             </figure>
           )}
 
-          {/* AI PROJECT FILM */}
-          <ProjectAiFilmPanel module={aiFilm} project={post.project} />
+          {/* AI PROJECT FILM — only render when a video module exists */}
+          {aiFilm && <ProjectAiFilmPanel module={aiFilm} project={post.project} />}
 
           {/* SMART EDITORIAL LAYOUT (CHAPTERS A–D) */}
           <SmartEditorialLayout post={post} />

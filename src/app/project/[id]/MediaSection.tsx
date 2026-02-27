@@ -259,6 +259,24 @@ export default function MediaSection({ project, isOwner, images, projectPost, is
         Upload your project materials. We'll extract products, rooms, and specifications automatically.
       </p>
 
+      {/* Publish prompt banner — shown when enough images exist but project is unpublished */}
+      {images.length >= 3 && !isPublished && isOwner && (
+        <div className="flex items-center justify-between px-4 py-3 rounded-xl border border-[var(--accent)]/20 bg-[var(--accent)]/5">
+          <span className="folio-ui text-[var(--text-primary)]">
+            {photoCount} photos uploaded &middot; Ready to publish
+          </span>
+          <button
+            onClick={() => {
+              const section = document.querySelector('[data-publish-flow]');
+              if (section) section.scrollIntoView({ behavior: 'smooth' });
+            }}
+            className="px-4 py-1.5 folio-ui font-semibold text-white bg-[var(--accent)] rounded-lg hover:bg-[var(--accent-hover)] transition-colors text-sm whitespace-nowrap"
+          >
+            Start Interview &rarr;
+          </button>
+        </div>
+      )}
+
       {/* Media Type Skeleton Cards */}
       {isOwner && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -501,12 +519,14 @@ export default function MediaSection({ project, isOwner, images, projectPost, is
 
       {/* Guided Publish Flow — inline below image grid for unpublished projects with images */}
       {images.length > 0 && !isPublished && isOwner && (
-        <GuidedPublishFlow
-          project={project}
-          imageCount={images.length}
-          images={images.map(img => ({ id: img.id, url: img.url, name: img.name }))}
-          projectPost={projectPost}
-        />
+        <div data-publish-flow>
+          <GuidedPublishFlow
+            project={project}
+            imageCount={images.length}
+            images={images.map(img => ({ id: img.id, url: img.url, name: img.name }))}
+            projectPost={projectPost}
+          />
+        </div>
       )}
 
       {/* Upload Modal */}
