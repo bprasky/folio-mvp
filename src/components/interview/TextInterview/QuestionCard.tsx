@@ -54,6 +54,7 @@ export function QuestionCard({
   previousAnswer,
 }: QuestionCardProps) {
   const [answer, setAnswer] = useState(previousAnswer || "");
+  const [isFocused, setIsFocused] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Find related image if present
@@ -65,13 +66,6 @@ export function QuestionCard({
   useEffect(() => {
     setAnswer(previousAnswer || "");
   }, [question.id, previousAnswer]);
-
-  // Auto-focus textarea on mount
-  useEffect(() => {
-    if (textareaRef.current) {
-      textareaRef.current.focus();
-    }
-  }, [question.id]);
 
   // Handle keyboard shortcuts
   useEffect(() => {
@@ -107,7 +101,7 @@ export function QuestionCard({
       </div>
 
       {/* Question section */}
-      <div className="flex-1 flex flex-col justify-center px-6 md:px-8 py-8">
+      <div className="px-6 md:px-8 pt-4 pb-6">
         <InterviewQuestion
           question={question.text}
           context={question.context}
@@ -120,20 +114,29 @@ export function QuestionCard({
       </div>
 
       {/* Input section */}
-      <div className="px-6 md:px-8 pb-4 space-y-4">
+      <div className="flex-1 flex flex-col justify-end px-6 md:px-8 pb-4 space-y-4">
         <div className="max-w-2xl mx-auto w-full">
           <textarea
             ref={textareaRef}
             value={answer}
             onChange={(e) => setAnswer(e.target.value)}
-            rows={6}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => {
+              if (!answer.trim()) {
+                setIsFocused(false);
+              }
+            }}
+            rows={isFocused || answer.trim() ? 6 : 2}
             className={cn(
-              "w-full min-h-[160px] md:min-h-[200px] p-4 md:p-6",
+              "w-full p-4 md:p-6",
               "bg-[var(--bg-elevated)]/50 rounded-xl text-lg",
               "placeholder:text-[var(--text-tertiary)]",
               "border-transparent focus:border-[var(--ridge-outer)]",
               "focus:outline-none focus:ring-2 focus:ring-gray-200",
-              "resize-none leading-relaxed transition-all"
+              "resize-none leading-relaxed transition-all duration-200 ease-in-out",
+              isFocused || answer.trim()
+                ? "min-h-[160px] md:min-h-[200px]"
+                : "min-h-[48px]"
             )}
             placeholder="Share your thoughts..."
             disabled={isLoading}
