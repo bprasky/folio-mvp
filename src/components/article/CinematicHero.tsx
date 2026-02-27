@@ -28,7 +28,7 @@ export default function CinematicHero({ imageUrl, title, deck }: Props) {
         <img
           src={imageUrl}
           alt={title || "Project hero"}
-          className="w-full h-[520px] object-cover"
+          className="w-full h-auto max-h-[80vh]"
         />
       </motion.div>
       {/* light-bleed divider */}

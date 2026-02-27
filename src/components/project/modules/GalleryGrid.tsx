@@ -17,7 +17,7 @@ export function GalleryGrid({ modules }: { modules: any[] }) {
       {images.map((im, i) => (
         <figure key={i} className="ridge-card overflow-hidden">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={im.url} alt={im.caption || ""} className="h-[200px] w-full object-cover" />
+          <img src={im.url} alt={im.caption || ""} className="w-full h-auto" />
           {im.caption && (
             <figcaption className="p-2 folio-meta text-[var(--text-secondary)]">
               {im.caption}

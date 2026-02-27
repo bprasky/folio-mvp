@@ -167,13 +167,13 @@ export function RichArticle({
 
       {/* Hero Image */}
       {heroImage && (
-        <div className="mb-10 aspect-video md:rounded-2xl overflow-hidden bg-[var(--bg-elevated)]">
+        <div className="mb-10 md:rounded-2xl bg-[var(--bg-elevated)]">
           <Image
             src={heroImage.url}
             alt={title}
             width={1200}
             height={675}
-            className="w-full h-full object-cover"
+            className="w-full h-auto md:rounded-2xl"
             priority
           />
         </div>
@@ -313,17 +313,18 @@ export function RichArticle({
                             imgIdx === 0 && chapter.imageIds!.length > 2
                               ? "md:col-span-2"
                               : ""
-                          } aspect-video bg-[var(--bg-elevated)] rounded-lg overflow-hidden relative`}
+                          } bg-[var(--bg-elevated)] rounded-lg overflow-hidden`}
                         >
                           <Image
                             src={image.url}
                             alt={image.caption || chapter.title || "Project image"}
-                            fill
-                            className="object-cover"
+                            width={800}
+                            height={600}
+                            className="w-full h-auto"
                             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                           />
                           {image.caption && (
-                            <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-xs p-2">
+                            <div className="bg-black/60 text-white text-xs p-2">
                               {image.caption}
                             </div>
                           )}

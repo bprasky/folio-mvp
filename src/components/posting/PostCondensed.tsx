@@ -13,12 +13,13 @@ export function PostCondensed({ payload }: PostCondensedProps) {
   return (
     <article className="max-w-4xl mx-auto">
       {heroImage && (
-        <div className="relative aspect-[16/9] overflow-hidden rounded-lg mb-6">
+        <div className="overflow-hidden rounded-lg mb-6">
           <Image
             src={heroImage.url}
             alt={project.title || "Project"}
-            fill
-            className="object-cover"
+            width={1200}
+            height={675}
+            className="w-full h-auto"
             priority
           />
         </div>

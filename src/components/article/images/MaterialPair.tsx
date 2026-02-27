@@ -29,7 +29,7 @@ export default function MaterialPair({
             <img
               src={context.url!}
               alt={context.alt || ""}
-              className="w-full h-[320px] object-cover"
+              className="w-full h-auto"
             />
             {caption ? (
               <figcaption className="p-2 folio-meta text-[var(--text-secondary)]">
@@ -47,7 +47,7 @@ export default function MaterialPair({
             <img
               src={detail.url!}
               alt={detail.alt || ""}
-              className="w-full h-[320px] object-cover"
+              className="w-full h-auto"
             />
             {detail.caption ? (
               <figcaption className="p-2 folio-meta text-[var(--text-secondary)]">
