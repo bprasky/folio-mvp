@@ -13,13 +13,14 @@ interface PostCardProps {
 export function PostCard({ post, project, heroImage, designer }: PostCardProps) {
   return (
     <Link href={`/p/${post.slug}`} className="block group">
-      <div className="relative aspect-[3/2] overflow-hidden rounded-lg bg-[var(--bg-elevated)]">
+      <div className="overflow-hidden rounded-lg bg-[var(--bg-elevated)]">
         {heroImage?.url && (
           <Image
             src={heroImage.url}
             alt={project.title || "Project"}
-            fill
-            className="object-cover transition-transform duration-200 group-hover:scale-105"
+            width={800}
+            height={600}
+            className="w-full h-auto transition-transform duration-200 group-hover:scale-105"
           />
         )}
       </div>

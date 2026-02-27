@@ -23,7 +23,7 @@ export default function ChapterGallery({ images }: { images: ImageLike[] }) {
             <img
               src={im.url!}
               alt={im.alt || ""}
-              className="w-full h-[220px] md:h-[240px] object-cover"
+              className="w-full h-auto"
             />
             {im.caption ? (
               <figcaption className="p-2 folio-meta text-[var(--text-secondary)]">
