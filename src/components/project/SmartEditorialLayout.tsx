@@ -4,6 +4,7 @@ import clsx from "clsx";
 import { buildEditorialChapters, EditorialChapter } from "@/lib/editorial/buildEditorialChapters";
 import { SceneShopStrip } from "@/components/project/SceneShopStrip";
 import { ImageTagDots } from "@/components/project/ImageTagDots";
+import { formatRoomName } from "@/lib/utils/formatRoomName";
 
 export function SmartEditorialLayout({ post }: { post: any }) {
   const chapters = buildEditorialChapters(post);
@@ -123,7 +124,7 @@ function CinemaSpread({ chapter }: { chapter: EditorialChapter }) {
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-black/5 to-transparent" />
           <div className="absolute bottom-6 left-6 right-6 flex flex-wrap items-end justify-between gap-3">
             <div className="rounded-full bg-[var(--bg-base)]/90 backdrop-blur-sm px-3 py-1 folio-meta uppercase tracking-[0.18em] text-[var(--text-secondary)]">
-              {chapter.title || "Project Chapter"}
+              {(chapter.title ? formatRoomName(chapter.title) : null) || "Project Chapter"}
             </div>
             {chapter.pullQuote && (
               <div className="max-w-md ridge-card px-4 py-3 folio-body">
@@ -227,7 +228,7 @@ function RidgeTextBlock({
     <div className="ridge-card px-5 py-4 md:px-6 md:py-5 space-y-3">
       {chapter.title && (
         <h2 className="folio-meta uppercase tracking-[0.16em] text-[var(--text-secondary)]">
-          {chapter.title}
+          {formatRoomName(chapter.title)}
         </h2>
       )}
       {chapter.body && (

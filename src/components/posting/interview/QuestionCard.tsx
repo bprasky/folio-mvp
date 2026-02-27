@@ -6,6 +6,7 @@ import type { InterviewQuestion } from "@/lib/posting/questionBank";
 import type { InterviewAnswer } from "@/lib/posting/interviewSchemas";
 import { useVoiceRecording } from "./useVoiceRecording";
 import { LinkedImagePreview } from "@/components/editorial/LinkedImagePreview";
+import { formatRoomName } from "@/lib/utils/formatRoomName";
 import type { InterviewQuestion as ContextualQuestion } from "@/types/interview";
 
 interface QuestionCardProps {
@@ -111,7 +112,7 @@ export function QuestionCard({
                 </span>
               )}
               {questionMetadata.roomContext && (
-                <span className="text-xs text-[var(--text-secondary)]">• {questionMetadata.roomContext}</span>
+                <span className="text-xs text-[var(--text-secondary)]">• {formatRoomName(questionMetadata.roomContext)}</span>
               )}
             </div>
             {questionMetadata.linkedImageId && images.length > 0 && (
