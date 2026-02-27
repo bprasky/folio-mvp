@@ -19,6 +19,7 @@ import type {
   ContextLevel,
 } from './contextLevel';
 import { buildInterviewBrief, type AIGeneratedQuestion, type InterviewBrief } from './buildInterviewBrief';
+import { formatRoomName } from '@/lib/utils/formatRoomName';
 
 // Question types that can be generated
 export type QuestionType =
@@ -178,15 +179,15 @@ function generateContextualOpener(context: ProjectContext): GeneratedQuestion {
 
   if (heroPiece && mainRoom) {
     const brand = heroPiece.brand ? ` from ${heroPiece.brand}` : '';
-    observation = `The ${mainRoom.name.toLowerCase()} has some striking selections — the ${heroPiece.productName}${brand} really sets the tone`;
+    observation = `The ${formatRoomName(mainRoom.name).toLowerCase()} has some striking selections — the ${heroPiece.productName}${brand} really sets the tone`;
   } else if (mainRoom && materials.length > 0) {
-    observation = `The ${mainRoom.name.toLowerCase()} with its ${materials.join(' and ')} feels very intentional`;
+    observation = `The ${formatRoomName(mainRoom.name).toLowerCase()} with its ${materials.join(' and ')} feels very intentional`;
   } else if (topVendor && mainRoom) {
-    observation = `We can see ${topVendor.name} appearing across the ${mainRoom.name.toLowerCase()} — there's a clear point of view here`;
+    observation = `We can see ${topVendor.name} appearing across the ${formatRoomName(mainRoom.name).toLowerCase()} — there's a clear point of view here`;
   } else if (mainRoom && mainRoom.selectionCount > 0) {
-    observation = `The ${mainRoom.name.toLowerCase()} is already taking shape with some beautiful selections`;
+    observation = `The ${formatRoomName(mainRoom.name).toLowerCase()} is already taking shape with some beautiful selections`;
   } else if (context.rooms.length > 1) {
-    const roomList = context.rooms.slice(0, 2).map((r) => r.name.toLowerCase()).join(' and ');
+    const roomList = context.rooms.slice(0, 2).map((r) => formatRoomName(r.name).toLowerCase()).join(' and ');
     observation = `The ${roomList} already show a strong direction`;
   }
 
@@ -236,7 +237,7 @@ function generateProspectiveQuestions(context: ProjectContext): GeneratedQuestio
   if (heroPiece) {
     questions.push({
       id: `prospective-${randomUUID()}`,
-      text: `The ${heroPiece.productName}${heroPiece.brand ? ` from ${heroPiece.brand}` : ''} feels like it could anchor the ${heroPiece.room} — is that the piece the rest of the design revolves around?`,
+      text: `The ${heroPiece.productName}${heroPiece.brand ? ` from ${heroPiece.brand}` : ''} feels like it could anchor the ${formatRoomName(heroPiece.room)} — is that the piece the rest of the design revolves around?`,
       topic: TOPICS.ANCHOR_PIECE,
       contextLevel: 1,
       type: 'prospective_vision',
@@ -260,7 +261,7 @@ function generateProspectiveQuestions(context: ProjectContext): GeneratedQuestio
 
   // Room relationships — only for multi-room, use actual room names
   if (roomCount >= 2) {
-    const roomNames = context.rooms.slice(0, 3).map((r) => r.name);
+    const roomNames = context.rooms.slice(0, 3).map((r) => formatRoomName(r.name));
     questions.push({
       id: `prospective-${randomUUID()}`,
       text: `How are you thinking about the flow between the ${roomNames.join(' and the ')}? Is there a material or palette that carries across?`,
@@ -302,7 +303,7 @@ function generateProspectiveQuestions(context: ProjectContext): GeneratedQuestio
     if (room.selectionCount > 0) {
       questions.push({
         id: `prospective-room-${room.id}`,
-        text: `Tell us the story behind the ${room.name}. What are you building toward in this space?`,
+        text: `Tell us the story behind the ${formatRoomName(room.name)}. What are you building toward in this space?`,
         topic: TOPICS.ROOM_STORY,
         contextLevel: 1,
         type: 'prospective_vision',
@@ -338,7 +339,7 @@ function generateProspectiveQuestions(context: ProjectContext): GeneratedQuestio
   for (const selection of heroPieces.slice(0, 3)) {
     questions.push({
       id: `prospective-hero-${selection.id}`,
-      text: `The ${selection.productName} is a statement piece for the ${selection.room}. What drew you to it?`,
+      text: `The ${selection.productName} is a statement piece for the ${formatRoomName(selection.room)}. What drew you to it?`,
       topic: TOPICS.ANCHOR_PIECE,
       contextLevel: 1,
       type: 'hero_piece',
@@ -541,7 +542,7 @@ function generateLevel2Questions(context: ProjectContext): GeneratedQuestion[] {
   // Vendor loyalty questions
   for (const vendor of context.dominantVendors) {
     if (vendor.selectionCount >= 3) {
-      const roomList = vendor.rooms.slice(0, 3).join(', ');
+      const roomList = vendor.rooms.slice(0, 3).map(r => formatRoomName(r)).join(', ');
       questions.push({
         id: `l2-vendor-${vendor.name.replace(/\s+/g, '-').toLowerCase()}`,
         text: `${vendor.name} appears throughout this project${roomList ? `—in the ${roomList}` : ''}. What keeps you coming back to them?`,
@@ -561,7 +562,7 @@ function generateLevel2Questions(context: ProjectContext): GeneratedQuestion[] {
   for (const selection of heroPieces.slice(0, 3)) {
     questions.push({
       id: `l2-hero-${selection.id}`,
-      text: `The ${selection.productName} in the ${selection.room} really anchors the space. Tell us about selecting this piece.`,
+      text: `The ${selection.productName} in the ${formatRoomName(selection.room)} really anchors the space. Tell us about selecting this piece.`,
       topic: TOPICS.ANCHOR_PIECE,
       contextLevel: 2,
       type: 'hero_piece',
@@ -719,7 +720,7 @@ function generateLevel4Questions(context: ProjectContext): GeneratedQuestion[] {
     if (flow.relationship === 'grand_reveal') {
       questions.push({
         id: `l4-reveal-${flow.fromRoom}-${flow.toRoom}`,
-        text: `The ${flow.fromRoom} leads ${flow.description || 'around'} to the ${flow.toRoom} in what feels like a reveal moment. Was that drama intentional?`,
+        text: `The ${formatRoomName(flow.fromRoom)} leads ${flow.description || 'around'} to the ${formatRoomName(flow.toRoom)} in what feels like a reveal moment. Was that drama intentional?`,
         topic: TOPICS.ROOM_RELATIONSHIPS,
         contextLevel: 4,
         type: 'spatial_narrative',
@@ -732,7 +733,7 @@ function generateLevel4Questions(context: ProjectContext): GeneratedQuestion[] {
     if (flow.relationship === 'flows_into') {
       questions.push({
         id: `l4-flow-${flow.fromRoom}-${flow.toRoom}`,
-        text: `There's a beautiful continuity as the ${flow.fromRoom} flows into the ${flow.toRoom}. How did you think about that transition?`,
+        text: `There's a beautiful continuity as the ${formatRoomName(flow.fromRoom)} flows into the ${formatRoomName(flow.toRoom)}. How did you think about that transition?`,
         topic: TOPICS.ROOM_RELATIONSHIPS,
         contextLevel: 4,
         type: 'spatial_flow',
@@ -745,7 +746,7 @@ function generateLevel4Questions(context: ProjectContext): GeneratedQuestion[] {
     if (flow.relationship === 'intimate_transition') {
       questions.push({
         id: `l4-intimate-${flow.fromRoom}-${flow.toRoom}`,
-        text: `The shift from the ${flow.fromRoom} to the ${flow.toRoom} feels like moving into a more private world. Talk to us about creating that sense of retreat.`,
+        text: `The shift from the ${formatRoomName(flow.fromRoom)} to the ${formatRoomName(flow.toRoom)} feels like moving into a more private world. Talk to us about creating that sense of retreat.`,
         topic: TOPICS.ROOM_RELATIONSHIPS,
         contextLevel: 4,
         type: 'spatial_narrative',
@@ -761,7 +762,7 @@ function generateLevel4Questions(context: ProjectContext): GeneratedQuestion[] {
   for (const room of openPlanRooms) {
     questions.push({
       id: `l4-sightlines-${room.id}`,
-      text: `From the ${room.name}, you can see into the ${room.adjacentRooms.join(' and ')}. How did you approach materials and palette to make that work?`,
+      text: `From the ${formatRoomName(room.name)}, you can see into the ${room.adjacentRooms.map(r => formatRoomName(r)).join(' and ')}. How did you approach materials and palette to make that work?`,
       topic: TOPICS.ROOM_RELATIONSHIPS,
       contextLevel: 4,
       type: 'sightlines',
@@ -809,7 +810,7 @@ function generateLevel5Questions(context: ProjectContext): GeneratedQuestion[] {
     if (decision.event === 'evolved' && decision.iterationCount && decision.iterationCount >= 2) {
       questions.push({
         id: `l5-evolved-${decision.productId || randomUUID()}`,
-        text: `The ${decision.productName} in the ${decision.room} went through a few rounds before you landed on it. Walk us through what made this the right choice.`,
+        text: `The ${decision.productName} in the ${formatRoomName(decision.room)} went through a few rounds before you landed on it. Walk us through what made this the right choice.`,
         topic: TOPICS.DECISION_JOURNEY,
         contextLevel: 5,
         type: 'decision_journey',

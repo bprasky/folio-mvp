@@ -2,6 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { BlocksSchema } from "./schemas";
 import { z } from "zod";
 import { callLLM } from "./llmClient";
+import { formatRoomName } from "@/lib/utils/formatRoomName";
 
 const client = new Anthropic();
 
@@ -86,7 +87,7 @@ function groupImagesIntoChapters(
   // If we have named rooms (not just "General"), use room-based chapters
   if (byRoom.size > 1 || (byRoom.size === 1 && !byRoom.has('General'))) {
     return Array.from(byRoom.entries()).map(([room, ids]) => ({
-      title: room,
+      title: formatRoomName(room),
       imageIds: ids.slice(0, 8),
     }));
   }
