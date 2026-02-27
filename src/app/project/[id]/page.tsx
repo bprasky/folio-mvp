@@ -11,7 +11,8 @@ import ProjectHero from './ProjectHero';
 import ProjectMediaManager from './ProjectMediaManager';
 import DraftsPanel from './DraftsPanel';
 import StoryPanel from './StoryPanel';
-import PublishPanel from './PublishPanel';
+import StagingPublishPanel, { NoDraftState } from './StagingPublishPanel';
+import { getPostForStaging } from '@/lib/post/getPostForStaging';
 import ProjectEmptyState from './ProjectEmptyState';
 import ProjectEmptyStateDiscovery from './ProjectEmptyStateDiscovery';
 
@@ -128,8 +129,12 @@ export default async function ProjectPage({
     currentView = 'publish';
   }
 
-  // Redirect story/publish tabs to media when project is not yet published
-  if (!isPublished && (currentView === 'story' || currentView === 'publish')) {
+  // Redirect story tab to media when project is not yet published
+  if (!isPublished && currentView === 'story') {
+    currentView = 'media';
+  }
+  // Redirect publish tab to media only when no draft or published content exists
+  if (!hasDraftOrPublished && currentView === 'publish') {
     currentView = 'media';
   }
 
@@ -233,44 +238,73 @@ export default async function ProjectPage({
       />
 
       {/* Tab Navigation */}
-      <ProjectTabs project={sanitizedProject} currentView={view} isPublished={isPublished} />
+      <ProjectTabs project={sanitizedProject} currentView={view} isPublished={isPublished} hasDraftOrPublished={hasDraftOrPublished} />
 
-      {/* Main Content - Full Width */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* MEDIA tab */}
-        {view === 'media' && (
-          <MediaSection project={sanitizedProject} isOwner={isOwner} images={base.images} isPublished={isPublished} />
-        )}
+      {/* PUBLISH tab — renders outside <main> for full-width immersive preview */}
+      {view === 'publish' && <PublishTabContent projectId={sanitizedProject.id} project={sanitizedProject} images={base.images} isOwner={isOwner} />}
 
-        {/* STORY tab */}
-        {view === 'story' && (
-          <StoryPanel
-            projectId={sanitizedProject.id}
-            project={sanitizedProject}
-            images={base.images.map(img => ({ id: img.id, url: img.url, name: img.name }))}
-            isOwner={isOwner}
-          />
-        )}
+      {/* Main Content - Full Width (non-publish tabs) */}
+      {view !== 'publish' && (
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* MEDIA tab */}
+          {view === 'media' && (
+            <MediaSection project={sanitizedProject} isOwner={isOwner} images={base.images} isPublished={isPublished} />
+          )}
 
-        {/* PUBLISH tab */}
-        {view === 'publish' && (
-          <PublishPanel
-            projectId={sanitizedProject.id}
-            project={sanitizedProject}
-            images={base.images}
-            isOwner={isOwner}
-          />
-        )}
+          {/* STORY tab */}
+          {view === 'story' && (
+            <StoryPanel
+              projectId={sanitizedProject.id}
+              project={sanitizedProject}
+              images={base.images.map(img => ({ id: img.id, url: img.url, name: img.name }))}
+              isOwner={isOwner}
+            />
+          )}
 
-        {/* BOARDS tab - default view */}
-        {(view === 'boards' || view === 'overview') && (
-          <DesignerBoard
-            projectId={sanitizedProject.id}
-            project={sanitizedProject}
-            imageCount={base.images.length}
-          />
-        )}
-      </main>
+          {/* BOARDS tab - default view */}
+          {(view === 'boards' || view === 'overview') && (
+            <DesignerBoard
+              projectId={sanitizedProject.id}
+              project={sanitizedProject}
+              imageCount={base.images.length}
+            />
+          )}
+        </main>
+      )}
     </div>
   );
-} 
+}
+
+/** Server component that fetches staging data and renders the appropriate publish view */
+async function PublishTabContent({
+  projectId,
+  project,
+  images,
+  isOwner,
+}: {
+  projectId: string;
+  project: { id: string; title: string };
+  images: any[];
+  isOwner: boolean;
+}) {
+  const stagingData = await getPostForStaging(projectId);
+
+  if (!stagingData || !stagingData.expandedBlocks) {
+    return (
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <NoDraftState projectId={projectId} />
+      </main>
+    );
+  }
+
+  return (
+    <StagingPublishPanel
+      projectId={projectId}
+      project={project}
+      images={images}
+      isOwner={isOwner}
+      initialPostData={stagingData}
+      initialModules={stagingData.modules || []}
+    />
+  );
+}

@@ -60,9 +60,8 @@ export default function GuidedPublishFlow({ project, imageCount, images, project
   }
 
   async function handleDraftGenerated() {
-    // Interview completed and draft was generated — refetch draft data, then show preview
-    await flow.refetch();
-    setShowPreviewModal(true);
+    // Interview completed and draft was generated — navigate to the Publish tab staging view
+    router.push(`/project/${project.id}?view=publish`);
   }
 
   function handlePublishSuccess() {
