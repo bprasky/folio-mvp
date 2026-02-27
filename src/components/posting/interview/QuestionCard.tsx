@@ -32,6 +32,7 @@ export function QuestionCard({
   images = [],
 }: QuestionCardProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [isFocused, setIsFocused] = useState(false);
   const maxLength = Math.min(question.maxLen ?? 2000, 2000);
   const charCount = answer.length;
 
@@ -68,13 +69,6 @@ export function QuestionCard({
     };
   }, [cleanup]);
 
-  // Auto-focus textarea on mount
-  useEffect(() => {
-    if (textareaRef.current) {
-      textareaRef.current.focus();
-    }
-  }, [question.id]);
-
   // Handle keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -91,8 +85,8 @@ export function QuestionCard({
 
   return (
     <div className="flex flex-col h-full">
-      {/* Question section (top 1/3) */}
-      <div className="flex-1 flex flex-col justify-center px-8 md:px-16 py-12 space-y-4">
+      {/* Question section */}
+      <div className="px-8 md:px-16 pt-4 pb-6 space-y-4">
         {/* Contextual question metadata */}
         {questionMetadata && questionMetadata.questionType === 'contextual' && (
           <div className="mb-6 space-y-3">
@@ -130,16 +124,24 @@ export function QuestionCard({
         )}
       </div>
 
-      {/* Input section (middle) */}
-      <div className="flex-1 flex flex-col justify-start px-8 md:px-16 py-6 space-y-4">
+      {/* Input section */}
+      <div className="flex-1 flex flex-col justify-end px-8 md:px-16 py-6 space-y-4">
         <div className="relative max-w-3xl">
           <textarea
             ref={textareaRef}
             value={answer}
             onChange={(e) => onAnswerChange(e.target.value)}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => {
+              if (!answer.trim()) {
+                setIsFocused(false);
+              }
+            }}
             maxLength={maxLength}
-            rows={8}
-            className={`w-full min-h-[200px] p-4 bg-[var(--bg-elevated)]/50 border rounded-xl text-lg placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30 focus:border-[var(--accent)]/50 resize-y leading-relaxed ${
+            rows={isFocused || answer.trim() ? 8 : 2}
+            className={`w-full p-4 bg-[var(--bg-elevated)]/50 border rounded-xl text-lg placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30 focus:border-[var(--accent)]/50 leading-relaxed transition-all duration-200 ease-in-out ${
+              isFocused || answer.trim() ? "min-h-[200px] resize-y" : "min-h-[56px] resize-none"
+            } ${
               fieldError ? "border-red-400 focus:border-red-500" : "border-[var(--ridge-outer)]"
             }`}
             placeholder="Type your answer here…"

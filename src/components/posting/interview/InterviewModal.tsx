@@ -12,7 +12,6 @@ import {
 import { FollowUpsForm } from "./FollowUpsForm";
 import { FooterBar } from "./FooterBar";
 import { QuestionCard } from "./QuestionCard";
-import { ProgressIndicator } from "./ProgressIndicator";
 import { InterviewModeSelector } from "./InterviewModeSelector";
 import { RealtimeInterviewView } from "./RealtimeInterviewView";
 import { flags, realtimeInterviewConfig } from "@/lib/flags";
@@ -1501,13 +1500,6 @@ export function InterviewModal({
             )}
             
             <div className="w-6" /> {/* Spacer for alignment */}
-          </div>
-        )}
-
-        {/* Phase A: Sequential flow - show progress indicator for question phase (if not in header) */}
-        {phase === "question" && currentQuestion && !showDraftResume && (
-          <div className="px-8 pt-6">
-            <ProgressIndicator current={currentQuestionIndex + 1} total={displayTotal} />
           </div>
         )}
 
