@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { decodeHtmlEntities } from "@/lib/utils";
 
 /**
  * ProductBank — Expandable product cards with per-contributor commentary.
@@ -60,7 +61,7 @@ export function ProductBank({ post, supplementalQuotes = [] }: ProductBankProps)
         } else {
           productMap.set(product.id, {
             id: product.id,
-            name: product.name,
+            name: decodeHtmlEntities(product.name || ""),
             imageUrl: product.imageUrl || product.cutoutImageUrl,
             url: product.url,
             vendorName: product.vendor?.companyName || product.vendor?.name,

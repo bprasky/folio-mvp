@@ -26,6 +26,7 @@ import {
   ImageLike,
   normalizeUrl,
 } from "@/components/article/images/utils";
+import { titleCase } from "@/lib/utils";
 
 interface PostExpandedProps {
   payload: any;
@@ -83,7 +84,7 @@ export function PostExpanded({ payload }: PostExpandedProps) {
   const imageMap = galleryImages.map((_: any, idx: number) => `img-${idx}`);
 
   // Designer info
-  const designerName = designer?.studio || designer?.name || null;
+  const designerName = designer?.studio || designer?.name ? titleCase(designer?.studio || designer?.name) : null;
   const designerHref = designer?.id ? `/designer/${designer.id}` : null;
 
   // Page-level unique image consumer to prevent repetition across all sections

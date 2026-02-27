@@ -12,7 +12,6 @@ import {
   LogOut,
   Layout,
   User as UserIcon,
-  Mail,
   Headphones,
   Building2,
   Briefcase,
@@ -302,22 +301,13 @@ export function UserMenu() {
           {/* Secondary links */}
           <div className="py-2">
             {isDesigner && (
-              <>
-                <MenuLink
-                  href="/projects"
-                  icon={<Folder className="h-4 w-4" />}
-                  onClick={() => setIsOpen(false)}
-                >
-                  My Projects
-                </MenuLink>
-                <MenuLink 
-                  href="/designer/directory" 
-                  icon={<Users className="h-4 w-4" />}
-                  onClick={() => setIsOpen(false)}
-                >
-                  Directory
-                </MenuLink>
-              </>
+              <MenuLink
+                href="/designer/directory"
+                icon={<Users className="h-4 w-4" />}
+                onClick={() => setIsOpen(false)}
+              >
+                Directory
+              </MenuLink>
             )}
 
             {isVendor && (
@@ -339,14 +329,6 @@ export function UserMenu() {
                 Admin Panel
               </MenuLink>
             )}
-
-            <MenuLink
-              href="/messages"
-              icon={<Mail className="h-4 w-4" />}
-              onClick={() => setIsOpen(false)}
-            >
-              Messages
-            </MenuLink>
 
             <MenuLink
               href="/settings"

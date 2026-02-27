@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { Metadata } from "next";
 import { getPostBySlug } from "@/lib/post/getPostBySlug";
 import { ImmersiveProjectPage } from "@/components/project/ImmersiveProjectPage";
+import { titleCase } from "@/lib/utils";
 
 export async function generateMetadata({
   params,
@@ -18,7 +19,7 @@ export async function generateMetadata({
 
   const { project, excerpt } = post;
   const designer = project.designer;
-  const designerLabel = designer?.studio || designer?.name || "Folio";
+  const designerLabel = titleCase(designer?.studio || designer?.name || "Folio");
   const title = `${project.title} | ${designerLabel} on Folio`;
   const description = excerpt || project.description || "Every room. Every source. The story behind the design.";
   const ogImageUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://folio.ad'}/api/og/project/${params.slug}`;

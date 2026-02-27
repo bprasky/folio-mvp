@@ -1,5 +1,7 @@
 // src/components/article/utils/materialResolvers.ts
 
+import { decodeHtmlEntities } from "@/lib/utils";
+
 export function resolveMaterialImage(
   mat: any,
   projectImages?: Array<{ id?: string; url?: string | null; tags?: Array<{ product?: { id?: string; imageUrl?: string | null } }> }>
@@ -80,13 +82,13 @@ export function resolveMaterialHref(mat: any) {
 }
 
 export function resolveMaterialName(mat: any) {
-  return (
+  const raw =
     mat?.name ||
     mat?.label ||
     mat?.product?.name ||
     mat?.vendorProduct?.name ||
-    "Material"
-  );
+    "Material";
+  return decodeHtmlEntities(raw);
 }
 
 export function resolveVendorName(mat: any) {
