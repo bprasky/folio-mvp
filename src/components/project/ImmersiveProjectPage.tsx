@@ -32,9 +32,9 @@ export function ImmersiveProjectPage({ post, modules }: Props) {
     [projectImages]
   );
 
-  const aiFilm =
-    modules.find((m) => m.type === "LONG_VIDEO" && m.isAiCompiled) ||
-    modules.find((m) => m.type === "LONG_VIDEO");
+  // const aiFilm =
+  //   modules.find((m) => m.type === "LONG_VIDEO" && m.isAiCompiled) ||
+  //   modules.find((m) => m.type === "LONG_VIDEO");
 
   return (
     <div className="relative min-h-screen">
@@ -62,8 +62,8 @@ export function ImmersiveProjectPage({ post, modules }: Props) {
             </figure>
           )}
 
-          {/* AI PROJECT FILM — only render when a video module exists */}
-          {aiFilm && <ProjectAiFilmPanel module={aiFilm} project={post.project} />}
+          {/* AI PROJECT FILM — hidden until AI editor is implemented */}
+          {/* <ProjectAiFilmPanel module={aiFilm} project={post.project} /> */}
 
           {/* SMART EDITORIAL LAYOUT (CHAPTERS A–D) */}
           <SmartEditorialLayout post={post} />
