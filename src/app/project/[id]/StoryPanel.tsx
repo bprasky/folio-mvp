@@ -333,6 +333,9 @@ export default function StoryPanel({ projectId, project, images, isOwner }: Stor
           <div className="text-left">
             <span className="folio-ui font-semibold block">Continue to Interview</span>
             <span className="folio-meta opacity-80">Answer questions about your design decisions</span>
+            <span className="folio-meta opacity-60 text-xs block mt-0.5">
+              Your answers will update the draft. Regenerate and republish to apply changes.
+            </span>
           </div>
         </button>
       )}

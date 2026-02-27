@@ -30,8 +30,7 @@ export function ProjectAiFilmPanel({ module, project }: FilmProps) {
         </p>
         <p className="folio-meta text-[var(--text-secondary)]">
           Until the AI editor is live, you can upload a long-form reveal or walkthrough from the{" "}
-          <span className="font-medium">Media</span> tab on the project dashboard (saved as a{" "}
-          <code className="rounded bg-[var(--bg-elevated)] px-1">LONG_VIDEO</code> module) and it will
+          <span className="font-medium">Media</span> tab on the project dashboard and it will
           render here.
         </p>
       </section>
