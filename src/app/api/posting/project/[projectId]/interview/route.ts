@@ -341,6 +341,7 @@ export async function POST(
         role: 'DESIGNER' as const,
         answer: qa.answer,
         isFollowUp: qa.isFollowUp || false,
+        prompt: qa.prompt || '',
         // Preserve metadata
         metadata: (qa as any).metadata || {},
       }));
@@ -357,6 +358,7 @@ export async function POST(
         role: 'DESIGNER' as const,
         answer: qa.answer,
         isFollowUp: qa.isFollowUp || false,
+        prompt: qa.prompt || '',
         // Preserve metadata
         metadata: (qa as any).metadata || {},
       }));
