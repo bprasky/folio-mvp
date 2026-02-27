@@ -26,6 +26,7 @@ const AnswerBaseSchema = z.object({
   section: SECTION_ENUM.optional(),
   category: SIX_W_ENUM.optional(),
   isFollowUp: z.boolean().optional(),
+  prompt: z.string().optional(),
   answer: z
     .string()
     .transform((s) => s.trim())
