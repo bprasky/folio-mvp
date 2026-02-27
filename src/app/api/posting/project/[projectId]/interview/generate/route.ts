@@ -1852,7 +1852,7 @@ export async function POST(
       }
       
       return NextResponse.json(
-        { error: "Editorial generation failed", code: e?.code || "COMPOSE_ERROR", message: e?.message },
+        { error: "Story generation failed", code: e?.code || "COMPOSE_ERROR", message: e?.message },
         { status: e?.status || 502 }
       );
     }
@@ -1921,7 +1921,7 @@ export async function POST(
                 }
               }
               return NextResponse.json(
-                { error: "Editorial generation failed", code: "INVALID_IMAGE_IDS", message: "No valid image IDs found" },
+                { error: "Story generation failed", code: "INVALID_IMAGE_IDS", message: "No valid image IDs found" },
                 { status: 502 }
               );
             }

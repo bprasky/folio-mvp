@@ -1,3 +1,5 @@
+import { formatRoomName } from '@/lib/utils/formatRoomName';
+
 /**
  * layoutEngine.ts - Deterministic editorial layout engine
  * 
@@ -127,7 +129,7 @@ function classifyImage(
  */
 function getRoomName(image: ClassifiedImage, roomMap: Map<string, string>): string | undefined {
   if (!image.room) return undefined;
-  return roomMap.get(image.room) || roomMap.get(image.room.toLowerCase()) || image.room;
+  return roomMap.get(image.room) || roomMap.get(image.room.toLowerCase()) || formatRoomName(image.room);
 }
 
 /**

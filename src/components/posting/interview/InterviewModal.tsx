@@ -969,6 +969,7 @@ export function InterviewModal({
     const currentAttempt = generationAttempts + 1;
     setGenerationAttempts(currentAttempt);
     logClient('generate:start', { baseAnswers: baseAnswers.length, followUps: followUpAnswersState.length, attempt: currentAttempt });
+    setGenerationStep(0);
     setIsGenerating(true);
     setError(null);
     setFieldErrors({});
@@ -1083,8 +1084,10 @@ export function InterviewModal({
         const errorMessage = errData?.error || `Story generation failed (${res.status})`;
         logClient('generate:hard-fail', { status: res.status, code: errorCode, message: errorMessage });
         
-        // Show user-friendly error message
-        handleBanner(`Story generation failed: ${errorMessage}. Nothing was saved. Error code: ${errorCode}. Try Regenerate.`);
+        // Log full error details for debugging
+        console.error('[InterviewModal] Generation error:', { errorCode, errorMessage });
+        // Show user-friendly error message (no internal codes or terminology)
+        handleBanner('Story generation failed. Nothing was saved \u2014 your interview answers are safe. Try regenerating.');
         setIsGenerating(false);
         return;
       }
@@ -1137,7 +1140,8 @@ export function InterviewModal({
           
           // Handle hard-fail errors (502, 400)
           if (retry.status >= 400) {
-            handleBanner(`Story generation failed: ${errorMessage}. Nothing was saved. Error code: ${errorCode}. Try Regenerate.`);
+            console.error('[InterviewModal] Retry generation error:', { errorCode, errorMessage });
+            handleBanner('Story generation failed. Nothing was saved \u2014 your interview answers are safe. Try regenerating.');
             setIsGenerating(false);
             return;
           }
