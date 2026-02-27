@@ -337,8 +337,8 @@ export default function DraftsPanel({ projectId }: { projectId: string }) {
           issues: json?.issues 
         });
         
-        // Show user-friendly error message with validation details
-        alert(`Story generation failed\n\nThe AI didn't return a valid article. Nothing was saved.\n\nError code: ${errorCode}\nError: ${errorMessage}${errorDetails}\n\nTry Regenerate.`);
+        // Show user-friendly error message (internal codes logged above)
+        alert('Story generation failed.\n\nNothing was saved \u2014 your interview answers are safe. Try regenerating.');
         return;
       }
 

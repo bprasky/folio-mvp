@@ -1,3 +1,5 @@
+import { formatRoomName } from '@/lib/utils/formatRoomName';
+
 /**
  * textHelpers.ts - Strong fallback text generators
  * 
@@ -47,8 +49,8 @@ export function getRoomBlurb(room: Room | null | undefined, project: Project): s
     }
     
     // Fallback template using room name
-    const roomName = room.name || 'This space';
-    return `The ${roomName} showcases a thoughtful approach to space and materiality. Each element has been carefully selected to create harmony between form and function.`;
+    const roomDisplay = formatRoomName(room.name || 'This space');
+    return `The ${roomDisplay} showcases a thoughtful approach to space and materiality. Each element has been carefully selected to create harmony between form and function.`;
   }
   
   // Ultimate fallback
@@ -64,7 +66,7 @@ export function getImageCaption(image: Image, roomName: string | null | undefine
   }
   
   if (roomName) {
-    return `${roomName} — Featured moment`;
+    return `${formatRoomName(roomName)} — Featured moment`;
   }
   
   return 'Featured moment';
@@ -100,7 +102,7 @@ export function generateEditorialText(
   
   // If we have room name but no room data, use template (only for edit mode)
   if (roomName && !isPublished) {
-    return `The ${roomName} showcases a thoughtful approach to space and materiality. Each element has been carefully selected to create harmony between form and function.`;
+    return `The ${formatRoomName(roomName)} showcases a thoughtful approach to space and materiality. Each element has been carefully selected to create harmony between form and function.`;
   }
   
   // Ultimate fallback (avoid template in published mode)

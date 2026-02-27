@@ -6,6 +6,7 @@ import { FaChevronDown, FaChevronUp, FaEllipsisV, FaShoppingBag, FaUpload, FaEdi
 import { HiOutlineDotsVertical } from 'react-icons/hi';
 import { useRouter } from 'next/navigation';
 import SafeImage from '@/components/SafeImage';
+import { formatRoomName } from '@/lib/utils/formatRoomName';
 import { getRoomTemplate, Slot, inferSlotKey, inferSlotKeyFromCategory, ROOM_TEMPLATES, RoomTemplate } from './roomTemplates';
 import EditProductDrawer from './EditProductDrawer';
 import BoardTileMenu from './BoardTileMenu';
@@ -416,7 +417,7 @@ export default function DesignerBoardRoom({
       {/* Room Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
-          <h3 className="folio-h3 text-[var(--text-primary)]">{room.name}</h3>
+          <h3 className="folio-h3 text-[var(--text-primary)]">{formatRoomName(room.name)}</h3>
 
           {/* Room Type Badge */}
           {room.type && (

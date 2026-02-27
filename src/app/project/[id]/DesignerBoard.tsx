@@ -5,6 +5,7 @@ import clsx from 'clsx';
 import { useRouter } from 'next/navigation';
 import DesignerBoardRoom from './DesignerBoardRoom';
 import { getRoomTemplate, RoomTemplate } from './roomTemplates';
+import { formatRoomName } from '@/lib/utils/formatRoomName';
 import { computeTileSize as dimensionComputeTileSize } from './tileSizing';
 import { FaImage, FaSpinner } from 'react-icons/fa';
 import GenerateDialog from '@/components/boards/GenerateDialog';
@@ -294,7 +295,7 @@ export default function DesignerBoard({
             <option value="">All Rooms</option>
             {project.rooms.map(room => (
               <option key={room.id} value={room.id}>
-                {room.name}
+                {formatRoomName(room.name)}
               </option>
             ))}
           </select>
@@ -408,7 +409,7 @@ export default function DesignerBoard({
         <GenerateDialog
           projectId={projectId}
           roomId={selectedRoomId}
-          roomName={project.rooms.find(r => r.id === selectedRoomId)?.name || 'Room'}
+          roomName={formatRoomName(project.rooms.find(r => r.id === selectedRoomId)?.name || 'Room')}
           selections={project.rooms.find(r => r.id === selectedRoomId)?.selections || []}
           open={generateDialogOpen}
           onOpenChange={setGenerateDialogOpen}

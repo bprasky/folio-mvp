@@ -377,7 +377,7 @@ export function useInterviewSession({
         if (generateRes.status === 202) {
           console.log("[useInterviewSession] Generation already in progress or draft exists", errBody);
         } else {
-          throw new Error(errBody.error || errBody.message || `Editorial generation failed: ${generateRes.status}`);
+          throw new Error(errBody.error || errBody.message || `Story generation failed: ${generateRes.status}`);
         }
       } else {
         console.log("[useInterviewSession] Editorial generated successfully");

@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { ProjectTimeline } from "@prisma/client";
 import { ensureDefaultRoomForProject } from './defaultRoom';
+import { formatRoomName } from '@/lib/utils/formatRoomName';
 
 const NEXT_PUBLIC_FOLIO_LIVING_PROJECTS = process.env.NEXT_PUBLIC_FOLIO_LIVING_PROJECTS === 'true';
 const NEXT_PUBLIC_FOLIO_SKELETON_TAGS = process.env.NEXT_PUBLIC_FOLIO_SKELETON_TAGS === 'true';
@@ -100,7 +101,7 @@ export async function ensureRoomsForProject(projectId: string): Promise<void> {
     if (roomsToCreate.length > 0) {
       await prisma.room.createMany({
         data: roomsToCreate.map((name) => ({
-          name,
+          name: formatRoomName(name),
           projectId,
         })),
         skipDuplicates: true,
