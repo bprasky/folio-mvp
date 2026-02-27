@@ -9,6 +9,7 @@
 
 import { type MagazineProduct } from "@/lib/magazine/getMagazineData";
 import Image from "next/image";
+import { decodeHtmlEntities } from "@/lib/utils";
 
 interface Props {
   products: MagazineProduct[];
@@ -34,7 +35,7 @@ export default function MagazineProductRail({ products }: Props) {
               {product.imageUrl && (
                 <Image
                   src={product.imageUrl}
-                  alt={product.name}
+                  alt={decodeHtmlEntities(product.name)}
                   fill
                   className="object-cover"
                 />
@@ -42,7 +43,7 @@ export default function MagazineProductRail({ products }: Props) {
             </div>
             <div className="space-y-1 px-3 py-2">
               <p className="folio-body line-clamp-2 text-xs font-medium text-[var(--text-primary)]">
-                {product.name}
+                {decodeHtmlEntities(product.name)}
               </p>
               {product.vendorName && (
                 <p className="folio-meta text-[11px] text-[var(--text-secondary)]">

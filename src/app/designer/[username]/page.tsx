@@ -37,47 +37,60 @@ export default async function DesignerProfilePage({
   // For now, treat username as id (can be updated when username field is added)
   const designerId = params.username;
 
-  // Fetch designer with brand assets
-  const designer = await prisma.user.findUnique({
-    where: { id: designerId },
-    select: {
-      id: true,
-      name: true,
-      title: true,
-      bio: true,
-      profileImage: true,
-      location: true,
-      aestheticProfile: true,
-      aestheticDetectedAt: true,
-      profileState: true,
-      brandAssets: {
-        select: {
-          logoLightUrl: true,
-          logoDarkUrl: true,
-          logomarkUrl: true,
-          primaryColor: true,
-          secondaryColor: true,
-          accentColor: true,
-          backgroundColor: true,
-          headingFont: true,
-          bodyFont: true,
-          moodImageUrls: true,
-          inspirationNotes: true,
-          inspiredByDesigners: true,
-          inspiredByPublications: true,
-          tagline: true,
-          brandAdjectives: true,
+  // Fetch designer with brand assets — wrapped in try/catch because
+  // an invalid UUID will cause Prisma to throw (not return null)
+  let designer;
+  try {
+    designer = await prisma.user.findUnique({
+      where: { id: designerId },
+      select: {
+        id: true,
+        name: true,
+        title: true,
+        bio: true,
+        profileImage: true,
+        location: true,
+        aestheticProfile: true,
+        aestheticDetectedAt: true,
+        profileState: true,
+        brandAssets: {
+          select: {
+            logoLightUrl: true,
+            logoDarkUrl: true,
+            logomarkUrl: true,
+            primaryColor: true,
+            secondaryColor: true,
+            accentColor: true,
+            backgroundColor: true,
+            headingFont: true,
+            bodyFont: true,
+            moodImageUrls: true,
+            inspirationNotes: true,
+            inspiredByDesigners: true,
+            inspiredByPublications: true,
+            tagline: true,
+            brandAdjectives: true,
+          },
         },
       },
-    },
-  });
+    });
+  } catch (error) {
+    console.error("[DesignerProfilePage] Failed to fetch designer:", designerId, error);
+    notFound();
+  }
 
   if (!designer) {
     notFound();
   }
 
   // Fetch published projects
-  const projects = await getDesignerPublishedProjects(designerId);
+  let projects;
+  try {
+    projects = await getDesignerPublishedProjects(designerId);
+  } catch (error) {
+    console.error("[DesignerProfilePage] Failed to fetch projects:", designerId, error);
+    projects = [];
+  }
 
   // Get brand assets
   const brandAssets: BrandAssets | null = designer.brandAssets

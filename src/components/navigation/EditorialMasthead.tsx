@@ -102,7 +102,15 @@ export function EditorialMasthead() {
           <div className="flex items-center gap-4 min-w-0">
             <MobileMenu />
 
-            {/* FOLIO Logo - appears in nav when scrolled (or always on magazine page) */}
+            {/* FOLIO Logo - mobile: always visible, clickable */}
+            <Link
+              href="/"
+              className="md:hidden font-serif text-xl tracking-tight font-semibold text-[var(--text-primary)] hover:text-[var(--text-primary)]"
+            >
+              FOLIO
+            </Link>
+
+            {/* FOLIO Logo - desktop: appears in nav when scrolled (or always on magazine page) */}
             <motion.div
               className="hidden md:block"
               style={{

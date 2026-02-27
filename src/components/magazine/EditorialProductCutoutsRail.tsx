@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { type MagazineProduct } from "@/lib/magazine/getMagazineData";
 import { getProductDisplayImage } from "@/lib/products/getProductDisplayImage";
+import { decodeHtmlEntities } from "@/lib/utils";
 
 interface Props {
   products: MagazineProduct[];
@@ -69,7 +70,7 @@ export default function EditorialProductCutoutsRail({ products }: Props) {
                   {imageUrl ? (
                     <Image
                       src={imageUrl}
-                      alt={product.name}
+                      alt={decodeHtmlEntities(product.name)}
                       fill
                       sizes="(max-width: 768px) 140px, 180px"
                       className="object-contain p-2"
@@ -82,7 +83,7 @@ export default function EditorialProductCutoutsRail({ products }: Props) {
                 {/* Product info */}
                 <div className="flex flex-col gap-0.5 min-h-[40px] justify-start flex-shrink-0">
                   <p className="folio-body line-clamp-2 text-xs font-semibold text-[var(--text-primary)] leading-snug">
-                    {product.name}
+                    {decodeHtmlEntities(product.name)}
                   </p>
                   {product.vendorName ? (
                     <p className="folio-meta text-[10px] text-[var(--text-secondary)] font-medium">

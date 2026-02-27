@@ -15,6 +15,7 @@
 
 import { parseCredits } from "@/lib/posting/creditsSchema";
 import type { CreditEntry } from "@/lib/posting/creditsSchema";
+import { titleCase } from "@/lib/utils";
 
 type CreditsSectionProps = {
   post: any;
@@ -60,7 +61,7 @@ export function CreditsSection({ post }: CreditsSectionProps) {
         )}
         {author?.name && (
           <div className="folio-meta text-[var(--text-secondary)] pt-2 border-t border-[var(--ridge-outer)]">
-            By {author.name}
+            By {titleCase(author.name)}
           </div>
         )}
       </div>

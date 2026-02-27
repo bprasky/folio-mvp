@@ -7,6 +7,7 @@ import { CreditsSection } from "@/components/project/CreditsSection";
 import { ProductBank } from "@/components/project/ProductBank";
 import { ProjectImageGallery } from "@/components/project/ProjectImageGallery";
 import { ImageTagDots } from "@/components/project/ImageTagDots";
+import { titleCase } from "@/lib/utils";
 
 type MediaModule = {
   id: string;
@@ -101,7 +102,7 @@ function BackgroundCanvas({ images }: { images: string[] }) {
 
 function DesignerProjectBadge({ post }: { post: any }) {
   const designer = post.project?.designer;
-  const name = designer?.studio || designer?.name || "Designer";
+  const name = titleCase(designer?.studio || designer?.name || "Designer");
   const logoUrl = designer?.profileImage;
 
   return (
