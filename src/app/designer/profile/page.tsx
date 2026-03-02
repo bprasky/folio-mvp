@@ -16,7 +16,7 @@ export default async function DesignerProfilePage() {
 
   const userId = session.user.id;
 
-  // Fetch user (without profileInterview — table may not exist yet)
+  // Fetch user — keep this query free of tables that may not exist yet
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: {
@@ -38,22 +38,6 @@ export default async function DesignerProfilePage() {
             select: {
               id: true,
               name: true,
-              teamMembers: {
-                select: {
-                  id: true,
-                  name: true,
-                  role: true,
-                  headshotUrl: true,
-                  linkedUser: {
-                    select: {
-                      id: true,
-                      name: true,
-                      profileImage: true,
-                    },
-                  },
-                },
-                orderBy: { displayOrder: 'asc' },
-              },
             },
           },
         },
@@ -65,16 +49,42 @@ export default async function DesignerProfilePage() {
     redirect('/login');
   }
 
-  // Get organization and team members
+  // Get organization
   const orgUser = user.organizationUsers[0] ?? null;
   const organization = orgUser?.organization ? { name: orgUser.organization.name } : null;
-  const teamMembers: ProfileTeamMember[] = (orgUser?.organization?.teamMembers ?? []).map(m => ({
-    id: m.id,
-    name: m.linkedUser?.name || m.name,
-    role: m.role,
-    headshotUrl: m.headshotUrl,
-    profileImage: m.linkedUser?.profileImage || null,
-  }));
+
+  // Fetch team members separately — team_member table may not exist yet
+  let teamMembers: ProfileTeamMember[] = [];
+  if (orgUser?.organization?.id) {
+    try {
+      const members = await prisma.teamMember.findMany({
+        where: { organizationId: orgUser.organization.id },
+        select: {
+          id: true,
+          name: true,
+          role: true,
+          headshotUrl: true,
+          linkedUser: {
+            select: {
+              id: true,
+              name: true,
+              profileImage: true,
+            },
+          },
+        },
+        orderBy: { displayOrder: 'asc' },
+      });
+      teamMembers = members.map(m => ({
+        id: m.id,
+        name: m.linkedUser?.name || m.name,
+        role: m.role,
+        headshotUrl: m.headshotUrl,
+        profileImage: m.linkedUser?.profileImage || null,
+      }));
+    } catch {
+      // Table doesn't exist yet — silently fall back to empty
+    }
+  }
 
   // Fetch published projects with cover images and post titles
   const rawProjects = await prisma.project.findMany({
