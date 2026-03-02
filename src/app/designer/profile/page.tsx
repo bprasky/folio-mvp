@@ -42,7 +42,7 @@ export default async function DesignerProfilePage() {
       organizationUsers: {
         where: { isActive: true, showOnProfile: true },
         take: 1,
-        include: {
+        select: {
           organization: {
             select: {
               id: true,
