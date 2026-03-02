@@ -110,7 +110,7 @@ export default async function DesignerProfilePage() {
         select: { url: true },
       },
       post: {
-        select: { title: true },
+        select: { slug: true },
       },
     },
   });
@@ -153,7 +153,7 @@ export default async function DesignerProfilePage() {
 
   const projects: ProfileProject[] = rawProjects.map(p => ({
     id: p.id,
-    title: p.post?.title || p.title || 'Untitled Project',
+    title: p.title || 'Untitled Project',
     imageUrl: p.images[0]?.url || null,
     location: [p.city, p.regionState].filter(Boolean).join(', ') || null,
     type: p.projectType !== 'UNSPECIFIED' ? formatProjectType(p.projectType) : null,
