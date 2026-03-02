@@ -5,7 +5,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/options";
 import { prisma } from "@/lib/prisma";
 import { assertProjectView } from "@/lib/authz/access";
-import { normalizeRole } from "@/lib/permissions";
+import { normalizeRole, canPerformAction } from "@/lib/permissions";
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { notifyTaggedVendors } from "@/lib/email/notifyVendorTagged";
@@ -79,6 +79,19 @@ export async function PATCH(
         { error: "Forbidden: role not allowed" },
         { status: 403 }
       );
+    }
+
+    // Org-based publish permission: only org-affiliated users can publish
+    // Admins bypass this check
+    if (role !== "ADMIN") {
+      const canPublish = await canPerformAction(session.user.id, 'publish_project');
+      if (!canPublish) {
+        console.error(`[${correlationId}] Forbidden: user lacks org membership for publishing`);
+        return NextResponse.json(
+          { error: "Publishing requires a design firm organization account. Please switch to your organization workspace." },
+          { status: 403 }
+        );
+      }
     }
 
     // Validate input body

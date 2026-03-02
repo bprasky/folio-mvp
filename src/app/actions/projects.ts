@@ -2,7 +2,7 @@
 
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
-import { normalizeRole, canCreateProject } from '@/lib/permissions';
+import { normalizeRole, canCreateProject, canPerformAction } from '@/lib/permissions';
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
@@ -82,6 +82,15 @@ export async function publishEditorial({ projectId }: { projectId: string }) {
   }
 
   try {
+    // Org-based publish permission: only org-affiliated users can publish
+    const role = normalizeRole(session.user.role);
+    if (role !== 'ADMIN') {
+      const canPublish = await canPerformAction(session.user.id, 'publish_project');
+      if (!canPublish) {
+        return { ok: false, message: 'Publishing requires a design firm organization account. Please switch to your organization workspace.' };
+      }
+    }
+
     // Find the draft
     const post = await prisma.projectPost.findFirst({
       where: {
@@ -214,13 +223,22 @@ const PublishInput = z.object({ projectId: z.string().uuid() });
 
 export async function publishProjectAction(raw: unknown) {
   const { projectId } = PublishInput.parse(raw);
-  
+
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     throw new Error('Unauthorized');
   }
 
   const userId = session.user.id;
+
+  // Org-based publish permission: only org-affiliated users can publish
+  const role = normalizeRole(session.user.role);
+  if (role !== 'ADMIN') {
+    const canPublish = await canPerformAction(userId, 'publish_project');
+    if (!canPublish) {
+      throw new Error('Publishing requires a design firm organization account. Please switch to your organization workspace.');
+    }
+  }
 
   // Fetch project with tagged products
   const project = await prisma.project.findFirst({

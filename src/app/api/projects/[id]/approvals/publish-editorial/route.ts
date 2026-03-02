@@ -33,9 +33,11 @@ export async function POST(
         slug: result.slug,
       });
     } else {
+      // Return the actual error message (e.g., org permission errors)
+      const status = result.message?.includes('organization') ? 403 : 500;
       return NextResponse.json(
-        { error: 'Failed to publish. Please try again.' },
-        { status: 500 }
+        { error: result.message || 'Failed to publish. Please try again.' },
+        { status }
       );
     }
   } catch (error: any) {

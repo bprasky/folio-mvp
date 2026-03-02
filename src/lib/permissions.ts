@@ -382,7 +382,7 @@ export function getUserOrgType(memberships: OrgMembershipWithOrg[]): 'DESIGNER' 
  */
 export async function canPerformAction(
   userId: string,
-  action: 'create_project' | 'premium_features' | 'generate_images' | 'connect_clients' | 'earn_affiliate'
+  action: 'create_project' | 'publish_project' | 'premium_features' | 'generate_images' | 'connect_clients' | 'earn_affiliate'
 ): Promise<boolean> {
   // First check operating org context (the "Operating as" dropdown)
   const user = await prisma.user.findUnique({
@@ -405,6 +405,7 @@ export async function canPerformAction(
 
     switch (action) {
       case 'create_project':
+      case 'publish_project':
         // Must be operating as a design firm
         return orgType === 'DESIGN_FIRM';
       case 'premium_features':
@@ -423,6 +424,7 @@ export async function canPerformAction(
 
   switch (action) {
     case 'create_project':
+    case 'publish_project':
       return canCreateProjectWithOrg(memberships);
     case 'premium_features':
       return canAccessPremiumFeatures(memberships);
