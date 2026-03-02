@@ -6,6 +6,7 @@ import NextImage from 'next/image';
 import { FaTimes, FaPlus, FaUpload, FaLink, FaTag, FaTrash, FaSearch, FaCheck, FaSpinner, FaExclamationTriangle, FaEnvelope, FaUser } from 'react-icons/fa';
 import { PROJECT_TYPE_BY_LABEL, CLIENT_BY_LABEL, DEFAULTS } from '@/domain/project/enums';
 import { GlassInput } from '@/components/ui/glass-input';
+import { getMonographUrl } from '@/lib/utils/getMonographUrl';
 
 interface ProjectImage {
   id: string;
@@ -575,7 +576,7 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
           profileImage: c.profileImage,
           studio: c.studio,
           isInvite: c.isInvite,
-          url: c.userId ? `/designer/${c.userId}` : undefined
+          url: c.userId && c.name ? getMonographUrl({ name: c.name }) : undefined
         }));
       }
 

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import type { UpdatesCarouselItem } from "@/lib/feed/getUpdatesCarousel";
+import { getMonographUrl } from "@/lib/utils/getMonographUrl";
 
 type Props = { groups: UpdatesCarouselItem[]; index: number; onClose: () => void };
 
@@ -67,8 +68,8 @@ export function StoryViewer({ groups, index: startIndex, onClose }: Props) {
           {/* HEADER: Designer — Project */}
           <div className="absolute left-0 right-0 top-0 z-10 flex items-center justify-between p-3">
             <div className="rounded-full bg-white/85 px-3 py-1 text-[12px] text-[var(--text-primary)] shadow">
-              {g.designer.slug ? (
-                <Link href={`/designer/${g.designer.slug}`} className="hover:underline">
+              {g.designer.name ? (
+                <Link href={getMonographUrl({ name: g.designer.name })} className="hover:underline">
                   {designerName}
                 </Link>
               ) : (
