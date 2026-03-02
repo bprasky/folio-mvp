@@ -16,7 +16,7 @@ export default async function DesignerProfilePage() {
 
   const userId = session.user.id;
 
-  // Fetch user with profile interview and organization
+  // Fetch user — keep this query free of tables that may not exist yet
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: {
@@ -30,15 +30,6 @@ export default async function DesignerProfilePage() {
       website: true,
       instagram: true,
       linkedin: true,
-      profileInterview: {
-        select: {
-          generatedBio: true,
-          shortBio: true,
-          pullQuotes: true,
-          philosophyStatement: true,
-          processDescription: true,
-        },
-      },
       organizationUsers: {
         where: { isActive: true, showOnProfile: true },
         take: 1,
@@ -47,22 +38,6 @@ export default async function DesignerProfilePage() {
             select: {
               id: true,
               name: true,
-              teamMembers: {
-                select: {
-                  id: true,
-                  name: true,
-                  role: true,
-                  headshotUrl: true,
-                  linkedUser: {
-                    select: {
-                      id: true,
-                      name: true,
-                      profileImage: true,
-                    },
-                  },
-                },
-                orderBy: { displayOrder: 'asc' },
-              },
             },
           },
         },
@@ -74,16 +49,42 @@ export default async function DesignerProfilePage() {
     redirect('/login');
   }
 
-  // Get organization and team members
+  // Get organization
   const orgUser = user.organizationUsers[0] ?? null;
   const organization = orgUser?.organization ? { name: orgUser.organization.name } : null;
-  const teamMembers: ProfileTeamMember[] = (orgUser?.organization?.teamMembers ?? []).map(m => ({
-    id: m.id,
-    name: m.linkedUser?.name || m.name,
-    role: m.role,
-    headshotUrl: m.headshotUrl,
-    profileImage: m.linkedUser?.profileImage || null,
-  }));
+
+  // Fetch team members separately — team_member table may not exist yet
+  let teamMembers: ProfileTeamMember[] = [];
+  if (orgUser?.organization?.id) {
+    try {
+      const members = await prisma.teamMember.findMany({
+        where: { organizationId: orgUser.organization.id },
+        select: {
+          id: true,
+          name: true,
+          role: true,
+          headshotUrl: true,
+          linkedUser: {
+            select: {
+              id: true,
+              name: true,
+              profileImage: true,
+            },
+          },
+        },
+        orderBy: { displayOrder: 'asc' },
+      });
+      teamMembers = members.map(m => ({
+        id: m.id,
+        name: m.linkedUser?.name || m.name,
+        role: m.role,
+        headshotUrl: m.headshotUrl,
+        profileImage: m.linkedUser?.profileImage || null,
+      }));
+    } catch {
+      // Table doesn't exist yet — silently fall back to empty
+    }
+  }
 
   // Fetch published projects with cover images and post titles
   const rawProjects = await prisma.project.findMany({
@@ -109,7 +110,7 @@ export default async function DesignerProfilePage() {
         select: { url: true },
       },
       post: {
-        select: { title: true },
+        select: { slug: true },
       },
     },
   });
@@ -152,7 +153,7 @@ export default async function DesignerProfilePage() {
 
   const projects: ProfileProject[] = rawProjects.map(p => ({
     id: p.id,
-    title: p.post?.title || p.title || 'Untitled Project',
+    title: p.title || 'Untitled Project',
     imageUrl: p.images[0]?.url || null,
     location: [p.city, p.regionState].filter(Boolean).join(', ') || null,
     type: p.projectType !== 'UNSPECIFIED' ? formatProjectType(p.projectType) : null,
@@ -218,24 +219,37 @@ export default async function DesignerProfilePage() {
       productCount: count,
     }));
 
-  // Parse pullQuotes from JSON
-  const rawPullQuotes = user.profileInterview?.pullQuotes;
-  let pullQuotes: string[] | null = null;
-  if (rawPullQuotes) {
-    if (Array.isArray(rawPullQuotes)) {
-      pullQuotes = rawPullQuotes.filter((q): q is string => typeof q === 'string');
-    }
-  }
-
-  const profileInterview = user.profileInterview
-    ? {
-        generatedBio: user.profileInterview.generatedBio,
-        shortBio: user.profileInterview.shortBio,
-        pullQuotes,
-        philosophyStatement: user.profileInterview.philosophyStatement,
-        processDescription: user.profileInterview.processDescription,
+  // Attempt to load profileInterview — table may not exist yet (P2021)
+  let profileInterview: ProfilePageData['profileInterview'] = null;
+  try {
+    const interview = await prisma.profileInterview.findUnique({
+      where: { userId },
+      select: {
+        generatedBio: true,
+        shortBio: true,
+        pullQuotes: true,
+        philosophyStatement: true,
+        processDescription: true,
+      },
+    });
+    if (interview) {
+      let pullQuotes: string[] | null = null;
+      if (interview.pullQuotes && Array.isArray(interview.pullQuotes)) {
+        pullQuotes = (interview.pullQuotes as unknown[]).filter(
+          (q): q is string => typeof q === 'string'
+        );
       }
-    : null;
+      profileInterview = {
+        generatedBio: interview.generatedBio,
+        shortBio: interview.shortBio,
+        pullQuotes,
+        philosophyStatement: interview.philosophyStatement,
+        processDescription: interview.processDescription,
+      };
+    }
+  } catch {
+    // Table doesn't exist yet — silently fall back to null
+  }
 
   const pageData: ProfilePageData = {
     user: {
