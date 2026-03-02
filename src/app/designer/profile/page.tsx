@@ -88,8 +88,10 @@ export default async function DesignerProfilePage() {
   // Fetch published projects with cover images and post titles
   const rawProjects = await prisma.project.findMany({
     where: {
-      OR: [{ designerId: userId }, { ownerId: userId }],
-      ...PUBLISHED_PROJECT_FILTER,
+      AND: [
+        { OR: [{ designerId: userId }, { ownerId: userId }] },
+        PUBLISHED_PROJECT_FILTER,
+      ],
     },
     orderBy: [{ publishedAt: 'desc' }, { updatedAt: 'desc' }],
     select: {
