@@ -93,30 +93,28 @@ async function getDesignerByUsername(username: string) {
     return containsMatch;
   }
 
-  // Last resort: return first designer if no match (for testing)
-  // TODO: Remove this in production
-  const firstDesigner = await prisma.user.findFirst({
-    where: {
-      role: 'DESIGNER',
-    },
-  });
-
-  return firstDesigner || null;
+  return null;
 }
 
 /**
- * Get fingerprint tags from designer's projects
+ * Get fingerprint tags from designer's specialties or aesthetic profile
  */
-async function getFingerprintTags(designerId: string) {
-  // For now, return hardcoded fingerprint tags
-  // TODO: Replace with real analysis of project data
-  return [
-    'Warm Neutrals',
-    'Textural Contrast',
-    'Organic Modernism',
-    'Architectural Restraint',
-    'Midwestern Soul',
-  ];
+function getFingerprintTags(designer: { specialties: string[]; aestheticProfile: any }): string[] {
+  // Primary: use specialties if populated
+  if (designer.specialties && designer.specialties.length > 0) {
+    return designer.specialties;
+  }
+
+  // Fallback: parse aestheticProfile for style descriptors
+  if (designer.aestheticProfile && typeof designer.aestheticProfile === 'object') {
+    const profile = designer.aestheticProfile as Record<string, any>;
+    const styles = profile.dominantStyles || profile.styles || profile.tags;
+    if (Array.isArray(styles) && styles.length > 0) {
+      return styles.map((s: any) => (typeof s === 'string' ? s : String(s)));
+    }
+  }
+
+  return [];
 }
 
 export default async function Monograph({ params }: Props) {
@@ -136,11 +134,12 @@ export default async function Monograph({ params }: Props) {
   console.log('[Monograph] Found designer:', designer.name, designer.email);
 
   // Fetch all data in parallel
-  const [projects, knownForProducts, fingerprintTags] = await Promise.all([
+  const [projects, knownForProducts] = await Promise.all([
     getDesignerPublishedProjects(designer.id),
     getTaggedProductsForDesigner(designer.id),
-    getFingerprintTags(designer.id),
   ]);
+
+  const fingerprintTags = getFingerprintTags(designer);
 
   const hasProjects = projects.length > 0;
 
@@ -186,21 +185,28 @@ export default async function Monograph({ params }: Props) {
                     projects[0]?.images?.[0]?.url || 
                     '/images/placeholders/project-16x9.jpg';
 
-  // Calculate metrics (use designer data or seed values for Brad Prasky Design)
-  const followers = designer.followers || 18420;
-  // Calculate project views from projects
-  const projectViews = projects.reduce((sum, p) => sum + (p.views || 0), 0) || 184600;
-  const productSaves = knownForProducts.reduce((sum, p) => sum + p.tagCount, 0) || 4247;
-  const editorialsFeatured = 12; // TODO: Query from editorial assignments
+  // Calculate metrics from real data
+  const followers = designer.followers || 0;
+  const projectViews = projects.reduce((sum, p) => sum + (p.views || 0), 0);
+  const productSaves = knownForProducts.reduce((sum, p) => sum + p.tagCount, 0);
+
+  // Query real editorial featured count
+  const editorialsFeatured = await prisma.projectPost.count({
+    where: {
+      project: { designerId: designer.id },
+      status: 'PUBLISHED',
+    },
+  });
 
   return (
     <main className="min-h-screen bg-[#fdfbf8]">
-      <Hero 
+      <Hero
         imageUrl={heroImage}
         title={designer.name}
         locations={locations}
         establishedYear={establishedYear}
         followers={followers}
+        profileImageUrl={designer.profileImage}
       />
 
       <div className="max-w-7xl mx-auto px-6 py-24 space-y-48">

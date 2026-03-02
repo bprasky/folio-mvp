@@ -2,6 +2,7 @@ import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
+import { PUBLISHED_PROJECT_FILTER } from '@/server/queries/filters';
 import ProfileHero from '@/components/profile/unified/ProfileHero';
 import ProfileTabs from '@/components/profile/unified/ProfileTabs';
 import ProfileFeed from '@/components/profile/unified/ProfileFeed';
@@ -80,7 +81,7 @@ export default async function ProfilePage({ params, searchParams }: Props) {
 
   // Get project count
   const projectCount = await prisma.project.count({
-    where: { designerId: resolvedParams.userId, isPublic: true },
+    where: { designerId: resolvedParams.userId, ...PUBLISHED_PROJECT_FILTER },
   });
 
   // Get featured count

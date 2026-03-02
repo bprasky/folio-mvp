@@ -6,13 +6,14 @@ interface HeroProps {
   locations: string[];
   establishedYear: number;
   followers: number;
+  profileImageUrl?: string | null;
 }
 
 function formatNumber(num: number): string {
   return num.toLocaleString('en-US');
 }
 
-export default function Hero({ imageUrl, title, locations, establishedYear, followers }: HeroProps) {
+export default function Hero({ imageUrl, title, locations, establishedYear, followers, profileImageUrl }: HeroProps) {
   return (
     <div className="relative w-full h-[70vh] min-h-[500px] max-h-[800px] overflow-hidden">
       {/* Hero Image */}
@@ -43,9 +44,20 @@ export default function Hero({ imageUrl, title, locations, establishedYear, foll
       {/* Content Overlay */}
       <div className="absolute bottom-0 left-0 right-0 p-8 md:p-12 lg:p-16">
         <div className="max-w-7xl mx-auto">
-          <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl xl:text-7xl text-white font-light mb-4 leading-tight">
-            {title}
-          </h1>
+          <div className="flex items-end gap-5 mb-4">
+            {profileImageUrl && (
+              <Image
+                src={profileImageUrl}
+                alt={title}
+                width={80}
+                height={80}
+                className="rounded-full object-cover ring-2 ring-white/30 shrink-0"
+              />
+            )}
+            <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl xl:text-7xl text-white font-light leading-tight">
+              {title}
+            </h1>
+          </div>
           
           <div className="flex flex-wrap items-center gap-4 text-white/90 text-sm md:text-base font-light">
             <span>{locations.join(' · ')}</span>

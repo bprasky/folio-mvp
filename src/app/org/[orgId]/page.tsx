@@ -1,6 +1,7 @@
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
+import { PUBLISHED_PROJECT_FILTER } from '@/server/queries/filters';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import OrgProfileHero from '@/components/org-profile/OrgProfileHero';
@@ -182,7 +183,7 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
   if (memberIds.length > 0) {
     try {
       projectCount = await prisma.project.count({
-        where: { designerId: { in: memberIds }, isPublic: true },
+        where: { designerId: { in: memberIds }, ...PUBLISHED_PROJECT_FILTER },
       });
     } catch (err) {
       console.error('[OrgProfilePage] Error counting projects:', err);

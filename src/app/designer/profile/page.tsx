@@ -33,6 +33,7 @@ import DesignerCTAs from '@/components/atelier/DesignerCTAs';
 import { RidgeCard } from '@/components/ui/ridge-card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { getMonographUrl } from '@/lib/utils/getMonographUrl';
 
 const defaultDesignerData = {
   name: '',
@@ -358,6 +359,17 @@ export default function DesignerProfile() {
                   </a>
                 )}
               </div>
+
+              {/* View Public Profile */}
+              {designerData.name && (
+                <Link
+                  href={getMonographUrl({ name: designerData.name })}
+                  target="_blank"
+                  className="block text-center text-sm text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors py-2"
+                >
+                  View Public Profile &rarr;
+                </Link>
+              )}
 
               {/* CTAs - Moved under profile card */}
               <DesignerCTAs />

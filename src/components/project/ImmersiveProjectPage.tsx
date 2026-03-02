@@ -8,6 +8,7 @@ import { ProductBank } from "@/components/project/ProductBank";
 import { ProjectImageGallery } from "@/components/project/ProjectImageGallery";
 import { ImageTagDots } from "@/components/project/ImageTagDots";
 import { titleCase } from "@/lib/utils";
+import { getMonographUrl } from "@/lib/utils/getMonographUrl";
 
 type MediaModule = {
   id: string;
@@ -107,7 +108,7 @@ function DesignerProjectBadge({ post }: { post: any }) {
 
   return (
     <a
-      href={designer?.id ? `/designer/${designer.id}` : "#"}
+      href={designer?.name ? getMonographUrl(designer) : "#"}
       className="ridge-card px-4 py-3 flex items-center gap-3 hover:shadow-lg transition-all"
     >
       {logoUrl ? (

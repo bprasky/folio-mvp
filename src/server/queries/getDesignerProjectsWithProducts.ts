@@ -34,6 +34,7 @@
  */
 
 import { prisma } from '@/lib/prisma';
+import { PUBLISHED_PROJECT_FILTER } from '@/server/queries/filters';
 
 /**
  * Get published projects for a specific designer
@@ -43,12 +44,7 @@ export async function getDesignerPublishedProjects(designerId: string) {
   return prisma.project.findMany({
     where: {
       designerId,
-      // Only return published projects (same filter as public feed)
-      OR: [
-        { isPublic: true },
-        { publishedAt: { not: null } },
-        { status: 'published' }
-      ]
+      ...PUBLISHED_PROJECT_FILTER
     },
     orderBy: [
       { publishedAt: 'desc' },

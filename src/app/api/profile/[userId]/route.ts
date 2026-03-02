@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { PUBLISHED_PROJECT_FILTER } from '@/server/queries/filters';
 
 export async function GET(
   request: NextRequest,
@@ -51,7 +52,7 @@ export async function GET(
       // Stats - count public projects
       _count: {
         select: {
-          designerProjects: { where: { isPublic: true } },
+          designerProjects: { where: PUBLISHED_PROJECT_FILTER },
         },
       },
       // Organization for team
