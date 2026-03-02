@@ -16,7 +16,7 @@ export default async function DesignerProfilePage() {
 
   const userId = session.user.id;
 
-  // Fetch user with profile interview and organization
+  // Fetch user (without profileInterview — table may not exist yet)
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: {
@@ -30,15 +30,6 @@ export default async function DesignerProfilePage() {
       website: true,
       instagram: true,
       linkedin: true,
-      profileInterview: {
-        select: {
-          generatedBio: true,
-          shortBio: true,
-          pullQuotes: true,
-          philosophyStatement: true,
-          processDescription: true,
-        },
-      },
       organizationUsers: {
         where: { isActive: true, showOnProfile: true },
         take: 1,
@@ -218,24 +209,37 @@ export default async function DesignerProfilePage() {
       productCount: count,
     }));
 
-  // Parse pullQuotes from JSON
-  const rawPullQuotes = user.profileInterview?.pullQuotes;
-  let pullQuotes: string[] | null = null;
-  if (rawPullQuotes) {
-    if (Array.isArray(rawPullQuotes)) {
-      pullQuotes = rawPullQuotes.filter((q): q is string => typeof q === 'string');
-    }
-  }
-
-  const profileInterview = user.profileInterview
-    ? {
-        generatedBio: user.profileInterview.generatedBio,
-        shortBio: user.profileInterview.shortBio,
-        pullQuotes,
-        philosophyStatement: user.profileInterview.philosophyStatement,
-        processDescription: user.profileInterview.processDescription,
+  // Attempt to load profileInterview — table may not exist yet (P2021)
+  let profileInterview: ProfilePageData['profileInterview'] = null;
+  try {
+    const interview = await prisma.profileInterview.findUnique({
+      where: { userId },
+      select: {
+        generatedBio: true,
+        shortBio: true,
+        pullQuotes: true,
+        philosophyStatement: true,
+        processDescription: true,
+      },
+    });
+    if (interview) {
+      let pullQuotes: string[] | null = null;
+      if (interview.pullQuotes && Array.isArray(interview.pullQuotes)) {
+        pullQuotes = (interview.pullQuotes as unknown[]).filter(
+          (q): q is string => typeof q === 'string'
+        );
       }
-    : null;
+      profileInterview = {
+        generatedBio: interview.generatedBio,
+        shortBio: interview.shortBio,
+        pullQuotes,
+        philosophyStatement: interview.philosophyStatement,
+        processDescription: interview.processDescription,
+      };
+    }
+  } catch {
+    // Table doesn't exist yet — silently fall back to null
+  }
 
   const pageData: ProfilePageData = {
     user: {
