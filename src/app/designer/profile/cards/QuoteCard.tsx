@@ -1,3 +1,5 @@
+'use client';
+
 interface QuoteCardProps {
   quote: string;
   attribution?: string;
