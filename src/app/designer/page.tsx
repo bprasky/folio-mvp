@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import SafeImage from '../../components/SafeImage';
-import { FaPlus, FaEdit, FaTrash, FaChartLine, FaBriefcase, FaUser, FaToggleOn, FaToggleOff, FaDownload, FaUpload } from 'react-icons/fa';
+import { FaPlus, FaEdit, FaTrash, FaChartLine, FaBriefcase, FaUser, FaToggleOn, FaToggleOff, FaDownload, FaUpload, FaInstagram } from 'react-icons/fa';
 import ProjectCreationModal from '../../components/ProjectCreationModal';
 import { useRole } from '../../contexts/RoleContext';
 import { PublishButton } from './PublishButton';
@@ -364,6 +364,16 @@ export default function DesignerProfile() {
               >
                 <FaUpload className="inline w-3 h-3 mr-1" />
                 Setup
+              </Link>
+            )}
+            {project.status === 'published' && !project.id?.startsWith('mock') && (
+              <Link
+                href={`/designer/projects/${project.id}/instagram`}
+                className="rounded bg-black/60 text-white text-[11px] px-2 py-1 hover:bg-black/80"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <FaInstagram className="inline w-3 h-3 mr-1" />
+                Instagram
               </Link>
             )}
             {!project.id?.startsWith('mock') && (
