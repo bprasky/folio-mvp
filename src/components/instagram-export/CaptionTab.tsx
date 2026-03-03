@@ -31,7 +31,6 @@ export function CaptionTab({
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // Fallback for browsers that don't support clipboard API
       const textArea = document.createElement('textarea');
       textArea.value = fullCaption;
       document.body.appendChild(textArea);
@@ -44,15 +43,31 @@ export function CaptionTab({
   };
 
   return (
-    <div className="space-y-6">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      {/* Caption editor */}
       <div>
-        <label className="mb-2 block text-[13px] font-medium text-[#2C2420]">
-          Instagram Caption
-        </label>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+          <div style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase' as const, color: '#8B7B68', fontWeight: 500 }}>
+            Instagram Caption
+          </div>
+          {caption && (
+            <div style={{ fontSize: '12px', color: '#A89880' }}>
+              {caption.length} characters
+            </div>
+          )}
+        </div>
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-8">
-            <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#E8E0D8] border-t-[#2C2420]" />
-            <p className="mt-3 text-[13px] text-[#8B7B68]">Generating caption...</p>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 0' }}>
+            <div style={{
+              width: '24px',
+              height: '24px',
+              borderRadius: '50%',
+              border: '2px solid #E8E0D8',
+              borderTopColor: '#2C2420',
+              animation: 'spin 1s linear infinite',
+            }} />
+            <p style={{ marginTop: '12px', fontSize: '13px', color: '#8B7B68' }}>Generating caption...</p>
+            <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
           </div>
         ) : (
           <textarea
@@ -60,63 +75,75 @@ export function CaptionTab({
             onChange={(e) => setCaption(e.target.value)}
             rows={6}
             placeholder="Caption will be generated after selecting a headline..."
-            className="w-full rounded-lg border border-[#E8E0D8] bg-white px-3 py-2 text-[14px] leading-relaxed text-[#2C2420] placeholder:text-[#A89880] focus:border-[#C4B5A0] focus:outline-none"
+            style={{
+              width: '100%',
+              borderRadius: '10px',
+              border: '1px solid #E8E0D8',
+              background: '#FFFFFF',
+              padding: '12px 14px',
+              fontSize: '14px',
+              lineHeight: 1.6,
+              color: '#2C2420',
+              outline: 'none',
+              resize: 'vertical' as const,
+              fontFamily: 'inherit',
+            }}
           />
         )}
       </div>
 
       {/* CTA preview */}
       {caption && (
-        <div className="rounded-lg bg-[#F0EBE4] p-4">
-          <p className="mb-2 text-[11px] font-medium uppercase tracking-wider text-[#8B7B68]">
+        <div style={{
+          padding: '14px 16px',
+          borderRadius: '10px',
+          background: '#FAF7F4',
+          border: '1px solid #F0EBE4',
+        }}>
+          <div style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase' as const, color: '#8B7B68', marginBottom: '6px', fontWeight: 500 }}>
             Auto-appended CTA
-          </p>
-          <p className="font-serif text-[13px] italic text-[#2C2420]">{ctaText}</p>
+          </div>
+          <div style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: '13px', fontStyle: 'italic', color: '#2C2420' }}>
+            {ctaText}
+          </div>
         </div>
       )}
 
       {/* Actions */}
-      <div className="flex gap-2">
+      <div style={{ display: 'flex', gap: '8px' }}>
         <button
           onClick={handleCopy}
           disabled={!fullCaption}
-          className={`flex flex-1 items-center justify-center gap-2 rounded-lg py-2.5 text-[13px] font-medium transition-all duration-200 ${
-            copied
-              ? 'bg-green-50 text-green-700 border border-green-200'
-              : 'bg-[#2C2420] text-white disabled:opacity-40'
-          }`}
+          style={{
+            flex: 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px',
+            borderRadius: '10px',
+            padding: '10px',
+            fontSize: '13px',
+            fontWeight: 500,
+            border: copied ? '1px solid #bbf7d0' : 'none',
+            cursor: fullCaption ? 'pointer' : 'default',
+            transition: 'all 0.2s',
+            background: copied ? '#f0fdf4' : '#2C2420',
+            color: copied ? '#15803d' : '#FFFFFF',
+            opacity: fullCaption ? 1 : 0.4,
+          }}
         >
           {copied ? (
             <>
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <path
-                  d="M11.667 3.5L5.25 9.917L2.333 7"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
+                <path d="M11.667 3.5L5.25 9.917L2.333 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
               Copied!
             </>
           ) : (
             <>
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <rect
-                  x="5.25"
-                  y="5.25"
-                  width="7"
-                  height="7"
-                  rx="1.5"
-                  stroke="currentColor"
-                  strokeWidth="1"
-                />
-                <path
-                  d="M3.5 8.75H2.917C2.27 8.75 1.75 8.23 1.75 7.583V2.917C1.75 2.27 2.27 1.75 2.917 1.75H7.583C8.23 1.75 8.75 2.27 8.75 2.917V3.5"
-                  stroke="currentColor"
-                  strokeWidth="1"
-                  strokeLinecap="round"
-                />
+                <rect x="5.25" y="5.25" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1" />
+                <path d="M3.5 8.75H2.917C2.27 8.75 1.75 8.23 1.75 7.583V2.917C1.75 2.27 2.27 1.75 2.917 1.75H7.583C8.23 1.75 8.75 2.27 8.75 2.917V3.5" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
               </svg>
               Copy Caption
             </>
@@ -126,21 +153,36 @@ export function CaptionTab({
         <button
           onClick={onRegenerate}
           disabled={loading}
-          className="rounded-lg border border-[#E8E0D8] px-4 py-2.5 text-[13px] font-medium text-[#8B7B68] transition-colors hover:border-[#C4B5A0] hover:text-[#2C2420] disabled:opacity-50"
+          style={{
+            borderRadius: '10px',
+            border: '1px solid #E8E0D8',
+            background: '#FFFFFF',
+            padding: '10px 16px',
+            fontSize: '13px',
+            fontWeight: 500,
+            color: '#8B7B68',
+            cursor: 'pointer',
+            transition: 'all 0.2s',
+            opacity: loading ? 0.5 : 1,
+          }}
         >
           Regenerate
         </button>
       </div>
 
-      {/* Preview */}
+      {/* Full preview */}
       {fullCaption && (
-        <div className="rounded-lg border border-[#E8E0D8] p-4">
-          <p className="mb-2 text-[11px] font-medium uppercase tracking-wider text-[#8B7B68]">
+        <div style={{
+          padding: '14px 16px',
+          borderRadius: '10px',
+          border: '1px solid #E8E0D8',
+        }}>
+          <div style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase' as const, color: '#8B7B68', marginBottom: '8px', fontWeight: 500 }}>
             Full Caption Preview
-          </p>
-          <p className="whitespace-pre-wrap text-[13px] leading-relaxed text-[#2C2420]">
+          </div>
+          <div style={{ whiteSpace: 'pre-wrap' as const, fontSize: '13px', lineHeight: 1.6, color: '#2C2420' }}>
             {fullCaption}
-          </p>
+          </div>
         </div>
       )}
     </div>

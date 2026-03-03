@@ -102,40 +102,47 @@ export function ExportButton({ projectId, config, caption }: Props) {
   };
 
   return (
-    <div className="flex items-center gap-3">
+    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
       {progress && (
-        <span className="text-[13px] text-[#8B7B68]">{progress}</span>
+        <span style={{ fontSize: '13px', color: '#8B7B68' }}>{progress}</span>
       )}
       <button
         onClick={handleExport}
         disabled={exporting || !config.headline}
-        className={`flex items-center gap-2 rounded-xl px-5 py-2.5 text-[14px] font-medium transition-all duration-200 ${
-          exporting
-            ? 'bg-[#E8E0D8] text-[#8B7B68]'
-            : 'bg-[#2C2420] text-white hover:bg-[#1a1512] disabled:opacity-40'
-        }`}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          borderRadius: '10px',
+          padding: '10px 20px',
+          fontSize: '13px',
+          fontWeight: 500,
+          border: 'none',
+          cursor: exporting || !config.headline ? 'default' : 'pointer',
+          transition: 'all 0.2s',
+          background: exporting ? '#E8E0D8' : '#2C2420',
+          color: exporting ? '#8B7B68' : '#FFFFFF',
+          opacity: !config.headline && !exporting ? 0.4 : 1,
+        }}
       >
         {exporting ? (
           <>
-            <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#8B7B68] border-t-white" />
+            <div style={{
+              width: '16px',
+              height: '16px',
+              borderRadius: '50%',
+              border: '2px solid #8B7B68',
+              borderTopColor: '#FFFFFF',
+              animation: 'spin 1s linear infinite',
+            }} />
+            <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
             Exporting...
           </>
         ) : (
           <>
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path
-                d="M8 2V10.5M8 10.5L11 7.5M8 10.5L5 7.5"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <path
-                d="M3 12H13"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-              />
+              <path d="M8 2V10.5M8 10.5L11 7.5M8 10.5L5 7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M3 12H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
             </svg>
             Export Carousel
           </>
