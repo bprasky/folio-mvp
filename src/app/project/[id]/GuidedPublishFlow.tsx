@@ -79,7 +79,7 @@ export default function GuidedPublishFlow({ project, imageCount, images, project
       </div>
 
       {/* Project Summary Card */}
-      <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-elevated)] shadow-sm overflow-hidden">
+      <div className="rounded-[20px] border border-[var(--border-default)] bg-[var(--bg-elevated)] shadow-sm overflow-hidden">
         <button
           onClick={() => setSummaryExpanded(!summaryExpanded)}
           className="w-full flex items-center justify-between px-6 py-4 text-left"

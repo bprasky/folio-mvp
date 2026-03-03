@@ -62,7 +62,7 @@ export default function LocalEvents({ events }: LocalEventsProps) {
                 onClick={() => handleEventClick(e.id)}
                 className="text-left group"
               >
-                <div className="relative rounded-3xl overflow-hidden aspect-[16/10] shadow-sm hover:shadow-md transition-shadow">
+                <div className="relative rounded-[20px] overflow-hidden aspect-[16/10] shadow-sm hover:shadow-md transition-shadow">
                   <Image
                     src={pickImage(e)}
                     alt={e.title}

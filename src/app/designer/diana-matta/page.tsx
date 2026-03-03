@@ -255,7 +255,7 @@ const SMSModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void })
       exit={{ opacity: 0 }}
     >
       <motion.div 
-        className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl"
+        className="bg-white rounded-[20px] max-w-md w-full p-6 shadow-2xl"
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.9, opacity: 0 }}
@@ -753,7 +753,7 @@ export default function DesignerProfile() {
             style={{ y: sidebarY }}
           >
             <motion.div 
-              className="bg-white rounded-2xl p-8 shadow-lg"
+              className="bg-white rounded-[20px] p-8 shadow-lg"
               initial={{ opacity: 0, x: -50 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8 }}
@@ -850,7 +850,7 @@ export default function DesignerProfile() {
           <main className="col-span-8">
             {/* Tab Navigation */}
             <motion.div 
-              className="bg-white rounded-2xl p-2 shadow-lg mb-8"
+              className="bg-white rounded-[20px] p-2 shadow-lg mb-8"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}

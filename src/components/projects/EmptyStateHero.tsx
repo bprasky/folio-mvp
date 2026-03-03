@@ -30,7 +30,7 @@ export function EmptyStateHero({ userType, userName }: EmptyStateHeroProps) {
     : 'Save products and inspiration from the Magazine into organized collections. Keep track of ideas for your space in one place.';
 
   return (
-    <section className="ridge-card ridge-card-lg p-8 md:p-12 relative z-10">
+    <section className="p-8 md:p-12 relative z-10">
       <div className="max-w-2xl mx-auto text-center relative z-10">
         {/* Icon cluster with ridge styling */}
         <div className="flex justify-center gap-3 mb-6">

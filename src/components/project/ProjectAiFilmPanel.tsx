@@ -19,7 +19,7 @@ type FilmProps = {
 export function ProjectAiFilmPanel({ module, project }: FilmProps) {
   if (!module) {
     return (
-      <section className="ridge-card px-4 py-3 md:px-5 md:py-4 folio-meta text-[var(--text-primary)] space-y-1">
+      <section className="px-4 py-3 md:px-5 md:py-4 folio-meta text-[var(--text-primary)] space-y-1">
         <div className="folio-meta font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
           Project Film (AI-Compiled)
         </div>

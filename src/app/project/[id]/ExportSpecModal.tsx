@@ -49,7 +49,7 @@ export default function ExportSpecModal({
 
       {/* Modal */}
       <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-md">
-        <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-elevated)] shadow-lg p-6">
+        <div className="rounded-[20px] border border-[var(--border-default)] bg-[var(--bg-elevated)] shadow-lg p-6">
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <h3 className="folio-h3 text-[var(--text-primary)]">Export Spec</h3>

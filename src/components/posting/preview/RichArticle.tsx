@@ -152,7 +152,7 @@ export function RichArticle({
   const hasContent = narrativeParagraphs.length > 0 || pullQuotes.length > 0;
 
   return (
-    <article className="rounded-3xl shadow-xl backdrop-blur-sm bg-[var(--bg-base)] p-6 md:p-10 max-w-7xl mx-auto prose prose-neutral dark:prose-invert max-w-none prose-p:leading-relaxed prose-headings:font-semibold">
+    <article className="rounded-[20px] shadow-xl backdrop-blur-sm bg-[var(--bg-base)] p-6 md:p-10 max-w-7xl mx-auto prose prose-neutral dark:prose-invert max-w-none prose-p:leading-relaxed prose-headings:font-semibold">
       {/* Title */}
       <header className="mb-8">
         <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-[var(--text-primary)] mb-4">

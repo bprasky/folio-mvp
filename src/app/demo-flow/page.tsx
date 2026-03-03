@@ -201,7 +201,7 @@ export default function DemoFlowPage() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.3 }}
-            className="bg-white rounded-2xl shadow-lg p-8 mb-6"
+            className="bg-white rounded-[20px] shadow-lg p-8 mb-6"
           >
             <div className="flex items-start gap-6">
               <div className={`p-4 rounded-xl bg-gradient-to-r ${currentStepData.color} text-white`}>

@@ -25,7 +25,7 @@ export function UpdatesCard({ module }: { module: any }) {
   return (
     <Link
       href={`${projectSlug}#module-${module.id}`}
-      className="group rounded-3xl ring-1 ring-black/5 bg-[var(--bg-base)] overflow-hidden flex flex-col"
+      className="group rounded-[20px] ring-1 ring-black/5 bg-[var(--bg-base)] overflow-hidden flex flex-col"
     >
       <div className="relative h-[220px] bg-[var(--bg-elevated)]">
         {thumb ? (

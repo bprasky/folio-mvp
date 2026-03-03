@@ -14,7 +14,7 @@ export default function OverviewModal({ open, onClose, project }: OverviewModalP
     <Dialog open={open} onClose={onClose} className="relative z-50">
       <div className="fixed inset-0 bg-black/50" aria-hidden="true" />
       <div className="fixed inset-0 flex items-center justify-center p-4">
-        <DialogPanel className="w-full max-w-2xl rounded-2xl bg-[var(--bg-elevated)] p-6 shadow-xl">
+        <DialogPanel className="w-full max-w-2xl rounded-[20px] bg-[var(--bg-elevated)] p-6 shadow-xl">
           <div className="flex items-center justify-between mb-4">
             <DialogTitle className="folio-h2 text-[var(--text-primary)]">Overview</DialogTitle>
             <button

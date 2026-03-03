@@ -140,7 +140,7 @@ export default function EditorialsPage() {
             <div className="relative">
               <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-6">Featured Editorial</h2>
               <Link href={`/editorials/${featuredEditorial.slug}`}>
-                <div className="relative h-[500px] rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300 group cursor-pointer">
+                <div className="relative h-[500px] rounded-[20px] overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300 group cursor-pointer">
                   <SafeImage
                     src={featuredEditorial.heroImage}
                     alt={featuredEditorial.title}
@@ -183,7 +183,7 @@ export default function EditorialsPage() {
           {/* Editorial Grid */}
           <div>
             <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-6">All Editorials</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
               {filteredEditorials.map((editorial) => (
                 <Link key={editorial.id} href={`/editorials/${editorial.slug}`}>
                   <article className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden group cursor-pointer">

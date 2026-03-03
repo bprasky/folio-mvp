@@ -311,7 +311,7 @@ export default function StoryPanel({ projectId, project, images, isOwner }: Stor
       </p>
 
       {/* Project Credits */}
-      <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-elevated)] p-6 shadow-sm">
+      <div className="rounded-[20px] border border-[var(--border-default)] bg-[var(--bg-elevated)] p-6 shadow-sm">
         <h2 className="folio-h3 text-[var(--text-primary)] mb-1">Project Credits</h2>
         <p className="folio-meta text-[var(--text-tertiary)] mb-4">
           Who else brought this project to life? Credits appear on your published post.
@@ -341,7 +341,7 @@ export default function StoryPanel({ projectId, project, images, isOwner }: Stor
       )}
 
       {/* Your Reflections Section */}
-      <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-elevated)] p-6 shadow-sm">
+      <div className="rounded-[20px] border border-[var(--border-default)] bg-[var(--bg-elevated)] p-6 shadow-sm">
         <div className="flex items-center justify-between mb-4">
           <h2 className="folio-h3 text-[var(--text-primary)]">Your Reflections</h2>
           <button
@@ -420,7 +420,7 @@ export default function StoryPanel({ projectId, project, images, isOwner }: Stor
       </div>
 
       {/* Follow-up Questions Section */}
-      <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-elevated)] p-6 shadow-sm">
+      <div className="rounded-[20px] border border-[var(--border-default)] bg-[var(--bg-elevated)] p-6 shadow-sm">
         <div className="flex items-center justify-between mb-4">
           <h2 className="folio-h3 text-[var(--text-primary)]">Follow-up Questions</h2>
           <div className="flex gap-2">
@@ -507,7 +507,7 @@ export default function StoryPanel({ projectId, project, images, isOwner }: Stor
             className="absolute inset-0 bg-black/50 backdrop-blur-sm"
             onClick={() => setShowInterviewModal(false)}
           />
-          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-3xl mx-4 max-h-[90vh] overflow-hidden">
+          <div className="relative bg-white rounded-[20px] shadow-2xl w-full max-w-3xl mx-4 max-h-[90vh] overflow-hidden">
             <InterviewFlow
               projectId={project.id}
               projectName={project.title}

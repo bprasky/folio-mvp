@@ -22,7 +22,7 @@ export default function CinematicHero({ imageUrl, title, deck }: Props) {
     <div ref={ref} className="relative">
       <motion.div
         style={{ y, scale }}
-        className="overflow-hidden rounded-3xl ring-1 ring-black/5"
+        className="overflow-hidden rounded-[20px] ring-1 ring-black/5"
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img

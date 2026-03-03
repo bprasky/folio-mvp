@@ -180,7 +180,7 @@ export default function CreatePostPage() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* Post Details */}
-          <div className="bg-white rounded-2xl p-6 shadow-sm">
+          <div className="bg-white rounded-[20px] p-6 shadow-sm">
             <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-4">Post Details</h2>
             
             <div className="space-y-4">
@@ -234,7 +234,7 @@ export default function CreatePostPage() {
           </div>
 
           {/* Product Selection */}
-          <div className="bg-white rounded-2xl p-6 shadow-sm">
+          <div className="bg-white rounded-[20px] p-6 shadow-sm">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-[var(--text-primary)]">
                 Select Products ({formData.selectedItems.size} selected)

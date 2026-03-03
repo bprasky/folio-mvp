@@ -211,7 +211,7 @@ export function BioInterviewModal({
   if (step === 'generating') {
     return (
       <Dialog open={open} onOpenChange={() => {}}>
-        <DialogContent className="w-full max-w-5xl h-[90vh] max-h-[90vh] mx-auto my-auto rounded-3xl flex flex-col items-center justify-center bg-white/90 backdrop-blur-xl border border-white/30 shadow-2xl overflow-hidden">
+        <DialogContent className="w-full max-w-5xl h-[90vh] max-h-[90vh] mx-auto my-auto rounded-[20px] flex flex-col items-center justify-center bg-white/90 backdrop-blur-xl border border-white/30 shadow-2xl overflow-hidden">
           <div className="flex flex-col items-center justify-center space-y-6">
             <Sparkles className="w-16 h-16 text-amber-600 animate-pulse" />
             <h3 className="text-3xl font-serif italic text-[var(--text-primary)]">
@@ -231,7 +231,7 @@ export function BioInterviewModal({
   if (step === 'complete') {
     return (
       <Dialog open={open} onOpenChange={onClose}>
-        <DialogContent className="w-full max-w-5xl h-[90vh] max-h-[90vh] mx-auto my-auto rounded-3xl flex flex-col items-center justify-center bg-white/90 backdrop-blur-xl border border-white/30 shadow-2xl overflow-hidden">
+        <DialogContent className="w-full max-w-5xl h-[90vh] max-h-[90vh] mx-auto my-auto rounded-[20px] flex flex-col items-center justify-center bg-white/90 backdrop-blur-xl border border-white/30 shadow-2xl overflow-hidden">
           <div className="flex flex-col items-center justify-center space-y-6">
             <div
               className="w-20 h-20 rounded-full flex items-center justify-center"
@@ -260,7 +260,7 @@ export function BioInterviewModal({
   // Main interview view - immersive style
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="w-full max-w-5xl h-[90vh] max-h-[90vh] mx-auto my-auto rounded-3xl flex flex-col bg-white/90 backdrop-blur-xl border border-white/30 shadow-2xl overflow-hidden">
+      <DialogContent className="w-full max-w-5xl h-[90vh] max-h-[90vh] mx-auto my-auto rounded-[20px] flex flex-col bg-white/90 backdrop-blur-xl border border-white/30 shadow-2xl overflow-hidden">
         {/* Header with close button and progress */}
         <div className="flex items-center justify-between px-8 py-4 border-b border-[var(--ridge-outer)]/50 bg-white/50">
           <button

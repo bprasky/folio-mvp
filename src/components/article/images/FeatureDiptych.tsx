@@ -30,7 +30,7 @@ export default function FeatureDiptych({ images }: { images: ImageLike[] }) {
       {/* Feature */}
       {feature ? (
         <figure
-          className="rounded-3xl overflow-hidden ring-1 ring-black/5 cursor-zoom-in"
+          className="rounded-[20px] overflow-hidden ring-1 ring-black/5 cursor-zoom-in"
           onClick={() => setOpen(0)}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -53,7 +53,7 @@ export default function FeatureDiptych({ images }: { images: ImageLike[] }) {
           {diptych.map((img, i) => (
             <figure
               key={i}
-              className="rounded-3xl overflow-hidden ring-1 ring-black/5 cursor-zoom-in"
+              className="rounded-[20px] overflow-hidden ring-1 ring-black/5 cursor-zoom-in"
               onClick={() => setOpen(1 + i)}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -78,7 +78,7 @@ export default function FeatureDiptych({ images }: { images: ImageLike[] }) {
           {triptych.map((img, i) => (
             <figure
               key={i}
-              className="rounded-3xl overflow-hidden ring-1 ring-black/5 cursor-zoom-in"
+              className="rounded-[20px] overflow-hidden ring-1 ring-black/5 cursor-zoom-in"
               onClick={() => setOpen(1 + diptych.length + i)}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
