@@ -137,7 +137,7 @@ export default function FlowMosaic({ events, canEdit = false }: FlowMosaicProps)
           <article
             key={item.id}
             className={clsx(
-              "group relative rounded-xl border border-folio-border shadow-sm bg-white overflow-hidden",
+              "group relative rounded-[20px] overflow-hidden",
               // Tailwind supports col-span-1..12, dynamic via template string
               `col-span-${colSpan}`
             )}

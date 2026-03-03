@@ -29,7 +29,7 @@ export default function MagazineProductRail({ products }: Props) {
         {products.map((product) => (
           <div
             key={product.id}
-            className="ridge-card min-w-[180px] max-w-[220px] flex-shrink-0 overflow-hidden rounded-2xl"
+            className="ridge-card min-w-[180px] max-w-[220px] flex-shrink-0 overflow-hidden rounded-[20px]"
           >
             <div className="relative aspect-[4/3] w-full bg-[var(--bg-base)]">
               {product.imageUrl && (

@@ -24,8 +24,8 @@ export function TopicCard({ topic, onContribute, className }: TopicCardProps) {
   return (
     <div
       className={cn(
-        'rounded-xl border border-[var(--border-subtle)] bg-white p-5 transition-all',
-        'hover:shadow-md hover:border-[var(--border-default)]',
+        'rounded-[20px] border border-[var(--border-subtle)] bg-white p-5 transition-all',
+        'hover:border-[var(--border-default)]',
         className
       )}
     >
@@ -64,7 +64,7 @@ export function TopicCard({ topic, onContribute, className }: TopicCardProps) {
       <div className="mb-4">
         <div className="h-1.5 bg-[var(--bg-elevated)] rounded-full overflow-hidden">
           <div
-            className="h-full bg-gradient-to-r from-blue-500 to-blue-400 transition-all duration-500"
+            className="h-full bg-[rgb(74,44,59)] transition-all duration-500"
             style={{ width: `${progress}%` }}
           />
         </div>
@@ -78,7 +78,7 @@ export function TopicCard({ topic, onContribute, className }: TopicCardProps) {
       {hasContributed ? (
         <button
           disabled
-          className="w-full py-2.5 px-4 rounded-lg bg-emerald-50 text-emerald-700 font-medium text-sm cursor-default"
+          className="w-full py-2.5 px-4 rounded-lg bg-[rgb(74,44,59)]/10 text-[rgb(74,44,59)] font-medium text-sm cursor-default"
         >
           Contributed
         </button>
