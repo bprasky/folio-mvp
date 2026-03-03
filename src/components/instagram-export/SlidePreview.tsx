@@ -1,12 +1,12 @@
 'use client';
 
 import type { SlideData } from './InstagramExportEditor';
-import type { AspectRatio } from '@/lib/instagram-export/generate-images';
 import type { HeadlinePosition, WatermarkStyle } from '@/lib/instagram-export/svg-templates';
 
 interface Props {
-  slide: SlideData | undefined;
-  aspectRatio: AspectRatio;
+  slides: SlideData[];
+  activeIndex: number;
+  onSelectSlide: (index: number) => void;
   headline: string;
   headlinePosition: HeadlinePosition;
   watermarkStyle: WatermarkStyle;
@@ -16,29 +16,29 @@ interface Props {
   bioText: string;
   projectName: string;
   designerPhoto?: string;
+  caption: string;
+  designerHandle?: string;
 }
-
-const ASPECT_RATIOS = {
-  '4:5': 'aspect-[4/5]',
-  '1:1': 'aspect-square',
-  '9:16': 'aspect-[9/16]',
-} as const;
 
 function getWatermarkText(style: WatermarkStyle, designerName: string): string {
   switch (style) {
     case 'folio_x':
-      return `FOLIO \u00D7 ${designerName.toUpperCase()}`;
+      return `folio \u00D7 ${designerName.toLowerCase()}`;
     case 'folio_presents':
-      return `FOLIO PRESENTS ${designerName.toUpperCase()}`;
+      return 'a folio editorial';
     case 'minimal':
     default:
-      return 'FOLIO';
+      return 'folio';
   }
 }
 
+// Noise texture SVG for subtle grain
+const NOISE_TEXTURE = "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")";
+
 export function SlidePreview({
-  slide,
-  aspectRatio,
+  slides,
+  activeIndex,
+  onSelectSlide,
   headline,
   headlinePosition,
   watermarkStyle,
@@ -48,128 +48,176 @@ export function SlidePreview({
   bioText,
   projectName,
   designerPhoto,
+  caption,
+  designerHandle,
 }: Props) {
+  const slide = slides[activeIndex];
   if (!slide) return null;
 
-  const aspectClass = ASPECT_RATIOS[aspectRatio];
   const watermarkText = getWatermarkText(watermarkStyle, designerName);
+  const handle = designerHandle || designerName.toLowerCase().replace(/\s+/g, '');
 
-  // Headline positioning classes
-  const headlineClasses = {
-    bottom_left: 'bottom-8 left-8 text-left',
-    bottom_center: 'bottom-8 left-0 right-0 text-center',
-    top_left: 'top-8 left-8 text-left',
+  const positionStyles: Record<string, React.CSSProperties> = {
+    bottom_left: { bottom: '64px', left: '28px', right: '28px', textAlign: 'left' },
+    bottom_center: { bottom: '64px', left: '28px', right: '28px', textAlign: 'center' },
+    top_left: { top: '64px', left: '28px', right: '28px', textAlign: 'left' },
   };
 
-  // Watermark position (opposite of headline)
-  const watermarkClasses = headlinePosition.startsWith('bottom')
-    ? 'top-6 right-6'
-    : 'bottom-6 right-6';
-
-  // Gradient direction
-  const gradientClasses = headlinePosition.startsWith('bottom')
-    ? 'bg-gradient-to-t from-black/60 via-black/20 to-transparent'
-    : 'bg-gradient-to-b from-black/60 via-black/20 to-transparent';
-
-  return (
-    <div className="flex justify-center">
-      <div className={`relative w-full max-w-[420px] overflow-hidden rounded-2xl shadow-lg ${aspectClass}`}>
-        {/* Hero slide */}
-        {slide.type === 'hero' && slide.imageUrl && (
-          <>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={slide.imageUrl}
-              alt="Hero"
-              className="absolute inset-0 h-full w-full object-cover"
-            />
-            <div className={`absolute inset-0 ${gradientClasses}`} />
-            <div className={`absolute ${headlineClasses[headlinePosition]} max-w-[80%]`}>
-              <p className="font-serif text-[22px] italic leading-tight text-white drop-shadow-lg">
-                &ldquo;{headline || 'Your headline here'}&rdquo;
-              </p>
-            </div>
-            <div className={`absolute ${watermarkClasses}`}>
-              <span className="text-[10px] font-normal tracking-[0.15em] text-white/80 drop-shadow">
-                {watermarkText}
-              </span>
-            </div>
-          </>
-        )}
-
-        {/* Detail slide */}
-        {slide.type === 'detail' && slide.imageUrl && (
-          <>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={slide.imageUrl}
-              alt="Detail"
-              className="absolute inset-0 h-full w-full object-cover"
-            />
-            <div className="absolute bottom-6 right-6">
-              <span className="text-[10px] font-normal tracking-[0.15em] text-white/80 drop-shadow">
-                {watermarkText}
-              </span>
-            </div>
-          </>
-        )}
-
-        {/* Bio slide */}
-        {slide.type === 'bio' && (
-          <div className="absolute inset-0 flex flex-col bg-[#F5F0EB]">
-            {designerPhoto && (
-              <div className="relative h-[45%]">
+  const renderSlide = () => {
+    // Bio slide
+    if (slide.type === 'bio') {
+      return (
+        <div style={{ width: '100%', height: '100%', background: 'linear-gradient(160deg, #F5F0EB 0%, #EDE6DD 40%, #E4DBD0 100%)', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ position: 'absolute', inset: 0, opacity: 0.03, backgroundImage: NOISE_TEXTURE }} />
+          {/* Photo area */}
+          <div style={{ flex: '0 0 45%', position: 'relative', overflow: 'hidden' }}>
+            {designerPhoto ? (
+              <>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={designerPhoto}
-                  alt={designerName}
-                  className="h-full w-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#F5F0EB]" />
-              </div>
+                <img src={designerPhoto} alt={designerName} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+              </>
+            ) : (
+              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, #C4B5A0 0%, #9B8B75 50%, #7B6B55 100%)' }} />
             )}
-            <div className={`flex flex-1 flex-col px-8 ${designerPhoto ? '' : 'justify-center'}`}>
-              <h3 className="font-serif text-[24px] font-medium text-[#2C2420]">
-                {designerName}
-              </h3>
-              {(designerTitle || studioName) && (
-                <p className="mt-1 text-[13px] tracking-wide text-[#8B7B68]">
-                  {designerTitle}
-                  {studioName ? ` \u2014 ${studioName}` : ''}
-                </p>
-              )}
-              <div className="my-4 h-px bg-[#C4B5A0]" />
-              <p className="font-serif text-[15px] italic leading-relaxed text-[#2C2420]">
-                {bioText || 'Designer bio will appear here...'}
-              </p>
+            <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '40%', background: 'linear-gradient(0deg, #F5F0EB 0%, transparent 100%)' }} />
+          </div>
+          {/* Text content */}
+          <div style={{ flex: 1, padding: '0 28px 24px', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', position: 'relative', zIndex: 1 }}>
+            <div style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: '18px', color: '#2C2420', marginBottom: '3px', letterSpacing: '0.5px' }}>
+              {designerName}
             </div>
-            <div className="absolute bottom-6 right-6">
-              <span className="text-[10px] font-normal tracking-[0.15em] text-[#A89880]">
+            <div style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: '9px', letterSpacing: '2.5px', textTransform: 'uppercase', color: '#A89880', marginBottom: '16px' }}>
+              {designerTitle ? `${designerTitle} · ` : ''}{studioName || ''}
+            </div>
+            <div style={{ width: '32px', height: '1px', background: '#C4B5A0', marginBottom: '16px' }} />
+            <div style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: '13px', lineHeight: 1.65, color: '#4A3F35', fontStyle: 'italic' }}>
+              {bioText || 'Designer bio will appear here...'}
+            </div>
+          </div>
+          {/* Watermark */}
+          <div style={{ position: 'absolute', bottom: '16px', right: '20px', zIndex: 2 }}>
+            <div style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: '7px', letterSpacing: '2.5px', color: 'rgba(139,123,104,0.5)', textTransform: 'lowercase' }}>
+              {watermarkText}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // CTA slide
+    if (slide.type === 'cta') {
+      return (
+        <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, #F5F0EB 0%, #EDE6DD 100%)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+          <div style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: '14px', letterSpacing: '3px', color: '#4A3F35', textTransform: 'uppercase', marginBottom: '20px' }}>
+            Full Editorial
+          </div>
+          <div style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: '28px', color: '#2C2420', marginBottom: '8px', fontStyle: 'italic' }}>
+            folio
+          </div>
+          <div style={{ width: '40px', height: '1px', background: '#4A3F35', margin: '16px 0' }} />
+          <div style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: '11px', letterSpacing: '2px', color: '#8B7B68', textTransform: 'uppercase' }}>
+            {projectName}
+          </div>
+          <div style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: '10px', letterSpacing: '1.5px', color: '#A89880', textTransform: 'uppercase', marginTop: '6px' }}>
+            by {designerName}
+          </div>
+          <div style={{ position: 'absolute', bottom: '24px', fontFamily: "'Helvetica Neue', sans-serif", fontSize: '9px', letterSpacing: '1.5px', color: '#B8A898', textTransform: 'uppercase' }}>
+            folioad.com
+          </div>
+        </div>
+      );
+    }
+
+    // Hero / Detail slides (with images)
+    const isHero = slide.type === 'hero';
+    const gradientDir = headlinePosition.startsWith('top') ? '180deg' : '0deg';
+
+    return (
+      <div style={{ width: '100%', height: '100%', position: 'relative', overflow: 'hidden' }}>
+        {slide.imageUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={slide.imageUrl} alt={slide.type} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+        ) : (
+          <div style={{ position: 'absolute', inset: 0, background: isHero ? 'linear-gradient(135deg, #8B7355 0%, #6B5B45 40%, #4A3F35 100%)' : 'linear-gradient(160deg, #9B8B75 0%, #7B6B55 50%, #5A4F45 100%)' }}>
+            <div style={{ position: 'absolute', inset: 0, opacity: 0.06, backgroundImage: NOISE_TEXTURE }} />
+          </div>
+        )}
+        {isHero && (
+          <>
+            <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(${gradientDir}, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0) 50%)` }} />
+            <div style={{ position: 'absolute', ...positionStyles[headlinePosition], zIndex: 2 }}>
+              <div style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: '20px', lineHeight: 1.3, color: '#FFFFFF', fontStyle: 'italic', textShadow: '0 1px 8px rgba(0,0,0,0.3)', maxWidth: '280px', margin: headlinePosition === 'bottom_center' ? '0 auto' : undefined }}>
+                &ldquo;{headline || 'Your headline here'}&rdquo;
+              </div>
+            </div>
+            <div style={{ position: 'absolute', bottom: headlinePosition.startsWith('bottom') ? '28px' : 'auto', top: headlinePosition.startsWith('top') ? '28px' : 'auto', right: '28px', zIndex: 2 }}>
+              <div style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: '8px', letterSpacing: '2.5px', color: 'rgba(255,255,255,0.65)', textTransform: 'lowercase' }}>
                 {watermarkText}
-              </span>
+              </div>
+            </div>
+          </>
+        )}
+        {slide.type === 'detail' && (
+          <div style={{ position: 'absolute', bottom: '20px', right: '20px', zIndex: 2 }}>
+            <div style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: '8px', letterSpacing: '2.5px', color: 'rgba(255,255,255,0.45)', textTransform: 'lowercase' }}>
+              {watermarkText}
             </div>
           </div>
         )}
+      </div>
+    );
+  };
 
-        {/* CTA slide */}
-        {slide.type === 'cta' && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#F5F0EB] px-12">
-            <p className="text-[10px] tracking-[0.25em] text-[#8B7B68]">
-              FULL EDITORIAL
-            </p>
-            <p className="mt-6 font-serif text-[36px] italic text-[#2C2420]">
-              folio
-            </p>
-            <div className="mx-auto my-6 h-px w-2/3 bg-[#C4B5A0]" />
-            <p className="text-center font-serif text-[18px] text-[#2C2420]">
-              {projectName}
-            </p>
-            <p className="mt-2 text-[14px] font-light text-[#8B7B68]">
-              by {designerName}
-            </p>
-            <p className="absolute bottom-8 text-[10px] tracking-[0.12em] text-[#A89880]">
-              FOLIOAD.COM
-            </p>
+  return (
+    <div style={{ width: '340px' }}>
+      {/* Instagram phone frame */}
+      <div style={{ background: '#FFFFFF', borderRadius: '12px', boxShadow: '0 4px 24px rgba(44,36,32,0.08), 0 1px 4px rgba(44,36,32,0.04)', overflow: 'hidden', border: '1px solid #EDE6DD' }}>
+        {/* Instagram header */}
+        <div style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'linear-gradient(135deg, #C4B5A0, #8B7B68)', overflow: 'hidden', flexShrink: 0 }}>
+            {designerPhoto && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={designerPhoto} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            )}
+          </div>
+          <div>
+            <div style={{ fontSize: '13px', fontWeight: 600, color: '#2C2420' }}>{handle}</div>
+            <div style={{ fontSize: '10px', color: '#A89880' }}>{projectName}</div>
+          </div>
+        </div>
+
+        {/* Active slide */}
+        <div style={{ width: '340px', height: '425px', position: 'relative' }}>
+          {renderSlide()}
+        </div>
+
+        {/* Dots navigation */}
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '6px', padding: '12px' }}>
+          {slides.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => onSelectSlide(i)}
+              style={{
+                width: i === activeIndex ? '16px' : '6px',
+                height: '6px',
+                borderRadius: '3px',
+                background: i === activeIndex ? '#2C2420' : '#D4C9BC',
+                border: 'none',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                padding: 0,
+              }}
+            />
+          ))}
+        </div>
+
+        {/* Caption preview */}
+        {caption && (
+          <div style={{ padding: '8px 16px 16px', borderTop: '1px solid #F0EBE4' }}>
+            <div style={{ fontSize: '12px', lineHeight: 1.6, color: '#4A3F35' }}>
+              <span style={{ fontWeight: 600 }}>{handle}</span>{' '}
+              {caption.substring(0, 120)}...
+            </div>
           </div>
         )}
       </div>

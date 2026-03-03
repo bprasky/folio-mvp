@@ -222,38 +222,66 @@ export function InstagramExportEditor({ project, post, designer, images, rooms }
     }
   }, [selectedHeadline]);
 
+  // Tab auto-navigation: switch to relevant slide when tab changes
+  const handleTabChange = (tab: TabType) => {
+    setActiveTab(tab);
+    if (tab === 'headline') {
+      setActiveSlideIndex(0); // Hero slide
+    } else if (tab === 'designer') {
+      const bioIdx = slides.findIndex((s) => s.type === 'bio');
+      if (bioIdx >= 0) setActiveSlideIndex(bioIdx);
+    } else if (tab === 'caption') {
+      const ctaIdx = slides.findIndex((s) => s.type === 'cta');
+      if (ctaIdx >= 0) setActiveSlideIndex(ctaIdx);
+    }
+  };
+
+  const designerHandle = designer?.name?.toLowerCase().replace(/\s+/g, '') || 'designer';
+
   const tabs: { key: TabType; label: string }[] = [
     { key: 'format', label: 'Format' },
     { key: 'headline', label: 'Headline' },
-    { key: 'designer', label: 'Designer' },
+    { key: 'designer', label: 'Bio' },
     { key: 'caption', label: 'Caption' },
   ];
 
   return (
-    <div className="min-h-screen bg-[#FAF7F4]">
+    <div style={{ minHeight: '100vh', background: '#FAF7F4' }}>
       {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-[#E8E0D8] bg-[#FAF7F4]/80 backdrop-blur-xl">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
-          <div className="flex items-center gap-4">
+      <header style={{
+        position: 'sticky',
+        top: 0,
+        zIndex: 50,
+        borderBottom: '1px solid #E8E0D8',
+        background: 'rgba(250,247,244,0.85)',
+        backdropFilter: 'blur(20px)',
+      }}>
+        <div style={{
+          maxWidth: '1280px',
+          margin: '0 auto',
+          display: 'flex',
+          height: '64px',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '0 24px',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <Link
               href={`/p/${post.slug}`}
-              className="text-[#8B7B68] transition-colors hover:text-[#2C2420]"
+              style={{ color: '#8B7B68', transition: 'color 0.2s', display: 'flex', alignItems: 'center' }}
             >
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <path
-                  d="M12.5 15L7.5 10L12.5 5"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
+                <path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </Link>
-            <div>
-              <h1 className="text-[15px] font-medium text-[#2C2420]">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <span style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: '20px', fontStyle: 'italic', color: '#2C2420' }}>
+                folio
+              </span>
+              <span style={{ color: '#D4C9BC', fontSize: '18px', fontWeight: 200 }}>|</span>
+              <span style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: '13px', letterSpacing: '1.5px', textTransform: 'uppercase' as const, color: '#8B7B68' }}>
                 Share to Instagram
-              </h1>
-              <p className="text-[13px] text-[#8B7B68]">{project.title}</p>
+              </span>
             </div>
           </div>
 
@@ -277,15 +305,21 @@ export function InstagramExportEditor({ project, post, designer, images, rooms }
 
       {/* Room selector */}
       {rooms.length > 1 && (
-        <div className="border-b border-[#E8E0D8] bg-[#FAF7F4]">
-          <div className="mx-auto flex max-w-7xl gap-2 px-6 py-3">
+        <div style={{ borderBottom: '1px solid #E8E0D8', background: '#FAF7F4' }}>
+          <div style={{ maxWidth: '1280px', margin: '0 auto', display: 'flex', gap: '8px', padding: '12px 24px' }}>
             <button
               onClick={() => setSelectedRoom(null)}
-              className={`rounded-full px-4 py-1.5 text-[13px] font-medium transition-all duration-200 ${
-                selectedRoom === null
-                  ? 'bg-[#2C2420] text-white'
-                  : 'bg-[#F0EBE4] text-[#8B7B68] hover:bg-[#E8E0D8]'
-              }`}
+              style={{
+                borderRadius: '20px',
+                padding: '6px 16px',
+                fontSize: '13px',
+                fontWeight: 500,
+                border: 'none',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                background: selectedRoom === null ? '#2C2420' : '#F0EBE4',
+                color: selectedRoom === null ? '#FFFFFF' : '#8B7B68',
+              }}
             >
               Full Project
             </button>
@@ -293,11 +327,17 @@ export function InstagramExportEditor({ project, post, designer, images, rooms }
               <button
                 key={room.id}
                 onClick={() => setSelectedRoom(room.id)}
-                className={`rounded-full px-4 py-1.5 text-[13px] font-medium transition-all duration-200 ${
-                  selectedRoom === room.id
-                    ? 'bg-[#2C2420] text-white'
-                    : 'bg-[#F0EBE4] text-[#8B7B68] hover:bg-[#E8E0D8]'
-                }`}
+                style={{
+                  borderRadius: '20px',
+                  padding: '6px 16px',
+                  fontSize: '13px',
+                  fontWeight: 500,
+                  border: 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  background: selectedRoom === room.id ? '#2C2420' : '#F0EBE4',
+                  color: selectedRoom === room.id ? '#FFFFFF' : '#8B7B68',
+                }}
               >
                 {room.name}
               </button>
@@ -307,12 +347,20 @@ export function InstagramExportEditor({ project, post, designer, images, rooms }
       )}
 
       {/* Main layout */}
-      <div className="mx-auto flex max-w-7xl gap-8 px-6 py-8">
+      <div style={{
+        maxWidth: '1280px',
+        margin: '0 auto',
+        display: 'flex',
+        gap: '48px',
+        padding: '32px 24px',
+        alignItems: 'flex-start',
+      }}>
         {/* Left: Preview */}
-        <div className="flex-1">
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <SlidePreview
-            slide={slides[activeSlideIndex]}
-            aspectRatio={aspectRatio}
+            slides={slides}
+            activeIndex={activeSlideIndex}
+            onSelectSlide={setActiveSlideIndex}
             headline={selectedHeadline}
             headlinePosition={headlinePosition}
             watermarkStyle={watermarkStyle}
@@ -322,6 +370,8 @@ export function InstagramExportEditor({ project, post, designer, images, rooms }
             bioText={selectedBio}
             projectName={project.title}
             designerPhoto={designer?.profileImage || undefined}
+            caption={caption}
+            designerHandle={designerHandle}
           />
           <SlideThumbnails
             slides={slides}
@@ -331,18 +381,33 @@ export function InstagramExportEditor({ project, post, designer, images, rooms }
         </div>
 
         {/* Right: Controls */}
-        <div className="w-[380px] shrink-0">
+        <div style={{ width: '380px', flexShrink: 0 }}>
           {/* Tab navigation */}
-          <div className="mb-6 flex gap-1 rounded-xl bg-[#F0EBE4] p-1">
+          <div style={{
+            display: 'flex',
+            gap: '4px',
+            borderRadius: '12px',
+            background: '#F0EBE4',
+            padding: '4px',
+            marginBottom: '24px',
+          }}>
             {tabs.map((tab) => (
               <button
                 key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
-                className={`flex-1 rounded-lg px-3 py-2 text-[13px] font-medium transition-all duration-200 ${
-                  activeTab === tab.key
-                    ? 'bg-white text-[#2C2420] shadow-sm'
-                    : 'text-[#8B7B68] hover:text-[#2C2420]'
-                }`}
+                onClick={() => handleTabChange(tab.key)}
+                style={{
+                  flex: 1,
+                  borderRadius: '8px',
+                  padding: '8px 12px',
+                  fontSize: '13px',
+                  fontWeight: 500,
+                  border: 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  background: activeTab === tab.key ? '#FFFFFF' : 'transparent',
+                  color: activeTab === tab.key ? '#2C2420' : '#8B7B68',
+                  boxShadow: activeTab === tab.key ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
+                }}
               >
                 {tab.label}
               </button>
@@ -350,7 +415,12 @@ export function InstagramExportEditor({ project, post, designer, images, rooms }
           </div>
 
           {/* Tab content */}
-          <div className="rounded-2xl border border-[#E8E0D8] bg-white p-6">
+          <div style={{
+            borderRadius: '16px',
+            border: '1px solid #E8E0D8',
+            background: '#FFFFFF',
+            padding: '24px',
+          }}>
             {activeTab === 'format' && (
               <FormatTab
                 aspectRatio={aspectRatio}

@@ -17,28 +17,23 @@ interface Props {
   setSelectedImageUrls: (urls: string[]) => void;
 }
 
-function OptionButton({
-  label,
-  selected,
-  onClick,
-}: {
-  label: string;
-  selected: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={`rounded-lg border px-3 py-2 text-[13px] font-medium transition-all duration-200 ${
-        selected
-          ? 'border-[#C4B5A0] bg-[#F0EBE4] text-[#2C2420]'
-          : 'border-[#E8E0D8] bg-white text-[#8B7B68] hover:border-[#C4B5A0]'
-      }`}
-    >
-      {label}
-    </button>
-  );
-}
+const WATERMARK_OPTIONS: { value: WatermarkStyle; label: string; description: string }[] = [
+  { value: 'folio_x', label: 'folio \u00D7 name', description: 'Classic collaboration credit' },
+  { value: 'folio_presents', label: 'a folio editorial', description: 'Editorial series branding' },
+  { value: 'minimal', label: 'folio', description: 'Clean minimal mark' },
+];
+
+const ASPECT_OPTIONS: { value: AspectRatio; label: string; description: string }[] = [
+  { value: '4:5', label: '4:5 Portrait', description: 'Recommended for feed' },
+  { value: '1:1', label: '1:1 Square', description: 'Classic grid format' },
+  { value: '9:16', label: '9:16 Story', description: 'Full-screen stories' },
+];
+
+const POSITION_OPTIONS: { value: HeadlinePosition; label: string }[] = [
+  { value: 'bottom_left', label: 'Bottom Left' },
+  { value: 'bottom_center', label: 'Bottom Center' },
+  { value: 'top_left', label: 'Top Left' },
+];
 
 export function FormatTab({
   aspectRatio,
@@ -64,114 +59,202 @@ export function FormatTab({
   };
 
   return (
-    <div className="space-y-6">
-      {/* Aspect Ratio */}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
+      {/* Watermark Style */}
       <div>
-        <label className="mb-2 block text-[13px] font-medium text-[#2C2420]">
-          Aspect Ratio
-        </label>
-        <div className="flex gap-2">
-          {([['4:5', 'Portrait'], ['1:1', 'Square'], ['9:16', 'Story']] as const).map(
-            ([value, label]) => (
-              <OptionButton
-                key={value}
-                label={label}
-                selected={aspectRatio === value}
-                onClick={() => setAspectRatio(value)}
-              />
-            )
-          )}
+        <div style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase' as const, color: '#8B7B68', marginBottom: '12px', fontWeight: 500 }}>
+          Watermark Style
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          {WATERMARK_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => setWatermarkStyle(opt.value)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '12px 16px',
+                borderRadius: '10px',
+                border: watermarkStyle === opt.value ? '1.5px solid #C4B5A0' : '1px solid #E8E0D8',
+                background: watermarkStyle === opt.value ? '#FAF7F4' : '#FFFFFF',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                textAlign: 'left' as const,
+              }}
+            >
+              {/* Radio dot */}
+              <div style={{
+                width: '18px',
+                height: '18px',
+                borderRadius: '50%',
+                border: watermarkStyle === opt.value ? '2px solid #2C2420' : '2px solid #D4C9BC',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}>
+                {watermarkStyle === opt.value && (
+                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#2C2420' }} />
+                )}
+              </div>
+              <div>
+                <div style={{ fontSize: '14px', color: '#2C2420', fontWeight: 500 }}>
+                  {opt.label}
+                </div>
+                <div style={{ fontSize: '12px', color: '#A89880', marginTop: '2px' }}>
+                  {opt.description}
+                </div>
+              </div>
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* Watermark */}
+      {/* Aspect Ratio */}
       <div>
-        <label className="mb-2 block text-[13px] font-medium text-[#2C2420]">
-          Watermark
-        </label>
-        <div className="flex flex-wrap gap-2">
-          {([
-            ['folio_x', 'folio \u00D7 name'],
-            ['folio_presents', 'folio presents'],
-            ['minimal', 'folio'],
-          ] as const).map(([value, label]) => (
-            <OptionButton
-              key={value}
-              label={label}
-              selected={watermarkStyle === value}
-              onClick={() => setWatermarkStyle(value)}
-            />
+        <div style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase' as const, color: '#8B7B68', marginBottom: '12px', fontWeight: 500 }}>
+          Aspect Ratio
+        </div>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          {ASPECT_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => setAspectRatio(opt.value)}
+              style={{
+                flex: 1,
+                padding: '10px 8px',
+                borderRadius: '10px',
+                border: aspectRatio === opt.value ? '1.5px solid #C4B5A0' : '1px solid #E8E0D8',
+                background: aspectRatio === opt.value ? '#FAF7F4' : '#FFFFFF',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                textAlign: 'center' as const,
+              }}
+            >
+              <div style={{ fontSize: '13px', color: '#2C2420', fontWeight: 500 }}>
+                {opt.label}
+              </div>
+              <div style={{ fontSize: '11px', color: '#A89880', marginTop: '2px' }}>
+                {opt.description}
+              </div>
+            </button>
           ))}
         </div>
       </div>
 
       {/* Headline Position */}
       <div>
-        <label className="mb-2 block text-[13px] font-medium text-[#2C2420]">
+        <div style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase' as const, color: '#8B7B68', marginBottom: '12px', fontWeight: 500 }}>
           Headline Position
-        </label>
-        <div className="flex gap-2">
-          {([
-            ['bottom_left', 'Bottom Left'],
-            ['bottom_center', 'Bottom Center'],
-            ['top_left', 'Top Left'],
-          ] as const).map(([value, label]) => (
-            <OptionButton
-              key={value}
-              label={label}
-              selected={headlinePosition === value}
-              onClick={() => setHeadlinePosition(value)}
-            />
+        </div>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          {POSITION_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => setHeadlinePosition(opt.value)}
+              style={{
+                flex: 1,
+                padding: '10px 8px',
+                borderRadius: '10px',
+                border: headlinePosition === opt.value ? '1.5px solid #C4B5A0' : '1px solid #E8E0D8',
+                background: headlinePosition === opt.value ? '#FAF7F4' : '#FFFFFF',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                fontSize: '13px',
+                color: headlinePosition === opt.value ? '#2C2420' : '#8B7B68',
+                fontWeight: 500,
+              }}
+            >
+              {opt.label}
+            </button>
           ))}
         </div>
       </div>
 
-      {/* Slide Count */}
+      {/* Carousel Length */}
       <div>
-        <label className="mb-2 block text-[13px] font-medium text-[#2C2420]">
+        <div style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase' as const, color: '#8B7B68', marginBottom: '12px', fontWeight: 500 }}>
           Carousel Length
-        </label>
-        <div className="flex gap-2">
+        </div>
+        <div style={{ display: 'flex', gap: '8px' }}>
           {([3, 4, 5] as const).map((count) => (
-            <OptionButton
+            <button
               key={count}
-              label={`${count} slides`}
-              selected={slideCount === count}
               onClick={() => setSlideCount(count)}
-            />
+              style={{
+                flex: 1,
+                padding: '10px 8px',
+                borderRadius: '10px',
+                border: slideCount === count ? '1.5px solid #C4B5A0' : '1px solid #E8E0D8',
+                background: slideCount === count ? '#FAF7F4' : '#FFFFFF',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                fontSize: '13px',
+                color: slideCount === count ? '#2C2420' : '#8B7B68',
+                fontWeight: 500,
+              }}
+            >
+              {count} slides
+            </button>
           ))}
         </div>
       </div>
 
       {/* Image Selection */}
       <div>
-        <label className="mb-2 block text-[13px] font-medium text-[#2C2420]">
+        <div style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase' as const, color: '#8B7B68', marginBottom: '12px', fontWeight: 500 }}>
           Images ({selectedImageUrls.length} selected)
-        </label>
-        <div className="grid grid-cols-4 gap-2">
-          {images.map((img) => (
-            <button
-              key={img.id}
-              onClick={() => toggleImage(img.url)}
-              className={`relative aspect-square overflow-hidden rounded-lg transition-all duration-200 ${
-                selectedImageUrls.includes(img.url)
-                  ? 'ring-2 ring-[#2C2420] ring-offset-1'
-                  : 'opacity-50 ring-1 ring-[#E8E0D8] hover:opacity-80'
-              }`}
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={img.url}
-                alt={img.name || 'Project image'}
-                className="h-full w-full object-cover"
-              />
-              {selectedImageUrls.includes(img.url) && (
-                <div className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-[#2C2420] text-[10px] font-bold text-white">
-                  {selectedImageUrls.indexOf(img.url) + 1}
-                </div>
-              )}
-            </button>
-          ))}
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
+          {images.map((img) => {
+            const isSelected = selectedImageUrls.includes(img.url);
+            return (
+              <button
+                key={img.id}
+                onClick={() => toggleImage(img.url)}
+                style={{
+                  position: 'relative',
+                  aspectRatio: '1',
+                  overflow: 'hidden',
+                  borderRadius: '8px',
+                  border: 'none',
+                  padding: 0,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  outline: isSelected ? '2px solid #2C2420' : '1px solid #E8E0D8',
+                  outlineOffset: '1px',
+                  opacity: isSelected ? 1 : 0.5,
+                }}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={img.url}
+                  alt={img.name || 'Project image'}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+                {isSelected && (
+                  <div style={{
+                    position: 'absolute',
+                    top: '4px',
+                    right: '4px',
+                    width: '20px',
+                    height: '20px',
+                    borderRadius: '50%',
+                    background: '#2C2420',
+                    color: '#FFFFFF',
+                    fontSize: '10px',
+                    fontWeight: 700,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}>
+                    {selectedImageUrls.indexOf(img.url) + 1}
+                  </div>
+                )}
+              </button>
+            );
+          })}
         </div>
       </div>
     </div>

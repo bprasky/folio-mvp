@@ -40,28 +40,62 @@ export function DesignerTab({
   };
 
   return (
-    <div className="space-y-6">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      {/* Source info */}
+      <div style={{
+        padding: '12px 16px',
+        borderRadius: '10px',
+        background: '#FAF7F4',
+        border: '1px solid #F0EBE4',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '10px',
+      }}>
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
+          <circle cx="8" cy="8" r="6.5" stroke="#A89880" strokeWidth="1" />
+          <path d="M8 7V11" stroke="#A89880" strokeWidth="1.2" strokeLinecap="round" />
+          <circle cx="8" cy="5.5" r="0.5" fill="#A89880" />
+        </svg>
+        <span style={{ fontSize: '12px', color: '#8B7B68', lineHeight: 1.4 }}>
+          Generated from your Folio profile and editorial content
+        </span>
+      </div>
+
       {/* Bio toggle */}
-      <div className="flex items-center justify-between">
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
-          <label className="block text-[13px] font-medium text-[#2C2420]">
+          <div style={{ fontSize: '13px', fontWeight: 500, color: '#2C2420' }}>
             Designer Bio Slide
-          </label>
-          <p className="mt-0.5 text-[12px] text-[#A89880]">
+          </div>
+          <div style={{ fontSize: '12px', color: '#A89880', marginTop: '2px' }}>
             Include a designer intro in the carousel
-          </p>
+          </div>
         </div>
         <button
           onClick={() => setBioEnabled(!bioEnabled)}
-          className={`relative h-6 w-11 rounded-full transition-colors duration-200 ${
-            bioEnabled ? 'bg-[#2C2420]' : 'bg-[#E8E0D8]'
-          }`}
+          style={{
+            position: 'relative',
+            width: '44px',
+            height: '24px',
+            borderRadius: '12px',
+            border: 'none',
+            cursor: 'pointer',
+            transition: 'background 0.2s',
+            background: bioEnabled ? '#2C2420' : '#E8E0D8',
+            padding: 0,
+          }}
         >
-          <span
-            className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform duration-200 ${
-              bioEnabled ? 'translate-x-[22px]' : 'translate-x-0.5'
-            }`}
-          />
+          <span style={{
+            position: 'absolute',
+            top: '2px',
+            left: bioEnabled ? '22px' : '2px',
+            width: '20px',
+            height: '20px',
+            borderRadius: '50%',
+            background: '#FFFFFF',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+            transition: 'left 0.2s',
+          }} />
         </button>
       </div>
 
@@ -69,25 +103,41 @@ export function DesignerTab({
         <>
           {/* Bio options */}
           <div>
-            <label className="mb-3 block text-[13px] font-medium text-[#2C2420]">
+            <div style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase' as const, color: '#8B7B68', marginBottom: '12px', fontWeight: 500 }}>
               Select a Bio Blurb
-            </label>
+            </div>
             {loading ? (
-              <div className="flex flex-col items-center justify-center py-8">
-                <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#E8E0D8] border-t-[#2C2420]" />
-                <p className="mt-3 text-[13px] text-[#8B7B68]">Generating bio options...</p>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 0' }}>
+                <div style={{
+                  width: '24px',
+                  height: '24px',
+                  borderRadius: '50%',
+                  border: '2px solid #E8E0D8',
+                  borderTopColor: '#2C2420',
+                  animation: 'spin 1s linear infinite',
+                }} />
+                <p style={{ marginTop: '12px', fontSize: '13px', color: '#8B7B68' }}>Generating bio options...</p>
+                <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
               </div>
             ) : (
-              <div className="space-y-2">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {bioOptions.map((bio, i) => (
                   <button
                     key={i}
                     onClick={() => setSelectedBio(bio)}
-                    className={`w-full rounded-lg border p-3 text-left text-[14px] leading-relaxed transition-all duration-200 ${
-                      selectedBio === bio
-                        ? 'border-[#C4B5A0] bg-[#F0EBE4] text-[#2C2420]'
-                        : 'border-[#E8E0D8] text-[#8B7B68] hover:border-[#C4B5A0] hover:text-[#2C2420]'
-                    }`}
+                    style={{
+                      width: '100%',
+                      padding: '12px 16px',
+                      borderRadius: '10px',
+                      border: selectedBio === bio ? '1.5px solid #C4B5A0' : '1px solid #E8E0D8',
+                      background: selectedBio === bio ? '#FAF7F4' : '#FFFFFF',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                      textAlign: 'left' as const,
+                      fontSize: '14px',
+                      lineHeight: 1.6,
+                      color: selectedBio === bio ? '#2C2420' : '#8B7B68',
+                    }}
                   >
                     {bio}
                   </button>
@@ -98,46 +148,98 @@ export function DesignerTab({
 
           {/* Custom bio */}
           <div>
-            <label className="mb-2 block text-[13px] font-medium text-[#2C2420]">
+            <div style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase' as const, color: '#8B7B68', marginBottom: '8px', fontWeight: 500 }}>
               Or Write Your Own
-            </label>
+            </div>
             <textarea
               value={customBio}
               onChange={(e) => setCustomBio(e.target.value)}
               placeholder={`Write a bio blurb for ${designerName}...`}
               rows={3}
-              className="w-full rounded-lg border border-[#E8E0D8] bg-white px-3 py-2 text-[14px] text-[#2C2420] placeholder:text-[#A89880] focus:border-[#C4B5A0] focus:outline-none"
+              style={{
+                width: '100%',
+                borderRadius: '10px',
+                border: '1px solid #E8E0D8',
+                background: '#FFFFFF',
+                padding: '10px 14px',
+                fontSize: '14px',
+                color: '#2C2420',
+                outline: 'none',
+                resize: 'vertical' as const,
+                fontFamily: 'inherit',
+                lineHeight: 1.6,
+              }}
             />
             <button
               onClick={handleCustomApply}
               disabled={!customBio.trim()}
-              className="mt-2 rounded-lg bg-[#2C2420] px-4 py-2 text-[13px] font-medium text-white transition-opacity disabled:opacity-40"
+              style={{
+                marginTop: '8px',
+                borderRadius: '10px',
+                background: '#2C2420',
+                color: '#FFFFFF',
+                padding: '10px 16px',
+                fontSize: '13px',
+                fontWeight: 500,
+                border: 'none',
+                cursor: 'pointer',
+                opacity: customBio.trim() ? 1 : 0.4,
+              }}
             >
               Apply
             </button>
           </div>
 
           {/* Regenerate */}
-          <div className="border-t border-[#E8E0D8] pt-4">
+          <div style={{ borderTop: '1px solid #E8E0D8', paddingTop: '16px' }}>
             {showFeedback ? (
-              <div className="space-y-3">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <textarea
                   value={feedbackInput}
                   onChange={(e) => setFeedbackInput(e.target.value)}
                   placeholder="e.g. 'More about their material sensibility' or 'Focus on the warmth of their style'"
                   rows={2}
-                  className="w-full rounded-lg border border-[#E8E0D8] bg-white px-3 py-2 text-[14px] text-[#2C2420] placeholder:text-[#A89880] focus:border-[#C4B5A0] focus:outline-none"
+                  style={{
+                    width: '100%',
+                    borderRadius: '10px',
+                    border: '1px solid #E8E0D8',
+                    background: '#FFFFFF',
+                    padding: '10px 14px',
+                    fontSize: '14px',
+                    color: '#2C2420',
+                    outline: 'none',
+                    resize: 'vertical' as const,
+                    fontFamily: 'inherit',
+                  }}
                 />
-                <div className="flex gap-2">
+                <div style={{ display: 'flex', gap: '8px' }}>
                   <button
                     onClick={handleRegenerate}
-                    className="flex-1 rounded-lg bg-[#2C2420] py-2 text-[13px] font-medium text-white"
+                    style={{
+                      flex: 1,
+                      borderRadius: '10px',
+                      background: '#2C2420',
+                      color: '#FFFFFF',
+                      padding: '10px',
+                      fontSize: '13px',
+                      fontWeight: 500,
+                      border: 'none',
+                      cursor: 'pointer',
+                    }}
                   >
                     Regenerate
                   </button>
                   <button
                     onClick={() => setShowFeedback(false)}
-                    className="rounded-lg border border-[#E8E0D8] px-4 py-2 text-[13px] text-[#8B7B68]"
+                    style={{
+                      borderRadius: '10px',
+                      border: '1px solid #E8E0D8',
+                      background: '#FFFFFF',
+                      padding: '10px 16px',
+                      fontSize: '13px',
+                      color: '#8B7B68',
+                      cursor: 'pointer',
+                    }}
                   >
                     Cancel
                   </button>
@@ -147,7 +249,23 @@ export function DesignerTab({
               <button
                 onClick={() => setShowFeedback(true)}
                 disabled={loading}
-                className="flex w-full items-center justify-center gap-2 rounded-lg border border-[#E8E0D8] py-2.5 text-[13px] font-medium text-[#8B7B68] transition-colors hover:border-[#C4B5A0] hover:text-[#2C2420] disabled:opacity-50"
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  borderRadius: '10px',
+                  border: '1px solid #E8E0D8',
+                  background: '#FFFFFF',
+                  padding: '10px',
+                  fontSize: '13px',
+                  fontWeight: 500,
+                  color: '#8B7B68',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  opacity: loading ? 0.5 : 1,
+                }}
               >
                 Regenerate with Direction
               </button>
