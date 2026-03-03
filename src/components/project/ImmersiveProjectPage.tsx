@@ -9,6 +9,7 @@ import { ProjectImageGallery } from "@/components/project/ProjectImageGallery";
 import { ImageTagDots } from "@/components/project/ImageTagDots";
 import { titleCase } from "@/lib/utils";
 import { getMonographUrl } from "@/lib/utils/getMonographUrl";
+import { ShareToInstagramButton } from "@/components/instagram-export/ShareToInstagramButton";
 
 type MediaModule = {
   id: string;
@@ -49,6 +50,11 @@ export function ImmersiveProjectPage({ post, modules }: Props) {
           {/* DESIGNER BADGE ROW */}
           <div className="flex items-center justify-between gap-4">
             <DesignerProjectBadge post={post} />
+            <ShareToInstagramButton
+              projectId={post.projectId}
+              designerId={post.project?.designerId}
+              postStatus={post.status}
+            />
           </div>
 
           {/* HERO IMAGE */}

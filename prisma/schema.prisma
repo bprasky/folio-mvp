@@ -181,6 +181,9 @@ model User {
   // Design Journey Tracking
   selectionChanges               SelectionHistory[]
 
+  // Instagram Export System
+  instagramExports               InstagramExport[]  @relation("DesignerInstagramExports")
+
   @@map("users")
 }
 
@@ -308,6 +311,7 @@ model Project {
   attributeVerifications AttributeVerification[] @relation("ProjectAttributeVerifications")
   designerDecisions    DesignerDecision[]
   instagramCampaigns   InstagramCampaign[]
+  instagramExports     InstagramExport[]
 
   // Commerce relations
   orders               Order[]
@@ -4856,4 +4860,35 @@ model RealtimeConversationSegment {
   @@unique([sessionId, sequenceNumber])
   @@index([sessionId, startedAt])
   @@map("realtime_conversation_segments")
+}
+
+// Instagram Export System (single carousel export)
+model InstagramExport {
+  id         String  @id @default(cuid())
+  projectId  String
+  project    Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  designerId String
+  designer   User    @relation("DesignerInstagramExports", fields: [designerId], references: [id], onDelete: Cascade)
+
+  // Configuration
+  config Json @default("{}")
+
+  // Generated content
+  headline String?
+  bioText  String?
+  caption  String?
+
+  // Generated image URLs (Supabase storage)
+  imageUrls String[] @default([])
+
+  // Status
+  status     String    @default("draft") // draft, generated, exported
+  exportedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([projectId])
+  @@index([designerId])
+  @@map("instagram_exports")
 }
