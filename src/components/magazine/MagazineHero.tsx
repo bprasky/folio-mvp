@@ -30,7 +30,7 @@ export default function MagazineHero({ hero, edition }: Props) {
     <article className="group w-full">
       <Link href={href} className="block">
         {/* Hero card with rounded corners and glass styling */}
-        <div className="relative w-full h-[50vh] md:h-[65vh] bg-[var(--bg-base)] rounded-2xl overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.12)]">
+        <div className="relative w-full h-[50vh] md:h-[65vh] bg-[var(--bg-base)] rounded-[20px] overflow-hidden">
           {hero.imageUrl && hero.imageUrl.length > 0 ? (
             <Image
               src={hero.imageUrl}

@@ -7,7 +7,7 @@
 
 export default function MagazineHeroSkeleton() {
   return (
-    <article className="ridge-card overflow-hidden rounded-3xl">
+    <article className="ridge-card overflow-hidden rounded-[20px]">
       <div className="relative aspect-[16/7] w-full animate-pulse bg-[var(--bg-base)]" />
       <div className="space-y-2 px-5 py-4">
         <div className="h-4 w-24 rounded-full bg-[var(--bg-elevated)]" />

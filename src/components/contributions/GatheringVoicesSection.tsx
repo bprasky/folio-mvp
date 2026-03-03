@@ -67,17 +67,17 @@ export function GatheringVoicesSection({ className }: GatheringVoicesSectionProp
   return (
     <section className={className}>
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h2 className="folio-h2 mb-1">Now Gathering Voices</h2>
-          <p className="folio-body text-[var(--text-secondary)]">
-            Share your perspective on upcoming articles
-          </p>
-        </div>
+      <div className="mb-6">
+        <h2
+          className="text-[13px] font-normal uppercase tracking-[0.12em] text-[var(--text-secondary)]"
+          style={{ fontFamily: 'var(--font-body)' }}
+        >
+          Now Gathering Voices
+        </h2>
       </div>
 
       {/* Topics Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
         {topics.map((topic) => (
           <TopicCard
             key={topic.id}
