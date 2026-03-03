@@ -20,8 +20,8 @@ type FestivalsCarouselProps = {
 
 export default function FestivalsCarousel({ festivals }: FestivalsCarouselProps) {
   const [x, setX] = useState(0);
-  const [cardWidth, setCardWidth] = useState(720);
-  const GAP = 24;
+  const [cardWidth, setCardWidth] = useState(880);
+  const GAP = 16;
 
   const now = new Date();
   const nextIdx = useMemo(() => {
@@ -36,7 +36,7 @@ export default function FestivalsCarousel({ festivals }: FestivalsCarouselProps)
     const updateCardWidth = () => {
       const vw = window.innerWidth;
       // Responsive card width: smaller on mobile
-      const calculatedWidth = vw < 768 ? vw * 0.85 : vw < 1024 ? 600 : 720;
+      const calculatedWidth = vw < 768 ? vw * 0.85 : vw < 1024 ? 640 : 880;
       setCardWidth(calculatedWidth);
     };
     
@@ -47,7 +47,7 @@ export default function FestivalsCarousel({ festivals }: FestivalsCarouselProps)
 
   useEffect(() => {
     const vw = window.innerWidth;
-    const PEEK = Math.round(cardWidth * 0.25);
+    const PEEK = Math.round(vw * 0.10); // matches pl-[10%]
     const centerOffset = (vw - cardWidth) / 2;
     const shift = nextIdx * (cardWidth + GAP) - (centerOffset - PEEK);
     setX(-Math.max(0, shift));
@@ -69,7 +69,7 @@ export default function FestivalsCarousel({ festivals }: FestivalsCarouselProps)
     <section className="relative w-screen mx-[calc(50%-50vw)]">
       <div className="relative">
         <motion.div
-          className="flex gap-6 pl-[25%] pr-8 items-stretch"
+          className="flex gap-4 pl-[10%] pr-8 items-stretch"
           animate={{ x }}
           transition={{ type: "tween", ease: "easeOut", duration: 0.6 }}
         >
@@ -93,18 +93,18 @@ export default function FestivalsCarousel({ festivals }: FestivalsCarouselProps)
         {/* Arrows */}
         <div className="pointer-events-none absolute inset-y-0 left-0 right-0 flex items-center justify-between">
           <button
-            className="pointer-events-auto rounded-full bg-[var(--bg-base)]/70 hover:bg-[var(--bg-base)] px-3 py-2 m-2 shadow-md transition-colors z-30"
+            className="pointer-events-auto rounded-full bg-white/70 hover:bg-stone-200 px-4 py-3 ml-4 shadow-sm backdrop-blur-sm transition-colors z-30 text-[rgb(30,30,30)]"
             onClick={() => nudge(-1)}
             aria-label="Previous festival"
           >
-            ‹
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5"><path fillRule="evenodd" d="M11.78 5.22a.75.75 0 0 1 0 1.06L8.56 9.5l3.22 3.22a.75.75 0 1 1-1.06 1.06l-3.75-3.75a.75.75 0 0 1 0-1.06l3.75-3.75a.75.75 0 0 1 1.06 0Z" clipRule="evenodd" /></svg>
           </button>
           <button
-            className="pointer-events-auto rounded-full bg-[var(--bg-base)]/70 hover:bg-[var(--bg-base)] px-3 py-2 m-2 shadow-md transition-colors z-30"
+            className="pointer-events-auto rounded-full bg-white/70 hover:bg-stone-200 px-4 py-3 mr-4 shadow-sm backdrop-blur-sm transition-colors z-30 text-[rgb(30,30,30)]"
             onClick={() => nudge(1)}
             aria-label="Next festival"
           >
-            ›
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5"><path fillRule="evenodd" d="M8.22 5.22a.75.75 0 0 1 1.06 0l3.75 3.75a.75.75 0 0 1 0 1.06l-3.75 3.75a.75.75 0 1 1-1.06-1.06L11.44 9.5 8.22 6.28a.75.75 0 0 1 0-1.06Z" clipRule="evenodd" /></svg>
           </button>
         </div>
       </div>

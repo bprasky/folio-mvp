@@ -58,7 +58,7 @@ export default async function EventsPage({
       )}
 
       {/* Edge-to-edge Festival Carousel */}
-      <section aria-label="Festival timeline" className="mb-10">
+      <section aria-label="Festival timeline" className="mb-12">
         <Suspense fallback={<div className="h-[400px] bg-[var(--bg-base)]" />}>
           <FestivalsCarousel festivals={festivals} />
         </Suspense>
