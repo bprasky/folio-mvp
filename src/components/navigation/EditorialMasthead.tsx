@@ -20,6 +20,9 @@ export function EditorialMasthead() {
 
   // Check if we're on the magazine page - hide large masthead and adjust header
   const isMagazinePage = pathname === "/magazine" || pathname?.startsWith("/magazine?");
+  // Hide large masthead on designer/dashboard pages — the nav-bar logo is sufficient context
+  const isDesignerPage = pathname === "/designer" || pathname?.startsWith("/designer/");
+  const hidesMasthead = isMagazinePage || isDesignerPage;
   const effectiveThreshold = isMagazinePage ? MAGAZINE_SCROLL_THRESHOLD : SCROLL_THRESHOLD;
 
   // Track scroll position with requestAnimationFrame for smooth performance
@@ -160,8 +163,8 @@ export function EditorialMasthead() {
       </motion.header>
 
       {/* Large Editorial Masthead - initial state, animates into nav */}
-      {/* Hidden on magazine page since the hero has its own glass foil masthead */}
-      {!isMagazinePage && (
+      {/* Hidden on magazine & designer pages — nav-bar logo is sufficient context */}
+      {!hidesMasthead && (
         <div
           className="relative w-full bg-[var(--bg-base)]"
           style={{
