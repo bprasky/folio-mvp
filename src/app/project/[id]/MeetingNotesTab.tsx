@@ -187,11 +187,11 @@ export default function MeetingNotesTab({ projectId }: MeetingNotesTabProps) {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Main Content */}
       <div className="lg:col-span-2 space-y-6" data-tour="meeting-notes-content">
         {/* Add Note Form */}
-        <div className="bg-[var(--bg-elevated)] rounded-lg shadow-sm border border-[var(--border-default)] p-6">
+        <div className="bg-[var(--bg-elevated)] rounded-[20px] shadow-sm border border-[var(--border-default)] p-6">
           <h2 className="folio-h3 text-[var(--text-primary)] mb-4">
             Add Meeting Note
           </h2>
@@ -265,7 +265,7 @@ export default function MeetingNotesTab({ projectId }: MeetingNotesTabProps) {
         </div>
 
         {/* Notes List */}
-        <div className="bg-[var(--bg-elevated)] rounded-lg shadow-sm border border-[var(--border-default)] p-6">
+        <div className="bg-[var(--bg-elevated)] rounded-[20px] shadow-sm border border-[var(--border-default)] p-6">
           <h2 className="folio-h3 text-[var(--text-primary)] mb-4">
             Meeting Notes ({notes.length})
           </h2>

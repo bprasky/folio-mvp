@@ -452,7 +452,7 @@ export default function DesignerBoardRoom({
                 <button
                   onClick={handleDeleteRoom}
                   disabled={isDeletingRoom}
-                  className="w-full px-3 py-2 text-left folio-ui text-red-600 hover:bg-red-50 flex items-center gap-2"
+                  className="w-full px-3 py-2 text-left folio-ui text-[rgb(74,44,59)] hover:bg-stone-100 flex items-center gap-2"
                 >
                   <FaTrash className="w-3 h-3" />
                   {isDeletingRoom ? 'Deleting...' : 'Delete Room'}
@@ -524,7 +524,7 @@ export default function DesignerBoardRoom({
               <article
                 key={selection.id}
               className={clsx(
-                "group relative rounded-xl border shadow-sm bg-[var(--bg-elevated)] overflow-hidden",
+                "group relative rounded-[20px] border shadow-sm bg-[var(--bg-elevated)] overflow-hidden",
                 paintAccentEnabled && room.paintColor
                   ? "border-[var(--border-default)]" // Subtle border, not overwhelming
                   : "border-[var(--border-default)]",
@@ -582,10 +582,10 @@ export default function DesignerBoardRoom({
                         <div>{formatPrice(selection.unitPrice)}</div>
                       )}
                       {currentOverride && (
-                        <div className="text-yellow-300">● {currentOverride}</div>
+                        <div className="text-white/70">● {currentOverride}</div>
                       )}
                       {getRoleLabel(selection.slotKey) && (
-                        <div className="text-blue-300 flex items-center gap-1">
+                        <div className="text-white/80 flex items-center gap-1">
                           <span>Role: {getRoleLabel(selection.slotKey)}</span>
                           <button
                             onClick={(e) => {
@@ -612,7 +612,7 @@ export default function DesignerBoardRoom({
               <article
                 key={`${room.id}:${slot.key}`}
                 className={clsx(
-                  "group relative rounded-xl border-2 border-dashed border-[var(--border-default)] bg-[var(--bg-base)] opacity-60",
+                  "group relative rounded-[20px] border-2 border-dashed border-[var(--border-default)] bg-[var(--bg-base)] opacity-60",
                   paintAccentEnabled && room.paintColor
                     ? "border-[var(--text-tertiary)]"
                     : "border-[var(--border-default)]",
@@ -760,7 +760,7 @@ export default function DesignerBoardRoom({
                       isCurrent
                         ? "bg-[var(--accent)]/10 text-[var(--accent)]"
                         : isTaken
-                          ? "bg-red-50 text-red-700 hover:bg-red-100"
+                          ? "bg-stone-100 text-[rgb(74,44,59)] hover:bg-stone-200"
                           : "hover:bg-[var(--bg-base)]"
                     )}
                   >

@@ -157,7 +157,7 @@ export default function SpecsQuotesPanel({ projectId, userId, userRole }: SpecsQ
       case 'ACCEPTED':
         return <CheckCircle className="h-4 w-4 text-[var(--accent)]" />;
       case 'REJECTED':
-        return <XCircle className="h-4 w-4 text-red-500" />;
+        return <XCircle className="h-4 w-4 text-[rgb(74,44,59)]" />;
       case 'SENT':
         return <Clock className="h-4 w-4 text-[var(--accent)]" />;
       case 'EXPIRED':
@@ -172,7 +172,7 @@ export default function SpecsQuotesPanel({ projectId, userId, userRole }: SpecsQ
       case 'ACCEPTED':
         return 'bg-[var(--accent)]/10 text-[var(--accent)]';
       case 'REJECTED':
-        return 'bg-red-100 text-red-800';
+        return 'bg-stone-100 text-[rgb(74,44,59)]';
       case 'SENT':
         return 'bg-[var(--accent)]/10 text-[var(--accent)]';
       case 'EXPIRED':
@@ -325,7 +325,7 @@ export default function SpecsQuotesPanel({ projectId, userId, userRole }: SpecsQ
         ) : (
           <div className="space-y-6">
             {quotes.map((quoteChain, chainIndex) => (
-              <div key={chainIndex} className="border border-[var(--border-default)] rounded-lg p-4">
+              <div key={chainIndex} className="border border-[var(--border-default)] rounded-[20px] p-4">
                 <div className="space-y-4">
                   {quoteChain.map((quote, quoteIndex) => (
                     <div key={quote.id} className="flex items-center justify-between p-3 bg-[var(--bg-base)] rounded-lg">

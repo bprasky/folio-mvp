@@ -99,7 +99,7 @@ export default function PublishPreviewModal({
         <div className="flex-1 overflow-y-auto px-6 py-6">
           {/* Generating state — sequential progress messages */}
           {isGenerating && !hasDraft && (
-            <div className="flex flex-col items-center justify-center py-16 space-y-8">
+            <div className="flex flex-col items-center justify-center py-16 space-y-6">
               {/* Animated dot indicator */}
               <div className="flex items-center gap-2">
                 {PROGRESS_MESSAGES.map((_, i) => (
@@ -253,7 +253,7 @@ export default function PublishPreviewModal({
         {/* Error */}
         {flow.error && (
           <div className="px-6 pb-4">
-            <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg folio-meta">
+            <div className="p-3 bg-stone-100 border border-stone-300 text-[rgb(74,44,59)] rounded-[20px] folio-meta">
               {flow.error}
             </div>
           </div>

@@ -81,7 +81,7 @@ export default function ProjectUnderstandingPanel({
   };
 
   return (
-    <div className="bg-[var(--bg-elevated)] rounded-lg shadow-sm border border-[var(--border-default)] p-6 sticky top-4" data-tour="project-understanding">
+    <div className="bg-[var(--bg-elevated)] rounded-[20px] shadow-sm border border-[var(--border-default)] p-6 sticky top-4" data-tour="project-understanding">
       <div className="flex items-center justify-between mb-4">
         <h2 className="folio-h3 text-[var(--text-primary)]">
           Project Understanding
@@ -177,7 +177,7 @@ export default function ProjectUnderstandingPanel({
                 {roomIntents.map((roomIntent) => (
                   <div
                     key={roomIntent.id}
-                    className="border border-[var(--border-default)] rounded-lg p-4"
+                    className="border border-[var(--border-default)] rounded-[20px] p-4"
                   >
                     <h4 className="font-medium text-[var(--text-primary)] mb-2">
                       {roomIntent.roomName}

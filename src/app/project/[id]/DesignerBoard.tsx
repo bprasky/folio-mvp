@@ -328,7 +328,7 @@ export default function DesignerBoard({
       </div>
 
       {/* Room Groups */}
-      <div className="space-y-8">
+      <div className="space-y-12">
         {filteredRooms.map(room => (
           <DesignerBoardRoom
             key={room.id}

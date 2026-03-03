@@ -163,7 +163,7 @@ export default function BoardTileMenu({
                   setIsOpen(false);
                   onDelete(selection.id);
                 }}
-                className="w-full text-left px-3 py-2 folio-ui hover:bg-red-50 text-red-600 flex items-center gap-2"
+                className="w-full text-left px-3 py-2 folio-ui hover:bg-stone-100 text-[rgb(74,44,59)] flex items-center gap-2"
               >
                 <FaTrash className="w-3 h-3" />
                 Delete

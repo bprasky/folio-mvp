@@ -525,7 +525,7 @@ export default function DraftsPanel({ projectId }: { projectId: string }) {
           />
         </div>
       )}
-      <div className="col-span-8 space-y-8">
+      <div className="col-span-8 space-y-12">
         {/* Your Reflections Section */}
         <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-elevated)] p-6 shadow-sm">
           <div className="flex items-center justify-between mb-4">
@@ -548,7 +548,7 @@ export default function DraftsPanel({ projectId }: { projectId: string }) {
             {filteredAnswers.map((qa, i) => (
               <div
                 key={i}
-                className="border border-[var(--border-default)] rounded-lg p-4 mb-3"
+                className="border border-[var(--border-default)] rounded-[20px] p-4 mb-3"
               >
                 <label className="block folio-ui font-medium text-[var(--text-primary)] mb-2">
                   {qa.q || qa.question || "Your reflection"}
@@ -556,13 +556,14 @@ export default function DraftsPanel({ projectId }: { projectId: string }) {
                 <textarea
                   value={qa.a || qa.answer || ""}
                   onChange={(e) => setAnswer(i, "a", e.target.value)}
-                  className="w-full min-h-[80px] p-2 border border-[var(--border-default)] rounded folio-ui resize-y bg-[var(--bg-base)]"
+                  className="w-full min-h-[80px] p-2 border border-[var(--border-default)] rounded-[20px] resize-y bg-[var(--bg-base)]"
+                  style={{ fontFamily: "var(--font-headline)", fontStyle: "italic", fontSize: "16px", lineHeight: "1.5" }}
                   placeholder="Share your thoughts..."
                 />
                 <div className="flex justify-end mt-2">
                   <button
                     onClick={() => removeAnswer(i)}
-                    className="text-[var(--text-tertiary)] hover:text-red-500"
+                    className="text-[var(--text-tertiary)] hover:text-[rgb(74,44,59)]"
                     aria-label="Remove"
                   >
                     <X className="w-4 h-4" />
@@ -610,14 +611,15 @@ export default function DraftsPanel({ projectId }: { projectId: string }) {
                   onChange={(e) => setFollowup(i, "q", e.target.value)}
                 />
                 <textarea
-                  className="col-span-6 px-3 py-2 folio-ui border border-[var(--border-default)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)] resize-none bg-[var(--bg-base)]"
+                  className="col-span-6 px-3 py-2 border border-[var(--border-default)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)] resize-none bg-[var(--bg-base)]"
+                  style={{ fontFamily: "var(--font-headline)", fontStyle: "italic", fontSize: "15px", lineHeight: "1.5" }}
                   value={qa.a || qa.answer || ""}
                   placeholder="Answer"
                   rows={2}
                   onChange={(e) => setFollowup(i, "a", e.target.value)}
                 />
                 <button
-                  className="col-span-1 px-2 py-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition-colors"
+                  className="col-span-1 px-2 py-1 text-[var(--text-tertiary)] hover:text-[rgb(74,44,59)] hover:bg-stone-100 rounded transition-colors"
                   onClick={() => removeFollowup(i)}
                   aria-label="Remove"
                 >
@@ -742,7 +744,7 @@ export default function DraftsPanel({ projectId }: { projectId: string }) {
             <DialogTitle>Generate Debug (Dry-Run)</DialogTitle>
           </DialogHeader>
           <div className="mt-4">
-            <pre className="text-xs whitespace-pre-wrap overflow-auto max-h-[70vh] p-4 rounded bg-[var(--bg-elevated)] border border-[var(--ridge-outer)] font-mono">
+            <pre className="text-xs whitespace-pre-wrap overflow-auto max-h-[70vh] p-4 rounded-[20px] bg-[var(--bg-elevated)] border border-[var(--ridge-outer)] folio-ui">
               {JSON.stringify(debugPayload, null, 2)}
             </pre>
           </div>

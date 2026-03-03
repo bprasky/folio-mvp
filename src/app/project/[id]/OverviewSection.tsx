@@ -109,9 +109,9 @@ export default function OverviewSection({ project, isOwner }: OverviewSectionPro
   const currentProject = isEditing ? editedProject : project;
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-12">
       {/* Overview Section */}
-      <section className="bg-[var(--bg-elevated)] p-8 rounded-lg shadow-md">
+      <section className="bg-[var(--bg-elevated)] p-8 rounded-[20px] shadow-md">
         <div className="flex items-center justify-between mb-4">
           <h2 className="folio-h2">Overview</h2>
           {isOwner && (
@@ -209,7 +209,7 @@ export default function OverviewSection({ project, isOwner }: OverviewSectionPro
       </section>
 
       {/* Project Stats Section */}
-      <section className="bg-[var(--bg-elevated)] p-8 rounded-lg shadow-md">
+      <section className="bg-[var(--bg-elevated)] p-8 rounded-[20px] shadow-md">
         <h2 className="folio-h2 mb-6">Project Insights</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="text-center p-4 bg-[var(--accent)]/10 rounded-lg">
@@ -228,7 +228,7 @@ export default function OverviewSection({ project, isOwner }: OverviewSectionPro
       </section>
 
       {/* Placeholder for Images Section */}
-      <section className="bg-[var(--bg-elevated)] p-8 rounded-lg shadow-md">
+      <section className="bg-[var(--bg-elevated)] p-8 rounded-[20px] shadow-md">
         <h2 className="folio-h2 mb-6">Project Images</h2>
         <div className="text-center py-12 text-[var(--text-secondary)]">
           <p>No images uploaded yet.</p>
