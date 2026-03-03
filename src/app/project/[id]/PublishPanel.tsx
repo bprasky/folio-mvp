@@ -100,7 +100,7 @@ export default function PublishPanel({ projectId, project, images, isOwner }: Pu
   return (
     <div className="max-w-3xl space-y-6">
       {/* Readiness Checklist */}
-      <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-elevated)] shadow-sm overflow-hidden">
+      <div className="rounded-[20px] border border-[var(--border-default)] bg-[var(--bg-elevated)] shadow-sm overflow-hidden">
         <button
           onClick={() => setChecklistExpanded(!checklistExpanded)}
           className="w-full flex items-center justify-between px-6 py-4 text-left"
@@ -146,7 +146,7 @@ export default function PublishPanel({ projectId, project, images, isOwner }: Pu
       </div>
 
       {/* Draft Section */}
-      <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-elevated)] p-6 shadow-sm">
+      <div className="rounded-[20px] border border-[var(--border-default)] bg-[var(--bg-elevated)] p-6 shadow-sm">
         <h2 className="folio-h3 text-[var(--text-primary)] mb-4">Draft</h2>
 
         {currentLead?.kicker || currentLead?.title ? (
@@ -251,7 +251,7 @@ export default function PublishPanel({ projectId, project, images, isOwner }: Pu
 
       {/* Publish Actions */}
       {publishSuccess ? (
-        <div className="rounded-2xl border border-[var(--ridge-outer)] bg-[var(--bg-elevated)] p-6 shadow-sm text-center">
+        <div className="rounded-[20px] border border-[var(--ridge-outer)] bg-[var(--bg-elevated)] p-6 shadow-sm text-center">
           <CheckCircle2 className="w-8 h-8 text-[var(--accent)] mx-auto mb-3" />
           <h3 className="folio-h3 text-[var(--text-primary)] mb-2">Published!</h3>
           <p className="folio-body text-[var(--text-secondary)] mb-4">
@@ -289,7 +289,7 @@ export default function PublishPanel({ projectId, project, images, isOwner }: Pu
           />
         </div>
       ) : (
-        <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-elevated)] p-6 shadow-sm">
+        <div className="rounded-[20px] border border-[var(--border-default)] bg-[var(--bg-elevated)] p-6 shadow-sm">
           <button
             onClick={handlePublish}
             disabled={isPublishing || !currentPost}

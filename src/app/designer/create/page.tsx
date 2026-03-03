@@ -89,7 +89,7 @@ function LongFormCreateUI() {
           </div>
 
           {/* Project basics section */}
-          <RidgeCard padding="md">
+          <div>
             <h3 className="folio-h3 text-[var(--text-primary)] mb-3">Project basics</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -199,7 +199,7 @@ function LongFormCreateUI() {
                 />
               </div>
             </div>
-          </RidgeCard>
+          </div>
 
           <div>
             <label className="block folio-body font-medium text-[var(--text-primary)] mb-1">Description</label>

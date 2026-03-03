@@ -95,7 +95,7 @@ export default function DesignerAnalyticsPage() {
     <div className="min-h-screen bg-[var(--bg-base)] p-8 lg:p-12">
       <div className="max-w-7xl mx-auto">
         {/* Designer Overview Header */}
-        <RidgeCard padding="lg" className="mb-10 flex flex-col md:flex-row items-center md:justify-between">
+        <div className="mb-10 flex flex-col md:flex-row items-center md:justify-between">
           <div className="flex items-center mb-6 md:mb-0">
             <SafeImage
               src={productData.profile_image}
@@ -136,7 +136,7 @@ export default function DesignerAnalyticsPage() {
               <p className="stats-label">Pending Earnings</p>
             </div>
           </div>
-        </RidgeCard>
+        </div>
 
         {/* Analytics Tabs */}
         <div className="flex space-x-2 mb-8 p-1 bg-[var(--bg-elevated)] rounded-xl">

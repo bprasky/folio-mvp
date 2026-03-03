@@ -158,7 +158,7 @@ function DetailGridSpread({ chapter }: { chapter: EditorialChapter }) {
 
   return (
     <section className="mx-auto max-w-6xl px-3 md:px-0 grid gap-8 md:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)] items-start">
-      <div className="grid grid-cols-2 gap-4 md:gap-5">
+      <div className="grid grid-cols-2 gap-3">
         {allImages.slice(0, 4).map((img: any, idx: number) => (
           <div
             key={img.id ?? idx}
@@ -179,7 +179,7 @@ function DetailGridSpread({ chapter }: { chapter: EditorialChapter }) {
       </div>
       <div className="space-y-4">
         <RidgeTextBlock chapter={chapter} variant="narrative" />
-        <div className="ridge-card p-4 space-y-3">
+        <div className="p-4 space-y-3">
           <div className="flex items-center justify-between gap-2">
             <h3 className="folio-meta uppercase tracking-[0.18em] text-[var(--text-secondary)]">
               In the Details
@@ -225,7 +225,7 @@ function RidgeTextBlock({
   if (!chapter.body && !chapter.title) return null;
 
   return (
-    <div className="ridge-card px-5 py-4 md:px-6 md:py-5 space-y-3">
+    <div className="px-5 py-4 md:px-6 md:py-5 space-y-3">
       {chapter.title && (
         <h2 className="folio-meta uppercase tracking-[0.16em] text-[var(--text-secondary)]">
           {formatRoomName(chapter.title)}

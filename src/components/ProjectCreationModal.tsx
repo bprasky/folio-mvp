@@ -943,7 +943,7 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.9, opacity: 0 }}
-          className="bg-white/95 backdrop-blur-xl border border-white/30 rounded-3xl max-w-6xl w-full max-h-[90vh] overflow-hidden shadow-2xl"
+          className="bg-white/95 backdrop-blur-xl border border-white/30 rounded-[20px] max-w-6xl w-full max-h-[90vh] overflow-hidden shadow-2xl"
           onClick={(e) => e.stopPropagation()}
         >
           <div className="flex justify-between items-center p-6 border-b border-[var(--ridge-outer)]/50 bg-white/50">
@@ -1620,7 +1620,7 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              className="bg-white/95 backdrop-blur-xl border border-white/30 rounded-3xl max-w-5xl w-full max-h-[85vh] overflow-hidden shadow-2xl m-4"
+              className="bg-white/95 backdrop-blur-xl border border-white/30 rounded-[20px] max-w-5xl w-full max-h-[85vh] overflow-hidden shadow-2xl m-4"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="p-6 border-b border-[var(--ridge-outer)]/50 bg-white/50">

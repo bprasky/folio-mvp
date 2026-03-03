@@ -20,7 +20,7 @@ export function AISummaryRibbon() {
   const rev = bundle.revenueProjection;
 
   return (
-    <div className="mb-6 rounded-3xl bg-black text-white px-6 py-3 shadow-md flex flex-col md:flex-row md:items-center md:justify-between gap-2 text-xs md:text-sm">
+    <div className="mb-6 rounded-[20px] bg-black text-white px-6 py-3 shadow-md flex flex-col md:flex-row md:items-center md:justify-between gap-2 text-xs md:text-sm">
       <span className="font-semibold uppercase tracking-wide text-[11px] opacity-90">AI Summary for Today</span>
       <div className="flex flex-col md:flex-row gap-3 md:gap-6">
         <span className="opacity-90">

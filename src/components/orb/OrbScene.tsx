@@ -162,7 +162,7 @@ export function OrbScene(props: OrbSceneProps) {
   }, []);
 
   return (
-    <div className="relative w-full h-full min-h-[600px] rounded-3xl border border-slate-800 bg-slate-950/70 shadow-[0_0_50px_rgba(15,23,42,0.9)]">
+    <div className="relative w-full h-full min-h-[600px] rounded-[20px] border border-slate-800 bg-slate-950/70 shadow-[0_0_50px_rgba(15,23,42,0.9)]">
       {/* Metrics HUD overlay */}
       <div className="absolute top-4 left-4 z-10 text-[11px] text-slate-400 space-y-1">
         <div className="font-semibold text-slate-200 text-xs tracking-[0.16em] uppercase">

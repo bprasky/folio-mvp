@@ -283,7 +283,7 @@ export default function MediaSection({ project, isOwner, images, projectPost, is
           {/* Photos Card */}
           <button
             onClick={() => setShowUploadModal(true)}
-            className="group text-left rounded-2xl border border-[var(--border-default)] bg-[var(--bg-elevated)] p-5 hover:border-[var(--accent)] hover:shadow-sm transition-all"
+            className="group text-left rounded-[20px] border border-[var(--border-default)] bg-[var(--bg-elevated)] p-5 hover:border-[var(--accent)] hover:shadow-sm transition-all"
           >
             <Camera className="w-6 h-6 text-[var(--accent)] mb-3" />
             <h3 className="folio-ui font-semibold text-[var(--text-primary)] mb-1">Photos</h3>
@@ -304,7 +304,7 @@ export default function MediaSection({ project, isOwner, images, projectPost, is
           {/* Presentation Card */}
           <button
             onClick={handleImportPresentation}
-            className="group text-left rounded-2xl border border-[var(--border-default)] bg-[var(--bg-elevated)] p-5 hover:border-[var(--accent)] hover:shadow-sm transition-all"
+            className="group text-left rounded-[20px] border border-[var(--border-default)] bg-[var(--bg-elevated)] p-5 hover:border-[var(--accent)] hover:shadow-sm transition-all"
           >
             <Presentation className="w-6 h-6 text-[var(--accent)] mb-3" />
             <h3 className="folio-ui font-semibold text-[var(--text-primary)] mb-1">Presentation</h3>
@@ -325,7 +325,7 @@ export default function MediaSection({ project, isOwner, images, projectPost, is
           {/* Material Schedule Card */}
           <button
             onClick={handleImportPdfSpecs}
-            className="group text-left rounded-2xl border border-[var(--border-default)] bg-[var(--bg-elevated)] p-5 hover:border-[var(--accent)] hover:shadow-sm transition-all"
+            className="group text-left rounded-[20px] border border-[var(--border-default)] bg-[var(--bg-elevated)] p-5 hover:border-[var(--accent)] hover:shadow-sm transition-all"
           >
             <FileSpreadsheet className="w-6 h-6 text-[var(--accent)] mb-3" />
             <h3 className="folio-ui font-semibold text-[var(--text-primary)] mb-1">Material Schedule</h3>

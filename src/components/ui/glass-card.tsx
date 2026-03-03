@@ -29,7 +29,7 @@ const GlassCard = forwardRef<HTMLDivElement, GlassCardProps>(
       lg: "rounded-lg",
       xl: "rounded-xl",
       "2xl": "rounded-2xl",
-      "3xl": "rounded-3xl",
+      "3xl": "rounded-[20px]",
     };
     
     return (

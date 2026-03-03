@@ -53,7 +53,7 @@ export function ImmersiveProjectPage({ post, modules }: Props) {
 
           {/* HERO IMAGE */}
           {projectImages[0]?.url && (
-            <figure className="relative overflow-hidden rounded-3xl ridge-card ridge-card-lg shadow-[0_18px_60px_rgba(15,14,10,0.18)]">
+            <figure className="relative overflow-hidden rounded-[20px] ridge-card ridge-card-lg shadow-[0_18px_60px_rgba(15,14,10,0.18)]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={projectImages[0].url}

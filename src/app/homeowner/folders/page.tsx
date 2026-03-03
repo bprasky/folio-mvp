@@ -103,7 +103,7 @@ export default function HomeownerFolders() {
             {!isCreating ? (
               <button
                 onClick={() => setIsCreating(true)}
-                className="bg-[var(--bg-elevated)] rounded-2xl p-6 shadow-[var(--ridge-shadow)] hover:shadow-lg transition-all duration-300 border-2 border-dashed border-[var(--border-color)] hover:border-[var(--accent)] w-full max-w-md"
+                className="bg-[var(--bg-elevated)] rounded-[20px] p-6 shadow-[var(--ridge-shadow)] hover:shadow-lg transition-all duration-300 border-2 border-dashed border-[var(--border-color)] hover:border-[var(--accent)] w-full max-w-md"
               >
                 <div className="flex items-center justify-center space-x-3">
                   <FaPlus className="text-[var(--accent)] text-xl" />

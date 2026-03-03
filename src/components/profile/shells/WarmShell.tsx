@@ -10,7 +10,7 @@ export default function WarmShell({ designer, projects, aesthetic, viewerContext
       {/* Rounded Inset Hero */}
       {heroImage && (
         <div className="max-w-6xl mx-auto px-6 pt-12">
-          <div className="relative h-[50vh] rounded-3xl overflow-hidden shadow-xl">
+          <div className="relative h-[50vh] rounded-[20px] overflow-hidden shadow-xl">
             <SafeImage
               src={heroImage}
               alt={`${designer.name} portfolio`}

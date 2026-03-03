@@ -297,7 +297,7 @@ export default function RoomManagementPage() {
               <motion.div
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                className="bg-white rounded-2xl p-6 w-full max-w-lg mx-4"
+                className="bg-white rounded-[20px] p-6 w-full max-w-lg mx-4"
               >
                 <div className="flex justify-between items-center mb-6">
                   <h3 className="text-xl font-bold text-[var(--text-primary)]">Add Selection</h3>
@@ -369,7 +369,7 @@ export default function RoomManagementPage() {
               <motion.div
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                className="bg-white rounded-2xl p-6 w-full max-w-md mx-4"
+                className="bg-white rounded-[20px] p-6 w-full max-w-md mx-4"
               >
                 <div className="flex justify-between items-center mb-6">
                   <h3 className="text-xl font-bold text-[var(--text-primary)]">Add Selection</h3>
@@ -437,7 +437,7 @@ export default function RoomManagementPage() {
               <motion.div
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                className="bg-white rounded-2xl p-6 w-full max-w-md mx-4"
+                className="bg-white rounded-[20px] p-6 w-full max-w-md mx-4"
               >
                 <h3 className="text-xl font-bold text-[var(--text-primary)] mb-4">Edit Selection</h3>
                 
@@ -513,7 +513,7 @@ export default function RoomManagementPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
-                className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow"
+                className="bg-white rounded-[20px] shadow-lg overflow-hidden hover:shadow-xl transition-shadow"
               >
                 {/* Image */}
                 <div className="aspect-square bg-[var(--bg-elevated)] relative">
@@ -618,7 +618,7 @@ export default function RoomManagementPage() {
               transition={{ delay: 0.2 }}
               className="text-center py-16"
             >
-              <div className="bg-white rounded-2xl p-8 shadow-lg max-w-md mx-auto">
+              <div className="bg-white rounded-[20px] p-8 shadow-lg max-w-md mx-auto">
                 <FaCamera className="w-16 h-16 text-[var(--text-tertiary)] mx-auto mb-4" />
                 <h3 className="text-xl font-bold text-[var(--text-primary)] mb-2">No Selections Yet</h3>
                 <p className="text-[var(--text-secondary)] mb-6">
@@ -659,7 +659,7 @@ export default function RoomManagementPage() {
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-white rounded-2xl p-6 w-full max-w-md mx-4"
+            className="bg-white rounded-[20px] p-6 w-full max-w-md mx-4"
           >
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-xl font-bold text-[var(--text-primary)]">Upload Image</h3>

@@ -33,7 +33,7 @@ export function CreditsSection({ post }: CreditsSectionProps) {
 
   return (
     <section className="mx-auto max-w-4xl px-3 md:px-0">
-      <div className="ridge-card px-6 py-5 md:px-8 md:py-6 space-y-4">
+      <div className="px-6 py-5 md:px-8 md:py-6 space-y-4">
         {credits.length > 0 && (
           <div className="flex flex-wrap gap-x-6 gap-y-2 folio-meta text-[var(--text-secondary)]">
             {credits.map((credit: CreditEntry, idx: number) => {

@@ -67,7 +67,7 @@ export default function ProfessionalsPage() {
             >
               <div
                 onClick={() => handleRoleSelect('designer')}
-                className="group cursor-pointer bg-white rounded-2xl p-8 md:p-10 border border-folio-stone-100 hover:border-folio-stone-300 transition-all duration-300 hover:shadow-folio2 h-full flex flex-col"
+                className="group cursor-pointer bg-white rounded-[20px] p-8 md:p-10 border border-folio-stone-100 hover:border-folio-stone-300 transition-all duration-300 hover:shadow-folio2 h-full flex flex-col"
               >
                 <div className="flex-1">
                   {/* Icon */}
@@ -102,7 +102,7 @@ export default function ProfessionalsPage() {
             >
               <div
                 onClick={() => handleRoleSelect('vendor')}
-                className="group cursor-pointer bg-white rounded-2xl p-8 md:p-10 border border-folio-stone-100 hover:border-folio-stone-300 transition-all duration-300 hover:shadow-folio2 h-full flex flex-col"
+                className="group cursor-pointer bg-white rounded-[20px] p-8 md:p-10 border border-folio-stone-100 hover:border-folio-stone-300 transition-all duration-300 hover:shadow-folio2 h-full flex flex-col"
               >
                 <div className="flex-1">
                   {/* Icon */}

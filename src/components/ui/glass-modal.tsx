@@ -31,7 +31,7 @@ const GlassModal = forwardRef<HTMLDivElement, GlassModalProps>(
             "bg-white/90 backdrop-blur-xl",
             "border border-white/30",
             "shadow-2xl",
-            "rounded-3xl",
+            "rounded-[20px]",
             "overflow-hidden",
             "flex flex-col",
             "m-0",

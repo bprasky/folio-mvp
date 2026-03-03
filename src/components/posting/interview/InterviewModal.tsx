@@ -1418,8 +1418,8 @@ export function InterviewModal({
       <DialogContent
         className={
           phase === "question" || phase === "followup"
-            ? "w-full max-w-5xl h-[90vh] max-h-[90vh] mx-auto my-auto rounded-3xl flex flex-col bg-white/90 backdrop-blur-xl border border-white/30 shadow-2xl overflow-hidden"
-            : "max-w-6xl max-h-[90vh] overflow-y-auto bg-white/90 backdrop-blur-xl border border-white/30 shadow-2xl rounded-3xl"
+            ? "w-full max-w-5xl h-[90vh] max-h-[90vh] mx-auto my-auto rounded-[20px] flex flex-col bg-white/90 backdrop-blur-xl border border-white/30 shadow-2xl overflow-hidden"
+            : "max-w-6xl max-h-[90vh] overflow-y-auto bg-white/90 backdrop-blur-xl border border-white/30 shadow-2xl rounded-[20px]"
         }
       >
         {/* Interview Mode Selection */}

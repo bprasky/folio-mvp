@@ -5,7 +5,7 @@ import React from "react";
 /**
  * Centered windowed modal:
  * - Keeps page overlay blur
- * - Centers a rounded-3xl card (max-w ~1100px)
+ * - Centers a rounded-[20px] card (max-w ~1100px)
  * - Card is `relative` + `overflow-hidden` so the invitation layout's
  *   absolute full-bleed backdrop is scoped to the card (no page stretch)
  */
@@ -41,7 +41,7 @@ export default function ModalChromeClient({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Windowed card that *contains* the invitation layout */}
-        <div className="relative w-full rounded-3xl shadow-2xl ring-1 ring-black/10 overflow-hidden bg-transparent">
+        <div className="relative w-full rounded-[20px] shadow-2xl ring-1 ring-black/10 overflow-hidden bg-transparent">
           {/* Let the content control height; cap it so it scrolls if needed */}
           <div className="max-h-[90svh] overflow-y-auto">
             {children}

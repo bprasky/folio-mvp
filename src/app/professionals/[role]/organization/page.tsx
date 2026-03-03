@@ -301,7 +301,7 @@ export default function OrganizationPage() {
               </div>
 
               {/* Search Section */}
-              <div className="bg-white rounded-2xl border border-folio-stone-100 p-6 md:p-8 shadow-sm">
+              <div className="bg-white rounded-[20px] border border-folio-stone-100 p-6 md:p-8 shadow-sm">
                 {/* Search Input */}
                 <div className="relative">
                   <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
@@ -422,7 +422,7 @@ export default function OrganizationPage() {
               </div>
 
               {/* Create Form */}
-              <div className="bg-white rounded-2xl border border-folio-stone-100 p-6 md:p-8 shadow-sm">
+              <div className="bg-white rounded-[20px] border border-folio-stone-100 p-6 md:p-8 shadow-sm">
                 <form onSubmit={handleCreateOrg} className="space-y-6">
                   {/* Organization Name */}
                   <div>
@@ -546,7 +546,7 @@ export default function OrganizationPage() {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.4 }}
             >
-              <div className="bg-white rounded-2xl border border-folio-stone-100 p-8 md:p-12 shadow-sm text-center">
+              <div className="bg-white rounded-[20px] border border-folio-stone-100 p-8 md:p-12 shadow-sm text-center">
                 {/* Success Icon */}
                 <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-6">
                   <FaCheck className="w-7 h-7 text-emerald-600" />

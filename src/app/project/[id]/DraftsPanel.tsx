@@ -527,7 +527,7 @@ export default function DraftsPanel({ projectId }: { projectId: string }) {
       )}
       <div className="col-span-8 space-y-12">
         {/* Your Reflections Section */}
-        <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-elevated)] p-6 shadow-sm">
+        <div className="rounded-[20px] border border-[var(--border-default)] bg-[var(--bg-elevated)] p-6 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <h2 className="folio-h3 text-[var(--text-primary)]">Your Reflections</h2>
             <div className="flex gap-2">
@@ -575,7 +575,7 @@ export default function DraftsPanel({ projectId }: { projectId: string }) {
         </div>
 
         {/* Follow-up Questions Section */}
-        <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-elevated)] p-6 shadow-sm">
+        <div className="rounded-[20px] border border-[var(--border-default)] bg-[var(--bg-elevated)] p-6 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <h2 className="folio-h3 text-[var(--text-primary)]">Follow-up Questions</h2>
             <div className="flex gap-2">
@@ -660,7 +660,7 @@ export default function DraftsPanel({ projectId }: { projectId: string }) {
       {/* Sidebar */}
       <div className="col-span-4 space-y-6">
         {/* Story Draft Preview */}
-        <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-elevated)] p-6 shadow-sm">
+        <div className="rounded-[20px] border border-[var(--border-default)] bg-[var(--bg-elevated)] p-6 shadow-sm">
           <h3 className="font-semibold folio-h3 text-[var(--text-primary)] mb-4">
             Story Draft
           </h3>
