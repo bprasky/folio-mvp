@@ -33,7 +33,7 @@ export default function FestivalCard({ festival, isPast, isNext }: FestivalCardP
   return (
     <div
       className={clsx(
-        "relative shrink-0 rounded-3xl overflow-hidden shadow-sm aspect-[16/9] transition-all group",
+        "relative shrink-0 rounded-[20px] overflow-hidden shadow-sm aspect-[16/9] transition-all group",
         isPast ? "grayscale opacity-85 hover:opacity-90" : "hover:shadow-md"
       )}
     >
@@ -43,11 +43,11 @@ export default function FestivalCard({ festival, isPast, isNext }: FestivalCardP
         alt={festival.title}
         fill
         className="object-cover"
-        sizes="(max-width: 768px) 100vw, 720px"
+        sizes="(max-width: 768px) 100vw, 880px"
       />
 
       {/* Gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/15 to-transparent z-10" />
+      <div className="absolute inset-0 bg-gradient-to-t from-[rgba(30,30,30,0.65)] via-[rgba(30,30,30,0.15)] to-transparent z-10" />
 
       {/* Clickable link overlay - behind content */}
       <Link href={href} className="absolute inset-0 z-20 block" aria-label={festival.title} />
@@ -65,7 +65,7 @@ export default function FestivalCard({ festival, isPast, isNext }: FestivalCardP
       {/* Countdown + RSVP (top-right) - above link */}
       {!isPast && (
         <div className="absolute right-5 top-5 flex flex-col items-end gap-2 text-white z-30">
-          <div className="rounded-xl bg-black/45 backdrop-blur px-3 py-2 text-right pointer-events-none">
+          <div className="rounded-xl bg-[rgba(30,30,30,0.7)] backdrop-blur px-3 py-2 text-right pointer-events-none">
             <div className="text-[11px] uppercase tracking-wide opacity-90">Starts in</div>
             <div className="text-lg font-medium tabular-nums">
               {days}d {hours}h {minutes}m
@@ -80,7 +80,7 @@ export default function FestivalCard({ festival, isPast, isNext }: FestivalCardP
             }}
             className={clsx(
               "rounded-xl px-3 py-1 text-sm transition-colors pointer-events-auto",
-              userRsvped ? "bg-white text-black" : "bg-black/45 text-white hover:bg-black/60"
+              userRsvped ? "bg-white text-[rgb(30,30,30)]" : "bg-[rgba(30,30,30,0.7)] text-white hover:bg-[rgba(30,30,30,0.8)]"
             )}
           >
             {userRsvped ? "RSVP'd" : "RSVP"} • {rsvpCount.toLocaleString()}
@@ -90,7 +90,7 @@ export default function FestivalCard({ festival, isPast, isNext }: FestivalCardP
 
       {/* Past badge - above link */}
       {isPast && (
-        <div className="absolute right-4 top-4 rounded-full bg-black/60 px-3 py-1 text-[12px] uppercase text-white z-30 pointer-events-none">
+        <div className="absolute right-4 top-4 rounded-full bg-[rgba(30,30,30,0.7)] px-3 py-1 text-[12px] uppercase tracking-wide text-white z-30 pointer-events-none">
           Past event
         </div>
       )}
