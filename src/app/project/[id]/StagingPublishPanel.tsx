@@ -126,7 +126,7 @@ export default function StagingPublishPanel({
             {isPublishedStatus ? (
               <>
                 <span className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-green-500" />
+                  <span className="w-2 h-2 rounded-full bg-[rgb(74,44,59)]" />
                   <span className="folio-ui font-medium text-[var(--text-primary)]">Published</span>
                 </span>
                 {slug && (
@@ -142,7 +142,7 @@ export default function StagingPublishPanel({
               </>
             ) : (
               <span className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-amber-400" />
+                <span className="w-2 h-2 rounded-full border-2 border-[var(--text-tertiary)] bg-transparent" />
                 <span className="folio-ui font-medium text-[var(--text-primary)]">
                   Preview — not yet published
                 </span>
@@ -166,7 +166,7 @@ export default function StagingPublishPanel({
       {/* ERROR BANNER */}
       {error && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
-          <div className="flex items-start gap-2 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg folio-ui">
+          <div className="flex items-start gap-2 p-4 bg-stone-100 border border-stone-300 text-[rgb(74,44,59)] rounded-[20px] folio-ui">
             <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
             <span>{error}</span>
           </div>
@@ -218,8 +218,8 @@ export default function StagingPublishPanel({
               <span
                 className={`folio-meta px-2 py-0.5 rounded-full ${
                   allRequired
-                    ? "bg-green-100 text-green-700"
-                    : "bg-amber-100 text-amber-700"
+                    ? "bg-[rgb(74,44,59)]/10 text-[rgb(74,44,59)]"
+                    : "bg-stone-100 text-stone-600"
                 }`}
               >
                 {totalPassed}/{totalChecks}
@@ -248,7 +248,7 @@ export default function StagingPublishPanel({
                   <button
                     onClick={() => setShowUnpublishDialog(true)}
                     disabled={isUnpublishing}
-                    className="px-4 py-2 folio-ui font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="px-4 py-2 folio-ui font-medium text-[rgb(74,44,59)] border border-stone-300 rounded-lg hover:bg-stone-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     {isUnpublishing ? "Unpublishing..." : "Unpublish"}
                   </button>
@@ -329,7 +329,7 @@ export function NoDraftState({ projectId }: { projectId: string }) {
         {regenBusy ? "Generating..." : "Generate Draft"}
       </button>
       {error && (
-        <div className="mt-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg folio-ui">
+        <div className="mt-4 p-4 bg-stone-100 border border-stone-300 text-[rgb(74,44,59)] rounded-[20px] folio-ui">
           {error}
         </div>
       )}

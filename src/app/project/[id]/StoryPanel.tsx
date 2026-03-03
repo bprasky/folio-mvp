@@ -304,7 +304,7 @@ export default function StoryPanel({ projectId, project, images, isOwner }: Stor
   }
 
   return (
-    <div className="max-w-3xl space-y-8">
+    <div className="max-w-3xl space-y-12">
       {/* Intro */}
       <p className="folio-body text-[var(--text-secondary)]">
         Tell us about this project. Your reflections and credits shape the published post.
@@ -360,7 +360,7 @@ export default function StoryPanel({ projectId, project, images, isOwner }: Stor
           {filteredAnswers.map((qa, i) => (
             <div
               key={i}
-              className={`rounded-lg p-4 mb-3 transition-colors ${
+              className={`rounded-[20px] p-4 mb-3 transition-colors ${
                 qa.isFeatured
                   ? "border-l-4 border-l-[var(--accent)] border border-[var(--accent)]/30 bg-[var(--accent)]/5"
                   : "border border-[var(--border-default)]"
@@ -393,9 +393,10 @@ export default function StoryPanel({ projectId, project, images, isOwner }: Stor
               <textarea
                 value={qa.a || qa.answer || ""}
                 onChange={(e) => setAnswer(i, "a", e.target.value)}
-                className={`w-full min-h-[80px] p-2 border border-[var(--border-default)] rounded folio-ui resize-y bg-[var(--bg-base)] focus:ring-1 focus:ring-[var(--accent)] focus:border-[var(--accent)] ${
+                className={`w-full min-h-[80px] p-2 border border-[var(--border-default)] rounded-[20px] resize-y bg-[var(--bg-base)] focus:ring-1 focus:ring-[var(--accent)] focus:border-[var(--accent)] ${
                   qa.isFeatured ? "min-h-[60px]" : ""
                 }`}
+                style={{ fontFamily: "var(--font-headline)", fontStyle: "italic", fontSize: "16px", lineHeight: "1.5" }}
                 placeholder="Share your thoughts..."
               />
               <div className="flex items-center justify-between mt-2">
@@ -407,7 +408,7 @@ export default function StoryPanel({ projectId, project, images, isOwner }: Stor
                 <div className="flex-1" />
                 <button
                   onClick={() => removeAnswer(i)}
-                  className="text-[var(--text-tertiary)] hover:text-red-500"
+                  className="text-[var(--text-tertiary)] hover:text-[rgb(74,44,59)]"
                   aria-label="Remove"
                 >
                   <X className="w-4 h-4" />
@@ -455,14 +456,15 @@ export default function StoryPanel({ projectId, project, images, isOwner }: Stor
                 onChange={(e) => setFollowup(i, "q", e.target.value)}
               />
               <textarea
-                className="col-span-6 px-3 py-2 folio-ui border border-[var(--border-default)] rounded-lg focus:ring-1 focus:ring-[var(--accent)] focus:border-[var(--accent)] resize-none bg-[var(--bg-base)]"
+                className="col-span-6 px-3 py-2 border border-[var(--border-default)] rounded-lg focus:ring-1 focus:ring-[var(--accent)] focus:border-[var(--accent)] resize-none bg-[var(--bg-base)]"
+                style={{ fontFamily: "var(--font-headline)", fontStyle: "italic", fontSize: "15px", lineHeight: "1.5" }}
                 value={qa.a || qa.answer || ""}
                 placeholder="Answer"
                 rows={2}
                 onChange={(e) => setFollowup(i, "a", e.target.value)}
               />
               <button
-                className="col-span-1 px-2 py-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition-colors"
+                className="col-span-1 px-2 py-1 text-[var(--text-tertiary)] hover:text-[rgb(74,44,59)] hover:bg-stone-100 rounded transition-colors"
                 onClick={() => removeFollowup(i)}
                 aria-label="Remove"
               >

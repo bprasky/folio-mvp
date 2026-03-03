@@ -244,7 +244,7 @@ export default function PublishPanel({ projectId, project, images, isOwner }: Pu
 
       {/* Error */}
       {error && (
-        <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg folio-ui">
+        <div className="p-4 bg-stone-100 border border-stone-300 text-[rgb(74,44,59)] rounded-[20px] folio-ui">
           {error}
         </div>
       )}
@@ -272,7 +272,7 @@ export default function PublishPanel({ projectId, project, images, isOwner }: Pu
             <button
               onClick={() => setShowUnpublishDialog(true)}
               disabled={isUnpublishing}
-              className="folio-ui text-sm font-medium text-red-600 hover:text-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="folio-ui text-sm font-medium text-[rgb(74,44,59)] hover:text-[rgb(74,44,59)]/80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {isUnpublishing ? "Unpublishing..." : "Unpublish"}
             </button>

@@ -268,11 +268,11 @@ export default function EditProductDrawer({
                 </div>
               </div>
             ) : error ? (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                <p className="text-red-800">{error}</p>
+              <div className="bg-stone-100 border border-stone-300 rounded-[20px] p-4">
+                <p className="text-[rgb(74,44,59)]">{error}</p>
                 <button
                   onClick={fetchProductData}
-                  className="mt-2 folio-ui text-red-600 hover:text-red-800 underline"
+                  className="mt-2 folio-ui text-[rgb(74,44,59)] hover:text-[rgb(74,44,59)]/80 underline"
                 >
                   Try again
                 </button>

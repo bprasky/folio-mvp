@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { FaUpload, FaImages, FaTag, FaCheckCircle, FaCloudUploadAlt, FaFileImport, FaTrash } from 'react-icons/fa';
+import { FaUpload, FaImages, FaImage, FaTag, FaCheckCircle, FaCloudUploadAlt, FaFileImport, FaTrash } from 'react-icons/fa';
 import { Camera, FileSpreadsheet, Presentation } from 'lucide-react';
 import ProjectCreationModal from '@/components/ProjectCreationModal';
 import { PresentationImportModal } from '@/components/import/PresentationImportModal';
@@ -460,15 +460,20 @@ export default function MediaSection({ project, isOwner, images, projectPost, is
               return (
                 <div
                   key={image.id}
-                  className={`relative group aspect-[4/3] bg-[var(--bg-base)] rounded-lg overflow-hidden border-2 ${
+                  className={`relative group aspect-[4/3] bg-[var(--bg-base)] rounded-[20px] overflow-hidden border-2 ${
                     isCover ? 'border-[var(--accent)]' : 'border-[var(--border-default)] hover:border-[var(--accent)]'
                   } transition-all`}
                 >
+                  {/* Designed empty state fallback — visible when image fails to load */}
+                  <div className="absolute inset-0 bg-stone-100 border border-stone-200 rounded-[20px] flex flex-col items-center justify-center">
+                    <FaImage className="w-8 h-8 text-stone-300 mb-2" />
+                    <span className="folio-meta text-stone-400">Image unavailable</span>
+                  </div>
                   <Image
                     src={image.url}
                     alt={image.name || 'Project image'}
                     fill
-                    className="object-cover"
+                    className="object-cover relative z-[1]"
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                   />
 
@@ -503,7 +508,7 @@ export default function MediaSection({ project, isOwner, images, projectPost, is
                       </button>
                       <button
                         onClick={() => handleDeleteImage(image.id)}
-                        className="px-3 py-2 rounded-lg text-sm font-medium bg-red-500 text-white hover:bg-red-600 transition-colors"
+                        className="px-3 py-2 rounded-lg text-sm font-medium bg-[rgb(74,44,59)] text-white hover:bg-[rgb(74,44,59)]/80 transition-colors"
                       >
                         <FaTrash className="w-4 h-4" />
                       </button>

@@ -55,7 +55,7 @@ export default function ConfirmDialog({
   if (!open) return null;
 
   const confirmButtonClasses = confirmVariant === 'destructive' 
-    ? 'bg-red-600 hover:bg-red-700 focus:ring-red-500' 
+    ? 'bg-[rgb(74,44,59)] hover:bg-[rgb(74,44,59)]/80 focus:ring-[rgb(74,44,59)]'
     : 'bg-[var(--accent)] hover:bg-[var(--accent-hover)] focus:ring-[var(--accent)]';
 
   return createPortal(
