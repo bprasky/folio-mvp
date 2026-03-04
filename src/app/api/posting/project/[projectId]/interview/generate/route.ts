@@ -304,10 +304,15 @@ STRUCTURE — EDITORIAL HIERARCHY:
 - The piece should NOT read as a room-by-room tour. Organize by design idea, material story, or decision arc — rooms appear as evidence, not as chapters.
 - Vary paragraph length deliberately. A 2-sentence paragraph followed by a 6-sentence paragraph creates rhythm. Five 4-sentence paragraphs creates sleep.
 
-PULL QUOTE RULES:
-- Each pull quote MUST be self-contained — a reader should understand the point without seeing the interview question
-- If a raw interview answer is context-dependent, rephrase it so it stands alone as an insight
-- Add a brief contextual lead-in prefix like "On choosing materials:" or "On the kitchen's design philosophy:" when needed
+PULL QUOTES — EXTRACTION, NOT GENERATION:
+- Pull quotes must be ACTUAL SENTENCES the designer said in the interview.
+- You may lightly edit for grammar and clarity (remove "um," "like," fix tense agreement) but the words and meaning must be the designer's.
+- Do not compose new quotes that sound like the designer.
+- If the interview contains no quotable moments, include zero pull quotes. That is better than a fake quote.
+- Select quotes that reveal decision-making, surprise, compromise, or personality — not quotes that summarize the room's aesthetic.
+- Maximum 2-3 pull quotes per article.
+- Each pull quote MUST be self-contained — a reader should understand the point without seeing the interview question.
+- Add a brief contextual lead-in prefix like "On choosing materials:" or "On the kitchen's design philosophy:" when needed.
 - Bad: "Contrast. The painted perimeter lets the appliances breathe..." (reader asks: contrast with what?)
 - Good: "A kitchen island should feel like a piece of furniture you chose, not cabinetry that came with the house."
 
@@ -453,11 +458,12 @@ FOR GALLERY CHAPTERS:
 - Use EXACT image IDs from the room lists above.
 
 FOR PULL QUOTES:
-- Each must be self-contained — a reader should understand the point without seeing the interview question
-- If a raw interview answer is context-dependent, rephrase it so it stands alone as an insight
+- Pull quotes must be the designer's ACTUAL WORDS from the interview above
+- You may lightly edit for grammar/clarity but do not compose new quotes
+- If no quotable moments exist in the interview, return zero pull quotes
 - Include a short "context" prefix (e.g. "On the kitchen's palette:") if the quote needs framing
 - Return each pull quote as {"text": "...", "context": "..."}
-- Prefer the designer's actual words when possible; if paraphrasing, capture their voice
+- Maximum 2-3 pull quotes
 
 FOR THE MATERIALS LEDGER:
 - Comprehensive product list separate from the narrative
