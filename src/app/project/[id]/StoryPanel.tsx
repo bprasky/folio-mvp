@@ -7,6 +7,7 @@ import { CreditsEditor } from "@/components/posting/CreditsEditor";
 import type { CreditEntry } from "@/lib/posting/creditsSchema";
 import { TagDiagnosticModal } from "@/components/posting/interview/TagDiagnosticModal";
 import { InterviewFlow } from "@/components/interview";
+import { usePublishFlow } from "@/hooks/usePublishFlow";
 
 type QA = {
   q?: string;
@@ -323,6 +324,11 @@ export default function StoryPanel({ projectId, project, images, isOwner }: Stor
         />
       </div>
 
+      {/* Editorial Context */}
+      {isOwner && POSTING_V1_ENABLED && (
+        <EditorialContextSection projectId={projectId} />
+      )}
+
       {/* Continue to Interview CTA */}
       {isOwner && POSTING_V1_ENABLED && (
         <button
@@ -520,6 +526,68 @@ export default function StoryPanel({ projectId, project, images, isOwner }: Stor
             />
           </div>
         </div>
+      )}
+    </div>
+  );
+}
+
+// Inline component for editorial context display/toggles
+function EditorialContextSection({ projectId }: { projectId: string }) {
+  const { contextToggles, setContextToggle, generationMeta, generateDraft, regenBusy } = usePublishFlow(projectId);
+  const [dirty, setDirty] = useState(false);
+
+  function handleToggle(key: 'includeBio' | 'includeProjectHistory', value: boolean) {
+    setContextToggle(key, value);
+    setDirty(true);
+  }
+
+  async function handleRegenerate() {
+    await generateDraft();
+    setDirty(false);
+  }
+
+  return (
+    <div className="rounded-[20px] border border-[var(--border-default)] bg-[var(--bg-elevated)] p-6 shadow-sm">
+      <h2 className="folio-h3 text-[var(--text-primary)] mb-1">Editorial Context</h2>
+      <p className="folio-meta text-[var(--text-tertiary)] mb-4">
+        Control what background context Folio uses when writing about your project.
+      </p>
+      <div className="space-y-3">
+        <label className="flex items-center gap-2 cursor-pointer select-none folio-ui text-[var(--text-secondary)]">
+          <input
+            type="checkbox"
+            checked={contextToggles.includeBio}
+            onChange={(e) => handleToggle('includeBio', e.target.checked)}
+            className="w-4 h-4 rounded border-[var(--border-default)] accent-[var(--accent)]"
+          />
+          Include my bio for richer editorial context
+        </label>
+        <label className="flex items-center gap-2 cursor-pointer select-none folio-ui text-[var(--text-secondary)]">
+          <input
+            type="checkbox"
+            checked={contextToggles.includeProjectHistory}
+            onChange={(e) => handleToggle('includeProjectHistory', e.target.checked)}
+            className="w-4 h-4 rounded border-[var(--border-default)] accent-[var(--accent)]"
+          />
+          Reference my other Folio projects
+        </label>
+      </div>
+      {generationMeta?.designerBioMissing && contextToggles.includeBio && (
+        <p className="mt-3 folio-meta text-[var(--text-tertiary)]">
+          Your bio helps Folio write features that sound like you.{" "}
+          <a href="/settings/profile" className="text-[var(--accent)] hover:text-[var(--accent-hover)] underline">
+            Add one now
+          </a>
+        </p>
+      )}
+      {dirty && (
+        <button
+          onClick={handleRegenerate}
+          disabled={regenBusy}
+          className="mt-4 px-4 py-2 folio-ui font-medium text-white bg-[var(--accent)] rounded-lg hover:bg-[var(--accent-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          {regenBusy ? "Regenerating..." : "Regenerate with updated context"}
+        </button>
       )}
     </div>
   );

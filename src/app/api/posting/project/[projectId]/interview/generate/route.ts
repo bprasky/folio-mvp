@@ -1405,7 +1405,11 @@ export async function POST(
     const force = Boolean(body.force);
     const answersOverride = Array.isArray(body.answersOverride) ? body.answersOverride : undefined;
     const followupsOverride = Array.isArray(body.followupsOverride) ? body.followupsOverride : undefined;
-    
+
+    // Editorial context toggles (default: include everything available)
+    const includeBio = body.includeBio !== false;
+    const includeProjectHistory = body.includeProjectHistory !== false;
+
     // Always use recomposition mode (hard-fail editorial)
     const mode = 'recomposition' as const;
 
@@ -1931,12 +1935,12 @@ export async function POST(
 
     // Fetch designer context for editorial generation
     const designerName = projectData.designer?.name || undefined;
-    const designerBio = projectData.designer?.bio || undefined;
+    const designerBio = includeBio ? (projectData.designer?.bio || undefined) : undefined;
     const projectLocation = [projectData.city, projectData.regionState].filter(Boolean).join(', ') || undefined;
 
     // Fetch designer's other published projects for context
     let projectHistory: string | undefined;
-    if (projectData.designerId) {
+    if (includeProjectHistory && projectData.designerId) {
       try {
         const otherProjects = await prisma.project.findMany({
           where: {
