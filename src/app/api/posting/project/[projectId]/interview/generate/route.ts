@@ -329,6 +329,9 @@ function buildEditorialPrompt({
   productsByRoom,
   imageOrder,
   materialsLedger,
+  designerName,
+  location,
+  atelierSummary,
 }: {
   project: { title: string };
   answers: Array<{ q: string; a: string }>;
@@ -337,6 +340,11 @@ function buildEditorialPrompt({
   productsByRoom: Record<string, Array<{ id: string; name: string; vendor?: string; imageId: string }>>;
   imageOrder: string[];
   materialsLedger?: { items: Array<{ name: string; productId?: string }> };
+  designerName?: string;
+  location?: string;
+  designerBio?: string;
+  projectHistory?: string;
+  atelierSummary?: string;
 }): string {
   // Separate Layer 1 (base) and Layer 2 (follow-up/deeper) answers
   const hasFollowups = followups && followups.length > 0;
@@ -370,8 +378,19 @@ ${interviewText}
 
 ## Project Details
 - Project: ${project.title}
+- Designer: ${designerName || 'Not specified'}
+- Location: ${location || 'Not specified'}
 - Rooms: ${roomContexts.map(r => r.room).join(', ')}
-- Products tagged: ${materialsList || 'None'}
+- Products tagged: ${materialsList || 'None'}${designerBio ? `
+
+## Designer Bio (use to inform tone and context — do not quote directly or paraphrase into the article. This helps you understand who is speaking in the interview)
+${designerBio}` : ''}${projectHistory ? `
+
+## Designer's Other Published Projects on Folio (use for context about their body of work — reference only if it genuinely enriches the narrative, e.g., "a departure from their typical palette" or "continuing a thread from previous work." Do not force references)
+${projectHistory}` : ''}${atelierSummary ? `
+
+## Designer Voice & Philosophy (from their Folio profile — use to inform tone, do not quote directly)
+${atelierSummary}` : ''}
 
 ### Room Organization
 ${roomContexts.map(r => `**${r.room}** — ${r.images} images, products: ${r.products.length > 0 ? r.products.join(', ') : 'none'}\n  Image IDs: ${r.imageIds.join(', ')}`).join('\n')}
@@ -502,6 +521,11 @@ async function composeEditorialHard({
   imageOrder,
   imageSelections,
   images,
+  designerName,
+  location,
+  designerBio,
+  projectHistory,
+  atelierSummary,
   correlationId,
 }: {
   project: { title: string };
@@ -511,6 +535,11 @@ async function composeEditorialHard({
   imageOrder?: string[];
   imageSelections?: Record<string, string[]>;
   images?: Array<{ id: string; room?: string | null; tags?: Array<{ product: { id: string; name: string; vendor?: { name: string } | null } }> }>;
+  designerName?: string;
+  location?: string;
+  designerBio?: string;
+  projectHistory?: string;
+  atelierSummary?: string;
   correlationId?: string;
 }): Promise<{
   lead: { kicker: string; deck: string };
@@ -582,6 +611,11 @@ async function composeEditorialHard({
     productsByRoom,
     imageOrder: imageIds,
     materialsLedger,
+    designerName,
+    location,
+    designerBio,
+    projectHistory,
+    atelierSummary,
   });
 
   console.log('[composeEditorialHard] Calling Claude API with room-organized prompt', {
@@ -1457,6 +1491,7 @@ export async function POST(
             id: true,
             name: true,
             studio: true,
+            bio: true,
           },
         },
         images: {
@@ -1894,6 +1929,81 @@ export async function POST(
       _cid,
     });
 
+    // Fetch designer context for editorial generation
+    const designerName = projectData.designer?.name || undefined;
+    const designerBio = projectData.designer?.bio || undefined;
+    const projectLocation = [projectData.city, projectData.regionState].filter(Boolean).join(', ') || undefined;
+
+    // Fetch designer's other published projects for context
+    let projectHistory: string | undefined;
+    if (projectData.designerId) {
+      try {
+        const otherProjects = await prisma.project.findMany({
+          where: {
+            designerId: projectData.designerId,
+            id: { not: projectId },
+            isPublic: true,
+          },
+          select: {
+            title: true,
+            city: true,
+            regionState: true,
+            images: {
+              select: {
+                room: true,
+                tags: {
+                  select: { product: { select: { name: true } } },
+                  take: 3,
+                },
+              },
+              take: 10,
+            },
+          },
+          orderBy: { publishedAt: 'desc' },
+          take: 5,
+        });
+        if (otherProjects.length > 0) {
+          projectHistory = otherProjects.map(p => {
+            const rooms = [...new Set(p.images.map(img => img.room).filter(Boolean))];
+            const topProducts = [...new Set(p.images.flatMap(img => img.tags.map(t => t.product.name)))].slice(0, 3);
+            const location = [p.city, p.regionState].filter(Boolean).join(', ');
+            return `- ${p.title}${location ? ` (${location})` : ''} — rooms: ${rooms.length > 0 ? rooms.join(', ') : 'N/A'}, materials: ${topProducts.length > 0 ? topProducts.join(', ') : 'N/A'}`;
+          }).join('\n');
+        }
+      } catch (historyErr: any) {
+        console.warn('[generate] Project history fetch failed (non-fatal):', historyErr?.message, { _cid });
+      }
+    }
+
+    // Fetch Atelier fingerprint summary if available
+    let atelierSummary: string | undefined;
+    if (projectData.designerId) {
+      try {
+        const fingerprint = await prisma.atelierFingerprint.findFirst({
+          where: { designerId: projectData.designerId, ownerType: 'DESIGNER' },
+          include: {
+            nodes: {
+              orderBy: { weight: 'desc' },
+              take: 10,
+            },
+          },
+        });
+        if (fingerprint && fingerprint.nodes.length > 0) {
+          const grouped: Record<string, string[]> = {};
+          for (const node of fingerprint.nodes) {
+            const type = node.nodeType.toLowerCase().replace('_', ' ');
+            if (!grouped[type]) grouped[type] = [];
+            grouped[type].push(node.label);
+          }
+          atelierSummary = Object.entries(grouped)
+            .map(([type, labels]) => `${type}: ${labels.join(', ')}`)
+            .join('\n');
+        }
+      } catch (fingerprintErr: any) {
+        console.warn('[generate] Atelier fingerprint fetch failed (non-fatal):', fingerprintErr?.message, { _cid });
+      }
+    }
+
     let composed: any;
     try {
       composed = await composeEditorialHard({
@@ -1904,6 +2014,11 @@ export async function POST(
         imageOrder: validImageIds,  // Use validated image IDs
         imageSelections: imageSelections,
         images: imagesWithRoomData,  // Pass images with room data
+        designerName,
+        location: projectLocation,
+        designerBio,
+        projectHistory,
+        atelierSummary,
         correlationId: _cid,
       });
     } catch (e: any) {
@@ -2277,7 +2392,14 @@ export async function POST(
       }
     }
 
-    return NextResponse.json({ ok: true }, { status: 200 });
+    return NextResponse.json({
+      ok: true,
+      meta: {
+        designerBioMissing: !designerBio,
+        hasProjectHistory: !!projectHistory,
+        hasAtelierFingerprint: !!atelierSummary,
+      },
+    }, { status: 200 });
   } catch (error: any) {
     // Ensure unlock on all error paths — but only write if we actually need to clear a lock
     try {
