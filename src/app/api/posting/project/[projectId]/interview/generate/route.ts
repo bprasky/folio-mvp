@@ -2233,6 +2233,41 @@ export async function POST(
       });
     }
 
+    // Generation metadata for monitoring
+    const allBodyText = (validatedBlocks.galleryChapters || [])
+      .flatMap((ch: any) => ch.body || [])
+      .join(' ');
+    const wordCount = allBodyText.split(/\s+/).filter(Boolean).length +
+      (validatedBlocks.lead?.kicker?.split(/\s+/).length || 0) +
+      (validatedBlocks.lead?.deck?.split(/\s+/).length || 0);
+    const roomsCovered = (validatedBlocks.galleryChapters || []).map((ch: any) => ch.title || 'Untitled');
+    const productsInText = allTaggedProducts
+      .filter(p => allGeneratedText.toLowerCase().includes(p.name.toLowerCase()))
+      .map(p => p.name);
+    const productsNotInText = allTaggedProducts
+      .filter(p => !allGeneratedText.toLowerCase().includes(p.name.toLowerCase()))
+      .map(p => p.name);
+
+    console.log('[EDITORIAL_GENERATION_META]', JSON.stringify({
+      projectId,
+      wordCount,
+      sectionCount: (validatedBlocks.galleryChapters || []).length,
+      pullQuoteCount: (validatedBlocks.pullQuotes || []).length,
+      roomsCovered,
+      productsInText,
+      productsInTags: allTaggedProducts.map(p => p.name),
+      unmatchedProducts: productsNotInText,
+      accuracyWarnings: accuracyCheck.warnings,
+      interviewAnswerCount: normalizedAnswers.length,
+      hasFollowUps: normalizedFollowUps.length > 0,
+      hasBrandProfile: false,
+      hasBio: !!designerBio,
+      hasProjectHistory: !!projectHistory,
+      hasFingerprint: !!atelierSummary,
+      durationMs: duration,
+      _cid,
+    }));
+
     // expandedBlocks is the validated structure ready to save
     const expandedBlocks = validatedBlocks;
 
