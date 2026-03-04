@@ -67,6 +67,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return NextResponse.json(
+        { error: 'Invalid email format' },
+        { status: 400 }
+      );
+    }
+
+    // Enforce password policy
+    if (typeof password !== 'string' || password.length < 8) {
+      return NextResponse.json(
+        { error: 'Password must be at least 8 characters long' },
+        { status: 400 }
+      );
+    }
+
     // Validate consent
     if (!acceptedTerms) {
       return NextResponse.json(
@@ -102,8 +119,9 @@ export async function POST(request: NextRequest) {
       if (process.env.NODE_ENV !== 'production') {
         console.log('[Signup API] User already exists with email:', email);
       }
+      // Return generic message to prevent user enumeration
       return NextResponse.json(
-        { error: 'User with this email already exists' },
+        { error: 'Unable to create account with this email' },
         { status: 409 }
       );
     }

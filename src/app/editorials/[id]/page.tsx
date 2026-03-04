@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { FaArrowLeft, FaCalendarAlt, FaUser, FaShare, FaHeart, FaBookmark } from 'react-icons/fa';
 import SafeImage from '../../../components/SafeImage';
+import { sanitizeHtml } from '@/lib/sanitize';
 
 interface Editorial {
   id: string;
@@ -198,7 +199,7 @@ const EditorialDetailPage = () => {
             <div className="prose prose-folio max-w-none">
               <div 
                 className="text-folio-text leading-relaxed"
-                dangerouslySetInnerHTML={{ __html: editorial.content }}
+                dangerouslySetInnerHTML={{ __html: sanitizeHtml(editorial.content) }}
               />
             </div>
           </div>

@@ -2,12 +2,21 @@ export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { assertProjectView } from "@/lib/authz/access";
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    await assertProjectView(session.user.id, params.id);
+
     const searchParams = request.nextUrl.searchParams;
     const limit = Math.min(parseInt(searchParams.get("limit") || "10"), 50);
     const approvedOnly = searchParams.get("approvedOnly") !== "false"; // Default true
@@ -80,6 +89,9 @@ export async function GET(
       totalCount: quotes.length,
     });
   } catch (error) {
+    if (error instanceof Error && error.message === "Forbidden") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
     console.error("[projects/interview-quotes] Error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }

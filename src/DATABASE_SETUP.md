@@ -24,8 +24,8 @@ I've updated your application to use a **PostgreSQL database with Prisma ORM**. 
 4. Copy the connection string
 5. Create a `.env` file in your project root:
    ```
-   DATABASE_URL="postgresql://postgres:ds%-t$#eT9$M76Z@db.gwdkhgejsyvynqzolyau.supabase.co:5432/postgres"
-   NEXT_PUBLIC_SUPABASE_URL="https://gwdkhgejsyvynqzolyau.supabase.co"
+   DATABASE_URL="postgresql://postgres:YOUR_PASSWORD@db.YOUR_PROJECT_REF.supabase.co:5432/postgres"
+   NEXT_PUBLIC_SUPABASE_URL="https://YOUR_PROJECT_REF.supabase.co"
    NEXT_PUBLIC_SUPABASE_ANON_KEY="YOUR_ANON_KEY_HERE"
    SUPABASE_SERVICE_ROLE_KEY="YOUR_SERVICE_ROLE_KEY_HERE"
    SUPABASE_DB_WEBHOOK_SECRET="your-webhook-secret-here"

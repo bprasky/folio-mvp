@@ -20,7 +20,8 @@ export async function GET(request: NextRequest) {
     }
 
     const searchParams = request.nextUrl.searchParams;
-    const vendorId = searchParams.get('vendorId') || session.user.id;
+    // SECURITY: Always use the authenticated user's ID — never accept vendorId from query params
+    const vendorId = session.user.id;
     const eventId = searchParams.get('eventId');
 
     // Get vendor's products

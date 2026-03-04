@@ -73,6 +73,24 @@ export async function PUT(
   { params }: { params: { productId: string } }
 ) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Verify the user owns this product (is the vendor) or is an admin
+    const product = await prisma.product.findUnique({
+      where: { id: params.productId },
+      select: { vendorId: true },
+    });
+    if (!product) {
+      return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+    }
+    const userRole = (session.user as any).role;
+    if (product.vendorId !== session.user.id && userRole !== 'ADMIN') {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     const body = await request.json();
     const {
       name,

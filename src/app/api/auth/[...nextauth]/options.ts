@@ -320,7 +320,13 @@ export const authOptions: NextAuthOptions = {
       },
     },
   },
-  secret: process.env.NEXTAUTH_SECRET || (process.env.NODE_ENV === 'production' ? undefined : 'dev-secret-key-not-for-production'),
+  secret: (() => {
+    if (process.env.NEXTAUTH_SECRET) return process.env.NEXTAUTH_SECRET;
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('NEXTAUTH_SECRET must be set in production');
+    }
+    return 'dev-secret-key-not-for-production';
+  })(),
   // Add NEXTAUTH_URL for production
   ...(process.env.NEXTAUTH_URL && { url: process.env.NEXTAUTH_URL }),
 }; 

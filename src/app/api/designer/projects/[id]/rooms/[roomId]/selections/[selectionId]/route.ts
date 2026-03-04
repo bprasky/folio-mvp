@@ -2,6 +2,9 @@ export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import { assertProjectView } from '@/lib/authz/access';
 
 const prisma = new PrismaClient();
 
@@ -10,6 +13,12 @@ export async function PATCH(
   { params }: { params: { id: string; roomId: string; selectionId: string } }
 ) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    await assertProjectView(session.user.id, params.id);
+
     const body = await request.json();
     const { photo, notes, vendorId } = body;
 
@@ -43,6 +52,9 @@ export async function PATCH(
 
     return NextResponse.json(updatedSelection);
   } catch (error) {
+    if (error instanceof Error && error.message === 'Forbidden') {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
     console.error('Error updating selection:', error);
     return NextResponse.json(
       { error: 'Failed to update selection', details: error instanceof Error ? error.message : 'Unknown error' },
@@ -56,6 +68,12 @@ export async function DELETE(
   { params }: { params: { id: string; roomId: string; selectionId: string } }
 ) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    await assertProjectView(session.user.id, params.id);
+
     // Verify selection exists and belongs to the room/project
     const selection = await prisma.selection.findFirst({
       where: { 
@@ -81,6 +99,9 @@ export async function DELETE(
 
     return NextResponse.json({ message: 'Selection deleted successfully' });
   } catch (error) {
+    if (error instanceof Error && error.message === 'Forbidden') {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
     console.error('Error deleting selection:', error);
     return NextResponse.json(
       { error: 'Failed to delete selection', details: error instanceof Error ? error.message : 'Unknown error' },

@@ -1,16 +1,33 @@
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/app/api/auth/[...nextauth]/options';
+import { prisma } from '@/lib/prisma';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const projectId = params.id;
+
+    // Verify the user has vendor org access to this project
+    const orgUser = await prisma.organizationUser.findFirst({
+      where: {
+        userId: session.user.id,
+        isActive: true,
+        organization: {
+          type: { in: ['VENDOR', 'MANUFACTURER', 'SHOWROOM'] },
+        },
+      },
+      select: { organizationId: true },
+    });
 
     const project = await prisma.project.findUnique({
       where: { id: projectId },
@@ -40,6 +57,13 @@ export async function GET(
       );
     }
 
+    // Check that the vendor user owns the project or their org is linked
+    const isOwner = project.ownerId === session.user.id;
+    const isVendorOrg = orgUser && project.vendorOrgId === orgUser.organizationId;
+    if (!isOwner && !isVendorOrg) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     return NextResponse.json(project);
   } catch (error) {
     console.error('Error fetching vendor project:', error);
@@ -55,7 +79,41 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const projectId = params.id;
+
+    // Verify the user has vendor org access to this project
+    const orgUser = await prisma.organizationUser.findFirst({
+      where: {
+        userId: session.user.id,
+        isActive: true,
+        organization: {
+          type: { in: ['VENDOR', 'MANUFACTURER', 'SHOWROOM'] },
+        },
+      },
+      select: { organizationId: true },
+    });
+
+    // Check project exists and user has access
+    const existingProject = await prisma.project.findUnique({
+      where: { id: projectId },
+      select: { ownerId: true, vendorOrgId: true },
+    });
+
+    if (!existingProject) {
+      return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+    }
+
+    const isOwner = existingProject.ownerId === session.user.id;
+    const isVendorOrg = orgUser && existingProject.vendorOrgId === orgUser.organizationId;
+    if (!isOwner && !isVendorOrg) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     const body = await request.json();
 
     const project = await prisma.project.update({
@@ -84,4 +142,4 @@ export async function PATCH(
       { status: 500 }
     );
   }
-} 
+}

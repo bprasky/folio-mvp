@@ -1,6 +1,26 @@
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/app/api/auth/[...nextauth]/options';
+
+// Block SSRF: reject internal/private IPs and non-HTTP schemes
+function isUrlSafe(urlString: string): boolean {
+  try {
+    const parsed = new URL(urlString);
+    if (!['http:', 'https:'].includes(parsed.protocol)) return false;
+    const hostname = parsed.hostname;
+    // Block localhost, private IPs, link-local, and cloud metadata
+    if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1') return false;
+    if (hostname === '0.0.0.0' || hostname.endsWith('.local')) return false;
+    if (hostname === '169.254.169.254') return false; // Cloud metadata
+    if (hostname.startsWith('10.') || hostname.startsWith('192.168.')) return false;
+    if (/^172\.(1[6-9]|2\d|3[01])\./.test(hostname)) return false;
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 // Enhanced function to scrape product data from various sites
 async function scrapeProductData(url: string) {
@@ -346,17 +366,27 @@ function determineCategory(tags: string[], name: string): string {
 
 export async function POST(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { url } = await request.json();
-    
+
     if (!url) {
       return NextResponse.json({ error: 'URL is required' }, { status: 400 });
     }
-    
+
     // Validate URL format
     try {
       new URL(url);
     } catch {
       return NextResponse.json({ error: 'Invalid URL format' }, { status: 400 });
+    }
+
+    // Block SSRF attacks
+    if (!isUrlSafe(url)) {
+      return NextResponse.json({ error: 'URL not allowed' }, { status: 400 });
     }
     
     // For demo purposes, return mock data for some common sites

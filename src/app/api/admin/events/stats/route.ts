@@ -1,12 +1,13 @@
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/prisma';
+import { requireAdmin } from '@/lib/requireAdmin';
 
 export async function GET(req: NextRequest) {
   try {
+    await requireAdmin();
+
     const [
       totalEvents,
       pendingEvents,
@@ -47,8 +48,10 @@ export async function GET(req: NextRequest) {
       approvedEvents,
       recentEvents,
     });
-  } catch (error) {
+  } catch (error: any) {
+    if (error.status === 401) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (error.status === 403) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     console.error('Error fetching event stats:', error);
     return NextResponse.json({ error: 'Failed to fetch event stats' }, { status: 500 });
   }
-} 
+}

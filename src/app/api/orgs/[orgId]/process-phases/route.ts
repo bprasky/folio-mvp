@@ -14,6 +14,11 @@ export async function GET(
   { params }: { params: { orgId: string } }
 ) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { orgId } = params;
 
     const phases = await prisma.orgProcessPhase.findMany({

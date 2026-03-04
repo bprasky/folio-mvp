@@ -1,25 +1,64 @@
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/app/api/auth/[...nextauth]/options';
+import { prisma } from '@/lib/prisma';
 
-const prisma = new PrismaClient();
+/** Helper: verify vendor user has access to the project */
+async function verifyVendorProjectAccess(userId: string, projectId: string) {
+  const orgUser = await prisma.organizationUser.findFirst({
+    where: {
+      userId,
+      isActive: true,
+      organization: {
+        type: { in: ['VENDOR', 'MANUFACTURER', 'SHOWROOM'] },
+      },
+    },
+    select: { organizationId: true },
+  });
+
+  const project = await prisma.project.findUnique({
+    where: { id: projectId },
+    select: { ownerId: true, vendorOrgId: true },
+  });
+
+  if (!project) return { allowed: false as const, reason: 'Project not found', status: 404 };
+
+  const isOwner = project.ownerId === userId;
+  const isVendorOrg = orgUser && project.vendorOrgId === orgUser.organizationId;
+
+  if (!isOwner && !isVendorOrg) return { allowed: false as const, reason: 'Forbidden', status: 403 };
+
+  return { allowed: true as const };
+}
 
 export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string; selectionId: string } }
 ) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const projectId = params.id;
     const selectionId = params.selectionId;
+
+    const access = await verifyVendorProjectAccess(session.user.id, projectId);
+    if (!access.allowed) {
+      return NextResponse.json({ error: access.reason }, { status: access.status });
+    }
+
     const body = await request.json();
-    const { 
-      photo, 
-      notes, 
-      vendorName, 
-      productName, 
-      colorFinish, 
-      unitPrice, 
+    const {
+      photo,
+      notes,
+      vendorName,
+      productName,
+      colorFinish,
+      unitPrice,
       quantity,
       productUrl,
       tags,
@@ -29,7 +68,7 @@ export async function PUT(
 
     // Verify the selection exists and belongs to the project
     const existingSelection = await prisma.selection.findFirst({
-      where: { 
+      where: {
         id: selectionId,
         projectId: projectId
       }
@@ -76,12 +115,22 @@ export async function DELETE(
   { params }: { params: { id: string; selectionId: string } }
 ) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const projectId = params.id;
     const selectionId = params.selectionId;
 
+    const access = await verifyVendorProjectAccess(session.user.id, projectId);
+    if (!access.allowed) {
+      return NextResponse.json({ error: access.reason }, { status: access.status });
+    }
+
     // Verify the selection exists and belongs to the project
     const existingSelection = await prisma.selection.findFirst({
-      where: { 
+      where: {
         id: selectionId,
         projectId: projectId
       }
@@ -108,4 +157,4 @@ export async function DELETE(
       { status: 500 }
     );
   }
-} 
+}

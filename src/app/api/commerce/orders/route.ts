@@ -204,26 +204,23 @@ export async function POST(request: NextRequest) {
     const marginCents = totalRetailCents - totalTradeCents;
     const split = calculateMarginSplit(marginCents, discountPercent);
 
-    // Validate credit application
-    if (creditAppliedCents > 0) {
-      const creditAccount = await prisma.creditAccount.findUnique({
-        where: { userId: session.user.id },
-        select: { availableBalance: true },
-      });
-
-      const availableCents = Math.round(Number(creditAccount?.availableBalance || 0) * 100);
-      if (creditAppliedCents > availableCents) {
-        return NextResponse.json(
-          { error: 'Insufficient credit balance' },
-          { status: 400 }
-        );
-      }
-    }
-
     const cashPaidCents = totalRetailCents - split.consumerDiscountCents - creditAppliedCents;
 
-    // Create order with items in a transaction
+    // Create order with items in a transaction (credit check INSIDE to prevent TOCTOU race)
     const order = await prisma.$transaction(async (tx) => {
+      // Validate credit application inside the transaction to prevent double-spend
+      if (creditAppliedCents > 0) {
+        const creditAccount = await tx.creditAccount.findUnique({
+          where: { userId: session.user.id },
+          select: { availableBalance: true },
+        });
+
+        const availableCents = Math.round(Number(creditAccount?.availableBalance || 0) * 100);
+        if (creditAppliedCents > availableCents) {
+          throw Object.assign(new Error('Insufficient credit balance'), { status: 400 });
+        }
+      }
+
       // Create the order
       const newOrder = await tx.order.create({
         data: {
@@ -308,6 +305,9 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error: any) {
+    if (error.status === 400) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
     console.error('[commerce/orders][POST]', error);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }

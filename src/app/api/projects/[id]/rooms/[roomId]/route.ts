@@ -2,6 +2,9 @@ export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import { assertProjectView } from '@/lib/authz/access';
 
 const prisma = new PrismaClient();
 
@@ -10,7 +13,12 @@ export async function GET(
   { params }: { params: { id: string; roomId: string } }
 ) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     const { id: projectId, roomId } = params;
+    await assertProjectView(session.user.id, projectId);
 
     const room = await prisma.room.findFirst({
       where: {
@@ -32,6 +40,9 @@ export async function GET(
 
     return NextResponse.json(room);
   } catch (error) {
+    if (error instanceof Error && error.message === 'Forbidden') {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
     console.error('Error fetching room:', error);
     return NextResponse.json(
       { error: 'Failed to fetch room' },
@@ -45,7 +56,13 @@ export async function PUT(
   { params }: { params: { id: string; roomId: string } }
 ) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     const { id: projectId, roomId } = params;
+    await assertProjectView(session.user.id, projectId);
+
     const body = await request.json();
 
     // Build update data - only include fields that are provided
@@ -74,6 +91,9 @@ export async function PUT(
 
     return NextResponse.json(room);
   } catch (error) {
+    if (error instanceof Error && error.message === 'Forbidden') {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
     console.error('Error updating room:', error);
     return NextResponse.json(
       { error: 'Failed to update room' },
@@ -87,7 +107,12 @@ export async function DELETE(
   { params }: { params: { id: string; roomId: string } }
 ) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     const { id: projectId, roomId } = params;
+    await assertProjectView(session.user.id, projectId);
 
     // Delete all selections in the room first
     await prisma.selection.deleteMany({
@@ -106,6 +131,9 @@ export async function DELETE(
 
     return NextResponse.json({ message: 'Room deleted successfully' });
   } catch (error) {
+    if (error instanceof Error && error.message === 'Forbidden') {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
     console.error('Error deleting room:', error);
     return NextResponse.json(
       { error: 'Failed to delete room' },

@@ -1,23 +1,28 @@
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/app/api/auth/[...nextauth]/options';
+import { prisma } from '@/lib/prisma';
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { name, type, description, website, logo, userId, userRole } = body;
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
-    if (!name || !type || !userId) {
+    const body = await request.json();
+    const { name, type, description, website, logo, userRole } = body;
+
+    if (!name || !type) {
       return NextResponse.json(
-        { error: 'Missing required fields: name, type, userId' },
+        { error: 'Missing required fields: name, type' },
         { status: 400 }
       );
     }
 
-    // Create organization and link user
+    // Create organization and link user using session.user.id
     const organization = await prisma.organization.create({
       data: {
         name,
@@ -27,7 +32,7 @@ export async function POST(request: NextRequest) {
         logo,
         users: {
           create: {
-            userId,
+            userId: session.user.id,
             role: userRole || 'OWNER',
           },
         },
@@ -53,8 +58,12 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
-    const userId = searchParams.get('userId');
     const type = searchParams.get('type');
 
     let where: any = {};
@@ -63,13 +72,12 @@ export async function GET(request: NextRequest) {
       where.type = type;
     }
 
-    if (userId) {
-      where.users = {
-        some: {
-          userId,
-        },
-      };
-    }
+    // Always scope to the authenticated user's organizations
+    where.users = {
+      some: {
+        userId: session.user.id,
+      },
+    };
 
     const organizations = await prisma.organization.findMany({
       where,
