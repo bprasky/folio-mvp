@@ -2,16 +2,24 @@ export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import { assertProjectView } from '@/lib/authz/access';
+import { ensureProductForSelection } from '@/lib/tagging/ensureProductForSelection';
 
 const prisma = new PrismaClient();
-
-import { ensureProductForSelection } from '@/lib/tagging/ensureProductForSelection';
 
 export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    await assertProjectView(session.user.id, params.id);
+
     const body = await request.json();
     const {
       photo,
@@ -86,6 +94,9 @@ export async function POST(
 
     return NextResponse.json(selection, { status: 201 });
   } catch (error) {
+    if (error instanceof Error && error.message === 'Forbidden') {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
     console.error('Error creating selection:', error);
     return NextResponse.json(
       { error: 'Failed to create selection', details: error instanceof Error ? error.message : 'Unknown error' },
@@ -99,6 +110,12 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    await assertProjectView(session.user.id, params.id);
+
     const { searchParams } = new URL(request.url);
     const roomId = searchParams.get('roomId');
 
@@ -135,6 +152,9 @@ export async function GET(
 
     return NextResponse.json(selections);
   } catch (error) {
+    if (error instanceof Error && error.message === 'Forbidden') {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
     console.error('Error fetching selections:', error);
     return NextResponse.json(
       { error: 'Failed to fetch selections', details: error instanceof Error ? error.message : 'Unknown error' },

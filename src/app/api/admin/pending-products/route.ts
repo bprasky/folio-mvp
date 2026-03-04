@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/requireAdmin';
 
 // In-memory storage for demo purposes
 // In production, this would be stored in a database
@@ -8,6 +9,7 @@ let pendingProducts: any[] = [];
 
 export async function GET(request: NextRequest) {
   try {
+    await requireAdmin();
     // Return all pending products with sorting and filtering options
     const { searchParams } = new URL(request.url);
     const sortBy = searchParams.get('sortBy') || 'taggedAt';
@@ -68,7 +70,9 @@ export async function GET(request: NextRequest) {
       totalPending: pendingProducts.length
     });
 
-  } catch (error) {
+  } catch (error: any) {
+    if (error.status === 401) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (error.status === 403) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     console.error('Error fetching pending products:', error);
     return NextResponse.json(
       { error: 'Failed to fetch pending products' },
@@ -79,6 +83,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    await requireAdmin();
     const productData = await request.json();
     
     const newPendingProduct = {
@@ -112,7 +117,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(newPendingProduct);
     }
 
-  } catch (error) {
+  } catch (error: any) {
+    if (error.status === 401) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (error.status === 403) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     console.error('Error creating pending product:', error);
     return NextResponse.json(
       { error: 'Failed to create pending product' },
@@ -123,6 +130,7 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
+    await requireAdmin();
     const { id, action, ...updateData } = await request.json();
     
     const productIndex = pendingProducts.findIndex(product => product.id === id);
@@ -170,7 +178,9 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json(pendingProducts[productIndex]);
     }
 
-  } catch (error) {
+  } catch (error: any) {
+    if (error.status === 401) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (error.status === 403) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     console.error('Error updating pending product:', error);
     return NextResponse.json(
       { error: 'Failed to update pending product' },
@@ -181,6 +191,7 @@ export async function PUT(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
+    await requireAdmin();
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
     
@@ -204,7 +215,9 @@ export async function DELETE(request: NextRequest) {
     
     return NextResponse.json(deletedProduct);
 
-  } catch (error) {
+  } catch (error: any) {
+    if (error.status === 401) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (error.status === 403) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     console.error('Error deleting pending product:', error);
     return NextResponse.json(
       { error: 'Failed to delete pending product' },

@@ -1,18 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { requireAdmin } from '@/lib/requireAdmin';
 import { cookies } from 'next/headers';
 
 const IMPERSONATION_COOKIE = 'folio-impersonation';
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    await requireAdmin();
 
     // Get impersonation data from cookie
     const cookieStore = cookies();
@@ -56,7 +51,9 @@ export async function POST(request: NextRequest) {
     response.cookies.delete(IMPERSONATION_COOKIE);
 
     return response;
-  } catch (error) {
+  } catch (error: any) {
+    if (error.status === 401) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (error.status === 403) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     console.error('Error ending impersonation:', error);
     return NextResponse.json(
       { error: 'Failed to end impersonation' },
@@ -68,11 +65,7 @@ export async function POST(request: NextRequest) {
 // GET endpoint to check impersonation status
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    await requireAdmin();
 
     // Get impersonation data from cookie
     const cookieStore = cookies();
@@ -91,7 +84,9 @@ export async function GET(request: NextRequest) {
     } catch {
       return NextResponse.json({ isImpersonating: false });
     }
-  } catch (error) {
+  } catch (error: any) {
+    if (error.status === 401) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (error.status === 403) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     console.error('Error checking impersonation status:', error);
     return NextResponse.json({ isImpersonating: false });
   }

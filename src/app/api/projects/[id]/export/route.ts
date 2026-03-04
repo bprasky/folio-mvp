@@ -2,6 +2,9 @@ export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import { assertProjectView } from '@/lib/authz/access';
 
 const prisma = new PrismaClient();
 
@@ -10,7 +13,13 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     const projectId = params.id;
+    await assertProjectView(session.user.id, projectId);
+
     const { searchParams } = new URL(request.url);
     const format = searchParams.get('format') || 'csv';
 
@@ -104,6 +113,9 @@ export async function GET(
       },
     });
   } catch (error) {
+    if (error instanceof Error && error.message === 'Forbidden') {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
     console.error('Error exporting project:', error);
     return NextResponse.json(
       { error: 'Failed to export project' },

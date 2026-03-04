@@ -1,12 +1,17 @@
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/app/api/auth/[...nextauth]/options';
+import { prisma } from '@/lib/prisma';
 
 export async function GET(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const query = searchParams.get('q')?.trim();
     const role = searchParams.get('role')?.toUpperCase();
@@ -16,11 +21,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ users: [] });
     }
 
-    // Build where clause
+    // Build where clause - search by name only (not email) to avoid enumeration
     const whereClause: any = {
       OR: [
         { name: { contains: query, mode: 'insensitive' } },
-        { email: { contains: query, mode: 'insensitive' } },
         { studio: { contains: query, mode: 'insensitive' } },
       ],
     };
@@ -35,7 +39,6 @@ export async function GET(request: NextRequest) {
       select: {
         id: true,
         name: true,
-        email: true,
         role: true,
         profileImage: true,
         studio: true,
@@ -54,4 +57,4 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-} 
+}

@@ -3,9 +3,11 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { readFile, writeFile } from 'fs/promises';
 import { join } from 'path';
+import { requireAdmin } from '@/lib/requireAdmin';
 
 export async function GET() {
   try {
+    await requireAdmin();
     // Load vendors from JSON file
     const vendorsPath = join(process.cwd(), 'src', 'data', 'vendors.json');
     const vendorsContent = await readFile(vendorsPath, 'utf-8');
@@ -15,7 +17,9 @@ export async function GET() {
       success: true,
       vendors: vendorsData
     });
-  } catch (error) {
+  } catch (error: any) {
+    if (error.status === 401) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (error.status === 403) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     console.error('Error fetching vendors:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to fetch vendors' },
@@ -26,6 +30,7 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    await requireAdmin();
     const body = await request.json();
     const { name, description, website, contactEmail, specialties } = body;
 
@@ -74,7 +79,9 @@ export async function POST(request: NextRequest) {
       message: 'Vendor created successfully'
     });
 
-  } catch (error) {
+  } catch (error: any) {
+    if (error.status === 401) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (error.status === 403) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     console.error('Error creating vendor:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to create vendor' },

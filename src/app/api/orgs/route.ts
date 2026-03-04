@@ -14,15 +14,19 @@ import { prisma } from '@/lib/prisma';
  */
 export async function GET(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const url = new URL(request.url);
-    const userId = url.searchParams.get('userId');
     const query = url.searchParams.get('q');
     const type = url.searchParams.get('type');
     const limit = parseInt(url.searchParams.get('limit') || '20');
     const offset = parseInt(url.searchParams.get('offset') || '0');
 
-    // If userId is provided, get user's organizations via membership
-    if (userId) {
+    // If no search query, get the authenticated user's organizations via membership
+    if (!query && !type) {
       // Use raw SQL to avoid missing column issues
       const memberships = await prisma.$queryRaw<any[]>`
         SELECT
@@ -37,7 +41,7 @@ export async function GET(request: NextRequest) {
           o.website
         FROM organization_users ou
         JOIN organizations o ON ou."organizationId" = o.id
-        WHERE ou."userId" = ${userId}
+        WHERE ou."userId" = ${session.user.id}
         ORDER BY ou."joinedAt" DESC
         LIMIT ${limit}
       `;

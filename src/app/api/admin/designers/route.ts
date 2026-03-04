@@ -6,10 +6,12 @@ export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { requireAdmin } from '@/lib/requireAdmin';
 import { createEmptyDesignerBrandProfile } from '@/lib/server/designerBrandProfile';
 
 export async function GET() {
   try {
+    await requireAdmin();
     const designers = await prisma.user.findMany({
       where: { role: 'DESIGNER' },
       select: {
@@ -40,7 +42,9 @@ export async function GET() {
     });
 
     return NextResponse.json({ designers }, { status: 200 });
-  } catch (e) {
+  } catch (e: any) {
+    if (e.status === 401) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (e.status === 403) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     // Do NOT block pages; return empty list with 200 so UI can render.
     console.error('[/api/admin/designers] fallback due to error:', e);
     return NextResponse.json({ designers: [] }, { status: 200 });
@@ -49,6 +53,7 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    await requireAdmin();
     const { name, bio, profileImage } = await request.json();
 
     if (!name?.trim()) {
@@ -85,7 +90,9 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(newDesigner, { status: 201 });
-  } catch (error) {
+  } catch (error: any) {
+    if (error.status === 401) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (error.status === 403) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     console.error('Error creating designer:', error);
     return NextResponse.json(
       { error: 'Failed to create designer' },
@@ -96,6 +103,7 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
+    await requireAdmin();
     const designerData = await request.json();
     
     const { id, ...updateData } = designerData;
@@ -167,7 +175,9 @@ export async function PUT(request: NextRequest) {
     });
     
     return NextResponse.json(updatedDesigner, { status: 200 });
-  } catch (error) {
+  } catch (error: any) {
+    if (error.status === 401) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (error.status === 403) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     console.error('Error updating designer:', error);
     return NextResponse.json(
       { error: 'Failed to update designer' },

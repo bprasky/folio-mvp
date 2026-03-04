@@ -1,4 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -59,6 +61,11 @@ Keep responses concise and helpful. You're here to solve problems, not to lectur
 
 export async function POST(request: Request) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     if (!process.env.ANTHROPIC_API_KEY) {
       return Response.json({ error: 'Support chat is not configured' }, { status: 503 });
     }

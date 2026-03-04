@@ -11,6 +11,10 @@ export const maxDuration = 60;
  * Send { url: "signed-pdf-url" } to see what text is extracted
  */
 export async function POST(req: NextRequest) {
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  }
+
   try {
     const session = await getServerSession(authOptions);
     const userId = (session?.user as { id?: string })?.id;

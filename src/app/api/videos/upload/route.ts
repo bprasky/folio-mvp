@@ -1,6 +1,8 @@
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { writeFile, mkdir, readFile } from 'fs/promises';
 import { join } from 'path';
 import { existsSync } from 'fs';
@@ -30,9 +32,24 @@ const mockTranscribeVideo = async (videoUrl: string): Promise<{
 
 export async function POST(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const formData = await request.formData();
     const file = formData.get('video') as File;
     const videoUrl = formData.get('videoUrl') as string;
+
+    // Validate file type - only allow video/* mime types
+    if (file && file.size > 0) {
+      if (!file.type.startsWith('video/')) {
+        return NextResponse.json(
+          { success: false, error: 'Invalid file type. Only video files are allowed.' },
+          { status: 400 }
+        );
+      }
+    }
     const title = formData.get('title') as string;
     const description = formData.get('description') as string;
     const creatorId = formData.get('creatorId') as string;
