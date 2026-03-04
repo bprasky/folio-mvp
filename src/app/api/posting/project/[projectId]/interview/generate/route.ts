@@ -286,6 +286,8 @@ You must AVOID:
 - The pattern of "Product X does Y because Z" repeated for each item
 - Sequential product descriptions (product → explanation → next product → explanation)
 - Generic design language ("thoughtfully curated", "deliberately chosen", "seamlessly blends", "creates a dynamic flow", "transforms the space")
+- These specific AI-default phrases: "anchors the space", "adds warmth", "adds visual weight", "adds [quality]", "creates intimacy", "creates visual interest", "creates a sense of", "embodies" (as a verb for rooms or objects), "echoing" (to describe formal relationships), "the space feels", "the room feels", "without compromising", "without competing", "[thing] while [thing]" as a repeated two-clause construction, "commitment to [abstract noun]", "testament to", "envelope of calm", "envelope of [quality]", "material continuity", "material palette", "a sense of [noun]", "the kind of [noun] that [clause]", "rather than [negative]" as praise by contrast
+- Any sentence where you could swap the project name and photos and the sentence would still be accurate — if it's generic, cut it
 - Treating the article as a specification document
 - Mentioning every single tagged product — only include products that serve the narrative
 - Promotional or inflated language — be observational, not promotional
