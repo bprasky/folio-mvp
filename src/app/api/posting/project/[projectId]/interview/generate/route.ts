@@ -295,7 +295,14 @@ NARRATIVE STRUCTURE:
 - Build through the design logic: how decisions cascaded from one to the next
 - Let products appear naturally as supporting evidence for design decisions
 - Close with the emotional or experiential quality of the finished space
-- Organize by room/space, but let the narrative flow between rooms naturally
+
+STRUCTURE — EDITORIAL HIERARCHY:
+- NOT every room deserves equal coverage. Spend words where the story is.
+- Identify the 1-2 rooms with the strongest design decisions, material stories, or interview content. These get 60-70% of the word budget.
+- Remaining rooms get 1-2 sentences each — enough to establish continuity, not enough to bore.
+- If the designer barely discussed a room in the interview, that's a signal: cover it briefly or skip it.
+- The piece should NOT read as a room-by-room tour. Organize by design idea, material story, or decision arc — rooms appear as evidence, not as chapters.
+- Vary paragraph length deliberately. A 2-sentence paragraph followed by a 6-sentence paragraph creates rhythm. Five 4-sentence paragraphs creates sleep.
 
 PULL QUOTE RULES:
 - Each pull quote MUST be self-contained — a reader should understand the point without seeing the interview question
@@ -416,11 +423,15 @@ FOR THE SECTIONS ARRAY (3-5 narrative sections + 1-2 pullquotes):
 - Every paragraph should have a POINT — a design insight, a tension resolved, a relationship revealed
 - Do NOT follow the pattern: name product → explain product → next product
 
-FOR GALLERY CHAPTERS (one per room):
-- 2-4 paragraphs per room telling that room's story
-- How the room is experienced, what decisions shaped it, how it connects to adjacent spaces
-- Products appear in context of decisions, not as standalone descriptions
-- Use EXACT image IDs from the room's list above
+FOR GALLERY CHAPTERS:
+- Create 2-4 gallery chapters organized by VISUAL STORY, not by room.
+- A chapter might span two rooms if they share a material or idea.
+- A chapter might cover one corner of one room if that's where the interesting detail is.
+- Chapter titles should be observational, not room labels. Not "The Kitchen" — instead "Where the Brass Meets the Stone." Not "Living Room" — instead "A Conversation Between Light and Linen."
+- Not every image needs a chapter. Select the images that advance the story.
+- 2-4 paragraphs per chapter.
+- Products appear in context of decisions, not as standalone descriptions.
+- Use EXACT image IDs from the room lists above.
 
 FOR PULL QUOTES:
 - Each must be self-contained — a reader should understand the point without seeing the interview question
@@ -435,7 +446,6 @@ FOR THE MATERIALS LEDGER:
 
 CRITICAL RULES:
 - 600-900 words total across sections and chapters
-- Title each gallery chapter with the room name exactly as listed
 - Products serve the narrative — the narrative does not serve the products
 - No generic design language: ban "thoughtfully curated", "seamlessly blends", "creates a dynamic flow"
 - The article should read like a magazine feature, not a product specification sheet
