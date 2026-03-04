@@ -29,6 +29,18 @@ export interface UsePublishFlowReturn {
   unpublish: () => Promise<{ ok: boolean }>;
   refetch: () => Promise<void>;
 
+  // Context toggles
+  contextToggles: {
+    includeBio: boolean;
+    includeProjectHistory: boolean;
+  };
+  setContextToggle: (key: 'includeBio' | 'includeProjectHistory', value: boolean) => void;
+  generationMeta: {
+    designerBioMissing?: boolean;
+    hasProjectHistory?: boolean;
+    hasAtelierFingerprint?: boolean;
+  } | null;
+
   // Action state
   regenBusy: boolean;
   isPublishing: boolean;
@@ -50,6 +62,21 @@ export function usePublishFlow(projectId: string): UsePublishFlowReturn {
   const [publishSuccess, setPublishSuccess] = useState(false);
   const [publishedSlug, setPublishedSlug] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Context toggles for editorial generation
+  const [contextToggles, setContextToggles] = useState({
+    includeBio: true,
+    includeProjectHistory: true,
+  });
+  const [generationMeta, setGenerationMeta] = useState<{
+    designerBioMissing?: boolean;
+    hasProjectHistory?: boolean;
+    hasAtelierFingerprint?: boolean;
+  } | null>(null);
+
+  const setContextToggle = useCallback((key: 'includeBio' | 'includeProjectHistory', value: boolean) => {
+    setContextToggles(prev => ({ ...prev, [key]: value }));
+  }, []);
 
   // Readiness state
   const [heroAssetId, setHeroAssetId] = useState<string | null>(null);
@@ -165,6 +192,8 @@ export function usePublishFlow(projectId: string): UsePublishFlowReturn {
         source: "guided_publish",
         forceOverwriteDraft: true,
         mode: "recomposition",
+        includeBio: contextToggles.includeBio,
+        includeProjectHistory: contextToggles.includeProjectHistory,
       };
 
       if (answersToSend.length > 0) {
@@ -194,6 +223,12 @@ export function usePublishFlow(projectId: string): UsePublishFlowReturn {
         return;
       }
 
+      // Capture generation meta (bio missing, project history, fingerprint flags)
+      const responseJson = await res.json().catch(() => ({}));
+      if (responseJson?.meta) {
+        setGenerationMeta(responseJson.meta);
+      }
+
       await fetchData();
     } catch (err: any) {
       console.error("[usePublishFlow] Generate failed", err);
@@ -201,7 +236,7 @@ export function usePublishFlow(projectId: string): UsePublishFlowReturn {
     } finally {
       setRegenBusy(false);
     }
-  }, [projectId, fetchData]);
+  }, [projectId, fetchData, contextToggles]);
 
   const publish = useCallback(async (): Promise<{ slug: string | null }> => {
     try {
@@ -277,6 +312,9 @@ export function usePublishFlow(projectId: string): UsePublishFlowReturn {
     heroAssetId,
     hasCredits,
     isLoading,
+    contextToggles,
+    setContextToggle,
+    generationMeta,
     generateDraft,
     publish,
     unpublish,

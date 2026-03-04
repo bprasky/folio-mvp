@@ -286,6 +286,8 @@ You must AVOID:
 - The pattern of "Product X does Y because Z" repeated for each item
 - Sequential product descriptions (product → explanation → next product → explanation)
 - Generic design language ("thoughtfully curated", "deliberately chosen", "seamlessly blends", "creates a dynamic flow", "transforms the space")
+- These specific AI-default phrases: "anchors the space", "adds warmth", "adds visual weight", "adds [quality]", "creates intimacy", "creates visual interest", "creates a sense of", "embodies" (as a verb for rooms or objects), "echoing" (to describe formal relationships), "the space feels", "the room feels", "without compromising", "without competing", "[thing] while [thing]" as a repeated two-clause construction, "commitment to [abstract noun]", "testament to", "envelope of calm", "envelope of [quality]", "material continuity", "material palette", "a sense of [noun]", "the kind of [noun] that [clause]", "rather than [negative]" as praise by contrast
+- Any sentence where you could swap the project name and photos and the sentence would still be accurate — if it's generic, cut it
 - Treating the article as a specification document
 - Mentioning every single tagged product — only include products that serve the narrative
 - Promotional or inflated language — be observational, not promotional
@@ -295,14 +297,34 @@ NARRATIVE STRUCTURE:
 - Build through the design logic: how decisions cascaded from one to the next
 - Let products appear naturally as supporting evidence for design decisions
 - Close with the emotional or experiential quality of the finished space
-- Organize by room/space, but let the narrative flow between rooms naturally
 
-PULL QUOTE RULES:
-- Each pull quote MUST be self-contained — a reader should understand the point without seeing the interview question
-- If a raw interview answer is context-dependent, rephrase it so it stands alone as an insight
-- Add a brief contextual lead-in prefix like "On choosing materials:" or "On the kitchen's design philosophy:" when needed
+STRUCTURE — EDITORIAL HIERARCHY:
+- NOT every room deserves equal coverage. Spend words where the story is.
+- Identify the 1-2 rooms with the strongest design decisions, material stories, or interview content. These get 60-70% of the word budget.
+- Remaining rooms get 1-2 sentences each — enough to establish continuity, not enough to bore.
+- If the designer barely discussed a room in the interview, that's a signal: cover it briefly or skip it.
+- The piece should NOT read as a room-by-room tour. Organize by design idea, material story, or decision arc — rooms appear as evidence, not as chapters.
+- Vary paragraph length deliberately. A 2-sentence paragraph followed by a 6-sentence paragraph creates rhythm. Five 4-sentence paragraphs creates sleep.
+
+PULL QUOTES — EXTRACTION, NOT GENERATION:
+- Pull quotes must be ACTUAL SENTENCES the designer said in the interview.
+- You may lightly edit for grammar and clarity (remove "um," "like," fix tense agreement) but the words and meaning must be the designer's.
+- Do not compose new quotes that sound like the designer.
+- If the interview contains no quotable moments, include zero pull quotes. That is better than a fake quote.
+- Select quotes that reveal decision-making, surprise, compromise, or personality — not quotes that summarize the room's aesthetic.
+- Maximum 2-3 pull quotes per article.
+- Each pull quote MUST be self-contained — a reader should understand the point without seeing the interview question.
+- Add a brief contextual lead-in prefix like "On choosing materials:" or "On the kitchen's design philosophy:" when needed.
 - Bad: "Contrast. The painted perimeter lets the appliances breathe..." (reader asks: contrast with what?)
 - Good: "A kitchen island should feel like a piece of furniture you chose, not cabinetry that came with the house."
+
+ACCURACY RULES — NON-NEGOTIABLE:
+- You may ONLY reference products, materials, and vendors that appear in the provided product tag data below. Do not invent product names, vendor names, material origins, or finishes.
+- Do not claim to know materials, country of origin, manufacturing methods, or finish types unless explicitly stated in the interview answers or product tag data.
+- Do not fabricate designer quotes. Pull quotes must be drawn directly from the interview answers provided. If no suitable quote exists for a section, omit the pull quote — do not generate one.
+- Do not invent lifestyle details about the clients (how they entertain, family routines, number of guests) unless the designer explicitly described this in their interview answers.
+- Do not describe what you cannot verify from the provided data. If you don't know what material the floor is, don't name one. Describe what the interview and tags tell you; stay silent on what they don't.
+- When referencing a product, use the EXACT product name and vendor name from the tag data. Do not paraphrase product names.
 
 The article should make a reader want to visit this space, not inventory it.`;
 
@@ -314,6 +336,9 @@ function buildEditorialPrompt({
   productsByRoom,
   imageOrder,
   materialsLedger,
+  designerName,
+  location,
+  atelierSummary,
 }: {
   project: { title: string };
   answers: Array<{ q: string; a: string }>;
@@ -322,6 +347,11 @@ function buildEditorialPrompt({
   productsByRoom: Record<string, Array<{ id: string; name: string; vendor?: string; imageId: string }>>;
   imageOrder: string[];
   materialsLedger?: { items: Array<{ name: string; productId?: string }> };
+  designerName?: string;
+  location?: string;
+  designerBio?: string;
+  projectHistory?: string;
+  atelierSummary?: string;
 }): string {
   // Separate Layer 1 (base) and Layer 2 (follow-up/deeper) answers
   const hasFollowups = followups && followups.length > 0;
@@ -355,8 +385,19 @@ ${interviewText}
 
 ## Project Details
 - Project: ${project.title}
+- Designer: ${designerName || 'Not specified'}
+- Location: ${location || 'Not specified'}
 - Rooms: ${roomContexts.map(r => r.room).join(', ')}
-- Products tagged: ${materialsList || 'None'}
+- Products tagged: ${materialsList || 'None'}${designerBio ? `
+
+## Designer Bio (use to inform tone and context — do not quote directly or paraphrase into the article. This helps you understand who is speaking in the interview)
+${designerBio}` : ''}${projectHistory ? `
+
+## Designer's Other Published Projects on Folio (use for context about their body of work — reference only if it genuinely enriches the narrative, e.g., "a departure from their typical palette" or "continuing a thread from previous work." Do not force references)
+${projectHistory}` : ''}${atelierSummary ? `
+
+## Designer Voice & Philosophy (from their Folio profile — use to inform tone, do not quote directly)
+${atelierSummary}` : ''}
 
 ### Room Organization
 ${roomContexts.map(r => `**${r.room}** — ${r.images} images, products: ${r.products.length > 0 ? r.products.join(', ') : 'none'}\n  Image IDs: ${r.imageIds.join(', ')}`).join('\n')}
@@ -408,18 +449,23 @@ FOR THE SECTIONS ARRAY (3-5 narrative sections + 1-2 pullquotes):
 - Every paragraph should have a POINT — a design insight, a tension resolved, a relationship revealed
 - Do NOT follow the pattern: name product → explain product → next product
 
-FOR GALLERY CHAPTERS (one per room):
-- 2-4 paragraphs per room telling that room's story
-- How the room is experienced, what decisions shaped it, how it connects to adjacent spaces
-- Products appear in context of decisions, not as standalone descriptions
-- Use EXACT image IDs from the room's list above
+FOR GALLERY CHAPTERS:
+- Create 2-4 gallery chapters organized by VISUAL STORY, not by room.
+- A chapter might span two rooms if they share a material or idea.
+- A chapter might cover one corner of one room if that's where the interesting detail is.
+- Chapter titles should be observational, not room labels. Not "The Kitchen" — instead "Where the Brass Meets the Stone." Not "Living Room" — instead "A Conversation Between Light and Linen."
+- Not every image needs a chapter. Select the images that advance the story.
+- 2-4 paragraphs per chapter.
+- Products appear in context of decisions, not as standalone descriptions.
+- Use EXACT image IDs from the room lists above.
 
 FOR PULL QUOTES:
-- Each must be self-contained — a reader should understand the point without seeing the interview question
-- If a raw interview answer is context-dependent, rephrase it so it stands alone as an insight
+- Pull quotes must be the designer's ACTUAL WORDS from the interview above
+- You may lightly edit for grammar/clarity but do not compose new quotes
+- If no quotable moments exist in the interview, return zero pull quotes
 - Include a short "context" prefix (e.g. "On the kitchen's palette:") if the quote needs framing
 - Return each pull quote as {"text": "...", "context": "..."}
-- Prefer the designer's actual words when possible; if paraphrasing, capture their voice
+- Maximum 2-3 pull quotes
 
 FOR THE MATERIALS LEDGER:
 - Comprehensive product list separate from the narrative
@@ -427,7 +473,6 @@ FOR THE MATERIALS LEDGER:
 
 CRITICAL RULES:
 - 600-900 words total across sections and chapters
-- Title each gallery chapter with the room name exactly as listed
 - Products serve the narrative — the narrative does not serve the products
 - No generic design language: ban "thoughtfully curated", "seamlessly blends", "creates a dynamic flow"
 - The article should read like a magazine feature, not a product specification sheet
@@ -484,6 +529,11 @@ async function composeEditorialHard({
   imageOrder,
   imageSelections,
   images,
+  designerName,
+  location,
+  designerBio,
+  projectHistory,
+  atelierSummary,
   correlationId,
 }: {
   project: { title: string };
@@ -493,6 +543,11 @@ async function composeEditorialHard({
   imageOrder?: string[];
   imageSelections?: Record<string, string[]>;
   images?: Array<{ id: string; room?: string | null; tags?: Array<{ product: { id: string; name: string; vendor?: { name: string } | null } }> }>;
+  designerName?: string;
+  location?: string;
+  designerBio?: string;
+  projectHistory?: string;
+  atelierSummary?: string;
   correlationId?: string;
 }): Promise<{
   lead: { kicker: string; deck: string };
@@ -564,6 +619,11 @@ async function composeEditorialHard({
     productsByRoom,
     imageOrder: imageIds,
     materialsLedger,
+    designerName,
+    location,
+    designerBio,
+    projectHistory,
+    atelierSummary,
   });
 
   console.log('[composeEditorialHard] Calling Claude API with room-organized prompt', {
@@ -830,6 +890,60 @@ async function composeEditorialHard({
   };
 }
 
+
+// Post-generation accuracy verification (monitoring mode — logs warnings, does not hard-fail)
+function verifyProductAccuracy(
+  generatedText: string,
+  taggedProducts: Array<{ name: string; vendor?: string }>,
+  interviewText: string,
+): { warnings: string[] } {
+  const warnings: string[] = [];
+  if (!generatedText || taggedProducts.length === 0) return { warnings };
+
+  const textLower = generatedText.toLowerCase();
+  const interviewLower = interviewText.toLowerCase();
+
+  // Build sets of known product and vendor names
+  const knownProducts = new Set(taggedProducts.map(p => p.name.toLowerCase()));
+  const knownVendors = new Set(
+    taggedProducts
+      .map(p => p.vendor?.toLowerCase())
+      .filter((v): v is string => !!v && v.length > 1)
+  );
+
+  // Check for vendor names in text that don't match tagged vendors
+  // Extract capitalized multi-word proper nouns that could be vendor names
+  const properNounPattern = /(?:by |from |(?:designed|crafted|made) by )((?:[A-Z][a-z]+(?:\s+(?:&\s+)?[A-Z][a-z]+)*))/g;
+  let match;
+  while ((match = properNounPattern.exec(generatedText)) !== null) {
+    const candidate = match[1].trim();
+    const candidateLower = candidate.toLowerCase();
+    // Skip if it matches a known vendor or product
+    if (knownVendors.has(candidateLower)) continue;
+    if (knownProducts.has(candidateLower)) continue;
+    // Skip if it appears in interview answers (designer mentioned it)
+    if (interviewLower.includes(candidateLower)) continue;
+    warnings.push(`Possible unverified vendor reference: "${candidate}" — not found in tag data or interview`);
+  }
+
+  // Check for material origin claims not backed by data
+  const originPattern = /\b(Italian|French|Japanese|Scandinavian|Belgian|Danish|Swedish|German|English|British|Portuguese|Brazilian|Mexican|Moroccan|Indian|Chinese|Korean|Turkish|Greek|Spanish|Dutch|Swiss|Austrian|Norwegian|Finnish|Czech|Polish|Hungarian|Thai|Vietnamese|Indonesian|Filipino|Australian|Canadian|American)\b\s+\b(marble|leather|linen|silk|wool|oak|walnut|teak|ceramic|porcelain|tile|stone|granite|limestone|travertine|slate|brass|bronze|copper|steel|iron|glass|crystal|velvet|cotton|hemp|jute|rattan|bamboo|lacquer|plaster|concrete|terrazzo)\b/gi;
+  while ((match = originPattern.exec(generatedText)) !== null) {
+    const claim = match[0];
+    const claimLower = claim.toLowerCase();
+    // Check if this claim appears in interview answers or product data
+    const inInterview = interviewLower.includes(claimLower);
+    const inProducts = taggedProducts.some(p =>
+      p.name.toLowerCase().includes(claimLower) ||
+      (p.vendor?.toLowerCase().includes(match![1].toLowerCase()) ?? false)
+    );
+    if (!inInterview && !inProducts) {
+      warnings.push(`Unverified material origin claim: "${claim}" — not found in interview answers or tag data`);
+    }
+  }
+
+  return { warnings };
+}
 
 function polishQA(qa: any[]) {
   if (!Array.isArray(qa)) return [];
@@ -1299,7 +1413,11 @@ export async function POST(
     const force = Boolean(body.force);
     const answersOverride = Array.isArray(body.answersOverride) ? body.answersOverride : undefined;
     const followupsOverride = Array.isArray(body.followupsOverride) ? body.followupsOverride : undefined;
-    
+
+    // Editorial context toggles (default: include everything available)
+    const includeBio = body.includeBio !== false;
+    const includeProjectHistory = body.includeProjectHistory !== false;
+
     // Always use recomposition mode (hard-fail editorial)
     const mode = 'recomposition' as const;
 
@@ -1385,6 +1503,7 @@ export async function POST(
             id: true,
             name: true,
             studio: true,
+            bio: true,
           },
         },
         images: {
@@ -1822,6 +1941,81 @@ export async function POST(
       _cid,
     });
 
+    // Fetch designer context for editorial generation
+    const designerName = projectData.designer?.name || undefined;
+    const designerBio = includeBio ? (projectData.designer?.bio || undefined) : undefined;
+    const projectLocation = [projectData.city, projectData.regionState].filter(Boolean).join(', ') || undefined;
+
+    // Fetch designer's other published projects for context
+    let projectHistory: string | undefined;
+    if (includeProjectHistory && projectData.designerId) {
+      try {
+        const otherProjects = await prisma.project.findMany({
+          where: {
+            designerId: projectData.designerId,
+            id: { not: projectId },
+            isPublic: true,
+          },
+          select: {
+            title: true,
+            city: true,
+            regionState: true,
+            images: {
+              select: {
+                room: true,
+                tags: {
+                  select: { product: { select: { name: true } } },
+                  take: 3,
+                },
+              },
+              take: 10,
+            },
+          },
+          orderBy: { publishedAt: 'desc' },
+          take: 5,
+        });
+        if (otherProjects.length > 0) {
+          projectHistory = otherProjects.map(p => {
+            const rooms = [...new Set(p.images.map(img => img.room).filter(Boolean))];
+            const topProducts = [...new Set(p.images.flatMap(img => img.tags.map(t => t.product.name)))].slice(0, 3);
+            const location = [p.city, p.regionState].filter(Boolean).join(', ');
+            return `- ${p.title}${location ? ` (${location})` : ''} — rooms: ${rooms.length > 0 ? rooms.join(', ') : 'N/A'}, materials: ${topProducts.length > 0 ? topProducts.join(', ') : 'N/A'}`;
+          }).join('\n');
+        }
+      } catch (historyErr: any) {
+        console.warn('[generate] Project history fetch failed (non-fatal):', historyErr?.message, { _cid });
+      }
+    }
+
+    // Fetch Atelier fingerprint summary if available
+    let atelierSummary: string | undefined;
+    if (projectData.designerId) {
+      try {
+        const fingerprint = await prisma.atelierFingerprint.findFirst({
+          where: { designerId: projectData.designerId, ownerType: 'DESIGNER' },
+          include: {
+            nodes: {
+              orderBy: { weight: 'desc' },
+              take: 10,
+            },
+          },
+        });
+        if (fingerprint && fingerprint.nodes.length > 0) {
+          const grouped: Record<string, string[]> = {};
+          for (const node of fingerprint.nodes) {
+            const type = node.nodeType.toLowerCase().replace('_', ' ');
+            if (!grouped[type]) grouped[type] = [];
+            grouped[type].push(node.label);
+          }
+          atelierSummary = Object.entries(grouped)
+            .map(([type, labels]) => `${type}: ${labels.join(', ')}`)
+            .join('\n');
+        }
+      } catch (fingerprintErr: any) {
+        console.warn('[generate] Atelier fingerprint fetch failed (non-fatal):', fingerprintErr?.message, { _cid });
+      }
+    }
+
     let composed: any;
     try {
       composed = await composeEditorialHard({
@@ -1832,6 +2026,11 @@ export async function POST(
         imageOrder: validImageIds,  // Use validated image IDs
         imageSelections: imageSelections,
         images: imagesWithRoomData,  // Pass images with room data
+        designerName,
+        location: projectLocation,
+        designerBio,
+        projectHistory,
+        atelierSummary,
         correlationId: _cid,
       });
     } catch (e: any) {
@@ -2006,7 +2205,69 @@ export async function POST(
     
     // Ensure mode is set to recomposition (should already be set by composeEditorialHard)
     validatedBlocks.mode = 'recomposition';
-    
+
+    // Post-generation accuracy verification (monitoring mode)
+    const allGeneratedText = [
+      validatedBlocks.lead?.kicker || '',
+      validatedBlocks.lead?.deck || '',
+      ...(validatedBlocks.galleryChapters || []).flatMap((ch: any) => ch.body || []),
+      ...(validatedBlocks.pullQuotes || []).map((q: any) => typeof q === 'string' ? q : q?.text || ''),
+    ].join(' ');
+    const allTaggedProducts = validImages.flatMap(img =>
+      (img.tags || []).map(tag => ({
+        name: tag.product.name,
+        vendor: tag.product.vendor?.name,
+      }))
+    );
+    const allInterviewText = normalizedAnswers.map((a: { q: string; a: string }) => `${a.q} ${a.a}`).join(' ') +
+      ' ' + normalizedFollowUps.map((f: { q: string; a: string }) => `${f.q} ${f.a}`).join(' ');
+    const accuracyCheck = verifyProductAccuracy(allGeneratedText, allTaggedProducts, allInterviewText);
+    if (accuracyCheck.warnings.length > 0) {
+      console.warn('[EDITORIAL_ACCURACY]', {
+        projectId,
+        warningCount: accuracyCheck.warnings.length,
+        warnings: accuracyCheck.warnings,
+        taggedProductCount: allTaggedProducts.length,
+        taggedProducts: allTaggedProducts.map(p => `${p.name}${p.vendor ? ` (${p.vendor})` : ''}`),
+        _cid,
+      });
+    }
+
+    // Generation metadata for monitoring
+    const allBodyText = (validatedBlocks.galleryChapters || [])
+      .flatMap((ch: any) => ch.body || [])
+      .join(' ');
+    const wordCount = allBodyText.split(/\s+/).filter(Boolean).length +
+      (validatedBlocks.lead?.kicker?.split(/\s+/).length || 0) +
+      (validatedBlocks.lead?.deck?.split(/\s+/).length || 0);
+    const roomsCovered = (validatedBlocks.galleryChapters || []).map((ch: any) => ch.title || 'Untitled');
+    const productsInText = allTaggedProducts
+      .filter(p => allGeneratedText.toLowerCase().includes(p.name.toLowerCase()))
+      .map(p => p.name);
+    const productsNotInText = allTaggedProducts
+      .filter(p => !allGeneratedText.toLowerCase().includes(p.name.toLowerCase()))
+      .map(p => p.name);
+
+    console.log('[EDITORIAL_GENERATION_META]', JSON.stringify({
+      projectId,
+      wordCount,
+      sectionCount: (validatedBlocks.galleryChapters || []).length,
+      pullQuoteCount: (validatedBlocks.pullQuotes || []).length,
+      roomsCovered,
+      productsInText,
+      productsInTags: allTaggedProducts.map(p => p.name),
+      unmatchedProducts: productsNotInText,
+      accuracyWarnings: accuracyCheck.warnings,
+      interviewAnswerCount: normalizedAnswers.length,
+      hasFollowUps: normalizedFollowUps.length > 0,
+      hasBrandProfile: false,
+      hasBio: !!designerBio,
+      hasProjectHistory: !!projectHistory,
+      hasFingerprint: !!atelierSummary,
+      durationMs: duration,
+      _cid,
+    }));
+
     // expandedBlocks is the validated structure ready to save
     const expandedBlocks = validatedBlocks;
 
@@ -2178,7 +2439,14 @@ export async function POST(
       }
     }
 
-    return NextResponse.json({ ok: true }, { status: 200 });
+    return NextResponse.json({
+      ok: true,
+      meta: {
+        designerBioMissing: !designerBio,
+        hasProjectHistory: !!projectHistory,
+        hasAtelierFingerprint: !!atelierSummary,
+      },
+    }, { status: 200 });
   } catch (error: any) {
     // Ensure unlock on all error paths — but only write if we actually need to clear a lock
     try {

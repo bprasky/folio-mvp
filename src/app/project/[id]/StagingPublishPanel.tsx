@@ -69,6 +69,9 @@ export default function StagingPublishPanel({
     publishSuccess,
     publishedSlug,
     error,
+    contextToggles,
+    setContextToggle,
+    generationMeta,
   } = usePublishFlow(projectId);
 
   const [checklistExpanded, setChecklistExpanded] = useState(false);
@@ -170,6 +173,40 @@ export default function StagingPublishPanel({
             <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
             <span>{error}</span>
           </div>
+        </div>
+      )}
+
+      {/* EDITORIAL CONTEXT TOGGLES */}
+      {!isPublishedStatus && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-3">
+          <div className="flex flex-wrap items-center gap-4 folio-meta text-[var(--text-tertiary)]">
+            <label className="flex items-center gap-1.5 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={contextToggles.includeBio}
+                onChange={(e) => setContextToggle('includeBio', e.target.checked)}
+                className="w-3.5 h-3.5 rounded border-[var(--border-default)] accent-[var(--accent)]"
+              />
+              <span>Include my bio</span>
+            </label>
+            <label className="flex items-center gap-1.5 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={contextToggles.includeProjectHistory}
+                onChange={(e) => setContextToggle('includeProjectHistory', e.target.checked)}
+                className="w-3.5 h-3.5 rounded border-[var(--border-default)] accent-[var(--accent)]"
+              />
+              <span>Reference my other projects</span>
+            </label>
+          </div>
+          {generationMeta?.designerBioMissing && contextToggles.includeBio && (
+            <p className="mt-2 folio-meta text-[var(--text-tertiary)]">
+              Your bio helps Folio write features that sound like you.{" "}
+              <a href="/settings/profile" className="text-[var(--accent)] hover:text-[var(--accent-hover)] underline">
+                Add one now
+              </a>
+            </p>
+          )}
         </div>
       )}
 
