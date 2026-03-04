@@ -304,6 +304,14 @@ PULL QUOTE RULES:
 - Bad: "Contrast. The painted perimeter lets the appliances breathe..." (reader asks: contrast with what?)
 - Good: "A kitchen island should feel like a piece of furniture you chose, not cabinetry that came with the house."
 
+ACCURACY RULES — NON-NEGOTIABLE:
+- You may ONLY reference products, materials, and vendors that appear in the provided product tag data below. Do not invent product names, vendor names, material origins, or finishes.
+- Do not claim to know materials, country of origin, manufacturing methods, or finish types unless explicitly stated in the interview answers or product tag data.
+- Do not fabricate designer quotes. Pull quotes must be drawn directly from the interview answers provided. If no suitable quote exists for a section, omit the pull quote — do not generate one.
+- Do not invent lifestyle details about the clients (how they entertain, family routines, number of guests) unless the designer explicitly described this in their interview answers.
+- Do not describe what you cannot verify from the provided data. If you don't know what material the floor is, don't name one. Describe what the interview and tags tell you; stay silent on what they don't.
+- When referencing a product, use the EXACT product name and vendor name from the tag data. Do not paraphrase product names.
+
 The article should make a reader want to visit this space, not inventory it.`;
 
 function buildEditorialPrompt({
@@ -830,6 +838,60 @@ async function composeEditorialHard({
   };
 }
 
+
+// Post-generation accuracy verification (monitoring mode — logs warnings, does not hard-fail)
+function verifyProductAccuracy(
+  generatedText: string,
+  taggedProducts: Array<{ name: string; vendor?: string }>,
+  interviewText: string,
+): { warnings: string[] } {
+  const warnings: string[] = [];
+  if (!generatedText || taggedProducts.length === 0) return { warnings };
+
+  const textLower = generatedText.toLowerCase();
+  const interviewLower = interviewText.toLowerCase();
+
+  // Build sets of known product and vendor names
+  const knownProducts = new Set(taggedProducts.map(p => p.name.toLowerCase()));
+  const knownVendors = new Set(
+    taggedProducts
+      .map(p => p.vendor?.toLowerCase())
+      .filter((v): v is string => !!v && v.length > 1)
+  );
+
+  // Check for vendor names in text that don't match tagged vendors
+  // Extract capitalized multi-word proper nouns that could be vendor names
+  const properNounPattern = /(?:by |from |(?:designed|crafted|made) by )((?:[A-Z][a-z]+(?:\s+(?:&\s+)?[A-Z][a-z]+)*))/g;
+  let match;
+  while ((match = properNounPattern.exec(generatedText)) !== null) {
+    const candidate = match[1].trim();
+    const candidateLower = candidate.toLowerCase();
+    // Skip if it matches a known vendor or product
+    if (knownVendors.has(candidateLower)) continue;
+    if (knownProducts.has(candidateLower)) continue;
+    // Skip if it appears in interview answers (designer mentioned it)
+    if (interviewLower.includes(candidateLower)) continue;
+    warnings.push(`Possible unverified vendor reference: "${candidate}" — not found in tag data or interview`);
+  }
+
+  // Check for material origin claims not backed by data
+  const originPattern = /\b(Italian|French|Japanese|Scandinavian|Belgian|Danish|Swedish|German|English|British|Portuguese|Brazilian|Mexican|Moroccan|Indian|Chinese|Korean|Turkish|Greek|Spanish|Dutch|Swiss|Austrian|Norwegian|Finnish|Czech|Polish|Hungarian|Thai|Vietnamese|Indonesian|Filipino|Australian|Canadian|American)\b\s+\b(marble|leather|linen|silk|wool|oak|walnut|teak|ceramic|porcelain|tile|stone|granite|limestone|travertine|slate|brass|bronze|copper|steel|iron|glass|crystal|velvet|cotton|hemp|jute|rattan|bamboo|lacquer|plaster|concrete|terrazzo)\b/gi;
+  while ((match = originPattern.exec(generatedText)) !== null) {
+    const claim = match[0];
+    const claimLower = claim.toLowerCase();
+    // Check if this claim appears in interview answers or product data
+    const inInterview = interviewLower.includes(claimLower);
+    const inProducts = taggedProducts.some(p =>
+      p.name.toLowerCase().includes(claimLower) ||
+      (p.vendor?.toLowerCase().includes(match![1].toLowerCase()) ?? false)
+    );
+    if (!inInterview && !inProducts) {
+      warnings.push(`Unverified material origin claim: "${claim}" — not found in interview answers or tag data`);
+    }
+  }
+
+  return { warnings };
+}
 
 function polishQA(qa: any[]) {
   if (!Array.isArray(qa)) return [];
@@ -2006,7 +2068,34 @@ export async function POST(
     
     // Ensure mode is set to recomposition (should already be set by composeEditorialHard)
     validatedBlocks.mode = 'recomposition';
-    
+
+    // Post-generation accuracy verification (monitoring mode)
+    const allGeneratedText = [
+      validatedBlocks.lead?.kicker || '',
+      validatedBlocks.lead?.deck || '',
+      ...(validatedBlocks.galleryChapters || []).flatMap((ch: any) => ch.body || []),
+      ...(validatedBlocks.pullQuotes || []).map((q: any) => typeof q === 'string' ? q : q?.text || ''),
+    ].join(' ');
+    const allTaggedProducts = validImages.flatMap(img =>
+      (img.tags || []).map(tag => ({
+        name: tag.product.name,
+        vendor: tag.product.vendor?.name,
+      }))
+    );
+    const allInterviewText = normalizedAnswers.map((a: { q: string; a: string }) => `${a.q} ${a.a}`).join(' ') +
+      ' ' + normalizedFollowUps.map((f: { q: string; a: string }) => `${f.q} ${f.a}`).join(' ');
+    const accuracyCheck = verifyProductAccuracy(allGeneratedText, allTaggedProducts, allInterviewText);
+    if (accuracyCheck.warnings.length > 0) {
+      console.warn('[EDITORIAL_ACCURACY]', {
+        projectId,
+        warningCount: accuracyCheck.warnings.length,
+        warnings: accuracyCheck.warnings,
+        taggedProductCount: allTaggedProducts.length,
+        taggedProducts: allTaggedProducts.map(p => `${p.name}${p.vendor ? ` (${p.vendor})` : ''}`),
+        _cid,
+      });
+    }
+
     // expandedBlocks is the validated structure ready to save
     const expandedBlocks = validatedBlocks;
 
