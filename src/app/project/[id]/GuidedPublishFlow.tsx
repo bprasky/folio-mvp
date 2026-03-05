@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { ChevronDown, ChevronUp, Sparkles, MapPin, ImageIcon, LayoutGrid } from "lucide-react";
 import { usePublishFlow } from "@/hooks/usePublishFlow";
 import { InterviewModal } from "@/components/posting/interview/InterviewModal";
-import PublishPreviewModal from "./PublishPreviewModal";
+import type { EditorialState } from "@/lib/editorial/getEditorialState";
 
 interface GuidedPublishFlowProps {
   project: {
@@ -19,6 +19,7 @@ interface GuidedPublishFlowProps {
   imageCount: number;
   images: Array<{ id: string; url: string; name?: string }>;
   projectPost?: any;
+  editorialState?: EditorialState;
 }
 
 const PROJECT_TYPE_LABELS: Record<string, string> = {
@@ -36,36 +37,40 @@ const PROJECT_TYPE_LABELS: Record<string, string> = {
   ARCHITECTURAL: "Architectural",
 };
 
-export default function GuidedPublishFlow({ project, imageCount, images, projectPost }: GuidedPublishFlowProps) {
+export default function GuidedPublishFlow({ project, imageCount, images, projectPost, editorialState }: GuidedPublishFlowProps) {
   const router = useRouter();
   const flow = usePublishFlow(project.id);
   const [summaryExpanded, setSummaryExpanded] = useState(true);
   const [showInterviewModal, setShowInterviewModal] = useState(false);
-  const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const roomCount = project.rooms?.length || 0;
   const location = [project.city, project.regionState].filter(Boolean).join(", ");
   const typeLabel = PROJECT_TYPE_LABELS[project.projectType || ""] || project.projectType || "";
 
-  // Does a draft already exist from a previous session?
-  const hasDraft = !!flow.currentPost && !!(flow.currentLead?.title || flow.currentLead?.kicker);
-
-  function handleProceedToPublish() {
+  function handleOpenInterview() {
     setShowInterviewModal(true);
   }
 
-  function handlePreviewAndPublish() {
-    // Skip interview — go straight to preview modal with existing draft
-    setShowPreviewModal(true);
+  async function handleGenerateStory() {
+    // INTERVIEWED state: generate from existing answers, then navigate to publish tab
+    setIsGenerating(true);
+    try {
+      await flow.generateDraft();
+      router.push(`/project/${project.id}?view=publish`);
+      router.refresh();
+    } finally {
+      setIsGenerating(false);
+    }
+  }
+
+  function handleNavigateToPublish() {
+    // GENERATED / UNPUBLISHED: go directly to publish tab (no preview modal)
+    router.push(`/project/${project.id}?view=publish`);
   }
 
   async function handleDraftGenerated() {
     // Interview completed and draft was generated — navigate to the Publish tab staging view
-    router.push(`/project/${project.id}?view=publish`);
-  }
-
-  function handlePublishSuccess() {
-    setShowPreviewModal(false);
     router.push(`/project/${project.id}?view=publish`);
   }
 
@@ -143,25 +148,57 @@ export default function GuidedPublishFlow({ project, imageCount, images, project
         )}
       </div>
 
-      {/* Publish CTAs */}
-      {hasDraft ? (
+      {/* Publish CTAs — state-driven (spec: 17_EDITORIAL_FLOW_SPEC.md §2) */}
+      {editorialState === 'INTERVIEWED' ? (
         <div className="flex gap-3">
           <button
-            onClick={handlePreviewAndPublish}
-            className="flex-1 px-6 py-4 folio-ui font-semibold text-white bg-[var(--accent)] rounded-2xl hover:bg-[var(--accent-hover)] transition-colors shadow-sm"
+            onClick={handleGenerateStory}
+            disabled={isGenerating || flow.regenBusy}
+            className="flex-1 px-6 py-4 folio-ui font-semibold text-white bg-[var(--accent)] rounded-2xl hover:bg-[var(--accent-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
           >
-            Preview &amp; Publish
+            {isGenerating || flow.regenBusy ? "Generating..." : "Generate Story"}
           </button>
           <button
-            onClick={handleProceedToPublish}
+            onClick={handleOpenInterview}
+            className="px-6 py-4 folio-ui font-medium text-[var(--text-secondary)] bg-[var(--bg-base)] border border-[var(--border-default)] rounded-2xl hover:bg-[var(--bg-elevated)] transition-colors"
+          >
+            Redo Interview
+          </button>
+        </div>
+      ) : editorialState === 'GENERATED' ? (
+        <div className="flex gap-3">
+          <button
+            onClick={handleNavigateToPublish}
+            className="flex-1 px-6 py-4 folio-ui font-semibold text-white bg-[var(--accent)] rounded-2xl hover:bg-[var(--accent-hover)] transition-colors shadow-sm"
+          >
+            Continue to Publish
+          </button>
+          <button
+            onClick={handleOpenInterview}
+            className="px-6 py-4 folio-ui font-medium text-[var(--text-secondary)] bg-[var(--bg-base)] border border-[var(--border-default)] rounded-2xl hover:bg-[var(--bg-elevated)] transition-colors"
+          >
+            Redo Interview
+          </button>
+        </div>
+      ) : editorialState === 'UNPUBLISHED' ? (
+        <div className="flex gap-3">
+          <button
+            onClick={handleNavigateToPublish}
+            className="flex-1 px-6 py-4 folio-ui font-semibold text-white bg-[var(--accent)] rounded-2xl hover:bg-[var(--accent-hover)] transition-colors shadow-sm"
+          >
+            Review &amp; Re-Publish
+          </button>
+          <button
+            onClick={handleOpenInterview}
             className="px-6 py-4 folio-ui font-medium text-[var(--text-secondary)] bg-[var(--bg-base)] border border-[var(--border-default)] rounded-2xl hover:bg-[var(--bg-elevated)] transition-colors"
           >
             Redo Interview
           </button>
         </div>
       ) : (
+        /* EMPTY or no editorialState — default "Proceed to Publish" opens interview */
         <button
-          onClick={handleProceedToPublish}
+          onClick={handleOpenInterview}
           className="w-full px-6 py-4 folio-ui font-semibold text-white bg-[var(--accent)] rounded-2xl hover:bg-[var(--accent-hover)] transition-colors shadow-sm"
         >
           Proceed to Publish
@@ -185,16 +222,6 @@ export default function GuidedPublishFlow({ project, imageCount, images, project
         post={projectPost}
         onDraftGenerated={handleDraftGenerated}
       />
-
-      {/* Preview Modal — shown after interview completes and draft is generated */}
-      {showPreviewModal && (
-        <PublishPreviewModal
-          projectId={project.id}
-          flow={flow}
-          onClose={() => setShowPreviewModal(false)}
-          onPublishSuccess={handlePublishSuccess}
-        />
-      )}
     </div>
   );
 }

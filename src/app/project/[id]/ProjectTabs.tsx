@@ -2,6 +2,7 @@
 
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { LayoutGrid, ImageIcon, MessageSquare, Share2 } from 'lucide-react';
+import type { EditorialState } from '@/lib/editorial/getEditorialState';
 
 type TabView = 'overview' | 'media' | 'boards' | 'drafts' | 'files' | 'publish' | 'story';
 
@@ -14,9 +15,10 @@ interface ProjectTabsProps {
   currentView: TabView;
   isPublished: boolean;
   hasDraftOrPublished?: boolean;
+  editorialState?: EditorialState;
 }
 
-export default function ProjectTabs({ project, currentView, isPublished, hasDraftOrPublished }: ProjectTabsProps) {
+export default function ProjectTabs({ project, currentView, isPublished, hasDraftOrPublished, editorialState }: ProjectTabsProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -40,41 +42,41 @@ export default function ProjectTabs({ project, currentView, isPublished, hasDraf
   }, 0) || 0;
 
   // Tab structure: BOARDS | MEDIA | (STORY) | (PUBLISH)
-  // Story and Publish tabs only appear after project is published
+  // Visibility rules per editorial state (spec: 17_EDITORIAL_FLOW_SPEC.md §2):
+  //   Story:   PUBLISHED only
+  //   Publish: GENERATED, PUBLISHED, UNPUBLISHED
+  const showStory = editorialState === 'PUBLISHED';
+  const showPublish = editorialState === 'GENERATED' || editorialState === 'PUBLISHED' || editorialState === 'UNPUBLISHED';
+
   const allTabs = [
     {
       id: 'boards' as TabView,
       label: 'Boards',
       icon: LayoutGrid,
       badge: totalSelections > 0 ? totalSelections : undefined,
-      requiresPublished: false,
+      visible: true,
     },
     {
       id: 'media' as TabView,
       label: 'Media',
       icon: ImageIcon,
-      requiresPublished: false,
+      visible: true,
     },
     {
       id: 'story' as TabView,
       label: 'Story',
       icon: MessageSquare,
-      requiresPublished: true,
+      visible: showStory,
     },
     {
       id: 'publish' as TabView,
       label: 'Publish',
       icon: Share2,
-      requiresPublished: false,
-      requiresDraftOrPublished: true,
+      visible: showPublish,
     },
   ];
 
-  const tabs = allTabs.filter(tab => {
-    if (tab.requiresDraftOrPublished) return !!hasDraftOrPublished;
-    if (tab.requiresPublished) return isPublished;
-    return true;
-  });
+  const tabs = allTabs.filter(tab => tab.visible);
 
   return (
     <div className="bg-[var(--bg-elevated)] py-4">

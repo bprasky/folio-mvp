@@ -77,7 +77,8 @@ export default async function PublishPage({
   }
 
   // If already published, redirect to story view
-  if (project.isPublic && project.publishedAt) {
+  // Use ProjectPost.status as the single source of truth (not Project.publishedAt)
+  if (project.post?.status === 'PUBLISHED') {
     redirect(`/project/${params.id}?view=story`);
   }
 

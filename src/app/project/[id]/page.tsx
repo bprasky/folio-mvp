@@ -15,6 +15,7 @@ import StagingPublishPanel, { NoDraftState } from './StagingPublishPanel';
 import { getPostForStaging } from '@/lib/post/getPostForStaging';
 import ProjectEmptyState from './ProjectEmptyState';
 import ProjectEmptyStateDiscovery from './ProjectEmptyStateDiscovery';
+import { getEditorialState, type EditorialState } from '@/lib/editorial/getEditorialState';
 
 type TabView = 'overview' | 'media' | 'boards' | 'drafts' | 'files' | 'publish' | 'story';
 
@@ -72,6 +73,7 @@ export default async function ProjectPage({
         select: {
           expandedBlocks: true,
           status: true,
+          publishedAt: true,
         },
       },
       // Include rooms and selections for Designer Board
@@ -111,10 +113,23 @@ export default async function ProjectPage({
     notFound();
   }
 
-  // Show Story/Publish tabs when any editorial content exists (draft OR published)
-  const hasDraftOrPublished = !!base.post || !!base.publishedAt;
-  // Strict published check — only true when actually live (used by MediaSection to hide guided flow)
-  const isPublished = base.post?.status === 'PUBLISHED' || !!base.publishedAt;
+  // Count interview answers for state detection
+  const interviewAnswerCount = await prisma.editorialInterviewAnswer.count({
+    where: { interview: { projectId: params.id } },
+  });
+
+  // Formalized editorial state machine (spec: 17_EDITORIAL_FLOW_SPEC.md §2)
+  const editorialState = getEditorialState({
+    post: base.post ? {
+      status: base.post.status,
+      publishedAt: base.post.publishedAt ?? null,
+      expandedBlocks: base.post.expandedBlocks,
+    } : null,
+    interviewAnswerCount,
+  });
+
+  const isPublished = editorialState === 'PUBLISHED';
+  const hasDraftOrPublished = (['GENERATED', 'PUBLISHED', 'UNPUBLISHED'] as EditorialState[]).includes(editorialState);
 
   // Determine current view from search params
   // Default: 'media' for unpublished (primary workspace), 'boards' for published
@@ -238,17 +253,17 @@ export default async function ProjectPage({
       />
 
       {/* Tab Navigation */}
-      <ProjectTabs project={sanitizedProject} currentView={view} isPublished={isPublished} hasDraftOrPublished={hasDraftOrPublished} />
+      <ProjectTabs project={sanitizedProject} currentView={view} isPublished={isPublished} hasDraftOrPublished={hasDraftOrPublished} editorialState={editorialState} />
 
       {/* PUBLISH tab — renders outside <main> for full-width immersive preview */}
-      {view === 'publish' && <PublishTabContent projectId={sanitizedProject.id} project={sanitizedProject} images={base.images} isOwner={isOwner} />}
+      {view === 'publish' && <PublishTabContent projectId={sanitizedProject.id} project={sanitizedProject} images={base.images} isOwner={isOwner} editorialState={editorialState} />}
 
       {/* Main Content - Full Width (non-publish tabs) */}
       {view !== 'publish' && (
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* MEDIA tab */}
           {view === 'media' && (
-            <MediaSection project={sanitizedProject} isOwner={isOwner} images={base.images} isPublished={isPublished} />
+            <MediaSection project={sanitizedProject} isOwner={isOwner} images={base.images} isPublished={isPublished} editorialState={editorialState} />
           )}
 
           {/* STORY tab */}
@@ -281,11 +296,13 @@ async function PublishTabContent({
   project,
   images,
   isOwner,
+  editorialState,
 }: {
   projectId: string;
   project: { id: string; title: string };
   images: any[];
   isOwner: boolean;
+  editorialState: EditorialState;
 }) {
   const stagingData = await getPostForStaging(projectId);
 
@@ -305,6 +322,7 @@ async function PublishTabContent({
       isOwner={isOwner}
       initialPostData={stagingData}
       initialModules={stagingData.modules || []}
+      editorialState={editorialState}
     />
   );
 }
