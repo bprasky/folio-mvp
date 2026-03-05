@@ -15,6 +15,7 @@ import {
 import { usePublishFlow } from "@/hooks/usePublishFlow";
 import { ImmersiveProjectPage } from "@/components/project/ImmersiveProjectPage";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import { InterviewModal } from "@/components/posting/interview/InterviewModal";
 import type { EditorialState } from "@/lib/editorial/getEditorialState";
 
 interface ProductTag {
@@ -79,6 +80,7 @@ export default function StagingPublishPanel({
 
   const [checklistExpanded, setChecklistExpanded] = useState(false);
   const [showUnpublishDialog, setShowUnpublishDialog] = useState(false);
+  const [showInterviewModal, setShowInterviewModal] = useState(false);
 
   const isPublishedStatus = initialPostData?.status === "PUBLISHED" || publishSuccess;
   const slug = initialPostData?.slug || publishedSlug;
@@ -157,6 +159,14 @@ export default function StagingPublishPanel({
           </div>
 
           <div className="flex items-center gap-2">
+            {(editorialState === 'GENERATED' || editorialState === 'UNPUBLISHED') && (
+              <button
+                onClick={() => setShowInterviewModal(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 folio-meta font-medium text-[var(--text-secondary)] bg-[var(--bg-base)] border border-[var(--border-default)] rounded-lg hover:bg-[var(--bg-elevated)] transition-colors"
+              >
+                Redo Interview
+              </button>
+            )}
             <button
               onClick={handleRegenerate}
               disabled={regenBusy}
@@ -341,6 +351,20 @@ export default function StagingPublishPanel({
           )}
         </div>
       </div>
+
+      {/* Redo Interview modal — available for GENERATED and UNPUBLISHED states */}
+      <InterviewModal
+        open={showInterviewModal}
+        onOpenChange={setShowInterviewModal}
+        projectId={projectId}
+        projectName={project.title}
+        images={images.map(img => ({ id: img.id, url: img.url, name: img.name }))}
+        post={initialPostData}
+        onDraftGenerated={() => {
+          setShowInterviewModal(false);
+          router.refresh();
+        }}
+      />
 
       {/* Unpublish confirmation dialog */}
       <ConfirmDialog
