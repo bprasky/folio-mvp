@@ -261,8 +261,8 @@ export default function MediaSection({ project, isOwner, images, projectPost, is
         Upload your project materials. We'll extract products, rooms, and specifications automatically.
       </p>
 
-      {/* Publish prompt banner — shown when enough images exist but project is unpublished */}
-      {images.length >= 3 && (editorialState ? editorialState !== 'PUBLISHED' : !isPublished) && isOwner && (
+      {/* Publish prompt banner — shown when enough images exist but no interview yet */}
+      {images.length >= 3 && (!editorialState || editorialState === 'EMPTY' || editorialState === 'INTERVIEWED') && isOwner && (
         <div className="flex items-center justify-between px-4 py-3 rounded-xl border border-[var(--accent)]/20 bg-[var(--accent)]/5">
           <span className="folio-ui text-[var(--text-primary)]">
             {photoCount} photos uploaded &middot; Ready to publish
@@ -524,8 +524,9 @@ export default function MediaSection({ project, isOwner, images, projectPost, is
         )}
       </section>
 
-      {/* Guided Publish Flow — inline below image grid for unpublished projects with images */}
-      {images.length > 0 && (editorialState ? editorialState !== 'PUBLISHED' : !isPublished) && isOwner && (
+      {/* Guided Publish Flow — only for EMPTY (with images) and INTERVIEWED states.
+          GENERATED/UNPUBLISHED/PUBLISHED have the Publish tab visible instead. */}
+      {images.length > 0 && (!editorialState || editorialState === 'EMPTY' || editorialState === 'INTERVIEWED') && isOwner && (
         <div data-publish-flow>
           <GuidedPublishFlow
             project={project}

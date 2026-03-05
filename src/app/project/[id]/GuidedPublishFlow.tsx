@@ -64,11 +64,6 @@ export default function GuidedPublishFlow({ project, imageCount, images, project
     }
   }
 
-  function handleNavigateToPublish() {
-    // GENERATED / UNPUBLISHED: go directly to publish tab (no preview modal)
-    router.push(`/project/${project.id}?view=publish`);
-  }
-
   async function handleDraftGenerated() {
     // Interview completed and draft was generated — navigate to the Publish tab staging view
     router.push(`/project/${project.id}?view=publish`);
@@ -148,7 +143,8 @@ export default function GuidedPublishFlow({ project, imageCount, images, project
         )}
       </div>
 
-      {/* Publish CTAs — state-driven (spec: 17_EDITORIAL_FLOW_SPEC.md §2) */}
+      {/* Publish CTAs — state-driven (spec: 17_EDITORIAL_FLOW_SPEC.md §2)
+          Only EMPTY and INTERVIEWED render here; GENERATED/UNPUBLISHED use the Publish tab. */}
       {editorialState === 'INTERVIEWED' ? (
         <div className="flex gap-3">
           <button
@@ -157,36 +153,6 @@ export default function GuidedPublishFlow({ project, imageCount, images, project
             className="flex-1 px-6 py-4 folio-ui font-semibold text-white bg-[var(--accent)] rounded-2xl hover:bg-[var(--accent-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
           >
             {isGenerating || flow.regenBusy ? "Generating..." : "Generate Story"}
-          </button>
-          <button
-            onClick={handleOpenInterview}
-            className="px-6 py-4 folio-ui font-medium text-[var(--text-secondary)] bg-[var(--bg-base)] border border-[var(--border-default)] rounded-2xl hover:bg-[var(--bg-elevated)] transition-colors"
-          >
-            Redo Interview
-          </button>
-        </div>
-      ) : editorialState === 'GENERATED' ? (
-        <div className="flex gap-3">
-          <button
-            onClick={handleNavigateToPublish}
-            className="flex-1 px-6 py-4 folio-ui font-semibold text-white bg-[var(--accent)] rounded-2xl hover:bg-[var(--accent-hover)] transition-colors shadow-sm"
-          >
-            Continue to Publish
-          </button>
-          <button
-            onClick={handleOpenInterview}
-            className="px-6 py-4 folio-ui font-medium text-[var(--text-secondary)] bg-[var(--bg-base)] border border-[var(--border-default)] rounded-2xl hover:bg-[var(--bg-elevated)] transition-colors"
-          >
-            Redo Interview
-          </button>
-        </div>
-      ) : editorialState === 'UNPUBLISHED' ? (
-        <div className="flex gap-3">
-          <button
-            onClick={handleNavigateToPublish}
-            className="flex-1 px-6 py-4 folio-ui font-semibold text-white bg-[var(--accent)] rounded-2xl hover:bg-[var(--accent-hover)] transition-colors shadow-sm"
-          >
-            Review &amp; Re-Publish
           </button>
           <button
             onClick={handleOpenInterview}
