@@ -416,30 +416,31 @@ export async function PATCH(
         console.warn(`[${correlationId}] Analytics logging failed:`, analyticsError);
       }
 
-      // Update Project.isPublic and publishedAt when publishing
-      await prisma.project.update({
-        where: { id: projectId },
-        data: {
-          isPublic: true,
-          publishedAt: new Date(),
-        },
-      });
-
-      // Update post status and slug
-      const updated = await prisma.projectPost.update({
-        where: { projectId },
-        data: {
-          status: targetStatus,
-          slug,
-          publishedAt: new Date(),
-        },
-        select: {
-          id: true,
-          status: true,
-          slug: true,
-          publishedAt: true,
-        },
-      });
+      // Single transaction: update both ProjectPost and Project atomically
+      const now = new Date();
+      const [updated] = await prisma.$transaction([
+        prisma.projectPost.update({
+          where: { projectId },
+          data: {
+            status: targetStatus,
+            slug,
+            publishedAt: now,
+          },
+          select: {
+            id: true,
+            status: true,
+            slug: true,
+            publishedAt: true,
+          },
+        }),
+        prisma.project.update({
+          where: { id: projectId },
+          data: {
+            isPublic: true,
+            publishedAt: now,
+          },
+        }),
+      ]);
 
       // Revalidate paths
       try {
@@ -469,17 +470,20 @@ export async function PATCH(
     }
 
     // Handle unpublish: PUBLISHED -> DRAFT
+    // Note: ProjectPost.publishedAt is PRESERVED (distinguishes UNPUBLISHED from GENERATED)
+    //       Project.publishedAt is CLEARED (controls public visibility)
     if (targetStatus === "DRAFT" && post.status === "PUBLISHED") {
-      const updated = await prisma.projectPost.update({
-        where: { projectId },
-        data: { status: "DRAFT" },
-        select: { id: true, status: true, slug: true, publishedAt: true },
-      });
-
-      await prisma.project.update({
-        where: { id: projectId },
-        data: { isPublic: false, publishedAt: null },
-      });
+      const [updated] = await prisma.$transaction([
+        prisma.projectPost.update({
+          where: { projectId },
+          data: { status: "DRAFT" },
+          select: { id: true, status: true, slug: true, publishedAt: true },
+        }),
+        prisma.project.update({
+          where: { id: projectId },
+          data: { isPublic: false, publishedAt: null },
+        }),
+      ]);
 
       try {
         const { logPassiveEvent } = await import("@/lib/analytics");

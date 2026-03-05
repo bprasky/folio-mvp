@@ -15,6 +15,7 @@ import {
 import { usePublishFlow } from "@/hooks/usePublishFlow";
 import { ImmersiveProjectPage } from "@/components/project/ImmersiveProjectPage";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import type { EditorialState } from "@/lib/editorial/getEditorialState";
 
 interface ProductTag {
   id: string;
@@ -42,6 +43,7 @@ interface StagingPublishPanelProps {
   isOwner: boolean;
   initialPostData: any;
   initialModules: any[];
+  editorialState?: EditorialState;
 }
 
 export default function StagingPublishPanel({
@@ -51,6 +53,7 @@ export default function StagingPublishPanel({
   isOwner,
   initialPostData,
   initialModules,
+  editorialState,
 }: StagingPublishPanelProps) {
   const router = useRouter();
   const {
@@ -176,6 +179,16 @@ export default function StagingPublishPanel({
         </div>
       )}
 
+      {/* UNPUBLISHED STATE BANNER */}
+      {editorialState === 'UNPUBLISHED' && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
+          <div className="flex items-start gap-2 p-4 bg-[var(--accent)]/5 border border-[var(--accent)]/20 rounded-[20px] folio-ui text-[var(--text-primary)]">
+            <AlertCircle className="w-4 h-4 mt-0.5 shrink-0 text-[var(--accent)]" />
+            <span>This project was previously published and is now a draft. Review your changes and re-publish when ready.</span>
+          </div>
+        </div>
+      )}
+
       {/* EDITORIAL CONTEXT TOGGLES */}
       {!isPublishedStatus && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-3">
@@ -296,7 +309,11 @@ export default function StagingPublishPanel({
                   disabled={isPublishing || !initialPostData?.expandedBlocks}
                   className="px-6 py-2 folio-ui font-semibold text-white bg-[var(--accent)] rounded-lg hover:bg-[var(--accent-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  {isPublishing ? "Publishing..." : "Publish to Folio"}
+                  {isPublishing
+                    ? "Publishing..."
+                    : editorialState === 'UNPUBLISHED'
+                    ? "Re-Publish to Folio"
+                    : "Publish to Folio"}
                 </button>
               )}
             </div>

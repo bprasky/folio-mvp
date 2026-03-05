@@ -9,6 +9,7 @@ import ProjectCreationModal from '@/components/ProjectCreationModal';
 import { PresentationImportModal } from '@/components/import/PresentationImportModal';
 import { PdfSpecImportModal } from '@/components/import/PdfSpecImportModal';
 import GuidedPublishFlow from './GuidedPublishFlow';
+import type { EditorialState } from '@/lib/editorial/getEditorialState';
 
 interface ProductTag {
   id: string;
@@ -42,9 +43,10 @@ interface MediaSectionProps {
   images: ProjectImage[];
   projectPost?: any;
   isPublished?: boolean;
+  editorialState?: EditorialState;
 }
 
-export default function MediaSection({ project, isOwner, images, projectPost, isPublished }: MediaSectionProps) {
+export default function MediaSection({ project, isOwner, images, projectPost, isPublished, editorialState }: MediaSectionProps) {
   const router = useRouter();
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [selectedHeroImageId, setSelectedHeroImageId] = useState<string | null>(null);
@@ -260,7 +262,7 @@ export default function MediaSection({ project, isOwner, images, projectPost, is
       </p>
 
       {/* Publish prompt banner — shown when enough images exist but project is unpublished */}
-      {images.length >= 3 && !isPublished && isOwner && (
+      {images.length >= 3 && (editorialState ? editorialState !== 'PUBLISHED' : !isPublished) && isOwner && (
         <div className="flex items-center justify-between px-4 py-3 rounded-xl border border-[var(--accent)]/20 bg-[var(--accent)]/5">
           <span className="folio-ui text-[var(--text-primary)]">
             {photoCount} photos uploaded &middot; Ready to publish
@@ -523,13 +525,14 @@ export default function MediaSection({ project, isOwner, images, projectPost, is
       </section>
 
       {/* Guided Publish Flow — inline below image grid for unpublished projects with images */}
-      {images.length > 0 && !isPublished && isOwner && (
+      {images.length > 0 && (editorialState ? editorialState !== 'PUBLISHED' : !isPublished) && isOwner && (
         <div data-publish-flow>
           <GuidedPublishFlow
             project={project}
             imageCount={images.length}
             images={images.map(img => ({ id: img.id, url: img.url, name: img.name }))}
             projectPost={projectPost}
+            editorialState={editorialState}
           />
         </div>
       )}

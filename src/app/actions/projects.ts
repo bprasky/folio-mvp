@@ -107,14 +107,24 @@ export async function publishEditorial({ projectId }: { projectId: string }) {
       return { ok: false, message: 'Access denied' };
     }
 
-    // Publish the draft
-    const updated = await prisma.projectPost.update({
-      where: { id: post.id },
-      data: {
-        status: 'PUBLISHED',
-        publishedAt: new Date(),
-      },
-    });
+    // Publish the draft — single transaction updates both ProjectPost and Project
+    const now = new Date();
+    const [updated] = await prisma.$transaction([
+      prisma.projectPost.update({
+        where: { id: post.id },
+        data: {
+          status: 'PUBLISHED',
+          publishedAt: now,
+        },
+      }),
+      prisma.project.update({
+        where: { id: projectId },
+        data: {
+          isPublic: true,
+          publishedAt: now,
+        },
+      }),
+    ]);
 
     // Revalidate paths
     revalidatePath(`/project/${projectId}`);
