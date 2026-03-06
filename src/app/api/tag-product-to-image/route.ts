@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
+import { assertProjectWrite } from '@/lib/authz/access';
 import { recordAtelierSignal } from '@/lib/atelier/signals';
 import { AtelierOwnerType, AtelierSignalSourceType } from '@prisma/client';
 import { syncSingleTestimonial } from '@/lib/syncTestimonials';
@@ -41,16 +42,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verify project ownership and get designerId
-    const project = await prisma.project.findFirst({
-      where: { 
-        id: projectId,
-        OR: [
-          { ownerId: session.user.id },
-          { designerId: session.user.id }
-        ]
-      },
-      select: { 
+    // Check project write access (owner, designer, org member, or admin)
+    try {
+      await assertProjectWrite(session.user.id, projectId);
+    } catch (e: any) {
+      return NextResponse.json(
+        { error: 'Project not found or not permitted' },
+        { status: 403 }
+      );
+    }
+
+    // Fetch project for designerId
+    const project = await prisma.project.findUnique({
+      where: { id: projectId },
+      select: {
         id: true,
         designerId: true,
         ownerId: true
@@ -59,8 +64,8 @@ export async function POST(request: NextRequest) {
 
     if (!project) {
       return NextResponse.json(
-        { error: 'Project not found or not permitted' },
-        { status: 403 }
+        { error: 'Project not found' },
+        { status: 404 }
       );
     }
 
@@ -418,11 +423,7 @@ export async function DELETE(request: NextRequest) {
       where: { id: tagId },
       include: {
         image: {
-          include: {
-            project: {
-              select: { ownerId: true, designerId: true }
-            }
-          }
+          select: { projectId: true }
         }
       }
     });
@@ -434,10 +435,10 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    const isOwner = tag.image.project.ownerId === session.user.id ||
-                    tag.image.project.designerId === session.user.id;
-
-    if (!isOwner) {
+    // Check project write access via the tag's project
+    try {
+      await assertProjectWrite(session.user.id, tag.image.projectId);
+    } catch {
       return NextResponse.json(
         { error: 'Not authorized to delete this tag' },
         { status: 403 }

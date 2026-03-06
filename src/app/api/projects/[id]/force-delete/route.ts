@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
-import { assertProjectView } from "@/lib/authz/access";
+import { assertProjectWrite } from "@/lib/authz/access";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
@@ -24,32 +24,23 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Check project access
-    await assertProjectView(session.user.id, projectId);
-
-    // Verify user is owner or designer
-    const project = await prisma.project.findUnique({
-      where: { id: projectId },
-      select: { ownerId: true, designerId: true, archivedAt: true },
-    });
-
-    if (!project) {
-      return NextResponse.json(
-        { error: 'Project not found' },
-        { status: 404 }
-      );
-    }
-
-    const isOwner = project.ownerId === session.user.id || project.designerId === session.user.id;
-    if (!isOwner) {
-      return NextResponse.json(
-        { error: 'Forbidden: Only project owner can force delete' },
-        { status: 403 }
-      );
+    // Check project write access (owner, designer, org member, or admin)
+    try {
+      await assertProjectWrite(session.user.id, projectId);
+    } catch (e: any) {
+      if (e.message === "NotFound") {
+        return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+      }
+      return NextResponse.json({ error: 'Forbidden: Only project owner can force delete' }, { status: 403 });
     }
 
     // Check if project is archived
-    if (!project.archivedAt) {
+    const project = await prisma.project.findUnique({
+      where: { id: projectId },
+      select: { archivedAt: true },
+    });
+
+    if (!project?.archivedAt) {
       return NextResponse.json(
         { error: 'Project is not archived. Use regular delete endpoint instead.' },
         { status: 400 }

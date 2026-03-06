@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { assertProjectWrite } from '@/lib/authz/access';
 import { deleteProjectImage } from '@/lib/storage';
 
 export async function DELETE(
@@ -18,20 +19,14 @@ export async function DELETE(
     }
 
     const { id: projectId, imageId } = await params;
-    const userId = session.user.id;
 
-    console.log('[DELETE image] Starting:', { projectId, imageId, userId });
+    console.log('[DELETE image] Starting:', { projectId, imageId, userId: session.user.id });
 
-    // Verify user has access to project - check ownerId only first
-    const project = await prisma.project.findUnique({
-      where: { id: projectId },
-      select: { id: true, ownerId: true }
-    });
-
-    console.log('[DELETE image] Project:', project ? { id: project.id, ownerId: project.ownerId } : 'NOT FOUND');
-
-    if (!project || project.ownerId !== userId) {
-      console.log('[DELETE image] Access denied - user is not owner');
+    // Check project write access (owner, designer, org member, or admin)
+    try {
+      await assertProjectWrite(session.user.id, projectId);
+    } catch (e: any) {
+      console.log('[DELETE image] Access denied');
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
 

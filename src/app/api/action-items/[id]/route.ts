@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
+import { assertProjectWrite } from '@/lib/authz/access';
 
 /**
  * PATCH /api/action-items/[id]
@@ -63,12 +64,10 @@ export async function PATCH(
       );
     }
 
-    // Verify project access
-    const project = await prisma.project.findFirst({
-      where: { id: projectId, ownerId: session.user.id },
-    });
-
-    if (!project) {
+    // Verify project write access (owner, designer, org member, or admin)
+    try {
+      await assertProjectWrite(session.user.id, projectId);
+    } catch {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 

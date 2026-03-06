@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { assertProjectWrite } from "@/lib/authz/access";
 import { sendVendorProductPreviewEmail } from "@/lib/email/sendVendorProductPreviewEmail";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/options";
@@ -18,6 +19,16 @@ export async function POST(req: NextRequest, { params }: Params) {
     }
 
     const { id: projectId } = params;
+
+    // Check project write access (owner, designer, org member, or admin)
+    try {
+      await assertProjectWrite(session.user.id, projectId);
+    } catch (e: any) {
+      if (e.message === "NotFound") {
+        return NextResponse.json({ error: "Project not found" }, { status: 404 });
+      }
+      return NextResponse.json({ error: "Unauthorized to notify vendors for this project" }, { status: 403 });
+    }
 
     const project = await prisma.project.findUnique({
       where: { id: projectId },
@@ -62,18 +73,6 @@ export async function POST(req: NextRequest, { params }: Params) {
 
     if (!project) {
       return NextResponse.json({ error: "Project not found" }, { status: 404 });
-    }
-
-    // Verify user has permission (owner or designer)
-    const hasPermission =
-      project.ownerId === session.user.id ||
-      project.designerId === session.user.id;
-
-    if (!hasPermission) {
-      return NextResponse.json(
-        { error: "Unauthorized to notify vendors for this project" },
-        { status: 403 }
-      );
     }
 
     const notifications: Promise<any>[] = [];
