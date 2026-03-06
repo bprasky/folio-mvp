@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 
 type ProjectStatus = 'new_project' | 'completed_project';
 
@@ -13,6 +14,9 @@ type DetailsCore = {
 // Unified Create Project UI - single form with optional advanced details
 export default function UnifiedCreateProjectUI() {
   const router = useRouter();
+  const { data: session } = useSession();
+  const operatingAsOrgId = (session?.user as any)?.operatingAsOrgId as string | null ?? null;
+  const operatingAsOrgName = (session?.user as any)?.operatingAsOrg?.name as string | null ?? null;
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [projectStatus, setProjectStatus] = useState<ProjectStatus | ''>('');
@@ -47,13 +51,13 @@ export default function UnifiedCreateProjectUI() {
           'Content-Type': 'application/json',
         },
         credentials: 'same-origin',
-        body: JSON.stringify({ name, description, projectStatus, detailsCore }),
+        body: JSON.stringify({ name, description, projectStatus, detailsCore, designerOrgId: operatingAsOrgId }),
       });
 
       if (r.status === 401) {
         setErr('You must be signed in to create projects.');
       } else if (r.status === 403) {
-        setErr('You must be a member of a design firm to create projects.');
+        setErr('You must be operating as a design firm to create projects. Check your workspace in the profile menu.');
       } else if (!r.ok) {
         const errorData = await r.json().catch(() => ({}));
         setErr(errorData.error || 'Failed to create project.');
@@ -74,11 +78,32 @@ export default function UnifiedCreateProjectUI() {
     }
   }
 
+  if (!operatingAsOrgId) {
+    return (
+      <div className="min-h-screen bg-[var(--bg-elevated)] flex items-center justify-center p-6">
+        <div className="max-w-md w-full ridge-card p-8 text-center">
+          <h1 className="text-2xl font-bold mb-4 text-[var(--text-primary)]" style={{ fontFamily: 'var(--font-headline)' }}>Select a firm to create projects under</h1>
+          <p className="text-[var(--text-secondary)] mb-6">
+            Use the <strong>&ldquo;Operating as&rdquo;</strong> menu in your profile to switch to a design firm workspace.
+          </p>
+          <button
+            onClick={() => router.push('/projects')}
+            className="rounded-lg px-6 py-2 bg-[var(--accent)] text-white font-medium hover:bg-[var(--accent-hover)] transition-colors"
+          >
+            Back to Projects
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[var(--bg-elevated)] flex items-center justify-center p-6">
       <div className="max-w-2xl w-full ridge-card p-8">
         <h1 className="text-3xl font-bold mb-2 text-[var(--text-primary)]" style={{ fontFamily: 'var(--font-headline)' }}>Create a Project</h1>
-        <p className="text-[var(--text-secondary)] mb-6">Give your project a title to get started</p>
+        <p className="text-[var(--text-secondary)] mb-6">
+          Creating under <strong>{operatingAsOrgName || 'your firm'}</strong>
+        </p>
 
         <form onSubmit={onSubmit} className="space-y-5">
           <div>

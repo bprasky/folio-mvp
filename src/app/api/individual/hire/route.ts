@@ -71,6 +71,25 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Best-effort: resolve designer's org for project attribution
+    let designerOrgId: string | null = null;
+    const designerRecord = await prisma.user.findUnique({
+      where: { id: finalDesignerId },
+      select: { operatingAsOrgId: true },
+    });
+    if (designerRecord?.operatingAsOrgId) {
+      designerOrgId = designerRecord.operatingAsOrgId;
+    } else {
+      // Fallback: if designer belongs to exactly one DESIGN_FIRM, use that
+      const designFirmMemberships = await prisma.organizationUser.findMany({
+        where: { userId: finalDesignerId, isActive: true, organization: { type: 'DESIGN_FIRM' } },
+        select: { organizationId: true },
+      });
+      if (designFirmMemberships.length === 1) {
+        designerOrgId = designFirmMemberships[0].organizationId;
+      }
+    }
+
     // Create project with Individual as owner, Designer as designer
     const project = await prisma.project.create({
       data: {
@@ -78,6 +97,7 @@ export async function POST(request: NextRequest) {
         description: description?.trim() || null,
         ownerId: individualId, // Individual owns the project
         designerId: finalDesignerId, // Designer is assigned
+        designerOrgId, // Best-effort from designer's org context
         status: 'draft',
         isPublic: false,
         publishedAt: null,

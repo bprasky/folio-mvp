@@ -25,6 +25,7 @@ import { normalizeRole } from '@/lib/permissions';
 export default function GlassCreateButton() {
   const { data: session } = useSession();
   const role = normalizeRole(session?.user?.role);
+  const operatingAsOrgId = (session?.user as any)?.operatingAsOrgId as string | undefined;
   const [open, setOpen] = useState(false);
   const router = useRouter();
 
@@ -35,9 +36,8 @@ export default function GlassCreateButton() {
           { label: 'Product', href: '/vendor/products/new' },
           { label: 'Event', href: '/events/new' },
         ]
-      : role === 'DESIGNER'
+      : role === 'DESIGNER' && operatingAsOrgId
       ? [
-          // If you use a modal chooser, you can dispatch it here instead of routing
           { label: 'Project', href: '/projects/new' },
           { label: 'Client Project', href: '/projects/new?type=client' },
         ]
@@ -48,6 +48,7 @@ export default function GlassCreateButton() {
         ]
       : [];
 
+  // Designers without active org see no create options
   if (actions.length === 0) return null;
 
   return (

@@ -423,7 +423,8 @@ export async function canPerformAction(
 
   switch (action) {
     case 'create_project':
-      return canCreateProjectWithOrg(memberships);
+      // No fallback — user must have active org selected via "Operating as"
+      return false;
     case 'premium_features':
       return canAccessPremiumFeatures(memberships);
     case 'generate_images':

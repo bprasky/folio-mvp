@@ -42,6 +42,13 @@ export async function POST(req: Request, { params }: Params) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    // Resolve designer's org context for new projects
+    const designerUser = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { operatingAsOrgId: true },
+    });
+    const designerOrgId = designerUser?.operatingAsOrgId ?? null;
+
     let chosenProjectId: string;
 
     if (choice === 'existing') {
@@ -50,25 +57,30 @@ export async function POST(req: Request, { params }: Params) {
       }
       chosenProjectId = projectId;
     } else if (choice === 'new') {
-      // Create minimal project for this designer
-      const name = String(body?.newProjectName || visit.project?.title || "Imported Handoff").trim();
+      if (!designerOrgId) {
+        return NextResponse.json({ error: "Select a firm before claiming this handoff" }, { status: 400 });
+      }
+      const name = String(newTitle || visit.handoffPackage?.itemsJson?.[0]?.productName || "Imported Handoff").trim();
       const project = await prisma.project.create({
         data: {
-          title: name,   // Use title field (schema uses title, not name)
+          title: name,
           ownerId: session.user.id,
           designerId: session.user.id,
+          designerOrgId,
         },
       });
       chosenProjectId = project.id;
     } else if (choice === 'specsheet') {
-      // Create special minimal project flagged as spec sheet
+      if (!designerOrgId) {
+        return NextResponse.json({ error: "Select a firm before claiming this handoff" }, { status: 400 });
+      }
       const name = `Spec Sheet – ${new Date().toLocaleDateString()}`;
       const project = await prisma.project.create({
         data: {
-          title: name,   // Use title field (schema uses title, not name)
+          title: name,
           ownerId: session.user.id,
           designerId: session.user.id,
-          // Add a flag to indicate this is a spec sheet if your schema supports it
+          designerOrgId,
         },
       });
       chosenProjectId = project.id;
