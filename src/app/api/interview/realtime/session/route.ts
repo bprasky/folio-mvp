@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
+import { assertProjectWrite } from '@/lib/authz/access';
 import { realtimeInterviewConfig } from '@/lib/flags';
 
 /**
@@ -34,15 +35,18 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Verify project ownership
-    const project = await prisma.project.findFirst({
-      where: {
-        id: projectId,
-        OR: [
-          { designerId: session.user.id },
-          { ownerId: session.user.id },
-        ],
-      },
+    // Check project write access (owner, designer, org member, or admin)
+    try {
+      await assertProjectWrite(session.user.id, projectId);
+    } catch (e: any) {
+      if (e.message === "NotFound") {
+        return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+      }
+      return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+    }
+
+    const project = await prisma.project.findUnique({
+      where: { id: projectId },
       include: {
         designer: {
           select: { id: true, name: true },

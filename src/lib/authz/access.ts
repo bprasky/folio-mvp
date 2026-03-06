@@ -133,3 +133,75 @@ export async function assertProjectEdit(userId: string, projectId: string) {
   }
   return access;
 }
+
+/**
+ * Checks if the current user has write access to a project.
+ * Write access is granted if:
+ * 1. User is the project owner (ownerId) or designer (designerId)
+ * 2. User is a member of the project's organization with role
+ *    OWNER, ADMIN, MANAGER, or MEMBER (not VIEWER)
+ * 3. User is a ProjectParticipant with role OWNER or EDITOR
+ * 4. User has ADMIN role (global admin)
+ *
+ * Throws "Forbidden" if access denied, "NotFound" if project doesn't exist.
+ */
+export async function assertProjectWrite(
+  userId: string,
+  projectId: string
+): Promise<void> {
+  // 1. Fetch project
+  const project = await prisma.project.findUnique({
+    where: { id: projectId },
+    select: { ownerId: true, designerId: true, designerOrgId: true },
+  });
+
+  if (!project) throw new Error("NotFound");
+
+  // 2. Direct ownership — fast path
+  if (project.ownerId === userId || project.designerId === userId) return;
+
+  // 3. Fetch user role + org memberships in parallel
+  const [user, orgMemberships] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true },
+    }),
+    prisma.organizationUser.findMany({
+      where: { userId, isActive: true },
+      select: { organizationId: true, role: true },
+    }),
+  ]);
+
+  // 4. Global admin
+  if (user?.role === "ADMIN") return;
+
+  // 5. Org membership — is user in the project's org with a write-capable role?
+  if (project.designerOrgId) {
+    const WRITE_ROLES = ["OWNER", "ADMIN", "MANAGER", "MEMBER"];
+    const orgMatch = orgMemberships.find(
+      (m) =>
+        m.organizationId === project.designerOrgId &&
+        WRITE_ROLES.includes(m.role)
+    );
+    if (orgMatch) return;
+  }
+
+  // 6. ProjectParticipant — direct user or via org
+  const orgIds = orgMemberships.map((m) => m.organizationId);
+  const participant = await prisma.projectParticipant
+    .findFirst({
+      where: {
+        projectId,
+        OR: [
+          { userId },
+          ...(orgIds.length > 0 ? [{ orgId: { in: orgIds } }] : []),
+        ],
+        role: { in: ["OWNER", "EDITOR"] },
+      },
+    })
+    .catch(() => null);
+
+  if (participant) return;
+
+  throw new Error("Forbidden");
+}

@@ -12,7 +12,7 @@ export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { assertProjectView } from '@/lib/authz/access'
+import { assertProjectWrite } from '@/lib/authz/access'
 import prisma from '@/lib/prisma'
 import { extractSpecificationsFromPDF, ExtractionResult } from '@/lib/pdf'
 
@@ -28,26 +28,14 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const userId = session.user.id
-
-    // Verify project access
-    await assertProjectView(userId, projectId)
-
-    const project = await prisma.project.findFirst({
-      where: {
-        id: projectId,
-        OR: [
-          { designerId: userId },
-          { ownerId: userId }
-        ]
+    // Check project write access (owner, designer, org member, or admin)
+    try {
+      await assertProjectWrite(session.user.id, projectId)
+    } catch (e: any) {
+      if (e.message === "NotFound") {
+        return NextResponse.json({ error: 'Project not found or access denied' }, { status: 404 })
       }
-    })
-
-    if (!project) {
-      return NextResponse.json(
-        { error: 'Project not found or access denied' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
     // Parse multipart form data

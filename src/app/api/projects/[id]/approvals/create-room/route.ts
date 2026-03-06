@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { assertProjectWrite } from '@/lib/authz/access';
 import { z } from 'zod';
 
 const CreateRoomInput = z.object({
@@ -21,19 +22,14 @@ export async function POST(
   }
 
   const projectId = params.id;
-  const userId = session.user.id;
 
-  // Verify project access
-  const project = await prisma.project.findUnique({
-    where: { id: projectId },
-    select: { ownerId: true, designerId: true },
-  });
-
-  if (!project) {
-    return NextResponse.json({ error: 'Project not found' }, { status: 404 });
-  }
-
-  if (project.ownerId !== userId && project.designerId !== userId) {
+  // Check project write access (owner, designer, org member, or admin)
+  try {
+    await assertProjectWrite(session.user.id, projectId);
+  } catch (e: any) {
+    if (e.message === "NotFound") {
+      return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+    }
     return NextResponse.json({ error: 'Access denied' }, { status: 403 });
   }
 

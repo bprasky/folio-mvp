@@ -4,8 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/options";
 import { prisma } from "@/lib/prisma";
-import { assertProjectView } from "@/lib/authz/access";
-import { normalizeRole } from "@/lib/permissions";
+import { assertProjectWrite } from "@/lib/authz/access";
 import { normalizeAnswers, makeAnswerKey } from "@/lib/posting/interviewSchemas";
 import { moderateAnswers } from "@/lib/posting/moderation";
 import { callLLM } from "@/lib/posting/llmClient";
@@ -106,26 +105,14 @@ export async function POST(
     }
 
     const projectId = params.projectId;
-    const role = normalizeRole(session?.user?.role);
 
-    // Check project access
-    await assertProjectView(session.user.id, projectId);
-
-    // Verify role permission
-    const project = await prisma.project.findUnique({
-      where: { id: projectId },
-      select: { ownerId: true, designerId: true },
-    });
-
-    if (!project) {
-      return NextResponse.json(
-        { error: "Project not found" },
-        { status: 404 }
-      );
-    }
-
-    const isOwner = project.ownerId === session.user.id || project.designerId === session.user.id;
-    if (!isOwner && role !== "ADMIN") {
+    // Check project write access (owner, designer, org member, or admin)
+    try {
+      await assertProjectWrite(session.user.id, projectId);
+    } catch (e: any) {
+      if (e.message === "NotFound") {
+        return NextResponse.json({ error: "Project not found" }, { status: 404 });
+      }
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

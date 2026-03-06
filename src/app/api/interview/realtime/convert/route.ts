@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
+import { assertProjectWrite } from '@/lib/authz/access';
 import { makeSlug } from '@/lib/posting/slug';
 
 /**
@@ -46,12 +47,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Session not found' }, { status: 404 });
     }
 
-    // Verify access
-    const hasAccess =
-      realtimeSession.project.designerId === session.user.id ||
-      realtimeSession.project.ownerId === session.user.id;
-
-    if (!hasAccess) {
+    // Check project write access (owner, designer, org member, or admin)
+    try {
+      await assertProjectWrite(session.user.id, realtimeSession.projectId);
+    } catch {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
 
