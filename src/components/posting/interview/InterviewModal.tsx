@@ -136,6 +136,7 @@ export function InterviewModal({
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [isLoadingFollowUps, setIsLoadingFollowUps] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false); // Phase A: Sequential flow
+  const [isClearing, setIsClearing] = useState(false);
   const [llmAvailable, setLlmAvailable] = useState<boolean | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [banner, setBanner] = useState<string | null>(null);
@@ -1601,33 +1602,65 @@ export function InterviewModal({
               </p>
               <div className="flex flex-col gap-3 pt-2">
                 <button
+                  disabled={isClearing}
                   onClick={() => {
                     setShowDraftResume(false);
                     // Phase/index already set from preload — just dismiss the prompt
                     console.log('[InterviewModal] Resuming draft at index:', currentQuestionIndex);
                   }}
-                  className="px-6 py-3 text-sm font-medium text-white bg-[var(--accent)] rounded-full hover:bg-[var(--accent-hover)] transition-colors"
+                  className="px-6 py-3 text-sm font-medium text-white bg-[var(--accent)] rounded-full hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-50"
                 >
                   Continue where I left off
                 </button>
                 <button
-                  onClick={() => {
-                    // Clear draft and start fresh
-                    const draftKey = `interviewDraft:${projectId}`;
-                    localStorage.removeItem(draftKey);
-                    setAnswers([]);
-                    setFollowUps([]);
-                    setMorphedQuestions(new Map());
-                    setSelectedQuestionIds([]);
-                    setCurrentQuestionIndex(0);
-                    setPhase("question");
-                    setStep("answer");
-                    setShowDraftResume(false);
-                    console.log('[InterviewModal] Starting over — draft cleared');
+                  disabled={isClearing}
+                  onClick={async () => {
+                    const confirmed = window.confirm(
+                      "This will clear your current reflections and begin a new interview. Continue?"
+                    );
+                    if (!confirmed) return;
+
+                    setIsClearing(true);
+                    try {
+                      // Clear client state
+                      localStorage.removeItem(`interviewDraft:${projectId}`);
+                      localStorage.removeItem(`interview-draft-${projectId}`);
+                      setAnswers([]);
+                      setFollowUps([]);
+                      setMorphedQuestions(new Map());
+                      setSelectedQuestionIds([]);
+                      setCurrentQuestionIndex(0);
+                      setPhase("question");
+                      setStep("answer");
+                      setShowDraftResume(false);
+
+                      // Clear server-side answers (matches DraftsPanel pattern)
+                      const clearRes = await fetch(`/api/posting/project/${projectId}/interview`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          answers: [],
+                          followUps: [],
+                          selectedQuestionIds: []
+                        })
+                      });
+
+                      if (!clearRes.ok) {
+                        const data = await clearRes.json().catch(() => ({}));
+                        throw new Error(data.error || "Failed to clear answers");
+                      }
+
+                      console.log('[InterviewModal] Starting over — draft and server answers cleared');
+                    } catch (err) {
+                      console.error('[InterviewModal] Start over error:', err);
+                      alert("Failed to reset interview: " + (err instanceof Error ? err.message : "Unknown error"));
+                    } finally {
+                      setIsClearing(false);
+                    }
                   }}
-                  className="px-6 py-3 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+                  className="px-6 py-3 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors disabled:opacity-50"
                 >
-                  Start over
+                  {isClearing ? "Clearing..." : "Start over"}
                 </button>
               </div>
             </div>
