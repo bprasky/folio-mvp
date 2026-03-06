@@ -200,17 +200,24 @@ export async function GET(
     });
 
     // Fetch room progress from EditorialInterview (Phase B)
-    const editorialInterview = await prisma.editorialInterview.findUnique({
-      where: { projectId },
-      select: { roomProgress: true },
-    });
+    // Wrapped defensively — room_progress column may not exist if migration hasn't been applied
+    let roomProgress: any = null;
+    try {
+      const editorialInterview = await prisma.editorialInterview.findUnique({
+        where: { projectId },
+        select: { roomProgress: true },
+      });
+      roomProgress = editorialInterview?.roomProgress || null;
+    } catch (err) {
+      console.warn('[interview/GET] Failed to fetch roomProgress (migration may not be applied):', err);
+    }
 
     if (!post) {
       return NextResponse.json({
         answers: [],
         followUps: [],
         selectedQuestionIds: [],
-        roomProgress: editorialInterview?.roomProgress || null,
+        roomProgress,
       });
     }
 
@@ -236,7 +243,7 @@ export async function GET(
       followUps,
       selectedQuestionIds,
       contextualQuestions, // Include contextual questions from AI classification
-      roomProgress: editorialInterview?.roomProgress || null,
+      roomProgress,
     });
   } catch (e: any) {
     console.error('[posting/interview] GET failed', { err: e?.message });
