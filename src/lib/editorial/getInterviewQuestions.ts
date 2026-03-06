@@ -7,6 +7,13 @@ import {
   type GeneratedQuestion,
   type ProjectSizeClassification,
 } from '@/lib/interview';
+import { prisma } from '@/lib/prisma';
+import {
+  computeRoomBudget,
+  computeGlobalGates,
+  type RoomQuestionsGroup,
+  type RoomGroupedQuestions,
+} from './roomPacing';
 
 // Base questions from existing question bank (Level 0 fallback)
 const BASE_QUESTIONS = [
@@ -246,5 +253,179 @@ async function fallbackToLegacyQuestions(projectId: string): Promise<InterviewQu
       : 'No project context available',
     upgradeSuggestion: 'Upload more project files to unlock personalized questions',
     projectSize: { size: 'focused' as const, targetQuestionCount: 6, roomCount: 0, selectionCount: 0 },
+  };
+}
+
+/**
+ * Get interview questions grouped by room with per-room budgets.
+ * Used when `?grouped=true` is passed to the questions API.
+ *
+ * Spec: 17_EDITORIAL_FLOW_SPEC.md §3
+ */
+export async function getInterviewQuestionsGroupedByRoom(
+  projectId: string,
+): Promise<{
+  grouped: true;
+  rooms: RoomQuestionsGroup[];
+  crossRoomQuestions: InterviewQuestion[];
+  globalGates: RoomGroupedQuestions['globalGates'];
+  contextLevel: ContextLevel;
+  contextDescription: string;
+  upgradeSuggestion: string | null;
+  projectSize: ProjectSizeClassification;
+}> {
+  // 1. Assess project context (reuses existing room infrastructure)
+  const context = await assessProjectContext(projectId);
+
+  // 2. Count images per room
+  const project = await prisma.project.findUnique({
+    where: { id: projectId },
+    select: {
+      images: { select: { room: true, tags: { select: { id: true } } } },
+      rooms: { select: { id: true, name: true, type: true } },
+    },
+  });
+
+  const roomIdToName = new Map<string, string>();
+  for (const room of project?.rooms ?? []) {
+    roomIdToName.set(room.id, room.name);
+  }
+
+  // Build image+tag counts per room
+  const imageCountByRoom = new Map<string, number>();
+  const tagCountByRoom = new Map<string, number>();
+  for (const img of project?.images ?? []) {
+    if (!img.room) continue;
+    const resolved = roomIdToName.get(img.room) || img.room;
+    imageCountByRoom.set(resolved, (imageCountByRoom.get(resolved) || 0) + 1);
+    tagCountByRoom.set(resolved, (tagCountByRoom.get(resolved) || 0) + img.tags.length);
+  }
+
+  // 3. Generate flat question list (existing pipeline)
+  const contextualQuestions = await generateInterviewQuestions(context, {
+    maxQuestions: context.projectSize.targetQuestionCount + 5, // over-generate, then trim per room
+    prioritizeBoostable: true,
+    includeGeneric: true,
+    projectId,
+  });
+
+  // Convert to InterviewQuestion format
+  const allQuestions: InterviewQuestion[] = contextualQuestions.map((q) => {
+    const converted = toInterviewQuestion(q);
+    return {
+      id: converted.id,
+      questionText: converted.questionText,
+      questionType: converted.questionType,
+      source: converted.source,
+      linkedImageId: converted.linkedImageId,
+      linkedProductId: converted.linkedProductId,
+      attributeType: converted.attributeType,
+      attributeValue: converted.attributeValue,
+      roomContext: converted.roomContext,
+      boostable: converted.boostable,
+      pullQuotePotential: converted.pullQuotePotential,
+      contextLevel: converted.contextLevel,
+      questionCategory: converted.questionCategory,
+      vendors: q.vendors,
+      rooms: q.rooms,
+      products: q.products,
+      // Assign roomId from the room context
+      roomId: q.rooms?.[0] ? (context.rooms.find(r => r.name === q.rooms![0])?.id) : undefined,
+      isCrossRoom: (q.rooms?.length ?? 0) > 1,
+    };
+  });
+
+  // 4. Partition into room buckets
+  const roomBuckets = new Map<string, InterviewQuestion[]>();
+  const crossRoomQuestions: InterviewQuestion[] = [];
+  const globalOpeners: InterviewQuestion[] = [];
+
+  // Initialize buckets for known rooms
+  for (const room of context.rooms) {
+    roomBuckets.set(room.name, []);
+  }
+
+  for (const q of allQuestions) {
+    const qRooms = q.rooms || [];
+    if (qRooms.length === 0) {
+      // No room association — global opener or cross-room
+      if (q.contextLevel === 0 || q.questionCategory === 'generic' || q.questionCategory === 'prospective_vision') {
+        globalOpeners.push(q);
+      } else {
+        crossRoomQuestions.push(q);
+      }
+    } else if (qRooms.length === 1 && roomBuckets.has(qRooms[0])) {
+      roomBuckets.get(qRooms[0])!.push(q);
+    } else {
+      // Multi-room question → cross-room
+      crossRoomQuestions.push(q);
+    }
+  }
+
+  // 5. Build room groups with budgets, trim to budget
+  const roomGroups: RoomQuestionsGroup[] = [];
+  const gateRooms: Array<{ roomId: string; roomName: string; imageCount: number; tagCount: number }> = [];
+
+  for (const room of context.rooms) {
+    const imgCount = imageCountByRoom.get(room.name) || 0;
+    const tgCount = tagCountByRoom.get(room.name) || room.selectionCount;
+    const budget = computeRoomBudget(imgCount, tgCount);
+    const questions = (roomBuckets.get(room.name) || []).slice(0, budget.baseQuestions);
+
+    // If the room has fewer questions than budget, add base fallbacks
+    if (questions.length < budget.baseQuestions) {
+      const needed = budget.baseQuestions - questions.length;
+      // Pull from global openers to fill
+      for (let i = 0; i < needed && globalOpeners.length > 0; i++) {
+        const opener = globalOpeners.shift()!;
+        opener.roomId = room.id;
+        questions.push(opener);
+      }
+    }
+
+    // Tag all questions with roomId
+    for (const q of questions) {
+      q.roomId = room.id;
+    }
+
+    roomGroups.push({
+      roomId: room.id,
+      roomName: room.name,
+      roomType: room.type,
+      budget: {
+        roomId: room.id,
+        roomName: room.name,
+        roomType: room.type,
+        imageCount: imgCount,
+        tagCount: tgCount,
+        baseQuestions: budget.baseQuestions,
+        maxFollowUps: budget.maxFollowUps,
+      },
+      questions,
+    });
+
+    gateRooms.push({
+      roomId: room.id,
+      roomName: room.name,
+      imageCount: imgCount,
+      tagCount: tgCount,
+    });
+  }
+
+  // 6. Compute global gates
+  const globalGates = computeGlobalGates(gateRooms);
+
+  // 7. Context metadata
+  const { getContextLevelDescription, getContextUpgradeSuggestion } = await import('@/lib/interview');
+
+  return {
+    grouped: true,
+    rooms: roomGroups,
+    crossRoomQuestions: crossRoomQuestions.slice(0, 2), // max 2 cross-room
+    globalGates,
+    contextLevel: context.level,
+    contextDescription: getContextLevelDescription(context.level),
+    upgradeSuggestion: getContextUpgradeSuggestion(context.level),
+    projectSize: context.projectSize,
   };
 }

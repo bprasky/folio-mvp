@@ -21,8 +21,11 @@ import type {
   SixWCategory,
 } from "@/lib/posting/interviewSchemas";
 import { useInterviewQuestions } from "@/hooks/useInterviewQuestions";
+import { useRoomInterviewQuestions } from "@/hooks/useRoomInterviewQuestions";
+import { useRoomInterviewFlow } from "@/hooks/useRoomInterviewFlow";
 import { useBackgroundEvaluation } from "@/hooks/useBackgroundEvaluation";
 import { LinkedImagePreview } from "@/components/editorial/LinkedImagePreview";
+import { RoomProgressBar } from "./RoomProgressBar";
 import type { InterviewQuestion as ContextualQuestion } from "@/types/interview";
 
 interface InterviewModalProps {
@@ -447,6 +450,15 @@ export function InterviewModal({
 
   // Fetch questions using the new hook
   const { questions: fetchedQuestions, loading: questionsLoading, context: questionsContext } = useInterviewQuestions(projectId);
+
+  // Room pacing: fetch room-grouped questions (Phase B)
+  const roomData = useRoomInterviewQuestions(projectId);
+  const hasRoomPacing = roomData.rooms.length > 1 && !roomData.loading;
+  const roomFlow = useRoomInterviewFlow(
+    roomData.rooms,
+    roomData.crossRoomQuestions,
+    roomData.globalGates,
+  );
   
   // Convert fetched questions to InterviewQuestion format for compatibility
   const contextualQuestions = useMemo(() => {
@@ -614,6 +626,24 @@ export function InterviewModal({
         .filter(q => !answeredIds.has(q.id))
         .map(q => ({ id: q.id, question: morphedQuestions.get(q.id) || q.prompt }));
 
+      // Room pacing: include room context for scoped follow-ups
+      const roomPayload = hasRoomPacing && roomFlow.currentRoom
+        ? {
+            roomId: roomFlow.currentRoom.roomId,
+            roomName: roomFlow.currentRoom.roomName,
+            roomAnswers: baseAnswers
+              .filter(a => {
+                // Filter to just this room's answers using question metadata
+                const meta = questionMetadataMap.get(a.questionId);
+                return meta?.roomId === roomFlow.currentRoom?.roomId;
+              })
+              .map(a => ({
+                question: allQuestions.find(q => q.id === a.questionId)?.prompt || a.questionId,
+                answer: a.answer,
+              })),
+          }
+        : {};
+
       const resp = await fetch(`/api/posting/project/${projectId}/interview/followups/single`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -622,6 +652,7 @@ export function InterviewModal({
           answer: answerText,
           previousAnswers,
           remainingQuestions,
+          ...roomPayload,
         }),
       });
 
@@ -761,7 +792,16 @@ export function InterviewModal({
       }
 
       // Move to next question or complete
-      if (currentQuestionIndex < totalQuestions - 1 - skippedCount) {
+      if (hasRoomPacing) {
+        // Room pacing: record answer and advance within room
+        roomFlow.recordAnswer(currentQuestion.id);
+        roomFlow.advanceQuestion();
+        // Check if all rooms done — if so, trigger generation
+        if (roomFlow.canFinish) {
+          autoGenerateRef.current = true;
+          setPhase("complete");
+        }
+      } else if (currentQuestionIndex < totalQuestions - 1 - skippedCount) {
         setCurrentQuestionIndex((prev) => prev + 1);
       } else {
         autoGenerateRef.current = true;
@@ -859,6 +899,9 @@ export function InterviewModal({
                 aiClassificationAttribute: questionMeta?.attributeType && questionMeta?.attributeValue
                   ? `${questionMeta.attributeType}:${questionMeta.attributeValue}`
                   : null,
+                // Room pacing fields
+                roomId: hasRoomPacing ? (questionMeta?.roomId || roomFlow.currentRoom?.roomId || null) : null,
+                isCrossRoom: questionMeta?.isCrossRoom || false,
               };
             }),
         };
@@ -1494,11 +1537,28 @@ export function InterviewModal({
             </button>
             
             {phase === "question" && currentQuestion && !showDraftResume && (
-              <span className="text-sm text-[var(--text-secondary)]">
-                Question {currentQuestionIndex + 1} of {displayTotal}
-              </span>
+              hasRoomPacing ? (
+                <div className="flex-1 px-4">
+                  <RoomProgressBar
+                    rooms={roomFlow.rooms.map((room) => ({
+                      roomId: room.roomId,
+                      roomName: room.roomName,
+                      status: roomFlow.roomProgress[room.roomId]?.status ?? 'not_started',
+                      answeredCount: roomFlow.roomProgress[room.roomId]?.answeredCount ?? 0,
+                      totalQuestions: room.budget.baseQuestions,
+                    }))}
+                    currentRoomIndex={roomFlow.currentRoomIndex}
+                    currentQuestionInRoom={roomFlow.currentQuestionIndex}
+                    totalQuestionsInRoom={roomFlow.totalQuestionsInRoom}
+                  />
+                </div>
+              ) : (
+                <span className="text-sm text-[var(--text-secondary)]">
+                  Question {currentQuestionIndex + 1} of {displayTotal}
+                </span>
+              )
             )}
-            
+
             <div className="w-6" /> {/* Spacer for alignment */}
           </div>
         )}
@@ -1591,6 +1651,33 @@ export function InterviewModal({
               questionMetadata={questionMetadataMap.get(currentQuestion?.id || "")}
               images={images}
             />
+            {/* Room pacing: Skip room button + warnings */}
+            {hasRoomPacing && (
+              <div className="px-8 py-3 border-t border-[var(--ridge-outer)]/30 flex items-center justify-between">
+                {roomFlow.canSkipRoom ? (
+                  <button
+                    onClick={() => {
+                      roomFlow.skipRoom();
+                      // Check if all rooms done after skip
+                      if (roomFlow.canFinish) {
+                        autoGenerateRef.current = true;
+                        setPhase("complete");
+                      }
+                    }}
+                    className="text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+                  >
+                    Move to next room &rarr;
+                  </button>
+                ) : (
+                  <div />
+                )}
+                {roomFlow.activeWarnings.length > 0 && (
+                  <span className="text-xs text-yellow-600">
+                    {roomFlow.activeWarnings.length} room{roomFlow.activeWarnings.length > 1 ? "s" : ""} with important content unanswered
+                  </span>
+                )}
+              </div>
+            )}
           </div>
         ) : phase === "complete" ? (
           /* Generation in progress — auto-triggered after last question */

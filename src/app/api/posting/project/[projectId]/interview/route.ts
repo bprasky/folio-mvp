@@ -199,11 +199,18 @@ export async function GET(
       select: { provenance: true },
     });
 
+    // Fetch room progress from EditorialInterview (Phase B)
+    const editorialInterview = await prisma.editorialInterview.findUnique({
+      where: { projectId },
+      select: { roomProgress: true },
+    });
+
     if (!post) {
       return NextResponse.json({
         answers: [],
         followUps: [],
         selectedQuestionIds: [],
+        roomProgress: editorialInterview?.roomProgress || null,
       });
     }
 
@@ -229,6 +236,7 @@ export async function GET(
       followUps,
       selectedQuestionIds,
       contextualQuestions, // Include contextual questions from AI classification
+      roomProgress: editorialInterview?.roomProgress || null,
     });
   } catch (e: any) {
     console.error('[posting/interview] GET failed', { err: e?.message });
@@ -312,6 +320,9 @@ export async function POST(
       linkedProductId: qa?.linkedProductId || qa?.linked_product_id || null,
       questionSource: qa?.questionSource || qa?.question_source || (qa?.isFollowUp ? 'follow_up' : 'base_question'),
       aiClassificationAttribute: qa?.aiClassificationAttribute || qa?.ai_classification_attribute || null,
+      // Room pacing fields (Phase B)
+      roomId: qa?.roomId || qa?.room_id || null,
+      isCrossRoom: qa?.isCrossRoom || qa?.is_cross_room || false,
     });
 
     const answers = normalizeQA(answersRaw).map((a, i) => {
@@ -593,14 +604,31 @@ export async function POST(
               linkedProductId: metadata.linkedProductId || null,
               questionSource: metadata.questionSource || (answer.isFollowUp ? 'follow_up' : 'base_question'),
               aiClassificationAttribute: metadata.aiClassificationAttribute || null,
+              roomId: metadata.roomId || null,
+              isCrossRoom: metadata.isCrossRoom || false,
             },
           });
         }
 
-        // Update selectedQuestionIds
+        // Compute and update room progress (Phase B)
+        const roomProgressMap: Record<string, { status: string; answeredCount: number; totalQuestions: number; baseQuestions: number }> = {};
+        for (const answer of mergedAnswers) {
+          const meta = (answer as any).metadata || {};
+          const rid = meta.roomId;
+          if (!rid) continue;
+          if (!roomProgressMap[rid]) {
+            roomProgressMap[rid] = { status: 'in_progress', answeredCount: 0, totalQuestions: 0, baseQuestions: 0 };
+          }
+          roomProgressMap[rid].answeredCount++;
+        }
+
+        // Update selectedQuestionIds + roomProgress
         await prisma.editorialInterview.update({
           where: { id: interview.id },
-          data: { selectedQuestionIds },
+          data: {
+            selectedQuestionIds,
+            ...(Object.keys(roomProgressMap).length > 0 ? { roomProgress: roomProgressMap } : {}),
+          },
         });
       }
     } catch (error) {
