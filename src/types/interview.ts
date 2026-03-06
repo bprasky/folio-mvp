@@ -10,6 +10,9 @@ export interface InterviewQuestion {
   attributeType?: 'color' | 'material' | 'style' | 'mood' | 'element';
   attributeValue?: string;
   roomContext?: string;
+  // Room pacing (Phase B)
+  roomId?: string;
+  isCrossRoom?: boolean;
 }
 
 export interface InterviewAnswer {

@@ -1351,6 +1351,9 @@ model EditorialInterview {
 
   selectedQuestionIds String[] @map("selected_question_ids")
 
+  // Room pacing: tracks per-room interview progress
+  roomProgress Json?    @map("room_progress")
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -1387,6 +1390,10 @@ model EditorialInterviewAnswer {
   questionSource             String? @map("question_source") // 'base_question' | 'ai_classification' | 'follow_up'
   aiClassificationAttribute  String? @map("ai_classification_attribute") // e.g., "color:sage green"
 
+  // Room pacing: associates answer with a specific room
+  roomId      String?  @map("room_id")
+  isCrossRoom Boolean  @default(false) @map("is_cross_room")
+
   createdAt DateTime @default(now()) @map("created_at")
 
   // Relations
@@ -1395,6 +1402,7 @@ model EditorialInterviewAnswer {
   @@index([interviewId])
   @@index([questionId])
   @@index([linkedImageId])
+  @@index([roomId])
   @@map("editorial_interview_answers")
 }
 

@@ -30,6 +30,18 @@ const SingleFollowUpRequestSchema = z.object({
     id: z.string(),
     question: z.string(),
   })).optional(),
+  // Room pacing fields (Phase B)
+  roomId: z.string().optional(),
+  roomName: z.string().optional(),
+  roomAnswers: z.array(z.object({
+    question: z.string(),
+    answer: z.string(),
+  })).optional(),
+  crossRoom: z.boolean().optional(),
+  completedRooms: z.array(z.object({
+    roomName: z.string(),
+    keyThemes: z.array(z.string()),
+  })).optional(),
 });
 
 const POSTING_V1_ENABLED =
@@ -257,19 +269,34 @@ export async function POST(
     if (projectData?.projectType) {
       prompt += `\nType: ${projectData.projectType}`;
     }
+
+    // Room pacing context (Phase B)
+    if (validated.roomName) {
+      prompt += `\nCurrent room: ${validated.roomName}`;
+    }
+    if (validated.crossRoom && validated.completedRooms?.length) {
+      prompt += `\n\nCross-room synthesis: Generate a follow-up connecting themes across these rooms:`;
+      for (const room of validated.completedRooms) {
+        prompt += `\n- ${room.roomName}: ${room.keyThemes.join(', ')}`;
+      }
+    }
+
     prompt += `\n\nDesigner's answer:\n${moderated.text}`;
-    
+
     if (imagesCompact.trim()) {
       prompt += `\n\nContext:\n${imagesCompact}`;
     }
     if (productsCompact.trim()) {
       prompt += `\n${productsCompact}`;
     }
-    
-    // Include previous answers so follow-ups don't repeat covered topics
-    if (validated.previousAnswers?.length) {
+
+    // Include previous answers — use room-scoped answers if available, otherwise all
+    const previousAnswersToUse = validated.roomAnswers?.length
+      ? validated.roomAnswers
+      : validated.previousAnswers;
+    if (previousAnswersToUse?.length) {
       prompt += `\n\nTopics already discussed (do NOT repeat these):\n`;
-      for (const prev of validated.previousAnswers.slice(-5)) {
+      for (const prev of previousAnswersToUse.slice(-5)) {
         prompt += `- "${prev.question}": ${prev.answer.slice(0, 150)}\n`;
       }
     }
