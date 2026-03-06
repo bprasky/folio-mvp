@@ -58,11 +58,12 @@ export async function POST(request: Request) {
       category: z.string().min(1, 'Category is required'),
       client: z.string().optional(),
       designerId: z.string().min(1, 'Designer ID is required'),
+      designerOrgId: z.string().min(1, 'Designer org ID is required'),
       images: z.array(z.any()).optional(),
     });
 
     const validatedPayload = adminProjectSchema.parse(await request.json());
-    const { name, description, category, client, designerId, images } = validatedPayload;
+    const { name, description, category, client, designerId, designerOrgId, images } = validatedPayload;
 
     // Verify the designer user exists
     const designer = await prisma.user.findUnique({
@@ -78,6 +79,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Specified user is not a designer' }, { status: 400 });
     }
 
+    // Validate designer is a member of the specified org
+    const orgMembership = await prisma.organizationUser.findFirst({
+      where: { userId: designerId, organizationId: designerOrgId, isActive: true },
+      select: { id: true },
+    });
+    if (!orgMembership) {
+      return NextResponse.json({ error: 'Designer is not a member of the specified organization' }, { status: 400 });
+    }
+
     // Create the project in the database
     const project = await prisma.project.create({
       data: {
@@ -86,6 +96,7 @@ export async function POST(request: Request) {
         category: category.trim(),
         designerId: designerId.trim(),
         ownerId: designerId.trim(), // Designer owns the project
+        designerOrgId: designerOrgId.trim(),
         status: 'draft',
         isPublic: false,
         isAIEnabled: false,

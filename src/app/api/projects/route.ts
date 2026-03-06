@@ -104,7 +104,18 @@ export async function POST(req: Request) {
     }
 
     // Extract designerOrgId before normalization (not part of schema)
-    const requestedOrgId = json?.designerOrgId as string | undefined;
+    let requestedOrgId = json?.designerOrgId as string | undefined;
+
+    // Fallback: read operatingAsOrgId from user record if not in body
+    if (!requestedOrgId) {
+      const userRecord = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { operatingAsOrgId: true },
+      });
+      if (userRecord?.operatingAsOrgId) {
+        requestedOrgId = userRecord.operatingAsOrgId;
+      }
+    }
 
     // If designerOrgId provided, validate user is a member of that org
     let validatedOrgId: string | null = null;
@@ -119,6 +130,13 @@ export async function POST(req: Request) {
         }, { status: 403 });
       }
       validatedOrgId = requestedOrgId;
+    }
+
+    // Require org context — no orphan projects
+    if (!validatedOrgId) {
+      return NextResponse.json({
+        error: 'Organization context required. Select a firm from your workspace menu.'
+      }, { status: 400 });
     }
 
     const data = normalizeCreatePayload(json); // accepts both shapes, returns canonical

@@ -166,6 +166,32 @@ export async function createProjectAction(input: {
     throw new Error('Your role is not permitted to create projects');
   }
 
+  // Require org context — no orphan projects
+  const operatingAsOrgId = (session?.user as any)?.operatingAsOrgId as string | null ?? null;
+  let designerOrgId: string | null = operatingAsOrgId;
+
+  // Fallback: read from DB if not in session
+  if (!designerOrgId) {
+    const userRecord = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { operatingAsOrgId: true },
+    });
+    designerOrgId = userRecord?.operatingAsOrgId ?? null;
+  }
+
+  // Validate membership if we have an org
+  if (designerOrgId) {
+    const membership = await prisma.organizationUser.findFirst({
+      where: { userId, organizationId: designerOrgId, isActive: true },
+      select: { id: true },
+    });
+    if (!membership) {
+      throw new Error('You are not a member of this organization');
+    }
+  } else {
+    throw new Error('Organization context required to create projects');
+  }
+
   // Always create as draft - ignore intent param
   const project = await prisma.project.create({
     data: {
@@ -173,6 +199,7 @@ export async function createProjectAction(input: {
       description: input.description?.trim() || null,
       designerId: userId,
       ownerId: userId,
+      designerOrgId,
       status: 'draft', // Explicitly set - always draft regardless of intent
       isPublic: false, // Explicitly set
       publishedAt: null, // Explicitly set
