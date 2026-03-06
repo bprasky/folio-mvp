@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
+import { assertProjectWrite } from '@/lib/authz/access';
 import { logSignal, extractTags } from '@/lib/telemetry/context-signal';
 
 export async function POST(
@@ -27,9 +28,18 @@ export async function POST(
     return NextResponse.json({ error: 'projectId is required' }, { status: 400 });
   }
 
-  // Ensure project belongs to the designer
-  const project = await prisma.project.findFirst({
-    where: { id: projectId, ownerId: session.user.id },
+  // Verify project write access (owner, designer, org member, or admin)
+  try {
+    await assertProjectWrite(session.user.id, projectId);
+  } catch (e: any) {
+    if (e.message === "NotFound") {
+      return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+    }
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+
+  const project = await prisma.project.findUnique({
+    where: { id: projectId },
   });
   if (!project) {
     return NextResponse.json({ error: 'Project not found' }, { status: 404 });
