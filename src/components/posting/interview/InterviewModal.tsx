@@ -22,7 +22,7 @@ import type {
 } from "@/lib/posting/interviewSchemas";
 import { useInterviewQuestions } from "@/hooks/useInterviewQuestions";
 import { useRoomInterviewQuestions } from "@/hooks/useRoomInterviewQuestions";
-import { useRoomInterviewFlow } from "@/hooks/useRoomInterviewFlow";
+import { useRoomInterviewFlow, GENERAL_ROOM_ID, REFLECTIONS_ROOM_ID } from "@/hooks/useRoomInterviewFlow";
 import { useBackgroundEvaluation } from "@/hooks/useBackgroundEvaluation";
 import { LinkedImagePreview } from "@/components/editorial/LinkedImagePreview";
 import { RoomProgressBar } from "./RoomProgressBar";
@@ -453,7 +453,9 @@ export function InterviewModal({
 
   // Room pacing: fetch room-grouped questions (Phase B)
   const roomData = useRoomInterviewQuestions(projectId);
-  const hasRoomPacing = roomData.rooms.length > 1 && !roomData.loading;
+  // Room pacing activates when there's at least 1 actual room (not counting General/Reflections phases)
+  const actualRoomCount = roomData.rooms.filter(r => r.roomId !== '__general__' && r.roomId !== '__reflections__').length;
+  const hasRoomPacing = actualRoomCount >= 1 && !roomData.loading;
   const roomFlow = useRoomInterviewFlow(
     roomData.rooms,
     roomData.crossRoomQuestions,
@@ -1654,7 +1656,18 @@ export function InterviewModal({
             {/* Room pacing: Skip room button + warnings */}
             {hasRoomPacing && (
               <div className="px-8 py-3 border-t border-[var(--ridge-outer)]/30 flex items-center justify-between">
-                {roomFlow.canSkipRoom ? (
+                {roomFlow.currentPhase === 'reflections' ? (
+                  <button
+                    onClick={() => {
+                      roomFlow.skipReflections();
+                      autoGenerateRef.current = true;
+                      setPhase("complete");
+                    }}
+                    className="text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+                  >
+                    Skip to generate &rarr;
+                  </button>
+                ) : roomFlow.canSkipRoom ? (
                   <button
                     onClick={() => {
                       roomFlow.skipRoom();

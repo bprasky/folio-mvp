@@ -9,12 +9,18 @@ import type {
   RoomGroupedQuestions,
 } from "@/lib/editorial/roomPacing";
 
+// Phase identifiers for General and Reflections rooms
+export const GENERAL_ROOM_ID = '__general__';
+export const REFLECTIONS_ROOM_ID = '__reflections__';
+
+export type InterviewPhase = 'general' | 'rooms' | 'reflections';
+
 // ---------------------------------------------------------------------------
 // Public interface
 // ---------------------------------------------------------------------------
 
 export interface RoomInterviewFlowState {
-  /** All room groups with questions */
+  /** All room groups with questions (includes General + Reflections) */
   rooms: RoomQuestionsGroup[];
 
   /** Current room index */
@@ -35,6 +41,9 @@ export interface RoomInterviewFlowState {
   /** Per-room progress map */
   roomProgress: RoomProgressMap;
 
+  /** Current interview phase */
+  currentPhase: InterviewPhase;
+
   /** Cross-room phase — asking synthesis questions */
   crossRoomPhase: boolean;
 
@@ -50,6 +59,9 @@ export interface RoomInterviewFlowState {
   /** Can skip current room (minimum met)? */
   canSkipRoom: boolean;
 
+  /** Can skip reflections phase entirely? */
+  canSkipReflections: boolean;
+
   /** Minimum total answers required */
   minimumTotalAnswers: number;
 
@@ -62,12 +74,28 @@ export interface RoomInterviewFlowState {
   // Actions
   advanceQuestion: () => void;
   skipRoom: () => void;
+  skipReflections: () => void;
   recordAnswer: (questionId: string) => void;
   goToRoom: (roomIndex: number) => void;
   initFromSavedState: (
     answeredQuestionIds: Set<string>,
     savedProgress: RoomProgressMap | null,
   ) => void;
+}
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function getPhaseForRoom(room: RoomQuestionsGroup | null): InterviewPhase {
+  if (!room) return 'rooms';
+  if (room.roomId === GENERAL_ROOM_ID) return 'general';
+  if (room.roomId === REFLECTIONS_ROOM_ID) return 'reflections';
+  return 'rooms';
+}
+
+function isActualRoom(room: RoomQuestionsGroup): boolean {
+  return room.roomId !== GENERAL_ROOM_ID && room.roomId !== REFLECTIONS_ROOM_ID;
 }
 
 // ---------------------------------------------------------------------------
@@ -99,6 +127,7 @@ export function useRoomInterviewFlow(
   // Derived values
   const currentRoom = rooms[currentRoomIndex] ?? null;
   const totalQuestionsInRoom = currentRoom?.questions.length ?? 0;
+  const currentPhase = getPhaseForRoom(currentRoom);
 
   const currentQuestion = useMemo(() => {
     if (crossRoomPhase) {
@@ -107,15 +136,17 @@ export function useRoomInterviewFlow(
     return currentRoom?.questions[currentQuestionIndex] ?? null;
   }, [crossRoomPhase, crossRoomQuestions, crossRoomQuestionIndex, currentRoom, currentQuestionIndex]);
 
-  // Count completed rooms
+  // Count completed actual rooms (not General/Reflections)
+  const actualRooms = useMemo(() => rooms.filter(isActualRoom), [rooms]);
+
   const completedRoomCount = useMemo(
-    () => Object.values(roomProgress).filter((r) => r.status === "complete").length,
-    [roomProgress],
+    () => actualRooms.filter((r) => roomProgress[r.roomId]?.status === "complete").length,
+    [actualRooms, roomProgress],
   );
 
   const skippedRoomCount = useMemo(
-    () => Object.values(roomProgress).filter((r) => r.status === "skipped").length,
-    [roomProgress],
+    () => actualRooms.filter((r) => roomProgress[r.roomId]?.status === "skipped").length,
+    [actualRooms, roomProgress],
   );
 
   const totalAnswerCount = useMemo(
@@ -125,13 +156,19 @@ export function useRoomInterviewFlow(
 
   const hasStarted = totalAnswerCount > 0;
 
-  // Can skip: answered at least 1 question in current room (room minimum = 1 for skip purposes;
-  // the spec says skip appears after room minimum — here, answering at least 1 question enables it)
+  // Can skip: General = never, Reflections = always, Rooms = after 1 answer
   const canSkipRoom = useMemo(() => {
     if (!currentRoom) return false;
+    if (currentRoom.roomId === GENERAL_ROOM_ID) return false;
+    if (currentRoom.roomId === REFLECTIONS_ROOM_ID) return true;
     const progress = roomProgress[currentRoom.roomId];
     return progress ? progress.answeredCount >= 1 : false;
   }, [currentRoom, roomProgress]);
+
+  // Can skip reflections entirely
+  const canSkipReflections = useMemo(() => {
+    return currentPhase === 'reflections';
+  }, [currentPhase]);
 
   // Active warnings (rooms with 3+ images/5+ tags and zero answers)
   const activeWarnings = useMemo(() => {
@@ -141,13 +178,22 @@ export function useRoomInterviewFlow(
     });
   }, [globalGates.warnings, roomProgress]);
 
-  // Can finish: all rooms complete or skipped, minimum total answers met, at least 1 complete
+  // Can finish: all actual rooms complete or skipped, minimum total answers met,
+  // at least 1 complete, and either reflections complete/skipped or we're past them
   const canFinish = useMemo(() => {
-    const allDone = completedRoomCount + skippedRoomCount >= rooms.length;
+    const allActualDone = completedRoomCount + skippedRoomCount >= actualRooms.length;
     const meetsMinimum = totalAnswerCount >= globalGates.minimumTotalAnswers;
     const hasAtLeastOneComplete = completedRoomCount > 0;
-    return allDone && meetsMinimum && hasAtLeastOneComplete;
-  }, [completedRoomCount, skippedRoomCount, rooms.length, totalAnswerCount, globalGates.minimumTotalAnswers]);
+    const generalDone = roomProgress[GENERAL_ROOM_ID]?.status === 'complete';
+
+    // Reflections can be skipped or completed — either counts as "done"
+    const reflectionsProgress = roomProgress[REFLECTIONS_ROOM_ID];
+    const reflectionsDone = !reflectionsProgress ||
+      reflectionsProgress.status === 'complete' ||
+      reflectionsProgress.status === 'skipped';
+
+    return allActualDone && meetsMinimum && hasAtLeastOneComplete && generalDone && reflectionsDone;
+  }, [completedRoomCount, skippedRoomCount, actualRooms.length, totalAnswerCount, globalGates.minimumTotalAnswers, roomProgress]);
 
   // Record an answer for a question
   const recordAnswer = useCallback(
@@ -184,13 +230,6 @@ export function useRoomInterviewFlow(
           return i;
         }
       }
-      // Wrap around
-      for (let i = 0; i < fromIndex; i++) {
-        const progress = roomProgress[rooms[i].roomId];
-        if (!progress || progress.status === "not_started" || progress.status === "in_progress") {
-          return i;
-        }
-      }
       return null;
     },
     [rooms, roomProgress],
@@ -202,7 +241,6 @@ export function useRoomInterviewFlow(
       if (crossRoomQuestionIndex < crossRoomQuestions.length - 1) {
         setCrossRoomQuestionIndex((i) => i + 1);
       }
-      // Cross-room done — canFinish check handles the rest
       return;
     }
 
@@ -221,15 +259,7 @@ export function useRoomInterviewFlow(
         }));
       }
 
-      // Check if we should enter cross-room phase
-      const newCompletedCount = completedRoomCount + 1;
-      if (newCompletedCount >= 3 && crossRoomQuestions.length > 0 && !crossRoomPhase) {
-        setCrossRoomPhase(true);
-        setCrossRoomQuestionIndex(0);
-        return;
-      }
-
-      // Move to next room
+      // Move to next room (General → rooms → Reflections)
       const nextIdx = findNextRoom(currentRoomIndex + 1);
       if (nextIdx !== null) {
         setCurrentRoomIndex(nextIdx);
@@ -244,7 +274,6 @@ export function useRoomInterviewFlow(
     currentQuestionIndex,
     totalQuestionsInRoom,
     currentRoom,
-    completedRoomCount,
     currentRoomIndex,
     findNextRoom,
   ]);
@@ -252,6 +281,7 @@ export function useRoomInterviewFlow(
   // Skip current room
   const skipRoom = useCallback(() => {
     if (!currentRoom) return;
+    if (currentRoom.roomId === GENERAL_ROOM_ID) return; // General can't be skipped
 
     setRoomProgress((prev) => ({
       ...prev,
@@ -266,8 +296,18 @@ export function useRoomInterviewFlow(
       setCurrentRoomIndex(nextIdx);
       setCurrentQuestionIndex(0);
     }
-    // If no next room, canFinish check handles the rest
   }, [currentRoom, currentRoomIndex, findNextRoom]);
+
+  // Skip reflections entirely
+  const skipReflections = useCallback(() => {
+    setRoomProgress((prev) => ({
+      ...prev,
+      [REFLECTIONS_ROOM_ID]: {
+        ...prev[REFLECTIONS_ROOM_ID],
+        status: "skipped",
+      },
+    }));
+  }, []);
 
   // Go to a specific room
   const goToRoom = useCallback((roomIndex: number) => {
@@ -304,7 +344,6 @@ export function useRoomInterviewFlow(
         const p = progress[rooms[i].roomId];
         if (!p || p.status === "in_progress" || p.status === "not_started") {
           setCurrentRoomIndex(i);
-          // Find first unanswered question in this room
           const firstUnanswered = rooms[i].questions.findIndex(
             (q) => !answeredQuestionIds.has(q.id),
           );
@@ -316,19 +355,6 @@ export function useRoomInterviewFlow(
     [rooms, roomProgress],
   );
 
-  // Build room progress array for the progress bar
-  const roomProgressForBar = useMemo(
-    () =>
-      rooms.map((room) => ({
-        roomId: room.roomId,
-        roomName: room.roomName,
-        status: (roomProgress[room.roomId]?.status ?? "not_started") as RoomProgressStatus,
-        answeredCount: roomProgress[room.roomId]?.answeredCount ?? 0,
-        totalQuestions: room.budget.baseQuestions,
-      })),
-    [rooms, roomProgress],
-  );
-
   return {
     rooms,
     currentRoomIndex,
@@ -337,16 +363,19 @@ export function useRoomInterviewFlow(
     currentQuestion,
     totalQuestionsInRoom,
     roomProgress,
+    currentPhase,
     crossRoomPhase,
     crossRoomQuestions,
     canFinish,
     activeWarnings,
     canSkipRoom,
+    canSkipReflections,
     minimumTotalAnswers: globalGates.minimumTotalAnswers,
     totalAnswerCount,
     hasStarted,
     advanceQuestion,
     skipRoom,
+    skipReflections,
     recordAnswer,
     goToRoom,
     initFromSavedState,

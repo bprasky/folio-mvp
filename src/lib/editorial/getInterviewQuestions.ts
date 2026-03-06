@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto';
 import { generateContextualQuestions, ContextualQuestion } from './generateContextualQuestions';
 import {
   assessProjectContext,
@@ -14,6 +15,7 @@ import {
   type RoomQuestionsGroup,
   type RoomGroupedQuestions,
 } from './roomPacing';
+import { formatRoomName } from '@/lib/utils/formatRoomName';
 
 // Base questions from existing question bank (Level 0 fallback)
 const BASE_QUESTIONS = [
@@ -291,12 +293,12 @@ export async function getInterviewQuestionsGroupedByRoom(
     roomIdToName.set(room.id, room.name);
   }
 
-  // Build image+tag counts per room
+  // Build image+tag counts per room (normalize names to Title Case)
   const imageCountByRoom = new Map<string, number>();
   const tagCountByRoom = new Map<string, number>();
   for (const img of project?.images ?? []) {
     if (!img.room) continue;
-    const resolved = roomIdToName.get(img.room) || img.room;
+    const resolved = formatRoomName(roomIdToName.get(img.room) || img.room);
     imageCountByRoom.set(resolved, (imageCountByRoom.get(resolved) || 0) + 1);
     tagCountByRoom.set(resolved, (tagCountByRoom.get(resolved) || 0) + img.tags.length);
   }
@@ -367,8 +369,9 @@ export async function getInterviewQuestionsGroupedByRoom(
   const gateRooms: Array<{ roomId: string; roomName: string; imageCount: number; tagCount: number }> = [];
 
   for (const room of context.rooms) {
-    const imgCount = imageCountByRoom.get(room.name) || 0;
-    const tgCount = tagCountByRoom.get(room.name) || room.selectionCount;
+    const displayName = formatRoomName(room.name);
+    const imgCount = imageCountByRoom.get(displayName) || imageCountByRoom.get(room.name) || 0;
+    const tgCount = tagCountByRoom.get(displayName) || tagCountByRoom.get(room.name) || room.selectionCount;
     const budget = computeRoomBudget(imgCount, tgCount);
     const questions = (roomBuckets.get(room.name) || []).slice(0, budget.baseQuestions);
 
@@ -390,11 +393,11 @@ export async function getInterviewQuestionsGroupedByRoom(
 
     roomGroups.push({
       roomId: room.id,
-      roomName: room.name,
+      roomName: displayName,
       roomType: room.type,
       budget: {
         roomId: room.id,
-        roomName: room.name,
+        roomName: displayName,
         roomType: room.type,
         imageCount: imgCount,
         tagCount: tgCount,
@@ -406,21 +409,60 @@ export async function getInterviewQuestionsGroupedByRoom(
 
     gateRooms.push({
       roomId: room.id,
-      roomName: room.name,
+      roomName: displayName,
       imageCount: imgCount,
       tagCount: tgCount,
     });
   }
 
-  // 6. Compute global gates
+  // 6. Build General phase (opening project-level questions)
+  const generalQuestions = generateGeneralQuestions(context, project);
+  const generalGroup: RoomQuestionsGroup = {
+    roomId: '__general__',
+    roomName: 'General',
+    roomType: null,
+    budget: {
+      roomId: '__general__',
+      roomName: 'General',
+      roomType: null,
+      imageCount: 0,
+      tagCount: 0,
+      baseQuestions: generalQuestions.length,
+      maxFollowUps: 0,
+    },
+    questions: generalQuestions,
+  };
+
+  // 7. Build Reflections phase (closing synthesis questions)
+  const reflectionQuestions = generateReflectionQuestions(context, project);
+  const reflectionsGroup: RoomQuestionsGroup = {
+    roomId: '__reflections__',
+    roomName: 'Reflections',
+    roomType: null,
+    budget: {
+      roomId: '__reflections__',
+      roomName: 'Reflections',
+      roomType: null,
+      imageCount: 0,
+      tagCount: 0,
+      baseQuestions: reflectionQuestions.length,
+      maxFollowUps: 0,
+    },
+    questions: reflectionQuestions,
+  };
+
+  // 8. Assemble final rooms: General → Room groups → Reflections
+  const allRoomGroups = [generalGroup, ...roomGroups, reflectionsGroup];
+
+  // 9. Compute global gates (only for actual rooms, not phases)
   const globalGates = computeGlobalGates(gateRooms);
 
-  // 7. Context metadata
+  // 10. Context metadata
   const { getContextLevelDescription, getContextUpgradeSuggestion } = await import('@/lib/interview');
 
   return {
     grouped: true,
-    rooms: roomGroups,
+    rooms: allRoomGroups,
     crossRoomQuestions: crossRoomQuestions.slice(0, 2), // max 2 cross-room
     globalGates,
     contextLevel: context.level,
@@ -428,4 +470,136 @@ export async function getInterviewQuestionsGroupedByRoom(
     upgradeSuggestion: getContextUpgradeSuggestion(context.level),
     projectSize: context.projectSize,
   };
+}
+
+// ---------------------------------------------------------------------------
+// General phase question generation
+// ---------------------------------------------------------------------------
+
+function generateGeneralQuestions(
+  context: Awaited<ReturnType<typeof assessProjectContext>>,
+  project: { rooms?: Array<{ name: string }> } | null,
+): InterviewQuestion[] {
+  const questions: InterviewQuestion[] = [];
+
+  const roomCount = context.rooms.length;
+  const roomList = context.rooms.slice(0, 3).map(r => formatRoomName(r.name)).join(', ');
+  const hasSelections = context.selections.length > 0;
+
+  // Question 1: Project brief/vision
+  if (context.isProspective) {
+    questions.push({
+      id: `general-${randomUUID()}`,
+      questionText: roomCount > 1
+        ? `You're designing across ${roomList}${roomCount > 3 ? ' and more' : ''} — what's the overarching vision tying these spaces together?`
+        : `What's the design direction you're working toward for this project?`,
+      questionType: 'base',
+      source: 'base_question',
+      category: 'brief',
+      contextLevel: 0,
+    });
+  } else {
+    questions.push({
+      id: `general-${randomUUID()}`,
+      questionText: roomCount > 1
+        ? `This project spans ${roomList}${roomCount > 3 ? ' and more' : ''} — what was the original brief?`
+        : `What was the brief or starting point for this project?`,
+      questionType: 'base',
+      source: 'base_question',
+      category: 'brief',
+      contextLevel: 0,
+    });
+  }
+
+  // Question 2: Process/constraint
+  if (hasSelections) {
+    const vendorNames = [...new Set(context.selections.map(s => s.brand).filter(Boolean))].slice(0, 2);
+    if (vendorNames.length > 0) {
+      questions.push({
+        id: `general-${randomUUID()}`,
+        questionText: `What was the biggest constraint you were working with, and how did it shape the final design?`,
+        questionType: 'base',
+        source: 'base_question',
+        category: 'process',
+        contextLevel: 0,
+      });
+    } else {
+      questions.push({
+        id: `general-${randomUUID()}`,
+        questionText: `What was the first major design decision you made on this project?`,
+        questionType: 'base',
+        source: 'base_question',
+        category: 'process',
+        contextLevel: 0,
+      });
+    }
+  } else {
+    questions.push({
+      id: `general-${randomUUID()}`,
+      questionText: `What was the first design decision that set the tone for everything else?`,
+      questionType: 'base',
+      source: 'base_question',
+      category: 'process',
+      contextLevel: 0,
+    });
+  }
+
+  return questions;
+}
+
+// ---------------------------------------------------------------------------
+// Reflections phase question generation
+// ---------------------------------------------------------------------------
+
+function generateReflectionQuestions(
+  context: Awaited<ReturnType<typeof assessProjectContext>>,
+  project: { rooms?: Array<{ name: string }> } | null,
+): InterviewQuestion[] {
+  const questions: InterviewQuestion[] = [];
+
+  const roomCount = context.rooms.length;
+
+  // Question 1: Hidden detail / discovery
+  if (roomCount > 1) {
+    questions.push({
+      id: `reflection-${randomUUID()}`,
+      questionText: `Looking at the whole project, what's the one detail or decision that most people would miss?`,
+      questionType: 'base',
+      source: 'base_question',
+      category: 'reflection',
+      contextLevel: 0,
+    });
+  } else {
+    questions.push({
+      id: `reflection-${randomUUID()}`,
+      questionText: `What would you want someone to notice first when they walk into this space?`,
+      questionType: 'base',
+      source: 'base_question',
+      category: 'reflection',
+      contextLevel: 0,
+    });
+  }
+
+  // Question 2: Direction change / pride moment
+  if (context.isProspective) {
+    questions.push({
+      id: `reflection-${randomUUID()}`,
+      questionText: `Has the design direction shifted at any point during this project? What prompted that change?`,
+      questionType: 'base',
+      source: 'base_question',
+      category: 'reflection',
+      contextLevel: 0,
+    });
+  } else {
+    questions.push({
+      id: `reflection-${randomUUID()}`,
+      questionText: `Was there a moment where the design direction changed significantly? What made you rethink?`,
+      questionType: 'base',
+      source: 'base_question',
+      category: 'reflection',
+      contextLevel: 0,
+    });
+  }
+
+  return questions;
 }

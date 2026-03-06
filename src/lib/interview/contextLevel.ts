@@ -14,6 +14,7 @@
  */
 
 import { prisma } from '@/lib/prisma';
+import { formatRoomName } from '@/lib/utils/formatRoomName';
 
 // Types for context assessment
 export type ContextLevel = 0 | 1 | 2 | 3 | 4 | 5;
@@ -502,7 +503,9 @@ export async function assessProjectContext(projectId: string): Promise<ProjectCo
   }
 
   // First, add rooms from project.rooms
+  // Normalize room names to Title Case for deduplication
   for (const room of project.rooms) {
+    const displayName = formatRoomName(room.name);
     const roomSelections = selections.filter((s) => s.roomId === room.id);
     const vendorCounts = new Map<string, number>();
     for (const s of roomSelections) {
@@ -511,9 +514,9 @@ export async function assessProjectContext(projectId: string): Promise<ProjectCo
     const dominantVendor = Array.from(vendorCounts.entries())
       .sort((a, b) => b[1] - a[1])[0]?.[0];
 
-    roomMap.set(room.name, {
+    roomMap.set(displayName, {
       id: room.id,
-      name: room.name,
+      name: displayName,
       type: normalizeRoomType(room.type),
       selectionCount: roomSelections.length,
       dominantVendor,
@@ -531,8 +534,11 @@ export async function assessProjectContext(projectId: string): Promise<ProjectCo
     // Resolve: image.room may be a room ID (UUID) or a room name
     const resolvedName = roomIdToName.get(image.room) || image.room;
 
-    // Skip if this room is already in the map (by resolved name)
-    if (roomMap.has(resolvedName)) continue;
+    // Normalize to Title Case for deduplication
+    const displayName = formatRoomName(resolvedName);
+
+    // Skip if this room is already in the map (by normalized name)
+    if (roomMap.has(displayName)) continue;
 
     // Skip UUIDs that don't resolve to a known room
     // (stale/orphaned references — not useful for question generation)
@@ -542,10 +548,10 @@ export async function assessProjectContext(projectId: string): Promise<ProjectCo
       continue;
     }
 
-    const roomSelections = selections.filter((s) => s.room === resolvedName);
-    roomMap.set(resolvedName, {
+    const roomSelections = selections.filter((s) => s.room === resolvedName || formatRoomName(s.room) === displayName);
+    roomMap.set(displayName, {
       id: `image-room-${image.room}`,
-      name: resolvedName,
+      name: displayName,
       type: normalizeRoomType(resolvedName),
       selectionCount: roomSelections.length,
       keyPieces: roomSelections.filter((s) => s.isHeroPiece),
