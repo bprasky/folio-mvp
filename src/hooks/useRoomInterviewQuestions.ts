@@ -15,6 +15,20 @@ export interface RoomInterviewQuestionsResult {
 }
 
 /**
+ * Deduplicate rooms by normalized name — keeps the first (display-format) entry,
+ * discards slug duplicates like "dining_room" when "Dining Room" already exists.
+ */
+function deduplicateRooms(rooms: RoomQuestionsGroup[]): RoomQuestionsGroup[] {
+  const seen = new Set<string>();
+  return rooms.filter((room) => {
+    const normalized = room.roomName.toLowerCase().replace(/_/g, ' ').trim();
+    if (seen.has(normalized)) return false;
+    seen.add(normalized);
+    return true;
+  });
+}
+
+/**
  * Fetches interview questions grouped by room from the API.
  * Used by InterviewModal when room pacing is active.
  */
@@ -57,7 +71,7 @@ export function useRoomInterviewQuestions(projectId: string): RoomInterviewQuest
         const data = await response.json();
         if (cancelled) return;
 
-        setRooms(data.rooms || []);
+        setRooms(deduplicateRooms(data.rooms || []));
         setCrossRoomQuestions(data.crossRoomQuestions || []);
         setGlobalGates(data.globalGates || { minimumTotalAnswers: 5, warnings: [] });
         setContextLevel(data.contextLevel ?? 0);
