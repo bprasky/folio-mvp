@@ -15,6 +15,79 @@ import {
   type RoomGroupedQuestions,
 } from './roomPacing';
 
+// ---------------------------------------------------------------------------
+// Room-type fallback questions — deterministic backfill when LLM under-generates
+// ---------------------------------------------------------------------------
+const ROOM_FALLBACK_QUESTIONS: Record<string, string[]> = {
+  kitchen: [
+    "Walk me through how you chose the cabinetry finish and why.",
+    "What was the biggest tradeoff you made in the kitchen?",
+    "How did you decide on the island — size, material, layout?",
+    "What do most people not notice about this kitchen?",
+  ],
+  bathroom: [
+    "How did you balance spa feeling with everyday use?",
+    "What drove the vanity choice — custom or sourced?",
+    "What's the one detail in here you're proudest of?",
+  ],
+  entry: [
+    "What did you want someone to feel in the first 10 seconds?",
+    "How does the entry set up the rest of the house?",
+    "Was there anything you deliberately left out of this space?",
+  ],
+  living_room: [
+    "How did you handle scale in this room?",
+    "What's the relationship between the seating and the lighting?",
+    "What was the client's biggest request for this room?",
+  ],
+  dining_room: [
+    "How did you choose the table — and how does it relate to the chairs?",
+    "What role does lighting play in this room specifically?",
+    "Is this room more for everyday or for entertaining?",
+  ],
+  bedroom: [
+    "What was the priority in here — rest, style, or both?",
+    "How did you approach the palette differently from the rest of the house?",
+    "What's the one piece that makes this room work?",
+  ],
+  office: [
+    "How did you make this space feel productive without feeling sterile?",
+    "What was the design challenge in this space?",
+    "What's the detail most people miss?",
+  ],
+  outdoor: [
+    "How did you bridge indoor and outdoor in this project?",
+    "What was the design challenge in this space?",
+    "What would you change if you did it again?",
+  ],
+  default: [
+    "What was the design challenge in this space?",
+    "What's the detail most people miss?",
+    "What would you change if you did it again?",
+  ],
+};
+
+/** Map a room type or name to a fallback question key. */
+function fallbackKeyForRoom(roomType: string | null, roomName: string): string {
+  // Try room type first (already lowercase with underscores)
+  if (roomType && roomType in ROOM_FALLBACK_QUESTIONS) {
+    return roomType;
+  }
+  // Normalize room name: "Primary Bath" → "bathroom", "Living Room" → "living_room"
+  const normalized = roomName.toLowerCase().replace(/\s+/g, '_');
+  if (normalized in ROOM_FALLBACK_QUESTIONS) return normalized;
+  // Partial matches
+  if (normalized.includes('bath') || normalized.includes('powder')) return 'bathroom';
+  if (normalized.includes('kitchen')) return 'kitchen';
+  if (normalized.includes('living') || normalized.includes('family') || normalized.includes('great_room')) return 'living_room';
+  if (normalized.includes('dining')) return 'dining_room';
+  if (normalized.includes('bed') || normalized.includes('master') || normalized.includes('primary_suite')) return 'bedroom';
+  if (normalized.includes('entry') || normalized.includes('foyer') || normalized.includes('mudroom')) return 'entry';
+  if (normalized.includes('office') || normalized.includes('study') || normalized.includes('library')) return 'office';
+  if (normalized.includes('outdoor') || normalized.includes('patio') || normalized.includes('deck') || normalized.includes('terrace')) return 'outdoor';
+  return 'default';
+}
+
 // Base questions from existing question bank (Level 0 fallback)
 const BASE_QUESTIONS = [
   {
@@ -445,6 +518,31 @@ export async function getInterviewQuestionsGroupedByRoom(
       imageCount: imgCount,
       tagCount: tgCount,
     });
+  }
+
+  // 5b. Backfill: ensure every room meets its budget minimum using deterministic fallbacks
+  for (const group of roomGroups) {
+    if (group.questions.length >= group.budget.baseQuestions) continue;
+
+    const key = fallbackKeyForRoom(group.roomType, group.roomName);
+    const pool = ROOM_FALLBACK_QUESTIONS[key] || ROOM_FALLBACK_QUESTIONS.default;
+    const existingTexts = new Set(group.questions.map(q => q.questionText.toLowerCase()));
+
+    for (const fallbackText of pool) {
+      if (group.questions.length >= group.budget.baseQuestions) break;
+      if (existingTexts.has(fallbackText.toLowerCase())) continue;
+
+      group.questions.push({
+        id: `fallback_${group.roomId}_${group.questions.length}`,
+        questionText: fallbackText,
+        questionType: 'base',
+        source: 'base_question',
+        category: 'room_fallback',
+        roomId: group.roomId,
+        roomContext: group.roomName,
+      });
+      existingTexts.add(fallbackText.toLowerCase());
+    }
   }
 
   // 6. Compute global gates

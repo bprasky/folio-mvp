@@ -381,19 +381,10 @@ export async function POST(
         return NextResponse.json({ ok: true, followups: cached, _cid }, { status: 200 });
       }
       
-      const status =
-        llmResult.code === 'auth_failed'
-          ? 401
-          : llmResult.code === 'rate_limited'
-          ? 429
-          : llmResult.code === 'timeout'
-          ? 408
-          : llmResult.code === 'moderation_block'
-          ? 422
-          : 502;
+      // Follow-ups are an enhancement, not a gate — degrade gracefully
       return NextResponse.json(
-        { ok: false, followups: [], error: llmResult.code },
-        { status }
+        { ok: true, followups: [], questionUpdates: [], _cid },
+        { status: 200 }
       );
     }
 
@@ -401,7 +392,16 @@ export async function POST(
 
     const rawText = llmResult.data.content[0]?.type === 'text' ? llmResult.data.content[0].text : '{}';
     const raw = rawText.replace(/```json\n?|\n?```/g, '').trim();
-    const json = JSON.parse(raw);
+    let json: any;
+    try {
+      json = JSON.parse(raw);
+    } catch (parseErr) {
+      console.error('[FOLLOWUP_ERROR] json_parse_failed', { _cid, raw: raw.slice(0, 200), parseErr });
+      return NextResponse.json(
+        { ok: true, followups: [], questionUpdates: [], _cid },
+        { status: 200 }
+      );
+    }
 
     // Extract acknowledgment (optional)
     const acknowledgment = typeof json.acknowledgment === "string"
@@ -562,10 +562,11 @@ export async function POST(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
     const requestId = randomUUID();
-    console.error("[posting/interview/followups/single] Error:", { requestId, error });
+    console.error("[FOLLOWUP_ERROR] unhandled", { requestId, error: error?.message || error });
+    // Follow-ups are an enhancement, not a gate — degrade gracefully
     return NextResponse.json(
-      { error: "server_error", requestId },
-      { status: 500 }
+      { ok: true, followups: [], questionUpdates: [], requestId },
+      { status: 200 }
     );
   }
 }
