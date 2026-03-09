@@ -166,7 +166,7 @@ function DestinationOption({
           
           if (response.ok) {
             const { projectId } = await response.json();
-            window.location.href = `/designer/projects/${projectId}`;
+            window.location.href = `/project/${projectId}?view=media`;
           }
         }}
       >

@@ -523,11 +523,26 @@ export function InterviewModal({
       .filter((q): q is InterviewQuestion => q !== undefined);
   }, [selectedQuestionIds, allQuestions]);
 
-  const currentQuestion = selectedQuestions[currentQuestionIndex];
-  const totalQuestions = selectedQuestions.length;
+  // When room pacing is active, derive currentQuestion from the room flow hook
+  // (which tracks per-room question index) instead of the flat selectedQuestions list.
+  const currentQuestion = hasRoomPacing
+    ? (roomFlow.currentQuestion
+        ? {
+            id: roomFlow.currentQuestion.id,
+            role: 'DESIGNER' as const,
+            section: 'what' as const,
+            prompt: roomFlow.currentQuestion.questionText,
+          }
+        : undefined)
+    : selectedQuestions[currentQuestionIndex];
+  const totalQuestions = hasRoomPacing ? roomFlow.totalQuestionsInRoom : selectedQuestions.length;
   const displayTotal = lockedTotal ?? totalQuestions;
-  const isLastQuestion = currentQuestionIndex >= totalQuestions - 1;
-  const isNearFinish = !isLastQuestion && totalQuestions > 1 && currentQuestionIndex >= totalQuestions - 2;
+  const isLastQuestion = hasRoomPacing
+    ? roomFlow.currentQuestionIndex >= roomFlow.totalQuestionsInRoom - 1
+    : currentQuestionIndex >= totalQuestions - 1;
+  const isNearFinish = !isLastQuestion && totalQuestions > 1 && (hasRoomPacing
+    ? roomFlow.currentQuestionIndex >= roomFlow.totalQuestionsInRoom - 2
+    : currentQuestionIndex >= totalQuestions - 2);
 
   // Auto-generate: when the last question answer is saved, trigger generation automatically
   const autoGenerateRef = useRef(false);

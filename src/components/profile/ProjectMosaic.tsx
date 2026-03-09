@@ -327,7 +327,7 @@ export default function ProjectMosaic({ projects, theme, viewer, canEdit = false
               {canEdit && (
                 <div className="absolute top-2 right-2 z-40 pointer-events-auto">
                   <Link
-                    href={`/designer/projects/${item.id}`}
+                    href={`/project/${item.id}?view=media`}
                     className="pointer-events-auto rounded bg-black/60 text-white text-[11px] px-2 py-1 hover:bg-black/80"
                     onClick={(e) => e.stopPropagation()}
                   >

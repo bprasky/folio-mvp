@@ -337,6 +337,8 @@ function buildEditorialPrompt({
   materialsLedger,
   designerName,
   location,
+  designerBio,
+  projectHistory,
   atelierSummary,
 }: {
   project: { title: string };
@@ -1928,10 +1930,17 @@ export async function POST(
       _cid,
     });
 
-    // Fetch designer context for editorial generation
-    const designerName = projectData.designer?.name || undefined;
-    const designerBio = includeBio ? (projectData.designer?.bio || undefined) : undefined;
-    const projectLocation = [projectData.city, projectData.regionState].filter(Boolean).join(', ') || undefined;
+    // Fetch designer context for editorial generation — all optional, never block generation
+    let designerName: string | undefined;
+    let designerBio: string | undefined;
+    let projectLocation: string | undefined;
+    try {
+      designerName = projectData.designer?.name || undefined;
+      designerBio = includeBio ? (projectData.designer?.bio || undefined) : undefined;
+      projectLocation = [projectData.city, projectData.regionState].filter(Boolean).join(', ') || undefined;
+    } catch (ctxErr: any) {
+      console.warn('[generate] Designer context fetch failed (non-fatal):', ctxErr?.message, { _cid });
+    }
 
     // Fetch designer's other published projects for context
     let projectHistory: string | undefined;
