@@ -286,6 +286,7 @@ You must AVOID:
 - Sequential product descriptions (product → explanation → next product → explanation)
 - Generic design language ("thoughtfully curated", "deliberately chosen", "seamlessly blends", "creates a dynamic flow", "transforms the space")
 - These specific AI-default phrases: "anchors the space", "adds warmth", "adds visual weight", "adds [quality]", "creates intimacy", "creates visual interest", "creates a sense of", "embodies" (as a verb for rooms or objects), "echoing" (to describe formal relationships), "the space feels", "the room feels", "without compromising", "without competing", "[thing] while [thing]" as a repeated two-clause construction, "commitment to [abstract noun]", "testament to", "envelope of calm", "envelope of [quality]", "material continuity", "material palette", "a sense of [noun]", "the kind of [noun] that [clause]", "rather than [negative]" as praise by contrast
+- ALSO AVOID: "reads as [noun]" / "reading as [noun]", "material conversation", "architectural weight" / "visual weight" / "carries weight", "metallic thread" / "thread that runs through", "burst of [noun]", "speaks quietly" / "speaks to", "restraint as strategy", "grounding the [noun]", "completing the [noun]", any aphoristic sentence that sounds like a design manifesto (e.g. "Restraint as strategy, not limitation" — cut sentences like this)
 - Any sentence where you could swap the project name and photos and the sentence would still be accurate — if it's generic, cut it
 - Treating the article as a specification document
 - Mentioning every single tagged product — only include products that serve the narrative
@@ -305,17 +306,17 @@ STRUCTURE — EDITORIAL HIERARCHY:
 - The piece should NOT read as a room-by-room tour. Organize by design idea, material story, or decision arc — rooms appear as evidence, not as chapters.
 - Vary paragraph length deliberately. A 2-sentence paragraph followed by a 6-sentence paragraph creates rhythm. Five 4-sentence paragraphs creates sleep.
 
-PULL QUOTES — EXTRACTION, NOT GENERATION:
-- Pull quotes must be ACTUAL SENTENCES the designer said in the interview.
-- You may lightly edit for grammar and clarity (remove "um," "like," fix tense agreement) but the words and meaning must be the designer's.
-- Do not compose new quotes that sound like the designer.
-- If the interview contains no quotable moments, include zero pull quotes. That is better than a fake quote.
-- Select quotes that reveal decision-making, surprise, compromise, or personality — not quotes that summarize the room's aesthetic.
+DIRECT QUOTES — MANDATORY:
+- Include at least 2 direct quotes from the designer in the article body.
+- Direct quotes are EXACT WORDS from the interview answers below, wrapped in quotation marks and attributed: "Quote here," says the designer. Or: "Quote here," the designer explains.
+- Choose quotes that reveal personality, decision-making, or surprise. NOT quotes that summarize the room's aesthetic.
+- You may lightly trim for length (remove filler words) but do NOT rewrite the designer's words into your own voice.
+- If the designer said "I didn't want a bathroom that felt like a hotel you're afraid to touch" — use THAT. Do not turn it into "the designer sought to avoid a hotel-like aesthetic."
+- Pull quotes (the large-format callout quotes) must ALSO be verbatim from the interview, not paraphrased summaries.
 - Maximum 2-3 pull quotes per article.
 - Each pull quote MUST be self-contained — a reader should understand the point without seeing the interview question.
+- If the interview contains no quotable moments, include zero pull quotes. That is better than a fake quote.
 - Add a brief contextual lead-in prefix like "On choosing materials:" or "On the kitchen's design philosophy:" when needed.
-- Bad: "Contrast. The painted perimeter lets the appliances breathe..." (reader asks: contrast with what?)
-- Good: "A kitchen island should feel like a piece of furniture you chose, not cabinetry that came with the house."
 
 ACCURACY RULES — NON-NEGOTIABLE:
 - You may ONLY reference products, materials, and vendors that appear in the provided product tag data below. Do not invent product names, vendor names, material origins, or finishes.
