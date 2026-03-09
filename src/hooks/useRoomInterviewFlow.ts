@@ -50,6 +50,12 @@ export interface RoomInterviewFlowState {
   /** Can skip current room (minimum met)? */
   canSkipRoom: boolean;
 
+  /** How many more answers needed before skip becomes available */
+  answersUntilSkip: number;
+
+  /** How many unanswered questions remain in current room */
+  remainingInRoom: number;
+
   /** Minimum total answers required */
   minimumTotalAnswers: number;
 
@@ -59,11 +65,17 @@ export interface RoomInterviewFlowState {
   /** Has the interview started (at least 1 room with answers)? */
   hasStarted: boolean;
 
+  /** Per-room follow-up tracking: how many follow-ups generated vs budget */
+  followUpsGeneratedInRoom: number;
+  maxFollowUpsInRoom: number;
+
   // Actions
   advanceQuestion: () => void;
   skipRoom: () => void;
   recordAnswer: (questionId: string) => void;
   goToRoom: (roomIndex: number) => void;
+  /** Insert follow-up questions into the current room's question queue */
+  insertFollowUpQuestions: (questions: InterviewQuestion[]) => void;
   initFromSavedState: (
     answeredQuestionIds: Set<string>,
     savedProgress: RoomProgressMap | null,
@@ -96,16 +108,26 @@ export function useRoomInterviewFlow(
   const [crossRoomPhase, setCrossRoomPhase] = useState(false);
   const [crossRoomQuestionIndex, setCrossRoomQuestionIndex] = useState(0);
 
+  // Follow-up tracking: per-room count of generated follow-ups
+  const [followUpCounts, setFollowUpCounts] = useState<Record<string, number>>({});
+  // Dynamic question lists per room (base + inserted follow-ups)
+  const [roomQuestionOverrides, setRoomQuestionOverrides] = useState<Record<string, InterviewQuestion[]>>({});
+
   // Derived values
   const currentRoom = rooms[currentRoomIndex] ?? null;
-  const totalQuestionsInRoom = currentRoom?.questions.length ?? 0;
+  // Use overridden question list (with follow-ups inserted) if available
+  const currentRoomQuestions = useMemo(() => {
+    if (!currentRoom) return [];
+    return roomQuestionOverrides[currentRoom.roomId] || currentRoom.questions;
+  }, [currentRoom, roomQuestionOverrides]);
+  const totalQuestionsInRoom = currentRoomQuestions.length;
 
   const currentQuestion = useMemo(() => {
     if (crossRoomPhase) {
       return crossRoomQuestions[crossRoomQuestionIndex] ?? null;
     }
-    return currentRoom?.questions[currentQuestionIndex] ?? null;
-  }, [crossRoomPhase, crossRoomQuestions, crossRoomQuestionIndex, currentRoom, currentQuestionIndex]);
+    return currentRoomQuestions[currentQuestionIndex] ?? null;
+  }, [crossRoomPhase, crossRoomQuestions, crossRoomQuestionIndex, currentRoomQuestions, currentQuestionIndex]);
 
   // Count completed rooms
   const completedRoomCount = useMemo(
@@ -125,13 +147,46 @@ export function useRoomInterviewFlow(
 
   const hasStarted = totalAnswerCount > 0;
 
-  // Can skip: answered at least 1 question in current room (room minimum = 1 for skip purposes;
-  // the spec says skip appears after room minimum — here, answering at least 1 question enables it)
+  // Can skip: answered at least ceil(budget * 0.6) questions in current room.
+  // First room (index 0) cannot be skipped — it sets the interview tone.
+  const skipMinimumForRoom = useMemo(() => {
+    if (!currentRoom) return Infinity;
+    return Math.ceil(currentRoom.budget.baseQuestions * 0.6);
+  }, [currentRoom]);
+
   const canSkipRoom = useMemo(() => {
     if (!currentRoom) return false;
+    if (currentRoomIndex === 0) return false; // Never skip first room
     const progress = roomProgress[currentRoom.roomId];
-    return progress ? progress.answeredCount >= 1 : false;
+    return progress ? progress.answeredCount >= skipMinimumForRoom : false;
+  }, [currentRoom, currentRoomIndex, roomProgress, skipMinimumForRoom]);
+
+  // How many more answers needed before skip is available (for UI label)
+  const answersUntilSkip = useMemo(() => {
+    if (!currentRoom || currentRoomIndex === 0) return Infinity;
+    const progress = roomProgress[currentRoom.roomId];
+    const answered = progress?.answeredCount ?? 0;
+    return Math.max(0, skipMinimumForRoom - answered);
+  }, [currentRoom, currentRoomIndex, roomProgress, skipMinimumForRoom]);
+
+  // How many questions remain unanswered in current room (for skip button label)
+  const remainingInRoom = useMemo(() => {
+    if (!currentRoom) return 0;
+    const progress = roomProgress[currentRoom.roomId];
+    const answered = progress?.answeredCount ?? 0;
+    return Math.max(0, currentRoom.budget.baseQuestions - answered);
   }, [currentRoom, roomProgress]);
+
+  // Follow-up budget tracking for current room
+  const followUpsGeneratedInRoom = useMemo(() => {
+    if (!currentRoom) return 0;
+    return followUpCounts[currentRoom.roomId] || 0;
+  }, [currentRoom, followUpCounts]);
+
+  const maxFollowUpsInRoom = useMemo(() => {
+    if (!currentRoom) return 0;
+    return currentRoom.budget.maxFollowUps;
+  }, [currentRoom]);
 
   // Active warnings (rooms with 3+ images/5+ tags and zero answers)
   const activeWarnings = useMemo(() => {
@@ -153,26 +208,29 @@ export function useRoomInterviewFlow(
   const recordAnswer = useCallback(
     (questionId: string) => {
       if (!currentRoom) return;
+      // Total questions = dynamic list length (base + any inserted follow-ups)
+      const dynamicTotal = currentRoomQuestions.length;
       setRoomProgress((prev) => {
         const current = prev[currentRoom.roomId] || {
           status: "not_started" as RoomProgressStatus,
           answeredCount: 0,
-          totalQuestions: currentRoom.budget.baseQuestions,
+          totalQuestions: dynamicTotal,
           baseQuestions: currentRoom.budget.baseQuestions,
         };
         const newCount = current.answeredCount + 1;
-        const isComplete = newCount >= current.totalQuestions;
+        const isComplete = newCount >= dynamicTotal;
         return {
           ...prev,
           [currentRoom.roomId]: {
             ...current,
             answeredCount: newCount,
+            totalQuestions: dynamicTotal,
             status: isComplete ? "complete" : "in_progress",
           },
         };
       });
     },
-    [currentRoom],
+    [currentRoom, currentRoomQuestions],
   );
 
   // Find next room that isn't complete or skipped
@@ -277,6 +335,55 @@ export function useRoomInterviewFlow(
     }
   }, [rooms.length]);
 
+  // Insert follow-up questions into the current room's question queue.
+  // Respects the room's maxFollowUps budget — only inserts up to the remaining budget.
+  const insertFollowUpQuestions = useCallback(
+    (questions: InterviewQuestion[]) => {
+      if (!currentRoom || questions.length === 0) return;
+
+      const roomId = currentRoom.roomId;
+      const maxFollowUps = currentRoom.budget.maxFollowUps;
+      const alreadyGenerated = followUpCounts[roomId] || 0;
+      const remainingBudget = Math.max(0, maxFollowUps - alreadyGenerated);
+
+      if (remainingBudget === 0) return;
+
+      const toInsert = questions.slice(0, remainingBudget);
+
+      // Update follow-up count
+      setFollowUpCounts((prev) => ({
+        ...prev,
+        [roomId]: (prev[roomId] || 0) + toInsert.length,
+      }));
+
+      // Insert follow-ups right after the current question index in the dynamic list
+      setRoomQuestionOverrides((prev) => {
+        const currentList = prev[roomId] || currentRoom.questions;
+        const insertAt = currentQuestionIndex + 1;
+        const updated = [
+          ...currentList.slice(0, insertAt),
+          ...toInsert,
+          ...currentList.slice(insertAt),
+        ];
+        return { ...prev, [roomId]: updated };
+      });
+
+      // Update totalQuestions in room progress to reflect the new questions
+      setRoomProgress((prev) => {
+        const current = prev[roomId];
+        if (!current) return prev;
+        return {
+          ...prev,
+          [roomId]: {
+            ...current,
+            totalQuestions: current.totalQuestions + toInsert.length,
+          },
+        };
+      });
+    },
+    [currentRoom, currentQuestionIndex, followUpCounts],
+  );
+
   // Initialize from saved state (resume)
   const initFromSavedState = useCallback(
     (answeredQuestionIds: Set<string>, savedProgress: RoomProgressMap | null) => {
@@ -342,6 +449,10 @@ export function useRoomInterviewFlow(
     canFinish,
     activeWarnings,
     canSkipRoom,
+    answersUntilSkip,
+    remainingInRoom,
+    followUpsGeneratedInRoom,
+    maxFollowUpsInRoom,
     minimumTotalAnswers: globalGates.minimumTotalAnswers,
     totalAnswerCount,
     hasStarted,
@@ -349,6 +460,7 @@ export function useRoomInterviewFlow(
     skipRoom,
     recordAnswer,
     goToRoom,
+    insertFollowUpQuestions,
     initFromSavedState,
   };
 }

@@ -532,6 +532,7 @@ export function InterviewModal({
             role: 'DESIGNER' as const,
             section: 'what' as const,
             prompt: roomFlow.currentQuestion.questionText,
+            contextLevel: roomFlow.currentQuestion.contextLevel,
           }
         : undefined)
     : selectedQuestions[currentQuestionIndex];
@@ -752,7 +753,20 @@ export function InterviewModal({
       const bgUpdates = bgFlush();
 
       // Phase B: Generate follow-ups + evaluate/morph remaining questions (authoritative)
-      const { questionUpdates } = await generateSingleFollowUp(currentQuestion.id, answerData.answer);
+      const { followUps: generatedFollowUps, questionUpdates } = await generateSingleFollowUp(currentQuestion.id, answerData.answer);
+
+      // Room pacing: insert follow-ups into room question queue (additive to base budget)
+      if (hasRoomPacing && generatedFollowUps.length > 0) {
+        const followUpQuestions: ContextualQuestion[] = generatedFollowUps.map((fu) => ({
+          id: fu.id,
+          questionText: fu.prompt,
+          questionType: 'follow_up' as const,
+          source: 'follow_up' as const,
+          roomId: roomFlow.currentRoom?.roomId,
+          isCrossRoom: false,
+        }));
+        roomFlow.insertFollowUpQuestions(followUpQuestions);
+      }
 
       // Merge: background updates first, then submit-time overwrites (submit-time wins)
       const mergedMap = new Map<string, QuestionUpdate>();
@@ -797,13 +811,17 @@ export function InterviewModal({
           });
         }
 
-        // Only skip fully covered questions (after MIN_QUESTIONS threshold met)
-        if (coveredIds.size > 0) {
+        // Only skip fully covered questions (after MIN_QUESTIONS threshold met).
+        // In room pacing mode, don't remove from selectedQuestionIds — the room flow
+        // manages its own question queue and coverage should not reduce question count.
+        if (coveredIds.size > 0 && !hasRoomPacing) {
           skippedCount = coveredIds.size;
           logClient('coverage:skip', { covered: Array.from(coveredIds), answeredCount });
           setSelectedQuestionIds(prev => prev.filter(id => !coveredIds.has(id)));
           // Update locked total so progress indicator stays accurate
           setLockedTotal(prev => prev !== null ? prev - skippedCount : null);
+        } else if (coveredIds.size > 0) {
+          logClient('coverage:room-pacing-ignore', { covered: Array.from(coveredIds), answeredCount });
         }
       }
 
@@ -1714,7 +1732,9 @@ export function InterviewModal({
                     }}
                     className="text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
                   >
-                    Move to next room &rarr;
+                    {roomFlow.remainingInRoom > 0
+                      ? `Skip (${roomFlow.remainingInRoom} remaining) \u2192`
+                      : 'Move to next room \u2192'}
                   </button>
                 ) : (
                   <div />

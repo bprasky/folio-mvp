@@ -113,12 +113,12 @@ export function classifyProjectSize(
   selectionCount: number
 ): ProjectSizeClassification {
   if (roomCount <= 1) {
-    return { size: 'focused', targetQuestionCount: 6, roomCount, selectionCount };
+    return { size: 'focused', targetQuestionCount: 8, roomCount, selectionCount };
   }
   if (roomCount <= 3) {
     return {
       size: 'medium',
-      targetQuestionCount: selectionCount > 15 ? 10 : 8,
+      targetQuestionCount: selectionCount > 15 ? 12 : 10,
       roomCount,
       selectionCount,
     };
@@ -126,14 +126,14 @@ export function classifyProjectSize(
   if (roomCount <= 6) {
     return {
       size: 'large',
-      targetQuestionCount: selectionCount > 25 ? 14 : 12,
+      targetQuestionCount: selectionCount > 25 ? 18 : 16,
       roomCount,
       selectionCount,
     };
   }
   return {
     size: 'showcase',
-    targetQuestionCount: Math.min(18, 15 + Math.floor((roomCount - 7) / 2)),
+    targetQuestionCount: Math.min(24, 18 + Math.floor((roomCount - 7) / 2)),
     roomCount,
     selectionCount,
   };

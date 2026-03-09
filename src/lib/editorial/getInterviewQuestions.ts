@@ -350,6 +350,25 @@ export async function getInterviewQuestionsGroupedByRoom(
   const crossRoomQuestions: InterviewQuestion[] = [];
   const globalOpeners: InterviewQuestion[] = [];
 
+  // Build normalized-to-canonical room name lookup for fuzzy matching.
+  // AI-generated questions may use "dining_room", "Dining Area", etc.
+  const normalizeRoomName = (name: string): string =>
+    name.toLowerCase().replace(/_/g, ' ').replace(/\s+/g, ' ').trim();
+
+  const normalizedToCanonical = new Map<string, string>();
+  for (const room of context.rooms) {
+    normalizedToCanonical.set(normalizeRoomName(room.name), room.name);
+  }
+
+  /** Resolve a question's room tag to a canonical room name, or null if no match. */
+  const resolveRoomName = (roomTag: string): string | null => {
+    // Exact match first
+    if (roomBuckets.has(roomTag)) return roomTag;
+    // Normalized match
+    const canonical = normalizedToCanonical.get(normalizeRoomName(roomTag));
+    return canonical ?? null;
+  };
+
   // Initialize buckets for known rooms
   for (const room of context.rooms) {
     roomBuckets.set(room.name, []);
@@ -364,8 +383,14 @@ export async function getInterviewQuestionsGroupedByRoom(
       } else {
         crossRoomQuestions.push(q);
       }
-    } else if (qRooms.length === 1 && roomBuckets.has(qRooms[0])) {
-      roomBuckets.get(qRooms[0])!.push(q);
+    } else if (qRooms.length === 1) {
+      const resolved = resolveRoomName(qRooms[0]);
+      if (resolved) {
+        roomBuckets.get(resolved)!.push(q);
+      } else {
+        // Single-room question that doesn't match any known room → cross-room
+        crossRoomQuestions.push(q);
+      }
     } else {
       // Multi-room question → cross-room
       crossRoomQuestions.push(q);
