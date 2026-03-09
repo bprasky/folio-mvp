@@ -17,9 +17,10 @@ export const SectionSchema = z.object({
   heading: z.string().optional(),
   body: z.string().optional(),
   quote: z.string().optional(),
-}).strict();
+}).passthrough();
 
 // Composed draft schema for LLM output (accepts sections at compose time)
+// Uses .passthrough() so unexpected keys from the LLM don't cause validation failures
 export const ComposedDraftSchema = z.object({
   lead: z.object({
     title: z.string().min(3).max(80).optional(), // Support title field
@@ -34,14 +35,14 @@ export const ComposedDraftSchema = z.object({
   })).min(1),
   pullQuotes: z.array(z.union([z.string(), z.object({ text: z.string(), context: z.string().optional() })])).optional(),
   credits: z.array(z.object({ role: z.string(), name: z.string().nullable().optional() })).optional(),
-  materialsLedger: z.object({ 
+  materialsLedger: z.object({
     items: z.array(z.object({
       name: z.string(),
-      productId: z.string().uuid().nullable().optional(),
+      productId: z.string().nullable().optional(),
     }))
   }).optional(),
   mode: RecompositionModeSchema.optional(),
-}).strict();
+}).passthrough();
 
 // Tolerant schema for LLM payload (accepts sections & materials temporarily) - for backward compatibility
 const SectionSchemaLoose = z.object({
