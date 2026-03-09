@@ -245,7 +245,7 @@ export default function RoomManagementPage() {
             <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-4">Room Not Found</h2>
             <p className="text-[var(--text-secondary)] mb-6">The room you're looking for doesn't exist.</p>
             <button
-              onClick={() => router.push(`/designer/projects/${projectId}`)}
+              onClick={() => router.push(`/project/${projectId}?view=media`)}
               className="bg-[var(--accent)] text-white px-6 py-3 rounded-lg hover:bg-[var(--accent)] transition-colors"
             >
               Back to Project
@@ -268,7 +268,7 @@ export default function RoomManagementPage() {
           >
             <div className="flex items-center gap-4 mb-6">
               <button
-                onClick={() => router.push(`/designer/projects/${projectId}`)}
+                onClick={() => router.push(`/project/${projectId}?view=media`)}
                 className="p-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
               >
                 <FaArrowLeft className="w-5 h-5" />

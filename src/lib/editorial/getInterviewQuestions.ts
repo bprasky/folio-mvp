@@ -292,11 +292,21 @@ export async function getInterviewQuestionsGroupedByRoom(
   }
 
   // Build image+tag counts per room
+  // Normalize slug-style room names (e.g. "dining_room") to match canonical names ("Dining Room")
+  const canonicalRoomNames = new Map<string, string>();
+  for (const room of project?.rooms ?? []) {
+    canonicalRoomNames.set(room.name.toLowerCase().replace(/_/g, ' ').trim(), room.name);
+  }
+
   const imageCountByRoom = new Map<string, number>();
   const tagCountByRoom = new Map<string, number>();
   for (const img of project?.images ?? []) {
     if (!img.room) continue;
-    const resolved = roomIdToName.get(img.room) || img.room;
+    let resolved = roomIdToName.get(img.room) || img.room;
+    // Normalize: if resolved is a slug like "dining_room", map to canonical "Dining Room"
+    const normalized = resolved.toLowerCase().replace(/_/g, ' ').trim();
+    const canonical = canonicalRoomNames.get(normalized);
+    if (canonical) resolved = canonical;
     imageCountByRoom.set(resolved, (imageCountByRoom.get(resolved) || 0) + 1);
     tagCountByRoom.set(resolved, (tagCountByRoom.get(resolved) || 0) + img.tags.length);
   }

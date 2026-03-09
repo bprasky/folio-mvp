@@ -531,8 +531,13 @@ export async function assessProjectContext(projectId: string): Promise<ProjectCo
     // Resolve: image.room may be a room ID (UUID) or a room name
     const resolvedName = roomIdToName.get(image.room) || image.room;
 
-    // Skip if this room is already in the map (by resolved name)
-    if (roomMap.has(resolvedName)) continue;
+    // Skip if this room is already in the map (by resolved name or normalized form)
+    // e.g. "dining_room" matches "Dining Room" after normalizing
+    const normalizedResolved = resolvedName.toLowerCase().replace(/_/g, ' ').trim();
+    const existingMatch = Array.from(roomMap.keys()).find(
+      k => k.toLowerCase().replace(/_/g, ' ').trim() === normalizedResolved
+    );
+    if (existingMatch) continue;
 
     // Skip UUIDs that don't resolve to a known room
     // (stale/orphaned references — not useful for question generation)
