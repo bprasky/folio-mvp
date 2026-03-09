@@ -69,13 +69,23 @@ export interface RoomInterviewFlowState {
   followUpsGeneratedInRoom: number;
   maxFollowUpsInRoom: number;
 
+  /** Current round (1 = base, 2+ = follow-up) for the current room */
+  currentRound: number;
+
+  /** True while waiting for batch follow-up generation between rounds */
+  pendingRoundTransition: boolean;
+
   // Actions
   advanceQuestion: () => void;
   skipRoom: () => void;
   recordAnswer: (questionId: string) => void;
   goToRoom: (roomIndex: number) => void;
-  /** Insert follow-up questions into the current room's question queue */
+  /** Insert follow-up questions into the current room's question queue (legacy single mode) */
   insertFollowUpQuestions: (questions: InterviewQuestion[]) => void;
+  /** Insert batch follow-up questions for the next round */
+  insertRoundQuestions: (questions: InterviewQuestion[]) => void;
+  /** Complete a round transition (when no follow-ups generated or room doesn't qualify) */
+  completeRoundTransition: () => void;
   initFromSavedState: (
     answeredQuestionIds: Set<string>,
     savedProgress: RoomProgressMap | null,
@@ -112,6 +122,10 @@ export function useRoomInterviewFlow(
   const [followUpCounts, setFollowUpCounts] = useState<Record<string, number>>({});
   // Dynamic question lists per room (base + inserted follow-ups)
   const [roomQuestionOverrides, setRoomQuestionOverrides] = useState<Record<string, InterviewQuestion[]>>({});
+
+  // Round-based follow-up tracking
+  const [roomRound, setRoomRound] = useState<Record<string, number>>({}); // roomId → current round (1, 2, 3)
+  const [pendingRoundTransition, setPendingRoundTransition] = useState(false);
 
   // Derived values
   const currentRoom = rooms[currentRoomIndex] ?? null;
@@ -188,6 +202,12 @@ export function useRoomInterviewFlow(
     return currentRoom.budget.maxFollowUps;
   }, [currentRoom]);
 
+  // Current round for the active room (1 = base, 2+ = follow-up)
+  const currentRound = useMemo(() => {
+    if (!currentRoom) return 1;
+    return roomRound[currentRoom.roomId] || 1;
+  }, [currentRoom, roomRound]);
+
   // Active warnings (rooms with 3+ images/5+ tags and zero answers)
   const activeWarnings = useMemo(() => {
     return globalGates.warnings.filter((w) => {
@@ -254,7 +274,36 @@ export function useRoomInterviewFlow(
     [rooms, roomProgress],
   );
 
-  // Advance to next question in room, or next room if done
+  // Helper: finalize room and move to next
+  const finalizeRoomAndAdvance = useCallback(() => {
+    if (currentRoom) {
+      setRoomProgress((prev) => ({
+        ...prev,
+        [currentRoom.roomId]: {
+          ...prev[currentRoom.roomId],
+          status: "complete",
+        },
+      }));
+    }
+
+    // Check if we should enter cross-room phase
+    const newCompletedCount = completedRoomCount + 1;
+    if (newCompletedCount >= 3 && crossRoomQuestions.length > 0 && !crossRoomPhase) {
+      setCrossRoomPhase(true);
+      setCrossRoomQuestionIndex(0);
+      return;
+    }
+
+    // Move to next room
+    const nextIdx = findNextRoom(currentRoomIndex + 1);
+    if (nextIdx !== null) {
+      setCurrentRoomIndex(nextIdx);
+      setCurrentQuestionIndex(0);
+    }
+    // If no next room, canFinish will be true and the UI shows "Finish interview"
+  }, [currentRoom, completedRoomCount, crossRoomQuestions.length, crossRoomPhase, currentRoomIndex, findNextRoom]);
+
+  // Advance to next question in room, or trigger round transition / next room
   const advanceQuestion = useCallback(() => {
     if (crossRoomPhase) {
       if (crossRoomQuestionIndex < crossRoomQuestions.length - 1) {
@@ -265,35 +314,20 @@ export function useRoomInterviewFlow(
     }
 
     if (currentQuestionIndex < totalQuestionsInRoom - 1) {
-      // More questions in current room
+      // More questions in current room/round
       setCurrentQuestionIndex((i) => i + 1);
     } else {
-      // Room done — mark complete
-      if (currentRoom) {
-        setRoomProgress((prev) => ({
-          ...prev,
-          [currentRoom.roomId]: {
-            ...prev[currentRoom.roomId],
-            status: "complete",
-          },
-        }));
-      }
+      // All questions in current round answered — check if we should generate more rounds
+      const round = currentRoom ? (roomRound[currentRoom.roomId] || 1) : 1;
 
-      // Check if we should enter cross-room phase
-      const newCompletedCount = completedRoomCount + 1;
-      if (newCompletedCount >= 3 && crossRoomQuestions.length > 0 && !crossRoomPhase) {
-        setCrossRoomPhase(true);
-        setCrossRoomQuestionIndex(0);
-        return;
+      if (round <= 2) {
+        // Round 1 or 2 just finished — signal round transition for batch follow-up generation
+        // InterviewModal will call the batch endpoint and then call insertRoundQuestions or completeRoundTransition
+        setPendingRoundTransition(true);
+      } else {
+        // Round 3+ done — room is truly complete
+        finalizeRoomAndAdvance();
       }
-
-      // Move to next room
-      const nextIdx = findNextRoom(currentRoomIndex + 1);
-      if (nextIdx !== null) {
-        setCurrentRoomIndex(nextIdx);
-        setCurrentQuestionIndex(0);
-      }
-      // If no next room, canFinish will be true and the UI shows "Finish interview"
     }
   }, [
     crossRoomPhase,
@@ -302,9 +336,8 @@ export function useRoomInterviewFlow(
     currentQuestionIndex,
     totalQuestionsInRoom,
     currentRoom,
-    completedRoomCount,
-    currentRoomIndex,
-    findNextRoom,
+    roomRound,
+    finalizeRoomAndAdvance,
   ]);
 
   // Skip current room
@@ -384,6 +417,57 @@ export function useRoomInterviewFlow(
     [currentRoom, currentQuestionIndex, followUpCounts],
   );
 
+  // Insert batch follow-up questions for the next round (round-based flow).
+  // Appends questions to end of the room's question list and advances the round counter.
+  const insertRoundQuestions = useCallback(
+    (questions: InterviewQuestion[]) => {
+      if (!currentRoom || questions.length === 0) {
+        // No follow-ups generated — complete the transition
+        setPendingRoundTransition(false);
+        finalizeRoomAndAdvance();
+        return;
+      }
+
+      const roomId = currentRoom.roomId;
+      const round = roomRound[roomId] || 1;
+
+      // Advance round counter
+      setRoomRound((prev) => ({ ...prev, [roomId]: round + 1 }));
+
+      // Append follow-ups to end of the room's question list
+      setRoomQuestionOverrides((prev) => {
+        const currentList = prev[roomId] || currentRoom.questions;
+        return { ...prev, [roomId]: [...currentList, ...questions] };
+      });
+
+      // Update totalQuestions in room progress
+      setRoomProgress((prev) => {
+        const current = prev[roomId];
+        if (!current) return prev;
+        return {
+          ...prev,
+          [roomId]: {
+            ...current,
+            totalQuestions: current.totalQuestions + questions.length,
+          },
+        };
+      });
+
+      // Advance to the first follow-up question (next after current last)
+      setCurrentQuestionIndex((prev) => prev + 1);
+
+      // Clear transition state
+      setPendingRoundTransition(false);
+    },
+    [currentRoom, roomRound, finalizeRoomAndAdvance],
+  );
+
+  // Complete a round transition without adding questions (room is done).
+  const completeRoundTransition = useCallback(() => {
+    setPendingRoundTransition(false);
+    finalizeRoomAndAdvance();
+  }, [finalizeRoomAndAdvance]);
+
   // Initialize from saved state (resume)
   const initFromSavedState = useCallback(
     (answeredQuestionIds: Set<string>, savedProgress: RoomProgressMap | null) => {
@@ -453,6 +537,8 @@ export function useRoomInterviewFlow(
     remainingInRoom,
     followUpsGeneratedInRoom,
     maxFollowUpsInRoom,
+    currentRound,
+    pendingRoundTransition,
     minimumTotalAnswers: globalGates.minimumTotalAnswers,
     totalAnswerCount,
     hasStarted,
@@ -461,6 +547,8 @@ export function useRoomInterviewFlow(
     recordAnswer,
     goToRoom,
     insertFollowUpQuestions,
+    insertRoundQuestions,
+    completeRoundTransition,
     initFromSavedState,
   };
 }

@@ -13,6 +13,10 @@ interface RoomProgressBarProps {
   currentRoomIndex: number;
   currentQuestionInRoom: number;
   totalQuestionsInRoom: number;
+  /** Current round (1 = base questions, 2+ = follow-up rounds) */
+  currentRound?: number;
+  /** Number of base questions in the current room (for follow-up offset) */
+  baseQuestionCount?: number;
 }
 
 function StatusIcon({ status }: { status: RoomProgressStatus }) {
@@ -57,6 +61,8 @@ export function RoomProgressBar({
   currentRoomIndex,
   currentQuestionInRoom,
   totalQuestionsInRoom,
+  currentRound = 1,
+  baseQuestionCount = 0,
 }: RoomProgressBarProps) {
   const currentRoom = rooms[currentRoomIndex];
 
@@ -88,8 +94,10 @@ export function RoomProgressBar({
       {/* Current room progress text */}
       {currentRoom && (
         <span className="text-xs text-[var(--text-secondary)] px-1">
-          {currentRoom.roomName} &mdash; {currentQuestionInRoom + 1} of{" "}
-          {totalQuestionsInRoom} questions
+          {currentRoom.roomName} &mdash;{" "}
+          {currentRound > 1 && baseQuestionCount > 0
+            ? `Follow-up ${currentQuestionInRoom + 1 - baseQuestionCount} of ${totalQuestionsInRoom - baseQuestionCount}`
+            : `${currentQuestionInRoom + 1} of ${totalQuestionsInRoom} questions`}
         </span>
       )}
     </div>
