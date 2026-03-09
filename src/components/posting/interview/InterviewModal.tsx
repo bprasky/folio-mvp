@@ -26,6 +26,7 @@ import { useRoomInterviewFlow } from "@/hooks/useRoomInterviewFlow";
 import { useBackgroundEvaluation } from "@/hooks/useBackgroundEvaluation";
 import { LinkedImagePreview } from "@/components/editorial/LinkedImagePreview";
 import { RoomProgressBar } from "./RoomProgressBar";
+import { computeRoundBudget } from "@/lib/editorial/roomPacing";
 import type { InterviewQuestion as ContextualQuestion } from "@/types/interview";
 
 interface InterviewModalProps {
@@ -719,6 +720,90 @@ export function InterviewModal({
     }
   }, [projectId, baseAnswers, allQuestions, selectedQuestions, morphedQuestions]);
 
+  // Round-based batch follow-up generation (triggered when pendingRoundTransition becomes true)
+  useEffect(() => {
+    if (!hasRoomPacing || !roomFlow.pendingRoundTransition || !roomFlow.currentRoom) return;
+
+    const generateBatchFollowUps = async () => {
+      setIsLoadingFollowUps(true);
+      try {
+        const round = roomFlow.currentRound;
+        const room = roomFlow.currentRoom!;
+        const tagCount = room.budget.tagCount;
+
+        // Gather this room's answers
+        const roomAnswers = baseAnswers
+          .filter((a) => {
+            const meta = questionMetadataMap.get(a.questionId);
+            return meta?.roomId === room.roomId;
+          })
+          .map((a) => ({
+            question: allQuestions.find((q) => q.id === a.questionId)?.prompt || '',
+            answer: a.answer,
+          }));
+
+        // Compute how many follow-ups for this round
+        const maxFollowUps = computeRoundBudget(round, roomAnswers.length, tagCount);
+
+        if (maxFollowUps === 0) {
+          roomFlow.completeRoundTransition();
+          return;
+        }
+
+        logClient('followups-batch:request', {
+          roomId: room.roomId,
+          roomName: room.roomName,
+          round,
+          maxFollowUps,
+          answerCount: roomAnswers.length,
+        });
+
+        const resp = await fetch(
+          `/api/posting/project/${projectId}/interview/followups/batch`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              roomId: room.roomId,
+              roomName: room.roomName,
+              previousAnswers: roomAnswers,
+              round,
+              maxFollowUps,
+            }),
+          }
+        );
+
+        const data = await resp.json();
+        logClient('followups-batch:response', {
+          ok: data?.ok,
+          followUpCount: data?.followUps?.length || 0,
+        });
+
+        if (data.followUps?.length > 0) {
+          const questions: ContextualQuestion[] = data.followUps.map((fu: any) => ({
+            id: fu.id,
+            questionText: fu.question,
+            questionType: 'follow_up' as const,
+            source: 'follow_up' as const,
+            roomId: room.roomId,
+            isCrossRoom: false,
+          }));
+          roomFlow.insertRoundQuestions(questions);
+        } else {
+          roomFlow.completeRoundTransition();
+        }
+      } catch (err) {
+        console.error('[InterviewModal] batch follow-up error:', err);
+        roomFlow.completeRoundTransition(); // Degrade gracefully
+      } finally {
+        setIsLoadingFollowUps(false);
+      }
+    };
+
+    generateBatchFollowUps();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roomFlow.pendingRoundTransition]);
+
   // Handle sequential question answer submission
   const handleQuestionAnswerSubmit = useCallback(async () => {
     if (!currentQuestion || !currentAnswer.trim()) {
@@ -752,20 +837,12 @@ export function InterviewModal({
       // Flush background evaluation results first (speculative, pre-computed while user typed)
       const bgUpdates = bgFlush();
 
-      // Phase B: Generate follow-ups + evaluate/morph remaining questions (authoritative)
-      const { followUps: generatedFollowUps, questionUpdates } = await generateSingleFollowUp(currentQuestion.id, answerData.answer);
-
-      // Room pacing: insert follow-ups into room question queue (additive to base budget)
-      if (hasRoomPacing && generatedFollowUps.length > 0) {
-        const followUpQuestions: ContextualQuestion[] = generatedFollowUps.map((fu) => ({
-          id: fu.id,
-          questionText: fu.prompt,
-          questionType: 'follow_up' as const,
-          source: 'follow_up' as const,
-          roomId: roomFlow.currentRoom?.roomId,
-          isCrossRoom: false,
-        }));
-        roomFlow.insertFollowUpQuestions(followUpQuestions);
+      // Follow-up generation: in room pacing mode, follow-ups are generated in batch
+      // between rounds (not per-answer). In legacy mode, use single follow-up generation.
+      let questionUpdates: QuestionUpdate[] = [];
+      if (!hasRoomPacing) {
+        const result = await generateSingleFollowUp(currentQuestion.id, answerData.answer);
+        questionUpdates = result.questionUpdates;
       }
 
       // Merge: background updates first, then submit-time overwrites (submit-time wins)
@@ -1584,6 +1661,8 @@ export function InterviewModal({
                     currentRoomIndex={roomFlow.currentRoomIndex}
                     currentQuestionInRoom={roomFlow.currentQuestionIndex}
                     totalQuestionsInRoom={roomFlow.totalQuestionsInRoom}
+                    currentRound={roomFlow.currentRound}
+                    baseQuestionCount={roomFlow.currentRoom?.budget.baseQuestions ?? 0}
                   />
                 </div>
               ) : (
@@ -1702,6 +1781,21 @@ export function InterviewModal({
           /* Question set loading / resolving — prevents blank screen during ID realignment */
           <div className="flex-1 flex items-center justify-center py-16">
             <div className="animate-spin rounded-full h-5 w-5 border-2 border-[var(--accent)] border-t-transparent" />
+          </div>
+        ) : phase === "question" && hasRoomPacing && roomFlow.pendingRoundTransition ? (
+          /* Round transition: generating batch follow-ups between rounds */
+          <div className="flex-1 flex flex-col items-center justify-center px-8 py-16">
+            <div className="max-w-md text-center space-y-4">
+              <p className="text-lg font-serif text-[var(--text-primary)]">
+                Great answers about your {roomFlow.currentRoom?.roomName || 'room'}.
+              </p>
+              <p className="text-sm text-[var(--text-secondary)]">
+                A couple more questions based on what you shared...
+              </p>
+              <div className="flex justify-center pt-2">
+                <div className="animate-spin rounded-full h-5 w-5 border-2 border-[var(--accent)] border-t-transparent" />
+              </div>
+            </div>
           </div>
         ) : phase === "question" && displayQuestion ? (
           /* Phase A: Sequential flow - question phase */

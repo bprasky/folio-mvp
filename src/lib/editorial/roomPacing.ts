@@ -82,6 +82,29 @@ export function computeRoomBudget(
 }
 
 // ---------------------------------------------------------------------------
+// Round-based follow-up budget (batch generation between rounds)
+//
+// Round 2: max(1, min(3, ceil(round1_answer_count * 0.5)))
+// Round 3: 1-2, only for rooms with 5+ tags
+// ---------------------------------------------------------------------------
+
+export function computeRoundBudget(
+  round: number,
+  roundAnswerCount: number,
+  tagCount: number,
+): number {
+  if (round === 1) {
+    // Generating round 2 follow-ups from round 1 answers
+    return Math.max(1, Math.min(3, Math.ceil(roundAnswerCount * 0.5)));
+  }
+  if (round === 2 && tagCount >= 5) {
+    // Round 3 deep follow-ups for rich rooms
+    return Math.min(2, Math.max(1, Math.ceil(roundAnswerCount * 0.4)));
+  }
+  return 0; // No more rounds
+}
+
+// ---------------------------------------------------------------------------
 // Global gates (Spec §3)
 // ---------------------------------------------------------------------------
 
