@@ -731,14 +731,17 @@ export function InterviewModal({
         const room = roomFlow.currentRoom!;
         const tagCount = room.budget.tagCount;
 
-        // Gather this room's answers
+        // Gather this room's answers using room flow's question list
+        // (includes base questions + any prior-round follow-ups)
+        const roomQuestionTextMap = new Map<string, string>();
+        for (const q of roomFlow.currentRoomQuestions) {
+          roomQuestionTextMap.set(q.id, q.questionText);
+        }
+
         const roomAnswers = baseAnswers
-          .filter((a) => {
-            const meta = questionMetadataMap.get(a.questionId);
-            return meta?.roomId === room.roomId;
-          })
+          .filter((a) => roomQuestionTextMap.has(a.questionId))
           .map((a) => ({
-            question: allQuestions.find((q) => q.id === a.questionId)?.prompt || '',
+            question: roomQuestionTextMap.get(a.questionId) || '',
             answer: a.answer,
           }));
 
@@ -749,6 +752,14 @@ export function InterviewModal({
           roomFlow.completeRoundTransition();
           return;
         }
+
+        console.log('[InterviewModal] followups-batch:answers', {
+          roomId: room.roomId,
+          roomName: room.roomName,
+          collectedAnswers: roomAnswers.length,
+          answerQuestionIds: baseAnswers.map(a => a.questionId),
+          roomQuestionIds: Array.from(roomQuestionTextMap.keys()),
+        });
 
         logClient('followups-batch:request', {
           roomId: room.roomId,

@@ -29,6 +29,9 @@ export interface RoomInterviewFlowState {
   /** Current question (convenience) */
   currentQuestion: InterviewQuestion | null;
 
+  /** Full question list for the current room (base + inserted follow-ups) */
+  currentRoomQuestions: InterviewQuestion[];
+
   /** Total questions in current room */
   totalQuestionsInRoom: number;
 
@@ -526,6 +529,7 @@ export function useRoomInterviewFlow(
     currentRoom,
     currentQuestionIndex,
     currentQuestion,
+    currentRoomQuestions,
     totalQuestionsInRoom,
     roomProgress,
     crossRoomPhase,
