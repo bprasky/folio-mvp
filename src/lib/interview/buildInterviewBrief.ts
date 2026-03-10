@@ -125,12 +125,15 @@ function aggregateByFrequency(
     .map(([value]) => value);
 }
 
+// Bump this version when the LLM prompt changes to invalidate cached briefs.
+const BRIEF_PROMPT_VERSION = 2;
+
 function computeBriefHash(
   imageCount: number,
   roomNames: string[],
   selectionIds: string[]
 ): string {
-  const input = `${imageCount}:${roomNames.sort().join(',')}:${selectionIds.sort().join(',')}`;
+  const input = `v${BRIEF_PROMPT_VERSION}:${imageCount}:${roomNames.sort().join(',')}:${selectionIds.sort().join(',')}`;
   return createHash('sha256').update(input).digest('hex').slice(0, 16);
 }
 
