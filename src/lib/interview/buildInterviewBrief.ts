@@ -541,6 +541,10 @@ Additionally, generate the interview questions based on your research brief.
 
 QUESTION COUNT: ${input.questionCount}
 
+ROOM DISTRIBUTION: The project has these rooms: ${input.project.rooms.join(', ')}.
+Generate at least 3 questions per room. Each question's "rooms" array must tag the relevant room by name.
+Ensure every room listed above has dedicated questions — do not leave any room without coverage.
+
 QUESTION RULES:
 1. Every question must reference a specific product, vendor, room, or material BY NAME
 2. Every question sets up an answer the designer would be proud to publish

@@ -542,8 +542,12 @@ export function InterviewModal({
   const isLastQuestion = hasRoomPacing
     ? roomFlow.currentQuestionIndex >= roomFlow.totalQuestionsInRoom - 1
     : currentQuestionIndex >= totalQuestions - 1;
+  // isInterviewComplete: true only when ALL rooms/rounds are done AND we're on the last question
+  const isInterviewComplete = hasRoomPacing
+    ? roomFlow.canFinish && isLastQuestion
+    : isLastQuestion;
   const isNearFinish = !isLastQuestion && totalQuestions > 1 && (hasRoomPacing
-    ? roomFlow.currentQuestionIndex >= roomFlow.totalQuestionsInRoom - 2
+    ? roomFlow.canFinish && roomFlow.currentQuestionIndex >= roomFlow.totalQuestionsInRoom - 2
     : currentQuestionIndex >= totalQuestions - 2);
 
   // Auto-generate: when the last question answer is saved, trigger generation automatically
@@ -1932,6 +1936,7 @@ export function InterviewModal({
               isGenerating={isGenerating}
               isLoadingFollowUps={isLoadingFollowUps}
               isLastQuestion={isLastQuestion}
+              isInterviewComplete={isInterviewComplete}
               isNearFinish={isNearFinish}
               generationProgressMessage={isGenerating ? GENERATION_MESSAGES[generationStep] : undefined}
               generationAttempts={generationAttempts}
