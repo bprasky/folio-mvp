@@ -14,6 +14,7 @@ interface FooterBarProps {
   isGenerating?: boolean;
   isLoadingFollowUps?: boolean;
   isLastQuestion?: boolean;
+  isInterviewComplete?: boolean;
   isNearFinish?: boolean;
   generationProgressMessage?: string;
   generationAttempts?: number;
@@ -31,6 +32,7 @@ export function FooterBar({
   isGenerating = false,
   isLoadingFollowUps = false,
   isLastQuestion = false,
+  isInterviewComplete = false,
   isNearFinish = false,
   generationProgressMessage,
   generationAttempts = 0,
@@ -75,14 +77,14 @@ export function FooterBar({
                   {isLoadingFollowUps ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                      Generating follow-ups...
+                      Loading follow-ups...
                     </>
                   ) : isSubmitting ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
                       Saving...
                     </>
-                  ) : isLastQuestion ? (
+                  ) : isInterviewComplete && isLastQuestion ? (
                     <>
                       Finish & Generate Story
                       <span className="text-xs opacity-75 ml-1">(⌘+Enter)</span>
