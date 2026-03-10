@@ -319,6 +319,15 @@ export async function getInterviewQuestionsGroupedByRoom(
     projectId,
   });
 
+  // Diagnostic: what the LLM returned
+  console.info('[QUESTION_GEN] LLM returned', {
+    total: contextualQuestions.length,
+    perRoom: contextualQuestions.reduce((acc, q) => {
+      for (const r of q.rooms || ['_untagged']) acc[r] = (acc[r] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>),
+  });
+
   // Convert to InterviewQuestion format
   const allQuestions: InterviewQuestion[] = contextualQuestions.map((q) => {
     const converted = toInterviewQuestion(q);
@@ -366,7 +375,15 @@ export async function getInterviewQuestionsGroupedByRoom(
     if (roomBuckets.has(roomTag)) return roomTag;
     // Normalized match
     const canonical = normalizedToCanonical.get(normalizeRoomName(roomTag));
-    return canonical ?? null;
+    if (canonical) return canonical;
+    // Partial match: "Dining" → "Dining Room", "Bath" → "Primary Bathroom"
+    const normalizedTag = normalizeRoomName(roomTag);
+    for (const [normalizedCanonical, canonicalName] of normalizedToCanonical) {
+      if (normalizedCanonical.includes(normalizedTag) || normalizedTag.includes(normalizedCanonical)) {
+        return canonicalName;
+      }
+    }
+    return null;
   };
 
   // Initialize buckets for known rooms
@@ -396,6 +413,13 @@ export async function getInterviewQuestionsGroupedByRoom(
       crossRoomQuestions.push(q);
     }
   }
+
+  // Diagnostic: room distribution after bucketing
+  console.info('[QUESTION_GEN] Room distribution', {
+    buckets: Object.fromEntries([...roomBuckets].map(([k, v]) => [k, v.length])),
+    globalOpeners: globalOpeners.length,
+    crossRoom: crossRoomQuestions.length,
+  });
 
   // 5. Build room groups with budgets, trim to budget
   const roomGroups: RoomQuestionsGroup[] = [];
@@ -446,6 +470,16 @@ export async function getInterviewQuestionsGroupedByRoom(
       tagCount: tgCount,
     });
   }
+
+  // Diagnostic: budget vs assigned per room
+  console.info('[QUESTION_GEN] Budget check', {
+    rooms: roomGroups.map(g => ({
+      name: g.roomName,
+      budget: g.budget.baseQuestions,
+      assigned: g.questions.length,
+      deficit: g.budget.baseQuestions - g.questions.length,
+    })),
+  });
 
   // 6. Compute global gates
   const globalGates = computeGlobalGates(gateRooms);

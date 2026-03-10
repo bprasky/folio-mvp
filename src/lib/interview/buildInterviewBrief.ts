@@ -12,6 +12,7 @@ import { createHash } from 'crypto';
 import Anthropic from '@anthropic-ai/sdk';
 import { prisma } from '@/lib/prisma';
 import { assessProjectContext, classifyProjectSize, type ProjectContext } from './contextLevel';
+import { computeRoomBudget } from '@/lib/editorial/roomPacing';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -387,6 +388,14 @@ export async function buildInterviewBrief(
   const questionCount = options?.questionCount ?? projectSize.targetQuestionCount;
   const budgetBand = classifyBudgetBand(project.selections);
 
+  // Compute per-room question budgets for the LLM prompt
+  const roomBudgets = project.rooms.map((room) => {
+    const imgCount = project.images.filter((img) => img.room === room.id || img.room === room.name).length;
+    const selCount = project.selections.filter((s) => s.roomId === room.id).length;
+    const budget = computeRoomBudget(imgCount, selCount);
+    return { name: room.name, questionCount: budget.baseQuestions, selectionCount: selCount };
+  });
+
   const narrativeBrief = await generateNarrativeBrief({
     project: {
       title: project.title || 'Untitled',
@@ -406,6 +415,7 @@ export async function buildInterviewBrief(
     vendorMap,
     designerContext,
     budgetBand,
+    roomBudgets,
     generateQuestions,
     questionCount,
   });
@@ -487,6 +497,7 @@ interface SynthesisInput {
   budgetBand: string;
   generateQuestions: boolean;
   questionCount: number;
+  roomBudgets?: Array<{ name: string; questionCount: number; selectionCount: number }>;
 }
 
 async function generateNarrativeBrief(
@@ -541,9 +552,14 @@ Additionally, generate the interview questions based on your research brief.
 
 QUESTION COUNT: ${input.questionCount}
 
-ROOM DISTRIBUTION: The project has these rooms: ${input.project.rooms.join(', ')}.
-Generate at least 3 questions per room. Each question's "rooms" array must tag the relevant room by name.
-Ensure every room listed above has dedicated questions — do not leave any room without coverage.
+ROOM DISTRIBUTION — generate this many questions per room:
+${input.roomBudgets
+  ? input.roomBudgets.map(r =>
+      `- ${r.name} (${r.selectionCount} tagged products): ${r.questionCount} questions`
+    ).join('\n')
+  : input.project.rooms.map(r => `- ${r}: 3 questions`).join('\n')}
+Each question's "rooms" array MUST contain exactly one room name matching the list above.
+Every room MUST receive its full question count. Do not leave any room short.
 
 QUESTION RULES:
 1. Every question must reference a specific product, vendor, room, or material BY NAME
