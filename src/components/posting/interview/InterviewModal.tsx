@@ -731,16 +731,26 @@ export function InterviewModal({
         const room = roomFlow.currentRoom!;
         const tagCount = room.budget.tagCount;
 
-        // Gather this room's answers
+        // Gather this room's answers — use the room's own question list
+        // to match answer questionIds. The questionMetadataMap is built from a
+        // separate (non-grouped) API call with different question IDs, so it
+        // cannot be used to resolve roomId for room-paced questions.
+        const roomQuestionMap = new Map(
+          roomFlow.currentRoomQuestions.map(q => [q.id, q.questionText])
+        );
         const roomAnswers = baseAnswers
-          .filter((a) => {
-            const meta = questionMetadataMap.get(a.questionId);
-            return meta?.roomId === room.roomId;
-          })
+          .filter((a) => roomQuestionMap.has(a.questionId))
           .map((a) => ({
-            question: allQuestions.find((q) => q.id === a.questionId)?.prompt || '',
+            question: roomQuestionMap.get(a.questionId) || '',
             answer: a.answer,
           }));
+
+        console.log('[InterviewModal] followups-batch:answers', {
+          roomId: room.roomId,
+          roomName: room.roomName,
+          collectedAnswers: roomAnswers.length,
+          answerRoomIds: baseAnswers.map(a => roomQuestionMap.has(a.questionId) ? room.roomId : 'none'),
+        });
 
         // Compute how many follow-ups for this round
         const maxFollowUps = computeRoundBudget(round, roomAnswers.length, tagCount);

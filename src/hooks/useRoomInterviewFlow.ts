@@ -65,6 +65,9 @@ export interface RoomInterviewFlowState {
   /** Has the interview started (at least 1 room with answers)? */
   hasStarted: boolean;
 
+  /** Full question list for the current room (base + inserted follow-ups) */
+  currentRoomQuestions: InterviewQuestion[];
+
   /** Per-room follow-up tracking: how many follow-ups generated vs budget */
   followUpsGeneratedInRoom: number;
   maxFollowUpsInRoom: number;
@@ -526,6 +529,7 @@ export function useRoomInterviewFlow(
     currentRoom,
     currentQuestionIndex,
     currentQuestion,
+    currentRoomQuestions,
     totalQuestionsInRoom,
     roomProgress,
     crossRoomPhase,
