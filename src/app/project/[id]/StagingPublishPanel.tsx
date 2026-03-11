@@ -11,11 +11,13 @@ import {
   RefreshCw,
   Eye,
   AlertCircle,
+  Tag,
 } from "lucide-react";
 import { usePublishFlow } from "@/hooks/usePublishFlow";
 import { ImmersiveProjectPage } from "@/components/project/ImmersiveProjectPage";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import { InterviewModal } from "@/components/posting/interview/InterviewModal";
+import { ProjectImageTagger } from "@/components/project/ProjectImageTagger";
 import type { EditorialState } from "@/lib/editorial/getEditorialState";
 
 interface ProductTag {
@@ -81,6 +83,7 @@ export default function StagingPublishPanel({
   const [checklistExpanded, setChecklistExpanded] = useState(false);
   const [showUnpublishDialog, setShowUnpublishDialog] = useState(false);
   const [showInterviewModal, setShowInterviewModal] = useState(false);
+  const [showTagger, setShowTagger] = useState(false);
 
   const isPublishedStatus = initialPostData?.status === "PUBLISHED" || publishSuccess;
   const slug = initialPostData?.slug || publishedSlug;
@@ -233,6 +236,36 @@ export default function StagingPublishPanel({
         </div>
       )}
 
+      {/* PRODUCT TAG REVIEW — Entry Point C */}
+      {!isPublishedStatus && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-3">
+          {hasTags ? (
+            <div className="flex items-center gap-3">
+              <Tag className="w-4 h-4 text-[var(--accent)] shrink-0" />
+              <span className="folio-meta text-[var(--text-secondary)]">
+                {taggedCount} {taggedCount === 1 ? "image" : "images"} tagged
+              </span>
+              <button
+                onClick={() => setShowTagger(true)}
+                className="folio-meta text-[var(--accent)] hover:text-[var(--accent-hover)] underline transition-colors"
+              >
+                Edit Tags
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowTagger(true)}
+              className="flex items-center gap-2 p-3 w-full rounded-xl border border-dashed border-[var(--border-default)] hover:border-[var(--accent)] hover:bg-[var(--accent)]/5 transition-all text-left"
+            >
+              <Tag className="w-4 h-4 text-[var(--text-tertiary)] shrink-0" />
+              <span className="folio-meta text-[var(--text-secondary)]">
+                No products tagged yet. Tag now to enrich your editorial.
+              </span>
+            </button>
+          )}
+        </div>
+      )}
+
       {/* GENERATED STORY TITLE — surfaced above the preview */}
       {(currentLead?.kicker || currentLead?.title) && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-2">
@@ -342,6 +375,7 @@ export default function StagingPublishPanel({
                   done={hasTags}
                   label={`Products tagged${hasTags ? ` (${taggedCount})` : ""}`}
                   required
+                  onClick={() => setShowTagger(true)}
                 />
                 <ReadinessItem done={hasCover} label="Cover image selected" required />
                 <ReadinessItem done={hasReflections} label="Story reflections added" recommended />
@@ -365,6 +399,17 @@ export default function StagingPublishPanel({
           router.refresh();
         }}
       />
+
+      {/* ProjectImageTagger — Entry Point C: post-interview tag editing */}
+      {showTagger && (
+        <ProjectImageTagger
+          projectId={projectId}
+          onClose={() => {
+            setShowTagger(false);
+            router.refresh();
+          }}
+        />
+      )}
 
       {/* Unpublish confirmation dialog */}
       <ConfirmDialog
@@ -420,14 +465,16 @@ function ReadinessItem({
   label,
   required,
   recommended,
+  onClick,
 }: {
   done: boolean;
   label: string;
   required?: boolean;
   recommended?: boolean;
+  onClick?: () => void;
 }) {
-  return (
-    <div className="flex items-center gap-2 py-0.5">
+  const content = (
+    <>
       {done ? (
         <CheckCircle2 className="w-4 h-4 text-[var(--accent)] shrink-0" />
       ) : (
@@ -443,6 +490,23 @@ function ReadinessItem({
       {recommended && !done && (
         <span className="folio-meta text-[var(--text-tertiary)]">(recommended)</span>
       )}
+    </>
+  );
+
+  if (onClick) {
+    return (
+      <button
+        onClick={onClick}
+        className="flex items-center gap-2 py-0.5 hover:text-[var(--accent)] transition-colors cursor-pointer"
+      >
+        {content}
+      </button>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-2 py-0.5">
+      {content}
     </div>
   );
 }

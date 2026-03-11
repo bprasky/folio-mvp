@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronDown, ChevronUp, Sparkles, MapPin, ImageIcon, LayoutGrid } from "lucide-react";
+import { ChevronDown, ChevronUp, Sparkles, MapPin, ImageIcon, LayoutGrid, Tag } from "lucide-react";
 import { usePublishFlow } from "@/hooks/usePublishFlow";
 import { InterviewModal } from "@/components/posting/interview/InterviewModal";
+import { FinishScheduleOptionsModal } from "@/components/posting/FinishScheduleOptionsModal";
+import { ProjectImageTagger } from "@/components/project/ProjectImageTagger";
 import type { EditorialState } from "@/lib/editorial/getEditorialState";
 
 interface GuidedPublishFlowProps {
@@ -42,14 +44,62 @@ export default function GuidedPublishFlow({ project, imageCount, images, project
   const flow = usePublishFlow(project.id);
   const [summaryExpanded, setSummaryExpanded] = useState(true);
   const [showInterviewModal, setShowInterviewModal] = useState(false);
+  const [showFinishScheduleModal, setShowFinishScheduleModal] = useState(false);
+  const [showSkipDecision, setShowSkipDecision] = useState(false);
+  const [showTagger, setShowTagger] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [tagCount, setTagCount] = useState(0);
 
   const roomCount = project.rooms?.length || 0;
   const location = [project.city, project.regionState].filter(Boolean).join(", ");
   const typeLabel = PROJECT_TYPE_LABELS[project.projectType || ""] || project.projectType || "";
 
+  // Fetch tag count on mount and after tagger closes
+  const fetchTagCount = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/tag-product-to-image?projectId=${project.id}`);
+      if (res.ok) {
+        const tags = await res.json();
+        setTagCount(Array.isArray(tags) ? tags.length : 0);
+      }
+    } catch {
+      // ignore
+    }
+  }, [project.id]);
+
+  useEffect(() => {
+    fetchTagCount();
+  }, [fetchTagCount]);
+
   function handleOpenInterview() {
+    // Entry Point A: show finish schedule gate before interview
+    setShowFinishScheduleModal(true);
+  }
+
+  function handleFinishScheduleComplete(option: 'uploaded' | 'later' | 'skip') {
+    setShowFinishScheduleModal(false);
+    if (option === 'skip') {
+      // Show decision branch: continue to interview or tag manually
+      setShowSkipDecision(true);
+    } else {
+      // 'uploaded' or 'later' → proceed to interview
+      setShowInterviewModal(true);
+    }
+  }
+
+  function handleSkipDecisionInterview() {
+    setShowSkipDecision(false);
     setShowInterviewModal(true);
+  }
+
+  function handleSkipDecisionTag() {
+    setShowSkipDecision(false);
+    setShowTagger(true);
+  }
+
+  function handleTaggerClose() {
+    setShowTagger(false);
+    fetchTagCount();
   }
 
   async function handleGenerateStory() {
@@ -145,6 +195,31 @@ export default function GuidedPublishFlow({ project, imageCount, images, project
 
       {/* Publish CTAs — state-driven (spec: 17_EDITORIAL_FLOW_SPEC.md §2)
           Only EMPTY and INTERVIEWED render here; GENERATED/UNPUBLISHED use the Publish tab. */}
+      {/* Skip decision branch — shown after declining finish schedule upload */}
+      {showSkipDecision && (
+        <div className="rounded-[20px] border border-[var(--border-default)] bg-[var(--bg-elevated)] p-6 space-y-3">
+          <h4 className="folio-ui font-semibold text-[var(--text-primary)]">What would you like to do?</h4>
+          <p className="folio-meta text-[var(--text-secondary)]">
+            You can tag products on your images now, or go straight to the interview.
+          </p>
+          <div className="flex gap-3">
+            <button
+              onClick={handleSkipDecisionInterview}
+              className="flex-1 px-4 py-3 folio-ui font-semibold text-white bg-[var(--accent)] rounded-2xl hover:bg-[var(--accent-hover)] transition-colors"
+            >
+              Continue to Interview
+            </button>
+            <button
+              onClick={handleSkipDecisionTag}
+              className="flex-1 px-4 py-3 folio-ui font-medium text-[var(--text-primary)] bg-[var(--bg-base)] border border-[var(--border-default)] rounded-2xl hover:bg-[var(--bg-elevated)] transition-colors flex items-center justify-center gap-2"
+            >
+              <Tag className="w-4 h-4" />
+              Tag Products First
+            </button>
+          </div>
+        </div>
+      )}
+
       {editorialState === 'INTERVIEWED' ? (
         <div className="flex gap-3">
           <button
@@ -171,12 +246,34 @@ export default function GuidedPublishFlow({ project, imageCount, images, project
         </button>
       )}
 
+      {/* Entry Point B: Tag Products secondary button — always visible */}
+      <button
+        onClick={() => setShowTagger(true)}
+        className="w-full px-4 py-3 folio-ui font-medium text-[var(--text-secondary)] bg-transparent border border-[var(--border-default)] rounded-2xl hover:bg-[var(--bg-elevated)] transition-colors flex items-center justify-center gap-2"
+      >
+        <Tag className="w-4 h-4" />
+        Tag Products
+        {tagCount > 0 && (
+          <span className="ml-1 px-2 py-0.5 text-xs rounded-full bg-[var(--accent)]/10 text-[var(--accent)]">
+            {tagCount} tagged
+          </span>
+        )}
+      </button>
+
       {/* Error */}
       {flow.error && (
         <div className="p-4 bg-stone-100 border border-stone-300 text-[rgb(74,44,59)] rounded-[20px] folio-ui">
           {flow.error}
         </div>
       )}
+
+      {/* Entry Point A: Finish Schedule gate — shown before interview */}
+      <FinishScheduleOptionsModal
+        open={showFinishScheduleModal}
+        onOpenChange={setShowFinishScheduleModal}
+        projectId={project.id}
+        onComplete={handleFinishScheduleComplete}
+      />
 
       {/* Interview Modal — the guided interview is the path to publishing */}
       <InterviewModal
@@ -188,6 +285,14 @@ export default function GuidedPublishFlow({ project, imageCount, images, project
         post={projectPost}
         onDraftGenerated={handleDraftGenerated}
       />
+
+      {/* ProjectImageTagger — opened from skip decision or Tag Products button */}
+      {showTagger && (
+        <ProjectImageTagger
+          projectId={project.id}
+          onClose={handleTaggerClose}
+        />
+      )}
     </div>
   );
 }

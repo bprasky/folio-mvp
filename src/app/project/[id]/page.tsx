@@ -282,6 +282,22 @@ export default async function ProjectPage({
               projectId={sanitizedProject.id}
               project={sanitizedProject}
               imageCount={base.images.length}
+              images={base.images.map(img => ({
+                id: img.id,
+                url: img.url,
+                room: img.room ?? null,
+                tags: img.tags.map(tag => ({
+                  id: tag.id,
+                  x: tag.x,
+                  y: tag.y,
+                  productId: tag.productId,
+                  product: tag.product ? {
+                    id: tag.product.id,
+                    name: tag.product.name,
+                    imageUrl: tag.product.imageUrl ?? null,
+                  } : null,
+                })),
+              }))}
             />
           )}
         </main>
