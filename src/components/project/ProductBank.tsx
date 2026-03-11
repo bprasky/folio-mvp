@@ -114,19 +114,6 @@ export function ProductBank({ post, supplementalQuotes = [] }: ProductBankProps)
     return Array.from(productMap.values());
   }, [post?.project?.images]);
 
-  // Debug: log product data to verify tag positions
-  useEffect(() => {
-    if (products.length > 0) {
-      console.log('[ProductBank] Product data:', products.map(p => ({
-        name: p.name.slice(0, 30),
-        tagX: p.tagX,
-        tagY: p.tagY,
-        sourceImage: p.sourceImageUrl?.slice(-30),
-        cropUrl: p.cropUrl?.slice(-30),
-      })));
-    }
-  }, [products]);
-
   // Group supplemental quotes by productTagId
   const quotesByTagId = useMemo(() => {
     const map = new Map<string, SupplementalQuote[]>();
@@ -194,24 +181,28 @@ export function ProductBank({ post, supplementalQuotes = [] }: ProductBankProps)
 
   const hasMultipleRooms = roomGroups.size > 1;
 
-  // Auto-trigger batch crop generation for existing projects without crops
+  // Auto-trigger batch crop generation for projects with products from source images
   const projectId = post?.projectId || post?.project?.id;
-  const hasMissingCrops = products.some((p) => !p.cropUrl && p.sourceImageUrl);
+  const hasProductsFromImages = products.some((p) => p.sourceImageUrl);
   const cropTriggerRef = useRef(false);
 
   useEffect(() => {
-    if (!projectId || !hasMissingCrops || cropTriggerRef.current) return;
+    if (!projectId || !hasProductsFromImages || cropTriggerRef.current) return;
     cropTriggerRef.current = true;
 
-    fetch(`/api/projects/${projectId}/generate-crops`, { method: "POST" })
+    fetch(`/api/projects/${projectId}/generate-crops`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ force: products.some((p) => p.cropUrl) }),
+    })
       .then((res) => res.json())
       .then((data) => {
         if (data.generated > 0) {
-          console.log(`[ProductBank] Generated ${data.generated} crops for project ${projectId}`);
+          console.log(`[ProductBank] Regenerated ${data.generated} crops`);
         }
       })
-      .catch((err) => console.error("[ProductBank] Crop generation failed:", err));
-  }, [projectId, hasMissingCrops]);
+      .catch(() => {});
+  }, [projectId, hasProductsFromImages]);
 
   if (products.length === 0) {
     return (
@@ -443,7 +434,7 @@ function ProductCard({
                 style={{
                   backgroundImage: `url(${product.sourceImageUrl})`,
                   backgroundSize: "220%",
-                  backgroundPosition: `${(product.tagX ?? 0.5) * 100}% ${(product.tagY ?? 0.5) * 100}%`,
+                  backgroundPosition: `${product.tagX ?? 50}% ${product.tagY ?? 50}%`,
                   backgroundRepeat: "no-repeat",
                 }}
               />
@@ -526,7 +517,7 @@ function ProductDetail({
           style={{
             backgroundImage: `url(${product.sourceImageUrl})`,
             backgroundSize: "200%",
-            backgroundPosition: `${(product.tagX ?? 0.5) * 100}% ${(product.tagY ?? 0.5) * 100}%`,
+            backgroundPosition: `${product.tagX ?? 50}% ${product.tagY ?? 50}%`,
             backgroundRepeat: "no-repeat",
           }}
         />
@@ -585,8 +576,8 @@ function ProductDetail({
               <div
                 className="absolute w-2 h-2 rounded-full bg-white shadow-md border border-stone-300"
                 style={{
-                  left: `${product.tagX * 100}%`,
-                  top: `${product.tagY * 100}%`,
+                  left: `${product.tagX}%`,
+                  top: `${product.tagY}%`,
                   transform: "translate(-50%, -50%)",
                 }}
               />

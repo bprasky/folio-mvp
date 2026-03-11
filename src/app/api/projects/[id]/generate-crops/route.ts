@@ -59,11 +59,20 @@ export async function POST(
       );
     }
 
-    // Find all tags for this project that don't have a crop yet
+    // Check for force regeneration flag
+    let force = false;
+    try {
+      const body = await request.json();
+      force = body?.force === true;
+    } catch {
+      // No body is fine
+    }
+
+    // Find tags to process (all tags if force, otherwise only those without crops)
     const tags = await prisma.productTag.findMany({
       where: {
         image: { projectId },
-        cropUrl: null,
+        ...(force ? {} : { cropUrl: null }),
       },
       include: {
         image: {
