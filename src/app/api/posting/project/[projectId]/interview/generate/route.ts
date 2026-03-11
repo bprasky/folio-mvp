@@ -2436,6 +2436,58 @@ export async function POST(
       }
     }
 
+    // Fire-and-forget: generate contextual crops for product tags without crops
+    try {
+      const { generateProductCrop } = await import("@/lib/crops/generateProductCrop");
+      const { uploadCrop } = await import("@/lib/crops/uploadCrop");
+      const { getCategoryDefaultScale } = await import("@/lib/crops/categoryDefaults");
+
+      const uncropped = await prisma.productTag.findMany({
+        where: { image: { projectId }, cropUrl: null },
+        include: {
+          image: { select: { id: true, url: true, projectId: true } },
+          product: { select: { id: true, category: true } },
+        },
+      });
+
+      if (uncropped.length > 0) {
+        console.log(`[generate] Queueing crop generation for ${uncropped.length} tags`, { projectId, _cid });
+        // Run in background — don't await, don't block the response
+        (async () => {
+          let generated = 0;
+          // Process 3 at a time
+          for (let i = 0; i < uncropped.length; i += 3) {
+            const batch = uncropped.slice(i, i + 3);
+            const results = await Promise.allSettled(
+              batch.map(async (tag) => {
+                const crop = await generateProductCrop({
+                  tag: { x: tag.x, y: tag.y, category: tag.product.category },
+                  sourceImageUrl: tag.image.url,
+                });
+                await uploadCrop({ buffer: crop.buffer, tagId: tag.id, projectId: tag.image.projectId });
+                await prisma.productTag.update({
+                  where: { id: tag.id },
+                  data: {
+                    cropX: tag.x,
+                    cropY: tag.y,
+                    cropScale: getCategoryDefaultScale(tag.product.category),
+                    cropAspect: "1:1",
+                  },
+                });
+              })
+            );
+            generated += results.filter((r) => r.status === "fulfilled").length;
+          }
+          console.log(`[generate] Crop generation complete: ${generated}/${uncropped.length}`, { projectId });
+        })().catch((err) => {
+          console.error("[generate] Background crop generation failed:", err);
+        });
+      }
+    } catch (cropSetupErr) {
+      // Don't fail editorial generation if crop setup fails
+      console.error("[generate] Failed to set up crop generation:", cropSetupErr);
+    }
+
     return NextResponse.json({
       ok: true,
       meta: {
