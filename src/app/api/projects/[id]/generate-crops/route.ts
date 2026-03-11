@@ -100,7 +100,9 @@ export async function POST(
             y: tag.y,
             cropX: tag.cropX,
             cropY: tag.cropY,
-            cropScale: tag.cropScale,
+            // When force-regenerating, ignore saved cropScale (unless manually set)
+            // so updated category defaults take effect
+            cropScale: force && !tag.cropManual ? null : tag.cropScale,
             cropAspect: tag.cropAspect,
             category: tag.product.category,
           },
@@ -114,12 +116,18 @@ export async function POST(
         });
 
         // Update tag with crop metadata
+        // When force-regenerating, recalculate scale from category defaults
+        // (don't reuse stale cropScale from a previous generation)
+        const effectiveScale = force
+          ? (tag.cropManual ? tag.cropScale : null) ?? getCategoryDefaultScale(tag.product.category)
+          : tag.cropScale ?? getCategoryDefaultScale(tag.product.category);
+
         await prisma.productTag.update({
           where: { id: tag.id },
           data: {
             cropX: tag.cropX ?? tag.x,
             cropY: tag.cropY ?? tag.y,
-            cropScale: tag.cropScale ?? getCategoryDefaultScale(tag.product.category),
+            cropScale: effectiveScale,
             cropAspect: tag.cropAspect ?? "1:1",
           },
         });
