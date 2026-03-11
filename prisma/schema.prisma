@@ -500,6 +500,14 @@ model ProductTag {
   product   Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
   selection Selection?   // Selection created from this tag
 
+  // Contextual crop fields
+  cropUrl    String?
+  cropX      Float?
+  cropY      Float?
+  cropScale  Float?
+  cropAspect String?
+  cropManual Boolean @default(false)
+
   // Intelligence System relations
   supplementalQuotes SupplementalQuote[] @relation("ProductTagQuotes")
 
