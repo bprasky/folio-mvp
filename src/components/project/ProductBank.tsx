@@ -114,6 +114,19 @@ export function ProductBank({ post, supplementalQuotes = [] }: ProductBankProps)
     return Array.from(productMap.values());
   }, [post?.project?.images]);
 
+  // Debug: log product data to verify tag positions
+  useEffect(() => {
+    if (products.length > 0) {
+      console.log('[ProductBank] Product data:', products.map(p => ({
+        name: p.name.slice(0, 30),
+        tagX: p.tagX,
+        tagY: p.tagY,
+        sourceImage: p.sourceImageUrl?.slice(-30),
+        cropUrl: p.cropUrl?.slice(-30),
+      })));
+    }
+  }, [products]);
+
   // Group supplemental quotes by productTagId
   const quotesByTagId = useMemo(() => {
     const map = new Map<string, SupplementalQuote[]>();
