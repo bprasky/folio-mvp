@@ -24,9 +24,10 @@ type MediaModule = {
 type Props = {
   post: any;                 // existing post shape (ProjectPost + project + expandedBlocks)
   modules: MediaModule[];
+  isOwner?: boolean;
 };
 
-export function ImmersiveProjectPage({ post, modules }: Props) {
+export function ImmersiveProjectPage({ post, modules, isOwner = false }: Props) {
   const projectImages: { url: string }[] =
     post?.project?.images?.length ? post.project.images : (post?.leadImages || []);
 
@@ -82,6 +83,7 @@ export function ImmersiveProjectPage({ post, modules }: Props) {
             <ProductBank
               post={post}
               supplementalQuotes={post.supplementalQuotes}
+              isOwner={isOwner}
             />
             <CreditsSection post={post} />
           </div>
