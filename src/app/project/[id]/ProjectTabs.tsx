@@ -25,14 +25,10 @@ export default function ProjectTabs({ project, currentView, isPublished, hasDraf
 
   const handleTabChange = (view: TabView) => {
     const params = new URLSearchParams(searchParams.toString());
-    // Boards is now default, so delete param when switching to it
-    if (view === 'boards') {
-      params.delete('view');
-    } else {
-      params.set('view', view);
-    }
+    // Always set ?view= explicitly so server picks the correct tab
+    params.set('view', view);
 
-    const newUrl = params.toString() ? `${pathname}?${params.toString()}` : pathname;
+    const newUrl = `${pathname}?${params.toString()}`;
     router.replace(newUrl);
   };
 
