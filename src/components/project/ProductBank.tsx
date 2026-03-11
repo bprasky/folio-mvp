@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useCallback } from "react";
+import { useMemo, useState, useCallback, useEffect, useRef } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { decodeHtmlEntities } from "@/lib/utils";
@@ -180,6 +180,25 @@ export function ProductBank({ post, supplementalQuotes = [] }: ProductBankProps)
   }, [filteredProducts]);
 
   const hasMultipleRooms = roomGroups.size > 1;
+
+  // Auto-trigger batch crop generation for existing projects without crops
+  const projectId = post?.projectId || post?.project?.id;
+  const hasMissingCrops = products.some((p) => !p.cropUrl && p.sourceImageUrl);
+  const cropTriggerRef = useRef(false);
+
+  useEffect(() => {
+    if (!projectId || !hasMissingCrops || cropTriggerRef.current) return;
+    cropTriggerRef.current = true;
+
+    fetch(`/api/projects/${projectId}/generate-crops`, { method: "POST" })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.generated > 0) {
+          console.log(`[ProductBank] Generated ${data.generated} crops for project ${projectId}`);
+        }
+      })
+      .catch((err) => console.error("[ProductBank] Crop generation failed:", err));
+  }, [projectId, hasMissingCrops]);
 
   if (products.length === 0) {
     return (
@@ -403,18 +422,17 @@ function ProductCard({
                 onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
               />
             ) : product.sourceImageUrl ? (
-              /* CSS fallback — zoom into source image at tag location */
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={product.sourceImageUrl}
-                alt={product.name}
-                className="w-full h-full object-cover"
+              /* CSS fallback — background-image zoomed to tag location */
+              <div
+                className="w-full h-full"
+                role="img"
+                aria-label={product.name}
                 style={{
-                  objectPosition: `${(product.tagX ?? 0.5) * 100}% ${(product.tagY ?? 0.5) * 100}%`,
-                  transform: "scale(2.2)",
-                  transformOrigin: `${(product.tagX ?? 0.5) * 100}% ${(product.tagY ?? 0.5) * 100}%`,
+                  backgroundImage: `url(${product.sourceImageUrl})`,
+                  backgroundSize: "220%",
+                  backgroundPosition: `${(product.tagX ?? 0.5) * 100}% ${(product.tagY ?? 0.5) * 100}%`,
+                  backgroundRepeat: "no-repeat",
                 }}
-                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
               />
             ) : product.imageUrl ? (
               /* Product catalog image fallback */
@@ -478,21 +496,28 @@ function ProductDetail({
   return (
     <div className="mt-2 rounded-xl bg-white/80 backdrop-blur-xl border border-white/20 shadow-lg p-4 space-y-3">
       {/* Larger crop or source image — zoomed to product location */}
-      {(product.cropUrl || product.sourceImageUrl) && (
+      {product.cropUrl ? (
         <div className="relative aspect-[4/3] rounded-lg overflow-hidden">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={product.cropUrl || product.sourceImageUrl!}
+            src={product.cropUrl}
             alt={product.name}
             className="w-full h-full object-cover"
-            style={!product.cropUrl && product.tagX != null ? {
-              objectPosition: `${product.tagX * 100}% ${(product.tagY ?? 0.5) * 100}%`,
-              transform: "scale(2.0)",
-              transformOrigin: `${product.tagX * 100}% ${(product.tagY ?? 0.5) * 100}%`,
-            } : undefined}
           />
         </div>
-      )}
+      ) : product.sourceImageUrl ? (
+        <div
+          className="aspect-[4/3] rounded-lg overflow-hidden"
+          role="img"
+          aria-label={product.name}
+          style={{
+            backgroundImage: `url(${product.sourceImageUrl})`,
+            backgroundSize: "200%",
+            backgroundPosition: `${(product.tagX ?? 0.5) * 100}% ${(product.tagY ?? 0.5) * 100}%`,
+            backgroundRepeat: "no-repeat",
+          }}
+        />
+      ) : null}
 
       {/* Full product name */}
       <div>
