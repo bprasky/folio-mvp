@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
-import { FaTimes, FaTag, FaSearch, FaCheck, FaTrash } from "react-icons/fa";
+import { FaTimes, FaTag, FaSearch, FaCheck, FaTrash, FaGripLines } from "react-icons/fa";
 
 type ImageWithTags = {
   id: string;
@@ -54,6 +54,12 @@ export function ProjectImageTagger({ projectId, onClose }: Props) {
   const [hoveredTagId, setHoveredTagId] = useState<string | null>(null);
   const imageRef = useRef<HTMLImageElement | null>(null);
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Drag state — refs to avoid re-renders during drag
+  const [draggingTagId, setDraggingTagId] = useState<string | null>(null);
+  const [dragPos, setDragPos] = useState<{ x: number; y: number } | null>(null);
+  const dragDidMove = useRef(false);
+  const justFinishedDrag = useRef(false);
 
   const fetchImages = useCallback(async () => {
     try {
@@ -142,6 +148,8 @@ export function ProjectImageTagger({ projectId, onClose }: Props) {
   }, [searchTerm]);
 
   const handleImageClick = (e: React.MouseEvent<HTMLImageElement>) => {
+    // Don't place a new tag if we just finished dragging
+    if (justFinishedDrag.current) return;
     const rect = imageRef.current?.getBoundingClientRect();
     if (!rect) return;
     const x = ((e.clientX - rect.left) / rect.width) * 100;
@@ -195,6 +203,87 @@ export function ProjectImageTagger({ projectId, onClose }: Props) {
     }
   };
 
+  // --- Drag-to-reposition handlers ---
+  const handleDragStart = useCallback((tagId: string, e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragDidMove.current = false;
+    setDraggingTagId(tagId);
+    setHoveredTagId(null);
+
+    const tag = activeImage?.tags.find(t => t.id === tagId);
+    if (tag) {
+      const xPct = tag.x <= 1 ? tag.x * 100 : tag.x;
+      const yPct = tag.y <= 1 ? tag.y * 100 : tag.y;
+      setDragPos({ x: xPct, y: yPct });
+    }
+  }, [activeImage]);
+
+  const getDragPosition = useCallback((clientX: number, clientY: number) => {
+    const rect = imageRef.current?.getBoundingClientRect();
+    if (!rect) return null;
+    const x = Math.max(0, Math.min(100, ((clientX - rect.left) / rect.width) * 100));
+    const y = Math.max(0, Math.min(100, ((clientY - rect.top) / rect.height) * 100));
+    return { x, y };
+  }, []);
+
+  const handleDragSave = useCallback(async (tagId: string, x: number, y: number) => {
+    try {
+      const res = await fetch("/api/tag-product-to-image", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: tagId, x, y }),
+      });
+      if (res.ok) {
+        await fetchImages();
+      }
+    } catch (err) {
+      console.error("[ProjectImageTagger] drag save error:", err);
+      await fetchImages(); // revert to server state on error
+    }
+  }, [fetchImages]);
+
+  useEffect(() => {
+    if (!draggingTagId) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      dragDidMove.current = true;
+      const pos = getDragPosition(e.clientX, e.clientY);
+      if (pos) setDragPos(pos);
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      dragDidMove.current = true;
+      const touch = e.touches[0];
+      if (!touch) return;
+      const pos = getDragPosition(touch.clientX, touch.clientY);
+      if (pos) setDragPos(pos);
+    };
+
+    const handleEnd = () => {
+      if (dragDidMove.current && dragPos) {
+        handleDragSave(draggingTagId, dragPos.x, dragPos.y);
+        // Suppress the next image click so dropping doesn't create a new tag
+        justFinishedDrag.current = true;
+        setTimeout(() => { justFinishedDrag.current = false; }, 200);
+      }
+      setDraggingTagId(null);
+      setDragPos(null);
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleEnd);
+    window.addEventListener("touchmove", handleTouchMove, { passive: false });
+    window.addEventListener("touchend", handleEnd);
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleEnd);
+      window.removeEventListener("touchmove", handleTouchMove);
+      window.removeEventListener("touchend", handleEnd);
+    };
+  }, [draggingTagId, dragPos, getDragPosition, handleDragSave]);
+
   // Keep activeImage in sync after fetchImages
   useEffect(() => {
     if (activeImage) {
@@ -242,7 +331,7 @@ export function ProjectImageTagger({ projectId, onClose }: Props) {
         <div className="flex items-center gap-3">
           <FaTag className="w-4 h-4 text-[var(--accent)]" />
           <h2 className="folio-ui text-[var(--text-primary)]">
-            {activeImage ? "Click image to place a tag" : "Select an image to tag"}
+            {activeImage ? "Click to place a tag \u00B7 Drag to reposition" : "Select an image to tag"}
           </h2>
         </div>
         <button
@@ -307,27 +396,31 @@ export function ProjectImageTagger({ projectId, onClose }: Props) {
                 onClick={handleImageClick}
               />
 
-              {/* Existing tag dots */}
+              {/* Existing tag dots — draggable */}
               {activeImage.tags.map((tag) => {
-                const xPct = tag.x <= 1 ? tag.x * 100 : tag.x;
-                const yPct = tag.y <= 1 ? tag.y * 100 : tag.y;
+                const isDragging = draggingTagId === tag.id;
+                const xPct = isDragging && dragPos ? dragPos.x : (tag.x <= 1 ? tag.x * 100 : tag.x);
+                const yPct = isDragging && dragPos ? dragPos.y : (tag.y <= 1 ? tag.y * 100 : tag.y);
                 return (
                   <div
                     key={tag.id}
-                    className="absolute z-10 pointer-events-auto"
+                    className={`absolute z-10 pointer-events-auto ${isDragging ? "z-30" : ""}`}
                     style={{
                       left: `${xPct}%`,
                       top: `${yPct}%`,
                       transform: "translate(-50%, -50%)",
+                      cursor: isDragging ? "grabbing" : "grab",
                     }}
-                    onMouseEnter={() => setHoveredTagId(tag.id)}
+                    onMouseDown={(e) => handleDragStart(tag.id, e)}
+                    onTouchStart={(e) => handleDragStart(tag.id, e)}
+                    onMouseEnter={() => { if (!draggingTagId) setHoveredTagId(tag.id); }}
                     onMouseLeave={() => setHoveredTagId(null)}
                   >
-                    <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[var(--accent)] border-2 border-white shadow-lg">
+                    <div className={`flex h-5 w-5 items-center justify-center rounded-full bg-[var(--accent)] border-2 border-white shadow-lg transition-transform ${isDragging ? "scale-125" : ""}`}>
                       <FaTag className="w-2.5 h-2.5 text-white" />
                     </div>
 
-                    {hoveredTagId === tag.id && (
+                    {hoveredTagId === tag.id && !isDragging && (
                       <div className="absolute left-1/2 bottom-full mb-2 -translate-x-1/2 w-max max-w-[220px] ridge-card px-3 py-2 shadow-lg z-20">
                         <div className="flex items-center gap-2">
                           {tag.product?.imageUrl && (
