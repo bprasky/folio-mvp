@@ -33,7 +33,8 @@ export async function uploadCrop({
   }
 
   const { data: pub } = supabaseAdmin.storage.from(BUCKET).getPublicUrl(path);
-  const publicUrl = pub.publicUrl;
+  // Add cache-buster to avoid stale CDN/browser cache after re-crops
+  const publicUrl = `${pub.publicUrl}?v=${Date.now()}`;
 
   // Update the ProductTag record with the crop URL
   await prisma.productTag.update({

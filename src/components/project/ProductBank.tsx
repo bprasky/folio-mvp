@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useCallback, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { decodeHtmlEntities } from "@/lib/utils";
@@ -66,6 +67,7 @@ function getCategoryLabel(category?: string): string {
 }
 
 export function ProductBank({ post, supplementalQuotes = [] }: ProductBankProps) {
+  const router = useRouter();
   const [expandedProductId, setExpandedProductId] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState<string>("all");
 
@@ -181,28 +183,33 @@ export function ProductBank({ post, supplementalQuotes = [] }: ProductBankProps)
 
   const hasMultipleRooms = roomGroups.size > 1;
 
-  // Auto-trigger batch crop generation for projects with products from source images
+  // Auto-trigger batch crop generation for products missing crops
+  // Also force-regenerate if existing crops lack cache-buster (pre-fix crops)
   const projectId = post?.projectId || post?.project?.id;
-  const hasProductsFromImages = products.some((p) => p.sourceImageUrl);
+  const hasMissingCrops = products.some((p) => !p.cropUrl && p.sourceImageUrl);
+  const hasStaleCoordCrops = products.some(
+    (p) => p.cropUrl && !p.cropUrl.includes("?v=")
+  );
+  const needsCropWork = hasMissingCrops || hasStaleCoordCrops;
   const cropTriggerRef = useRef(false);
 
   useEffect(() => {
-    if (!projectId || !hasProductsFromImages || cropTriggerRef.current) return;
+    if (!projectId || !needsCropWork || cropTriggerRef.current) return;
     cropTriggerRef.current = true;
 
     fetch(`/api/projects/${projectId}/generate-crops`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ force: products.some((p) => p.cropUrl) }),
+      body: JSON.stringify({ force: hasStaleCoordCrops }),
     })
       .then((res) => res.json())
       .then((data) => {
         if (data.generated > 0) {
-          console.log(`[ProductBank] Regenerated ${data.generated} crops`);
+          router.refresh();
         }
       })
       .catch(() => {});
-  }, [projectId, hasProductsFromImages]);
+  }, [projectId, needsCropWork, hasStaleCoordCrops, router]);
 
   if (products.length === 0) {
     return (
