@@ -21,6 +21,10 @@ export interface ProfileProduct {
   price: string | number | null;
   category: string | null;
   projectCount: number;
+  // Context data for the product-in-project modal
+  sourceImageUrl: string | null;
+  projectTitle: string | null;
+  projectId: string | null;
 }
 
 export interface ProfileTeamMember {

@@ -135,7 +135,13 @@ export default async function DesignerProfilePage() {
             },
           },
           image: {
-            select: { projectId: true },
+            select: {
+              projectId: true,
+              url: true,
+              project: {
+                select: { title: true },
+              },
+            },
           },
         },
       })
@@ -166,13 +172,16 @@ export default async function DesignerProfilePage() {
   // Total project count
   const projectCount = projects.length;
 
-  // Deduplicate products and count projects, capturing best crop URL
+  // Deduplicate products and count projects, capturing best crop URL and context
   const productMap = new Map<
     string,
     {
       product: (typeof allProductTags)[0]['product'];
       projectIds: Set<string>;
       cropUrl: string | null;
+      sourceImageUrl: string | null;
+      projectTitle: string | null;
+      projectId: string | null;
     }
   >();
   allProductTags.forEach(tag => {
@@ -182,12 +191,18 @@ export default async function DesignerProfilePage() {
       // Prefer a tag that has a cropUrl
       if (!existing.cropUrl && tag.cropUrl) {
         existing.cropUrl = tag.cropUrl;
+        existing.sourceImageUrl = tag.image.url;
+        existing.projectTitle = (tag.image as any).project?.title || null;
+        existing.projectId = tag.image.projectId;
       }
     } else {
       productMap.set(tag.productId, {
         product: tag.product,
         projectIds: new Set([tag.image.projectId]),
         cropUrl: tag.cropUrl,
+        sourceImageUrl: tag.image.url,
+        projectTitle: (tag.image as any).project?.title || null,
+        projectId: tag.image.projectId,
       });
     }
   });
@@ -202,6 +217,9 @@ export default async function DesignerProfilePage() {
       price: item.product.price,
       category: item.product.category,
       projectCount: item.projectIds.size,
+      sourceImageUrl: item.sourceImageUrl,
+      projectTitle: item.projectTitle,
+      projectId: item.projectId,
     }))
     .sort((a, b) => b.projectCount - a.projectCount);
 
