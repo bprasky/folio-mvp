@@ -473,7 +473,7 @@ function ProductCard({
     <div className="col-span-1">
       <button
         type="button"
-        onClick={onExpand}
+        onClick={isOwner ? undefined : onExpand}
         className="w-full text-left group"
       >
         {/* Image container — 1:1 aspect */}
@@ -601,9 +601,9 @@ function ProductCard({
         </div>
       </button>
 
-      {/* Expanded detail — inline */}
+      {/* Expanded detail — inline (public/published view only, not staging) */}
       <AnimatePresence>
-        {expanded && (
+        {expanded && !isOwner && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
