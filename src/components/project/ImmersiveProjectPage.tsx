@@ -64,7 +64,7 @@ export function ImmersiveProjectPage({ post, modules }: Props) {
               <img
                 src={projectImages[0].url}
                 alt={post.project?.title ?? ""}
-                className="h-full w-full object-cover"
+                className="w-full h-auto"
               />
               <ImageTagDots image={projectImages[0]} />
             </figure>

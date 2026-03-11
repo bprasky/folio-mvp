@@ -43,7 +43,7 @@ export function ProjectImageGallery({ project }: ProjectImageGalleryProps) {
             <img
               src={img.url}
               alt={project?.title ?? ""}
-              className="h-full w-full object-cover"
+              className="w-full h-auto"
             />
             <ImageTagDots image={img} />
           </figure>

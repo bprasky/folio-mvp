@@ -29,7 +29,7 @@ export function ProductGrid({ items }: { items: Product[] }) {
                 <img
                   src={p.imageUrl}
                   alt={p.name}
-                  className="h-40 w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                  className="h-40 w-full object-contain transition-transform duration-500 group-hover:scale-[1.03]"
                   loading="lazy"
                   decoding="async"
                 />

@@ -113,12 +113,12 @@ function CinemaSpread({ chapter }: { chapter: EditorialChapter }) {
   return (
     <section className="w-full">
       {chapter.primaryImage?.url && (
-        <div className="relative h-[55vh] min-h-[360px] max-h-[640px] ridge-card ridge-card-lg overflow-hidden">
+        <div className="relative ridge-card ridge-card-lg overflow-hidden">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={chapter.primaryImage.url}
             alt={chapter.title ?? ""}
-            className="h-full w-full object-cover"
+            className="w-full h-auto"
           />
           <ImageTagDots image={chapter.primaryImage} />
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-black/5 to-transparent" />
@@ -171,7 +171,7 @@ function DetailGridSpread({ chapter }: { chapter: EditorialChapter }) {
             <img
               src={img.url}
               alt={chapter.title ?? ""}
-              className="h-full w-full object-cover"
+              className="w-full h-auto"
             />
             <ImageTagDots image={img} />
           </div>
@@ -208,7 +208,7 @@ function FigureImage({ image, title }: { image: any; title?: string | null }) {
       <img
         src={image.url}
         alt={title ?? ""}
-        className="h-full w-full object-cover"
+        className="w-full h-auto"
       />
       <ImageTagDots image={image} />
     </figure>
