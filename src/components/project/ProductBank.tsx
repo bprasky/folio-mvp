@@ -188,7 +188,7 @@ export function ProductBank({ post, supplementalQuotes = [] }: ProductBankProps)
   const projectId = post?.projectId || post?.project?.id;
   const hasMissingCrops = products.some((p) => !p.cropUrl && p.sourceImageUrl);
   const hasStaleCoordCrops = products.some(
-    (p) => p.cropUrl && !p.cropUrl.includes("?v=")
+    (p) => p.cropUrl && !p.cropUrl.includes("&s=2")
   );
   const needsCropWork = hasMissingCrops || hasStaleCoordCrops;
   const cropTriggerRef = useRef(false);
@@ -440,7 +440,7 @@ function ProductCard({
                 aria-label={product.name}
                 style={{
                   backgroundImage: `url(${product.sourceImageUrl})`,
-                  backgroundSize: "220%",
+                  backgroundSize: "160%",
                   backgroundPosition: `${product.tagX ?? 50}% ${product.tagY ?? 50}%`,
                   backgroundRepeat: "no-repeat",
                 }}
@@ -523,7 +523,7 @@ function ProductDetail({
           aria-label={product.name}
           style={{
             backgroundImage: `url(${product.sourceImageUrl})`,
-            backgroundSize: "200%",
+            backgroundSize: "150%",
             backgroundPosition: `${product.tagX ?? 50}% ${product.tagY ?? 50}%`,
             backgroundRepeat: "no-repeat",
           }}
