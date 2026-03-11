@@ -352,7 +352,19 @@ export function InterviewModal({
             setPhase("question");
             setCurrentQuestionIndex(0);
             setShowDraftResume(false);
+            startingFreshRef.current = false;
             console.log('[InterviewModal] Starting fresh in question phase');
+          } else if (startingFreshRef.current && !cancelled) {
+            // User just clicked "Start over" — skip draft resume even if stale
+            // server data arrived (race condition). The clear POST is in flight.
+            startingFreshRef.current = false;
+            setStep("answer");
+            setPhase("question");
+            setCurrentQuestionIndex(0);
+            setShowDraftResume(false);
+            setAnswers([]);
+            setFollowUps([]);
+            console.log('[InterviewModal] Skipping draft resume (starting fresh)');
           } else if (hasBaseAnswers && !cancelled) {
             // Show draft resume prompt so user can choose: continue or start over
             const baseCount = finalAnswers.filter((a: any) => !a.isFollowUp).length;
@@ -552,6 +564,8 @@ export function InterviewModal({
 
   // Auto-generate: when the last question answer is saved, trigger generation automatically
   const autoGenerateRef = useRef(false);
+  // When true, the preload effect skips draft resume (user just clicked "Start over")
+  const startingFreshRef = useRef(false);
 
   // Lock the question count denominator on first population
   useEffect(() => {
@@ -1747,6 +1761,8 @@ export function InterviewModal({
                     if (!confirmed) return;
 
                     setIsClearing(true);
+                    // Flag so preload effect skips draft resume if it races
+                    startingFreshRef.current = true;
                     try {
                       // Clear client state
                       localStorage.removeItem(`interviewDraft:${projectId}`);
