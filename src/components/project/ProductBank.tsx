@@ -386,6 +386,12 @@ function ProductCard({
       >
         {/* Image container — 1:1 aspect */}
         <div className="relative aspect-square rounded-xl overflow-hidden bg-stone-100 shadow-sm group-hover:shadow-md transition-all duration-150">
+          {/* 2-letter fallback always rendered behind images */}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="font-['Instrument_Sans'] text-[18px] font-medium text-stone-300">
+              {product.name.slice(0, 2).toUpperCase()}
+            </span>
+          </div>
           <div className="absolute inset-0 group-hover:scale-[1.02] transition-transform duration-150">
             {product.cropUrl ? (
               /* Server-generated crop */
@@ -394,24 +400,22 @@ function ProductCard({
                 src={product.cropUrl}
                 alt={product.name}
                 className="w-full h-full object-cover"
-                loading="lazy"
+                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
               />
             ) : product.sourceImageUrl ? (
-              /* CSS fallback — approximate crop using tag coords */
-              <div className="w-full h-full overflow-hidden">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={product.sourceImageUrl}
-                  alt={product.name}
-                  className="w-full h-full object-cover"
-                  style={{
-                    objectPosition: `${(product.tagX ?? 0.5) * 100}% ${(product.tagY ?? 0.5) * 100}%`,
-                    transform: "scale(1.8)",
-                    transformOrigin: `${(product.tagX ?? 0.5) * 100}% ${(product.tagY ?? 0.5) * 100}%`,
-                  }}
-                  loading="lazy"
-                />
-              </div>
+              /* CSS fallback — zoom into source image at tag location */
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={product.sourceImageUrl}
+                alt={product.name}
+                className="w-full h-full object-cover"
+                style={{
+                  objectPosition: `${(product.tagX ?? 0.5) * 100}% ${(product.tagY ?? 0.5) * 100}%`,
+                  transform: "scale(2.2)",
+                  transformOrigin: `${(product.tagX ?? 0.5) * 100}% ${(product.tagY ?? 0.5) * 100}%`,
+                }}
+                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+              />
             ) : product.imageUrl ? (
               /* Product catalog image fallback */
               // eslint-disable-next-line @next/next/no-img-element
@@ -419,16 +423,9 @@ function ProductCard({
                 src={product.imageUrl}
                 alt={product.name}
                 className="w-full h-full object-cover"
-                loading="lazy"
+                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
               />
-            ) : (
-              /* No image at all */
-              <div className="w-full h-full flex items-center justify-center bg-stone-100">
-                <span className="font-['Instrument_Sans'] text-[18px] font-medium text-stone-300">
-                  {product.name.slice(0, 2).toUpperCase()}
-                </span>
-              </div>
-            )}
+            ) : null}
           </div>
         </div>
 
@@ -480,7 +477,7 @@ function ProductDetail({
 }) {
   return (
     <div className="mt-2 rounded-xl bg-white/80 backdrop-blur-xl border border-white/20 shadow-lg p-4 space-y-3">
-      {/* Larger crop or source image */}
+      {/* Larger crop or source image — zoomed to product location */}
       {(product.cropUrl || product.sourceImageUrl) && (
         <div className="relative aspect-[4/3] rounded-lg overflow-hidden">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -488,6 +485,11 @@ function ProductDetail({
             src={product.cropUrl || product.sourceImageUrl!}
             alt={product.name}
             className="w-full h-full object-cover"
+            style={!product.cropUrl && product.tagX != null ? {
+              objectPosition: `${product.tagX * 100}% ${(product.tagY ?? 0.5) * 100}%`,
+              transform: "scale(2.0)",
+              transformOrigin: `${product.tagX * 100}% ${(product.tagY ?? 0.5) * 100}%`,
+            } : undefined}
           />
         </div>
       )}
