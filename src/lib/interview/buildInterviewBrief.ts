@@ -163,44 +163,13 @@ export async function buildInterviewBrief(
 ): Promise<InterviewBrief> {
   const generateQuestions = options?.generateQuestions ?? (process.env.INTERVIEW_AI_QUESTIONS === 'true');
 
-  // -------------------------------------------------------------------------
-  // 1. Check cache
-  // -------------------------------------------------------------------------
-  if (!options?.forceRegenerate) {
-    const post = await prisma.projectPost.findUnique({
-      where: { projectId },
-      select: { provenance: true },
-    });
-
-    if (post?.provenance) {
-      const provenance = post.provenance as Record<string, unknown>;
-      const cached = provenance.interviewBrief as InterviewBrief | undefined;
-      if (cached?.briefHash) {
-        // Compute fresh hash to check if data changed
-        const project = await prisma.project.findUnique({
-          where: { id: projectId },
-          select: {
-            images: { select: { id: true } },
-            rooms: { select: { name: true } },
-            selections: { select: { id: true } },
-          },
-        });
-        if (project) {
-          const freshHash = computeBriefHash(
-            project.images.length,
-            project.rooms.map((r) => r.name),
-            project.selections.map((s) => s.id)
-          );
-          if (cached.briefHash === freshHash) {
-            return cached;
-          }
-        }
-      }
-    }
-  }
+  // Cache removed (Phase 6): brief generation is fast and the founding designer
+  // cohort is tiny. The old cache was actively preventing LLM calls from running
+  // because computeBriefHash didn't account for all relevant inputs.
+  // See: per-room question generation spec, Phase 6.
 
   // -------------------------------------------------------------------------
-  // 2. Load project data
+  // Load project data
   // -------------------------------------------------------------------------
   const context = await assessProjectContext(projectId);
 
