@@ -459,4 +459,57 @@ export async function DELETE(request: NextRequest) {
       { status: 500 }
     );
   }
-} 
+}
+
+export async function PATCH(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { id, x, y } = await request.json();
+
+    if (!id || x == null || y == null) {
+      return NextResponse.json(
+        { error: 'Missing required fields: id, x, y' },
+        { status: 400 }
+      );
+    }
+
+    // Verify tag exists and get project for authz
+    const tag = await prisma.productTag.findUnique({
+      where: { id },
+      include: {
+        image: { select: { projectId: true } }
+      }
+    });
+
+    if (!tag) {
+      return NextResponse.json({ error: 'Tag not found' }, { status: 404 });
+    }
+
+    try {
+      await assertProjectWrite(session.user.id, tag.image.projectId);
+    } catch {
+      return NextResponse.json(
+        { error: 'Not authorized to update this tag' },
+        { status: 403 }
+      );
+    }
+
+    const updated = await prisma.productTag.update({
+      where: { id },
+      data: { x, y },
+    });
+
+    return NextResponse.json(updated);
+
+  } catch (error) {
+    console.error('Failed to update product tag:', error);
+    return NextResponse.json(
+      { error: 'Failed to update product tag' },
+      { status: 500 }
+    );
+  }
+}
