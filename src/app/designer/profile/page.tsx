@@ -166,22 +166,28 @@ export default async function DesignerProfilePage() {
   // Total project count
   const projectCount = projects.length;
 
-  // Deduplicate products and count projects
+  // Deduplicate products and count projects, capturing best crop URL
   const productMap = new Map<
     string,
     {
       product: (typeof allProductTags)[0]['product'];
       projectIds: Set<string>;
+      cropUrl: string | null;
     }
   >();
   allProductTags.forEach(tag => {
     const existing = productMap.get(tag.productId);
     if (existing) {
       existing.projectIds.add(tag.image.projectId);
+      // Prefer a tag that has a cropUrl
+      if (!existing.cropUrl && tag.cropUrl) {
+        existing.cropUrl = tag.cropUrl;
+      }
     } else {
       productMap.set(tag.productId, {
         product: tag.product,
         projectIds: new Set([tag.image.projectId]),
+        cropUrl: tag.cropUrl,
       });
     }
   });
@@ -192,6 +198,7 @@ export default async function DesignerProfilePage() {
       name: item.product.name,
       vendor: item.product.brand || 'Unknown Vendor',
       imageUrl: item.product.imageUrl,
+      cropUrl: item.cropUrl,
       price: item.product.price,
       category: item.product.category,
       projectCount: item.projectIds.size,

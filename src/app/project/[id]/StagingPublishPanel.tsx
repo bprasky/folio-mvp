@@ -293,7 +293,7 @@ export default function StagingPublishPanel({
 
       {/* IMMERSIVE PREVIEW — renders exactly as readers see it */}
       <div className="relative">
-        <ImmersiveProjectPage post={initialPostData} modules={initialModules} />
+        <ImmersiveProjectPage post={initialPostData} modules={initialModules} isOwner={isOwner} />
       </div>
 
       {/* STAGING FOOTER — sticky at bottom */}

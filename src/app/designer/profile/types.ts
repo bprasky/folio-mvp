@@ -17,6 +17,7 @@ export interface ProfileProduct {
   name: string;
   vendor: string;
   imageUrl: string | null;
+  cropUrl: string | null;
   price: string | number | null;
   category: string | null;
   projectCount: number;

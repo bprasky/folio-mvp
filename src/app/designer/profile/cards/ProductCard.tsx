@@ -9,6 +9,7 @@ interface ProductCardProps {
     vendor?: string;
     price?: string | number | null;
     imageUrl?: string | null;
+    cropUrl?: string | null;
     projectCount?: number;
     category?: string | null;
   };
@@ -23,13 +24,16 @@ export default function ProductCard({ product, onClick }: ProductCardProps) {
         : product.price
       : null;
 
+  // Prefer contextual crop over catalog image
+  const displayImageUrl = product.cropUrl || product.imageUrl || '';
+
   return (
     <button
       onClick={onClick}
       className="product-card group relative overflow-hidden rounded-xl cursor-pointer w-full text-left"
     >
       <SafeImage
-        src={product.imageUrl || ''}
+        src={displayImageUrl}
         alt={product.name}
         fill
         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"

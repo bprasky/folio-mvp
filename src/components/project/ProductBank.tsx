@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { decodeHtmlEntities } from "@/lib/utils";
+import { CropAdjusterModal } from "@/components/products/CropAdjusterModal";
 
 /**
  * ProductBank — Visual grid of contextual product crops grouped by room.
@@ -29,6 +30,7 @@ type SupplementalQuote = {
 type ProductBankProps = {
   post: any;
   supplementalQuotes?: SupplementalQuote[];
+  isOwner?: boolean;
 };
 
 type ProductEntry = {
@@ -41,7 +43,11 @@ type ProductEntry = {
   finish?: string;
   tagIds: string[];
   // Crop & source image data (from the best tag)
+  bestTagId?: string;
   cropUrl?: string;
+  cropX?: number;
+  cropY?: number;
+  cropScale?: number;
   tagX?: number;
   tagY?: number;
   sourceImageUrl?: string;
@@ -66,10 +72,11 @@ function getCategoryLabel(category?: string): string {
   return CATEGORY_LABELS[category.toUpperCase()] ?? category;
 }
 
-export function ProductBank({ post, supplementalQuotes = [] }: ProductBankProps) {
+export function ProductBank({ post, supplementalQuotes = [], isOwner = false }: ProductBankProps) {
   const router = useRouter();
   const [expandedProductId, setExpandedProductId] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState<string>("all");
+  const [cropTarget, setCropTarget] = useState<ProductEntry | null>(null);
 
   // Build unique product list from all image tags, with crop/source data
   const products = useMemo(() => {
@@ -87,7 +94,11 @@ export function ProductBank({ post, supplementalQuotes = [] }: ProductBankProps)
           }
           // Prefer a tag that has a cropUrl
           if (!existing.cropUrl && tag.cropUrl) {
+            existing.bestTagId = tag.id;
             existing.cropUrl = tag.cropUrl;
+            existing.cropX = tag.cropX;
+            existing.cropY = tag.cropY;
+            existing.cropScale = tag.cropScale;
             existing.tagX = tag.x;
             existing.tagY = tag.y;
             existing.sourceImageUrl = img.url;
@@ -103,7 +114,11 @@ export function ProductBank({ post, supplementalQuotes = [] }: ProductBankProps)
             category: product.category,
             finish: product.brand,
             tagIds: [tag.id],
+            bestTagId: tag.id,
             cropUrl: tag.cropUrl || undefined,
+            cropX: tag.cropX,
+            cropY: tag.cropY,
+            cropScale: tag.cropScale,
             tagX: tag.x,
             tagY: tag.y,
             sourceImageUrl: img.url,
@@ -269,6 +284,8 @@ export function ProductBank({ post, supplementalQuotes = [] }: ProductBankProps)
               onExpand={setExpandedProductId}
               getQuotes={getQuotesForProduct}
               materialNotes={materialNotes}
+              isOwner={isOwner}
+              onAdjustCrop={setCropTarget}
             />
           ))
         ) : (
@@ -285,11 +302,31 @@ export function ProductBank({ post, supplementalQuotes = [] }: ProductBankProps)
                 }
                 quotes={getQuotesForProduct(product)}
                 materialInfo={materialNotes.get(product.id)}
+                isOwner={isOwner}
+                onAdjustCrop={() => setCropTarget(product)}
               />
             ))}
           </div>
         )}
       </div>
+
+      {/* Crop Adjuster Modal */}
+      {cropTarget && cropTarget.bestTagId && cropTarget.sourceImageUrl && (
+        <CropAdjusterModal
+          tagId={cropTarget.bestTagId}
+          sourceImageUrl={cropTarget.sourceImageUrl}
+          currentCropX={cropTarget.cropX ?? cropTarget.tagX ?? 50}
+          currentCropY={cropTarget.cropY ?? cropTarget.tagY ?? 50}
+          currentCropScale={cropTarget.cropScale ?? undefined}
+          category={cropTarget.category}
+          productName={cropTarget.name}
+          onClose={() => setCropTarget(null)}
+          onSaved={() => {
+            setCropTarget(null);
+            router.refresh();
+          }}
+        />
+      )}
     </section>
   );
 }
@@ -329,6 +366,8 @@ function RoomSection({
   onExpand,
   getQuotes,
   materialNotes,
+  isOwner,
+  onAdjustCrop,
 }: {
   room: string;
   products: ProductEntry[];
@@ -336,6 +375,8 @@ function RoomSection({
   onExpand: (id: string | null) => void;
   getQuotes: (product: ProductEntry) => SupplementalQuote[];
   materialNotes: Map<string, { finish?: string; note?: string }>;
+  isOwner?: boolean;
+  onAdjustCrop?: (product: ProductEntry) => void;
 }) {
   const [collapsed, setCollapsed] = useState(false);
 
@@ -382,6 +423,8 @@ function RoomSection({
                   }
                   quotes={getQuotes(product)}
                   materialInfo={materialNotes.get(product.id)}
+                  isOwner={isOwner}
+                  onAdjustCrop={() => onAdjustCrop?.(product)}
                 />
               ))}
             </div>
@@ -400,13 +443,32 @@ function ProductCard({
   onExpand,
   quotes,
   materialInfo,
+  isOwner,
+  onAdjustCrop,
 }: {
   product: ProductEntry;
   expanded: boolean;
   onExpand: () => void;
   quotes: SupplementalQuote[];
   materialInfo?: { finish?: string; note?: string };
+  isOwner?: boolean;
+  onAdjustCrop?: () => void;
 }) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Close menu on outside click
+  useEffect(() => {
+    if (!menuOpen) return;
+    function handleClick(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [menuOpen]);
+
   return (
     <div className="col-span-1">
       <button
@@ -456,6 +518,74 @@ function ProductCard({
               />
             ) : null}
           </div>
+
+          {/* Three-dot menu — owner only */}
+          {isOwner && (
+            <div ref={menuRef} className="absolute top-2 right-2 z-10">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setMenuOpen(!menuOpen);
+                }}
+                className="w-7 h-7 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/60 transition-colors duration-150"
+                aria-label="Product options"
+              >
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                  <circle cx="8" cy="3" r="1.5" />
+                  <circle cx="8" cy="8" r="1.5" />
+                  <circle cx="8" cy="13" r="1.5" />
+                </svg>
+              </button>
+
+              {/* Dropdown menu */}
+              <AnimatePresence>
+                {menuOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95, y: -4 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, y: -4 }}
+                    transition={{ duration: 0.12 }}
+                    className="absolute right-0 top-9 w-40 rounded-xl bg-white/90 backdrop-blur-xl border border-white/20 shadow-lg overflow-hidden"
+                  >
+                    {product.bestTagId && product.sourceImageUrl && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setMenuOpen(false);
+                          onAdjustCrop?.();
+                        }}
+                        className="w-full px-3 py-2.5 text-left font-['Instrument_Sans'] text-[13px] text-stone-700 hover:bg-stone-100 transition-colors duration-100 flex items-center gap-2"
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <rect x="3" y="3" width="18" height="18" rx="2" />
+                          <path d="M9 3v18M3 9h18" />
+                        </svg>
+                        Adjust crop
+                      </button>
+                    )}
+                    {product.url && (
+                      <a
+                        href={product.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="w-full px-3 py-2.5 text-left font-['Instrument_Sans'] text-[13px] text-stone-700 hover:bg-stone-100 transition-colors duration-100 flex items-center gap-2"
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" />
+                          <polyline points="15 3 21 3 21 9" />
+                          <line x1="10" y1="14" x2="21" y2="3" />
+                        </svg>
+                        View product
+                      </a>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          )}
         </div>
 
         {/* Product info */}
