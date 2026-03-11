@@ -45,18 +45,18 @@ export const InterviewPayloadSchema = z.object({
   imageOrder: z.array(z.string()).optional(), // Allow any string IDs, not just UUIDs
 });
 
-// Map new 6W to legacy buckets so the generator keeps weighting consistent
-export const sectionAliasToLegacy: Record<string, string> = {
-  why: "designIntent",
-  who: "collaboration",
-  what: "materialsMethod",
-  where: "designIntent",
-  when: "insightsReflection",
-  how: "materialsMethod",
-};
-
 export type InterviewAnswer = z.infer<typeof InterviewAnswerSchema>;
 export type InterviewPayload = z.infer<typeof InterviewPayloadSchema>;
+
+/** Question shape used by interview UI components (formerly in questionBank.ts) */
+export type InterviewQuestion = {
+  id: string;
+  role: "DESIGNER" | "VENDOR" | "ANY";
+  section: "why" | "who" | "what" | "where" | "when" | "how";
+  prompt: string;
+  helper?: string;
+  maxLen?: number;
+};
 
 const WHITESPACE_RE = /\s+/g;
 

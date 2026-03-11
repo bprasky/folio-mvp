@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { DEFAULT_QUESTION_BANK, type InterviewQuestion } from "@/lib/posting/questionBank";
+import type { InterviewQuestion } from "@/lib/posting/interviewSchemas";
 
 interface PromptPickerProps {
   selectedQuestionIds: string[];
@@ -27,9 +27,8 @@ export function PromptPicker({
   hasTaggedProducts = false,
   contextualQuestions = [],
 }: PromptPickerProps) {
-  // Merge DEFAULT_QUESTION_BANK with contextual questions
   const allQuestions = useMemo(() => {
-    return [...DEFAULT_QUESTION_BANK, ...contextualQuestions];
+    return contextualQuestions;
   }, [contextualQuestions]);
   
   // Filter questions by role

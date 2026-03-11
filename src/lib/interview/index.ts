@@ -54,9 +54,22 @@ export type {
 
 // Question Generation
 export {
-  generateInterviewQuestions,
   toInterviewQuestion,
 } from './generateQuestions';
+
+// Per-Room Question Generation (replaces flat generateInterviewQuestions)
+export {
+  generateAllRoomQuestions,
+} from './generateAllRoomQuestions';
+
+export {
+  generateRoomQuestions,
+} from './generateRoomQuestions';
+
+export type {
+  RoomQuestionInput,
+  RoomQuestionOutput,
+} from './generateRoomQuestions';
 
 export type {
   GeneratedQuestion,

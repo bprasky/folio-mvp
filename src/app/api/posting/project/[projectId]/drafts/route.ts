@@ -6,9 +6,6 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/options";
 import { prisma } from "@/lib/prisma";
 import { assertProjectView } from "@/lib/authz/access";
 import { hasNewProductsSinceGeneration } from "@/lib/posting/hasNewProductsSinceGeneration";
-import { DEFAULT_QUESTION_BANK } from "@/lib/posting/questionBank";
-
-const questionTextById = new Map(DEFAULT_QUESTION_BANK.map(q => [q.id, q.prompt]));
 
 export async function GET(
   request: NextRequest,
@@ -41,9 +38,7 @@ export async function GET(
     // Extract interview data - normalize answers and followUps to consistent format
     const normalizeQA = (items: any[]): Array<{ q: string; a: string; isFeatured: boolean }> => {
       return (items || []).map((item: any) => {
-        const questionText = item.question || item.q || item.prompt || '';
-        // Recover question text from question bank if missing (backward compat for existing data)
-        const q = questionText || (item.questionId ? questionTextById.get(item.questionId) ?? '' : '');
+        const q = item.question || item.q || item.prompt || '';
         return {
           q,
           a: item.answer || item.a || '',
