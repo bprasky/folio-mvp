@@ -15,7 +15,7 @@ import { QuestionCard } from "./QuestionCard";
 import { InterviewModeSelector } from "./InterviewModeSelector";
 import { RealtimeInterviewView } from "./RealtimeInterviewView";
 import { flags, realtimeInterviewConfig } from "@/lib/flags";
-import { DEFAULT_QUESTION_BANK, type InterviewQuestion } from "@/lib/posting/questionBank";
+import type { InterviewQuestion } from "@/lib/posting/interviewSchemas";
 import type {
   InterviewAnswer,
   SixWCategory,
@@ -495,15 +495,15 @@ export function InterviewModal({
     return map;
   }, [fetchedQuestions]);
   
-  // Use contextual questions only — no generic DEFAULT_QUESTION_BANK.
+  // Use contextual questions only — no legacy fallback.
   // The contextual system already includes base fallbacks for low-context projects.
   const allQuestions = useMemo(() => {
-    return contextualQuestions.length > 0 ? contextualQuestions : DEFAULT_QUESTION_BANK;
+    return contextualQuestions;
   }, [contextualQuestions]);
 
   // Auto-select all questions when they load (no pick phase)
   // Also re-select when the question set changes (e.g. contextual questions load
-  // after DEFAULT_QUESTION_BANK was initially used) to avoid a stale-ID mismatch
+  // after initial render) to avoid a stale-ID mismatch
   // that leaves selectedQuestions empty and the modal blank.
   useEffect(() => {
     if (allQuestions.length === 0) return;

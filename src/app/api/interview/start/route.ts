@@ -20,15 +20,6 @@ const RequestSchema = z.object({
   mode: z.enum(["voice", "text"]),
 });
 
-// Minimal fallback if contextual system fails entirely
-const FALLBACK_QUESTIONS = [
-  { id: "fallback-1", text: "Tell us about this project and what made it special.", source: "default" as const },
-  { id: "fallback-2", text: "What was the initial vision for this space?", source: "default" as const },
-  { id: "fallback-3", text: "How would you describe the overall aesthetic?", source: "default" as const },
-  { id: "fallback-4", text: "Is there a piece in this project that anchors the whole design?", source: "default" as const },
-  { id: "fallback-5", text: "What do you hope people feel when they walk into this space?", source: "default" as const },
-];
-
 // Map contextual question sources to the InterviewQuestion source format
 function mapSource(source: string): "ai-personalized" | "ai-followup" | "default" {
   if (source === "ai_classification" || source === "contextual") return "ai-personalized";
@@ -109,37 +100,27 @@ export async function POST(request: NextRequest) {
     // Generate session ID
     const sessionId = `session-${randomUUID()}`;
 
-    // Generate contextual questions using AI classification data
-    let questions: Array<{ id: string; text: string; source: "ai-personalized" | "ai-followup" | "default"; relatedImageId?: string; context?: string }>;
-    let contextLevel = 0;
-    let contextDescription = "No project context available";
-    let upgradeSuggestion: string | null = "Upload project photos to unlock personalized questions";
+    // Generate contextual questions — no fallback, hard error if this fails
+    const { getInterviewQuestionsWithContext } = await import("@/lib/editorial/getInterviewQuestions");
+    const result = await getInterviewQuestionsWithContext(projectId, {
+      maxQuestions: 15,
+      prioritizeBoostable: true,
+    });
 
-    try {
-      const { getInterviewQuestionsWithContext } = await import("@/lib/editorial/getInterviewQuestions");
-      const result = await getInterviewQuestionsWithContext(projectId, {
-        maxQuestions: 15,
-        prioritizeBoostable: true,
-      });
+    const contextLevel = result.contextLevel;
+    const contextDescription = result.contextDescription;
+    const upgradeSuggestion = result.upgradeSuggestion;
 
-      contextLevel = result.contextLevel;
-      contextDescription = result.contextDescription;
-      upgradeSuggestion = result.upgradeSuggestion;
+    // Map to the InterviewQuestion format expected by the frontend
+    const questions = result.questions.map((q) => ({
+      id: q.id,
+      text: q.questionText,
+      source: mapSource(q.source),
+      relatedImageId: q.linkedImageId,
+      context: q.roomContext,
+    }));
 
-      // Map to the InterviewQuestion format expected by the frontend
-      questions = result.questions.map((q) => ({
-        id: q.id,
-        text: q.questionText,
-        source: mapSource(q.source),
-        relatedImageId: q.linkedImageId,
-        context: q.roomContext,
-      }));
-
-      console.log(`[/api/interview/start] Generated ${questions.length} questions at context level ${contextLevel} for project ${projectId}`);
-    } catch (questionError: any) {
-      console.error("[/api/interview/start] Failed to generate contextual questions:", questionError?.message);
-      questions = [...FALLBACK_QUESTIONS];
-    }
+    console.log(`[/api/interview/start] Generated ${questions.length} questions at context level ${contextLevel} for project ${projectId}`);
 
     // Get hero image
     const heroImageUrl = project.images[0]?.url ?? null;

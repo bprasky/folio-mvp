@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useMemo } from "react";
-import { DEFAULT_QUESTION_BANK, type InterviewQuestion } from "@/lib/posting/questionBank";
+import type { InterviewQuestion } from "@/lib/posting/interviewSchemas";
 import type {
   InterviewAnswer,
   SixWCategory,
@@ -28,9 +28,8 @@ export function AnswerForm({
   fieldErrors = {},
   contextualQuestions = [],
 }: AnswerFormProps) {
-  // Merge DEFAULT_QUESTION_BANK with contextual questions
   const allQuestions = useMemo(() => {
-    return [...DEFAULT_QUESTION_BANK, ...contextualQuestions];
+    return contextualQuestions;
   }, [contextualQuestions]);
   const [localAnswers, setLocalAnswers] = useState<Record<string, string>>({});
   const [isSaving, setIsSaving] = useState(false);

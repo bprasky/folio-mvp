@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { DEFAULT_QUESTION_BANK } from "@/lib/posting/questionBank";
 import type {
   InterviewAnswer,
   SixWCategory,
@@ -190,18 +189,17 @@ export function FollowUpsForm({
         const parentAnswer = initialAnswers.find(
           (answer) => answer.questionId === group.questionId && !answer.isFollowUp
         );
-        const parentQuestion = DEFAULT_QUESTION_BANK.find(
-          (question) => question.id === group.questionId
-        );
+        // Use the prompt field from the parent answer (stored at answer time)
+        const parentQuestionText = parentAnswer?.prompt;
 
         return (
           <div
             key={group.questionId}
             className="space-y-4 border-l-2 border-[var(--accent)]/20 pl-4"
           >
-            {parentQuestion && (
+            {parentQuestionText && (
               <div className="text-sm font-medium text-[var(--text-primary)]">
-                {parentQuestion.prompt}
+                {parentQuestionText}
               </div>
             )}
             {parentAnswer && (

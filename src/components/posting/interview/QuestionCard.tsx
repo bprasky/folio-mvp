@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Mic, Square, Loader2 } from "lucide-react";
-import type { InterviewQuestion } from "@/lib/posting/questionBank";
+import type { InterviewQuestion } from "@/lib/posting/interviewSchemas";
 import type { InterviewAnswer } from "@/lib/posting/interviewSchemas";
 import { useVoiceRecording } from "./useVoiceRecording";
 import { LinkedImagePreview } from "@/components/editorial/LinkedImagePreview";

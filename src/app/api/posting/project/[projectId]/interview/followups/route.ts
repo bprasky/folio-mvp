@@ -67,9 +67,9 @@ Example format:
 {
   "followUps": [
     {
-      "questionId": "why-2",
+      "questionId": "q-abc123",
       "followUps": [
-        { "id": "fu-why-2-1", "prompt": "You mentioned the marble was a late decision. What changed your mind — was there a moment it clicked?" }
+        { "id": "fu-abc123-1", "prompt": "You mentioned the marble was a late decision. What changed your mind — was there a moment it clicked?" }
       ]
     }
   ]
