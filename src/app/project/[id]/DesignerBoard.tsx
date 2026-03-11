@@ -40,11 +40,31 @@ type Selection = {
   vendorRepId?: string | null;
   productUrl?: string | null;
   tags: string[];
+  productTagId?: string | null;
   // TODO: Add metadata field for overrides when schema supports it
   metadata?: {
     displaySize?: 'auto' | 'large' | 'medium' | 'small';
     featured?: boolean;
   };
+};
+
+type ImageProductTag = {
+  id: string;
+  x: number;
+  y: number;
+  productId: string;
+  product: {
+    id: string;
+    name: string;
+    imageUrl?: string | null;
+  } | null;
+};
+
+type TaggedImage = {
+  id: string;
+  url: string;
+  room?: string | null;
+  tags: ImageProductTag[];
 };
 
 type Room = {
@@ -74,6 +94,7 @@ type DesignerBoardProps = {
   project: Project;
   showAll?: boolean; // default true
   imageCount?: number; // number of images in the project (for analyzing state)
+  images?: TaggedImage[]; // project images with ProductTag data
 };
 
 // Reuse the Festival sizing logic
@@ -90,6 +111,7 @@ export default function DesignerBoard({
   project,
   showAll = true,
   imageCount = 0,
+  images = [],
 }: DesignerBoardProps) {
   const router = useRouter();
   const capabilities = useUserCapabilities();
@@ -142,6 +164,32 @@ export default function DesignerBoard({
     if (!selectedRoomId) return project.rooms;
     return project.rooms.filter(room => room.id === selectedRoomId);
   }, [project.rooms, selectedRoomId]);
+
+  // Compute orphaned ProductTags — tags not linked to any Selection
+  const orphanedTags = useMemo(() => {
+    if (!images || images.length === 0) return [];
+
+    // Collect all productTagIds linked from selections
+    const linkedTagIds = new Set<string>();
+    for (const room of project.rooms) {
+      for (const sel of room.selections) {
+        if (sel.productTagId) {
+          linkedTagIds.add(sel.productTagId);
+        }
+      }
+    }
+
+    // Find tags that aren't linked
+    const orphaned: Array<ImageProductTag & { image: TaggedImage }> = [];
+    for (const img of images) {
+      for (const tag of img.tags) {
+        if (!linkedTagIds.has(tag.id)) {
+          orphaned.push({ ...tag, image: img });
+        }
+      }
+    }
+    return orphaned;
+  }, [images, project.rooms]);
 
   const handleRoomPaintAccentToggle = (roomId: string) => {
     setPaintAccentEnabled(prev => ({
@@ -389,6 +437,56 @@ export default function DesignerBoard({
         <div className="text-center py-12 text-[var(--text-secondary)]">
           <p className="folio-body">No rooms match your filter</p>
           <p className="folio-ui mt-2">Try selecting a different room or "All Rooms"</p>
+        </div>
+      )}
+
+      {/* Orphaned ProductTags — tags not linked to any Selection */}
+      {orphanedTags.length > 0 && (
+        <div className="space-y-4">
+          <h3 className="folio-ui font-semibold text-[var(--text-primary)]">
+            Tagged Products
+            <span className="ml-2 folio-meta font-normal text-[var(--text-secondary)]">
+              {orphanedTags.length} product{orphanedTags.length !== 1 ? 's' : ''} not yet in a room
+            </span>
+          </h3>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            {orphanedTags.map((tag) => {
+              const xPct = tag.x <= 1 ? tag.x * 100 : tag.x;
+              const yPct = tag.y <= 1 ? tag.y * 100 : tag.y;
+              return (
+                <div
+                  key={tag.id}
+                  className="ridge-card overflow-hidden"
+                >
+                  {/* Image thumbnail with tag dot */}
+                  <div className="relative aspect-[4/3] bg-[var(--bg-elevated)]">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={tag.image.url}
+                      alt=""
+                      className="h-full w-full object-cover"
+                    />
+                    <div
+                      className="absolute z-10"
+                      style={{
+                        left: `${xPct}%`,
+                        top: `${yPct}%`,
+                        transform: 'translate(-50%, -50%)',
+                      }}
+                    >
+                      <div className="flex h-4 w-4 items-center justify-center rounded-full bg-[var(--accent)] border-2 border-white shadow-lg" />
+                    </div>
+                  </div>
+                  {/* Product info */}
+                  <div className="px-3 py-2">
+                    <p className="folio-meta font-medium text-[var(--text-primary)] truncate">
+                      {tag.product?.name ?? 'Unknown Product'}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
 
