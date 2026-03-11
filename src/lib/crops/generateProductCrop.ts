@@ -47,8 +47,13 @@ export async function generateProductCrop(options: CropOptions): Promise<CropRes
   const imgHeight = metadata.height!;
 
   // Calculate crop center (use manual override if set)
-  const centerX = (tag.cropX ?? tag.x) * imgWidth;
-  const centerY = (tag.cropY ?? tag.y) * imgHeight;
+  // Tag x,y are stored as 0-100 percentages in the DB; normalize to 0-1
+  const rawX = tag.cropX ?? tag.x;
+  const rawY = tag.cropY ?? tag.y;
+  const normX = rawX > 1 ? rawX / 100 : rawX;
+  const normY = rawY > 1 ? rawY / 100 : rawY;
+  const centerX = normX * imgWidth;
+  const centerY = normY * imgHeight;
 
   // Calculate crop scale
   const scale = tag.cropScale ?? getCategoryDefaultScale(tag.category);
