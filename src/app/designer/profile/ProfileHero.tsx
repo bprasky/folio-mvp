@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import SafeImage from '@/components/SafeImage';
-import { getMonographUrl } from '@/lib/utils/getMonographUrl';
 
 interface ProfileHeroProps {
   user: {
@@ -16,13 +15,13 @@ interface ProfileHeroProps {
     instagram?: string | null;
     linkedin?: string | null;
   };
-  organization?: { name: string } | null;
+  organization?: { id: string; name: string } | null;
   profileInterview?: {
     shortBio?: string | null;
     philosophyStatement?: string | null;
   } | null;
-  projectCount: number;
-  productCount: number;
+  saveCount: number;
+  boardCount: number;
   isOwner: boolean;
 }
 
@@ -30,13 +29,12 @@ export default function ProfileHero({
   user,
   organization,
   profileInterview,
-  projectCount,
-  productCount,
+  saveCount,
+  boardCount,
   isOwner,
 }: ProfileHeroProps) {
   const tagline = profileInterview?.shortBio || user.bio;
   const fingerprint = user.specialties || [];
-  const firmName = organization?.name || null;
 
   const initials = user.name
     ?.split(' ')
@@ -66,17 +64,32 @@ export default function ProfileHero({
         {/* Info */}
         <div className="flex-1 min-w-0">
           <h1 className="folio-h2 mb-0.5">{user.name}</h1>
-          <div className="folio-body mb-0.5">
-            {[user.title, firmName].filter(Boolean).join(' \u00B7 ')}
-          </div>
+          {(user.title || organization) && (
+            <div className="folio-body mb-0.5">
+              {user.title && organization ? (
+                <>
+                  {user.title} at{' '}
+                  <Link href={`/org/${organization.id}`} style={{ color: 'inherit', textDecoration: 'underline', textUnderlineOffset: '2px' }}>
+                    {organization.name} ↗
+                  </Link>
+                </>
+              ) : user.title ? (
+                user.title
+              ) : organization ? (
+                <Link href={`/org/${organization.id}`} style={{ color: 'inherit', textDecoration: 'underline', textUnderlineOffset: '2px' }}>
+                  {organization.name} ↗
+                </Link>
+              ) : null}
+            </div>
+          )}
           {user.location && (
             <div className="folio-meta mb-3.5">{user.location}</div>
           )}
 
           {/* Stats */}
           <div className="flex gap-8 mb-3.5">
-            <StatPill value={projectCount} label="Projects" />
-            <StatPill value={productCount} label="Products" />
+            <StatPill value={saveCount} label="Saves" />
+            <StatPill value={boardCount} label="Boards" />
           </div>
 
           {/* Tagline */}
@@ -108,13 +121,14 @@ export default function ProfileHero({
                 >
                   Edit Profile
                 </Link>
-                <Link
-                  href={getMonographUrl({ name: user.name })}
-                  target="_blank"
-                  className="ridge-btn pill-btn px-6 py-2 text-[13px] no-underline inline-block"
-                >
-                  View Public Profile
-                </Link>
+                {organization && (
+                  <Link
+                    href={`/org/${organization.id}`}
+                    className="ridge-btn pill-btn px-6 py-2 text-[13px] no-underline inline-block"
+                  >
+                    View {organization.name} ↗
+                  </Link>
+                )}
               </>
             ) : (
               <>

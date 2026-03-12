@@ -1,16 +1,15 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import ProfileHero from './ProfileHero';
 import ProfileTabs, { type TabId } from './ProfileTabs';
-import AllFeed from './tabs/AllFeed';
 import ProjectsFeed from './tabs/ProjectsFeed';
-import ShopFeed from './tabs/ShopFeed';
 import AboutTab from './tabs/AboutTab';
 import type { ProfilePageData } from './types';
 
 export default function ProfileClient({ data }: { data: ProfilePageData }) {
-  const [activeTab, setActiveTab] = useState<TabId>('all');
+  const [activeTab, setActiveTab] = useState<TabId>('saves');
 
   const {
     user,
@@ -18,28 +17,11 @@ export default function ProfileClient({ data }: { data: ProfilePageData }) {
     profileInterview,
     designerBio,
     projects,
-    products,
     teamMembers,
-    collaborations,
-    projectCount,
-    productCount,
+    saveCount,
+    boardCount,
     isOwner,
   } = data;
-
-  // Build quotes from profileInterview
-  const quotes = [];
-  if (profileInterview?.philosophyStatement) {
-    quotes.push({
-      text: profileInterview.philosophyStatement,
-    });
-  }
-  if (profileInterview?.pullQuotes) {
-    profileInterview.pullQuotes.forEach((q, i) => {
-      if (i > 0 || !profileInterview.philosophyStatement) {
-        quotes.push({ text: q, attribution: `\u2014 ${user.name}` });
-      }
-    });
-  }
 
   return (
     <div style={{ background: 'var(--bg-base)', minHeight: '100vh', fontFamily: 'var(--font-body)' }}>
@@ -47,8 +29,8 @@ export default function ProfileClient({ data }: { data: ProfilePageData }) {
         user={user}
         organization={organization}
         profileInterview={profileInterview}
-        projectCount={projectCount}
-        productCount={productCount}
+        saveCount={saveCount}
+        boardCount={boardCount}
         isOwner={isOwner}
       />
 
@@ -57,20 +39,12 @@ export default function ProfileClient({ data }: { data: ProfilePageData }) {
         onTabChange={setActiveTab}
         user={{ name: user.name, profileImage: user.profileImage }}
         firmName={organization?.name}
+        hasOrg={!!organization}
       />
 
       <div style={{ maxWidth: 960, margin: '0 auto', padding: '0 24px', paddingBottom: 80 }}>
-        {activeTab === 'all' && (
-          <AllFeed
-            projects={projects}
-            products={products}
-            teamMembers={teamMembers}
-            collaborations={collaborations}
-            quotes={quotes}
-          />
-        )}
-        {activeTab === 'projects' && <ProjectsFeed projects={projects} />}
-        {activeTab === 'shop' && <ShopFeed products={products} />}
+        {activeTab === 'saves' && <SavesEmptyState />}
+        {activeTab === 'boards' && <ProjectsFeed projects={projects} />}
         {activeTab === 'about' && (
           <AboutTab
             user={user}
@@ -81,6 +55,47 @@ export default function ProfileClient({ data }: { data: ProfilePageData }) {
             isOwner={isOwner}
           />
         )}
+      </div>
+    </div>
+  );
+}
+
+function SavesEmptyState() {
+  return (
+    <div
+      style={{
+        textAlign: 'center',
+        padding: '80px 24px',
+        maxWidth: 480,
+        margin: '0 auto',
+      }}
+    >
+      <p
+        style={{
+          fontFamily: 'var(--font-body)',
+          fontSize: '16px',
+          color: 'var(--text-secondary)',
+          lineHeight: 1.6,
+          marginBottom: '28px',
+        }}
+      >
+        Start saving projects and products you love.
+        <br />
+        They&rsquo;ll appear here for easy access.
+      </p>
+      <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+        <Link
+          href="/feed"
+          className="accent-btn pill-btn px-6 py-2.5 text-[13px] no-underline inline-block"
+        >
+          Browse the Feed
+        </Link>
+        <Link
+          href="/directory"
+          className="ridge-btn pill-btn px-6 py-2.5 text-[13px] no-underline inline-block"
+        >
+          Explore the Directory
+        </Link>
       </div>
     </div>
   );

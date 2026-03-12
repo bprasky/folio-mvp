@@ -51,7 +51,21 @@ export default async function DesignerProfilePage() {
 
   // Get organization
   const orgUser = user.organizationUsers[0] ?? null;
-  const organization = orgUser?.organization ? { name: orgUser.organization.name } : null;
+  const organization = orgUser?.organization
+    ? { id: orgUser.organization.id, name: orgUser.organization.name }
+    : null;
+
+  // Fetch save and board counts
+  let saveCount = 0;
+  let boardCount = 0;
+  try {
+    [saveCount, boardCount] = await Promise.all([
+      prisma.save.count({ where: { userId } }),
+      prisma.board.count({ where: { userId } }),
+    ]);
+  } catch {
+    // Tables might not exist yet — fall back to 0
+  }
 
   // Fetch team members separately — team_member table may not exist yet
   let teamMembers: ProfileTeamMember[] = [];
@@ -321,8 +335,8 @@ export default async function DesignerProfilePage() {
     products,
     teamMembers,
     collaborations,
-    projectCount,
-    productCount,
+    saveCount,
+    boardCount,
     isOwner: true,
   };
 

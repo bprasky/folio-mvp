@@ -74,7 +74,7 @@ export interface ProfilePageData {
     instagram: string | null;
     linkedin: string | null;
   };
-  organization: { name: string } | null;
+  organization: { id: string; name: string } | null;
   profileInterview: {
     generatedBio: string | null;
     shortBio: string | null;
@@ -87,7 +87,7 @@ export interface ProfilePageData {
   products: ProfileProduct[];
   teamMembers: ProfileTeamMember[];
   collaborations: ProfileCollaboration[];
-  projectCount: number;
-  productCount: number;
+  saveCount: number;
+  boardCount: number;
   isOwner: boolean;
 }
