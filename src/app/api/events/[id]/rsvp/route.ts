@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/options";
 import prisma from "@/lib/prisma";
 import { logSignal } from "@/lib/telemetry/context-signal";
+import { nanoid } from "nanoid";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -27,11 +28,19 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     const next = String(status || "").toUpperCase() as RSVPState;
     if (!OK.includes(next)) return NextResponse.json({ error: "Bad status" }, { status: 400 });
 
-    await prisma.eventRSVP.upsert({
+    const rsvp = await prisma.eventRSVP.upsert({
       where: { userId_eventId: { userId: session.user.id, eventId } },
       update: { status: next },
       create: { userId: session.user.id, eventId, status: next },
     });
+
+    // Generate badge token for ATTENDING RSVPs (used for event check-in)
+    if (next === "ATTENDING" && !rsvp.badgeToken) {
+      await prisma.eventRSVP.update({
+        where: { id: rsvp.id },
+        data: { badgeToken: nanoid(12) },
+      });
+    }
 
     // Log context signal for predictive market layer
     await logSignal({

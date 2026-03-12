@@ -128,6 +128,7 @@
     "dotenv": "^17.2.0",
     "exceljs": "^4.4.0",
     "framer-motion": "^12.23.21",
+    "html5-qrcode": "^2.3.8",
     "jszip": "^3.10.1",
     "lucide-react": "^0.539.0",
     "nanoid": "^5.1.6",
