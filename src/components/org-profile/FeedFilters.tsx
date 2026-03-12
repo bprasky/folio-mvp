@@ -20,9 +20,11 @@ interface FeedFiltersProps {
   activeFilter: string;
   activeSort: string;
   orgId: string;
+  isAdmin?: boolean;
+  onAddRecognition?: () => void;
 }
 
-export default function FeedFilters({ activeFilter, activeSort, orgId }: FeedFiltersProps) {
+export default function FeedFilters({ activeFilter, activeSort, orgId, isAdmin, onAddRecognition }: FeedFiltersProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -40,18 +42,29 @@ export default function FeedFilters({ activeFilter, activeSort, orgId }: FeedFil
   return (
     <div className="flex flex-wrap items-center gap-3 mb-6">
       {FILTERS.map(filter => (
-        <button
-          key={filter.id}
-          onClick={() => updateParams('filter', filter.id)}
-          className="px-4 py-1.5 text-xs rounded-full transition-all"
-          style={{
-            backgroundColor: activeFilter === filter.id ? '#2C2825' : 'transparent',
-            color: activeFilter === filter.id ? '#FAF9F7' : '#6B635B',
-            border: activeFilter === filter.id ? 'none' : '1px solid #D4CEC6',
-          }}
-        >
-          {filter.label}
-        </button>
+        <div key={filter.id} className="flex items-center gap-1">
+          <button
+            onClick={() => updateParams('filter', filter.id)}
+            className="px-4 py-1.5 text-xs rounded-full transition-all"
+            style={{
+              backgroundColor: activeFilter === filter.id ? '#2C2825' : 'transparent',
+              color: activeFilter === filter.id ? '#FAF9F7' : '#6B635B',
+              border: activeFilter === filter.id ? 'none' : '1px solid #D4CEC6',
+            }}
+          >
+            {filter.label}
+          </button>
+          {filter.id === 'recognition' && isAdmin && onAddRecognition && (
+            <button
+              onClick={onAddRecognition}
+              className="w-6 h-6 text-xs rounded-full flex items-center justify-center transition-all hover:opacity-80"
+              style={{ border: '1px solid #D4CEC6', color: '#6B635B' }}
+              title="Add recognition"
+            >
+              +
+            </button>
+          )}
+        </div>
       ))}
 
       <div className="flex-1" />

@@ -107,7 +107,7 @@ export async function PATCH(
     }
 
     const body = await request.json();
-    const { name, description, website, logo, address, phone } = body;
+    const { name, description, website, logo, address, phone, tagline, philosophy, location, foundedYear, specialties } = body;
 
     // Build update data (only include provided fields)
     const updateData: any = {};
@@ -117,6 +117,11 @@ export async function PATCH(
     if (logo !== undefined) updateData.logo = logo?.trim() || null;
     if (address !== undefined) updateData.address = address.trim();
     if (phone !== undefined) updateData.phone = phone.trim();
+    if (tagline !== undefined) updateData.tagline = tagline?.trim() || null;
+    if (philosophy !== undefined) updateData.philosophy = philosophy?.trim() || null;
+    if (location !== undefined) updateData.location = location?.trim() || null;
+    if (foundedYear !== undefined) updateData.foundedYear = foundedYear ? parseInt(foundedYear) : null;
+    if (specialties !== undefined) updateData.specialties = Array.isArray(specialties) ? specialties : [];
 
     const org = await prisma.organization.update({
       where: { id: orgId },
