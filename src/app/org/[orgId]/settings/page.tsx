@@ -1,15 +1,23 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
+import { FaCamera } from 'react-icons/fa';
 
 export default function OrgSettingsPage() {
   const params = useParams();
   const router = useRouter();
+  const { data: session } = useSession();
   const orgId = params.orgId as string;
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const [form, setForm] = useState({
     name: '',
     description: '',
@@ -17,7 +25,6 @@ export default function OrgSettingsPage() {
     philosophy: '',
     location: '',
     website: '',
-    logo: '',
     foundedYear: '',
     specialties: [] as string[],
   });
@@ -36,10 +43,18 @@ export default function OrgSettingsPage() {
             philosophy: data.philosophy || '',
             location: data.location || data.address || '',
             website: data.website || '',
-            logo: data.logo || '',
             foundedYear: data.foundedYear ? String(data.foundedYear) : '',
             specialties: Array.isArray(data.specialties) ? data.specialties : [],
           });
+          setLogoUrl(data.logo || null);
+
+          // Check if current user is admin/owner
+          const userMember = data.members?.find(
+            (m: any) => m.userId === session?.user?.id
+          );
+          setIsAuthorized(
+            userMember && ['OWNER', 'ADMIN'].includes(userMember.role)
+          );
         }
       } catch (error) {
         console.error('Failed to load org:', error);
@@ -47,8 +62,10 @@ export default function OrgSettingsPage() {
         setLoading(false);
       }
     }
-    loadOrg();
-  }, [orgId]);
+    if (session?.user) {
+      loadOrg();
+    }
+  }, [orgId, session]);
 
   const handleSave = async () => {
     try {
@@ -69,6 +86,30 @@ export default function OrgSettingsPage() {
     }
   };
 
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingLogo(true);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await fetch(`/api/orgs/${orgId}/logo`, {
+        method: 'POST',
+        body: fd,
+      });
+      if (res.ok) {
+        const { logo } = await res.json();
+        setLogoUrl(logo);
+      }
+    } catch (error) {
+      console.error('Error uploading logo:', error);
+    } finally {
+      setUploadingLogo(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
   const addSpecialty = () => {
     const val = specialtyInput.trim();
     if (val && !form.specialties.includes(val)) {
@@ -84,10 +125,37 @@ export default function OrgSettingsPage() {
     }));
   };
 
+  const initials = form.name
+    ?.split(' ')
+    .map(n => n[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase() || '';
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#FAF9F7' }}>
         <p className="text-sm" style={{ color: '#8B8178' }}>Loading...</p>
+      </div>
+    );
+  }
+
+  if (!isAuthorized) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#FAF9F7' }}>
+        <div className="text-center">
+          <h3 className="text-lg font-medium mb-2" style={{ color: '#2C2825' }}>Access Denied</h3>
+          <p className="text-sm mb-4" style={{ color: '#8B8178' }}>
+            You need admin or owner access to edit this organization.
+          </p>
+          <button
+            onClick={() => router.push(`/org/${orgId}`)}
+            className="px-5 py-2 text-sm rounded-full transition-all hover:opacity-80"
+            style={{ backgroundColor: '#2C2825', color: '#FAF9F7' }}
+          >
+            Go Back
+          </button>
+        </div>
       </div>
     );
   }
@@ -113,6 +181,48 @@ export default function OrgSettingsPage() {
           <p className="text-sm" style={{ color: '#8B8178', fontFamily: 'var(--font-body)' }}>
             This is what designers, vendors, and clients see when they visit your profile.
           </p>
+        </div>
+
+        {/* Logo Upload */}
+        <div className="flex items-center gap-4 mb-8">
+          <div
+            className="relative w-20 h-20 rounded-full flex items-center justify-center cursor-pointer group flex-shrink-0"
+            onClick={() => fileInputRef.current?.click()}
+            title="Change logo"
+          >
+            {logoUrl ? (
+              <img
+                src={logoUrl}
+                alt={form.name}
+                className="w-20 h-20 rounded-full object-cover"
+              />
+            ) : (
+              <div
+                className="w-20 h-20 rounded-full flex items-center justify-center text-2xl font-light"
+                style={{ backgroundColor: '#E8E4DF', color: '#6B635B' }}
+              >
+                {initials}
+              </div>
+            )}
+            <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+              {uploadingLogo ? (
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white" />
+              ) : (
+                <FaCamera className="w-5 h-5 text-white" />
+              )}
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="hidden"
+              onChange={handleLogoUpload}
+            />
+          </div>
+          <div>
+            <p className="text-sm font-medium" style={{ color: '#2C2825' }}>Studio Logo</p>
+            <p className="text-xs" style={{ color: '#8B8178' }}>Click to upload (JPEG, PNG, or WebP, max 5MB)</p>
+          </div>
         </div>
 
         <div className="flex flex-col gap-6">
@@ -185,28 +295,6 @@ export default function OrgSettingsPage() {
               className="w-full px-4 py-2.5 text-sm rounded-xl border outline-none transition-colors focus:border-[#B8845C]"
               style={inputStyle}
             />
-          </Field>
-
-          {/* Logo URL */}
-          <Field label="Logo URL">
-            <input
-              type="url"
-              value={form.logo}
-              onChange={(e) => setForm((f) => ({ ...f, logo: e.target.value }))}
-              placeholder="https://..."
-              className="w-full px-4 py-2.5 text-sm rounded-xl border outline-none transition-colors focus:border-[#B8845C]"
-              style={inputStyle}
-            />
-            {form.logo && (
-              <div className="mt-2">
-                <img
-                  src={form.logo}
-                  alt="Logo preview"
-                  className="w-16 h-16 rounded-xl object-cover border"
-                  style={{ borderColor: '#E8E4DF' }}
-                />
-              </div>
-            )}
           </Field>
 
           {/* Founded Year */}

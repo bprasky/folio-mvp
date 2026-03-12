@@ -118,7 +118,7 @@ export default function ProfileHero({
             {isOwner ? (
               <>
                 <Link
-                  href="/settings/profile"
+                  href="/profile"
                   className="accent-btn pill-btn px-7 py-2.5 text-[13px] no-underline inline-block"
                 >
                   Edit Profile
