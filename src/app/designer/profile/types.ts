@@ -61,6 +61,13 @@ export interface DesignerBioData {
   answerCount: number;
 }
 
+export interface UpcomingEventRSVP {
+  eventId: string;
+  eventTitle: string;
+  eventStartDate: string;
+  eventLocation: string | null;
+}
+
 export interface ProfilePageData {
   user: {
     id: string;
@@ -89,5 +96,6 @@ export interface ProfilePageData {
   collaborations: ProfileCollaboration[];
   saveCount: number;
   boardCount: number;
+  upcomingEventRSVPs: UpcomingEventRSVP[];
   isOwner: boolean;
 }

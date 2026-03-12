@@ -23,6 +23,7 @@ interface ProfileHeroProps {
   saveCount: number;
   boardCount: number;
   isOwner: boolean;
+  onBadgeClick?: () => void;
 }
 
 export default function ProfileHero({
@@ -32,6 +33,7 @@ export default function ProfileHero({
   saveCount,
   boardCount,
   isOwner,
+  onBadgeClick,
 }: ProfileHeroProps) {
   const tagline = profileInterview?.shortBio || user.bio;
   const fingerprint = user.specialties || [];
@@ -121,6 +123,24 @@ export default function ProfileHero({
                 >
                   Edit Profile
                 </Link>
+                {onBadgeClick && (
+                  <button
+                    onClick={onBadgeClick}
+                    className="ridge-btn pill-btn px-3 py-2"
+                    title="Folio Badge"
+                    aria-label="Open Folio Badge"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                      <rect x="1" y="1" width="5" height="5" rx="0.5" />
+                      <rect x="10" y="1" width="5" height="5" rx="0.5" />
+                      <rect x="1" y="10" width="5" height="5" rx="0.5" />
+                      <rect x="10" y="10" width="2" height="2" rx="0.25" />
+                      <rect x="13" y="10" width="2" height="2" rx="0.25" />
+                      <rect x="10" y="13" width="2" height="2" rx="0.25" />
+                      <rect x="13" y="13" width="2" height="2" rx="0.25" />
+                    </svg>
+                  </button>
+                )}
                 {organization && (
                   <Link
                     href={`/org/${organization.id}`}
