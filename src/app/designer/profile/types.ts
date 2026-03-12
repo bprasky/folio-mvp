@@ -50,6 +50,13 @@ export interface ProfileQuote {
   attribution?: string;
 }
 
+export interface DesignerBioData {
+  status: string; // empty | scraped | interviewing | generated | published
+  folioBio: string | null;
+  sourceUrl: string | null;
+  answerCount: number;
+}
+
 export interface ProfilePageData {
   user: {
     id: string;
@@ -71,6 +78,7 @@ export interface ProfilePageData {
     philosophyStatement: string | null;
     processDescription: string | null;
   } | null;
+  designerBio: DesignerBioData | null;
   projects: ProfileProject[];
   products: ProfileProduct[];
   teamMembers: ProfileTeamMember[];

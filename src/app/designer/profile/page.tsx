@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 import { PUBLISHED_PROJECT_FILTER } from '@/server/queries/filters';
 import ProfileClient from './ProfileClient';
-import type { ProfilePageData, ProfileProject, ProfileProduct, ProfileTeamMember, ProfileCollaboration } from './types';
+import type { ProfilePageData, ProfileProject, ProfileProduct, ProfileTeamMember, ProfileCollaboration, DesignerBioData } from './types';
 
 export const dynamic = 'force-dynamic';
 
@@ -258,6 +258,31 @@ export default async function DesignerProfilePage() {
     // Table doesn't exist yet — silently fall back to null
   }
 
+  // Attempt to load designerBio — table may not exist yet
+  let designerBio: DesignerBioData | null = null;
+  try {
+    const bio = await prisma.designerBio.findUnique({
+      where: { userId },
+      select: {
+        status: true,
+        folioBio: true,
+        sourceUrl: true,
+        interviewAnswers: true,
+      },
+    });
+    if (bio) {
+      const answers = Array.isArray(bio.interviewAnswers) ? bio.interviewAnswers : [];
+      designerBio = {
+        status: bio.status,
+        folioBio: bio.folioBio,
+        sourceUrl: bio.sourceUrl,
+        answerCount: answers.length,
+      };
+    }
+  } catch {
+    // Table doesn't exist yet — silently fall back to null
+  }
+
   const pageData: ProfilePageData = {
     user: {
       id: user.id,
@@ -273,6 +298,7 @@ export default async function DesignerProfilePage() {
     },
     organization,
     profileInterview,
+    designerBio,
     projects,
     products,
     teamMembers,
