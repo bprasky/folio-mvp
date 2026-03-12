@@ -1,7 +1,9 @@
 'use client';
 
+import { useState } from 'react';
 import SafeImage from '@/components/SafeImage';
-import type { ProfileTeamMember } from '../types';
+import BioSetupFlow from '@/components/designer-bio/BioSetupFlow';
+import type { ProfileTeamMember, DesignerBioData } from '../types';
 
 interface AboutTabProps {
   user: {
@@ -18,6 +20,7 @@ interface AboutTabProps {
     philosophyStatement: string | null;
     processDescription: string | null;
   } | null;
+  designerBio: DesignerBioData | null;
   teamMembers: ProfileTeamMember[];
   organization: { name: string } | null;
   isOwner: boolean;
@@ -26,10 +29,13 @@ interface AboutTabProps {
 export default function AboutTab({
   user,
   profileInterview,
+  designerBio,
   teamMembers,
   organization,
   isOwner,
 }: AboutTabProps) {
+  const [justPublished, setJustPublished] = useState(false);
+
   const bio = profileInterview?.generatedBio || user.bio;
   const pullQuotes = profileInterview?.pullQuotes;
   const philosophy = profileInterview?.philosophyStatement;
@@ -44,13 +50,31 @@ export default function AboutTab({
 
   const hasAnyContent = hasBio || hasPullQuote || hasPhilosophy || hasProcess || hasTeam || hasSocial;
 
-  if (!hasAnyContent) {
+  // Show setup flow for owners without published bio content
+  const bioIsPublished = designerBio?.status === 'published';
+  const showSetupFlow = isOwner && !hasAnyContent && !bioIsPublished && !justPublished;
+
+  if (showSetupFlow) {
+    return (
+      <div className="py-8">
+        <BioSetupFlow
+          designerBio={designerBio}
+          userWebsite={user.website}
+          onPublished={() => {
+            setJustPublished(true);
+            // Reload page to fetch the published bio content
+            window.location.reload();
+          }}
+        />
+      </div>
+    );
+  }
+
+  if (!hasAnyContent && !justPublished) {
     return (
       <div className="text-center py-16">
         <p className="folio-body" style={{ color: 'var(--text-tertiary)' }}>
-          {isOwner
-            ? 'Complete your profile interview to share your story and design philosophy.'
-            : 'This designer hasn\u2019t added their bio yet.'}
+          This designer hasn&rsquo;t added their bio yet.
         </p>
       </div>
     );

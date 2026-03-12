@@ -16,6 +16,7 @@ export default function ProfileClient({ data }: { data: ProfilePageData }) {
     user,
     organization,
     profileInterview,
+    designerBio,
     projects,
     products,
     teamMembers,
@@ -74,6 +75,7 @@ export default function ProfileClient({ data }: { data: ProfilePageData }) {
           <AboutTab
             user={user}
             profileInterview={profileInterview}
+            designerBio={designerBio}
             teamMembers={teamMembers}
             organization={organization}
             isOwner={isOwner}
