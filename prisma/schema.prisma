@@ -249,6 +249,7 @@ model Event {
   organization             Organization?      @relation("OrgEvents", fields: [organizationId], references: [id])
   impressions              impressions[]
   placements               placements[]
+  workflowJobs             EventWorkflowJob[]
 
   @@index([parentFestivalId])
   @@index([city])
@@ -274,6 +275,23 @@ model EventRSVP {
 
   @@unique([userId, eventId])
   @@map("event_rsvps")
+}
+
+model EventWorkflowJob {
+  id          String    @id @default(cuid())
+  eventId     String
+  event       Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  jobType     String
+  status      String    @default("pending")
+  jobData     Json?
+  result      Json?
+  scheduledAt DateTime?
+  startedAt   DateTime?
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([eventId])
+  @@map("event_workflow_jobs")
 }
 
 model Project {

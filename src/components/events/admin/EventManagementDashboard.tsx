@@ -144,8 +144,23 @@ export default function EventManagementDashboard({ eventId }: EventManagementDas
                 <WorkflowButton
                   eventId={eventId}
                   type="recap"
-                  label="Send Recap Emails"
-                  description="Send post-event recap to all attendees"
+                  label="Send Thank-You to Checked-In"
+                  description="Send thank-you emails to all checked-in attendees"
+                  body={{ type: "thank_you" }}
+                />
+                <WorkflowButton
+                  eventId={eventId}
+                  type="recap"
+                  label="Send 'Sorry We Missed You'"
+                  description="Email attendees who RSVP'd but didn't check in"
+                  body={{ type: "no_show" }}
+                />
+                <WorkflowButton
+                  eventId={eventId}
+                  type="recap"
+                  label="Follow Up with Walk-Ins"
+                  description="Encourage walk-in guests to complete their Folio profile"
+                  body={{ type: "walk_in_followup" }}
                 />
                 <WorkflowButton
                   eventId={eventId}
@@ -165,6 +180,14 @@ export default function EventManagementDashboard({ eventId }: EventManagementDas
                   label="Generate Follow-ups"
                   description="Create designer product follow-up suggestions"
                 />
+              </div>
+              <div className="mt-4 pt-4 border-t border-stone-200">
+                <Link
+                  href={`/events/${eventId}/dashboard`}
+                  className="inline-flex items-center text-sm font-medium text-emerald-700 bg-emerald-50 px-4 py-2 rounded-lg hover:bg-emerald-100 transition-colors"
+                >
+                  Live Check-In Dashboard &rarr;
+                </Link>
               </div>
             </div>
           </div>
@@ -198,11 +221,13 @@ function WorkflowButton({
   type,
   label,
   description,
+  body,
 }: {
   eventId: string;
   type: string;
   label: string;
   description: string;
+  body?: Record<string, string>;
 }) {
   const [isRunning, setIsRunning] = useState(false);
 
@@ -212,6 +237,7 @@ function WorkflowButton({
       const response = await fetch(`/api/events/${eventId}/workflow/${type}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        body: body ? JSON.stringify(body) : undefined,
       });
 
       const data = await response.json();

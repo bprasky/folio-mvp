@@ -248,6 +248,12 @@ export default function EventDetailClient({ event, canEdit = false, featuredProd
                 {canEdit && (
                   <div className="flex gap-2">
                     <Link
+                      href={`/events/${currentEvent.id}/dashboard`}
+                      className="flex items-center px-4 py-2 bg-stone-800 text-white rounded-lg hover:bg-stone-900 transition-colors"
+                    >
+                      Dashboard
+                    </Link>
+                    <Link
                       href={`/events/${currentEvent.id}/check-in`}
                       className="flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
                     >
