@@ -6,14 +6,15 @@ import { useSearchParams } from 'next/navigation';
 interface OrgProfileTabsProps {
   activeTab: string;
   orgId: string;
+  defaultTab?: string;
 }
 
-export default function OrgProfileTabs({ activeTab, orgId }: OrgProfileTabsProps) {
+export default function OrgProfileTabs({ activeTab, orgId, defaultTab = 'feed' }: OrgProfileTabsProps) {
   const searchParams = useSearchParams();
 
   const createUrl = (tab: string) => {
     const params = new URLSearchParams(searchParams.toString());
-    if (tab === 'feed') {
+    if (tab === defaultTab) {
       params.delete('tab');
     } else {
       params.set('tab', tab);

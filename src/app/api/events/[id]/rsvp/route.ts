@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/options";
 import prisma from "@/lib/prisma";
 import { logSignal } from "@/lib/telemetry/context-signal";
+import { nanoid } from "nanoid";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -27,11 +28,21 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     const next = String(status || "").toUpperCase() as RSVPState;
     if (!OK.includes(next)) return NextResponse.json({ error: "Bad status" }, { status: 400 });
 
-    await prisma.eventRSVP.upsert({
+    const rsvp = await prisma.eventRSVP.upsert({
       where: { userId_eventId: { userId: session.user.id, eventId } },
       update: { status: next },
       create: { userId: session.user.id, eventId, status: next },
     });
+
+    // Generate badge token for ATTENDING RSVPs (used for event check-in)
+    let badgeToken = rsvp.badgeToken;
+    if (next === "ATTENDING" && !badgeToken) {
+      badgeToken = nanoid(12);
+      await prisma.eventRSVP.update({
+        where: { id: rsvp.id },
+        data: { badgeToken },
+      });
+    }
 
     // Log context signal for predictive market layer
     await logSignal({
@@ -53,7 +64,11 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       interested: byStatus.find(s => s.status?.toUpperCase() === "INTERESTED")?._count ?? 0,
     };
 
-    return NextResponse.json({ ok: true, counts });
+    return NextResponse.json({
+      ok: true,
+      counts,
+      badgeToken: next === "ATTENDING" ? badgeToken : undefined,
+    });
   } catch (e) {
     console.error("RSVP PATCH error", e);
     return NextResponse.json({ error: "Server error" }, { status: 500 });

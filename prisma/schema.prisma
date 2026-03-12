@@ -245,28 +245,53 @@ model Event {
   createdBy                User               @relation("EventCreator", fields: [createdById], references: [id])
   parentFestival           Event?             @relation("FestivalSubevents", fields: [parentFestivalId], references: [id])
   subevents                Event[]            @relation("FestivalSubevents")
+  organizationId           String?
+  organization             Organization?      @relation("OrgEvents", fields: [organizationId], references: [id])
   impressions              impressions[]
   placements               placements[]
+  workflowJobs             EventWorkflowJob[]
 
   @@index([parentFestivalId])
   @@index([city])
   @@index([startDate])
+  @@index([organizationId])
   @@map("events")
 }
 
 model EventRSVP {
-  id        String   @id @default(cuid())
-  status    String   @default("attending")
-  notes     String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  userId    String
-  eventId   String
-  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  user      User     @relation("UserRSVPs", fields: [userId], references: [id], onDelete: Cascade)
+  id            String    @id @default(cuid())
+  status        String    @default("attending")
+  notes         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  userId        String
+  eventId       String
+  badgeToken    String?   @unique
+  checkedInAt   DateTime?
+  checkedInById String?
+  checkInMethod String? // 'badge_scan' | 'manual' | 'walk_in'
+  event         Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user          User      @relation("UserRSVPs", fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, eventId])
   @@map("event_rsvps")
+}
+
+model EventWorkflowJob {
+  id          String    @id @default(cuid())
+  eventId     String
+  event       Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  jobType     String
+  status      String    @default("pending")
+  jobData     Json?
+  result      Json?
+  scheduledAt DateTime?
+  startedAt   DateTime?
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([eventId])
+  @@map("event_workflow_jobs")
 }
 
 model Project {
@@ -739,6 +764,9 @@ model Organization {
   presentationViews       VendorPresentationView[]
   isFoundingVendor        Boolean                  @default(false)
   foundingVendorClaimedAt DateTime?
+
+  // Events hosted by this organization
+  events Event[] @relation("OrgEvents")
 
   @@index([status])
   @@index([type])
@@ -2509,6 +2537,8 @@ enum RecognitionType {
   EDITORIAL
   SPEAKING
   CERTIFICATION
+  PUBLICATION
+  OTHER
 }
 
 // Collaborations (vendor partnerships, joint projects)
