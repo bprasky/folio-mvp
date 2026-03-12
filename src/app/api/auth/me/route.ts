@@ -23,6 +23,7 @@ export async function GET(req: Request) {
         id: true,
         name: true,
         email: true,
+        title: true,
         bio: true,
         location: true,
         website: true,
@@ -81,12 +82,13 @@ export async function PUT(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { name, bio, location, website, instagram, linkedin } = body;
+    const { name, title, bio, location, website, instagram, linkedin } = body;
 
     const updatedUser = await prisma.user.update({
       where: { id },
       data: {
         name,
+        title,
         bio,
         location,
         website,
@@ -97,6 +99,7 @@ export async function PUT(req: NextRequest) {
         id: true,
         name: true,
         email: true,
+        title: true,
         bio: true,
         location: true,
         website: true,

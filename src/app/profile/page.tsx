@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import {
   FaUser,
@@ -21,6 +21,7 @@ import {
   FaRocket,
   FaPalette,
   FaStore,
+  FaCamera,
 } from 'react-icons/fa';
 import Link from 'next/link';
 
@@ -42,6 +43,7 @@ interface UserProfile {
   id: string;
   name: string;
   email: string;
+  title?: string;
   bio?: string;
   location?: string;
   website?: string;
@@ -59,6 +61,7 @@ export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
+    title: '',
     bio: '',
     location: '',
     website: '',
@@ -67,6 +70,29 @@ export default function ProfilePage() {
   });
   const [orgMemberships, setOrgMemberships] = useState<OrgMembership[]>([]);
   const [togglingVisibility, setTogglingVisibility] = useState<string | null>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingAvatar(true);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await fetch('/api/auth/me/avatar', { method: 'POST', body: fd });
+      if (res.ok) {
+        const { profileImage } = await res.json();
+        setProfile(prev => prev ? { ...prev, profileImage } : prev);
+      }
+    } catch (error) {
+      console.error('Error uploading avatar:', error);
+    } finally {
+      setUploadingAvatar(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
 
   const toggleOrgVisibility = async (membershipId: string, currentValue: boolean) => {
     setTogglingVisibility(membershipId);
@@ -104,6 +130,7 @@ export default function ProfilePage() {
         setProfile(userData);
         setFormData({
           name: userData.name || '',
+          title: userData.title || '',
           bio: userData.bio || '',
           location: userData.location || '',
           website: userData.website || '',
@@ -189,7 +216,11 @@ export default function ProfilePage() {
           <div className="p-6 border-b border-[var(--ridge-outer)]">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
-                <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                <div
+                  className="relative w-20 h-20 rounded-full flex items-center justify-center cursor-pointer group"
+                  onClick={() => fileInputRef.current?.click()}
+                  title="Change profile photo"
+                >
                   {profile.profileImage ? (
                     <img
                       src={profile.profileImage}
@@ -197,12 +228,31 @@ export default function ProfilePage() {
                       className="w-20 h-20 rounded-full object-cover"
                     />
                   ) : (
-                    <FaUser className="w-8 h-8 text-white" />
+                    <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                      <FaUser className="w-8 h-8 text-white" />
+                    </div>
                   )}
+                  <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    {uploadingAvatar ? (
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white" />
+                    ) : (
+                      <FaCamera className="w-5 h-5 text-white" />
+                    )}
+                  </div>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    className="hidden"
+                    onChange={handleAvatarUpload}
+                  />
                 </div>
                 <div>
                   <h2 className="text-2xl font-bold text-[var(--text-primary)]">{profile.name}</h2>
-                  <p className="text-[var(--text-secondary)]">{profile.email}</p>
+                  {profile.title && (
+                    <p className="text-[var(--text-secondary)]">{profile.title}</p>
+                  )}
+                  <p className="text-[var(--text-secondary)] text-sm">{profile.email}</p>
                   <span className="inline-block bg-[var(--accent)]/10 text-[var(--accent-hover)] text-xs px-2 py-1 rounded-full mt-1 capitalize">
                     {profile.role}
                   </span>
@@ -236,15 +286,15 @@ export default function ProfilePage() {
 
                   <div>
                     <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
-                      Email
+                      Title / Role
                     </label>
                     <input
-                      type="email"
-                      value={profile.email}
-                      disabled
-                      className="w-full px-3 py-2 border border-[var(--ridge-outer)] rounded-md bg-[var(--bg-elevated)] text-[var(--text-secondary)]"
+                      type="text"
+                      value={formData.title}
+                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                      className="w-full px-3 py-2 border border-[var(--ridge-outer)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                      placeholder="e.g. Interior Designer, Architect"
                     />
-                    <p className="text-xs text-[var(--text-secondary)] mt-1">Email cannot be changed</p>
                   </div>
 
                   <div className="md:col-span-2">
@@ -350,6 +400,10 @@ export default function ProfilePage() {
                     <div>
                       <label className="block text-sm font-medium text-[var(--text-primary)]">Full Name</label>
                       <p className="text-[var(--text-primary)]">{profile.name}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-[var(--text-primary)]">Title / Role</label>
+                      <p className="text-[var(--text-primary)]">{profile.title || 'No title added yet'}</p>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-[var(--text-primary)]">Email</label>
