@@ -35,10 +35,12 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     });
 
     // Generate badge token for ATTENDING RSVPs (used for event check-in)
-    if (next === "ATTENDING" && !rsvp.badgeToken) {
+    let badgeToken = rsvp.badgeToken;
+    if (next === "ATTENDING" && !badgeToken) {
+      badgeToken = nanoid(12);
       await prisma.eventRSVP.update({
         where: { id: rsvp.id },
-        data: { badgeToken: nanoid(12) },
+        data: { badgeToken },
       });
     }
 
@@ -62,7 +64,11 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       interested: byStatus.find(s => s.status?.toUpperCase() === "INTERESTED")?._count ?? 0,
     };
 
-    return NextResponse.json({ ok: true, counts });
+    return NextResponse.json({
+      ok: true,
+      counts,
+      badgeToken: next === "ATTENDING" ? badgeToken : undefined,
+    });
   } catch (e) {
     console.error("RSVP PATCH error", e);
     return NextResponse.json({ error: "Server error" }, { status: 500 });

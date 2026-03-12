@@ -244,9 +244,15 @@ export default function EventDetailClient({ event, canEdit = false, featuredProd
               <div className="flex justify-between items-start mb-6">
                 <h1 className="text-3xl font-bold text-[var(--text-primary)]">{currentEvent.title}</h1>
                 
-                {/* Edit Buttons for Admins */}
+                {/* Edit Buttons & Check-In for Admins */}
                 {canEdit && (
                   <div className="flex gap-2">
+                    <Link
+                      href={`/events/${currentEvent.id}/check-in`}
+                      className="flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
+                    >
+                      Check-In Scanner
+                    </Link>
                     {currentEvent.eventTypes?.includes('FESTIVAL') ? (
                       <button
                         onClick={() => setIsEditModalOpen(true)}
