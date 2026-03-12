@@ -3,14 +3,14 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import SafeImage from '@/components/SafeImage';
 
-const TABS = [
-  { id: 'all', label: 'All' },
-  { id: 'projects', label: 'Projects' },
-  { id: 'shop', label: 'Shop' },
-  { id: 'about', label: 'About' },
+const BASE_TABS = [
+  { id: 'saves', label: 'Saves' },
+  { id: 'boards', label: 'Boards' },
 ] as const;
 
-export type TabId = (typeof TABS)[number]['id'];
+const ABOUT_TAB = { id: 'about', label: 'About' } as const;
+
+export type TabId = 'saves' | 'boards' | 'about';
 
 interface ProfileTabsProps {
   activeTab: TabId;
@@ -20,6 +20,7 @@ interface ProfileTabsProps {
     profileImage?: string | null;
   };
   firmName?: string | null;
+  hasOrg?: boolean;
 }
 
 export default function ProfileTabs({
@@ -27,7 +28,9 @@ export default function ProfileTabs({
   onTabChange,
   user,
   firmName,
+  hasOrg = false,
 }: ProfileTabsProps) {
+  const TABS = hasOrg ? [...BASE_TABS, ABOUT_TAB] : [...BASE_TABS];
   const [isScrolled, setIsScrolled] = useState(false);
   const sentinelRef = useRef<HTMLDivElement>(null);
 

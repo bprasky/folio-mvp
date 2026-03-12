@@ -7,6 +7,9 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import OrgProfileHero from '@/components/org-profile/OrgProfileHero';
 import OrgProfileTabs from '@/components/org-profile/OrgProfileTabs';
 import OrgProfileFeed from '@/components/org-profile/OrgProfileFeed';
+import OrgProjectsGrid from '@/components/org-profile/OrgProjectsGrid';
+import OrgShopTab from '@/components/org-profile/OrgShopTab';
+import OrgContactTab from '@/components/org-profile/OrgContactTab';
 import { OrgAboutTab } from '@/components/org-onboarding';
 import PinnedCarousel from '@/components/org-profile/PinnedCarousel';
 
@@ -208,6 +211,102 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
   // Get pinned items (with fallback for missing fields)
   const pinnedItems = await getPinnedItems(memberIds);
 
+  // Fetch published projects for the Projects tab
+  let orgProjects: any[] = [];
+  if (memberIds.length > 0) {
+    try {
+      orgProjects = await prisma.project.findMany({
+        where: { designerId: { in: memberIds }, ...PUBLISHED_PROJECT_FILTER },
+        orderBy: { publishedAt: 'desc' },
+        select: {
+          id: true,
+          title: true,
+          city: true,
+          regionState: true,
+          projectType: true,
+          createdAt: true,
+          images: { take: 1, orderBy: { displayOrder: 'asc' }, select: { url: true } },
+        },
+      });
+    } catch (err) {
+      console.error('[OrgProfilePage] Error fetching projects:', err);
+    }
+  }
+
+  const projectsData = orgProjects.map((p: any) => ({
+    id: p.id,
+    title: p.title || 'Untitled Project',
+    imageUrl: p.images?.[0]?.url || null,
+    location: [p.city, p.regionState].filter(Boolean).join(', ') || null,
+    type: p.projectType !== 'UNSPECIFIED' ? p.projectType : null,
+    year: p.createdAt ? new Date(p.createdAt).getFullYear().toString() : null,
+  }));
+
+  // Fetch products from org members' projects for the Shop tab
+  let productsData: any[] = [];
+  if (orgProjects.length > 0) {
+    try {
+      const projectIds = orgProjects.map((p: any) => p.id);
+      const allProductTags = await prisma.productTag.findMany({
+        where: { image: { projectId: { in: projectIds } } },
+        include: {
+          product: {
+            select: { id: true, name: true, brand: true, price: true, imageUrl: true, category: true },
+          },
+          image: {
+            select: {
+              projectId: true,
+              url: true,
+              project: { select: { title: true } },
+            },
+          },
+        },
+      });
+
+      // Deduplicate products
+      const productMap = new Map<string, any>();
+      allProductTags.forEach((tag: any) => {
+        const existing = productMap.get(tag.productId);
+        if (existing) {
+          existing.projectIds.add(tag.image.projectId);
+          if (!existing.cropUrl && tag.cropUrl) {
+            existing.cropUrl = tag.cropUrl;
+            existing.sourceImageUrl = tag.image.url;
+            existing.projectTitle = tag.image.project?.title || null;
+            existing.projectId = tag.image.projectId;
+          }
+        } else {
+          productMap.set(tag.productId, {
+            product: tag.product,
+            projectIds: new Set([tag.image.projectId]),
+            cropUrl: tag.cropUrl,
+            sourceImageUrl: tag.image.url,
+            projectTitle: tag.image.project?.title || null,
+            projectId: tag.image.projectId,
+          });
+        }
+      });
+
+      productsData = Array.from(productMap.values())
+        .map(item => ({
+          id: item.product.id,
+          name: item.product.name,
+          vendor: item.product.brand || 'Unknown Vendor',
+          imageUrl: item.product.imageUrl,
+          cropUrl: item.cropUrl,
+          price: item.product.price,
+          category: item.product.category,
+          projectCount: item.projectIds.size,
+          sourceImageUrl: item.sourceImageUrl,
+          projectTitle: item.projectTitle,
+          projectId: item.projectId,
+        }))
+        .sort((a: any, b: any) => b.projectCount - a.projectCount);
+    } catch (err) {
+      console.error('[OrgProfilePage] Error fetching products:', err);
+    }
+  }
+
   const activeTab = resolvedSearchParams.tab || 'feed';
   const activeFilter = resolvedSearchParams.filter || 'all';
   const activeSort = resolvedSearchParams.sort || 'featured';
@@ -237,7 +336,7 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
       <OrgProfileTabs activeTab={activeTab} orgId={resolvedParams.orgId} />
 
       <div className="max-w-6xl mx-auto px-6 py-8">
-        {activeTab === 'feed' ? (
+        {activeTab === 'feed' && (
           <Suspense fallback={<FeedSkeleton />}>
             <OrgProfileFeed
               orgId={resolvedParams.orgId}
@@ -245,7 +344,14 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
               initialSort={activeSort}
             />
           </Suspense>
-        ) : (
+        )}
+        {activeTab === 'projects' && (
+          <OrgProjectsGrid projects={projectsData} isOwner={isOwner} />
+        )}
+        {activeTab === 'shop' && (
+          <OrgShopTab products={productsData} />
+        )}
+        {activeTab === 'about' && (
           <OrgAboutTab
             org={orgData}
             team={teamData}
@@ -266,6 +372,9 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
             onboardingProgress={onboardingProgress}
             isOwner={isOwner}
           />
+        )}
+        {activeTab === 'contact' && (
+          <OrgContactTab org={orgData} isOwner={isOwner} />
         )}
       </div>
     </div>

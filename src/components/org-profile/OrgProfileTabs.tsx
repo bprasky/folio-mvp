@@ -24,7 +24,10 @@ export default function OrgProfileTabs({ activeTab, orgId }: OrgProfileTabsProps
 
   const tabs = [
     { id: 'feed', label: 'Feed' },
+    { id: 'projects', label: 'Projects' },
+    { id: 'shop', label: 'Shop' },
     { id: 'about', label: 'About' },
+    { id: 'contact', label: 'Contact' },
   ];
 
   return (
