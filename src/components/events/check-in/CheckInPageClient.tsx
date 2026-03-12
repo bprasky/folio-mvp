@@ -21,12 +21,23 @@ export type Attendee = {
   orgName: string | null;
 };
 
+export type ScannedProduct = {
+  id: string;
+  name: string;
+  imageUrl: string | null;
+  price: number | null;
+  vendorName: string | null;
+};
+
 export type ScanResultData =
   | { status: "checked_in"; checkedInAt: string; attendee: Attendee }
   | { status: "already_checked_in"; checkedInAt: string; attendee: Attendee }
   | { status: "not_found" }
   | { status: "invalid_qr" }
-  | { status: "wrong_event" };
+  | { status: "wrong_event" }
+  | { status: "product_scanned"; product: ScannedProduct }
+  | { status: "product_already_scanned"; product: ScannedProduct }
+  | { status: "product_not_found" };
 
 type ViewMode = "scanning" | "result" | "manual";
 

@@ -164,6 +164,13 @@ export default function EventManagementDashboard({ eventId }: EventManagementDas
                 />
                 <WorkflowButton
                   eventId={eventId}
+                  type="recap"
+                  label="Send Product Recap"
+                  description="Send scanned product collection to attendees who scanned products"
+                  body={{ type: "product_recap" }}
+                />
+                <WorkflowButton
+                  eventId={eventId}
                   type="follow"
                   label="Auto-Follow Relationships"
                   description="Automatically follow designers, vendors, and products"

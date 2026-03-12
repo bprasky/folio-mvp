@@ -50,12 +50,25 @@ export async function GET(
           new Date(a.checkedInAt!).getTime()
       )[0]?.checkedInAt;
 
+    // Product scan stats
+    const productScanCount = await prisma.eventProductScan.count({
+      where: { eventId },
+    });
+    const uniqueScanners = await prisma.eventProductScan
+      .groupBy({ by: ["userId"], where: { eventId } })
+      .then((g) => g.length);
+
     return NextResponse.json({
       totalRsvps,
       checkedIn,
       walkIns,
       notYet: Math.max(0, notYet),
       lastScan: lastScan ?? null,
+      productScans: productScanCount,
+      avgScansPerPerson:
+        uniqueScanners > 0
+          ? Math.round((productScanCount / uniqueScanners) * 10) / 10
+          : 0,
     });
   } catch (e) {
     console.error("Check-in stats error", e);
