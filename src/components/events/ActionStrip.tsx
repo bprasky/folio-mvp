@@ -1,6 +1,8 @@
 "use client";
 import { useMemo, useState } from "react";
+import { useSession } from "next-auth/react";
 import { track } from "@/lib/analytics";
+import EventBadgeQR from "./EventBadgeQR";
 
 type ActionStripProps = {
   event: {
@@ -36,7 +38,9 @@ function googleCalUrl(e: ActionStripProps["event"]) {
 }
 
 export default function ActionStrip({ event }: ActionStripProps) {
+  const { data: session } = useSession();
   const [rsvp, setRsvp] = useState<"ATTENDING" | "INTERESTED" | "SEND_TO_TEAM" | null>(null);
+  const [badgeToken, setBadgeToken] = useState<string | null>(null);
   const vendorName = event.createdBy?.companyName || event.createdBy?.name || "Vendor";
   const gcal = useMemo(() => googleCalUrl(event), [event]);
 
@@ -49,8 +53,8 @@ export default function ActionStrip({ event }: ActionStripProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: next }),
       });
-      // optional: you can read counts here and raise a custom event to refresh InsightBar
-      // const data = await res.json();
+      const data = await res.json();
+      if (data.badgeToken) setBadgeToken(data.badgeToken);
     } catch (e) {
       // roll back on error (optional)
       console.warn("RSVP update failed", e);
@@ -135,6 +139,14 @@ export default function ActionStrip({ event }: ActionStripProps) {
       >
         Share
       </button>
+
+      {badgeToken && session?.user?.name && (
+        <EventBadgeQR
+          badgeToken={badgeToken}
+          userName={session.user.name}
+          eventId={event.id}
+        />
+      )}
     </div>
   );
 } 
