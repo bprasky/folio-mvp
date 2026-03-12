@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import WebsiteImportCard from './WebsiteImportCard';
-import BioInterviewChat from './BioInterviewChat';
+import BioInterviewModal from './BioInterviewModal';
 import BioPreview from './BioPreview';
 import type { DesignerBioData } from '@/app/designer/profile/types';
 
@@ -172,9 +172,10 @@ export default function BioSetupFlow({ designerBio, userWebsite, onPublished }: 
 
   if (step === 'interview') {
     return (
-      <div style={{ maxWidth: 600, margin: '0 auto' }}>
-        <BioInterviewChat onComplete={handleInterviewComplete} />
-      </div>
+      <BioInterviewModal
+        onComplete={handleInterviewComplete}
+        onClose={() => setStep('choose')}
+      />
     );
   }
 
