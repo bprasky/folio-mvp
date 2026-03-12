@@ -6,10 +6,13 @@ import ProfileHero from './ProfileHero';
 import ProfileTabs, { type TabId } from './ProfileTabs';
 import ProjectsFeed from './tabs/ProjectsFeed';
 import AboutTab from './tabs/AboutTab';
+import FolioBadgeModal from '@/components/badge/FolioBadgeModal';
+import { getMonographUrl } from '@/lib/utils/getMonographUrl';
 import type { ProfilePageData } from './types';
 
 export default function ProfileClient({ data }: { data: ProfilePageData }) {
   const [activeTab, setActiveTab] = useState<TabId>('saves');
+  const [badgeModalOpen, setBadgeModalOpen] = useState(false);
 
   const {
     user,
@@ -20,8 +23,12 @@ export default function ProfileClient({ data }: { data: ProfilePageData }) {
     teamMembers,
     saveCount,
     boardCount,
+    upcomingEventRSVPs,
     isOwner,
   } = data;
+
+  const monographUrl = getMonographUrl({ name: user.name });
+  const tagline = profileInterview?.shortBio || user.bio;
 
   return (
     <div style={{ background: 'var(--bg-base)', minHeight: '100vh', fontFamily: 'var(--font-body)' }}>
@@ -32,6 +39,7 @@ export default function ProfileClient({ data }: { data: ProfilePageData }) {
         saveCount={saveCount}
         boardCount={boardCount}
         isOwner={isOwner}
+        onBadgeClick={() => setBadgeModalOpen(true)}
       />
 
       <ProfileTabs
@@ -56,6 +64,16 @@ export default function ProfileClient({ data }: { data: ProfilePageData }) {
           />
         )}
       </div>
+
+      <FolioBadgeModal
+        open={badgeModalOpen}
+        onOpenChange={setBadgeModalOpen}
+        user={{ name: user.name, title: user.title, profileImage: user.profileImage }}
+        organization={organization ? { name: organization.name } : null}
+        tagline={tagline}
+        monographUrl={monographUrl}
+        upcomingEventRSVPs={upcomingEventRSVPs}
+      />
     </div>
   );
 }

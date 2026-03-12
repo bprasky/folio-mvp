@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 import { PUBLISHED_PROJECT_FILTER } from '@/server/queries/filters';
 import ProfileClient from './ProfileClient';
-import type { ProfilePageData, ProfileProject, ProfileProduct, ProfileTeamMember, ProfileCollaboration, DesignerBioData } from './types';
+import type { ProfilePageData, ProfileProject, ProfileProduct, ProfileTeamMember, ProfileCollaboration, DesignerBioData, UpcomingEventRSVP } from './types';
 
 export const dynamic = 'force-dynamic';
 
@@ -315,6 +315,38 @@ export default async function DesignerProfilePage() {
     // Table doesn't exist yet — silently fall back to null
   }
 
+  // Fetch upcoming event RSVPs for the badge feature
+  let upcomingEventRSVPs: UpcomingEventRSVP[] = [];
+  try {
+    const rsvps = await prisma.eventRSVP.findMany({
+      where: {
+        userId,
+        status: 'attending',
+        event: { endDate: { gte: new Date() } },
+      },
+      select: {
+        eventId: true,
+        event: {
+          select: {
+            title: true,
+            startDate: true,
+            location: true,
+          },
+        },
+      },
+      orderBy: { event: { startDate: 'asc' } },
+      take: 3,
+    });
+    upcomingEventRSVPs = rsvps.map(r => ({
+      eventId: r.eventId,
+      eventTitle: r.event.title,
+      eventStartDate: r.event.startDate.toISOString(),
+      eventLocation: r.event.location,
+    }));
+  } catch {
+    // EventRSVP table might not exist yet
+  }
+
   const pageData: ProfilePageData = {
     user: {
       id: user.id,
@@ -337,6 +369,7 @@ export default async function DesignerProfilePage() {
     collaborations,
     saveCount,
     boardCount,
+    upcomingEventRSVPs,
     isOwner: true,
   };
 
