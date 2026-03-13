@@ -80,7 +80,84 @@ export async function POST(req: Request) {
       eventId = activeRsvp.eventId;
     }
 
-    // Create the visit record
+    // Territory soft lock check: if the scanner's vendor org has territory lock enabled,
+    // check if another rep already has an active relationship with the recipient's org
+    let territoryWarning: {
+      existingRepName: string;
+      existingRepId: string;
+      designerOrgName: string;
+      isAssigned: boolean; // true = explicit territory assignment, false = organic relationship
+    } | null = null;
+
+    if (initiatorOrgId && recipientOrgId) {
+      const initiatorOrg = await prisma.organization.findUnique({
+        where: { id: initiatorOrgId },
+        select: { type: true, territoryLockEnabled: true, dormancyThresholdDays: true },
+      });
+
+      if (initiatorOrg && VENDOR_ORG_TYPES.includes(initiatorOrg.type) && initiatorOrg.territoryLockEnabled) {
+        // Check for explicit territory assignment
+        const assignment = await prisma.orgTerritoryAssignment.findUnique({
+          where: {
+            vendorOrgId_designerOrgId: {
+              vendorOrgId: initiatorOrgId,
+              designerOrgId: recipientOrgId,
+            },
+          },
+          include: {
+            repUser: { select: { id: true, name: true } },
+          },
+        });
+
+        if (assignment && assignment.repUserId !== session.user.id) {
+          territoryWarning = {
+            existingRepName: assignment.repUser.name,
+            existingRepId: assignment.repUserId,
+            designerOrgName: recipient.name || 'this firm',
+            isAssigned: true,
+          };
+        }
+
+        // If no explicit assignment, check for active organic relationship (non-dormant)
+        if (!territoryWarning) {
+          const dormancyDays = initiatorOrg.dormancyThresholdDays || 30;
+          const activeThreshold = new Date(Date.now() - dormancyDays * 24 * 60 * 60 * 1000);
+
+          const existingVisit = await prisma.visitRecord.findFirst({
+            where: {
+              OR: [
+                { initiatorOrgId: initiatorOrgId, recipientOrgId: recipientOrgId },
+                { initiatorOrgId: recipientOrgId, recipientOrgId: initiatorOrgId },
+              ],
+              initiatorUserId: { not: session.user.id },
+              recipientUserId: { not: session.user.id },
+              updatedAt: { gte: activeThreshold }, // only non-dormant
+            },
+            include: {
+              initiatorUser: { select: { id: true, name: true } },
+              recipientUser: { select: { id: true, name: true } },
+            },
+            orderBy: { createdAt: 'desc' },
+          });
+
+          if (existingVisit) {
+            // The "other rep" is whichever party is from the vendor org
+            const otherRep = existingVisit.initiatorOrgId === initiatorOrgId
+              ? existingVisit.initiatorUser
+              : existingVisit.recipientUser;
+
+            territoryWarning = {
+              existingRepName: otherRep.name,
+              existingRepId: otherRep.id,
+              designerOrgName: recipient.name || 'this firm',
+              isAssigned: false,
+            };
+          }
+        }
+      }
+    }
+
+    // Create the visit record (scan still completes even with territory warning)
     const visit = await prisma.visitRecord.create({
       data: {
         initiatorUserId: session.user.id,
@@ -120,10 +197,36 @@ export async function POST(req: Request) {
       location: visit.event?.title || visit.location || null,
     });
 
+    // If territory warning, notify the existing rep
+    if (territoryWarning) {
+      await prisma.notification.create({
+        data: {
+          userId: territoryWarning.existingRepId,
+          type: 'TERRITORY_OVERLAP',
+          title: `${visit.initiatorUser.name} connected with ${territoryWarning.designerOrgName}`,
+          body: territoryWarning.isAssigned
+            ? `Your colleague ${visit.initiatorUser.name} connected with ${territoryWarning.designerOrgName}, which is assigned to your territory.`
+            : `Your colleague ${visit.initiatorUser.name} connected with ${territoryWarning.designerOrgName}, where you already have an active relationship.`,
+          actionUrl: `/org/${initiatorOrgId}?tab=relationships`,
+          metadata: {
+            visitId: visit.id,
+            scannerUserId: session.user.id,
+          },
+        },
+      });
+    }
+
     return NextResponse.json({
       visit,
       productShares,
       duplicate: false,
+      territoryWarning: territoryWarning
+        ? {
+            message: `Your colleague ${territoryWarning.existingRepName} already ${territoryWarning.isAssigned ? 'is assigned to' : 'has an active relationship with'} ${territoryWarning.designerOrgName}. Notes have been shared with them.`,
+            existingRepName: territoryWarning.existingRepName,
+            isAssigned: territoryWarning.isAssigned,
+          }
+        : null,
     });
   } catch (error) {
     console.error('[visits/initiate] Error:', error);

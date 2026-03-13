@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 
 interface RepInfo {
+  repUserId: string;
   repName: string;
   visitCount: number;
   lastActivity: string;
@@ -17,6 +18,7 @@ interface Relationship {
   totalVisits: number;
   totalProductShares: number;
   status: 'active' | 'new' | 'dormant';
+  assignedRepUserId: string | null;
 }
 
 interface Stats {
@@ -31,11 +33,12 @@ interface OrgDesignerRelationshipsProps {
   isAdmin?: boolean;
 }
 
-export default function OrgDesignerRelationships({ orgId }: OrgDesignerRelationshipsProps) {
+export default function OrgDesignerRelationships({ orgId, isAdmin }: OrgDesignerRelationshipsProps) {
   const [relationships, setRelationships] = useState<Relationship[]>([]);
   const [stats, setStats] = useState<Stats>({ total: 0, active: 0, new: 0, dormant: 0 });
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'active' | 'new' | 'dormant'>('all');
+  const [assigning, setAssigning] = useState<string | null>(null); // designerOrgId being assigned
 
   useEffect(() => {
     fetch(`/api/org/${orgId}/designer-relationships`)
@@ -47,6 +50,29 @@ export default function OrgDesignerRelationships({ orgId }: OrgDesignerRelations
       })
       .catch(() => setLoading(false));
   }, [orgId]);
+
+  async function assignRep(designerOrgId: string, repUserId: string) {
+    setAssigning(designerOrgId);
+    try {
+      const res = await fetch(`/api/org/${orgId}/territory/assign`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ repUserId, designerOrgId }),
+      });
+      if (res.ok) {
+        setRelationships((prev) =>
+          prev.map((r) =>
+            r.designerOrg?.id === designerOrgId
+              ? { ...r, assignedRepUserId: repUserId }
+              : r
+          )
+        );
+      }
+    } catch {
+      // silent
+    }
+    setAssigning(null);
+  }
 
   const filtered = filter === 'all' ? relationships : relationships.filter((r) => r.status === filter);
 
@@ -115,6 +141,9 @@ export default function OrgDesignerRelationships({ orgId }: OrgDesignerRelations
         {filtered.map((rel, i) => {
           const displayName = rel.designerOrg?.name || rel.designerUser?.name || 'Unknown';
           const sc = statusColors[rel.status] || statusColors.active;
+          const assignedRep = rel.assignedRepUserId
+            ? rel.reps.find((r) => r.repUserId === rel.assignedRepUserId)
+            : null;
 
           return (
             <div key={i} className="bg-white rounded-lg border border-stone-200 p-5">
@@ -125,6 +154,11 @@ export default function OrgDesignerRelationships({ orgId }: OrgDesignerRelations
                     <span className={`text-[10px] px-2 py-0.5 rounded-full ${sc.bg} ${sc.text}`}>
                       {sc.label}
                     </span>
+                    {assignedRep && (
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-50 text-purple-700">
+                        Assigned: {assignedRep.repName}
+                      </span>
+                    )}
                   </div>
                   {rel.designerOrg && (
                     <p className="text-xs text-stone-400 mb-2">Design Firm</p>
@@ -145,12 +179,28 @@ export default function OrgDesignerRelationships({ orgId }: OrgDesignerRelations
                           ? 'bg-green-400'
                           : 'bg-stone-300'
                       }`} />
-                      <span className="text-stone-700">{rep.repName}</span>
+                      <span className="text-stone-700">
+                        {rep.repName}
+                        {rep.repUserId === rel.assignedRepUserId && (
+                          <span className="text-purple-500 ml-1">(primary)</span>
+                        )}
+                      </span>
                     </div>
                     <div className="flex items-center gap-3 text-stone-400">
                       <span>{rep.visitCount} visit{rep.visitCount !== 1 ? 's' : ''}</span>
                       {rep.productShareCount > 0 && (
                         <span>{rep.productShareCount} products shared</span>
+                      )}
+                      {/* Assign rep button for admins */}
+                      {isAdmin && rel.designerOrg && rep.repUserId !== rel.assignedRepUserId && (
+                        <button
+                          onClick={() => assignRep(rel.designerOrg!.id, rep.repUserId)}
+                          disabled={assigning === rel.designerOrg.id}
+                          className="text-purple-500 hover:text-purple-700 transition-colors disabled:opacity-50"
+                          title={`Assign ${rep.repName} as primary rep`}
+                        >
+                          Assign
+                        </button>
                       )}
                     </div>
                   </div>

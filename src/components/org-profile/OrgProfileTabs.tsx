@@ -9,9 +9,10 @@ interface OrgProfileTabsProps {
   defaultTab?: string;
   orgType?: string;
   isMember?: boolean;
+  isAdmin?: boolean;
 }
 
-export default function OrgProfileTabs({ activeTab, orgId, defaultTab = 'feed', orgType, isMember }: OrgProfileTabsProps) {
+export default function OrgProfileTabs({ activeTab, orgId, defaultTab = 'feed', orgType, isMember, isAdmin }: OrgProfileTabsProps) {
   const searchParams = useSearchParams();
 
   const createUrl = (tab: string) => {
@@ -39,6 +40,10 @@ export default function OrgProfileTabs({ activeTab, orgId, defaultTab = 'feed', 
     // Relationships tab: only for vendor orgs, only for members
     ...(isMember && orgType && VENDOR_ORG_TYPES.includes(orgType)
       ? [{ id: 'relationships', label: 'Relationships' }]
+      : []),
+    // Audit Log tab: only for admins of vendor or design orgs with visit data
+    ...(isAdmin && isMember && orgType && [...VENDOR_ORG_TYPES, ...DESIGN_ORG_TYPES].includes(orgType)
+      ? [{ id: 'audit', label: 'Audit Log' }]
       : []),
     { id: 'about', label: 'About' },
     { id: 'contact', label: 'Contact' },

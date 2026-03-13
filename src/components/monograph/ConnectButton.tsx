@@ -22,6 +22,7 @@ export default function ConnectButton({
   const router = useRouter();
   const [state, setState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [visitId, setVisitId] = useState<string | null>(existingVisitId || null);
+  const [territoryWarning, setTerritoryWarning] = useState<string | null>(null);
 
   // Don't show if session is loading or user is the profile owner
   if (status === 'loading') return null;
@@ -34,15 +35,22 @@ export default function ConnectButton({
       : 'just now';
 
     return (
-      <button
-        onClick={() => visitId && router.push(`/visits/${visitId}`)}
-        className="flex items-center gap-2 bg-white/95 backdrop-blur-sm px-4 py-2 rounded border border-stone-200/50 shadow-sm hover:bg-white transition-colors cursor-pointer"
-      >
-        <svg className="w-4 h-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-        </svg>
-        <span className="text-sm text-stone-700">Connected {date}</span>
-      </button>
+      <div className="flex flex-col items-end gap-1.5">
+        <button
+          onClick={() => visitId && router.push(`/visits/${visitId}`)}
+          className="flex items-center gap-2 bg-white/95 backdrop-blur-sm px-4 py-2 rounded border border-stone-200/50 shadow-sm hover:bg-white transition-colors cursor-pointer"
+        >
+          <svg className="w-4 h-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+          <span className="text-sm text-stone-700">Connected {date}</span>
+        </button>
+        {territoryWarning && (
+          <div className="bg-amber-50 border border-amber-200 rounded px-3 py-2 max-w-xs">
+            <p className="text-xs text-amber-700">{territoryWarning}</p>
+          </div>
+        )}
+      </div>
     );
   }
 
@@ -73,10 +81,15 @@ export default function ConnectButton({
       setVisitId(data.visit.id);
       setState('success');
 
+      // Show territory warning if present
+      if (data.territoryWarning?.message) {
+        setTerritoryWarning(data.territoryWarning.message);
+      }
+
       // Navigate to visit detail after brief pause
       setTimeout(() => {
         router.push(`/visits/${data.visit.id}`);
-      }, 1000);
+      }, territoryWarning ? 3000 : 1000);
     } catch (err) {
       console.error('[ConnectButton] Network error:', err);
       setState('error');

@@ -1,14 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
-const DORMANCY_THRESHOLD_DAYS = 30;
 const VENDOR_ORG_TYPES = ['VENDOR', 'MANUFACTURER', 'SHOWROOM'];
+const DEFAULT_DORMANCY_DAYS = 30;
 
 /**
  * Cron job: Check for dormant vendor-designer relationships
  *
+ * Uses org-specific dormancyThresholdDays setting (defaults to 30).
  * Finds vendor orgs where reps connected with designers but had no
- * follow-up activity in 30+ days. Notifies org admins.
+ * follow-up activity past the threshold. Notifies org admins.
  *
  * Schedule: weekly (e.g., every Monday at 9am)
  * Config in vercel.json:
@@ -24,7 +25,6 @@ export async function GET(request: NextRequest) {
     }
 
     const now = new Date();
-    const threshold = new Date(now.getTime() - DORMANCY_THRESHOLD_DAYS * 24 * 60 * 60 * 1000);
 
     // Find vendor orgs that have visit records
     const vendorOrgs = await prisma.organization.findMany({
@@ -38,6 +38,7 @@ export async function GET(request: NextRequest) {
       select: {
         id: true,
         name: true,
+        dormancyThresholdDays: true,
         users: {
           where: { isActive: true, role: { in: ['OWNER', 'ADMIN'] } },
           select: { userId: true },
@@ -51,6 +52,9 @@ export async function GET(request: NextRequest) {
     for (const vendorOrg of vendorOrgs) {
       const adminIds = vendorOrg.users.map((u) => u.userId);
       if (adminIds.length === 0) continue;
+
+      const thresholdDays = vendorOrg.dormancyThresholdDays || DEFAULT_DORMANCY_DAYS;
+      const threshold = new Date(now.getTime() - thresholdDays * 24 * 60 * 60 * 1000);
 
       // Get all member IDs for this vendor org
       const allMembers = await prisma.organizationUser.findMany({
@@ -68,12 +72,11 @@ export async function GET(request: NextRequest) {
             { recipientUserId: { in: memberIds }, recipientOrgId: vendorOrg.id },
           ],
           createdAt: { lt: threshold },
-          // No updates since threshold (using updatedAt as activity proxy)
           updatedAt: { lt: threshold },
         },
         include: {
-          initiatorUser: { select: { name: true } },
-          recipientUser: { select: { name: true } },
+          initiatorUser: { select: { id: true, name: true } },
+          recipientUser: { select: { id: true, name: true } },
           initiatorOrg: { select: { name: true } },
           recipientOrg: { select: { name: true } },
         },
@@ -82,6 +85,15 @@ export async function GET(request: NextRequest) {
       if (dormantVisits.length === 0) continue;
 
       totalDormant += dormantVisits.length;
+
+      // Identify which designer orgs are dormant for reassignment suggestions
+      const dormantDesignerOrgs = new Set<string>();
+      for (const visit of dormantVisits) {
+        const designerOrgId = visit.initiatorOrgId === vendorOrg.id
+          ? visit.recipientOrgId
+          : visit.initiatorOrgId;
+        if (designerOrgId) dormantDesignerOrgs.add(designerOrgId);
+      }
 
       // Create one digest notification per admin
       for (const adminId of adminIds) {
@@ -101,11 +113,13 @@ export async function GET(request: NextRequest) {
             userId: adminId,
             type: 'DORMANCY_ALERT',
             title: `${dormantVisits.length} designer relationship${dormantVisits.length !== 1 ? 's' : ''} need attention`,
-            body: `${dormantVisits.length} connection${dormantVisits.length !== 1 ? 's' : ''} at ${vendorOrg.name} ha${dormantVisits.length !== 1 ? 've' : 's'} had no activity in ${DORMANCY_THRESHOLD_DAYS}+ days. Review and follow up.`,
+            body: `${dormantVisits.length} connection${dormantVisits.length !== 1 ? 's' : ''} at ${vendorOrg.name} ha${dormantVisits.length !== 1 ? 've' : 's'} had no activity in ${thresholdDays}+ days. Review and consider reassigning.`,
             actionUrl: `/org/${vendorOrg.id}?tab=relationships`,
             metadata: {
               vendorOrgId: vendorOrg.id,
               dormantCount: dormantVisits.length,
+              dormantDesignerOrgIds: Array.from(dormantDesignerOrgs),
+              thresholdDays,
             },
           },
         });

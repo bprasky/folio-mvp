@@ -14,6 +14,8 @@ import { OrgAboutTab } from '@/components/org-onboarding';
 import PinnedCarousel from '@/components/org-profile/PinnedCarousel';
 import OrgVendorDirectory from '@/components/org-profile/OrgVendorDirectory';
 import OrgDesignerRelationships from '@/components/org-profile/OrgDesignerRelationships';
+import OrgTerritoryManager from '@/components/org-profile/OrgTerritoryManager';
+import OrgAuditLog from '@/components/org-profile/OrgAuditLog';
 
 export const dynamic = 'force-dynamic';
 
@@ -360,7 +362,7 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
 
       {pinnedItems.length > 0 && <PinnedCarousel items={pinnedItems} />}
 
-      <OrgProfileTabs activeTab={activeTab} orgId={resolvedParams.orgId} defaultTab={defaultTab} orgType={org.type} isMember={isMember} />
+      <OrgProfileTabs activeTab={activeTab} orgId={resolvedParams.orgId} defaultTab={defaultTab} orgType={org.type} isMember={isMember} isAdmin={isAdmin} />
 
       <div className="max-w-6xl mx-auto px-6 py-8">
         {activeTab === 'feed' && (
@@ -390,6 +392,17 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
         {activeTab === 'relationships' && isMember && (
           <Suspense fallback={<TabSkeleton />}>
             <OrgDesignerRelationships orgId={resolvedParams.orgId} isAdmin={isAdmin} />
+            {isAdmin && (
+              <div className="mt-8">
+                <h2 className="text-sm font-medium text-stone-900 mb-4">Territory & Governance</h2>
+                <OrgTerritoryManager orgId={resolvedParams.orgId} isAdmin={isAdmin} />
+              </div>
+            )}
+          </Suspense>
+        )}
+        {activeTab === 'audit' && isMember && isAdmin && (
+          <Suspense fallback={<TabSkeleton />}>
+            <OrgAuditLog orgId={resolvedParams.orgId} />
           </Suspense>
         )}
         {activeTab === 'about' && (

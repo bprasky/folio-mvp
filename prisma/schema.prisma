@@ -192,6 +192,9 @@ model User {
   initiatedVisits VisitRecord[] @relation("initiatedVisits")
   receivedVisits  VisitRecord[] @relation("receivedVisits")
 
+  // Territory assignments (as rep)
+  territoryAssignments OrgTerritoryAssignment[] @relation("RepTerritoryAssignments")
+
   @@map("users")
 }
 
@@ -779,6 +782,15 @@ model Organization {
   // QR Exchange / Visit System
   orgInitiatedVisits VisitRecord[] @relation("orgInitiatedVisits")
   orgReceivedVisits  VisitRecord[] @relation("orgReceivedVisits")
+
+  // Territory & Governance (Phase 3)
+  territoryLockEnabled  Boolean @default(false) // soft lock opt-in for vendor orgs
+  dormancyThresholdDays Int     @default(30)    // days before flagging dormant
+
+  // Territory assignments where this vendor org assigned reps
+  territoryAssignments OrgTerritoryAssignment[] @relation("VendorTerritoryAssignments")
+  // Territory assignments where this design org is the assigned account
+  assignedAsTerritoryAccount OrgTerritoryAssignment[] @relation("DesignerTerritoryAssignments")
 
   @@index([status])
   @@index([type])
@@ -5091,4 +5103,24 @@ model VisitProductShare {
   @@index([visitRecordId])
   @@index([productId])
   @@map("visit_product_shares")
+}
+
+// Territory & Governance (Phase 3)
+model OrgTerritoryAssignment {
+  id            String       @id @default(cuid())
+  vendorOrgId   String
+  vendorOrg     Organization @relation("VendorTerritoryAssignments", fields: [vendorOrgId], references: [id])
+  repUserId     String
+  repUser       User         @relation("RepTerritoryAssignments", fields: [repUserId], references: [id])
+  designerOrgId String
+  designerOrg   Organization @relation("DesignerTerritoryAssignments", fields: [designerOrgId], references: [id])
+
+  assignedBy String   // org admin who made the assignment
+  assignedAt DateTime @default(now())
+  expiresAt  DateTime? // optional expiry for temporary assignments
+
+  @@unique([vendorOrgId, designerOrgId]) // one primary rep per designer org
+  @@index([vendorOrgId])
+  @@index([repUserId])
+  @@map("org_territory_assignments")
 }

@@ -5,7 +5,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
-const DORMANCY_THRESHOLD_DAYS = 30;
+const DEFAULT_DORMANCY_THRESHOLD_DAYS = 30;
 
 /**
  * GET /api/org/[orgId]/designer-relationships
@@ -35,12 +35,27 @@ export async function GET(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
+    // Get org settings for dormancy threshold
+    const orgSettings = await prisma.organization.findUnique({
+      where: { id: orgId },
+      select: { dormancyThresholdDays: true },
+    });
+
     // Get all org member IDs (reps)
     const members = await prisma.organizationUser.findMany({
       where: { organizationId: orgId, isActive: true },
       select: { userId: true, user: { select: { id: true, name: true } } },
     });
     const memberIds = members.map((m) => m.userId);
+
+    // Get territory assignments for this org
+    const territoryAssignments = await prisma.orgTerritoryAssignment.findMany({
+      where: { vendorOrgId: orgId },
+      select: { designerOrgId: true, repUserId: true },
+    });
+    const assignmentByDesignerOrg = new Map(
+      territoryAssignments.map((a) => [a.designerOrgId, a.repUserId])
+    );
 
     const DESIGN_ORG_TYPES = ['DESIGN_FIRM', 'ARCHITECTURE_FIRM'];
 
@@ -68,13 +83,15 @@ export async function GET(
     });
 
     const now = new Date();
-    const dormancyThreshold = new Date(now.getTime() - DORMANCY_THRESHOLD_DAYS * 24 * 60 * 60 * 1000);
+    const dormancyDays = orgSettings?.dormancyThresholdDays || DEFAULT_DORMANCY_THRESHOLD_DAYS;
+    const dormancyThreshold = new Date(now.getTime() - dormancyDays * 24 * 60 * 60 * 1000);
 
     // Aggregate by designer org (or individual designer if no org)
     const relationshipMap = new Map<string, {
       designerOrg: { id: string; name: string; type: string; logo: string | null } | null;
       designerUser: { id: string; name: string; profileImage: string | null; role: string; title: string | null } | null;
       reps: Map<string, {
+        repUserId: string;
         repName: string;
         visitCount: number;
         lastActivity: Date;
@@ -118,6 +135,7 @@ export async function GET(
       // Track rep activity
       if (!entry.reps.has(repUser.id)) {
         entry.reps.set(repUser.id, {
+          repUserId: repUser.id,
           repName: repUser.name,
           visitCount: 0,
           lastActivity: visit.createdAt,
@@ -143,17 +161,22 @@ export async function GET(
       }
     }
 
-    // Convert to array
+    // Convert to array, include territory assignment info
     const relationships = Array.from(relationshipMap.values())
-      .map((entry) => ({
-        designerOrg: entry.designerOrg,
-        designerUser: entry.designerUser,
-        reps: Array.from(entry.reps.values()),
-        lastActivity: entry.lastActivity,
-        totalVisits: entry.totalVisits,
-        totalProductShares: entry.totalProductShares,
-        status: entry.status,
-      }))
+      .map((entry) => {
+        const designerOrgId = entry.designerOrg?.id;
+        const assignedRepId = designerOrgId ? assignmentByDesignerOrg.get(designerOrgId) : undefined;
+        return {
+          designerOrg: entry.designerOrg,
+          designerUser: entry.designerUser,
+          reps: Array.from(entry.reps.values()),
+          lastActivity: entry.lastActivity,
+          totalVisits: entry.totalVisits,
+          totalProductShares: entry.totalProductShares,
+          status: entry.status,
+          assignedRepUserId: assignedRepId || null,
+        };
+      })
       .sort((a, b) => b.lastActivity.getTime() - a.lastActivity.getTime());
 
     // Summary stats
