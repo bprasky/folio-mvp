@@ -454,7 +454,7 @@ export default function DesignerBoardRoom({
           {/* Room Type Badge */}
           {room.type && (
             <span className="px-2 py-0.5 folio-meta text-[var(--text-tertiary)] bg-[var(--bg-elevated)] rounded border border-[var(--border-default)]">
-              {ROOM_TYPE_OPTIONS.find(opt => opt.value === room.type)?.label || room.type}
+              {typeKeyToDisplay(room.type)}
             </span>
           )}
 
