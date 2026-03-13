@@ -17,6 +17,7 @@ import { parseCredits } from "@/lib/posting/creditsSchema";
 import type { CreditEntry } from "@/lib/posting/creditsSchema";
 import { titleCase } from "@/lib/utils";
 import { getMonographUrl } from "@/lib/utils/getMonographUrl";
+import { getPhotographerUrl } from "@/lib/utils/getPhotographerUrl";
 
 type CreditsSectionProps = {
   post: any;
@@ -37,8 +38,11 @@ export function CreditsSection({ post }: CreditsSectionProps) {
         {credits.length > 0 && (
           <div className="flex flex-wrap gap-x-6 gap-y-2 folio-meta text-[var(--text-secondary)]">
             {credits.map((credit: CreditEntry, idx: number) => {
+              const isPhotographer = credit.role.toLowerCase() === "photographer";
               const href = credit.userId
-                ? getMonographUrl({ name: credit.name })
+                ? (isPhotographer
+                    ? getPhotographerUrl({ name: credit.name })
+                    : getMonographUrl({ name: credit.name }))
                 : credit.url || undefined;
               return (
                 <div key={idx}>

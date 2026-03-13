@@ -104,6 +104,12 @@ model User {
   builderSpecialtyTrades    String[] // e.g., ["millwork", "steel", "concrete", "glass"]
   builderYearsInBusiness    Int?
 
+  // Photographer-specific profile fields
+  photographyStyles    String[] // e.g. ["interior", "architectural", "lifestyle", "portrait", "commercial"]
+  travelRadius         String?  // e.g. "Southeast US", "Nationwide", "Orlando Metro"
+  bookingEmail         String?  // separate from account email, for hire inquiries
+  bookingUrl           String?  // external booking link (Calendly, HoneyBook, etc.)
+
   // Commerce & Credit relations
   creditAccount            CreditAccount?
   purchaserOrders          Order[]        @relation("PurchaserOrders")
@@ -970,6 +976,7 @@ enum Role {
   ARCHITECT // NEW - parallel to DESIGNER for architecture professionals
   BUILDER // NEW - parallel to DESIGNER for construction professionals
   DEVELOPER // Real estate developer for presale listings
+  PHOTOGRAPHER // Professional photographer (credited on projects)
 }
 
 enum AccountStatus {
@@ -986,6 +993,7 @@ enum OrgType {
   CONTRACTOR // Used for builders/construction companies
   ARCHITECTURE_FIRM // NEW - parallel to DESIGN_FIRM for architecture practices
   DEVELOPER // Real estate development company
+  PHOTOGRAPHY_STUDIO // Photography studio or freelance photographer
 }
 
 // Phase 2: Organization tier status for feature gating

@@ -32,6 +32,7 @@ export const CreditEntrySchema = z.object({
   userId: z.string().optional(),
   organizationId: z.string().optional(),
   url: z.string().url().optional(),
+  instagram: z.string().max(100).optional(),
 });
 
 export const CreditsArraySchema = z.array(CreditEntrySchema);

@@ -7,7 +7,9 @@ export async function logPassiveEvent(params: {
         'vendor.quote.superseded' | 'vendor.quote.status_changed' | 'vendor.action.promote_project' |
         'vendor.action.invite_event' | 'vendor.action.priority_support' | 'vendor.action.confirm_spec' |
         'vendor.handoff.created' | 'visit.email.sent' | 'designer.handoff.opened' | 
-        'designer.handoff.destination_selected';
+        'designer.handoff.destination_selected' |
+        'photographer.hire_click' | 'photographer.profile_view' |
+        'project_publish_success' | 'project_unpublish_success';
   actorId?: string;
   payload?: Record<string, any>;
 }): Promise<void> {

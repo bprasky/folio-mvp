@@ -20,9 +20,10 @@ import {
   CheckCircle,
   Users,
   Loader2,
+  Camera,
 } from 'lucide-react';
 
-type OrgType = 'DESIGNER' | 'VENDOR';
+type OrgType = 'DESIGNER' | 'VENDOR' | 'PHOTOGRAPHER';
 type Step = 'type' | 'search' | 'create' | 'request';
 
 interface Organization {
@@ -67,7 +68,7 @@ function JoinContent() {
   // Check for type in URL params
   useEffect(() => {
     const typeParam = searchParams.get('type');
-    if (typeParam === 'DESIGNER' || typeParam === 'VENDOR') {
+    if (typeParam === 'DESIGNER' || typeParam === 'VENDOR' || typeParam === 'PHOTOGRAPHER') {
       setSelectedType(typeParam);
       setStep('search');
     }
@@ -106,7 +107,9 @@ function JoinContent() {
     setMessage('');
 
     try {
-      const orgType = selectedType === 'DESIGNER' ? 'DESIGN_FIRM' : 'VENDOR';
+      const orgType = selectedType === 'DESIGNER' ? 'DESIGN_FIRM'
+        : selectedType === 'PHOTOGRAPHER' ? 'PHOTOGRAPHY_STUDIO'
+        : 'VENDOR';
 
       const response = await fetch('/api/orgs', {
         method: 'POST',
@@ -248,6 +251,27 @@ function JoinContent() {
               <h4 className="font-semibold text-[var(--text-primary)]">Vendor / Manufacturer</h4>
               <p className="text-sm text-[var(--text-secondary)]">
                 Furniture, lighting, textiles, or other product manufacturer or showroom
+              </p>
+            </div>
+          </div>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            setSelectedType('PHOTOGRAPHER');
+            setStep('search');
+          }}
+          className="w-full p-6 bg-white/50 backdrop-blur-sm border border-[var(--ridge-outer)]/70 rounded-xl hover:border-rose-400 hover:bg-white/70 transition-all text-left shadow-sm"
+        >
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-rose-100 rounded-xl flex items-center justify-center flex-shrink-0">
+              <Camera className="w-6 h-6 text-rose-600" />
+            </div>
+            <div>
+              <h4 className="font-semibold text-[var(--text-primary)]">Photography Studio</h4>
+              <p className="text-sm text-[var(--text-secondary)]">
+                Interior, architectural, or design photography
               </p>
             </div>
           </div>

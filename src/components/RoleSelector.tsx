@@ -2,12 +2,12 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaChevronDown, FaUser, FaPalette, FaStore, FaSpinner, FaGraduationCap, FaCrown, FaDraftingCompass, FaHardHat } from 'react-icons/fa';
+import { FaChevronDown, FaUser, FaPalette, FaStore, FaSpinner, FaGraduationCap, FaCrown, FaDraftingCompass, FaHardHat, FaCamera } from 'react-icons/fa';
 import { useRole } from '../contexts/RoleContext';
 
 // Individual-First Architecture: 'individual' is the base user type
 // ARCHITECT and BUILDER are parallel to DESIGNER
-export type UserRole = 'individual' | 'homeowner' | 'designer' | 'vendor' | 'student' | 'admin' | 'architect' | 'builder';
+export type UserRole = 'individual' | 'homeowner' | 'designer' | 'vendor' | 'student' | 'admin' | 'architect' | 'builder' | 'photographer';
 
 interface RoleOption {
   value: UserRole;
@@ -45,6 +45,13 @@ const roleOptions: RoleOption[] = [
     icon: FaHardHat,
     color: 'bg-orange-500',
     description: 'Constructing and renovating spaces'
+  },
+  {
+    value: 'photographer',
+    label: 'Photographer',
+    icon: FaCamera,
+    color: 'bg-rose-500',
+    description: 'Capturing interiors and architecture'
   },
   {
     value: 'vendor',
