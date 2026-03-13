@@ -3,7 +3,8 @@
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import EditableParagraph from './EditableParagraph';
-import type { SectionOverride, SectionOverrideField } from '@/lib/posting/editingTypes';
+import SectionFeedback from './SectionFeedback';
+import type { SectionOverride, SectionOverrideField, SectionHistoryEntry } from '@/lib/posting/editingTypes';
 import SafeImage from '@/components/SafeImage';
 
 interface ProjectImage {
@@ -17,6 +18,7 @@ interface EditableArticleProps {
   projectId: string;
   blocks: Record<string, any>;
   overrides: SectionOverride[];
+  sectionHistory: SectionHistoryEntry[];
   images: ProjectImage[];
 }
 
@@ -30,6 +32,7 @@ export default function EditableArticle({
   projectId,
   blocks,
   overrides: initialOverrides,
+  sectionHistory,
   images,
 }: EditableArticleProps) {
   const router = useRouter();
@@ -37,6 +40,9 @@ export default function EditableArticle({
   const [overrides, setOverrides] = useState<SectionOverride[]>(initialOverrides);
 
   const imageMap = new Map(images.map((img) => [img.id, img]));
+
+  const hasHistory = (ci: number) =>
+    sectionHistory.some((h) => h.chapterIndex === ci && h.versions.length > 0);
 
   const isEditing = (chapterIndex: number, paragraphIndex: number, field: SectionOverrideField) =>
     editingField?.chapterIndex === chapterIndex &&
@@ -225,6 +231,14 @@ export default function EditableArticle({
               />
             </div>
           )}
+
+          {/* Section feedback + regenerate */}
+          <SectionFeedback
+            projectId={projectId}
+            chapterIndex={ci}
+            hasHistory={hasHistory(ci)}
+            onRegenerated={() => router.refresh()}
+          />
         </div>
       ))}
 

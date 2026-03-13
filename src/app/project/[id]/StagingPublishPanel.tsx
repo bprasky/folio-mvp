@@ -20,7 +20,7 @@ import { InterviewModal } from "@/components/posting/interview/InterviewModal";
 import { ProjectImageTagger } from "@/components/project/ProjectImageTagger";
 import type { EditorialState } from "@/lib/editorial/getEditorialState";
 import EditableArticle from "@/components/posting/editing/EditableArticle";
-import type { SectionOverride } from "@/lib/posting/editingTypes";
+import type { SectionOverride, SectionHistoryEntry } from "@/lib/posting/editingTypes";
 
 interface ProductTag {
   id: string;
@@ -86,6 +86,10 @@ export default function StagingPublishPanel({
   const [showUnpublishDialog, setShowUnpublishDialog] = useState(false);
   const [showInterviewModal, setShowInterviewModal] = useState(false);
   const [showTagger, setShowTagger] = useState(false);
+  const [viewMode, setViewMode] = useState<'edit' | 'preview'>('edit');
+  const [showRegenDialog, setShowRegenDialog] = useState(false);
+  const [regenFeedback, setRegenFeedback] = useState('');
+  const [keepEdits, setKeepEdits] = useState(true);
 
   const isPublishedStatus = initialPostData?.status === "PUBLISHED" || publishSuccess;
   const slug = initialPostData?.slug || publishedSlug;
@@ -113,7 +117,34 @@ export default function StagingPublishPanel({
   }, [allRequired]);
 
   async function handleRegenerate() {
+    const savedOverrides = keepEdits
+      ? ((initialPostData?.sectionOverrides ?? []) as SectionOverride[])
+      : [];
+
     await generateDraft();
+
+    // Re-apply preserved manual edits after regeneration
+    if (savedOverrides.length > 0) {
+      for (const override of savedOverrides) {
+        try {
+          await fetch(`/api/posting/project/${projectId}/sections/override`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              chapterIndex: override.chapterIndex,
+              paragraphIndex: override.paragraphIndex,
+              field: override.field,
+              editedBody: override.editedBody,
+            }),
+          });
+        } catch {
+          // Best-effort: if an override can't be applied (chapter structure changed), skip it
+        }
+      }
+    }
+
+    setShowRegenDialog(false);
+    setRegenFeedback('');
     router.refresh();
   }
 
@@ -164,6 +195,32 @@ export default function StagingPublishPanel({
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Edit / Preview toggle */}
+            {initialPostData?.expandedBlocks && (
+              <div className="flex rounded-lg border border-[var(--border-default)] overflow-hidden">
+                <button
+                  onClick={() => setViewMode('edit')}
+                  className={`flex items-center gap-1 px-3 py-1.5 folio-meta font-medium transition-colors ${
+                    viewMode === 'edit'
+                      ? 'bg-[var(--accent)] text-white'
+                      : 'bg-[var(--bg-base)] text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)]'
+                  }`}
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => setViewMode('preview')}
+                  className={`flex items-center gap-1 px-3 py-1.5 folio-meta font-medium transition-colors ${
+                    viewMode === 'preview'
+                      ? 'bg-[var(--accent)] text-white'
+                      : 'bg-[var(--bg-base)] text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)]'
+                  }`}
+                >
+                  <Eye className="w-3.5 h-3.5" />
+                  Preview
+                </button>
+              </div>
+            )}
             {(editorialState === 'GENERATED' || editorialState === 'UNPUBLISHED') && (
               <button
                 onClick={() => setShowInterviewModal(true)}
@@ -173,7 +230,7 @@ export default function StagingPublishPanel({
               </button>
             )}
             <button
-              onClick={handleRegenerate}
+              onClick={() => setShowRegenDialog(true)}
               disabled={regenBusy}
               className="flex items-center gap-1.5 px-3 py-1.5 folio-meta font-medium text-[var(--text-secondary)] bg-[var(--bg-base)] border border-[var(--border-default)] rounded-lg hover:bg-[var(--bg-elevated)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
@@ -293,22 +350,22 @@ export default function StagingPublishPanel({
         </div>
       )}
 
-      {/* EDITABLE ARTICLE — click-to-edit text surface */}
-      {initialPostData?.expandedBlocks && (
-        <div className="border-b border-[var(--border-default)] bg-[var(--bg-base)]">
+      {/* CONTENT AREA — Edit mode or Preview mode */}
+      {viewMode === 'edit' && initialPostData?.expandedBlocks ? (
+        <div className="bg-[var(--bg-base)]">
           <EditableArticle
             projectId={projectId}
             blocks={initialPostData.expandedBlocks}
             overrides={(initialPostData.sectionOverrides ?? []) as SectionOverride[]}
+            sectionHistory={(initialPostData.sectionHistory ?? []) as SectionHistoryEntry[]}
             images={images}
           />
         </div>
+      ) : (
+        <div className="relative">
+          <ImmersiveProjectPage post={initialPostData} modules={initialModules} isOwner={isOwner} />
+        </div>
       )}
-
-      {/* IMMERSIVE PREVIEW — renders exactly as readers see it */}
-      <div className="relative">
-        <ImmersiveProjectPage post={initialPostData} modules={initialModules} isOwner={isOwner} />
-      </div>
 
       {/* STAGING FOOTER — sticky at bottom */}
       <div className="sticky bottom-0 z-50 border-t border-[var(--border-default)] bg-[var(--bg-elevated)]/95 backdrop-blur-sm">
@@ -423,6 +480,64 @@ export default function StagingPublishPanel({
             router.refresh();
           }}
         />
+      )}
+
+      {/* Regeneration dialog with feedback + keep edits */}
+      {showRegenDialog && (
+        <div className="fixed inset-0 z-50 overflow-hidden">
+          <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setShowRegenDialog(false)} />
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-[var(--bg-elevated)] rounded-lg shadow-xl p-6">
+            <h3 className="folio-h3 mb-2">Regenerate Article</h3>
+            <p className="folio-meta text-[var(--text-tertiary)] mb-4">
+              This will regenerate the entire article using AI. Any unpreserved edits will be lost.
+            </p>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block folio-meta font-medium text-[var(--text-primary)] mb-1">
+                  Any direction for the rewrite? (optional)
+                </label>
+                <input
+                  type="text"
+                  value={regenFeedback}
+                  onChange={(e) => setRegenFeedback(e.target.value)}
+                  placeholder="e.g., More conversational tone, focus on the materials"
+                  className="w-full border border-[var(--border-default)] rounded-md px-3 py-2 folio-meta focus:outline-none focus:ring-2 focus:ring-[var(--accent)] bg-[var(--bg-base)]"
+                />
+              </div>
+
+              {((initialPostData?.sectionOverrides as SectionOverride[] | undefined)?.length ?? 0) > 0 && (
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={keepEdits}
+                    onChange={(e) => setKeepEdits(e.target.checked)}
+                    className="rounded border-[var(--border-default)] text-[var(--accent)] focus:ring-[var(--accent)]"
+                  />
+                  <span className="folio-meta text-[var(--text-primary)]">
+                    Keep my manual edits
+                  </span>
+                </label>
+              )}
+
+              <div className="flex justify-end gap-3 pt-2">
+                <button
+                  onClick={() => setShowRegenDialog(false)}
+                  className="px-4 py-2 folio-meta text-[var(--text-primary)] border border-[var(--border-default)] rounded-md hover:bg-[var(--bg-base)]"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleRegenerate}
+                  disabled={regenBusy}
+                  className="px-4 py-2 folio-meta font-medium bg-[var(--accent)] text-white rounded-md hover:bg-[var(--accent-hover)] disabled:opacity-50"
+                >
+                  {regenBusy ? 'Regenerating...' : 'Regenerate'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Unpublish confirmation dialog */}
