@@ -19,6 +19,8 @@ import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import { InterviewModal } from "@/components/posting/interview/InterviewModal";
 import { ProjectImageTagger } from "@/components/project/ProjectImageTagger";
 import type { EditorialState } from "@/lib/editorial/getEditorialState";
+import EditableArticle from "@/components/posting/editing/EditableArticle";
+import type { SectionOverride } from "@/lib/posting/editingTypes";
 
 interface ProductTag {
   id: string;
@@ -288,6 +290,18 @@ export default function StagingPublishPanel({
               {currentLead.deck || currentLead.dek}
             </p>
           )}
+        </div>
+      )}
+
+      {/* EDITABLE ARTICLE — click-to-edit text surface */}
+      {initialPostData?.expandedBlocks && (
+        <div className="border-b border-[var(--border-default)] bg-[var(--bg-base)]">
+          <EditableArticle
+            projectId={projectId}
+            blocks={initialPostData.expandedBlocks}
+            overrides={(initialPostData.sectionOverrides ?? []) as SectionOverride[]}
+            images={images}
+          />
         </div>
       )}
 

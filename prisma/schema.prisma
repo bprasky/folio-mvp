@@ -1270,6 +1270,11 @@ model ProjectPost {
   publishedContributions Contribution[] @relation("PostContributions")
   sourceArticleTopic     ArticleTopic?  @relation("TopicPublishedPost")
 
+  // Section editing (Phase C)
+  sectionOverrides   Json?    @map("section_overrides")
+  sectionHistory     Json?    @map("section_history")
+  lastGenerationNote String?  @map("last_generation_note") @db.Text
+
   @@map("project_posts")
 }
 
