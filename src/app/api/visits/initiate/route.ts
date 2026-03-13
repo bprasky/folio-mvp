@@ -108,13 +108,15 @@ export async function POST(req: Request) {
       recipientOrgType: visit.recipientOrg?.type || null,
     });
 
-    // Create notification for recipient
+    // Create notification for recipient + cross-org notifications
     await notifyVisitConnected({
       visitId: visit.id,
       initiatorUserId: session.user.id,
       initiatorName: visit.initiatorUser.name,
       initiatorOrgName: visit.initiatorOrg?.name || null,
       recipientUserId,
+      recipientOrgId: recipientOrgId,
+      recipientOrgName: visit.recipientOrg?.name || null,
       location: visit.event?.title || visit.location || null,
     });
 

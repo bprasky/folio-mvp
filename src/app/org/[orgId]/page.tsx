@@ -12,6 +12,8 @@ import OrgShopTab from '@/components/org-profile/OrgShopTab';
 import OrgContactTab from '@/components/org-profile/OrgContactTab';
 import { OrgAboutTab } from '@/components/org-onboarding';
 import PinnedCarousel from '@/components/org-profile/PinnedCarousel';
+import OrgVendorDirectory from '@/components/org-profile/OrgVendorDirectory';
+import OrgDesignerRelationships from '@/components/org-profile/OrgDesignerRelationships';
 
 export const dynamic = 'force-dynamic';
 
@@ -358,7 +360,7 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
 
       {pinnedItems.length > 0 && <PinnedCarousel items={pinnedItems} />}
 
-      <OrgProfileTabs activeTab={activeTab} orgId={resolvedParams.orgId} defaultTab={defaultTab} />
+      <OrgProfileTabs activeTab={activeTab} orgId={resolvedParams.orgId} defaultTab={defaultTab} orgType={org.type} isMember={isMember} />
 
       <div className="max-w-6xl mx-auto px-6 py-8">
         {activeTab === 'feed' && (
@@ -379,6 +381,16 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
         )}
         {activeTab === 'shop' && (
           <OrgShopTab products={productsData} />
+        )}
+        {activeTab === 'vendors' && isMember && (
+          <Suspense fallback={<TabSkeleton />}>
+            <OrgVendorDirectory orgId={resolvedParams.orgId} />
+          </Suspense>
+        )}
+        {activeTab === 'relationships' && isMember && (
+          <Suspense fallback={<TabSkeleton />}>
+            <OrgDesignerRelationships orgId={resolvedParams.orgId} isAdmin={isAdmin} />
+          </Suspense>
         )}
         {activeTab === 'about' && (
           <OrgAboutTab
@@ -441,6 +453,20 @@ async function getPinnedItems(memberIds: string[]) {
     // pinnedAt field might not exist in Prisma client yet
     return [];
   }
+}
+
+function TabSkeleton() {
+  return (
+    <div className="space-y-4">
+      {[1, 2, 3].map(i => (
+        <div
+          key={i}
+          className="h-24 rounded-lg animate-pulse"
+          style={{ backgroundColor: '#E8E4DF' }}
+        />
+      ))}
+    </div>
+  );
 }
 
 function FeedSkeleton() {
