@@ -8,10 +8,11 @@ import { MobileMenu } from "./MobileMenu";
 import { UserAvatar } from "./UserAvatar";
 import { UserAvatarWithBadge } from "./UserAvatarWithBadge";
 import { CreateButton } from "./CreateButton";
+import { BadgeButton } from "./BadgeButton";
 
 export function Navigation() {
   return <EditorialMasthead />;
 }
 
-export { TopNav, Logo, GlobalSearch, NavLinks, UserMenu, MobileMenu, EditorialMasthead, UserAvatar, UserAvatarWithBadge, CreateButton };
+export { TopNav, Logo, GlobalSearch, NavLinks, UserMenu, MobileMenu, EditorialMasthead, UserAvatar, UserAvatarWithBadge, CreateButton, BadgeButton };
 

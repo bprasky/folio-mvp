@@ -18,8 +18,9 @@ export const dynamic = 'force-dynamic';
 export const dynamicParams = true;
 export const revalidate = 0;
 
-type Props = { 
+type Props = {
   params: { username: string } | Promise<{ username: string }>;
+  searchParams: { badge?: string; event?: string } | Promise<{ badge?: string; event?: string }>;
 };
 
 /**
@@ -30,19 +31,19 @@ function cleanUsername(username: string): string {
 }
 
 /**
- * Derive designer from username
+ * Derive user from username slug
  * Username format: "bradpraskydesign" -> lookup by email prefix or name
+ * Works for all user roles (designers, vendors, architects, builders, etc.)
  */
-async function getDesignerByUsername(username: string) {
+async function getUserByUsername(username: string) {
   const clean = cleanUsername(username);
-  
+
   // Try to find by email prefix first (e.g., "brad" matches "brad@folio.com")
   const emailMatch = await prisma.user.findFirst({
     where: {
       email: {
         startsWith: clean,
       },
-      role: 'DESIGNER',
     },
   });
 
@@ -57,7 +58,6 @@ async function getDesignerByUsername(username: string) {
         equals: clean,
         mode: 'insensitive',
       },
-      role: 'DESIGNER',
     },
   });
 
@@ -67,16 +67,14 @@ async function getDesignerByUsername(username: string) {
 
   // Try name match with spaces removed (e.g., "bradpraskydesign" matches "Brad Prasky Design")
   const nameWithoutSpaces = clean.replace(/\s+/g, '').toLowerCase();
-  const allDesigners = await prisma.user.findMany({
-    where: {
-      role: 'DESIGNER',
-    },
+  const allUsers = await prisma.user.findMany({
+    select: { id: true, name: true, email: true, role: true, createdAt: true, location: true, bio: true, profileImage: true, specialties: true, aestheticProfile: true, followers: true },
   });
 
-  for (const designer of allDesigners) {
-    const designerNameWithoutSpaces = designer.name.replace(/\s+/g, '').toLowerCase();
-    if (designerNameWithoutSpaces === nameWithoutSpaces) {
-      return designer;
+  for (const user of allUsers) {
+    const userNameWithoutSpaces = user.name.replace(/\s+/g, '').toLowerCase();
+    if (userNameWithoutSpaces === nameWithoutSpaces) {
+      return user;
     }
   }
 
@@ -87,7 +85,6 @@ async function getDesignerByUsername(username: string) {
         contains: clean,
         mode: 'insensitive',
       },
-      role: 'DESIGNER',
     },
   });
 
@@ -119,21 +116,23 @@ function getFingerprintTags(designer: { specialties: string[]; aestheticProfile:
   return [];
 }
 
-export default async function Monograph({ params }: Props) {
+export default async function Monograph({ params, searchParams }: Props) {
   // Handle both sync and async params (Next.js 15+)
   const resolvedParams = params instanceof Promise ? await params : params;
+  const resolvedSearchParams = searchParams instanceof Promise ? await searchParams : searchParams;
   const handle = cleanUsername(resolvedParams.username);
+  const isBadgeScan = resolvedSearchParams.badge === 'true';
 
-  console.log('[Monograph] Looking up designer with username:', handle);
+  console.log('[Monograph] Looking up user with username:', handle, isBadgeScan ? '(badge scan)' : '');
 
-  const designer = await getDesignerByUsername(handle);
+  const designer = await getUserByUsername(handle);
 
-  if (!designer || designer.role !== 'DESIGNER') {
-    console.log('[Monograph] Designer not found for username:', handle);
+  if (!designer) {
+    console.log('[Monograph] User not found for username:', handle);
     notFound();
   }
 
-  console.log('[Monograph] Found designer:', designer.name, designer.email);
+  console.log('[Monograph] Found user:', designer.name, designer.email);
 
   // Fetch all data in parallel
   const [projects, knownForProducts] = await Promise.all([
@@ -200,10 +199,10 @@ export default async function Monograph({ params }: Props) {
     },
   });
 
-  // Check for existing connection (for ConnectButton)
+  // Only check for existing connection when arriving via QR badge scan
   const session = await auth();
   let existingVisit: { id: string; createdAt: Date } | null = null;
-  if (session?.user?.id && session.user.id !== designer.id) {
+  if (isBadgeScan && session?.user?.id && session.user.id !== designer.id) {
     existingVisit = await prisma.visitRecord.findFirst({
       where: {
         OR: [
@@ -226,7 +225,8 @@ export default async function Monograph({ params }: Props) {
         followers={followers}
         profileImageUrl={designer.profileImage}
       >
-        {session?.user?.id !== designer.id && (
+        {/* ConnectButton only shows when arriving via QR badge scan */}
+        {isBadgeScan && session?.user?.id !== designer.id && (
           <ConnectButton
             recipientUserId={designer.id}
             recipientName={designer.name}
