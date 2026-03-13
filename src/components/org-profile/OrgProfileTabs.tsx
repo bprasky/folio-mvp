@@ -6,14 +6,18 @@ import { useSearchParams } from 'next/navigation';
 interface OrgProfileTabsProps {
   activeTab: string;
   orgId: string;
+  defaultTab?: string;
+  orgType?: string;
+  isMember?: boolean;
+  isAdmin?: boolean;
 }
 
-export default function OrgProfileTabs({ activeTab, orgId }: OrgProfileTabsProps) {
+export default function OrgProfileTabs({ activeTab, orgId, defaultTab = 'feed', orgType, isMember, isAdmin }: OrgProfileTabsProps) {
   const searchParams = useSearchParams();
 
   const createUrl = (tab: string) => {
     const params = new URLSearchParams(searchParams.toString());
-    if (tab === 'feed') {
+    if (tab === defaultTab) {
       params.delete('tab');
     } else {
       params.set('tab', tab);
@@ -22,10 +26,25 @@ export default function OrgProfileTabs({ activeTab, orgId }: OrgProfileTabsProps
     return `/org/${orgId}${queryString ? `?${queryString}` : ''}`;
   };
 
+  const VENDOR_ORG_TYPES = ['VENDOR', 'MANUFACTURER', 'SHOWROOM'];
+  const DESIGN_ORG_TYPES = ['DESIGN_FIRM', 'ARCHITECTURE_FIRM'];
+
   const tabs = [
     { id: 'feed', label: 'Feed' },
     { id: 'projects', label: 'Projects' },
     { id: 'shop', label: 'Shop' },
+    // Vendor Directory tab: only for design firms, only for members
+    ...(isMember && orgType && DESIGN_ORG_TYPES.includes(orgType)
+      ? [{ id: 'vendors', label: 'Vendors' }]
+      : []),
+    // Relationships tab: only for vendor orgs, only for members
+    ...(isMember && orgType && VENDOR_ORG_TYPES.includes(orgType)
+      ? [{ id: 'relationships', label: 'Relationships' }]
+      : []),
+    // Audit Log tab: only for admins of vendor or design orgs with visit data
+    ...(isAdmin && isMember && orgType && [...VENDOR_ORG_TYPES, ...DESIGN_ORG_TYPES].includes(orgType)
+      ? [{ id: 'audit', label: 'Audit Log' }]
+      : []),
     { id: 'about', label: 'About' },
     { id: 'contact', label: 'Contact' },
   ];

@@ -53,24 +53,28 @@ export async function POST(
     }
 
     const body = await request.json();
-    const { type, title, source, date, url } = body;
+    const { type, title, source, date, url, imageUrl, excerpt, sourceLogoUrl } = body;
 
-    if (!type || !title || !source) {
+    if (!type || !title) {
       return NextResponse.json(
-        { error: 'Type, title, and source are required' },
+        { error: 'Type and title are required' },
         { status: 400 }
       );
     }
 
-    // Create recognition entry
+    // Create recognition entry (auto-set publishedAt so it appears in feed)
     const recognition = await prisma.orgRecognition.create({
       data: {
         organizationId: orgId,
         type,
         title,
-        source,
+        source: source || '',
         date: date ? new Date(date) : new Date(),
-        url: url || null
+        url: url || null,
+        imageUrl: imageUrl || null,
+        excerpt: excerpt || null,
+        sourceLogoUrl: sourceLogoUrl || null,
+        publishedAt: new Date(),
       }
     });
 

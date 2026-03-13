@@ -176,10 +176,12 @@ export default function IndividualProfile() {
                   </div>
                 </div>
 
-                <Button variant="accent">
-                  <FaEdit className="w-4 h-4 mr-2" />
-                  Edit Profile
-                </Button>
+                <Link href="/profile">
+                  <Button variant="accent">
+                    <FaEdit className="w-4 h-4 mr-2" />
+                    Edit Profile
+                  </Button>
+                </Link>
               </div>
             </RidgeCard>
           </motion.div>

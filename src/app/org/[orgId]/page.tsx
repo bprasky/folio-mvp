@@ -12,6 +12,10 @@ import OrgShopTab from '@/components/org-profile/OrgShopTab';
 import OrgContactTab from '@/components/org-profile/OrgContactTab';
 import { OrgAboutTab } from '@/components/org-onboarding';
 import PinnedCarousel from '@/components/org-profile/PinnedCarousel';
+import OrgVendorDirectory from '@/components/org-profile/OrgVendorDirectory';
+import OrgDesignerRelationships from '@/components/org-profile/OrgDesignerRelationships';
+import OrgTerritoryManager from '@/components/org-profile/OrgTerritoryManager';
+import OrgAuditLog from '@/components/org-profile/OrgAuditLog';
 
 export const dynamic = 'force-dynamic';
 
@@ -151,6 +155,7 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
   const session = await getServerSession(authOptions);
   let isOwner = false;
   let isAdmin = false;
+  let isMember = false;
 
   if (session?.user?.id) {
     try {
@@ -163,6 +168,7 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
       });
       isOwner = membership?.role === 'OWNER';
       isAdmin = membership?.role === 'OWNER' || membership?.role === 'ADMIN';
+      isMember = membership !== null;
     } catch (err) {
       console.error('[OrgProfilePage] Error checking membership:', err);
       // Continue with default isOwner/isAdmin = false
@@ -190,6 +196,27 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
       });
     } catch (err) {
       console.error('[OrgProfilePage] Error counting projects:', err);
+    }
+  }
+
+  // Compute setup card completion state
+  const setupState = {
+    profileComplete: Boolean(orgData.description) && Boolean(org.logo),
+    recognitionComplete: recognition.length > 0,
+    teamInviteComplete: false,
+    firstProjectPublished: projectCount > 0,
+  };
+
+  if (memberIds.length > 1) {
+    setupState.teamInviteComplete = true;
+  } else {
+    try {
+      const inviteCount = await (prisma as any).teamMemberInvite?.count?.({
+        where: { organizationId: resolvedParams.orgId },
+      }) ?? 0;
+      setupState.teamInviteComplete = inviteCount > 0;
+    } catch {
+      // TeamMemberInvite model might not exist yet
     }
   }
 
@@ -307,7 +334,9 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
     }
   }
 
-  const activeTab = resolvedSearchParams.tab || 'feed';
+  // Default to About tab when no published projects (empty profile is a dead end on Feed)
+  const defaultTab = projectCount === 0 ? 'about' : 'feed';
+  const activeTab = resolvedSearchParams.tab || defaultTab;
   const activeFilter = resolvedSearchParams.filter || 'all';
   const activeSort = resolvedSearchParams.sort || 'featured';
 
@@ -333,7 +362,7 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
 
       {pinnedItems.length > 0 && <PinnedCarousel items={pinnedItems} />}
 
-      <OrgProfileTabs activeTab={activeTab} orgId={resolvedParams.orgId} />
+      <OrgProfileTabs activeTab={activeTab} orgId={resolvedParams.orgId} defaultTab={defaultTab} orgType={org.type} isMember={isMember} isAdmin={isAdmin} />
 
       <div className="max-w-6xl mx-auto px-6 py-8">
         {activeTab === 'feed' && (
@@ -342,6 +371,10 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
               orgId={resolvedParams.orgId}
               initialFilter={activeFilter}
               initialSort={activeSort}
+              isMember={isMember}
+              isAdmin={isAdmin}
+              projectCount={projectCount}
+              setupState={setupState}
             />
           </Suspense>
         )}
@@ -350,6 +383,27 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
         )}
         {activeTab === 'shop' && (
           <OrgShopTab products={productsData} />
+        )}
+        {activeTab === 'vendors' && isMember && (
+          <Suspense fallback={<TabSkeleton />}>
+            <OrgVendorDirectory orgId={resolvedParams.orgId} />
+          </Suspense>
+        )}
+        {activeTab === 'relationships' && isMember && (
+          <Suspense fallback={<TabSkeleton />}>
+            <OrgDesignerRelationships orgId={resolvedParams.orgId} isAdmin={isAdmin} />
+            {isAdmin && (
+              <div className="mt-8">
+                <h2 className="text-sm font-medium text-stone-900 mb-4">Territory & Governance</h2>
+                <OrgTerritoryManager orgId={resolvedParams.orgId} isAdmin={isAdmin} />
+              </div>
+            )}
+          </Suspense>
+        )}
+        {activeTab === 'audit' && isMember && isAdmin && (
+          <Suspense fallback={<TabSkeleton />}>
+            <OrgAuditLog orgId={resolvedParams.orgId} />
+          </Suspense>
         )}
         {activeTab === 'about' && (
           <OrgAboutTab
@@ -412,6 +466,20 @@ async function getPinnedItems(memberIds: string[]) {
     // pinnedAt field might not exist in Prisma client yet
     return [];
   }
+}
+
+function TabSkeleton() {
+  return (
+    <div className="space-y-4">
+      {[1, 2, 3].map(i => (
+        <div
+          key={i}
+          className="h-24 rounded-lg animate-pulse"
+          style={{ backgroundColor: '#E8E4DF' }}
+        />
+      ))}
+    </div>
+  );
 }
 
 function FeedSkeleton() {

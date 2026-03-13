@@ -6,6 +6,9 @@ import ProjectCard from './feed-cards/ProjectCard';
 import MediaCard from './feed-cards/MediaCard';
 import RecognitionCard from './feed-cards/RecognitionCard';
 import CollaborationCard from './feed-cards/CollaborationCard';
+import GuidedSetupCard from './GuidedSetupCard';
+import AddRecognitionModal from './AddRecognitionModal';
+import InviteTeamModal from './InviteTeamModal';
 
 interface FeedItem {
   id: string;
@@ -16,17 +19,38 @@ interface FeedItem {
   engagement?: number;
 }
 
+interface SetupState {
+  profileComplete: boolean;
+  recognitionComplete: boolean;
+  teamInviteComplete: boolean;
+  firstProjectPublished: boolean;
+}
+
 interface OrgProfileFeedProps {
   orgId: string;
   initialFilter: string;
   initialSort: string;
+  isMember?: boolean;
+  isAdmin?: boolean;
+  projectCount?: number;
+  setupState?: SetupState;
 }
 
-export default function OrgProfileFeed({ orgId, initialFilter, initialSort }: OrgProfileFeedProps) {
+export default function OrgProfileFeed({
+  orgId,
+  initialFilter,
+  initialSort,
+  isMember = false,
+  isAdmin = false,
+  projectCount = 0,
+  setupState,
+}: OrgProfileFeedProps) {
   const [items, setItems] = useState<FeedItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState(initialFilter);
   const [sort, setSort] = useState(initialSort);
+  const [recognitionModalOpen, setRecognitionModalOpen] = useState(false);
+  const [inviteModalOpen, setInviteModalOpen] = useState(false);
 
   useEffect(() => {
     async function loadFeed() {
@@ -60,17 +84,34 @@ export default function OrgProfileFeed({ orgId, initialFilter, initialSort }: Or
     return <LoadingSkeleton />;
   }
 
+  const showSetupCard = isMember && projectCount === 0 && setupState;
+
   return (
     <div>
-      <FeedFilters activeFilter={filter} activeSort={sort} orgId={orgId} />
+      <FeedFilters
+        activeFilter={filter}
+        activeSort={sort}
+        orgId={orgId}
+        isAdmin={isAdmin}
+        onAddRecognition={() => setRecognitionModalOpen(true)}
+      />
 
       {items.length === 0 ? (
-        <div className="text-center py-16">
-          <p style={{ color: '#8B8178' }}>No content yet</p>
-          <p className="text-sm mt-2" style={{ color: '#A09890' }}>
-            Projects and media will appear here once published
-          </p>
-        </div>
+        showSetupCard ? (
+          <GuidedSetupCard
+            orgId={orgId}
+            setupState={setupState}
+            onOpenRecognitionModal={() => setRecognitionModalOpen(true)}
+            onOpenInviteModal={() => setInviteModalOpen(true)}
+          />
+        ) : (
+          <div className="text-center py-16">
+            <p style={{ color: '#8B8178' }}>No content yet</p>
+            <p className="text-sm mt-2" style={{ color: '#A09890' }}>
+              Projects and media will appear here once published
+            </p>
+          </div>
+        )
       ) : (
         <div className="columns-1 sm:columns-2 lg:columns-3 gap-4">
           {items.map(item => (
@@ -80,6 +121,18 @@ export default function OrgProfileFeed({ orgId, initialFilter, initialSort }: Or
           ))}
         </div>
       )}
+
+      <AddRecognitionModal
+        open={recognitionModalOpen}
+        onOpenChange={setRecognitionModalOpen}
+        orgId={orgId}
+      />
+
+      <InviteTeamModal
+        open={inviteModalOpen}
+        onOpenChange={setInviteModalOpen}
+        orgId={orgId}
+      />
     </div>
   );
 }

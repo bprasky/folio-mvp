@@ -19,6 +19,8 @@ export const ROLE_LABELS: Record<Role, string> = {
   INDIVIDUAL: 'Individual',
   ARCHITECT: 'Architect',
   BUILDER: 'Builder',
+  DEVELOPER: 'Developer',
+  PHOTOGRAPHER: 'Photographer',
 };
 
 /**
@@ -31,6 +33,8 @@ export const ORG_TYPE_LABELS: Record<OrgType, string> = {
   SHOWROOM: 'Showroom',
   CONTRACTOR: 'General Contractor / Builder',
   ARCHITECTURE_FIRM: 'Architecture Firm',
+  DEVELOPER: 'Developer',
+  PHOTOGRAPHY_STUDIO: 'Photography Studio',
 };
 
 /**
@@ -48,7 +52,7 @@ export const PARTICIPANT_SIDE_LABELS: Record<ParticipantSide, string> = {
  * Defines which organization types a role can create or join
  */
 export const ROLE_TO_ORG_TYPES: Record<Role, OrgType[]> = {
-  ADMIN: ['DESIGN_FIRM', 'ARCHITECTURE_FIRM', 'CONTRACTOR', 'VENDOR', 'MANUFACTURER', 'SHOWROOM'],
+  ADMIN: ['DESIGN_FIRM', 'ARCHITECTURE_FIRM', 'CONTRACTOR', 'VENDOR', 'MANUFACTURER', 'SHOWROOM', 'PHOTOGRAPHY_STUDIO'],
   DESIGNER: ['DESIGN_FIRM'],
   ARCHITECT: ['ARCHITECTURE_FIRM'],
   BUILDER: ['CONTRACTOR'],
@@ -56,6 +60,8 @@ export const ROLE_TO_ORG_TYPES: Record<Role, OrgType[]> = {
   INDIVIDUAL: [],
   HOMEOWNER: [],
   GUEST: [],
+  DEVELOPER: ['DEVELOPER'],
+  PHOTOGRAPHER: ['PHOTOGRAPHY_STUDIO'],
 };
 
 /**
@@ -69,6 +75,8 @@ export const ORG_TYPE_TO_ROLE: Record<OrgType, Role> = {
   VENDOR: 'VENDOR',
   MANUFACTURER: 'VENDOR',
   SHOWROOM: 'VENDOR',
+  DEVELOPER: 'DEVELOPER',
+  PHOTOGRAPHY_STUDIO: 'PHOTOGRAPHER',
 };
 
 /**

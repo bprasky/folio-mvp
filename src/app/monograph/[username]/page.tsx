@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
+import { auth } from '@/lib/auth';
 import Hero from '@/components/monograph/Hero';
 import Fingerprint from '@/components/monograph/Fingerprint';
 import SelectedWorks from '@/components/monograph/SelectedWorks';
@@ -7,9 +8,10 @@ import KnownFor from '@/components/monograph/KnownFor';
 import Services from '@/components/monograph/Services';
 import Colophon from '@/components/monograph/Colophon';
 import EmptyState from '@/components/monograph/EmptyState';
-import { 
-  getDesignerPublishedProjects, 
-  getTaggedProductsForDesigner 
+import ConnectButton from '@/components/monograph/ConnectButton';
+import {
+  getDesignerPublishedProjects,
+  getTaggedProductsForDesigner
 } from '@/server/queries/getDesignerProjectsWithProducts';
 
 export const dynamic = 'force-dynamic';
@@ -198,6 +200,22 @@ export default async function Monograph({ params }: Props) {
     },
   });
 
+  // Check for existing connection (for ConnectButton)
+  const session = await auth();
+  let existingVisit: { id: string; createdAt: Date } | null = null;
+  if (session?.user?.id && session.user.id !== designer.id) {
+    existingVisit = await prisma.visitRecord.findFirst({
+      where: {
+        OR: [
+          { initiatorUserId: session.user.id, recipientUserId: designer.id },
+          { initiatorUserId: designer.id, recipientUserId: session.user.id },
+        ],
+      },
+      select: { id: true, createdAt: true },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
   return (
     <main className="min-h-screen bg-[#fdfbf8]">
       <Hero
@@ -207,7 +225,16 @@ export default async function Monograph({ params }: Props) {
         establishedYear={establishedYear}
         followers={followers}
         profileImageUrl={designer.profileImage}
-      />
+      >
+        {session?.user?.id !== designer.id && (
+          <ConnectButton
+            recipientUserId={designer.id}
+            recipientName={designer.name}
+            existingVisitDate={existingVisit?.createdAt?.toISOString() || null}
+            existingVisitId={existingVisit?.id || null}
+          />
+        )}
+      </Hero>
 
       <div className="max-w-7xl mx-auto px-6 py-24 space-y-48">
         {/* Opening Quote Spread */}
