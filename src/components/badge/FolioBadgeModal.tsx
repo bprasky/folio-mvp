@@ -33,14 +33,14 @@ export default function FolioBadgeModal({
 
   const nearestEvent = upcomingEventRSVPs[0] ?? null;
 
-  // Build the full QR target URL
+  // Build the full QR target URL — always includes ?badge=true so scanning enables connect flow
   const buildBadgeUrl = useCallback(() => {
     if (typeof window === 'undefined') return '';
     const base = `${window.location.origin}${monographUrl}`;
     if (nearestEvent) {
-      return `${base}?event=${nearestEvent.eventId}&badge=true`;
+      return `${base}?badge=true&event=${nearestEvent.eventId}`;
     }
-    return base;
+    return `${base}?badge=true`;
   }, [monographUrl, nearestEvent]);
 
   // Generate QR code client-side (code-split)

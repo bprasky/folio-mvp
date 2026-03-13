@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 import Image from 'next/image';
 import Link from 'next/link';
+import AddConnectionButton from '@/components/visits/AddConnectionButton';
 
 export const dynamic = 'force-dynamic';
 
@@ -47,9 +48,12 @@ export default async function VisitsPage() {
   return (
     <main className="min-h-screen bg-[#fdfbf8]">
       <div className="max-w-3xl mx-auto px-6 py-12">
-        <h1 className="text-2xl font-serif font-light text-stone-900 mb-8">
-          Connections
-        </h1>
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-2xl font-serif font-light text-stone-900">
+            Connections
+          </h1>
+          <AddConnectionButton />
+        </div>
 
         {visits.length === 0 ? (
           <div className="text-center py-16">

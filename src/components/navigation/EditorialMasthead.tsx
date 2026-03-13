@@ -9,6 +9,7 @@ import { NavLinks } from "./NavLinks";
 import { UserMenu } from "./UserMenu";
 import { MobileMenu } from "./MobileMenu";
 import { CreateButton } from "./CreateButton";
+import { BadgeButton } from "./BadgeButton";
 
 const SCROLL_THRESHOLD = 100; // Trigger point for state change (50-100px as specified)
 const MAGAZINE_SCROLL_THRESHOLD = 200; // Higher threshold for magazine page (waits for hero scroll)
@@ -156,6 +157,7 @@ export function EditorialMasthead() {
             <div className="md:hidden">
               <GlobalSearch placeholder="Search..." />
             </div>
+            <BadgeButton />
             <CreateButton />
             <UserMenu />
           </div>
