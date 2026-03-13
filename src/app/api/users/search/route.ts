@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
       ];
     }
 
-    if (role && ['ADMIN', 'VENDOR', 'DESIGNER', 'HOMEOWNER', 'GUEST'].includes(role)) {
+    if (role && ['ADMIN', 'VENDOR', 'DESIGNER', 'HOMEOWNER', 'GUEST', 'PHOTOGRAPHER', 'ARCHITECT', 'BUILDER'].includes(role)) {
       whereClause.role = role;
     }
 

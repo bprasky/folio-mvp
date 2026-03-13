@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { Plus, Pencil, Trash2, Check, X, Lock } from "lucide-react";
 import { CREDIT_ROLE_OPTIONS, type CreditEntry } from "@/lib/posting/creditsSchema";
 
@@ -12,11 +12,8 @@ import { CREDIT_ROLE_OPTIONS, type CreditEntry } from "@/lib/posting/creditsSche
  *
  * The Designer credit is auto-populated from the project owner and cannot be removed.
  *
- * --- Future: Super Articles (see docs/15_SUPER_ARTICLES.md) ---
- * - Each credited party may eventually contribute their own interview answers
- *   via CreditEntry.userId linking to their InterviewSession.
- * - A Folio user search field will replace the free-text name input for linked users.
- * - contributionStatus tracking (invited / contributed / declined) will be added.
+ * When role is "Photographer", shows additional fields (instagram) and
+ * typeahead search for existing photographer users on Folio.
  */
 
 interface CreditsEditorProps {
@@ -35,9 +32,15 @@ type EditingCredit = {
   customRole: string;
   name: string;
   url: string;
+  instagram: string;
+  userId?: string;
 };
 
-const emptyForm: EditingCredit = { role: "", customRole: "", name: "", url: "" };
+const emptyForm: EditingCredit = { role: "", customRole: "", name: "", url: "", instagram: "" };
+
+function isPhotographerRole(role: string): boolean {
+  return role.toLowerCase() === "photographer";
+}
 
 export function CreditsEditor({ credits, onChange, saving }: CreditsEditorProps) {
   const [adding, setAdding] = useState(false);
@@ -62,6 +65,8 @@ export function CreditsEditor({ credits, onChange, saving }: CreditsEditorProps)
       customRole: matchesPreset ? "" : credit.role,
       name: credit.name,
       url: credit.url || "",
+      instagram: credit.instagram || "",
+      userId: credit.userId,
     });
     setEditingIndex(index);
     setAdding(false);
@@ -87,6 +92,8 @@ export function CreditsEditor({ credits, onChange, saving }: CreditsEditorProps)
       role,
       name,
       ...(form.url.trim() ? { url: form.url.trim() } : {}),
+      ...(form.instagram.trim() ? { instagram: form.instagram.trim() } : {}),
+      ...(form.userId ? { userId: form.userId } : {}),
     };
 
     if (editingIndex !== null) {
@@ -159,6 +166,11 @@ export function CreditsEditor({ credits, onChange, saving }: CreditsEditorProps)
                     link
                   </a>
                 )}
+                {credit.instagram && (
+                  <span className="text-[var(--text-tertiary)] text-xs shrink-0">
+                    @{credit.instagram.replace(/^@/, "")}
+                  </span>
+                )}
               </div>
               <div className="flex items-center gap-1 shrink-0">
                 {locked ? (
@@ -212,6 +224,13 @@ export function CreditsEditor({ credits, onChange, saving }: CreditsEditorProps)
   );
 }
 
+/** Typeahead suggestion from user search */
+interface UserSuggestion {
+  id: string;
+  name: string;
+  profileImage?: string;
+}
+
 function CreditForm({
   form,
   onChange,
@@ -225,12 +244,61 @@ function CreditForm({
   onCancel: () => void;
   canSave: boolean;
 }) {
+  const showPhotographerFields = isPhotographerRole(form.role);
+  const [suggestions, setSuggestions] = useState<UserSuggestion[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const suggestionsRef = useRef<HTMLDivElement>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+
+  // Typeahead search for photographer users
+  useEffect(() => {
+    if (!showPhotographerFields || form.name.trim().length < 2 || form.userId) {
+      setSuggestions([]);
+      return;
+    }
+
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch(
+          `/api/users/search?q=${encodeURIComponent(form.name.trim())}&role=PHOTOGRAPHER&limit=5`
+        );
+        if (res.ok) {
+          const data = await res.json();
+          setSuggestions(data.users || []);
+          setShowSuggestions(true);
+        }
+      } catch {
+        setSuggestions([]);
+      }
+    }, 300);
+
+    return () => clearTimeout(debounceRef.current);
+  }, [form.name, showPhotographerFields, form.userId]);
+
+  // Close suggestions on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (suggestionsRef.current && !suggestionsRef.current.contains(e.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleSelectSuggestion = (user: UserSuggestion) => {
+    onChange({ ...form, name: user.name, userId: user.id });
+    setShowSuggestions(false);
+    setSuggestions([]);
+  };
+
   return (
     <div className="rounded-lg border border-[var(--accent)]/30 bg-[var(--bg-elevated)] p-3 space-y-2">
       <div className="flex gap-2">
         <select
           value={form.role}
-          onChange={(e) => onChange({ ...form, role: e.target.value, customRole: "" })}
+          onChange={(e) => onChange({ ...form, role: e.target.value, customRole: "", instagram: "", userId: undefined })}
           className="flex-1 rounded-md border border-[var(--ridge-outer)] bg-white px-2 py-1.5 text-sm text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
         >
           <option value="">Select role...</option>
@@ -251,14 +319,42 @@ function CreditForm({
           />
         )}
       </div>
-      <input
-        type="text"
-        value={form.name}
-        onChange={(e) => onChange({ ...form, name: e.target.value })}
-        placeholder="Name..."
-        className="w-full rounded-md border border-[var(--ridge-outer)] bg-white px-2 py-1.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
-        maxLength={100}
-      />
+
+      {/* Name field with typeahead for photographers */}
+      <div className="relative" ref={suggestionsRef}>
+        <input
+          type="text"
+          value={form.name}
+          onChange={(e) => onChange({ ...form, name: e.target.value, userId: undefined })}
+          placeholder={showPhotographerFields ? "Search photographer or enter name..." : "Name..."}
+          className="w-full rounded-md border border-[var(--ridge-outer)] bg-white px-2 py-1.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
+          maxLength={100}
+          onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+        />
+        {form.userId && (
+          <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-green-600 font-medium">
+            Linked
+          </span>
+        )}
+        {showSuggestions && suggestions.length > 0 && (
+          <div className="absolute z-10 mt-1 w-full rounded-md border border-[var(--ridge-outer)] bg-white shadow-lg max-h-40 overflow-y-auto">
+            {suggestions.map((user) => (
+              <button
+                key={user.id}
+                type="button"
+                onClick={() => handleSelectSuggestion(user)}
+                className="w-full text-left px-3 py-2 text-sm hover:bg-[var(--bg-elevated)] transition-colors flex items-center gap-2"
+              >
+                {user.profileImage && (
+                  <img src={user.profileImage} alt="" className="w-5 h-5 rounded-full object-cover" />
+                )}
+                <span className="text-[var(--text-primary)]">{user.name}</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
       <input
         type="url"
         value={form.url}
@@ -266,6 +362,19 @@ function CreditForm({
         placeholder="Website URL (optional)"
         className="w-full rounded-md border border-[var(--ridge-outer)] bg-white px-2 py-1.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
       />
+
+      {/* Instagram field — shown for Photographer role */}
+      {showPhotographerFields && (
+        <input
+          type="text"
+          value={form.instagram}
+          onChange={(e) => onChange({ ...form, instagram: e.target.value })}
+          placeholder="Instagram handle (optional)"
+          className="w-full rounded-md border border-[var(--ridge-outer)] bg-white px-2 py-1.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
+          maxLength={100}
+        />
+      )}
+
       <div className="flex justify-end gap-2">
         <button
           onClick={onCancel}

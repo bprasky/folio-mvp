@@ -28,8 +28,11 @@ export function Credits({ credits }: CreditsProps) {
       </h3>
       <div className="grid grid-cols-2 gap-4 text-sm">
         {creditsArray.map((credit: any, idx: number) => {
+          const isPhotographer = credit.role?.toLowerCase() === "photographer";
           const href = credit.userId
-            ? `/designer/${credit.userId}`
+            ? (isPhotographer
+                ? `/photographer/${credit.name?.replace(/\s+/g, '').toLowerCase()}`
+                : `/designer/${credit.userId}`)
             : credit.url || undefined;
           return (
             <div key={idx}>
