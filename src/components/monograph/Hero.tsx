@@ -7,13 +7,14 @@ interface HeroProps {
   establishedYear: number;
   followers: number;
   profileImageUrl?: string | null;
+  children?: React.ReactNode;
 }
 
 function formatNumber(num: number): string {
   return num.toLocaleString('en-US');
 }
 
-export default function Hero({ imageUrl, title, locations, establishedYear, followers, profileImageUrl }: HeroProps) {
+export default function Hero({ imageUrl, title, locations, establishedYear, followers, profileImageUrl, children }: HeroProps) {
   return (
     <div className="relative w-full h-[70vh] min-h-[500px] max-h-[800px] overflow-hidden">
       {/* Hero Image */}
@@ -29,8 +30,8 @@ export default function Hero({ imageUrl, title, locations, establishedYear, foll
       {/* Overlay Gradient */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
       
-      {/* Followers Badge - Top Right */}
-      <div className="absolute top-8 right-8 z-10">
+      {/* Top Right Actions */}
+      <div className="absolute top-8 right-8 z-10 flex flex-col items-end gap-2">
         <div className="bg-white/95 backdrop-blur-sm px-4 py-2 rounded border border-stone-200/50 shadow-sm">
           <div className="text-[13px] leading-tight" style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', color: '#6d6256', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
             <span className="text-[#b89a72] font-normal not-italic" style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>
@@ -39,6 +40,7 @@ export default function Hero({ imageUrl, title, locations, establishedYear, foll
             <span className="ml-1">Followers on Folio</span>
           </div>
         </div>
+        {children}
       </div>
       
       {/* Content Overlay */}
