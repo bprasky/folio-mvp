@@ -86,6 +86,7 @@ export default function StagingPublishPanel({
   const [showUnpublishDialog, setShowUnpublishDialog] = useState(false);
   const [showInterviewModal, setShowInterviewModal] = useState(false);
   const [showTagger, setShowTagger] = useState(false);
+  const [viewMode, setViewMode] = useState<'edit' | 'preview'>('edit');
 
   const isPublishedStatus = initialPostData?.status === "PUBLISHED" || publishSuccess;
   const slug = initialPostData?.slug || publishedSlug;
@@ -164,6 +165,32 @@ export default function StagingPublishPanel({
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Edit / Preview toggle */}
+            {initialPostData?.expandedBlocks && (
+              <div className="flex rounded-lg border border-[var(--border-default)] overflow-hidden">
+                <button
+                  onClick={() => setViewMode('edit')}
+                  className={`flex items-center gap-1 px-3 py-1.5 folio-meta font-medium transition-colors ${
+                    viewMode === 'edit'
+                      ? 'bg-[var(--accent)] text-white'
+                      : 'bg-[var(--bg-base)] text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)]'
+                  }`}
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => setViewMode('preview')}
+                  className={`flex items-center gap-1 px-3 py-1.5 folio-meta font-medium transition-colors ${
+                    viewMode === 'preview'
+                      ? 'bg-[var(--accent)] text-white'
+                      : 'bg-[var(--bg-base)] text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)]'
+                  }`}
+                >
+                  <Eye className="w-3.5 h-3.5" />
+                  Preview
+                </button>
+              </div>
+            )}
             {(editorialState === 'GENERATED' || editorialState === 'UNPUBLISHED') && (
               <button
                 onClick={() => setShowInterviewModal(true)}
@@ -293,9 +320,9 @@ export default function StagingPublishPanel({
         </div>
       )}
 
-      {/* EDITABLE ARTICLE — click-to-edit text surface */}
-      {initialPostData?.expandedBlocks && (
-        <div className="border-b border-[var(--border-default)] bg-[var(--bg-base)]">
+      {/* CONTENT AREA — Edit mode or Preview mode */}
+      {viewMode === 'edit' && initialPostData?.expandedBlocks ? (
+        <div className="bg-[var(--bg-base)]">
           <EditableArticle
             projectId={projectId}
             blocks={initialPostData.expandedBlocks}
@@ -303,12 +330,11 @@ export default function StagingPublishPanel({
             images={images}
           />
         </div>
+      ) : (
+        <div className="relative">
+          <ImmersiveProjectPage post={initialPostData} modules={initialModules} isOwner={isOwner} />
+        </div>
       )}
-
-      {/* IMMERSIVE PREVIEW — renders exactly as readers see it */}
-      <div className="relative">
-        <ImmersiveProjectPage post={initialPostData} modules={initialModules} isOwner={isOwner} />
-      </div>
 
       {/* STAGING FOOTER — sticky at bottom */}
       <div className="sticky bottom-0 z-50 border-t border-[var(--border-default)] bg-[var(--bg-elevated)]/95 backdrop-blur-sm">
