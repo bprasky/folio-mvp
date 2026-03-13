@@ -194,6 +194,13 @@ model User {
   designerBio DesignerBio?
   profileQAs  ProfileQA[]
 
+  // QR Exchange / Visit System
+  initiatedVisits VisitRecord[] @relation("initiatedVisits")
+  receivedVisits  VisitRecord[] @relation("receivedVisits")
+
+  // Territory assignments (as rep)
+  territoryAssignments OrgTerritoryAssignment[] @relation("RepTerritoryAssignments")
+
   @@map("users")
 }
 
@@ -256,6 +263,7 @@ model Event {
   impressions              impressions[]
   placements               placements[]
   workflowJobs             EventWorkflowJob[]
+  visitRecords             VisitRecord[]
 
   @@index([parentFestivalId])
   @@index([city])
@@ -520,6 +528,9 @@ model Product {
   shopProducts ShopProduct[]        @relation("ProductShopProducts")
   testimonials ProductTestimonial[] @relation("ProductTestimonials")
 
+  // QR Exchange / Visit System
+  visitProductShares VisitProductShare[]
+
   @@map("products")
 }
 
@@ -773,6 +784,19 @@ model Organization {
 
   // Events hosted by this organization
   events Event[] @relation("OrgEvents")
+
+  // QR Exchange / Visit System
+  orgInitiatedVisits VisitRecord[] @relation("orgInitiatedVisits")
+  orgReceivedVisits  VisitRecord[] @relation("orgReceivedVisits")
+
+  // Territory & Governance (Phase 3)
+  territoryLockEnabled  Boolean @default(false) // soft lock opt-in for vendor orgs
+  dormancyThresholdDays Int     @default(30)    // days before flagging dormant
+
+  // Territory assignments where this vendor org assigned reps
+  territoryAssignments OrgTerritoryAssignment[] @relation("VendorTerritoryAssignments")
+  // Territory assignments where this design org is the assigned account
+  assignedAsTerritoryAccount OrgTerritoryAssignment[] @relation("DesignerTerritoryAssignments")
 
   @@index([status])
   @@index([type])
@@ -5016,4 +5040,95 @@ model ProfileQA {
   @@index([userId, status])
   @@index([userId, displayOrder])
   @@map("profile_qas")
+}
+
+// ============================================================
+// QR Exchange / Visit System
+// ============================================================
+
+enum VisitType {
+  SHOWROOM
+  EVENT
+  TRADE_SHOW
+  OTHER
+}
+
+model VisitRecord {
+  id String @id @default(cuid())
+
+  // Participants
+  initiatorUserId String
+  initiatorUser   User   @relation("initiatedVisits", fields: [initiatorUserId], references: [id])
+  recipientUserId String
+  recipientUser   User   @relation("receivedVisits", fields: [recipientUserId], references: [id])
+
+  // Org context (captured at time of scan from operatingAsOrgId)
+  initiatorOrgId String?
+  initiatorOrg   Organization? @relation("orgInitiatedVisits", fields: [initiatorOrgId], references: [id])
+  recipientOrgId String?
+  recipientOrg   Organization? @relation("orgReceivedVisits", fields: [recipientOrgId], references: [id])
+
+  // Visit context
+  visitType VisitType @default(OTHER)
+  eventId   String?
+  event     Event?    @relation(fields: [eventId], references: [id])
+  location  String?
+
+  // Notes
+  initiatorNotes String?
+  recipientNotes String?
+
+  // Metadata
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  productShares VisitProductShare[]
+
+  @@index([initiatorUserId])
+  @@index([recipientUserId])
+  @@index([initiatorOrgId])
+  @@index([recipientOrgId])
+  @@index([eventId])
+  @@map("visit_records")
+}
+
+model VisitProductShare {
+  id            String      @id @default(cuid())
+  visitRecordId String
+  visitRecord   VisitRecord @relation(fields: [visitRecordId], references: [id], onDelete: Cascade)
+  productId     String
+  product       Product     @relation(fields: [productId], references: [id])
+
+  sharedByUserId   String
+  autoShared       Boolean @default(false) // true = auto-pulled from org catalog
+  savedByRecipient Boolean @default(false)
+  savedToProjectId String?
+
+  createdAt DateTime @default(now())
+
+  @@unique([visitRecordId, productId])
+  @@index([visitRecordId])
+  @@index([productId])
+  @@map("visit_product_shares")
+}
+
+// Territory & Governance (Phase 3)
+model OrgTerritoryAssignment {
+  id            String       @id @default(cuid())
+  vendorOrgId   String
+  vendorOrg     Organization @relation("VendorTerritoryAssignments", fields: [vendorOrgId], references: [id])
+  repUserId     String
+  repUser       User         @relation("RepTerritoryAssignments", fields: [repUserId], references: [id])
+  designerOrgId String
+  designerOrg   Organization @relation("DesignerTerritoryAssignments", fields: [designerOrgId], references: [id])
+
+  assignedBy String   // org admin who made the assignment
+  assignedAt DateTime @default(now())
+  expiresAt  DateTime? // optional expiry for temporary assignments
+
+  @@unique([vendorOrgId, designerOrgId]) // one primary rep per designer org
+  @@index([vendorOrgId])
+  @@index([repUserId])
+  @@map("org_territory_assignments")
 }
