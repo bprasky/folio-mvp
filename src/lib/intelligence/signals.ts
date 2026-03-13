@@ -175,8 +175,10 @@ export async function recordSave(params: {
   productId: string;
   boardId?: string;
   roomType?: string;
+  source?: string;
+  meta?: any;
 }): Promise<{ success: boolean; isNew: boolean; saveId?: string }> {
-  const { userId, productId, boardId, roomType } = params;
+  const { userId, productId, boardId, roomType, source, meta } = params;
 
   // Check if already saved
   const existing = await prisma.save.findUnique({
@@ -210,6 +212,8 @@ export async function recordSave(params: {
       boardId,
       roomType,
       productAttributes: productAttributes || undefined,
+      source: source || undefined,
+      meta: meta || undefined,
     },
   });
 

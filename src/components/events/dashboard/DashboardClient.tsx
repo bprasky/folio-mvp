@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import ArrivalTimeline from "./ArrivalTimeline";
+import ProductScanTimeline from "./ProductScanTimeline";
 
 type EventInfo = {
   id: string;
@@ -17,6 +18,8 @@ type Stats = {
   walkIns: number;
   notYet: number;
   lastScan: string | null;
+  productScans: number;
+  avgScansPerPerson: number;
 };
 
 type Attendee = {
@@ -103,7 +106,7 @@ export default function DashboardClient({ event }: { event: EventInfo }) {
 
       <div className="max-w-5xl mx-auto px-4 py-6 space-y-6">
         {/* Stat Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           <StatCard
             value={
               stats ? `${stats.checkedIn}/${stats.totalRsvps}` : "..."
@@ -126,6 +129,14 @@ export default function DashboardClient({ event }: { event: EventInfo }) {
             }
             label="No-Shows"
           />
+          <StatCard
+            value={stats?.productScans?.toString() ?? "..."}
+            label="Products Scanned"
+          />
+          <StatCard
+            value={stats?.avgScansPerPerson?.toString() ?? "..."}
+            label="Avg Scans/Person"
+          />
         </div>
 
         {/* Arrival Timeline */}
@@ -134,6 +145,14 @@ export default function DashboardClient({ event }: { event: EventInfo }) {
             Arrival Timeline
           </h2>
           <ArrivalTimeline eventId={event.id} />
+        </div>
+
+        {/* Product Scan Timeline */}
+        <div className="bg-white rounded-xl border border-[var(--border-light,#e7e5e4)] p-4">
+          <h2 className="text-sm font-medium text-[var(--text-primary,#1c1917)] mb-3">
+            Product Scan Timeline
+          </h2>
+          <ProductScanTimeline eventId={event.id} />
         </div>
 
         {/* Attendee Table */}

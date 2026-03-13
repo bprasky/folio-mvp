@@ -10,10 +10,11 @@ import {
   thankYouEmailHtml,
   missedYouEmailHtml,
   walkInFollowUpEmailHtml,
+  productRecapEmailHtml,
 } from "@/lib/email/templates/event-recap";
 import { nanoid } from "nanoid";
 
-type RecapType = "thank_you" | "no_show" | "walk_in_followup";
+type RecapType = "thank_you" | "no_show" | "walk_in_followup" | "product_recap";
 
 /**
  * POST /api/events/[id]/workflow/recap
@@ -49,6 +50,11 @@ export async function POST(
     });
     if (!event) {
       return NextResponse.json({ error: "Event not found" }, { status: 404 });
+    }
+
+    // Product recap has a different flow
+    if (type === "product_recap") {
+      return handleProductRecap(eventId, event.title);
     }
 
     // Build RSVP query based on type
@@ -163,4 +169,113 @@ export async function POST(
       { status: 500 }
     );
   }
+}
+
+async function handleProductRecap(eventId: string, eventTitle: string) {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://folioad.com";
+
+  // Get all scans grouped by user
+  const scans = await prisma.eventProductScan.findMany({
+    where: { eventId },
+    include: {
+      user: { select: { id: true, email: true, name: true } },
+      product: {
+        select: {
+          id: true,
+          name: true,
+          imageUrl: true,
+          vendor: { select: { name: true, companyName: true } },
+        },
+      },
+    },
+    orderBy: { scannedAt: "asc" },
+  });
+
+  // Group scans by user
+  const scansByUser = new Map<
+    string,
+    {
+      email: string;
+      name: string;
+      products: { name: string; vendorName: string; imageUrl: string | null; productUrl: string }[];
+    }
+  >();
+
+  for (const scan of scans) {
+    if (!scan.user?.email) continue;
+    const userId = scan.userId;
+    if (!scansByUser.has(userId)) {
+      scansByUser.set(userId, {
+        email: scan.user.email,
+        name: scan.user.name || "there",
+        products: [],
+      });
+    }
+    scansByUser.get(userId)!.products.push({
+      name: scan.product.name,
+      vendorName: scan.product.vendor?.companyName || scan.product.vendor?.name || "Unknown",
+      imageUrl: scan.product.imageUrl,
+      productUrl: `${appUrl}/products/${scan.product.id}`,
+    });
+  }
+
+  const job = await prisma.eventWorkflowJob.create({
+    data: {
+      id: nanoid(12),
+      eventId,
+      jobType: "product_recap_email",
+      status: "running",
+      startedAt: new Date(),
+      jobData: {
+        type: "product_recap",
+        recipientCount: scansByUser.size,
+        totalScans: scans.length,
+      },
+    },
+  });
+
+  let sent = 0;
+  let failed = 0;
+  const collectionUrl = `${appUrl}/events/${eventId}/my-collection`;
+
+  for (const [, userData] of scansByUser) {
+    const html = productRecapEmailHtml(
+      userData.name,
+      eventTitle,
+      userData.products,
+      collectionUrl
+    );
+
+    const result = await sendEmail({
+      to: userData.email,
+      subject: `Your picks from ${eventTitle}`,
+      html,
+    });
+
+    if (result.success) sent++;
+    else failed++;
+  }
+
+  await prisma.eventWorkflowJob.update({
+    where: { id: job.id },
+    data: {
+      status: "completed",
+      completedAt: new Date(),
+      result: {
+        emailsSent: sent,
+        emailsFailed: failed,
+        totalScans: scans.length,
+        uniqueProducts: new Set(scans.map((s) => s.productId)).size,
+        avgScansPerUser: scansByUser.size > 0 ? scans.length / scansByUser.size : 0,
+      },
+    },
+  });
+
+  return NextResponse.json({
+    success: true,
+    jobId: job.id,
+    emailsSent: sent,
+    emailsFailed: failed,
+    message: `${sent} product recap emails sent`,
+  });
 }

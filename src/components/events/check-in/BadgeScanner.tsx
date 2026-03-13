@@ -18,6 +18,25 @@ function parseBadgeUrl(
   }
 }
 
+function parseQrCode(
+  raw: string
+):
+  | { type: "badge"; badgeToken: string }
+  | { type: "product"; productId: string }
+  | null {
+  // folio:// protocol
+  if (raw.startsWith("folio://product/")) {
+    const productId = raw.replace("folio://product/", "").trim();
+    return productId ? { type: "product", productId } : null;
+  }
+
+  // URL-based badge QR (existing format)
+  const badge = parseBadgeUrl(raw);
+  if (badge?.badgeToken) return { type: "badge", badgeToken: badge.badgeToken };
+
+  return null;
+}
+
 type Props = {
   eventId: string;
   onScanResult: (result: ScanResultData) => void;
@@ -27,48 +46,75 @@ export default function BadgeScanner({ eventId, onScanResult }: Props) {
   const scannerRef = useRef<any>(null);
   const processingRef = useRef(false);
 
+  const pauseScanner = useCallback(() => {
+    if (scannerRef.current) {
+      try {
+        scannerRef.current.pause(true);
+      } catch {
+        // scanner may already be paused
+      }
+    }
+  }, []);
+
   const handleScan = useCallback(
     async (decodedText: string) => {
       if (processingRef.current) return;
       processingRef.current = true;
 
-      const parsed = parseBadgeUrl(decodedText);
-      if (!parsed || !parsed.badgeToken) {
+      const parsed = parseQrCode(decodedText);
+
+      if (!parsed) {
         onScanResult({ status: "invalid_qr" });
         processingRef.current = false;
         return;
       }
 
-      try {
-        const res = await fetch(`/api/events/${eventId}/check-in/scan`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ badgeToken: parsed.badgeToken }),
-        });
-        const data = await res.json();
-
-        if (res.status === 404) {
-          onScanResult({ status: "not_found" });
-        } else if (res.status === 400 && data.status === "wrong_event") {
-          onScanResult({ status: "wrong_event" });
-        } else {
-          onScanResult(data as ScanResultData);
-        }
-      } catch {
-        onScanResult({ status: "not_found" });
-      }
-
-      // Pause scanning while showing result
-      if (scannerRef.current) {
+      if (parsed.type === "badge") {
+        // Existing badge check-in flow
         try {
-          scannerRef.current.pause(true);
+          const res = await fetch(`/api/events/${eventId}/check-in/scan`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ badgeToken: parsed.badgeToken }),
+          });
+          const data = await res.json();
+
+          if (res.status === 404) {
+            onScanResult({ status: "not_found" });
+          } else if (res.status === 400 && data.status === "wrong_event") {
+            onScanResult({ status: "wrong_event" });
+          } else {
+            onScanResult(data as ScanResultData);
+          }
         } catch {
-          // scanner may already be paused
+          onScanResult({ status: "not_found" });
+        }
+      } else {
+        // Product scan flow
+        try {
+          const res = await fetch(`/api/events/${eventId}/scan`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ productId: parsed.productId }),
+          });
+          const data = await res.json();
+
+          if (res.status === 404) {
+            onScanResult({ status: "product_not_found" });
+          } else if (res.status === 403) {
+            onScanResult({ status: "invalid_qr" });
+          } else {
+            onScanResult(data as ScanResultData);
+          }
+        } catch {
+          onScanResult({ status: "product_not_found" });
         }
       }
+
+      pauseScanner();
       processingRef.current = false;
     },
-    [eventId, onScanResult]
+    [eventId, onScanResult, pauseScanner]
   );
 
   useEffect(() => {
@@ -107,7 +153,7 @@ export default function BadgeScanner({ eventId, onScanResult }: Props) {
     <div className="rounded-xl overflow-hidden bg-black mb-4">
       <div id="badge-reader" className="w-full" />
       <p className="text-center text-white/60 text-sm py-3">
-        Point at a Folio Badge
+        Scan a Badge or Product QR
       </p>
     </div>
   );

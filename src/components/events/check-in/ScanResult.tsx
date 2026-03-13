@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { ScanResultData, Attendee } from "./CheckInPageClient";
+import type { ScanResultData, Attendee, ScannedProduct } from "./CheckInPageClient";
 
 type Props = {
   result: ScanResultData;
@@ -43,6 +43,41 @@ function AttendeeCard({ attendee }: { attendee: Attendee }) {
   );
 }
 
+function ProductCard({ product }: { product: ScannedProduct }) {
+  return (
+    <div className="flex items-center gap-3 mt-3">
+      {product.imageUrl ? (
+        <img
+          src={product.imageUrl}
+          alt={product.name}
+          className="w-16 h-16 rounded-lg object-cover"
+        />
+      ) : (
+        <div className="w-16 h-16 rounded-lg bg-stone-200 flex items-center justify-center text-stone-400">
+          <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+          </svg>
+        </div>
+      )}
+      <div className="min-w-0">
+        <p className="font-semibold text-[var(--text-primary,#1c1917)] truncate">
+          {product.name}
+        </p>
+        {product.vendorName && (
+          <p className="text-sm text-[var(--text-secondary,#78716c)] truncate">
+            {product.vendorName}
+          </p>
+        )}
+        {product.price != null && (
+          <p className="text-sm font-medium text-[var(--text-primary,#1c1917)]">
+            ${product.price.toLocaleString()}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function formatTime(iso: string) {
   return new Date(iso).toLocaleTimeString([], {
     hour: "numeric",
@@ -62,12 +97,18 @@ export default function ScanResult({
   useEffect(() => {
     if (
       result.status === "checked_in" ||
-      result.status === "already_checked_in"
+      result.status === "already_checked_in" ||
+      result.status === "product_scanned" ||
+      result.status === "product_already_scanned"
     ) {
       const timer = setTimeout(onScanNext, 3000);
       return () => clearTimeout(timer);
     }
-    if (result.status === "invalid_qr" || result.status === "wrong_event") {
+    if (
+      result.status === "invalid_qr" ||
+      result.status === "wrong_event" ||
+      result.status === "product_not_found"
+    ) {
       const timer = setTimeout(onScanNext, 2000);
       return () => clearTimeout(timer);
     }
@@ -76,9 +117,6 @@ export default function ScanResult({
   async function handleAddWalkIn() {
     if (result.status !== "not_found") return;
     setAddingWalkIn(true);
-    // Walk-in needs a userId — but not_found means no RSVP.
-    // The scan endpoint returns not_found when badge token doesn't match any RSVP.
-    // For walk-in from scanner, we redirect to manual lookup.
     onScanNext();
   }
 
@@ -137,12 +175,66 @@ export default function ScanResult({
     );
   }
 
+  // Product scan results
+  if (result.status === "product_scanned") {
+    return (
+      <div className="rounded-xl bg-blue-50 border border-blue-200 p-5">
+        <p className="text-blue-800 font-bold text-lg">PRODUCT SAVED</p>
+        <ProductCard product={result.product} />
+        <p className="text-sm text-blue-700 mt-3">
+          Added to your event collection.
+        </p>
+        <button
+          onClick={onScanNext}
+          className="mt-4 w-full py-2.5 rounded-lg bg-blue-600 text-white font-medium text-sm hover:bg-blue-700 transition-colors"
+        >
+          Scan Next
+        </button>
+      </div>
+    );
+  }
+
+  if (result.status === "product_already_scanned") {
+    return (
+      <div className="rounded-xl bg-sky-50 border border-sky-200 p-5">
+        <p className="text-sky-800 font-bold text-lg">ALREADY SCANNED</p>
+        <ProductCard product={result.product} />
+        <p className="text-sm text-sky-700 mt-3">
+          This product is already in your collection.
+        </p>
+        <button
+          onClick={onScanNext}
+          className="mt-4 w-full py-2.5 rounded-lg bg-sky-600 text-white font-medium text-sm hover:bg-sky-700 transition-colors"
+        >
+          Scan Next
+        </button>
+      </div>
+    );
+  }
+
+  if (result.status === "product_not_found") {
+    return (
+      <div className="rounded-xl bg-red-50 border border-red-200 p-5">
+        <p className="text-red-800 font-bold text-lg">PRODUCT NOT FOUND</p>
+        <p className="text-sm text-red-700 mt-2">
+          This product QR code could not be matched.
+        </p>
+        <button
+          onClick={onScanNext}
+          className="mt-4 w-full py-2.5 rounded-lg bg-stone-300 text-stone-700 font-medium text-sm hover:bg-stone-400 transition-colors"
+        >
+          Scan Next
+        </button>
+      </div>
+    );
+  }
+
   // invalid_qr or wrong_event
   return (
     <div className="rounded-xl bg-stone-100 border border-stone-200 p-5">
-      <p className="text-stone-700 font-bold text-lg">Not a Folio Badge</p>
+      <p className="text-stone-700 font-bold text-lg">Unrecognized QR Code</p>
       <p className="text-sm text-stone-500 mt-2">
-        This QR code is not a valid Folio badge. Try again.
+        This QR code is not a valid Folio badge or product. Try again.
       </p>
       <button
         onClick={onScanNext}

@@ -194,6 +194,9 @@ model User {
   designerBio DesignerBio?
   profileQAs  ProfileQA[]
 
+  // Event Product Scans
+  productScans EventProductScan[]
+
   // QR Exchange / Visit System
   initiatedVisits VisitRecord[] @relation("initiatedVisits")
   receivedVisits  VisitRecord[] @relation("receivedVisits")
@@ -263,6 +266,7 @@ model Event {
   impressions              impressions[]
   placements               placements[]
   workflowJobs             EventWorkflowJob[]
+  productScans             EventProductScan[]
   visitRecords             VisitRecord[]
 
   @@index([parentFestivalId])
@@ -527,6 +531,9 @@ model Product {
   // Designer Shop System relations
   shopProducts ShopProduct[]        @relation("ProductShopProducts")
   testimonials ProductTestimonial[] @relation("ProductTestimonials")
+
+  // Event Product Scans
+  productScans EventProductScan[]
 
   // QR Exchange / Visit System
   visitProductShares VisitProductShare[]
@@ -3646,6 +3653,10 @@ model Save {
   // Extracted attributes (populated async from product)
   productAttributes Json? // { colors: [], materials: [], shapes: [], styles: [] }
 
+  // Provenance
+  source String? // e.g. "EVENT_SCAN", "MANUAL", "BROWSE"
+  meta   Json?   // e.g. { eventId, scannedAt }
+
   // Conversion tracking
   converted   Boolean   @default(false)
   convertedAt DateTime?
@@ -5040,6 +5051,29 @@ model ProfileQA {
   @@index([userId, status])
   @@index([userId, displayOrder])
   @@map("profile_qas")
+}
+
+model EventProductScan {
+  id          String   @id @default(cuid())
+  eventId     String
+  userId      String
+  productId   String
+  scanMethod  String   @default("qr")
+  scannedAt   DateTime @default(now())
+  autoSavedId String?
+  boothId     String?
+  notes       String?
+
+  event   Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, userId, productId])
+  @@index([eventId])
+  @@index([userId])
+  @@index([productId])
+  @@index([eventId, productId])
+  @@map("event_product_scans")
 }
 
 // ============================================================

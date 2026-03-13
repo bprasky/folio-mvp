@@ -54,6 +54,41 @@ export async function GET(
 
     const totalRsvps = attending.length;
 
+    // Product scan stats
+    const productScans = await prisma.eventProductScan.findMany({
+      where: { eventId },
+      include: {
+        product: { select: { id: true, name: true } },
+        user: { select: { role: true } },
+      },
+    });
+
+    const uniqueScannedProducts = new Set(productScans.map((s) => s.productId));
+    const uniqueProductScanners = new Set(productScans.map((s) => s.userId));
+    const designerScanners = new Set(
+      productScans.filter((s) => s.user?.role === "DESIGNER").map((s) => s.userId)
+    );
+
+    // Per-product breakdown
+    const productBreakdown = new Map<
+      string,
+      { productName: string; scanCount: number; scanners: Set<string>; designerScans: number }
+    >();
+    for (const scan of productScans) {
+      if (!productBreakdown.has(scan.productId)) {
+        productBreakdown.set(scan.productId, {
+          productName: scan.product.name,
+          scanCount: 0,
+          scanners: new Set(),
+          designerScans: 0,
+        });
+      }
+      const entry = productBreakdown.get(scan.productId)!;
+      entry.scanCount++;
+      entry.scanners.add(scan.userId);
+      if (scan.user?.role === "DESIGNER") entry.designerScans++;
+    }
+
     return NextResponse.json({
       attendanceRate: totalRsvps > 0 ? checkedIn.length / totalRsvps : 0,
       totalRsvps,
@@ -65,6 +100,28 @@ export async function GET(
         total: designerRsvps.length,
       },
       checkInMethods: methods,
+      productScans: {
+        totalScans: productScans.length,
+        uniqueProducts: uniqueScannedProducts.size,
+        uniqueScanners: uniqueProductScanners.size,
+        scanRate:
+          checkedIn.length > 0
+            ? uniqueProductScanners.size / checkedIn.length
+            : 0,
+        designerScanRate:
+          designerCheckedIn.length > 0
+            ? designerScanners.size / designerCheckedIn.length
+            : 0,
+        products: [...productBreakdown.entries()]
+          .map(([productId, data]) => ({
+            productId,
+            productName: data.productName,
+            scanCount: data.scanCount,
+            uniqueScanners: data.scanners.size,
+            designerScans: data.designerScans,
+          }))
+          .sort((a, b) => b.scanCount - a.scanCount),
+      },
     });
   } catch (e) {
     console.error("Vendor stats error", e);
