@@ -7,23 +7,54 @@ import { HiOutlineDotsVertical } from 'react-icons/hi';
 import { useRouter } from 'next/navigation';
 import SafeImage from '@/components/SafeImage';
 import { formatRoomName } from '@/lib/utils/formatRoomName';
-import { getRoomTemplate, Slot, inferSlotKey, inferSlotKeyFromCategory, ROOM_TEMPLATES, RoomTemplate } from './roomTemplates';
+import { getRoomTemplate, Slot, inferSlotKey, inferSlotKeyFromCategory, ROOM_TEMPLATES } from './roomTemplates';
 import EditProductDrawer from './EditProductDrawer';
 import BoardTileMenu from './BoardTileMenu';
 import SaveSelectionToProjectModal from './SaveSelectionToProjectModal';
 import { computeTileSize } from './tileSizing';
 
-// Room type options for the edit modal
-const ROOM_TYPE_OPTIONS: { value: RoomTemplate['type'] | ''; label: string }[] = [
-  { value: '', label: 'No Template' },
-  { value: 'KITCHEN', label: 'Kitchen' },
-  { value: 'BATH', label: 'Bathroom' },
-  { value: 'LIVING', label: 'Living Room' },
-  { value: 'BEDROOM', label: 'Bedroom' },
-  { value: 'DINING', label: 'Dining Room' },
-  { value: 'OFFICE', label: 'Office' },
-  { value: 'ENTRY', label: 'Entry / Foyer' },
+// Room type suggestions for the combobox (known types get placeholder templates; custom types are fine too)
+const ROOM_TYPE_SUGGESTIONS = [
+  'Kitchen', 'Bathroom', 'Living Room', 'Bedroom',
+  'Dining Room', 'Office', 'Entry / Foyer',
+  'Bar', 'Wine Cellar', 'Gym', 'Sauna',
+  'Exterior', 'Patio', 'Pool House',
+  'Mudroom', 'Laundry', 'Pantry', 'Closet',
+  'Media Room', 'Library', 'Nursery',
+  'Hallway', 'Garage', 'Sunroom',
 ];
+
+// Maps display labels to internal type keys for known template types
+const DISPLAY_TO_TYPE_KEY: Record<string, string> = {
+  'kitchen': 'KITCHEN',
+  'bathroom': 'BATH',
+  'living room': 'LIVING',
+  'bedroom': 'BEDROOM',
+  'dining room': 'DINING',
+  'office': 'OFFICE',
+  'entry / foyer': 'ENTRY',
+};
+
+// Maps internal type keys back to display labels
+const TYPE_KEY_TO_DISPLAY: Record<string, string> = {
+  'KITCHEN': 'Kitchen',
+  'BATH': 'Bathroom',
+  'LIVING': 'Living Room',
+  'BEDROOM': 'Bedroom',
+  'DINING': 'Dining Room',
+  'OFFICE': 'Office',
+  'ENTRY': 'Entry / Foyer',
+};
+
+function displayToTypeKey(display: string): string | null {
+  if (!display.trim()) return null;
+  return DISPLAY_TO_TYPE_KEY[display.toLowerCase().trim()] || display.toUpperCase().replace(/\s+/g, '_');
+}
+
+function typeKeyToDisplay(key: string | null | undefined): string {
+  if (!key) return '';
+  return TYPE_KEY_TO_DISPLAY[key] || formatRoomName(key);
+}
 
 // Types
 type Selection = {
@@ -191,7 +222,7 @@ export default function DesignerBoardRoom({
   useEffect(() => {
     if (roomEditOpen) {
       setEditingRoomName(room.name);
-      setEditingRoomType(room.type || '');
+      setEditingRoomType(typeKeyToDisplay(room.type));
     }
   }, [roomEditOpen, room.name, room.type]);
 
@@ -199,11 +230,12 @@ export default function DesignerBoardRoom({
   const handleSaveRoom = async () => {
     if (!editingRoomName.trim()) return;
     setIsSavingRoom(true);
+    const typeKey = displayToTypeKey(editingRoomType);
     try {
       if (onRoomUpdate) {
         await onRoomUpdate(room.id, {
           name: editingRoomName.trim(),
-          type: editingRoomType || null
+          type: typeKey
         });
       } else {
         // Fallback: call API directly
@@ -212,7 +244,7 @@ export default function DesignerBoardRoom({
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             name: editingRoomName.trim(),
-            type: editingRoomType || null
+            type: typeKey
           })
         });
         if (!res.ok) throw new Error('Failed to update room');
@@ -813,19 +845,20 @@ export default function DesignerBoardRoom({
                   Room Type
                 </label>
                 <p className="folio-meta text-[var(--text-tertiary)] mb-2">
-                  Determines which product categories appear as placeholders
+                  Determines placeholder tiles. Pick a suggestion or type your own.
                 </p>
-                <select
+                <input
+                  list="room-type-suggestions"
                   value={editingRoomType}
                   onChange={(e) => setEditingRoomType(e.target.value)}
+                  placeholder="e.g., Bar, Wine Cellar, Gym"
                   className="w-full border border-[var(--border-default)] rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] bg-[var(--bg-base)]"
-                >
-                  {ROOM_TYPE_OPTIONS.map(opt => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
+                />
+                <datalist id="room-type-suggestions">
+                  {ROOM_TYPE_SUGGESTIONS.map(s => (
+                    <option key={s} value={s} />
                   ))}
-                </select>
+                </datalist>
               </div>
 
               {/* Actions */}
