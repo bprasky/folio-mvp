@@ -1690,7 +1690,7 @@ export function InterviewModal({
                     currentQuestionInRoom={roomFlow.currentQuestionIndex}
                     totalQuestionsInRoom={roomFlow.totalQuestionsInRoom}
                     currentRound={roomFlow.currentRound}
-                    baseQuestionCount={roomFlow.currentRoom?.budget.baseQuestions ?? 0}
+                    baseQuestionCount={roomFlow.currentRoom?.questions.length ?? 0}
                   />
                 </div>
               ) : (
