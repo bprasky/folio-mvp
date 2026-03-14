@@ -16,7 +16,7 @@ type GenInput = {
   project: any;
   designer?: any;
   vendors?: any[];
-  images: { id: string; caption?: string }[];
+  images: { id: string; caption?: string; room?: string }[];
   tags: any[];
   answers: {
     questionId: string;
@@ -24,11 +24,14 @@ type GenInput = {
     role: "DESIGNER" | "VENDOR" | "ANY";
     answer: string;
     isFollowUp?: boolean;
+    parentAnswerId?: string;
+    roomId?: string;
   }[];
   followups?: {
     question: string;
     answer: string;
   }[];
+  rooms?: Array<{ id: string; name: string; type?: string }>;
   imageOrder?: string[];
   correlationId?: string;
 };
@@ -68,7 +71,7 @@ function buildMaterialContext(tags: any[]) {
 
 // Group images into chapters by room (or evenly if no room data)
 function groupImagesIntoChapters(
-  images: { id: string; caption?: string }[],
+  images: { id: string; caption?: string; room?: string }[],
   imageOrder?: string[]
 ): Array<{ title: string; imageIds: string[] }> {
   const ordered = imageOrder
@@ -78,7 +81,7 @@ function groupImagesIntoChapters(
   // Try grouping by room first
   const byRoom = new Map<string, string[]>();
   for (const img of ordered) {
-    const room = (img as any).room || 'General';
+    const room = img.room || 'General';
     const list = byRoom.get(room) || [];
     list.push(img.id);
     byRoom.set(room, list);
@@ -143,10 +146,14 @@ export function toFallbackBlocks(input: GenInput) {
   }));
 
   // Extract genuine pull quotes from answers of appropriate length
-  const pullQuotes = uniqueAnswers
-    .filter(a => a.answer.length > 80 && a.answer.length < 300)
-    .slice(0, 2)
-    .map(a => a.answer.slice(0, 300));
+  const designerName = input.designer?.name;
+  const pullQuotes: Array<string | { text: string; context?: string }> = uniqueAnswers
+    .filter(a => a.answer.length > 60 && a.answer.length < 250 && /\b(I|we|my|our)\b/i.test(a.answer))
+    .slice(0, 3)
+    .map(a => ({
+      text: a.answer.slice(0, 300),
+      context: designerName || undefined,
+    }));
 
   const blocks = {
     lead: { kicker, deck },
@@ -185,12 +192,35 @@ function parseNarrativeToBlocks(article: string, input: GenInput): z.infer<typeo
   const startIdx = lines.indexOf(deckCandidate) + 1 || 2;
   const narrativeParagraphs = lines.slice(startIdx).filter(l => l.length > 50);
 
-  // Extract pull quotes (look for quoted text with proper quote marks)
-  const pullQuotes = narrativeParagraphs
-    .filter(p => /[""\u201C\u201D]/.test(p) && p.length < 300)
-    .slice(0, 2)
-    .map(p => p.replace(/["""\u201C\u201D]/g, '').trim().slice(0, 300))
-    .filter(q => q.length > 20);
+  // Extract pull quotes — look for quoted text within paragraphs
+  const designerName = input.designer?.name;
+  const pullQuotes: Array<string | { text: string; context?: string }> = [];
+
+  // Strategy 1: Extract text within quotation marks from the narrative
+  for (const p of narrativeParagraphs) {
+    const quoteMatches = p.match(/["\u201C]([^"\u201D]{20,250})["\u201D]/g);
+    if (quoteMatches) {
+      for (const match of quoteMatches) {
+        const cleaned = match.replace(/["\u201C\u201D]/g, '').trim();
+        if (cleaned.length >= 20 && cleaned.length <= 300) {
+          pullQuotes.push({ text: cleaned, context: designerName || undefined });
+        }
+      }
+    }
+    if (pullQuotes.length >= 4) break;
+  }
+
+  // Strategy 2: If LLM didn't produce enough quoted text, extract from interview answers
+  const uniqueAnswers = deduplicateAnswers(input.answers);
+  if (pullQuotes.length < 2 && uniqueAnswers.length > 0) {
+    const quoteWorthy = uniqueAnswers
+      .filter(a => a.answer.length > 60 && a.answer.length < 250)
+      .filter(a => /\b(I|we|my|our)\b/i.test(a.answer))
+      .slice(0, 3 - pullQuotes.length);
+    for (const a of quoteWorthy) {
+      pullQuotes.push({ text: a.answer.slice(0, 300), context: designerName || undefined });
+    }
+  }
 
   // Build room-organized gallery chapters with images distributed across them
   const chapters = groupImagesIntoChapters(input.images, input.imageOrder);
@@ -239,37 +269,71 @@ export async function generateEditorialDraft(input: GenInput): Promise<{
   
   // De-duplicate answers before processing
   const uniqueAnswers = deduplicateAnswers(input.answers);
-  
+
   // Build context
   const { project, designer, images, tags } = input;
   const products = buildMaterialContext(tags);
-  
+
+  // Build room-answer summary for room coverage enforcement
+  const roomAnswerCounts = new Map<string, number>();
+  for (const a of uniqueAnswers) {
+    const roomName = a.section || 'General';
+    roomAnswerCounts.set(roomName, (roomAnswerCounts.get(roomName) || 0) + 1);
+  }
+
+  // Format answers with [BASE] / [FOLLOW-UP] tags and room context
+  const formattedAnswers = uniqueAnswers.map(a => {
+    const tag = a.isFollowUp ? `[FOLLOW-UP — ${a.section || 'General'}]` : `[BASE — ${a.section || 'General'}]`;
+    return `${tag} Q: ${a.questionId || 'Question'}\nA: ${a.answer}`;
+  }).join("\n\n");
+
+  const roomCoverageList = roomAnswerCounts.size > 0
+    ? `\nROOMS WITH INTERVIEW CONTENT (DO NOT OMIT ANY):\n${Array.from(roomAnswerCounts.entries()).map(([room, count]) => `- ${room}: ${count} answer${count > 1 ? 's' : ''}`).join('\n')}\n`
+    : '';
+
   const contextText = `
 PROJECT: ${project?.title ?? ""}
 DESIGNER: ${designer?.name ?? ""}
 LOCATION: ${project?.city ?? project?.regionState ?? ""}
 TAGGED PRODUCTS: ${products.map(p => p.name).join(", ")}
 IMAGES: ${images.length}
-ANSWERS: ${uniqueAnswers.map(a => `Q: ${a.questionId || 'Question'}\nA: ${a.answer}`).join("\n\n")}
-${input.followups && input.followups.length > 0 ? `FOLLOWUPS: ${input.followups.map(f => `Q: ${f.question}\nA: ${f.answer}`).join("\n\n")}` : ''}
+${roomCoverageList}
+INTERVIEW ANSWERS:
+${formattedAnswers || '(No interview answers available)'}
 `;
 
   const prompt = `
-You are Folio — an editorial design platform. 
-Write a refined, emotionally intelligent, Architectural Digest–style article 
-based on the following context. 
-The tone should be sophisticated, human, and flowing — 
-blending storytelling, material focus, and designer insight. 
+You are Folio — an editorial design platform.
+Write a refined, emotionally intelligent, Architectural Digest–style article
+based on the following context.
+The tone should be sophisticated, human, and flowing —
+blending storytelling, material focus, and designer insight.
 Avoid repeating raw Q&A. Instead, narrate the project's journey.
 
 ${FOLIO_TONE}
 
 Include:
 • A short headline and a 1–2 sentence intro ("dek")
-• 3–5 narrative paragraphs organized naturally
+• 3–5 narrative paragraphs organized by room, covering ALL rooms listed below
 • A "Method" section describing process and design philosophy
-• Optional pull quotes (if content fits)
+• 2-4 pull quotes from the designer's own words, wrapped in quotation marks
 • End with a "Materials" section summarizing key tagged materials.
+
+ROOM COVERAGE: You MUST include editorial content for EVERY room that has interview answers. Rooms with more answers deserve proportionally more editorial space. If a room has no dedicated photos, weave its design story into the broader narrative. Do not skip any room.
+
+PULL QUOTES: Include 2-4 direct quotes from the designer wrapped in quotation marks ("\u201C...\u201D"). Choose statements that:
+- Are specific and opinionated ("We almost went with polished nickel but brass felt right for this house")
+- Reveal process or philosophy ("I always tell clients the lighting plan is really a furniture plan")
+- Mention a real material, product, or decision
+- Sound like a human talking, not a press release
+- Are 15-50 words
+Do NOT use generic statements ("We wanted to create a warm and inviting space") or words like "harmonious," "curate," "elevate," "juxtaposition," or "seamlessly."
+
+USING FOLLOW-UP CONTENT: Answers tagged [FOLLOW-UP] contain the richest material — process stories, client anecdotes, tradeoff explanations, and behind-the-scenes details. Surface these as:
+- Embedded anecdotes ("The designer recalls visiting three showrooms before...")
+- Attributed perspective ("For ${designer?.name || 'the designer'}, the turning point came when...")
+- Specific process details that give the piece texture beyond physical description
+Do NOT flatten follow-up answers into generic descriptive prose. The follow-ups are what make this editorial sound like a person wrote it, not an AI.
 
 CONTEXT:
 ${contextText}
@@ -293,7 +357,7 @@ ${contextText}
         return await client.messages.create({
           model: modelName,
           temperature: 0.8,
-          max_tokens: 2000,
+          max_tokens: 3500,
           system: `You are Folio, the voice of modern design storytelling. ${FOLIO_TONE}`,
           messages: [
             { role: "user", content: prompt },

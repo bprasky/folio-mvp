@@ -132,8 +132,33 @@ export async function getOrCreateEditorialDraft(projectId: string): Promise<{
     throw new Error(`Project ${projectId} not found`);
   }
 
+  // Fetch interview answers for the project
+  const interview = await prisma.editorialInterview.findUnique({
+    where: { projectId },
+    include: {
+      answers: {
+        select: {
+          id: true,
+          questionId: true,
+          questionText: true,
+          answerText: true,
+          isFollowUp: true,
+          parentAnswerId: true,
+          roomId: true,
+          questionSource: true,
+        },
+        orderBy: { createdAt: 'asc' },
+      },
+    },
+  });
+
+  // Build room ID → name lookup for mapping answer roomIds to display names
+  const roomIdToName = new Map<string, string>();
+  for (const room of project.rooms) {
+    roomIdToName.set(room.id, room.name);
+  }
+
   // Build input for generateEditorialDraft
-  // Note: Interview answers are optional - draft can be generated from project data, images, and tags alone
   const input = {
     project: {
       id: project.id,
@@ -167,8 +192,24 @@ export async function getOrCreateEditorialDraft(projectId: string): Promise<{
         } : undefined,
       }))
     ),
-    answers: [] as any[], // Interview answers not available - draft will be generated from project data
-    followups: [] as any[], // Can be populated if needed
+    answers: (interview?.answers ?? []).map(a => ({
+      questionId: a.questionId,
+      section: a.roomId
+        ? (roomIdToName.get(a.roomId) ?? 'General')
+        : 'General',
+      role: 'DESIGNER' as const,
+      answer: a.answerText,
+      isFollowUp: a.isFollowUp,
+      parentAnswerId: a.parentAnswerId ?? undefined,
+      roomId: a.roomId ?? undefined,
+    })),
+    followups: (interview?.answers ?? [])
+      .filter(a => a.isFollowUp && a.questionText)
+      .map(a => ({
+        question: a.questionText!,
+        answer: a.answerText,
+      })),
+    rooms: project.rooms.map(r => ({ id: r.id, name: r.name, type: r.type ?? undefined })),
     imageOrder: project.images.map(img => img.id),
     correlationId: `published-${projectId}`,
   };
