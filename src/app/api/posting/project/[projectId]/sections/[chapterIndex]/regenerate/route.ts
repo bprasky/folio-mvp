@@ -73,7 +73,11 @@ export async function POST(
     // Fetch interview answers for context
     const interview = await prisma.editorialInterview.findFirst({
       where: { projectId },
-      include: { answers: true },
+      select: {
+        answers: {
+          select: { questionText: true, answerText: true },
+        },
+      },
     });
 
     const answers = (interview?.answers || [])
