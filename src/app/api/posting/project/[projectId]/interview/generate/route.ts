@@ -302,9 +302,14 @@ STRUCTURE — EDITORIAL HIERARCHY:
 - NOT every room deserves equal coverage. Spend words where the story is.
 - Identify the 1-2 rooms with the strongest design decisions, material stories, or interview content. These get 60-70% of the word budget.
 - Remaining rooms get 1-2 sentences each — enough to establish continuity, not enough to bore.
-- If the designer barely discussed a room in the interview, that's a signal: cover it briefly or skip it.
-- The piece should NOT read as a room-by-room tour. Organize by design idea, material story, or decision arc — rooms appear as evidence, not as chapters.
+- Every room the designer discussed in the interview MUST receive editorial coverage. Rooms with more interview content deserve proportionally more space.
+- The piece should NOT read as a room-by-room tour. Organize by design idea, material story, or decision arc — but every discussed room must appear somewhere in the narrative.
 - Vary paragraph length deliberately. A 2-sentence paragraph followed by a 6-sentence paragraph creates rhythm. Five 4-sentence paragraphs creates sleep.
+
+FOLLOW-UP ANSWERS:
+- Answers tagged [FOLLOW-UP] contain the richest editorial material — process stories, client anecdotes, tradeoff explanations, and behind-the-scenes details.
+- Surface these as embedded anecdotes, attributed perspective, or specific process details that give the piece texture beyond physical description.
+- Do NOT flatten follow-up content into generic descriptive prose. Follow-ups are what make this editorial sound like a person wrote it, not an AI.
 
 DIRECT QUOTES — MANDATORY:
 - Include at least 2 direct quotes from the designer in the article body.
@@ -313,9 +318,9 @@ DIRECT QUOTES — MANDATORY:
 - You may lightly trim for length (remove filler words) but do NOT rewrite the designer's words into your own voice.
 - If the designer said "I didn't want a bathroom that felt like a hotel you're afraid to touch" — use THAT. Do not turn it into "the designer sought to avoid a hotel-like aesthetic."
 - Pull quotes (the large-format callout quotes) must ALSO be verbatim from the interview, not paraphrased summaries.
-- Maximum 2-3 pull quotes per article.
+- Include 2-3 pull quotes per article. If the interview contains designer statements about specific materials, tradeoffs, or process decisions, those are your pull quotes.
 - Each pull quote MUST be self-contained — a reader should understand the point without seeing the interview question.
-- If the interview contains no quotable moments, include zero pull quotes. That is better than a fake quote.
+- Pull quotes from [FOLLOW-UP] answers are often the strongest — they contain the specific stories and reasoning that make great callout quotes.
 - Add a brief contextual lead-in prefix like "On choosing materials:" or "On the kitchen's design philosophy:" when needed.
 
 ACCURACY RULES — NON-NEGOTIABLE:
@@ -341,6 +346,7 @@ function buildEditorialPrompt({
   designerBio,
   projectHistory,
   atelierSummary,
+  roomsWithAnswers,
 }: {
   project: { title: string };
   answers: Array<{ q: string; a: string }>;
@@ -354,6 +360,7 @@ function buildEditorialPrompt({
   designerBio?: string;
   projectHistory?: string;
   atelierSummary?: string;
+  roomsWithAnswers?: Map<string, number>;
 }): string {
   // Separate Layer 1 (base) and Layer 2 (follow-up/deeper) answers
   const hasFollowups = followups && followups.length > 0;
@@ -371,9 +378,10 @@ function buildEditorialPrompt({
 
   const materialsList = (materialsLedger?.items ?? []).map(i => i.name).join(', ');
 
-  // Format all interview responses as a conversation, not categorized
-  const allQA = [...answers, ...(followups || [])];
-  const interviewText = allQA.map(qa => `Q: ${qa.q}\nA: ${qa.a}`).join('\n\n');
+  // Format interview responses with [BASE] / [FOLLOW-UP] tags
+  const baseText = answers.map(qa => `[BASE] Q: ${qa.q}\nA: ${qa.a}`).join('\n\n');
+  const followupText = (followups || []).map(qa => `[FOLLOW-UP] Q: ${qa.q}\nA: ${qa.a}`).join('\n\n');
+  const interviewText = [baseText, followupText].filter(Boolean).join('\n\n');
 
   // Determine narrative depth instruction based on interview depth
   const depthInstruction = hasFollowups
@@ -403,7 +411,10 @@ ${atelierSummary}` : ''}
 
 ### Room Organization
 ${roomContexts.map(r => `**${r.room}** — ${r.images} images, products: ${r.products.length > 0 ? r.products.join(', ') : 'none'}\n  Image IDs: ${r.imageIds.join(', ')}`).join('\n')}
-
+${roomsWithAnswers && roomsWithAnswers.size > 0 ? `
+### Rooms with Interview Content (DO NOT OMIT ANY):
+${Array.from(roomsWithAnswers.entries()).map(([room, count]) => `- ${room}: ${count} answer${count > 1 ? 's' : ''}`).join('\n')}
+` : ''}
 ### Available Images (in order):
 ${imageOrder.join(', ')}
 
@@ -537,6 +548,7 @@ async function composeEditorialHard({
   projectHistory,
   atelierSummary,
   correlationId,
+  roomsWithAnswers,
 }: {
   project: { title: string };
   answers: Array<{ q: string; a: string }>;
@@ -551,6 +563,7 @@ async function composeEditorialHard({
   projectHistory?: string;
   atelierSummary?: string;
   correlationId?: string;
+  roomsWithAnswers?: Map<string, number>;
 }): Promise<{
   lead: { kicker: string; deck: string };
   galleryChapters: Array<{ title?: string; imageIds: string[]; body: string[] }>;
@@ -626,6 +639,7 @@ async function composeEditorialHard({
     designerBio,
     projectHistory,
     atelierSummary,
+    roomsWithAnswers,
   });
 
   console.log('[composeEditorialHard] Calling Claude API with room-organized prompt', {
@@ -1522,6 +1536,13 @@ export async function POST(
       );
     }
 
+    // Fetch rooms for room-answer mapping (used by bridge and room coverage)
+    const projectRooms = await prisma.room.findMany({
+      where: { projectId },
+      select: { id: true, name: true },
+    });
+    const roomIdToName = new Map(projectRooms.map(r => [r.id, r.name]));
+
     // Fetch or create post
     let post = await prisma.projectPost.findUnique({
       where: { projectId },
@@ -1661,6 +1682,7 @@ export async function POST(
             role: "DESIGNER",
             isFollowUp: a.isFollowUp,
             section: a.questionSource || "base_question",
+            roomName: a.roomId ? roomIdToName.get(a.roomId) || undefined : undefined,
           }));
 
           const baseDbAnswers = dbAnswers.filter((a) => !a.isFollowUp);
@@ -2013,6 +2035,21 @@ export async function POST(
       }
     }
 
+    // Build room-answer counts from interview answers (for room coverage enforcement)
+    const roomsWithAnswers = new Map<string, number>();
+    for (const a of answers) {
+      const roomName = (a as any).roomName;
+      if (roomName) {
+        roomsWithAnswers.set(roomName, (roomsWithAnswers.get(roomName) || 0) + 1);
+      }
+    }
+    if (roomsWithAnswers.size > 0) {
+      console.log('[ROOM COVERAGE] Rooms with interview answers:', {
+        rooms: Object.fromEntries(roomsWithAnswers),
+        _cid,
+      });
+    }
+
     let composed: any;
     try {
       composed = await composeEditorialHard({
@@ -2029,6 +2066,7 @@ export async function POST(
         projectHistory,
         atelierSummary,
         correlationId: _cid,
+        roomsWithAnswers: roomsWithAnswers.size > 0 ? roomsWithAnswers : undefined,
       });
     } catch (e: any) {
       console.error("[generate] hard-fail:", { code: e?.code, message: e?.message, _cid });
