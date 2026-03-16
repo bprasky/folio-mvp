@@ -166,6 +166,7 @@ export async function getInterviewQuestionsGroupedByRoom(
       roomTypes: context.rooms.map(r => r.type || r.name),
       materialPalette: context.materialThemes,
       contextLevel: context.level,
+      respondentRole: 'DESIGNER',
     });
 
     if (projectGenQuestions.length > 0) {

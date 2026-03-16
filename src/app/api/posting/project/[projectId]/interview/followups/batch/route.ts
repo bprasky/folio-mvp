@@ -191,12 +191,40 @@ export async function POST(
     prompt += `\nRound: ${validated.round} (${validated.round === 1 ? 'first follow-up round' : 'deep follow-up round'})`;
 
     if (isProjectPhase) {
-      prompt += `\n\nIMPORTANT: These are PROJECT-LEVEL questions about the overall design vision, not room-specific.
-Push for SPECIFICITY and STORIES:
-- If they say "the client wanted modern," follow up: "Modern can mean a lot of things — what did it mean for them specifically?"
-- If they mention a decision, follow up: "How did that come about? Was that in the original plan or did it evolve?"
-- If they mention a person or relationship, follow up with the human story.
-- These answers become the narrative frame and pull quote material for the editorial. Go deep.\n`;
+      prompt += `\n\nIMPORTANT: These are PROJECT-LEVEL follow-ups. Stay at 30,000 feet.
+
+PROJECT-LEVEL FOLLOW-UP GOAL:
+Your job is to fill in the WHO, WHAT, WHERE, WHEN, WHY of this project. Check which of those are still unanswered or thin after the designer's answers, and follow up on the GAPS.
+
+SCOPE RULES:
+- DO NOT chase room-specific details. If the designer says "the kitchen island was a whole saga and we rethought the bar halfway through":
+  - GOOD: "Was that kind of evolution typical for this project, or were those isolated surprises?"
+  - GOOD: "How did the clients handle those changes — were they flexible or did it create tension?"
+  - BAD: "Tell me about that moment at the slab yard when you found the bookmatched piece"
+  - BAD: "What specifically changed about the bar concept?"
+  The slab yard story and the bar rethink belong in ROOM-LEVEL interviews where we have photos to reference.
+- If the designer's answer covers one category well but leaves another untouched, PIVOT to the uncovered category rather than drilling deeper into the one they already addressed.
+- Push for SPECIFICITY and STORIES within the project-level frame:
+  - If they say "the client wanted modern," follow up: "Modern can mean a lot of things — what did it mean for them specifically?"
+  - If they mention a decision, follow up: "How did that come about? Was that in the original plan or did it evolve?"
+  - If they mention a person or relationship, follow up with the human story.
+- The goal is solid coverage of ALL FIVE categories: who the client is, what the scope was, what the design direction was, what makes this designer's work recognizable, and what surprised them. That's the complete narrative frame.
+- These answers become the pull quote material for the editorial. Go deep, but stay wide.\n`;
+    } else {
+      prompt += `\n\nROOM-LEVEL FOLLOW-UP GOAL:
+Your job is to draw out the STORY behind specific decisions visible in the photos and referenced in the designer's base answers.
+
+Push for:
+- "What did you try first?" — the rejected option reveals the thinking
+- "How did the client react to that choice?" — the human moment
+- "Tell me about working with the vendor/fabricator on that" — the process story
+- "What would someone miss if they just glanced at this room?" — the hidden detail
+
+These follow-ups produce the richest editorial material: anecdotes, turning points, behind-the-scenes texture. This is where "we went to the slab yard three times" and "the fabricator was nervous about the waterfall edge" come from.
+
+Room follow-ups should reference BOTH the photos AND what the designer said in their base answer. If the designer mentioned a specific product, ask why that one and what they considered instead. If they described a material or finish, ask about the tactile or experiential quality. If they mentioned a vendor relationship, push on that story.
+
+Stay focused on THIS room: ${validated.roomName}. Do not drift to project-level narrative or other rooms unless the designer explicitly connected them.\n`;
     }
 
     // Designer's answers from the previous round
