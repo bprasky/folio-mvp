@@ -70,25 +70,33 @@ export function RoomProgressBar({
     <div className="flex flex-col gap-2">
       {/* Room pills row */}
       <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide px-1">
-        {rooms.map((room, idx) => (
-          <button
-            key={room.roomId}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-medium whitespace-nowrap transition-colors shrink-0 ${statusBorderClass(room.status, idx === currentRoomIndex)}`}
-            disabled
-            aria-current={idx === currentRoomIndex ? "step" : undefined}
-          >
-            <StatusIcon status={room.status} />
-            <span
-              className={
-                idx === currentRoomIndex
-                  ? "text-[var(--text-primary)]"
-                  : "text-[var(--text-secondary)]"
-              }
-            >
-              {room.roomName}
-            </span>
-          </button>
-        ))}
+        {rooms.map((room, idx) => {
+          const isProject = room.roomId === 'project';
+          const showSeparator = isProject && rooms.length > 1;
+          return (
+            <div key={room.roomId} className="flex items-center gap-1.5 shrink-0">
+              <button
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-medium whitespace-nowrap transition-colors ${isProject ? 'italic' : ''} ${statusBorderClass(room.status, idx === currentRoomIndex)}`}
+                disabled
+                aria-current={idx === currentRoomIndex ? "step" : undefined}
+              >
+                <StatusIcon status={room.status} />
+                <span
+                  className={
+                    idx === currentRoomIndex
+                      ? "text-[var(--text-primary)]"
+                      : "text-[var(--text-secondary)]"
+                  }
+                >
+                  {room.roomName}
+                </span>
+              </button>
+              {showSeparator && (
+                <span className="h-4 w-px bg-[var(--ridge-outer)] shrink-0" />
+              )}
+            </div>
+          );
+        })}
       </div>
 
       {/* Current room progress text */}

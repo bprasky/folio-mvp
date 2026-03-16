@@ -78,6 +78,9 @@ export interface RoomInterviewFlowState {
   /** True while waiting for batch follow-up generation between rounds */
   pendingRoundTransition: boolean;
 
+  /** True when the current room is the project-level phase (roomId === 'project') */
+  isProjectPhase: boolean;
+
   // Actions
   advanceQuestion: () => void;
   skipRoom: () => void;
@@ -543,6 +546,7 @@ export function useRoomInterviewFlow(
     maxFollowUpsInRoom,
     currentRound,
     pendingRoundTransition,
+    isProjectPhase: currentRoom?.roomId === 'project',
     minimumTotalAnswers: globalGates.minimumTotalAnswers,
     totalAnswerCount,
     hasStarted,

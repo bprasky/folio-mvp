@@ -375,7 +375,21 @@ export async function generateEditorialDraft(input: GenInput): Promise<{
     list.push(a);
     answersByRoom.set(room, list);
   }
-  const formattedAnswers = Array.from(answersByRoom.entries()).map(([room, answers]) => {
+  // Format project-level answers first (if any), then room answers
+  const projectAnswers = answersByRoom.get('About This Project');
+  let formattedProjectSection = '';
+  if (projectAnswers && projectAnswers.length > 0) {
+    answersByRoom.delete('About This Project');
+    const formatted = projectAnswers.map(a => {
+      const sourceTag = a.isFollowUp
+        ? '[SOURCE: PROJECT FOLLOW-UP — highest-value content for pull quotes and editorial framing]'
+        : '[SOURCE: PROJECT — narrative frame material]';
+      return `Q: ${a.questionId || 'Question'}\nA: "${a.answer}" ${sourceTag}`;
+    }).join('\n\n');
+    formattedProjectSection = `=== ABOUT THIS PROJECT ===\n${formatted}`;
+  }
+
+  const formattedRoomSections = Array.from(answersByRoom.entries()).map(([room, answers]) => {
     const roomHeader = `[ROOM: ${room}]`;
     const formatted = answers.map(a => {
       const sourceTag = a.isFollowUp
@@ -385,6 +399,8 @@ export async function generateEditorialDraft(input: GenInput): Promise<{
     }).join('\n\n');
     return `${roomHeader}\n${formatted}`;
   }).join('\n\n');
+
+  const formattedAnswers = [formattedProjectSection, formattedRoomSections].filter(Boolean).join('\n\n');
 
   const roomCoverageList = roomAnswerCounts.size > 0
     ? `\nROOMS WITH INTERVIEW CONTENT (DO NOT OMIT ANY):\n${Array.from(roomAnswerCounts.entries()).map(([room, count]) => `- ${room}: ${count} answer${count > 1 ? 's' : ''}`).join('\n')}\n`
@@ -488,6 +504,14 @@ CRITICAL: If you cannot find 2 genuinely good pull quotes from the interview mat
 Do NOT use words like "harmonious," "curate," "elevate," "juxtaposition," or "seamlessly."
 
 PROJECT NARRATIVE: ${project?.description ? `The project description captures the client's story — who they are, what prompted this project, and what they asked for. Weave this narrative throughout the piece, not just in the opener. The reader should understand the people behind the project.` : 'If context clues suggest a client story (relocation, renovation motivation, lifestyle needs), weave it naturally through the narrative.'}
+
+PROJECT-LEVEL ANSWERS AS NARRATIVE FRAME:
+The interview may begin with project-level questions (tagged [SOURCE: PROJECT]) about the client, the brief, the design direction, and the designer's signature. These answers are your NARRATIVE FRAME — not a separate intro paragraph that gets abandoned, but the story thread that connects every room description.
+
+- The client story should open the editorial and recur as context throughout
+- The design direction should inform how you describe material and spatial choices
+- The signature/identity answers are primary source for PULL QUOTES — these reveal who the designer IS
+- The surprise/pivot answer is often the most narratively compelling moment — place it for impact
 
 CONTEXT:
 ${contextText}
