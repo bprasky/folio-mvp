@@ -18,6 +18,7 @@ import { formatRoomName } from '@/lib/utils/formatRoomName';
  * - detail: { type: 'detail', image, caption?, roomName? } - REQUIRES image
  * - productInsert: { type: 'productInsert', products[], roomName?, isBoosted? } - Can be placeholder
  * - textInterlude: { type: 'textInterlude', roomName?, text } - REQUIRES text
+ * - pullQuote: { type: 'pullQuote', text, attribution? } - REQUIRES text
  * 
  * OPTIONAL FIELDS:
  * - roomName: string | undefined (derived from roomMap)
@@ -57,7 +58,8 @@ export type EditorialBlock =
   | { type: 'gallery'; images: ClassifiedImage[]; roomName?: string; imageIds: string[] }
   | { type: 'detail'; image: ClassifiedImage; caption?: string; roomName?: string; imageIds: string[] }
   | { type: 'productInsert'; products: Array<{ id: string; name: string; imageUrl?: string | null; primaryImageUrl?: string | null; imageUrls?: string[]; thumbnailUrl?: string | null }>; roomName?: string; isBoosted?: boolean; featuredQuestions?: Array<{ productId: string; questions: string[] }>; imageIds?: string[] }
-  | { type: 'textInterlude'; roomName?: string; text: string; imageIds?: string[] };
+  | { type: 'textInterlude'; roomName?: string; text: string; imageIds?: string[] }
+  | { type: 'pullQuote'; text: string; attribution?: string; imageIds?: string[] };
 
 interface LayoutEngineOptions {
   projectTitle: string;
@@ -70,7 +72,7 @@ interface LayoutEngineOptions {
 
 import { generateEditorialText as getEditorialText, getProjectIntroText } from './textHelpers';
 import { roomPriority, groupImagesByRoom } from './roomPriority';
-import type { Blocks } from '@/lib/posting/schemas';
+import { normalizePullQuote, type Blocks } from '@/lib/posting/schemas';
 
 /**
  * Classify an image based on available metadata or heuristics
@@ -559,6 +561,7 @@ export function generateEditorialLayout(
     if (block.type === 'gallery' && (!block.images || block.images.length === 0)) return false;
     // Text blocks should always have text (already ensured above)
     if (block.type === 'textInterlude' && (!block.text || block.text.trim().length === 0)) return false;
+    if (block.type === 'pullQuote' && (!block.text || block.text.trim().length === 0)) return false;
     return true;
   });
   
@@ -865,12 +868,15 @@ export function generateEditorialLayoutFromDraft(
         }
       }
 
-      // Insert pull quote as text interlude (if available and not last chapter)
+      // Insert pull quote between chapters (not after last)
       if (draft.pullQuotes && draft.pullQuotes.length > 0 && chapterIndex < draft.galleryChapters.length - 1) {
         const pullQuoteIndex = chapterIndex % draft.pullQuotes.length;
+        const raw = draft.pullQuotes[pullQuoteIndex];
+        const normalized = normalizePullQuote(raw);
         blocks.push({
-          type: 'textInterlude',
-          text: draft.pullQuotes[pullQuoteIndex],
+          type: 'pullQuote',
+          text: normalized.text,
+          attribution: normalized.context,
           imageIds: [],
         });
       }

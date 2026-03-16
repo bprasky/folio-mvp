@@ -166,6 +166,8 @@ export async function getOrCreateEditorialDraft(projectId: string): Promise<{
       description: project.description,
       city: project.city,
       regionState: project.regionState,
+      clientType: project.clientType,
+      projectType: project.projectType,
     },
     designer: project.designer ? {
       id: project.designer.id,
