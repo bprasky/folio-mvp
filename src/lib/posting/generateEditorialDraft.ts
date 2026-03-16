@@ -124,6 +124,19 @@ function buildCredits(input: GenInput): Array<{ role: string; name: string }> {
   return credits;
 }
 
+// Distribute top-level pull quotes into per-chapter pullQuote fields
+// so both the draft editor and preview can render them inline.
+function distributePullQuotesToChapters(
+  chapters: Array<{ title: string; body: string[]; imageIds: string[]; pullQuote?: string }>,
+  pullQuotes: Array<string | { text: string; context?: string }>
+) {
+  if (!pullQuotes.length || !chapters.length) return;
+  for (let i = 0; i < chapters.length && i < pullQuotes.length; i++) {
+    const q = pullQuotes[i];
+    chapters[i].pullQuote = typeof q === 'string' ? q : q.text;
+  }
+}
+
 // Fallback blocks generator — produces canonical format matching composeEditorialHard output
 export function toFallbackBlocks(input: GenInput) {
   const uniqueAnswers = deduplicateAnswers(input.answers);
@@ -154,6 +167,9 @@ export function toFallbackBlocks(input: GenInput) {
       text: a.answer.slice(0, 300),
       context: designerName || undefined,
     }));
+
+  // Distribute pull quotes into per-chapter fields for editor/preview rendering
+  distributePullQuotesToChapters(galleryChapters, pullQuotes);
 
   const blocks = {
     lead: { kicker, deck },
@@ -242,6 +258,9 @@ function parseNarrativeToBlocks(article: string, input: GenInput): z.infer<typeo
 
   // Build materials ledger
   const ledger = buildMaterialContext(input.tags);
+
+  // Distribute pull quotes into per-chapter fields for editor/preview rendering
+  distributePullQuotesToChapters(galleryChapters, pullQuotes);
 
   const blocks = {
     lead: { kicker, deck },

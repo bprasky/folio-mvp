@@ -348,7 +348,7 @@ function buildEditorialPrompt({
   atelierSummary,
   roomsWithAnswers,
 }: {
-  project: { title: string };
+  project: { title: string; description?: string | null; projectType?: string | null; clientType?: string | null };
   answers: Array<{ q: string; a: string }>;
   followups?: Array<{ q: string; a: string }>;
   imagesByRoom: Record<string, Array<{ id: string }>>;
@@ -356,6 +356,7 @@ function buildEditorialPrompt({
   imageOrder: string[];
   materialsLedger?: { items: Array<{ name: string; productId?: string }> };
   designerName?: string;
+  designerStudio?: string;
   location?: string;
   designerBio?: string;
   projectHistory?: string;
@@ -395,10 +396,12 @@ ${interviewText}
 
 ## Project Details
 - Project: ${project.title}
-- Designer: ${designerName || 'Not specified'}
-- Location: ${location || 'Not specified'}
+- Designer: ${designerName || 'Not specified'}${designerStudio ? ` / ${designerStudio}` : ''}
+- Location: ${location || 'Not specified'}${project.description ? `\n- Project description: ${project.description}` : ''}${project.projectType && project.projectType !== 'UNSPECIFIED' ? `\n- Project type: ${project.projectType.toLowerCase().replace(/_/g, ' ')}` : ''}${project.clientType ? `\n- Client type: ${project.clientType.toLowerCase()}` : ''}
 - Rooms: ${roomContexts.map(r => r.room).join(', ')}
-- Products tagged: ${materialsList || 'None'}${designerBio ? `
+- Products tagged: ${materialsList || 'None'}
+
+PROJECT CONTEXT: The project description is the narrative frame — it captures who the client is, what prompted the project, and what they asked for. Use it to open and thread through the piece. Location should inform design vocabulary (reference local light, climate, landscape). Do NOT open with "Nestled in..." or use the description verbatim — synthesize into narrative.${designerBio ? `
 
 ## Designer Bio (use to inform tone and context — do not quote directly or paraphrase into the article. This helps you understand who is speaking in the interview)
 ${designerBio}` : ''}${projectHistory ? `
@@ -543,6 +546,7 @@ async function composeEditorialHard({
   imageSelections,
   images,
   designerName,
+  designer,
   location,
   designerBio,
   projectHistory,
@@ -550,7 +554,7 @@ async function composeEditorialHard({
   correlationId,
   roomsWithAnswers,
 }: {
-  project: { title: string };
+  project: { title: string; description?: string | null; projectType?: string | null; clientType?: string | null };
   answers: Array<{ q: string; a: string }>;
   followups?: Array<{ q: string; a: string }>;
   materialsLedger?: { items: Array<{ name: string; productId?: string }> };
@@ -558,6 +562,7 @@ async function composeEditorialHard({
   imageSelections?: Record<string, string[]>;
   images?: Array<{ id: string; room?: string | null; tags?: Array<{ product: { id: string; name: string; vendor?: { name: string } | null } }> }>;
   designerName?: string;
+  designer?: { studio?: string | null } | null;
   location?: string;
   designerBio?: string;
   projectHistory?: string;
@@ -635,6 +640,7 @@ async function composeEditorialHard({
     imageOrder: imageIds,
     materialsLedger,
     designerName,
+    designerStudio: designer?.studio || undefined,
     location,
     designerBio,
     projectHistory,
@@ -2053,7 +2059,12 @@ export async function POST(
     let composed: any;
     try {
       composed = await composeEditorialHard({
-        project: { title: projectData.title || 'Project' },
+        project: {
+          title: projectData.title || 'Project',
+          description: projectData.description,
+          projectType: projectData.projectType,
+          clientType: projectData.clientType,
+        },
         answers: normalizedAnswers,
         followups: normalizedFollowUps.length > 0 ? normalizedFollowUps : undefined,
         materialsLedger: materialsLedger,
@@ -2061,6 +2072,7 @@ export async function POST(
         imageSelections: imageSelections,
         images: imagesWithRoomData,  // Pass images with room data
         designerName,
+        designer: projectData.designer,
         location: projectLocation,
         designerBio,
         projectHistory,
@@ -2302,6 +2314,15 @@ export async function POST(
       durationMs: duration,
       _cid,
     }));
+
+    // Distribute top-level pullQuotes into per-chapter pullQuote fields
+    // so both the draft editor and preview can render them inline.
+    if (validatedBlocks.pullQuotes?.length && validatedBlocks.galleryChapters?.length) {
+      for (let i = 0; i < validatedBlocks.galleryChapters.length && i < validatedBlocks.pullQuotes.length; i++) {
+        const q = validatedBlocks.pullQuotes[i];
+        validatedBlocks.galleryChapters[i].pullQuote = typeof q === 'string' ? q : q.text;
+      }
+    }
 
     // expandedBlocks is the validated structure ready to save
     const expandedBlocks = validatedBlocks;
