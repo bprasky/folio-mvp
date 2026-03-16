@@ -162,7 +162,7 @@ If VENDOR:
   4. SIGNATURE_IDENTITY → "What makes this particular application of your product special?"
   5. SURPRISE_PIVOT → "Were there any spec changes or surprises during the project?"
 
-AVAILABLE CONTEXT (use to decide WHAT to ask, NOT what to put IN questions):
+AVAILABLE CONTEXT (use to decide what to ask — you may reference details, but ATTRIBUTE the source):
 - Project description: ${input.projectDescription || 'Not provided'}
 - Location: ${locationStr}
 - Project type: ${input.projectType || 'Not specified'}
@@ -182,30 +182,33 @@ REQUIRED CATEGORIES (generate exactly one question per category, adapted to ${ro
 4. SIGNATURE_IDENTITY — What in this project is most YOU?
 5. SURPRISE_PIVOT — What changed along the way?
 
-RULES FOR CONTEXTUAL ADAPTATION (ASK, DON'T ASSERT):
-NEVER assert specific facts in questions — timelines, square footage, budget numbers, family details, number of children, ages, previous city. Even if this information is in the project description, your job is to get the ${role.toLowerCase()} to say it in their own words. The metadata tells you WHICH questions are worth asking. It does NOT go INTO the question.
+RULES FOR CONTEXTUAL ADAPTATION (ATTRIBUTE, DON'T ASSERT):
+NEVER assert metadata as absolute fact. The project description is the designer's own notes — it may be approximate, shorthand, or incomplete. Your job is to use it as a jumping-off point and get the ${role.toLowerCase()} to confirm, correct, or expand on it in their own words.
 
-Use metadata to decide what to ask:
-- Description says "14 months" → Ask about timeline: "How long did this one take start to finish?"
-- Description says "family from Chicago" → Ask about the client: "Tell me about the clients — who are they and what brought them to you?"
-- Description says "full renovation" → Ask about scope: "What were you starting with — were you working with existing bones or starting fresh?"
+The key rule: ATTRIBUTE where the detail came from. "Your project description mentions this took 14 months" is good — it shows you did your homework and invites them to confirm or correct. "This 14-month renovation" stated as fact is bad — you're treating unverified notes as gospel.
 
-Do NOT put metadata details into the question:
-- BAD: "This 14-month full gut renovation must have been an undertaking"
-- BAD: "Your clients, a young family with two kids under five from Chicago"
-- BAD: "With a $500K budget for a 3,200 square foot home"
-- BAD: "Over 14 months with a family with small children, what evolved?"
-- GOOD: "How long did this project take?"
-- GOOD: "Tell me about the clients."
+Use metadata to ask informed questions WITH attribution:
+- Description says "14 months" → "Your project description mentions about 14 months — walk me through the timeline."
+- Description says "family from Chicago" → "The project notes mention a relocation — tell me about these clients and what brought them to you."
+- Description says "full renovation" → "It sounds like this was a full gut — what were you starting with?"
+- Photos show warm, sculptural forms → "Looking at the photos, there's a real warmth here — was that the direction from day one?"
+
+Do NOT state metadata as unattributed fact:
+- BAD: "This 14-month full gut renovation must have been an undertaking" (states duration and scope as fact)
+- BAD: "Your clients, a young family with two kids under five from Chicago" (recites their file back at them as if you know these people)
+- BAD: "With a $500K budget for a 3,200 square foot home" (asserts numbers as truth)
+- BAD: "Over 14 months with a family with small children, what evolved?" (embeds unverified details as given)
+- GOOD: "Your project description mentions about 14 months — walk me through that timeline."
+- GOOD: "The notes mention a relocation — tell me about these clients."
 - GOOD: "What was the budget reality on this one?"
+- GOOD: "Looking at the photos, there's a warmth here that doesn't feel accidental — where did that come from?"
 
-Exception: You CAN gently reference that a description EXISTS without restating its contents. "The project notes mention a relocation — tell me about that" is fine. "The project notes say a young family of four relocated from Chicago to Boca Raton" is not — you just read their file out loud.
+The distinction: "Your project description mentioned X — tell me about that" gives them a chance to say "actually it was 16 months" or add context. "This X project" treats the metadata as settled fact and skips the confirmation.
 
 - For SIGNATURE_IDENTITY: Use the designer's name if available. "What in this project would someone who knows your work immediately say 'that's a ${input.designerName || '[Designer]'} project'?"
 
 WHAT MAKES A GOOD QUESTION:
-- Uses metadata to choose the right topic, but lets the respondent supply the details
-- Does NOT repeat or quote metadata back to the respondent
+- References metadata WITH attribution ("your description mentions…", "the notes say…", "looking at the photos…") so the respondent can confirm, correct, or expand
 - Asks ONE thing clearly (not compound questions)
 - Opens space for storytelling, not yes/no answers
 - Focuses on wins and arrivals, not compromises or failures
@@ -217,8 +220,8 @@ WHAT MAKES A BAD QUESTION:
 - "What inspired you?" (lazy, generic)
 - "Tell me about the challenges you faced." (focuses on negatives)
 - "Can you walk me through the project?" (too broad)
-- "The description mentions a young family from Chicago — what did they want?" (parrots metadata)
-- "This 14-month renovation must have been complex" (asserts facts from the description)
+- "This 14-month renovation must have been complex" (asserts metadata as unattributed fact)
+- "Your clients, a young family with two kids under five from Chicago" (recites their file back as if you know these people)
 - Anything that ignores the available context and could be asked about any project
 - Anything that addresses the ${role.toLowerCase()} as if they're a different role
 
@@ -227,8 +230,8 @@ Return ONLY a JSON object:
   "questions": [
     {
       "category": "CLIENT_BRIEF",
-      "question": "Tell me about these clients — who are they and what did they come to you with?",
-      "intent": "Get the human story and original brief in the designer's own words"
+      "question": "The project notes mention a relocation — tell me about these clients and what they came to you with.",
+      "intent": "Get the human story and original brief, letting the designer confirm and expand on the metadata"
     },
     {
       "category": "SCOPE_PARAMETERS",
