@@ -291,13 +291,26 @@ export async function generateEditorialDraft(input: GenInput): Promise<{
     ? `\nROOMS WITH INTERVIEW CONTENT (DO NOT OMIT ANY):\n${Array.from(roomAnswerCounts.entries()).map(([room, count]) => `- ${room}: ${count} answer${count > 1 ? 's' : ''}`).join('\n')}\n`
     : '';
 
+  const locationParts = [project?.city, project?.regionState].filter(Boolean);
+  const locationStr = locationParts.join(', ') || '';
+  const designerLine = designer?.name
+    ? `${designer.name}${designer.studio ? ` / ${designer.studio}` : ''}`
+    : '';
+
   const contextText = `
 PROJECT: ${project?.title ?? ""}
-DESIGNER: ${designer?.name ?? ""}
-LOCATION: ${project?.city ?? project?.regionState ?? ""}
-TAGGED PRODUCTS: ${products.map(p => p.name).join(", ")}
+DESIGNER: ${designerLine}
+LOCATION: ${locationStr}
+${project?.description ? `PROJECT DESCRIPTION: ${project.description}\n` : ''}${project?.projectType && project.projectType !== 'UNSPECIFIED' ? `PROJECT TYPE: ${project.projectType.toLowerCase().replace(/_/g, ' ')}\n` : ''}${project?.clientType ? `CLIENT TYPE: ${project.clientType.toLowerCase()}\n` : ''}TAGGED PRODUCTS: ${products.map(p => p.name).join(", ")}
 IMAGES: ${images.length}
 ${roomCoverageList}
+PROJECT CONTEXT INSTRUCTIONS:
+- The project description is the narrative frame — it captures who the client is, what prompted the project, and what they asked for. A family relocating, a couple's first home, a hospitality concept — this is the STORY. Use it to open and thread through the piece.
+- If a studio/firm name is available, credit it naturally ("designed by [Name] of [Studio]") — not in every paragraph, but enough for attribution.
+- Location should inform design vocabulary — reference local light, climate, landscape, or geography when relevant. Do NOT open with "Nestled in [location]..." or "Located in the heart of..." — these are cliché leads.
+- Project type and client type shape the editorial angle (residential warmth differs from hospitality precision).
+- Do NOT list these metadata fields literally or use the project description verbatim — synthesize into editorial narrative woven throughout the piece.
+
 INTERVIEW ANSWERS:
 ${formattedAnswers || '(No interview answers available)'}
 `;

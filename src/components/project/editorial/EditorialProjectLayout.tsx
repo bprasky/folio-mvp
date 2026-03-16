@@ -10,6 +10,7 @@ import { DetailBlock } from './DetailBlock';
 import { ProductInsertBlock } from './ProductInsertBlock';
 import { TextInterludeBlock } from './TextInterludeBlock';
 import { PullQuoteBlock } from './PullQuoteBlock';
+import { EditorialPullQuote } from './EditorialPullQuote';
 import { generateEditorialLayout, generateEditorialLayoutFromDraft, EditorialBlock } from './layoutEngine';
 import { roomPriority } from './roomPriority';
 import type { Blocks } from '@/lib/posting/schemas';
@@ -362,7 +363,15 @@ function renderBlock(block: EditorialBlock, project: Project, index: number, mod
           text={block.text}
         />
       );
-    
+
+    case 'pullQuote':
+      return (
+        <EditorialPullQuote
+          text={block.text}
+          attribution={block.attribution}
+        />
+      );
+
     default:
       return null;
   }
