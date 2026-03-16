@@ -194,17 +194,23 @@ export async function getOrCreateEditorialDraft(projectId: string): Promise<{
         } : undefined,
       }))
     ),
-    answers: (interview?.answers ?? []).map(a => ({
-      questionId: a.questionId,
-      section: a.roomId
-        ? (roomIdToName.get(a.roomId) ?? 'General')
-        : 'General',
-      role: 'DESIGNER' as const,
-      answer: a.answerText,
-      isFollowUp: a.isFollowUp,
-      parentAnswerId: a.parentAnswerId ?? undefined,
-      roomId: a.roomId ?? undefined,
-    })),
+    answers: (interview?.answers ?? []).map(a => {
+      // Project-level answers get a distinct section for editorial framing
+      const isProjectAnswer = a.questionSource === 'project_question' || a.questionSource === 'project_follow_up';
+      return {
+        questionId: a.questionId,
+        section: isProjectAnswer
+          ? 'About This Project'
+          : a.roomId
+            ? (roomIdToName.get(a.roomId) ?? 'General')
+            : 'General',
+        role: 'DESIGNER' as const,
+        answer: a.answerText,
+        isFollowUp: a.isFollowUp,
+        parentAnswerId: a.parentAnswerId ?? undefined,
+        roomId: a.roomId ?? undefined,
+      };
+    }),
     followups: (interview?.answers ?? [])
       .filter(a => a.isFollowUp && a.questionText)
       .map(a => ({

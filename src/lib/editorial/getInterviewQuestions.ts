@@ -10,6 +10,8 @@ import {
   type RoomGroupedQuestions,
 } from './roomPacing';
 import { generateAllRoomQuestions } from '@/lib/interview/generateAllRoomQuestions';
+import { generateProjectQuestions } from '@/lib/interview/generateProjectQuestions';
+import { prisma } from '@/lib/prisma';
 
 export interface InterviewQuestion {
   id: string;
@@ -123,7 +125,86 @@ export async function getInterviewQuestionsGroupedByRoom(
   upgradeSuggestion: string | null;
   projectSize: ProjectSizeClassification;
 }> {
-  const { roomResults, context } = await generateAllRoomQuestions(projectId);
+  // Generate room questions and project questions in parallel
+  const [roomResult, projectMeta] = await Promise.all([
+    generateAllRoomQuestions(projectId),
+    prisma.project.findUnique({
+      where: { id: projectId },
+      select: {
+        title: true,
+        description: true,
+        city: true,
+        regionState: true,
+        projectType: true,
+        clientType: true,
+        designer: { select: { name: true, studio: true } },
+        images: {
+          select: { url: true },
+          orderBy: { displayOrder: 'asc' as const },
+          take: 3,
+        },
+      },
+    }),
+  ]);
+
+  const { roomResults, context } = roomResult;
+
+  // Generate project-level questions (fire after we have context for metadata)
+  let projectGroup: RoomQuestionsGroup | null = null;
+  try {
+    const locationParts = [projectMeta?.city, projectMeta?.regionState].filter(Boolean);
+    const { questions: projectGenQuestions } = await generateProjectQuestions({
+      projectTitle: context.projectTitle,
+      projectDescription: context.projectDescription,
+      designerName: projectMeta?.designer?.name || undefined,
+      studioName: projectMeta?.designer?.studio || undefined,
+      location: locationParts.join(', ') || undefined,
+      projectType: projectMeta?.projectType || undefined,
+      clientType: projectMeta?.clientType || undefined,
+      representativeImages: (projectMeta?.images || []).map(img => ({ url: img.url })),
+      roomNames: context.rooms.map(r => r.name),
+      roomTypes: context.rooms.map(r => r.type || r.name),
+      materialPalette: context.materialThemes,
+      contextLevel: context.level,
+    });
+
+    if (projectGenQuestions.length > 0) {
+      const projectInterviewQuestions: InterviewQuestion[] = projectGenQuestions.map((q) => {
+        const converted = toInterviewQuestion(q);
+        return {
+          id: converted.id,
+          questionText: converted.questionText,
+          questionType: converted.questionType,
+          source: 'ai_classification' as const,
+          boostable: converted.boostable,
+          pullQuotePotential: converted.pullQuotePotential,
+          contextLevel: converted.contextLevel,
+          questionCategory: converted.questionCategory,
+          vendors: q.vendors,
+          rooms: q.rooms,
+          products: q.products,
+        };
+      });
+
+      projectGroup = {
+        roomId: 'project',
+        roomName: 'About This Project',
+        roomType: null,
+        budget: {
+          roomId: 'project',
+          roomName: 'About This Project',
+          roomType: null,
+          imageCount: 0,
+          tagCount: 0,
+          baseQuestions: projectInterviewQuestions.length,
+          maxFollowUps: 3,
+        },
+        questions: projectInterviewQuestions,
+      };
+    }
+  } catch (err) {
+    console.warn('[getInterviewQuestionsGroupedByRoom] Project question generation failed, proceeding with room-only flow:', err);
+  }
 
   // Convert per-room results to RoomQuestionsGroup format
   const roomGroups: RoomQuestionsGroup[] = [];
@@ -185,6 +266,11 @@ export async function getInterviewQuestionsGroupedByRoom(
       imageCount: imgCount,
       tagCount: tgCount,
     });
+  }
+
+  // Prepend project-level questions as synthetic room at index 0
+  if (projectGroup) {
+    roomGroups.unshift(projectGroup);
   }
 
   const globalGates = computeGlobalGates(gateRooms);

@@ -186,11 +186,21 @@ export async function POST(
       prompt += `\nType: ${projectData.projectType}`;
     }
 
-    prompt += `\nRoom: ${validated.roomName}`;
+    const isProjectPhase = validated.roomName === 'About This Project' || validated.roomId === 'project';
+    prompt += `\n${isProjectPhase ? 'Phase: About This Project (project-level overview)' : `Room: ${validated.roomName}`}`;
     prompt += `\nRound: ${validated.round} (${validated.round === 1 ? 'first follow-up round' : 'deep follow-up round'})`;
 
+    if (isProjectPhase) {
+      prompt += `\n\nIMPORTANT: These are PROJECT-LEVEL questions about the overall design vision, not room-specific.
+Push for SPECIFICITY and STORIES:
+- If they say "the client wanted modern," follow up: "Modern can mean a lot of things — what did it mean for them specifically?"
+- If they mention a decision, follow up: "How did that come about? Was that in the original plan or did it evolve?"
+- If they mention a person or relationship, follow up with the human story.
+- These answers become the narrative frame and pull quote material for the editorial. Go deep.\n`;
+    }
+
     // Designer's answers from the previous round
-    prompt += `\n\nDesigner's answers from this room:\n`;
+    prompt += `\n\nDesigner's answers${isProjectPhase ? '' : ' from this room'}:\n`;
     for (const qa of validated.previousAnswers) {
       const moderated = softModerate(`${qa.question}: ${qa.answer}`);
       prompt += `\nQ: ${qa.question}\nA: ${moderated.text.split(': ').slice(1).join(': ') || qa.answer}\n`;

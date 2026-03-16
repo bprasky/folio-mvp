@@ -1034,12 +1034,30 @@ export function InterviewModal({
                 // Metadata fields
                 linkedImageId: questionMeta?.linkedImageId || null,
                 linkedProductId: questionMeta?.linkedProductId || null,
-                questionSource: questionMeta?.source || (item.isFollowUp ? 'follow_up' : 'base_question'),
-                aiClassificationAttribute: questionMeta?.attributeType && questionMeta?.attributeValue
-                  ? `${questionMeta.attributeType}:${questionMeta.attributeValue}`
-                  : null,
-                // Room pacing fields
-                roomId: hasRoomPacing ? (questionMeta?.roomId || roomFlow.currentRoom?.roomId || null) : null,
+                questionSource: (() => {
+                  // Project-level questions get distinct questionSource for editorial generation
+                  const resolvedRoomId = hasRoomPacing ? (questionMeta?.roomId || roomFlow.currentRoom?.roomId || null) : null;
+                  if (resolvedRoomId === 'project') {
+                    return item.isFollowUp ? 'project_follow_up' : 'project_question';
+                  }
+                  return questionMeta?.source || (item.isFollowUp ? 'follow_up' : 'base_question');
+                })(),
+                aiClassificationAttribute: (() => {
+                  // For project questions, store category (e.g. "project_category:CLIENT_BRIEF")
+                  const resolvedRoomId = hasRoomPacing ? (questionMeta?.roomId || roomFlow.currentRoom?.roomId || null) : null;
+                  if (resolvedRoomId === 'project' && item.questionId.startsWith('project-')) {
+                    const categoryMatch = item.questionId.match(/^project-([A-Z_]+)-/);
+                    if (categoryMatch) return `project_category:${categoryMatch[1]}`;
+                  }
+                  return questionMeta?.attributeType && questionMeta?.attributeValue
+                    ? `${questionMeta.attributeType}:${questionMeta.attributeValue}`
+                    : null;
+                })(),
+                // Room pacing fields — project-level answers get roomId: null in DB
+                roomId: (() => {
+                  const resolvedRoomId = hasRoomPacing ? (questionMeta?.roomId || roomFlow.currentRoom?.roomId || null) : null;
+                  return resolvedRoomId === 'project' ? null : resolvedRoomId;
+                })(),
                 isCrossRoom: questionMeta?.isCrossRoom || false,
               };
             }),
@@ -1817,10 +1835,14 @@ export function InterviewModal({
           <div className="flex-1 flex flex-col items-center justify-center px-8 py-16">
             <div className="max-w-md text-center space-y-4">
               <p className="text-lg font-serif text-[var(--text-primary)]">
-                Great answers about your {roomFlow.currentRoom?.roomName || 'room'}.
+                {roomFlow.isProjectPhase
+                  ? "Great — thanks for the overview."
+                  : `Great answers about your ${roomFlow.currentRoom?.roomName || 'room'}.`}
               </p>
               <p className="text-sm text-[var(--text-secondary)]">
-                A couple more questions based on what you shared...
+                {roomFlow.isProjectPhase
+                  ? "A few follow-ups before we get into the rooms..."
+                  : "A couple more questions based on what you shared..."}
               </p>
               <div className="flex justify-center pt-2">
                 <div className="animate-spin rounded-full h-5 w-5 border-2 border-[var(--accent)] border-t-transparent" />
