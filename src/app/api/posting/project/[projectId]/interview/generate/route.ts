@@ -342,6 +342,7 @@ function buildEditorialPrompt({
   imageOrder,
   materialsLedger,
   designerName,
+  designerStudio,
   location,
   designerBio,
   projectHistory,
