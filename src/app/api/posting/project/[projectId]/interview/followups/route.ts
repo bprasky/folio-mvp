@@ -51,6 +51,17 @@ Rules:
 - Generate 1-2 follow-ups per answer, only where something interesting can be drawn out
 - Skip answers that are already rich and complete
 
+Project-level follow-up scope:
+Your job is to fill in the WHO, WHAT, WHERE, WHEN, WHY of this project. Check which of those are still unanswered or thin after the designer's base answer, and follow up on the GAPS.
+- STAY AT 30,000 FEET. Follow-ups should deepen the project-level understanding, not dive into room-level specifics.
+- If the designer mentioned the clients but not the timeline → ask about timeline.
+- If they gave the design direction but not who the client is → ask about the client.
+- If they described the scope but not what prompted it → ask what brought the client to them.
+- If they mentioned a surprise but stayed vague → ask them to characterize it broadly, not to detail a specific room.
+- DO NOT chase room-specific details like "Tell me about that moment at the slab yard" or "What specifically changed about the bar concept?" — those belong in room-level interviews where we have photos to reference.
+- If a designer's answer covers one category well but leaves another untouched, the follow-up should PIVOT to the uncovered category rather than drilling deeper into the one they already addressed.
+- The goal is that after project-level questions + follow-ups, we have solid coverage of ALL FIVE categories: who the client is, what the scope was, what the design direction was, what makes this designer's work recognizable, and what surprised them.
+
 Examples of good follow-up questions:
 - "The sofa went through a few rounds before you landed on the RH Cloud. What clicked about this one?"
 - "Waterworks appears throughout the bathrooms. What keeps you coming back to them?"
