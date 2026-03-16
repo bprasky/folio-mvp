@@ -126,14 +126,46 @@ function buildCredits(input: GenInput): Array<{ role: string; name: string }> {
 
 // Distribute top-level pull quotes into per-chapter pullQuote fields
 // so both the draft editor and preview can render them inline.
+// Uses sourceSection matching when available, falls back to index-based distribution.
 function distributePullQuotesToChapters(
   chapters: Array<{ title: string; body: string[]; imageIds: string[]; pullQuote?: string }>,
-  pullQuotes: Array<string | { text: string; context?: string }>
+  pullQuotes: Array<string | { text: string; context?: string; sourceSection?: string }>
 ) {
   if (!pullQuotes.length || !chapters.length) return;
-  for (let i = 0; i < chapters.length && i < pullQuotes.length; i++) {
-    const q = pullQuotes[i];
-    chapters[i].pullQuote = typeof q === 'string' ? q : q.text;
+
+  const assigned = new Set<number>(); // chapter indices that got a pull quote
+
+  // First pass: match by sourceSection
+  for (const q of pullQuotes) {
+    if (typeof q === 'string' || !q.sourceSection) continue;
+    const matchIdx = chapters.findIndex(ch =>
+      ch.title.toLowerCase() === q.sourceSection!.toLowerCase()
+    );
+    if (matchIdx >= 0 && !assigned.has(matchIdx)) {
+      chapters[matchIdx].pullQuote = q.text;
+      assigned.add(matchIdx);
+    }
+  }
+
+  // Second pass: distribute remaining pull quotes to chapters without one
+  let quoteIdx = 0;
+  for (let i = 0; i < chapters.length && quoteIdx < pullQuotes.length; i++) {
+    if (assigned.has(i)) continue;
+    // Find next unassigned pull quote
+    while (quoteIdx < pullQuotes.length) {
+      const q = pullQuotes[quoteIdx];
+      const text = typeof q === 'string' ? q : q.text;
+      const section = typeof q === 'string' ? undefined : q.sourceSection;
+      // Skip quotes already assigned by sourceSection match
+      if (section && chapters.some(ch => ch.title.toLowerCase() === section.toLowerCase() && ch.pullQuote === text)) {
+        quoteIdx++;
+        continue;
+      }
+      chapters[i].pullQuote = text;
+      assigned.add(i);
+      quoteIdx++;
+      break;
+    }
   }
 }
 
@@ -204,29 +236,50 @@ function parseNarrativeToBlocks(article: string, input: GenInput): z.infer<typeo
   const deckCandidate = lines.find((l, i) => i > 0 && l.length > 30 && l.length < 400) || lines[1] || '';
   const deck = deckCandidate.slice(0, 400);
 
-  // Extract narrative paragraphs (skip headline/deck)
+  // Extract narrative paragraphs (skip headline/deck and PULL QUOTE markers)
   const startIdx = lines.indexOf(deckCandidate) + 1 || 2;
-  const narrativeParagraphs = lines.slice(startIdx).filter(l => l.length > 50);
+  const narrativeParagraphs = lines.slice(startIdx).filter(l => l.length > 50 && !/^PULL\s*QUOTE\s*:/i.test(l));
 
-  // Extract pull quotes — look for quoted text within paragraphs
+  // Extract pull quotes — three strategies in priority order
   const designerName = input.designer?.name;
-  const pullQuotes: Array<string | { text: string; context?: string }> = [];
+  const pullQuotes: Array<string | { text: string; context?: string; sourceSection?: string }> = [];
 
-  // Strategy 1: Extract text within quotation marks from the narrative
-  for (const p of narrativeParagraphs) {
-    const quoteMatches = p.match(/["\u201C]([^"\u201D]{20,250})["\u201D]/g);
-    if (quoteMatches) {
-      for (const match of quoteMatches) {
-        const cleaned = match.replace(/["\u201C\u201D]/g, '').trim();
-        if (cleaned.length >= 20 && cleaned.length <= 300) {
-          pullQuotes.push({ text: cleaned, context: designerName || undefined });
-        }
-      }
+  // Strategy 1: Parse explicit PULL QUOTE markers from the LLM output
+  // Format: PULL QUOTE: "text" — designer [from: section name]
+  const pullQuoteMarkerLines = lines.filter(l => /^PULL\s*QUOTE\s*:/i.test(l));
+  for (const line of pullQuoteMarkerLines) {
+    const textMatch = line.match(/["\u201C]([^"\u201D]{15,300})["\u201D]/);
+    const sectionMatch = line.match(/\[from:\s*([^\]]+)\]/i);
+    if (textMatch) {
+      pullQuotes.push({
+        text: textMatch[1].trim(),
+        context: designerName || undefined,
+        sourceSection: sectionMatch?.[1]?.trim() || undefined,
+      });
     }
-    if (pullQuotes.length >= 4) break;
   }
 
-  // Strategy 2: If LLM didn't produce enough quoted text, extract from interview answers
+  // Strategy 2: Extract quoted text from narrative paragraphs (direct quotes in the body)
+  if (pullQuotes.length < 3) {
+    for (const p of narrativeParagraphs) {
+      if (pullQuoteMarkerLines.includes(p)) continue; // Skip marker lines
+      const quoteMatches = p.match(/["\u201C]([^"\u201D]{20,250})["\u201D]/g);
+      if (quoteMatches) {
+        for (const match of quoteMatches) {
+          const cleaned = match.replace(/["\u201C\u201D]/g, '').trim();
+          if (cleaned.length >= 20 && cleaned.length <= 300) {
+            // Don't add duplicates (already found via PULL QUOTE markers)
+            if (!pullQuotes.some(q => typeof q !== 'string' && q.text === cleaned)) {
+              pullQuotes.push({ text: cleaned, context: designerName || undefined });
+            }
+          }
+        }
+      }
+      if (pullQuotes.length >= 4) break;
+    }
+  }
+
+  // Strategy 3: Fallback — extract from interview answers if still not enough
   const uniqueAnswers = deduplicateAnswers(input.answers);
   if (pullQuotes.length < 2 && uniqueAnswers.length > 0) {
     const quoteWorthy = uniqueAnswers
@@ -254,6 +307,19 @@ function parseNarrativeToBlocks(article: string, input: GenInput): z.infer<typeo
   // Ensure at least one chapter has body content
   if (galleryChapters.length > 0 && galleryChapters.every(ch => ch.body.length === 0)) {
     galleryChapters[0].body = narrativeParagraphs.slice(0, 3).map(p => p.slice(0, 5000));
+  }
+
+  // Infer sourceSection for pull quotes that don't have one by matching body text
+  for (const pq of pullQuotes) {
+    if (typeof pq === 'string' || pq.sourceSection) continue;
+    const quoteText = pq.text.toLowerCase();
+    for (const ch of galleryChapters) {
+      const bodyText = (ch.body || []).join(' ').toLowerCase();
+      if (bodyText.includes(quoteText.slice(0, 40))) {
+        pq.sourceSection = ch.title;
+        break;
+      }
+    }
   }
 
   // Build materials ledger
@@ -300,11 +366,25 @@ export async function generateEditorialDraft(input: GenInput): Promise<{
     roomAnswerCounts.set(roomName, (roomAnswerCounts.get(roomName) || 0) + 1);
   }
 
-  // Format answers with [BASE] / [FOLLOW-UP] tags and room context
-  const formattedAnswers = uniqueAnswers.map(a => {
-    const tag = a.isFollowUp ? `[FOLLOW-UP — ${a.section || 'General'}]` : `[BASE — ${a.section || 'General'}]`;
-    return `${tag} Q: ${a.questionId || 'Question'}\nA: ${a.answer}`;
-  }).join("\n\n");
+  // Format answers grouped by room, wrapped in quotation marks to reinforce spoken words
+  const designerNameForPrompt = designer?.name || 'the designer';
+  const answersByRoom = new Map<string, typeof uniqueAnswers>();
+  for (const a of uniqueAnswers) {
+    const room = a.section || 'General';
+    const list = answersByRoom.get(room) || [];
+    list.push(a);
+    answersByRoom.set(room, list);
+  }
+  const formattedAnswers = Array.from(answersByRoom.entries()).map(([room, answers]) => {
+    const roomHeader = `[ROOM: ${room}]`;
+    const formatted = answers.map(a => {
+      const sourceTag = a.isFollowUp
+        ? '[SOURCE: FOLLOW-UP — richer narrative, prioritize for anecdotes and direct quotes]'
+        : '[SOURCE: BASE QUESTION]';
+      return `Q: ${a.questionId || 'Question'}\nA: "${a.answer}" ${sourceTag}`;
+    }).join('\n\n');
+    return `${roomHeader}\n${formatted}`;
+  }).join('\n\n');
 
   const roomCoverageList = roomAnswerCounts.size > 0
     ? `\nROOMS WITH INTERVIEW CONTENT (DO NOT OMIT ANY):\n${Array.from(roomAnswerCounts.entries()).map(([room, count]) => `- ${room}: ${count} answer${count > 1 ? 's' : ''}`).join('\n')}\n`
@@ -330,7 +410,10 @@ PROJECT CONTEXT INSTRUCTIONS:
 - Project type and client type shape the editorial angle (residential warmth differs from hospitality precision).
 - Do NOT list these metadata fields literally or use the project description verbatim — synthesize into editorial narrative woven throughout the piece.
 
-INTERVIEW ANSWERS:
+DESIGNER INTERVIEW — ${designerNameForPrompt}
+
+For each room, the designer answered questions about their process and decisions. Use their actual words as source material for direct quotes.
+
 ${formattedAnswers || '(No interview answers available)'}
 `;
 
@@ -348,24 +431,63 @@ Include:
 • A short headline and a 1–2 sentence intro ("dek")
 • 3–5 narrative paragraphs organized by room, covering ALL rooms listed below
 • A "Method" section describing process and design philosophy
-• 2-4 pull quotes from the designer's own words, wrapped in quotation marks
 • End with a "Materials" section summarizing key tagged materials.
 
 ROOM COVERAGE: You MUST include editorial content for EVERY room that has interview answers. Rooms with more answers deserve proportionally more editorial space. If a room has no dedicated photos, weave its design story into the broader narrative. Do not skip any room.
 
-PULL QUOTES: Include 2-4 direct quotes from the designer wrapped in quotation marks ("\u201C...\u201D"). Choose statements that:
-- Are specific and opinionated ("We almost went with polished nickel but brass felt right for this house")
-- Reveal process or philosophy ("I always tell clients the lighting plan is really a furniture plan")
-- Mention a real material, product, or decision
-- Sound like a human talking, not a press release
-- Are 15-50 words
-Do NOT use generic statements ("We wanted to create a warm and inviting space") or words like "harmonious," "curate," "elevate," "juxtaposition," or "seamlessly."
+WEAVING THE DESIGNER'S VOICE:
 
-USING FOLLOW-UP CONTENT: Answers tagged [FOLLOW-UP] contain the richest material — process stories, client anecdotes, tradeoff explanations, and behind-the-scenes details. Surface these as:
-- Embedded anecdotes ("The designer recalls visiting three showrooms before...")
-- Attributed perspective ("For ${designer?.name || 'the designer'}, the turning point came when...")
-- Specific process details that give the piece texture beyond physical description
-Do NOT flatten follow-up answers into generic descriptive prose. The follow-ups are what make this editorial sound like a person wrote it, not an AI.
+You are writing a magazine feature, not a product catalog. The designer's interview answers are your primary source material — treat them the way a journalist treats quotes from a subject.
+
+Rules for using interview content:
+
+1. DIRECT QUOTES: Use the designer's actual words from interview answers as direct quotes 2-4 times in the full piece. These should be the most vivid, specific, or opinionated moments. Format them naturally:
+   - '${designerNameForPrompt} recalls...' followed by a direct quote
+   - 'As ${designerNameForPrompt} explains, "[quote]"'
+   - '"[Quote]," ${designerNameForPrompt} says.'
+   - '"[Quote]," says ${designerNameForPrompt}, "[continuation]."'
+
+   Direct quotes must be REAL phrases from the interview answers. Do not invent quotes. Do not clean up the language so much that it loses the person's voice. A designer saying "We almost went polished nickel but brass felt right for this house" is better than "We carefully considered polished nickel before ultimately selecting brass for its warmth."
+
+2. ATTRIBUTED PARAPHRASE: Use 3-5 times. Convey the designer's perspective without direct quotation:
+   - '${designerNameForPrompt} chose brass hardware over polished nickel, drawn to its warmth against the mauve cabinetry.'
+   - 'The decision to remove the entry closet came early — ${designerNameForPrompt} wanted the full volume of the space to announce itself.'
+
+3. UNATTRIBUTED NARRATIVE: The remaining prose can describe materials, spatial relationships, and visual effects without attribution. But even this should feel informed by the designer's perspective, not written by someone who only saw photos.
+
+BALANCE: A typical 4-section editorial should have:
+- 2-4 direct quotes (not all in one section — distribute them)
+- 3-5 attributed paraphrases
+- The rest as narrative prose
+
+The reader should finish the piece feeling like they heard from the designer, not just read about the house.
+
+USING FOLLOW-UP CONTENT: Answers tagged [SOURCE: FOLLOW-UP] contain the richest material — process stories, client anecdotes, tradeoff explanations, and behind-the-scenes details. Prioritize these for direct quotes and anecdotes. Do NOT flatten follow-up answers into generic descriptive prose.
+
+PULL QUOTES:
+
+After writing the full editorial, select 2-3 pull quotes. These MUST be extracted from direct quotes you already used in the body text — not generated separately. A pull quote is a highlight of something already in the piece, pulled out for visual emphasis.
+
+Good pull quotes are:
+- ALREADY IN THE BODY TEXT as a direct quote from the designer
+- Specific to this project (mention a material, a room, a decision, a moment)
+- 15-40 words — long enough to have substance, short enough to read at a glance
+- Something that makes a reader want to read the full piece
+
+Bad pull quotes (DO NOT generate):
+- Generic wisdom that could apply to any project ("Every detail matters")
+- Pithy one-liners the designer never actually said
+- Descriptions of the space rather than the designer's perspective on it
+- Anything the designer didn't say in the interview
+
+Format each pull quote on its own line, clearly marked:
+PULL QUOTE: "[exact text from the body]" — ${designerNameForPrompt} [from: section name]
+
+CRITICAL: If you cannot find 2 genuinely good pull quotes from the interview material, output 1 or even 0. Do not fabricate quotes to fill a quota.
+
+Do NOT use words like "harmonious," "curate," "elevate," "juxtaposition," or "seamlessly."
+
+PROJECT NARRATIVE: ${project?.description ? `The project description captures the client's story — who they are, what prompted this project, and what they asked for. Weave this narrative throughout the piece, not just in the opener. The reader should understand the people behind the project.` : 'If context clues suggest a client story (relocation, renovation motivation, lifestyle needs), weave it naturally through the narrative.'}
 
 CONTEXT:
 ${contextText}

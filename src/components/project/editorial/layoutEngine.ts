@@ -777,6 +777,7 @@ export function generateEditorialLayoutFromDraft(
   }
 
   // 2. Process gallery chapters (narrative-driven)
+  const usedPullQuoteTexts = new Set<string>(); // Prevent duplicate pull quotes
   if (draft.galleryChapters && draft.galleryChapters.length > 0) {
     for (let chapterIndex = 0; chapterIndex < draft.galleryChapters.length; chapterIndex++) {
       const chapter = draft.galleryChapters[chapterIndex];
@@ -868,17 +869,44 @@ export function generateEditorialLayoutFromDraft(
         }
       }
 
-      // Insert pull quote between chapters (not after last)
+      // Insert pull quote after the chapter it's drawn from (using sourceSection match)
+      // Don't stack consecutive pull quotes; don't repeat the same quote text
       if (draft.pullQuotes && draft.pullQuotes.length > 0 && chapterIndex < draft.galleryChapters.length - 1) {
-        const pullQuoteIndex = chapterIndex % draft.pullQuotes.length;
-        const raw = draft.pullQuotes[pullQuoteIndex];
-        const normalized = normalizePullQuote(raw);
-        blocks.push({
-          type: 'pullQuote',
-          text: normalized.text,
-          attribution: normalized.context,
-          imageIds: [],
-        });
+        const lastBlock = blocks[blocks.length - 1];
+        const lastWasPullQuote = lastBlock?.type === 'pullQuote';
+
+        if (!lastWasPullQuote) {
+          // Find a pull quote whose sourceSection matches this chapter
+          const chapterName = (chapter.title || '').toLowerCase();
+          const matchingQuote = draft.pullQuotes.find(raw => {
+            const normalized = normalizePullQuote(raw);
+            return normalized.sourceSection
+              && normalized.sourceSection.toLowerCase() === chapterName
+              && !usedPullQuoteTexts.has(normalized.text);
+          });
+
+          let chosen: ReturnType<typeof normalizePullQuote> | null = null;
+          if (matchingQuote) {
+            chosen = normalizePullQuote(matchingQuote);
+          } else {
+            // Fallback: first unused pull quote
+            const unused = draft.pullQuotes.find(raw => {
+              const n = normalizePullQuote(raw);
+              return !usedPullQuoteTexts.has(n.text);
+            });
+            if (unused) chosen = normalizePullQuote(unused);
+          }
+
+          if (chosen) {
+            usedPullQuoteTexts.add(chosen.text);
+            blocks.push({
+              type: 'pullQuote',
+              text: chosen.text,
+              attribution: chosen.context,
+              imageIds: [],
+            });
+          }
+        }
       }
     }
   } else {

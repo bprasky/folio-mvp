@@ -33,7 +33,7 @@ export const ComposedDraftSchema = z.object({
     imageIds: z.array(z.string()).min(1),
     body: z.array(z.string()).optional(),
   })).min(1),
-  pullQuotes: z.array(z.union([z.string(), z.object({ text: z.string(), context: z.string().optional() })])).optional(),
+  pullQuotes: z.array(z.union([z.string(), z.object({ text: z.string(), context: z.string().optional(), sourceSection: z.string().optional() })])).optional(),
   credits: z.array(z.object({ role: z.string(), name: z.string().nullable().optional() })).optional(),
   materialsLedger: z.object({
     items: z.array(z.object({
@@ -83,7 +83,7 @@ export const LlmComposedLooseSchema = z.object({
     }))
   }).optional(),
 
-  pullQuotes: z.array(z.union([z.string(), z.object({ text: z.string(), context: z.string().optional() })])).optional(),
+  pullQuotes: z.array(z.union([z.string(), z.object({ text: z.string(), context: z.string().optional(), sourceSection: z.string().optional() })])).optional(),
   method: z.array(z.string()).optional(),
 }).passthrough();
 
@@ -114,6 +114,7 @@ export const BlocksSchema = z.object({
       z.object({
         text: z.string().max(300),
         context: z.string().max(80).optional(),
+        sourceSection: z.string().max(80).optional(),
       }),
     ])
   ).max(5).optional(),
@@ -147,11 +148,11 @@ export const BlocksSchema = z.object({
 
 export type Blocks = z.infer<typeof BlocksSchema>;
 
-/** Normalized pull quote with optional context */
-export type NormalizedPullQuote = { text: string; context?: string };
+/** Normalized pull quote with optional context and source section */
+export type NormalizedPullQuote = { text: string; context?: string; sourceSection?: string };
 
-/** Normalize a pull quote entry (string or {text, context}) to a consistent shape */
-export function normalizePullQuote(q: string | { text: string; context?: string }): NormalizedPullQuote {
+/** Normalize a pull quote entry (string or {text, context, sourceSection}) to a consistent shape */
+export function normalizePullQuote(q: string | { text: string; context?: string; sourceSection?: string }): NormalizedPullQuote {
   if (typeof q === 'string') return { text: q };
-  return { text: q.text, context: q.context || undefined };
+  return { text: q.text, context: q.context || undefined, sourceSection: q.sourceSection || undefined };
 }
