@@ -499,25 +499,34 @@ Begin.`;
 
 function validateRoomStructure(
   blocks: any,
-  rooms: string[]
+  rooms: string[],
+  imagesByRoom?: Record<string, Array<{ id: string }>>
 ): { valid: boolean; issues: string[] } {
   const issues: string[] = [];
-  
+
   if (!blocks.galleryChapters || !Array.isArray(blocks.galleryChapters)) {
     issues.push('Missing galleryChapters array');
     return { valid: false, issues };
   }
-  
-  // Check that each room has a corresponding chapter
-  const chapterTitles = blocks.galleryChapters.map((ch: any) => ch.title?.toLowerCase() || '');
-  for (const room of rooms) {
-    if (room === 'General') continue; // Skip General room
-    const roomLower = room.toLowerCase();
-    if (!chapterTitles.some((title: string) => title.includes(roomLower))) {
-      issues.push(`No chapter found for room: ${room}`);
+
+  // Check room coverage via image usage (not title matching — chapters use creative titles)
+  if (imagesByRoom) {
+    const usedImageIds = new Set<string>();
+    for (const ch of blocks.galleryChapters) {
+      if (Array.isArray(ch.imageIds)) {
+        for (const id of ch.imageIds) usedImageIds.add(id);
+      }
+    }
+    for (const room of rooms) {
+      if (room === 'General') continue;
+      const roomImages = imagesByRoom[room] || [];
+      const hasImageInChapter = roomImages.some(img => usedImageIds.has(img.id));
+      if (!hasImageInChapter && roomImages.length > 0) {
+        issues.push(`No images used from room: ${room}`);
+      }
     }
   }
-  
+
   // Check that each chapter has substantive content
   for (const [idx, chapter] of blocks.galleryChapters.entries()) {
     if (!chapter.title) {
@@ -530,7 +539,7 @@ function validateRoomStructure(
       issues.push(`Chapter ${idx} has no images`);
     }
   }
-  
+
   return {
     valid: issues.length === 0,
     issues,
@@ -693,7 +702,7 @@ async function composeEditorialHard({
   
   // Validate room structure if we have room data
   if (rooms.length > 0 && rooms[0] !== 'General') {
-    const validation = validateRoomStructure(raw, rooms);
+    const validation = validateRoomStructure(raw, rooms, imagesByRoom);
     if (!validation.valid) {
       console.warn('[composeEditorialHard] Room structure validation issues', {
         _cid,
@@ -2208,6 +2217,18 @@ export async function POST(
       });
     }
     
+    // Replace LLM-generated materialsLedger with DB-sourced one (has valid UUIDs)
+    if (materialsLedger) {
+      composed.materialsLedger = materialsLedger;
+    } else if (composed.materialsLedger?.items) {
+      // Strip non-UUID productIds/vendorIds that the LLM may have hallucinated
+      const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      for (const item of composed.materialsLedger.items) {
+        if (item.productId && !uuidRe.test(item.productId)) delete item.productId;
+        if (item.vendorId && !uuidRe.test(item.vendorId)) delete item.vendorId;
+      }
+    }
+
     // Prepare for BlocksSchema validation
     const composedLoose = composed;
 
