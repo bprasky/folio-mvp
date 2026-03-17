@@ -2,7 +2,8 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { X, Loader2 } from "lucide-react";
+import { X } from "lucide-react";
+import { GenerationProgress } from "@/components/ui/GenerationProgress";
 import { ModeSelection } from "./ModeSelection";
 import { TextInterview } from "./TextInterview/TextInterview";
 import { useInterviewSession } from "./hooks/useInterviewSession";
@@ -238,10 +239,11 @@ export function InterviewFlow({
             {...modeToInterviewTransition}
             className="h-full flex items-center justify-center"
           >
-            <div className="text-center space-y-4">
-              <Loader2 className="w-8 h-8 text-[var(--text-tertiary)] animate-spin mx-auto" />
-              <p className="text-[var(--text-secondary)]">Creating your story...</p>
-            </div>
+            <GenerationProgress
+              currentStep={0}
+              messages={["Creating your story…"]}
+              isGenerating={true}
+            />
           </motion.div>
         );
 
