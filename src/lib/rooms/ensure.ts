@@ -2,6 +2,7 @@
 
 import { prisma } from '@/lib/prisma';
 import { normalizeRoomName, normalizeRoomKey } from '@/lib/approvals-utils';
+import { inferRoomType } from './utils';
 
 /**
  * Ensure a room exists for a project by name
@@ -60,23 +61,6 @@ export async function ensureRoomByName(
   return newRoom;
 }
 
-/**
- * Infer room type from room name
- * Returns a room type string or null
- */
-function inferRoomType(roomName: string): string | null {
-  const lower = roomName.toLowerCase();
-  
-  if (lower.includes('kitchen')) return 'KITCHEN';
-  if (lower.includes('bath') || lower.includes('powder')) return 'BATH';
-  if (lower.includes('living') || lower.includes('family')) return 'LIVING';
-  if (lower.includes('bedroom') || lower.includes('bed') || lower.includes('nursery')) return 'BEDROOM';
-  if (lower.includes('dining')) return 'DINING';
-  if (lower.includes('office') || lower.includes('study')) return 'OFFICE';
-  if (lower.includes('entry') || lower.includes('foyer') || lower.includes('mudroom')) return 'ENTRY';
-  
-  return null;
-}
 
 
 

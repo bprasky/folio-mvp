@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import { formatRoomName } from '@/lib/utils/formatRoomName';
+import { inferRoomType } from '@/lib/rooms/utils';
 
 const prisma = new PrismaClient();
 
@@ -73,6 +74,14 @@ export async function PUT(
       const oldName = existingRoom.name;
       const newName = body.name as string;
 
+      // Re-infer room type from new name if user didn't explicitly set a type
+      if (body.type === undefined) {
+        const inferredType = inferRoomType(newName);
+        if (inferredType) {
+          updateData.type = inferredType;
+        }
+      }
+
       const room = await prisma.$transaction(async (tx) => {
         // 1. Update the Room record
         const updated = await tx.room.update({
@@ -96,12 +105,13 @@ export async function PUT(
           select: { id: true, expandedBlocks: true },
         });
 
+        const oldFormatted = formatRoomName(oldName);
+        const newFormatted = formatRoomName(newName);
+
         if (post?.expandedBlocks) {
           const blocks = post.expandedBlocks as Record<string, unknown>;
           const chapters = blocks.galleryChapters;
           if (Array.isArray(chapters)) {
-            const oldFormatted = formatRoomName(oldName);
-            const newFormatted = formatRoomName(newName);
             let changed = false;
 
             for (const chapter of chapters) {
@@ -124,10 +134,36 @@ export async function PUT(
         await tx.instagramCampaignPost.updateMany({
           where: {
             campaign: { projectId },
-            roomName: formatRoomName(oldName),
+            roomName: oldFormatted,
           },
-          data: { roomName: formatRoomName(newName) },
+          data: { roomName: newFormatted },
         });
+
+        // 5. Cascade to EditorialDraft.rawState galleryChapters titles
+        const drafts = await tx.editorialDraft.findMany({
+          where: { projectId },
+          select: { id: true, rawState: true },
+        });
+        for (const draft of drafts) {
+          if (!draft.rawState) continue;
+          const state = draft.rawState as Record<string, unknown>;
+          const draftChapters = state.galleryChapters;
+          if (Array.isArray(draftChapters)) {
+            let changed = false;
+            for (const chapter of draftChapters) {
+              if (chapter.title === oldFormatted) {
+                chapter.title = newFormatted;
+                changed = true;
+              }
+            }
+            if (changed) {
+              await tx.editorialDraft.update({
+                where: { id: draft.id },
+                data: { rawState: state },
+              });
+            }
+          }
+        }
 
         return updated;
       });

@@ -348,10 +348,11 @@ function buildEditorialPrompt({
   projectHistory,
   atelierSummary,
   roomsWithAnswers,
+  roomNameToType,
 }: {
   project: { title: string; description?: string | null; projectType?: string | null; clientType?: string | null };
-  answers: Array<{ q: string; a: string }>;
-  followups?: Array<{ q: string; a: string }>;
+  answers: Array<{ q: string; a: string; roomName?: string; isFollowUp?: boolean }>;
+  followups?: Array<{ q: string; a: string; roomName?: string }>;
   imagesByRoom: Record<string, Array<{ id: string }>>;
   productsByRoom: Record<string, Array<{ id: string; name: string; vendor?: string; imageId: string }>>;
   imageOrder: string[];
@@ -363,15 +364,18 @@ function buildEditorialPrompt({
   projectHistory?: string;
   atelierSummary?: string;
   roomsWithAnswers?: Map<string, number>;
+  roomNameToType?: Map<string, string | null>;
 }): string {
   // Separate Layer 1 (base) and Layer 2 (follow-up/deeper) answers
   const hasFollowups = followups && followups.length > 0;
 
-  // Build room-based context
+  // Build room-based context with type information
   const roomContexts = Object.entries(imagesByRoom).map(([room, images]) => {
     const products = productsByRoom[room] || [];
+    const roomType = roomNameToType?.get(room) || null;
     return {
       room,
+      roomType,
       images: images.length,
       products: products.map(p => `${p.name}${p.vendor ? ` (${p.vendor})` : ''}`),
       imageIds: images.map(img => img.id),
@@ -380,26 +384,58 @@ function buildEditorialPrompt({
 
   const materialsList = (materialsLedger?.items ?? []).map(i => i.name).join(', ');
 
-  // Format interview responses with [BASE] / [FOLLOW-UP] tags
-  const baseText = answers.map(qa => `[BASE] Q: ${qa.q}\nA: ${qa.a}`).join('\n\n');
-  const followupText = (followups || []).map(qa => `[FOLLOW-UP] Q: ${qa.q}\nA: ${qa.a}`).join('\n\n');
-  const interviewText = [baseText, followupText].filter(Boolean).join('\n\n');
+  // Group interview responses by room for structured context
+  const answersByRoom = new Map<string, Array<{ q: string; a: string; isFollowUp?: boolean }>>();
+  for (const qa of answers) {
+    const room = qa.roomName || 'General';
+    const list = answersByRoom.get(room) || [];
+    list.push(qa);
+    answersByRoom.set(room, list);
+  }
+  for (const qa of (followups || [])) {
+    const room = qa.roomName || 'General';
+    const list = answersByRoom.get(room) || [];
+    list.push({ ...qa, isFollowUp: true });
+    answersByRoom.set(room, list);
+  }
+
+  // Format interview text grouped by room
+  const interviewSections: string[] = [];
+  for (const [room, roomAnswers] of answersByRoom.entries()) {
+    const roomType = roomNameToType?.get(room);
+    const header = roomType
+      ? `[ROOM: ${room} (type: ${roomType})]`
+      : `[ROOM: ${room}]`;
+    const formatted = roomAnswers.map(qa => {
+      const tag = qa.isFollowUp ? '[FOLLOW-UP]' : '[BASE]';
+      return `${tag} Q: ${qa.q}\nA: ${qa.a}`;
+    }).join('\n\n');
+    interviewSections.push(`${header}\n${formatted}`);
+  }
+  const interviewText = interviewSections.join('\n\n');
 
   // Determine narrative depth instruction based on interview depth
   const depthInstruction = hasFollowups
     ? `The designer provided both initial responses and deeper follow-up answers. Use the follow-up answers for richer material — they contain the specific stories, reasoning, and evolution behind decisions. Write a full-depth feature.`
     : `Only initial interview responses are available. Write a tighter, more observational piece — focus on what the space achieves and let the design decisions speak through specific details rather than extended backstory.`;
 
+  // Determine required room count for gallery chapters
+  const roomsWithContent = roomsWithAnswers && roomsWithAnswers.size > 0
+    ? roomsWithAnswers
+    : new Map<string, number>();
+  const namedRooms = roomContexts.filter(r => r.room !== 'General');
+  const requiredChapterCount = Math.max(namedRooms.length, roomsWithContent.size, 1);
+
   return `Write a feature article about this project.
 
-## Designer's Interview Responses
+## Designer's Interview Responses (grouped by room)
 ${interviewText}
 
 ## Project Details
 - Project: ${project.title}
 - Designer: ${designerName || 'Not specified'}${designerStudio ? ` / ${designerStudio}` : ''}
 - Location: ${location || 'Not specified'}${project.description ? `\n- Project description: ${project.description}` : ''}${project.projectType && project.projectType !== 'UNSPECIFIED' ? `\n- Project type: ${project.projectType.toLowerCase().replace(/_/g, ' ')}` : ''}${project.clientType ? `\n- Client type: ${project.clientType.toLowerCase()}` : ''}
-- Rooms: ${roomContexts.map(r => r.room).join(', ')}
+- Rooms: ${roomContexts.map(r => r.roomType ? `${r.room} (type: ${r.roomType})` : r.room).join(', ')}
 - Products tagged: ${materialsList || 'None'}
 
 PROJECT CONTEXT: The project description is the narrative frame — it captures who the client is, what prompted the project, and what they asked for. Use it to open and thread through the piece. Location should inform design vocabulary (reference local light, climate, landscape). Do NOT open with "Nestled in..." or use the description verbatim — synthesize into narrative.${designerBio ? `
@@ -414,10 +450,13 @@ ${projectHistory}` : ''}${atelierSummary ? `
 ${atelierSummary}` : ''}
 
 ### Room Organization
-${roomContexts.map(r => `**${r.room}** — ${r.images} images, products: ${r.products.length > 0 ? r.products.join(', ') : 'none'}\n  Image IDs: ${r.imageIds.join(', ')}`).join('\n')}
+${roomContexts.map(r => `**${r.room}**${r.roomType ? ` (type: ${r.roomType})` : ''} — ${r.images} images, products: ${r.products.length > 0 ? r.products.join(', ') : 'none'}\n  Image IDs: ${r.imageIds.join(', ')}`).join('\n')}
 ${roomsWithAnswers && roomsWithAnswers.size > 0 ? `
-### Rooms with Interview Content (DO NOT OMIT ANY):
-${Array.from(roomsWithAnswers.entries()).map(([room, count]) => `- ${room}: ${count} answer${count > 1 ? 's' : ''}`).join('\n')}
+### Rooms with Interview Content (YOU MUST CREATE A GALLERY CHAPTER FOR EACH):
+${Array.from(roomsWithAnswers.entries()).map(([room, count]) => {
+  const roomType = roomNameToType?.get(room);
+  return `- ${room}${roomType ? ` (type: ${roomType})` : ''}: ${count} answer${count > 1 ? 's' : ''}`;
+}).join('\n')}
 ` : ''}
 ### Available Images (in order):
 ${imageOrder.join(', ')}
@@ -458,7 +497,7 @@ Produce a JSON object with this structure:
 
 ## Writing Instructions
 
-FOR THE SECTIONS ARRAY (3-5 narrative sections + 1-2 pullquotes):
+FOR THE SECTIONS ARRAY (${requiredChapterCount}-${requiredChapterCount + 2} narrative sections + 1-2 pullquotes):
 - Open with the space's defining tension, challenge, or idea — NOT with a product
 - Build through design logic: how one decision led to the next
 - Let products emerge as evidence within the story, not as items in a catalog
@@ -467,14 +506,14 @@ FOR THE SECTIONS ARRAY (3-5 narrative sections + 1-2 pullquotes):
 - Do NOT follow the pattern: name product → explain product → next product
 
 FOR GALLERY CHAPTERS:
-- Create 2-4 gallery chapters organized by VISUAL STORY, not by room.
-- A chapter might span two rooms if they share a material or idea.
-- A chapter might cover one corner of one room if that's where the interesting detail is.
-- Chapter titles should be observational, not room labels. Not "The Kitchen" — instead "Where the Brass Meets the Stone." Not "Living Room" — instead "A Conversation Between Light and Linen."
-- Not every image needs a chapter. Select the images that advance the story.
+- You MUST create exactly ${requiredChapterCount} gallery chapters — one for each room that has interview content or images.
+- REQUIRED rooms (do NOT omit or merge any): ${namedRooms.map(r => r.roomType ? `${r.room} (${r.roomType})` : r.room).join(', ')}
+- Each chapter title MUST include the room name (e.g., "The Kitchen: Where Brass Meets Stone" or simply "Kitchen").
+- Use the room type to correctly identify the space. A room named "Bar" with type BAR is a bar, NOT a bathroom.
+- Rooms with more interview answers deserve proportionally more editorial space.
 - 2-4 paragraphs per chapter.
 - Products appear in context of decisions, not as standalone descriptions.
-- Use EXACT image IDs from the room lists above.
+- Use EXACT image IDs from the room lists above. Assign each room's images to its chapter.
 
 FOR PULL QUOTES:
 - Pull quotes must be the designer's ACTUAL WORDS from the interview above
@@ -493,6 +532,7 @@ CRITICAL RULES:
 - Products serve the narrative — the narrative does not serve the products
 - No generic design language: ban "thoughtfully curated", "seamlessly blends", "creates a dynamic flow"
 - The article should read like a magazine feature, not a product specification sheet
+- EVERY room with interview content MUST get its own gallery chapter — do not drop, merge, or skip any room
 
 Begin.`;
 }
@@ -563,10 +603,11 @@ async function composeEditorialHard({
   atelierSummary,
   correlationId,
   roomsWithAnswers,
+  roomNameToType,
 }: {
   project: { title: string; description?: string | null; projectType?: string | null; clientType?: string | null };
-  answers: Array<{ q: string; a: string }>;
-  followups?: Array<{ q: string; a: string }>;
+  answers: Array<{ q: string; a: string; roomName?: string; isFollowUp?: boolean }>;
+  followups?: Array<{ q: string; a: string; roomName?: string }>;
   materialsLedger?: { items: Array<{ name: string; productId?: string }> };
   imageOrder?: string[];
   imageSelections?: Record<string, string[]>;
@@ -579,6 +620,7 @@ async function composeEditorialHard({
   atelierSummary?: string;
   correlationId?: string;
   roomsWithAnswers?: Map<string, number>;
+  roomNameToType?: Map<string, string | null>;
 }): Promise<{
   lead: { kicker: string; deck: string };
   galleryChapters: Array<{ title?: string; imageIds: string[]; body: string[] }>;
@@ -656,6 +698,7 @@ async function composeEditorialHard({
     projectHistory,
     atelierSummary,
     roomsWithAnswers,
+    roomNameToType,
   });
 
   console.log('[composeEditorialHard] Calling Claude API with room-organized prompt', {
@@ -1555,9 +1598,10 @@ export async function POST(
     // Fetch rooms for room-answer mapping (used by bridge and room coverage)
     const projectRooms = await prisma.room.findMany({
       where: { projectId },
-      select: { id: true, name: true },
+      select: { id: true, name: true, type: true },
     });
     const roomIdToName = new Map(projectRooms.map(r => [r.id, r.name]));
+    const roomNameToType = new Map(projectRooms.map(r => [r.name, r.type]));
 
     // Fetch or create post
     let post = await prisma.projectPost.findUnique({
@@ -1926,14 +1970,18 @@ export async function POST(
 
     // Normalize answers and followups for composition
     // Use prompt/questionText for the question text (not questionId which is an opaque ID)
+    // Preserve roomName so the prompt can group answers by room
     const normalizedAnswers = answers.map((a: any) => ({
       q: a.prompt || a.questionText || a.questionId || 'Question',
       a: a.answer || '',
+      roomName: a.roomName || undefined,
+      isFollowUp: a.isFollowUp || false,
     })).filter((x: { q: string; a: string }) => x.a.trim());
 
     const normalizedFollowUps = followupsArray.map((f: any) => ({
       q: f.question || f.prompt || 'Follow-up',
       a: f.answer || '',
+      roomName: f.roomName || undefined,
     })).filter((x: { q: string; a: string }) => x.a.trim());
 
     // Compose editorial blocks using AI (HARD-FAIL: no fallbacks)
@@ -2089,6 +2137,7 @@ export async function POST(
         atelierSummary,
         correlationId: _cid,
         roomsWithAnswers: roomsWithAnswers.size > 0 ? roomsWithAnswers : undefined,
+        roomNameToType: roomNameToType.size > 0 ? roomNameToType : undefined,
       });
     } catch (e: any) {
       console.error("[generate] hard-fail:", { code: e?.code, message: e?.message, _cid });

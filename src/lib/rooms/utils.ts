@@ -12,6 +12,24 @@ export function isUuid(value: string | null | undefined): boolean {
   return uuidRegex.test(value);
 }
 
+/**
+ * Infer room type from room name
+ * Returns a room type string or null
+ */
+export function inferRoomType(roomName: string): string | null {
+  const lower = roomName.toLowerCase();
+
+  if (lower.includes('kitchen')) return 'KITCHEN';
+  if (lower.includes('bath') || lower.includes('powder')) return 'BATH';
+  if (lower.includes('living') || lower.includes('family')) return 'LIVING';
+  if (lower.includes('bedroom') || lower.includes('bed') || lower.includes('nursery')) return 'BEDROOM';
+  if (lower.includes('dining')) return 'DINING';
+  if (lower.includes('office') || lower.includes('study')) return 'OFFICE';
+  if (lower.includes('entry') || lower.includes('foyer') || lower.includes('mudroom')) return 'ENTRY';
+
+  return null;
+}
+
 
 
 

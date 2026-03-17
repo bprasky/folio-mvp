@@ -389,8 +389,15 @@ export async function generateEditorialDraft(input: GenInput): Promise<{
     formattedProjectSection = `=== ABOUT THIS PROJECT ===\n${formatted}`;
   }
 
+  // Build room name → type lookup for prompt context
+  const roomNameToType = new Map<string, string>();
+  for (const r of input.rooms || []) {
+    if (r.type) roomNameToType.set(r.name, r.type);
+  }
+
   const formattedRoomSections = Array.from(answersByRoom.entries()).map(([room, answers]) => {
-    const roomHeader = `[ROOM: ${room}]`;
+    const roomType = roomNameToType.get(room);
+    const roomHeader = roomType ? `[ROOM: ${room} (type: ${roomType})]` : `[ROOM: ${room}]`;
     const formatted = answers.map(a => {
       const sourceTag = a.isFollowUp
         ? '[SOURCE: FOLLOW-UP — richer narrative, prioritize for anecdotes and direct quotes]'
@@ -402,8 +409,14 @@ export async function generateEditorialDraft(input: GenInput): Promise<{
 
   const formattedAnswers = [formattedProjectSection, formattedRoomSections].filter(Boolean).join('\n\n');
 
+  // Count rooms with interview content (excluding project-level)
+  const interviewedRoomCount = Array.from(roomAnswerCounts.keys()).filter(r => r !== 'About This Project' && r !== 'General').length;
+
   const roomCoverageList = roomAnswerCounts.size > 0
-    ? `\nROOMS WITH INTERVIEW CONTENT (DO NOT OMIT ANY):\n${Array.from(roomAnswerCounts.entries()).map(([room, count]) => `- ${room}: ${count} answer${count > 1 ? 's' : ''}`).join('\n')}\n`
+    ? `\nROOMS WITH INTERVIEW CONTENT (YOU MUST CREATE A SECTION FOR EACH — DO NOT OMIT OR MERGE ANY):\n${Array.from(roomAnswerCounts.entries()).map(([room, count]) => {
+        const roomType = roomNameToType.get(room);
+        return `- ${room}${roomType ? ` (type: ${roomType})` : ''}: ${count} answer${count > 1 ? 's' : ''}`;
+      }).join('\n')}\n`
     : '';
 
   const locationParts = [project?.city, project?.regionState].filter(Boolean);
@@ -445,11 +458,11 @@ ${FOLIO_TONE}
 
 Include:
 • A short headline and a 1–2 sentence intro ("dek")
-• 3–5 narrative paragraphs organized by room, covering ALL rooms listed below
+• Exactly ${interviewedRoomCount || 3} narrative sections — one per room with interview content. Do NOT merge rooms into a single section or drop any room.
 • A "Method" section describing process and design philosophy
 • End with a "Materials" section summarizing key tagged materials.
 
-ROOM COVERAGE: You MUST include editorial content for EVERY room that has interview answers. Rooms with more answers deserve proportionally more editorial space. If a room has no dedicated photos, weave its design story into the broader narrative. Do not skip any room.
+ROOM COVERAGE: You MUST include editorial content for EVERY room that has interview answers. Each room gets its own section. Rooms with more answers deserve proportionally more editorial space. If a room has no dedicated photos, weave its design story into the broader narrative. Do not skip any room. Do not merge rooms. Use the room type labels (e.g., KITCHEN, BAR, BATH) to correctly identify each space — do NOT guess room types from photos.
 
 WEAVING THE DESIGNER'S VOICE:
 
@@ -535,7 +548,7 @@ ${contextText}
         return await client.messages.create({
           model: modelName,
           temperature: 0.8,
-          max_tokens: 3500,
+          max_tokens: Math.max(3500, interviewedRoomCount * 800 + 1500), // Scale with room count: ~800 tokens per room + overhead
           system: `You are Folio, the voice of modern design storytelling. ${FOLIO_TONE}`,
           messages: [
             { role: "user", content: prompt },
