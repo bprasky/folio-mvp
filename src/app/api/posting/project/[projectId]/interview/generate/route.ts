@@ -2470,6 +2470,9 @@ export async function POST(
       update: {
         status: 'DRAFT',
         expandedBlocks: expandedBlocks,
+        // Clear stale overrides/history — fresh expandedBlocks invalidate old indices & originalBody
+        sectionOverrides: [],
+        sectionHistory: [],
         ...(heroAssetId ? { heroAssetId } : {}),
         ...(excerpt ? { excerpt } : {}),
         ...(credits ? { credits: credits as any } : {}),
@@ -2504,6 +2507,8 @@ export async function POST(
         slug,
         status: 'DRAFT',
         expandedBlocks: expandedBlocks,
+        sectionOverrides: [],
+        sectionHistory: [],
         ...(heroAssetId ? { heroAssetId } : {}),
         ...(excerpt ? { excerpt } : {}),
         ...(credits ? { credits: credits as any } : {}),
