@@ -64,7 +64,7 @@ export async function ensureRoomByName(
  * Infer room type from room name
  * Returns a room type string or null
  */
-function inferRoomType(roomName: string): string | null {
+export function inferRoomType(roomName: string): string | null {
   const lower = roomName.toLowerCase();
   
   if (lower.includes('kitchen')) return 'KITCHEN';
