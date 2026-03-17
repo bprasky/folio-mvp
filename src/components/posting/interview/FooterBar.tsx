@@ -9,6 +9,8 @@ interface FooterBarProps {
   onSubmit?: () => void;
   onGenerate?: () => void;
   onSkip?: () => void;
+  onSkipRoom?: () => void;
+  skipRoomLabel?: string;
   canProceed: boolean;
   isSubmitting?: boolean;
   isGenerating?: boolean;
@@ -27,6 +29,8 @@ export function FooterBar({
   onSubmit,
   onGenerate,
   onSkip,
+  onSkipRoom,
+  skipRoomLabel,
   canProceed,
   isSubmitting = false,
   isGenerating = false,
@@ -68,6 +72,14 @@ export function FooterBar({
         <div className="flex gap-3">
           {phase === "question" && (
             <>
+              {onSkipRoom && (
+                <button
+                  onClick={onSkipRoom}
+                  className="px-4 py-2 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+                >
+                  {skipRoomLabel || "Skip room \u2192"}
+                </button>
+              )}
               {onSubmit && (
                 <button
                   onClick={onSubmit}
