@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import { formatRoomName } from '@/lib/utils/formatRoomName';
-import { inferRoomType } from '@/lib/rooms/ensure';
+import { inferRoomType } from '@/lib/rooms/utils';
 
 const prisma = new PrismaClient();
 
