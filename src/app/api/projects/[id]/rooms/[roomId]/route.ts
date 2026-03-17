@@ -7,6 +7,10 @@ import { inferRoomType } from '@/lib/rooms/utils';
 
 const prisma = new PrismaClient();
 
+function escapeRegExp(s: string) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string; roomId: string } }
@@ -112,8 +116,8 @@ export async function PUT(
             let changed = false;
 
             for (const chapter of chapters) {
-              if (chapter.title === oldFormatted) {
-                chapter.title = newFormatted;
+              if (typeof chapter.title === 'string' && new RegExp(escapeRegExp(oldFormatted), 'i').test(chapter.title)) {
+                chapter.title = chapter.title.replace(new RegExp(escapeRegExp(oldFormatted), 'gi'), newFormatted);
                 changed = true;
               }
             }
@@ -123,6 +127,33 @@ export async function PUT(
                 where: { id: post.id },
                 data: { expandedBlocks: blocks },
               });
+            }
+          }
+        }
+
+        // 3b. Cascade to ProjectPost.provenance interview answer roomNames
+        if (post) {
+          const postWithProv = await tx.projectPost.findFirst({
+            where: { projectId },
+            select: { id: true, provenance: true },
+          });
+          if (postWithProv?.provenance) {
+            const prov = postWithProv.provenance as any;
+            const payloadAnswers = prov?.interview?.payload?.answers;
+            if (Array.isArray(payloadAnswers)) {
+              let provChanged = false;
+              for (const ans of payloadAnswers) {
+                if (ans.roomName && ans.roomName.toLowerCase() === oldName.toLowerCase()) {
+                  ans.roomName = newName;
+                  provChanged = true;
+                }
+              }
+              if (provChanged) {
+                await tx.projectPost.update({
+                  where: { id: postWithProv.id },
+                  data: { provenance: prov },
+                });
+              }
             }
           }
         }
@@ -148,8 +179,8 @@ export async function PUT(
           if (Array.isArray(draftChapters)) {
             let changed = false;
             for (const chapter of draftChapters) {
-              if (chapter.title === oldFormatted) {
-                chapter.title = newFormatted;
+              if (typeof chapter.title === 'string' && new RegExp(escapeRegExp(oldFormatted), 'i').test(chapter.title)) {
+                chapter.title = chapter.title.replace(new RegExp(escapeRegExp(oldFormatted), 'gi'), newFormatted);
                 changed = true;
               }
             }
