@@ -26,6 +26,7 @@ import { useRoomInterviewFlow } from "@/hooks/useRoomInterviewFlow";
 import { useBackgroundEvaluation } from "@/hooks/useBackgroundEvaluation";
 import { LinkedImagePreview } from "@/components/editorial/LinkedImagePreview";
 import { RoomProgressBar } from "./RoomProgressBar";
+import { GenerationProgress } from "@/components/ui/GenerationProgress";
 import { computeRoundBudget } from "@/lib/editorial/roomPacing";
 import type { InterviewQuestion as ContextualQuestion } from "@/types/interview";
 
@@ -1895,36 +1896,14 @@ export function InterviewModal({
           </div>
         ) : phase === "complete" ? (
           /* Generation in progress — auto-triggered after last question */
-          <div className="flex-1 flex flex-col items-center justify-center px-8 py-16">
-            <div className="text-center space-y-6">
-              {isGenerating ? (
-                <>
-                  <div className="animate-spin rounded-full h-8 w-8 border-2 border-[var(--accent)] border-t-transparent mx-auto" />
-                  <div>
-                    <h3 className="text-xl font-serif text-[var(--text-primary)] mb-2">
-                      Creating your story...
-                    </h3>
-                    <p className="text-sm text-[var(--text-secondary)]">
-                      {GENERATION_MESSAGES[generationStep]}
-                    </p>
-                  </div>
-                </>
-              ) : error ? (
-                <div>
-                  <h3 className="text-xl font-serif text-[var(--text-primary)] mb-2">
-                    {generationAttempts >= MAX_GENERATION_ATTEMPTS
-                      ? "Generation unavailable"
-                      : `Generation failed — attempt ${generationAttempts} of ${MAX_GENERATION_ATTEMPTS}`}
-                  </h3>
-                  <p className="text-sm text-[var(--text-secondary)] max-w-md mx-auto">
-                    {error}
-                  </p>
-                </div>
-              ) : (
-                <div className="animate-spin rounded-full h-8 w-8 border-2 border-[var(--accent)] border-t-transparent mx-auto" />
-              )}
-            </div>
-          </div>
+          <GenerationProgress
+            currentStep={generationStep}
+            messages={GENERATION_MESSAGES}
+            isGenerating={isGenerating}
+            error={error}
+            generationAttempts={generationAttempts}
+            maxAttempts={MAX_GENERATION_ATTEMPTS}
+          />
         ) : (
           /* Followup phase (batch flow for backward compatibility) */
           <div className={`mt-6 md:flex md:items-start md:gap-6 ${phase === "followup" ? "flex-1 min-h-0 px-6 pb-6" : ""}`}>
