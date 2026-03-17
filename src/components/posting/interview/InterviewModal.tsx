@@ -158,6 +158,11 @@ export function InterviewModal({
   const bannerTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const autosaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Answer-change detection: snapshot answers when navigating backward
+  const answerSnapshotsRef = useRef<Map<string, string>>(new Map());
+  const [showRegeneratePrompt, setShowRegeneratePrompt] = useState(false);
+  const [pendingResubmitQuestionId, setPendingResubmitQuestionId] = useState<string | null>(null);
+
   const baseAnswers = useMemo(() => answers.filter((answer) => !answer.isFollowUp), [answers]);
   const followUpAnswersState = useMemo(() => answers.filter((answer) => answer.isFollowUp), [answers]);
   
@@ -840,6 +845,21 @@ export function InterviewModal({
     }
 
     setFieldErrors({});
+
+    // Check if this is a re-submission of a changed answer (user went back and edited)
+    const previousSnapshot = answerSnapshotsRef.current.get(currentQuestion.id);
+    const trimmedAnswer = currentAnswer.trim().slice(0, 2000);
+    if (previousSnapshot !== undefined && previousSnapshot !== trimmedAnswer) {
+      const hadFollowUps = followUps.some(group => group.questionId === currentQuestion.id && group.followUps.length > 0);
+      if (hadFollowUps) {
+        setPendingResubmitQuestionId(currentQuestion.id);
+        setShowRegeneratePrompt(true);
+        return; // Pause — wait for user choice
+      }
+      // No follow-ups existed, clear snapshot and proceed normally
+      answerSnapshotsRef.current.delete(currentQuestion.id);
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -849,7 +869,7 @@ export function InterviewModal({
         role: currentQuestion.role === "ANY" ? "DESIGNER" : currentQuestion.role,
         section: currentQuestion.section,
         category: deriveCategory(currentQuestion.section),
-        answer: currentAnswer.trim().slice(0, 2000),
+        answer: trimmedAnswer,
         isFollowUp: false,
       };
 
@@ -956,7 +976,29 @@ export function InterviewModal({
     } finally {
       setIsSubmitting(false);
     }
-  }, [currentQuestion, currentAnswer, currentQuestionIndex, totalQuestions, persistAnswers, generateSingleFollowUp, handleBanner]);
+  }, [currentQuestion, currentAnswer, currentQuestionIndex, totalQuestions, persistAnswers, generateSingleFollowUp, handleBanner, followUps]);
+
+  // Handle regeneration prompt choices when a previous answer was changed
+  const handleKeepExistingFollowUps = useCallback(async () => {
+    if (!pendingResubmitQuestionId) return;
+    answerSnapshotsRef.current.delete(pendingResubmitQuestionId);
+    setShowRegeneratePrompt(false);
+    setPendingResubmitQuestionId(null);
+    // Re-trigger submit now that the snapshot is cleared
+    handleQuestionAnswerSubmit();
+  }, [pendingResubmitQuestionId, handleQuestionAnswerSubmit]);
+
+  const handleRegenerateFollowUps = useCallback(async () => {
+    if (!pendingResubmitQuestionId || !currentQuestion) return;
+    const questionId = pendingResubmitQuestionId;
+    answerSnapshotsRef.current.delete(questionId);
+    // Remove old follow-ups for this question
+    setFollowUps((prev) => prev.filter((group) => group.questionId !== questionId));
+    setShowRegeneratePrompt(false);
+    setPendingResubmitQuestionId(null);
+    // Re-trigger submit — generateSingleFollowUp will be called as part of normal flow
+    handleQuestionAnswerSubmit();
+  }, [pendingResubmitQuestionId, currentQuestion, handleQuestionAnswerSubmit]);
 
   // Handle answer change for current question
   const handleCurrentAnswerChange = useCallback(
@@ -1793,6 +1835,9 @@ export function InterviewModal({
                       setPhase("question");
                       setStep("answer");
                       setShowDraftResume(false);
+                      answerSnapshotsRef.current.clear();
+                      setShowRegeneratePrompt(false);
+                      setPendingResubmitQuestionId(null);
 
                       // Clear server-side answers (matches DraftsPanel pattern)
                       const clearRes = await fetch(`/api/posting/project/${projectId}/interview`, {
@@ -1863,35 +1908,6 @@ export function InterviewModal({
               questionMetadata={questionMetadataMap.get(currentQuestion?.id || "")}
               images={images}
             />
-            {/* Room pacing: Skip room button + warnings */}
-            {hasRoomPacing && (
-              <div className="px-8 py-3 border-t border-[var(--ridge-outer)]/30 flex items-center justify-between">
-                {roomFlow.canSkipRoom ? (
-                  <button
-                    onClick={() => {
-                      roomFlow.skipRoom();
-                      // Check if all rooms done after skip
-                      if (roomFlow.canFinish) {
-                        autoGenerateRef.current = true;
-                        setPhase("complete");
-                      }
-                    }}
-                    className="text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
-                  >
-                    {roomFlow.remainingInRoom > 0
-                      ? `Skip (${roomFlow.remainingInRoom} remaining) \u2192`
-                      : 'Move to next room \u2192'}
-                  </button>
-                ) : (
-                  <div />
-                )}
-                {roomFlow.activeWarnings.length > 0 && (
-                  <span className="text-xs text-yellow-600">
-                    {roomFlow.activeWarnings.length} room{roomFlow.activeWarnings.length > 1 ? "s" : ""} with important content unanswered
-                  </span>
-                )}
-              </div>
-            )}
           </div>
         ) : phase === "complete" ? (
           /* Generation in progress — auto-triggered after last question */
@@ -1942,11 +1958,48 @@ export function InterviewModal({
           </div>
         )}
 
+            {showRegeneratePrompt && (
+              <div className="px-8 py-3 border-t border-[var(--ridge-outer)]/30 bg-amber-50/80">
+                <div className="max-w-3xl mx-auto flex items-center justify-between gap-4">
+                  <p className="text-sm text-[var(--text-primary)]">
+                    This answer has changed. Regenerate follow-up questions?
+                  </p>
+                  <div className="flex gap-3 shrink-0">
+                    <button
+                      onClick={handleKeepExistingFollowUps}
+                      className="px-4 py-1.5 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+                    >
+                      Keep existing
+                    </button>
+                    <button
+                      onClick={handleRegenerateFollowUps}
+                      className="px-4 py-1.5 text-sm font-medium text-white bg-[var(--accent)] rounded-full hover:bg-[var(--accent-hover)] transition-colors"
+                    >
+                      Regenerate
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {!showDraftResume && !(phase === "complete" && isGenerating) && <FooterBar
               phase={phase}
               onBack={
-                phase === "question" && currentQuestionIndex > 0
-                  ? () => setCurrentQuestionIndex((prev) => prev - 1)
+                phase === "question" && (hasRoomPacing ? roomFlow.canGoBack : currentQuestionIndex > 0)
+                  ? () => {
+                      // Snapshot the current question's persisted answer before navigating back
+                      if (currentQuestion) {
+                        const existing = baseAnswers.find(a => a.questionId === currentQuestion.id);
+                        if (existing?.answer) {
+                          answerSnapshotsRef.current.set(currentQuestion.id, existing.answer);
+                        }
+                      }
+                      if (hasRoomPacing) {
+                        roomFlow.goToPreviousQuestion();
+                      } else {
+                        setCurrentQuestionIndex((prev) => prev - 1);
+                      }
+                    }
                   : step === "followups"
                   ? () => setStep("answer")
                   : undefined
@@ -1961,6 +2014,24 @@ export function InterviewModal({
                   ? handleGenerate
                   : (banner && followupsTried && step === "answer")
                   ? handleGenerate
+                  : undefined
+              }
+              onSkipRoom={
+                hasRoomPacing && roomFlow.canSkipRoom
+                  ? () => {
+                      roomFlow.skipRoom();
+                      if (roomFlow.canFinish) {
+                        autoGenerateRef.current = true;
+                        setPhase("complete");
+                      }
+                    }
+                  : undefined
+              }
+              skipRoomLabel={
+                hasRoomPacing && roomFlow.canSkipRoom
+                  ? roomFlow.remainingInRoom > 0
+                    ? `Skip (${roomFlow.remainingInRoom} remaining) \u2192`
+                    : 'Move to next room \u2192'
                   : undefined
               }
               canProceed={

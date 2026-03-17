@@ -92,6 +92,10 @@ export interface RoomInterviewFlowState {
   insertRoundQuestions: (questions: InterviewQuestion[]) => void;
   /** Complete a round transition (when no follow-ups generated or room doesn't qualify) */
   completeRoundTransition: () => void;
+  /** Navigate to the previous question within the current room/phase */
+  goToPreviousQuestion: () => void;
+  /** Whether the user can go back to a previous question */
+  canGoBack: boolean;
   initFromSavedState: (
     answeredQuestionIds: Set<string>,
     savedProgress: RoomProgressMap | null,
@@ -526,6 +530,23 @@ export function useRoomInterviewFlow(
     [rooms, roomProgress],
   );
 
+  // Navigate to the previous question within the current room/phase
+  const canGoBack = crossRoomPhase
+    ? crossRoomQuestionIndex > 0
+    : currentQuestionIndex > 0;
+
+  const goToPreviousQuestion = useCallback(() => {
+    if (crossRoomPhase) {
+      if (crossRoomQuestionIndex > 0) {
+        setCrossRoomQuestionIndex((i) => i - 1);
+      }
+      return;
+    }
+    if (currentQuestionIndex > 0) {
+      setCurrentQuestionIndex((i) => i - 1);
+    }
+  }, [crossRoomPhase, crossRoomQuestionIndex, currentQuestionIndex]);
+
   return {
     rooms,
     currentRoomIndex,
@@ -550,10 +571,12 @@ export function useRoomInterviewFlow(
     minimumTotalAnswers: globalGates.minimumTotalAnswers,
     totalAnswerCount,
     hasStarted,
+    canGoBack,
     advanceQuestion,
     skipRoom,
     recordAnswer,
     goToRoom,
+    goToPreviousQuestion,
     insertFollowUpQuestions,
     insertRoundQuestions,
     completeRoundTransition,
