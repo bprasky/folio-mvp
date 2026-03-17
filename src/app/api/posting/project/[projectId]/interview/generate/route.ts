@@ -348,7 +348,6 @@ function buildEditorialPrompt({
   projectHistory,
   atelierSummary,
   roomsWithAnswers,
-  roomNameToType,
 }: {
   project: { title: string; description?: string | null; projectType?: string | null; clientType?: string | null };
   answers: Array<{ q: string; a: string; roomName?: string; isFollowUp?: boolean }>;
@@ -364,18 +363,15 @@ function buildEditorialPrompt({
   projectHistory?: string;
   atelierSummary?: string;
   roomsWithAnswers?: Map<string, number>;
-  roomNameToType?: Map<string, string | null>;
 }): string {
   // Separate Layer 1 (base) and Layer 2 (follow-up/deeper) answers
   const hasFollowups = followups && followups.length > 0;
 
-  // Build room-based context with type information
+  // Build room-based context
   const roomContexts = Object.entries(imagesByRoom).map(([room, images]) => {
     const products = productsByRoom[room] || [];
-    const roomType = roomNameToType?.get(room) || null;
     return {
       room,
-      roomType,
       images: images.length,
       products: products.map(p => `${p.name}${p.vendor ? ` (${p.vendor})` : ''}`),
       imageIds: images.map(img => img.id),
@@ -402,10 +398,7 @@ function buildEditorialPrompt({
   // Format interview text grouped by room
   const interviewSections: string[] = [];
   for (const [room, roomAnswers] of answersByRoom.entries()) {
-    const roomType = roomNameToType?.get(room);
-    const header = roomType
-      ? `[ROOM: ${room} (type: ${roomType})]`
-      : `[ROOM: ${room}]`;
+    const header = `[ROOM: ${room}]`;
     const formatted = roomAnswers.map(qa => {
       const tag = qa.isFollowUp ? '[FOLLOW-UP]' : '[BASE]';
       return `${tag} Q: ${qa.q}\nA: ${qa.a}`;
@@ -435,7 +428,7 @@ ${interviewText}
 - Project: ${project.title}
 - Designer: ${designerName || 'Not specified'}${designerStudio ? ` / ${designerStudio}` : ''}
 - Location: ${location || 'Not specified'}${project.description ? `\n- Project description: ${project.description}` : ''}${project.projectType && project.projectType !== 'UNSPECIFIED' ? `\n- Project type: ${project.projectType.toLowerCase().replace(/_/g, ' ')}` : ''}${project.clientType ? `\n- Client type: ${project.clientType.toLowerCase()}` : ''}
-- Rooms: ${roomContexts.map(r => r.roomType ? `${r.room} (type: ${r.roomType})` : r.room).join(', ')}
+- Rooms: ${roomContexts.map(r => r.room).join(', ')}
 - Products tagged: ${materialsList || 'None'}
 
 PROJECT CONTEXT: The project description is the narrative frame — it captures who the client is, what prompted the project, and what they asked for. Use it to open and thread through the piece. Location should inform design vocabulary (reference local light, climate, landscape). Do NOT open with "Nestled in..." or use the description verbatim — synthesize into narrative.${designerBio ? `
@@ -450,12 +443,11 @@ ${projectHistory}` : ''}${atelierSummary ? `
 ${atelierSummary}` : ''}
 
 ### Room Organization
-${roomContexts.map(r => `**${r.room}**${r.roomType ? ` (type: ${r.roomType})` : ''} — ${r.images} images, products: ${r.products.length > 0 ? r.products.join(', ') : 'none'}\n  Image IDs: ${r.imageIds.join(', ')}`).join('\n')}
+${roomContexts.map(r => `**${r.room}** — ${r.images} images, products: ${r.products.length > 0 ? r.products.join(', ') : 'none'}\n  Image IDs: ${r.imageIds.join(', ')}`).join('\n')}
 ${roomsWithAnswers && roomsWithAnswers.size > 0 ? `
 ### Rooms with Interview Content (YOU MUST CREATE A GALLERY CHAPTER FOR EACH):
 ${Array.from(roomsWithAnswers.entries()).map(([room, count]) => {
-  const roomType = roomNameToType?.get(room);
-  return `- ${room}${roomType ? ` (type: ${roomType})` : ''}: ${count} answer${count > 1 ? 's' : ''}`;
+  return `- ${room}: ${count} answer${count > 1 ? 's' : ''}`;
 }).join('\n')}
 ` : ''}
 ### Available Images (in order):
@@ -507,9 +499,9 @@ FOR THE SECTIONS ARRAY (${requiredChapterCount}-${requiredChapterCount + 2} narr
 
 FOR GALLERY CHAPTERS:
 - You MUST create exactly ${requiredChapterCount} gallery chapters — one for each room that has interview content or images.
-- REQUIRED rooms (do NOT omit or merge any): ${namedRooms.map(r => r.roomType ? `${r.room} (${r.roomType})` : r.room).join(', ')}
+- REQUIRED rooms (do NOT omit or merge any): ${namedRooms.map(r => r.room).join(', ')}
 - Each chapter title MUST include the room name (e.g., "The Kitchen: Where Brass Meets Stone" or simply "Kitchen").
-- Use the room type to correctly identify the space. A room named "Bar" with type BAR is a bar, NOT a bathroom.
+- Use the designer's exact room name as the section heading — do not rename or reinterpret rooms.
 - Rooms with more interview answers deserve proportionally more editorial space.
 - 2-4 paragraphs per chapter.
 - Products appear in context of decisions, not as standalone descriptions.
@@ -603,7 +595,6 @@ async function composeEditorialHard({
   atelierSummary,
   correlationId,
   roomsWithAnswers,
-  roomNameToType,
 }: {
   project: { title: string; description?: string | null; projectType?: string | null; clientType?: string | null };
   answers: Array<{ q: string; a: string; roomName?: string; isFollowUp?: boolean }>;
@@ -620,7 +611,6 @@ async function composeEditorialHard({
   atelierSummary?: string;
   correlationId?: string;
   roomsWithAnswers?: Map<string, number>;
-  roomNameToType?: Map<string, string | null>;
 }): Promise<{
   lead: { kicker: string; deck: string };
   galleryChapters: Array<{ title?: string; imageIds: string[]; body: string[] }>;
@@ -698,7 +688,6 @@ async function composeEditorialHard({
     projectHistory,
     atelierSummary,
     roomsWithAnswers,
-    roomNameToType,
   });
 
   console.log('[composeEditorialHard] Calling Claude API with room-organized prompt', {
@@ -1598,10 +1587,9 @@ export async function POST(
     // Fetch rooms for room-answer mapping (used by bridge and room coverage)
     const projectRooms = await prisma.room.findMany({
       where: { projectId },
-      select: { id: true, name: true, type: true },
+      select: { id: true, name: true },
     });
     const roomIdToName = new Map(projectRooms.map(r => [r.id, r.name]));
-    const roomNameToType = new Map(projectRooms.map(r => [r.name, r.type]));
 
     // Fetch or create post
     let post = await prisma.projectPost.findUnique({
@@ -2137,7 +2125,6 @@ export async function POST(
         atelierSummary,
         correlationId: _cid,
         roomsWithAnswers: roomsWithAnswers.size > 0 ? roomsWithAnswers : undefined,
-        roomNameToType: roomNameToType.size > 0 ? roomNameToType : undefined,
       });
     } catch (e: any) {
       console.error("[generate] hard-fail:", { code: e?.code, message: e?.message, _cid });

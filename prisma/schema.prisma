@@ -626,7 +626,7 @@ model Category {
 model Room {
   id            String         @id @default(uuid())
   name          String
-  type          String? // Optional room type: KITCHEN, BATH, LIVING, BEDROOM, DINING, OFFICE, ENTRY
+  type          String? // Optional room type: KITCHEN, BATH, LIVING, BEDROOM, DINING, OFFICE, ENTRY, BAR, PANTRY, LAUNDRY, MUDROOM, NURSERY, PLAYROOM, HOME_THEATER, GYM, POOL, SUNROOM, POWDER_ROOM, LIBRARY, STUDY, LOUNGE, WINE_CELLAR, WALK_IN_CLOSET, BUTLER_PANTRY
   projectId     String
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
