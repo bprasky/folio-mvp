@@ -76,10 +76,7 @@ export async function PUT(
 
       // Re-infer room type from new name if user didn't explicitly set a type
       if (body.type === undefined) {
-        const inferredType = inferRoomType(newName);
-        if (inferredType) {
-          updateData.type = inferredType;
-        }
+        updateData.type = inferRoomType(newName); // null clears stale type
       }
 
       const room = await prisma.$transaction(async (tx) => {

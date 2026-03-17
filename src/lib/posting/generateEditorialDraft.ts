@@ -389,15 +389,8 @@ export async function generateEditorialDraft(input: GenInput): Promise<{
     formattedProjectSection = `=== ABOUT THIS PROJECT ===\n${formatted}`;
   }
 
-  // Build room name → type lookup for prompt context
-  const roomNameToType = new Map<string, string>();
-  for (const r of input.rooms || []) {
-    if (r.type) roomNameToType.set(r.name, r.type);
-  }
-
   const formattedRoomSections = Array.from(answersByRoom.entries()).map(([room, answers]) => {
-    const roomType = roomNameToType.get(room);
-    const roomHeader = roomType ? `[ROOM: ${room} (type: ${roomType})]` : `[ROOM: ${room}]`;
+    const roomHeader = `[ROOM: ${room}]`;
     const formatted = answers.map(a => {
       const sourceTag = a.isFollowUp
         ? '[SOURCE: FOLLOW-UP — richer narrative, prioritize for anecdotes and direct quotes]'
@@ -414,8 +407,7 @@ export async function generateEditorialDraft(input: GenInput): Promise<{
 
   const roomCoverageList = roomAnswerCounts.size > 0
     ? `\nROOMS WITH INTERVIEW CONTENT (YOU MUST CREATE A SECTION FOR EACH — DO NOT OMIT OR MERGE ANY):\n${Array.from(roomAnswerCounts.entries()).map(([room, count]) => {
-        const roomType = roomNameToType.get(room);
-        return `- ${room}${roomType ? ` (type: ${roomType})` : ''}: ${count} answer${count > 1 ? 's' : ''}`;
+        return `- ${room}: ${count} answer${count > 1 ? 's' : ''}`;
       }).join('\n')}\n`
     : '';
 
@@ -462,7 +454,7 @@ Include:
 • A "Method" section describing process and design philosophy
 • End with a "Materials" section summarizing key tagged materials.
 
-ROOM COVERAGE: You MUST include editorial content for EVERY room that has interview answers. Each room gets its own section. Rooms with more answers deserve proportionally more editorial space. If a room has no dedicated photos, weave its design story into the broader narrative. Do not skip any room. Do not merge rooms. Use the room type labels (e.g., KITCHEN, BAR, BATH) to correctly identify each space — do NOT guess room types from photos.
+ROOM COVERAGE: You MUST include editorial content for EVERY room that has interview answers. Each room gets its own section. Rooms with more answers deserve proportionally more editorial space. If a room has no dedicated photos, weave its design story into the broader narrative. Do not skip any room. Do not merge rooms. Use the designer's exact room names as section headings — do not rename or reinterpret rooms.
 
 WEAVING THE DESIGNER'S VOICE:
 

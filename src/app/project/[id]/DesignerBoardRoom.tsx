@@ -19,9 +19,11 @@ const ROOM_TYPE_SUGGESTIONS = [
   'Dining Room', 'Office', 'Entry / Foyer',
   'Bar', 'Wine Cellar', 'Gym', 'Sauna',
   'Exterior', 'Patio', 'Pool House',
-  'Mudroom', 'Laundry', 'Pantry', 'Closet',
-  'Media Room', 'Library', 'Nursery',
-  'Hallway', 'Garage', 'Sunroom',
+  'Mudroom', 'Laundry', 'Pantry', 'Walk-In Closet',
+  'Media Room', 'Library', 'Nursery', 'Playroom',
+  'Hallway', 'Garage', 'Sunroom', 'Lounge',
+  'Powder Room', 'Study', 'Home Theater',
+  'Pool', 'Butler Pantry',
 ];
 
 // Maps display labels to internal type keys for known template types
@@ -33,6 +35,23 @@ const DISPLAY_TO_TYPE_KEY: Record<string, string> = {
   'dining room': 'DINING',
   'office': 'OFFICE',
   'entry / foyer': 'ENTRY',
+  'bar': 'BAR',
+  'pantry': 'PANTRY',
+  'laundry': 'LAUNDRY',
+  'mudroom': 'MUDROOM',
+  'nursery': 'NURSERY',
+  'playroom': 'PLAYROOM',
+  'home theater': 'HOME_THEATER',
+  'gym': 'GYM',
+  'pool': 'POOL',
+  'sunroom': 'SUNROOM',
+  'powder room': 'POWDER_ROOM',
+  'library': 'LIBRARY',
+  'study': 'STUDY',
+  'lounge': 'LOUNGE',
+  'wine cellar': 'WINE_CELLAR',
+  'walk-in closet': 'WALK_IN_CLOSET',
+  'butler pantry': 'BUTLER_PANTRY',
 };
 
 // Maps internal type keys back to display labels
@@ -44,6 +63,23 @@ const TYPE_KEY_TO_DISPLAY: Record<string, string> = {
   'DINING': 'Dining Room',
   'OFFICE': 'Office',
   'ENTRY': 'Entry / Foyer',
+  'BAR': 'Bar',
+  'PANTRY': 'Pantry',
+  'LAUNDRY': 'Laundry',
+  'MUDROOM': 'Mudroom',
+  'NURSERY': 'Nursery',
+  'PLAYROOM': 'Playroom',
+  'HOME_THEATER': 'Home Theater',
+  'GYM': 'Gym',
+  'POOL': 'Pool',
+  'SUNROOM': 'Sunroom',
+  'POWDER_ROOM': 'Powder Room',
+  'LIBRARY': 'Library',
+  'STUDY': 'Study',
+  'LOUNGE': 'Lounge',
+  'WINE_CELLAR': 'Wine Cellar',
+  'WALK_IN_CLOSET': 'Walk-In Closet',
+  'BUTLER_PANTRY': 'Butler Pantry',
 };
 
 function displayToTypeKey(display: string): string | null {
