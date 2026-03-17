@@ -502,10 +502,11 @@ FOR GALLERY CHAPTERS:
 - REQUIRED rooms (do NOT omit or merge any): ${namedRooms.map(r => r.room).join(', ')}
 - Each chapter title MUST include the room name (e.g., "The Kitchen: Where Brass Meets Stone" or simply "Kitchen").
 - Use the designer's exact room name as the section heading — do not rename or reinterpret rooms.
+- Do NOT create thematic chapters that span multiple rooms. Each chapter = one room.
 - Rooms with more interview answers deserve proportionally more editorial space.
 - 2-4 paragraphs per chapter.
 - Products appear in context of decisions, not as standalone descriptions.
-- Use EXACT image IDs from the room lists above. Assign each room's images to its chapter.
+- CRITICAL: Use ONLY the exact image IDs listed in the "Image IDs" lines above. Copy-paste them exactly. Do NOT invent or modify image IDs. Each room's chapter MUST use that room's image IDs.
 
 FOR PULL QUOTES:
 - Pull quotes must be the designer's ACTUAL WORDS from the interview above
@@ -807,6 +808,9 @@ async function composeEditorialHard({
     arr.findIndex(q => q.text.trim() === quote.text.trim()) === index
   );
 
+  // Build set of known valid image IDs for strict validation
+  const knownImageIdSet = new Set(imageIds);
+
   // Process each gallery chapter
   if (Array.isArray(composed.galleryChapters)) {
     for (const chapter of composed.galleryChapters as any[]) {
@@ -815,14 +819,18 @@ async function composeEditorialHard({
         continue;
       }
 
-      // Validate imageIds are valid UUIDs
-      const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      // Validate imageIds against actual known image IDs (not just UUID format)
+      // This prevents LLM-hallucinated UUIDs from failing Zod v4 strict UUID validation
       const validImageIds = chapter.imageIds
-        .filter((id: any) => typeof id === 'string' && uuidPattern.test(id))
+        .filter((id: any) => typeof id === 'string' && knownImageIdSet.has(id))
         .slice(0, 8);
 
       if (validImageIds.length === 0) {
-        console.warn('[composeEditorialHard] Skipping chapter with no valid imageIds', { _cid, title: chapter.title });
+        console.warn('[composeEditorialHard] Skipping chapter with no valid imageIds (none matched known images)', {
+          _cid,
+          title: chapter.title,
+          providedIds: chapter.imageIds?.slice(0, 3),
+        });
         continue;
       }
 
@@ -2258,7 +2266,8 @@ export async function POST(
       composed.materialsLedger = materialsLedger;
     } else if (composed.materialsLedger?.items) {
       // Strip non-UUID productIds/vendorIds that the LLM may have hallucinated
-      const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      // Use strict RFC 4122 pattern matching Zod v4's uuid() validation
+      const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
       for (const item of composed.materialsLedger.items) {
         if (item.productId && !uuidRe.test(item.productId)) delete item.productId;
         if (item.vendorId && !uuidRe.test(item.vendorId)) delete item.vendorId;
