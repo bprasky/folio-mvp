@@ -1980,6 +1980,14 @@ export async function POST(
       roomName: f.roomName || undefined,
     })).filter((x: { q: string; a: string }) => x.a.trim());
 
+    // Debug: log room names as they'll appear in the generation prompt
+    console.log('[ROOM DEBUG] Rooms formatted for generation prompt:', {
+      answerRoomNames: [...new Set(normalizedAnswers.map((a: any) => a.roomName).filter(Boolean))],
+      followupRoomNames: [...new Set(normalizedFollowUps.map((f: any) => f.roomName).filter(Boolean))],
+      imageRooms: [...new Set(images.map((img: any) => img.room).filter(Boolean))],
+      _cid,
+    });
+
     // Compose editorial blocks using AI (HARD-FAIL: no fallbacks)
     // Prepare images with room data for room-based organization
     const validImages = images.filter(img => validImageIds.includes(img.id));
