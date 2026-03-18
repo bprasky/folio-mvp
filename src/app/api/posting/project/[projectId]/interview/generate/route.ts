@@ -2033,9 +2033,59 @@ export async function POST(
     // Compose editorial blocks using AI (HARD-FAIL: no fallbacks)
     // Prepare images with room data for room-based organization
     const validImages = images.filter(img => validImageIds.includes(img.id));
+
+    // Reconcile stale ProjectImage.room strings with current Room.name values.
+    // ProjectImage.room is denormalized and can go stale after room renames.
+    // Build a mapping: stale image room string → current Room.name
+    const currentRoomNames = projectRooms.map(r => r.name);
+    const normalizeForMatch = (s: string) => s.replace(/_/g, ' ').trim().toLowerCase();
+    const roomNameByNormalized = new Map(currentRoomNames.map(n => [normalizeForMatch(n), n]));
+
+    // Also map Room IDs to names (some images store roomId as room string)
+    const roomNameById = new Map(projectRooms.map(r => [r.id, r.name]));
+
+    // Collect all unique image room values
+    const imageRoomValues = [...new Set(validImages.map(img => img.room).filter(Boolean))] as string[];
+    const staleToCurrentRoom = new Map<string, string>();
+    const unmatchedImageRooms: string[] = [];
+    const matchedRoomNames = new Set<string>();
+
+    for (const imgRoom of imageRoomValues) {
+      // Try direct normalized name match
+      const normalized = normalizeForMatch(imgRoom);
+      const match = roomNameByNormalized.get(normalized);
+      if (match) {
+        staleToCurrentRoom.set(imgRoom, match);
+        matchedRoomNames.add(match);
+        continue;
+      }
+      // Try UUID match (some images store roomId)
+      const byId = roomNameById.get(imgRoom);
+      if (byId) {
+        staleToCurrentRoom.set(imgRoom, byId);
+        matchedRoomNames.add(byId);
+        continue;
+      }
+      unmatchedImageRooms.push(imgRoom);
+    }
+
+    // Pair unmatched image rooms with unmatched Room names by elimination
+    const unmatchedRoomNames = currentRoomNames.filter(n => !matchedRoomNames.has(n));
+    for (let i = 0; i < Math.min(unmatchedImageRooms.length, unmatchedRoomNames.length); i++) {
+      staleToCurrentRoom.set(unmatchedImageRooms[i], unmatchedRoomNames[i]);
+    }
+
+    if (staleToCurrentRoom.size > 0) {
+      const remapped = Object.fromEntries(staleToCurrentRoom.entries());
+      const hasRenames = imageRoomValues.some(v => staleToCurrentRoom.get(v) !== formatRoomName(v));
+      if (hasRenames) {
+        console.log('[ROOM RECONCILIATION] Mapped stale image rooms to current Room names:', { remapped, _cid });
+      }
+    }
+
     const imagesWithRoomData = validImages.map(img => ({
       id: img.id,
-      room: img.room || null,
+      room: img.room ? (staleToCurrentRoom.get(img.room) || img.room) : null,
       tags: img.tags || [],
     }));
 

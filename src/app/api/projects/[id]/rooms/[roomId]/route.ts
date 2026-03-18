@@ -168,29 +168,35 @@ export async function PUT(
         });
 
         // 5. Cascade to EditorialDraft.rawState galleryChapters titles
-        const drafts = await tx.editorialDraft.findMany({
-          where: { projectId },
-          select: { id: true, rawState: true },
-        });
-        for (const draft of drafts) {
-          if (!draft.rawState) continue;
-          const state = draft.rawState as Record<string, unknown>;
-          const draftChapters = state.galleryChapters;
-          if (Array.isArray(draftChapters)) {
-            let changed = false;
-            for (const chapter of draftChapters) {
-              if (typeof chapter.title === 'string' && new RegExp(escapeRegExp(oldFormatted), 'i').test(chapter.title)) {
-                chapter.title = chapter.title.replace(new RegExp(escapeRegExp(oldFormatted), 'gi'), newFormatted);
-                changed = true;
+        // Wrapped in try-catch: editorialDraft model may not exist in all environments.
+        // A failure here should NOT roll back the entire rename transaction.
+        try {
+          const drafts = await tx.editorialDraft.findMany({
+            where: { projectId },
+            select: { id: true, rawState: true },
+          });
+          for (const draft of drafts) {
+            if (!draft.rawState) continue;
+            const state = draft.rawState as Record<string, unknown>;
+            const draftChapters = state.galleryChapters;
+            if (Array.isArray(draftChapters)) {
+              let changed = false;
+              for (const chapter of draftChapters) {
+                if (typeof chapter.title === 'string' && new RegExp(escapeRegExp(oldFormatted), 'i').test(chapter.title)) {
+                  chapter.title = chapter.title.replace(new RegExp(escapeRegExp(oldFormatted), 'gi'), newFormatted);
+                  changed = true;
+                }
+              }
+              if (changed) {
+                await tx.editorialDraft.update({
+                  where: { id: draft.id },
+                  data: { rawState: state },
+                });
               }
             }
-            if (changed) {
-              await tx.editorialDraft.update({
-                where: { id: draft.id },
-                data: { rawState: state },
-              });
-            }
           }
+        } catch (editorialDraftErr) {
+          console.warn('EditorialDraft cascade skipped (model may not exist):', (editorialDraftErr as Error)?.message);
         }
 
         return updated;
