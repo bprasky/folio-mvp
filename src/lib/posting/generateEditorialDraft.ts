@@ -712,6 +712,13 @@ The interview may begin with project-level questions (tagged [SOURCE: PROJECT]) 
 - The signature/identity answers are primary source for PULL QUOTES — these reveal who the designer IS
 - The surprise/pivot answer is often the most narratively compelling moment — place it for impact
 
+NARRATIVE THREADING: The headline and subtitle establish a narrative promise. The body must deliver on it. If the headline mentions a family, the family should appear in the body — not just as "the clients" but as people with context (where they came from, what they wanted, how they live in the space now). If the headline mentions breaking rules or defying expectations, at least 2 sections should explicitly connect a design choice to that tension.
+Specifically:
+- The client's story should appear in at least 2 body sections, not just the headline/subtitle
+- Reference the project-level interview answers (client brief, design direction) within room descriptions where relevant
+- Put the family IN the house — show how they use the space, their reactions, their life in it
+- Avoid generic references to "the clients" when you have specific context (young family, relocated from Chicago, wanted warmth over beach aesthetic)
+
 ### Room Organization
 ${roomContexts.map(r => `**${r.room}** — ${r.images} images, products: ${r.products.length > 0 ? r.products.join(', ') : 'none'}\n  Image IDs: ${r.imageIds.join(', ')}`).join('\n')}
 ${roomAnswerCounts.size > 0 ? `
@@ -798,6 +805,15 @@ FOR THE SECTIONS ARRAY (${requiredChapterCount}-${requiredChapterCount + 2} narr
 - Every paragraph should have a POINT — a design insight, a tension resolved, a relationship revealed
 - Do NOT follow the pattern: name product → explain product → next product
 
+SENTENCE OPENINGS — CRITICAL FOR NATURAL PROSE:
+Never start more than 2 paragraphs in the entire article with "The [noun]..." Vary your openings:
+- Lead with a direct quote: '"We had to have both crews on site the same day," ${designerNameForPrompt} explains.'
+- Lead with action: '${designerNameForPrompt} sourced the marble from a local yard.'
+- Lead with a prepositional phrase: 'Above the island, three black pendants hover...'
+- Lead with a dependent clause: 'When the original slab cracked, the replacement turned out better.'
+- Lead with a spatial or temporal marker: 'At the far end of the open plan, the bar operates on different rules.'
+Each section should use at least 2 different opening structures across its paragraphs. If you notice yourself starting consecutive paragraphs with "The," rewrite one of them.
+
 FOR GALLERY CHAPTERS:
 - You MUST create exactly ${requiredChapterCount} gallery chapters — one for each room that has interview content or images.
 - REQUIRED rooms (do NOT omit or merge any): ${rooms.length > 0 ? rooms.join(', ') : 'General'}
@@ -808,14 +824,6 @@ FOR GALLERY CHAPTERS:
 - 2-4 paragraphs per chapter. EACH PARAGRAPH in a gallery chapter MUST include at least one direct quote or attributed paraphrase from the designer's interview answers for that room.
 - Products appear in context of decisions, not as standalone descriptions.
 - CRITICAL: Use ONLY the exact image IDs listed in the "Image IDs" lines above. Copy-paste them exactly. Do NOT invent or modify image IDs. Each room's chapter MUST use that room's image IDs.
-
-FOR PULL QUOTES:
-- Pull quotes must be the designer's ACTUAL WORDS from the interview above
-- You may lightly edit for grammar/clarity but do not compose new quotes
-- If no quotable moments exist in the interview, return zero pull quotes
-- Include a short "context" prefix (e.g. "On the kitchen's palette:") if the quote needs framing
-- Include "sourceSection" matching the room name
-- Maximum 2-3 pull quotes
 
 FOR THE MATERIALS LEDGER:
 - Comprehensive product list separate from the narrative
@@ -828,6 +836,16 @@ CRITICAL RULES:
 - The article should read like a magazine feature, not a product specification sheet
 - EVERY room with interview content MUST get its own gallery chapter — do not drop, merge, or skip any room
 - Return ONLY valid JSON.
+
+PULL QUOTES — STRICT EXTRACTION RULE (generate these AFTER writing all sections and gallery chapters):
+1. First, write the complete editorial with direct quotes woven in
+2. After the full editorial is written, review your direct quotes
+3. Select 2-3 of the strongest direct quotes you ALREADY WROTE in the body text
+4. Copy them VERBATIM as pull quotes — same words, same punctuation
+5. Set sourceSection to the section title where the quote appears
+6. A pull quote that does not appear word-for-word in the body text is INVALID — do not generate standalone quotes
+OUTPUT THE PULL QUOTES AFTER THE FULL EDITORIAL TEXT, referencing which section and paragraph each was copied from.
+If you cannot identify 2 strong quotes from your own body text, output fewer. Do not fabricate quotes to fill a quota.
 
 Begin.`;
 
