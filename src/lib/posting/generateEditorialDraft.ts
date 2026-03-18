@@ -7,12 +7,48 @@ import { formatRoomName } from "@/lib/utils/formatRoomName";
 const client = new Anthropic();
 
 export const FOLIO_TONE = `
-Warm, confident, minimalist, design-literate. 
+Warm, confident, minimalist, design-literate.
 Describe process, intent, and materials poetically but concretely.
 Avoid marketing speak; prefer quiet authority and authenticity.
 `;
 
-type GenInput = {
+// Unified system prompt — merges EDITORIAL_SYSTEM_PROMPT (route.ts) with voice weaving
+const EDITORIAL_SYSTEM_PROMPT = `You are a senior writer for a prestigious design magazine, writing a feature article about an interior design project. Your writing style is:
+
+- Observational and immersive, like walking through the space with the designer
+- Focused on design DECISIONS and the reasoning behind them, not product specifications
+- Weaving products into narrative naturally — they emerge in context, not as a list
+- Creating a sense of place: how the space feels, how elements relate to each other
+- Finding the story arc: what was the challenge, what was the breakthrough, what makes this space singular
+- Respectful of craft, letting the designer's voice and perspective drive the narrative
+
+The designer's interview answers are your primary source material — treat them the way a journalist treats quotes from a subject.
+
+${FOLIO_TONE}
+
+You must AVOID:
+- The pattern of "Product X does Y because Z" repeated for each item
+- Sequential product descriptions (product → explanation → next product → explanation)
+- Generic design language ("thoughtfully curated", "deliberately chosen", "seamlessly blends", "creates a dynamic flow", "transforms the space")
+- These specific AI-default phrases: "anchors the space", "adds warmth", "adds visual weight", "adds [quality]", "creates intimacy", "creates visual interest", "creates a sense of", "embodies" (as a verb for rooms or objects), "echoing" (to describe formal relationships), "the space feels", "the room feels", "without compromising", "without competing", "[thing] while [thing]" as a repeated two-clause construction, "commitment to [abstract noun]", "testament to", "envelope of calm", "envelope of [quality]", "material continuity", "material palette", "a sense of [noun]", "the kind of [noun] that [clause]", "rather than [negative]" as praise by contrast
+- ALSO AVOID: "reads as [noun]" / "reading as [noun]", "material conversation", "architectural weight" / "visual weight" / "carries weight", "metallic thread" / "thread that runs through", "burst of [noun]", "speaks quietly" / "speaks to", "restraint as strategy", "grounding the [noun]", "completing the [noun]", any aphoristic sentence that sounds like a design manifesto (e.g. "Restraint as strategy, not limitation" — cut sentences like this)
+- Any sentence where you could swap the project name and photos and the sentence would still be accurate — if it's generic, cut it
+- Treating the article as a specification document
+- Mentioning every single tagged product — only include products that serve the narrative
+- Promotional or inflated language — be observational, not promotional
+- Do NOT use words like "harmonious," "curate," "elevate," "juxtaposition," or "seamlessly."
+
+ACCURACY RULES — NON-NEGOTIABLE:
+- You may ONLY reference products, materials, and vendors that appear in the provided product tag data below. Do not invent product names, vendor names, material origins, or finishes.
+- Do not claim to know materials, country of origin, manufacturing methods, or finish types unless explicitly stated in the interview answers or product tag data.
+- Do not fabricate designer quotes. Pull quotes must be drawn directly from the interview answers provided. If no suitable quote exists for a section, omit the pull quote — do not generate one.
+- Do not invent lifestyle details about the clients (how they entertain, family routines, number of guests) unless the designer explicitly described this in their interview answers.
+- Do not describe what you cannot verify from the provided data.
+- When referencing a product, use the EXACT product name and vendor name from the tag data. Do not paraphrase product names.
+
+The article should make a reader want to visit this space, not inventory it.`;
+
+export type GenInput = {
   project: any;
   designer?: any;
   vendors?: any[];
@@ -34,9 +70,18 @@ type GenInput = {
   rooms?: Array<{ id: string; name: string; type?: string }>;
   imageOrder?: string[];
   correlationId?: string;
+  // Extended context from composeEditorialHard
+  designerBio?: string;
+  projectHistory?: string;
+  atelierSummary?: string;
+  imageSelections?: Record<string, string[]>;
 };
 
 const ANTHROPIC_ENABLED = !!process.env.ANTHROPIC_API_KEY && process.env.ANTHROPIC_ENABLED !== "false";
+
+// ============================================================================
+// HELPER FUNCTIONS
+// ============================================================================
 
 // De-duplicate answers by content
 function deduplicateAnswers(answers: GenInput['answers']) {
@@ -125,15 +170,13 @@ function buildCredits(input: GenInput): Array<{ role: string; name: string }> {
 }
 
 // Distribute top-level pull quotes into per-chapter pullQuote fields
-// so both the draft editor and preview can render them inline.
-// Uses sourceSection matching when available, falls back to index-based distribution.
 function distributePullQuotesToChapters(
   chapters: Array<{ title: string; body: string[]; imageIds: string[]; pullQuote?: string }>,
   pullQuotes: Array<string | { text: string; context?: string; sourceSection?: string }>
 ) {
   if (!pullQuotes.length || !chapters.length) return;
 
-  const assigned = new Set<number>(); // chapter indices that got a pull quote
+  const assigned = new Set<number>();
 
   // First pass: match by sourceSection
   for (const q of pullQuotes) {
@@ -151,12 +194,10 @@ function distributePullQuotesToChapters(
   let quoteIdx = 0;
   for (let i = 0; i < chapters.length && quoteIdx < pullQuotes.length; i++) {
     if (assigned.has(i)) continue;
-    // Find next unassigned pull quote
     while (quoteIdx < pullQuotes.length) {
       const q = pullQuotes[quoteIdx];
       const text = typeof q === 'string' ? q : q.text;
       const section = typeof q === 'string' ? undefined : q.sourceSection;
-      // Skip quotes already assigned by sourceSection match
       if (section && chapters.some(ch => ch.title.toLowerCase() === section.toLowerCase() && ch.pullQuote === text)) {
         quoteIdx++;
         continue;
@@ -169,7 +210,320 @@ function distributePullQuotesToChapters(
   }
 }
 
-// Fallback blocks generator — produces canonical format matching composeEditorialHard output
+// ============================================================================
+// POST-LLM REPAIR HELPERS (ported from composeEditorialHard)
+// ============================================================================
+
+// Split a very long paragraph into smaller chunks at sentence boundaries
+function splitLongParagraph(text: string, maxLength: number = 4000): string[] {
+  if (text.length <= maxLength) {
+    return [text];
+  }
+  const sentences = text.split(/([.!?]+\s+(?=[A-Z]))/);
+  const chunks: string[] = [];
+  let current = '';
+  for (let i = 0; i < sentences.length; i++) {
+    const candidate = current + sentences[i];
+    if (candidate.length > maxLength && current.length > 0) {
+      chunks.push(current.trim());
+      current = sentences[i];
+    } else {
+      current = candidate;
+    }
+  }
+  if (current.trim().length > 0) {
+    chunks.push(current.trim());
+  }
+  return chunks.map(chunk => chunk.length > 5000 ? chunk.substring(0, 5000) : chunk);
+}
+
+// Conservative fixes outside quotes; never alter quoted text
+function proofOutsideQuotes(paragraph: string): string {
+  if (!paragraph || !paragraph.trim()) return paragraph;
+  let result = paragraph.trim();
+  // Fix sentence starts (outside quotes only)
+  const parts = result.split(/"([^"]*)"/g);
+  for (let i = 0; i < parts.length; i += 2) {
+    if (parts[i]) {
+      parts[i] = parts[i].replace(/(^|\.\s+)([a-z])/g, (_, p, c) => p + c.toUpperCase());
+    }
+  }
+  return parts.join('"');
+}
+
+// Group images by room field
+function groupImagesByRoom(images: Array<{ id: string; room?: string | null }>): Record<string, Array<{ id: string }>> {
+  const byRoom: Record<string, Array<{ id: string }>> = {};
+  for (const img of images) {
+    const room = img.room || 'General';
+    if (!byRoom[room]) byRoom[room] = [];
+    byRoom[room].push({ id: img.id });
+  }
+  return byRoom;
+}
+
+// Group products by room via image-room mapping
+function groupProductsByRoom(
+  tags: Array<{ imageId: string; product: { id: string; name: string; vendor?: { name: string } | null } }>,
+  images: Array<{ id: string; room?: string | null }>
+): Record<string, Array<{ id: string; name: string; vendor?: string; imageId: string }>> {
+  const imageRoomMap = new Map(images.map(img => [img.id, img.room || 'General']));
+  const byRoom: Record<string, Array<{ id: string; name: string; vendor?: string; imageId: string }>> = {};
+  for (const tag of tags) {
+    const room = imageRoomMap.get(tag.imageId) || 'General';
+    if (!byRoom[room]) byRoom[room] = [];
+    const product = {
+      id: tag.product.id,
+      name: tag.product.name,
+      vendor: tag.product.vendor?.name,
+      imageId: tag.imageId,
+    };
+    if (!byRoom[room].find(p => p.id === product.id)) {
+      byRoom[room].push(product);
+    }
+  }
+  return byRoom;
+}
+
+// Validate room structure (monitoring only — logs warnings)
+function validateRoomStructure(
+  blocks: any,
+  rooms: string[],
+  imagesByRoom?: Record<string, Array<{ id: string }>>
+): { valid: boolean; issues: string[] } {
+  const issues: string[] = [];
+  if (!blocks.galleryChapters || !Array.isArray(blocks.galleryChapters)) {
+    issues.push('Missing galleryChapters array');
+    return { valid: false, issues };
+  }
+  if (imagesByRoom) {
+    const usedImageIds = new Set<string>();
+    for (const ch of blocks.galleryChapters) {
+      if (Array.isArray(ch.imageIds)) {
+        for (const id of ch.imageIds) usedImageIds.add(id);
+      }
+    }
+    for (const room of rooms) {
+      if (room === 'General') continue;
+      const roomImages = imagesByRoom[room] || [];
+      const hasImageInChapter = roomImages.some(img => usedImageIds.has(img.id));
+      if (!hasImageInChapter && roomImages.length > 0) {
+        issues.push(`No images used from room: ${room}`);
+      }
+    }
+  }
+  for (const [idx, chapter] of blocks.galleryChapters.entries()) {
+    if (!chapter.title) issues.push(`Chapter ${idx} missing title`);
+    if (!chapter.body || !Array.isArray(chapter.body) || chapter.body.length < 2) {
+      issues.push(`Chapter ${idx} has insufficient body content (need at least 2 paragraphs)`);
+    }
+    if (!chapter.imageIds || !Array.isArray(chapter.imageIds) || chapter.imageIds.length === 0) {
+      issues.push(`Chapter ${idx} has no images`);
+    }
+  }
+  return { valid: issues.length === 0, issues };
+}
+
+// ============================================================================
+// REPAIR JSON OUTPUT — applies room fixes, image validation, paragraph repair
+// ============================================================================
+
+function repairAndBuildBlocks(
+  composed: any,
+  input: GenInput,
+  imageIds: string[],
+  rooms: string[],
+  imagesByRoom: Record<string, Array<{ id: string }>>,
+  _cid: string,
+): z.infer<typeof BlocksSchema> {
+  const designerName = input.designer?.name;
+  const finalChapters: Array<{ title: string; imageIds: string[]; body: string[]; pullQuote?: string }> = [];
+
+  // --- Extract pull quotes from both pullQuotes array and pullquote sections ---
+  const rawPulls: Array<{ text: string; context?: string; sourceSection?: string }> = [];
+  if (Array.isArray(composed.pullQuotes)) {
+    for (const q of composed.pullQuotes) {
+      if (typeof q === 'string' && q.trim()) {
+        rawPulls.push({ text: q.trim(), context: designerName || undefined });
+      } else if (q && typeof q === 'object' && typeof q.text === 'string' && q.text.trim()) {
+        rawPulls.push({ text: q.text.trim(), context: q.context?.trim() || designerName || undefined, sourceSection: q.sourceSection?.trim() || undefined });
+      }
+    }
+  }
+  if (Array.isArray(composed.sections)) {
+    for (const s of composed.sections) {
+      if (s.type === "pullquote" && s.quote) {
+        rawPulls.push({ text: s.quote.trim(), context: designerName || undefined });
+      }
+    }
+  }
+  // Deduplicate pull quotes by text
+  const pullQuotes = rawPulls.filter((quote, index, arr) =>
+    arr.findIndex(q => q.text.trim() === quote.text.trim()) === index
+  ).slice(0, 3);
+
+  // --- Post-LLM repair: enforce room-based titles and correct image IDs ---
+  if (rooms.length > 0 && rooms[0] !== 'General' && Array.isArray(composed.galleryChapters)) {
+    const chapters = composed.galleryChapters as any[];
+    // Match chapters to rooms by position (prompt lists rooms in order)
+    for (let i = 0; i < Math.min(chapters.length, rooms.length); i++) {
+      const room = rooms[i];
+      const roomImages = (imagesByRoom[room] || []).map((img: { id: string }) => img.id);
+      chapters[i].title = formatRoomName(room);
+      if (roomImages.length > 0) {
+        chapters[i].imageIds = roomImages.slice(0, 8);
+      }
+    }
+    // Add missing rooms as chapters
+    for (let i = chapters.length; i < rooms.length; i++) {
+      const room = rooms[i];
+      const roomImages = (imagesByRoom[room] || []).map((img: { id: string }) => img.id);
+      if (roomImages.length > 0) {
+        chapters.push({
+          title: formatRoomName(room),
+          imageIds: roomImages.slice(0, 8),
+          body: ['Editorial content for this room is being developed.'],
+        });
+      }
+    }
+    console.log('[generateEditorialDraft] Post-LLM room repair applied', {
+      _cid, roomCount: rooms.length, chapterCount: chapters.length,
+      titles: chapters.map((ch: any) => ch.title),
+    });
+  }
+
+  // --- Process gallery chapters ---
+  const knownImageIdSet = new Set(imageIds);
+  if (Array.isArray(composed.galleryChapters)) {
+    for (const chapter of composed.galleryChapters as any[]) {
+      if (!chapter.imageIds || !Array.isArray(chapter.imageIds) || chapter.imageIds.length === 0) {
+        continue;
+      }
+      // Validate imageIds against known set
+      const validImageIds = chapter.imageIds
+        .filter((id: any) => typeof id === 'string' && knownImageIdSet.has(id))
+        .slice(0, 8);
+      if (validImageIds.length === 0) continue;
+
+      // Process body paragraphs
+      let bodyParas: string[] = [];
+      const chapterBody: any = chapter.body;
+      if (Array.isArray(chapterBody) && chapterBody.length > 0) {
+        for (const para of chapterBody) {
+          const text: string = typeof para === 'string' ? para : String(para || '');
+          const processed = proofOutsideQuotes(text.trim());
+          if (processed.length > 0) bodyParas.push(processed);
+        }
+      } else if (chapterBody && typeof chapterBody === 'string') {
+        const bodyText = proofOutsideQuotes(String(chapterBody).trim());
+        const paragraphs = bodyText.split(/\n\s*\n/).filter(p => p.trim().length > 0);
+        for (const para of paragraphs) {
+          const trimmed = para.trim();
+          if (trimmed.length > 4500) {
+            bodyParas.push(...splitLongParagraph(trimmed, 4000));
+          } else {
+            bodyParas.push(trimmed);
+          }
+        }
+      }
+
+      finalChapters.push({
+        title: chapter.title || 'Untitled',
+        imageIds: validImageIds,
+        body: bodyParas.length > 0 ? bodyParas : ['Content pending.'],
+      });
+    }
+  }
+
+  // --- Fallback: if no chapters with body, extract from sections ---
+  if (finalChapters.length === 0 || finalChapters.every(ch => ch.body.length === 0 || ch.body[0] === 'Content pending.')) {
+    const paras: string[] = [];
+    for (const s of composed.sections || []) {
+      if (s.type === "narrative" && s.body) {
+        const bodyText = proofOutsideQuotes(s.body.trim());
+        const paragraphs = bodyText.split(/\n\s*\n/).filter(p => p.trim().length > 0);
+        for (const para of paragraphs) {
+          const trimmed = para.trim();
+          if (trimmed.length > 4500) {
+            paras.push(...splitLongParagraph(trimmed, 4000));
+          } else {
+            paras.push(trimmed);
+          }
+        }
+      }
+    }
+    if (paras.length >= 3) {
+      const firstChapter = composed.galleryChapters?.[0];
+      const chapterImageIds = firstChapter?.imageIds?.filter((id: any) =>
+        typeof id === 'string' && knownImageIdSet.has(id)
+      ).slice(0, 8) || imageIds.slice(0, 8);
+      finalChapters.length = 0;
+      finalChapters.push({
+        title: firstChapter?.title || input.project?.title || 'The Space',
+        imageIds: chapterImageIds,
+        body: paras,
+      });
+    }
+  }
+
+  // --- Ensure we have at least one chapter ---
+  if (finalChapters.length === 0) {
+    // Use fallback with image grouping
+    const fallbackChapters = groupImagesIntoChapters(input.images, input.imageOrder);
+    for (const ch of fallbackChapters) {
+      finalChapters.push({
+        title: ch.title,
+        imageIds: ch.imageIds,
+        body: ['Editorial content is being generated.'],
+      });
+    }
+  }
+
+  // Distribute pull quotes into per-chapter fields
+  distributePullQuotesToChapters(finalChapters, pullQuotes);
+
+  const ledger = buildMaterialContext(input.tags);
+
+  const blocks = {
+    lead: composed.lead && typeof composed.lead === 'object'
+      ? {
+          kicker: (composed.lead.kicker || composed.lead.title || input.project?.title || '').slice(0, 80),
+          deck: (composed.lead.deck || composed.lead.dek || '').slice(0, 400),
+        }
+      : { kicker: input.project?.title || 'A Considered Composition', deck: '' },
+    galleryChapters: finalChapters.length > 0 ? finalChapters : undefined,
+    pullQuotes: pullQuotes.length > 0 ? pullQuotes : undefined,
+    materialsLedger: composed.materialsLedger?.items?.length
+      ? {
+          items: composed.materialsLedger.items.map((item: any) => ({
+            name: item.name,
+            finish: (item.finish && typeof item.finish === 'string' && item.finish.trim()) ? item.finish : undefined,
+            note: item.note?.slice(0, 140) || (item.vendor ? `Vendor: ${item.vendor}` : undefined),
+            productId: item.productId || undefined,
+            vendorId: item.vendorId || undefined,
+          })),
+        }
+      : ledger.length ? {
+          items: ledger.map(l => ({
+            name: l.name,
+            finish: (l.finish && typeof l.finish === 'string' && l.finish.trim()) ? l.finish : undefined,
+            note: l.vendor ? `Vendor: ${l.vendor}` : undefined,
+          })),
+        }
+      : undefined,
+    credits: Array.isArray(composed.credits) && composed.credits.length > 0
+      ? composed.credits.map((c: any) => ({ role: c.role || 'Designer', name: c.name ?? '' }))
+      : buildCredits(input),
+    mode: 'recomposition' as const,
+  };
+
+  return BlocksSchema.parse(blocks);
+}
+
+// ============================================================================
+// FALLBACK BLOCKS — produces canonical format when LLM is unavailable
+// ============================================================================
+
 export function toFallbackBlocks(input: GenInput) {
   const uniqueAnswers = deduplicateAnswers(input.answers);
   const ledger = buildMaterialContext(input.tags);
@@ -177,10 +531,8 @@ export function toFallbackBlocks(input: GenInput) {
   const kicker = input.project?.title || 'A Considered Composition';
   const deck = (uniqueAnswers[0]?.answer || input.project?.description || "A thoughtfully designed space.").slice(0, 400);
 
-  // Build room-organized chapters (matching canonical galleryChapters structure)
   const chapters = groupImagesIntoChapters(input.images, input.imageOrder);
 
-  // Distribute answer text across chapters as body paragraphs
   const answerTexts = uniqueAnswers.map(a => a.answer).filter(Boolean);
   const galleryChapters = chapters.map((ch, idx) => ({
     title: ch.title,
@@ -190,7 +542,6 @@ export function toFallbackBlocks(input: GenInput) {
     imageIds: ch.imageIds,
   }));
 
-  // Extract genuine pull quotes from answers of appropriate length
   const designerName = input.designer?.name;
   const pullQuotes: Array<string | { text: string; context?: string }> = uniqueAnswers
     .filter(a => a.answer.length > 60 && a.answer.length < 250 && /\b(I|we|my|our)\b/i.test(a.answer))
@@ -200,7 +551,6 @@ export function toFallbackBlocks(input: GenInput) {
       context: designerName || undefined,
     }));
 
-  // Distribute pull quotes into per-chapter fields for editor/preview rendering
   distributePullQuotesToChapters(galleryChapters, pullQuotes);
 
   const blocks = {
@@ -221,153 +571,29 @@ export function toFallbackBlocks(input: GenInput) {
   return BlocksSchema.parse(blocks);
 }
 
-// Extract structured blocks from narrative article — produces canonical format
-function parseNarrativeToBlocks(article: string, input: GenInput): z.infer<typeof BlocksSchema> {
-  const lines = article.split('\n').map(l => l.trim()).filter(Boolean);
+// ============================================================================
+// PROMPT ASSEMBLY
+// ============================================================================
 
-  // Extract kicker (headline) — use first short line, or strip markdown heading markers
-  let kicker = input.project?.title || '';
-  const headlineCandidate = lines[0] || '';
-  if (headlineCandidate.length < 80) {
-    kicker = headlineCandidate.replace(/^#+\s*/, '').trim() || kicker;
-  }
-
-  // Extract deck from second line or first substantial paragraph
-  const deckCandidate = lines.find((l, i) => i > 0 && l.length > 30 && l.length < 400) || lines[1] || '';
-  const deck = deckCandidate.slice(0, 400);
-
-  // Extract narrative paragraphs (skip headline/deck and PULL QUOTE markers)
-  const startIdx = lines.indexOf(deckCandidate) + 1 || 2;
-  const narrativeParagraphs = lines.slice(startIdx).filter(l => l.length > 50 && !/^PULL\s*QUOTE\s*:/i.test(l));
-
-  // Extract pull quotes — three strategies in priority order
-  const designerName = input.designer?.name;
-  const pullQuotes: Array<string | { text: string; context?: string; sourceSection?: string }> = [];
-
-  // Strategy 1: Parse explicit PULL QUOTE markers from the LLM output
-  // Format: PULL QUOTE: "text" — designer [from: section name]
-  const pullQuoteMarkerLines = lines.filter(l => /^PULL\s*QUOTE\s*:/i.test(l));
-  for (const line of pullQuoteMarkerLines) {
-    const textMatch = line.match(/["\u201C]([^"\u201D]{15,300})["\u201D]/);
-    const sectionMatch = line.match(/\[from:\s*([^\]]+)\]/i);
-    if (textMatch) {
-      pullQuotes.push({
-        text: textMatch[1].trim(),
-        context: designerName || undefined,
-        sourceSection: sectionMatch?.[1]?.trim() || undefined,
-      });
-    }
-  }
-
-  // Strategy 2: Extract quoted text from narrative paragraphs (direct quotes in the body)
-  if (pullQuotes.length < 3) {
-    for (const p of narrativeParagraphs) {
-      if (pullQuoteMarkerLines.includes(p)) continue; // Skip marker lines
-      const quoteMatches = p.match(/["\u201C]([^"\u201D]{20,250})["\u201D]/g);
-      if (quoteMatches) {
-        for (const match of quoteMatches) {
-          const cleaned = match.replace(/["\u201C\u201D]/g, '').trim();
-          if (cleaned.length >= 20 && cleaned.length <= 300) {
-            // Don't add duplicates (already found via PULL QUOTE markers)
-            if (!pullQuotes.some(q => typeof q !== 'string' && q.text === cleaned)) {
-              pullQuotes.push({ text: cleaned, context: designerName || undefined });
-            }
-          }
-        }
-      }
-      if (pullQuotes.length >= 4) break;
-    }
-  }
-
-  // Strategy 3: Fallback — extract from interview answers if still not enough
-  const uniqueAnswers = deduplicateAnswers(input.answers);
-  if (pullQuotes.length < 2 && uniqueAnswers.length > 0) {
-    const quoteWorthy = uniqueAnswers
-      .filter(a => a.answer.length > 60 && a.answer.length < 250)
-      .filter(a => /\b(I|we|my|our)\b/i.test(a.answer))
-      .slice(0, 3 - pullQuotes.length);
-    for (const a of quoteWorthy) {
-      pullQuotes.push({ text: a.answer.slice(0, 300), context: designerName || undefined });
-    }
-  }
-
-  // Build room-organized gallery chapters with images distributed across them
-  const chapters = groupImagesIntoChapters(input.images, input.imageOrder);
-
-  // Distribute narrative paragraphs across chapters
-  const parasPerChapter = Math.max(2, Math.ceil(narrativeParagraphs.length / Math.max(1, chapters.length)));
-  const galleryChapters = chapters.map((ch, idx) => ({
-    title: ch.title,
-    body: narrativeParagraphs
-      .slice(idx * parasPerChapter, (idx + 1) * parasPerChapter)
-      .map(p => p.slice(0, 5000)),
-    imageIds: ch.imageIds,
-  })).filter(ch => ch.body.length > 0 || ch.imageIds.length > 0);
-
-  // Ensure at least one chapter has body content
-  if (galleryChapters.length > 0 && galleryChapters.every(ch => ch.body.length === 0)) {
-    galleryChapters[0].body = narrativeParagraphs.slice(0, 3).map(p => p.slice(0, 5000));
-  }
-
-  // Infer sourceSection for pull quotes that don't have one by matching body text
-  for (const pq of pullQuotes) {
-    if (typeof pq === 'string' || pq.sourceSection) continue;
-    const quoteText = pq.text.toLowerCase();
-    for (const ch of galleryChapters) {
-      const bodyText = (ch.body || []).join(' ').toLowerCase();
-      if (bodyText.includes(quoteText.slice(0, 40))) {
-        pq.sourceSection = ch.title;
-        break;
-      }
-    }
-  }
-
-  // Build materials ledger
-  const ledger = buildMaterialContext(input.tags);
-
-  // Distribute pull quotes into per-chapter fields for editor/preview rendering
-  distributePullQuotesToChapters(galleryChapters, pullQuotes);
-
-  const blocks = {
-    lead: { kicker, deck },
-    galleryChapters: galleryChapters.length > 0 ? galleryChapters : undefined,
-    pullQuotes: pullQuotes.length > 0 ? pullQuotes : undefined,
-    materialsLedger: ledger.length ? {
-      items: ledger.map(l => ({
-        name: l.name,
-        finish: (l.finish && typeof l.finish === 'string' && l.finish.trim()) ? l.finish : undefined,
-        note: l.vendor ? `Vendor: ${l.vendor}` : undefined,
-      }))
-    } : undefined,
-    credits: buildCredits(input),
-    mode: 'recomposition' as const,
-  };
-
-  return BlocksSchema.parse(blocks);
-}
-
-export async function generateEditorialDraft(input: GenInput): Promise<{
-  blocks: z.infer<typeof BlocksSchema>;
-  usedFallback: boolean;
-}> {
-  const _cid = input.correlationId || 'generate';
-  
-  // De-duplicate answers before processing
-  const uniqueAnswers = deduplicateAnswers(input.answers);
-
-  // Build context
+function buildPrompt(input: GenInput, uniqueAnswers: GenInput['answers']): {
+  systemPrompt: string;
+  userPrompt: string;
+  imageIds: string[];
+  rooms: string[];
+  imagesByRoom: Record<string, Array<{ id: string }>>;
+} {
   const { project, designer, images, tags } = input;
   const products = buildMaterialContext(tags);
+  const designerNameForPrompt = designer?.name || 'the designer';
 
-  // Build room-answer summary for room coverage enforcement
+  // --- Build room-answer summary ---
   const roomAnswerCounts = new Map<string, number>();
   for (const a of uniqueAnswers) {
     const roomName = a.section || 'General';
     roomAnswerCounts.set(roomName, (roomAnswerCounts.get(roomName) || 0) + 1);
   }
 
-  // Format answers grouped by room, wrapped in quotation marks to reinforce spoken words
-  const designerNameForPrompt = designer?.name || 'the designer';
+  // --- Format answers grouped by room ---
   const answersByRoom = new Map<string, typeof uniqueAnswers>();
   for (const a of uniqueAnswers) {
     const room = a.section || 'General';
@@ -375,7 +601,8 @@ export async function generateEditorialDraft(input: GenInput): Promise<{
     list.push(a);
     answersByRoom.set(room, list);
   }
-  // Format project-level answers first (if any), then room answers
+
+  // Project-level answers
   const projectAnswers = answersByRoom.get('About This Project');
   let formattedProjectSection = '';
   if (projectAnswers && projectAnswers.length > 0) {
@@ -389,6 +616,7 @@ export async function generateEditorialDraft(input: GenInput): Promise<{
     formattedProjectSection = `=== ABOUT THIS PROJECT ===\n${formatted}`;
   }
 
+  // Room answers
   const formattedRoomSections = Array.from(answersByRoom.entries()).map(([room, answers]) => {
     const roomHeader = `[ROOM: ${room}]`;
     const formatted = answers.map(a => {
@@ -402,14 +630,29 @@ export async function generateEditorialDraft(input: GenInput): Promise<{
 
   const formattedAnswers = [formattedProjectSection, formattedRoomSections].filter(Boolean).join('\n\n');
 
-  // Count rooms with interview content (excluding project-level)
-  const interviewedRoomCount = Array.from(roomAnswerCounts.keys()).filter(r => r !== 'About This Project' && r !== 'General').length;
+  // --- Room organization ---
+  const orderedImages = input.imageOrder
+    ? input.imageOrder.map(id => images.find(i => i.id === id)).filter(Boolean) as typeof images
+    : images;
+  const imagesByRoom = groupImagesByRoom(orderedImages.map(img => ({ id: img.id, room: img.room || null })));
+  const rooms = Object.keys(imagesByRoom).filter(r => r !== 'General');
+  const imageIds = orderedImages.map(i => i.id);
 
-  const roomCoverageList = roomAnswerCounts.size > 0
-    ? `\nROOMS WITH INTERVIEW CONTENT (YOU MUST CREATE A SECTION FOR EACH — DO NOT OMIT OR MERGE ANY):\n${Array.from(roomAnswerCounts.entries()).map(([room, count]) => {
-        return `- ${room}: ${count} answer${count > 1 ? 's' : ''}`;
-      }).join('\n')}\n`
-    : '';
+  // Product grouping by room
+  const allTags = orderedImages.flatMap(img => {
+    const imgTags = tags.filter(t => t.imageId === img.id || (t.image && t.image.id === img.id));
+    return imgTags.map(t => ({
+      imageId: img.id,
+      product: t.product || t,
+    }));
+  });
+  const productsByRoom = groupProductsByRoom(
+    allTags.filter(t => t.product?.id && t.product?.name),
+    orderedImages.map(img => ({ id: img.id, room: img.room || null })),
+  );
+
+  const interviewedRoomCount = Array.from(roomAnswerCounts.keys()).filter(r => r !== 'About This Project' && r !== 'General').length;
+  const requiredChapterCount = Math.max(rooms.length, interviewedRoomCount, 1);
 
   const locationParts = [project?.city, project?.regionState].filter(Boolean);
   const locationStr = locationParts.join(', ') || '';
@@ -417,174 +660,262 @@ export async function generateEditorialDraft(input: GenInput): Promise<{
     ? `${designer.name}${designer.studio ? ` / ${designer.studio}` : ''}`
     : '';
 
-  const contextText = `
-PROJECT: ${project?.title ?? ""}
-DESIGNER: ${designerLine}
-LOCATION: ${locationStr}
-${project?.description ? `PROJECT DESCRIPTION: ${project.description}\n` : ''}${project?.projectType && project.projectType !== 'UNSPECIFIED' ? `PROJECT TYPE: ${project.projectType.toLowerCase().replace(/_/g, ' ')}\n` : ''}${project?.clientType ? `CLIENT TYPE: ${project.clientType.toLowerCase()}\n` : ''}TAGGED PRODUCTS: ${products.map(p => p.name).join(", ")}
-IMAGES: ${images.length}
-${roomCoverageList}
-PROJECT CONTEXT INSTRUCTIONS:
-- The project description is the narrative frame — it captures who the client is, what prompted the project, and what they asked for. A family relocating, a couple's first home, a hospitality concept — this is the STORY. Use it to open and thread through the piece.
-- If a studio/firm name is available, credit it naturally ("designed by [Name] of [Studio]") — not in every paragraph, but enough for attribution.
-- Location should inform design vocabulary — reference local light, climate, landscape, or geography when relevant. Do NOT open with "Nestled in [location]..." or "Located in the heart of..." — these are cliché leads.
-- Project type and client type shape the editorial angle (residential warmth differs from hospitality precision).
-- Do NOT list these metadata fields literally or use the project description verbatim — synthesize into editorial narrative woven throughout the piece.
+  // Room context for image/product mapping
+  const roomContexts = Object.entries(imagesByRoom).map(([room, imgs]) => {
+    const prods = productsByRoom[room] || [];
+    return {
+      room,
+      images: imgs.length,
+      products: prods.map(p => `${p.name}${p.vendor ? ` (${p.vendor})` : ''}`),
+      imageIds: imgs.map(img => img.id),
+    };
+  });
 
-DESIGNER INTERVIEW — ${designerNameForPrompt}
+  const hasFollowups = uniqueAnswers.some(a => a.isFollowUp);
+  const depthInstruction = hasFollowups
+    ? `The designer provided both initial responses and deeper follow-up answers. Use the follow-up answers for richer material — they contain the specific stories, reasoning, and evolution behind decisions. Write a full-depth feature.`
+    : `Only initial interview responses are available. Write a tighter, more observational piece — focus on what the space achieves and let the design decisions speak through specific details rather than extended backstory.`;
+
+  const materialsList = products.map(p => p.name).join(', ');
+
+  // --- Build user prompt ---
+  const userPrompt = `Write a feature article about this project.
+
+## Designer's Interview Responses (grouped by room)
 
 For each room, the designer answered questions about their process and decisions. Use their actual words as source material for direct quotes.
 
 ${formattedAnswers || '(No interview answers available)'}
-`;
 
-  const prompt = `
-You are Folio — an editorial design platform.
-Write a refined, emotionally intelligent, Architectural Digest–style article
-based on the following context.
-The tone should be sophisticated, human, and flowing —
-blending storytelling, material focus, and designer insight.
-Avoid repeating raw Q&A. Instead, narrate the project's journey.
+## Project Details
+- Project: ${project?.title ?? ''}
+- Designer: ${designerLine || 'Not specified'}
+- Location: ${locationStr || 'Not specified'}${project?.description ? `\n- Project description: ${project.description}` : ''}${project?.projectType && project.projectType !== 'UNSPECIFIED' ? `\n- Project type: ${project.projectType.toLowerCase().replace(/_/g, ' ')}` : ''}${project?.clientType ? `\n- Client type: ${project.clientType.toLowerCase()}` : ''}
+- Rooms: ${roomContexts.map(r => r.room).join(', ')}
+- Products tagged: ${materialsList || 'None'}
 
-${FOLIO_TONE}
+PROJECT CONTEXT: The project description is the narrative frame — it captures who the client is, what prompted the project, and what they asked for. Use it to open and thread through the piece. Location should inform design vocabulary (reference local light, climate, landscape). Do NOT open with "Nestled in..." or use the description verbatim — synthesize into narrative.${input.designerBio ? `
 
-Include:
-• A short headline and a 1–2 sentence intro ("dek")
-• Exactly ${interviewedRoomCount || 3} narrative sections — one per room with interview content. Do NOT merge rooms into a single section or drop any room.
-• A "Method" section describing process and design philosophy
-• End with a "Materials" section summarizing key tagged materials.
+## Designer Bio (use to inform tone and context — do not quote directly or paraphrase into the article. This helps you understand who is speaking in the interview)
+${input.designerBio}` : ''}${input.projectHistory ? `
 
-ROOM COVERAGE: You MUST include editorial content for EVERY room that has interview answers. Each room gets its own section. Rooms with more answers deserve proportionally more editorial space. If a room has no dedicated photos, weave its design story into the broader narrative. Do not skip any room. Do not merge rooms. Use the designer's exact room names as section headings — do not rename or reinterpret rooms.
+## Designer's Other Published Projects on Folio (use for context about their body of work — reference only if it genuinely enriches the narrative, e.g., "a departure from their typical palette" or "continuing a thread from previous work." Do not force references)
+${input.projectHistory}` : ''}${input.atelierSummary ? `
 
-WEAVING THE DESIGNER'S VOICE:
-
-You are writing a magazine feature, not a product catalog. The designer's interview answers are your primary source material — treat them the way a journalist treats quotes from a subject.
-
-Rules for using interview content:
-
-1. DIRECT QUOTES: Use the designer's actual words from interview answers as direct quotes 2-4 times in the full piece. These should be the most vivid, specific, or opinionated moments. Format them naturally:
-   - '${designerNameForPrompt} recalls...' followed by a direct quote
-   - 'As ${designerNameForPrompt} explains, "[quote]"'
-   - '"[Quote]," ${designerNameForPrompt} says.'
-   - '"[Quote]," says ${designerNameForPrompt}, "[continuation]."'
-
-   Direct quotes must be REAL phrases from the interview answers. Do not invent quotes. Do not clean up the language so much that it loses the person's voice. A designer saying "We almost went polished nickel but brass felt right for this house" is better than "We carefully considered polished nickel before ultimately selecting brass for its warmth."
-
-2. ATTRIBUTED PARAPHRASE: Use 3-5 times. Convey the designer's perspective without direct quotation:
-   - '${designerNameForPrompt} chose brass hardware over polished nickel, drawn to its warmth against the mauve cabinetry.'
-   - 'The decision to remove the entry closet came early — ${designerNameForPrompt} wanted the full volume of the space to announce itself.'
-
-3. UNATTRIBUTED NARRATIVE: The remaining prose can describe materials, spatial relationships, and visual effects without attribution. But even this should feel informed by the designer's perspective, not written by someone who only saw photos.
-
-BALANCE: A typical 4-section editorial should have:
-- 2-4 direct quotes (not all in one section — distribute them)
-- 3-5 attributed paraphrases
-- The rest as narrative prose
-
-The reader should finish the piece feeling like they heard from the designer, not just read about the house.
-
-USING FOLLOW-UP CONTENT: Answers tagged [SOURCE: FOLLOW-UP] contain the richest material — process stories, client anecdotes, tradeoff explanations, and behind-the-scenes details. Prioritize these for direct quotes and anecdotes. Do NOT flatten follow-up answers into generic descriptive prose.
-
-PULL QUOTES:
-
-After writing the full editorial, select 2-3 pull quotes. These MUST be extracted from direct quotes you already used in the body text — not generated separately. A pull quote is a highlight of something already in the piece, pulled out for visual emphasis.
-
-Good pull quotes are:
-- ALREADY IN THE BODY TEXT as a direct quote from the designer
-- Specific to this project (mention a material, a room, a decision, a moment)
-- 15-40 words — long enough to have substance, short enough to read at a glance
-- Something that makes a reader want to read the full piece
-
-Bad pull quotes (DO NOT generate):
-- Generic wisdom that could apply to any project ("Every detail matters")
-- Pithy one-liners the designer never actually said
-- Descriptions of the space rather than the designer's perspective on it
-- Anything the designer didn't say in the interview
-
-Format each pull quote on its own line, clearly marked:
-PULL QUOTE: "[exact text from the body]" — ${designerNameForPrompt} [from: section name]
-
-CRITICAL: If you cannot find 2 genuinely good pull quotes from the interview material, output 1 or even 0. Do not fabricate quotes to fill a quota.
-
-Do NOT use words like "harmonious," "curate," "elevate," "juxtaposition," or "seamlessly."
-
-PROJECT NARRATIVE: ${project?.description ? `The project description captures the client's story — who they are, what prompted this project, and what they asked for. Weave this narrative throughout the piece, not just in the opener. The reader should understand the people behind the project.` : 'If context clues suggest a client story (relocation, renovation motivation, lifestyle needs), weave it naturally through the narrative.'}
+## Designer Voice & Philosophy (from their Folio profile — use to inform tone, do not quote directly)
+${input.atelierSummary}` : ''}
 
 PROJECT-LEVEL ANSWERS AS NARRATIVE FRAME:
 The interview may begin with project-level questions (tagged [SOURCE: PROJECT]) about the client, the brief, the design direction, and the designer's signature. These answers are your NARRATIVE FRAME — not a separate intro paragraph that gets abandoned, but the story thread that connects every room description.
-
 - The client story should open the editorial and recur as context throughout
 - The design direction should inform how you describe material and spatial choices
 - The signature/identity answers are primary source for PULL QUOTES — these reveal who the designer IS
 - The surprise/pivot answer is often the most narratively compelling moment — place it for impact
 
-CONTEXT:
-${contextText}
-`;
+### Room Organization
+${roomContexts.map(r => `**${r.room}** — ${r.images} images, products: ${r.products.length > 0 ? r.products.join(', ') : 'none'}\n  Image IDs: ${r.imageIds.join(', ')}`).join('\n')}
+${roomAnswerCounts.size > 0 ? `
+### Rooms with Interview Content (YOU MUST CREATE A GALLERY CHAPTER FOR EACH):
+${Array.from(roomAnswerCounts.entries()).map(([room, count]) => {
+  return `- ${room}: ${count} answer${count > 1 ? 's' : ''}`;
+}).join('\n')}
+` : ''}
+### Available Images (in order):
+${imageIds.join(', ')}
 
-  let blocks: z.infer<typeof BlocksSchema>;
-  let usedFallback = false;
+## Narrative Depth
+${depthInstruction}
+
+## WEAVING THE DESIGNER'S VOICE — MANDATORY
+
+You are writing a magazine feature, not a product catalog. The designer's interview answers are your primary source material — treat them the way a journalist treats quotes from a subject.
+
+Rules for using interview content:
+
+1. DIRECT QUOTES — MANDATORY (at least 1 per gallery chapter):
+   Use the designer's ACTUAL WORDS from interview answers as direct quotes. Each gallery chapter MUST contain at least 1 direct attributed quote drawn from that room's interview answers. Format them naturally:
+   - '${designerNameForPrompt} recalls...' followed by a direct quote
+   - 'As ${designerNameForPrompt} explains, "[quote]"'
+   - '"[Quote]," ${designerNameForPrompt} says.'
+   - '"[Quote]," says ${designerNameForPrompt}, "[continuation]."'
+
+   Direct quotes must be REAL phrases from the interview answers above. Do not invent quotes. Do not clean up the language so much that it loses the person's voice. A designer saying "We almost went polished nickel but brass felt right for this house" is better than "We carefully considered polished nickel before ultimately selecting brass for its warmth."
+
+2. ATTRIBUTED PARAPHRASE (at least 1 per gallery chapter):
+   Convey the designer's perspective without direct quotation:
+   - '${designerNameForPrompt} chose brass hardware over polished nickel, drawn to its warmth against the mauve cabinetry.'
+   - 'The decision to remove the entry closet came early — ${designerNameForPrompt} wanted the full volume of the space to announce itself.'
+
+3. UNATTRIBUTED NARRATIVE:
+   The remaining prose can describe materials, spatial relationships, and visual effects without attribution. But even this should feel informed by the designer's perspective, not written by someone who only saw photos.
+
+BALANCE: Each gallery chapter should have:
+- At least 1 direct attributed quote (MANDATORY — do not skip this)
+- At least 1 attributed paraphrase
+- The rest as narrative prose
+- The reader should finish the piece feeling like they heard from the designer, not just read about the house.
+
+USING FOLLOW-UP CONTENT: Answers tagged [SOURCE: FOLLOW-UP] contain the richest material — process stories, client anecdotes, tradeoff explanations, and behind-the-scenes details. Prioritize these for direct quotes and anecdotes. Do NOT flatten follow-up answers into generic descriptive prose.
+
+## What to Generate
+
+Produce a JSON object with this structure:
+
+{
+  "lead": {
+    "kicker": "A headline capturing the project's singular idea — not generic (8-12 words)",
+    "deck": "1-2 sentences that set up the story. What makes this project worth reading about?"
+  },
+  "sections": [
+    { "type": "narrative", "body": "..." },
+    { "type": "pullquote", "quote": "Self-contained insight that makes sense without the interview question" },
+    { "type": "narrative", "body": "..." }
+  ],
+  "galleryChapters": [
+    {
+      "title": "Room Name",
+      "imageIds": ["exact-uuid-from-list"],
+      "body": ["paragraph1", "paragraph2", "paragraph3"]
+    }
+  ],
+  "pullQuotes": [
+    {"text": "Self-contained designer insight — must be verbatim from interview", "context": "On the design philosophy:", "sourceSection": "Room Name"}
+  ],
+  "credits": [{ "role": "Designer", "name": "${designerNameForPrompt}" }],
+  "materialsLedger": {
+    "items": [{ "name": "Product Name", "finish": "finish/color", "note": "Vendor: Name | Used in: Room" }]
+  },
+  "mode": "recomposition"
+}
+
+## Writing Instructions
+
+FOR THE SECTIONS ARRAY (${requiredChapterCount}-${requiredChapterCount + 2} narrative sections + 1-2 pullquotes):
+- Open with the space's defining tension, challenge, or idea — NOT with a product
+- Build through design logic: how one decision led to the next
+- Let products emerge as evidence within the story, not as items in a catalog
+- Close with the experiential quality of the finished space
+- Every paragraph should have a POINT — a design insight, a tension resolved, a relationship revealed
+- Do NOT follow the pattern: name product → explain product → next product
+
+FOR GALLERY CHAPTERS:
+- You MUST create exactly ${requiredChapterCount} gallery chapters — one for each room that has interview content or images.
+- REQUIRED rooms (do NOT omit or merge any): ${rooms.length > 0 ? rooms.join(', ') : 'General'}
+- Each chapter title MUST include the room name.
+- Use the designer's exact room name as the section heading — do not rename or reinterpret rooms.
+- Do NOT create thematic chapters that span multiple rooms. Each chapter = one room.
+- Rooms with more interview answers deserve proportionally more editorial space.
+- 2-4 paragraphs per chapter. EACH PARAGRAPH in a gallery chapter MUST include at least one direct quote or attributed paraphrase from the designer's interview answers for that room.
+- Products appear in context of decisions, not as standalone descriptions.
+- CRITICAL: Use ONLY the exact image IDs listed in the "Image IDs" lines above. Copy-paste them exactly. Do NOT invent or modify image IDs. Each room's chapter MUST use that room's image IDs.
+
+FOR PULL QUOTES:
+- Pull quotes must be the designer's ACTUAL WORDS from the interview above
+- You may lightly edit for grammar/clarity but do not compose new quotes
+- If no quotable moments exist in the interview, return zero pull quotes
+- Include a short "context" prefix (e.g. "On the kitchen's palette:") if the quote needs framing
+- Include "sourceSection" matching the room name
+- Maximum 2-3 pull quotes
+
+FOR THE MATERIALS LEDGER:
+- Comprehensive product list separate from the narrative
+- Include vendor and room context in notes (format: "Vendor: [name] | Used in: [room]")
+
+CRITICAL RULES:
+- 700-1100 words total across sections and chapters
+- Products serve the narrative — the narrative does not serve the products
+- MANDATORY: Include at least 1 direct attributed quote per gallery chapter, drawn from the interview answers. Format: '${designerNameForPrompt} says/recalls/explains, "[actual words]"'. Do NOT paraphrase every answer — preserve the designer's voice.
+- The article should read like a magazine feature, not a product specification sheet
+- EVERY room with interview content MUST get its own gallery chapter — do not drop, merge, or skip any room
+- Return ONLY valid JSON.
+
+Begin.`;
+
+  return { systemPrompt: EDITORIAL_SYSTEM_PROMPT, userPrompt, imageIds, rooms, imagesByRoom };
+}
+
+// ============================================================================
+// MAIN GENERATION FUNCTION — unified canonical path
+// ============================================================================
+
+export async function generateEditorialDraft(input: GenInput): Promise<{
+  blocks: z.infer<typeof BlocksSchema>;
+  usedFallback: boolean;
+}> {
+  const _cid = input.correlationId || 'generate';
+
+  // De-duplicate answers before processing
+  const uniqueAnswers = deduplicateAnswers(input.answers);
 
   if (!ANTHROPIC_ENABLED) {
     console.warn('[posting/generate] LLM disabled, using fallback blocks', {
-      projectId: input.project?.id,
-      _cid,
+      projectId: input.project?.id, _cid,
     });
-    blocks = toFallbackBlocks({ ...input, answers: uniqueAnswers });
-    usedFallback = true;
-  } else {
-    const modelName = 'claude-sonnet-4-20250514';
+    return { blocks: toFallbackBlocks({ ...input, answers: uniqueAnswers }), usedFallback: true };
+  }
 
-    const llmResult = await callLLM(
-      async () => {
-        return await client.messages.create({
-          model: modelName,
-          temperature: 0.8,
-          max_tokens: Math.max(3500, interviewedRoomCount * 800 + 1500), // Scale with room count: ~800 tokens per room + overhead
-          system: `You are Folio, the voice of modern design storytelling. ${FOLIO_TONE}`,
-          messages: [
-            { role: "user", content: prompt },
-          ],
-        });
-      },
-      { modelName, contextHint: `generate:${input.project?.id}`, baseDelayMs: 500 }
-    );
+  // Build prompt
+  const { systemPrompt, userPrompt, imageIds, rooms, imagesByRoom } = buildPrompt(input, uniqueAnswers);
 
-    if (!llmResult.ok) {
-      if (llmResult.code === 'moderation_block') {
-        console.warn('[generate] moderation_block; using fallback', { _cid });
-        usedFallback = true;
-        blocks = toFallbackBlocks({ ...input, answers: uniqueAnswers });
-      } else {
-        usedFallback = true;
-        console.warn('[generate] llm_fail_using_fallback', {
-          _cid,
-          code: llmResult.code,
-          status: llmResult.status,
-          projectId: input.project?.id,
-        });
-        blocks = toFallbackBlocks({ ...input, answers: uniqueAnswers });
-      }
-    } else {
-      console.info('[generate] llm_ok', { _cid, model: llmResult.usedModel });
-      const article = llmResult.data.content[0]?.type === 'text' ? llmResult.data.content[0].text : "";
-      
-      if (!article || article.trim().length === 0) {
-        console.warn('[generate] empty_article; using fallback', { _cid });
-        usedFallback = true;
-        blocks = toFallbackBlocks({ ...input, answers: uniqueAnswers });
-      } else {
-        // Parse narrative article into structured blocks
-        try {
-          blocks = parseNarrativeToBlocks(article, { ...input, answers: uniqueAnswers });
-        } catch (parseError) {
-          console.warn('[generate] parse_error; using fallback', { _cid, error: parseError });
-          usedFallback = true;
-          blocks = toFallbackBlocks({ ...input, answers: uniqueAnswers });
-        }
-      }
+  const interviewedRoomCount = Array.from(new Set(uniqueAnswers.map(a => a.section))).filter(r => r !== 'About This Project' && r !== 'General').length;
+  const modelName = 'claude-sonnet-4-20250514';
+
+  const llmResult = await callLLM(
+    async () => {
+      return await client.messages.create({
+        model: modelName,
+        temperature: 0.7,
+        max_tokens: Math.max(4096, interviewedRoomCount * 800 + 2000),
+        system: systemPrompt,
+        messages: [
+          { role: "user", content: userPrompt },
+        ],
+      });
+    },
+    { modelName, contextHint: `generate:${input.project?.id}`, baseDelayMs: 500 }
+  );
+
+  if (!llmResult.ok) {
+    console.warn('[generate] llm_fail_using_fallback', {
+      _cid, code: llmResult.code, status: llmResult.status, projectId: input.project?.id,
+    });
+    return { blocks: toFallbackBlocks({ ...input, answers: uniqueAnswers }), usedFallback: true };
+  }
+
+  console.info('[generate] llm_ok', { _cid, model: llmResult.usedModel });
+  const rawText = llmResult.data.content[0]?.type === 'text' ? llmResult.data.content[0].text : "";
+
+  if (!rawText || rawText.trim().length === 0) {
+    console.warn('[generate] empty_response; using fallback', { _cid });
+    return { blocks: toFallbackBlocks({ ...input, answers: uniqueAnswers }), usedFallback: true };
+  }
+
+  // Parse JSON output
+  let composed: any;
+  try {
+    const cleaned = rawText.replace(/```json\n?|\n?```/g, '').trim();
+    composed = JSON.parse(cleaned);
+  } catch (parseError) {
+    console.warn('[generate] JSON parse error; using fallback', { _cid, error: parseError });
+    return { blocks: toFallbackBlocks({ ...input, answers: uniqueAnswers }), usedFallback: true };
+  }
+
+  // Validate room structure (monitoring only)
+  if (rooms.length > 0 && rooms[0] !== 'General') {
+    const validation = validateRoomStructure(composed, rooms, imagesByRoom);
+    if (!validation.valid) {
+      console.warn('[generate] Room structure validation issues (will repair)', {
+        _cid, issues: validation.issues,
+      });
     }
   }
 
-  return { blocks, usedFallback };
+  // Repair and build validated blocks
+  try {
+    const blocks = repairAndBuildBlocks(composed, { ...input, answers: uniqueAnswers }, imageIds, rooms, imagesByRoom, _cid);
+    return { blocks, usedFallback: false };
+  } catch (repairError) {
+    console.warn('[generate] repair/validation error; using fallback', { _cid, error: repairError });
+    return { blocks: toFallbackBlocks({ ...input, answers: uniqueAnswers }), usedFallback: true };
+  }
 }
