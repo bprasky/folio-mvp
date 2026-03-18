@@ -13,6 +13,7 @@ import { cid } from "@/lib/utils/correlation";
 import { summarizeBudget, ensureUnder } from "@/lib/posting/contextBudget";
 import { compactImages, compactProducts, frameNarrativePrompt, softModerate } from "@/lib/posting/promptBuilders";
 import Anthropic from '@anthropic-ai/sdk';
+import { formatRoomName } from '@/lib/utils/formatRoomName';
 import { callLLM } from "@/lib/posting/llmClient";
 import { z } from "zod";
 import { LlmComposedLooseSchema, ComposedDraftSchema } from "@/lib/posting/schemas";
@@ -807,6 +808,47 @@ async function composeEditorialHard({
   const pulls = rawPulls.filter((quote, index, arr) =>
     arr.findIndex(q => q.text.trim() === quote.text.trim()) === index
   );
+
+  // Post-LLM repair: enforce room-based titles and correct image IDs.
+  // The LLM often generates creative titles and hallucinated UUIDs.
+  // We have ground truth from imagesByRoom — use it.
+  if (rooms.length > 0 && rooms[0] !== 'General' && Array.isArray(composed.galleryChapters)) {
+    const chapters = composed.galleryChapters as any[];
+
+    // Match chapters to rooms by position (prompt lists rooms in order)
+    for (let i = 0; i < Math.min(chapters.length, rooms.length); i++) {
+      const room = rooms[i];
+      const roomImages = (imagesByRoom[room] || []).map((img: { id: string }) => img.id);
+
+      // Override title with formatted room name
+      chapters[i].title = formatRoomName(room);
+
+      // Override imageIds with actual room images
+      if (roomImages.length > 0) {
+        chapters[i].imageIds = roomImages.slice(0, 8);
+      }
+    }
+
+    // Add missing rooms as chapters (if LLM generated fewer than required)
+    for (let i = chapters.length; i < rooms.length; i++) {
+      const room = rooms[i];
+      const roomImages = (imagesByRoom[room] || []).map((img: { id: string }) => img.id);
+      if (roomImages.length > 0) {
+        chapters.push({
+          title: formatRoomName(room),
+          imageIds: roomImages.slice(0, 8),
+          body: ['Editorial content for this room is being developed.'],
+        });
+      }
+    }
+
+    console.log('[composeEditorialHard] Post-LLM repair applied', {
+      _cid,
+      roomCount: rooms.length,
+      chapterCount: chapters.length,
+      titles: chapters.map((ch: any) => ch.title),
+    });
+  }
 
   // Build set of known valid image IDs for strict validation
   const knownImageIdSet = new Set(imageIds);
