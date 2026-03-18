@@ -41,7 +41,7 @@ You must AVOID:
 ACCURACY RULES — NON-NEGOTIABLE:
 - You may ONLY reference products, materials, and vendors that appear in the provided product tag data below. Do not invent product names, vendor names, material origins, or finishes.
 - Do not claim to know materials, country of origin, manufacturing methods, or finish types unless explicitly stated in the interview answers or product tag data.
-- Do not fabricate designer quotes. Pull quotes must be drawn directly from the interview answers provided. If no suitable quote exists for a section, omit the pull quote — do not generate one.
+- Do not fabricate designer quotes. Direct quotes in the body text must come from the interview answers provided.
 - Do not invent lifestyle details about the clients (how they entertain, family routines, number of guests) unless the designer explicitly described this in their interview answers.
 - Do not describe what you cannot verify from the provided data.
 - When referencing a product, use the EXACT product name and vendor name from the tag data. Do not paraphrase product names.
@@ -167,6 +167,85 @@ function buildCredits(input: GenInput): Array<{ role: string; name: string }> {
     credits.push({ role: 'Studio', name: input.designer.studio });
   }
   return credits;
+}
+
+// Extract pull quotes mechanically from body text direct quotes
+function extractPullQuotesFromBody(
+  chapters: Array<{ title: string; body: string[]; imageIds: string[] }>,
+  designerName?: string,
+): Array<{ text: string; context?: string; sourceSection?: string }> {
+  const candidates: Array<{ text: string; sourceSection: string; score: number }> = [];
+
+  // Attribution verbs to look for near quotes
+  const attrVerbs = 'says|explains|recalls|notes|adds|describes|continues|laughs|remembers|admits';
+  // Patterns: "quote," designer says  OR  designer says, "quote"
+  const quoteAfterAttr = new RegExp(
+    `(?:${attrVerbs})\\s*[,:]?\\s*["\u201C]([^"\u201D]{20,300})["\u201D]`,
+    'gi'
+  );
+  const quoteBeforeAttr = new RegExp(
+    `["\u201C]([^"\u201D]{20,300})["\u201D]\\s*,?\\s*(?:${designerName ? designerName.split(/\s+/).pop() + '\\s+' : ''})?(?:${attrVerbs})`,
+    'gi'
+  );
+
+  for (const chapter of chapters) {
+    for (const para of chapter.body) {
+      // Extract all direct quotes with attribution
+      for (const pattern of [quoteBeforeAttr, quoteAfterAttr]) {
+        pattern.lastIndex = 0;
+        let match: RegExpExecArray | null;
+        while ((match = pattern.exec(para)) !== null) {
+          const quoteText = match[1].trim();
+          if (!quoteText || quoteText.length < 20) continue;
+
+          let score = 0;
+          const words = quoteText.split(/\s+/).length;
+
+          // Length scoring
+          if (words >= 10 && words <= 40) score += 2;
+          else if ((words >= 5 && words < 10) || (words > 40 && words <= 60)) score += 1;
+
+          // First-person declarative (identity-revealing) — strongest signal
+          if (/\b(I wanted|I always|my thing|we never|I'm obsessed|I love|I knew|I didn't want|we wanted|I felt)\b/i.test(quoteText)) score += 3;
+
+          // Metaphor/analogy — magazine-ready imagery
+          if (/\b(like a|feels like|as if|reminds me of|felt like)\b/i.test(quoteText)) score += 2;
+
+          // Specific detail (proper nouns, numbers, materials, colors)
+          if (/\b(marble|brass|oak|walnut|limestone|concrete|steel|velvet|linen|ceramic|porcelain)\b/i.test(quoteText)) score += 1;
+          if (/\b(white|black|gray|grey|blue|green|mauve|warm|cool)\b/i.test(quoteText)) score += 1;
+
+          // Penalize purely process/factual
+          if (/\b(we ordered|it arrived|the contractor|we went with|was delivered|we installed)\b/i.test(quoteText)) score -= 1;
+
+          candidates.push({
+            text: quoteText,
+            sourceSection: chapter.title,
+            score,
+          });
+        }
+      }
+    }
+  }
+
+  // Deduplicate by text
+  const seen = new Set<string>();
+  const unique = candidates.filter(c => {
+    const key = c.text.toLowerCase().trim();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
+  // Sort by score descending, take top 2-3
+  unique.sort((a, b) => b.score - a.score);
+  const topQuotes = unique.slice(0, 3);
+
+  return topQuotes.map(q => ({
+    text: q.text,
+    context: `On ${q.sourceSection.toLowerCase()}:`,
+    sourceSection: q.sourceSection,
+  }));
 }
 
 // Distribute top-level pull quotes into per-chapter pullQuote fields
@@ -339,28 +418,7 @@ function repairAndBuildBlocks(
   const designerName = input.designer?.name;
   const finalChapters: Array<{ title: string; imageIds: string[]; body: string[]; pullQuote?: string }> = [];
 
-  // --- Extract pull quotes from both pullQuotes array and pullquote sections ---
-  const rawPulls: Array<{ text: string; context?: string; sourceSection?: string }> = [];
-  if (Array.isArray(composed.pullQuotes)) {
-    for (const q of composed.pullQuotes) {
-      if (typeof q === 'string' && q.trim()) {
-        rawPulls.push({ text: q.trim(), context: designerName || undefined });
-      } else if (q && typeof q === 'object' && typeof q.text === 'string' && q.text.trim()) {
-        rawPulls.push({ text: q.text.trim(), context: q.context?.trim() || designerName || undefined, sourceSection: q.sourceSection?.trim() || undefined });
-      }
-    }
-  }
-  if (Array.isArray(composed.sections)) {
-    for (const s of composed.sections) {
-      if (s.type === "pullquote" && s.quote) {
-        rawPulls.push({ text: s.quote.trim(), context: designerName || undefined });
-      }
-    }
-  }
-  // Deduplicate pull quotes by text
-  const pullQuotes = rawPulls.filter((quote, index, arr) =>
-    arr.findIndex(q => q.text.trim() === quote.text.trim()) === index
-  ).slice(0, 3);
+  // Pull quotes are now extracted mechanically from body text AFTER chapters are built (see below)
 
   // --- Post-LLM repair: enforce room-based titles and correct image IDs ---
   if (rooms.length > 0 && rooms[0] !== 'General' && Array.isArray(composed.galleryChapters)) {
@@ -479,6 +537,8 @@ function repairAndBuildBlocks(
     }
   }
 
+  // Mechanically extract pull quotes from body text direct quotes
+  const pullQuotes = extractPullQuotesFromBody(finalChapters, designerName);
   // Distribute pull quotes into per-chapter fields
   distributePullQuotesToChapters(finalChapters, pullQuotes);
 
@@ -487,7 +547,7 @@ function repairAndBuildBlocks(
   const blocks = {
     lead: composed.lead && typeof composed.lead === 'object'
       ? {
-          kicker: (composed.lead.kicker || composed.lead.title || input.project?.title || '').slice(0, 80),
+          kicker: (composed.lead.kicker || composed.lead.title || input.project?.title || '').slice(0, 120),
           deck: (composed.lead.deck || composed.lead.dek || '').slice(0, 400),
         }
       : { kicker: input.project?.title || 'A Considered Composition', deck: '' },
@@ -584,7 +644,10 @@ function buildPrompt(input: GenInput, uniqueAnswers: GenInput['answers']): {
 } {
   const { project, designer, images, tags } = input;
   const products = buildMaterialContext(tags);
-  const designerNameForPrompt = designer?.name || 'the designer';
+  const rawDesignerName = designer?.name;
+  const designerNameForPrompt = rawDesignerName
+    ? rawDesignerName.replace(/\b[a-z]/g, c => c.toUpperCase())
+    : 'the designer';
 
   // --- Build room-answer summary ---
   const roomAnswerCounts = new Map<string, number>();
@@ -653,6 +716,24 @@ function buildPrompt(input: GenInput, uniqueAnswers: GenInput['answers']): {
 
   const interviewedRoomCount = Array.from(roomAnswerCounts.keys()).filter(r => r !== 'About This Project' && r !== 'General').length;
   const requiredChapterCount = Math.max(rooms.length, interviewedRoomCount, 1);
+
+  // Structural variation: assign varied paragraph counts per room
+  const paraDistributions = [
+    [3, 2, 4, 2, 3],
+    [2, 3, 3, 4, 2],
+    [4, 2, 3, 2, 3],
+    [2, 4, 2, 3, 3],
+    [3, 3, 2, 4, 2],
+  ];
+  const chosenDist = paraDistributions[Math.floor(Math.random() * paraDistributions.length)];
+  const roomNames = rooms.length > 0 ? rooms : ['General'];
+  const paragraphCountsPerRoom = roomNames.map((room, i) => ({
+    room: formatRoomName(room),
+    count: chosenDist[i % chosenDist.length],
+  }));
+  const paragraphCountInstruction = paragraphCountsPerRoom
+    .map(r => `- ${r.room}: ${r.count} paragraphs`)
+    .join('\n');
 
   const locationParts = [project?.city, project?.regionState].filter(Boolean);
   const locationStr = locationParts.join(', ') || '';
@@ -770,7 +851,7 @@ Produce a JSON object with this structure:
 
 {
   "lead": {
-    "kicker": "A headline capturing the project's singular idea — not generic (8-12 words)",
+    "kicker": "A headline capturing the project's singular idea — not generic (8-15 words)",
     "deck": "1-2 sentences that set up the story. What makes this project worth reading about?"
   },
   "sections": [
@@ -784,9 +865,6 @@ Produce a JSON object with this structure:
       "imageIds": ["exact-uuid-from-list"],
       "body": ["paragraph1", "paragraph2", "paragraph3"]
     }
-  ],
-  "pullQuotes": [
-    {"text": "Self-contained designer insight — must be verbatim from interview", "context": "On the design philosophy:", "sourceSection": "Room Name"}
   ],
   "credits": [{ "role": "Designer", "name": "${designerNameForPrompt}" }],
   "materialsLedger": {
@@ -820,8 +898,10 @@ FOR GALLERY CHAPTERS:
 - Each chapter title MUST include the room name.
 - Use the designer's exact room name as the section heading — do not rename or reinterpret rooms.
 - Do NOT create thematic chapters that span multiple rooms. Each chapter = one room.
-- Rooms with more interview answers deserve proportionally more editorial space.
-- 2-4 paragraphs per chapter. EACH PARAGRAPH in a gallery chapter MUST include at least one direct quote or attributed paraphrase from the designer's interview answers for that room.
+- EACH PARAGRAPH in a gallery chapter MUST include at least one direct quote or attributed paraphrase from the designer's interview answers for that room.
+
+PARAGRAPH COUNTS PER ROOM (follow these exactly — this creates structural variation):
+${paragraphCountInstruction}
 - Products appear in context of decisions, not as standalone descriptions.
 - CRITICAL: Use ONLY the exact image IDs listed in the "Image IDs" lines above. Copy-paste them exactly. Do NOT invent or modify image IDs. Each room's chapter MUST use that room's image IDs.
 
@@ -836,20 +916,91 @@ CRITICAL RULES:
 - The article should read like a magazine feature, not a product specification sheet
 - EVERY room with interview content MUST get its own gallery chapter — do not drop, merge, or skip any room
 - Return ONLY valid JSON.
-
-PULL QUOTES — STRICT EXTRACTION RULE (generate these AFTER writing all sections and gallery chapters):
-1. First, write the complete editorial with direct quotes woven in
-2. After the full editorial is written, review your direct quotes
-3. Select 2-3 of the strongest direct quotes you ALREADY WROTE in the body text
-4. Copy them VERBATIM as pull quotes — same words, same punctuation
-5. Set sourceSection to the section title where the quote appears
-6. A pull quote that does not appear word-for-word in the body text is INVALID — do not generate standalone quotes
-OUTPUT THE PULL QUOTES AFTER THE FULL EDITORIAL TEXT, referencing which section and paragraph each was copied from.
-If you cannot identify 2 strong quotes from your own body text, output fewer. Do not fabricate quotes to fill a quota.
+- Do NOT generate a pullQuotes array — pull quotes are extracted automatically from your body text after generation.
 
 Begin.`;
 
   return { systemPrompt: EDITORIAL_SYSTEM_PROMPT, userPrompt, imageIds, rooms, imagesByRoom };
+}
+
+// ============================================================================
+// POST-PROCESSING: fix "The [noun]..." sentence openers via batched Haiku call
+// ============================================================================
+
+const THE_OPENER_PATTERN = /^The\s+[A-Z]/;
+const MAX_THE_OPENERS = 2;
+
+async function fixSentenceOpeners(
+  blocks: z.infer<typeof BlocksSchema>,
+  _cid: string,
+): Promise<z.infer<typeof BlocksSchema>> {
+  if (!blocks.galleryChapters) return blocks;
+
+  // Collect all paragraphs that start with "The [A-Z]..."
+  const flagged: Array<{ chapterIdx: number; paraIdx: number; text: string }> = [];
+  for (let ci = 0; ci < blocks.galleryChapters.length; ci++) {
+    const body = blocks.galleryChapters[ci].body;
+    if (!body) continue;
+    for (let pi = 0; pi < body.length; pi++) {
+      if (THE_OPENER_PATTERN.test(body[pi])) {
+        flagged.push({ chapterIdx: ci, paraIdx: pi, text: body[pi] });
+      }
+    }
+  }
+
+  // If within limit, nothing to fix
+  if (flagged.length <= MAX_THE_OPENERS) return blocks;
+
+  // Keep the first MAX_THE_OPENERS, fix the rest
+  const toFix = flagged.slice(MAX_THE_OPENERS);
+  console.info('[generate] fixing sentence openers', { _cid, total: flagged.length, toFix: toFix.length });
+
+  // Batch all paragraphs into a single Haiku call
+  const numberedInput = toFix.map((f, i) => `${i + 1}. ${f.text}`).join('\n\n');
+
+  const rewriteResult = await callLLM(
+    async () => {
+      return await client.messages.create({
+        model: 'claude-haiku-4-5-20251001',
+        temperature: 0.6,
+        max_tokens: Math.max(1024, toFix.length * 500),
+        system: `You are a copy editor. For each numbered paragraph below, rewrite ONLY its opening sentence so it does NOT start with "The". Keep the same meaning, tone, and all content after the first sentence. Use one of: a prepositional phrase, an action verb, the designer's name, a dependent clause, or a spatial/temporal marker. Return all rewritten paragraphs in the same numbered format (e.g., "1. [rewritten paragraph]").`,
+        messages: [{ role: 'user', content: numberedInput }],
+      });
+    },
+    { modelName: 'claude-haiku-4-5-20251001', contextHint: `fix-openers:${_cid}`, maxRetries: 1, baseDelayMs: 300 },
+  );
+
+  if (!rewriteResult.ok) {
+    console.warn('[generate] opener fix failed, keeping originals', { _cid, code: rewriteResult.code });
+    return blocks;
+  }
+
+  const rawResponse = rewriteResult.data.content[0]?.type === 'text' ? rewriteResult.data.content[0].text : '';
+  if (!rawResponse.trim()) return blocks;
+
+  // Parse numbered responses back
+  const rewrittenParagraphs = rawResponse.split(/\n\n(?=\d+\.\s)/).map(chunk => {
+    return chunk.replace(/^\d+\.\s*/, '').trim();
+  }).filter(p => p.length > 0);
+
+  // Apply rewrites
+  for (let i = 0; i < Math.min(toFix.length, rewrittenParagraphs.length); i++) {
+    const { chapterIdx, paraIdx } = toFix[i];
+    const rewritten = rewrittenParagraphs[i];
+    // Sanity check: rewritten should not start with "The [A-Z]" and should be reasonable length
+    if (rewritten && !THE_OPENER_PATTERN.test(rewritten) && rewritten.length > 20) {
+      blocks.galleryChapters![chapterIdx].body![paraIdx] = rewritten;
+    }
+  }
+
+  // Re-validate
+  try {
+    return BlocksSchema.parse(blocks);
+  } catch {
+    console.warn('[generate] blocks failed validation after opener fix, returning unfixed', { _cid });
+    return blocks;
+  }
 }
 
 // ============================================================================
@@ -930,7 +1081,9 @@ export async function generateEditorialDraft(input: GenInput): Promise<{
 
   // Repair and build validated blocks
   try {
-    const blocks = repairAndBuildBlocks(composed, { ...input, answers: uniqueAnswers }, imageIds, rooms, imagesByRoom, _cid);
+    let blocks = repairAndBuildBlocks(composed, { ...input, answers: uniqueAnswers }, imageIds, rooms, imagesByRoom, _cid);
+    // Post-processing: fix "The [noun]..." sentence openers
+    blocks = await fixSentenceOpeners(blocks, _cid);
     return { blocks, usedFallback: false };
   } catch (repairError) {
     console.warn('[generate] repair/validation error; using fallback', { _cid, error: repairError });
