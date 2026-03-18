@@ -27,7 +27,7 @@ export const ComposedDraftSchema = z.object({
     kicker: z.string().min(3).max(80),
     deck: z.string().min(10).max(400), // Increased from implicit limit to 400
   }).strict(),
-  sections: z.array(SectionSchema).min(3).max(7), // REQUIRED at compose time
+  sections: z.array(SectionSchema).min(3).max(15), // REQUIRED at compose time (rooms + pullquotes can exceed 7)
   galleryChapters: z.array(z.object({
     title: z.string().optional(),
     imageIds: z.array(z.string()).min(1),
