@@ -452,7 +452,11 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
           />
         )}
         {activeTab === 'contact' && (
-          <OrgContactTab org={orgData} isOwner={isOwner} />
+          <OrgContactTab
+            org={orgData}
+            isOwner={isOwner}
+            currentUser={session?.user ? { id: session.user.id, name: session.user.name || '' } : null}
+          />
         )}
       </div>
     </div>

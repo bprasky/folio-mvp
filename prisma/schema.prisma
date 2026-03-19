@@ -213,6 +213,13 @@ model User {
   followingRelationships UserRelationship[] @relation("Follower")
   followerRelationships  UserRelationship[] @relation("Following")
 
+  // Messaging System
+  initiatedConversations  Conversation[]              @relation("InitiatedConversations")
+  receivedConversations   Conversation[]              @relation("ReceivedConversations")
+  sentMessages            Message[]
+  conversationMemberships ConversationParticipant[]
+  messagingPreferences    MessagingPreferences?
+
   @@map("users")
 }
 
@@ -818,6 +825,11 @@ model Organization {
   interviewProfileExtractedAt DateTime?
   profileSourcedFromInterview Boolean              @default(false)
   profileFieldSources        ProfileFieldSource[]
+
+  // Messaging System
+  orgInitiatedConversations Conversation[] @relation("OrgInitiatedConversations")
+  orgReceivedConversations  Conversation[] @relation("OrgReceivedConversations")
+  orgSentMessages           Message[]
 
   @@index([status])
   @@index([type])
@@ -5279,4 +5291,129 @@ model UserRelationship {
   @@index([followingId])
   @@index([tier])
   @@map("user_relationships")
+}
+
+// ─── Messaging System ───────────────────────────────────────────────────────
+
+model Conversation {
+  id String @id @default(cuid())
+
+  // Participants — one or both may be orgs or users
+  initiatorUserId String?
+  initiatorOrgId  String?
+  recipientUserId String?
+  recipientOrgId  String?
+
+  // Thread metadata
+  subject String?
+  context ConversationContext @default(GENERAL)
+  status  ConversationStatus @default(ACTIVE)
+
+  // Attribution context (for vendor → designer threads)
+  attributionNote String?
+  productId       String?
+
+  // Timestamps
+  lastMessageAt DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  messages     Message[]
+  participants ConversationParticipant[]
+
+  initiatorUser User?         @relation("InitiatedConversations", fields: [initiatorUserId], references: [id])
+  initiatorOrg  Organization? @relation("OrgInitiatedConversations", fields: [initiatorOrgId], references: [id])
+  recipientUser User?         @relation("ReceivedConversations", fields: [recipientUserId], references: [id])
+  recipientOrg  Organization? @relation("OrgReceivedConversations", fields: [recipientOrgId], references: [id])
+
+  @@index([recipientOrgId, status])
+  @@index([recipientUserId, status])
+  @@index([initiatorUserId])
+  @@index([lastMessageAt])
+  @@map("conversations")
+}
+
+model Message {
+  id             String  @id @default(cuid())
+  conversationId String
+  senderUserId   String
+  senderOrgId    String?
+
+  body String
+
+  // Read receipts
+  readAt       DateTime?
+  readByUserId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  conversation Conversation  @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User          @relation(fields: [senderUserId], references: [id])
+  senderOrg    Organization? @relation(fields: [senderOrgId], references: [id])
+
+  @@index([conversationId, createdAt])
+  @@map("messages")
+}
+
+model ConversationParticipant {
+  id             String  @id @default(cuid())
+  conversationId String
+  userId         String
+  orgId          String?
+
+  // Per-participant state
+  lastReadAt  DateTime?
+  isArchived  Boolean   @default(false)
+  isMuted     Boolean   @default(false)
+  unreadCount Int       @default(0)
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id])
+
+  @@unique([conversationId, userId])
+  @@map("conversation_participants")
+}
+
+model MessagingPreferences {
+  id     String @id @default(cuid())
+  userId String @unique
+
+  // Email notification settings
+  emailOnNewMessage        Boolean              @default(true)
+  emailOnNewInquiry        Boolean              @default(true)
+  emailDigestFrequency     EmailDigestFrequency @default(IMMEDIATE)
+  emailNotificationAddress String?
+
+  // In-app notification settings
+  pushOnNewMessage Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("messaging_preferences")
+}
+
+enum ConversationContext {
+  GENERAL
+  CLIENT_INQUIRY
+  VENDOR_OUTREACH
+  PEER
+  PLATFORM
+}
+
+enum ConversationStatus {
+  ACTIVE
+  ARCHIVED
+  BLOCKED
+}
+
+enum EmailDigestFrequency {
+  IMMEDIATE
+  HOURLY
+  DAILY
+  NEVER
 }
