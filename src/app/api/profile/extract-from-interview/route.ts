@@ -58,7 +58,15 @@ export async function POST(request: NextRequest) {
     if (interview.interviewFormat === 'conversational' && interview.conversationalAnswers) {
       // New conversational format: build transcript from Q&A pairs
       const answers = interview.conversationalAnswers as Record<string, string>;
-      transcript = buildTranscriptFromAnswers(answers, ORG_ABOUT_QUESTIONS);
+      const interviewTranscript = buildTranscriptFromAnswers(answers, ORG_ABOUT_QUESTIONS);
+
+      // If there's an imported bio, merge it with the follow-up answers
+      const importedBio = (interview as any).importedBioText as string | null;
+      if (importedBio && importedBio.trim()) {
+        transcript = `EXISTING BIO:\n${importedBio}\n\nFOLLOW-UP INTERVIEW:\n${interviewTranscript}\n\nPrefer the follow-up interview for any field where both sources provide an answer — the interview reflects more recent and deliberate intent. Use the bio to fill gaps the interview didn't address.`;
+      } else {
+        transcript = interviewTranscript;
+      }
     } else {
       // Legacy layered format: build transcript from structured fields
       transcript = buildLegacyTranscript(interview);

@@ -3535,7 +3535,31 @@ model OrgBioInterview {
   conversationalAnswers Json?   // { questionId: answer } for 7-question conversational format
   interviewFormat       String  @default("layered") // "layered" (legacy) or "conversational" (new)
 
+  // Bio import
+  importedBioText       String?   @db.Text
+  importedBioUrl        String?
+  importedBioAnalyzedAt DateTime?
+  bioImportType         String    @default("FRESH") // FRESH | IMPORTED_URL | IMPORTED_TEXT
+
+  // Coverage tracking
+  questionCoverage InterviewQuestionCoverage[]
+
   @@map("org_bio_interview")
+}
+
+model InterviewQuestionCoverage {
+  id                   String  @id @default(cuid())
+  orgBioInterviewId    String?
+  questionId           String
+  depth                String  // FULL | PARTIAL | NONE
+  extractedAnswer      String? @db.Text
+  gapNote              String?
+  askedInFollowUp      Boolean @default(false)
+
+  orgBioInterview OrgBioInterview? @relation(fields: [orgBioInterviewId], references: [id])
+
+  @@unique([orgBioInterviewId, questionId])
+  @@map("interview_question_coverage")
 }
 
 // Team member invitations
