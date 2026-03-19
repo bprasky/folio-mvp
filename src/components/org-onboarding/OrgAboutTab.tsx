@@ -1,9 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { EmptyStateCard } from './EmptyStateCard';
 import { ProfileCompletenessIndicator } from './ProfileCompletenessIndicator';
-import { BioInterviewModal } from './BioInterviewModal';
 import { AddTeamMemberModal } from './AddTeamMemberModal';
 import { StudioDetailsModal } from './StudioDetailsModal';
 import { ProcessBuilderModal } from './ProcessBuilderModal';
@@ -79,7 +79,7 @@ export function OrgAboutTab({
   onboardingProgress,
   isOwner
 }: OrgAboutTabProps) {
-  const [showBioInterview, setShowBioInterview] = useState(false);
+  const router = useRouter();
   const [showAddTeamMember, setShowAddTeamMember] = useState(false);
   const [showStudioDetails, setShowStudioDetails] = useState(false);
   const [showProcessBuilder, setShowProcessBuilder] = useState(false);
@@ -98,16 +98,8 @@ export function OrgAboutTab({
           title="Tell your studio's story"
           description="Answer a few questions and we'll help craft your bio, tagline, and philosophy."
           buttonText="Start Bio Interview"
-          onAction={() => setShowBioInterview(true)}
+          onAction={() => router.push(`/org/${org.id}/settings/about-interview`)}
           estimatedTime="5 minutes"
-        />
-
-        <BioInterviewModal
-          open={showBioInterview}
-          onClose={() => setShowBioInterview(false)}
-          orgId={org.id}
-          orgName={org.name}
-          onComplete={refresh}
         />
       </div>
     );
@@ -434,14 +426,6 @@ export function OrgAboutTab({
       </div>
 
       {/* Modals */}
-      <BioInterviewModal
-        open={showBioInterview}
-        onClose={() => setShowBioInterview(false)}
-        orgId={org.id}
-        orgName={org.name}
-        onComplete={refresh}
-      />
-
       <AddTeamMemberModal
         open={showAddTeamMember}
         onClose={() => setShowAddTeamMember(false)}
