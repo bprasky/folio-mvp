@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import SafeImage from '@/components/SafeImage';
 
@@ -18,7 +19,10 @@ interface OrgProfileHeroProps {
   featuredCount: number;
   followerCount: number;
   isOwner?: boolean;
+  isMember?: boolean;
 }
+
+const DESIGN_ORG_TYPES = ['DESIGN_FIRM', 'ARCHITECTURE_FIRM'];
 
 export default function OrgProfileHero({
   org,
@@ -26,7 +30,24 @@ export default function OrgProfileHero({
   featuredCount,
   followerCount,
   isOwner = false,
+  isMember = false,
 }: OrgProfileHeroProps) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    }
+    if (menuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [menuOpen]);
+
+  const showVendorsLink = isMember && DESIGN_ORG_TYPES.includes(org.type);
   const initials = org.name
     ?.split(' ')
     .map(n => n[0])
@@ -117,7 +138,7 @@ export default function OrgProfileHero({
                   <Stat label="Featured" value={featuredCount} />
                 </div>
 
-                <div className="flex gap-3">
+                <div className="flex gap-3 items-center">
                   {isOwner ? (
                     <Link
                       href={`/org/${org.id}/settings`}
@@ -141,6 +162,39 @@ export default function OrgProfileHero({
                         Contact
                       </button>
                     </>
+                  )}
+
+                  {showVendorsLink && (
+                    <div className="relative" ref={menuRef}>
+                      <button
+                        onClick={() => setMenuOpen(!menuOpen)}
+                        className="w-9 h-9 rounded-full border flex items-center justify-center transition-all hover:bg-stone-50"
+                        style={{ borderColor: '#E8E4DF', color: '#6B635B' }}
+                        aria-label="More options"
+                      >
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                          <circle cx="8" cy="3" r="1.5" />
+                          <circle cx="8" cy="8" r="1.5" />
+                          <circle cx="8" cy="13" r="1.5" />
+                        </svg>
+                      </button>
+
+                      {menuOpen && (
+                        <div
+                          className="absolute right-0 mt-2 w-48 rounded-lg shadow-lg border z-50"
+                          style={{ backgroundColor: '#FFFFFF', borderColor: '#E8E4DF' }}
+                        >
+                          <Link
+                            href={`/org/${org.id}/vendors`}
+                            className="block px-4 py-3 text-sm transition-colors hover:bg-stone-50 rounded-lg"
+                            style={{ color: '#2C2825' }}
+                            onClick={() => setMenuOpen(false)}
+                          >
+                            Our Vendors
+                          </Link>
+                        </div>
+                      )}
+                    </div>
                   )}
                 </div>
 

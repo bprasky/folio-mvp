@@ -5,8 +5,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/options";
 import { prisma } from "@/lib/prisma";
 import { assertProjectWrite } from "@/lib/authz/access";
-// Removed toFallbackBlocks import - hard-fail mode doesn't use fallbacks
 import { BlocksSchema } from "@/lib/posting/schemas";
+import { generateEditorialDraft, type GenInput } from "@/lib/posting/generateEditorialDraft";
 import { rateLimit } from "@/lib/rateLimit";
 import { logPassiveEvent } from "@/lib/analytics";
 import { cid } from "@/lib/utils/correlation";
@@ -112,81 +112,8 @@ function parseJSON(s: string): any {
   }
 }
 
-function synthesizeFromAnswers(
-  answers: { q: string; a: string }[],
-  followups: { q: string; a: string }[],
-  selections: string[]
-): string {
-  const key = [...answers, ...followups].map(x => x.a).join(' ');
-  // Very simple synthesis; the LLM already tried — this is a resilience fallback
-  return `This project balances utility and personality. ${key.slice(0, 1500)} ... ` +
-    (selections?.length ? `Key materials include ${selections.join(', ')}.` : '');
-}
-
-function chunkToParagraphs(text: string): string[] {
-  return text
-    .split(/\n{2,}|\.(\s|$)/)
-    .map(s => s?.trim())
-    .filter(Boolean)
-    .map(s => s.endsWith('.') ? s : s + '.')
-    .filter(p => p.length > 20); // Filter out very short fragments
-}
-
-// Helper function to split a very long paragraph into smaller chunks at sentence boundaries
-function splitLongParagraph(text: string, maxLength: number = 4000): string[] {
-  if (text.length <= maxLength) {
-    return [text];
-  }
-  
-  // Split on sentence boundaries (period, exclamation, question mark followed by space and capital)
-  const sentences = text.split(/([.!?]+\s+(?=[A-Z]))/);
-  const chunks: string[] = [];
-  let current = '';
-  
-  for (let i = 0; i < sentences.length; i++) {
-    const candidate = current + sentences[i];
-    
-    // If adding this sentence would exceed maxLength, save current chunk and start new one
-    if (candidate.length > maxLength && current.length > 0) {
-      chunks.push(current.trim());
-      current = sentences[i];
-    } else {
-      current = candidate;
-    }
-  }
-  
-  // Add remaining text
-  if (current.trim().length > 0) {
-    chunks.push(current.trim());
-  }
-  
-  // Safety check: if any chunk is still too long, truncate it (shouldn't happen, but be safe)
-  return chunks.map(chunk => chunk.length > 5000 ? chunk.substring(0, 5000) : chunk);
-}
-
-// Conservative fixes outside quotes; never alter quoted text
-function proofOutsideQuotes(paragraph: string): string {
-  if (!paragraph || !paragraph.trim()) return paragraph;
-  
-  let result = paragraph.trim();
-  
-  // Common product name fixes (case-insensitive, outside quotes only)
-  result = result.replace(/\bmodern abstract painting #abav261\b/gi, 'Modern Abstract Painting #ABAV261');
-  result = result.replace(/\bgrey onyx\b/gi, 'Grey Onyx');
-  result = result.replace(/\bbas stone\b/gi, 'BAS Stone');
-  
-  // Fix sentence starts (outside quotes only)
-  // Split by quotes to preserve quoted text verbatim
-  const parts = result.split(/"([^"]*)"/g);
-  for (let i = 0; i < parts.length; i += 2) {
-    // Only process parts outside quotes (even indices)
-    if (parts[i]) {
-      // Capitalize first letter after sentence-ending punctuation
-      parts[i] = parts[i].replace(/(^|\.\s+)([a-z])/g, (_, p, c) => p + c.toUpperCase());
-    }
-  }
-  return parts.join('"');
-}
+// Dead functions removed — synthesizeFromAnswers, chunkToParagraphs, splitLongParagraph, proofOutsideQuotes
+// These are now in generateEditorialDraft.ts
 
 // ============================================================================
 // ROOM GROUPING HELPER FUNCTIONS
@@ -269,9 +196,10 @@ function formatAnswers(qaList: Array<{ q: string; a: string }>): string {
   return qaList.map(qa => `Q: ${qa.q}\nA: ${qa.a}`).join('\n\n');
 }
 
-// ============================================================================
-// IMPROVED PROMPTS
-// ============================================================================
+// NOTE: EDITORIAL_SYSTEM_PROMPT, buildEditorialPrompt, validateRoomStructure,
+// composeEditorialHard, composeEditorial are no longer called by the POST handler.
+// They are retained temporarily for reference. The canonical generation path is now
+// generateEditorialDraft() in src/lib/posting/generateEditorialDraft.ts.
 
 const EDITORIAL_SYSTEM_PROMPT = `You are a senior writer for a prestigious design magazine, writing a feature article about an interior design project. Your writing style is:
 
@@ -1988,7 +1916,7 @@ export async function POST(
       });
     }
 
-    // Validate imageOrder has at least one valid UUID (reuse pattern from composeEditorialHard scope)
+    // Validate imageOrder has at least one valid UUID
     const uuidPatternValidate = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     const validImageIds = (finalImageOrder || []).filter((id: string) => 
       id && typeof id === 'string' && uuidPatternValidate.test(id)
@@ -2210,33 +2138,68 @@ export async function POST(
       });
     }
 
+    // --- Normalize inputs to GenInput for the unified generateEditorialDraft ---
+    const genInput: GenInput = {
+      project: {
+        id: projectId,
+        title: projectData.title || 'Project',
+        description: projectData.description,
+        city: projectData.city,
+        regionState: projectData.regionState,
+        projectType: projectData.projectType,
+        clientType: projectData.clientType,
+      },
+      designer: projectData.designer ? {
+        id: projectData.designer.id,
+        name: designerName || projectData.designer.name || 'Designer',
+        studio: projectData.designer.studio,
+      } : undefined,
+      images: imagesWithRoomData.map(img => ({
+        id: img.id,
+        room: img.room || undefined,
+      })),
+      tags: validImages.flatMap(img =>
+        (img.tags || []).map((tag: any) => ({
+          id: tag.id,
+          imageId: img.id,
+          productId: tag.productId,
+          product: tag.product ? {
+            id: tag.product.id,
+            name: tag.product.name,
+            vendor: tag.product.vendor ? {
+              id: tag.product.vendor.id,
+              name: tag.product.vendor.name || tag.product.vendor.companyName || 'Vendor',
+            } : undefined,
+            finish: tag.product.finish || tag.product.category,
+          } : undefined,
+        }))
+      ),
+      answers: [...normalizedAnswers, ...normalizedFollowUps].map((a: any) => ({
+        questionId: a.q || 'Question',
+        section: a.roomName || 'General',
+        role: 'DESIGNER' as const,
+        answer: a.a || '',
+        isFollowUp: a.isFollowUp || false,
+        roomId: undefined,
+      })).filter(a => a.answer.trim()),
+      rooms: projectRooms.map(r => ({ id: r.id, name: r.name })),
+      imageOrder: validImageIds,
+      correlationId: _cid,
+      designerBio,
+      projectHistory,
+      atelierSummary,
+      imageSelections,
+    };
+
     let composed: any;
+    let usedFallback = false;
     try {
-      composed = await composeEditorialHard({
-        project: {
-          title: projectData.title || 'Project',
-          description: projectData.description,
-          projectType: projectData.projectType,
-          clientType: projectData.clientType,
-        },
-        answers: normalizedAnswers,
-        followups: normalizedFollowUps.length > 0 ? normalizedFollowUps : undefined,
-        materialsLedger: materialsLedger,
-        imageOrder: validImageIds,  // Use validated image IDs
-        imageSelections: imageSelections,
-        images: imagesWithRoomData,  // Pass images with room data
-        designerName,
-        designer: projectData.designer,
-        location: projectLocation,
-        designerBio,
-        projectHistory,
-        atelierSummary,
-        correlationId: _cid,
-        roomsWithAnswers: roomsWithAnswers.size > 0 ? roomsWithAnswers : undefined,
-      });
+      const result = await generateEditorialDraft(genInput);
+      composed = result.blocks;
+      usedFallback = result.usedFallback;
     } catch (e: any) {
-      console.error("[generate] hard-fail:", { code: e?.code, message: e?.message, _cid });
-      
+      console.error("[generate] generation failed:", { code: e?.code, message: e?.message, _cid });
+
       // Unlock if we acquired a lock
       if (acquireLock) {
         try {
@@ -2250,7 +2213,7 @@ export async function POST(
           console.error("[posting/interview/generate] Unlock failed", { _cid, unlockErr });
         }
       }
-      
+
       return NextResponse.json(
         { error: "Story generation failed", code: e?.code || "COMPOSE_ERROR", message: e?.message },
         { status: e?.status || 502 }
@@ -2258,7 +2221,8 @@ export async function POST(
     }
 
     const duration = Date.now() - started;
-    
+
+    // composed is already BlocksSchema-validated from generateEditorialDraft
     // Log generated structure for debugging
     console.log('[GENERATED STRUCTURE]', {
       projectId,
@@ -2274,73 +2238,11 @@ export async function POST(
       })),
       pullQuotesCount: composed.pullQuotes?.length || 0,
       materialsCount: composed.materialsLedger?.items?.length || 0,
+      usedFallback,
       durationMs: duration,
       _cid,
     });
-    
-    // composed already has the correct structure from composeEditorialHard:
-    // - lead: { kicker, deck }
-    // - galleryChapters: [{ title?, imageIds: string[], body: string[] }]
-    // - pullQuotes: string[]
-    // - credits: Array<{ role, name }>
-    // - materialsLedger?: { items: Array<{ name, productId? }> }
-    // - mode: 'recomposition'
-    
-    // Validate and filter imageIds to valid UUIDs (required by BlocksSchema)
-    const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    if (composed.galleryChapters && Array.isArray(composed.galleryChapters)) {
-      for (const chapter of composed.galleryChapters) {
-        if (Array.isArray(chapter.imageIds)) {
-          chapter.imageIds = chapter.imageIds
-            .map((id: any) => String(id))
-            .filter((id: string) => uuidPattern.test(id))
-            .slice(0, 8);
-          
-          // If no valid UUIDs, fail hard (schema requires at least 1)
-          if (chapter.imageIds.length === 0) {
-            // Use imageOrder as fallback if available
-            const validImageIds = (imageOrder || [])
-              .filter((id: string) => uuidPattern.test(String(id)))
-              .slice(0, 8);
-            
-            if (validImageIds.length > 0) {
-              chapter.imageIds = validImageIds;
-            } else {
-              // No valid UUIDs - this should not happen but fail gracefully
-              console.error('[AUDIT] generate: no valid imageIds', { _cid });
-              if (acquireLock) {
-                try {
-                  const fresh = await prisma.projectPost.findUnique({ where: { projectId }, select: { provenance: true } });
-                  const prov = { ...((fresh?.provenance as any) ?? {}) };
-                  if (prov.interview?.status?.phase === 'generating') {
-                    prov.interview.status = { phase: 'idle', endedAt: Date.now(), lastDurationMs: duration };
-                    await prisma.projectPost.update({ where: { projectId }, data: { provenance: prov as any } });
-                  }
-                } catch (unlockErr) {
-                  console.error("[posting/interview/generate] Unlock failed", { _cid, unlockErr });
-                }
-              }
-              return NextResponse.json(
-                { error: "Story generation failed", code: "INVALID_IMAGE_IDS", message: "No valid image IDs found" },
-                { status: 502 }
-              );
-            }
-          }
-        }
-      }
-    }
-    
-    console.log("[AUDIT] generate:compose:summary", {
-      lead: !!composed.lead,
-      mode: composed.mode,
-      narrativeCount: composed.galleryChapters?.[0]?.body?.length || 0,
-      pullquotes: composed.pullQuotes?.length || 0,
-      galleryChapters: composed.galleryChapters?.length || 0,
-      chapterBodyLen: composed.galleryChapters?.[0]?.body?.length || 0,
-      durationMs: duration,
-      _cid,
-    });
-    
+
     // DEBUG DRY-RUN: compose only, do not persist, respond with diagnostic JSON
     if (debugEcho) {
       return NextResponse.json({
@@ -2348,6 +2250,7 @@ export async function POST(
           note: "Dry-run only. Nothing saved.",
           projectId,
           callSource,
+          usedFallback,
         },
         composedPreview: {
           lead: composed.lead,
@@ -2360,13 +2263,11 @@ export async function POST(
         raw: composed,
       });
     }
-    
+
     // Replace LLM-generated materialsLedger with DB-sourced one (has valid UUIDs)
     if (materialsLedger) {
       composed.materialsLedger = materialsLedger;
     } else if (composed.materialsLedger?.items) {
-      // Strip non-UUID productIds/vendorIds that the LLM may have hallucinated
-      // Use strict RFC 4122 pattern matching Zod v4's uuid() validation
       const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
       for (const item of composed.materialsLedger.items) {
         if (item.productId && !uuidRe.test(item.productId)) delete item.productId;
@@ -2374,50 +2275,8 @@ export async function POST(
       }
     }
 
-    // Prepare for BlocksSchema validation
-    const composedLoose = composed;
-
-    // ---- FINAL STRICT PARSE ----
-    // Remove dotted keys before strict parse
-    const clean = stripDottedKeysDeep(composedLoose);
-    let validatedBlocks: any;
-    
-    try {
-      validatedBlocks = BlocksSchema.parse(clean);
-      console.log('[AUDIT] schema: strict parse OK', {
-        chapterBodyLen: validatedBlocks?.galleryChapters?.[0]?.body?.length ?? 0,
-        pullQuotes: validatedBlocks?.pullQuotes?.length ?? 0,
-        mode: validatedBlocks?.mode,
-        _cid,
-      });
-    } catch (e: any) {
-      console.error('[AUDIT] schema: strict parse failed', {
-        errors: e?.issues ?? e?.errors,
-        keys: Object.keys(clean || {}),
-        _cid,
-      });
-      
-      // HARD-FAIL: No fallbacks - unlock and return error
-      if (acquireLock) {
-        try {
-          const fresh = await prisma.projectPost.findUnique({ where: { projectId }, select: { provenance: true } });
-          const prov = { ...((fresh?.provenance as any) ?? {}) };
-          if (prov.interview?.status?.phase === 'generating') {
-            prov.interview.status = { phase: 'idle', endedAt: Date.now(), lastDurationMs: duration };
-            await prisma.projectPost.update({ where: { projectId }, data: { provenance: prov as any } });
-          }
-        } catch (unlockErr) {
-          console.error("[posting/interview/generate] Unlock failed", { _cid, unlockErr });
-        }
-      }
-      
-      return NextResponse.json(
-        { error: 'Validation error', code: 'VALIDATION_ERROR', issues: (e?.issues ?? e?.errors ?? []), message: 'Invalid blocks' },
-        { status: 502 }
-      );
-    }
-    
-    // Ensure mode is set to recomposition (should already be set by composeEditorialHard)
+    // composed is already BlocksSchema-validated; use it directly
+    const validatedBlocks = composed;
     validatedBlocks.mode = 'recomposition';
 
     // Post-generation accuracy verification (monitoring mode)

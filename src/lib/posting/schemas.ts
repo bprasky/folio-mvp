@@ -23,11 +23,11 @@ export const SectionSchema = z.object({
 // Uses .passthrough() so unexpected keys from the LLM don't cause validation failures
 export const ComposedDraftSchema = z.object({
   lead: z.object({
-    title: z.string().min(3).max(80).optional(), // Support title field
-    kicker: z.string().min(3).max(80),
+    title: z.string().min(3).max(120).optional(), // Support title field
+    kicker: z.string().min(3).max(120),
     deck: z.string().min(10).max(400), // Increased from implicit limit to 400
   }).strict(),
-  sections: z.array(SectionSchema).min(3).max(7), // REQUIRED at compose time
+  sections: z.array(SectionSchema).min(3).max(15), // REQUIRED at compose time (rooms + pullquotes can exceed 7)
   galleryChapters: z.array(z.object({
     title: z.string().optional(),
     imageIds: z.array(z.string()).min(1),
@@ -56,8 +56,8 @@ const SectionSchemaLoose = z.object({
 // Loose schema for LLM output - tolerates sections & materials that we'll repair/strip later
 export const LlmComposedLooseSchema = z.object({
   lead: z.object({
-    title: z.string().max(80).optional(), // Support title field with limit
-    kicker: z.string().max(80).optional(), // Increased limit
+    title: z.string().max(120).optional(), // Support title field with limit
+    kicker: z.string().max(120).optional(), // Increased limit
     deck: z.string().max(400).optional(), // Increased limit
     dek: z.string().max(400).optional(), // Alias for deck, same limit
   }).optional(),
@@ -116,12 +116,12 @@ export type PullQuoteSelection = z.infer<typeof PullQuoteSelectionSchema>;
 
 export const BlocksSchema = z.object({
   lead: z.object({
-    title: z.string().max(80).optional(), // Support title field (LLM sometimes generates this)
-    kicker: z.string().max(80).optional(), // Increased from 48 to 80 for natural headlines
+    title: z.string().max(120).optional(), // Support title field (LLM sometimes generates this)
+    kicker: z.string().max(120).optional(), // Increased from 80 to 120 for natural headlines
     deck: z.string().max(400).optional(), // Increased from 240 to 400 for proper magazine-style descriptions
   }).optional(),
   galleryChapters: z.array(z.object({
-    title: z.string().max(80).optional(),
+    title: z.string().max(120).optional(),
     body: z.array(z.string().max(5000)).optional(), // Allow very long paragraphs for recomposition (600-900 words = ~3000-4500 chars total, sections may be 1000-2000 chars each)
     imageIds: z.array(z.string().uuid()).min(1).max(8),
     pullQuote: z.union([
