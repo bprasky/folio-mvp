@@ -54,6 +54,27 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
   try {
     org = await prisma.organization.findUnique({
       where: { id: resolvedParams.orgId },
+      select: {
+        id: true,
+        name: true,
+        type: true,
+        description: true,
+        logo: true,
+        website: true,
+        address: true,
+        tagline: true,
+        philosophy: true,
+        location: true,
+        foundedYear: true,
+        specialties: true,
+        followerCount: true,
+        teamSizeRange: true,
+        services: true,
+        projectTypes: true,
+        serviceRegions: true,
+        memberships: true,
+        certifications: true,
+      },
     });
   } catch (err) {
     console.error('[OrgProfilePage] Error fetching organization:', err);
