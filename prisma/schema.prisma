@@ -204,6 +204,11 @@ model User {
   // Territory assignments (as rep)
   territoryAssignments OrgTerritoryAssignment[] @relation("RepTerritoryAssignments")
 
+  // Interview-first profile system
+  interviewProfileExtractedAt DateTime?
+  profileSourcedFromInterview Boolean               @default(false)
+  profileFieldSources        ProfileFieldSource[]
+
   // Relationship Graph
   followingRelationships UserRelationship[] @relation("Follower")
   followerRelationships  UserRelationship[] @relation("Following")
@@ -808,6 +813,11 @@ model Organization {
   territoryAssignments OrgTerritoryAssignment[] @relation("VendorTerritoryAssignments")
   // Territory assignments where this design org is the assigned account
   assignedAsTerritoryAccount OrgTerritoryAssignment[] @relation("DesignerTerritoryAssignments")
+
+  // Interview-first profile system
+  interviewProfileExtractedAt DateTime?
+  profileSourcedFromInterview Boolean              @default(false)
+  profileFieldSources        ProfileFieldSource[]
 
   @@index([status])
   @@index([type])
@@ -3521,6 +3531,10 @@ model OrgBioInterview {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
+  // Interview-first profile: conversational interview format
+  conversationalAnswers Json?   // { questionId: answer } for 7-question conversational format
+  interviewFormat       String  @default("layered") // "layered" (legacy) or "conversational" (new)
+
   @@map("org_bio_interview")
 }
 
@@ -5174,6 +5188,32 @@ model OrgTerritoryAssignment {
   @@index([vendorOrgId])
   @@index([repUserId])
   @@map("org_territory_assignments")
+}
+
+// Interview-first profile: tracks field-level sourcing
+model ProfileFieldSource {
+  id             String  @id @default(cuid())
+  userId         String?
+  organizationId String?
+
+  fieldName          String
+  source             ProfileFieldSourceType
+  interviewSessionId String? // OrgBioInterview or ProfileInterview id
+  extractedAt        DateTime?
+  manuallyEditedAt   DateTime?
+
+  user         User?         @relation(fields: [userId], references: [id])
+  organization Organization? @relation(fields: [organizationId], references: [id])
+
+  @@unique([userId, fieldName])
+  @@unique([organizationId, fieldName])
+  @@map("profile_field_sources")
+}
+
+enum ProfileFieldSourceType {
+  INTERVIEW_EXTRACTED
+  MANUALLY_ENTERED
+  INTERVIEW_THEN_EDITED
 }
 
 // Relationship Graph

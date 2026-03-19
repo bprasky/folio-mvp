@@ -1,9 +1,19 @@
 'use client';
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { FaCamera } from 'react-icons/fa';
+import { Mic, RefreshCw } from 'lucide-react';
+import { ProfileField, getFieldDisplayState, type FieldDisplayState } from '@/components/profile/ProfileField';
+
+interface FieldSourceMap {
+  [fieldName: string]: {
+    source: string;
+    extractedAt: string | null;
+    manuallyEditedAt: string | null;
+  };
+}
 
 export default function OrgSettingsPage() {
   const params = useParams();
@@ -16,6 +26,9 @@ export default function OrgSettingsPage() {
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [interviewCompleted, setInterviewCompleted] = useState(false);
+  const [profileSourced, setProfileSourced] = useState(false);
+  const [fieldSources, setFieldSources] = useState<FieldSourceMap>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [form, setForm] = useState({
@@ -29,6 +42,9 @@ export default function OrgSettingsPage() {
     specialties: [] as string[],
   });
   const [specialtyInput, setSpecialtyInput] = useState('');
+
+  // Track which fields the user has edited (for source tracking)
+  const [editedFields, setEditedFields] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     async function loadOrg() {
@@ -47,6 +63,7 @@ export default function OrgSettingsPage() {
             specialties: Array.isArray(data.specialties) ? data.specialties : [],
           });
           setLogoUrl(data.logo || null);
+          setProfileSourced(!!data.profileSourcedFromInterview);
 
           // Check if current user is admin/owner
           const userMember = data.members?.find(
@@ -55,6 +72,30 @@ export default function OrgSettingsPage() {
           setIsAuthorized(
             userMember && ['OWNER', 'ADMIN'].includes(userMember.role)
           );
+
+          // Check interview status
+          const bioRes = await fetch(`/api/orgs/${orgId}/bio-interview`);
+          if (bioRes.ok) {
+            const bioData = await bioRes.json();
+            const hasInterview = !!bioData.interview && (
+              !!bioData.interview.generatedAt ||
+              (bioData.interview.interviewFormat === 'conversational' && !!bioData.interview.conversationalAnswers)
+            );
+            setInterviewCompleted(hasInterview);
+
+            // If interview not completed, redirect to interview page (hard gate)
+            if (!hasInterview && userMember && ['OWNER', 'ADMIN'].includes(userMember.role)) {
+              router.replace(`/org/${orgId}/settings/about-interview?returnTo=profile`);
+              return;
+            }
+          }
+
+          // Load field sources
+          const sourceRes = await fetch(`/api/profile/field-source?orgId=${orgId}`);
+          if (sourceRes.ok) {
+            const sourceData = await sourceRes.json();
+            setFieldSources(sourceData.sources || {});
+          }
         }
       } catch (error) {
         console.error('Failed to load org:', error);
@@ -65,7 +106,12 @@ export default function OrgSettingsPage() {
     if (session?.user) {
       loadOrg();
     }
-  }, [orgId, session]);
+  }, [orgId, session, router]);
+
+  const handleFieldChange = useCallback((fieldName: string, value: string) => {
+    setForm((f) => ({ ...f, [fieldName]: value }));
+    setEditedFields((prev) => new Set(prev).add(fieldName));
+  }, []);
 
   const handleSave = async () => {
     try {
@@ -77,6 +123,22 @@ export default function OrgSettingsPage() {
       });
 
       if (res.ok) {
+        // Update field sources for edited fields
+        for (const fieldName of editedFields) {
+          const existingSource = fieldSources[fieldName];
+          if (existingSource?.source === 'INTERVIEW_EXTRACTED') {
+            await fetch('/api/profile/field-source', {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                organizationId: orgId,
+                fieldName,
+                source: 'INTERVIEW_THEN_EDITED',
+              }),
+            });
+          }
+        }
+
         router.push(`/org/${orgId}?tab=about`);
       }
     } catch (error) {
@@ -115,6 +177,7 @@ export default function OrgSettingsPage() {
     if (val && !form.specialties.includes(val)) {
       setForm((prev) => ({ ...prev, specialties: [...prev.specialties, val] }));
       setSpecialtyInput('');
+      setEditedFields((prev) => new Set(prev).add('specialties'));
     }
   };
 
@@ -123,11 +186,16 @@ export default function OrgSettingsPage() {
       ...prev,
       specialties: prev.specialties.filter((sp) => sp !== s),
     }));
+    setEditedFields((prev) => new Set(prev).add('specialties'));
+  };
+
+  const getDisplayState = (fieldName: string, value: string | undefined): FieldDisplayState => {
+    return getFieldDisplayState(value, fieldSources[fieldName], interviewCompleted);
   };
 
   const initials = form.name
     ?.split(' ')
-    .map(n => n[0])
+    .map((n) => n[0])
     .join('')
     .slice(0, 2)
     .toUpperCase() || '';
@@ -160,13 +228,6 @@ export default function OrgSettingsPage() {
     );
   }
 
-  const inputStyle = {
-    borderColor: '#E8E4DF',
-    backgroundColor: '#FAF9F7',
-    color: '#2C2825',
-    fontFamily: 'var(--font-body)',
-  };
-
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#FAF9F7' }}>
       <div className="max-w-2xl mx-auto px-6 py-12">
@@ -176,11 +237,23 @@ export default function OrgSettingsPage() {
             className="text-3xl italic mb-2"
             style={{ fontFamily: 'var(--font-headline)', color: '#2C2825', fontWeight: 400 }}
           >
-            Studio Profile
+            {profileSourced ? 'Review What We Heard' : 'Studio Profile'}
           </h1>
           <p className="text-sm" style={{ color: '#8B8178', fontFamily: 'var(--font-body)' }}>
-            This is what designers, vendors, and clients see when they visit your profile.
+            {profileSourced
+              ? 'These fields were populated from your interview. Edit anything that needs adjusting.'
+              : 'This is what designers, vendors, and clients see when they visit your profile.'}
           </p>
+          {interviewCompleted && (
+            <button
+              onClick={() => router.push(`/org/${orgId}/settings/about-interview?returnTo=profile`)}
+              className="mt-3 flex items-center gap-2 text-xs transition-opacity hover:opacity-70"
+              style={{ color: '#B8845C' }}
+            >
+              <RefreshCw size={12} />
+              Re-do interview to refresh profile
+            </button>
+          )}
         </div>
 
         {/* Logo Upload */}
@@ -226,91 +299,100 @@ export default function OrgSettingsPage() {
         </div>
 
         <div className="flex flex-col gap-6">
-          {/* Name */}
-          <Field label="Studio Name">
-            <input
-              type="text"
-              value={form.name}
-              onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-              className="w-full px-4 py-2.5 text-sm rounded-xl border outline-none transition-colors focus:border-[#B8845C]"
-              style={inputStyle}
-            />
-          </Field>
+          {/* Name — always manual, not extracted */}
+          <ProfileField
+            label="Studio Name"
+            fieldName="name"
+            value={form.name}
+            displayState="manually-entered"
+            onChange={handleFieldChange}
+          />
 
           {/* Tagline */}
-          <Field label="Tagline">
-            <input
-              type="text"
-              value={form.tagline}
-              onChange={(e) => setForm((f) => ({ ...f, tagline: e.target.value }))}
-              placeholder="A short phrase that captures your studio's identity"
-              className="w-full px-4 py-2.5 text-sm rounded-xl border outline-none transition-colors focus:border-[#B8845C]"
-              style={inputStyle}
-            />
-          </Field>
+          <ProfileField
+            label="Tagline"
+            fieldName="tagline"
+            value={form.tagline}
+            displayState={getDisplayState('tagline', form.tagline)}
+            onChange={handleFieldChange}
+            onInterviewRoute={() => router.push(`/org/${orgId}/settings/about-interview?returnTo=profile`)}
+          />
 
           {/* Bio / Description */}
-          <Field label="Bio">
-            <textarea
-              value={form.description}
-              onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-              placeholder="Tell the story of your studio..."
-              rows={5}
-              className="w-full px-4 py-2.5 text-sm rounded-xl border outline-none transition-colors focus:border-[#B8845C] resize-none"
-              style={inputStyle}
-            />
-          </Field>
+          <ProfileField
+            label="Bio"
+            fieldName="description"
+            value={form.description}
+            displayState={getDisplayState('description', form.description)}
+            multiline
+            onChange={handleFieldChange}
+            onInterviewRoute={() => router.push(`/org/${orgId}/settings/about-interview?returnTo=profile`)}
+          />
 
           {/* Philosophy */}
-          <Field label="Design Philosophy">
-            <textarea
-              value={form.philosophy}
-              onChange={(e) => setForm((f) => ({ ...f, philosophy: e.target.value }))}
-              placeholder="What guides your approach to design?"
-              rows={3}
-              className="w-full px-4 py-2.5 text-sm rounded-xl border outline-none transition-colors focus:border-[#B8845C] resize-none"
-              style={inputStyle}
-            />
-          </Field>
+          <ProfileField
+            label="Design Philosophy"
+            fieldName="philosophy"
+            value={form.philosophy}
+            displayState={getDisplayState('philosophy', form.philosophy)}
+            multiline
+            onChange={handleFieldChange}
+            onInterviewRoute={() => router.push(`/org/${orgId}/settings/about-interview?returnTo=profile`)}
+          />
 
           {/* Location */}
-          <Field label="Location">
-            <input
-              type="text"
-              value={form.location}
-              onChange={(e) => setForm((f) => ({ ...f, location: e.target.value }))}
-              placeholder="Miami, FL"
-              className="w-full px-4 py-2.5 text-sm rounded-xl border outline-none transition-colors focus:border-[#B8845C]"
-              style={inputStyle}
-            />
-          </Field>
+          <ProfileField
+            label="Location"
+            fieldName="location"
+            value={form.location}
+            displayState={getDisplayState('city', form.location)}
+            onChange={handleFieldChange}
+            onInterviewRoute={() => router.push(`/org/${orgId}/settings/about-interview?returnTo=profile`)}
+          />
 
-          {/* Website */}
-          <Field label="Website">
-            <input
-              type="url"
-              value={form.website}
-              onChange={(e) => setForm((f) => ({ ...f, website: e.target.value }))}
-              placeholder="https://yourstudio.com"
-              className="w-full px-4 py-2.5 text-sm rounded-xl border outline-none transition-colors focus:border-[#B8845C]"
-              style={inputStyle}
-            />
-          </Field>
+          {/* Website — always manual */}
+          <ProfileField
+            label="Website"
+            fieldName="website"
+            value={form.website}
+            displayState="manually-entered"
+            onChange={handleFieldChange}
+          />
 
           {/* Founded Year */}
-          <Field label="Founded Year">
-            <input
-              type="number"
-              value={form.foundedYear}
-              onChange={(e) => setForm((f) => ({ ...f, foundedYear: e.target.value }))}
-              placeholder="2015"
-              className="w-full px-4 py-2.5 text-sm rounded-xl border outline-none transition-colors focus:border-[#B8845C]"
-              style={inputStyle}
-            />
-          </Field>
+          <ProfileField
+            label="Founded Year"
+            fieldName="foundedYear"
+            value={form.foundedYear}
+            displayState={getDisplayState('foundingYear', form.foundedYear)}
+            onChange={handleFieldChange}
+            onInterviewRoute={() => router.push(`/org/${orgId}/settings/about-interview?returnTo=profile`)}
+          />
 
-          {/* Specialties */}
-          <Field label="Specialties">
+          {/* Specialties — custom rendering with tags */}
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <label
+                className="text-xs font-medium"
+                style={{ color: '#6B635B', fontFamily: 'var(--font-body)' }}
+              >
+                Specialties
+              </label>
+              {fieldSources['specialties']?.source === 'INTERVIEW_EXTRACTED' && (
+                <span
+                  className="text-xs italic flex items-center gap-1"
+                  style={{ color: '#B8B0A6' }}
+                >
+                  <Mic size={10} />
+                  From your interview
+                </span>
+              )}
+              {fieldSources['specialties']?.source === 'INTERVIEW_THEN_EDITED' && (
+                <span className="text-xs italic" style={{ color: '#B8B0A6' }}>
+                  Edited
+                </span>
+              )}
+            </div>
             <div className="flex flex-wrap gap-2 mb-2">
               {form.specialties.map((s) => (
                 <span
@@ -337,7 +419,12 @@ export default function OrgSettingsPage() {
                 onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addSpecialty())}
                 placeholder="Add a specialty..."
                 className="flex-1 px-4 py-2.5 text-sm rounded-xl border outline-none transition-colors focus:border-[#B8845C]"
-                style={inputStyle}
+                style={{
+                  borderColor: '#E8E4DF',
+                  backgroundColor: '#FAF9F7',
+                  color: '#2C2825',
+                  fontFamily: 'var(--font-body)',
+                }}
               />
               <button
                 onClick={addSpecialty}
@@ -347,7 +434,7 @@ export default function OrgSettingsPage() {
                 Add
               </button>
             </div>
-          </Field>
+          </div>
         </div>
 
         {/* Actions */}
@@ -369,20 +456,6 @@ export default function OrgSettingsPage() {
           </button>
         </div>
       </div>
-    </div>
-  );
-}
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <label
-        className="text-xs font-medium mb-1.5 block"
-        style={{ color: '#6B635B', fontFamily: 'var(--font-body)' }}
-      >
-        {label}
-      </label>
-      {children}
     </div>
   );
 }
