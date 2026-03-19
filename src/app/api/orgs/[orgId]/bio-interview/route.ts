@@ -27,20 +27,31 @@ export async function POST(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const { answers, format } = await request.json();
+    const { answers, format, importedBioText, importedBioUrl, bioImportType } = await request.json();
 
     // Conversational format: store answers as JSON, skip structured fields
     if (format === 'conversational') {
+      const importData = bioImportType && bioImportType !== 'FRESH'
+        ? {
+            importedBioText: importedBioText || null,
+            importedBioUrl: importedBioUrl || null,
+            importedBioAnalyzedAt: importedBioText ? new Date() : null,
+            bioImportType,
+          }
+        : {};
+
       const interview = await prisma.orgBioInterview.upsert({
         where: { organizationId: orgId },
         create: {
           organizationId: orgId,
           conversationalAnswers: answers,
           interviewFormat: 'conversational',
+          ...importData,
         },
         update: {
           conversationalAnswers: answers,
           interviewFormat: 'conversational',
+          ...importData,
         },
       });
 
