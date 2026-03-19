@@ -1,6 +1,6 @@
 "use client";
 
-import { Blocks, normalizePullQuote } from "@/lib/posting/schemas";
+import { Blocks, normalizePullQuote, getSelectedPullQuoteText } from "@/lib/posting/schemas";
 import Image from "next/image";
 import { useMemo, useState, useEffect } from "react";
 import InlineTagLink from '@/components/posting/interactive/InlineTagLink';
@@ -293,9 +293,9 @@ export function RichArticle({
                 )}
 
                 {/* Pull quote within chapter */}
-                {chapter.pullQuote && (
+                {getSelectedPullQuoteText(chapter.pullQuote) && (
                   <blockquote className="border-l-4 border-[var(--ridge-outer)] pl-6 italic text-lg text-[var(--text-secondary)] my-6">
-                    "{chapter.pullQuote}"
+                    "{getSelectedPullQuoteText(chapter.pullQuote)}"
                   </blockquote>
                 )}
 

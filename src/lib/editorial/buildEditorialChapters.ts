@@ -1,9 +1,11 @@
+import type { PullQuoteSelection } from '@/lib/posting/schemas';
+
 export type EditorialChapter = {
   id: string;
   index: number;
   title?: string | null;
   body?: string | null;
-  pullQuote?: string | null;
+  pullQuote?: string | PullQuoteSelection | null;
   primaryImage?: any | null;
   supportingImages: any[];
   taggedProducts: any[];

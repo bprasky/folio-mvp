@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { BlocksSchema } from "./schemas";
+import { BlocksSchema, syncPullQuotesFromChapters } from "./schemas";
+import type { PullQuoteSelection, PullQuoteAlternative } from "./schemas";
 import { z } from "zod";
 import { callLLM } from "./llmClient";
 import { formatRoomName } from "@/lib/utils/formatRoomName";
@@ -124,6 +125,56 @@ function buildCredits(input: GenInput): Array<{ role: string; name: string }> {
   return credits;
 }
 
+// Score a pull quote candidate using heuristics
+function scorePullQuote(text: string): number {
+  let score = 0;
+  if (/\b(I|we|my|our)\b/i.test(text)) score += 3;           // First-person voice
+  if (/\b(feels?|felt|warmth|light|rhythm|flow|breath|touch|soul|tension|energy|mood|quiet|soft)\b/i.test(text)) score += 2;  // Metaphor/sensory
+  if (/\b(brass|oak|marble|linen|walnut|concrete|steel|ceramic|tile|stone|leather|velvet|copper|plaster|terrazzo|travertine)\b/i.test(text)) score += 1;  // Material detail
+  if (/\b(process|step|phase|stage|method|procedure)\b/i.test(text)) score -= 1;  // Process language penalty
+  return score;
+}
+
+// Extract and score pull quotes from a single chapter's body paragraphs
+function extractPullQuotesForChapter(
+  body: string[],
+  designerName?: string
+): PullQuoteSelection | null {
+  const quotes: PullQuoteAlternative[] = [];
+  const seen = new Set<string>();
+
+  for (const paragraph of body) {
+    // Extract direct quotes (text inside quotation marks)
+    const matches = paragraph.match(/["\u201C]([^"\u201D]{20,250})["\u201D]/g);
+    if (!matches) continue;
+    for (const match of matches) {
+      const cleaned = match.replace(/["\u201C\u201D]/g, '').trim();
+      if (cleaned.length < 20 || cleaned.length > 300) continue;
+      const key = cleaned.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      const score = scorePullQuote(cleaned);
+      if (score >= 1) {
+        quotes.push({
+          text: cleaned,
+          context: designerName || undefined,
+          score,
+        });
+      }
+    }
+  }
+
+  if (quotes.length === 0) return null;
+
+  // Sort by score descending
+  quotes.sort((a, b) => b.score - a.score);
+
+  return {
+    selected: { text: quotes[0].text, context: quotes[0].context },
+    alternatives: quotes,
+  };
+}
+
 // Distribute top-level pull quotes into per-chapter pullQuote fields
 // so both the draft editor and preview can render them inline.
 // Uses sourceSection matching when available, falls back to index-based distribution.
@@ -190,23 +241,16 @@ export function toFallbackBlocks(input: GenInput) {
     imageIds: ch.imageIds,
   }));
 
-  // Extract genuine pull quotes from answers of appropriate length
+  // Extract pull quotes per-chapter from body text
   const designerName = input.designer?.name;
-  const pullQuotes: Array<string | { text: string; context?: string }> = uniqueAnswers
-    .filter(a => a.answer.length > 60 && a.answer.length < 250 && /\b(I|we|my|our)\b/i.test(a.answer))
-    .slice(0, 3)
-    .map(a => ({
-      text: a.answer.slice(0, 300),
-      context: designerName || undefined,
-    }));
-
-  // Distribute pull quotes into per-chapter fields for editor/preview rendering
-  distributePullQuotesToChapters(galleryChapters, pullQuotes);
+  const galleryChaptersWithQuotes = galleryChapters.map(ch => ({
+    ...ch,
+    pullQuote: extractPullQuotesForChapter(ch.body, designerName),
+  }));
 
   const blocks = {
     lead: { kicker, deck },
-    galleryChapters: galleryChapters.length > 0 ? galleryChapters : undefined,
-    pullQuotes: pullQuotes.length > 0 ? pullQuotes : undefined,
+    galleryChapters: galleryChaptersWithQuotes.length > 0 ? galleryChaptersWithQuotes : undefined,
     materialsLedger: ledger.length ? {
       items: ledger.map(l => ({
         name: l.name,
@@ -217,6 +261,9 @@ export function toFallbackBlocks(input: GenInput) {
     credits: buildCredits(input),
     mode: 'recomposition' as const,
   };
+
+  // Sync top-level pullQuotes from per-chapter selections (for layout engine)
+  syncPullQuotesFromChapters(blocks as Record<string, any>);
 
   return BlocksSchema.parse(blocks);
 }
@@ -240,56 +287,7 @@ function parseNarrativeToBlocks(article: string, input: GenInput): z.infer<typeo
   const startIdx = lines.indexOf(deckCandidate) + 1 || 2;
   const narrativeParagraphs = lines.slice(startIdx).filter(l => l.length > 50 && !/^PULL\s*QUOTE\s*:/i.test(l));
 
-  // Extract pull quotes — three strategies in priority order
   const designerName = input.designer?.name;
-  const pullQuotes: Array<string | { text: string; context?: string; sourceSection?: string }> = [];
-
-  // Strategy 1: Parse explicit PULL QUOTE markers from the LLM output
-  // Format: PULL QUOTE: "text" — designer [from: section name]
-  const pullQuoteMarkerLines = lines.filter(l => /^PULL\s*QUOTE\s*:/i.test(l));
-  for (const line of pullQuoteMarkerLines) {
-    const textMatch = line.match(/["\u201C]([^"\u201D]{15,300})["\u201D]/);
-    const sectionMatch = line.match(/\[from:\s*([^\]]+)\]/i);
-    if (textMatch) {
-      pullQuotes.push({
-        text: textMatch[1].trim(),
-        context: designerName || undefined,
-        sourceSection: sectionMatch?.[1]?.trim() || undefined,
-      });
-    }
-  }
-
-  // Strategy 2: Extract quoted text from narrative paragraphs (direct quotes in the body)
-  if (pullQuotes.length < 3) {
-    for (const p of narrativeParagraphs) {
-      if (pullQuoteMarkerLines.includes(p)) continue; // Skip marker lines
-      const quoteMatches = p.match(/["\u201C]([^"\u201D]{20,250})["\u201D]/g);
-      if (quoteMatches) {
-        for (const match of quoteMatches) {
-          const cleaned = match.replace(/["\u201C\u201D]/g, '').trim();
-          if (cleaned.length >= 20 && cleaned.length <= 300) {
-            // Don't add duplicates (already found via PULL QUOTE markers)
-            if (!pullQuotes.some(q => typeof q !== 'string' && q.text === cleaned)) {
-              pullQuotes.push({ text: cleaned, context: designerName || undefined });
-            }
-          }
-        }
-      }
-      if (pullQuotes.length >= 4) break;
-    }
-  }
-
-  // Strategy 3: Fallback — extract from interview answers if still not enough
-  const uniqueAnswers = deduplicateAnswers(input.answers);
-  if (pullQuotes.length < 2 && uniqueAnswers.length > 0) {
-    const quoteWorthy = uniqueAnswers
-      .filter(a => a.answer.length > 60 && a.answer.length < 250)
-      .filter(a => /\b(I|we|my|our)\b/i.test(a.answer))
-      .slice(0, 3 - pullQuotes.length);
-    for (const a of quoteWorthy) {
-      pullQuotes.push({ text: a.answer.slice(0, 300), context: designerName || undefined });
-    }
-  }
 
   // Build room-organized gallery chapters with images distributed across them
   const chapters = groupImagesIntoChapters(input.images, input.imageOrder);
@@ -309,29 +307,19 @@ function parseNarrativeToBlocks(article: string, input: GenInput): z.infer<typeo
     galleryChapters[0].body = narrativeParagraphs.slice(0, 3).map(p => p.slice(0, 5000));
   }
 
-  // Infer sourceSection for pull quotes that don't have one by matching body text
-  for (const pq of pullQuotes) {
-    if (typeof pq === 'string' || pq.sourceSection) continue;
-    const quoteText = pq.text.toLowerCase();
-    for (const ch of galleryChapters) {
-      const bodyText = (ch.body || []).join(' ').toLowerCase();
-      if (bodyText.includes(quoteText.slice(0, 40))) {
-        pq.sourceSection = ch.title;
-        break;
-      }
-    }
-  }
+  // Extract pull quotes PER CHAPTER from each chapter's own body text
+  // A dining room pull quote stays in the dining room.
+  const galleryChaptersWithQuotes = galleryChapters.map(ch => ({
+    ...ch,
+    pullQuote: extractPullQuotesForChapter(ch.body, designerName),
+  }));
 
   // Build materials ledger
   const ledger = buildMaterialContext(input.tags);
 
-  // Distribute pull quotes into per-chapter fields for editor/preview rendering
-  distributePullQuotesToChapters(galleryChapters, pullQuotes);
-
   const blocks = {
     lead: { kicker, deck },
-    galleryChapters: galleryChapters.length > 0 ? galleryChapters : undefined,
-    pullQuotes: pullQuotes.length > 0 ? pullQuotes : undefined,
+    galleryChapters: galleryChaptersWithQuotes.length > 0 ? galleryChaptersWithQuotes : undefined,
     materialsLedger: ledger.length ? {
       items: ledger.map(l => ({
         name: l.name,
@@ -342,6 +330,9 @@ function parseNarrativeToBlocks(article: string, input: GenInput): z.infer<typeo
     credits: buildCredits(input),
     mode: 'recomposition' as const,
   };
+
+  // Sync top-level pullQuotes from per-chapter selections (for layout engine)
+  syncPullQuotesFromChapters(blocks as Record<string, any>);
 
   return BlocksSchema.parse(blocks);
 }

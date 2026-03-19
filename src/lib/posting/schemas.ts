@@ -96,6 +96,24 @@ export const PostMetaSchema = z.object({
   ]).optional(),
 });
 
+// Per-chapter pull quote selection with alternatives for cycling UI
+export const PullQuoteAlternativeSchema = z.object({
+  text: z.string().max(300),
+  context: z.string().max(80).optional(),
+  score: z.number(),
+});
+
+export const PullQuoteSelectionSchema = z.object({
+  selected: z.object({
+    text: z.string().max(300),
+    context: z.string().max(80).optional(),
+  }).nullable(),
+  alternatives: z.array(PullQuoteAlternativeSchema),
+});
+
+export type PullQuoteAlternative = z.infer<typeof PullQuoteAlternativeSchema>;
+export type PullQuoteSelection = z.infer<typeof PullQuoteSelectionSchema>;
+
 export const BlocksSchema = z.object({
   lead: z.object({
     title: z.string().max(80).optional(), // Support title field (LLM sometimes generates this)
@@ -106,7 +124,10 @@ export const BlocksSchema = z.object({
     title: z.string().max(80).optional(),
     body: z.array(z.string().max(5000)).optional(), // Allow very long paragraphs for recomposition (600-900 words = ~3000-4500 chars total, sections may be 1000-2000 chars each)
     imageIds: z.array(z.string().uuid()).min(1).max(8),
-    pullQuote: z.string().max(300).optional(), // Increased from 200 to 300 for longer quotes
+    pullQuote: z.union([
+      z.string().max(300),       // Legacy format (backward compat)
+      PullQuoteSelectionSchema,  // New format with alternatives
+    ]).optional().nullable(),
   })).optional(),
   pullQuotes: z.array(
     z.union([
@@ -155,4 +176,37 @@ export type NormalizedPullQuote = { text: string; context?: string; sourceSectio
 export function normalizePullQuote(q: string | { text: string; context?: string; sourceSection?: string }): NormalizedPullQuote {
   if (typeof q === 'string') return { text: q };
   return { text: q.text, context: q.context || undefined, sourceSection: q.sourceSection || undefined };
+}
+
+/** Get the selected pull quote text from a chapter's pullQuote field (handles both legacy string and new object) */
+export function getSelectedPullQuoteText(pullQuote: string | PullQuoteSelection | null | undefined): string | null {
+  if (!pullQuote) return null;
+  if (typeof pullQuote === 'string') return pullQuote;
+  return pullQuote.selected?.text ?? null;
+}
+
+/** Get the selected pull quote context from a chapter's pullQuote field */
+export function getSelectedPullQuoteContext(pullQuote: string | PullQuoteSelection | null | undefined): string | undefined {
+  if (!pullQuote || typeof pullQuote === 'string') return undefined;
+  return pullQuote.selected?.context ?? undefined;
+}
+
+/** Check if a pullQuote value is in the new PullQuoteSelection format */
+export function isPullQuoteSelection(pullQuote: unknown): pullQuote is PullQuoteSelection {
+  return typeof pullQuote === 'object' && pullQuote !== null && 'alternatives' in pullQuote;
+}
+
+/** Sync top-level pullQuotes array from per-chapter selections */
+export function syncPullQuotesFromChapters(blocks: Record<string, any>): void {
+  const chapters = blocks.galleryChapters as Array<{ title?: string; pullQuote?: string | PullQuoteSelection | null }> | undefined;
+  if (!chapters) return;
+  const pullQuotes: NormalizedPullQuote[] = [];
+  for (const ch of chapters) {
+    const text = getSelectedPullQuoteText(ch.pullQuote);
+    if (text) {
+      const context = getSelectedPullQuoteContext(ch.pullQuote);
+      pullQuotes.push({ text, context, sourceSection: ch.title });
+    }
+  }
+  blocks.pullQuotes = pullQuotes.length > 0 ? pullQuotes : undefined;
 }
