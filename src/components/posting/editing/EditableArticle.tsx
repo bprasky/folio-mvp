@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import EditableParagraph from './EditableParagraph';
 import SectionFeedback from './SectionFeedback';
 import type { SectionOverride, SectionOverrideField, SectionHistoryEntry } from '@/lib/posting/editingTypes';
+import type { PullQuoteSelection } from '@/lib/posting/schemas';
+import { isPullQuoteSelection, getSelectedPullQuoteText } from '@/lib/posting/schemas';
 import SafeImage from '@/components/SafeImage';
 
 interface ProjectImage {
@@ -27,6 +29,172 @@ type EditingField = {
   paragraphIndex: number;
   field: SectionOverrideField;
 } | null;
+
+/** Inline pull quote picker — cycle through alternatives, remove, or add */
+function PullQuotePicker({
+  pullQuote,
+  chapterIndex,
+  projectId,
+  isEdited,
+  isEditing,
+  onStartEdit,
+  onSave,
+  onCancel,
+  onRevert,
+  onUpdate,
+}: {
+  pullQuote: string | PullQuoteSelection | null | undefined;
+  chapterIndex: number;
+  projectId: string;
+  isEdited: boolean;
+  isEditing: boolean;
+  onStartEdit: () => void;
+  onSave: (text: string) => void;
+  onCancel: () => void;
+  onRevert: () => void;
+  onUpdate: () => void;
+}) {
+  const [saving, setSaving] = useState(false);
+
+  // Normalize to get current text and alternatives
+  const isSelection = isPullQuoteSelection(pullQuote);
+  const selectedText = typeof pullQuote === 'string' ? pullQuote : pullQuote?.selected?.text ?? null;
+  const alternatives = isSelection ? pullQuote.alternatives : [];
+  const hasAlternatives = alternatives.length > 1;
+
+  // Find current index in alternatives
+  const currentIndex = selectedText
+    ? alternatives.findIndex(a => a.text === selectedText)
+    : -1;
+
+  const handleCycle = async (direction: 1 | -1) => {
+    if (!hasAlternatives || saving) return;
+    const nextIndex = ((currentIndex === -1 ? 0 : currentIndex) + direction + alternatives.length) % alternatives.length;
+    const nextText = alternatives[nextIndex].text;
+
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/posting/project/${projectId}/sections/pull-quote`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chapterIndex, selectedText: nextText }),
+      });
+      if (res.ok) onUpdate();
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleRemove = async () => {
+    if (saving) return;
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/posting/project/${projectId}/sections/pull-quote`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chapterIndex, selectedText: null }),
+      });
+      if (res.ok) onUpdate();
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleAdd = async () => {
+    if (!alternatives.length || saving) return;
+    const firstAlt = alternatives[0];
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/posting/project/${projectId}/sections/pull-quote`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chapterIndex, selectedText: firstAlt.text }),
+      });
+      if (res.ok) onUpdate();
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Section has a selected pull quote — show it with cycling controls
+  if (selectedText) {
+    return (
+      <div className="pl-4 border-l-2 border-[var(--accent)]">
+        <div className="flex items-center justify-between mb-1">
+          <label className="folio-meta font-medium text-[var(--text-tertiary)] uppercase tracking-wider">
+            Pull Quote
+          </label>
+          <div className="flex items-center gap-2">
+            {hasAlternatives && (
+              <>
+                <button
+                  onClick={() => handleCycle(-1)}
+                  disabled={saving}
+                  className="text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] disabled:opacity-40 transition-colors p-0.5"
+                  title="Previous quote"
+                  aria-label="Previous pull quote"
+                >
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 12L6 8L10 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                </button>
+                <span className="folio-meta text-[var(--text-tertiary)] tabular-nums">
+                  {currentIndex >= 0 ? currentIndex + 1 : 1} of {alternatives.length}
+                </span>
+                <button
+                  onClick={() => handleCycle(1)}
+                  disabled={saving}
+                  className="text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] disabled:opacity-40 transition-colors p-0.5"
+                  title="Next quote"
+                  aria-label="Next pull quote"
+                >
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 4L10 8L6 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                </button>
+              </>
+            )}
+            <button
+              onClick={handleRemove}
+              disabled={saving}
+              className="text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] disabled:opacity-40 transition-colors p-0.5 ml-1"
+              title="Remove pull quote"
+              aria-label="Remove pull quote"
+            >
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3.5 3.5L10.5 10.5M10.5 3.5L3.5 10.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+            </button>
+          </div>
+        </div>
+        <EditableParagraph
+          text={selectedText}
+          isEdited={isEdited}
+          isEditing={isEditing}
+          as="blockquote"
+          className="folio-body italic text-[var(--text-secondary)]"
+          onStartEdit={onStartEdit}
+          onSave={onSave}
+          onCancel={onCancel}
+          onRevert={onRevert}
+        />
+      </div>
+    );
+  }
+
+  // No selected pull quote but alternatives exist — offer to add one
+  if (alternatives.length > 0) {
+    return (
+      <div className="py-1">
+        <button
+          onClick={handleAdd}
+          disabled={saving}
+          className="folio-meta text-[var(--accent)] hover:text-[var(--text-primary)] disabled:opacity-40 transition-colors flex items-center gap-1"
+        >
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 3V11M3 7H11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+          Add pull quote ({alternatives.length} available)
+        </button>
+      </div>
+    );
+  }
+
+  // No pull quote and no alternatives — nothing to show
+  return null;
+}
 
 export default function EditableArticle({
   projectId,
@@ -90,7 +258,7 @@ export default function EditableArticle({
     title?: string;
     body?: string[];
     imageIds?: string[];
-    pullQuote?: string;
+    pullQuote?: string | PullQuoteSelection | null;
   }>;
 
   return (
@@ -212,25 +380,19 @@ export default function EditableArticle({
             </div>
           )}
 
-          {/* Pull quote */}
-          {chapter.pullQuote && (
-            <div className="pl-4 border-l-2 border-[var(--accent)]">
-              <label className="folio-meta font-medium text-[var(--text-tertiary)] uppercase tracking-wider mb-1 block">
-                Pull Quote
-              </label>
-              <EditableParagraph
-                text={chapter.pullQuote}
-                isEdited={isEdited(ci, 0, 'pullQuote')}
-                isEditing={isEditing(ci, 0, 'pullQuote')}
-                as="blockquote"
-                className="folio-body italic text-[var(--text-secondary)]"
-                onStartEdit={() => setEditingField({ chapterIndex: ci, paragraphIndex: 0, field: 'pullQuote' })}
-                onSave={(t) => handleSave(ci, 0, 'pullQuote', t)}
-                onCancel={() => setEditingField(null)}
-                onRevert={() => handleRevert(ci, 0, 'pullQuote')}
-              />
-            </div>
-          )}
+          {/* Pull quote picker */}
+          <PullQuotePicker
+            pullQuote={chapter.pullQuote}
+            chapterIndex={ci}
+            projectId={projectId}
+            isEdited={isEdited(ci, 0, 'pullQuote')}
+            isEditing={isEditing(ci, 0, 'pullQuote')}
+            onStartEdit={() => setEditingField({ chapterIndex: ci, paragraphIndex: 0, field: 'pullQuote' })}
+            onSave={(t) => handleSave(ci, 0, 'pullQuote', t)}
+            onCancel={() => setEditingField(null)}
+            onRevert={() => handleRevert(ci, 0, 'pullQuote')}
+            onUpdate={() => router.refresh()}
+          />
 
           {/* Section feedback + regenerate */}
           <SectionFeedback

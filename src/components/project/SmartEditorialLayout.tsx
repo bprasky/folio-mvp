@@ -5,6 +5,7 @@ import { buildEditorialChapters, EditorialChapter } from "@/lib/editorial/buildE
 import { SceneShopStrip } from "@/components/project/SceneShopStrip";
 import { ImageTagDots } from "@/components/project/ImageTagDots";
 import { formatRoomName } from "@/lib/utils/formatRoomName";
+import { getSelectedPullQuoteText } from "@/lib/posting/schemas";
 
 export function SmartEditorialLayout({ post }: { post: any }) {
   const chapters = buildEditorialChapters(post);
@@ -126,9 +127,9 @@ function CinemaSpread({ chapter }: { chapter: EditorialChapter }) {
             <div className="rounded-full bg-[var(--bg-base)]/90 backdrop-blur-sm px-3 py-1 folio-meta uppercase tracking-[0.18em] text-[var(--text-secondary)]">
               {(chapter.title ? formatRoomName(chapter.title) : null) || "Project Chapter"}
             </div>
-            {chapter.pullQuote && (
+            {getSelectedPullQuoteText(chapter.pullQuote) && (
               <div className="max-w-md ridge-card px-4 py-3 folio-body">
-                "{chapter.pullQuote}"
+                "{getSelectedPullQuoteText(chapter.pullQuote)}"
               </div>
             )}
           </div>
@@ -236,9 +237,9 @@ function RidgeTextBlock({
           {chapter.body}
         </p>
       )}
-      {chapter.pullQuote && variant !== "intro" && (
+      {getSelectedPullQuoteText(chapter.pullQuote) && variant !== "intro" && (
         <div className="mt-1 border-l-2 border-[var(--accent)] pl-3 folio-quote text-[var(--text-secondary)]">
-          "{chapter.pullQuote}"
+          "{getSelectedPullQuoteText(chapter.pullQuote)}"
         </div>
       )}
     </div>

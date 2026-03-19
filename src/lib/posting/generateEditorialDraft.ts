@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { BlocksSchema } from "./schemas";
+import { BlocksSchema, syncPullQuotesFromChapters } from "./schemas";
+import type { PullQuoteSelection, PullQuoteAlternative } from "./schemas";
 import { z } from "zod";
 import { callLLM } from "./llmClient";
 import { formatRoomName } from "@/lib/utils/formatRoomName";
@@ -169,12 +170,39 @@ function buildCredits(input: GenInput): Array<{ role: string; name: string }> {
   return credits;
 }
 
-// Extract pull quotes mechanically from body text direct quotes
-function extractPullQuotesFromBody(
-  chapters: Array<{ title: string; body: string[]; imageIds: string[] }>,
-  designerName?: string,
-): Array<{ text: string; context?: string; sourceSection?: string }> {
-  const candidates: Array<{ text: string; sourceSection: string; score: number }> = [];
+// Score a pull quote candidate using heuristics
+function scorePullQuote(text: string): number {
+  let score = 0;
+  const words = text.split(/\s+/).length;
+
+  // Length scoring — 10-40 words is ideal
+  if (words >= 10 && words <= 40) score += 2;
+  else if ((words >= 5 && words < 10) || (words > 40 && words <= 60)) score += 1;
+
+  // First-person declarative (identity-revealing) — strongest signal
+  if (/\b(I wanted|I always|my thing|we never|I'm obsessed|I love|I knew|I didn't want|we wanted|I felt|I|we|my|our)\b/i.test(text)) score += 3;
+
+  // Metaphor/analogy — magazine-ready imagery
+  if (/\b(like a|feels like|as if|reminds me of|felt like|feels?|felt|warmth|light|rhythm|flow|breath|touch|soul|tension|energy|mood|quiet|soft)\b/i.test(text)) score += 2;
+
+  // Specific material detail
+  if (/\b(brass|oak|marble|linen|walnut|concrete|steel|ceramic|tile|stone|leather|velvet|copper|plaster|terrazzo|travertine|limestone|porcelain)\b/i.test(text)) score += 1;
+  if (/\b(white|black|gray|grey|blue|green|mauve|warm|cool)\b/i.test(text)) score += 1;
+
+  // Penalize purely process/factual
+  if (/\b(process|step|phase|stage|method|procedure|we ordered|it arrived|the contractor|we went with|was delivered|we installed)\b/i.test(text)) score -= 1;
+
+  return score;
+}
+
+// Extract and score pull quotes from a single chapter's body paragraphs
+// Uses attribution-verb patterns for higher-quality extraction
+function extractPullQuotesForChapter(
+  body: string[],
+  designerName?: string
+): PullQuoteSelection | null {
+  const quotes: PullQuoteAlternative[] = [];
+  const seen = new Set<string>();
 
   // Attribution verbs to look for near quotes
   const attrVerbs = 'says|explains|recalls|notes|adds|describes|continues|laughs|remembers|admits';
@@ -184,109 +212,63 @@ function extractPullQuotesFromBody(
     'gi'
   );
   const quoteBeforeAttr = new RegExp(
-    `["\u201C]([^"\u201D]{20,300})["\u201D]\\s*,?\\s*(?:${designerName ? designerName.split(/\s+/).pop() + '\\s+' : ''})?(?:${attrVerbs})`,
+    `["\u201C]([^"\u201D]{20,300})["\u201D]\\s*,?\\s*(?:${designerName ? designerName.split(/\\s+/).pop() + '\\s+' : ''})?(?:${attrVerbs})`,
     'gi'
   );
+  // Fallback: any direct quote in quotation marks
+  const anyQuote = /["\u201C]([^"\u201D]{20,250})["\u201D]/g;
 
-  for (const chapter of chapters) {
-    for (const para of chapter.body) {
-      // Extract all direct quotes with attribution
-      for (const pattern of [quoteBeforeAttr, quoteAfterAttr]) {
-        pattern.lastIndex = 0;
-        let match: RegExpExecArray | null;
-        while ((match = pattern.exec(para)) !== null) {
-          const quoteText = match[1].trim();
-          if (!quoteText || quoteText.length < 20) continue;
-
-          let score = 0;
-          const words = quoteText.split(/\s+/).length;
-
-          // Length scoring
-          if (words >= 10 && words <= 40) score += 2;
-          else if ((words >= 5 && words < 10) || (words > 40 && words <= 60)) score += 1;
-
-          // First-person declarative (identity-revealing) — strongest signal
-          if (/\b(I wanted|I always|my thing|we never|I'm obsessed|I love|I knew|I didn't want|we wanted|I felt)\b/i.test(quoteText)) score += 3;
-
-          // Metaphor/analogy — magazine-ready imagery
-          if (/\b(like a|feels like|as if|reminds me of|felt like)\b/i.test(quoteText)) score += 2;
-
-          // Specific detail (proper nouns, numbers, materials, colors)
-          if (/\b(marble|brass|oak|walnut|limestone|concrete|steel|velvet|linen|ceramic|porcelain)\b/i.test(quoteText)) score += 1;
-          if (/\b(white|black|gray|grey|blue|green|mauve|warm|cool)\b/i.test(quoteText)) score += 1;
-
-          // Penalize purely process/factual
-          if (/\b(we ordered|it arrived|the contractor|we went with|was delivered|we installed)\b/i.test(quoteText)) score -= 1;
-
-          candidates.push({
-            text: quoteText,
-            sourceSection: chapter.title,
+  for (const paragraph of body) {
+    // First try: attributed quotes (higher quality)
+    for (const pattern of [quoteBeforeAttr, quoteAfterAttr]) {
+      pattern.lastIndex = 0;
+      let match: RegExpExecArray | null;
+      while ((match = pattern.exec(paragraph)) !== null) {
+        const cleaned = match[1].trim();
+        if (cleaned.length < 20 || cleaned.length > 300) continue;
+        const key = cleaned.toLowerCase();
+        if (seen.has(key)) continue;
+        seen.add(key);
+        const score = scorePullQuote(cleaned) + 1; // +1 bonus for attribution
+        if (score >= 1) {
+          quotes.push({
+            text: cleaned,
+            context: designerName || undefined,
             score,
           });
         }
       }
     }
-  }
 
-  // Deduplicate by text
-  const seen = new Set<string>();
-  const unique = candidates.filter(c => {
-    const key = c.text.toLowerCase().trim();
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
-
-  // Sort by score descending, take top 2-3
-  unique.sort((a, b) => b.score - a.score);
-  const topQuotes = unique.slice(0, 3);
-
-  return topQuotes.map(q => ({
-    text: q.text,
-    context: `On ${q.sourceSection.toLowerCase()}:`,
-    sourceSection: q.sourceSection,
-  }));
-}
-
-// Distribute top-level pull quotes into per-chapter pullQuote fields
-function distributePullQuotesToChapters(
-  chapters: Array<{ title: string; body: string[]; imageIds: string[]; pullQuote?: string }>,
-  pullQuotes: Array<string | { text: string; context?: string; sourceSection?: string }>
-) {
-  if (!pullQuotes.length || !chapters.length) return;
-
-  const assigned = new Set<number>();
-
-  // First pass: match by sourceSection
-  for (const q of pullQuotes) {
-    if (typeof q === 'string' || !q.sourceSection) continue;
-    const matchIdx = chapters.findIndex(ch =>
-      ch.title.toLowerCase() === q.sourceSection!.toLowerCase()
-    );
-    if (matchIdx >= 0 && !assigned.has(matchIdx)) {
-      chapters[matchIdx].pullQuote = q.text;
-      assigned.add(matchIdx);
-    }
-  }
-
-  // Second pass: distribute remaining pull quotes to chapters without one
-  let quoteIdx = 0;
-  for (let i = 0; i < chapters.length && quoteIdx < pullQuotes.length; i++) {
-    if (assigned.has(i)) continue;
-    while (quoteIdx < pullQuotes.length) {
-      const q = pullQuotes[quoteIdx];
-      const text = typeof q === 'string' ? q : q.text;
-      const section = typeof q === 'string' ? undefined : q.sourceSection;
-      if (section && chapters.some(ch => ch.title.toLowerCase() === section.toLowerCase() && ch.pullQuote === text)) {
-        quoteIdx++;
-        continue;
+    // Fallback: any quoted text
+    anyQuote.lastIndex = 0;
+    let match: RegExpExecArray | null;
+    while ((match = anyQuote.exec(paragraph)) !== null) {
+      const cleaned = match[1].trim();
+      if (cleaned.length < 20 || cleaned.length > 300) continue;
+      const key = cleaned.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      const score = scorePullQuote(cleaned);
+      if (score >= 1) {
+        quotes.push({
+          text: cleaned,
+          context: designerName || undefined,
+          score,
+        });
       }
-      chapters[i].pullQuote = text;
-      assigned.add(i);
-      quoteIdx++;
-      break;
     }
   }
+
+  if (quotes.length === 0) return null;
+
+  // Sort by score descending
+  quotes.sort((a, b) => b.score - a.score);
+
+  return {
+    selected: { text: quotes[0].text, context: quotes[0].context },
+    alternatives: quotes,
+  };
 }
 
 // ============================================================================
@@ -416,7 +398,7 @@ function repairAndBuildBlocks(
   _cid: string,
 ): z.infer<typeof BlocksSchema> {
   const designerName = input.designer?.name;
-  const finalChapters: Array<{ title: string; imageIds: string[]; body: string[]; pullQuote?: string }> = [];
+  const finalChapters: Array<{ title: string; imageIds: string[]; body: string[] }> = [];
 
   // Pull quotes are now extracted mechanically from body text AFTER chapters are built (see below)
 
@@ -537,10 +519,12 @@ function repairAndBuildBlocks(
     }
   }
 
-  // Mechanically extract pull quotes from body text direct quotes
-  const pullQuotes = extractPullQuotesFromBody(finalChapters, designerName);
-  // Distribute pull quotes into per-chapter fields
-  distributePullQuotesToChapters(finalChapters, pullQuotes);
+  // Extract pull quotes PER CHAPTER from each chapter's own body text
+  // A dining room pull quote stays in the dining room.
+  const finalChaptersWithQuotes = finalChapters.map(ch => ({
+    ...ch,
+    pullQuote: extractPullQuotesForChapter(ch.body, designerName),
+  }));
 
   const ledger = buildMaterialContext(input.tags);
 
@@ -551,8 +535,7 @@ function repairAndBuildBlocks(
           deck: (composed.lead.deck || composed.lead.dek || '').slice(0, 400),
         }
       : { kicker: input.project?.title || 'A Considered Composition', deck: '' },
-    galleryChapters: finalChapters.length > 0 ? finalChapters : undefined,
-    pullQuotes: pullQuotes.length > 0 ? pullQuotes : undefined,
+    galleryChapters: finalChaptersWithQuotes.length > 0 ? finalChaptersWithQuotes : undefined,
     materialsLedger: composed.materialsLedger?.items?.length
       ? {
           items: composed.materialsLedger.items.map((item: any) => ({
@@ -576,6 +559,9 @@ function repairAndBuildBlocks(
       : buildCredits(input),
     mode: 'recomposition' as const,
   };
+
+  // Sync top-level pullQuotes from per-chapter selections (for layout engine)
+  syncPullQuotesFromChapters(blocks as Record<string, any>);
 
   return BlocksSchema.parse(blocks);
 }
@@ -602,21 +588,16 @@ export function toFallbackBlocks(input: GenInput) {
     imageIds: ch.imageIds,
   }));
 
+  // Extract pull quotes per-chapter from body text
   const designerName = input.designer?.name;
-  const pullQuotes: Array<string | { text: string; context?: string }> = uniqueAnswers
-    .filter(a => a.answer.length > 60 && a.answer.length < 250 && /\b(I|we|my|our)\b/i.test(a.answer))
-    .slice(0, 3)
-    .map(a => ({
-      text: a.answer.slice(0, 300),
-      context: designerName || undefined,
-    }));
-
-  distributePullQuotesToChapters(galleryChapters, pullQuotes);
+  const galleryChaptersWithQuotes = galleryChapters.map(ch => ({
+    ...ch,
+    pullQuote: extractPullQuotesForChapter(ch.body, designerName),
+  }));
 
   const blocks = {
     lead: { kicker, deck },
-    galleryChapters: galleryChapters.length > 0 ? galleryChapters : undefined,
-    pullQuotes: pullQuotes.length > 0 ? pullQuotes : undefined,
+    galleryChapters: galleryChaptersWithQuotes.length > 0 ? galleryChaptersWithQuotes : undefined,
     materialsLedger: ledger.length ? {
       items: ledger.map(l => ({
         name: l.name,
@@ -627,6 +608,9 @@ export function toFallbackBlocks(input: GenInput) {
     credits: buildCredits(input),
     mode: 'recomposition' as const,
   };
+
+  // Sync top-level pullQuotes from per-chapter selections (for layout engine)
+  syncPullQuotesFromChapters(blocks as Record<string, any>);
 
   return BlocksSchema.parse(blocks);
 }

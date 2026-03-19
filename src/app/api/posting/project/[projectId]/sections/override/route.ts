@@ -185,7 +185,13 @@ function getFieldValue(
   const chapter = blocks.galleryChapters?.[chapterIndex];
   if (!chapter) return '';
   if (field === 'title') return chapter.title ?? '';
-  if (field === 'pullQuote') return chapter.pullQuote ?? '';
+  if (field === 'pullQuote') {
+    const pq = chapter.pullQuote;
+    if (!pq) return '';
+    if (typeof pq === 'string') return pq;
+    // New PullQuoteSelection format
+    return pq.selected?.text ?? '';
+  }
   if (field === 'body') return chapter.body?.[paragraphIndex] ?? '';
   return '';
 }
@@ -205,6 +211,19 @@ function setFieldValue(
   const chapter = blocks.galleryChapters?.[chapterIndex];
   if (!chapter) return;
   if (field === 'title') chapter.title = value;
-  else if (field === 'pullQuote') chapter.pullQuote = value;
+  else if (field === 'pullQuote') {
+    const pq = chapter.pullQuote;
+    if (pq && typeof pq === 'object' && 'selected' in pq) {
+      // New PullQuoteSelection format — update selected text
+      if (pq.selected) {
+        pq.selected.text = value;
+      } else if (value) {
+        pq.selected = { text: value };
+      }
+    } else {
+      // Legacy string format
+      chapter.pullQuote = value;
+    }
+  }
   else if (field === 'body' && Array.isArray(chapter.body)) chapter.body[paragraphIndex] = value;
 }

@@ -72,7 +72,7 @@ interface LayoutEngineOptions {
 
 import { generateEditorialText as getEditorialText, getProjectIntroText } from './textHelpers';
 import { roomPriority, groupImagesByRoom } from './roomPriority';
-import { normalizePullQuote, type Blocks } from '@/lib/posting/schemas';
+import { normalizePullQuote, getSelectedPullQuoteText, getSelectedPullQuoteContext, type Blocks } from '@/lib/posting/schemas';
 
 /**
  * Classify an image based on available metadata or heuristics
@@ -869,40 +869,41 @@ export function generateEditorialLayoutFromDraft(
         }
       }
 
-      // Insert pull quote after the chapter it's drawn from (using sourceSection match)
+      // Insert pull quote from this chapter's own pullQuote field
+      // Supports both legacy string format and new PullQuoteSelection object
       // Don't stack consecutive pull quotes; don't repeat the same quote text
-      if (draft.pullQuotes && draft.pullQuotes.length > 0 && chapterIndex < draft.galleryChapters.length - 1) {
+      if (chapterIndex < draft.galleryChapters.length - 1) {
         const lastBlock = blocks[blocks.length - 1];
         const lastWasPullQuote = lastBlock?.type === 'pullQuote';
 
         if (!lastWasPullQuote) {
-          // Find a pull quote whose sourceSection matches this chapter
-          const chapterName = (chapter.title || '').toLowerCase();
-          const matchingQuote = draft.pullQuotes.find(raw => {
-            const normalized = normalizePullQuote(raw);
-            return normalized.sourceSection
-              && normalized.sourceSection.toLowerCase() === chapterName
-              && !usedPullQuoteTexts.has(normalized.text);
-          });
+          const pqText = getSelectedPullQuoteText(chapter.pullQuote);
+          const pqContext = getSelectedPullQuoteContext(chapter.pullQuote);
+          // Legacy fallback: also check top-level pullQuotes for old data
+          let chosenText = pqText;
+          let chosenAttr = pqContext;
 
-          let chosen: ReturnType<typeof normalizePullQuote> | null = null;
-          if (matchingQuote) {
-            chosen = normalizePullQuote(matchingQuote);
-          } else {
-            // Fallback: first unused pull quote
-            const unused = draft.pullQuotes.find(raw => {
-              const n = normalizePullQuote(raw);
-              return !usedPullQuoteTexts.has(n.text);
+          if (!chosenText && draft.pullQuotes && draft.pullQuotes.length > 0) {
+            const chapterName = (chapter.title || '').toLowerCase();
+            const matchingQuote = draft.pullQuotes.find(raw => {
+              const normalized = normalizePullQuote(raw);
+              return normalized.sourceSection
+                && normalized.sourceSection.toLowerCase() === chapterName
+                && !usedPullQuoteTexts.has(normalized.text);
             });
-            if (unused) chosen = normalizePullQuote(unused);
+            if (matchingQuote) {
+              const n = normalizePullQuote(matchingQuote);
+              chosenText = n.text;
+              chosenAttr = n.context;
+            }
           }
 
-          if (chosen) {
-            usedPullQuoteTexts.add(chosen.text);
+          if (chosenText && !usedPullQuoteTexts.has(chosenText)) {
+            usedPullQuoteTexts.add(chosenText);
             blocks.push({
               type: 'pullQuote',
-              text: chosen.text,
-              attribution: chosen.context,
+              text: chosenText,
+              attribution: chosenAttr,
               imageIds: [],
             });
           }
