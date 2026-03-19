@@ -27,8 +27,27 @@ export async function POST(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const { answers } = await request.json();
+    const { answers, format } = await request.json();
 
+    // Conversational format: store answers as JSON, skip structured fields
+    if (format === 'conversational') {
+      const interview = await prisma.orgBioInterview.upsert({
+        where: { organizationId: orgId },
+        create: {
+          organizationId: orgId,
+          conversationalAnswers: answers,
+          interviewFormat: 'conversational',
+        },
+        update: {
+          conversationalAnswers: answers,
+          interviewFormat: 'conversational',
+        },
+      });
+
+      return NextResponse.json({ success: true, interview });
+    }
+
+    // Legacy layered format
     // Extract layer2Responses from nested answers
     const layer2Responses: Record<string, string> = {};
     for (const [key, value] of Object.entries(answers)) {
