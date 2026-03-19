@@ -40,10 +40,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'context must be "org" or "personal"' }, { status: 400 });
     }
 
-    if (!process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_ENABLED !== 'true') {
-      return NextResponse.json({ error: 'AI analysis not available' }, { status: 503 });
-    }
-
     const questions = context === 'org' ? ORG_ABOUT_QUESTIONS : PERSONAL_ABOUT_QUESTIONS;
 
     const response = await anthropic.messages.create({

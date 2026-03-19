@@ -2,13 +2,6 @@ import Anthropic from '@anthropic-ai/sdk';
 
 const anthropic = new Anthropic();
 
-function isAnthropicEnabled(): boolean {
-  return (
-    process.env.ANTHROPIC_ENABLED === 'true' &&
-    Boolean(process.env.ANTHROPIC_API_KEY)
-  );
-}
-
 // --- Org profile extraction ---
 
 export interface ExtractedOrgFields {
@@ -40,10 +33,6 @@ const ORG_FIELD_SCHEMA = {
 };
 
 export async function extractOrgProfileFields(transcript: string): Promise<ExtractedOrgFields> {
-  if (!isAnthropicEnabled()) {
-    throw new Error('AI extraction is not available');
-  }
-
   const response = await anthropic.messages.create({
     model: 'claude-sonnet-4-20250514',
     max_tokens: 1500,
@@ -99,10 +88,6 @@ const PERSONAL_FIELD_SCHEMA = {
 };
 
 export async function extractPersonalProfileFields(transcript: string): Promise<ExtractedPersonalFields> {
-  if (!isAnthropicEnabled()) {
-    throw new Error('AI extraction is not available');
-  }
-
   const response = await anthropic.messages.create({
     model: 'claude-sonnet-4-20250514',
     max_tokens: 1500,
