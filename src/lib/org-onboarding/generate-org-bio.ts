@@ -4,7 +4,9 @@ import { prisma } from '@/lib/prisma';
 interface BioGenerationInput {
   organizationId: string;
   orgName: string;
-  interview: {
+  /** Pre-built transcript string (conversational interviews) — takes priority over interview fields */
+  transcript?: string;
+  interview?: {
     originStory?: string;
     philosophyStatement?: string;
     projectTypes?: string[];
@@ -27,58 +29,45 @@ export interface GeneratedBioOutput {
 
 const anthropic = new Anthropic();
 
-/**
- * Check if Anthropic API is enabled and available
- */
-function isAnthropicEnabled(): boolean {
-  return (
-    process.env.ANTHROPIC_ENABLED === 'true' &&
-    Boolean(process.env.ANTHROPIC_API_KEY)
-  );
-}
-
 export async function generateOrgBio(input: BioGenerationInput): Promise<GeneratedBioOutput> {
-  const { orgName, interview } = input;
+  const { orgName, transcript, interview } = input;
 
-  if (!isAnthropicEnabled()) {
-    console.warn('[generateOrgBio] Anthropic API not enabled');
-    throw new Error('AI generation is not available');
+  let interviewContent: string;
+
+  if (transcript) {
+    // Conversational format: use the pre-built transcript directly
+    interviewContent = transcript;
+  } else if (interview) {
+    // Legacy layered format: build from structured fields
+    const parts: string[] = [];
+    if (interview.originStory) parts.push(`**Origin Story:**\n${interview.originStory}`);
+    if (interview.philosophyStatement) parts.push(`**Design Philosophy:**\n${interview.philosophyStatement}`);
+    if (interview.projectTypes?.length) parts.push(`**Project Focus:**\n${interview.projectTypes.join(', ')}`);
+    if (interview.location) parts.push(`**Location & Regions:**\n${interview.location}`);
+    if (interview.serviceRegions?.length) parts.push(`Service regions: ${interview.serviceRegions.join(', ')}`);
+    if (interview.idealClient) parts.push(`**Ideal Client:**\n${interview.idealClient}`);
+    if (interview.layer2Responses) {
+      const entries = Object.entries(interview.layer2Responses).filter(([, v]) => v);
+      if (entries.length) {
+        parts.push(`**Additional Context:**\n${entries.map(([k, v]) => `- ${k}: ${v}`).join('\n')}`);
+      }
+    }
+    if (interview.recognitionMentions) parts.push(`**Recognition:**\n${interview.recognitionMentions}`);
+    if (interview.collaboratorMentions) parts.push(`**Collaborations:**\n${interview.collaboratorMentions}`);
+    interviewContent = parts.join('\n\n');
+  } else {
+    throw new Error('Either transcript or interview data is required');
+  }
+
+  if (!interviewContent.trim()) {
+    throw new Error('No interview content to generate bio from');
   }
 
   const prompt = `You are a professional editorial writer for the interior design industry. Based on the following interview responses from ${orgName}, generate polished content for their studio profile.
 
 ## Interview Responses
 
-**Origin Story:**
-${interview.originStory || 'Not provided'}
-
-**Design Philosophy:**
-${interview.philosophyStatement || 'Not provided'}
-
-**Project Focus:**
-${interview.projectTypes?.join(', ') || 'Not specified'}
-
-**Location & Regions:**
-${interview.location || 'Not provided'}
-${interview.serviceRegions?.length ? `Service regions: ${interview.serviceRegions.join(', ')}` : ''}
-
-**Ideal Client:**
-${interview.idealClient || 'Not provided'}
-
-${interview.layer2Responses ? `
-**Additional Context:**
-${Object.entries(interview.layer2Responses).map(([key, value]) => `- ${key}: ${value}`).join('\n')}
-` : ''}
-
-${interview.recognitionMentions ? `
-**Recognition:**
-${interview.recognitionMentions}
-` : ''}
-
-${interview.collaboratorMentions ? `
-**Collaborations:**
-${interview.collaboratorMentions}
-` : ''}
+${interviewContent}
 
 ## Generate the following:
 

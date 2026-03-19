@@ -82,21 +82,31 @@ export async function POST(request: NextRequest) {
     // Step 2: Write extracted fields to Organization model + ProfileFieldSource records
     await applyExtractedFieldsToOrg(orgId, interview.id, extracted);
 
-    // Step 3: Also generate the polished bio (fullBio, shortBio, pullQuotes, etc.)
+    // Step 3: Generate the polished bio (fullBio, shortBio, pullQuotes, etc.)
     // This updates OrgBioInterview and Organization.description
-    await generateOrgBio({
-      organizationId: orgId,
-      orgName: org.name,
-      interview: {
-        originStory: interview.originStory || undefined,
-        philosophyStatement: interview.philosophyStatement || undefined,
-        projectTypes: interview.projectTypes,
-        location: interview.location || extracted.city || undefined,
-        serviceRegions: interview.serviceRegions,
-        idealClient: interview.idealClient || undefined,
-        layer2Responses: interview.layer2Responses as Record<string, string> | undefined,
-      },
-    });
+    if (interview.interviewFormat === 'conversational') {
+      // Conversational format: pass the transcript directly
+      await generateOrgBio({
+        organizationId: orgId,
+        orgName: org.name,
+        transcript,
+      });
+    } else {
+      // Legacy layered format: pass structured fields
+      await generateOrgBio({
+        organizationId: orgId,
+        orgName: org.name,
+        interview: {
+          originStory: interview.originStory || undefined,
+          philosophyStatement: interview.philosophyStatement || undefined,
+          projectTypes: interview.projectTypes,
+          location: interview.location || extracted.city || undefined,
+          serviceRegions: interview.serviceRegions,
+          idealClient: interview.idealClient || undefined,
+          layer2Responses: interview.layer2Responses as Record<string, string> | undefined,
+        },
+      });
+    }
 
     // Step 4: Update onboarding progress
     await prisma.orgOnboardingProgress.upsert({
