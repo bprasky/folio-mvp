@@ -80,11 +80,6 @@ export async function POST(request: NextRequest) {
     const truncated = plainText.slice(0, 8000);
 
     // Use Claude to extract the bio passage
-    if (!process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_ENABLED !== 'true') {
-      // If no AI available, return the raw text (best effort)
-      return NextResponse.json({ text: truncated.slice(0, 3000) });
-    }
-
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 1500,
