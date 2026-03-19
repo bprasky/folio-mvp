@@ -209,6 +209,10 @@ model User {
   profileSourcedFromInterview Boolean               @default(false)
   profileFieldSources        ProfileFieldSource[]
 
+  // Relationship Graph
+  followingRelationships UserRelationship[] @relation("Follower")
+  followerRelationships  UserRelationship[] @relation("Following")
+
   @@map("users")
 }
 
@@ -5210,4 +5214,45 @@ enum ProfileFieldSourceType {
   INTERVIEW_EXTRACTED
   MANUALLY_ENTERED
   INTERVIEW_THEN_EDITED
+}
+
+// Relationship Graph
+enum RelationshipTier {
+  FOLLOW
+  CONNECTION
+  FIRM_CONNECTION
+}
+
+model UserRelationship {
+  id              String           @id @default(cuid())
+  followerId      String
+  followingId     String
+  follower        User             @relation("Follower", fields: [followerId], references: [id])
+  following       User             @relation("Following", fields: [followingId], references: [id])
+
+  // Tier classification
+  tier            RelationshipTier @default(FOLLOW)
+  tierUpdatedAt   DateTime         @default(now())
+  isMutual        Boolean          @default(false)
+
+  // Firm connection qualifying signals
+  qrExchangeCount    Int           @default(0)
+  messageCount       Int           @default(0)
+  specExchangeCount  Int           @default(0)
+  sharedProjectCount Int           @default(0)
+  tagOverlapCount    Int           @default(0)
+  coEventCount       Int           @default(0)
+  lastActivityAt     DateTime?
+
+  // Scoring
+  engagementScore     Float?
+  engagementUpdatedAt DateTime?
+
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@unique([followerId, followingId])
+  @@index([followingId])
+  @@index([tier])
+  @@map("user_relationships")
 }

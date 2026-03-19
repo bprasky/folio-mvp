@@ -8,16 +8,23 @@ import { assertProjectWrite } from '@/lib/authz/access';
 import { callLLM } from '@/lib/posting/llmClient';
 import Anthropic from '@anthropic-ai/sdk';
 import type { SectionHistoryEntry, SectionOverride } from '@/lib/posting/editingTypes';
+import { FOLIO_TONE } from '@/lib/posting/generateEditorialDraft';
 
 const anthropic = new Anthropic();
 
 const SECTION_REGEN_SYSTEM_PROMPT = `You are a senior writer for a prestigious design magazine, regenerating one section of a feature article about an interior design project.
 
-Your writing style is warm, confident, minimalist, and design-literate. Describe process, intent, and materials poetically but concretely. Avoid marketing speak; prefer quiet authority and authenticity.
+${FOLIO_TONE}
 
-AVOID: "thoughtfully curated", "seamlessly blends", "creates a dynamic flow", "anchors the space", "adds warmth", "adds visual weight", "creates visual interest", "a sense of", generic design language.
+The designer's interview answers are your primary source material — treat them the way a journalist treats quotes from a subject.
 
-ACCURACY: Only reference products/materials from the provided data. Do not invent quotes, vendors, or details.`;
+You must AVOID:
+- Generic design language ("thoughtfully curated", "deliberately chosen", "seamlessly blends", "creates a dynamic flow", "transforms the space")
+- These specific AI-default phrases: "anchors the space", "adds warmth", "adds visual weight", "adds [quality]", "creates intimacy", "creates visual interest", "creates a sense of", "embodies", "echoing", "the space feels", "the room feels", "without compromising", "without competing", "commitment to [abstract noun]", "testament to", "envelope of calm", "material continuity", "material palette", "a sense of [noun]", "the kind of [noun] that [clause]", "rather than [negative]" as praise by contrast
+- ALSO AVOID: "reads as [noun]", "material conversation", "architectural weight" / "visual weight" / "carries weight", "metallic thread" / "thread that runs through", "burst of [noun]", "speaks quietly" / "speaks to", "restraint as strategy", "grounding the [noun]", "completing the [noun]", any aphoristic sentence that sounds like a design manifesto
+- Do NOT use words like "harmonious," "curate," "elevate," "juxtaposition," or "seamlessly."
+
+ACCURACY: Only reference products/materials from the provided data. Do not invent quotes, vendors, or details. When referencing a product, use the EXACT product name and vendor name from the tag data.`;
 
 /**
  * POST — Regenerate a single gallery chapter with designer feedback.
@@ -70,20 +77,65 @@ export async function POST(
     const chapter = chapters[chapterIndex];
     const previousBody = [...(chapter.body || [])];
 
-    // Fetch interview answers for context
+    // Fetch designer name for quote attribution
+    const project = await prisma.project.findUnique({
+      where: { id: projectId },
+      select: {
+        designer: { select: { name: true } },
+        rooms: { select: { id: true, name: true } },
+      },
+    });
+    const designerName = project?.designer?.name || 'the designer';
+
+    // Build room ID → name lookup
+    const roomIdToName = new Map((project?.rooms || []).map(r => [r.id, r.name]));
+
+    // Fetch interview answers — prefer answers for THIS room, include all for context
     const interview = await prisma.editorialInterview.findFirst({
       where: { projectId },
       select: {
         answers: {
-          select: { questionText: true, answerText: true },
+          select: { questionText: true, answerText: true, isFollowUp: true, roomId: true },
+          orderBy: { createdAt: 'asc' },
         },
       },
     });
 
-    const answers = (interview?.answers || [])
-      .filter((a: any) => a.answerText)
-      .map((a: any) => `Q: ${a.questionText || 'Question'}\nA: ${a.answerText}`)
-      .join('\n\n');
+    // Find the room name for this chapter (match by title)
+    const chapterTitle = (chapter.title || '').toLowerCase();
+
+    // Separate answers for this room vs other rooms
+    const allAnswers = (interview?.answers || []).filter((a: any) => a.answerText);
+    const thisRoomAnswers: any[] = [];
+    const otherRoomAnswers: any[] = [];
+
+    for (const a of allAnswers) {
+      const roomName = a.roomId ? roomIdToName.get(a.roomId) : undefined;
+      const isThisRoom = roomName && chapterTitle.includes(roomName.toLowerCase());
+      if (isThisRoom) {
+        thisRoomAnswers.push(a);
+      } else {
+        otherRoomAnswers.push(a);
+      }
+    }
+
+    // Format answers with quotation marks and source tags
+    const formatAnswer = (a: any) => {
+      const sourceTag = a.isFollowUp
+        ? '[SOURCE: FOLLOW-UP — richer narrative, prioritize for anecdotes and direct quotes]'
+        : '[SOURCE: BASE QUESTION]';
+      return `Q: ${a.questionText || 'Question'}\nA: "${a.answerText}" ${sourceTag}`;
+    };
+
+    const thisRoomText = thisRoomAnswers.length > 0
+      ? `### Interview Answers for THIS Section (${chapter.title}) — PRIMARY source for quotes:\n\n${thisRoomAnswers.map(formatAnswer).join('\n\n')}`
+      : '';
+
+    const otherRoomText = otherRoomAnswers.length > 0
+      ? `### Interview Answers from Other Rooms (for context only — do not repeat their content):\n\n${otherRoomAnswers.map(formatAnswer).join('\n\n')}`
+      : '';
+
+    const answersText = [thisRoomText, otherRoomText].filter(Boolean).join('\n\n') || 'No interview data available.';
 
     // Fetch product tags for images in this chapter
     const imageIds = chapter.imageIds || [];
@@ -115,8 +167,8 @@ ${(chapter.body || []).join('\n\n')}
 ${feedback ? `## Designer's Feedback
 The designer wants these changes: ${feedback}` : ''}
 
-## Interview Responses (for context and quotes)
-${answers || 'No interview data available.'}
+## Interview Responses — Use for Direct Quotes and Attribution
+${answersText}
 
 ## Products in This Section
 ${productsContext || 'No tagged products.'}
@@ -124,11 +176,30 @@ ${productsContext || 'No tagged products.'}
 ## Rest of the Article (for tone consistency — do NOT repeat content from these sections)
 ${otherChapters || 'No other sections.'}
 
+## WEAVING THE DESIGNER'S VOICE — MANDATORY
+
+This section MUST include the designer's voice. The interview answers above are your primary source material.
+
+1. DIRECT QUOTES — MANDATORY (at least 1 in this section):
+   Use ${designerName}'s ACTUAL WORDS from the interview answers as a direct quote. Format naturally:
+   - '${designerName} recalls...' followed by a direct quote
+   - 'As ${designerName} explains, "[quote]"'
+   - '"[Quote]," ${designerName} says.'
+   Direct quotes must be REAL phrases from the interview answers. Do not invent quotes. Do not rewrite the designer's voice.
+
+2. ATTRIBUTED PARAPHRASE (at least 1 in this section):
+   Convey ${designerName}'s perspective without direct quotation:
+   - '${designerName} chose brass hardware over polished nickel, drawn to its warmth...'
+
+3. UNATTRIBUTED NARRATIVE:
+   The remaining prose can describe materials and spatial relationships without attribution, but should feel informed by the designer's perspective.
+
 ## Instructions
 - Write 2-4 paragraphs for this section
 - Maintain the article's existing tone and voice
 - ${feedback ? 'Address the designer\'s feedback above' : 'Provide a fresh take on this section'}
-- Use designer quotes from the interview if relevant (verbatim, lightly trimmed)
+- MANDATORY: Include at least 1 direct attributed quote from ${designerName} using their actual words from the interview
+- MANDATORY: Include at least 1 attributed paraphrase
 - Only reference products listed above
 - Return ONLY a JSON array of paragraph strings: ["paragraph 1", "paragraph 2", ...]`;
 
