@@ -12,10 +12,8 @@ import OrgShopTab from '@/components/org-profile/OrgShopTab';
 import OrgContactTab from '@/components/org-profile/OrgContactTab';
 import { OrgAboutTab } from '@/components/org-onboarding';
 import PinnedCarousel from '@/components/org-profile/PinnedCarousel';
-import OrgVendorDirectory from '@/components/org-profile/OrgVendorDirectory';
 import OrgDesignerRelationships from '@/components/org-profile/OrgDesignerRelationships';
 import OrgTerritoryManager from '@/components/org-profile/OrgTerritoryManager';
-import OrgAuditLog from '@/components/org-profile/OrgAuditLog';
 
 export const dynamic = 'force-dynamic';
 
@@ -235,6 +233,20 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
     }
   }
 
+  // Get follower count from UserRelationship table
+  let followerCount = orgData.followerCount;
+  if (memberIds.length > 0) {
+    try {
+      const relationshipFollowerCount = await prisma.userRelationship.count({
+        where: { followingId: { in: memberIds } },
+      });
+      // Use the higher of denormalized count or actual relationship count
+      followerCount = Math.max(followerCount, relationshipFollowerCount);
+    } catch {
+      // UserRelationship table might not exist yet — fall back to denormalized count
+    }
+  }
+
   // Get pinned items (with fallback for missing fields)
   const pinnedItems = await getPinnedItems(memberIds);
 
@@ -356,8 +368,9 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
         org={orgData}
         projectCount={projectCount}
         featuredCount={featuredCount}
-        followerCount={orgData.followerCount}
+        followerCount={followerCount}
         isOwner={isOwner}
+        isMember={isMember}
       />
 
       {pinnedItems.length > 0 && <PinnedCarousel items={pinnedItems} />}
@@ -384,11 +397,6 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
         {activeTab === 'shop' && (
           <OrgShopTab products={productsData} />
         )}
-        {activeTab === 'vendors' && isMember && (
-          <Suspense fallback={<TabSkeleton />}>
-            <OrgVendorDirectory orgId={resolvedParams.orgId} />
-          </Suspense>
-        )}
         {activeTab === 'relationships' && isMember && (
           <Suspense fallback={<TabSkeleton />}>
             <OrgDesignerRelationships orgId={resolvedParams.orgId} isAdmin={isAdmin} />
@@ -398,11 +406,6 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
                 <OrgTerritoryManager orgId={resolvedParams.orgId} isAdmin={isAdmin} />
               </div>
             )}
-          </Suspense>
-        )}
-        {activeTab === 'audit' && isMember && isAdmin && (
-          <Suspense fallback={<TabSkeleton />}>
-            <OrgAuditLog orgId={resolvedParams.orgId} />
           </Suspense>
         )}
         {activeTab === 'about' && (
