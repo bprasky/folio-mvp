@@ -6,6 +6,10 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
 import { getUserOrgMemberships, isOrgAdmin } from '@/lib/permissions';
 import { generateOrgBio } from '@/lib/org-onboarding/generate-org-bio';
+import {
+  ORG_ABOUT_QUESTIONS,
+  buildTranscriptFromAnswers,
+} from '@/lib/org-onboarding/conversational-interview-questions';
 
 /**
  * POST /api/orgs/[orgId]/bio-interview/generate - Generate AI bio from interview
@@ -42,22 +46,35 @@ export async function POST(
       return NextResponse.json({ error: 'Interview not found' }, { status: 404 });
     }
 
-    // Generate bio
-    const generated = await generateOrgBio({
-      organizationId: orgId,
-      orgName: org.name,
-      interview: {
-        originStory: org.bioInterview.originStory || undefined,
-        philosophyStatement: org.bioInterview.philosophyStatement || undefined,
-        projectTypes: org.bioInterview.projectTypes,
-        location: org.bioInterview.location || undefined,
-        serviceRegions: org.bioInterview.serviceRegions,
-        idealClient: org.bioInterview.idealClient || undefined,
-        layer2Responses: org.bioInterview.layer2Responses as Record<string, string> | undefined,
-        recognitionMentions: org.bioInterview.recognitionMentions || undefined,
-        collaboratorMentions: org.bioInterview.collaboratorMentions || undefined
-      }
-    });
+    // Generate bio — use transcript for conversational, legacy fields otherwise
+    const interview = org.bioInterview;
+    let generated;
+
+    if (interview.interviewFormat === 'conversational' && interview.conversationalAnswers) {
+      const answers = interview.conversationalAnswers as Record<string, string>;
+      const transcript = buildTranscriptFromAnswers(answers, ORG_ABOUT_QUESTIONS);
+      generated = await generateOrgBio({
+        organizationId: orgId,
+        orgName: org.name,
+        transcript,
+      });
+    } else {
+      generated = await generateOrgBio({
+        organizationId: orgId,
+        orgName: org.name,
+        interview: {
+          originStory: interview.originStory || undefined,
+          philosophyStatement: interview.philosophyStatement || undefined,
+          projectTypes: interview.projectTypes,
+          location: interview.location || undefined,
+          serviceRegions: interview.serviceRegions,
+          idealClient: interview.idealClient || undefined,
+          layer2Responses: interview.layer2Responses as Record<string, string> | undefined,
+          recognitionMentions: interview.recognitionMentions || undefined,
+          collaboratorMentions: interview.collaboratorMentions || undefined
+        }
+      });
+    }
 
     // Update onboarding progress
     await prisma.orgOnboardingProgress.upsert({
