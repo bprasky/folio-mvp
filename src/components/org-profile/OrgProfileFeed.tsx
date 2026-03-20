@@ -2,13 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import FeedFilters from './FeedFilters';
-import ProjectCard from './feed-cards/ProjectCard';
-import MediaCard from './feed-cards/MediaCard';
-import RecognitionCard from './feed-cards/RecognitionCard';
-import CollaborationCard from './feed-cards/CollaborationCard';
 import GuidedSetupCard from './GuidedSetupCard';
 import AddRecognitionModal from './AddRecognitionModal';
 import InviteTeamModal from './InviteTeamModal';
+import FeedLayoutSystem from './feed-layout/FeedLayoutSystem';
 
 interface FeedItem {
   id: string;
@@ -81,7 +78,7 @@ export default function OrgProfileFeed({
   }, [initialFilter, initialSort]);
 
   if (loading) {
-    return <LoadingSkeleton />;
+    return <LoadingSkeleton projectCount={projectCount} />;
   }
 
   const showSetupCard = isMember && projectCount === 0 && setupState;
@@ -113,13 +110,12 @@ export default function OrgProfileFeed({
           </div>
         )
       ) : (
-        <div className="columns-1 sm:columns-2 lg:columns-3 gap-4">
-          {items.map(item => (
-            <div key={item.id} className="mb-4 break-inside-avoid">
-              {renderCard(item)}
-            </div>
-          ))}
-        </div>
+        <FeedLayoutSystem
+          items={items}
+          projectCount={projectCount}
+          orgId={orgId}
+          isMember={isMember}
+        />
       )}
 
       <AddRecognitionModal
@@ -137,22 +133,7 @@ export default function OrgProfileFeed({
   );
 }
 
-function renderCard(item: FeedItem) {
-  switch (item.type) {
-    case 'project':
-      return <ProjectCard project={item.data} />;
-    case 'media':
-      return <MediaCard media={item.data} />;
-    case 'recognition':
-      return <RecognitionCard recognition={item.data} />;
-    case 'collaboration':
-      return <CollaborationCard collaboration={item.data} />;
-    default:
-      return null;
-  }
-}
-
-function LoadingSkeleton() {
+function LoadingSkeleton({ projectCount }: { projectCount: number }) {
   return (
     <div>
       {/* Filter skeleton */}
@@ -166,19 +147,52 @@ function LoadingSkeleton() {
         ))}
       </div>
 
-      {/* Grid skeleton */}
-      <div className="columns-1 sm:columns-2 lg:columns-3 gap-4">
-        {[1, 2, 3, 4, 5, 6].map(i => (
-          <div
-            key={i}
-            className="mb-4 rounded-lg animate-pulse break-inside-avoid"
-            style={{
-              backgroundColor: '#E8E4DF',
-              aspectRatio: i % 2 === 0 ? '4/3' : '3/4',
-            }}
-          />
-        ))}
-      </div>
+      {/* Nascent skeleton: full-width featured cards */}
+      {projectCount > 0 && projectCount < 4 ? (
+        <div className="space-y-6">
+          {Array.from({ length: Math.min(projectCount, 3) }, (_, i) => (
+            <div
+              key={i}
+              className="rounded-2xl animate-pulse"
+              style={{ backgroundColor: '#E8E4DF', aspectRatio: '16/9' }}
+            />
+          ))}
+        </div>
+      ) : projectCount >= 4 ? (
+        /* Mosaic skeleton */
+        <div className="space-y-3">
+          <div className="grid grid-cols-[3fr_2fr] gap-3">
+            <div
+              className="rounded-xl animate-pulse"
+              style={{ backgroundColor: '#E8E4DF', aspectRatio: '4/5' }}
+            />
+            <div className="grid grid-rows-2 gap-3">
+              <div
+                className="rounded-xl animate-pulse"
+                style={{ backgroundColor: '#E8E4DF', aspectRatio: '1/1' }}
+              />
+              <div
+                className="rounded-xl animate-pulse"
+                style={{ backgroundColor: '#E8E4DF', aspectRatio: '1/1' }}
+              />
+            </div>
+          </div>
+        </div>
+      ) : (
+        /* Default masonry skeleton */
+        <div className="columns-1 sm:columns-2 lg:columns-3 gap-4">
+          {[1, 2, 3, 4, 5, 6].map(i => (
+            <div
+              key={i}
+              className="mb-4 rounded-lg animate-pulse break-inside-avoid"
+              style={{
+                backgroundColor: '#E8E4DF',
+                aspectRatio: i % 2 === 0 ? '4/3' : '3/4',
+              }}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
