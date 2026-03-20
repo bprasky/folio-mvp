@@ -43,6 +43,8 @@ export async function GET(
         where: { designerId: { in: memberIds }, isPublic: true },
         include: {
           images: { take: 1, orderBy: { displayOrder: 'asc' } },
+          _count: { select: { rooms: true } },
+          editorialAssignments: { select: { id: true }, take: 1 },
         },
         orderBy: { publishedAt: 'desc' },
         take: limit,
@@ -54,13 +56,19 @@ export async function GET(
           type: 'project' as const,
           data: {
             id: p.id,
-            name: p.name,
+            name: p.title || 'Untitled Project',
             city: p.city,
             saves: p.saves || 0,
             images: p.images,
+            // Enhanced fields for progressive layout
+            title: p.title || 'Untitled Project',
+            heroImage: p.images[0]?.url || null,
+            location: [p.city, p.regionState].filter(Boolean).join(', ') || null,
+            isEditorial: (p.editorialAssignments?.length || 0) > 0,
+            roomCount: p._count?.rooms || 0,
+            saveCount: p.saves || 0,
           },
           publishedAt: p.publishedAt,
-          // These fields might not exist in Prisma client yet
           pinnedAt: (p as any).pinnedAt || null,
           pinOrder: (p as any).pinOrder || null,
           engagement: p.saves || 0,
