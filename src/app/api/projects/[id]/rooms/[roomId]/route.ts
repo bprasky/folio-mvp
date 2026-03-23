@@ -159,13 +159,18 @@ export async function PUT(
         }
 
         // 4. Cascade to InstagramCampaignPost.roomName
-        await tx.instagramCampaignPost.updateMany({
-          where: {
-            campaign: { projectId },
-            roomName: oldFormatted,
-          },
-          data: { roomName: newFormatted },
-        });
+        // Wrapped in try-catch: instagramCampaignPost table may not exist in all environments.
+        try {
+          await tx.instagramCampaignPost.updateMany({
+            where: {
+              campaign: { projectId },
+              roomName: oldFormatted,
+            },
+            data: { roomName: newFormatted },
+          });
+        } catch (igPostErr) {
+          console.warn('InstagramCampaignPost cascade skipped (table may not exist):', (igPostErr as Error)?.message);
+        }
 
         // 5. Cascade to EditorialDraft.rawState galleryChapters titles
         // Wrapped in try-catch: editorialDraft model may not exist in all environments.
