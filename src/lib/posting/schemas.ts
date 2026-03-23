@@ -19,6 +19,21 @@ export const SectionSchema = z.object({
   quote: z.string().optional(),
 }).passthrough();
 
+// Per-chapter pull quote selection with alternatives for cycling UI
+export const PullQuoteAlternativeSchema = z.object({
+  text: z.string().max(300),
+  context: z.string().max(80).optional(),
+  score: z.number(),
+});
+
+export const PullQuoteSelectionSchema = z.object({
+  selected: z.object({
+    text: z.string().max(300),
+    context: z.string().max(80).optional(),
+  }).nullable(),
+  alternatives: z.array(PullQuoteAlternativeSchema),
+});
+
 // Composed draft schema for LLM output (accepts sections at compose time)
 // Uses .passthrough() so unexpected keys from the LLM don't cause validation failures
 export const ComposedDraftSchema = z.object({
@@ -32,6 +47,10 @@ export const ComposedDraftSchema = z.object({
     title: z.string().optional(),
     imageIds: z.array(z.string()).min(1),
     body: z.array(z.string()).optional(),
+    pullQuote: z.union([
+      z.string().max(300),
+      PullQuoteSelectionSchema,
+    ]).optional().nullable(),
   })).min(1),
   pullQuotes: z.array(z.union([z.string(), z.object({ text: z.string(), context: z.string().optional(), sourceSection: z.string().optional() })])).optional(),
   credits: z.array(z.object({ role: z.string(), name: z.string().nullable().optional() })).optional(),
@@ -71,6 +90,10 @@ export const LlmComposedLooseSchema = z.object({
     title: z.string().optional(),
     imageIds: z.array(z.string()).optional(),
     body: z.array(z.string()).optional(),
+    pullQuote: z.union([
+      z.string().max(300),
+      PullQuoteSelectionSchema,
+    ]).optional().nullable(),
   })).optional(),
 
   qa: z.array(z.object({ q: z.string(), a: z.string().optional() })).optional(),
@@ -94,21 +117,6 @@ export const PostMetaSchema = z.object({
   variant: z.enum([
     "PROJECT_FEATURE","MATERIAL_STUDY","METHOD","DESIGNER_PROFILE","EVENT_ESSAY"
   ]).optional(),
-});
-
-// Per-chapter pull quote selection with alternatives for cycling UI
-export const PullQuoteAlternativeSchema = z.object({
-  text: z.string().max(300),
-  context: z.string().max(80).optional(),
-  score: z.number(),
-});
-
-export const PullQuoteSelectionSchema = z.object({
-  selected: z.object({
-    text: z.string().max(300),
-    context: z.string().max(80).optional(),
-  }).nullable(),
-  alternatives: z.array(PullQuoteAlternativeSchema),
 });
 
 export type PullQuoteAlternative = z.infer<typeof PullQuoteAlternativeSchema>;
@@ -172,9 +180,15 @@ export type Blocks = z.infer<typeof BlocksSchema>;
 /** Normalized pull quote with optional context and source section */
 export type NormalizedPullQuote = { text: string; context?: string; sourceSection?: string };
 
-/** Normalize a pull quote entry (string or {text, context, sourceSection}) to a consistent shape */
-export function normalizePullQuote(q: string | { text: string; context?: string; sourceSection?: string }): NormalizedPullQuote {
+/** Normalize a pull quote entry (string, {text, context, sourceSection}, or PullQuoteSelection) to a consistent shape */
+export function normalizePullQuote(q: string | { text: string; context?: string; sourceSection?: string; selected?: { text: string; context?: string } | null; alternatives?: unknown[] }): NormalizedPullQuote {
   if (typeof q === 'string') return { text: q };
+  // Handle PullQuoteSelection format — extract from selected
+  if ('selected' in q && 'alternatives' in q) {
+    const sel = q.selected;
+    if (!sel) return { text: '' };
+    return { text: sel.text, context: sel.context || undefined };
+  }
   return { text: q.text, context: q.context || undefined, sourceSection: q.sourceSection || undefined };
 }
 

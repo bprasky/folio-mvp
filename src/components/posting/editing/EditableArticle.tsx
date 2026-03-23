@@ -56,9 +56,10 @@ function PullQuotePicker({
 }) {
   const [saving, setSaving] = useState(false);
 
-  // Normalize to get current text and alternatives
+  // Normalize to get current text, context, and alternatives
   const isSelection = isPullQuoteSelection(pullQuote);
   const selectedText = typeof pullQuote === 'string' ? pullQuote : pullQuote?.selected?.text ?? null;
+  const selectedContext = isSelection ? pullQuote.selected?.context : undefined;
   const alternatives = isSelection ? pullQuote.alternatives : [];
   const hasAlternatives = alternatives.length > 1;
 
@@ -116,14 +117,32 @@ function PullQuotePicker({
     }
   };
 
-  // Section has a selected pull quote — show it with cycling controls
+  // Section has a selected pull quote — show quote, attribution, then controls below
   if (selectedText) {
     return (
-      <div className="pl-4 border-l-2 border-[var(--accent)]">
-        <div className="flex items-center justify-between mb-1">
-          <label className="folio-meta font-medium text-[var(--text-tertiary)] uppercase tracking-wider">
-            Pull Quote
-          </label>
+      <div className="py-2">
+        {/* Quote text — Cormorant Garamond italic, editable */}
+        <EditableParagraph
+          text={selectedText}
+          isEdited={isEdited}
+          isEditing={isEditing}
+          as="blockquote"
+          className="font-[var(--font-headline)] text-lg md:text-xl italic leading-relaxed text-[var(--text-secondary)]"
+          onStartEdit={onStartEdit}
+          onSave={onSave}
+          onCancel={onCancel}
+          onRevert={onRevert}
+        />
+
+        {/* Attribution line */}
+        {selectedContext && (
+          <p className="mt-2 folio-meta tracking-wide uppercase text-[var(--text-tertiary)]">
+            — {selectedContext}
+          </p>
+        )}
+
+        {/* Controls — float beneath like secondary metadata */}
+        <div className="flex items-center justify-between mt-3">
           <div className="flex items-center gap-2">
             {hasAlternatives && (
               <>
@@ -150,28 +169,18 @@ function PullQuotePicker({
                 </button>
               </>
             )}
-            <button
-              onClick={handleRemove}
-              disabled={saving}
-              className="text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] disabled:opacity-40 transition-colors p-0.5 ml-1"
-              title="Remove pull quote"
-              aria-label="Remove pull quote"
-            >
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3.5 3.5L10.5 10.5M10.5 3.5L3.5 10.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
-            </button>
           </div>
+          <button
+            onClick={handleRemove}
+            disabled={saving}
+            className="flex items-center gap-1 folio-meta text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] disabled:opacity-40 transition-colors"
+            title="Remove pull quote"
+            aria-label="Remove pull quote"
+          >
+            <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M3.5 3.5L10.5 10.5M10.5 3.5L3.5 10.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+            Remove
+          </button>
         </div>
-        <EditableParagraph
-          text={selectedText}
-          isEdited={isEdited}
-          isEditing={isEditing}
-          as="blockquote"
-          className="folio-body italic text-[var(--text-secondary)]"
-          onStartEdit={onStartEdit}
-          onSave={onSave}
-          onCancel={onCancel}
-          onRevert={onRevert}
-        />
       </div>
     );
   }
@@ -179,14 +188,14 @@ function PullQuotePicker({
   // No selected pull quote but alternatives exist — offer to add one
   if (alternatives.length > 0) {
     return (
-      <div className="py-1">
+      <div className="py-2">
         <button
           onClick={handleAdd}
           disabled={saving}
           className="folio-meta text-[var(--accent)] hover:text-[var(--text-primary)] disabled:opacity-40 transition-colors flex items-center gap-1"
         >
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 3V11M3 7H11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
-          Add pull quote ({alternatives.length} available)
+          Add pull quote
         </button>
       </div>
     );
