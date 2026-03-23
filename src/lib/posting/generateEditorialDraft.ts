@@ -911,7 +911,7 @@ Begin.`;
 // POST-PROCESSING: fix "The [noun]..." sentence openers via batched Haiku call
 // ============================================================================
 
-const THE_OPENER_PATTERN = /^The\s+[A-Z]/;
+const THE_OPENER_PATTERN = /^The\s+/;
 const MAX_THE_OPENERS = 2;
 
 async function fixSentenceOpeners(
