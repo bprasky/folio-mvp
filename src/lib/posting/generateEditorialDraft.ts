@@ -932,6 +932,13 @@ async function fixSentenceOpeners(
     }
   }
 
+  console.log('[fixSentenceOpeners] entry', {
+    _cid,
+    totalParagraphs: blocks.galleryChapters.reduce((n, ch) => n + (ch.body?.length ?? 0), 0),
+    matchingThePattern: flagged.length,
+    flaggedForRewrite: Math.max(0, flagged.length - MAX_THE_OPENERS),
+  });
+
   // If within limit, nothing to fix
   if (flagged.length <= MAX_THE_OPENERS) return blocks;
 
@@ -977,6 +984,19 @@ async function fixSentenceOpeners(
       blocks.galleryChapters![chapterIdx].body![paraIdx] = rewritten;
     }
   }
+
+  const applied = Math.min(toFix.length, rewrittenParagraphs.length);
+  let actuallyApplied = 0;
+  for (let i = 0; i < applied; i++) {
+    const r = rewrittenParagraphs[i];
+    if (r && !THE_OPENER_PATTERN.test(r) && r.length > 20) actuallyApplied++;
+  }
+  console.log('[fixSentenceOpeners] result', {
+    _cid,
+    haikuCallSucceeded: rewriteResult.ok,
+    rewritesApplied: actuallyApplied,
+    rewritesAttempted: toFix.length,
+  });
 
   // Re-validate
   try {
