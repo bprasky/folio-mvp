@@ -1055,6 +1055,7 @@ export async function generateEditorialDraft(input: GenInput): Promise<{
     return { blocks: toFallbackBlocks({ ...input, answers: uniqueAnswers }), usedFallback: true };
   }
 
+  console.log('[GENERATE] LLM call complete, proceeding to repair', { _cid });
   console.info('[generate] llm_ok', { _cid, model: llmResult.usedModel });
   const rawText = llmResult.data.content[0]?.type === 'text' ? llmResult.data.content[0].text : "";
 
@@ -1085,11 +1086,13 @@ export async function generateEditorialDraft(input: GenInput): Promise<{
 
   // Repair and build validated blocks
   try {
+    console.log('[GENERATE] calling repairAndBuildBlocks', { _cid });
     let blocks = repairAndBuildBlocks(composed, { ...input, answers: uniqueAnswers }, imageIds, rooms, imagesByRoom, _cid);
     // Post-processing: fix "The [noun]..." sentence openers
     blocks = await fixSentenceOpeners(blocks, _cid);
     return { blocks, usedFallback: false };
-  } catch (repairError) {
+  } catch (repairError: any) {
+    console.log('[GENERATE] repairAndBuildBlocks THREW:', repairError?.message ?? repairError, { _cid });
     console.warn('[generate] repair/validation error; using fallback', { _cid, error: repairError });
     return { blocks: toFallbackBlocks({ ...input, answers: uniqueAnswers }), usedFallback: true };
   }
