@@ -165,6 +165,17 @@ export function RichArticle({
         )}
       </header>
 
+      {/* Introduction — narrative opening before room sections */}
+      {article.introduction && Array.isArray(article.introduction) && article.introduction.length > 0 && (
+        <div className="mb-8 max-w-3xl">
+          {article.introduction.map((para: string, idx: number) => (
+            <p key={idx} className="text-base leading-relaxed text-[var(--text-primary)] mb-4">
+              {para}
+            </p>
+          ))}
+        </div>
+      )}
+
       {/* Hero Image */}
       {heroImage && (
         <div className="mb-10 md:rounded-2xl bg-[var(--bg-elevated)]">

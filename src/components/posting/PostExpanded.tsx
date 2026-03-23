@@ -214,6 +214,20 @@ export function PostExpanded({ payload }: PostExpandedProps) {
         <FeatureDiptych images={heroImages} />
       )}
 
+      {/* Introduction — narrative opening before room sections */}
+      {blocks.introduction && Array.isArray(blocks.introduction) && blocks.introduction.length > 0 && (
+        <div className="max-w-3xl mx-auto prose prose-neutral">
+          {blocks.introduction.map((para: string, idx: number) => (
+            <p
+              key={idx}
+              className="text-[15px] leading-7 text-[var(--text-primary)] mb-4"
+            >
+              {para}
+            </p>
+          ))}
+        </div>
+      )}
+
       {/* 4) Narrative with motion pull quote + scroll-sync images */}
       {blocks.galleryChapters && Array.isArray(blocks.galleryChapters) && (
         <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_0.8fr] gap-10">

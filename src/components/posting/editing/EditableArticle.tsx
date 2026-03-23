@@ -319,6 +319,29 @@ export default function EditableArticle({
         </div>
       )}
 
+      {/* Introduction */}
+      {blocks.introduction && Array.isArray(blocks.introduction) && (blocks.introduction as string[]).length > 0 && (
+        <div className="space-y-3 pb-6 border-b border-[var(--border-default)]">
+          <label className="folio-meta font-medium text-[var(--text-tertiary)] uppercase tracking-wider">
+            Introduction
+          </label>
+          {(blocks.introduction as string[]).map((para: string, pi: number) => (
+            <EditableParagraph
+              key={pi}
+              text={para}
+              isEdited={isEdited(-2, pi, 'introduction')}
+              isEditing={isEditing(-2, pi, 'introduction')}
+              placeholder="Introduction paragraph..."
+              className="folio-body text-[var(--text-primary)]"
+              onStartEdit={() => setEditingField({ chapterIndex: -2, paragraphIndex: pi, field: 'introduction' })}
+              onSave={(t) => handleSave(-2, pi, 'introduction', t)}
+              onCancel={() => setEditingField(null)}
+              onRevert={() => handleRevert(-2, pi, 'introduction')}
+            />
+          ))}
+        </div>
+      )}
+
       {/* Gallery Chapters */}
       {chapters.map((chapter, ci) => (
         <div key={ci} className="space-y-4 pb-6 border-b border-[var(--border-default)] last:border-b-0">

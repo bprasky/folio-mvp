@@ -3,10 +3,10 @@
  * Overrides store manual edits separately from AI-generated expandedBlocks.
  */
 
-export type SectionOverrideField = 'title' | 'body' | 'pullQuote' | 'kicker' | 'deck';
+export type SectionOverrideField = 'title' | 'body' | 'pullQuote' | 'kicker' | 'deck' | 'introduction';
 
 export type SectionOverride = {
-  /** Chapter index in galleryChapters. -1 for lead fields (kicker, deck). */
+  /** Chapter index in galleryChapters. -1 for lead fields (kicker, deck). -2 for introduction paragraphs. */
   chapterIndex: number;
   /** For body fields: paragraph index within body[]. For other fields: 0. */
   paragraphIndex: number;

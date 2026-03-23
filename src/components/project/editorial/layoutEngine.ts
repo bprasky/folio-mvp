@@ -752,6 +752,16 @@ export function generateEditorialLayoutFromDraft(
         imageIds: [],
       });
     }
+    // Render introduction paragraphs after lead deck, before gallery chapters
+    if (draft.introduction && draft.introduction.length > 0) {
+      for (const para of draft.introduction) {
+        blocks.push({
+          type: 'textInterlude',
+          text: para,
+          imageIds: [],
+        });
+      }
+    }
   } else {
     // No chapters - use first image as hero
     const heroImage = classified[0];
