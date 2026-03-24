@@ -597,6 +597,7 @@ export function toFallbackBlocks(input: GenInput) {
 
   const blocks = {
     lead: { kicker, deck },
+    introduction: [] as string[],
     galleryChapters: galleryChaptersWithQuotes.length > 0 ? galleryChaptersWithQuotes : undefined,
     materialsLedger: ledger.length ? {
       items: ledger.map(l => ({
@@ -770,10 +771,11 @@ ${input.projectHistory}` : ''}${input.atelierSummary ? `
 ## Designer Voice & Philosophy (from their Folio profile — use to inform tone, do not quote directly)
 ${input.atelierSummary}` : ''}
 
-PROJECT-LEVEL ANSWERS AS NARRATIVE FRAME:
-The interview may begin with project-level questions (tagged [SOURCE: PROJECT]) about the client, the brief, the design direction, and the designer's signature. These answers are your NARRATIVE FRAME — not a separate intro paragraph that gets abandoned, but the story thread that connects every room description.
-- The client story should open the editorial and recur as context throughout
-- The design direction should inform how you describe material and spatial choices
+PROJECT-LEVEL ANSWERS — USE IN TWO WAYS:
+The interview may begin with project-level questions (tagged [SOURCE: PROJECT]) about the client, the brief, the design direction, and the designer's signature.
+1. OPENING SECTION (the "introduction" array): Use these answers as the PRIMARY source for the 2-3 paragraph introduction that establishes the project before room sections begin. This is where the client story, scope, and design thesis live.
+2. NARRATIVE THREADING: Also reference this context within room sections where relevant — but the primary home for this material is the introduction. The client story should recur in at least 2 room sections, not just the intro.
+- The design direction should inform how you describe material and spatial choices in room sections
 - The signature/identity answers are primary source for PULL QUOTES — these reveal who the designer IS
 - The surprise/pivot answer is often the most narratively compelling moment — place it for impact
 
@@ -838,6 +840,11 @@ Produce a JSON object with this structure:
     "kicker": "A headline capturing the project's singular idea — not generic (8-15 words)",
     "deck": "1-2 sentences that set up the story. What makes this project worth reading about?"
   },
+  "introduction": [
+    "Opening paragraph — who the clients are, what brought them to this project, and the setting/location.",
+    "Second paragraph — the design thesis: the one big idea that shaped every decision. Name the designer naturally.",
+    "Optional third paragraph — a teaser of the surprise, the signature move, or a tension the rooms will resolve."
+  ],
   "sections": [
     { "type": "narrative", "body": "..." },
     { "type": "pullquote", "quote": "Self-contained insight that makes sense without the interview question" },
@@ -858,6 +865,19 @@ Produce a JSON object with this structure:
 }
 
 ## Writing Instructions
+
+FOR THE INTRODUCTION ARRAY (2-3 paragraphs, written BEFORE gallery chapters):
+Using the project-level interview answers, write 2-3 paragraphs that establish:
+1. The clients and what brought them to this project (from CLIENT_BRIEF or similar answers)
+2. The scope — what kind of project this is, the location, the timeframe (from SCOPE_PARAMETERS)
+3. The design direction — the one-line thesis for the whole house (from DESIGN_DIRECTION)
+This opening should:
+- Name the designer naturally (first and last name on first mention)
+- Reference the location if known
+- Set up a tension or promise that the room sections will deliver on
+- NOT describe any specific room — save that for the gallery chapters
+- NOT repeat the headline or subtitle — build on them
+Tone: magazine feature opening. A reader should want to keep scrolling after these paragraphs.
 
 FOR THE SECTIONS ARRAY (${requiredChapterCount}-${requiredChapterCount + 2} narrative sections + 1-2 pullquotes):
 - Open with the space's defining tension, challenge, or idea — NOT with a product
@@ -894,7 +914,7 @@ FOR THE MATERIALS LEDGER:
 - Include vendor and room context in notes (format: "Vendor: [name] | Used in: [room]")
 
 CRITICAL RULES:
-- 700-1100 words total across sections and chapters
+- 850-1300 words total across introduction, sections, and chapters
 - Products serve the narrative — the narrative does not serve the products
 - MANDATORY: Include at least 1 direct attributed quote per gallery chapter, drawn from the interview answers. Format: '${designerNameForPrompt} says/recalls/explains, "[actual words]"'. Do NOT paraphrase every answer — preserve the designer's voice.
 - The article should read like a magazine feature, not a product specification sheet

@@ -178,6 +178,10 @@ function getFieldValue(
   paragraphIndex: number,
   field: SectionOverrideField
 ): string {
+  if (chapterIndex === -2) {
+    // Introduction paragraphs
+    return blocks.introduction?.[paragraphIndex] ?? '';
+  }
   if (chapterIndex === -1) {
     // Lead fields
     return blocks.lead?.[field] ?? '';
@@ -203,6 +207,12 @@ function setFieldValue(
   field: SectionOverrideField,
   value: string
 ): void {
+  if (chapterIndex === -2) {
+    // Introduction paragraphs
+    if (!blocks.introduction) blocks.introduction = [];
+    blocks.introduction[paragraphIndex] = value;
+    return;
+  }
   if (chapterIndex === -1) {
     if (!blocks.lead) blocks.lead = {};
     blocks.lead[field] = value;

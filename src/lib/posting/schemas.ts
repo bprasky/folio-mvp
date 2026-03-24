@@ -128,6 +128,7 @@ export const BlocksSchema = z.object({
     kicker: z.string().max(120).optional(), // Increased from 80 to 120 for natural headlines
     deck: z.string().max(400).optional(), // Increased from 240 to 400 for proper magazine-style descriptions
   }).optional(),
+  introduction: z.array(z.string().max(2000)).max(4).optional(),
   galleryChapters: z.array(z.object({
     title: z.string().max(120).optional(),
     body: z.array(z.string().max(5000)).optional(), // Allow very long paragraphs for recomposition (600-900 words = ~3000-4500 chars total, sections may be 1000-2000 chars each)
