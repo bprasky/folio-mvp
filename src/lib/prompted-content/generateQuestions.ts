@@ -83,23 +83,38 @@ export async function generateBioReflectiveQuestions(userId: string) {
     async () => {
       const message = await anthropic.messages.create({
         model: 'claude-sonnet-4-20250514',
-        system: `You are generating questions for professionals in the interior design industry.
-These questions will appear as beautifully typeset cards in a design magazine feed.
+        system: `You are generating questions for verified design professionals on Folio, a design publication platform. These questions appear as editorial-quality cards in the magazine feed.
 
-YOU HAVE ACCESS TO:
-- The designer's bio interview (their self-narrative, philosophy, origin story)
-- Their existing profile Q&A responses
+FRAMING PRINCIPLE: The bio is EVIDENCE of the designer's perspective, not the SUBJECT. Every question should be about a broader design theme, philosophy, or industry conversation. The designer's bio details are referenced because they prove the designer has a distinctive point of view — but the question asks for the principle, philosophy, or transferable insight, not a retelling of their story.
 
-CRITICAL RULES:
-- Every question must trace back to something specific the designer said in their bio or interview.
-- Questions should feel like they came from a thoughtful colleague who studied their work, not from a platform trying to extract content.
-- Focus on wins, arrivals, and genuine curiosity about craft decisions.
-- Never use: "Can you share...", "Tell us about a time...", "What insights..."
-- Never ask about failures, compromises, or regrets unless framed as "what did that teach you."
-- Be specific. Reference materials, spaces, decisions, places — not abstractions.
-- Maximum 2 sentences per question. The best questions are one sentence.
-- Questions should be answerable in 30-90 seconds of speaking or 2-4 sentences of typing.
-- Do NOT repeat or closely paraphrase any existing questions provided below.
+QUESTION STRUCTURE:
+1. Open with the broader theme — a design philosophy, industry trend, or question that many professionals think about. Frame it as a live conversation.
+2. Reference something from their bio as proof — "you mentioned X" or "your background in Y" — establishing that they have a unique angle.
+3. Ask the expertise question — the WHY, the PRINCIPLE, the TRANSFERABLE INSIGHT. Not "tell us more about your origin story" but "what's the thinking behind X that other designers could learn from."
+
+OPTIONAL TECHNIQUES:
+- A/B framing: "Is that more of an A or a B?" gives the designer a starting point. Examples: "Is that instinct or something you learned?" / "Does that come from your training or from client work?"
+- Trend context: "A lot of designers are rethinking X right now" — this tells the designer their answer has an audience.
+- Peer framing: "Most designers come at this from Y — your path was completely different" — positions the designer as distinctive.
+
+BANNED PATTERNS:
+- Do NOT ask them to retell or elaborate on something they already said in their bio
+- Do NOT quote their bio back at them as the main subject ("You said X — tell us more")
+- Do NOT use "Can you share...", "Tell us about a time...", "What insights can you offer..."
+- Do NOT ask about failures, compromises, or regrets unless framed as "what did that teach you"
+
+EXAMPLES:
+BAD: "You mentioned that your grandmother's home inspired your love of design — how does that early memory influence your work today?"
+GOOD: "A lot of designers talk about spaces from childhood that shaped how they see proportion and light. Is the instinct you bring to a room something you can trace back, or has it evolved into something entirely different?"
+
+BAD: "Your transition from fashion to interiors is unusual — what skills transferred?"
+GOOD: "The crossover between fashion and interiors is getting more attention lately. When you think about material and drape and texture, are you drawing on the same instinct in both worlds or are they fundamentally different disciplines?"
+
+TONE: Questions should read like a thoughtful design journalist who has studied the designer's background and wants to understand the thinking behind their perspective — not a platform extracting more bio content.
+
+Maximum 2 sentences per question. One sentence is often better.
+Questions should be answerable in 30-90 seconds of speaking or 2-4 sentences of typing.
+Do NOT repeat or closely paraphrase any existing questions provided below.
 
 Return a JSON array of exactly ${QUESTIONS_PER_BATCH} objects:
 [{
@@ -110,10 +125,10 @@ Return a JSON array of exactly ${QUESTIONS_PER_BATCH} objects:
         messages: [
           {
             role: 'user',
-            content: `DESIGNER BIO:\n${bio.folioBio}\n\nINTERVIEW ANSWERS:\n${qaBlock}\n\n${qaContext ? `EXISTING PROFILE Q&A:\n${qaContext}\n\n` : ''}${existingTexts.length > 0 ? `ALREADY ASKED (do not repeat):\n${existingTexts.join('\n')}\n\n` : ''}Generate ${QUESTIONS_PER_BATCH} bio-reflective questions for this designer.`,
+            content: `The following bio and interview answers reveal this designer's perspective and philosophy. Use them as EVIDENCE of their expertise when referencing their background, not as subjects to drill into. The question should be about the broader theme; the bio detail is cited to establish credibility.\n\nDESIGNER BIO:\n${bio.folioBio}\n\nINTERVIEW ANSWERS:\n${qaBlock}\n\n${qaContext ? `EXISTING PROFILE Q&A:\n${qaContext}\n\n` : ''}${existingTexts.length > 0 ? `ALREADY ASKED (do not repeat):\n${existingTexts.join('\n')}\n\n` : ''}Generate ${QUESTIONS_PER_BATCH} expertise-framed questions for this designer.`,
           },
         ],
-        max_tokens: 1200,
+        max_tokens: 1500,
         temperature: 0.85,
       });
 
@@ -268,26 +283,39 @@ export async function generateProjectReflectiveQuestions(userId: string) {
     async () => {
       const message = await anthropic.messages.create({
         model: 'claude-sonnet-4-20250514',
-        system: `You are generating questions for professionals in the interior design industry.
-These questions will appear as beautifully typeset cards in a design magazine feed.
+        system: `You are generating questions for verified design professionals on Folio, a design publication platform. These questions appear as editorial-quality cards in the magazine feed.
 
-YOU HAVE ACCESS TO:
-- The designer's published projects (titles, locations, rooms, editorial excerpts, interview answers)
-${bio?.folioBio ? '- The designer\'s bio for cross-referencing their philosophy with specific project decisions' : ''}
+FRAMING PRINCIPLE: The project is the EVIDENCE, not the SUBJECT. Every question should be about a broader design theme, trend, or expertise area. The designer's specific project is referenced because it proves they have real experience with the topic — but the question asks them to share the principle, philosophy, or approach behind the decision, not to describe the decision itself.
 
-YOUR GOAL:
-Generate questions that reference SPECIFIC projects, rooms, materials, or decisions visible in the data.
-These should feel like a thoughtful editor who visited the space asking follow-up questions.
+QUESTION STRUCTURE:
+1. Open with the broader theme — what the industry cares about, what people search for, what other professionals think about. Frame it as a live conversation happening in design right now.
+2. Reference their specific project as proof — "your [Project Name] achieved this" or "the way you handled this in [Project Name]" — establishing credibility.
+3. Ask the expertise question — the WHY, the PRINCIPLE, the TRANSFERABLE INSIGHT. Not "how did you do X in this project" but "what's the thinking behind X that other designers could learn from."
 
-CRITICAL RULES:
-- Every question MUST reference a specific project by name, location, or a detail from it.
-- Questions should surface the "why" behind visible decisions — material choices, spatial arrangements, vendor selections.
-- Focus on craft pride: "What made you choose X for Y?" not "Tell us about your process."
-- Never use: "Can you share...", "Tell us about a time...", "What insights..."
-- Never ask about failures, compromises, or regrets unless framed as "what did that teach you."
-- Maximum 2 sentences per question. The best questions are one sentence.
-- Questions should be answerable in 30-90 seconds of speaking or 2-4 sentences of typing.
-- Do NOT repeat or closely paraphrase any existing questions provided below.
+OPTIONAL TECHNIQUES:
+- A/B framing: "Is that more of an A or a B?" gives the designer a starting point and creates natural follow-up energy. Examples: "Is that an architectural move or a furniture move?" / "Do you design for how it looks now or how it'll look in ten years?" / "Is that about the client's lifestyle or the space's proportions?"
+- Trend context: "A lot of designers are rethinking X right now" or "Seamless storage is one of the most searched topics in residential design" — this tells the designer their answer has an audience.
+- Peer framing: "Most designers solve this with Y — you went a completely different direction" — this positions the designer as distinctive.
+
+BANNED PATTERNS:
+- Do NOT ask about specific project details as the main subject ("what drew you to pair X with Y in Project Z")
+- Do NOT quote their interview answers back at them and ask them to elaborate
+- Do NOT use "Can you share...", "Tell us about a time...", "What insights can you offer..."
+- Do NOT ask them to describe something they already described in a project interview — ask them to go BEYOND it
+- Do NOT make every question about the same project — spread references across their published work
+
+EXAMPLES:
+BAD: "The fluted oak panels that conceal your prep kitchen in the Boca Raton project — what was the design intent behind that detail?"
+GOOD: "A lot of designers are rethinking hidden storage right now. Your prep kitchen in the Boca Raton project pulled it off seamlessly — what's the principle behind making storage truly invisible versus just concealed?"
+
+BAD: "Luca's House features a fluid layout that 'invites interaction' — how did you achieve that openness?"
+GOOD: "Open layouts are everywhere, but most of them feel like one big room instead of distinct spaces that flow. Your approach in Luca's House kept the openness without losing the rooms — is that an architectural move or a furniture move?"
+
+TONE: Questions should read like a thoughtful design journalist who has studied the designer's portfolio and wants to understand the thinking behind the work — not a platform asking for more content about a specific room.
+
+Maximum 2 sentences per question. One sentence is often better.
+Questions should be answerable in 30-90 seconds of speaking or 2-4 sentences of typing.
+Do NOT repeat or closely paraphrase any existing questions provided below.
 
 Return a JSON array of exactly ${QUESTIONS_PER_BATCH} objects:
 [{
@@ -298,10 +326,10 @@ Return a JSON array of exactly ${QUESTIONS_PER_BATCH} objects:
         messages: [
           {
             role: 'user',
-            content: `${projectBlocks.join('\n\n---\n\n')}${bio?.folioBio ? `\n\nDESIGNER BIO:\n${bio.folioBio}` : ''}${existingTexts.length > 0 ? `\n\nALREADY ASKED (do not repeat):\n${existingTexts.join('\n')}` : ''}\n\nGenerate ${QUESTIONS_PER_BATCH} project-reflective questions for this designer.`,
+            content: `The following projects demonstrate this designer's areas of expertise. Use them as EVIDENCE when referencing their work, not as subjects to drill into. The question should be about the broader theme; the project is cited to establish credibility.\n\nPROJECTS:\n${projectBlocks.join('\n\n---\n\n')}${bio?.folioBio ? `\n\nDESIGNER BIO:\n${bio.folioBio}` : ''}${existingTexts.length > 0 ? `\n\nALREADY ASKED (do not repeat):\n${existingTexts.join('\n')}` : ''}\n\nGenerate ${QUESTIONS_PER_BATCH} expertise-framed questions for this designer.`,
           },
         ],
-        max_tokens: 1200,
+        max_tokens: 1500,
         temperature: 0.85,
       });
 
