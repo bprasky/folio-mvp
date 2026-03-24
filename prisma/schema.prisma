@@ -194,6 +194,10 @@ model User {
   designerBio DesignerBio?
   profileQAs  ProfileQA[]
 
+  // Prompted Content System
+  promptedQuestions PromptedQuestion[] @relation("UserPromptedQuestions")
+  promptedAnswers  PromptedAnswer[]   @relation("UserPromptedAnswers")
+
   // Event Product Scans
   productScans EventProductScan[]
 
@@ -1266,6 +1270,7 @@ enum PostVariant {
   METHOD
   DESIGNER_PROFILE
   EVENT_ESSAY
+  PROMPTED_ARTICLE
 }
 
 model ProjectPost {
@@ -5110,6 +5115,90 @@ model ProfileQA {
   @@index([userId, status])
   @@index([userId, displayOrder])
   @@map("profile_qas")
+}
+
+// ============================================================
+// PROMPTED CONTENT SYSTEM
+// ============================================================
+
+enum PromptedQuestionType {
+  BIO_REFLECTIVE
+  CROSS_DOMAIN
+  PROJECT_REFLECTIVE
+  PEER_RESONANT
+  STORY_COMPLETING
+  FOLLOW_UP
+}
+
+enum PromptedQuestionStatus {
+  GENERATED
+  DELIVERED
+  ANSWERED
+  SKIPPED
+  EXPIRED
+}
+
+model PromptedQuestion {
+  id              String   @id @default(cuid())
+  targetUserId    String
+  questionText    String   @db.Text
+  questionType    PromptedQuestionType @default(BIO_REFLECTIVE)
+
+  // Provenance — where this question came from
+  provenance      Json     // { sourceType, bioExcerptRef?, patternDescription?, storyThreadId?, parentAnswerId? }
+  atelierSignals  Json?    // { cluster, expectedSignals[] }
+
+  // Delivery
+  priority        Float    @default(0.5)
+  deliveryContext String   @default("feed_card") // feed_card, profile_dashboard, notification, post_bio_prompt
+  deliveredAt     DateTime?
+  expiresAt       DateTime?
+
+  // Status
+  status          PromptedQuestionStatus @default(GENERATED)
+
+  // Relations
+  targetUser      User     @relation("UserPromptedQuestions", fields: [targetUserId], references: [id], onDelete: Cascade)
+  answers         PromptedAnswer[]
+  parentAnswer    PromptedAnswer?  @relation("FollowUpQuestions", fields: [parentAnswerId], references: [id])
+  parentAnswerId  String?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([targetUserId, status])
+  @@index([status, priority])
+  @@map("prompted_questions")
+}
+
+model PromptedAnswer {
+  id              String   @id @default(cuid())
+  questionId      String
+  userId          String
+  answerText      String   @db.Text
+  videoUrl        String?
+  transcriptRaw   String?  @db.Text
+
+  // Bio enrichment
+  profileQAId     String?
+  bioEnriched     Boolean  @default(false)
+
+  // Article contribution
+  consentToQuote  Boolean  @default(true)
+
+  // Follow-ups
+  followUpQuestions PromptedQuestion[] @relation("FollowUpQuestions")
+
+  // Relations
+  question        PromptedQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  user            User             @relation("UserPromptedAnswers", fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([userId])
+  @@index([questionId])
+  @@map("prompted_answers")
 }
 
 model EventProductScan {
