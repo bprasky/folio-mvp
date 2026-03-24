@@ -535,6 +535,12 @@ function repairAndBuildBlocks(
           deck: (composed.lead.deck || composed.lead.dek || '').slice(0, 400),
         }
       : { kicker: input.project?.title || 'A Considered Composition', deck: '' },
+    introduction: Array.isArray(composed.introduction) && composed.introduction.length > 0
+      ? composed.introduction
+          .filter((p: any) => typeof p === 'string' && p.trim())
+          .map((p: string) => proofOutsideQuotes(p.trim()).slice(0, 2000))
+          .slice(0, 4)
+      : undefined,
     galleryChapters: finalChaptersWithQuotes.length > 0 ? finalChaptersWithQuotes : undefined,
     materialsLedger: composed.materialsLedger?.items?.length
       ? {
