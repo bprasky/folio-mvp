@@ -174,7 +174,7 @@ export default function MagazineMosaicGrid({ items }: Props) {
               <div className="relative z-20 pointer-events-none flex h-full items-end p-3">
                 <div className="text-white w-full">
                   <div className={clsx(
-                    "folio-h3 font-semibold leading-tight line-clamp-2",
+                    "folio-h3 font-semibold leading-tight line-clamp-2 !text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.4)]",
                     size === "L" ? "text-xl" : size === "M" ? "text-lg" : "text-sm"
                   )}>
                     {item.title}
@@ -182,7 +182,7 @@ export default function MagazineMosaicGrid({ items }: Props) {
                   {/* Meta row */}
                   <div className="mt-1.5 flex items-center gap-2 text-white/85 text-[11px]">
                     {item.isCollaboration && item.vendorName && item.designerName && (
-                      <span className="folio-meta inline-flex items-center gap-1 rounded bg-black/45 px-1.5 py-0.5 backdrop-blur-sm">
+                      <span className="folio-meta inline-flex items-center gap-1 rounded bg-black/45 px-1.5 py-0.5 backdrop-blur-sm capitalize">
                         {item.vendorName} × {item.designerName}
                       </span>
                     )}

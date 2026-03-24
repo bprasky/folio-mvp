@@ -124,6 +124,8 @@ export default function SignupPage() {
           onChange={handleChange}
           placeholder="John Doe"
           autoComplete="name"
+          autoCapitalize="words"
+          autoCorrect="off"
         />
       </div>
 

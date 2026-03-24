@@ -72,7 +72,7 @@ export default function EditorialProductCutoutsRail({ products }: Props) {
                   {decodeHtmlEntities(product.name)}
                 </p>
                 {product.vendorName && (
-                  <p className="text-white/80 text-[11px] mt-0.5">
+                  <p className="text-white/80 text-[11px] mt-0.5 capitalize">
                     {product.vendorName}
                   </p>
                 )}

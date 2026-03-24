@@ -106,7 +106,7 @@ export default function MagazineCoverHero({ hero, edition }: Props) {
                   textShadow: '0 1px 8px rgba(0,0,0,0.4)'
                 }}
               >
-                {hero.designerName && <span>{hero.designerName}</span>}
+                {hero.designerName && <span className="capitalize">{hero.designerName}</span>}
                 {hero.designerName && hero.locationLabel && <span className="mx-2 opacity-60">·</span>}
                 {hero.locationLabel && <span>{hero.locationLabel}</span>}
               </p>
