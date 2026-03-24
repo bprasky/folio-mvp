@@ -1301,6 +1301,9 @@ model ProjectPost {
   publishedContributions Contribution[] @relation("PostContributions")
   sourceArticleTopic     ArticleTopic?  @relation("TopicPublishedPost")
 
+  // Prompted Content: Story Threads
+  storyThreads           StoryThread[]
+
   // Section editing (Phase C)
   sectionOverrides   Json?    @map("section_overrides")
   sectionHistory     Json?    @map("section_history")
@@ -5130,6 +5133,15 @@ enum PromptedQuestionType {
   FOLLOW_UP
 }
 
+enum StoryThreadStatus {
+  FORMING
+  MATURING
+  READY
+  PROPOSED
+  PUBLISHED
+  STALE
+}
+
 enum PromptedQuestionStatus {
   GENERATED
   DELIVERED
@@ -5184,7 +5196,9 @@ model PromptedAnswer {
   bioEnriched     Boolean  @default(false)
 
   // Article contribution
-  consentToQuote  Boolean  @default(true)
+  consentToQuote    Boolean  @default(true)
+  storyThreadIds    String[]
+  pullQuoteExcerpt  String?  @db.Text
 
   // Follow-ups
   followUpQuestions PromptedQuestion[] @relation("FollowUpQuestions")
@@ -5199,6 +5213,38 @@ model PromptedAnswer {
   @@index([userId])
   @@index([questionId])
   @@map("prompted_answers")
+}
+
+model StoryThread {
+  id                   String            @id @default(cuid())
+  status               StoryThreadStatus @default(FORMING)
+
+  themeDescription     String   @db.Text
+  themeEmbedding       Unsupported("vector(1536)")?
+  proposedAngle        String?  @db.Text
+  proposedTitle        String?
+
+  contributingAnswers  Json     // [{ answerId, userId, relevanceScore, pullQuoteCandidate }]
+  supportingContext    Json     @default("[]")
+
+  narrativeTension     Float    @default(0)
+  perspectiveDiversity Float    @default(0)
+  emotionalWeight      Float    @default(0)
+  specificityScore     Float    @default(0)
+  compositeScore       Float    @default(0)
+
+  readyThresholds      Json     @default("{\"minContributors\": 3, \"minTensionScore\": 0.4, \"minSpecificityScore\": 0.5}")
+
+  articlePostId        String?
+  articlePost          ProjectPost? @relation(fields: [articlePostId], references: [id])
+
+  createdAt            DateTime @default(now())
+  lastActivityAt       DateTime @default(now())
+  staleAfter           DateTime
+
+  @@index([status])
+  @@index([compositeScore])
+  @@map("story_threads")
 }
 
 model EventProductScan {
