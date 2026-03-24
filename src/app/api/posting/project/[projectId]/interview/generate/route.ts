@@ -2283,6 +2283,7 @@ export async function POST(
     const allGeneratedText = [
       validatedBlocks.lead?.kicker || '',
       validatedBlocks.lead?.deck || '',
+      ...(validatedBlocks.introduction || []),
       ...(validatedBlocks.galleryChapters || []).flatMap((ch: any) => ch.body || []),
       ...(validatedBlocks.pullQuotes || []).map((q: any) => typeof q === 'string' ? q : q?.text || ''),
     ].join(' ');
@@ -2307,9 +2308,10 @@ export async function POST(
     }
 
     // Generation metadata for monitoring
-    const allBodyText = (validatedBlocks.galleryChapters || [])
-      .flatMap((ch: any) => ch.body || [])
-      .join(' ');
+    const allBodyText = [
+      ...(validatedBlocks.introduction || []),
+      ...(validatedBlocks.galleryChapters || []).flatMap((ch: any) => ch.body || []),
+    ].join(' ');
     const wordCount = allBodyText.split(/\s+/).filter(Boolean).length +
       (validatedBlocks.lead?.kicker?.split(/\s+/).length || 0) +
       (validatedBlocks.lead?.deck?.split(/\s+/).length || 0);
