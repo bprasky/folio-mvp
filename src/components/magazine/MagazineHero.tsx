@@ -61,7 +61,7 @@ export default function MagazineHero({ hero, edition }: Props) {
             <div className="relative">
               {/* Serif italic headline - editorial magazine style */}
               <h2
-                className="folio-h1 text-2xl md:text-4xl lg:text-5xl xl:text-6xl text-white leading-[1.15] mb-2 md:mb-3 drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]"
+                className="folio-h1 text-2xl md:text-4xl lg:text-5xl xl:text-6xl !text-white leading-[1.15] mb-2 md:mb-3 drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]"
                 style={{
                   fontFamily: 'var(--brand-font), ui-serif, Georgia, "Times New Roman", serif',
                   fontStyle: 'italic',
@@ -74,7 +74,7 @@ export default function MagazineHero({ hero, edition }: Props) {
               {/* Designer attribution */}
               {(hero.designerName || hero.locationLabel) && (
                 <p className="folio-body text-sm md:text-base lg:text-lg text-white/90 font-medium drop-shadow-[0_1px_4px_rgba(0,0,0,0.4)] tracking-wide">
-                  {hero.designerName && <span>{hero.designerName}</span>}
+                  {hero.designerName && <span className="capitalize">{hero.designerName}</span>}
                   {hero.designerName && hero.locationLabel && <span className="mx-2">·</span>}
                   {hero.locationLabel && <span>{hero.locationLabel}</span>}
                 </p>

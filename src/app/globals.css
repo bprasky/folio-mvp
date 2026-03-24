@@ -314,7 +314,7 @@
     font-family: var(--font-headline);
     font-weight: 500;
     font-size: 48px;
-    color: var(--text-primary);
+    color: var(--text-primary); /* Can be overridden locally with !text-white for image overlays */
     line-height: 1.1;
   }
 
@@ -322,7 +322,7 @@
     font-family: var(--font-headline);
     font-weight: 500;
     font-size: 36px;
-    color: var(--text-primary);
+    color: var(--text-primary); /* Can be overridden locally with !text-white for image overlays */
     line-height: 1.15;
   }
 
@@ -330,7 +330,7 @@
     font-family: var(--font-headline);
     font-weight: 500;
     font-size: 28px;
-    color: var(--text-primary);
+    color: var(--text-primary); /* Can be overridden locally with !text-white for image overlays */
     line-height: 1.2;
   }
 
