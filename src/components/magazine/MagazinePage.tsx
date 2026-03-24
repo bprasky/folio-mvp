@@ -15,6 +15,7 @@ import MagazineCoverHero from "./MagazineCoverHero";
 import EditorialProductCutoutsRail from "./EditorialProductCutoutsRail";
 import MagazineMosaicGrid from "./MagazineMosaicGrid";
 import { GatheringVoicesSection } from "@/components/contributions";
+import { PromptedQuestionsSection } from "@/components/prompted-content/PromptedQuestionsSection";
 import { auth } from "@/lib/auth";
 
 interface Props {
@@ -43,6 +44,11 @@ export default async function MagazinePage({ editionSlug }: Props) {
       {/* Gathering Voices — 48px section gap */}
       <div className="w-full px-3 pt-12">
         <GatheringVoicesSection />
+      </div>
+
+      {/* Prompted Questions — 48px section gap */}
+      <div className="w-full px-3 pt-12">
+        <PromptedQuestionsSection />
       </div>
 
       {/* Edition selector — 48px section gap */}
