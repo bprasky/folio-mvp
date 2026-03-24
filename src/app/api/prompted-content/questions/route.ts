@@ -7,13 +7,27 @@ import { prisma } from '@/lib/prisma';
 import {
   shouldGenerateQuestions,
   generateBioReflectiveQuestions,
+  generateProjectReflectiveQuestions,
 } from '@/lib/prompted-content/generateQuestions';
+
+const QUESTION_SELECT = {
+  id: true,
+  questionText: true,
+  questionType: true,
+  deliveryContext: true,
+  priority: true,
+  status: true,
+  createdAt: true,
+  provenance: true,
+} as const;
 
 /**
  * GET /api/prompted-content/questions
  *
  * Returns pending prompted questions for the authenticated user.
- * Triggers lazy generation if the user has a completed bio but no pending questions.
+ * Triggers lazy generation if no pending questions exist:
+ *   1. Try bio-reflective (requires completed bio)
+ *   2. Try project-reflective (requires published projects)
  */
 export async function GET(req: NextRequest) {
   try {
@@ -32,32 +46,34 @@ export async function GET(req: NextRequest) {
       },
       orderBy: { priority: 'desc' },
       take: 3,
-      select: {
-        id: true,
-        questionText: true,
-        questionType: true,
-        deliveryContext: true,
-        priority: true,
-        status: true,
-        createdAt: true,
-        provenance: true,
-      },
+      select: QUESTION_SELECT,
     });
 
     // If no pending questions, try to generate some
     if (questions.length === 0) {
       const canGenerate = await shouldGenerateQuestions(userId);
       if (canGenerate) {
-        // Check if user has a completed bio
+        let generated = false;
+
+        // Strategy 1: Bio-reflective questions (if bio exists)
         const bio = await prisma.designerBio.findUnique({
           where: { userId },
           select: { status: true, folioBio: true },
         });
 
         if (bio?.folioBio && bio.status !== 'empty') {
-          await generateBioReflectiveQuestions(userId);
+          const created = await generateBioReflectiveQuestions(userId);
+          if (created.length > 0) generated = true;
+        }
 
-          // Re-fetch after generation
+        // Strategy 2: Project-reflective questions (if published projects exist)
+        if (!generated) {
+          const created = await generateProjectReflectiveQuestions(userId);
+          if (created.length > 0) generated = true;
+        }
+
+        // Re-fetch after generation
+        if (generated) {
           questions = await prisma.promptedQuestion.findMany({
             where: {
               targetUserId: userId,
@@ -65,16 +81,7 @@ export async function GET(req: NextRequest) {
             },
             orderBy: { priority: 'desc' },
             take: 3,
-            select: {
-              id: true,
-              questionText: true,
-              questionType: true,
-              deliveryContext: true,
-              priority: true,
-              status: true,
-              createdAt: true,
-              provenance: true,
-            },
+            select: QUESTION_SELECT,
           });
         }
       }
