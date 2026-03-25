@@ -136,18 +136,16 @@ function placeBreathers(
   const breathers: BreatherData[] = [];
   if (roomTiles.length < 3) return breathers;
 
-  // Extract top-level pull quotes for breathers
-  const topQuotes: Array<{ text: string; context?: string; sourceSection?: string }> =
-    Array.isArray(post?.expandedBlocks?.pullQuotes)
-      ? post.expandedBlocks.pullQuotes
-          .map((q: any) => {
-            if (typeof q === "string") return { text: q };
-            return { text: q.text, context: q.context, sourceSection: q.sourceSection };
-          })
-          .filter((q: any) => q.text)
-      : [];
+  // Collect all quotes already used by room tiles so we never duplicate
+  const usedQuotes = new Set<string>();
+  for (const tile of roomTiles) {
+    if (tile.pullQuote) usedQuotes.add(tile.pullQuote);
+  }
 
-  // Also use supplemental quotes from other contributors
+  // Candidate pool: supplemental quotes from non-designer contributors (architect, builder, etc.)
+  // These are the best breathers — they shift perspective away from the room-level designer voice
+  const candidates: Array<{ text: string; attribution: string }> = [];
+
   const supplementalBreathers =
     post?.supplementalQuotes
       ?.filter((sq: any) => sq.pinned && sq.answer && sq.contributorRole !== "DESIGNER")
@@ -158,37 +156,52 @@ function placeBreathers(
           : "Contributor",
       })) ?? [];
 
+  for (const sb of supplementalBreathers) {
+    if (!usedQuotes.has(sb.text)) {
+      candidates.push(sb);
+      usedQuotes.add(sb.text);
+    }
+  }
+
+  // Next: top-level pull quotes that are NOT room-specific (no sourceSection)
+  // These are project-level quotes that won't duplicate any room tile
+  const topQuotes: Array<{ text: string; context?: string; sourceSection?: string }> =
+    Array.isArray(post?.expandedBlocks?.pullQuotes)
+      ? post.expandedBlocks.pullQuotes
+          .map((q: any) => {
+            if (typeof q === "string") return { text: q };
+            return { text: q.text, context: q.context, sourceSection: q.sourceSection };
+          })
+          .filter((q: any) => q.text)
+      : [];
+
+  for (const tq of topQuotes) {
+    // Skip if this quote is already used by a room tile
+    if (usedQuotes.has(tq.text)) continue;
+    // Prefer non-room-specific quotes; room-specific ones are last resort
+    candidates.push({
+      text: tq.text,
+      attribution: tq.sourceSection
+        ? formatRoomName(tq.sourceSection)
+        : post?.project?.designer?.name ?? "Designer",
+    });
+    usedQuotes.add(tq.text);
+  }
+
   // Insert breathers after every 2-3 rooms
   const intervals = roomTiles.length <= 4 ? [2] : [2, 5];
-  let quoteIdx = 0;
 
-  for (const interval of intervals) {
+  for (let i = 0; i < intervals.length; i++) {
+    const interval = intervals[i];
     if (interval >= roomTiles.length) break;
+    if (i >= candidates.length) break; // No unused quotes left
+
     const afterRoom = roomTiles[interval - 1];
-
-    let quote: string;
-    let attribution: string;
-
-    if (quoteIdx < supplementalBreathers.length) {
-      quote = supplementalBreathers[quoteIdx].text;
-      attribution = supplementalBreathers[quoteIdx].attribution;
-      quoteIdx++;
-    } else if (quoteIdx - supplementalBreathers.length < topQuotes.length) {
-      const tq = topQuotes[quoteIdx - supplementalBreathers.length];
-      quote = tq.text;
-      attribution = tq.sourceSection
-        ? formatRoomName(tq.sourceSection)
-        : post?.project?.designer?.name ?? "Designer";
-      quoteIdx++;
-    } else {
-      break; // No more quotes available
-    }
-
     breathers.push({
       id: `breather-${interval}`,
       insertAfterRoomSlug: afterRoom.roomSlug,
-      quote,
-      attribution,
+      quote: candidates[i].text,
+      attribution: candidates[i].attribution,
     });
   }
 
