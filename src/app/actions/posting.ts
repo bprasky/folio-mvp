@@ -63,7 +63,7 @@ export async function logPostSave(postId: string, postSlug: string, projectId: s
 export async function logStorySignal(
   projectId: string,
   postSlug: string,
-  verb: "ROOM_EXPAND" | "ROOM_DWELL" | "PRODUCT_TAP" | "ROOM_NAVIGATE" | "INBOUND_REFERRAL" | "TAGS_VIEWED",
+  verb: "ROOM_EXPAND" | "ROOM_DWELL" | "PRODUCT_TAP" | "ROOM_NAVIGATE" | "INBOUND_REFERRAL" | "TAGS_VIEWED" | "ROOM_IMPRESSION" | "ROOM_PEEK" | "PRODUCT_PEEK",
   meta?: Record<string, unknown>
 ) {
   try {
