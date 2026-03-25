@@ -21,7 +21,7 @@ export function StoryHero({ imageUrl, alt }: StoryHeroProps) {
         width={1920}
         height={1080}
         priority
-        className="w-full h-auto"
+        className="max-h-[75vh] w-auto mx-auto"
         sizes="100vw"
       />
     </figure>
