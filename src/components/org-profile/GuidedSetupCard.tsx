@@ -91,15 +91,7 @@ export default function GuidedSetupCard({
 
   return (
     <div
-      className="rounded-[20px] p-8 md:p-10"
-      style={{
-        background: 'rgba(255, 255, 255, 0.85)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
-        border: '1px solid rgba(184, 132, 92, 0.15)',
-        boxShadow:
-          '0 4px 24px rgba(44, 40, 37, 0.04), 0 1px 4px rgba(44, 40, 37, 0.02)',
-      }}
+      className="glass-overlay rounded-[20px] p-8 md:p-10"
     >
       {/* Headline */}
       <h2

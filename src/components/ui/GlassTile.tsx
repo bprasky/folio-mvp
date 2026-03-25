@@ -12,9 +12,7 @@ export default function GlassTile({ children, className, as = "section", ...rest
   return (
     <Comp
       className={cn(
-        // Glassmorphism
-        "rounded-2xl border border-white/30 bg-white/60 backdrop-blur-md shadow-lg",
-        // Dark mode support (if enabled)
+        "glass-surface rounded-2xl",
         "dark:bg-[var(--bg-base)] dark:border-white/10",
         className
       )}

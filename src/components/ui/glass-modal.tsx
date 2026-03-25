@@ -28,10 +28,7 @@ const GlassModal = forwardRef<HTMLDivElement, GlassModalProps>(
           className={cn(
             "w-full h-auto max-h-[90vh]",
             sizes[size],
-            "bg-white/90 backdrop-blur-xl",
-            "border border-white/30",
-            "shadow-2xl",
-            "rounded-[20px]",
+            "glass-overlay",
             "overflow-hidden",
             "flex flex-col",
             "m-0",
@@ -49,7 +46,7 @@ GlassModal.displayName = "GlassModal";
 
 // Sub-components for modal structure
 const GlassModalHeader = ({ children, className }: { children: React.ReactNode; className?: string }) => (
-  <div className={cn("px-8 py-4 border-b border-[var(--ridge-outer)]/50 bg-white/50", className)}>
+  <div className={cn("px-8 py-4 border-b border-[var(--glass-border)] bg-[var(--glass-bg-muted)]", className)}>
     {children}
   </div>
 );
@@ -61,7 +58,7 @@ const GlassModalBody = ({ children, className }: { children: React.ReactNode; cl
 );
 
 const GlassModalFooter = ({ children, className }: { children: React.ReactNode; className?: string }) => (
-  <div className={cn("px-8 py-4 border-t border-[var(--ridge-outer)]/50 bg-white/50", className)}>
+  <div className={cn("px-8 py-4 border-t border-[var(--glass-border)] bg-[var(--glass-bg-muted)]", className)}>
     {children}
   </div>
 );

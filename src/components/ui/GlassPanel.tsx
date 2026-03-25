@@ -12,19 +12,17 @@ interface GlassPanelProps {
 }
 
 /**
- * GlassPanel - Frosted glass container using namespaced folio-glass token
- * Light, airy 10% white glass with subtle highlight
- * Uses .folio-glass to avoid conflicts with legacy .glass/.card-glass
+ * GlassPanel - Frosted glass container using unified glass-tokens
+ * Warm ivory glass with subtle inner highlight
  */
-export function GlassPanel({ 
-  children, 
-  className, 
+export function GlassPanel({
+  children,
+  className,
   header,
   as: Component = "div",
   variant = 'default'
 }: GlassPanelProps) {
-  // All variants use namespaced folio-glass (wins cascade with !important)
-  const glassClass = 'folio-glass folio-glass--highlight';
+  const glassClass = 'glass-surface';
   
   return (
     <Component
@@ -34,7 +32,7 @@ export function GlassPanel({
       )}
     >
       {header && (
-        <div className="px-5 md:px-6 pt-5 pb-3 border-b border-white/20 dark:border-white/5">
+        <div className="px-5 md:px-6 pt-5 pb-3 border-b border-[var(--glass-border)] dark:border-white/5">
           {header}
         </div>
       )}

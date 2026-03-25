@@ -19,7 +19,7 @@ export default function AtelierServicesModal({ isOpen, onClose }: AtelierService
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 overflow-y-auto"
+        className="fixed inset-0 glass-backdrop z-50 overflow-y-auto"
         onClick={onClose}
       >
         <motion.div

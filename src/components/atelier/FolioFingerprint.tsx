@@ -28,7 +28,7 @@ export default function FolioFingerprint({ descriptors }: FolioFingerprintProps)
       transition={{ duration: 0.6 }}
       className="mb-12"
     >
-      <div className="bg-white/70 backdrop-blur-md border border-folio-stone-100 rounded-2xl p-8 shadow-folio1">
+      <div className="glass-surface rounded-2xl p-8 shadow-folio1">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 bg-folio-accent-200/30 rounded-xl flex items-center justify-center text-folio-accent-700">
             <FaFingerprint className="w-5 h-5" />

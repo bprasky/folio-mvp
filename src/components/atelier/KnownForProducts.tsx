@@ -44,7 +44,7 @@ export default function KnownForProducts({ products }: KnownForProductsProps) {
     return (
       <div className="mb-12">
         <h2 className="text-2xl font-serif text-folio-ink mb-6">Known For Products</h2>
-        <div className="bg-white/70 backdrop-blur-md border border-folio-stone-100 rounded-xl p-8 text-center">
+        <div className="glass-surface rounded-xl p-8 text-center">
           <p className="text-folio-stone-400 font-sans">No products tagged yet. Start tagging products in your projects to build your product portfolio.</p>
         </div>
       </div>
@@ -96,7 +96,7 @@ export default function KnownForProducts({ products }: KnownForProductsProps) {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.3 }}
-                className="bg-white/70 backdrop-blur-md border border-folio-stone-100 rounded-xl overflow-hidden hover:shadow-folio1 transition-all duration-300 group"
+                className="glass-surface rounded-xl overflow-hidden hover:shadow-folio1 transition-all duration-300 group"
               >
                 <div className="relative aspect-square bg-folio-stone-100">
                   {product.imageUrl || product.thumbnail ? (

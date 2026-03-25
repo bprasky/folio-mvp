@@ -18,9 +18,9 @@ interface GlassSurfaceProps {
 }
 
 export function GlassSurface({ children, className = '', variant = 'overlay' }: GlassSurfaceProps) {
-  const baseClasses = variant === 'overlay' 
-    ? 'bg-white/60 backdrop-blur-md border border-white/40 shadow-sm' 
-    : 'bg-white/80 backdrop-blur-md border border-white/40 shadow-sm';
+  const baseClasses = variant === 'overlay'
+    ? 'glass-surface-sm border border-white/40 shadow-sm'
+    : 'glass-surface border border-white/40 shadow-sm';
   
   return (
     <div className={`${baseClasses} ${className}`}>

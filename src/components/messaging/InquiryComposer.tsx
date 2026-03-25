@@ -54,12 +54,7 @@ export default function InquiryComposer({
 
   return (
     <div
-      className="rounded-2xl border p-6 space-y-4"
-      style={{
-        borderColor: '#E8E4DF',
-        backgroundColor: 'rgba(255,255,255,0.6)',
-        backdropFilter: 'blur(8px)',
-      }}
+      className="glass-surface-sm rounded-2xl p-6 space-y-4"
     >
       <h3
         className="text-sm font-medium"
