@@ -85,7 +85,7 @@ export function StoryRenderer({ post }: StoryRendererProps) {
       className="min-h-screen"
       style={{ background: "#FFFCF8" }}
     >
-      <div className="mx-auto max-w-[1200px] px-3 md:px-6 py-6 md:py-10">
+      <div className="mx-auto max-w-[1200px] py-6 md:py-10">
         {/* Hero: Full-width, clean, above the fold */}
         <StoryHero imageUrl={story.heroImageUrl} alt={story.title} />
 

@@ -1,29 +1,43 @@
 "use client";
 
-// PhotoTile — Pure, unobstructed room photo. Rule 1: Photos Are Sacred.
-// Parallax-enabled: scroll-linked translateY for depth effect.
-// No children, no overlays, no badges, no text.
+// PhotoTile — Room photo with parallax and product tag dots.
+// Rule 1 updated: tag dots are the ONE exception — they mark what's
+// physically in the image. Glass overlays, text, gradients, badges
+// are still never on photos.
+//
+// Desktop: tag dots fade in on hover (300ms).
+// Mobile: tag dots appear on tap-and-hold (300ms threshold).
 
 import Image from "next/image";
-import { useRef } from "react";
+import { useRef, useState, useCallback } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
+import { ImageTagDots } from "@/components/project/ImageTagDots";
 
 interface PhotoTileProps {
   imageUrl: string;
   alt: string;
   onClick: () => void;
+  onProductClick?: (product: any) => void;
+  image?: any; // Full image object with tags for ImageTagDots
   fullWidth?: boolean;
   reducedMotion?: boolean;
+  isExpanded?: boolean;
 }
 
 export function PhotoTile({
   imageUrl,
   alt,
   onClick,
+  onProductClick,
+  image,
   fullWidth = false,
   reducedMotion = false,
+  isExpanded = false,
 }: PhotoTileProps) {
   const ref = useRef<HTMLDivElement>(null);
+  const [showDots, setShowDots] = useState(false);
+  const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const { scrollYProgress } = useScroll({
     target: ref,
     offset: ["start end", "end start"],
@@ -36,12 +50,49 @@ export function PhotoTile({
     reducedMotion ? [0, 0] : [-travel, travel]
   );
 
+  const hasTags = image?.tags?.length > 0;
+
+  // Desktop: hover to show dots
+  const handleMouseEnter = useCallback(() => {
+    if (hasTags) setShowDots(true);
+  }, [hasTags]);
+  const handleMouseLeave = useCallback(() => {
+    setShowDots(false);
+  }, []);
+
+  // Mobile: tap-and-hold to show dots
+  const handleTouchStart = useCallback(() => {
+    if (!hasTags) return;
+    holdTimerRef.current = setTimeout(() => {
+      setShowDots(true);
+    }, 300);
+  }, [hasTags]);
+  const handleTouchEnd = useCallback(() => {
+    if (holdTimerRef.current) {
+      clearTimeout(holdTimerRef.current);
+      holdTimerRef.current = null;
+    }
+    // Dismiss dots after a short delay (unless user taps a dot)
+    if (showDots) {
+      setTimeout(() => setShowDots(false), 2000);
+    }
+  }, [showDots]);
+
   return (
     <div
       ref={ref}
       className="relative overflow-hidden rounded-[12px] cursor-pointer group"
-      style={{ minHeight: fullWidth ? 380 : 300 }}
+      style={{
+        minHeight: fullWidth ? 380 : 300,
+        // Grow slightly when expanded (change 3 partial: scale on expand)
+        transition: "transform 500ms cubic-bezier(0.4, 0, 0.2, 1)",
+        transform: isExpanded ? "scale(1.03)" : "scale(1)",
+      }}
       onClick={onClick}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
       role="button"
       tabIndex={0}
       onKeyDown={(e) => e.key === "Enter" && onClick()}
@@ -63,6 +114,24 @@ export function PhotoTile({
           sizes={fullWidth ? "100vw" : "(max-width: 768px) 100vw, 50vw"}
         />
       </motion.div>
+
+      {/* Product tag dots — fade in on hover (desktop) or tap-hold (mobile) */}
+      {hasTags && (
+        <div
+          className="absolute inset-0 z-10 pointer-events-none"
+          style={{
+            opacity: showDots ? 1 : 0,
+            transition: "opacity 300ms ease",
+          }}
+        >
+          <div
+            className="pointer-events-auto absolute inset-0"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <ImageTagDots image={image} />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

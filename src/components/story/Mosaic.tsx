@@ -70,6 +70,7 @@ export function Mosaic({
               room={room}
               isExpanded={isExpanded}
               onToggle={() => handleToggle(room.roomSlug)}
+              onProductClick={onProductClick}
               reducedMotion={reducedMotion}
             />
 
