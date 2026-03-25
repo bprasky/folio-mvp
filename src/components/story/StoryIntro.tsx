@@ -1,23 +1,27 @@
 "use client";
 
-// StoryIntro — Two-column introduction panel below the hero.
-// Left: location, title, credits. Right: pull quote, intro text.
-// Mobile: stacks to single column.
+// StoryIntro — Introduction panel for the story.
+// Default: Two-column grid below the hero (landscape).
+// Compact: Single-column stack beside the hero (portrait).
 
 import type { StoryData } from "@/lib/story/buildRoomTiles";
 
 interface StoryIntroProps {
   story: StoryData;
+  compact?: boolean;
 }
 
-export function StoryIntro({ story }: StoryIntroProps) {
+export function StoryIntro({ story, compact = false }: StoryIntroProps) {
   return (
     <section
-      className="mt-[10px] pb-6 border-b"
-      style={{ borderColor: "rgba(87, 75, 67, 0.06)" }}
+      className={compact ? "pb-4" : "mt-[10px] pb-6 border-b"}
+      style={compact ? undefined : { borderColor: "rgba(87, 75, 67, 0.06)" }}
     >
-      <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] gap-6 md:gap-10">
-        {/* Left column: Title, location, credits */}
+      <div className={compact
+        ? "flex flex-col gap-4"
+        : "grid grid-cols-1 md:grid-cols-[280px_1fr] gap-6 md:gap-10"
+      }>
+        {/* Title block: location, title, designer */}
         <div className="flex flex-col gap-3">
           {story.location && (
             <span
@@ -32,7 +36,10 @@ export function StoryIntro({ story }: StoryIntroProps) {
           )}
 
           <h1
-            className="text-[32px] md:text-[44px] leading-[1.1] italic"
+            className={compact
+              ? "text-[28px] md:text-[36px] leading-[1.1] italic"
+              : "text-[32px] md:text-[44px] leading-[1.1] italic"
+            }
             style={{
               fontFamily: "var(--font-headline, 'Cormorant Garamond', serif)",
               fontWeight: 400,
@@ -65,11 +72,14 @@ export function StoryIntro({ story }: StoryIntroProps) {
           </div>
         </div>
 
-        {/* Right column: Pull quote + intro text */}
+        {/* Quote + intro text */}
         <div className="flex flex-col gap-4">
           {story.projectPullQuote && (
             <blockquote
-              className="text-[18px] md:text-[20px] italic leading-[1.5]"
+              className={compact
+                ? "text-[16px] md:text-[18px] italic leading-[1.5]"
+                : "text-[18px] md:text-[20px] italic leading-[1.5]"
+              }
               style={{
                 fontFamily: "var(--font-headline, 'Cormorant Garamond', serif)",
                 fontWeight: 400,
@@ -91,7 +101,10 @@ export function StoryIntro({ story }: StoryIntroProps) {
 
           {story.introText && (
             <p
-              className="text-[14px] leading-[1.65] whitespace-pre-line"
+              className={compact
+                ? "text-[13px] leading-[1.65] whitespace-pre-line line-clamp-6"
+                : "text-[14px] leading-[1.65] whitespace-pre-line"
+              }
               style={{
                 fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
                 color: "rgba(87, 75, 67, 0.85)",

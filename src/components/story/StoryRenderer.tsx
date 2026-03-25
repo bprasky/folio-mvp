@@ -34,6 +34,17 @@ export function StoryRenderer({ post }: StoryRendererProps) {
   // Build story data from post
   const story = useMemo(() => buildStoryData(post), [post]);
 
+  // Detect hero image orientation (portrait vs landscape)
+  const [heroOrientation, setHeroOrientation] = useState<"landscape" | "portrait" | null>(null);
+  useEffect(() => {
+    if (!story?.heroImageUrl) return;
+    const img = new window.Image();
+    img.onload = () => {
+      setHeroOrientation(img.naturalWidth >= img.naturalHeight ? "landscape" : "portrait");
+    };
+    img.src = story.heroImageUrl;
+  }, [story?.heroImageUrl]);
+
   // Deep link params
   const autoExpandRoom = searchParams?.get("room") ?? null;
   const autoProductId = searchParams?.get("product") ?? null;
@@ -86,11 +97,33 @@ export function StoryRenderer({ post }: StoryRendererProps) {
       style={{ background: "#FFFCF8" }}
     >
       <div className="w-full py-6 md:py-10">
-        {/* Hero: Full-width, clean, above the fold */}
-        <StoryHero imageUrl={story.heroImageUrl} alt={story.title} />
-
-        {/* Introduction: below hero, visible above the fold */}
-        <StoryIntro story={story} />
+        {/* Hero + Intro: orientation-aware layout */}
+        {heroOrientation === null ? (
+          /* Skeleton while detecting orientation */
+          <div
+            className="w-full aspect-video rounded-[14px] animate-pulse"
+            style={{ background: "rgba(87, 75, 67, 0.06)" }}
+          />
+        ) : heroOrientation === "portrait" ? (
+          /* Portrait: photo left, intro right (stacks on mobile) */
+          <>
+            <div className="flex flex-col md:flex-row gap-6 md:gap-10">
+              <div className="w-full md:w-[48%]">
+                <StoryHero imageUrl={story.heroImageUrl} alt={story.title} orientation="portrait" />
+              </div>
+              <div className="w-full md:w-[52%] flex items-center">
+                <StoryIntro story={story} compact />
+              </div>
+            </div>
+            <div className="border-b mt-6" style={{ borderColor: "rgba(87, 75, 67, 0.06)" }} />
+          </>
+        ) : (
+          /* Landscape: full-width hero, intro below */
+          <>
+            <StoryHero imageUrl={story.heroImageUrl} alt={story.title} orientation="landscape" />
+            <StoryIntro story={story} />
+          </>
+        )}
 
         {/* Mosaic: Room grid with expand-to-detail */}
         <div className="mt-10">
