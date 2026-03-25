@@ -1,0 +1,133 @@
+/* -----------------------------------------------------------------------
+   Story Format — Glass tokens
+   Glassmorphism surfaces for the Room Card progressive-disclosure layout.
+   Warm ivory palette, never cold white. Photography is the real surface.
+   ----------------------------------------------------------------------- */
+
+/* Room Card sidebar (desktop split layout) */
+.story-glass-sidebar {
+  background: rgba(255, 252, 248, 0.55);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-left: 1px solid rgba(255, 252, 248, 0.3);
+  border-radius: 0 12px 12px 0;
+}
+
+/* Glass card surface (general Room Card / overlays) */
+.story-glass-card {
+  background: rgba(255, 252, 248, 0.65);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 252, 248, 0.35);
+  border-radius: 12px;
+  box-shadow:
+    0 4px 24px rgba(87, 75, 67, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+/* Dark glass overlay for pull quotes on hero / room photos */
+.story-glass-quote {
+  background: rgba(42, 36, 32, 0.45);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 252, 248, 0.12);
+  border-radius: 12px;
+}
+
+/* Glass pill badge (product count, credits bar) */
+.story-glass-badge {
+  background: rgba(255, 252, 248, 0.55);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 252, 248, 0.3);
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-family: 'Instrument Sans', sans-serif;
+  font-size: 13px;
+  color: rgba(87, 75, 67, 0.85);
+}
+
+/* Glass bottom sheet (Product Sheet on mobile) */
+.story-glass-sheet {
+  background: rgba(255, 252, 248, 0.85);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-top: 1px solid rgba(255, 252, 248, 0.4);
+  border-radius: 20px 20px 0 0;
+  box-shadow: 0 -8px 32px rgba(87, 75, 67, 0.08);
+}
+
+/* Glass side panel (Product Sheet on desktop) */
+.story-glass-panel {
+  background: rgba(255, 252, 248, 0.88);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-left: 1px solid rgba(255, 252, 248, 0.4);
+  box-shadow: -8px 0 32px rgba(87, 75, 67, 0.06);
+}
+
+/* Glass room thumbnail pill (hero strip on desktop) */
+.story-glass-thumb {
+  background: rgba(255, 252, 248, 0.45);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 252, 248, 0.25);
+  border-radius: 8px;
+  padding: 4px 12px;
+  cursor: pointer;
+  transition: all 200ms ease;
+}
+.story-glass-thumb:hover,
+.story-glass-thumb.active {
+  background: rgba(255, 252, 248, 0.65);
+  border-color: rgba(255, 252, 248, 0.45);
+  transform: scale(1.05);
+}
+
+/* Product tag dots on expanded room photos */
+.story-tag-dot {
+  width: 28px;
+  height: 28px;
+  background: rgba(255, 252, 248, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1.5px solid rgba(255, 252, 248, 0.5);
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(87, 75, 67, 0.12);
+  animation: story-tag-pulse 2.5s ease-in-out infinite;
+}
+
+@keyframes story-tag-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.85; }
+  50% { transform: scale(1.08); opacity: 1; }
+}
+
+/* Scroll indicator bounce */
+@keyframes story-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(6px); }
+}
+.story-bounce {
+  animation: story-bounce 2s ease-in-out infinite;
+}
+
+/* Deep link highlight glow */
+@keyframes story-glow {
+  0% { box-shadow: 0 0 0 0 rgba(87, 75, 67, 0.2); }
+  50% { box-shadow: 0 0 0 8px rgba(87, 75, 67, 0.08); }
+  100% { box-shadow: 0 0 0 0 rgba(87, 75, 67, 0); }
+}
+.story-highlight {
+  animation: story-glow 1.5s ease-out 1;
+}
+
+/* Text color tokens for glass surfaces */
+.story-text-on-dark {
+  color: rgba(255, 252, 248, 0.95);
+}
+.story-text-on-light {
+  color: rgba(87, 75, 67, 0.85);
+}
+.story-text-secondary {
+  color: rgba(87, 75, 67, 0.6);
+}

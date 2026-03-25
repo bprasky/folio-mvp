@@ -56,6 +56,31 @@ export async function logPostSave(postId: string, postSlug: string, projectId: s
   }
 }
 
+// ---------------------------------------------------------------------------
+// Story Format signals
+// ---------------------------------------------------------------------------
+
+export async function logStorySignal(
+  projectId: string,
+  postSlug: string,
+  verb: "ROOM_EXPAND" | "ROOM_DWELL" | "PRODUCT_TAP" | "ROOM_NAVIGATE" | "INBOUND_REFERRAL" | "TAGS_VIEWED",
+  meta?: Record<string, unknown>
+) {
+  try {
+    await logPassiveEvent({
+      projectId,
+      type: "project_create", // reuse existing type bucket
+      payload: {
+        postSlug,
+        verb,
+        ...meta,
+      },
+    });
+  } catch (error) {
+    console.warn("[posting/analytics] Failed to log story signal:", verb, error);
+  }
+}
+
 export async function logVendorInquiry(
   postId: string,
   postSlug: string,
