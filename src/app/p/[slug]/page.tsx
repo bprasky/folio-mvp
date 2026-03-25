@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import { Metadata } from "next";
 import { getPostBySlug } from "@/lib/post/getPostBySlug";
-import { ImmersiveProjectPage } from "@/components/project/ImmersiveProjectPage";
+import { StoryRenderer } from "@/components/story/StoryRenderer";
 import { titleCase } from "@/lib/utils";
 
 export async function generateMetadata({
@@ -61,6 +62,10 @@ export default async function PostPage({
     notFound();
   }
 
-  return <ImmersiveProjectPage post={post} modules={post.modules} />;
+  return (
+    <Suspense>
+      <StoryRenderer post={post} />
+    </Suspense>
+  );
 }
 
