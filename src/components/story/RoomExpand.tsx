@@ -61,7 +61,7 @@ export function RoomExpand({
                 alt={room.roomLabel}
                 width={1920}
                 height={1080}
-                className="w-full h-auto"
+                className="max-h-[75vh] w-auto mx-auto"
                 sizes="100vw"
                 priority
               />
@@ -124,7 +124,7 @@ export function RoomExpand({
                         alt={room.roomLabel}
                         width={960}
                         height={640}
-                        className="w-full h-auto"
+                        className="max-h-[60vh] w-auto mx-auto"
                         sizes="(max-width: 768px) 100vw, 50vw"
                       />
                       {/* Tag dots always visible in expanded gallery */}
