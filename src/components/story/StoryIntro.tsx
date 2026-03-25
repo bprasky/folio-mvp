@@ -42,36 +42,19 @@ export function StoryIntro({ story }: StoryIntroProps) {
             {story.title}
           </h1>
 
-          {/* Credits */}
+          {/* Designer + room count */}
           <div className="flex flex-col gap-1 mt-2">
-            {story.credits.slice(0, 4).map((credit, i) => (
-              <div
-                key={i}
-                className="text-[11px]"
-                style={{
-                  fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
-                  color: "rgba(87, 75, 67, 0.55)",
-                }}
-              >
-                <span className="uppercase tracking-[1px]">{credit.role}</span>
-                {": "}
-                {credit.url ? (
-                  <a
-                    href={credit.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="hover:underline"
-                    style={{ color: "rgba(87, 75, 67, 0.7)" }}
-                  >
-                    {credit.name}
-                  </a>
-                ) : (
-                  <span style={{ color: "rgba(87, 75, 67, 0.7)" }}>{credit.name}</span>
-                )}
-              </div>
-            ))}
             <div
-              className="text-[11px] mt-1"
+              className="text-[11px]"
+              style={{
+                fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
+                color: "rgba(87, 75, 67, 0.55)",
+              }}
+            >
+              {story.designerName}
+            </div>
+            <div
+              className="text-[11px]"
               style={{
                 fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
                 color: "rgba(87, 75, 67, 0.3)",

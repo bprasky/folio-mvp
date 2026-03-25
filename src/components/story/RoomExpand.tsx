@@ -1,8 +1,8 @@
 "use client";
 
-// RoomExpand — Full-width animated expansion for a room.
-// Contains: editorial narrative, photo gallery (with product tag dots),
-// tagged products, and collapse control.
+// RoomExpand — Full-width page-filling expansion for a room.
+// When expanded, the room's hero photo fills the full width and gallery
+// images are large and immersive. Collapsing returns to the mosaic.
 // Rule 4: Expand Is the Only Way to Get Depth.
 
 import { useRef, useEffect } from "react";
@@ -32,7 +32,7 @@ export function RoomExpand({
   useEffect(() => {
     if (isOpen && contentRef.current) {
       const timer = setTimeout(() => {
-        contentRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        contentRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
       }, 300);
       return () => clearTimeout(timer);
     }
@@ -53,19 +53,54 @@ export function RoomExpand({
               : { height: { duration: 0.5, ease: [0.4, 0, 0.2, 1] }, opacity: { duration: 0.3, delay: 0.08 } }
           }
         >
-          <div
-            className="px-4 md:px-8 py-8 rounded-[12px]"
-            style={{ background: "rgba(87, 75, 67, 0.02)" }}
-          >
-            {/* 1. Editorial narrative */}
+          <div className="py-6">
+            {/* Expanded hero — room photo fills the full width */}
+            <div className="relative w-full overflow-hidden rounded-[14px] mb-6" style={{ minHeight: "50vh" }}>
+              <Image
+                src={room.heroImage.url}
+                alt={room.roomLabel}
+                fill
+                className="object-cover"
+                sizes="100vw"
+                priority
+              />
+              <ImageTagDots image={room.heroImage} />
+            </div>
+
+            {/* Room label + collapse */}
+            <div className="flex items-center justify-between mb-6">
+              <span
+                className="uppercase tracking-[1.5px]"
+                style={{
+                  fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
+                  fontSize: "10px",
+                  fontWeight: 500,
+                  color: "rgba(87, 75, 67, 0.55)",
+                }}
+              >
+                {room.roomLabel}
+              </span>
+              <button
+                onClick={onCollapse}
+                className="text-[11px] transition-colors hover:opacity-70"
+                style={{
+                  fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
+                  color: "rgba(87, 75, 67, 0.3)",
+                }}
+              >
+                Collapse ↑
+              </button>
+            </div>
+
+            {/* Editorial narrative */}
             {room.editorialNarrative && (
-              <div className="max-w-[680px] mb-8">
+              <div className="max-w-[720px] mb-8">
                 <p
                   className="whitespace-pre-line"
                   style={{
                     fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
-                    fontSize: "14.5px",
-                    lineHeight: 1.7,
+                    fontSize: "15px",
+                    lineHeight: 1.75,
                     color: "rgba(87, 75, 67, 0.85)",
                   }}
                 >
@@ -74,37 +109,32 @@ export function RoomExpand({
               </div>
             )}
 
-            {/* 2. Photo gallery — generous secondary gallery, not a filmstrip */}
+            {/* Gallery — large immersive images, not thumbnails */}
             {room.additionalImages.length > 0 && (
               <div className="mb-8">
-                <div
-                  className="flex gap-3 overflow-x-auto pb-2"
-                  style={{ scrollbarWidth: "thin" }}
-                >
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-[10px]">
                   {room.additionalImages.map((img) => (
                     <div
                       key={img.id}
-                      className="relative flex-shrink-0 rounded-[10px] overflow-hidden"
+                      className="relative w-full overflow-hidden rounded-[12px]"
+                      style={{ minHeight: "280px" }}
                     >
-                      {/* 240-280px desktop, 180px mobile — immersive gallery */}
-                      <div className="relative h-[180px] w-[270px] md:h-[260px] md:w-[390px]">
-                        <Image
-                          src={img.url}
-                          alt={room.roomLabel}
-                          fill
-                          className="object-cover"
-                          sizes="(max-width: 768px) 270px, 390px"
-                        />
-                        {/* Tag dots always visible in expanded gallery */}
-                        <ImageTagDots image={img} />
-                      </div>
+                      <Image
+                        src={img.url}
+                        alt={room.roomLabel}
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 768px) 100vw, 50vw"
+                      />
+                      {/* Tag dots always visible in expanded gallery */}
+                      <ImageTagDots image={img} />
                     </div>
                   ))}
                 </div>
               </div>
             )}
 
-            {/* 3. Tagged products */}
+            {/* Tagged products */}
             {room.products.length > 0 && (
               <div className="mb-6">
                 <h4
@@ -118,7 +148,7 @@ export function RoomExpand({
                 >
                   Tagged Products
                 </h4>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
                   {room.products.map((product: any) => (
                     <button
                       key={product.id}
@@ -166,8 +196,11 @@ export function RoomExpand({
               </div>
             )}
 
-            {/* 4. Collapse control */}
-            <div className="flex justify-end">
+            {/* Bottom collapse */}
+            <div
+              className="flex justify-end pt-4 border-t"
+              style={{ borderColor: "rgba(87, 75, 67, 0.06)" }}
+            >
               <button
                 onClick={onCollapse}
                 className="text-[11px] transition-colors hover:opacity-70"
