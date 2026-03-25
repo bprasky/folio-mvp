@@ -54,13 +54,14 @@ export function RoomExpand({
           }
         >
           <div className="py-6">
-            {/* Expanded hero — room photo fills the full width */}
-            <div className="relative w-full overflow-hidden rounded-[14px] mb-6" style={{ minHeight: "50vh" }}>
+            {/* Expanded hero — room photo fills the full width, never cropped */}
+            <div className="relative w-full overflow-hidden rounded-[14px] mb-6">
               <Image
                 src={room.heroImage.url}
                 alt={room.roomLabel}
-                fill
-                className="object-cover"
+                width={1920}
+                height={1080}
+                className="w-full h-auto"
                 sizes="100vw"
                 priority
               />
@@ -117,13 +118,13 @@ export function RoomExpand({
                     <div
                       key={img.id}
                       className="relative w-full overflow-hidden rounded-[12px]"
-                      style={{ minHeight: "280px" }}
                     >
                       <Image
                         src={img.url}
                         alt={room.roomLabel}
-                        fill
-                        className="object-cover"
+                        width={960}
+                        height={640}
+                        className="w-full h-auto"
                         sizes="(max-width: 768px) 100vw, 50vw"
                       />
                       {/* Tag dots always visible in expanded gallery */}

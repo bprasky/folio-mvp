@@ -15,19 +15,15 @@ export function StoryHero({ imageUrl, alt }: StoryHeroProps) {
 
   return (
     <figure className="relative w-full overflow-hidden rounded-[14px]">
-      {/* Constrain hero height so intro panel is visible above the fold */}
-      <div className="relative w-full" style={{ maxHeight: "55vh" }}>
-        <Image
-          src={imageUrl}
-          alt={alt}
-          width={1440}
-          height={810}
-          priority
-          className="w-full h-auto object-cover"
-          style={{ maxHeight: "55vh", objectFit: "cover" }}
-          sizes="100vw"
-        />
-      </div>
+      <Image
+        src={imageUrl}
+        alt={alt}
+        width={1920}
+        height={1080}
+        priority
+        className="w-full h-auto"
+        sizes="100vw"
+      />
     </figure>
   );
 }
