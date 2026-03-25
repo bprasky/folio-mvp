@@ -70,7 +70,7 @@ export function QuoteTile({
       tabIndex={0}
       onKeyDown={(e) => e.key === "Enter" && onClick()}
       className={clsx(
-        "cursor-pointer rounded-[12px] transition-all duration-200 h-full",
+        "cursor-pointer rounded-[12px] transition-all duration-200",
         wide ? "flex flex-row items-center gap-8 px-8 py-5" : "flex flex-col justify-center px-7 py-6",
         isExpanded
           ? "ring-1 ring-[rgba(87,75,67,0.12)]"
@@ -83,7 +83,6 @@ export function QuoteTile({
         backdropFilter: "blur(20px)",
         WebkitBackdropFilter: "blur(20px)",
         border: "1px solid rgba(87, 75, 67, 0.04)",
-        minHeight: undefined,
       }}
     >
       <div className={clsx(wide ? "flex-1 flex flex-col gap-2" : "flex flex-col gap-3")}>

@@ -105,7 +105,7 @@ export function PhotoTile({
           alt={alt}
           width={1200}
           height={800}
-          className="max-h-[65vh] w-auto mx-auto transition-transform duration-300 group-hover:scale-[1.01]"
+          className="w-full h-auto transition-transform duration-300 group-hover:scale-[1.01]"
           sizes={fullWidth ? "100vw" : "(max-width: 768px) 100vw, 50vw"}
         />
       </motion.div>
