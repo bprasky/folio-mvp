@@ -106,7 +106,7 @@ export function QuoteTile({
           <blockquote
             style={{
               fontFamily: "var(--font-headline, 'Cormorant Garamond', serif)",
-              fontSize: wide ? "17px" : "19px",
+              fontSize: wide ? "17px" : "22px",
               fontWeight: 400,
               fontStyle: "italic",
               lineHeight: 1.45,

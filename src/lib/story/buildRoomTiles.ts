@@ -229,14 +229,31 @@ export function buildStoryData(post: any): StoryData | null {
       ? blocks.introduction.join("\n\n")
       : subtitle;
 
-  // Main pull quote (from first chapter or top-level)
+  // Main pull quote — prefer project-level quotes over room-specific ones.
+  // Room quotes lack context when shown in the intro (reader hasn't seen the room yet).
   let projectPullQuote: string | null = null;
-  if (chapters[0]) {
-    projectPullQuote = getSelectedPullQuoteText(chapters[0].pullQuote);
+
+  // 1. Try top-level pullQuotes first (these are project-wide, not room-specific)
+  if (Array.isArray(blocks?.pullQuotes) && blocks.pullQuotes.length > 0) {
+    // Look for a quote without a sourceSection (truly project-level)
+    for (const pq of blocks.pullQuotes) {
+      const text = typeof pq === "string" ? pq : pq?.text;
+      const section = typeof pq === "string" ? null : pq?.sourceSection;
+      if (text && !section) {
+        projectPullQuote = text;
+        break;
+      }
+    }
+    // If all quotes have sourceSection, take the first one as fallback
+    if (!projectPullQuote) {
+      const first = blocks.pullQuotes[0];
+      projectPullQuote = typeof first === "string" ? first : first?.text ?? null;
+    }
   }
-  if (!projectPullQuote && Array.isArray(blocks?.pullQuotes) && blocks.pullQuotes.length > 0) {
-    const first = blocks.pullQuotes[0];
-    projectPullQuote = typeof first === "string" ? first : first?.text ?? null;
+
+  // 2. Fall back to lead deck/subtitle if no standalone quote exists
+  if (!projectPullQuote) {
+    projectPullQuote = blocks?.lead?.deck ?? null;
   }
 
   // Hero image: first chapter's primary image, or heroAssetId, or first project image
