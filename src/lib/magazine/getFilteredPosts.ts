@@ -83,7 +83,6 @@ export async function getFilteredPosts(params: {
           regionState: true,
           images: {
             select: { id: true, url: true },
-            take: 3,
             orderBy: { createdAt: "asc" },
           },
           designer: {

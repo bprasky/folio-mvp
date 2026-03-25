@@ -59,7 +59,7 @@ export function RoomTilePair({
   return (
     <>
       <div
-        className="col-span-2 grid grid-cols-1 md:grid-cols-2 gap-[10px] items-end"
+        className="col-span-2 grid grid-cols-1 md:grid-cols-2 gap-[10px] items-center"
         id={`room-${room.roomSlug}`}
       >
         {photoFirst ? (
