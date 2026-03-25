@@ -18,7 +18,7 @@ export default function ExplanationOverlay({ aesthetic, onClose }: ExplanationOv
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 glass-backdrop">
       <div className="relative bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-8">
         <button
           onClick={handleClose}

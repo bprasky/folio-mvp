@@ -52,7 +52,7 @@ export default function InfluenceMetrics({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: index * 0.1 }}
-          className="bg-white/70 backdrop-blur-md border border-folio-stone-100 rounded-xl p-4 hover:shadow-folio1 transition-all duration-300"
+          className="glass-surface rounded-xl p-4 hover:shadow-folio1 transition-all duration-300"
         >
           <div className="flex items-center gap-2 mb-2">
             <div className="text-folio-accent-400">{metric.icon}</div>

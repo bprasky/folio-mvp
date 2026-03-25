@@ -22,7 +22,7 @@ export default function MomentExpanded({
   onShare,
 }: MomentExpandedProps) {
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-8">
+    <div className="fixed inset-0 z-50 glass-backdrop flex items-center justify-center p-8">
       <div className="bg-white max-w-6xl w-full max-h-[90vh] overflow-y-auto rounded-lg relative">
         {/* Close Button */}
         <button

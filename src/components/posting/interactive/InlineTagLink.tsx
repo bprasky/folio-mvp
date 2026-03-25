@@ -69,7 +69,7 @@ export default function InlineTagLink({
             animate={{ opacity: 1, y: 8, scale: 1 }}
             exit={{ opacity: 0, y: 6, scale: 0.98 }}
             transition={{ duration: 0.18 }}
-            className="absolute left-0 top-full z-40 mt-2 w-72 rounded-2xl p-3 shadow-xl backdrop-blur bg-white/95 border border-[var(--ridge-outer)]"
+            className="absolute left-0 top-full z-40 mt-2 w-72 rounded-2xl p-3 shadow-xl glass-overlay"
           >
             {data ? (
               <div className="flex gap-3">

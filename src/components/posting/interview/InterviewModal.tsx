@@ -1661,8 +1661,8 @@ export function InterviewModal({
       <DialogContent
         className={
           phase === "question" || phase === "followup"
-            ? "w-full max-w-5xl h-[90vh] max-h-[90vh] mx-auto my-auto rounded-[20px] flex flex-col bg-white/90 backdrop-blur-xl border border-white/30 shadow-2xl overflow-hidden"
-            : "max-w-6xl max-h-[90vh] overflow-y-auto bg-white/90 backdrop-blur-xl border border-white/30 shadow-2xl rounded-[20px]"
+            ? "w-full max-w-5xl h-[90vh] max-h-[90vh] mx-auto my-auto rounded-[20px] flex flex-col glass-overlay shadow-2xl overflow-hidden"
+            : "max-w-6xl max-h-[90vh] overflow-y-auto glass-overlay shadow-2xl rounded-[20px]"
         }
       >
         {/* Interview Mode Selection */}
@@ -1727,7 +1727,7 @@ export function InterviewModal({
         )}
         {/* Modal header with close button and progress */}
         {(phase === "question" || phase === "followup" || phase === "complete") && (
-          <div className="flex items-center justify-between px-8 py-4 border-b border-[var(--ridge-outer)]/50 bg-white/50">
+          <div className="flex items-center justify-between px-8 py-4 border-b border-[var(--ridge-outer)]/50 bg-[var(--glass-bg-muted)]">
             <button 
               onClick={() => onOpenChange(false)}
               className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors p-1 rounded-full hover:bg-[var(--bg-elevated)]"

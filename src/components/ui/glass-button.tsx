@@ -12,7 +12,7 @@ const GlassButton = forwardRef<HTMLButtonElement, GlassButtonProps>(
     
     const variants = {
       primary: "bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)] shadow-md",
-      secondary: "bg-white/70 text-[var(--text-primary)] border border-[var(--ridge-outer)]/50 hover:bg-white hover:text-[var(--text-primary)] shadow-sm",
+      secondary: "bg-[var(--glass-bg)] text-[var(--text-primary)] border border-[var(--glass-border)] hover:bg-[var(--glass-bg-hover)] hover:text-[var(--text-primary)] shadow-sm",
       ghost: "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]/50",
       danger: "bg-red-600 text-white hover:bg-red-700 shadow-md",
     };

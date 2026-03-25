@@ -22,7 +22,7 @@ export default function OverlayModal({
   return (
     <div className="fixed inset-0 z-[60]">
       <div
-        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+        className="absolute inset-0 glass-backdrop"
         onClick={() => router.back()}
         aria-hidden
       />

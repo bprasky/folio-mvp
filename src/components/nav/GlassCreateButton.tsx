@@ -70,7 +70,7 @@ export default function GlassCreateButton() {
         <div
           role="menu"
           aria-label="Create items"
-          className="absolute right-0 mt-2 w-48 overflow-hidden rounded-xl border border-black/5 bg-white/90 backdrop-blur-md shadow-lg"
+          className="absolute right-0 mt-2 w-48 overflow-hidden rounded-xl border border-black/5 glass-overlay shadow-lg"
         >
           {actions.map((a, i) => (
             <button

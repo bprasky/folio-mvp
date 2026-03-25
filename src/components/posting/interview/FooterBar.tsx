@@ -44,7 +44,7 @@ export function FooterBar({
   const maxAttemptsReached = generationAttempts >= MAX_GENERATION_ATTEMPTS;
 
   return (
-    <div className="px-8 py-4 border-t border-[var(--ridge-outer)]/50 bg-white/50">
+    <div className="px-8 py-4 border-t border-[var(--ridge-outer)]/50 bg-[var(--glass-bg-muted)]">
       {/* Near-finish hint — one question before "Finish & Generate Story" appears */}
       {phase === "question" && isNearFinish && (
         <p

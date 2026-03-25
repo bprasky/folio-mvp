@@ -179,7 +179,7 @@ export default function BioInterviewModal({ onComplete, onClose }: BioInterviewM
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/40"
+        className="absolute inset-0 glass-backdrop"
         onClick={onClose}
       />
 

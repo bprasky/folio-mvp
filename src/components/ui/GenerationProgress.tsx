@@ -102,7 +102,7 @@ export function GenerationProgress({
   if (error) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center px-8 py-16">
-        <div className="w-full max-w-sm rounded-[20px] bg-white/90 backdrop-blur-xl border border-white/30 p-10 shadow-neu-raised text-center space-y-4">
+        <div className="w-full max-w-sm glass-overlay p-10 shadow-neu-raised text-center space-y-4">
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-red-50">
             <Sparkles className="h-6 w-6 text-red-400" strokeWidth={1.5} />
           </div>
@@ -122,7 +122,7 @@ export function GenerationProgress({
   if (!isGenerating) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center px-8 py-16">
-        <div className="w-full max-w-sm rounded-[20px] bg-white/90 backdrop-blur-xl border border-white/30 p-10 shadow-neu-raised text-center">
+        <div className="w-full max-w-sm glass-overlay p-10 shadow-neu-raised text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-2 border-[var(--accent)] border-t-transparent mx-auto" />
         </div>
       </div>
@@ -131,7 +131,7 @@ export function GenerationProgress({
 
   return (
     <div className="flex flex-1 flex-col items-center justify-center px-8 py-16">
-      <div className="w-full max-w-sm rounded-[20px] bg-white/90 backdrop-blur-xl border border-white/30 p-10 shadow-neu-raised">
+      <div className="w-full max-w-sm glass-overlay p-10 shadow-neu-raised">
         <div className="text-center space-y-8">
           {/* Animated phase icon */}
           <PhaseIcon step={currentStep} />

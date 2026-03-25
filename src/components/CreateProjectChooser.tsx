@@ -13,7 +13,7 @@ export default function CreateProjectChooser({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+    <div className="fixed inset-0 z-50 flex items-center justify-center glass-backdrop">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
         <h2 className="text-xl font-semibold mb-4">Create a Project</h2>
         <div className="grid gap-3">

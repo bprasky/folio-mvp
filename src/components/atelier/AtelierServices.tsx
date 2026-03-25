@@ -81,7 +81,7 @@ export default function AtelierServices({ onServiceSelect }: AtelierServicesProp
             onClick={() => handleTileClick(service)}
             className="group relative cursor-pointer"
           >
-            <div className="relative bg-white/70 backdrop-blur-md border border-folio-stone-100 rounded-2xl p-6 hover:shadow-folio2 transition-all duration-300 hover:border-folio-accent-200">
+            <div className="relative glass-surface rounded-2xl p-6 hover:shadow-folio2 transition-all duration-300 hover:border-folio-accent-200">
               <div className="flex items-center justify-between mb-4">
                 <div className="text-folio-accent-700 group-hover:text-folio-accent-400 transition-colors">
                   {service.icon}
@@ -108,7 +108,7 @@ export default function AtelierServices({ onServiceSelect }: AtelierServicesProp
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 glass-backdrop z-50 flex items-center justify-center p-4"
             onClick={() => setSelectedService(null)}
           >
             <motion.div
@@ -116,7 +116,7 @@ export default function AtelierServices({ onServiceSelect }: AtelierServicesProp
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-white/90 backdrop-blur-md rounded-2xl p-8 max-w-md w-full shadow-folio3"
+              className="glass-overlay rounded-2xl p-8 max-w-md w-full shadow-folio3"
             >
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-2xl font-serif text-folio-ink">{selectedService.name}</h3>
