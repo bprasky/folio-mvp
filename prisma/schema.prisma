@@ -154,6 +154,7 @@ model User {
   // Intelligence System relations
   likes                  Like[]                  @relation("UserLikes")
   saves                  Save[]                  @relation("UserSaves")
+  postSaves              PostSave[]              @relation("UserPostSaves")
   boards                 Board[]                 @relation("UserBoards")
   tasteInferences        TasteInference[]        @relation("UserTasteInferences")
   tasteProfile           UserTasteProfile?       @relation("UserTasteProfile")
@@ -1308,6 +1309,8 @@ model ProjectPost {
   sectionOverrides   Json?    @map("section_overrides")
   sectionHistory     Json?    @map("section_history")
   lastGenerationNote String?  @map("last_generation_note") @db.Text
+
+  postSaves              PostSave[]
 
   @@map("project_posts")
 }
@@ -5551,4 +5554,20 @@ enum EmailDigestFrequency {
   HOURLY
   DAILY
   NEVER
+}
+
+// PostSave: bookmark/save for editorial posts (separate from product Save)
+model PostSave {
+  id            String      @id @default(cuid())
+  userId        String
+  projectPostId String
+  createdAt     DateTime    @default(now())
+
+  user          User        @relation("UserPostSaves", fields: [userId], references: [id], onDelete: Cascade)
+  projectPost   ProjectPost @relation(fields: [projectPostId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, projectPostId])
+  @@index([userId, createdAt])
+  @@index([projectPostId])
+  @@map("post_saves")
 }
