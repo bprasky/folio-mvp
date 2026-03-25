@@ -83,7 +83,7 @@ export function PhotoTile({
       ref={ref}
       className="relative overflow-hidden rounded-[12px] cursor-pointer group"
       style={{
-        minHeight: fullWidth ? 380 : 300,
+        background: "rgba(87, 75, 67, 0.04)",
       }}
       onClick={onClick}
       onMouseEnter={handleMouseEnter}
@@ -95,19 +95,17 @@ export function PhotoTile({
       onKeyDown={(e) => e.key === "Enter" && onClick()}
     >
       <motion.div
-        className="absolute inset-0"
         style={{
           y,
-          top: -travel,
-          bottom: -travel,
           willChange: "transform",
         }}
       >
         <Image
           src={imageUrl}
           alt={alt}
-          fill
-          className="object-cover transition-transform duration-300 group-hover:scale-[1.01]"
+          width={1200}
+          height={800}
+          className="w-full h-auto transition-transform duration-300 group-hover:scale-[1.01]"
           sizes={fullWidth ? "100vw" : "(max-width: 768px) 100vw, 50vw"}
         />
       </motion.div>
