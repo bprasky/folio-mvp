@@ -198,6 +198,7 @@ export function StoryRenderer({ post }: Props) {
       <div className="py-6 lg:py-12">
         <RoomIndex
           roomCards={storyData.roomCards}
+          breathers={storyData.breathers}
           expandedRoomSlug={expandedRoomSlug}
           highlightedRoomSlug={highlightedRoomSlug}
           onExpandRoom={handleExpandRoom}

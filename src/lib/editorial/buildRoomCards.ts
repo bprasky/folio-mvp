@@ -6,6 +6,8 @@ import { getSelectedPullQuoteText } from "@/lib/posting/schemas";
 // Types
 // ---------------------------------------------------------------------------
 
+export type RoomLayout = "A" | "B" | "C" | "E";
+
 export interface StoryProductData {
   id: string;
   name: string;
@@ -34,6 +36,16 @@ export interface RoomCardData {
   additionalImages: { id: string; url: string; tags?: any[] }[];
   /** Index within the story (for nav) */
   index: number;
+  /** Desktop layout type */
+  layout: RoomLayout;
+  /** For Layout E: slug of the paired room */
+  pairedWith?: string;
+}
+
+export interface BreatherData {
+  insertAfterRoomSlug: string;
+  quote: string;
+  attribution: string;
 }
 
 export interface StoryData {
@@ -52,6 +64,7 @@ export interface StoryData {
   roomCount: number;
   topVendors: string[];
   supplementalQuotes: any[];
+  breathers: BreatherData[];
 }
 
 // ---------------------------------------------------------------------------
@@ -129,6 +142,7 @@ export function buildRoomCards(post: any): StoryData {
         tags: img.tags,
       })),
       index: roomCards.length,
+      layout: "A", // placeholder — assigned below
     });
   }
 
@@ -154,8 +168,15 @@ export function buildRoomCards(post: any): StoryData {
         tags: img.tags,
       })),
       index: roomCards.length,
+      layout: "A",
     });
   }
+
+  // Assign desktop layouts
+  assignLayouts(roomCards);
+
+  // Build breathers from cross-room pull quotes
+  const breathers = buildBreathers(expandedBlocks, roomCards);
 
   // Best pull quote for hero (Layer 0)
   const projectPullQuote = resolveProjectPullQuote(expandedBlocks, roomCards);
@@ -189,7 +210,117 @@ export function buildRoomCards(post: any): StoryData {
     roomCount: roomCards.length,
     topVendors,
     supplementalQuotes: post?.supplementalQuotes ?? [],
+    breathers,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Layout Assignment
+// ---------------------------------------------------------------------------
+
+function assignLayouts(cards: RoomCardData[]): void {
+  if (cards.length === 0) return;
+
+  // Find the showstopper candidate: most additional images + most products
+  let showstopperIdx = -1;
+  let showstopperScore = -1;
+  for (let i = 0; i < cards.length; i++) {
+    const score = cards[i].additionalImages.length * 2 + cards[i].productCount;
+    if (score > showstopperScore && i > 0) {
+      // Don't make the first room the showstopper — it should establish the format
+      showstopperScore = score;
+      showstopperIdx = i;
+    }
+  }
+
+  // Find detail strip candidates: rooms with ≤2 products
+  const eCandidates: number[] = [];
+  for (let i = 0; i < cards.length; i++) {
+    if (i === showstopperIdx) continue;
+    if (cards[i].productCount <= 2 && cards[i].roomSlug !== "details") {
+      eCandidates.push(i);
+    }
+  }
+
+  // Pair E candidates (take first pair)
+  const ePairs: [number, number][] = [];
+  const eUsed = new Set<number>();
+  for (let i = 0; i + 1 < eCandidates.length; i += 2) {
+    ePairs.push([eCandidates[i], eCandidates[i + 1]]);
+    eUsed.add(eCandidates[i]);
+    eUsed.add(eCandidates[i + 1]);
+  }
+
+  // Assign layouts
+  let lastLayout: RoomLayout = "C"; // so first room gets A (not same as last)
+  for (let i = 0; i < cards.length; i++) {
+    if (i === 0) {
+      cards[i].layout = "A"; // First room establishes the format
+      lastLayout = "A";
+    } else if (i === showstopperIdx && cards.length > 2) {
+      cards[i].layout = "C"; // Full-bleed hero room
+      lastLayout = "C";
+    } else if (eUsed.has(i)) {
+      cards[i].layout = "E";
+      // Find the pair partner
+      for (const [a, b] of ePairs) {
+        if (a === i) cards[i].pairedWith = cards[b].roomSlug;
+        if (b === i) cards[i].pairedWith = cards[a].roomSlug;
+      }
+      lastLayout = "E";
+    } else {
+      // Alternate A/B for zigzag, avoid same as last
+      const preferred: RoomLayout = lastLayout === "A" ? "B" : "A";
+      cards[i].layout = preferred;
+      lastLayout = preferred;
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Breather Building
+// ---------------------------------------------------------------------------
+
+function buildBreathers(
+  expandedBlocks: any,
+  roomCards: RoomCardData[]
+): BreatherData[] {
+  if (roomCards.length < 3) return [];
+
+  // Look for cross-room quotes: top-level pullQuotes that don't match any room title
+  const topLevel = expandedBlocks?.pullQuotes;
+  if (!Array.isArray(topLevel) || topLevel.length === 0) return [];
+
+  const roomTitlesLower = new Set(
+    roomCards.map((c) => c.roomLabel.toLowerCase())
+  );
+
+  const crossRoomQuotes: { text: string; attribution: string }[] = [];
+  for (const pq of topLevel) {
+    const text = typeof pq === "string" ? pq : pq?.text;
+    const source = typeof pq === "object" ? pq?.sourceSection : undefined;
+    if (!text) continue;
+
+    // If the quote's source section matches a room, it's not cross-room
+    if (source && roomTitlesLower.has(source.toLowerCase())) continue;
+
+    crossRoomQuotes.push({
+      text,
+      attribution: typeof pq === "object" && pq?.context ? pq.context : "",
+    });
+  }
+
+  if (crossRoomQuotes.length === 0) return [];
+
+  // Insert first breather after 2nd room (index 1)
+  const insertIdx = Math.min(1, roomCards.length - 2);
+  return [
+    {
+      insertAfterRoomSlug: roomCards[insertIdx].roomSlug,
+      quote: crossRoomQuotes[0].text,
+      attribution: crossRoomQuotes[0].attribution,
+    },
+  ];
 }
 
 // ---------------------------------------------------------------------------
