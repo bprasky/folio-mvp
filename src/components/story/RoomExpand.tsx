@@ -74,7 +74,7 @@ export function RoomExpand({
               </div>
             )}
 
-            {/* 2. Photo gallery */}
+            {/* 2. Photo gallery — generous secondary gallery, not a filmstrip */}
             {room.additionalImages.length > 0 && (
               <div className="mb-8">
                 <div
@@ -85,16 +85,17 @@ export function RoomExpand({
                     <div
                       key={img.id}
                       className="relative flex-shrink-0 rounded-[10px] overflow-hidden"
-                      style={{ height: 130, width: "auto" }}
                     >
-                      <div className="relative h-[130px] w-[200px]">
+                      {/* 240-280px desktop, 180px mobile — immersive gallery */}
+                      <div className="relative h-[180px] w-[270px] md:h-[260px] md:w-[390px]">
                         <Image
                           src={img.url}
                           alt={room.roomLabel}
                           fill
                           className="object-cover"
-                          sizes="200px"
+                          sizes="(max-width: 768px) 270px, 390px"
                         />
+                        {/* Tag dots always visible in expanded gallery */}
                         <ImageTagDots image={img} />
                       </div>
                     </div>

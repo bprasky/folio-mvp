@@ -10,12 +10,13 @@
 
 import { PhotoTile } from "./PhotoTile";
 import { QuoteTile } from "./QuoteTile";
-import type { RoomTileData, TilePattern } from "@/lib/story/buildRoomTiles";
+import type { RoomTileData } from "@/lib/story/buildRoomTiles";
 
 interface RoomTilePairProps {
   room: RoomTileData;
   isExpanded: boolean;
   onToggle: () => void;
+  onProductClick?: (product: any) => void;
   reducedMotion: boolean;
 }
 
@@ -23,6 +24,7 @@ export function RoomTilePair({
   room,
   isExpanded,
   onToggle,
+  onProductClick,
   reducedMotion,
 }: RoomTilePairProps) {
   const { pattern } = room;
@@ -33,6 +35,7 @@ export function RoomTilePair({
         room={room}
         isExpanded={isExpanded}
         onToggle={onToggle}
+        onProductClick={onProductClick}
         reducedMotion={reducedMotion}
       />
     );
@@ -44,6 +47,7 @@ export function RoomTilePair({
         room={room}
         isExpanded={isExpanded}
         onToggle={onToggle}
+        onProductClick={onProductClick}
         reducedMotion={reducedMotion}
       />
     );
@@ -63,7 +67,10 @@ export function RoomTilePair({
             <PhotoTile
               imageUrl={room.heroImage.url}
               alt={room.roomLabel}
+              image={room.heroImage}
               onClick={onToggle}
+              onProductClick={onProductClick}
+              isExpanded={isExpanded}
               reducedMotion={reducedMotion}
             />
             <QuoteTile
@@ -92,7 +99,10 @@ export function RoomTilePair({
             <PhotoTile
               imageUrl={room.heroImage.url}
               alt={room.roomLabel}
+              image={room.heroImage}
               onClick={onToggle}
+              onProductClick={onProductClick}
+              isExpanded={isExpanded}
               reducedMotion={reducedMotion}
             />
           </>
@@ -107,6 +117,7 @@ function Pattern3({
   room,
   isExpanded,
   onToggle,
+  onProductClick,
   reducedMotion,
 }: RoomTilePairProps) {
   return (
@@ -114,8 +125,11 @@ function Pattern3({
       <PhotoTile
         imageUrl={room.heroImage.url}
         alt={room.roomLabel}
+        image={room.heroImage}
         onClick={onToggle}
+        onProductClick={onProductClick}
         fullWidth
+        isExpanded={isExpanded}
         reducedMotion={reducedMotion}
       />
       <QuoteTile
@@ -137,6 +151,7 @@ function Pattern4({
   room,
   isExpanded,
   onToggle,
+  onProductClick,
   reducedMotion,
 }: RoomTilePairProps) {
   return (
@@ -144,8 +159,11 @@ function Pattern4({
       <PhotoTile
         imageUrl={room.heroImage.url}
         alt={room.roomLabel}
+        image={room.heroImage}
         onClick={onToggle}
+        onProductClick={onProductClick}
         fullWidth
+        isExpanded={isExpanded}
         reducedMotion={reducedMotion}
       />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-[10px]">
