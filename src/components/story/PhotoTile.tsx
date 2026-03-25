@@ -84,9 +84,6 @@ export function PhotoTile({
       className="relative overflow-hidden rounded-[12px] cursor-pointer group"
       style={{
         minHeight: fullWidth ? 380 : 300,
-        // Grow slightly when expanded (change 3 partial: scale on expand)
-        transition: "transform 500ms cubic-bezier(0.4, 0, 0.2, 1)",
-        transform: isExpanded ? "scale(1.03)" : "scale(1)",
       }}
       onClick={onClick}
       onMouseEnter={handleMouseEnter}
