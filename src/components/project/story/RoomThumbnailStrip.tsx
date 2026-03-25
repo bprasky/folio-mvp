@@ -19,7 +19,7 @@ export function RoomThumbnailStrip({ roomCards, onScrollToRoom, activeRoomSlug }
           <button
             key={card.roomId}
             onClick={() => onScrollToRoom(card.roomSlug)}
-            className={`story-glass-thumb flex items-center gap-2 shrink-0 ${
+            className={`glass-badge flex items-center gap-2 shrink-0 ${
               isActive ? "active" : ""
             }`}
           >

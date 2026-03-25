@@ -185,6 +185,7 @@ function Pattern4({
             editorialTeaser={room.editorialTeaser}
             onClick={onToggle}
             isExpanded={isExpanded}
+            variant="light"
             reducedMotion={reducedMotion}
           />
         ) : (
@@ -195,6 +196,7 @@ function Pattern4({
             productCount={0}
             onClick={onToggle}
             isExpanded={isExpanded}
+            variant="light"
             reducedMotion={reducedMotion}
           />
         )}

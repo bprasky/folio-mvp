@@ -41,7 +41,7 @@ export function StoryHero({ storyData, onScrollToRoom, activeRoomSlug }: Props) 
 
         {/* Pull quote */}
         {projectPullQuote && (
-          <div className="story-glass-quote px-5 py-4 max-w-xl">
+          <div className="glass-surface px-5 py-4 max-w-xl">
             <p className="font-[var(--font-headline)] italic text-[18px] md:text-[22px] leading-relaxed story-text-on-dark">
               &ldquo;{projectPullQuote}&rdquo;
             </p>
@@ -54,7 +54,7 @@ export function StoryHero({ storyData, onScrollToRoom, activeRoomSlug }: Props) 
         )}
 
         {/* Credits bar */}
-        <div className="story-glass-badge inline-flex items-center gap-2 self-start story-text-on-dark">
+        <div className="glass-badge inline-flex items-center gap-2 self-start story-text-on-dark">
           <span className="font-medium">{designerLabel}</span>
           <span className="opacity-50">·</span>
           <span>{roomCount} room{roomCount !== 1 ? "s" : ""}</span>

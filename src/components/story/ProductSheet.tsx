@@ -82,14 +82,10 @@ export function ProductSheet({
           {/* Desktop: Right side panel */}
           <motion.div
             ref={sheetRef}
-            className="fixed z-50 hidden md:flex flex-col top-0 right-0 h-full overflow-y-auto"
+            className="fixed z-50 hidden md:flex flex-col top-0 right-0 h-full overflow-y-auto glass-overlay rounded-none border-l border-r-0 border-t-0 border-b-0"
             style={{
               width: 400,
               maxWidth: "40vw",
-              background: "rgba(255, 252, 248, 0.88)",
-              backdropFilter: "blur(24px)",
-              WebkitBackdropFilter: "blur(24px)",
-              borderLeft: "1px solid rgba(255, 252, 248, 0.4)",
               boxShadow: "-8px 0 32px rgba(87, 75, 67, 0.06)",
             }}
             initial={{ x: "100%" }}
@@ -110,12 +106,9 @@ export function ProductSheet({
 
           {/* Mobile: Bottom sheet */}
           <motion.div
-            className="fixed z-50 md:hidden left-0 right-0 bottom-0 overflow-y-auto rounded-t-[20px]"
+            className="fixed z-50 md:hidden left-0 right-0 bottom-0 overflow-y-auto glass-overlay rounded-b-none"
             style={{
               maxHeight: "70vh",
-              background: "rgba(255, 252, 248, 0.95)",
-              backdropFilter: "blur(24px)",
-              WebkitBackdropFilter: "blur(24px)",
               boxShadow: "0 -8px 32px rgba(87, 75, 67, 0.12)",
             }}
             initial={{ y: "100%" }}

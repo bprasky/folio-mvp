@@ -16,6 +16,8 @@ interface QuoteTileProps {
   onClick: () => void;
   isExpanded: boolean;
   wide?: boolean;
+  /** "default" = glass-surface, "light" = glass-surface-sm (secondary/teaser tiles) */
+  variant?: "default" | "light";
   reducedMotion?: boolean;
 }
 
@@ -28,6 +30,7 @@ export function QuoteTile({
   onClick,
   isExpanded,
   wide = false,
+  variant = "default",
   reducedMotion = false,
 }: QuoteTileProps) {
   const ref = useRef<HTMLDivElement>(null);
@@ -70,19 +73,15 @@ export function QuoteTile({
       tabIndex={0}
       onKeyDown={(e) => e.key === "Enter" && onClick()}
       className={clsx(
-        "cursor-pointer rounded-[12px] transition-all duration-200",
+        variant === "light" ? "glass-surface-sm" : "glass-surface",
+        "cursor-pointer transition-all duration-200",
         wide ? "flex flex-row items-center gap-8 px-8 py-5" : "flex flex-col justify-center px-7 py-6",
         isExpanded
           ? "ring-1 ring-[rgba(87,75,67,0.12)]"
           : "hover:ring-1 hover:ring-[rgba(87,75,67,0.09)]"
       )}
       style={{
-        background: isExpanded
-          ? "rgba(255, 252, 248, 0.78)"
-          : "rgba(255, 252, 248, 0.6)",
-        backdropFilter: "blur(20px)",
-        WebkitBackdropFilter: "blur(20px)",
-        border: "1px solid rgba(87, 75, 67, 0.04)",
+        ...(isExpanded ? { background: "var(--glass-bg-hover)" } : {}),
         minHeight: wide ? undefined : 300,
       }}
     >

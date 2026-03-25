@@ -140,7 +140,7 @@ export function ImageTagDots({ image, tags: tagsProp }: ImageTagDotsProps) {
             {/* Dot button (for click/tap) */}
             <button
               type="button"
-              className="flex h-4 w-4 items-center justify-center rounded-full bg-white/80 backdrop-blur-sm shadow-[0_0_0_1px_rgba(15,14,10,0.2)] transition-all hover:scale-110"
+              className="flex h-4 w-4 items-center justify-center glass-badge p-0 shadow-[0_0_0_1px_rgba(15,14,10,0.2)] transition-all hover:scale-110"
               onClick={(e) => {
                 e.stopPropagation();
                 setActiveId((prev) => (prev === tag.id ? null : tag.id));

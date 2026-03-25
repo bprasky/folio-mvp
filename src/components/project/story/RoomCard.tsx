@@ -154,7 +154,7 @@ export const RoomCard = forwardRef<HTMLDivElement, Props>(
             />
 
             {/* Room label — always visible (tiny pill) */}
-            <div className="absolute top-4 left-4 story-glass-badge text-[10px] px-2 py-1">
+            <div className="absolute top-4 left-4 glass-badge text-[10px] px-2 py-1">
               {roomLabel}
             </div>
 
@@ -165,7 +165,7 @@ export const RoomCard = forwardRef<HTMLDivElement, Props>(
               }`}
             >
               {pullQuote && (
-                <div className="story-glass-quote px-4 py-3">
+                <div className="glass-surface px-4 py-3">
                   <p className="font-[var(--font-headline)] italic text-[18px] md:text-[20px] leading-relaxed story-text-on-dark">
                     &ldquo;{pullQuote}&rdquo;
                   </p>
@@ -176,7 +176,7 @@ export const RoomCard = forwardRef<HTMLDivElement, Props>(
                   Tap to explore
                 </span>
                 {productCount > 0 && (
-                  <div className="story-glass-badge text-[12px]">
+                  <div className="glass-badge text-[12px]">
                     {productCount} product{productCount !== 1 ? "s" : ""}
                   </div>
                 )}
@@ -270,7 +270,7 @@ function DesktopLayoutSplit({
       </div>
 
       {/* Sidebar (40%) */}
-      <div className={`w-[40%] story-glass-sidebar flex flex-col justify-between p-6 overflow-y-auto ${
+      <div className={`w-[40%] glass-surface flex flex-col justify-between p-6 overflow-y-auto ${
         revealed ? "story-revealed" : ""
       } ${reversed ? "border-r border-l-0 rounded-l-xl rounded-r-none !border-radius-0" : ""}`}
         style={reversed ? { borderLeft: "none", borderRight: "1px solid rgba(255,252,248,0.3)", borderRadius: "12px 0 0 12px" } : undefined}
@@ -378,7 +378,7 @@ function DesktopLayoutC({
       </div>
 
       {/* Glass overlay — bottom left */}
-      <div className="absolute bottom-6 left-6 max-w-md story-glass-quote px-5 py-4">
+      <div className="absolute bottom-6 left-6 max-w-md glass-surface px-5 py-4">
         <h3 className="story-reveal-child font-[var(--font-body)] font-medium text-[14px] uppercase tracking-[0.16em] story-text-on-dark opacity-80">
           {card.roomLabel}
         </h3>
@@ -407,7 +407,7 @@ function DesktopLayoutC({
             <button
               key={product.tagId}
               onClick={(e) => { e.stopPropagation(); onProductTap?.(product.tagId); }}
-              className="story-reveal-child story-reveal-delay-4 story-glass-badge flex items-center gap-2 hover:scale-105 transition-transform"
+              className="story-reveal-child story-reveal-delay-4 glass-badge flex items-center gap-2 hover:scale-105 transition-transform"
             >
               {(product.cropUrl || product.thumbnailUrl || product.imageUrl) && (
                 <img
@@ -456,7 +456,7 @@ function DesktopLayoutE({
       </div>
 
       {/* Condensed info */}
-      <div className="p-4 story-glass-sidebar rounded-t-none rounded-b-xl border-l-0 border-t border-[rgba(255,252,248,0.3)]"
+      <div className="p-4 glass-surface rounded-t-none rounded-b-xl border-l-0 border-t border-[rgba(255,252,248,0.3)]"
         style={{ borderLeft: "none", borderRadius: "0 0 12px 12px" }}
       >
         <h3 className="story-reveal-child font-[var(--font-body)] font-medium text-[14px] uppercase tracking-[0.16em] story-text-secondary">

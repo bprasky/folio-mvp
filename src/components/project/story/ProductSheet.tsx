@@ -55,7 +55,7 @@ export function ProductSheet({
       <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
         <SheetContent
           side="right"
-          className="story-glass-panel w-[400px] max-w-[40vw] p-0 border-l-0 overflow-y-auto"
+          className="glass-overlay rounded-none border-l border-r-0 border-t-0 border-b-0 w-[400px] max-w-[40vw] p-0 overflow-y-auto"
         >
           {product && (
             <ProductSheetContent
@@ -83,7 +83,7 @@ export function ProductSheet({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/40"
+            className="fixed inset-0 z-50 glass-backdrop"
             onClick={onClose}
           />
 
@@ -102,7 +102,7 @@ export function ProductSheet({
                 onClose();
               }
             }}
-            className="fixed bottom-0 left-0 right-0 z-50 story-glass-sheet max-h-[75vh] overflow-y-auto"
+            className="fixed bottom-0 left-0 right-0 z-50 glass-overlay rounded-b-none max-h-[75vh] overflow-y-auto"
           >
             {/* Drag handle */}
             <div className="flex justify-center py-3">

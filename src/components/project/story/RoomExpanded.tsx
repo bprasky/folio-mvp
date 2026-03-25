@@ -52,7 +52,7 @@ export function RoomExpanded({
     <div className={`${isDesktop ? "py-6" : "pb-8"}`}>
       {/* Header — mobile only */}
       {!isDesktop && (
-        <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 bg-white/90 backdrop-blur-sm border-b border-[rgba(87,75,67,0.08)]">
+        <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 glass-sticky">
           <button
             onClick={onClose}
             className="flex items-center gap-1 text-[14px] font-[var(--font-body)] font-medium story-text-on-light"
@@ -136,7 +136,7 @@ export function RoomExpanded({
                   <button
                     key={product.tagId}
                     onClick={() => onProductTap(product.tagId)}
-                    className="story-glass-card p-3 flex flex-col gap-2 text-left hover:shadow-md transition-shadow"
+                    className="glass-surface p-3 flex flex-col gap-2 text-left hover:shadow-md transition-shadow"
                   >
                     <div className="aspect-square rounded-lg overflow-hidden bg-[rgba(87,75,67,0.06)]">
                       {(product.cropUrl || product.thumbnailUrl || product.imageUrl) ? (
