@@ -45,6 +45,21 @@ export default function RoleBasedLayout({ children }: RoleBasedLayoutProps) {
     );
   }
 
+  // Marketing pages render full-width without SimpleLayout chrome
+  const MARKETING_ROUTES = ['/about', '/for-designers'];
+  const isMarketingPage = MARKETING_ROUTES.some(route => pathname?.startsWith(route))
+    || (pathname === '/' && !session);
+
+  if (isMarketingPage) {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <Navigation />
+        <main className="flex-1">{children}</main>
+        <Footer />
+      </div>
+    );
+  }
+
   // Determine which layout to use based on user role
   const userRole = session?.user?.role?.toLowerCase() || 'guest';
 
