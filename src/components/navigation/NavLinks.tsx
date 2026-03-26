@@ -9,6 +9,8 @@ const links = [
   { href: "/magazine", label: "Magazine" },
   { href: "/directory", label: "Directory" },
   { href: "/events", label: "Events" },
+  { href: "/about", label: "About" },
+  { href: "/for-designers", label: "For Designers" },
 ];
 
 export function NavLinks() {
