@@ -103,7 +103,7 @@ export function WelcomeModal() {
         <motion.div
           className="relative w-[88%] max-w-[620px] max-h-[92vh] flex flex-col overflow-hidden"
           style={{
-            background: 'rgba(245, 242, 237, 0.18)',
+            background: 'rgba(245, 242, 237, 0.45)',
             backdropFilter: 'blur(40px) saturate(160%) brightness(1.08)',
             WebkitBackdropFilter: 'blur(40px) saturate(160%) brightness(1.08)',
             border: '1px solid rgba(255, 255, 255, 0.28)',
@@ -184,7 +184,7 @@ export function WelcomeModal() {
                     key={i}
                     className="p-4"
                     style={{
-                      background: 'rgba(255, 255, 255, 0.12)',
+                      background: 'rgba(255, 255, 255, 0.25)',
                       border: '1px solid rgba(255, 255, 255, 0.22)',
                       backdropFilter: 'blur(8px)',
                       borderRadius: '12px',
