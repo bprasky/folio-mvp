@@ -26,7 +26,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   metrics = {},
 }) => {
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
+    <div className="glass-surface p-6">
       <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
         <div className="relative h-32 w-32 rounded-full overflow-hidden">
           <Image

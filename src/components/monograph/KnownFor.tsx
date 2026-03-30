@@ -49,7 +49,7 @@ export default function KnownFor({ items, productSaves }: KnownForProps) {
           {items.map((product) => (
             <div
               key={product.id}
-              className="flex-shrink-0 w-64 md:w-80 bg-white rounded-lg border border-stone-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300"
+              className="flex-shrink-0 w-64 md:w-80 glass-surface overflow-hidden"
             >
               {/* Product Image */}
               <div className="relative w-full h-48 md:h-56 bg-stone-100">

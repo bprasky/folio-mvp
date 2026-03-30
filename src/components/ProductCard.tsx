@@ -22,7 +22,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   isSaved = false,
 }) => {
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-folio-border overflow-hidden hover:shadow-md transition-all duration-300 hover:-translate-y-1">
+    <div className="glass-surface overflow-hidden transition-all duration-300">
       <div className="relative h-48 w-full">
         <Image
           src={image}

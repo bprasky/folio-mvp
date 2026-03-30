@@ -31,7 +31,7 @@ export default function OverlayModal({
         aria-modal="true"
         className={cn(
           "absolute inset-x-0 top-6 mx-auto max-w-6xl",
-          "rounded-2xl bg-[var(--bg-base)] shadow-2xl ring-1 ring-[var(--ridge-outer)] dark:bg-[var(--bg-base)]",
+          "glass-overlay",
           className
         )}
       >

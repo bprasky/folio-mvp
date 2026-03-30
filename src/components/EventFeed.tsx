@@ -213,7 +213,7 @@ export default function EventFeed({
         const spanClass = getSpanFromIndex(i);
         
         return (
-          <div key={i} className={`bg-white rounded-xl shadow-sm border border-gray-100 animate-pulse overflow-hidden ${spanClass}`}>
+          <div key={i} className={`glass-surface animate-pulse overflow-hidden ${spanClass}`}>
             <div className="w-full h-48 bg-[var(--bg-elevated)]"></div>
             <div className="p-4 space-y-3">
               <div className="h-4 bg-[var(--bg-elevated)] rounded"></div>
@@ -239,7 +239,7 @@ export default function EventFeed({
           return (
             <motion.div
               key={event.id}
-              className={`bg-white rounded-xl shadow-lg overflow-hidden transition-transform transform hover:scale-[1.01] duration-300 ease-in-out ${spanClass}`}
+              className={`glass-surface overflow-hidden transition-transform transform hover:scale-[1.01] duration-300 ease-in-out ${spanClass}`}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: index * 0.1 }}
@@ -279,7 +279,7 @@ export default function EventFeed({
       {filteredEvents.map((event, index) => (
         <motion.div
           key={event.id}
-          className="bg-white rounded-xl shadow-lg overflow-hidden col-span-1 sm:col-span-1 lg:col-span-1 xl:col-span-1 transition-transform transform hover:scale-[1.01] duration-300 ease-in-out"
+          className="glass-surface overflow-hidden col-span-1 sm:col-span-1 lg:col-span-1 xl:col-span-1 transition-transform transform hover:scale-[1.01] duration-300 ease-in-out"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: index * 0.1 }}
@@ -325,7 +325,7 @@ export default function EventFeed({
   return (
     <div className={`w-full overflow-x-hidden ${className}`}>
       {/* Sticky Sort & Filter Menu Bar */}
-      <div className="bg-white border-b border-gray-100 sticky top-0 z-10 shadow-sm">
+      <div className="glass-surface border-b border-gray-100 sticky top-0 z-10">
         <div className="w-full max-w-7xl mx-auto py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
@@ -372,7 +372,7 @@ export default function EventFeed({
 
       {/* Collapsible Filters Panel */}
       {filtersVisible && (
-        <div className="bg-white border-b border-gray-100 shadow-sm">
+        <div className="glass-surface border-b border-gray-100">
           <div className="w-full max-w-7xl mx-auto py-4">
             <EventFilters
               sortBy={sortBy}
@@ -393,7 +393,7 @@ export default function EventFeed({
           useFibonacciLayout ? <FibonacciSkeleton /> : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto px-4">
               {[...Array(6)].map((_, i) => (
-                <div key={i} className="bg-white rounded-xl shadow-sm border border-gray-100 animate-pulse overflow-hidden">
+                <div key={i} className="glass-surface animate-pulse overflow-hidden">
                   <div className="w-full h-48 bg-[var(--bg-elevated)]"></div>
                   <div className="p-6 space-y-3">
                     <div className="flex flex-wrap gap-2 mb-2">

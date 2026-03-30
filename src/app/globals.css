@@ -67,45 +67,32 @@
 
 /* Folio Neumorphic Component Layer */
 @layer components {
-  /* Ridge Card Pattern - Core elevated surface */
+  /* Ridge Card — Legacy alias for glass-surface (see glass-tokens.css) */
   .ridge-card {
-    background: var(--bg-base);
-    border-radius: 20px;
-    border: 1px solid var(--ridge-outer);
-    box-shadow:
-      var(--neu-raised),
-      inset 0 1px 0 var(--ridge-inner),
-      inset 0 -1px 0 var(--ridge-dark);
     position: relative;
-  }
-
-  .ridge-card::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: 19px; /* 1px less than parent */
-    border: 1px solid var(--ridge-inner);
-    pointer-events: none;
-  }
-
-  /* Ridge Card Sizes */
-  .ridge-card-sm {
-    border-radius: 12px;
-  }
-  .ridge-card-sm::before {
-    border-radius: 11px;
-  }
-
-  .ridge-card-lg {
-    border-radius: 20px;
+    overflow: hidden;
+    border: 1px solid rgba(180, 162, 125, 0.28);
+    border-radius: 16px;
+    background-color: rgba(255, 253, 248, 0.85);
+    background-image:
+      linear-gradient(170deg, rgba(255,255,255,0.58) 0%, rgba(255,255,255,0.28) 55%, rgba(255,253,250,0.34) 100%),
+      linear-gradient(135deg, transparent 30%, rgba(255,245,215,0.18) 45%, rgba(255,248,225,0.25) 50%, rgba(255,245,215,0.18) 55%, transparent 70%),
+      radial-gradient(ellipse at 40% 8%, rgba(255,248,228,0.45) 0%, transparent 50%),
+      radial-gradient(ellipse at 45% 42%, rgba(190,158,96,0.38) 0%, rgba(190,158,96,0.34) 45%, rgba(190,158,96,0.28) 70%, rgba(190,158,96,0.12) 92%, transparent 100%),
+      radial-gradient(ellipse at 55% 92%, rgba(155,130,80,0.22) 0%, transparent 45%);
     box-shadow:
-      var(--neu-raised-lg),
-      inset 0 1px 0 var(--ridge-inner),
-      inset 0 -1px 0 var(--ridge-dark);
+      0 1px 3px rgba(120, 100, 80, 0.06),
+      inset 0 1px 2px rgba(255, 255, 255, 0.9),
+      inset 0 -2px 4px rgba(160, 140, 100, 0.08);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
   }
-  .ridge-card-lg::before {
-    border-radius: 19px;
-  }
+  .ridge-card::before { display: none; }
+
+  .ridge-card-sm { border-radius: 12px; }
+  .ridge-card-sm::before { display: none; }
+
+  .ridge-card-lg { border-radius: 20px; }
+  .ridge-card-lg::before { display: none; }
 
   /* Ridge Button - Secondary style */
   .ridge-btn {

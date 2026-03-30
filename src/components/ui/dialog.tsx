@@ -136,7 +136,7 @@ export function DialogContent({ className, children }: DialogContentProps) {
     <div
       ref={contentRef}
       className={cn(
-        "bg-[var(--bg-base)] rounded-2xl shadow-xl border border-[var(--ridge-outer)] max-w-lg w-full max-h-[90vh] overflow-y-auto",
+        "glass-overlay max-w-lg w-full max-h-[90vh] overflow-y-auto",
         className
       )}
     >
