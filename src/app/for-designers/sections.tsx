@@ -1,17 +1,42 @@
+"use client";
+
 import Link from "next/link";
+import { motion } from "framer-motion";
 import { GlassCard } from "@/components/ui/glass-card";
+
+const fade = {
+  initial: { opacity: 0, y: 16 },
+  whileInView: { opacity: 1, y: 0 },
+  viewport: { once: true, margin: "-40px" },
+  transition: { duration: 0.6, ease: "easeOut" },
+};
+
+const slowFade = {
+  ...fade,
+  transition: { duration: 0.8, ease: "easeOut" },
+};
 
 export function ForDesignersHero() {
   return (
-    <section className="py-24 px-6 bg-[#FAF9F6]">
-      <div className="max-w-3xl mx-auto text-center">
-        <h1 className="font-headline italic text-5xl md:text-6xl text-[var(--text-primary)] leading-tight">
+    <section className="pt-28 pb-20 px-6 bg-[#FAF9F6]">
+      <motion.div
+        className="max-w-3xl mx-auto text-center"
+        initial={{ opacity: 0, y: 24 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, ease: "easeOut" }}
+      >
+        <h1 className="font-headline italic text-5xl md:text-6xl lg:text-7xl text-[var(--text-primary)] leading-[1.1]">
           Your work is the product. Folio treats it that way.
         </h1>
-        <p className="mt-6 text-lg text-[var(--text-secondary)] leading-relaxed">
+        <motion.p
+          className="mt-8 text-lg md:text-xl text-[var(--text-secondary)] leading-relaxed max-w-2xl mx-auto"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.6, delay: 0.4, ease: "easeOut" }}
+        >
           Folio is where interior designers publish completed projects as structured, documented records.
-        </p>
-      </div>
+        </motion.p>
+      </motion.div>
     </section>
   );
 }
@@ -38,31 +63,44 @@ export function HowItWorks() {
   return (
     <section className="py-24 px-6 bg-[#FAF9F6]">
       <div className="max-w-5xl mx-auto">
-        <p className="uppercase tracking-widest text-sm text-[var(--text-secondary)] mb-3">
-          The Process
-        </p>
-        <h2 className="font-headline italic text-4xl md:text-5xl text-[var(--text-primary)] mb-12">
-          How it works
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <motion.div {...fade}>
+          <p className="uppercase tracking-widest text-sm text-[var(--text-secondary)] mb-3">
+            The Process
+          </p>
+          <h2 className="font-headline italic text-4xl md:text-5xl text-[var(--text-primary)] mb-14">
+            How it works
+          </h2>
+        </motion.div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {steps.map((step, i) => (
-            <GlassCard
+            <motion.div
               key={i}
-              variant="default"
-              padding="md"
-              rounded="xl"
-              className="border border-stone-200/60"
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-40px" }}
+              transition={{
+                duration: 0.6,
+                delay: i * 0.15,
+                ease: "easeOut",
+              }}
             >
-              <p className="text-sm font-medium text-[var(--accent)] mb-2">
-                {i + 1}.
-              </p>
-              <h3 className="text-lg font-medium text-[var(--text-primary)] mb-2">
-                {step.title}
-              </h3>
-              <p className="text-[var(--text-secondary)] leading-relaxed">
-                {step.description}
-              </p>
-            </GlassCard>
+              <GlassCard
+                variant="default"
+                padding="lg"
+                rounded="xl"
+                className="border border-stone-200/60 h-full"
+              >
+                <p className="font-headline italic text-3xl text-[var(--accent)] mb-3">
+                  {i + 1}
+                </p>
+                <h3 className="text-lg font-medium text-[var(--text-primary)] mb-3">
+                  {step.title}
+                </h3>
+                <p className="text-[var(--text-secondary)] leading-relaxed">
+                  {step.description}
+                </p>
+              </GlassCard>
+            </motion.div>
           ))}
         </div>
       </div>
@@ -74,28 +112,42 @@ export function WhyFolio() {
   return (
     <section className="py-24 px-6 bg-[#FAF9F6]">
       <div className="max-w-3xl mx-auto">
-        <p className="uppercase tracking-widest text-sm text-[var(--text-secondary)] mb-3">
-          Why Folio
-        </p>
-        <h2 className="font-headline italic text-4xl md:text-5xl text-[var(--text-primary)] mb-8">
-          Start with what you&rsquo;ve earned.
-        </h2>
-        <div className="space-y-6 text-[var(--text-primary)] leading-relaxed">
-          <p>
-            Most platforms start with what they need from you. Reach without
-            attribution. Leads without polish. Engagement without record.
+        <motion.div {...fade}>
+          <p className="uppercase tracking-widest text-sm text-[var(--text-secondary)] mb-3">
+            Why Folio
           </p>
-          <p>
-            Folio starts with what you&rsquo;ve earned. A polished, permanent
-            showcase of your work. Your story, told room by room. And full
-            credit for every high-end material and product decision that made the
-            project what it is.
+          <h2 className="font-headline italic text-4xl md:text-5xl text-[var(--text-primary)] mb-10">
+            Start with what you&rsquo;ve earned.
+          </h2>
+        </motion.div>
+
+        <motion.p
+          className="text-[var(--text-primary)] leading-relaxed mb-6"
+          {...fade}
+        >
+          Most platforms start with what they need from you. Reach without
+          attribution. Leads without polish. Engagement without record.
+        </motion.p>
+
+        <motion.p
+          className="text-[var(--text-primary)] leading-relaxed mb-6"
+          {...fade}
+        >
+          Folio starts with what you&rsquo;ve earned. A polished, permanent
+          showcase of your work. Your story, told room by room. And full
+          credit for every high-end material and product decision that made the
+          project what it is.
+        </motion.p>
+
+        {/* Emphasized closing */}
+        <motion.div className="py-8" {...slowFade}>
+          <hr className="border-t border-[var(--ridge-outer)] mb-8 max-w-xs" />
+          <p className="font-headline italic text-2xl md:text-3xl text-[var(--accent)] leading-snug">
+            Your taste is documented. Your name is attached.
+            <br />
+            Your work doesn&rsquo;t disappear.
           </p>
-          <p>
-            Your taste is documented. Your name is attached. Your work
-            doesn&rsquo;t disappear.
-          </p>
-        </div>
+        </motion.div>
       </div>
     </section>
   );
@@ -105,23 +157,41 @@ export function FoundingCohort() {
   return (
     <section id="apply" className="py-24 px-6 bg-[#FAF9F6]">
       <div className="max-w-3xl mx-auto">
-        <p className="uppercase tracking-widest text-sm text-[var(--text-secondary)] mb-3">
-          Founding Designers
-        </p>
-        <h2 className="font-headline italic text-4xl md:text-5xl text-[var(--text-primary)] mb-8">
-          We&rsquo;re building the founding cohort now.
-        </h2>
-        <div className="space-y-6 text-[var(--text-primary)] leading-relaxed mb-10">
-          <p>
-            Folio is invite-only during its founding phase. Founding designers
-            receive permanent recognition on the platform and structural
-            advantages that don&rsquo;t go away as the platform grows.
+        <motion.div {...fade}>
+          <p className="uppercase tracking-widest text-sm text-[var(--text-secondary)] mb-3">
+            Founding Designers
           </p>
-          <p>If your work is ready, so are we.</p>
-        </div>
-        <Link href="/auth/signup" className="accent-btn inline-block px-6 py-3">
-          Apply to Join
-        </Link>
+          <h2 className="font-headline italic text-4xl md:text-5xl text-[var(--text-primary)] mb-10">
+            We&rsquo;re building the founding cohort now.
+          </h2>
+        </motion.div>
+
+        <motion.p
+          className="text-[var(--text-primary)] leading-relaxed mb-6"
+          {...fade}
+        >
+          Folio is invite-only during its founding phase. Founding designers
+          receive permanent recognition on the platform and structural
+          advantages that don&rsquo;t go away as the platform grows.
+        </motion.p>
+
+        <motion.div {...slowFade}>
+          <div className="glass-surface rounded-2xl p-10 md:p-14 mt-10">
+            <p className="font-headline italic text-2xl md:text-3xl text-[var(--text-primary)] mb-3">
+              If your work is ready, so are we.
+            </p>
+            <p className="text-[var(--text-secondary)] leading-relaxed mb-8">
+              Apply to join Folio&rsquo;s founding designer cohort and help shape
+              the platform from the ground up.
+            </p>
+            <Link
+              href="/auth/signup"
+              className="accent-btn inline-block px-8 py-3.5 text-base"
+            >
+              Apply to Join
+            </Link>
+          </div>
+        </motion.div>
       </div>
     </section>
   );
