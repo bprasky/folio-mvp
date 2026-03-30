@@ -131,6 +131,16 @@
 }
 
 /* ============================================================================
+   GLASS ZONE — Warm background region for glass surfaces to sit on
+   Apply to content containers so glass blur has contrast behind it.
+   ============================================================================ */
+.glass-zone {
+  background: #F0EDE8;
+  border-radius: 24px;
+  padding: 1px; /* prevents margin collapse */
+}
+
+/* ============================================================================
    FALLBACK — browsers without backdrop-filter support
    ============================================================================ */
 @supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {

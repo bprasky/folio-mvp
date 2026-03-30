@@ -246,10 +246,10 @@ export default function ProjectsPageClient({ projectsRaw, operatingAsOrgId }: Pr
   }, [projects]);
 
   return (
-    <div className="min-h-screen w-full bg-[var(--bg-elevated)] -mx-6">
+    <div className="min-h-screen w-full -mx-6">
       <div className="relative w-full">
         {/* Designer Header */}
-        <div className="bg-[var(--bg-elevated)] border-b border-[var(--border)]">
+        <div className="border-b border-[var(--border)]">
           <div className="max-w-7xl mx-auto px-4 md:px-8 py-8">
             <div className="flex items-center gap-6 mb-6">
               {/* Designer Avatar */}
@@ -383,7 +383,7 @@ export default function ProjectsPageClient({ projectsRaw, operatingAsOrgId }: Pr
         {/* Sections: Drafts first (inbox behavior), then In Progress, Published, Archived */}
         {projects.length > 0 && (
           <>
-            <div className="space-y-6 px-4 md:px-8 pb-8 pt-4">
+            <div className="space-y-6 px-4 md:px-8 pb-8 pt-4 glass-zone mx-4 md:mx-8">
               {/* Drafts section - appears first, expands if has projects */}
               <CollapsibleSectionBand
                 section="DRAFTS"
