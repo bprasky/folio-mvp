@@ -19,7 +19,6 @@
 // - Navigation: Currently /feed in Navigation.tsx line 48, label "Home"
 
 import MagazinePage from "@/components/magazine/MagazinePage";
-import { LandingModal } from "@/components/landing/LandingModal";
 
 // Force dynamic rendering to prevent caching of product data
 export const dynamic = 'force-dynamic';
@@ -34,11 +33,6 @@ interface MagazinePageProps {
 export default async function Page({ searchParams }: MagazinePageProps) {
   const edition = searchParams?.edition || "for-you";
 
-  return (
-    <>
-      <MagazinePage editionSlug={edition} />
-      <LandingModal />
-    </>
-  );
+  return <MagazinePage editionSlug={edition} />;
 }
 
