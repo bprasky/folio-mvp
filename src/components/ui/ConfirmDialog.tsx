@@ -65,7 +65,7 @@ export default function ConfirmDialog({
     >
       <div 
         ref={dialogRef}
-        className="bg-[var(--bg-base)] rounded-2xl shadow-xl border border-[var(--ridge-outer)] max-w-md w-full p-6"
+        className="glass-overlay max-w-md w-full p-6"
         role="dialog"
         aria-modal="true"
         aria-labelledby="dialog-title"

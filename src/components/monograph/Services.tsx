@@ -15,7 +15,7 @@ export default function Services({ designerName }: ServicesProps) {
 
       <div className="grid md:grid-cols-2 gap-6 md:gap-8">
         {/* Full-Service Card */}
-        <div className="bg-white border border-stone-200 rounded-lg p-8 md:p-10 shadow-sm hover:shadow-md transition-shadow duration-300">
+        <div className="glass-surface p-8 md:p-10">
           <h3 className="font-serif text-2xl md:text-3xl text-stone-900 font-light mb-4">
             Full-Service Design
           </h3>
@@ -33,7 +33,7 @@ export default function Services({ designerName }: ServicesProps) {
         </div>
 
         {/* Folio Atelier AI Card */}
-        <div className="bg-gradient-to-br from-stone-50 to-stone-100 border border-stone-200 rounded-lg p-8 md:p-10 shadow-sm hover:shadow-md transition-shadow duration-300 relative overflow-hidden">
+        <div className="glass-surface p-8 md:p-10 relative overflow-hidden">
           {/* Surge Indicator */}
           <div className="absolute top-4 right-4">
             <span className="px-3 py-1 bg-amber-100 text-amber-800 text-xs font-medium rounded-full border border-amber-200">

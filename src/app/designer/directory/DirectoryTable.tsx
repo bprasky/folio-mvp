@@ -50,7 +50,7 @@ export default function DirectoryTable({
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-[#E8E6E3] overflow-hidden">
+    <div className="glass-surface overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead className="bg-[#F8F7F5] border-b border-[#F0EFED]">

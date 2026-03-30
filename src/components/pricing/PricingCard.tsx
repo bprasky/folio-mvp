@@ -29,10 +29,10 @@ export function PricingCard({
 
   return (
     <div
-      className={`relative rounded-2xl border p-6 flex flex-col ${
+      className={`glass-surface rounded-2xl p-6 flex flex-col ${
         isHighlighted
-          ? 'border-black bg-white shadow-lg ring-2 ring-black'
-          : 'border-neutral-200 bg-white'
+          ? 'featured ring-2 ring-black'
+          : ''
       } ${isCurrentTier ? 'ring-2 ring-[var(--accent)]' : ''}`}
     >
       {isHighlighted && (

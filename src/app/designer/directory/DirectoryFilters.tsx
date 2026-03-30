@@ -61,7 +61,7 @@ export default function DirectoryFilters({
   const hasActiveFilters = Object.keys(filters).length > 0 || searchTerm.length > 0;
 
   return (
-    <div className="bg-white border border-[#E8E6E3] rounded-xl p-4 mb-6 shadow-sm">
+    <div className="glass-surface p-4 mb-6">
 
       {/* Filter Toggle */}
       <div className="flex items-center justify-between mb-4">

@@ -23,7 +23,7 @@ export const FolderCard: React.FC<FolderCardProps> = ({
 }) => {
   return (
     <div
-      className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 cursor-pointer"
+      className="glass-surface overflow-hidden cursor-pointer"
       onClick={onClick}
     >
       <div className="p-4">

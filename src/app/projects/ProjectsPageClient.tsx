@@ -345,7 +345,7 @@ export default function ProjectsPageClient({ projectsRaw, operatingAsOrgId }: Pr
                 placeholder="Search projects by name..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 rounded-lg border border-[var(--border)] bg-[var(--bg-elevated)] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20"
+                className="glass-inset w-full pl-10 pr-4 py-3 rounded-lg text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20"
               />
             </div>
           </div>
@@ -1063,7 +1063,7 @@ function ProjectCard({ p, onRename, onDelete, onForceDelete }: {
 
   return (
     <div className="group relative">
-      <article className="relative overflow-hidden rounded-2xl bg-[var(--bg-elevated)] shadow-[var(--neu-raised)] transition-all duration-300 hover:shadow-lg hover:-translate-y-1 border border-[var(--ridge-outer)]">
+      <article className="glass-surface rounded-2xl transition-all duration-300">
         <Link href={`/project/${p.id}`} className="block">
           <div className="relative aspect-[3/4]">
             {p.coverUrl ? (

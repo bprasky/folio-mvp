@@ -22,9 +22,9 @@ interface RidgeCardProps extends React.HTMLAttributes<HTMLDivElement> {
 const RidgeCard = React.forwardRef<HTMLDivElement, RidgeCardProps>(
   ({ className, size = 'default', padding = 'md', children, ...props }, ref) => {
     const sizeClasses = {
-      default: 'ridge-card',
-      sm: 'ridge-card ridge-card-sm',
-      lg: 'ridge-card ridge-card-lg',
+      default: 'glass-surface',
+      sm: 'glass-surface glass-surface-sm',
+      lg: 'glass-surface',
     };
 
     const paddingClasses = {
@@ -136,7 +136,7 @@ const StatsCard = React.forwardRef<HTMLDivElement, StatsCardProps>(
   ({ className, value, label, trend, ...props }, ref) => (
     <div
       ref={ref}
-      className={cn('ridge-card stats-card', className)}
+      className={cn('glass-surface stats-card', className)}
       {...props}
     >
       <div className="flex items-baseline justify-between">

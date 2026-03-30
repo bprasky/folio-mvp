@@ -211,7 +211,7 @@ export default function ProfilePage() {
           <p className="text-[var(--text-secondary)] mt-2">Manage your account information and preferences</p>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm">
+        <div className="glass-surface">
           {/* Profile Header */}
           <div className="p-6 border-b border-[var(--ridge-outer)]">
             <div className="flex items-center justify-between">
@@ -504,7 +504,7 @@ export default function ProfilePage() {
         )}
 
         {/* Organization Memberships */}
-        <div className="bg-white rounded-lg shadow-sm mt-6">
+        <div className="glass-surface mt-6">
           <div className="p-6 border-b border-[var(--ridge-outer)]">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-medium text-[var(--text-primary)]">Organization Memberships</h3>
