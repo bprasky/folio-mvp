@@ -88,12 +88,7 @@ export function WelcomeModal() {
       {!dismissing ? null : null}
       {/* Backdrop */}
       <motion.div
-        className="fixed inset-0 z-50 flex items-center justify-center"
-        style={{
-          backdropFilter: 'blur(18px)',
-          WebkitBackdropFilter: 'blur(18px)',
-          background: 'rgba(0,0,0,0.15)',
-        }}
+        className="fixed inset-0 z-50 flex items-center justify-center glass-backdrop"
         initial={{ opacity: 0 }}
         animate={dismissing ? { opacity: 0 } : { opacity: 1 }}
         transition={{ duration: dismissing ? 0.2 : 0.3 }}
@@ -101,16 +96,7 @@ export function WelcomeModal() {
       >
         {/* Modal panel */}
         <motion.div
-          className="relative w-[88%] max-w-[620px] max-h-[92vh] flex flex-col overflow-hidden"
-          style={{
-            background: 'rgba(245, 242, 237, 0.45)',
-            backdropFilter: 'blur(40px) saturate(160%) brightness(1.08)',
-            WebkitBackdropFilter: 'blur(40px) saturate(160%) brightness(1.08)',
-            border: '1px solid rgba(255, 255, 255, 0.28)',
-            borderRadius: '20px',
-            boxShadow:
-              '0 8px 48px rgba(0,0,0,0.22), 0 1px 0 rgba(255,255,255,0.35) inset',
-          }}
+          className="relative w-[88%] max-w-[620px] max-h-[92vh] flex flex-col glass-overlay rounded-[20px]"
           initial={{ opacity: 0, scale: 0.96, y: 16 }}
           animate={
             dismissing
@@ -182,13 +168,7 @@ export function WelcomeModal() {
                 {steps.map((step, i) => (
                   <div
                     key={i}
-                    className="p-4"
-                    style={{
-                      background: 'rgba(255, 255, 255, 0.25)',
-                      border: '1px solid rgba(255, 255, 255, 0.22)',
-                      backdropFilter: 'blur(8px)',
-                      borderRadius: '12px',
-                    }}
+                    className="p-4 glass-surface glass-surface-sm"
                   >
                     <p
                       className="font-headline italic text-3xl mb-2"
