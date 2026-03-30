@@ -19,7 +19,7 @@ interface GlassSurfaceProps {
 
 export function GlassSurface({ children, className = '', variant = 'overlay' }: GlassSurfaceProps) {
   const baseClasses = variant === 'overlay'
-    ? 'glass-surface-sm border border-white/40 shadow-sm'
+    ? 'glass-surface glass-surface-sm'
     : 'glass-surface border border-white/40 shadow-sm';
   
   return (

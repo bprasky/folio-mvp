@@ -390,7 +390,7 @@ const SpringProductLaunch = () => {
             </div>
           </div>
           {/* Comments/Discussion (MVP) */}
-          <div className="glass p-4">
+          <div className="glass-surface p-4">
             <h4 className="font-semibold mb-2">Discussion</h4>
             <div className="comments-list">
               {renderComments()}

@@ -12,7 +12,7 @@ const GlassCard = forwardRef<HTMLDivElement, GlassCardProps>(
     
     const variants = {
       default: "glass-surface",
-      subtle: "glass-surface-sm",
+      subtle: "glass-surface glass-surface-sm",
       strong: "glass-overlay",
       solid: "bg-white border border-[var(--ridge-outer)]/50 shadow-lg",
     };

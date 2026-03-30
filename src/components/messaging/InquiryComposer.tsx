@@ -54,7 +54,7 @@ export default function InquiryComposer({
 
   return (
     <div
-      className="glass-surface-sm rounded-2xl p-6 space-y-4"
+      className="glass-surface glass-surface-sm p-6 space-y-4"
     >
       <h3
         className="text-sm font-medium"

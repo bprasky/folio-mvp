@@ -383,7 +383,7 @@ export default function ProjectsPageClient({ projectsRaw, operatingAsOrgId }: Pr
         {/* Sections: Drafts first (inbox behavior), then In Progress, Published, Archived */}
         {projects.length > 0 && (
           <>
-            <div className="space-y-6 px-4 md:px-8 pb-8 pt-4 glass-zone mx-4 md:mx-8">
+            <div className="space-y-6 px-4 md:px-8 pb-8 pt-4 mx-4 md:mx-8">
               {/* Drafts section - appears first, expands if has projects */}
               <CollapsibleSectionBand
                 section="DRAFTS"

@@ -46,7 +46,7 @@ GlassModal.displayName = "GlassModal";
 
 // Sub-components for modal structure
 const GlassModalHeader = ({ children, className }: { children: React.ReactNode; className?: string }) => (
-  <div className={cn("px-8 py-4 border-b border-[var(--glass-border)] bg-[var(--glass-bg-muted)]", className)}>
+  <div className={cn("px-8 py-4 border-b border-[rgba(190,175,155,0.24)] bg-white/25", className)}>
     {children}
   </div>
 );
@@ -58,7 +58,7 @@ const GlassModalBody = ({ children, className }: { children: React.ReactNode; cl
 );
 
 const GlassModalFooter = ({ children, className }: { children: React.ReactNode; className?: string }) => (
-  <div className={cn("px-8 py-4 border-t border-[var(--glass-border)] bg-[var(--glass-bg-muted)]", className)}>
+  <div className={cn("px-8 py-4 border-t border-[rgba(190,175,155,0.24)] bg-white/25", className)}>
     {children}
   </div>
 );

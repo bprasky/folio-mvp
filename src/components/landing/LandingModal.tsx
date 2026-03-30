@@ -92,7 +92,7 @@ export function LandingModal() {
               onClick={(e) => e.stopPropagation()}
             >
               {/* Sticky header */}
-              <div className="sticky top-0 z-10 flex items-center justify-between px-8 py-5 border-b border-[var(--glass-border)] bg-[rgba(255,252,248,0.95)] backdrop-blur-md">
+              <div className="sticky top-0 z-10 flex items-center justify-between px-8 py-5 border-b border-[rgba(190,175,155,0.24)] bg-[rgba(255,252,248,0.95)] backdrop-blur-md">
                 <span className="font-headline text-xl tracking-wide font-semibold text-[var(--text-primary)]">
                   FOLIO
                 </span>
@@ -226,7 +226,7 @@ export function LandingModal() {
               </div>
 
               {/* Sticky footer */}
-              <div className="sticky bottom-0 z-10 flex flex-col sm:flex-row items-center justify-between gap-3 px-8 py-5 border-t border-[var(--glass-border)] bg-[rgba(255,252,248,0.95)] backdrop-blur-md">
+              <div className="sticky bottom-0 z-10 flex flex-col sm:flex-row items-center justify-between gap-3 px-8 py-5 border-t border-[rgba(190,175,155,0.24)] bg-[rgba(255,252,248,0.95)] backdrop-blur-md">
                 <Link
                   href="/auth/signin"
                   onClick={handleClose}

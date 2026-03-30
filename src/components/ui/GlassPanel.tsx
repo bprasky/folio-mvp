@@ -32,7 +32,7 @@ export function GlassPanel({
       )}
     >
       {header && (
-        <div className="px-5 md:px-6 pt-5 pb-3 border-b border-[var(--glass-border)] dark:border-white/5">
+        <div className="px-5 md:px-6 pt-5 pb-3 border-b border-[rgba(190,175,155,0.24)] dark:border-white/5">
           {header}
         </div>
       )}

@@ -66,13 +66,7 @@ export function MobileMenu() {
 
       {isOpen && (
         <div
-          className="fixed top-16 left-0 right-0 border-b border-white/15 z-50"
-          style={{
-            background: 'rgba(245, 242, 237, 0.55)',
-            backdropFilter: 'blur(40px) saturate(160%) brightness(1.08)',
-            WebkitBackdropFilter: 'blur(40px) saturate(160%) brightness(1.08)',
-            boxShadow: '0 8px 48px rgba(0,0,0,0.22)',
-          }}
+          className="fixed top-16 left-0 right-0 border-b border-white/15 z-50 glass-overlay rounded-none"
         >
           {/* Mobile search */}
           <div className="p-4 border-b border-[var(--ridge-outer)]">
