@@ -65,7 +65,15 @@ export function MobileMenu() {
       </button>
 
       {isOpen && (
-        <div className="fixed top-16 left-0 right-0 bg-[var(--bg-base)] border-b border-[var(--ridge-outer)] shadow-lg z-50">
+        <div
+          className="fixed top-16 left-0 right-0 border-b border-white/15 z-50"
+          style={{
+            background: 'rgba(245, 242, 237, 0.55)',
+            backdropFilter: 'blur(40px) saturate(160%) brightness(1.08)',
+            WebkitBackdropFilter: 'blur(40px) saturate(160%) brightness(1.08)',
+            boxShadow: '0 8px 48px rgba(0,0,0,0.22)',
+          }}
+        >
           {/* Mobile search */}
           <div className="p-4 border-b border-[var(--ridge-outer)]">
             <form

@@ -15,11 +15,11 @@
    CSS VARIABLES
    ============================================================================ */
 :root {
-  /* Liquid glass colors */
-  --liquid-glass-white: rgba(255, 255, 255, 0.85);
-  --liquid-glass-white-dim: rgba(255, 255, 255, 0.4);
-  --liquid-glass-warm: rgba(255, 253, 250, 0.5);
-  --liquid-glass-warm-light: rgba(255, 250, 245, 0.7);
+  /* Liquid glass colors — aligned with Folio glass standard */
+  --liquid-glass-white: rgba(245, 242, 237, 0.55);
+  --liquid-glass-white-dim: rgba(245, 242, 237, 0.30);
+  --liquid-glass-warm: rgba(245, 242, 237, 0.40);
+  --liquid-glass-warm-light: rgba(245, 242, 237, 0.50);
 
   /* Shadow colors (warm brown tones) */
   --liquid-shadow-warm: rgba(120, 100, 80, 0.15);
@@ -35,10 +35,10 @@
   --liquid-glow-orb-2: rgba(255, 240, 220, 0.4);
   --liquid-glow-orb-3: rgba(255, 225, 200, 0.35);
 
-  /* Border colors */
-  --liquid-border-light: rgba(255, 255, 255, 0.9);
-  --liquid-border-warm: rgba(220, 200, 180, 0.3);
-  --liquid-border-inset: rgba(200, 190, 180, 0.3);
+  /* Border colors — aligned with Folio glass standard */
+  --liquid-border-light: rgba(255, 255, 255, 0.28);
+  --liquid-border-warm: rgba(255, 255, 255, 0.22);
+  --liquid-border-inset: rgba(255, 255, 255, 0.18);
 
   /* Blur values */
   --liquid-blur-standard: 40px;
@@ -114,8 +114,8 @@
     var(--liquid-glass-white-dim) 40%,
     var(--liquid-glass-warm) 100%
   );
-  backdrop-filter: blur(var(--liquid-blur-standard)) saturate(180%);
-  -webkit-backdrop-filter: blur(var(--liquid-blur-standard)) saturate(180%);
+  backdrop-filter: blur(var(--liquid-blur-standard)) saturate(160%) brightness(1.08);
+  -webkit-backdrop-filter: blur(var(--liquid-blur-standard)) saturate(160%) brightness(1.08);
 
   /* Multi-layer shadows for liquid depth */
   box-shadow:
@@ -429,8 +429,8 @@
     rgba(255, 255, 255, 0.92) 0%,
     rgba(255, 255, 255, 0.88) 100%
   );
-  backdrop-filter: blur(var(--liquid-blur-standard)) saturate(180%);
-  -webkit-backdrop-filter: blur(var(--liquid-blur-standard)) saturate(180%);
+  backdrop-filter: blur(var(--liquid-blur-standard)) saturate(160%) brightness(1.08);
+  -webkit-backdrop-filter: blur(var(--liquid-blur-standard)) saturate(160%) brightness(1.08);
   border-bottom: 1px solid rgba(224, 220, 216, 0.5);
   box-shadow:
     0 4px 20px rgba(120, 100, 80, 0.08),
