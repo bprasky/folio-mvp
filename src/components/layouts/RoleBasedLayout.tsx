@@ -26,7 +26,23 @@ export default function RoleBasedLayout({ children }: RoleBasedLayoutProps) {
     return <>{children}</>;
   }
 
-  // Show loading state while session is being determined
+  // Marketing pages render full-width without SimpleLayout chrome or loading skeleton.
+  // Check BEFORE loading state so server-rendered content shows immediately.
+  const MARKETING_ROUTES = ['/about', '/for-designers'];
+  const isMarketingRoute = MARKETING_ROUTES.some(route => pathname?.startsWith(route));
+  const isHomepageLanding = pathname === '/' && (status === 'loading' || !session);
+
+  if (isMarketingRoute || isHomepageLanding) {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <Navigation />
+        <main className="flex-1">{children}</main>
+        <Footer />
+      </div>
+    );
+  }
+
+  // Show loading state while session is being determined (authenticated routes only)
   if (status === 'loading') {
     return (
       <div className="flex flex-col min-h-screen w-full bg-[var(--bg-base)]">
@@ -41,21 +57,6 @@ export default function RoleBasedLayout({ children }: RoleBasedLayoutProps) {
             </div>
           </div>
         </main>
-      </div>
-    );
-  }
-
-  // Marketing pages render full-width without SimpleLayout chrome
-  const MARKETING_ROUTES = ['/about', '/for-designers'];
-  const isMarketingPage = MARKETING_ROUTES.some(route => pathname?.startsWith(route))
-    || (pathname === '/' && !session);
-
-  if (isMarketingPage) {
-    return (
-      <div className="flex flex-col min-h-screen">
-        <Navigation />
-        <main className="flex-1">{children}</main>
-        <Footer />
       </div>
     );
   }
