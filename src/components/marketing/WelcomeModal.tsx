@@ -2,12 +2,11 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { useSession } from 'next-auth/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 
-interface WelcomeModalProps {
-  onDismiss: () => void;
-}
+const SESSION_KEY = 'folio_welcome_dismissed';
 
 const steps = [
   {
@@ -35,10 +34,20 @@ const pillars = [
   { label: 'Your Clients', title: 'Find clients whose taste already matches yours', href: '/for-designers/client-matching' },
 ];
 
-export function WelcomeModal({ onDismiss }: WelcomeModalProps) {
+export function WelcomeModal() {
+  const [isOpen, setIsOpen] = useState(false);
   const [dismissing, setDismissing] = useState(false);
   const [targetPos, setTargetPos] = useState({ x: 0, y: 0 });
   const windowCenter = useRef({ x: 0, y: 0 });
+  const { status } = useSession();
+
+  useEffect(() => {
+    if (status === 'authenticated') return;
+    if (status === 'loading') return;
+    if (!sessionStorage.getItem(SESSION_KEY)) {
+      setIsOpen(true);
+    }
+  }, [status]);
 
   useEffect(() => {
     windowCenter.current = {
@@ -46,6 +55,13 @@ export function WelcomeModal({ onDismiss }: WelcomeModalProps) {
       y: window.innerHeight / 2,
     };
   }, []);
+
+  if (!isOpen) return null;
+
+  function handleClose() {
+    sessionStorage.setItem(SESSION_KEY, 'true');
+    setIsOpen(false);
+  }
 
   function handleDismiss() {
     const target = document.querySelector('[data-folio-target="for-designers-nav"]');
@@ -64,7 +80,7 @@ export function WelcomeModal({ onDismiss }: WelcomeModalProps) {
     const target = document.querySelector('[data-folio-target="for-designers-nav"]');
     target?.classList.add('folio-nav-pulse');
     setTimeout(() => target?.classList.remove('folio-nav-pulse'), 800);
-    onDismiss();
+    handleClose();
   }
 
   return (
@@ -214,7 +230,7 @@ export function WelcomeModal({ onDismiss }: WelcomeModalProps) {
                     href={pillar.href}
                     onClick={(e) => {
                       e.stopPropagation();
-                      onDismiss();
+                      handleClose();
                     }}
                     className="flex items-baseline gap-3 group py-2 transition-colors hover:bg-black/[0.02] -mx-2 px-2 rounded-lg"
                     style={{
@@ -277,7 +293,7 @@ export function WelcomeModal({ onDismiss }: WelcomeModalProps) {
               href="/auth/signin"
               onClick={(e) => {
                 e.stopPropagation();
-                onDismiss();
+                handleClose();
               }}
               className="text-xs text-[#7a6e68] hover:text-[var(--text-primary)] transition-colors"
             >
@@ -287,7 +303,7 @@ export function WelcomeModal({ onDismiss }: WelcomeModalProps) {
               href="/auth/signup"
               onClick={(e) => {
                 e.stopPropagation();
-                onDismiss();
+                handleClose();
               }}
               className="accent-btn inline-block px-7 py-2.5 text-sm"
             >
