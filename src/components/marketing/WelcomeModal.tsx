@@ -171,7 +171,7 @@ export function WelcomeModal() {
             <div className="px-7 py-8">
               <p
                 className="uppercase tracking-widest text-xs font-medium mb-2"
-                style={{ color: '#c9a96e' }}
+                style={{ color: '#a07d3f' }}
               >
                 The Process
               </p>
@@ -216,7 +216,7 @@ export function WelcomeModal() {
             <div className="px-7 py-8">
               <p
                 className="uppercase tracking-widest text-xs font-medium mb-2"
-                style={{ color: '#c9a96e' }}
+                style={{ color: '#a07d3f' }}
               >
                 What You Get
               </p>
@@ -263,7 +263,7 @@ export function WelcomeModal() {
             <div className="px-7 py-8 pb-4">
               <p
                 className="uppercase tracking-widest text-xs font-medium mb-2"
-                style={{ color: '#c9a96e' }}
+                style={{ color: '#a07d3f' }}
               >
                 Founding Designers
               </p>
