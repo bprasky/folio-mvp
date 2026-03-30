@@ -28,7 +28,8 @@ export default function RoleBasedLayout({ children }: RoleBasedLayoutProps) {
 
   // Marketing pages render full-width without SimpleLayout chrome or loading skeleton.
   const MARKETING_ROUTES = ['/about', '/for-designers'];
-  const isMarketingRoute = MARKETING_ROUTES.some(route => pathname?.startsWith(route));
+  const isMarketingRoute = MARKETING_ROUTES.some(route => pathname?.startsWith(route))
+    || pathname === '/';
 
   if (isMarketingRoute) {
     return (

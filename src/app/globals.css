@@ -2051,3 +2051,12 @@ body.frame-dark::before {
     padding: 0.5rem;
   }
 }
+
+/* Welcome modal → nav link pulse */
+@keyframes folio-nav-pulse {
+  0%   { color: #c9a96e; }
+  100% { color: inherit; }
+}
+.folio-nav-pulse {
+  animation: folio-nav-pulse 0.8s ease-out forwards;
+}
