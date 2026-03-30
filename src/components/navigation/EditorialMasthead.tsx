@@ -90,16 +90,22 @@ export function EditorialMasthead() {
     <>
       {/* Sticky Navigation Bar */}
       <motion.header
-        className={`sticky top-0 z-50 w-full backdrop-blur-md transition-colors duration-300 ${
+        className={`sticky top-0 z-50 w-full transition-colors duration-300 ${
           isMagazinePage && !isScrolled
             ? 'border-b border-transparent'
-            : 'border-b border-[var(--ridge-outer)]'
+            : 'border-b border-white/15'
         }`}
         style={{
           height: "64px",
           backgroundColor: isMagazinePage
-            ? `rgba(255, 255, 255, ${isScrolled ? 0.95 : 0})`
-            : 'rgba(255, 255, 255, 0.95)',
+            ? `rgba(245, 242, 237, ${isScrolled ? 0.45 : 0})`
+            : 'rgba(245, 242, 237, 0.45)',
+          backdropFilter: isMagazinePage && !isScrolled
+            ? 'none'
+            : 'blur(40px) saturate(160%) brightness(1.08)',
+          WebkitBackdropFilter: isMagazinePage && !isScrolled
+            ? 'none'
+            : 'blur(40px) saturate(160%) brightness(1.08)',
         }}
       >
         <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">

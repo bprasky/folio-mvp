@@ -198,7 +198,16 @@ export function UserMenu() {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-72 rounded-xl border border-[var(--ridge-outer)] bg-[var(--bg-base)] shadow-lg py-2 z-50">
+        <div
+          className="absolute right-0 mt-2 w-72 rounded-xl py-2 z-50"
+          style={{
+            background: 'rgba(245, 242, 237, 0.55)',
+            backdropFilter: 'blur(40px) saturate(160%) brightness(1.08)',
+            WebkitBackdropFilter: 'blur(40px) saturate(160%) brightness(1.08)',
+            border: '1px solid rgba(255, 255, 255, 0.28)',
+            boxShadow: '0 8px 48px rgba(0,0,0,0.22), 0 1px 0 rgba(255,255,255,0.35) inset',
+          }}
+        >
           {/* User info header */}
           <div className="px-4 py-3 border-b border-[var(--ridge-outer)]">
             <div className="flex items-center gap-3">

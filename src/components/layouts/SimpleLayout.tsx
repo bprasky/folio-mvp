@@ -3,7 +3,7 @@ import { ReactNode } from "react";
 
 export default function SimpleLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="relative min-h-screen bg-gray-50">
+    <div className="relative min-h-screen">
       {/* Navigation is now handled by RoleBasedLayout with new top navigation */}
 
       {/* Main Content Area */}

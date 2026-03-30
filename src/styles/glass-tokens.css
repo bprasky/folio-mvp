@@ -2,12 +2,13 @@
  * Folio Unified Glass Token System
  *
  * Single source of truth for all glassmorphism treatments.
- * Warm ivory palette — never cold white. Photography is the real surface.
+ * Warm transparent glass with blur, saturate, and brightness —
+ * content behind bleeds through. Photography is the real surface.
  *
  * Usage:
  *   .glass-surface     — Cards, tiles, panels (content containers)
  *   .glass-surface-sm  — Lighter variant for nested/secondary surfaces
- *   .glass-overlay     — Modal/sheet content panels (high opacity for readability)
+ *   .glass-overlay     — Modal/sheet content panels (higher opacity for readability)
  *   .glass-backdrop    — Modal/sheet dark backdrops (the dim layer behind content)
  *   .glass-badge       — Pills, badges, tags, small inline elements
  *   .glass-sticky      — Sticky headers and nav bars
@@ -20,33 +21,39 @@
  */
 
 :root {
-  /* ── Glass Backgrounds (warm ivory) ── */
-  --glass-bg: rgba(255, 252, 248, 0.75);
-  --glass-bg-hover: rgba(255, 252, 248, 0.85);
-  --glass-bg-muted: rgba(255, 252, 248, 0.60);
-  --glass-bg-heavy: rgba(255, 252, 248, 0.88);
+  /* ── Glass Backgrounds ── */
+  --glass-bg: rgba(245, 242, 237, 0.45);
+  --glass-bg-hover: rgba(245, 242, 237, 0.55);
+  --glass-bg-muted: rgba(255, 255, 255, 0.25);
+  --glass-bg-heavy: rgba(245, 242, 237, 0.55);
 
   /* ── Glass Borders ── */
-  --glass-border: rgba(255, 255, 255, 0.35);
-  --glass-border-hover: rgba(255, 255, 255, 0.50);
+  --glass-border: rgba(255, 255, 255, 0.28);
+  --glass-border-hover: rgba(255, 255, 255, 0.35);
 
   /* ── Glass Blur ── */
-  --glass-blur: 16px;
-  --glass-blur-heavy: 24px;
-  --glass-blur-light: 10px;
+  --glass-blur: 40px;
+  --glass-blur-heavy: 40px;
+  --glass-blur-light: 20px;
+
+  /* ── Glass Filter (shared saturate + brightness) ── */
+  --glass-filter: blur(40px) saturate(160%) brightness(1.08);
+  --glass-filter-light: blur(20px) saturate(150%) brightness(1.05);
+  --glass-filter-badge: blur(16px) saturate(150%) brightness(1.05);
 
   /* ── Glass Shadows ── */
-  --glass-shadow: 0 4px 24px rgba(87, 75, 67, 0.06);
-  --glass-shadow-lg: 0 8px 32px rgba(87, 75, 67, 0.10);
-  --glass-shadow-inner: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  --glass-shadow: 0 8px 48px rgba(0, 0, 0, 0.22), 0 1px 0 rgba(255, 255, 255, 0.35) inset;
+  --glass-shadow-lg: 0 12px 56px rgba(0, 0, 0, 0.28), 0 1px 0 rgba(255, 255, 255, 0.4) inset;
+  --glass-shadow-sm: 0 4px 24px rgba(0, 0, 0, 0.10), 0 1px 0 rgba(255, 255, 255, 0.25) inset;
+  --glass-shadow-inner: inset 0 1px 0 rgba(255, 255, 255, 0.35);
 
   /* ── Overlay Backdrop (dark scrim behind modals) ── */
-  --glass-overlay-backdrop: rgba(0, 0, 0, 0.40);
+  --glass-overlay-backdrop: rgba(0, 0, 0, 0.15);
 
   /* ── Badge / Pill ── */
-  --glass-badge-bg: rgba(255, 252, 248, 0.55);
-  --glass-badge-bg-hover: rgba(255, 252, 248, 0.70);
-  --glass-badge-border: rgba(255, 252, 248, 0.30);
+  --glass-badge-bg: rgba(245, 242, 237, 0.35);
+  --glass-badge-bg-hover: rgba(245, 242, 237, 0.45);
+  --glass-badge-border: rgba(255, 255, 255, 0.22);
 }
 
 /* ============================================================================
@@ -54,39 +61,39 @@
    ============================================================================ */
 .glass-surface {
   background: var(--glass-bg);
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
+  backdrop-filter: var(--glass-filter);
+  -webkit-backdrop-filter: var(--glass-filter);
   border: 1px solid var(--glass-border);
-  border-radius: 1rem;
-  box-shadow: var(--glass-shadow), var(--glass-shadow-inner);
+  border-radius: 20px;
+  box-shadow: var(--glass-shadow);
   transition: background 0.2s ease, box-shadow 0.2s ease;
 }
 
 .glass-surface:hover {
   background: var(--glass-bg-hover);
-  box-shadow: var(--glass-shadow-lg), var(--glass-shadow-inner);
+  box-shadow: var(--glass-shadow-lg);
 }
 
 /* Lighter/smaller variant for nested or secondary surfaces */
 .glass-surface-sm {
   background: var(--glass-bg-muted);
-  backdrop-filter: blur(var(--glass-blur-light));
-  -webkit-backdrop-filter: blur(var(--glass-blur-light));
-  border: 1px solid var(--glass-border);
-  border-radius: 0.75rem;
-  box-shadow: var(--glass-shadow);
+  backdrop-filter: var(--glass-filter-light);
+  -webkit-backdrop-filter: var(--glass-filter-light);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 12px;
+  box-shadow: var(--glass-shadow-sm);
 }
 
 /* ============================================================================
-   GLASS OVERLAY — Modal/sheet content panels (high readability)
+   GLASS OVERLAY — Modal/sheet content panels (higher readability)
    ============================================================================ */
 .glass-overlay {
   background: var(--glass-bg-heavy);
-  backdrop-filter: blur(var(--glass-blur-heavy));
-  -webkit-backdrop-filter: blur(var(--glass-blur-heavy));
+  backdrop-filter: var(--glass-filter);
+  -webkit-backdrop-filter: var(--glass-filter);
   border: 1px solid var(--glass-border);
   border-radius: 20px;
-  box-shadow: var(--glass-shadow-lg);
+  box-shadow: var(--glass-shadow);
 }
 
 /* ============================================================================
@@ -94,8 +101,8 @@
    ============================================================================ */
 .glass-backdrop {
   background: var(--glass-overlay-backdrop);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
 }
 
 /* ============================================================================
@@ -103,8 +110,8 @@
    ============================================================================ */
 .glass-badge {
   background: var(--glass-badge-bg);
-  backdrop-filter: blur(var(--glass-blur-light));
-  -webkit-backdrop-filter: blur(var(--glass-blur-light));
+  backdrop-filter: var(--glass-filter-badge);
+  -webkit-backdrop-filter: var(--glass-filter-badge);
   border: 1px solid var(--glass-badge-border);
   border-radius: 20px;
 }
@@ -117,10 +124,10 @@
    GLASS STICKY — Sticky headers and navigation bars
    ============================================================================ */
 .glass-sticky {
-  background: rgba(255, 252, 248, 0.90);
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  border-bottom: 1px solid rgba(224, 224, 224, 0.5);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-filter);
+  -webkit-backdrop-filter: var(--glass-filter);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 /* ============================================================================
@@ -129,19 +136,19 @@
 @supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
   .glass-surface,
   .glass-surface-sm {
-    background: rgba(255, 252, 248, 0.92);
+    background: rgba(245, 242, 237, 0.85);
   }
 
   .glass-overlay {
-    background: rgba(255, 252, 248, 0.96);
+    background: rgba(245, 242, 237, 0.92);
   }
 
   .glass-badge {
-    background: rgba(255, 252, 248, 0.80);
+    background: rgba(245, 242, 237, 0.75);
   }
 
   .glass-sticky {
-    background: rgba(255, 252, 248, 0.96);
+    background: rgba(245, 242, 237, 0.92);
   }
 }
 
