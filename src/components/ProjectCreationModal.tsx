@@ -946,7 +946,7 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
           className="glass-overlay rounded-[20px] max-w-6xl w-full max-h-[90vh] overflow-hidden shadow-2xl"
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="flex justify-between items-center p-6 border-b border-[var(--ridge-outer)]/50 bg-[var(--glass-bg-muted)]">
+          <div className="flex justify-between items-center p-6 border-b border-[var(--ridge-outer)]/50 bg-white/25">
             <div>
               <h2 className="text-2xl font-bold text-[var(--text-primary)]">
                 {editingProject ? 'Edit Project' : 'Create New Project'}
@@ -1132,7 +1132,7 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
                       Add Credit
                     </button>
                   ) : (
-                    <div className="border border-[var(--ridge-outer)] rounded-xl p-4 bg-[var(--glass-bg-muted)]">
+                    <div className="border border-[var(--ridge-outer)] rounded-xl p-4 bg-white/25">
                       {/* Role Selection */}
                       {!selectedCreditRole ? (
                         <div>
@@ -1551,7 +1551,7 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
             )}
           </div>
 
-          <div className="flex justify-between items-center p-6 border-t border-[var(--ridge-outer)]/50 bg-[var(--glass-bg-muted)]">
+          <div className="flex justify-between items-center p-6 border-t border-[var(--ridge-outer)]/50 bg-white/25">
             <div className="flex gap-3">
               {currentStep !== 'details' && (
                 <button
@@ -1623,7 +1623,7 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
               className="glass-overlay rounded-[20px] max-w-5xl w-full max-h-[85vh] overflow-hidden shadow-2xl m-4"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="p-6 border-b border-[var(--ridge-outer)]/50 bg-[var(--glass-bg-muted)]">
+              <div className="p-6 border-b border-[var(--ridge-outer)]/50 bg-white/25">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-xl font-bold text-[var(--text-primary)]">Select or Add Product</h3>
                   <button

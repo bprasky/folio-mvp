@@ -25,7 +25,7 @@ export default function MomentCard({
   
   return (
     <div
-      className="group relative aspect-[4/3] overflow-hidden cursor-pointer rounded-2xl glass"
+      className="group relative aspect-[4/3] overflow-hidden cursor-pointer rounded-2xl glass-surface"
       onClick={onClick}
     >
       {/* Image */}

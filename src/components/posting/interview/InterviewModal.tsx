@@ -1727,7 +1727,7 @@ export function InterviewModal({
         )}
         {/* Modal header with close button and progress */}
         {(phase === "question" || phase === "followup" || phase === "complete") && (
-          <div className="flex items-center justify-between px-8 py-4 border-b border-[var(--ridge-outer)]/50 bg-[var(--glass-bg-muted)]">
+          <div className="flex items-center justify-between px-8 py-4 border-b border-[var(--ridge-outer)]/50 bg-white/25">
             <button 
               onClick={() => onOpenChange(false)}
               className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors p-1 rounded-full hover:bg-[var(--bg-elevated)]"
