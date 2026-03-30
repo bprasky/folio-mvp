@@ -7,6 +7,7 @@ import {
   WhyFolio,
   FoundingCohort,
 } from "@/app/for-designers/sections";
+import { LandingModal } from "@/components/landing/LandingModal";
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -21,6 +22,7 @@ export default async function Home() {
         <HowItWorks />
         <WhyFolio />
         <FoundingCohort />
+        <LandingModal />
       </>
     );
   }
