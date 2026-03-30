@@ -108,46 +108,86 @@ export function HowItWorks() {
   );
 }
 
-export function WhyFolio() {
+const pillarCards = [
+  {
+    label: "Your Specifications",
+    title: "A directory that builds itself",
+    description: "Every product you tag is attributed to you automatically \u2014 no manual entry, no separate portfolio management.",
+    href: "/for-designers/directory",
+  },
+  {
+    label: "Your Editorial",
+    title: "Posts that keep working",
+    description: "Every project generates editorial-quality content built around your voice \u2014 owned content you can deploy to clients, press, and your network.",
+    href: "/for-designers/editorial",
+  },
+  {
+    label: "Your Identity",
+    title: "A bio that evolves with your work",
+    description: "Your Folio bio adapts as you publish, surfacing your actual taste fingerprint based on what you specify and build.",
+    href: "/for-designers/bio",
+  },
+  {
+    label: "Your Credit",
+    title: "Get credited for what you specify",
+    description: "When your tagged products are discovered and specified by others, that contribution is attributed back to you.",
+    href: "/for-designers/attribution",
+  },
+  {
+    label: "Your Clients",
+    title: "Find clients whose taste already matches yours",
+    description: "Folio builds an intelligence layer around your published work and uses it to surface clients who already align with what you do.",
+    href: "/for-designers/client-matching",
+  },
+];
+
+export function WhatYouGet() {
   return (
     <section className="py-24 px-6 bg-[#FAF9F6]">
-      <div className="max-w-3xl mx-auto">
+      <div className="max-w-5xl mx-auto">
         <motion.div {...fade}>
           <p className="uppercase tracking-widest text-sm text-[var(--text-secondary)] mb-3">
-            Why Folio
+            What You Get
           </p>
-          <h2 className="font-headline italic text-4xl md:text-5xl text-[var(--text-primary)] mb-10">
-            Start with what you&rsquo;ve earned.
+          <h2 className="font-headline italic text-4xl md:text-5xl text-[var(--text-primary)] mb-14">
+            Built around your work. Not theirs.
           </h2>
         </motion.div>
-
-        <motion.p
-          className="text-[var(--text-primary)] leading-relaxed mb-6"
-          {...fade}
-        >
-          Most platforms start with what they need from you. Reach without
-          attribution. Leads without polish. Engagement without record.
-        </motion.p>
-
-        <motion.p
-          className="text-[var(--text-primary)] leading-relaxed mb-6"
-          {...fade}
-        >
-          Folio starts with what you&rsquo;ve earned. A polished, permanent
-          showcase of your work. Your story, told room by room. And full
-          credit for every high-end material and product decision that made the
-          project what it is.
-        </motion.p>
-
-        {/* Emphasized closing */}
-        <motion.div className="py-8" {...slowFade}>
-          <hr className="border-t border-[var(--ridge-outer)] mb-8 max-w-xs" />
-          <p className="font-headline italic text-2xl md:text-3xl text-[var(--accent)] leading-snug">
-            Your taste is documented. Your name is attached.
-            <br />
-            Your work doesn&rsquo;t disappear.
-          </p>
-        </motion.div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {pillarCards.map((card, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-40px" }}
+              transition={{ duration: 0.6, delay: i * 0.1, ease: "easeOut" }}
+              className={i === 4 ? "lg:col-span-3 lg:max-w-md lg:mx-auto" : ""}
+            >
+              <GlassCard
+                variant="default"
+                padding="lg"
+                rounded="xl"
+                className="border border-stone-200/60 h-full flex flex-col"
+              >
+                <p className="uppercase tracking-widest text-xs text-[var(--text-secondary)] mb-2">
+                  {card.label}
+                </p>
+                <h3 className="font-headline italic text-xl text-[var(--text-primary)] mb-2">
+                  {card.title}
+                </h3>
+                <p className="text-sm text-[var(--text-secondary)] leading-relaxed mb-4 flex-1">
+                  {card.description}
+                </p>
+                <Link
+                  href={card.href}
+                  className="text-sm font-medium text-[var(--accent)] hover:text-[var(--accent-hover)] transition-colors"
+                >
+                  Learn more &rarr;
+                </Link>
+              </GlassCard>
+            </motion.div>
+          ))}
+        </div>
       </div>
     </section>
   );

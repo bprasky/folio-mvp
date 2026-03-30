@@ -27,12 +27,10 @@ export default function RoleBasedLayout({ children }: RoleBasedLayoutProps) {
   }
 
   // Marketing pages render full-width without SimpleLayout chrome or loading skeleton.
-  // Check BEFORE loading state so server-rendered content shows immediately.
   const MARKETING_ROUTES = ['/about', '/for-designers'];
   const isMarketingRoute = MARKETING_ROUTES.some(route => pathname?.startsWith(route));
-  const isHomepageLanding = pathname === '/' && (status === 'loading' || !session);
 
-  if (isMarketingRoute || isHomepageLanding) {
+  if (isMarketingRoute) {
     return (
       <div className="flex flex-col min-h-screen">
         <Navigation />

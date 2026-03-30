@@ -2,11 +2,20 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
 import { GlassCard } from "@/components/ui/glass-card";
 
 const SESSION_KEY = "folio-landing-seen";
+
+const pillars = [
+  { label: "Your Specifications", title: "A directory that builds itself", href: "/for-designers/directory" },
+  { label: "Your Editorial", title: "Posts that keep working", href: "/for-designers/editorial" },
+  { label: "Your Identity", title: "A bio that evolves with your work", href: "/for-designers/bio" },
+  { label: "Your Credit", title: "Get credited for what you specify", href: "/for-designers/attribution" },
+  { label: "Your Clients", title: "Find clients whose taste already matches yours", href: "/for-designers/client-matching" },
+];
 
 const steps = [
   {
@@ -40,12 +49,15 @@ const item = {
 export function LandingModal() {
   const [isOpen, setIsOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const { status } = useSession();
 
   useEffect(() => {
+    if (status === "authenticated") return;
+    if (status === "loading") return;
     if (!sessionStorage.getItem(SESSION_KEY)) {
       setIsOpen(true);
     }
-  }, []);
+  }, [status]);
 
   function handleClose() {
     setIsOpen(false);
@@ -157,33 +169,31 @@ export function LandingModal() {
                     <hr className="border-t border-[var(--ridge-outer)]" />
                   </div>
 
-                  {/* Why Folio */}
+                  {/* What You Get */}
                   <motion.div variants={item} className="px-8 md:px-12 py-10">
                     <p className="uppercase tracking-widest text-xs text-[var(--text-secondary)] mb-2">
-                      Why Folio
+                      What You Get
                     </p>
                     <h3 className="font-headline italic text-2xl md:text-3xl text-[var(--text-primary)] mb-6">
-                      Start with what you&rsquo;ve earned.
+                      Built around your work. Not theirs.
                     </h3>
-                    <div className="space-y-4 text-[var(--text-primary)] leading-relaxed text-[15px]">
-                      <p>
-                        Most platforms start with what they need from you. Reach
-                        without attribution. Leads without polish. Engagement
-                        without record.
-                      </p>
-                      <p>
-                        Folio starts with what you&rsquo;ve earned. A polished,
-                        permanent showcase of your work. Your story, told room by
-                        room. And full credit for every high-end material and
-                        product decision that made the project what it is.
-                      </p>
-                    </div>
-                    <div className="mt-6 pt-6 border-t border-[var(--ridge-outer)]">
-                      <p className="font-headline italic text-xl md:text-2xl text-[var(--accent)] leading-snug">
-                        Your taste is documented. Your name is attached.
-                        <br />
-                        Your work doesn&rsquo;t disappear.
-                      </p>
+                    <div className="space-y-3">
+                      {pillars.map((pillar, i) => (
+                        <Link
+                          key={i}
+                          href={pillar.href}
+                          onClick={handleClose}
+                          className="flex items-baseline gap-3 group py-2 border-b border-[var(--ridge-outer)] last:border-b-0 transition-colors hover:bg-black/[0.02] -mx-2 px-2 rounded-lg"
+                        >
+                          <span className="uppercase tracking-widest text-[10px] text-[var(--text-tertiary)] whitespace-nowrap min-w-[100px]">
+                            {pillar.label}
+                          </span>
+                          <span className="font-headline italic text-base text-[var(--text-primary)] group-hover:text-[var(--accent)] transition-colors">
+                            {pillar.title}
+                          </span>
+                          <span className="text-[var(--text-tertiary)] text-sm ml-auto shrink-0">&rarr;</span>
+                        </Link>
+                      ))}
                     </div>
                   </motion.div>
 
