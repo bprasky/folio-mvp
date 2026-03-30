@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import {
   ForDesignersHero,
   HowItWorks,
-  WhyFolio,
+  WhatYouGet,
   FoundingCohort,
 } from "./sections";
 
@@ -17,7 +17,7 @@ export default function ForDesignersPage() {
     <>
       <ForDesignersHero />
       <HowItWorks />
-      <WhyFolio />
+      <WhatYouGet />
       <FoundingCohort />
     </>
   );

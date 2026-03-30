@@ -1,31 +1,5 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/options";
-import MagazinePage from "@/components/magazine/MagazinePage";
-import {
-  ForDesignersHero,
-  HowItWorks,
-  WhyFolio,
-  FoundingCohort,
-} from "@/app/for-designers/sections";
-import { LandingModal } from "@/components/landing/LandingModal";
+import { redirect } from "next/navigation";
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
-
-export default async function Home() {
-  const session = await getServerSession(authOptions);
-
-  if (!session) {
-    return (
-      <>
-        <ForDesignersHero />
-        <HowItWorks />
-        <WhyFolio />
-        <FoundingCohort />
-        <LandingModal />
-      </>
-    );
-  }
-
-  return <MagazinePage editionSlug="for-you" />;
+export default function Home() {
+  redirect("/magazine");
 }
