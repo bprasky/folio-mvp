@@ -57,7 +57,7 @@ export function InsightConfirmation({
   return (
     <div
       className={cn(
-        'glass-panel p-4 rounded-xl',
+        'glass-overlay p-4 rounded-xl',
         'border border-[var(--border-subtle)]',
         'shadow-[var(--neu-raised)]',
         className

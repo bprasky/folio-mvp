@@ -275,7 +275,7 @@ const SpringProductLaunch = () => {
   }, []);
 
   return (
-    <div className="relative w-full min-h-screen flex flex-col items-center justify-start overflow-hidden">
+    <div className="relative w-full min-h-screen flex flex-col items-center justify-start overflow-hidden bg-[#0a0a0a] text-[#f5f5f5]">
       {/* Hero Section */}
       <div className="relative w-full h-screen min-h-[340px] flex items-end justify-center overflow-hidden">
         <div

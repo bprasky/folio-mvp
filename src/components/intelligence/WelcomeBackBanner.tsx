@@ -79,7 +79,7 @@ export function WelcomeBackBanner({
   return (
     <div
       className={cn(
-        'glass-panel rounded-xl p-6',
+        'glass-overlay rounded-xl p-6',
         'border border-[var(--border-subtle)]',
         'shadow-[var(--neu-raised)]',
         'relative',
