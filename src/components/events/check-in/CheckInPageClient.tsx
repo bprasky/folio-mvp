@@ -66,7 +66,7 @@ export default function CheckInPageClient({ event }: { event: EventInfo }) {
   return (
     <div className="min-h-screen bg-[var(--bg-base,#fdfbf8)]">
       {/* Header */}
-      <div className="border-b border-[var(--border-light,#e7e5e4)] bg-white/80 backdrop-blur-sm px-4 py-3">
+      <div className="glass-sticky px-4 py-3">
         <div className="flex items-center justify-between max-w-lg mx-auto">
           <div className="min-w-0">
             <h1 className="text-base font-semibold text-[var(--text-primary,#1c1917)] truncate">

@@ -73,7 +73,7 @@ export default function CollectionClient({ event }: { event: EventInfo }) {
   return (
     <div className="min-h-screen bg-[var(--bg-base,#fdfbf8)]">
       {/* Header */}
-      <div className="border-b border-[var(--border-light,#e7e5e4)] bg-white/80 backdrop-blur-sm px-4 py-4">
+      <div className="glass-sticky px-4 py-4">
         <div className="max-w-3xl mx-auto">
           <h1 className="text-xl font-semibold text-[var(--text-primary,#1c1917)]">
             My Collection &mdash; {event.title}

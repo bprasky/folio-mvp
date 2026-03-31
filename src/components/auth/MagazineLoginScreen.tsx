@@ -76,7 +76,7 @@ export default function MagazineLoginScreen({ onLogin, isLoading = false }: Maga
           transition={{ duration: 0.8, delay: 0.8 }}
           className="w-full max-w-md"
         >
-          <Card className="bg-white/90 backdrop-blur-sm border-stone-300 shadow-2xl">
+          <Card className="glass-surface border-stone-300 shadow-2xl">
             <CardContent className="p-8">
               <div className="text-center mb-8">
                 <h2 className="text-2xl font-serif text-stone-800 mb-2">
