@@ -210,10 +210,6 @@ const addToCalendar = (title: string, date: string, location: string) => {
 
 // --- Components ---
 const CommunityFeedItem = ({ item, onLike, isLiked }: { item: FeedItem; onLike: () => void; isLiked: boolean }) => {
-  let badges = '';
-  if (item.user.accountAge < 90) badges += `<span class='px-2 py-0.5 bg-[var(--accent)]/10 text-[var(--accent)] rounded-full folio-meta mr-1'>Rising</span>`;
-  if (item.user.location === currentUser.location) badges += `<span class='px-2 py-0.5 bg-green-100 text-green-800 rounded-full folio-meta'>Local</span>`;
-
   return (
     <RidgeCard className="p-4 mb-4">
       <div className="flex gap-4">
@@ -221,7 +217,10 @@ const CommunityFeedItem = ({ item, onLike, isLiked }: { item: FeedItem; onLike: 
         <div className="flex-1">
           <div className="folio-ui text-[var(--text-primary)]">
             <span className="font-semibold">{item.user.name}</span>
-            <span dangerouslySetInnerHTML={{ __html: badges }} /> {item.action}
+            {' '}
+            {item.user.accountAge < 90 && <span className="px-2 py-0.5 bg-[var(--accent)]/10 text-[var(--accent)] rounded-full folio-meta mr-1">Rising</span>}
+            {item.user.location === currentUser.location && <span className="px-2 py-0.5 bg-green-100 text-green-800 rounded-full folio-meta">Local</span>}
+            {' '}{item.action}
           </div>
           <div className="folio-meta text-[var(--text-tertiary)]">
             {item.time} <span className="ml-2 text-[var(--accent)]">{item.user.location || ''}</span>
