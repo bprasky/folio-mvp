@@ -11,6 +11,7 @@ export async function GET(request: NextRequest) {
   try {
     const festivals = await prisma.event.findMany({
       where: {
+        isFestival: true,
         isApproved: true,
         endDate: {
           gte: new Date(),

@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
     // Fetch active festivals (admin-created events of type 'festival')
     const festivals = await prisma.event.findMany({
       where: {
-        type: 'festival',
+        isFestival: true,
         isApproved: true,
         endDate: { gte: now }, // Only future or ongoing festivals
       },

@@ -1,16 +1,13 @@
 import { prisma } from "@/lib/prisma";
-import { Festival } from './fetchEvents';
 
-export async function fetchFestivals(): Promise<Festival[]> {
+export async function fetchFestivals() {
   try {
     const now = new Date();
     console.log('[fetchFestivals] Querying festivals with date filter:', now);
     
     const festivals = await prisma.event.findMany({
       where: {
-        eventTypes: {
-          has: 'FESTIVAL'
-        },
+        isFestival: true,
         isApproved: true,
         // endDate: { gte: now }, // Commented out to show all approved festivals
       },
@@ -36,7 +33,7 @@ export async function fetchFestivals(): Promise<Festival[]> {
             id: true,
           },
         },
-        rsvps: true,
+        _count: { select: { rsvps: true } },
       },
       orderBy: {
         startDate: 'asc',
