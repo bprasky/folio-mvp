@@ -19,8 +19,18 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { AccountStatus } from '@prisma/client';
 import bcrypt from 'bcryptjs';
+import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { checkRateLimit, getClientIp, RateLimitPresets } from '@/lib/rateLimit';
+
+const signupSchema = z.object({
+  name: z.string().min(1, 'Name is required').max(100),
+  email: z.string().email('Invalid email address'),
+  password: z.string().min(8, 'Password must be at least 8 characters').max(128),
+  acceptedTerms: z.literal(true, { errorMap: () => ({ message: 'You must agree to the Terms of Service and Privacy Policy' }) }),
+  tosVersion: z.string().optional(),
+  privacyVersion: z.string().optional(),
+});
 
 export async function POST(request: NextRequest) {
   // Rate limiting: Check IP-level limit (prevents mass signup from single source)
@@ -58,22 +68,13 @@ export async function POST(request: NextRequest) {
     if (process.env.NODE_ENV !== 'production') {
       console.log('[Signup API] Request body:', { ...body, password: '[REDACTED]' });
     }
-    const { name, email, password, acceptedTerms, tosVersion, privacyVersion } = body;
 
-    if (!name || !email || !password) {
-      return NextResponse.json(
-        { error: 'Missing required fields: name, email, password' },
-        { status: 400 }
-      );
+    const parsed = signupSchema.safeParse(body);
+    if (!parsed.success) {
+      const firstError = parsed.error.errors[0]?.message || 'Invalid input';
+      return NextResponse.json({ error: firstError }, { status: 400 });
     }
-
-    // Validate consent
-    if (!acceptedTerms) {
-      return NextResponse.json(
-        { error: 'You must agree to the Terms of Service and Privacy Policy' },
-        { status: 400 }
-      );
-    }
+    const { name, email, password, acceptedTerms, tosVersion, privacyVersion } = parsed.data;
 
     // Check if user already exists (case-insensitive)
     if (process.env.NODE_ENV !== 'production') {
@@ -103,8 +104,8 @@ export async function POST(request: NextRequest) {
         console.log('[Signup API] User already exists with email:', email);
       }
       return NextResponse.json(
-        { error: 'User with this email already exists' },
-        { status: 409 }
+        { error: 'Unable to create account. Please try a different email or sign in.' },
+        { status: 400 }
       );
     }
 
