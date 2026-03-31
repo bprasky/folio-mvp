@@ -9,7 +9,7 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { normalizeRole, canPerformAction } from '@/lib/permissions';
 import { normalizeCreatePayload } from './normalizeCreatePayload';
 import { logDbEnv } from '@/lib/dbEnv';
-import { assertProjectView } from "@/lib/authz/access";
+import { assertProjectView, assertProjectWrite } from "@/lib/authz/access";
 import { CLIENT_BY_LABEL, PROJECT_TYPE_BY_LABEL, DEFAULTS } from '@/domain/project/enums';
 import { makeSlug } from '@/lib/posting/slug';
 
@@ -370,13 +370,13 @@ export async function DELETE(request: NextRequest) {
       );
     }
     
-    const access = await assertProjectView(session.user.id, id);
+    const access = await assertProjectWrite(session.user.id, id);
 
     await prisma.project.delete({
       where: { id },
     });
     
-    return NextResponse.json({ message: 'Project deleted successfully' });
+    return NextResponse.json({ message: 'Project deleted successfully', deleted: true });
   } catch (error) {
     console.error('Error deleting project:', error);
     return NextResponse.json(
