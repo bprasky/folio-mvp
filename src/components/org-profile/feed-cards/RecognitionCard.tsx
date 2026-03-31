@@ -47,8 +47,7 @@ export default function RecognitionCard({ recognition }: RecognitionCardProps) {
   return (
     <CardWrapper {...wrapperProps} className="block group cursor-pointer">
       <div
-        className="rounded-lg overflow-hidden p-4 transition-all group-hover:shadow-md"
-        style={{ backgroundColor: '#F5F3F0', border: '1px solid #E8E4DF' }}
+        className="glass-surface rounded-2xl p-4 transition-all"
       >
         {/* Header */}
         <div className="flex items-start gap-3 mb-3">

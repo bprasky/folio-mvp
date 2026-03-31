@@ -56,8 +56,9 @@ export default function OrgProfileHero({
     .toUpperCase();
 
   return (
-    <div className="border-b" style={{ borderColor: '#E8E4DF' }}>
-      <div className="max-w-6xl mx-auto px-6 py-8">
+    <div>
+      <div className="max-w-6xl mx-auto px-6 py-6">
+        <div className="glass-surface rounded-2xl p-6 md:p-8" style={{ overflow: 'visible' }}>
         <div className="flex flex-col md:flex-row items-start gap-6 md:gap-8">
           {/* Logo */}
           <div
@@ -108,34 +109,38 @@ export default function OrgProfileHero({
 
                 {/* Specialty Pills */}
                 {(org as any).specialties && (org as any).specialties.length > 0 && (
-                  <div className="flex gap-2 mt-4 flex-wrap">
-                    {(org as any).specialties.slice(0, 5).map((tag: string) => (
-                      <span
-                        key={tag}
-                        className="px-3 py-1 text-xs rounded-full"
-                        style={{ backgroundColor: '#F0EDE9', color: '#6B635B' }}
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                    {(org as any).specialties.length > 5 && (
-                      <span
-                        className="px-3 py-1 text-xs rounded-full"
-                        style={{ backgroundColor: '#F0EDE9', color: '#8B8178' }}
-                      >
-                        +{(org as any).specialties.length - 5}
-                      </span>
-                    )}
+                  <div className="glass-surface glass-surface-sm mt-4 p-3">
+                    <div className="flex gap-2 flex-wrap">
+                      {(org as any).specialties.slice(0, 5).map((tag: string) => (
+                        <span
+                          key={tag}
+                          className="px-3 py-1 text-xs rounded-full"
+                          style={{ backgroundColor: '#F0EDE9', color: '#6B635B' }}
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                      {(org as any).specialties.length > 5 && (
+                        <span
+                          className="px-3 py-1 text-xs rounded-full"
+                          style={{ backgroundColor: '#F0EDE9', color: '#8B8178' }}
+                        >
+                          +{(org as any).specialties.length - 5}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>
 
               {/* Stats & CTAs */}
               <div className="flex flex-col items-start md:items-end gap-4">
-                <div className="flex gap-6 md:gap-8">
-                  <Stat label="Projects" value={projectCount} />
-                  <Stat label="Followers" value={followerCount} />
-                  <Stat label="Featured" value={featuredCount} />
+                <div className="glass-surface glass-surface-sm px-4 py-3">
+                  <div className="flex gap-6 md:gap-8">
+                    <Stat label="Projects" value={projectCount} />
+                    <Stat label="Followers" value={followerCount} />
+                    <Stat label="Featured" value={featuredCount} />
+                  </div>
                 </div>
 
                 <div className="flex gap-3 items-center">
@@ -213,6 +218,7 @@ export default function OrgProfileHero({
               </div>
             </div>
           </div>
+        </div>
         </div>
       </div>
     </div>

@@ -102,7 +102,7 @@ export default function OrgProfileFeed({
             onOpenInviteModal={() => setInviteModalOpen(true)}
           />
         ) : (
-          <div className="text-center py-16">
+          <div className="glass-surface rounded-2xl text-center py-16">
             <p style={{ color: '#8B8178' }}>No content yet</p>
             <p className="text-sm mt-2" style={{ color: '#A09890' }}>
               Projects and media will appear here once published

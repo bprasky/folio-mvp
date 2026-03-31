@@ -40,7 +40,8 @@ export default function FeedFilters({ activeFilter, activeSort, orgId, isAdmin, 
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-3 mb-6">
+    <div className="glass-surface glass-surface-sm p-3 mb-6">
+    <div className="flex flex-wrap items-center gap-3">
       {FILTERS.map(filter => (
         <div key={filter.id} className="flex items-center gap-1">
           <button
@@ -85,6 +86,7 @@ export default function FeedFilters({ activeFilter, activeSort, orgId, isAdmin, 
           </option>
         ))}
       </select>
+    </div>
     </div>
   );
 }

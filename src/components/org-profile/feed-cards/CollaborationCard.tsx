@@ -28,8 +28,7 @@ export default function CollaborationCard({ collaboration }: CollaborationCardPr
   return (
     <div className="group cursor-pointer">
       <div
-        className="rounded-lg overflow-hidden transition-all group-hover:shadow-md"
-        style={{ backgroundColor: '#F5F3F0', border: '1px solid #E8E4DF' }}
+        className="glass-surface rounded-2xl transition-all"
       >
         {/* Image */}
         {collaboration.imageUrl && (

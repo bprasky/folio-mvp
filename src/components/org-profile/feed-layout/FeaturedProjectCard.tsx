@@ -11,8 +11,7 @@ interface FeaturedProjectCardProps {
 export default function FeaturedProjectCard({ project }: FeaturedProjectCardProps) {
   return (
     <Link href={`/project/${project.id}`}>
-      <div className="group rounded-2xl overflow-hidden border border-stone-200
-                      bg-white hover:shadow-md transition-shadow duration-300">
+      <div className="group glass-surface rounded-2xl transition-all duration-300">
 
         {/* Hero image — 16:9, full width */}
         <div className="relative w-full aspect-[16/9] overflow-hidden bg-stone-100">
