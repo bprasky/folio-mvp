@@ -1,15 +1,15 @@
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/prisma';
+import { requireAdmin } from '@/lib/requireAdmin';
 
 export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    await requireAdmin();
     const eventId = params.id;
     const body = await request.json();
     const { reason } = body;
@@ -36,11 +36,11 @@ export async function POST(
       message: 'Event rejected successfully',
       event
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error rejecting event:', error);
     return NextResponse.json(
-      { error: 'Failed to reject event' },
-      { status: 500 }
+      { error: error.message || 'Failed to reject event' },
+      { status: error.status ?? 500 }
     );
   }
 } 

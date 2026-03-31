@@ -7,9 +7,11 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { createEmptyDesignerBrandProfile } from '@/lib/server/designerBrandProfile';
+import { requireAdmin } from '@/lib/requireAdmin';
 
 export async function GET() {
   try {
+    await requireAdmin();
     const designers = await prisma.user.findMany({
       where: { role: 'DESIGNER' },
       select: {
@@ -40,8 +42,10 @@ export async function GET() {
     });
 
     return NextResponse.json({ designers }, { status: 200 });
-  } catch (e) {
-    // Do NOT block pages; return empty list with 200 so UI can render.
+  } catch (e: any) {
+    if (e.status === 401 || e.status === 403) {
+      return NextResponse.json({ error: e.message }, { status: e.status });
+    }
     console.error('[/api/admin/designers] fallback due to error:', e);
     return NextResponse.json({ designers: [] }, { status: 200 });
   }
@@ -49,6 +53,7 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    await requireAdmin();
     const { name, bio, profileImage } = await request.json();
 
     if (!name?.trim()) {
@@ -85,17 +90,18 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(newDesigner, { status: 201 });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error creating designer:', error);
     return NextResponse.json(
-      { error: 'Failed to create designer' },
-      { status: 500 }
+      { error: error.message || 'Failed to create designer' },
+      { status: error.status ?? 500 }
     );
   }
 }
 
 export async function PUT(request: NextRequest) {
   try {
+    await requireAdmin();
     const designerData = await request.json();
     
     const { id, ...updateData } = designerData;
@@ -167,11 +173,11 @@ export async function PUT(request: NextRequest) {
     });
     
     return NextResponse.json(updatedDesigner, { status: 200 });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error updating designer:', error);
     return NextResponse.json(
-      { error: 'Failed to update designer' },
-      { status: 500 }
+      { error: error.message || 'Failed to update designer' },
+      { status: error.status ?? 500 }
     );
   }
 } 
