@@ -1,26 +1,9 @@
 /**
- * Folio Cinematic Gradient - Cascade Winner
- * 
- * Loaded LAST to override any Tailwind resets or utility conflicts.
- * Uses CSS variable approach to avoid shorthand property resets.
+ * Folio Cinematic Gradient — DEPRECATED
+ *
+ * CinematicBackground component now returns null.
+ * Page-level gradient washes removed — warmth lives inside
+ * glass elements via the dimensional mesh in glass-tokens.css.
+ *
+ * This file is kept empty to avoid breaking the @import in globals.css.
  */
-
-#folio-cinematic-bg {
-  /* DO NOT set background-image here - let inline style win */
-  /* The component sets it directly via useEffect + DOM API */
-  
-  /* Only ensure positioning/layout properties */
-  position: fixed !important;
-  top: 0 !important;
-  left: 0 !important;
-  right: 0 !important;
-  bottom: 0 !important;
-  z-index: -10 !important;
-  pointer-events: none !important;
-  
-  /* Ensure background properties don't reset */
-  background-repeat: no-repeat !important;
-  background-size: cover !important;
-  background-position: center top !important;
-}
-
