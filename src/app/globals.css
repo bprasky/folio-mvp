@@ -1429,24 +1429,7 @@ body {
 @media (max-width: 640px) {
   .sticky-upload-btn { position: fixed !important; bottom: 1.5rem; right: 1.5rem; z-index: 50; width: 56px; height: 56px; border-radius: 9999px; box-shadow: 0 4px 16px rgba(124, 30, 61, 0.3); display: flex; align-items: center; justify-content: center; font-size: 2rem; background: var(--folio-accent); color: white; }
 }
-/* Spring Product Launch Page Styles — scoped via page wrapper, not body */
-/* legacy .glass for spring-product-launch dark page — kept scoped */
 .glass { background: rgba(20, 20, 20, 0.7); backdrop-filter: blur(20px); border-radius: 1.5rem; }
-.brand-badge { background: #4ade80; color: #065f46; font-weight: 700; border-radius: 9999px; padding: 0.2rem 0.9rem; font-size: 0.9rem; margin-left: 0.5rem; }
-.designer-pro { background: #fbbf24; color: #92400e; font-weight: 700; border-radius: 9999px; padding: 0.1rem 0.7rem; font-size: 0.8rem; margin-left: 0.3rem; }
-.mutual-follower { border: 2px solid #4ade80; }
-.gallery-img { transition: transform 0.2s, box-shadow 0.2s; }
-.gallery-img:hover { transform: scale(1.05); box-shadow: 0 4px 16px #4ade8044; }
-.comment-bubble { background: #232323; border-radius: 1rem; padding: 0.75rem 1.25rem; margin-bottom: 0.5rem; }
-.comment-author { font-weight: 600; color: #4ade80; }
-.comment-time { font-size: 0.8rem; color: #aaa; margin-left: 0.5rem; }
-.rsvp-btn { transition: background 0.2s, color 0.2s; position: relative; overflow: hidden; }
-.rsvp-btn.active { background: #4ade80; color: #065f46; }
-.rsvp-btn.inactive { background: #232323; color: #fff; }
-.pulse-anim { animation: pulseGlow 1s 1; }
-@keyframes pulseGlow { 0% { box-shadow: 0 0 0 0 #4ade80; } 70% { box-shadow: 0 0 0 16px rgba(74,222,128,0); } 100% { box-shadow: 0 0 0 0 rgba(74,222,128,0); } }
-.confetti { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); font-size: 2rem; pointer-events: none; animation: confettiPop 1s forwards; }
-@keyframes confettiPop { 0% { opacity: 0; transform: translate(-50%,-50%) scale(0.5); } 30% { opacity: 1; transform: translate(-50%,-50%) scale(1.2); } 100% { opacity: 0; transform: translate(-50%,-50%) scale(1.5); } }
 .tooltip { position: absolute; z-index: 30; left: 50%; transform: translateX(-50%); bottom: 110%; background: #232323; color: #fff; padding: 0.3rem 0.7rem; border-radius: 0.5rem; font-size: 0.85rem; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
 .avatar-tooltip:hover .tooltip, .show-tooltip .tooltip { opacity: 1; pointer-events: auto; }
  @media (max-width: 768px) {
