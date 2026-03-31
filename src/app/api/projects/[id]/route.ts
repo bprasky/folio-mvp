@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
-import { assertProjectView } from "@/lib/authz/access";
+import { assertProjectView, assertProjectWrite } from "@/lib/authz/access";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
@@ -65,6 +65,34 @@ export async function GET(
     console.error('Error fetching project:', error);
     return NextResponse.json(
       { error: 'Failed to fetch project' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id: projectId } = await params;
+
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    await assertProjectWrite(session.user.id, projectId);
+
+    await prisma.project.delete({
+      where: { id: projectId },
+    });
+
+    return NextResponse.json({ message: 'Project deleted successfully', deleted: true });
+  } catch (error) {
+    console.error('Error deleting project:', error);
+    return NextResponse.json(
+      { error: 'Failed to delete project: ' + (error instanceof Error ? error.message : 'Unknown error') },
       { status: 500 }
     );
   }
