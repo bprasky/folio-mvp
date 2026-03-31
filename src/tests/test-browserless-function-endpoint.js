@@ -1,10 +1,10 @@
 // Browserless /content endpoint test for onboarding designer profiles
 // Test site: https://www.heidicaillierdesign.com
 // Logs API connectivity, HTTP errors, and parsed output (about, team, images)
-// Token: 2Sbq0KFBxBlYj237333ef79801d3b6ec95e752a02d26dd3ae
+// Token: set BROWSERLESS_TOKEN env var
 
 const axios = require('axios');
-const BROWSERLESS_TOKEN = '2Sbq0KFBxBlYj237333ef79801d3b6ec95e752a02d26dd3ae';
+const BROWSERLESS_TOKEN = process.env.BROWSERLESS_TOKEN;
 const TEST_URL = 'https://www.heidicaillierdesign.com';
 
 function extractAbout(html) {
