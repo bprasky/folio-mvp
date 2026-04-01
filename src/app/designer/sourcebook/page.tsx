@@ -77,6 +77,40 @@ export default function SourcebookPage() {
     });
   };
 
+  const handleSendViaFolio = async (recipientName: string, recipientEmail: string) => {
+    if (!resolverModal) return;
+
+    // Build payload based on the current action type and modal data
+    const payload: Record<string, unknown> = {
+      type: resolverActionType,
+      productId: resolverModal.productId,
+      productName: resolverModal.productName,
+      vendorName: resolverModal.productBrand || '',
+    };
+
+    try {
+      const res = await fetch('/api/email/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          actionType: resolverActionType,
+          productId: resolverModal.productId,
+          recipientEmail,
+          recipientName,
+          payload,
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.conversationId) {
+        setResolverModal(null);
+        window.location.href = `/inbox/${data.conversationId}`;
+      }
+    } catch {
+      // Silently fail — user can retry
+    }
+  };
+
   const handleRequestSent = (conversationId: string) => {
     setSelectedRepUserId(undefined);
     // Could show a toast or navigate to inbox
@@ -497,6 +531,7 @@ export default function SourcebookPage() {
         vendorName={resolverModal?.productBrand || ''}
         onRepSelected={handleRepSelected}
         onInviteRep={handleInviteRep}
+        onSendViaFolio={handleSendViaFolio}
       />
     </div>
   );

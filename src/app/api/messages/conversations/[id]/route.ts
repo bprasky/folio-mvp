@@ -48,6 +48,14 @@ export async function GET(
       recipientUser: {
         select: { id: true, name: true, profileImage: true },
       },
+      emailThread: {
+        select: {
+          id: true,
+          recipientEmail: true,
+          recipientName: true,
+          status: true,
+        },
+      },
     },
   });
 

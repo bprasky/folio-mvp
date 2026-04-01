@@ -111,6 +111,31 @@ export async function resolveVendorRep(
     }
   }
 
+  // 2b. Check imported contacts for a preferred rep at this vendor
+  if (vendorOrgId) {
+    const preferredContact = await prisma.designerContact.findFirst({
+      where: {
+        userId: designerUserId,
+        vendorOrgId,
+        isPreferredRep: true,
+      },
+      select: { name: true, email: true },
+    });
+
+    if (preferredContact) {
+      // Return as a special status so the caller can send via Folio email
+      return {
+        status: 'NO_REP',
+        vendorOrgId,
+        vendorOrgName: vendorOrgName || undefined,
+        preferredContact: {
+          name: preferredContact.name,
+          email: preferredContact.email,
+        },
+      };
+    }
+  }
+
   // 3. Fall back to vendor org members (OWNER/ADMIN/MANAGER)
   const orgMembers = await prisma.organizationUser.findMany({
     where: {

@@ -48,6 +48,7 @@ export async function GET(req: Request) {
           }
         : {}),
       ...(filter === "inquiries" ? { context: "CLIENT_INQUIRY" } : {}),
+      ...(filter === "emails" ? { context: "FOLIO_EMAIL" } : {}),
       ...(effectiveCategory ? { category: effectiveCategory } : {}),
     },
     include: {
