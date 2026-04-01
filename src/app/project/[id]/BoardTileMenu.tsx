@@ -13,6 +13,7 @@ type BoardTileMenuProps = {
   onFeatureToggle?: (selId: string, featured: boolean) => void;
   onSaveToProject?: (selection: any) => void;
   onDelete?: (selId: string) => void;
+  onEnterQuote?: (selection: any) => void;
   editable?: boolean; // disabled for placeholders
   currentOverride?: string;
 };
@@ -26,6 +27,7 @@ export default function BoardTileMenu({
   onFeatureToggle,
   onSaveToProject,
   onDelete,
+  onEnterQuote,
   editable = true,
   currentOverride
 }: BoardTileMenuProps) {
@@ -106,6 +108,19 @@ export default function BoardTileMenu({
             >
               <FaFolderPlus className="w-3 h-3" />
               Save to Another Project
+            </button>
+          )}
+
+          {onEnterQuote && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsOpen(false);
+                onEnterQuote(selection);
+              }}
+              className="w-full text-left px-3 py-2 folio-ui hover:bg-[var(--bg-base)] text-[var(--text-primary)] flex items-center gap-2"
+            >
+              💰 Enter Quote
             </button>
           )}
 

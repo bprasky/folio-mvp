@@ -233,6 +233,10 @@ model User {
   // Pending Actions (structured requests awaiting rep signup)
   pendingActions PendingAction[] @relation("UserPendingActions")
 
+  // Phase 3: Project-Level Actions
+  quotedPricing       ProjectProductPricing[] @relation("QuotedByUser")
+  bulkPricingRequests BulkPricingRequest[]    @relation("BulkRequestRep")
+
   @@map("users")
 }
 
@@ -423,6 +427,11 @@ model Project {
   selectionHistory     SelectionHistory[]
   designJourney        ProjectDesignJourney?
 
+  // Phase 3: Project-Level Actions
+  targetInstallDate    DateTime?
+  productPricing       ProjectProductPricing[]
+  bulkPricingRequests  BulkPricingRequest[]
+
   @@map("projects")
 }
 
@@ -572,6 +581,10 @@ model Product {
 
   // Pending Actions
   pendingActions PendingAction[] @relation("ProductPendingActions")
+
+  // Phase 3: Project-Level Actions
+  projectPricing   ProjectProductPricing[]
+  actionItemSignals ActionItemSignal[] @relation("ProductActionSignals")
 
   @@map("products")
 }
@@ -849,6 +862,11 @@ model Organization {
   orgInitiatedConversations Conversation[] @relation("OrgInitiatedConversations")
   orgReceivedConversations  Conversation[] @relation("OrgReceivedConversations")
   orgSentMessages           Message[]
+
+  // Phase 3: Project-Level Actions
+  bulkPricingRequests        BulkPricingRequest[]  @relation("VendorBulkRequests")
+  vendorActionItemSignals    ActionItemSignal[]    @relation("VendorActionSignals")
+  designerActionItemSignals  ActionItemSignal[]    @relation("DesignerActionSignals")
 
   @@index([status])
   @@index([type])
@@ -5668,4 +5686,123 @@ model PendingAction {
   @@index([status])
   @@index([senderId])
   @@map("pending_actions")
+}
+
+// ─── Phase 3: Project-Level Actions ───────────────────────────────
+
+model ProjectProductPricing {
+  id              String    @id @default(cuid())
+  projectId       String
+  productId       String
+  roomId          String?
+
+  // Pricing
+  unitPriceTrade  Decimal?  @db.Decimal(10, 2)
+  unitPriceRetail Decimal?  @db.Decimal(10, 2)
+  quantity        Int       @default(1)
+  unit            String?
+
+  // Quote metadata
+  quotedById      String?
+  quotedByName    String?
+  quotedByEmail   String?
+  quotedAt        DateTime?
+  validThrough    DateTime?
+  quoteSource     String    @default("MANUAL")
+
+  // Lead time
+  leadTimeWeeks   Int?
+  availability    String?
+  availabilityNote String?
+
+  // COM/COL
+  isCustomMaterial Boolean  @default(false)
+  comVendor       String?
+  comMaterial      String?
+  comSku           String?
+  comYardage       Decimal?  @db.Decimal(10, 2)
+
+  // Status
+  status          String    @default("NOT_REQUESTED")
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  project         Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  product         Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  quotedBy        User?     @relation("QuotedByUser", fields: [quotedById], references: [id], onDelete: SetNull)
+
+  @@unique([projectId, productId, roomId])
+  @@index([projectId])
+  @@index([productId])
+  @@index([status])
+  @@map("project_product_pricing")
+}
+
+model BulkPricingRequest {
+  id              String    @id @default(cuid())
+  projectId       String
+  vendorOrgId     String?
+  vendorName      String
+  repId           String?
+  repName         String?
+  repEmail        String?
+
+  productIds      String[]  @default([])
+  timeline        String?
+  designerNote    String?
+  tradeStatus     String?
+
+  status          String    @default("SENT")
+  sentAt          DateTime  @default(now())
+  respondedAt     DateTime?
+  conversationId  String?
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  project         Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  vendorOrg       Organization? @relation("VendorBulkRequests", fields: [vendorOrgId], references: [id], onDelete: SetNull)
+  rep             User?         @relation("BulkRequestRep", fields: [repId], references: [id], onDelete: SetNull)
+
+  @@index([projectId])
+  @@index([vendorOrgId])
+  @@index([status])
+  @@map("bulk_pricing_requests")
+}
+
+model ActionItemSignal {
+  id              String    @id @default(cuid())
+  actionType      String
+  productId       String
+  vendorOrgId     String?
+  projectId       String?
+  designerOrgId   String
+
+  quantity        Int?
+  unit            String?
+  timeline        String?
+  projectType     String?
+  location        String?
+
+  resolution      String    @default("PENDING")
+  responseTime    Int?
+  convertedToOrder Boolean  @default(false)
+
+  isOffPlatform   Boolean   @default(false)
+  isBulk          Boolean   @default(false)
+
+  createdAt       DateTime  @default(now())
+
+  product         Product       @relation("ProductActionSignals", fields: [productId], references: [id], onDelete: Cascade)
+  vendorOrg       Organization? @relation("VendorActionSignals", fields: [vendorOrgId], references: [id], onDelete: SetNull)
+  designerOrg     Organization  @relation("DesignerActionSignals", fields: [designerOrgId], references: [id], onDelete: Cascade)
+
+  @@index([actionType])
+  @@index([productId])
+  @@index([vendorOrgId])
+  @@index([designerOrgId])
+  @@index([createdAt])
+  @@index([projectType])
+  @@map("action_item_signals")
 }
