@@ -6,6 +6,10 @@ import { Button } from '@/components/ui/button';
 import SourcebookCard from './SourcebookCard';
 import NotesModal from './NotesModal';
 import UseInProjectModal from './UseInProjectModal';
+import RequestSampleModal from './RequestSampleModal';
+import RequestQuoteModal from './RequestQuoteModal';
+import ContactRepModal from './ContactRepModal';
+import RepResolverModal from './RepResolverModal';
 import type {
   SourcebookEntry,
   SourcebookSortField,
@@ -35,6 +39,49 @@ export default function SourcebookPage() {
   // Modal state
   const [notesModal, setNotesModal] = useState<SourcebookEntry | null>(null);
   const [useInProjectModal, setUseInProjectModal] = useState<SourcebookEntry | null>(null);
+  const [sampleModal, setSampleModal] = useState<SourcebookEntry | null>(null);
+  const [quoteModal, setQuoteModal] = useState<SourcebookEntry | null>(null);
+  const [contactModal, setContactModal] = useState<SourcebookEntry | null>(null);
+  const [resolverModal, setResolverModal] = useState<SourcebookEntry | null>(null);
+  const [resolverActionType, setResolverActionType] = useState<'SAMPLE_REQUEST' | 'QUOTE_REQUEST' | 'GENERAL'>('GENERAL');
+  const [selectedRepUserId, setSelectedRepUserId] = useState<string | undefined>();
+
+  const handleNeedResolution = (entry: SourcebookEntry, actionType: 'SAMPLE_REQUEST' | 'QUOTE_REQUEST' | 'GENERAL') => {
+    setResolverActionType(actionType);
+    setResolverModal(entry);
+  };
+
+  const handleRepSelected = (repUserId: string) => {
+    setSelectedRepUserId(repUserId);
+    // Re-open the original action modal with the selected rep
+    if (resolverModal) {
+      if (resolverActionType === 'SAMPLE_REQUEST') setSampleModal(resolverModal);
+      else if (resolverActionType === 'QUOTE_REQUEST') setQuoteModal(resolverModal);
+      else setContactModal(resolverModal);
+    }
+    setResolverModal(null);
+  };
+
+  const handleInviteRep = async (repName: string, repEmail: string, sendInvite: boolean) => {
+    if (!resolverModal) return;
+    await fetch('/api/designer/sourcebook/invite-rep', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        productId: resolverModal.productId,
+        actionType: resolverActionType,
+        repName,
+        repEmail,
+        sendInvite,
+      }),
+    });
+  };
+
+  const handleRequestSent = (conversationId: string) => {
+    setSelectedRepUserId(undefined);
+    // Could show a toast or navigate to inbox
+    window.location.href = `/inbox/${conversationId}`;
+  };
 
   const loadSourcebook = useCallback(async () => {
     try {
@@ -382,6 +429,9 @@ export default function SourcebookPage() {
                 onEditNotes={setNotesModal}
                 onArchive={handleArchive}
                 onUseInProject={setUseInProjectModal}
+                onRequestSample={setSampleModal}
+                onRequestQuote={setQuoteModal}
+                onContactRep={setContactModal}
               />
             ))}
           </div>
@@ -404,6 +454,49 @@ export default function SourcebookPage() {
         productName={useInProjectModal?.productName || ''}
         productBrand={useInProjectModal?.productBrand || null}
         currentProjectIds={useInProjectModal?.projects.map(p => p.projectId) || []}
+      />
+
+      <RequestSampleModal
+        isOpen={!!sampleModal}
+        onClose={() => { setSampleModal(null); setSelectedRepUserId(undefined); }}
+        productId={sampleModal?.productId || ''}
+        productName={sampleModal?.productName || ''}
+        vendorName={sampleModal?.productBrand || ''}
+        recipientUserId={selectedRepUserId}
+        onSent={handleRequestSent}
+        onNeedResolution={() => sampleModal && handleNeedResolution(sampleModal, 'SAMPLE_REQUEST')}
+      />
+
+      <RequestQuoteModal
+        isOpen={!!quoteModal}
+        onClose={() => { setQuoteModal(null); setSelectedRepUserId(undefined); }}
+        productId={quoteModal?.productId || ''}
+        productName={quoteModal?.productName || ''}
+        vendorName={quoteModal?.productBrand || ''}
+        recipientUserId={selectedRepUserId}
+        onSent={handleRequestSent}
+        onNeedResolution={() => quoteModal && handleNeedResolution(quoteModal, 'QUOTE_REQUEST')}
+      />
+
+      <ContactRepModal
+        isOpen={!!contactModal}
+        onClose={() => { setContactModal(null); setSelectedRepUserId(undefined); }}
+        productId={contactModal?.productId || ''}
+        productName={contactModal?.productName || ''}
+        vendorName={contactModal?.productBrand || ''}
+        recipientUserId={selectedRepUserId}
+        onSent={handleRequestSent}
+        onNeedResolution={() => contactModal && handleNeedResolution(contactModal, 'GENERAL')}
+      />
+
+      <RepResolverModal
+        isOpen={!!resolverModal}
+        onClose={() => setResolverModal(null)}
+        productId={resolverModal?.productId || ''}
+        productName={resolverModal?.productName || ''}
+        vendorName={resolverModal?.productBrand || ''}
+        onRepSelected={handleRepSelected}
+        onInviteRep={handleInviteRep}
       />
     </div>
   );

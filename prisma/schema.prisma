@@ -230,6 +230,9 @@ model User {
   directoryBookmarks   DirectoryBookmark[]  @relation("UserDirectoryBookmarks")
   bookmarkedBy         DirectoryBookmark[]  @relation("BookmarkedByUsers")
 
+  // Pending Actions (structured requests awaiting rep signup)
+  pendingActions PendingAction[] @relation("UserPendingActions")
+
   @@map("users")
 }
 
@@ -566,6 +569,9 @@ model Product {
 
   // Sourcebook System
   sourcebookEntries SourcebookEntry[] @relation("ProductSourcebookEntries")
+
+  // Pending Actions
+  pendingActions PendingAction[] @relation("ProductPendingActions")
 
   @@map("products")
 }
@@ -5455,6 +5461,10 @@ model Conversation {
   context ConversationContext @default(GENERAL)
   status  ConversationStatus @default(ACTIVE)
 
+  // Structured request categorization
+  category       MessageCategory @default(GENERAL)
+  structuredData Json?           // Action-specific payload (quantity, timeline, finish, etc.)
+
   // Attribution context (for vendor → designer threads)
   attributionNote String?
   productId       String?
@@ -5564,6 +5574,22 @@ enum EmailDigestFrequency {
   NEVER
 }
 
+enum MessageCategory {
+  SAMPLE_REQUEST
+  QUOTE_REQUEST
+  REORDER_REQUEST
+  COLLABORATION
+  GENERAL
+}
+
+enum PendingActionStatus {
+  PENDING
+  DELIVERED
+  EXPIRED
+  CANCELLED
+  EMAIL_SENT
+}
+
 // PostSave: bookmark/save for editorial posts (separate from product Save)
 model PostSave {
   id            String      @id @default(cuid())
@@ -5614,4 +5640,32 @@ model DirectoryBookmark {
   @@index([userId])
   @@index([professionalId])
   @@map("directory_bookmarks")
+}
+
+// ─── Pending Actions (queued requests for invited reps) ───────────
+
+model PendingAction {
+  id           String              @id @default(cuid())
+  senderId     String
+  actionType   MessageCategory
+  productId    String
+  targetEmail  String
+  targetName   String
+  targetOrgId  String?
+  payload      Json
+  status       PendingActionStatus @default(PENDING)
+  inviteSentAt   DateTime?
+  reminderSentAt DateTime?
+  deliveredAt    DateTime?
+  expiredAt      DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  sender  User    @relation("UserPendingActions", fields: [senderId], references: [id], onDelete: Cascade)
+  product Product @relation("ProductPendingActions", fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([targetEmail])
+  @@index([status])
+  @@index([senderId])
+  @@map("pending_actions")
 }
