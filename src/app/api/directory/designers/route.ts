@@ -27,10 +27,23 @@ export async function GET(request: NextRequest) {
     const style = searchParams.get('style') || undefined;
     const region = searchParams.get('region') || undefined;
     const bookmarkedOnly = searchParams.get('bookmarked') === 'true';
+    const specifyingMyProducts = searchParams.get('specifyingMyProducts') === 'true';
 
     // Legacy: map old 'view' param to 'sort'
     const legacyView = searchParams.get('view');
-    const effectiveSort = legacyView === 'rising' ? 'rising' : sort;
+    let effectiveSort = legacyView === 'rising' ? 'rising' : sort;
+
+    // Critical mass threshold check for ranked sort
+    // Ranked view only available when: 50+ in a metro, 200+ platform-wide, or admin-enabled
+    if (effectiveSort === 'ranked') {
+      const totalEligible = await prisma.directoryRanking.count({
+        where: { rankingType: 'DESIGNER', isEligible: true, isVisible: true },
+      });
+      if (totalEligible < 200) {
+        // Fall back to recent sort — threshold not met
+        effectiveSort = 'recent';
+      }
+    }
 
     const skip = (page - 1) * limit;
 
@@ -56,8 +69,23 @@ export async function GET(request: NextRequest) {
     }
 
     // Browse mode: query users directly
+    // Get vendor org ID for "specifying my products" filter
+    let vendorOrgId: string | undefined;
+    if (specifyingMyProducts && userId) {
+      const vendorMembership = await prisma.organizationUser.findFirst({
+        where: {
+          userId,
+          isActive: true,
+          organization: { type: { in: ['VENDOR', 'MANUFACTURER', 'SHOWROOM'] } },
+        },
+        select: { organizationId: true },
+      });
+      vendorOrgId = vendorMembership?.organizationId;
+    }
+
     return handleBrowseQuery({
       page, limit, skip, effectiveSort, region, style, bookmarkedOnly, bookmarkedIds,
+      specifyingMyProducts, vendorOrgId,
     });
   } catch (error) {
     console.error('[API] /api/directory/designers error:', error);
@@ -178,10 +206,11 @@ async function handleRankedQuery({
 }
 
 async function handleBrowseQuery({
-  page, limit, skip, effectiveSort, region, style, bookmarkedOnly, bookmarkedIds,
+  page, limit, skip, effectiveSort, region, style, bookmarkedOnly, bookmarkedIds, specifyingMyProducts, vendorOrgId,
 }: {
   page: number; limit: number; skip: number; effectiveSort: string;
   region?: string; style?: string; bookmarkedOnly: boolean; bookmarkedIds: Set<string>;
+  specifyingMyProducts?: boolean; vendorOrgId?: string;
 }) {
   // Query published designers directly
   const whereClause: Record<string, unknown> = {
@@ -198,6 +227,31 @@ async function handleBrowseQuery({
 
   if (bookmarkedOnly) {
     whereClause.id = { in: Array.from(bookmarkedIds) };
+  }
+
+  // Vendor lens: only show designers who have tagged this vendor's products
+  if (specifyingMyProducts && vendorOrgId) {
+    // Find designers who have tagged products from this vendor org
+    const vendorProducts = await prisma.product.findMany({
+      where: { vendorId: { not: null } },
+      select: { id: true, vendorId: true },
+    });
+
+    // Get designer IDs who have tagged these products
+    const taggedDesignerIds = await prisma.productTag.findMany({
+      where: { productId: { in: vendorProducts.map(p => p.id) } },
+      select: { image: { select: { project: { select: { designerId: true } } } } },
+    });
+
+    const designerIds = new Set(
+      taggedDesignerIds
+        .map(t => t.image?.project?.designerId)
+        .filter((id): id is string => !!id)
+    );
+
+    if (designerIds.size > 0) {
+      whereClause.id = { in: Array.from(designerIds) };
+    }
   }
 
   // Determine order

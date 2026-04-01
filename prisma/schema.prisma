@@ -5569,6 +5569,12 @@ model MessagingPreferences {
   // In-app notification settings
   pushOnNewMessage Boolean @default(true)
 
+  // Per-category notification preferences (Phase 5)
+  emailOnSampleRequest Boolean @default(true)
+  emailOnQuoteRequest  Boolean @default(true)
+  emailOnReorderRequest Boolean @default(true)
+  emailOnCollaboration Boolean @default(true)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
