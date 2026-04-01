@@ -237,6 +237,9 @@ model User {
   quotedPricing       ProjectProductPricing[] @relation("QuotedByUser")
   bulkPricingRequests BulkPricingRequest[]    @relation("BulkRequestRep")
 
+  // Phase 4: Shadow Profiles
+  repShadowProfile RepShadowProfile? @relation("RepShadowUser")
+
   @@map("users")
 }
 
@@ -867,6 +870,9 @@ model Organization {
   bulkPricingRequests        BulkPricingRequest[]  @relation("VendorBulkRequests")
   vendorActionItemSignals    ActionItemSignal[]    @relation("VendorActionSignals")
   designerActionItemSignals  ActionItemSignal[]    @relation("DesignerActionSignals")
+
+  // Phase 4: Shadow Profiles
+  vendorShadowProfile VendorShadowProfile? @relation("VendorShadowOrg")
 
   @@index([status])
   @@index([type])
@@ -5805,4 +5811,61 @@ model ActionItemSignal {
   @@index([createdAt])
   @@index([projectType])
   @@map("action_item_signals")
+}
+
+// ─── Phase 4: Shadow Profiles ─────────────────────────────────────
+
+model VendorShadowProfile {
+  id               String    @id @default(cuid())
+  vendorName       String    @unique
+  vendorOrgId      String?   @unique
+
+  totalProducts    Int       @default(0)
+  totalProjects    Int       @default(0)
+  totalDesigners   Int       @default(0)
+  totalQuotedValue Decimal?  @db.Decimal(10, 2)
+  avgOrderValue    Decimal?  @db.Decimal(10, 2)
+  reorderRate      Float?
+
+  geoDistribution  Json?
+  projectTypeDist  Json?
+  topProducts      Json?
+
+  claimedAt        DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  vendorOrg        Organization? @relation("VendorShadowOrg", fields: [vendorOrgId], references: [id], onDelete: SetNull)
+  reps             RepShadowProfile[]
+
+  @@index([vendorOrgId])
+  @@map("vendor_shadow_profiles")
+}
+
+model RepShadowProfile {
+  id                  String    @id @default(cuid())
+  vendorShadowId      String
+  repName             String
+  repEmail            String?
+  userId              String?   @unique
+
+  inferredTerritory   String?
+
+  designersServed     Int       @default(0)
+  totalRequests       Int       @default(0)
+  avgResponseHours    Float?
+  quoteConversionRate Float?
+  repeatRequestRate   Float?
+
+  claimedAt           DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  vendorShadow        VendorShadowProfile @relation(fields: [vendorShadowId], references: [id], onDelete: Cascade)
+  user                User?               @relation("RepShadowUser", fields: [userId], references: [id], onDelete: SetNull)
+
+  @@unique([vendorShadowId, repEmail])
+  @@index([vendorShadowId])
+  @@index([userId])
+  @@map("rep_shadow_profiles")
 }

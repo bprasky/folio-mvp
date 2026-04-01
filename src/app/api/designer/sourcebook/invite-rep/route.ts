@@ -9,6 +9,7 @@ import {
   generateQuoteRequestEmail,
   buildMailtoLink,
 } from '@/lib/messaging/email-templates';
+import { seedRepShadowFromInvite } from '@/lib/intelligence/shadow-profiles';
 
 /**
  * POST /api/designer/sourcebook/invite-rep
@@ -80,6 +81,20 @@ export async function POST(request: NextRequest) {
 
       // TODO: Send actual invite email via SendGrid/Resend
       // For now, record it as sent
+
+      // Seed rep shadow profile for intelligence
+      const product = await prisma.product.findUnique({
+        where: { id: productId },
+        select: { brand: true },
+      });
+      if (product?.brand) {
+        seedRepShadowFromInvite({
+          vendorName: product.brand,
+          repName,
+          repEmail,
+          designerLocation: designer?.location || undefined,
+        }).catch(console.error);
+      }
 
       return NextResponse.json({
         success: true,
