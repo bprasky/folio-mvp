@@ -46,6 +46,7 @@ export default async function ProjectPage({
       budgetBand: true,
       city: true,
       regionState: true,
+      targetInstallDate: true,
       updatedAt: true,
       ownerId: true,
       createdAt: true,
@@ -282,6 +283,7 @@ export default async function ProjectPage({
             <ActionItemsPanel
               projectId={sanitizedProject.id}
               projectName={sanitizedProject.title}
+              targetInstallDate={base.targetInstallDate?.toISOString() || null}
               selections={sanitizedProject.rooms.flatMap(r =>
                 r.selections.map(s => ({
                   ...s,

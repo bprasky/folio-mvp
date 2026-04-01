@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { RidgeCard } from '@/components/ui/ridge-card';
 import { Button } from '@/components/ui/button';
 import type { BudgetSummary } from '@/types/project-actions';
@@ -30,6 +30,7 @@ interface PricingEntry {
 interface ActionItemsPanelProps {
   projectId: string;
   projectName: string;
+  targetInstallDate: string | null;
   selections: Selection[];
   onRefresh: () => void;
 }
@@ -37,9 +38,15 @@ interface ActionItemsPanelProps {
 export default function ActionItemsPanel({
   projectId,
   projectName,
+  targetInstallDate,
   selections,
   onRefresh,
 }: ActionItemsPanelProps) {
+  const [installDate, setInstallDate] = useState(targetInstallDate);
+  const [editingInstallDate, setEditingInstallDate] = useState(false);
+  const [installDateInput, setInstallDateInput] = useState(
+    targetInstallDate ? new Date(targetInstallDate).toISOString().split('T')[0] : ''
+  );
   const [budget, setBudget] = useState<BudgetSummary | null>(null);
   const [pricing, setPricing] = useState<PricingEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -95,6 +102,85 @@ export default function ActionItemsPanel({
       };
     });
 
+  // Procurement Timeline computation
+  const timelineBuckets = useMemo(() => {
+    if (!installDate) return null;
+    const install = new Date(installDate);
+    const now = new Date();
+
+    // Group products with lead times by order deadline
+    const withLeadTime: Array<{
+      productName: string;
+      vendorName: string;
+      leadTimeWeeks: number;
+      orderBy: Date;
+    }> = [];
+
+    const missingLeadTime: string[] = [];
+
+    for (const p of pricing) {
+      const sel = selections.find(s => {
+        const uiMeta = (s as unknown as Record<string, unknown>).uiMeta as Record<string, string> | null;
+        return (uiMeta?.productId || s.productTagId || s.id) === p.productId;
+      });
+      const productName = sel?.productName || 'Unknown';
+      const vendorName = sel?.vendorName || 'Unknown';
+
+      if (p.leadTimeWeeks && p.leadTimeWeeks > 0) {
+        const orderBy = new Date(install.getTime() - p.leadTimeWeeks * 7 * 24 * 60 * 60 * 1000);
+        withLeadTime.push({ productName, vendorName, leadTimeWeeks: p.leadTimeWeeks, orderBy });
+      } else if (p.status === 'RECEIVED') {
+        missingLeadTime.push(productName);
+      }
+    }
+
+    // Also count selections without any pricing entry as missing
+    for (const s of selections) {
+      const uiMeta = (s as unknown as Record<string, unknown>).uiMeta as Record<string, string> | null;
+      const productId = uiMeta?.productId || s.productTagId || s.id;
+      if (!pricing.find(p => p.productId === productId)) {
+        missingLeadTime.push(s.productName || 'Unknown');
+      }
+    }
+
+    // Sort by order deadline (soonest first)
+    withLeadTime.sort((a, b) => a.orderBy.getTime() - b.orderBy.getTime());
+
+    // Group into monthly buckets
+    const buckets = new Map<string, typeof withLeadTime>();
+    for (const item of withLeadTime) {
+      const monthKey = item.orderBy.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+      if (!buckets.has(monthKey)) buckets.set(monthKey, []);
+      buckets.get(monthKey)!.push(item);
+    }
+
+    // Find items approaching deadline (within 4 weeks)
+    const fourWeeksFromNow = new Date(now.getTime() + 4 * 7 * 24 * 60 * 60 * 1000);
+    const approaching = withLeadTime.filter(item => item.orderBy <= fourWeeksFromNow && item.orderBy >= now);
+
+    return {
+      buckets: Array.from(buckets.entries()),
+      missingCount: missingLeadTime.length,
+      approaching,
+      installDateFormatted: install.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+    };
+  }, [installDate, pricing, selections]);
+
+  const saveInstallDate = async () => {
+    if (!installDateInput) return;
+    try {
+      const res = await fetch(`/api/projects/${projectId}/settings`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ targetInstallDate: installDateInput }),
+      });
+      if (res.ok) {
+        setInstallDate(new Date(installDateInput).toISOString());
+        setEditingInstallDate(false);
+      }
+    } catch { /* silently handle */ }
+  };
+
   if (loading) {
     return (
       <div className="py-16 text-center">
@@ -128,10 +214,20 @@ export default function ActionItemsPanel({
       </div>
 
       {/* Needs Attention */}
-      {(pendingQuotes.length > 0 || discontinued.length > 0) && (
+      {(pendingQuotes.length > 0 || discontinued.length > 0 || (timelineBuckets?.approaching.length || 0) > 0) && (
         <RidgeCard padding="lg">
           <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3">Needs Attention</h3>
           <div className="space-y-2">
+            {timelineBuckets && timelineBuckets.approaching.length > 0 && (
+              <div className="text-sm text-[var(--text-secondary)]">
+                <span className="text-red-500">⚠</span> {timelineBuckets.approaching.length} item{timelineBuckets.approaching.length !== 1 ? 's' : ''} need to be ordered within 4 weeks to meet timeline
+                {timelineBuckets.approaching.map((item, i) => (
+                  <div key={i} className="ml-5 text-xs text-[var(--text-tertiary)]">
+                    {item.productName} ({item.vendorName}) · {item.leadTimeWeeks} wk lead
+                  </div>
+                ))}
+              </div>
+            )}
             {pendingQuotes.length > 0 && (
               <div className="text-sm text-[var(--text-secondary)]">
                 <span className="text-amber-600">⏳</span> {pendingQuotes.length} quote request{pendingQuotes.length !== 1 ? 's' : ''} pending
@@ -242,6 +338,77 @@ export default function ActionItemsPanel({
           </div>
         </RidgeCard>
       )}
+
+      {/* Procurement Timeline */}
+      <RidgeCard padding="lg">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-semibold text-[var(--text-primary)]">Procurement Timeline</h3>
+          {!editingInstallDate && (
+            <button
+              onClick={() => setEditingInstallDate(true)}
+              className="text-xs text-[var(--accent)] hover:underline"
+            >
+              {installDate ? 'Change' : 'Set install date'}
+            </button>
+          )}
+        </div>
+
+        {editingInstallDate && (
+          <div className="flex items-center gap-2 mb-4">
+            <input
+              type="date"
+              value={installDateInput}
+              onChange={(e) => setInstallDateInput(e.target.value)}
+              className="px-3 py-1.5 text-sm bg-white border border-[#E8E6E3] rounded-lg text-[#2C2925]"
+            />
+            <Button variant="accent" size="sm" onClick={saveInstallDate}>Save</Button>
+            <Button variant="ridge" size="sm" onClick={() => setEditingInstallDate(false)}>Cancel</Button>
+          </div>
+        )}
+
+        {!installDate ? (
+          <p className="text-sm text-[var(--text-tertiary)]">
+            Set a target install date to see backward-scheduled order deadlines.
+          </p>
+        ) : timelineBuckets ? (
+          <div className="space-y-4">
+            <p className="text-xs text-[var(--text-tertiary)]">
+              Target install: {timelineBuckets.installDateFormatted}
+            </p>
+
+            {timelineBuckets.buckets.length > 0 ? (
+              timelineBuckets.buckets.map(([monthLabel, items]) => (
+                <div key={monthLabel}>
+                  <div className="text-sm font-medium text-[var(--text-primary)] mb-1">
+                    Order by {monthLabel}
+                  </div>
+                  {items.map((item, i) => (
+                    <div key={i} className="ml-4 text-xs text-[var(--text-secondary)] py-0.5">
+                      {item.productName} ({item.vendorName}) · {item.leadTimeWeeks} wk
+                    </div>
+                  ))}
+                </div>
+              ))
+            ) : (
+              <p className="text-sm text-[var(--text-tertiary)]">
+                No products with lead time data yet.
+              </p>
+            )}
+
+            {timelineBuckets.missingCount > 0 && (
+              <div className="text-sm text-[var(--text-secondary)] mt-2">
+                ❓ {timelineBuckets.missingCount} item{timelineBuckets.missingCount !== 1 ? 's' : ''} missing lead time data
+                <button
+                  onClick={() => setLeadTimeModalOpen(true)}
+                  className="ml-2 text-[var(--accent)] hover:underline"
+                >
+                  Request Lead Times
+                </button>
+              </div>
+            )}
+          </div>
+        ) : null}
+      </RidgeCard>
 
       {/* Completed */}
       {pricedCount > 0 && (
