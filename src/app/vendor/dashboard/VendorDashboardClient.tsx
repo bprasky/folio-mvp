@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import ActionItemsAnalytics from '@/components/vendor/ActionItemsAnalytics';
 import {
   FaPlus,
   FaEye,
@@ -251,6 +252,11 @@ export default function VendorDashboardClient({ user, projects, stats }: VendorD
               </div>
             </div>
           </RidgeCard>
+        </div>
+
+        {/* Specification Activity Analytics */}
+        <div className="mb-8">
+          <ActionItemsAnalytics />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

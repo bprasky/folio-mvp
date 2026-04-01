@@ -5,6 +5,8 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
 import { canClaimOrganization } from '@/lib/vendor/domain-verification';
+import { mergeVendorShadow, mergeRepShadow } from '@/lib/intelligence/shadow-merge';
+import { deliverPendingActions } from '@/lib/messaging/pending-actions';
 
 /**
  * POST /api/vendor/claim
@@ -85,6 +87,25 @@ export async function POST(request: NextRequest) {
         status: 'CLAIMED',
       },
     });
+
+    // Merge shadow profile data into live org
+    const org = await prisma.organization.findUnique({
+      where: { id: organizationId },
+      select: { name: true },
+    });
+    if (org) {
+      mergeVendorShadow(organizationId, org.name).catch(console.error);
+    }
+
+    // Merge rep shadow profile for this user
+    if (session.user.email) {
+      mergeRepShadow(session.user.id, session.user.email).catch(console.error);
+    }
+
+    // Deliver any pending actions targeting this user's email
+    if (session.user.email) {
+      deliverPendingActions(session.user.email).catch(console.error);
+    }
 
     return NextResponse.json({
       success: true,
