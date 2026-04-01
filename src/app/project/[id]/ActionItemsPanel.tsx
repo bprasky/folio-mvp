@@ -5,6 +5,7 @@ import { RidgeCard } from '@/components/ui/ridge-card';
 import { Button } from '@/components/ui/button';
 import type { BudgetSummary } from '@/types/project-actions';
 import BulkPricingModal from './BulkPricingModal';
+import BatchRequestModal from './BatchRequestModal';
 
 interface Selection {
   id: string;
@@ -43,6 +44,8 @@ export default function ActionItemsPanel({
   const [pricing, setPricing] = useState<PricingEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [bulkModalOpen, setBulkModalOpen] = useState(false);
+  const [leadTimeModalOpen, setLeadTimeModalOpen] = useState(false);
+  const [availabilityModalOpen, setAvailabilityModalOpen] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -115,6 +118,12 @@ export default function ActionItemsPanel({
       <div className="flex flex-wrap gap-2">
         <Button variant="accent" size="sm" onClick={() => setBulkModalOpen(true)}>
           Request Pricing
+        </Button>
+        <Button variant="ridge" size="sm" onClick={() => setLeadTimeModalOpen(true)}>
+          Request Lead Times
+        </Button>
+        <Button variant="ridge" size="sm" onClick={() => setAvailabilityModalOpen(true)}>
+          Check Availability
         </Button>
       </div>
 
@@ -251,10 +260,46 @@ export default function ActionItemsPanel({
         projectId={projectId}
         projectName={projectName}
         selections={bulkSelections}
-        onSent={(count) => {
+        onSent={() => {
           setBulkModalOpen(false);
           loadData();
           onRefresh();
+        }}
+      />
+
+      <BatchRequestModal
+        isOpen={leadTimeModalOpen}
+        onClose={() => setLeadTimeModalOpen(false)}
+        projectId={projectId}
+        projectName={projectName}
+        selections={bulkSelections.map(s => ({
+          productId: s.productId,
+          productName: s.productName,
+          vendorName: s.vendorName,
+          roomName: s.roomName,
+        }))}
+        requestType="lead-time"
+        onSent={() => {
+          setLeadTimeModalOpen(false);
+          loadData();
+        }}
+      />
+
+      <BatchRequestModal
+        isOpen={availabilityModalOpen}
+        onClose={() => setAvailabilityModalOpen(false)}
+        projectId={projectId}
+        projectName={projectName}
+        selections={bulkSelections.map(s => ({
+          productId: s.productId,
+          productName: s.productName,
+          vendorName: s.vendorName,
+          roomName: s.roomName,
+        }))}
+        requestType="availability"
+        onSent={() => {
+          setAvailabilityModalOpen(false);
+          loadData();
         }}
       />
     </div>
