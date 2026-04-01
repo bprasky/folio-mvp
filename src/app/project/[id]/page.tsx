@@ -15,9 +15,10 @@ import StagingPublishPanel, { NoDraftState } from './StagingPublishPanel';
 import { getPostForStaging } from '@/lib/post/getPostForStaging';
 import ProjectEmptyState from './ProjectEmptyState';
 import ProjectEmptyStateDiscovery from './ProjectEmptyStateDiscovery';
+import ActionItemsPanel from './ActionItemsPanel';
 import { getEditorialState, type EditorialState } from '@/lib/editorial/getEditorialState';
 
-type TabView = 'overview' | 'media' | 'boards' | 'drafts' | 'files' | 'publish' | 'story';
+type TabView = 'overview' | 'media' | 'boards' | 'drafts' | 'files' | 'publish' | 'story' | 'actions';
 
 export default async function ProjectPage({ 
   params, 
@@ -45,6 +46,7 @@ export default async function ProjectPage({
       budgetBand: true,
       city: true,
       regionState: true,
+      targetInstallDate: true,
       updatedAt: true,
       ownerId: true,
       createdAt: true,
@@ -154,7 +156,7 @@ export default async function ProjectPage({
   }
 
   // Validate view parameter
-  const validViews: TabView[] = ['overview', 'media', 'boards', 'drafts', 'files', 'publish', 'story'];
+  const validViews: TabView[] = ['overview', 'media', 'boards', 'drafts', 'files', 'publish', 'story', 'actions'];
   const view = validViews.includes(currentView) ? currentView : defaultView;
 
   // Convert Prisma Decimal objects to numbers for client components
@@ -273,6 +275,22 @@ export default async function ProjectPage({
               project={sanitizedProject}
               images={base.images.map(img => ({ id: img.id, url: img.url, name: img.name }))}
               isOwner={isOwner}
+            />
+          )}
+
+          {/* ACTION ITEMS tab */}
+          {view === 'actions' && (
+            <ActionItemsPanel
+              projectId={sanitizedProject.id}
+              projectName={sanitizedProject.title}
+              targetInstallDate={base.targetInstallDate?.toISOString() || null}
+              selections={sanitizedProject.rooms.flatMap(r =>
+                r.selections.map(s => ({
+                  ...s,
+                  room: { id: r.id, name: r.name },
+                }))
+              )}
+              onRefresh={() => {}}
             />
           )}
 

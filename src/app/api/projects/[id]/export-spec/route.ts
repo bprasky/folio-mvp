@@ -32,6 +32,9 @@ export async function POST(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
+    const includePricing = searchParams.get('includePricing') === 'true';
+    const includeLeadTime = searchParams.get('includeLeadTime') === 'true';
+
     // Fetch project with rooms and selections
     const project = await prisma.project.findUnique({
       where: { id: projectId },
@@ -47,6 +50,22 @@ export async function POST(
         }
       }
     });
+
+    // Fetch pricing data if requested
+    let pricingMap = new Map<string, { unitPriceTrade: number | null; leadTimeWeeks: number | null; availability: string | null }>();
+    if (includePricing || includeLeadTime) {
+      const pricing = await prisma.projectProductPricing.findMany({
+        where: { projectId },
+      });
+      for (const p of pricing) {
+        const key = `${p.productId}-${p.roomId || ''}`;
+        pricingMap.set(key, {
+          unitPriceTrade: p.unitPriceTrade ? Number(p.unitPriceTrade) : null,
+          leadTimeWeeks: p.leadTimeWeeks,
+          availability: p.availability,
+        });
+      }
+    }
 
     if (!project) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
@@ -68,26 +87,33 @@ export async function POST(
       sku: string;
       url: string;
       price: string;
+      tradePricing: string;
+      leadTime: string;
+      availability: string;
       unit: string;
       quantity: string;
       notes: string;
     }> = [];
 
     for (const room of roomsToExport) {
-      const roomTemplate = room.type 
-        ? getRoomTemplateByType(room.type) 
+      const roomTemplate = room.type
+        ? getRoomTemplateByType(room.type)
         : getRoomTemplate(room.name);
-      
+
       for (const selection of room.selections) {
-        // Get board section from slotKey or infer from category
         let boardSection = 'General';
         if (selection.slotKey && roomTemplate) {
           const slot = roomTemplate.slots.find(s => s.key === selection.slotKey);
           boardSection = slot?.label || selection.slotKey;
         } else if (selection.tags && selection.tags.length > 0) {
-          // Infer from first tag
           boardSection = selection.tags[0];
         }
+
+        // Look up pricing from ProjectProductPricing
+        const productId = selection.vendorProductId || selection.id;
+        const pricingKey = `${productId}-${room.id}`;
+        const pricingKeyNoRoom = `${productId}-`;
+        const pricing = pricingMap.get(pricingKey) || pricingMap.get(pricingKeyNoRoom);
 
         exportData.push({
           projectName: project.title || 'Untitled Project',
@@ -98,7 +124,10 @@ export async function POST(
           sku: selection.vendorProductId || '',
           url: selection.productUrl || '',
           price: selection.unitPrice ? `$${Number(selection.unitPrice).toFixed(2)}` : '',
-          unit: 'ea', // Default unit
+          tradePricing: pricing?.unitPriceTrade ? `$${pricing.unitPriceTrade.toFixed(2)}` : '',
+          leadTime: pricing?.leadTimeWeeks ? `${pricing.leadTimeWeeks} wk` : '',
+          availability: pricing?.availability || '',
+          unit: 'ea',
           quantity: selection.quantity ? String(selection.quantity) : '',
           notes: selection.notes || ''
         });
@@ -118,7 +147,7 @@ export async function POST(
       const worksheet = workbook.addWorksheet('Specification');
 
       // Add headers
-      worksheet.columns = [
+      const columns: Array<Partial<ExcelJS.Column>> = [
         { header: 'Project Name', key: 'projectName', width: 20 },
         { header: 'Room', key: 'room', width: 15 },
         { header: 'Board Section', key: 'boardSection', width: 20 },
@@ -129,8 +158,18 @@ export async function POST(
         { header: 'Price', key: 'price', width: 12 },
         { header: 'Unit', key: 'unit', width: 10 },
         { header: 'Quantity', key: 'quantity', width: 10 },
-        { header: 'Notes', key: 'notes', width: 40 }
+        { header: 'Notes', key: 'notes', width: 40 },
       ];
+
+      if (includePricing) {
+        columns.push({ header: 'Trade Price', key: 'tradePricing', width: 14 });
+      }
+      if (includeLeadTime) {
+        columns.push({ header: 'Lead Time', key: 'leadTime', width: 12 });
+        columns.push({ header: 'Availability', key: 'availability', width: 16 });
+      }
+
+      worksheet.columns = columns;
 
       // Style header row
       worksheet.getRow(1).font = { bold: true };

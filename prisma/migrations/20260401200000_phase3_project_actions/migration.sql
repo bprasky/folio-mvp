@@ -1,0 +1,4 @@
+-- Phase 3: Project-Level Actions
+-- This migration is already applied via manual SQL. Kept here for Prisma migration history.
+-- Tables created: project_product_pricing, bulk_pricing_requests, action_item_signals
+-- Column added: projects.targetInstallDate

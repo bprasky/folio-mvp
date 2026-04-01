@@ -133,6 +133,45 @@ export default function DesignerBoard({
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const analysisTriggeredRef = useRef(false);
 
+  // Pricing data for status indicators on board tiles
+  const [pricingData, setPricingData] = useState<Record<string, { status: string; unitPriceTrade: number | null; leadTimeWeeks: number | null; availability: string | null }>>({});
+
+  useEffect(() => {
+    fetch(`/api/projects/${projectId}/pricing`)
+      .then(res => res.ok ? res.json() : { entries: [] })
+      .then(data => {
+        const map: typeof pricingData = {};
+        for (const entry of data.entries || []) {
+          map[entry.productId] = {
+            status: entry.status,
+            unitPriceTrade: entry.unitPriceTrade,
+            leadTimeWeeks: entry.leadTimeWeeks,
+            availability: entry.availability,
+          };
+        }
+        setPricingData(map);
+      })
+      .catch(() => {});
+  }, [projectId]);
+
+  const refreshPricing = () => {
+    fetch(`/api/projects/${projectId}/pricing`)
+      .then(res => res.ok ? res.json() : { entries: [] })
+      .then(data => {
+        const map: typeof pricingData = {};
+        for (const entry of data.entries || []) {
+          map[entry.productId] = {
+            status: entry.status,
+            unitPriceTrade: entry.unitPriceTrade,
+            leadTimeWeeks: entry.leadTimeWeeks,
+            availability: entry.availability,
+          };
+        }
+        setPricingData(map);
+      })
+      .catch(() => {});
+  };
+
   // Auto-trigger image analysis when images exist but no rooms have been created yet
   useEffect(() => {
     if (imageCount > 0 && project.rooms.length === 0 && !analysisTriggeredRef.current) {
@@ -386,6 +425,8 @@ export default function DesignerBoard({
             paintAccentEnabled={paintAccentEnabled[room.id] || false}
             onPaintAccentToggle={() => handleRoomPaintAccentToggle(room.id)}
             onSelectionSizeOverride={handleSelectionSizeOverride}
+            pricingData={pricingData}
+            onPricingRefresh={refreshPricing}
           />
         ))}
       </div>

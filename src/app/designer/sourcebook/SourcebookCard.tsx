@@ -12,6 +12,9 @@ interface SourcebookCardProps {
   onEditNotes: (entry: SourcebookEntry) => void;
   onArchive: (productId: string, archived: boolean) => void;
   onUseInProject: (entry: SourcebookEntry) => void;
+  onRequestSample: (entry: SourcebookEntry) => void;
+  onRequestQuote: (entry: SourcebookEntry) => void;
+  onContactRep: (entry: SourcebookEntry) => void;
 }
 
 export default function SourcebookCard({
@@ -19,6 +22,9 @@ export default function SourcebookCard({
   onEditNotes,
   onArchive,
   onUseInProject,
+  onRequestSample,
+  onRequestQuote,
+  onContactRep,
 }: SourcebookCardProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -90,7 +96,26 @@ export default function SourcebookCard({
               </button>
 
               {menuOpen && (
-                <div className="absolute right-0 top-8 z-20 w-48 bg-white rounded-lg shadow-lg border border-[var(--border-subtle)] py-1">
+                <div className="absolute right-0 top-8 z-20 w-52 bg-white rounded-lg shadow-lg border border-[var(--border-subtle)] py-1">
+                  <button
+                    onClick={() => { onRequestSample(entry); setMenuOpen(false); }}
+                    className="w-full text-left px-4 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-elevated)] transition-colors"
+                  >
+                    📦 Request Sample
+                  </button>
+                  <button
+                    onClick={() => { onRequestQuote(entry); setMenuOpen(false); }}
+                    className="w-full text-left px-4 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-elevated)] transition-colors"
+                  >
+                    💰 Request Quote
+                  </button>
+                  <button
+                    onClick={() => { onContactRep(entry); setMenuOpen(false); }}
+                    className="w-full text-left px-4 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-elevated)] transition-colors"
+                  >
+                    💬 Contact Rep
+                  </button>
+                  <div className="border-t border-[var(--border-subtle)] my-1" />
                   <button
                     onClick={() => { onEditNotes(entry); setMenuOpen(false); }}
                     className="w-full text-left px-4 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-elevated)] transition-colors"
@@ -156,24 +181,31 @@ export default function SourcebookCard({
             <Button
               variant="ridge"
               size="sm"
-              onClick={() => onUseInProject(entry)}
+              onClick={() => onRequestSample(entry)}
             >
-              Use in Project
+              Request Sample
             </Button>
             <Button
               variant="ridge"
               size="sm"
-              onClick={() => onEditNotes(entry)}
+              onClick={() => onRequestQuote(entry)}
             >
-              {entry.notes ? 'Edit Notes' : 'Add Notes'}
+              Request Quote
             </Button>
-            {uniqueProjects.length > 0 && (
-              <Link href={`/designer/projects/${uniqueProjects[0].projectId}`}>
-                <Button variant="ridge" size="sm">
-                  View in Projects
-                </Button>
-              </Link>
-            )}
+            <Button
+              variant="ridge"
+              size="sm"
+              onClick={() => onContactRep(entry)}
+            >
+              Contact Rep
+            </Button>
+            <Button
+              variant="ridge"
+              size="sm"
+              onClick={() => onUseInProject(entry)}
+            >
+              Use in Project
+            </Button>
           </div>
         </div>
       </div>

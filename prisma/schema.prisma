@@ -230,6 +230,16 @@ model User {
   directoryBookmarks   DirectoryBookmark[]  @relation("UserDirectoryBookmarks")
   bookmarkedBy         DirectoryBookmark[]  @relation("BookmarkedByUsers")
 
+  // Pending Actions (structured requests awaiting rep signup)
+  pendingActions PendingAction[] @relation("UserPendingActions")
+
+  // Phase 3: Project-Level Actions
+  quotedPricing       ProjectProductPricing[] @relation("QuotedByUser")
+  bulkPricingRequests BulkPricingRequest[]    @relation("BulkRequestRep")
+
+  // Phase 4: Shadow Profiles
+  repShadowProfile RepShadowProfile? @relation("RepShadowUser")
+
   @@map("users")
 }
 
@@ -420,6 +430,11 @@ model Project {
   selectionHistory     SelectionHistory[]
   designJourney        ProjectDesignJourney?
 
+  // Phase 3: Project-Level Actions
+  targetInstallDate    DateTime?
+  productPricing       ProjectProductPricing[]
+  bulkPricingRequests  BulkPricingRequest[]
+
   @@map("projects")
 }
 
@@ -566,6 +581,13 @@ model Product {
 
   // Sourcebook System
   sourcebookEntries SourcebookEntry[] @relation("ProductSourcebookEntries")
+
+  // Pending Actions
+  pendingActions PendingAction[] @relation("ProductPendingActions")
+
+  // Phase 3: Project-Level Actions
+  projectPricing   ProjectProductPricing[]
+  actionItemSignals ActionItemSignal[] @relation("ProductActionSignals")
 
   @@map("products")
 }
@@ -843,6 +865,14 @@ model Organization {
   orgInitiatedConversations Conversation[] @relation("OrgInitiatedConversations")
   orgReceivedConversations  Conversation[] @relation("OrgReceivedConversations")
   orgSentMessages           Message[]
+
+  // Phase 3: Project-Level Actions
+  bulkPricingRequests        BulkPricingRequest[]  @relation("VendorBulkRequests")
+  vendorActionItemSignals    ActionItemSignal[]    @relation("VendorActionSignals")
+  designerActionItemSignals  ActionItemSignal[]    @relation("DesignerActionSignals")
+
+  // Phase 4: Shadow Profiles
+  vendorShadowProfile VendorShadowProfile? @relation("VendorShadowOrg")
 
   @@index([status])
   @@index([type])
@@ -5455,6 +5485,10 @@ model Conversation {
   context ConversationContext @default(GENERAL)
   status  ConversationStatus @default(ACTIVE)
 
+  // Structured request categorization
+  category       MessageCategory @default(GENERAL)
+  structuredData Json?           // Action-specific payload (quantity, timeline, finish, etc.)
+
   // Attribution context (for vendor → designer threads)
   attributionNote String?
   productId       String?
@@ -5535,6 +5569,12 @@ model MessagingPreferences {
   // In-app notification settings
   pushOnNewMessage Boolean @default(true)
 
+  // Per-category notification preferences (Phase 5)
+  emailOnSampleRequest Boolean @default(true)
+  emailOnQuoteRequest  Boolean @default(true)
+  emailOnReorderRequest Boolean @default(true)
+  emailOnCollaboration Boolean @default(true)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -5562,6 +5602,22 @@ enum EmailDigestFrequency {
   HOURLY
   DAILY
   NEVER
+}
+
+enum MessageCategory {
+  SAMPLE_REQUEST
+  QUOTE_REQUEST
+  REORDER_REQUEST
+  COLLABORATION
+  GENERAL
+}
+
+enum PendingActionStatus {
+  PENDING
+  DELIVERED
+  EXPIRED
+  CANCELLED
+  EMAIL_SENT
 }
 
 // PostSave: bookmark/save for editorial posts (separate from product Save)
@@ -5614,4 +5670,208 @@ model DirectoryBookmark {
   @@index([userId])
   @@index([professionalId])
   @@map("directory_bookmarks")
+}
+
+// ─── Pending Actions (queued requests for invited reps) ───────────
+
+model PendingAction {
+  id           String              @id @default(cuid())
+  senderId     String
+  actionType   MessageCategory
+  productId    String
+  targetEmail  String
+  targetName   String
+  targetOrgId  String?
+  payload      Json
+  status       PendingActionStatus @default(PENDING)
+  inviteSentAt   DateTime?
+  reminderSentAt DateTime?
+  deliveredAt    DateTime?
+  expiredAt      DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  sender  User    @relation("UserPendingActions", fields: [senderId], references: [id], onDelete: Cascade)
+  product Product @relation("ProductPendingActions", fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([targetEmail])
+  @@index([status])
+  @@index([senderId])
+  @@map("pending_actions")
+}
+
+// ─── Phase 3: Project-Level Actions ───────────────────────────────
+
+model ProjectProductPricing {
+  id              String    @id @default(cuid())
+  projectId       String
+  productId       String
+  roomId          String?
+
+  // Pricing
+  unitPriceTrade  Decimal?  @db.Decimal(10, 2)
+  unitPriceRetail Decimal?  @db.Decimal(10, 2)
+  quantity        Int       @default(1)
+  unit            String?
+
+  // Quote metadata
+  quotedById      String?
+  quotedByName    String?
+  quotedByEmail   String?
+  quotedAt        DateTime?
+  validThrough    DateTime?
+  quoteSource     String    @default("MANUAL")
+
+  // Lead time
+  leadTimeWeeks   Int?
+  availability    String?
+  availabilityNote String?
+
+  // COM/COL
+  isCustomMaterial Boolean  @default(false)
+  comVendor       String?
+  comMaterial      String?
+  comSku           String?
+  comYardage       Decimal?  @db.Decimal(10, 2)
+
+  // Status
+  status          String    @default("NOT_REQUESTED")
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  project         Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  product         Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  quotedBy        User?     @relation("QuotedByUser", fields: [quotedById], references: [id], onDelete: SetNull)
+
+  @@unique([projectId, productId, roomId])
+  @@index([projectId])
+  @@index([productId])
+  @@index([status])
+  @@map("project_product_pricing")
+}
+
+model BulkPricingRequest {
+  id              String    @id @default(cuid())
+  projectId       String
+  vendorOrgId     String?
+  vendorName      String
+  repId           String?
+  repName         String?
+  repEmail        String?
+
+  productIds      String[]  @default([])
+  timeline        String?
+  designerNote    String?
+  tradeStatus     String?
+
+  status          String    @default("SENT")
+  sentAt          DateTime  @default(now())
+  respondedAt     DateTime?
+  conversationId  String?
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  project         Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  vendorOrg       Organization? @relation("VendorBulkRequests", fields: [vendorOrgId], references: [id], onDelete: SetNull)
+  rep             User?         @relation("BulkRequestRep", fields: [repId], references: [id], onDelete: SetNull)
+
+  @@index([projectId])
+  @@index([vendorOrgId])
+  @@index([status])
+  @@map("bulk_pricing_requests")
+}
+
+model ActionItemSignal {
+  id              String    @id @default(cuid())
+  actionType      String
+  productId       String
+  vendorOrgId     String?
+  projectId       String?
+  designerOrgId   String
+
+  quantity        Int?
+  unit            String?
+  timeline        String?
+  projectType     String?
+  location        String?
+
+  resolution      String    @default("PENDING")
+  responseTime    Int?
+  convertedToOrder Boolean  @default(false)
+
+  isOffPlatform   Boolean   @default(false)
+  isBulk          Boolean   @default(false)
+
+  createdAt       DateTime  @default(now())
+
+  product         Product       @relation("ProductActionSignals", fields: [productId], references: [id], onDelete: Cascade)
+  vendorOrg       Organization? @relation("VendorActionSignals", fields: [vendorOrgId], references: [id], onDelete: SetNull)
+  designerOrg     Organization  @relation("DesignerActionSignals", fields: [designerOrgId], references: [id], onDelete: Cascade)
+
+  @@index([actionType])
+  @@index([productId])
+  @@index([vendorOrgId])
+  @@index([designerOrgId])
+  @@index([createdAt])
+  @@index([projectType])
+  @@map("action_item_signals")
+}
+
+// ─── Phase 4: Shadow Profiles ─────────────────────────────────────
+
+model VendorShadowProfile {
+  id               String    @id @default(cuid())
+  vendorName       String    @unique
+  vendorOrgId      String?   @unique
+
+  totalProducts    Int       @default(0)
+  totalProjects    Int       @default(0)
+  totalDesigners   Int       @default(0)
+  totalQuotedValue Decimal?  @db.Decimal(10, 2)
+  avgOrderValue    Decimal?  @db.Decimal(10, 2)
+  reorderRate      Float?
+
+  geoDistribution  Json?
+  projectTypeDist  Json?
+  topProducts      Json?
+
+  claimedAt        DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  vendorOrg        Organization? @relation("VendorShadowOrg", fields: [vendorOrgId], references: [id], onDelete: SetNull)
+  reps             RepShadowProfile[]
+
+  @@index([vendorOrgId])
+  @@map("vendor_shadow_profiles")
+}
+
+model RepShadowProfile {
+  id                  String    @id @default(cuid())
+  vendorShadowId      String
+  repName             String
+  repEmail            String?
+  userId              String?   @unique
+
+  inferredTerritory   String?
+
+  designersServed     Int       @default(0)
+  totalRequests       Int       @default(0)
+  avgResponseHours    Float?
+  quoteConversionRate Float?
+  repeatRequestRate   Float?
+
+  claimedAt           DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  vendorShadow        VendorShadowProfile @relation(fields: [vendorShadowId], references: [id], onDelete: Cascade)
+  user                User?               @relation("RepShadowUser", fields: [userId], references: [id], onDelete: SetNull)
+
+  @@unique([vendorShadowId, repEmail])
+  @@index([vendorShadowId])
+  @@index([userId])
+  @@map("rep_shadow_profiles")
 }

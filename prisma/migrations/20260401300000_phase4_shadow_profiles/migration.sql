@@ -1,0 +1,1 @@
+-- Phase 4: Shadow Profiles\n-- Tables created via manual SQL. Kept for migration history.

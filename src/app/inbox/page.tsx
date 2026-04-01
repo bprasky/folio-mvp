@@ -2,11 +2,15 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useSession } from 'next-auth/react';
+import { CATEGORY_LABELS, CATEGORY_ICONS } from '@/types/structured-requests';
 
 interface ConversationPreview {
   id: string;
   subject: string | null;
   context: string;
+  category?: string;
+  structuredData?: Record<string, unknown>;
   lastMessageAt: string | null;
   initiatorUser: { id: string; name: string; profileImage: string | null } | null;
   initiatorOrg: { id: string; name: string; logo: string | null } | null;
@@ -20,37 +24,61 @@ interface ConversationPreview {
 }
 
 type Filter = 'all' | 'unread' | 'inquiries';
+type CategoryFilter = 'all' | 'SAMPLE_REQUEST' | 'QUOTE_REQUEST' | 'GENERAL' | 'COLLABORATION';
 
 export default function InboxPage() {
+  const { data: session } = useSession();
   const [conversations, setConversations] = useState<ConversationPreview[]>([]);
+  const [categoryCounts, setCategoryCounts] = useState<Record<string, number>>({});
   const [filter, setFilter] = useState<Filter>('all');
+  const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('all');
   const [loading, setLoading] = useState(true);
+  const [isVendor, setIsVendor] = useState(false);
+
+  // Detect vendor user
+  useEffect(() => {
+    const role = (session?.user as Record<string, unknown>)?.role;
+    setIsVendor(role === 'VENDOR');
+  }, [session]);
 
   useEffect(() => {
     setLoading(true);
-    fetch(`/api/messages/inbox?filter=${filter}`)
+    const params = new URLSearchParams({ filter });
+    if (categoryFilter !== 'all') {
+      params.set('category', categoryFilter);
+    }
+    fetch(`/api/messages/inbox?${params.toString()}`)
       .then((res) => res.json())
       .then((data) => {
         setConversations(data.conversations || []);
+        setCategoryCounts(data.categoryCounts || {});
         setLoading(false);
       })
       .catch(() => setLoading(false));
-  }, [filter]);
+  }, [filter, categoryFilter]);
 
-  const filters: { id: Filter; label: string }[] = [
+  const baseFilters: { id: Filter; label: string }[] = [
     { id: 'all', label: 'All' },
     { id: 'unread', label: 'Unread' },
     { id: 'inquiries', label: 'Inquiries' },
   ];
 
+  const categoryFilters: { id: CategoryFilter; label: string; icon: string }[] = [
+    { id: 'all', label: 'All', icon: '' },
+    { id: 'SAMPLE_REQUEST', label: 'Samples', icon: CATEGORY_ICONS.SAMPLE_REQUEST },
+    { id: 'QUOTE_REQUEST', label: 'Quotes', icon: CATEGORY_ICONS.QUOTE_REQUEST },
+    { id: 'GENERAL', label: 'General', icon: CATEGORY_ICONS.GENERAL },
+    { id: 'COLLABORATION', label: 'Collaborations', icon: CATEGORY_ICONS.COLLABORATION },
+  ];
+
   return (
     <div className="max-w-2xl mx-auto py-8 px-4">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-4">
         <h1 className="text-xl font-medium" style={{ color: '#2C2825' }}>
           Inbox
         </h1>
         <div className="flex gap-1">
-          {filters.map((f) => (
+          {baseFilters.map((f) => (
             <button
               key={f.id}
               onClick={() => setFilter(f.id)}
@@ -65,6 +93,42 @@ export default function InboxPage() {
           ))}
         </div>
       </div>
+
+      {/* Category tabs — shown for vendor users or when category data exists */}
+      {(isVendor || Object.keys(categoryCounts).length > 1) && (
+        <div className="flex gap-1 mb-6 overflow-x-auto pb-1">
+          {categoryFilters.map((cf) => {
+            const count = cf.id === 'all'
+              ? Object.values(categoryCounts).reduce((a, b) => a + b, 0)
+              : categoryCounts[cf.id] || 0;
+
+            return (
+              <button
+                key={cf.id}
+                onClick={() => setCategoryFilter(cf.id)}
+                className="px-3 py-1.5 rounded-full text-xs transition-colors whitespace-nowrap flex items-center gap-1"
+                style={{
+                  backgroundColor: categoryFilter === cf.id ? '#2C2825' : '#F0EDE9',
+                  color: categoryFilter === cf.id ? '#fff' : '#5C554D',
+                }}
+              >
+                {cf.icon && <span>{cf.icon}</span>}
+                {cf.label}
+                {count > 0 && (
+                  <span
+                    className="ml-1 px-1.5 py-0.5 rounded-full text-[10px]"
+                    style={{
+                      backgroundColor: categoryFilter === cf.id ? 'rgba(255,255,255,0.2)' : '#E0DCD7',
+                    }}
+                  >
+                    {count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {loading ? (
         <div className="space-y-3">
@@ -101,7 +165,12 @@ function ConversationRow({ conversation }: { conversation: ConversationPreview }
   const unread = (conversation.participants[0]?.unreadCount ?? 0) > 0;
   const sender = conversation.initiatorUser || conversation.initiatorOrg;
   const senderName = sender?.name ?? 'Unknown';
-  const senderImage = (sender as any)?.profileImage || (sender as any)?.logo || null;
+  const senderImage = (sender as Record<string, unknown>)?.profileImage as string | null
+    || (sender as Record<string, unknown>)?.logo as string | null
+    || null;
+  const category = conversation.category;
+  const categoryIcon = category ? CATEGORY_ICONS[category] : undefined;
+  const categoryLabel = category ? CATEGORY_LABELS[category] : undefined;
 
   return (
     <Link href={`/inbox/${conversation.id}`}>
@@ -131,15 +200,22 @@ function ConversationRow({ conversation }: { conversation: ConversationPreview }
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between">
-            <span
-              className="text-sm"
-              style={{
-                fontWeight: unread ? 600 : 400,
-                color: unread ? '#2C2825' : '#5C554D',
-              }}
-            >
-              {senderName}
-            </span>
+            <div className="flex items-center gap-2">
+              <span
+                className="text-sm"
+                style={{
+                  fontWeight: unread ? 600 : 400,
+                  color: unread ? '#2C2825' : '#5C554D',
+                }}
+              >
+                {senderName}
+              </span>
+              {categoryIcon && categoryLabel && categoryLabel !== 'General' && (
+                <span className="text-xs px-1.5 py-0.5 rounded-full" style={{ backgroundColor: '#F0EDE9', color: '#5C554D' }}>
+                  {categoryIcon} {categoryLabel}
+                </span>
+              )}
+            </div>
             <span className="text-xs" style={{ color: '#A69E96' }}>
               {conversation.lastMessageAt
                 ? formatRelativeTime(conversation.lastMessageAt)

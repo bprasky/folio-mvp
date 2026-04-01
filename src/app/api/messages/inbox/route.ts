@@ -11,6 +11,18 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const orgId = searchParams.get("orgId");
   const filter = searchParams.get("filter") ?? "all";
+  const category = searchParams.get("category");
+
+  // Map category filter shortcuts
+  const categoryMap: Record<string, string> = {
+    samples: "SAMPLE_REQUEST",
+    quotes: "QUOTE_REQUEST",
+    general: "GENERAL",
+    collaborations: "COLLABORATION",
+  };
+  const effectiveCategory = category
+    ? categoryMap[category] || category
+    : undefined;
 
   const conversations = await prisma.conversation.findMany({
     where: {
@@ -36,6 +48,7 @@ export async function GET(req: Request) {
           }
         : {}),
       ...(filter === "inquiries" ? { context: "CLIENT_INQUIRY" } : {}),
+      ...(effectiveCategory ? { category: effectiveCategory } : {}),
     },
     include: {
       messages: {
@@ -63,5 +76,25 @@ export async function GET(req: Request) {
     orderBy: { lastMessageAt: "desc" },
   });
 
-  return NextResponse.json({ conversations });
+  // Compute category counts for vendor inbox tabs
+  const categoryCounts = await prisma.conversation.groupBy({
+    by: ['category'],
+    where: {
+      OR: [
+        { recipientUserId: userId },
+        ...(orgId ? [{ recipientOrgId: orgId }] : []),
+        { initiatorUserId: userId },
+        { participants: { some: { userId } } },
+      ],
+      status: "ACTIVE",
+    },
+    _count: { id: true },
+  });
+
+  const counts: Record<string, number> = {};
+  for (const row of categoryCounts) {
+    counts[row.category] = row._count.id;
+  }
+
+  return NextResponse.json({ conversations, categoryCounts: counts });
 }

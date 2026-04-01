@@ -1,10 +1,10 @@
 'use client';
 
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
-import { LayoutGrid, ImageIcon, MessageSquare, Share2 } from 'lucide-react';
+import { LayoutGrid, ImageIcon, MessageSquare, Share2, ClipboardList } from 'lucide-react';
 import type { EditorialState } from '@/lib/editorial/getEditorialState';
 
-type TabView = 'overview' | 'media' | 'boards' | 'drafts' | 'files' | 'publish' | 'story';
+type TabView = 'overview' | 'media' | 'boards' | 'drafts' | 'files' | 'publish' | 'story' | 'actions';
 
 interface ProjectTabsProps {
   project: {
@@ -51,6 +51,12 @@ export default function ProjectTabs({ project, currentView, isPublished, hasDraf
       icon: LayoutGrid,
       badge: totalSelections > 0 ? totalSelections : undefined,
       visible: true,
+    },
+    {
+      id: 'actions' as TabView,
+      label: 'Action Items',
+      icon: ClipboardList,
+      visible: totalSelections > 0,
     },
     {
       id: 'media' as TabView,
