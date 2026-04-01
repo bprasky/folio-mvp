@@ -11,6 +11,7 @@ import { getRoomTemplate, Slot, inferSlotKey, inferSlotKeyFromCategory, ROOM_TEM
 import EditProductDrawer from './EditProductDrawer';
 import BoardTileMenu from './BoardTileMenu';
 import SaveSelectionToProjectModal from './SaveSelectionToProjectModal';
+import ManualQuoteEntryModal from './ManualQuoteEntryModal';
 import { computeTileSize } from './tileSizing';
 
 // Room type suggestions for the combobox (known types get placeholder templates; custom types are fine too)
@@ -150,6 +151,13 @@ function convertTileSize(tileSize: TileSize): Size {
   }
 }
 
+type PricingEntry = {
+  status: string;
+  unitPriceTrade: number | null;
+  leadTimeWeeks: number | null;
+  availability: string | null;
+};
+
 type DesignerBoardRoomProps = {
   room: Room;
   projectId: string;
@@ -159,6 +167,8 @@ type DesignerBoardRoomProps = {
   onSelectionSizeOverride: (selectionId: string, newSize: Size | 'auto') => void;
   onRoomUpdate?: (roomId: string, data: { name?: string; type?: string | null }) => Promise<void>;
   onRoomDelete?: (roomId: string) => Promise<void>;
+  pricingData?: Record<string, PricingEntry>;
+  onPricingRefresh?: () => void;
 };
 
 // Reuse Festival sizing logic for spans
@@ -221,13 +231,16 @@ export default function DesignerBoardRoom({
   onPaintAccentToggle,
   onSelectionSizeOverride,
   onRoomUpdate,
-  onRoomDelete
+  onRoomDelete,
+  pricingData = {},
+  onPricingRefresh,
 }: DesignerBoardRoomProps) {
   const [sizeOverrides, setSizeOverrides] = useState<Record<string, Size>>({});
   const [editing, setEditing] = useState<{ open: boolean; productId?: string; selectionId?: string; slotKey?: string }>({ open: false });
   const [replacingImage, setReplacingImage] = useState<{ open: boolean; selectionId?: string }>({ open: false });
   const [roleChangePopover, setRoleChangePopover] = useState<{ open: boolean; selectionId?: string }>({ open: false });
   const [saveToProjectSelection, setSaveToProjectSelection] = useState<Selection | null>(null);
+  const [quoteEntrySelection, setQuoteEntrySelection] = useState<Selection | null>(null);
 
   // Room menu state
   const [roomMenuOpen, setRoomMenuOpen] = useState(false);
@@ -614,6 +627,7 @@ export default function DesignerBoardRoom({
                 onOverrideSize={handleSizeOverride}
                 onSaveToProject={(sel) => setSaveToProjectSelection(sel)}
                 onDelete={handleDeleteSelection}
+                onEnterQuote={(sel) => setQuoteEntrySelection(sel)}
                 currentOverride={currentOverride}
                 editable={true}
               />
@@ -646,9 +660,31 @@ export default function DesignerBoardRoom({
                       {selection.vendorName && (
                         <div>{selection.vendorName}</div>
                       )}
-                      {selection.unitPrice && (
-                        <div>{formatPrice(selection.unitPrice)}</div>
-                      )}
+                      {/* Pricing status indicator */}
+                      {(() => {
+                        const uiMeta = selection.metadata as unknown as Record<string, string> | undefined;
+                        const productId = uiMeta?.productId || selection.vendorProductId;
+                        const pricing = productId ? pricingData[productId] : undefined;
+                        if (pricing?.status === 'RECEIVED' && pricing.unitPriceTrade != null) {
+                          return (
+                            <div className="text-green-300">
+                              ✓ ${pricing.unitPriceTrade.toLocaleString()}
+                              {pricing.leadTimeWeeks && <span className="text-white/70 ml-1">· {pricing.leadTimeWeeks} wk</span>}
+                            </div>
+                          );
+                        }
+                        if (pricing?.status === 'REQUESTED') {
+                          return <div className="text-amber-300">⏳ Quote pending</div>;
+                        }
+                        if (pricing?.availability === 'DISCONTINUED') {
+                          return <div className="text-red-300">⛔ Discontinued</div>;
+                        }
+                        // Fall back to selection.unitPrice if no ProjectProductPricing
+                        if (selection.unitPrice) {
+                          return <div>{formatPrice(selection.unitPrice)}</div>;
+                        }
+                        return null;
+                      })()}
                       {currentOverride && (
                         <div className="text-white/70">● {currentOverride}</div>
                       )}
@@ -926,6 +962,25 @@ export default function DesignerBoardRoom({
         onSuccess={() => {
           setSaveToProjectSelection(null);
           router.refresh();
+        }}
+      />
+
+      <ManualQuoteEntryModal
+        isOpen={!!quoteEntrySelection}
+        onClose={() => setQuoteEntrySelection(null)}
+        projectId={projectId}
+        productId={
+          (quoteEntrySelection?.metadata as unknown as Record<string, string> | undefined)?.productId
+          || quoteEntrySelection?.vendorProductId
+          || quoteEntrySelection?.id
+          || ''
+        }
+        productName={quoteEntrySelection?.productName || 'Unknown'}
+        vendorName={quoteEntrySelection?.vendorName || 'Unknown'}
+        roomId={room.id}
+        onSaved={() => {
+          setQuoteEntrySelection(null);
+          onPricingRefresh?.();
         }}
       />
     </div>
