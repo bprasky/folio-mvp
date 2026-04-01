@@ -549,7 +549,7 @@ const EventsPageClient: React.FC<EventsPageClientProps> = ({
             {userRole === 'DESIGNER' && (
               <div className="space-y-4">
                 <Link
-                  href="/inspire"
+                  href="/magazine"
                   className="inline-flex items-center px-6 py-3 bg-[var(--accent)] text-white rounded-lg hover:bg-[var(--accent)]-dark transition-colors"
                 >
                   <FaUser className="mr-2" />

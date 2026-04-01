@@ -200,7 +200,7 @@ export default function DesignerAnalyticsPage() {
                           className="rounded-md object-cover mr-3"
                         />
                         <Link
-                          href={product.product_name === 'Eco Modular Sofa' ? '/product/eco-modular-sofa' : `#/product/${product.product_name.toLowerCase().replace(/\s/g, '-')}`}
+                          href={`#/product/${product.product_name.toLowerCase().replace(/\s/g, '-')}`}
                           className="font-medium text-[var(--text-primary)] hover:text-[var(--accent)] transition-colors"
                         >
                           {product.product_name}

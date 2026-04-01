@@ -6,7 +6,6 @@ const path = require('path');
 // Files to protect from reversions
 const protectedFiles = [
   'app/designer/profile/page.tsx',
-  'app/designer/diana-matta/page.tsx',
   'components/ProjectCreationModal.tsx',
   'app/api/projects/route.ts'
 ];

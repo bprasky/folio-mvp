@@ -97,11 +97,11 @@ export default async function ProductPage({ params }: ProductPageProps) {
       {/* Header */}
       <div className="bg-white border-b">
         <div className="container mx-auto px-4 py-4">
-          <Link 
-            href="/inspire" 
+          <Link
+            href="/magazine"
             className="text-[var(--accent)] hover:underline inline-flex items-center gap-2"
           >
-            ← Back to Inspire
+            ← Back to Magazine
           </Link>
         </div>
       </div>

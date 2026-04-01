@@ -28,7 +28,7 @@ export default function TopSavedProductsLeaderboard({ products }: TopSavedProduc
               <div className="flex items-center">
                 <span className="text-lg font-bold text-[var(--text-primary)] mr-4">#{index + 1}</span>
                 <Link 
-                  href={product.product_name === 'Eco Modular Sofa' ? '/product/eco-modular-sofa' : `#/product/${product.product_id}`}
+                  href={`/product/${product.product_id}`}
                   className="text-lg text-[var(--text-primary)] hover:underline"
                 >
                   {product.product_name}
