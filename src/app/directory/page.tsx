@@ -9,9 +9,13 @@ import type { DirectoryDesigner, DirectoryVendor } from '@/lib/directory/types';
 import { RidgeCard } from '@/components/ui/ridge-card';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import ProfessionalCard from './ProfessionalCard';
+import VendorCard from './VendorCard';
 
 type Tab = 'designers' | 'architects' | 'builders' | 'vendors';
-type ViewMode = 'overall' | 'rising' | 'region' | 'style';
+type ViewMode = 'browse' | 'ranked';
+type BrowseSort = 'recent' | 'alpha' | 'projects';
+type RankedView = 'overall' | 'rising';
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'designers', label: 'Designers' },
@@ -20,44 +24,20 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'vendors', label: 'Vendors' },
 ];
 
-const TAB_SUBTITLES: Record<Tab, string> = {
-  designers: 'The most influential designers on Folio, ranked by quality and engagement.',
-  architects: 'The most influential architects on Folio, ranked by quality and engagement.',
-  builders: 'The most influential builders on Folio, ranked by quality and engagement.',
-  vendors: 'The most specified vendors on Folio, ranked by designer engagement.',
-};
-
-const VIEW_OPTIONS = [
-  { value: 'overall', label: 'Overall' },
-  { value: 'rising', label: 'Rising' },
-  { value: 'region', label: 'By Region' },
-  { value: 'style', label: 'By Style' },
+const BROWSE_SORTS: { value: BrowseSort; label: string }[] = [
+  { value: 'recent', label: 'Recently Active' },
+  { value: 'alpha', label: 'Alphabetical' },
+  { value: 'projects', label: 'Most Projects' },
 ];
 
 const REGIONS = [
-  'New York',
-  'Los Angeles',
-  'San Francisco',
-  'Miami',
-  'Chicago',
-  'Dallas',
-  'Seattle',
-  'Boston',
-  'Denver',
-  'Atlanta',
+  'New York', 'Los Angeles', 'San Francisco', 'Miami', 'Chicago',
+  'Dallas', 'Seattle', 'Boston', 'Denver', 'Atlanta',
 ];
 
 const STYLES = [
-  'Modern',
-  'Traditional',
-  'Transitional',
-  'Contemporary',
-  'Minimalist',
-  'Industrial',
-  'Coastal',
-  'Mediterranean',
-  'Mid-Century Modern',
-  'Eclectic',
+  'Modern', 'Traditional', 'Transitional', 'Contemporary', 'Minimalist',
+  'Industrial', 'Coastal', 'Mediterranean', 'Mid-Century Modern', 'Eclectic',
 ];
 
 export default function DirectoryPage() {
@@ -69,14 +49,18 @@ export default function DirectoryPage() {
     (searchParams.get('tab') as Tab) || 'designers'
   );
   const [viewMode, setViewMode] = useState<ViewMode>(
-    (searchParams.get('view') as ViewMode) || 'overall'
+    (searchParams.get('mode') as ViewMode) || 'browse'
   );
-  const [selectedRegion, setSelectedRegion] = useState<string>(
-    searchParams.get('region') || ''
+  const [browseSort, setBrowseSort] = useState<BrowseSort>(
+    (searchParams.get('sort') as BrowseSort) || 'recent'
   );
-  const [selectedStyle, setSelectedStyle] = useState<string>(
-    searchParams.get('style') || ''
+  const [rankedView, setRankedView] = useState<RankedView>(
+    (searchParams.get('view') as RankedView) || 'overall'
   );
+  const [selectedRegion, setSelectedRegion] = useState(searchParams.get('region') || '');
+  const [selectedStyle, setSelectedStyle] = useState(searchParams.get('style') || '');
+  const [showBookmarked, setShowBookmarked] = useState(false);
+
   const [designers, setDesigners] = useState<DirectoryDesigner[]>([]);
   const [vendors, setVendors] = useState<DirectoryVendor[]>([]);
   const [loading, setLoading] = useState(true);
@@ -84,43 +68,36 @@ export default function DirectoryPage() {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
   const [total, setTotal] = useState(0);
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
-  // Determine if current tab is for professionals (designers/architects/builders)
   const isProfessionalTab = activeTab !== 'vendors';
+  const isAuthenticated = authStatus === 'authenticated';
 
-  // Load data
   const loadData = useCallback(async (reset: boolean = false) => {
     try {
       setLoading(true);
       setError(null);
 
       const currentPage = reset ? 1 : page;
-
-      // Build query params
       const params = new URLSearchParams();
       params.set('page', currentPage.toString());
       params.set('limit', '50');
-      params.set('view', viewMode === 'region' || viewMode === 'style' ? 'overall' : viewMode);
 
-      if (viewMode === 'region' && selectedRegion) {
-        params.set('region', selectedRegion);
-      }
-      if (viewMode === 'style' && selectedStyle) {
-        params.set('style', selectedStyle);
+      if (viewMode === 'browse') {
+        params.set('sort', browseSort);
+      } else {
+        params.set('sort', rankedView === 'rising' ? 'rising' : 'ranked');
       }
 
-      // For architects and builders, we use the designers endpoint with a role filter
-      // The API needs to support this - for now, all professional roles use designers endpoint
+      if (selectedRegion) params.set('region', selectedRegion);
+      if (selectedStyle) params.set('style', selectedStyle);
+      if (showBookmarked) params.set('bookmarked', 'true');
+
       const endpoint = isProfessionalTab
         ? `/api/directory/designers?${params.toString()}`
         : `/api/directory/vendors?${params.toString()}`;
 
       const response = await fetch(endpoint);
-
-      if (!response.ok) {
-        throw new Error('Failed to load directory');
-      }
+      if (!response.ok) throw new Error('Failed to load directory');
 
       const data = await response.json();
 
@@ -134,94 +111,44 @@ export default function DirectoryPage() {
 
       setHasMore(data.pagination.hasMore);
       setTotal(data.pagination.total);
-      setLastUpdated(new Date(data.lastUpdated));
-
       if (reset) setPage(1);
     } catch (err: unknown) {
-      console.error('Error loading directory:', err);
       setError(err instanceof Error ? err.message : 'Failed to load directory');
     } finally {
       setLoading(false);
     }
-  }, [activeTab, viewMode, selectedRegion, selectedStyle, page, designers, vendors, isProfessionalTab]);
+  }, [activeTab, viewMode, browseSort, rankedView, selectedRegion, selectedStyle, showBookmarked, page, designers, vendors, isProfessionalTab]);
 
-  // Load data on mount and when filters change
   useEffect(() => {
     loadData(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, viewMode, selectedRegion, selectedStyle]);
+  }, [activeTab, viewMode, browseSort, rankedView, selectedRegion, selectedStyle, showBookmarked]);
 
-  // Update URL when filters change
+  // Update URL
   useEffect(() => {
     const params = new URLSearchParams();
     params.set('tab', activeTab);
-    params.set('view', viewMode);
-    if (viewMode === 'region' && selectedRegion) {
-      params.set('region', selectedRegion);
-    }
-    if (viewMode === 'style' && selectedStyle) {
-      params.set('style', selectedStyle);
-    }
+    params.set('mode', viewMode);
+    if (viewMode === 'browse') params.set('sort', browseSort);
+    if (viewMode === 'ranked') params.set('view', rankedView);
+    if (selectedRegion) params.set('region', selectedRegion);
+    if (selectedStyle) params.set('style', selectedStyle);
     router.replace(`/directory?${params.toString()}`, { scroll: false });
-  }, [activeTab, viewMode, selectedRegion, selectedStyle, router]);
-
-  const handleLoadMore = () => {
-    setPage((p) => p + 1);
-    loadData(false);
-  };
+  }, [activeTab, viewMode, browseSort, rankedView, selectedRegion, selectedStyle, router]);
 
   const handleTabChange = (tab: Tab) => {
     setActiveTab(tab);
     setPage(1);
-    // Reset secondary filters when changing tabs
     setSelectedRegion('');
     setSelectedStyle('');
+    setShowBookmarked(false);
   };
 
-  const handleViewChange = (view: ViewMode) => {
-    setViewMode(view);
-    setPage(1);
-    // Reset secondary filters when changing view mode
-    if (view !== 'region') setSelectedRegion('');
-    if (view !== 'style') setSelectedStyle('');
+  const handleLoadMore = () => {
+    setPage(p => p + 1);
+    loadData(false);
   };
 
-  const formatLastUpdated = () => {
-    if (!lastUpdated) return '';
-    const diff = Date.now() - lastUpdated.getTime();
-    const minutes = Math.floor(diff / 60000);
-    if (minutes < 1) return 'Just now';
-    if (minutes < 60) return `${minutes}m ago`;
-    const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `${hours}h ago`;
-    return lastUpdated.toLocaleDateString();
-  };
-
-  // Determine CTA link based on auth status
-  const getCtaLink = () => {
-    if (authStatus === 'unauthenticated') {
-      return '/signup';
-    }
-    // Check if user is Pro (simplified check - you may need to fetch this)
-    const isPro = session?.user?.subscriptionTier === 'PRO' || session?.user?.subscriptionTier === 'ENTERPRISE';
-    if (!isPro) {
-      return '/settings/subscription';
-    }
-    return '/projects/new';
-  };
-
-  const getCtaText = () => {
-    if (authStatus === 'unauthenticated') {
-      return 'Get Started';
-    }
-    const isPro = session?.user?.subscriptionTier === 'PRO' || session?.user?.subscriptionTier === 'ENTERPRISE';
-    if (!isPro) {
-      return 'Upgrade to Pro';
-    }
-    return 'Publish Your First Project';
-  };
-
-  // Check if data is empty (no results)
   const isEmpty = isProfessionalTab ? designers.length === 0 : vendors.length === 0;
   const isInitialLoad = loading && isEmpty;
 
@@ -230,10 +157,10 @@ export default function DirectoryPage() {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
             {/* Tabs */}
             <div className="flex gap-1 p-1 bg-[var(--bg-elevated)] rounded-lg">
-              {TABS.map((tab) => (
+              {TABS.map(tab => (
                 <button
                   key={tab.id}
                   onClick={() => handleTabChange(tab.id)}
@@ -249,68 +176,103 @@ export default function DirectoryPage() {
               ))}
             </div>
 
-            {/* View toggle */}
-            <div className="flex items-center gap-2">
-              <select
-                value={viewMode}
-                onChange={(e) => handleViewChange(e.target.value as ViewMode)}
-                className="px-3 py-2 text-sm bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-lg text-[var(--text-primary)]"
+            {/* View Mode Toggle */}
+            <div className="flex gap-1 p-1 bg-[var(--bg-elevated)] rounded-lg">
+              <button
+                onClick={() => setViewMode('browse')}
+                className={cn(
+                  'px-3 py-1.5 text-sm font-medium rounded-md transition-colors',
+                  viewMode === 'browse'
+                    ? 'bg-[var(--bg-card)] text-[var(--text-primary)] shadow-sm'
+                    : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                )}
               >
-                {VIEW_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-
-              {/* Secondary filter for region */}
-              {viewMode === 'region' && (
-                <select
-                  value={selectedRegion}
-                  onChange={(e) => setSelectedRegion(e.target.value)}
-                  className="px-3 py-2 text-sm bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-lg text-[var(--text-primary)]"
-                >
-                  <option value="">All Regions</option>
-                  {REGIONS.map((region) => (
-                    <option key={region} value={region}>
-                      {region}
-                    </option>
-                  ))}
-                </select>
-              )}
-
-              {/* Secondary filter for style */}
-              {viewMode === 'style' && (
-                <select
-                  value={selectedStyle}
-                  onChange={(e) => setSelectedStyle(e.target.value)}
-                  className="px-3 py-2 text-sm bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-lg text-[var(--text-primary)]"
-                >
-                  <option value="">All Styles</option>
-                  {STYLES.map((style) => (
-                    <option key={style} value={style}>
-                      {style}
-                    </option>
-                  ))}
-                </select>
-              )}
+                Browse
+              </button>
+              <button
+                onClick={() => setViewMode('ranked')}
+                className={cn(
+                  'px-3 py-1.5 text-sm font-medium rounded-md transition-colors',
+                  viewMode === 'ranked'
+                    ? 'bg-[var(--bg-card)] text-[var(--text-primary)] shadow-sm'
+                    : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                )}
+              >
+                Ranked
+              </button>
             </div>
           </div>
 
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="folio-h1 text-[var(--text-primary)] mb-1">
-                {viewMode === 'rising' ? 'Rising This Week' : 'Folio Top 100'}
-              </h1>
-              <p className="folio-body text-[var(--text-secondary)]">
-                {TAB_SUBTITLES[activeTab]}
-              </p>
-            </div>
-            {lastUpdated && !isEmpty && (
-              <span className="text-xs text-[var(--text-tertiary)]">
-                Last updated: {formatLastUpdated()}
-              </span>
+          {/* Filters Row */}
+          <div className="flex flex-wrap items-center gap-2">
+            {viewMode === 'browse' ? (
+              <>
+                <select
+                  value={browseSort}
+                  onChange={(e) => { setBrowseSort(e.target.value as BrowseSort); setPage(1); }}
+                  className="px-3 py-2 text-sm bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-lg text-[var(--text-primary)]"
+                >
+                  {BROWSE_SORTS.map(opt => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+
+                <select
+                  value={selectedRegion}
+                  onChange={(e) => { setSelectedRegion(e.target.value); setPage(1); }}
+                  className="px-3 py-2 text-sm bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-lg text-[var(--text-primary)]"
+                >
+                  <option value="">All Locations</option>
+                  {REGIONS.map(r => <option key={r} value={r}>{r}</option>)}
+                </select>
+
+                {isProfessionalTab && (
+                  <select
+                    value={selectedStyle}
+                    onChange={(e) => { setSelectedStyle(e.target.value); setPage(1); }}
+                    className="px-3 py-2 text-sm bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-lg text-[var(--text-primary)]"
+                  >
+                    <option value="">All Styles</option>
+                    {STYLES.map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                )}
+
+                {isAuthenticated && (
+                  <button
+                    onClick={() => { setShowBookmarked(!showBookmarked); setPage(1); }}
+                    className={cn(
+                      'px-3 py-2 text-sm rounded-lg border transition-colors',
+                      showBookmarked
+                        ? 'bg-[var(--accent)]/10 border-[var(--accent)]/30 text-[var(--accent)]'
+                        : 'bg-[var(--bg-card)] border-[var(--border-subtle)] text-[var(--text-secondary)]'
+                    )}
+                  >
+                    Bookmarked
+                  </button>
+                )}
+              </>
+            ) : (
+              <select
+                value={rankedView}
+                onChange={(e) => { setRankedView(e.target.value as RankedView); setPage(1); }}
+                className="px-3 py-2 text-sm bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-lg text-[var(--text-primary)]"
+              >
+                <option value="overall">Overall</option>
+                <option value="rising">Rising</option>
+              </select>
             )}
+          </div>
+
+          {/* Title */}
+          <div className="mt-4">
+            <h1 className="folio-h1 text-[var(--text-primary)] mb-1">
+              {viewMode === 'browse' ? 'Directory' : rankedView === 'rising' ? 'Rising This Week' : 'Folio Top 100'}
+            </h1>
+            <p className="folio-body text-[var(--text-secondary)]">
+              {viewMode === 'browse'
+                ? 'Discover design professionals on Folio.'
+                : `The most ${activeTab === 'vendors' ? 'specified vendors' : 'influential professionals'} on Folio, ranked by quality and engagement.`}
+            </p>
           </div>
         </div>
 
@@ -318,54 +280,68 @@ export default function DirectoryPage() {
         {isInitialLoad ? (
           <div className="flex items-center justify-center py-32">
             <div className="text-center">
-              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent)]"></div>
-              <p className="mt-4 folio-body text-[var(--text-secondary)]">
-                Loading directory...
-              </p>
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent)]" />
+              <p className="mt-4 folio-body text-[var(--text-secondary)]">Loading directory...</p>
             </div>
           </div>
         ) : error && isEmpty ? (
-          // Error state - but make it less alarming if it's just empty data
-          <DirectoryEmptyState
-            tab={activeTab}
-            ctaLink={getCtaLink()}
-            ctaText={getCtaText()}
-          />
+          <DirectoryEmptyState tab={activeTab} />
         ) : isEmpty ? (
-          // Empty state - invitation to participate
-          <DirectoryEmptyState
-            tab={activeTab}
-            ctaLink={getCtaLink()}
-            ctaText={getCtaText()}
-          />
-        ) : (
+          <DirectoryEmptyState tab={activeTab} />
+        ) : viewMode === 'browse' ? (
           <>
-            {/* Professional List (Designers, Architects, Builders) */}
-            {isProfessionalTab && (
-              <div className="space-y-3">
-                {designers.map((designer, index) => (
-                  <DesignerRow key={designer.user.id} designer={designer} index={index} />
+            {/* Card Grid */}
+            {isProfessionalTab ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                {designers.map(designer => (
+                  <ProfessionalCard
+                    key={designer.user.id}
+                    designer={designer}
+                    isAuthenticated={isAuthenticated}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                {vendors.map(vendor => (
+                  <VendorCard key={vendor.organization.id} vendor={vendor} />
                 ))}
               </div>
             )}
 
-            {/* Vendors List */}
-            {!isProfessionalTab && (
-              <div className="space-y-3">
-                {vendors.map((vendor, index) => (
-                  <VendorRow key={vendor.organization.id} vendor={vendor} index={index} />
-                ))}
-              </div>
-            )}
-
-            {/* Load More */}
             {hasMore && (
               <div className="mt-8 text-center">
-                <Button
-                  variant="ridge"
-                  onClick={handleLoadMore}
-                  disabled={loading}
-                >
+                <Button variant="ridge" onClick={handleLoadMore} disabled={loading}>
+                  {loading ? 'Loading...' : 'Load More'}
+                </Button>
+                <p className="mt-2 text-sm text-[var(--text-tertiary)]">
+                  Showing {isProfessionalTab ? designers.length : vendors.length} of {total}
+                </p>
+              </div>
+            )}
+          </>
+        ) : (
+          <>
+            {/* Ranked List (existing layout) */}
+            {isProfessionalTab && (
+              <div className="space-y-3">
+                {designers.map(designer => (
+                  <DesignerRow key={designer.user.id} designer={designer} />
+                ))}
+              </div>
+            )}
+
+            {!isProfessionalTab && (
+              <div className="space-y-3">
+                {vendors.map(vendor => (
+                  <VendorRow key={vendor.organization.id} vendor={vendor} />
+                ))}
+              </div>
+            )}
+
+            {hasMore && (
+              <div className="mt-8 text-center">
+                <Button variant="ridge" onClick={handleLoadMore} disabled={loading}>
                   {loading ? 'Loading...' : 'Load More'}
                 </Button>
                 <p className="mt-2 text-sm text-[var(--text-tertiary)]">
@@ -380,31 +356,21 @@ export default function DirectoryPage() {
   );
 }
 
-/**
- * Empty state component for when a directory category has no ranked members
- */
-function DirectoryEmptyState({
-  tab,
-  ctaLink,
-  ctaText,
-}: {
-  tab: Tab;
-  ctaLink: string;
-  ctaText: string;
-}) {
+function DirectoryEmptyState({ tab }: { tab: Tab }) {
   return (
     <div className="flex items-center justify-center py-32">
       <div className="text-center max-w-md">
         <h2 className="folio-h1 text-[var(--text-primary)] mb-6">
-          #1 is open.
+          {tab === 'vendors' ? 'No vendors yet.' : '#1 is open.'}
         </h2>
         <p className="folio-body text-[var(--text-secondary)] mb-8 leading-relaxed">
-          The Folio Directory launches with our first founding members.
-          Early entrants start at the top while the field is wide open.
+          {tab === 'vendors'
+            ? 'The Folio Directory launches with our first founding vendor partners. Check back soon.'
+            : 'The Folio Directory launches with our first founding members. Early entrants start at the top while the field is wide open.'}
         </p>
-        <Link href={ctaLink}>
+        <Link href="/signup">
           <Button variant="accent" size="lg" className="px-8">
-            {ctaText}
+            Get Started
           </Button>
         </Link>
       </div>
@@ -412,19 +378,21 @@ function DirectoryEmptyState({
   );
 }
 
-function DesignerRow({ designer, index }: { designer: DirectoryDesigner; index: number }) {
+function RankChange({ change }: { change: number }) {
+  if (change === 0) return <span className="text-xs text-[var(--text-tertiary)]">&mdash;</span>;
+  if (change > 0) return <span className="text-xs text-green-600">+{change}</span>;
+  return <span className="text-xs text-red-500">{change}</span>;
+}
+
+function DesignerRow({ designer }: { designer: DirectoryDesigner }) {
   return (
     <RidgeCard padding="lg">
       <div className="flex items-center gap-4">
-        {/* Rank */}
         <div className="flex-shrink-0 w-16 text-center">
-          <div className="text-2xl font-semibold text-[var(--text-primary)]">
-            {designer.rank}
-          </div>
+          <div className="text-2xl font-semibold text-[var(--text-primary)]">{designer.rank}</div>
           <RankChange change={designer.rankChange} />
         </div>
 
-        {/* Avatar */}
         <Link href={`/profile/${designer.user.id}`} className="flex-shrink-0">
           {designer.user.profileImage ? (
             <Image
@@ -443,7 +411,6 @@ function DesignerRow({ designer, index }: { designer: DirectoryDesigner; index: 
           )}
         </Link>
 
-        {/* Info */}
         <div className="flex-grow min-w-0">
           <Link href={`/profile/${designer.user.id}`}>
             <h3 className="text-lg font-semibold text-[var(--text-primary)] hover:text-[var(--accent)] truncate">
@@ -451,9 +418,7 @@ function DesignerRow({ designer, index }: { designer: DirectoryDesigner; index: 
             </h3>
           </Link>
           {designer.user.location && (
-            <p className="text-sm text-[var(--text-secondary)]">
-              {designer.user.location}
-            </p>
+            <p className="text-sm text-[var(--text-secondary)]">{designer.user.location}</p>
           )}
           {designer.user.bio && (
             <p className="text-sm text-[var(--text-tertiary)] line-clamp-1 mt-1">
@@ -467,12 +432,8 @@ function DesignerRow({ designer, index }: { designer: DirectoryDesigner; index: 
           </div>
         </div>
 
-        {/* Featured Project */}
         {designer.featuredProject && (
-          <Link
-            href={`/projects/${designer.featuredProject.id}`}
-            className="flex-shrink-0 hidden md:block"
-          >
+          <Link href={`/projects/${designer.featuredProject.id}`} className="flex-shrink-0 hidden md:block">
             <div className="w-32 h-20 rounded-lg overflow-hidden bg-[var(--bg-elevated)]">
               {designer.featuredProject.heroImage ? (
                 <Image
@@ -483,10 +444,8 @@ function DesignerRow({ designer, index }: { designer: DirectoryDesigner; index: 
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center">
-                  <span className="text-xs text-[var(--text-tertiary)]">
-                    {designer.featuredProject.title}
-                  </span>
+                <div className="w-full h-full flex items-center justify-center text-xs text-[var(--text-tertiary)]">
+                  No image
                 </div>
               )}
             </div>
@@ -497,52 +456,38 @@ function DesignerRow({ designer, index }: { designer: DirectoryDesigner; index: 
   );
 }
 
-function VendorRow({ vendor, index }: { vendor: DirectoryVendor; index: number }) {
+function VendorRow({ vendor }: { vendor: DirectoryVendor }) {
   return (
     <RidgeCard padding="lg">
       <div className="flex items-center gap-4">
-        {/* Rank */}
         <div className="flex-shrink-0 w-16 text-center">
-          <div className="text-2xl font-semibold text-[var(--text-primary)]">
-            {vendor.rank}
-          </div>
+          <div className="text-2xl font-semibold text-[var(--text-primary)]">{vendor.rank}</div>
           <RankChange change={vendor.rankChange} />
         </div>
 
-        {/* Logo */}
-        <Link href={`/org/${vendor.organization.id}`} className="flex-shrink-0">
+        <div className="flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden bg-[var(--bg-elevated)] flex items-center justify-center">
           {vendor.organization.logo ? (
             <Image
               src={vendor.organization.logo}
               alt={vendor.organization.name}
               width={64}
               height={64}
-              className="rounded-lg object-contain bg-white p-2"
+              className="object-contain"
             />
           ) : (
-            <div className="w-16 h-16 rounded-lg bg-[var(--bg-elevated)] flex items-center justify-center">
-              <span className="text-xl font-medium text-[var(--text-secondary)]">
-                {vendor.organization.name.charAt(0)}
-              </span>
-            </div>
+            <span className="text-xl font-medium text-[var(--text-secondary)]">
+              {vendor.organization.name.charAt(0)}
+            </span>
           )}
-        </Link>
+        </div>
 
-        {/* Info */}
         <div className="flex-grow min-w-0">
-          <Link href={`/org/${vendor.organization.id}`}>
-            <h3 className="text-lg font-semibold text-[var(--text-primary)] hover:text-[var(--accent)] truncate">
-              {vendor.organization.name}
-            </h3>
-          </Link>
+          <h3 className="text-lg font-semibold text-[var(--text-primary)] truncate">
+            {vendor.organization.name}
+          </h3>
           <p className="text-sm text-[var(--text-secondary)] capitalize">
-            {vendor.organization.type.toLowerCase().replace('_', ' ')}
+            {vendor.organization.type.replace(/_/g, ' ').toLowerCase()}
           </p>
-          {vendor.organization.description && (
-            <p className="text-sm text-[var(--text-tertiary)] line-clamp-1 mt-1">
-              {vendor.organization.description}
-            </p>
-          )}
           <div className="flex items-center gap-4 mt-2 text-xs text-[var(--text-tertiary)]">
             <span>{vendor.stats.designersTagging} designers</span>
             <span>{vendor.stats.projectsIncluded} projects</span>
@@ -551,26 +496,5 @@ function VendorRow({ vendor, index }: { vendor: DirectoryVendor; index: number }
         </div>
       </div>
     </RidgeCard>
-  );
-}
-
-function RankChange({ change }: { change: number }) {
-  if (change === 0) {
-    return (
-      <span className="text-xs text-[var(--text-tertiary)]">
-        —
-      </span>
-    );
-  }
-
-  return (
-    <span
-      className={cn(
-        'text-xs font-medium',
-        change > 0 ? 'text-green-600' : 'text-red-500'
-      )}
-    >
-      {change > 0 ? `▲${change}` : `▼${Math.abs(change)}`}
-    </span>
   );
 }

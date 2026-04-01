@@ -535,10 +535,10 @@ export default function DesignerProfile() {
           Analytics
         </Link>
         <Link
-          href="/designer/directory"
+          href="/designer/sourcebook"
           className="px-3 py-2 text-sm font-sans text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors border-b-2 border-transparent -mb-px"
         >
-          Directory
+          Sourcebook
         </Link>
       </div>
 

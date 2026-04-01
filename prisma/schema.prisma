@@ -225,6 +225,11 @@ model User {
   conversationMemberships ConversationParticipant[]
   messagingPreferences    MessagingPreferences?
 
+  // Sourcebook & Directory Bookmarks
+  sourcebookEntries    SourcebookEntry[]    @relation("UserSourcebookEntries")
+  directoryBookmarks   DirectoryBookmark[]  @relation("UserDirectoryBookmarks")
+  bookmarkedBy         DirectoryBookmark[]  @relation("BookmarkedByUsers")
+
   @@map("users")
 }
 
@@ -558,6 +563,9 @@ model Product {
 
   // QR Exchange / Visit System
   visitProductShares VisitProductShare[]
+
+  // Sourcebook System
+  sourcebookEntries SourcebookEntry[] @relation("ProductSourcebookEntries")
 
   @@map("products")
 }
@@ -5570,4 +5578,40 @@ model PostSave {
   @@index([userId, createdAt])
   @@index([projectPostId])
   @@map("post_saves")
+}
+
+// ─── Sourcebook System ────────────────────────────────────────────
+
+model SourcebookEntry {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  notes     String?
+  archived  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user    User    @relation("UserSourcebookEntries", fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation("ProductSourcebookEntries", fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@index([userId, archived])
+  @@map("sourcebook_entries")
+}
+
+// ─── Directory Bookmarks ──────────────────────────────────────────
+
+model DirectoryBookmark {
+  id             String   @id @default(cuid())
+  userId         String
+  professionalId String
+  createdAt      DateTime @default(now())
+
+  user         User @relation("UserDirectoryBookmarks", fields: [userId], references: [id], onDelete: Cascade)
+  professional User @relation("BookmarkedByUsers", fields: [professionalId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, professionalId])
+  @@index([userId])
+  @@index([professionalId])
+  @@map("directory_bookmarks")
 }
