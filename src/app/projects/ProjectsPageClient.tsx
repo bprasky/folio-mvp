@@ -798,7 +798,7 @@ function SectionBand({
   const config = SECTION_CONFIG[section];
 
   return (
-    <RidgeCard className="p-4 md:p-6">
+    <div>
       <header className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-lg bg-[var(--bg-base)] border border-[var(--border)]">
@@ -828,7 +828,7 @@ function SectionBand({
           ))}
         </div>
       )}
-    </RidgeCard>
+    </div>
   );
 }
 
@@ -870,13 +870,13 @@ function CollapsibleSectionBand({
   }
 
   return (
-    <RidgeCard className={cn(
+    <div className={cn(
       "overflow-hidden transition-all",
-      isExpanded && "p-4 md:p-6"
+      isExpanded && "pt-2"
     )}>
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full px-4 py-3 flex items-center justify-between hover:bg-[var(--bg-base)] transition-all duration-150 rounded-t-2xl"
+        className="w-full px-4 py-3 flex items-center justify-between hover:bg-[var(--bg-base)] transition-all duration-150 rounded-lg"
       >
         <div className="flex items-center gap-3">
           <div className="p-1.5 rounded-lg bg-[var(--bg-base)] border border-[var(--border)]">
@@ -918,7 +918,7 @@ function CollapsibleSectionBand({
           )}
         </div>
       )}
-    </RidgeCard>
+    </div>
   );
 }
 
