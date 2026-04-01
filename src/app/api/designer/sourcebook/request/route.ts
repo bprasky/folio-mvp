@@ -6,6 +6,7 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
 import { resolveVendorRep } from '@/lib/messaging/rep-resolution';
 import { sendMessageNotification } from '@/lib/messaging/notifications';
+import { recordActionSignal, getDesignerOrgId } from '@/lib/intelligence/action-signals';
 import type { StructuredRequestPayload } from '@/types/structured-requests';
 
 /**
@@ -46,14 +47,22 @@ export async function POST(request: NextRequest) {
       if (resolution.status === 'DIRECT_REP' && resolution.rep) {
         targetUserId = resolution.rep.userId;
         targetOrgId = resolution.vendorOrgId;
-      } else if (resolution.status === 'ORG_MEMBERS') {
-        // Return resolution so client shows picker
-        return NextResponse.json({
-          resolutionNeeded: true,
-          resolution,
-        });
       } else {
-        // No rep found
+        // No direct rep — record off-platform signal before returning
+        const designerOrgId = await getDesignerOrgId(userId);
+        if (designerOrgId) {
+          const p = (payload || {}) as Record<string, unknown>;
+          recordActionSignal({
+            actionType,
+            productId,
+            designerOrgId,
+            vendorOrgId: resolution.vendorOrgId,
+            quantity: typeof p.quantity === 'number' ? p.quantity : undefined,
+            timeline: typeof p.timeline === 'string' ? p.timeline : undefined,
+            isOffPlatform: true,
+          }).catch(console.error);
+        }
+
         return NextResponse.json({
           resolutionNeeded: true,
           resolution,
@@ -130,6 +139,20 @@ export async function POST(request: NextRequest) {
     const messageId = conversation.messages[0]?.id;
     if (messageId) {
       sendMessageNotification(conversation.id, messageId).catch(console.error);
+    }
+
+    // Record ActionItemSignal for intelligence
+    const designerOrgId = await getDesignerOrgId(userId);
+    if (designerOrgId) {
+      const p = payload as unknown as Record<string, unknown>;
+      recordActionSignal({
+        actionType,
+        productId,
+        designerOrgId,
+        vendorOrgId: targetOrgId,
+        quantity: typeof p.quantity === 'number' ? p.quantity : undefined,
+        timeline: typeof p.timeline === 'string' ? p.timeline : undefined,
+      }).catch(console.error);
     }
 
     return NextResponse.json({ conversationId: conversation.id }, { status: 201 });

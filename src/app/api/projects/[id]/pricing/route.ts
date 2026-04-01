@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
+import { seedRepShadowFromInvite } from '@/lib/intelligence/shadow-profiles';
 
 /**
  * GET /api/projects/[id]/pricing
@@ -61,7 +62,7 @@ export async function POST(
     }
 
     const body = await request.json();
-    const { productId, roomId, unitPriceTrade, unitPriceRetail, quantity, leadTimeWeeks, availability, availabilityNote, validThrough, quoteSource } = body;
+    const { productId, roomId, unitPriceTrade, unitPriceRetail, quantity, leadTimeWeeks, availability, availabilityNote, validThrough, quoteSource, quotedByName, quotedByEmail, vendorName } = body;
 
     if (!productId) {
       return NextResponse.json({ error: 'productId is required' }, { status: 400 });
@@ -87,7 +88,8 @@ export async function POST(
         availabilityNote: availabilityNote || undefined,
         validThrough: validThrough ? new Date(validThrough) : undefined,
         quoteSource: quoteSource || 'MANUAL',
-        quotedByName: session.user.name || undefined,
+        quotedByName: quotedByName || session.user.name || undefined,
+        quotedByEmail: quotedByEmail || undefined,
         quotedAt: unitPriceTrade != null ? new Date() : undefined,
         status: unitPriceTrade != null ? 'RECEIVED' : 'NOT_REQUESTED',
       },
@@ -102,6 +104,20 @@ export async function POST(
         ...(quoteSource ? { quoteSource } : {}),
       },
     });
+
+    // Seed RepShadowProfile from manual quote attribution
+    if (quotedByName && quotedByEmail && vendorName) {
+      const designer = await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: { location: true },
+      });
+      seedRepShadowFromInvite({
+        vendorName,
+        repName: quotedByName,
+        repEmail: quotedByEmail,
+        designerLocation: designer?.location || undefined,
+      }).catch(console.error);
+    }
 
     return NextResponse.json({
       entry: {

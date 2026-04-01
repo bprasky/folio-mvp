@@ -27,6 +27,8 @@ export default function ManualQuoteEntryModal({
   const [unitPrice, setUnitPrice] = useState('');
   const [leadTimeWeeks, setLeadTimeWeeks] = useState('');
   const [validThrough, setValidThrough] = useState('');
+  const [quotedByName, setQuotedByName] = useState('');
+  const [quotedByEmail, setQuotedByEmail] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -48,6 +50,9 @@ export default function ManualQuoteEntryModal({
           leadTimeWeeks: leadTimeWeeks ? parseInt(leadTimeWeeks, 10) : null,
           validThrough: validThrough || null,
           quoteSource: 'MANUAL',
+          quotedByName: quotedByName.trim() || null,
+          quotedByEmail: quotedByEmail.trim() || null,
+          vendorName,
         }),
       });
 
@@ -62,6 +67,8 @@ export default function ManualQuoteEntryModal({
       setUnitPrice('');
       setLeadTimeWeeks('');
       setValidThrough('');
+      setQuotedByName('');
+      setQuotedByEmail('');
     } catch {
       setError('Something went wrong. Please try again.');
     } finally {
@@ -121,6 +128,26 @@ export default function ManualQuoteEntryModal({
               onChange={(e) => setValidThrough(e.target.value)}
               className="w-full px-3 py-2 bg-white border border-[#E8E6E3] rounded-lg text-[#2C2925] focus:outline-none focus:border-[#C9C4BC] transition-all"
             />
+          </div>
+
+          <div className="border-t border-[#E8E6E3] pt-3">
+            <div className="text-xs text-[var(--text-tertiary)] mb-2">Who provided this quote? (optional)</div>
+            <div className="grid grid-cols-2 gap-3">
+              <input
+                type="text"
+                value={quotedByName}
+                onChange={(e) => setQuotedByName(e.target.value)}
+                placeholder="Rep name"
+                className="px-3 py-2 bg-white border border-[#E8E6E3] rounded-lg text-sm text-[#2C2925] placeholder-[#A39E97] focus:outline-none focus:border-[#C9C4BC] transition-all"
+              />
+              <input
+                type="email"
+                value={quotedByEmail}
+                onChange={(e) => setQuotedByEmail(e.target.value)}
+                placeholder="Rep email"
+                className="px-3 py-2 bg-white border border-[#E8E6E3] rounded-lg text-sm text-[#2C2925] placeholder-[#A39E97] focus:outline-none focus:border-[#C9C4BC] transition-all"
+              />
+            </div>
           </div>
         </div>
 
