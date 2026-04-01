@@ -32,7 +32,6 @@ interface ActionItemsPanelProps {
   projectName: string;
   targetInstallDate: string | null;
   selections: Selection[];
-  onRefresh: () => void;
 }
 
 export default function ActionItemsPanel({
@@ -40,7 +39,6 @@ export default function ActionItemsPanel({
   projectName,
   targetInstallDate,
   selections,
-  onRefresh,
 }: ActionItemsPanelProps) {
   const [installDate, setInstallDate] = useState(targetInstallDate);
   const [editingInstallDate, setEditingInstallDate] = useState(false);
@@ -430,7 +428,6 @@ export default function ActionItemsPanel({
         onSent={() => {
           setBulkModalOpen(false);
           loadData();
-          onRefresh();
         }}
       />
 

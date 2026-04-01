@@ -286,11 +286,15 @@ export default async function ProjectPage({
               targetInstallDate={base.targetInstallDate?.toISOString() || null}
               selections={sanitizedProject.rooms.flatMap(r =>
                 r.selections.map(s => ({
-                  ...s,
+                  id: s.id,
+                  productName: s.productName,
+                  vendorName: s.vendorName,
+                  unitPrice: s.unitPrice,
+                  roomId: s.roomId,
                   room: { id: r.id, name: r.name },
+                  productTagId: s.productTagId,
                 }))
               )}
-              onRefresh={() => {}}
             />
           )}
 
