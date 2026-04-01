@@ -304,11 +304,11 @@ export function UserMenu() {
           <div className="py-2">
             {isDesigner && (
               <MenuLink
-                href="/designer/directory"
+                href="/designer/sourcebook"
                 icon={<Users className="h-4 w-4" />}
                 onClick={() => setIsOpen(false)}
               >
-                Directory
+                Sourcebook
               </MenuLink>
             )}
 

@@ -3,8 +3,8 @@ import Link from "next/link";
 import { FoundingCohort } from "../sections";
 
 export const metadata: Metadata = {
-  title: "Your Specifications | FOLIO",
-  description: "Every product you tag is attributed to you automatically. Your specification history, structured and searchable.",
+  title: "Your Sourcebook | FOLIO",
+  description: "Every product you tag is attributed to you automatically. Your specification history, structured and searchable in your Sourcebook.",
 };
 
 export default function DirectoryPillarPage() {
@@ -21,7 +21,7 @@ export default function DirectoryPillarPage() {
       <section className="pt-12 pb-8 px-6">
         <div className="max-w-3xl mx-auto">
           <h1 className="font-headline italic text-5xl md:text-6xl text-[var(--text-primary)] leading-[1.1] mb-6">
-            A directory that builds itself.
+            A sourcebook that builds itself.
           </h1>
           <p className="text-lg text-[var(--text-secondary)] leading-relaxed">
             Your specification history, structured and attributed automatically.
@@ -40,7 +40,7 @@ export default function DirectoryPillarPage() {
           </p>
           <p>
             Most designers have this knowledge locked in their heads or scattered across
-            old project files. Folio surfaces it as a living directory &mdash; organized by
+            old project files. Folio surfaces it as a living Sourcebook &mdash; organized by
             product category, manufacturer, and project &mdash; that grows every time you publish.
           </p>
           <p>
@@ -82,7 +82,7 @@ export default function DirectoryPillarPage() {
             <rect x="618" y="56" width="56" height="36" rx="4" fill="#EFEBE6" />
             <rect x="556" y="98" width="56" height="36" rx="4" fill="#C9A96E" fillOpacity="0.12" />
             <rect x="618" y="98" width="56" height="36" rx="4" fill="#EFEBE6" />
-            <text x="620" y="140" textAnchor="middle" className="fill-[var(--text-secondary)]" fontSize="11">Your directory grows</text>
+            <text x="620" y="140" textAnchor="middle" className="fill-[var(--text-secondary)]" fontSize="11">Your Sourcebook grows</text>
           </svg>
         </div>
       </section>

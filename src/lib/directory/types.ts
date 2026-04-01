@@ -54,6 +54,7 @@ export interface DirectoryDesigner {
     location: string | null;
     title: string | null;
     bio: string | null;
+    role?: string;
   };
   stats: {
     projectCount: number;
@@ -65,7 +66,12 @@ export interface DirectoryDesigner {
     title: string;
     heroImage: string | null;
   };
+  // Browse view additions
+  isBookmarked?: boolean;
+  styles?: string[];
 }
+
+export type DirectorySortMode = 'recent' | 'alpha' | 'projects' | 'ranked' | 'rising';
 
 export interface DirectoryVendor {
   rank: number;

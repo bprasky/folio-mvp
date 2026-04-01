@@ -17,7 +17,9 @@ export async function GET(request: NextRequest) {
     const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '50', 10)));
     const category = searchParams.get('category') || undefined;
     const region = searchParams.get('region') || undefined;
-    const view = (searchParams.get('view') || 'overall') as 'overall' | 'rising';
+    const sort = searchParams.get('sort') || 'ranked';
+    const legacyView = searchParams.get('view');
+    const view = legacyView === 'rising' ? 'rising' : (sort === 'rising' ? 'rising' : 'overall');
 
     const skip = (page - 1) * limit;
 
