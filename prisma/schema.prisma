@@ -240,6 +240,17 @@ model User {
   // Phase 4: Shadow Profiles
   repShadowProfile RepShadowProfile? @relation("RepShadowUser")
 
+  // Phase 5: Email Integration & Contact Import
+  emailSendPreference    String?  @default("folio") // "folio" | "mailto" | "ask"
+  signatureIncludeFirm   Boolean  @default(true)
+  signatureIncludePhone  Boolean  @default(true)
+  signatureIncludeProfile Boolean @default(true)
+  signatureIncludeEmail  Boolean  @default(false)
+  proxyAddress           ProxyAddress?
+  emailThreads           EmailThread[]        @relation("UserEmailThreads")
+  designerContacts       DesignerContact[]    @relation("UserDesignerContacts")
+  contactImportJobs      ContactImportJob[]   @relation("UserContactImportJobs")
+
   @@map("users")
 }
 
@@ -873,6 +884,9 @@ model Organization {
 
   // Phase 4: Shadow Profiles
   vendorShadowProfile VendorShadowProfile? @relation("VendorShadowOrg")
+
+  // Phase 5: Contact Import
+  designerContacts DesignerContact[] @relation("VendorOrgDesignerContacts")
 
   @@index([status])
   @@index([type])
@@ -5507,10 +5521,14 @@ model Conversation {
   recipientUser User?         @relation("ReceivedConversations", fields: [recipientUserId], references: [id])
   recipientOrg  Organization? @relation("OrgReceivedConversations", fields: [recipientOrgId], references: [id])
 
+  // Email thread linkage
+  emailThread   EmailThread?  @relation("EmailThreadConversation")
+
   @@index([recipientOrgId, status])
   @@index([recipientUserId, status])
   @@index([initiatorUserId])
   @@index([lastMessageAt])
+  @@index([context])
   @@map("conversations")
 }
 
@@ -5589,6 +5607,7 @@ enum ConversationContext {
   VENDOR_OUTREACH
   PEER
   PLATFORM
+  FOLIO_EMAIL
 }
 
 enum ConversationStatus {
@@ -5869,9 +5888,191 @@ model RepShadowProfile {
 
   vendorShadow        VendorShadowProfile @relation(fields: [vendorShadowId], references: [id], onDelete: Cascade)
   user                User?               @relation("RepShadowUser", fields: [userId], references: [id], onDelete: SetNull)
+  designerContacts    DesignerContact[]   @relation("RepShadowContacts")
 
   @@unique([vendorShadowId, repEmail])
   @@index([vendorShadowId])
   @@index([userId])
   @@map("rep_shadow_profiles")
+}
+
+// ─── Phase 5: Email Integration ──────────────────────────────────
+
+model ProxyAddress {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  address   String   @unique
+
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("proxy_addresses")
+}
+
+model EmailThread {
+  id              String            @id @default(cuid())
+  userId          String
+  conversationId  String?           @unique
+
+  // Linkage to action
+  actionType      String?
+  productId       String?
+  projectId       String?
+  pendingActionId String?
+
+  // Recipient
+  recipientEmail  String
+  recipientName   String?
+  vendorOrgId     String?
+
+  // Thread state
+  status          EmailThreadStatus @default(SENT)
+  subject         String
+
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  user            User              @relation("UserEmailThreads", fields: [userId], references: [id], onDelete: Cascade)
+  conversation    Conversation?     @relation("EmailThreadConversation", fields: [conversationId], references: [id], onDelete: SetNull)
+  messages        EmailMessage[]
+
+  @@index([userId])
+  @@index([recipientEmail])
+  @@index([status])
+  @@map("email_threads")
+}
+
+model EmailMessage {
+  id              String          @id @default(cuid())
+  threadId        String
+  direction       EmailDirection
+
+  // Email fields
+  fromAddress     String
+  toAddress       String
+  subject         String
+  textBody        String
+  htmlBody        String?
+
+  // Resend metadata
+  resendMessageId String?
+  inboundId       String?
+
+  // Parsing (for inbound replies)
+  parsedData      Json?
+  parsingStatus   ParsingStatus?
+
+  sentAt          DateTime
+  createdAt       DateTime        @default(now())
+
+  thread          EmailThread     @relation(fields: [threadId], references: [id], onDelete: Cascade)
+
+  @@index([threadId])
+  @@index([resendMessageId])
+  @@map("email_messages")
+}
+
+enum EmailThreadStatus {
+  SENT
+  REPLIED
+  PARSED
+  CONFIRMED
+  CLOSED
+}
+
+enum EmailDirection {
+  OUTBOUND
+  INBOUND
+}
+
+enum ParsingStatus {
+  PENDING
+  PARSED
+  CONFIRMED
+  REJECTED
+}
+
+// ─── Phase 5: Contact Import ─────────────────────────────────────
+
+model DesignerContact {
+  id              String                  @id @default(cuid())
+  userId          String
+  importSourceId  String
+
+  // Contact fields
+  name            String
+  email           String
+  company         String?
+  title           String?
+
+  // Matching
+  vendorOrgId     String?
+  vendorName      String?
+  matchConfidence ContactMatchConfidence?
+  isPreferredRep  Boolean                 @default(false)
+
+  // Shadow profile linkage
+  repShadowId     String?
+
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @updatedAt
+
+  user            User                    @relation("UserDesignerContacts", fields: [userId], references: [id], onDelete: Cascade)
+  importSource    ContactImportJob        @relation(fields: [importSourceId], references: [id], onDelete: Cascade)
+  vendorOrg       Organization?           @relation("VendorOrgDesignerContacts", fields: [vendorOrgId], references: [id], onDelete: SetNull)
+  repShadow       RepShadowProfile?       @relation("RepShadowContacts", fields: [repShadowId], references: [id], onDelete: SetNull)
+
+  @@unique([userId, email])
+  @@index([userId])
+  @@index([vendorOrgId])
+  @@index([email])
+  @@map("designer_contacts")
+}
+
+model ContactImportJob {
+  id              String        @id @default(cuid())
+  userId          String
+  source          ContactSource
+
+  // Processing status
+  status          ImportStatus  @default(PROCESSING)
+  totalContacts   Int           @default(0)
+  filteredCount   Int           @default(0)
+  matchedCount    Int           @default(0)
+  importedCount   Int           @default(0)
+
+  // OAuth metadata (if applicable)
+  oauthProvider   String?
+  syncToken       String?
+
+  processedAt     DateTime?
+  createdAt       DateTime      @default(now())
+
+  user            User          @relation("UserContactImportJobs", fields: [userId], references: [id], onDelete: Cascade)
+  contacts        DesignerContact[]
+
+  @@index([userId])
+  @@map("contact_import_jobs")
+}
+
+enum ContactMatchConfidence {
+  HIGH
+  MEDIUM
+  LOW
+  UNMATCHED
+}
+
+enum ContactSource {
+  GOOGLE
+  MICROSOFT
+  CSV_UPLOAD
+  VCF_UPLOAD
+}
+
+enum ImportStatus {
+  PROCESSING
+  AWAITING_REVIEW
+  COMPLETED
+  FAILED
 }

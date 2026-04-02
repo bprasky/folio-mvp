@@ -33,6 +33,8 @@ export interface RepResolutionResult {
   orgMembers?: Array<{ userId: string; name: string; role: string; profileImage: string | null }>;
   vendorOrgId?: string;
   vendorOrgName?: string;
+  /** Set when a preferred rep is found from imported contacts (off-platform) */
+  preferredContact?: { name: string; email: string };
 }
 
 export const TIMELINE_LABELS: Record<string, string> = {
@@ -55,4 +57,12 @@ export const CATEGORY_ICONS: Record<string, string> = {
   REORDER_REQUEST: '\uD83D\uDD04',
   COLLABORATION: '\uD83E\uDD1D',
   GENERAL: '\uD83D\uDCAC',
+  FOLIO_EMAIL: '\u2709\uFE0F',
 };
+
+/** Result from the email send API */
+export interface EmailSendResult {
+  threadId: string;
+  conversationId: string;
+  sent: boolean;
+}

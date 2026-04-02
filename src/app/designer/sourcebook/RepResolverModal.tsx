@@ -15,6 +15,8 @@ interface RepResolverModalProps {
   onRepSelected: (repUserId: string) => void;
   /** Called when user wants to invite a new rep */
   onInviteRep: (repName: string, repEmail: string, sendInvite: boolean) => void;
+  /** Called when user wants to send email via Folio proxy instead of inviting */
+  onSendViaFolio?: (recipientName: string, recipientEmail: string) => void;
 }
 
 type Step = 'loading' | 'search' | 'invite';
@@ -27,6 +29,7 @@ export default function RepResolverModal({
   vendorName,
   onRepSelected,
   onInviteRep,
+  onSendViaFolio,
 }: RepResolverModalProps) {
   const [step, setStep] = useState<Step>('loading');
   const [resolution, setResolution] = useState<RepResolutionResult | null>(null);
@@ -185,8 +188,23 @@ export default function RepResolverModal({
             </div>
 
             <div className="flex flex-col gap-2 mt-5">
+              {onSendViaFolio && (
+                <Button
+                  variant="accent"
+                  onClick={() => {
+                    if (inviteName.trim() && inviteEmail.trim()) {
+                      onSendViaFolio(inviteName.trim(), inviteEmail.trim());
+                      onClose();
+                    }
+                  }}
+                  disabled={!inviteName.trim() || !inviteEmail.trim() || sending}
+                  className="w-full"
+                >
+                  Send from Folio
+                </Button>
+              )}
               <Button
-                variant="accent"
+                variant={onSendViaFolio ? 'ridge' : 'accent'}
                 onClick={() => handleInvite(true)}
                 disabled={!inviteName.trim() || !inviteEmail.trim() || sending}
                 className="w-full"
@@ -202,6 +220,12 @@ export default function RepResolverModal({
                 Just send me the email template
               </Button>
             </div>
+
+            {onSendViaFolio && (
+              <p className="text-xs text-[var(--text-tertiary)] mt-2 text-center">
+                Folio sends the email on your behalf. Replies come back to your Folio inbox.
+              </p>
+            )}
 
             {members && members.length > 0 && (
               <button

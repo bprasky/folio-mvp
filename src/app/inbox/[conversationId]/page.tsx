@@ -25,6 +25,12 @@ interface ConversationData {
   recipientOrg: { id: string; name: string; logo: string | null } | null;
   recipientUser: { id: string; name: string; profileImage: string | null } | null;
   messages: MessageData[];
+  emailThread?: {
+    id: string;
+    recipientEmail: string;
+    recipientName: string | null;
+    status: string;
+  } | null;
 }
 
 export default function ThreadPage({
@@ -70,20 +76,43 @@ export default function ThreadPage({
     setSending(true);
 
     try {
-      const res = await fetch(`/api/messages/conversations/${resolvedId}/messages`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ body: reply.trim() }),
-      });
+      // For email threads, send via the email reply endpoint
+      if (conversation?.context === 'FOLIO_EMAIL' && conversation.emailThread?.id) {
+        const res = await fetch(`/api/email/threads/${conversation.emailThread.id}/reply`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: reply.trim() }),
+        });
 
-      if (res.ok) {
-        const { message } = await res.json();
-        setConversation((prev) =>
-          prev
-            ? { ...prev, messages: [...prev.messages, message] }
-            : prev
-        );
-        setReply('');
+        if (res.ok) {
+          const newMessage: MessageData = {
+            id: `temp-${Date.now()}`,
+            body: reply.trim(),
+            createdAt: new Date().toISOString(),
+            senderUserId: currentUserId || '',
+            sender: { id: currentUserId || '', name: 'You', profileImage: null },
+          };
+          setConversation((prev) =>
+            prev ? { ...prev, messages: [...prev.messages, newMessage] } : prev
+          );
+          setReply('');
+        }
+      } else {
+        const res = await fetch(`/api/messages/conversations/${resolvedId}/messages`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ body: reply.trim() }),
+        });
+
+        if (res.ok) {
+          const { message } = await res.json();
+          setConversation((prev) =>
+            prev
+              ? { ...prev, messages: [...prev.messages, message] }
+              : prev
+          );
+          setReply('');
+        }
       }
     } catch {
       // Silently fail
@@ -154,6 +183,24 @@ export default function ThreadPage({
           )}
         </div>
       </div>
+
+      {/* Email thread indicator */}
+      {conversation.context === 'FOLIO_EMAIL' && conversation.emailThread && (
+        <div
+          className="rounded-xl px-4 py-3 mt-4 flex items-start gap-2 text-xs"
+          style={{
+            backgroundColor: '#F0EDF5',
+            border: '1px solid #DDD8E8',
+            color: '#6B5B8D',
+          }}
+        >
+          <span className="mt-0.5 shrink-0">✉️</span>
+          <span>
+            Sent via Folio Email to {conversation.emailThread.recipientName || conversation.emailThread.recipientEmail}
+            {conversation.emailThread.status === 'REPLIED' && ' — Reply received'}
+          </span>
+        </div>
+      )}
 
       {/* Attribution note for vendor outreach */}
       {conversation.context === 'VENDOR_OUTREACH' && conversation.attributionNote && (

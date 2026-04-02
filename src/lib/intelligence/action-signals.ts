@@ -49,6 +49,27 @@ export async function recordActionSignal(params: RecordSignalParams): Promise<vo
 }
 
 /**
+ * Update the resolution status of an existing ActionItemSignal.
+ */
+export async function updateSignalResolution(
+  signalId: string,
+  resolution: string,
+  responseTime?: number,
+): Promise<void> {
+  try {
+    await prisma.actionItemSignal.update({
+      where: { id: signalId },
+      data: {
+        resolution,
+        ...(responseTime != null ? { responseTime } : {}),
+      },
+    });
+  } catch (error) {
+    console.error('[updateSignalResolution] Failed:', error);
+  }
+}
+
+/**
  * Get the designer's org ID for signal recording.
  * Falls back to creating a signal without org if not found.
  */

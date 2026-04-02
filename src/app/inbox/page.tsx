@@ -23,7 +23,7 @@ interface ConversationPreview {
   participants: { unreadCount: number }[];
 }
 
-type Filter = 'all' | 'unread' | 'inquiries';
+type Filter = 'all' | 'unread' | 'inquiries' | 'emails';
 type CategoryFilter = 'all' | 'SAMPLE_REQUEST' | 'QUOTE_REQUEST' | 'GENERAL' | 'COLLABORATION';
 
 export default function InboxPage() {
@@ -61,6 +61,7 @@ export default function InboxPage() {
     { id: 'all', label: 'All' },
     { id: 'unread', label: 'Unread' },
     { id: 'inquiries', label: 'Inquiries' },
+    { id: 'emails', label: 'Emails' },
   ];
 
   const categoryFilters: { id: CategoryFilter; label: string; icon: string }[] = [
@@ -163,6 +164,7 @@ export default function InboxPage() {
 function ConversationRow({ conversation }: { conversation: ConversationPreview }) {
   const lastMessage = conversation.messages[0];
   const unread = (conversation.participants[0]?.unreadCount ?? 0) > 0;
+  const isEmail = conversation.context === 'FOLIO_EMAIL';
   const sender = conversation.initiatorUser || conversation.initiatorOrg;
   const senderName = sender?.name ?? 'Unknown';
   const senderImage = (sender as Record<string, unknown>)?.profileImage as string | null
@@ -210,7 +212,12 @@ function ConversationRow({ conversation }: { conversation: ConversationPreview }
               >
                 {senderName}
               </span>
-              {categoryIcon && categoryLabel && categoryLabel !== 'General' && (
+              {isEmail && (
+                <span className="text-xs px-1.5 py-0.5 rounded-full" style={{ backgroundColor: '#EDE8F5', color: '#6B5B8D' }}>
+                  ✉️ via Folio Email
+                </span>
+              )}
+              {!isEmail && categoryIcon && categoryLabel && categoryLabel !== 'General' && (
                 <span className="text-xs px-1.5 py-0.5 rounded-full" style={{ backgroundColor: '#F0EDE9', color: '#5C554D' }}>
                   {categoryIcon} {categoryLabel}
                 </span>

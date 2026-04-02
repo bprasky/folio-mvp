@@ -103,3 +103,93 @@ export function buildMailtoLink(
   });
   return `mailto:${email}?${params.toString()}`;
 }
+
+// ─── HTML Email Templates (for Send from Folio) ─────────────────
+
+const EMAIL_WRAPPER_STYLE = `
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #2C2825;
+`;
+
+function wrapHtml(bodyHtml: string, signature: string): string {
+  return `<div style="${EMAIL_WRAPPER_STYLE}">
+${bodyHtml}
+${signature}
+</div>`;
+}
+
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+export function generateSampleRequestHtml(
+  payload: SampleRequestPayload,
+  designer: DesignerProfile,
+  signature: string,
+  repName?: string,
+): string {
+  const { subject } = generateSampleRequestEmail(payload, designer, repName);
+  let body = `<p>Hi ${escapeHtml(repName || 'there')},</p>
+<p>I'm ${escapeHtml(designer.name)}${designer.firmName ? ` with ${escapeHtml(designer.firmName)}` : ''}. I'm currently specifying the <strong>${escapeHtml(payload.productName)}</strong> for an upcoming project and would love to request a sample.</p>`;
+
+  if (payload.finishOrColorway) {
+    body += `<p><strong>Finish/Colorway:</strong> ${escapeHtml(payload.finishOrColorway)}</p>`;
+  }
+  if (payload.shippingAddress) {
+    body += `<p><strong>Ship to:</strong><br>${escapeHtml(payload.shippingAddress).replace(/\n/g, '<br>')}</p>`;
+  }
+  if (payload.designerNote) {
+    body += `<p>${escapeHtml(payload.designerNote)}</p>`;
+  }
+
+  return wrapHtml(body, signature);
+}
+
+export function generateQuoteRequestHtml(
+  payload: QuoteRequestPayload,
+  designer: DesignerProfile,
+  signature: string,
+  repName?: string,
+): string {
+  const timelineLabels: Record<string, string> = {
+    urgent: 'Urgent',
+    '2-4_weeks': '2\u20134 weeks',
+    flexible: 'Flexible',
+  };
+
+  let body = `<p>Hi ${escapeHtml(repName || 'there')},</p>
+<p>I'm ${escapeHtml(designer.name)}${designer.firmName ? ` with ${escapeHtml(designer.firmName)}` : ''}. I'm requesting a quote for the following:</p>
+<table style="border-collapse:collapse;margin:12px 0">
+  <tr><td style="padding:4px 16px 4px 0;color:#5C554D"><strong>Product:</strong></td><td>${escapeHtml(payload.productName)}</td></tr>
+  ${payload.vendorName ? `<tr><td style="padding:4px 16px 4px 0;color:#5C554D"><strong>Vendor:</strong></td><td>${escapeHtml(payload.vendorName)}</td></tr>` : ''}
+  <tr><td style="padding:4px 16px 4px 0;color:#5C554D"><strong>Quantity:</strong></td><td>${payload.quantity}</td></tr>
+  <tr><td style="padding:4px 16px 4px 0;color:#5C554D"><strong>Timeline:</strong></td><td>${timelineLabels[payload.timeline] || payload.timeline}</td></tr>
+  ${payload.projectName ? `<tr><td style="padding:4px 16px 4px 0;color:#5C554D"><strong>Project:</strong></td><td>${escapeHtml(payload.projectName)}</td></tr>` : ''}
+</table>`;
+
+  if (payload.notes) {
+    body += `<p>${escapeHtml(payload.notes)}</p>`;
+  }
+  body += `<p>Please provide pricing including trade discount if applicable.</p>`;
+
+  return wrapHtml(body, signature);
+}
+
+export function generateGeneralContactHtml(
+  message: string,
+  productName: string,
+  designer: DesignerProfile,
+  signature: string,
+  repName?: string,
+): string {
+  const body = `<p>Hi ${escapeHtml(repName || 'there')},</p>
+<p>${escapeHtml(message).replace(/\n/g, '<br>')}</p>`;
+
+  return wrapHtml(body, signature);
+}

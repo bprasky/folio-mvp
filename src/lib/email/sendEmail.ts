@@ -37,3 +37,48 @@ export async function sendEmail({
     return { success: false, error: e.message };
   }
 }
+
+/**
+ * Send an email from a designer's Folio proxy address.
+ * Used for action item emails (quote requests, sample requests, etc.)
+ * so replies route back through Folio's inbound webhook.
+ */
+export async function sendProxyEmail({
+  from,
+  replyTo,
+  to,
+  subject,
+  text,
+  html,
+}: {
+  from: string;     // e.g. "Sarah Chen via Folio <sarah.chen.a8f3@mail.folioad.com>"
+  replyTo: string;  // proxy address for reply routing
+  to: string;
+  subject: string;
+  text: string;
+  html: string;
+}): Promise<{ success: boolean; resendMessageId?: string; error?: string }> {
+  if (!resend) {
+    console.log(`[Email] No RESEND_API_KEY — skipping proxy email to ${to}: ${subject}`);
+    return { success: true };
+  }
+
+  try {
+    const { data, error } = await resend.emails.send({
+      from,
+      replyTo,
+      to,
+      subject,
+      text,
+      html,
+    });
+    if (error) {
+      console.error(`[Email] Proxy send failed to ${to}:`, error);
+      return { success: false, error: error.message };
+    }
+    return { success: true, resendMessageId: data?.id };
+  } catch (e: any) {
+    console.error(`[Email] Proxy send exception to ${to}:`, e);
+    return { success: false, error: e.message };
+  }
+}
