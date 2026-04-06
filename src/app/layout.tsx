@@ -36,7 +36,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${cormorant.variable} ${instrumentSans.variable}`}>
-      <body className="bg-[var(--bg-base)] text-[var(--text-primary)] min-h-screen antialiased font-[var(--font-body)]">
+      <body className="bg-surface-canvas text-folio-text-primary min-h-screen antialiased font-[var(--font-body)]">
         <Providers>
           <SessionRoleSync />
           <ImpersonationBanner />

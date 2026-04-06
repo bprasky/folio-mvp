@@ -232,3 +232,22 @@
   -webkit-backdrop-filter: blur(20px) saturate(160%);
   border-bottom: 1px solid rgba(190, 175, 155, 0.12);
 }
+
+/* ---- WARM MESH (Level 2 on white contexts only, NEVER over photography) ---- */
+
+.warm-mesh {
+  position: relative;
+  overflow: hidden;
+}
+
+.warm-mesh::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 20% 50%, rgba(201,169,110,0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(245,240,235,0.8) 0%, transparent 50%),
+    radial-gradient(ellipse at 60% 80%, rgba(201,169,110,0.04) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+}

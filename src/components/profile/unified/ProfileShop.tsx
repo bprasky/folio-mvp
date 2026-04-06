@@ -115,7 +115,7 @@ export default function ProfileShop({ userId }: ProfileShopProps) {
   if (error) {
     return (
       <div className="text-center py-12">
-        <p style={{ color: '#8B8178' }}>Unable to load shop. Please try again.</p>
+        <p className="text-folio-text-secondary">Unable to load shop. Please try again.</p>
       </div>
     );
   }
@@ -124,15 +124,13 @@ export default function ProfileShop({ userId }: ProfileShopProps) {
     return (
       <div className="text-center py-16">
         <div
-          className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4"
-          style={{ backgroundColor: '#F5F3F0' }}
+          className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4 bg-surface-elevated"
         >
           <svg
-            className="w-8 h-8"
+            className="w-8 h-8 text-folio-text-secondary"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
-            style={{ color: '#8B8178' }}
           >
             <path
               strokeLinecap="round"
@@ -142,10 +140,10 @@ export default function ProfileShop({ userId }: ProfileShopProps) {
             />
           </svg>
         </div>
-        <h3 className="text-lg font-medium mb-2" style={{ color: '#2C2825' }}>
+        <h3 className="text-lg font-medium mb-2 text-folio-text-primary">
           No products in shop yet
         </h3>
-        <p style={{ color: '#8B8178' }}>
+        <p className="text-folio-text-secondary">
           Products added during project posting will appear here.
         </p>
       </div>
@@ -156,7 +154,7 @@ export default function ProfileShop({ userId }: ProfileShopProps) {
     <div>
       {/* Header with count */}
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-lg font-medium" style={{ color: '#2C2825' }}>
+        <h2 className="text-lg font-medium text-folio-text-primary">
           {products.length} Product{products.length !== 1 ? 's' : ''}
         </h2>
       </div>
@@ -167,12 +165,7 @@ export default function ProfileShop({ userId }: ProfileShopProps) {
         <select
           value={productType}
           onChange={(e) => setProductType(e.target.value)}
-          className="px-4 py-2 rounded-lg border text-sm"
-          style={{
-            backgroundColor: '#FAF9F7',
-            borderColor: '#E8E4DF',
-            color: '#2C2825',
-          }}
+          className="px-4 py-2 rounded-lg border text-sm bg-surface-ground border-folio-border-subtle text-folio-text-primary"
         >
           {PRODUCT_TYPE_OPTIONS.map((opt) => (
             <option key={opt.value} value={opt.value}>
@@ -185,12 +178,7 @@ export default function ProfileShop({ userId }: ProfileShopProps) {
         <select
           value={vendor}
           onChange={(e) => setVendor(e.target.value)}
-          className="px-4 py-2 rounded-lg border text-sm"
-          style={{
-            backgroundColor: '#FAF9F7',
-            borderColor: '#E8E4DF',
-            color: '#2C2825',
-          }}
+          className="px-4 py-2 rounded-lg border text-sm bg-surface-ground border-folio-border-subtle text-folio-text-primary"
         >
           {vendors.map((v) => (
             <option key={v.value} value={v.value}>
@@ -203,12 +191,7 @@ export default function ProfileShop({ userId }: ProfileShopProps) {
         <select
           value={sort}
           onChange={(e) => setSort(e.target.value)}
-          className="px-4 py-2 rounded-lg border text-sm ml-auto"
-          style={{
-            backgroundColor: '#FAF9F7',
-            borderColor: '#E8E4DF',
-            color: '#2C2825',
-          }}
+          className="px-4 py-2 rounded-lg border text-sm ml-auto bg-surface-ground border-folio-border-subtle text-folio-text-primary"
         >
           {SORT_OPTIONS.map((opt) => (
             <option key={opt.value} value={opt.value}>
@@ -251,11 +234,10 @@ function ShopProductCard({
   return (
     <button
       onClick={() => onOpenModal(item.id)}
-      className="group block rounded-xl overflow-hidden border transition-shadow hover:shadow-lg text-left w-full"
-      style={{ backgroundColor: '#FFFFFF', borderColor: '#E8E4DF' }}
+      className="group block rounded-xl overflow-hidden border transition-shadow hover:shadow-lg text-left w-full bg-surface-canvas border-folio-border-subtle"
     >
       {/* Product Image */}
-      <div className="aspect-square relative" style={{ backgroundColor: '#F5F3F0' }}>
+      <div className="aspect-square relative bg-surface-elevated">
         {item.product.imageUrl ? (
           <Image
             src={item.product.imageUrl}
@@ -266,11 +248,10 @@ function ShopProductCard({
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
             <svg
-              className="w-12 h-12"
+              className="w-12 h-12 text-folio-text-tertiary"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
-              style={{ color: '#C4BEB5' }}
             >
               <path
                 strokeLinecap="round"
@@ -294,8 +275,7 @@ function ShopProductCard({
           )}
           {item.isFeatured && !item.hasActiveBoost && (
             <span
-              className="px-2 py-0.5 rounded-full text-xs font-medium"
-              style={{ backgroundColor: '#2C2825', color: '#FFFFFF' }}
+              className="px-2 py-0.5 rounded-full text-xs font-medium bg-folio-text-primary text-surface-ground"
             >
               Pinned
             </span>
@@ -306,15 +286,14 @@ function ShopProductCard({
       {/* Product Info */}
       <div className="p-4">
         <h3
-          className="font-medium text-sm mb-1 line-clamp-2"
-          style={{ color: '#2C2825' }}
+          className="font-medium text-sm mb-1 line-clamp-2 text-folio-text-primary"
         >
           {item.product.name}
         </h3>
-        <p className="text-sm mb-2" style={{ color: '#8B8178' }}>
+        <p className="text-sm mb-2 text-folio-text-secondary">
           {item.product.brand || 'Unknown Vendor'}
         </p>
-        <p className="text-xs" style={{ color: '#A9A29A' }}>
+        <p className="text-xs text-folio-text-tertiary">
           In {item.projectCount} project{item.projectCount !== 1 ? 's' : ''}
         </p>
       </div>
@@ -328,8 +307,7 @@ function ShopSkeleton() {
       {/* Header skeleton */}
       <div className="flex items-center justify-between mb-6">
         <div
-          className="h-6 w-24 rounded animate-pulse"
-          style={{ backgroundColor: '#E8E4DF' }}
+          className="h-6 w-24 rounded animate-pulse bg-folio-border-subtle"
         />
       </div>
 
@@ -338,8 +316,7 @@ function ShopSkeleton() {
         {[1, 2, 3].map((i) => (
           <div
             key={i}
-            className="h-10 w-32 rounded-lg animate-pulse"
-            style={{ backgroundColor: '#E8E4DF' }}
+            className="h-10 w-32 rounded-lg animate-pulse bg-folio-border-subtle"
           />
         ))}
       </div>
@@ -349,14 +326,13 @@ function ShopSkeleton() {
         {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
           <div
             key={i}
-            className="rounded-xl overflow-hidden animate-pulse"
-            style={{ backgroundColor: '#F5F3F0' }}
+            className="rounded-xl overflow-hidden animate-pulse bg-surface-elevated"
           >
-            <div className="aspect-square" style={{ backgroundColor: '#E8E4DF' }} />
+            <div className="aspect-square bg-folio-border-subtle" />
             <div className="p-4 space-y-2">
-              <div className="h-4 w-3/4 rounded" style={{ backgroundColor: '#E8E4DF' }} />
-              <div className="h-3 w-1/2 rounded" style={{ backgroundColor: '#E8E4DF' }} />
-              <div className="h-3 w-1/3 rounded" style={{ backgroundColor: '#E8E4DF' }} />
+              <div className="h-4 w-3/4 rounded bg-folio-border-subtle" />
+              <div className="h-3 w-1/2 rounded bg-folio-border-subtle" />
+              <div className="h-3 w-1/3 rounded bg-folio-border-subtle" />
             </div>
           </div>
         ))}

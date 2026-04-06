@@ -78,8 +78,8 @@ export default function ProfileAbout({ user, team = [], organization }: ProfileA
         <section>
           <SectionTitle>About</SectionTitle>
           <div
-            className="prose prose-stone max-w-none"
-            style={{ color: '#5C564F', lineHeight: 1.8 }}
+            className="prose prose-stone max-w-none text-folio-text-secondary"
+            style={{ lineHeight: 1.8 }}
           >
             <p className="text-base whitespace-pre-line">{bio}</p>
           </div>
@@ -89,16 +89,15 @@ export default function ProfileAbout({ user, team = [], organization }: ProfileA
       {/* Philosophy Quote */}
       {pullQuotes && pullQuotes.length > 0 && (
         <section
-          className="py-8 px-6 rounded-xl -mx-2"
-          style={{ backgroundColor: '#F5F3F0' }}
+          className="py-8 px-6 rounded-xl -mx-2 bg-surface-elevated"
         >
           <blockquote
-            className="text-xl md:text-2xl font-light italic text-center"
-            style={{ fontFamily: 'Georgia, serif', color: '#3D3A36', maxWidth: '640px', margin: '0 auto' }}
+            className="text-xl md:text-2xl font-light italic text-center text-folio-text-primary"
+            style={{ fontFamily: 'Georgia, serif', maxWidth: '640px', margin: '0 auto' }}
           >
             "{pullQuotes[0]}"
           </blockquote>
-          <p className="text-center mt-4 text-sm" style={{ color: '#8B8178' }}>
+          <p className="text-center mt-4 text-sm text-folio-text-secondary">
             — {user.name}
           </p>
         </section>
@@ -108,7 +107,7 @@ export default function ProfileAbout({ user, team = [], organization }: ProfileA
       {processDescription && (
         <section>
           <SectionTitle>Design Process</SectionTitle>
-          <div style={{ color: '#5C564F', lineHeight: 1.8 }}>
+          <div className="text-folio-text-secondary" style={{ lineHeight: 1.8 }}>
             <p className="text-base whitespace-pre-line">{processDescription}</p>
           </div>
         </section>
@@ -182,8 +181,7 @@ export default function ProfileAbout({ user, team = [], organization }: ProfileA
             {user.specialties.map(specialty => (
               <span
                 key={specialty}
-                className="px-4 py-2 text-sm rounded-full"
-                style={{ backgroundColor: '#F0EDE9', color: '#5C564F' }}
+                className="px-4 py-2 text-sm rounded-full bg-surface-elevated text-folio-text-secondary"
               >
                 {specialty}
               </span>
@@ -209,13 +207,11 @@ export default function ProfileAbout({ user, team = [], organization }: ProfileA
         <section>
           <SectionTitle>Firm</SectionTitle>
           <div
-            className="flex items-center gap-4 p-4 rounded-xl"
-            style={{ backgroundColor: '#F5F3F0' }}
+            className="flex items-center gap-4 p-4 rounded-xl bg-surface-elevated"
           >
             {organization.logo ? (
               <div
-                className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0"
-                style={{ backgroundColor: 'white' }}
+                className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-surface-canvas"
               >
                 <SafeImage
                   src={organization.logo}
@@ -227,17 +223,16 @@ export default function ProfileAbout({ user, team = [], organization }: ProfileA
               </div>
             ) : (
               <div
-                className="w-16 h-16 rounded-lg flex items-center justify-center flex-shrink-0"
-                style={{ backgroundColor: '#E8E4DF', color: '#8B8178' }}
+                className="w-16 h-16 rounded-lg flex items-center justify-center flex-shrink-0 bg-folio-border-subtle text-folio-text-secondary"
               >
                 <BuildingIcon />
               </div>
             )}
             <div>
-              <p className="font-medium" style={{ color: '#2C2825' }}>
+              <p className="font-medium text-folio-text-primary">
                 {organization.name}
               </p>
-              <p className="text-sm" style={{ color: '#8B8178' }}>
+              <p className="text-sm text-folio-text-secondary">
                 {formatOrgType(organization.type)}
               </p>
             </div>

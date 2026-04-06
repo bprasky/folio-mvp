@@ -29,23 +29,21 @@ export default function ProfileTabs({ userId, activeTab }: ProfileTabsProps) {
   };
 
   return (
-    <div className="border-b" style={{ borderColor: '#E8E4DF' }}>
+    <div className="border-b border-folio-border-subtle">
       <div className="max-w-6xl mx-auto px-6">
         <nav className="flex gap-8" aria-label="Profile tabs">
           {TABS.map(tab => (
             <Link
               key={tab.id}
               href={createTabUrl(tab.id)}
-              className="relative py-4 text-sm font-medium transition-colors"
-              style={{
-                color: activeTab === tab.id ? '#2C2825' : '#8B8178',
-              }}
+              className={`relative py-4 text-sm font-medium transition-colors ${
+                activeTab === tab.id ? 'text-folio-text-primary' : 'text-folio-text-secondary'
+              }`}
             >
               {tab.label}
               {activeTab === tab.id && (
                 <span
-                  className="absolute bottom-0 left-0 right-0 h-0.5"
-                  style={{ backgroundColor: '#2C2825' }}
+                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-folio-text-primary"
                 />
               )}
             </Link>
