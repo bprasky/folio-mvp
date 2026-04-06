@@ -253,6 +253,12 @@ export async function getMagazineData(
               companyName: true,
             },
           },
+          // Fetch tags to find cropUrl for selection-sourced products
+          tags: {
+            select: { cropUrl: true },
+            where: { cropUrl: { not: null } },
+            take: 1,
+          },
         },
       });
 
@@ -263,7 +269,7 @@ export async function getMagazineData(
             name: product.name,
             imageUrl: product.imageUrl ?? null,
             cutoutImageUrl: product.cutoutImageUrl ?? null,
-            cropUrl: null,
+            cropUrl: product.tags?.[0]?.cropUrl ?? null,
             vendorName: product.vendor?.name ?? product.vendor?.companyName ?? null,
           });
         }
