@@ -284,7 +284,7 @@ export async function getMagazineData(
       const bHas = !!(b.imageUrl || b.cropUrl);
       return aHas === bHas ? 0 : aHas ? -1 : 1;
     })
-    .filter(p => !!(p.imageUrl || p.cutoutImageUrl || p.cropUrl));
+    .filter(p => !!(p.imageUrl || p.cropUrl));
 
   // Debug logging to verify cutout data
   if (heroProducts.length > 0) {
