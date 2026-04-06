@@ -26,7 +26,7 @@ export function ForDesignersHero() {
         transition={{ duration: 0.8, ease: "easeOut" }}
       >
         <h1 className="font-headline italic text-5xl md:text-6xl lg:text-7xl text-folio-text-primary leading-[1.1]">
-          Your work is the product. Folio treats it that way.
+          One place for your projects, your products, and every conversation in between.
         </h1>
         <motion.p
           className="mt-8 text-lg md:text-xl text-folio-text-secondary leading-relaxed max-w-2xl mx-auto"
@@ -34,7 +34,9 @@ export function ForDesignersHero() {
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6, delay: 0.4, ease: "easeOut" }}
         >
-          Folio is where interior designers publish completed projects as structured, documented records.
+          Folio is where interior designers publish work, manage procurement,
+          and keep every vendor communication organized &mdash; from first quote
+          to final install.
         </motion.p>
       </motion.div>
     </section>
@@ -43,19 +45,19 @@ export function ForDesignersHero() {
 
 const steps = [
   {
-    title: "Upload your photography",
+    title: "Publish your work",
     description:
-      "Bring in the images from your completed project, room by room.",
+      "Upload your photography, walk through a brief interview, and Folio generates an editorial-quality project post \u2014 in your voice, under your name.",
   },
   {
-    title: "Tell the story",
+    title: "Run your projects",
     description:
-      "A brief interview walks you through the decisions, the brief, and the details that don\u2019t make it into the photos.",
+      "Every product you tag builds your Sourcebook. Request quotes, track lead times, and manage procurement from one project board.",
   },
   {
-    title: "Folio does the rest",
+    title: "Own every conversation",
     description:
-      "Your project is structured into a professional post \u2014 your name, your products, your voice attached to every room.",
+      "Vendor emails, rep texts, contractor updates \u2014 one searchable inbox linked to your projects and products. Nothing gets lost.",
   },
 ];
 
@@ -110,34 +112,39 @@ export function HowItWorks() {
 
 const pillarCards = [
   {
-    label: "Your Specifications",
-    title: "A directory that builds itself",
-    description: "Every product you tag is attributed to you automatically \u2014 no manual entry, no separate portfolio management.",
-    href: "/for-designers/directory",
-  },
-  {
     label: "Your Editorial",
-    title: "Posts that keep working",
-    description: "Every project generates editorial-quality content built around your voice \u2014 owned content you can deploy to clients, press, and your network.",
+    title: "Projects that speak for themselves.",
+    description:
+      "Upload your photography, walk through a brief interview, and Folio generates a structured editorial post \u2014 in your voice, with every product attributed. Professional documentation of your work, without the writing.",
     href: "/for-designers/editorial",
   },
   {
-    label: "Your Identity",
-    title: "A bio that evolves with your work",
-    description: "Your Folio bio adapts as you publish, surfacing your actual taste fingerprint based on what you specify and build.",
-    href: "/for-designers/bio",
+    label: "Your Products",
+    title: "Every product you\u2019ve ever specified, organized.",
+    description:
+      "Your Sourcebook builds itself as you tag products across projects. Request samples, get quotes, check availability \u2014 with structured actions that work whether or not the vendor is on Folio.",
+    href: "/for-designers/sourcebook",
   },
   {
-    label: "Your Credit",
-    title: "Get credited for what you specify",
-    description: "When your tagged products are discovered and specified by others, that contribution is attributed back to you.",
-    href: "/for-designers/attribution",
+    label: "Your Budget",
+    title: "Pricing, lead times, and deadlines \u2014 from one board.",
+    description:
+      "Send bulk quote requests grouped by vendor, track responses, and watch your project budget build itself. A procurement timeline tells you what to order and when.",
+    href: "/for-designers/procurement",
   },
   {
-    label: "Your Clients",
-    title: "Find clients whose taste already matches yours",
-    description: "Folio builds an intelligence layer around your published work and uses it to surface clients who already align with what you do.",
-    href: "/for-designers/client-matching",
+    label: "Your Communications",
+    title: "Every conversation, every channel, one place.",
+    description:
+      "Vendor emails, rep texts, contractor updates \u2014 all linked to the right project and the right product. Your whole team\u2019s communications, searchable and organized.",
+    href: "/for-designers/communications",
+  },
+  {
+    label: "Your Reputation",
+    title: "A presence that compounds.",
+    description:
+      "Your published work, product expertise, and client reviews build a professional presence in Folio\u2019s Directory \u2014 discoverable by location, style, and the products you specify.",
+    href: "/for-designers/discovery",
   },
 ];
 
@@ -150,7 +157,7 @@ export function WhatYouGet() {
             What You Get
           </p>
           <h2 className="font-headline italic text-4xl md:text-5xl text-folio-text-primary mb-14">
-            Built around your work. Not theirs.
+            One platform for the whole studio.
           </h2>
         </motion.div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

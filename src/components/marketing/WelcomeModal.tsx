@@ -10,28 +10,28 @@ const SESSION_KEY = 'folio_welcome_dismissed';
 
 const steps = [
   {
-    title: 'Upload your photography',
+    title: 'Publish your work',
     description:
-      'Bring in the images from your completed project, room by room.',
+      'Upload your photography, walk through a brief interview, and Folio generates an editorial-quality project post \u2014 in your voice, under your name.',
   },
   {
-    title: 'Tell the story',
+    title: 'Run your projects',
     description:
-      'A brief interview walks you through the decisions, the brief, and the details that don\u2019t make it into the photos.',
+      'Every product you tag builds your Sourcebook. Request quotes, track lead times, and manage procurement from one project board.',
   },
   {
-    title: 'Folio does the rest',
+    title: 'Own every conversation',
     description:
-      'Your project is structured into a professional post \u2014 your name, your products, your voice attached to every room.',
+      'Vendor emails, rep texts, contractor updates \u2014 one searchable inbox linked to your projects and products. Nothing gets lost.',
   },
 ];
 
-const pillars = [
-  { label: 'Your Specifications', title: 'A directory that builds itself', href: '/for-designers/directory' },
-  { label: 'Your Editorial', title: 'Posts that keep working', href: '/for-designers/editorial' },
-  { label: 'Your Identity', title: 'A bio that evolves with your work', href: '/for-designers/bio' },
-  { label: 'Your Credit', title: 'Get credited for what you specify', href: '/for-designers/attribution' },
-  { label: 'Your Clients', title: 'Find clients whose taste already matches yours', href: '/for-designers/client-matching' },
+const whatYouGet = [
+  'Editorial Publishing',
+  'Sourcebook & Actions',
+  'Project Procurement',
+  'Unified Communications',
+  'Directory & Discovery',
 ];
 
 export function WelcomeModal() {
@@ -138,13 +138,12 @@ export function WelcomeModal() {
             {/* Hero */}
             <div className="px-7 pt-8 pb-6 text-center">
               <h2 className="font-headline italic text-4xl text-folio-text-primary leading-[1.1]">
-                Your work is the product.
-                <br />
-                Folio treats it that way.
+                One place for your projects, your products, and every conversation in between.
               </h2>
               <p className="mt-4 text-sm leading-relaxed max-w-md mx-auto" style={{ color: 'rgba(40, 30, 24, 0.75)' }}>
-                Folio is where interior designers publish completed projects as
-                structured, documented records.
+                Folio is where interior designers publish work, manage
+                procurement, and keep every vendor communication organized
+                &mdash; from first quote to final install.
               </p>
             </div>
 
@@ -201,37 +200,29 @@ export function WelcomeModal() {
                 What You Get
               </p>
               <h3 className="font-headline italic text-2xl text-folio-text-primary mb-5">
-                Built around your work. Not theirs.
+                One platform for the whole studio.
               </h3>
-              <div className="space-y-2.5">
-                {pillars.map((pillar, i) => (
-                  <Link
+              <div className="space-y-2">
+                {whatYouGet.map((item, i) => (
+                  <p
                     key={i}
-                    href={pillar.href}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleClose();
-                    }}
-                    className="flex items-baseline gap-3 group py-2 transition-colors hover:bg-black/[0.02] -mx-2 px-2 rounded-lg"
-                    style={{
-                      borderBottom:
-                        i < pillars.length - 1
-                          ? '1px solid rgba(201, 169, 110, 0.1)'
-                          : 'none',
-                    }}
+                    className="text-sm text-folio-text-primary leading-relaxed"
                   >
-                    <span className="uppercase tracking-widest text-[10px] whitespace-nowrap min-w-[100px]" style={{ color: 'rgba(40, 30, 24, 0.6)' }}>
-                      {pillar.label}
-                    </span>
-                    <span className="font-headline italic text-sm text-folio-text-primary group-hover:text-[#c9a96e] transition-colors">
-                      {pillar.title}
-                    </span>
-                    <span className="text-[#c9a96e]/40 text-sm ml-auto shrink-0">
-                      &rarr;
-                    </span>
-                  </Link>
+                    <span style={{ color: '#c9a96e' }}>&#10022;</span>
+                    {' '}{item}
+                  </p>
                 ))}
               </div>
+              <Link
+                href="/for-designers"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleClose();
+                }}
+                className="inline-block mt-4 text-sm font-medium text-[var(--accent)] hover:text-[var(--accent-hover)] transition-colors"
+              >
+                Explore all features &rarr;
+              </Link>
             </div>
 
             {/* Divider */}

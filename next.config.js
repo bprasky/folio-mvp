@@ -45,6 +45,10 @@ const nextConfig = {
       { source: '/', destination: '/magazine', permanent: false },
       { source: '/designer', destination: '/projects', permanent: true },
       { source: '/designer/projects', destination: '/projects', permanent: true },
+      { source: '/for-designers/directory', destination: '/for-designers/sourcebook', permanent: true },
+      { source: '/for-designers/bio', destination: '/for-designers/discovery', permanent: true },
+      { source: '/for-designers/attribution', destination: '/for-designers/discovery', permanent: true },
+      { source: '/for-designers/client-matching', destination: '/for-designers/discovery', permanent: true },
     ];
   },
   // Security headers
