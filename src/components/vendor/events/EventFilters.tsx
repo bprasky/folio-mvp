@@ -25,16 +25,16 @@ export function EventFilters({ eventId }: EventFiltersProps) {
   };
 
   return (
-    <Card className="bg-white border-[#DAD2CA]">
+    <Card className="bg-white border-folio-border-strong">
       <CardContent className="py-4">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
           {/* Date Range */}
           <div className="flex items-center space-x-2">
-            <label className="text-sm font-medium text-[#2B2B2B] whitespace-nowrap">
+            <label className="text-sm font-medium text-folio-text-primary whitespace-nowrap">
               Date Range:
             </label>
             <Select value={dateRange} onValueChange={setDateRange}>
-              <SelectTrigger className="w-[150px] border-[#DAD2CA]">
+              <SelectTrigger className="w-[150px] border-folio-border-strong">
                 <SelectValue>
                   {dateRange === 'event-window' ? 'Event Window' :
                    dateRange === 'last-7-days' ? 'Last 7 Days' :
@@ -54,11 +54,11 @@ export function EventFilters({ eventId }: EventFiltersProps) {
 
           {/* City Filter */}
           <div className="flex items-center space-x-2">
-            <label className="text-sm font-medium text-[#2B2B2B] whitespace-nowrap">
+            <label className="text-sm font-medium text-folio-text-primary whitespace-nowrap">
               City:
             </label>
             <Select value={cityFilter} onValueChange={setCityFilter}>
-              <SelectTrigger className="w-[120px] border-[#DAD2CA]">
+              <SelectTrigger className="w-[120px] border-folio-border-strong">
                 <SelectValue>
                   {cityFilter === 'all' ? 'All Cities' :
                    cityFilter === 'new-york' ? 'New York' :
@@ -84,7 +84,7 @@ export function EventFilters({ eventId }: EventFiltersProps) {
               variant="outline" 
               size="sm" 
               onClick={handleReset}
-              className="border-[#DAD2CA]"
+              className="border-folio-border-strong"
             >
               <RotateCcw className="w-4 h-4 mr-2" />
               Reset

@@ -106,7 +106,7 @@ export function QuestionCard({
                 </span>
               )}
               {questionMetadata.roomContext && (
-                <span className="text-xs text-[var(--text-secondary)]">• {formatRoomName(questionMetadata.roomContext)}</span>
+                <span className="text-xs text-folio-text-secondary">• {formatRoomName(questionMetadata.roomContext)}</span>
               )}
             </div>
             {questionMetadata.linkedImageId && images.length > 0 && (
@@ -117,11 +117,11 @@ export function QuestionCard({
             )}
           </div>
         )}
-        <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl italic text-[var(--text-primary)] leading-tight mb-8 max-w-3xl">
+        <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl italic text-folio-text-primary leading-tight mb-8 max-w-3xl">
           {question.prompt}
         </h2>
         {question.helper && (
-          <p className="text-sm text-[var(--text-secondary)] max-w-2xl">{question.helper}</p>
+          <p className="text-sm text-folio-text-secondary max-w-2xl">{question.helper}</p>
         )}
       </div>
 
@@ -140,10 +140,10 @@ export function QuestionCard({
             }}
             maxLength={maxLength}
             rows={isFocused || answer.trim() ? 8 : 2}
-            className={`w-full p-4 bg-[var(--bg-elevated)]/50 border rounded-xl text-lg placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30 focus:border-[var(--accent)]/50 leading-relaxed transition-all duration-200 ease-in-out ${
+            className={`w-full p-4 bg-surface-ground/50 border rounded-xl text-lg placeholder:text-folio-text-tertiary focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30 focus:border-[var(--accent)]/50 leading-relaxed transition-all duration-200 ease-in-out ${
               isFocused || answer.trim() ? "min-h-[200px] resize-y" : "min-h-[56px] resize-none"
             } ${
-              fieldError ? "border-red-400 focus:border-red-500" : "border-[var(--ridge-outer)]"
+              fieldError ? "border-red-400 focus:border-red-500" : "border-folio-border-subtle"
             }`}
             placeholder="Type your answer here…"
             disabled={isSubmitting || isRecording || isTranscribing}
@@ -165,7 +165,7 @@ export function QuestionCard({
                   await startRecording();
                 }}
                 disabled={isSubmitting}
-                className="p-2 rounded-full transition-colors bg-[var(--bg-elevated)] text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)] disabled:opacity-50 disabled:cursor-not-allowed"
+                className="p-2 rounded-full transition-colors bg-surface-ground text-folio-text-secondary hover:bg-surface-ground disabled:opacity-50 disabled:cursor-not-allowed"
                 title="Record voice answer"
               >
                 <Mic className="h-4 w-4" />
@@ -191,7 +191,7 @@ export function QuestionCard({
                 <button
                   type="button"
                   onClick={cancelRecording}
-                  className="p-1.5 text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                  className="p-1.5 text-xs text-folio-text-secondary hover:text-folio-text-primary"
                   title="Cancel recording"
                 >
                   Cancel
@@ -202,7 +202,7 @@ export function QuestionCard({
         </div>
 
         {/* Character count and error */}
-        <div className="flex justify-between items-center text-sm text-[var(--text-tertiary)] max-w-3xl">
+        <div className="flex justify-between items-center text-sm text-folio-text-tertiary max-w-3xl">
           <div>
             {fieldError && (
               <p className="text-red-600">{fieldError}</p>

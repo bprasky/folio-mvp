@@ -85,7 +85,7 @@ export function SplitEditorialBlock({
         <div className="w-full md:w-1/2 space-y-4">
           {/* Room Label - Section Header Style */}
           {roomName && (
-            <div className="folio-ui uppercase tracking-wider text-[var(--text-secondary)] mb-2">
+            <div className="folio-ui uppercase tracking-wider text-folio-text-secondary mb-2">
               {roomName}
             </div>
           )}
@@ -93,7 +93,7 @@ export function SplitEditorialBlock({
           {/* Editorial Text - Readable Paragraph Style */}
           <div className="prose prose-neutral max-w-none">
             {text.split('\n\n').map((paragraph, idx) => (
-              <p key={idx} className="text-base md:text-lg leading-relaxed text-[var(--text-primary)] font-normal mb-4 last:mb-0">
+              <p key={idx} className="text-base md:text-lg leading-relaxed text-folio-text-primary font-normal mb-4 last:mb-0">
                 {paragraph.trim()}
               </p>
             ))}
@@ -101,10 +101,10 @@ export function SplitEditorialBlock({
 
           {/* Tagged Products (Inline References) */}
           {productNames.length > 0 && (
-            <div className="pt-4 border-t border-[var(--ridge-outer)]">
-              <div className="folio-ui text-[var(--text-secondary)]">
+            <div className="pt-4 border-t border-folio-border-subtle">
+              <div className="folio-ui text-folio-text-secondary">
                 <span className="font-medium">Selections: </span>
-                <span className="text-[var(--text-secondary)]">
+                <span className="text-folio-text-secondary">
                   {productNames.join(' • ')}
                 </span>
               </div>

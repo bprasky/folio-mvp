@@ -50,7 +50,7 @@ export default function Lightbox({
         />
         <button
           onClick={onClose}
-          className="absolute top-2 right-2 rounded-full bg-[var(--bg-base)]/80 px-3 py-1 folio-meta hover:bg-[var(--bg-base)] transition-colors"
+          className="absolute top-2 right-2 rounded-full bg-surface-canvas/80 px-3 py-1 folio-meta hover:bg-surface-canvas transition-colors"
         >
           Close
         </button>
@@ -62,7 +62,7 @@ export default function Lightbox({
                 setIdx((i) => Math.max(i - 1, 0));
               }}
               disabled={idx === 0}
-              className="rounded-full bg-[var(--bg-base)]/80 px-3 py-2 folio-meta hover:bg-[var(--bg-base)] transition-colors pointer-events-auto disabled:opacity-50 disabled:cursor-not-allowed"
+              className="rounded-full bg-surface-canvas/80 px-3 py-2 folio-meta hover:bg-surface-canvas transition-colors pointer-events-auto disabled:opacity-50 disabled:cursor-not-allowed"
             >
               ←
             </button>
@@ -72,14 +72,14 @@ export default function Lightbox({
                 setIdx((i) => Math.min(i + 1, images.length - 1));
               }}
               disabled={idx === images.length - 1}
-              className="rounded-full bg-[var(--bg-base)]/80 px-3 py-2 folio-meta hover:bg-[var(--bg-base)] transition-colors pointer-events-auto disabled:opacity-50 disabled:cursor-not-allowed"
+              className="rounded-full bg-surface-canvas/80 px-3 py-2 folio-meta hover:bg-surface-canvas transition-colors pointer-events-auto disabled:opacity-50 disabled:cursor-not-allowed"
             >
               →
             </button>
           </div>
         )}
         {im.caption || (im.tags?.length ?? 0) > 0 ? (
-          <div className="mt-2 rounded-xl bg-[var(--bg-base)]/85 p-3 folio-meta text-[var(--text-primary)]">
+          <div className="mt-2 rounded-xl bg-surface-canvas/85 p-3 folio-meta text-folio-text-primary">
             {im.caption ? <p className="mb-1">{im.caption}</p> : null}
             {/* Hook: render tag chips if you have InlineTagLink */}
             {im.tags && im.tags.length > 0 && (
@@ -87,7 +87,7 @@ export default function Lightbox({
                 {im.tags.slice(0, 6).map((t, i) => (
                   <span
                     key={i}
-                    className="rounded-full bg-[var(--bg-elevated)] px-2 py-0.5 folio-meta ring-1 ring-black/5"
+                    className="rounded-full bg-surface-ground px-2 py-0.5 folio-meta ring-1 ring-black/5"
                   >
                     {t?.label || t?.name || t?.productName || "Tagged"}
                   </span>

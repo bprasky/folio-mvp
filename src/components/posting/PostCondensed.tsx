@@ -25,14 +25,14 @@ export function PostCondensed({ payload }: PostCondensedProps) {
         </div>
       )}
       <header className="mb-6">
-        <h1 className="text-3xl font-bold text-[var(--text-primary)] mb-2">
+        <h1 className="text-3xl font-bold text-folio-text-primary mb-2">
           {project.title}
         </h1>
         {post.excerpt && (
-          <p className="text-lg text-[var(--text-secondary)]">{post.excerpt}</p>
+          <p className="text-lg text-folio-text-secondary">{post.excerpt}</p>
         )}
         {designer && (
-          <p className="mt-4 text-sm text-[var(--text-secondary)]">
+          <p className="mt-4 text-sm text-folio-text-secondary">
             by {designer.name}
             {designer.studio && ` • ${designer.studio}`}
           </p>

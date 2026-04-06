@@ -119,7 +119,7 @@ export function QuickAddToRoom({ open, onOpenChange, productId, eventId, subeven
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="rounded-2xl bg-[var(--bg-elevated)] backdrop-blur-xl ring-1 ring-white/10 text-[var(--text-primary)] shadow-2xl">
+      <DialogContent className="rounded-2xl bg-surface-ground backdrop-blur-xl ring-1 ring-white/10 text-folio-text-primary shadow-2xl">
         <DialogHeader>
           <DialogTitle>Save to project & room</DialogTitle>
         </DialogHeader>

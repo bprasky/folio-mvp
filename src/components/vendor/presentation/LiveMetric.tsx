@@ -17,15 +17,15 @@ interface LiveMetricProps {
 const sizeClasses = {
   sm: {
     value: 'text-2xl font-semibold',
-    label: 'text-folio-meta text-[var(--text-secondary)]',
+    label: 'text-folio-meta text-folio-text-secondary',
   },
   md: {
     value: 'text-folio-stat',
-    label: 'text-folio-body text-[var(--text-secondary)]',
+    label: 'text-folio-body text-folio-text-secondary',
   },
   lg: {
     value: 'text-5xl md:text-6xl font-semibold tracking-tight',
-    label: 'text-folio-body text-[var(--text-secondary)] mt-2',
+    label: 'text-folio-body text-folio-text-secondary mt-2',
   },
 };
 

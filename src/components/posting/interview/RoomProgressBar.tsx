@@ -31,12 +31,12 @@ function StatusIcon({ status }: { status: RoomProgressStatus }) {
       );
     case "skipped":
       return (
-        <span className="text-[var(--text-tertiary)] text-xs line-through">&#8709;</span>
+        <span className="text-folio-text-tertiary text-xs line-through">&#8709;</span>
       );
     case "not_started":
     default:
       return (
-        <span className="text-[var(--text-tertiary)] text-xs">&#9675;</span>
+        <span className="text-folio-text-tertiary text-xs">&#9675;</span>
       );
   }
 }
@@ -49,10 +49,10 @@ function statusBorderClass(status: RoomProgressStatus, isCurrent: boolean): stri
     case "in_progress":
       return "border-[var(--accent)]/20 bg-transparent";
     case "skipped":
-      return "border-[var(--border-default)] bg-[var(--bg-elevated)]/50 opacity-60";
+      return "border-folio-border-subtle bg-surface-ground/50 opacity-60";
     case "not_started":
     default:
-      return "border-[var(--border-default)] bg-transparent";
+      return "border-folio-border-subtle bg-transparent";
   }
 }
 
@@ -84,8 +84,8 @@ export function RoomProgressBar({
                 <span
                   className={
                     idx === currentRoomIndex
-                      ? "text-[var(--text-primary)]"
-                      : "text-[var(--text-secondary)]"
+                      ? "text-folio-text-primary"
+                      : "text-folio-text-secondary"
                   }
                 >
                   {room.roomName}
@@ -101,7 +101,7 @@ export function RoomProgressBar({
 
       {/* Current room progress text */}
       {currentRoom && (
-        <span className="text-xs text-[var(--text-secondary)] px-1">
+        <span className="text-xs text-folio-text-secondary px-1">
           {currentRoom.roomName} &mdash;{" "}
           {currentRound > 1 && baseQuestionCount > 0
             ? `Follow-up ${currentQuestionInRoom + 1 - baseQuestionCount} of ${totalQuestionsInRoom - baseQuestionCount}`

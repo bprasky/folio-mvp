@@ -20,7 +20,7 @@ export function MarketMap({ markets, onHover, onActionClick }: MarketMapProps) {
     switch (badge) {
       case 'Hot': return 'bg-red-100 text-red-800 border-red-200';
       case 'Underserved': return 'bg-[var(--accent)]/10 text-blue-800 border-[var(--accent)]/20';
-      default: return 'bg-[var(--bg-elevated)] text-[var(--text-primary)] border-[var(--ridge-outer)]';
+      default: return 'bg-surface-ground text-folio-text-primary border-folio-border-subtle';
     }
   };
 
@@ -47,15 +47,15 @@ export function MarketMap({ markets, onHover, onActionClick }: MarketMapProps) {
   };
 
   return (
-    <Card className="bg-white border-[#DAD2CA]">
+    <Card className="bg-white border-folio-border-strong">
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle className="text-lg font-serif text-[#2B2B2B] flex items-center space-x-2">
-              <Map className="w-5 h-5 text-[#8C8278]" />
+            <CardTitle className="text-lg font-serif text-folio-text-primary flex items-center space-x-2">
+              <Map className="w-5 h-5 text-folio-text-secondary" />
               <span>Market Map</span>
             </CardTitle>
-            <p className="text-sm text-[#8C8278] mt-1">
+            <p className="text-sm text-folio-text-secondary mt-1">
               Where to close now — and where to grow
             </p>
           </div>
@@ -84,7 +84,7 @@ export function MarketMap({ markets, onHover, onActionClick }: MarketMapProps) {
       <CardContent>
         {viewMode === 'list' ? (
           <div className="space-y-3">
-            <div className="grid grid-cols-12 gap-4 text-xs font-medium text-[#8C8278] border-b border-[#DAD2CA] pb-2">
+            <div className="grid grid-cols-12 gap-4 text-xs font-medium text-folio-text-secondary border-b border-folio-border-strong pb-2">
               <div className="col-span-4">City</div>
               <div className="col-span-2 text-right">Saves</div>
               <div className="col-span-2 text-right">Share%</div>
@@ -95,12 +95,12 @@ export function MarketMap({ markets, onHover, onActionClick }: MarketMapProps) {
             {markets.map((market, index) => (
               <div 
                 key={market.city}
-                className="grid grid-cols-12 gap-4 items-center py-3 border-b border-[#F7F4F1] hover:bg-[#F7F4F1]/50 transition-colors"
+                className="grid grid-cols-12 gap-4 items-center py-3 border-b border-[#F7F4F1] hover:bg-surface-elevated/50 transition-colors"
                 onMouseEnter={() => onHover?.(market)}
                 onMouseLeave={() => onHover?.(null)}
               >
                 <div className="col-span-4 flex items-center space-x-2">
-                  <div className="font-medium text-[#2B2B2B]">
+                  <div className="font-medium text-folio-text-primary">
                     {market.city}
                   </div>
                   {market.badge && (
@@ -110,11 +110,11 @@ export function MarketMap({ markets, onHover, onActionClick }: MarketMapProps) {
                   )}
                 </div>
                 
-                <div className="col-span-2 text-right font-medium text-[#2B2B2B]">
+                <div className="col-span-2 text-right font-medium text-folio-text-primary">
                   {market.saves.toLocaleString()}
                 </div>
                 
-                <div className="col-span-2 text-right text-[#2B2B2B]">
+                <div className="col-span-2 text-right text-folio-text-primary">
                   {market.sharePct.toFixed(1)}%
                 </div>
                 
@@ -149,9 +149,9 @@ export function MarketMap({ markets, onHover, onActionClick }: MarketMapProps) {
           </div>
         ) : (
           <div className="text-center py-12">
-            <Map className="w-12 h-12 text-[#8C8278] mx-auto mb-4" />
-            <p className="text-[#8C8278]">Mini map visualization coming soon</p>
-            <p className="text-sm text-[#8C8278] mt-2">
+            <Map className="w-12 h-12 text-folio-text-secondary mx-auto mb-4" />
+            <p className="text-folio-text-secondary">Mini map visualization coming soon</p>
+            <p className="text-sm text-folio-text-secondary mt-2">
               Use list view for detailed market analysis
             </p>
           </div>

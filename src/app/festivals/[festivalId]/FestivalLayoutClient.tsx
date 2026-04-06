@@ -9,7 +9,7 @@ import BlurContainer from "@/components/ui/BlurContainer";
  *   /festivals/:festivalId/subevents/:eventId
  * Works regardless of parallel route internals.
  *
- * Folio Design System: Uses bg-[var(--bg-base)] for base background
+ * Folio Design System: Uses bg-surface-canvas for base background
  */
 export default function FestivalLayoutClient({
   children,
@@ -25,7 +25,7 @@ export default function FestivalLayoutClient({
   const hasModal = /\/festivals\/[^/]+\/subevents\/[^/]+$/.test(pathname || "");
 
   return (
-    <div className="relative bg-[var(--bg-base)]">
+    <div className="relative bg-surface-canvas">
       <BlurContainer blurred={hasModal}>{children}</BlurContainer>
       {hasModal ? modal : null}
     </div>

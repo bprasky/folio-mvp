@@ -87,14 +87,14 @@ export default function PostViewPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[var(--bg-base)] p-6">
+      <div className="min-h-screen bg-surface-canvas p-6">
         <div className="max-w-4xl mx-auto">
           <div className="animate-pulse">
-            <div className="h-12 bg-[var(--bg-elevated)] rounded-lg w-2/3 mb-6"></div>
-            <div className="h-6 bg-[var(--bg-elevated)] rounded w-1/2 mb-8"></div>
+            <div className="h-12 bg-surface-ground rounded-lg w-2/3 mb-6"></div>
+            <div className="h-6 bg-surface-ground rounded w-1/2 mb-8"></div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="bg-[var(--bg-elevated)] rounded-xl h-64"></div>
+                <div key={i} className="bg-surface-ground rounded-xl h-64"></div>
               ))}
             </div>
           </div>
@@ -105,7 +105,7 @@ export default function PostViewPage() {
 
   if (!post) {
     return (
-      <div className="min-h-screen bg-[var(--bg-base)] p-6">
+      <div className="min-h-screen bg-surface-canvas p-6">
         <div className="max-w-4xl mx-auto text-center py-12">
           <h1 className="folio-h2 mb-4">Post not found</h1>
           <p className="folio-body">The post you're looking for doesn't exist or has been removed.</p>
@@ -115,7 +115,7 @@ export default function PostViewPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--bg-base)]">
+    <div className="min-h-screen bg-surface-canvas">
       {/* Hero Section */}
       <div className="ridge-card mx-4 mt-4">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -130,7 +130,7 @@ export default function PostViewPage() {
 
             {/* Designer Info */}
             <div className="flex items-center justify-center gap-3 mb-6">
-              <div className="w-12 h-12 rounded-full bg-[var(--bg-elevated)] overflow-hidden">
+              <div className="w-12 h-12 rounded-full bg-surface-ground overflow-hidden">
                 {post.designer.profileImage ? (
                   <SafeImage
                     src={post.designer.profileImage}
@@ -139,15 +139,15 @@ export default function PostViewPage() {
                     className="object-cover"
                   />
                 ) : (
-                  <div className="w-full h-full bg-[var(--bg-elevated)] flex items-center justify-center">
-                    <span className="text-[var(--text-secondary)] font-medium text-lg">
+                  <div className="w-full h-full bg-surface-ground flex items-center justify-center">
+                    <span className="text-folio-text-secondary font-medium text-lg">
                       {post.designer.name.charAt(0).toUpperCase()}
                     </span>
                   </div>
                 )}
               </div>
               <div className="text-left">
-                <p className="folio-ui text-[var(--text-primary)]">{post.designer.name}</p>
+                <p className="folio-ui text-folio-text-primary">{post.designer.name}</p>
                 <p className="folio-meta">
                   {new Date(post.createdAt).toLocaleDateString('en-US', {
                     year: 'numeric',
@@ -203,7 +203,7 @@ export default function PostViewPage() {
               onClick={() => handleProductClick(item)}
             >
               {/* Product Image */}
-              <div className="relative h-48 bg-[var(--bg-elevated)] overflow-hidden">
+              <div className="relative h-48 bg-surface-ground overflow-hidden">
                 <SafeImage
                   src={item.imageUrl || "/images/product-placeholder.jpg"}
                   alt={item.productName}
@@ -214,7 +214,7 @@ export default function PostViewPage() {
                 {/* Section Badge */}
                 {item.section && (
                   <div className="absolute top-3 left-3">
-                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-[var(--bg-base)]/90 backdrop-blur-sm folio-meta text-[var(--text-secondary)]">
+                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-surface-canvas/90 backdrop-blur-sm folio-meta text-folio-text-secondary">
                       <Tag className="w-3 h-3" />
                       {item.section}
                     </span>
@@ -234,7 +234,7 @@ export default function PostViewPage() {
 
               {/* Product Info */}
               <div className="p-4">
-                <h3 className="folio-ui text-[var(--text-primary)] mb-2 line-clamp-2">
+                <h3 className="folio-ui text-folio-text-primary mb-2 line-clamp-2">
                   {item.productName}
                 </h3>
 
@@ -243,7 +243,7 @@ export default function PostViewPage() {
                     <span className="folio-meta text-[var(--accent)] font-medium">
                       Click to shop
                     </span>
-                    <ExternalLink className="w-4 h-4 text-[var(--text-tertiary)]" />
+                    <ExternalLink className="w-4 h-4 text-folio-text-tertiary" />
                   </div>
                 )}
               </div>
@@ -254,8 +254,8 @@ export default function PostViewPage() {
         {/* Empty State */}
         {post.items.length === 0 && (
           <div className="text-center py-12">
-            <div className="w-16 h-16 bg-[var(--bg-elevated)] rounded-full mx-auto mb-4 flex items-center justify-center">
-              <Tag className="w-8 h-8 text-[var(--text-tertiary)]" />
+            <div className="w-16 h-16 bg-surface-ground rounded-full mx-auto mb-4 flex items-center justify-center">
+              <Tag className="w-8 h-8 text-folio-text-tertiary" />
             </div>
             <h3 className="folio-h3 mb-2">No products yet</h3>
             <p className="folio-body">This post doesn't have any products yet.</p>

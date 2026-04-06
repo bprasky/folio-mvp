@@ -30,7 +30,7 @@ export default function MagazineHero({ hero, edition }: Props) {
     <article className="group w-full">
       <Link href={href} className="block">
         {/* Hero card with rounded corners and glass styling */}
-        <div className="relative w-full h-[50vh] md:h-[65vh] bg-[var(--bg-base)] rounded-[20px] overflow-hidden">
+        <div className="relative w-full h-[50vh] md:h-[65vh] bg-surface-canvas rounded-[20px] overflow-hidden">
           {hero.imageUrl && hero.imageUrl.length > 0 ? (
             <Image
               src={hero.imageUrl}
@@ -40,7 +40,7 @@ export default function MagazineHero({ hero, edition }: Props) {
               priority
             />
           ) : (
-            <div className="absolute inset-0 bg-[var(--bg-elevated)]" />
+            <div className="absolute inset-0 bg-surface-ground" />
           )}
           
           {/* Gradient overlay for text contrast */}
@@ -48,7 +48,7 @@ export default function MagazineHero({ hero, edition }: Props) {
 
           {/* Subtle EDITORIAL badge - top left */}
           <div className="absolute left-4 md:left-6 top-4 md:top-6 z-10">
-            <span className="folio-meta inline-flex items-center rounded-full bg-[var(--bg-elevated)]/90 backdrop-blur-sm px-3 py-1 text-[10px] font-medium uppercase tracking-[0.12em] text-[var(--text-secondary)] shadow-sm border border-[var(--ridge-outer)]">
+            <span className="folio-meta inline-flex items-center rounded-full bg-surface-ground/90 backdrop-blur-sm px-3 py-1 text-[10px] font-medium uppercase tracking-[0.12em] text-folio-text-secondary shadow-sm border border-folio-border-subtle">
               Editorial
             </span>
           </div>

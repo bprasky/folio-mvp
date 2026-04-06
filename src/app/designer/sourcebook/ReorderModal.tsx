@@ -111,9 +111,9 @@ export default function ReorderModal({
       <div className="relative glass-surface rounded-2xl p-6 w-full max-w-md mx-4 shadow-xl">
         <div className="flex items-center gap-2 mb-1">
           <span className="text-lg">🔄</span>
-          <h3 className="folio-h3 text-[var(--text-primary)]">Reorder</h3>
+          <h3 className="folio-h3 text-folio-text-primary">Reorder</h3>
         </div>
-        <p className="text-sm text-[var(--text-secondary)] mb-4">
+        <p className="text-sm text-folio-text-secondary mb-4">
           {productName} — {vendorName}
         </p>
 
@@ -125,8 +125,8 @@ export default function ReorderModal({
           <>
             {previousOrder && (
               <div className="glass-surface rounded-lg p-3 mb-4 text-sm">
-                <div className="text-[var(--text-tertiary)] text-xs mb-1">Previous order</div>
-                <div className="text-[var(--text-primary)]">
+                <div className="text-folio-text-tertiary text-xs mb-1">Previous order</div>
+                <div className="text-folio-text-primary">
                   {new Date(previousOrder.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                   {' · '}Qty: {previousOrder.quantity}
                   {previousOrder.tradeAmount > 0 && ` · $${previousOrder.tradeAmount.toLocaleString()} (trade)`}
@@ -136,29 +136,29 @@ export default function ReorderModal({
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm text-[var(--text-tertiary)] mb-1 font-medium">Quantity</label>
+                <label className="block text-sm text-folio-text-tertiary mb-1 font-medium">Quantity</label>
                 <input
                   type="number"
                   min={1}
                   value={quantity}
                   onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                  className="w-full px-3 py-2 bg-white border border-[#E8E6E3] rounded-lg text-[#2C2925]"
+                  className="w-full px-3 py-2 bg-white border border-folio-border-subtle rounded-lg text-folio-text-primary"
                 />
               </div>
 
               <div>
-                <label className="block text-sm text-[var(--text-tertiary)] mb-1 font-medium">Notes (optional)</label>
+                <label className="block text-sm text-folio-text-tertiary mb-1 font-medium">Notes (optional)</label>
                 <textarea
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="Any changes from the previous order..."
                   rows={2}
-                  className="w-full px-3 py-2 bg-white border border-[#E8E6E3] rounded-lg text-[#2C2925] placeholder-[#A39E97] resize-none"
+                  className="w-full px-3 py-2 bg-white border border-folio-border-subtle rounded-lg text-folio-text-primary placeholder-[#A39E97] resize-none"
                 />
               </div>
             </div>
 
-            <p className="text-xs text-[var(--text-tertiary)] mt-3">
+            <p className="text-xs text-folio-text-tertiary mt-3">
               Price may have changed. Quote will be confirmed before charging.
             </p>
 

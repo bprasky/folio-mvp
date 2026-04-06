@@ -40,8 +40,8 @@ export default function MagazineEditionCarousel({ editions, activeSlug }: Props)
             className={clsx(
               "folio-ui px-4 py-1.5 md:py-2 text-xs md:text-sm font-medium transition-all duration-200 whitespace-nowrap rounded-full",
               isActive
-                ? "ridge-btn text-[var(--text-primary)] bg-[var(--bg-elevated)]"
-                : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]/50 border border-transparent"
+                ? "ridge-btn text-folio-text-primary bg-surface-ground"
+                : "text-folio-text-secondary hover:text-folio-text-primary hover:bg-surface-ground/50 border border-transparent"
             )}
           >
             {edition.label}

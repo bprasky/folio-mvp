@@ -12,7 +12,7 @@ export default function EditorialPillarPage() {
     <div className="bg-[#FAF9F6]">
       {/* Breadcrumb */}
       <div className="max-w-3xl mx-auto px-6 pt-8">
-        <Link href="/for-designers" className="text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">
+        <Link href="/for-designers" className="text-sm text-folio-text-secondary hover:text-folio-text-primary transition-colors">
           &larr; For Designers
         </Link>
       </div>
@@ -20,10 +20,10 @@ export default function EditorialPillarPage() {
       {/* Hero */}
       <section className="pt-12 pb-8 px-6">
         <div className="max-w-3xl mx-auto">
-          <h1 className="font-headline italic text-5xl md:text-6xl text-[var(--text-primary)] leading-[1.1] mb-6">
+          <h1 className="font-headline italic text-5xl md:text-6xl text-folio-text-primary leading-[1.1] mb-6">
             Posts that keep working.
           </h1>
-          <p className="text-lg text-[var(--text-secondary)] leading-relaxed">
+          <p className="text-lg text-folio-text-secondary leading-relaxed">
             Editorial-quality content generated from your project, in your voice.
           </p>
         </div>
@@ -31,7 +31,7 @@ export default function EditorialPillarPage() {
 
       {/* Body */}
       <section className="py-8 px-6">
-        <div className="max-w-3xl mx-auto space-y-6 text-[var(--text-primary)] leading-relaxed">
+        <div className="max-w-3xl mx-auto space-y-6 text-folio-text-primary leading-relaxed">
           <p>
             When you publish a project on Folio, the platform generates a structured
             editorial feature built around your photography and your interview responses.

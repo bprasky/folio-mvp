@@ -140,7 +140,7 @@ export default function EditorialReviewPage() {
       case 'pending': return 'bg-amber-100 text-amber-800';
       case 'approved': return 'bg-green-100 text-green-800';
       case 'rejected': return 'bg-red-100 text-red-800';
-      default: return 'bg-[var(--bg-elevated)] text-[var(--text-secondary)]';
+      default: return 'bg-surface-ground text-folio-text-secondary';
     }
   };
 
@@ -150,7 +150,7 @@ export default function EditorialReviewPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--bg-base)]">
+    <div className="min-h-screen bg-surface-canvas">
       <div className="container mx-auto px-6 py-8">
         {/* Header */}
         <div className="mb-8">
@@ -188,12 +188,12 @@ export default function EditorialReviewPage() {
                   className={`flex items-center py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                     selectedTab === tab.key
                       ? 'border-[var(--accent)] text-[var(--accent)]'
-                      : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border-subtle)]'
+                      : 'border-transparent text-folio-text-secondary hover:text-folio-text-primary hover:border-[var(--border-subtle)]'
                   }`}
                 >
                   <tab.icon className="mr-2" />
                   {tab.label}
-                  <span className="ml-2 bg-[var(--bg-elevated)] text-[var(--text-secondary)] py-1 px-2 rounded-full text-xs">
+                  <span className="ml-2 bg-surface-ground text-folio-text-secondary py-1 px-2 rounded-full text-xs">
                     {getTabCount()}
                   </span>
                 </button>
@@ -207,7 +207,7 @@ export default function EditorialReviewPage() {
           {loading ? (
             <div className="text-center py-12">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--accent)] mx-auto"></div>
-              <p className="mt-4 text-[var(--text-secondary)]">Loading submissions...</p>
+              <p className="mt-4 text-folio-text-secondary">Loading submissions...</p>
             </div>
           ) : error ? (
             <div className="text-center py-12">
@@ -222,7 +222,7 @@ export default function EditorialReviewPage() {
             </div>
           ) : submissions.length === 0 ? (
             <RidgeCard padding="xl" className="text-center">
-              <FaNewspaper className="mx-auto h-16 w-16 text-[var(--text-tertiary)] mb-4" />
+              <FaNewspaper className="mx-auto h-16 w-16 text-folio-text-tertiary mb-4" />
               <h3 className="folio-h3 mb-2">
                 No {selectedTab} submissions
               </h3>

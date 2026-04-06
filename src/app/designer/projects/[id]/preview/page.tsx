@@ -362,7 +362,7 @@ export default function ProjectPostPreviewPage() {
 
   if (!POSTING_V1_ENABLED) {
     return (
-      <div className="p-8 text-center text-[var(--text-secondary)]">
+      <div className="p-8 text-center text-folio-text-secondary">
         Posting feature is disabled. Set NEXT_PUBLIC_POSTING_V1=true to enable.
       </div>
     );
@@ -376,7 +376,7 @@ export default function ProjectPostPreviewPage() {
     return (
       <div className="p-8 max-w-2xl mx-auto">
         <h1 className="text-2xl font-bold mb-4">Post Preview</h1>
-        <p className="text-[var(--text-secondary)] mb-6">
+        <p className="text-folio-text-secondary mb-6">
           No post exists for this project yet. Initialize a post to start creating your publication.
         </p>
         <button
@@ -400,14 +400,14 @@ export default function ProjectPostPreviewPage() {
         </div>
       )}
 
-      <div className="border-b border-[var(--ridge-outer)] mb-8">
+      <div className="border-b border-folio-border-subtle mb-8">
         <nav className="flex gap-4">
           <button
             onClick={() => setView("article")}
             className={`px-4 py-2 border-b-2 ${
               view === "article"
                 ? "border-[var(--accent)] text-[var(--accent)]"
-                : "border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                : "border-transparent text-folio-text-secondary hover:text-folio-text-primary"
             }`}
           >
             Article
@@ -417,7 +417,7 @@ export default function ProjectPostPreviewPage() {
             className={`px-4 py-2 border-b-2 ${
               view === "card"
                 ? "border-[var(--accent)] text-[var(--accent)]"
-                : "border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                : "border-transparent text-folio-text-secondary hover:text-folio-text-primary"
             }`}
           >
             Card
@@ -427,7 +427,7 @@ export default function ProjectPostPreviewPage() {
             className={`px-4 py-2 border-b-2 ${
               view === "condensed"
                 ? "border-[var(--accent)] text-[var(--accent)]"
-                : "border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                : "border-transparent text-folio-text-secondary hover:text-folio-text-primary"
             }`}
           >
             Condensed
@@ -437,7 +437,7 @@ export default function ProjectPostPreviewPage() {
             className={`px-4 py-2 border-b-2 ${
               view === "expanded"
                 ? "border-[var(--accent)] text-[var(--accent)]"
-                : "border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                : "border-transparent text-folio-text-secondary hover:text-folio-text-primary"
             }`}
           >
             Expanded
@@ -453,7 +453,7 @@ export default function ProjectPostPreviewPage() {
       )}
 
       {/* Credits Editor — editable both before and after article generation */}
-      <div className="mb-8 rounded-lg border border-[var(--ridge-outer)] bg-white p-5">
+      <div className="mb-8 rounded-lg border border-folio-border-subtle bg-white p-5">
         <CreditsEditor
           credits={credits}
           onChange={handleCreditsChange}
@@ -464,7 +464,7 @@ export default function ProjectPostPreviewPage() {
       {/* Generate button or error message */}
       {!post.post.expandedBlocks && (
         <div className="mb-6 text-center py-8">
-          <p className="text-[var(--text-secondary)] mb-4">
+          <p className="text-folio-text-secondary mb-4">
             No article draft exists yet. Generate an AI draft from your interview answers.
           </p>
           <button
@@ -495,7 +495,7 @@ export default function ProjectPostPreviewPage() {
       )}
 
       {/* Legacy Views */}
-      <div className="bg-white rounded-lg border border-[var(--ridge-outer)] p-8">
+      <div className="bg-white rounded-lg border border-folio-border-subtle p-8">
         {view === "card" && post && (
           <PostCard
             post={post.post}
@@ -510,12 +510,12 @@ export default function ProjectPostPreviewPage() {
 
       {post.post && (
         <div className="mt-6 flex items-center justify-between">
-          <div className="text-sm text-[var(--text-secondary)]">
+          <div className="text-sm text-folio-text-secondary">
             Status: <span className="font-semibold">{post.post.status}</span>
             {post.post.slug && (
               <>
                 {" • "}Slug:{" "}
-                <code className="bg-[var(--bg-elevated)] px-2 py-1 rounded">
+                <code className="bg-surface-ground px-2 py-1 rounded">
                   {post.post.slug}
                 </code>
               </>

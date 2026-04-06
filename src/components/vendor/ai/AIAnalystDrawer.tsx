@@ -57,17 +57,17 @@ export function AIAnalystDrawer({ open, onClose, sectionId, context }: AIAnalyst
         className="flex-1 bg-black/30 backdrop-blur-sm"
         onClick={onClose}
       />
-      <div className="w-full max-w-md h-full bg-[var(--bg-base)] border-l border-[var(--ridge-outer)] shadow-2xl flex flex-col">
-        <div className="p-4 border-b border-[var(--ridge-outer)] flex items-center justify-between bg-[var(--bg-base)]/95 backdrop-blur-xl">
+      <div className="w-full max-w-md h-full bg-surface-canvas border-l border-folio-border-subtle shadow-2xl flex flex-col">
+        <div className="p-4 border-b border-folio-border-subtle flex items-center justify-between bg-surface-canvas/95 backdrop-blur-xl">
           <div>
-            <div className="folio-ui font-semibold text-[var(--text-primary)]">AI Analyst</div>
-            <div className="text-[11px] text-[var(--text-secondary)]">
+            <div className="folio-ui font-semibold text-folio-text-primary">AI Analyst</div>
+            <div className="text-[11px] text-folio-text-secondary">
               Discuss this recommendation based on your actual Folio data.
             </div>
           </div>
           <button
             onClick={onClose}
-            className="folio-meta text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition"
+            className="folio-meta text-folio-text-secondary hover:text-folio-text-primary transition"
           >
             Close
           </button>
@@ -79,24 +79,24 @@ export function AIAnalystDrawer({ open, onClose, sectionId, context }: AIAnalyst
               className={`max-w-[85%] px-3 py-2 rounded-2xl ${
                 m.role === 'user'
                   ? 'bg-[var(--text-primary)] text-[var(--bg-base)] ml-auto'
-                  : 'bg-[var(--bg-elevated)] text-[var(--text-primary)]'
+                  : 'bg-surface-ground text-folio-text-primary'
               }`}
             >
               {m.content}
             </div>
           ))}
           {loading && (
-            <div className="max-w-[85%] px-3 py-2 rounded-2xl bg-[var(--bg-elevated)] text-[var(--text-secondary)]">
+            <div className="max-w-[85%] px-3 py-2 rounded-2xl bg-surface-ground text-folio-text-secondary">
               Thinking...
             </div>
           )}
         </div>
-        <div className="p-3 border-t border-[var(--ridge-outer)] flex items-center gap-2 bg-[var(--bg-base)]/95 backdrop-blur-xl">
+        <div className="p-3 border-t border-folio-border-subtle flex items-center gap-2 bg-surface-canvas/95 backdrop-blur-xl">
           <input
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && !e.shiftKey && send()}
-            className="flex-1 border border-[var(--ridge-outer)] rounded-xl px-3 py-2 folio-meta focus:outline-none focus:ring-2 focus:ring-[var(--text-primary)]"
+            className="flex-1 border border-folio-border-subtle rounded-xl px-3 py-2 folio-meta focus:outline-none focus:ring-2 focus:ring-[var(--text-primary)]"
             placeholder="Ask why this was recommended, or explore alternative strategies..."
             disabled={loading}
           />

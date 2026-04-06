@@ -16,16 +16,16 @@ export function BenchmarkSection() {
   return (
     <section className="space-y-2">
       <div className="flex items-center gap-2">
-        <h3 className="text-lg font-semibold text-[var(--text-primary)]">AI Competitor Benchmarks</h3>
+        <h3 className="text-lg font-semibold text-folio-text-primary">AI Competitor Benchmarks</h3>
         <AIBadge />
       </div>
-      <p className="folio-ui text-[var(--text-secondary)]">
+      <p className="folio-ui text-folio-text-secondary">
         Anonymous comparison vs. peers in your category.
       </p>
 
       {!aiUnlocked || !bundle ? (
         <div className="ridge-card p-4 flex items-center justify-between">
-          <span className="folio-ui text-[var(--text-secondary)]">
+          <span className="folio-ui text-folio-text-secondary">
             Unlock AI to compare your saves, tags, and active designers against category averages.
           </span>
           <button
@@ -41,19 +41,19 @@ export function BenchmarkSection() {
       ) : (
         <div className="ridge-card p-4 grid md:grid-cols-3 gap-4 text-sm">
           {bundle.benchmarks.map(b => (
-            <div key={b.category} className="space-y-2 p-3 rounded-lg bg-[var(--bg-elevated)]/50">
-              <div className="folio-meta uppercase tracking-wide text-[var(--text-secondary)]">{b.category}</div>
+            <div key={b.category} className="space-y-2 p-3 rounded-lg bg-surface-ground/50">
+              <div className="folio-meta uppercase tracking-wide text-folio-text-secondary">{b.category}</div>
               <div className="flex items-center justify-between">
-                <span className="text-[var(--text-primary)]">You</span>
-                <span className="font-semibold text-[var(--text-primary)]">{b.you.toLocaleString()}</span>
+                <span className="text-folio-text-primary">You</span>
+                <span className="font-semibold text-folio-text-primary">{b.you.toLocaleString()}</span>
               </div>
               <div className="flex items-center justify-between folio-meta">
-                <span className="text-[var(--text-secondary)]">Peers avg</span>
-                <span className="text-[var(--text-secondary)]">{b.peersAvg.toLocaleString()}</span>
+                <span className="text-folio-text-secondary">Peers avg</span>
+                <span className="text-folio-text-secondary">{b.peersAvg.toLocaleString()}</span>
               </div>
               <div className="flex items-center justify-between folio-meta">
-                <span className="text-[var(--text-secondary)]">Top quartile</span>
-                <span className="text-[var(--text-secondary)]">{b.topQuartile.toLocaleString()}</span>
+                <span className="text-folio-text-secondary">Top quartile</span>
+                <span className="text-folio-text-secondary">{b.topQuartile.toLocaleString()}</span>
               </div>
               <div className="h-1 rounded-full bg-[var(--ridge-inner)] mt-2">
                 <div

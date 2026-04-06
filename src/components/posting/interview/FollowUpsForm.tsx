@@ -170,10 +170,10 @@ export function FollowUpsForm({
   return (
     <div className="space-y-8">
       {isSaving && (
-        <div className="text-xs text-[var(--text-secondary)] italic">Saving…</div>
+        <div className="text-xs text-folio-text-secondary italic">Saving…</div>
       )}
 
-      <div className="text-sm text-[var(--text-secondary)] mb-6">
+      <div className="text-sm text-folio-text-secondary mb-6">
         <p className="font-medium mb-2">
           Let's dig deeper
         </p>
@@ -198,12 +198,12 @@ export function FollowUpsForm({
             className="space-y-4 border-l-2 border-[var(--accent)]/20 pl-4"
           >
             {parentQuestionText && (
-              <div className="text-sm font-medium text-[var(--text-primary)]">
+              <div className="text-sm font-medium text-folio-text-primary">
                 {parentQuestionText}
               </div>
             )}
             {parentAnswer && (
-              <div className="text-xs text-[var(--text-secondary)] italic mb-3">
+              <div className="text-xs text-folio-text-secondary italic mb-3">
                 Your answer: "{parentAnswer.answer.substring(0, 100)}
                 {parentAnswer.answer.length > 100 ? "…" : ""}"
               </div>
@@ -211,7 +211,7 @@ export function FollowUpsForm({
 
             {/* Phase C: Acknowledgment sentence */}
             {group.acknowledgment && (
-              <div className="text-sm text-[var(--text-primary)] italic mb-4 px-3 py-2 bg-[var(--bg-elevated)] rounded-lg border-l-4 border-[var(--accent)]/30">
+              <div className="text-sm text-folio-text-primary italic mb-4 px-3 py-2 bg-surface-ground rounded-lg border-l-4 border-[var(--accent)]/30">
                 {group.acknowledgment}
               </div>
             )}
@@ -223,9 +223,9 @@ export function FollowUpsForm({
 
               return (
                 <div key={followUp.id} className="space-y-2 ml-4">
-                  <label className="block text-sm font-medium text-[var(--text-primary)]">
+                  <label className="block text-sm font-medium text-folio-text-primary">
                     {followUp.prompt}
-                    <span className="ml-2 text-xs text-[var(--text-secondary)] italic">
+                    <span className="ml-2 text-xs text-folio-text-secondary italic">
                       follow-up
                     </span>
                   </label>
@@ -242,7 +242,7 @@ export function FollowUpsForm({
                     style={{ maxWidth: "72ch" }}
                     placeholder="Type your answer here (optional)…"
                   />
-                  <div className="flex justify-between text-xs text-[var(--text-secondary)]">
+                  <div className="flex justify-between text-xs text-folio-text-secondary">
                     <span>{charCount} / 2000 characters</span>
                   </div>
                   {errorMessage && (

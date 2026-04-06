@@ -13,8 +13,8 @@ function CarouselSkeleton() {
           key={idx}
           className="relative flex flex-1 min-w-0 flex-col items-center gap-2"
         >
-          <div className="block h-[120px] w-full aspect-square overflow-hidden rounded-lg ring-2 ring-[var(--ridge-outer)] bg-[var(--bg-elevated)] animate-pulse" />
-          <div className="h-3 w-full max-w-[100px] bg-[var(--bg-elevated)] rounded animate-pulse" />
+          <div className="block h-[120px] w-full aspect-square overflow-hidden rounded-lg ring-2 ring-[var(--ridge-outer)] bg-surface-ground animate-pulse" />
+          <div className="h-3 w-full max-w-[100px] bg-surface-ground rounded animate-pulse" />
         </div>
       ))}
     </div>
@@ -44,10 +44,10 @@ export function UpdatesCarousel({ groups }: { groups: UpdatesCarouselItem[] }) {
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={g.cover} alt="" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]" />
               ) : (
-                <span className="h-full w-full bg-[var(--bg-elevated)] block" />
+                <span className="h-full w-full bg-surface-ground block" />
               )}
             </span>
-            <span className="text-[11px] text-[var(--text-secondary)] line-clamp-2 text-center w-full max-w-[120px]">
+            <span className="text-[11px] text-folio-text-secondary line-clamp-2 text-center w-full max-w-[120px]">
               {g.designer.studioName || g.designer.name || "Designer"}
             </span>
           </button>

@@ -115,10 +115,10 @@ export default function SmartInvitesCard({ vendorId, eventId }: SmartInvitesCard
     return (
       <div className="bg-white rounded-lg shadow-sm p-6">
         <div className="animate-pulse">
-          <div className="h-6 bg-[var(--bg-elevated)] rounded w-1/3 mb-4"></div>
+          <div className="h-6 bg-surface-ground rounded w-1/3 mb-4"></div>
           <div className="space-y-3">
             {[1, 2, 3].map(i => (
-              <div key={i} className="h-16 bg-[var(--bg-elevated)] rounded"></div>
+              <div key={i} className="h-16 bg-surface-ground rounded"></div>
             ))}
           </div>
         </div>
@@ -130,8 +130,8 @@ export default function SmartInvitesCard({ vendorId, eventId }: SmartInvitesCard
     <div className="bg-white rounded-lg shadow-sm p-6">
       <div className="flex items-start justify-between mb-4">
         <div>
-          <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-1">Smart Invites</h3>
-          <p className="text-sm text-[var(--text-secondary)]">
+          <h3 className="text-lg font-semibold text-folio-text-primary mb-1">Smart Invites</h3>
+          <p className="text-sm text-folio-text-secondary">
             Recommended designers based on engagement with your products
           </p>
         </div>
@@ -147,22 +147,22 @@ export default function SmartInvitesCard({ vendorId, eventId }: SmartInvitesCard
       {/* Recommended Designers List */}
       <div className="space-y-3">
         {recommendedDesigners.length === 0 ? (
-          <p className="text-sm text-[var(--text-secondary)] italic">No recommendations yet. Designers will appear here as they engage with your products.</p>
+          <p className="text-sm text-folio-text-secondary italic">No recommendations yet. Designers will appear here as they engage with your products.</p>
         ) : (
           recommendedDesigners.map((designer) => {
             const isInvited = invitedDesigners.has(designer.id);
             return (
               <div
                 key={designer.id}
-                className="flex items-center justify-between p-3 border border-[var(--ridge-outer)] rounded-lg hover:bg-[var(--bg-elevated)] transition-colors"
+                className="flex items-center justify-between p-3 border border-folio-border-subtle rounded-lg hover:bg-surface-ground transition-colors"
               >
                 <div className="flex items-center gap-3 flex-1">
-                  <div className="w-10 h-10 rounded-full bg-[var(--bg-elevated)] flex items-center justify-center">
-                    <FaUser className="w-5 h-5 text-[var(--text-secondary)]" />
+                  <div className="w-10 h-10 rounded-full bg-surface-ground flex items-center justify-center">
+                    <FaUser className="w-5 h-5 text-folio-text-secondary" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <p className="font-medium text-[var(--text-primary)] truncate">
+                      <p className="font-medium text-folio-text-primary truncate">
                         {designer.name}
                       </p>
                       {designer.matchScore && (
@@ -172,16 +172,16 @@ export default function SmartInvitesCard({ vendorId, eventId }: SmartInvitesCard
                       )}
                     </div>
                     {designer.companyName && (
-                      <p className="text-sm text-[var(--text-secondary)] truncate">{designer.companyName}</p>
+                      <p className="text-sm text-folio-text-secondary truncate">{designer.companyName}</p>
                     )}
                     <div className="flex items-center gap-3 mt-1">
                       {designer.location && (
-                        <div className="flex items-center gap-1 text-xs text-[var(--text-secondary)]">
+                        <div className="flex items-center gap-1 text-xs text-folio-text-secondary">
                           <FaMapMarkerAlt className="w-3 h-3" />
                           <span>{designer.location}</span>
                         </div>
                       )}
-                      <span className="text-xs text-[var(--text-secondary)]">{designer.reason}</span>
+                      <span className="text-xs text-folio-text-secondary">{designer.reason}</span>
                     </div>
                   </div>
                 </div>
@@ -190,7 +190,7 @@ export default function SmartInvitesCard({ vendorId, eventId }: SmartInvitesCard
                   disabled={isInvited}
                   className={`ml-4 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
                     isInvited
-                      ? 'bg-[var(--bg-elevated)] text-[var(--text-secondary)] cursor-not-allowed'
+                      ? 'bg-surface-ground text-folio-text-secondary cursor-not-allowed'
                       : 'bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)]'
                   }`}
                 >

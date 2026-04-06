@@ -59,30 +59,30 @@ export function ActionModal({ action, onClose }: { action: AnyAction; onClose: (
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/30 backdrop-blur-sm">
-      <div className="w-full max-w-lg rounded-2xl p-5 bg-[var(--bg-base)]/95 backdrop-blur-xl shadow-xl border border-[var(--ridge-outer)] space-y-3">
+      <div className="w-full max-w-lg rounded-2xl p-5 bg-surface-canvas/95 backdrop-blur-xl shadow-xl border border-folio-border-subtle space-y-3">
         <div className="flex items-center justify-between">
-          <h4 className="font-semibold text-[var(--text-primary)]">{action.label}</h4>
+          <h4 className="font-semibold text-folio-text-primary">{action.label}</h4>
           <button
             onClick={onClose}
-            className="folio-ui text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition"
+            className="folio-ui text-folio-text-secondary hover:text-folio-text-primary transition"
           >
             Close
           </button>
         </div>
 
-        <div className="folio-ui text-[var(--text-primary)]">
+        <div className="folio-ui text-folio-text-primary">
           <p className="mb-2">
             We'll prepare this as a task (no changes yet). You can connect it to Events/Editorial later.
           </p>
-          <pre className="folio-meta bg-[var(--bg-elevated)] p-3 rounded-md overflow-auto border border-[var(--ridge-outer)]">
+          <pre className="folio-meta bg-surface-ground p-3 rounded-md overflow-auto border border-folio-border-subtle">
             {JSON.stringify(action.payload, null, 2)}
           </pre>
         </div>
 
-        <div className="flex justify-end gap-2 pt-2 border-t border-[var(--ridge-outer)]">
+        <div className="flex justify-end gap-2 pt-2 border-t border-folio-border-subtle">
           <button
             onClick={onClose}
-            className="rounded-xl px-4 py-2 border border-[var(--ridge-outer)] hover:bg-[var(--bg-elevated)] text-[var(--text-primary)] transition"
+            className="rounded-xl px-4 py-2 border border-folio-border-subtle hover:bg-surface-ground text-folio-text-primary transition"
           >
             Cancel
           </button>

@@ -25,7 +25,7 @@ export default async function NewProductPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--bg-base)]">
+    <div className="min-h-screen bg-surface-canvas">
       <ProductWizard vendorId={session.user.id || ''} />
     </div>
   );

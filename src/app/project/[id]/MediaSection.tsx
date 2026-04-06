@@ -382,7 +382,7 @@ export default function MediaSection({ project, isOwner, images, projectPost, is
               transition-all duration-200 ease-out cursor-pointer
               ${isDragOver
                 ? 'border-[var(--accent)] bg-[var(--accent)]/5 scale-[1.01]'
-                : 'border-folio-border-subtle hover:border-[var(--text-tertiary)] bg-surface-canvas'
+                : 'border-folio-border-subtle hover:border-folio-text-tertiary bg-surface-canvas'
               }
             `}
             onClick={() => setShowUploadModal(true)}

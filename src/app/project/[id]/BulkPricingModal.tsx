@@ -108,8 +108,8 @@ export default function BulkPricingModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={onClose} />
       <div className="relative glass-surface rounded-2xl p-6 w-full max-w-2xl mx-4 shadow-xl max-h-[85vh] overflow-y-auto">
-        <h3 className="folio-h3 text-[var(--text-primary)] mb-1">Request Pricing</h3>
-        <p className="text-sm text-[var(--text-secondary)] mb-4">
+        <h3 className="folio-h3 text-folio-text-primary mb-1">Request Pricing</h3>
+        <p className="text-sm text-folio-text-secondary mb-4">
           {projectName}
         </p>
 
@@ -123,14 +123,14 @@ export default function BulkPricingModal({
         <div className="space-y-4 mb-4">
           {byVendor.map(([vendorName, vendorProducts]) => (
             <div key={vendorName}>
-              <h4 className="text-sm font-semibold text-[var(--text-primary)] mb-2">
+              <h4 className="text-sm font-semibold text-folio-text-primary mb-2">
                 {vendorName} ({vendorProducts.length} products)
               </h4>
               <div className="space-y-1.5">
                 {vendorProducts.map(sel => (
                   <label
                     key={sel.productId}
-                    className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-[var(--bg-elevated)] transition-colors cursor-pointer"
+                    className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-surface-ground transition-colors cursor-pointer"
                   >
                     <input
                       type="checkbox"
@@ -139,7 +139,7 @@ export default function BulkPricingModal({
                       className="accent-[var(--accent)]"
                       disabled={sel.hasPricing}
                     />
-                    <span className={`text-sm flex-grow ${sel.hasPricing ? 'text-[var(--text-tertiary)] line-through' : 'text-[var(--text-primary)]'}`}>
+                    <span className={`text-sm flex-grow ${sel.hasPricing ? 'text-folio-text-tertiary line-through' : 'text-folio-text-primary'}`}>
                       {sel.productName}
                       {sel.hasPricing && sel.currentPrice != null && (
                         <span className="ml-2 text-green-600">(${sel.currentPrice.toLocaleString()})</span>
@@ -147,7 +147,7 @@ export default function BulkPricingModal({
                     </span>
                     {!sel.hasPricing && selectedIds.has(sel.productId) && (
                       <div className="flex items-center gap-1">
-                        <span className="text-xs text-[var(--text-tertiary)]">Qty:</span>
+                        <span className="text-xs text-folio-text-tertiary">Qty:</span>
                         <input
                           type="number"
                           min={1}
@@ -156,7 +156,7 @@ export default function BulkPricingModal({
                             ...prev,
                             [sel.productId]: Math.max(1, parseInt(e.target.value) || 1),
                           }))}
-                          className="w-16 px-2 py-1 text-xs bg-white border border-[#E8E6E3] rounded text-center"
+                          className="w-16 px-2 py-1 text-xs bg-white border border-folio-border-subtle rounded text-center"
                           onClick={(e) => e.stopPropagation()}
                         />
                       </div>
@@ -171,11 +171,11 @@ export default function BulkPricingModal({
         <div className="border-t border-[var(--border-subtle)] pt-4 space-y-3">
           <div className="flex gap-4">
             <div className="flex-1">
-              <label className="block text-sm text-[var(--text-tertiary)] mb-1 font-medium">Timeline</label>
+              <label className="block text-sm text-folio-text-tertiary mb-1 font-medium">Timeline</label>
               <select
                 value={timeline}
                 onChange={(e) => setTimeline(e.target.value)}
-                className="w-full px-3 py-2 bg-white border border-[#E8E6E3] rounded-lg text-sm text-[#2C2925]"
+                className="w-full px-3 py-2 bg-white border border-folio-border-subtle rounded-lg text-sm text-folio-text-primary"
               >
                 <option value="urgent">Urgent</option>
                 <option value="2-4_weeks">2–4 weeks</option>
@@ -185,7 +185,7 @@ export default function BulkPricingModal({
           </div>
 
           <div>
-            <label className="block text-sm text-[var(--text-tertiary)] mb-1 font-medium">
+            <label className="block text-sm text-folio-text-tertiary mb-1 font-medium">
               Note to all vendors (optional)
             </label>
             <textarea
@@ -193,12 +193,12 @@ export default function BulkPricingModal({
               onChange={(e) => setDesignerNote(e.target.value)}
               placeholder="Residential project targeting Fall 2026 install. Please provide trade pricing."
               rows={2}
-              className="w-full px-3 py-2 bg-white border border-[#E8E6E3] rounded-lg text-[#2C2925] placeholder-[#A39E97] text-sm resize-none"
+              className="w-full px-3 py-2 bg-white border border-folio-border-subtle rounded-lg text-folio-text-primary placeholder-[#A39E97] text-sm resize-none"
             />
           </div>
         </div>
 
-        <p className="text-sm text-[var(--text-secondary)] mt-3">
+        <p className="text-sm text-folio-text-secondary mt-3">
           This will send {vendorCount} quote request{vendorCount !== 1 ? 's' : ''} to {vendorCount} vendor{vendorCount !== 1 ? 's' : ''} for {selectedCount} product{selectedCount !== 1 ? 's' : ''}.
         </p>
 

@@ -112,16 +112,16 @@ export default function RequestQuoteModal({
       <div className="relative glass-surface rounded-2xl p-6 w-full max-w-lg mx-4 shadow-xl">
         <div className="flex items-center gap-2 mb-1">
           <span className="text-lg">💰</span>
-          <h3 className="folio-h3 text-[var(--text-primary)]">Request a Quote</h3>
+          <h3 className="folio-h3 text-folio-text-primary">Request a Quote</h3>
         </div>
-        <p className="text-sm text-[var(--text-secondary)] mb-4">
+        <p className="text-sm text-folio-text-secondary mb-4">
           {productName} — {vendorName}
         </p>
 
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm text-[var(--text-tertiary)] mb-1 font-medium">
+              <label className="block text-sm text-folio-text-tertiary mb-1 font-medium">
                 Quantity
               </label>
               <input
@@ -129,18 +129,18 @@ export default function RequestQuoteModal({
                 min={1}
                 value={quantity}
                 onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                className="w-full px-3 py-2 bg-white border border-[#E8E6E3] rounded-lg text-[#2C2925] focus:outline-none focus:border-[#C9C4BC] transition-all"
+                className="w-full px-3 py-2 bg-white border border-folio-border-subtle rounded-lg text-folio-text-primary focus:outline-none focus:border-folio-border-strong transition-all"
               />
             </div>
 
             <div>
-              <label className="block text-sm text-[var(--text-tertiary)] mb-1 font-medium">
+              <label className="block text-sm text-folio-text-tertiary mb-1 font-medium">
                 Timeline
               </label>
               <select
                 value={timeline}
                 onChange={(e) => setTimeline(e.target.value as typeof timeline)}
-                className="w-full px-3 py-2 bg-white border border-[#E8E6E3] rounded-lg text-[#2C2925] focus:outline-none focus:border-[#C9C4BC] transition-all"
+                className="w-full px-3 py-2 bg-white border border-folio-border-subtle rounded-lg text-folio-text-primary focus:outline-none focus:border-folio-border-strong transition-all"
               >
                 <option value="urgent">Urgent</option>
                 <option value="2-4_weeks">2–4 weeks</option>
@@ -150,13 +150,13 @@ export default function RequestQuoteModal({
           </div>
 
           <div>
-            <label className="block text-sm text-[var(--text-tertiary)] mb-1 font-medium">
+            <label className="block text-sm text-folio-text-tertiary mb-1 font-medium">
               Project (optional)
             </label>
             <select
               value={selectedProjectId}
               onChange={(e) => handleProjectChange(e.target.value)}
-              className="w-full px-3 py-2 bg-white border border-[#E8E6E3] rounded-lg text-[#2C2925] focus:outline-none focus:border-[#C9C4BC] transition-all"
+              className="w-full px-3 py-2 bg-white border border-folio-border-subtle rounded-lg text-folio-text-primary focus:outline-none focus:border-folio-border-strong transition-all"
             >
               <option value="">Select a project...</option>
               {projects.map(p => (
@@ -166,7 +166,7 @@ export default function RequestQuoteModal({
           </div>
 
           <div>
-            <label className="block text-sm text-[var(--text-tertiary)] mb-1 font-medium">
+            <label className="block text-sm text-folio-text-tertiary mb-1 font-medium">
               Notes (optional)
             </label>
             <textarea
@@ -174,12 +174,12 @@ export default function RequestQuoteModal({
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Specific finish, custom dimensions, trade pricing..."
               rows={3}
-              className="w-full px-3 py-2 bg-white border border-[#E8E6E3] rounded-lg text-[#2C2925] placeholder-[#A39E97] focus:outline-none focus:border-[#C9C4BC] transition-all resize-none"
+              className="w-full px-3 py-2 bg-white border border-folio-border-subtle rounded-lg text-folio-text-primary placeholder-[#A39E97] focus:outline-none focus:border-folio-border-strong transition-all resize-none"
             />
           </div>
         </div>
 
-        <p className="text-xs text-[var(--text-tertiary)] mt-3">
+        <p className="text-xs text-folio-text-tertiary mt-3">
           Please provide pricing including trade discount if applicable. Resale cert on file with Folio.
         </p>
 

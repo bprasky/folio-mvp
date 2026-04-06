@@ -47,28 +47,28 @@ export function InsightCard({ insight }: { insight: AiInsight }) {
   };
 
   return (
-    <Card className="p-5 bg-white border-[#DAD2CA] hover:shadow-md transition-all duration-200 hover:border-[#8C8278]">
+    <Card className="p-5 bg-white border-folio-border-strong hover:shadow-md transition-all duration-200 hover:border-[#8C8278]">
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1">
           <div className="flex items-start justify-between mb-2">
-            <div className="text-[16px] font-semibold text-[#2B2B2B] leading-tight">{insight.title}</div>
+            <div className="text-[16px] font-semibold text-folio-text-primary leading-tight">{insight.title}</div>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setShowExplanation(!showExplanation)}
-              className="text-[#8C8278] hover:text-[#2B2B2B] p-1 h-auto"
+              className="text-folio-text-secondary hover:text-folio-text-primary p-1 h-auto"
             >
               <Info className="w-4 h-4" />
             </Button>
           </div>
           
-          <p className="text-sm text-[#645C53] leading-relaxed mb-3">{insight.body}</p>
+          <p className="text-sm text-folio-text-secondary leading-relaxed mb-3">{insight.body}</p>
           
           {/* Dynamic explanation */}
           {showExplanation && (
-            <div className="mb-3 p-3 bg-[#F7F4F1] rounded-lg border-l-3 border-[#8C8278]">
-              <div className="text-xs font-medium text-[#8C8278] mb-1">Why this works:</div>
-              <p className="text-sm text-[#645C53] leading-relaxed">{getExplanation()}</p>
+            <div className="mb-3 p-3 bg-surface-elevated rounded-lg border-l-3 border-[#8C8278]">
+              <div className="text-xs font-medium text-folio-text-secondary mb-1">Why this works:</div>
+              <p className="text-sm text-folio-text-secondary leading-relaxed">{getExplanation()}</p>
             </div>
           )}
 
@@ -88,14 +88,14 @@ export function InsightCard({ insight }: { insight: AiInsight }) {
 
         {/* Impact block */}
         <div className="shrink-0 text-right">
-          <div className="text-xs text-[#8C8278] mb-1">Expected lift</div>
-          <div className="text-xl font-bold text-[#2B2B2B] mb-2">${(impact.expectedLiftUsd/1000).toFixed(0)}k</div>
+          <div className="text-xs text-folio-text-secondary mb-1">Expected lift</div>
+          <div className="text-xl font-bold text-folio-text-primary mb-2">${(impact.expectedLiftUsd/1000).toFixed(0)}k</div>
           
           <div className="space-y-2 mb-3">
             <Badge className={cn("text-[11px] px-2 py-1 border", confidenceTone)}>
               {impact.confidence} confidence
             </Badge>
-            <div className="flex items-center justify-end gap-1 text-[11px] text-[#8C8278]">
+            <div className="flex items-center justify-end gap-1 text-[11px] text-folio-text-secondary">
               {getUrgencyIcon()}
               <span>Urgency: -{impact.decayPctByDay}%/day</span>
             </div>

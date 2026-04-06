@@ -46,7 +46,7 @@ async function ProductsContent({ searchParams }: { searchParams: SearchParams })
 
       {data.items.length === 0 ? (
         <RidgeCard padding="xl" className="text-center">
-          <p className="folio-body text-[var(--text-secondary)] mb-4">No products found</p>
+          <p className="folio-body text-folio-text-secondary mb-4">No products found</p>
           <Link href="/vendor/products/new">
             <Button variant="accent">
               + Add Your First Product
@@ -58,7 +58,7 @@ async function ProductsContent({ searchParams }: { searchParams: SearchParams })
           {/* Table */}
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-[var(--bg-elevated)] text-[var(--text-tertiary)] border-b border-[var(--border-subtle)]">
+              <thead className="bg-surface-ground text-folio-text-tertiary border-b border-[var(--border-subtle)]">
                 <tr>
                   <th className="px-4 py-3 text-left font-medium">Product</th>
                   <th className="px-4 py-3 text-left font-medium">Brand</th>
@@ -72,7 +72,7 @@ async function ProductsContent({ searchParams }: { searchParams: SearchParams })
                 {data.items.map((product) => (
                   <tr
                     key={product.id}
-                    className="border-t border-[var(--border-subtle)] hover:bg-[var(--bg-elevated)] transition-colors"
+                    className="border-t border-[var(--border-subtle)] hover:bg-surface-ground transition-colors"
                   >
                     <td className="px-4 py-3">
                       <Link
@@ -83,15 +83,15 @@ async function ProductsContent({ searchParams }: { searchParams: SearchParams })
                           imageUrl={product.imageUrl}
                           productName={product.name}
                         />
-                        <span className="text-[var(--text-primary)] font-medium">
+                        <span className="text-folio-text-primary font-medium">
                           {product.name}
                         </span>
                       </Link>
                     </td>
-                    <td className="px-4 py-3 text-[var(--text-secondary)]">
+                    <td className="px-4 py-3 text-folio-text-secondary">
                       {product.skuOrBrand}
                     </td>
-                    <td className="px-4 py-3 text-[var(--text-secondary)]">
+                    <td className="px-4 py-3 text-folio-text-secondary">
                       {product.vendorName}
                     </td>
                     <td className="px-4 py-3">
@@ -161,7 +161,7 @@ export default function VendorProductsPage({
   searchParams: SearchParams;
 }) {
   return (
-    <div className="mx-auto max-w-[1200px] px-6 py-8 bg-[var(--bg-base)] min-h-screen">
+    <div className="mx-auto max-w-[1200px] px-6 py-8 bg-surface-canvas min-h-screen">
       {/* Header */}
       <div className="mb-8 flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -172,7 +172,7 @@ export default function VendorProductsPage({
             <h1 className="folio-h1">
               Products
             </h1>
-            <p className="folio-body text-[var(--text-secondary)]">
+            <p className="folio-body text-folio-text-secondary">
               Manage your product catalog
             </p>
           </div>
@@ -190,8 +190,8 @@ export default function VendorProductsPage({
       <Suspense
         fallback={
           <div className="animate-pulse space-y-4">
-            <div className="h-10 bg-[var(--bg-elevated)] rounded-lg" />
-            <div className="h-64 bg-[var(--bg-elevated)] rounded-xl" />
+            <div className="h-10 bg-surface-ground rounded-lg" />
+            <div className="h-64 bg-surface-ground rounded-xl" />
           </div>
         }
       >

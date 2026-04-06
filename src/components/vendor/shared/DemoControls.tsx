@@ -41,11 +41,11 @@ export function DemoControls() {
       </button>
 
       {open && (
-        <div className="mt-2 w-[340px] max-h-[80vh] overflow-y-auto rounded-2xl bg-[var(--bg-base)]/95 backdrop-blur-xl border border-[var(--ridge-outer)] shadow-2xl p-4 space-y-4 text-xs">
+        <div className="mt-2 w-[340px] max-h-[80vh] overflow-y-auto rounded-2xl bg-surface-canvas/95 backdrop-blur-xl border border-folio-border-subtle shadow-2xl p-4 space-y-4 text-xs">
           <div className="flex items-center justify-between">
-            <div className="font-semibold text-sm text-[var(--text-primary)]">Adjust Inputs</div>
+            <div className="font-semibold text-sm text-folio-text-primary">Adjust Inputs</div>
             <button
-              className="folio-meta text-[var(--text-secondary)] underline hover:text-[var(--text-primary)] transition"
+              className="folio-meta text-folio-text-secondary underline hover:text-folio-text-primary transition"
               onClick={handleReset}
             >
               Reset
@@ -149,8 +149,8 @@ export function DemoControls() {
           </Section>
 
           {/* Toggle demo (keeps ?demo=1 in URL) */}
-          <div className="pt-2 border-t border-[var(--ridge-outer)]">
-            <label className="flex items-center gap-2 text-sm text-[var(--text-primary)]">
+          <div className="pt-2 border-t border-folio-border-subtle">
+            <label className="flex items-center gap-2 text-sm text-folio-text-primary">
               <input
                 type="checkbox"
                 className="rounded"
@@ -177,7 +177,7 @@ export function DemoControls() {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="space-y-2">
-      <div className="font-semibold text-[11px] uppercase tracking-wide text-[var(--text-secondary)]">{title}</div>
+      <div className="font-semibold text-[11px] uppercase tracking-wide text-folio-text-secondary">{title}</div>
       {children}
     </div>
   );
@@ -200,7 +200,7 @@ function Slider({
 }) {
   return (
     <div className="space-y-1">
-      <div className="flex justify-between text-[var(--text-primary)]">
+      <div className="flex justify-between text-folio-text-primary">
         <span className="folio-meta">{label}</span>
         <span className="font-mono folio-meta">{typeof value === 'number' ? value.toLocaleString() : value}</span>
       </div>

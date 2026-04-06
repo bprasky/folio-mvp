@@ -41,15 +41,15 @@ export default function ProfileProgressIndicator({
 
   return (
     <div className="fixed bottom-6 right-6 z-50">
-      <div className="bg-[var(--bg-base)] rounded-2xl shadow-xl border border-[var(--ridge-outer)] p-4 w-72">
+      <div className="bg-surface-canvas rounded-2xl shadow-xl border border-folio-border-subtle p-4 w-72">
         <div className="flex items-center justify-between mb-3">
-          <span className="text-sm font-medium text-[var(--text-primary)]">
+          <span className="text-sm font-medium text-folio-text-primary">
             Profile Completion
           </span>
-          <span className="text-sm text-[var(--text-secondary)]">{Math.round(progress)}%</span>
+          <span className="text-sm text-folio-text-secondary">{Math.round(progress)}%</span>
         </div>
 
-        <div className="h-1.5 bg-[var(--bg-elevated)] rounded-full overflow-hidden mb-4">
+        <div className="h-1.5 bg-surface-ground rounded-full overflow-hidden mb-4">
           <div
             className="h-full bg-[var(--text-primary)] rounded-full transition-all duration-500"
             style={{ width: `${progress}%` }}
@@ -66,7 +66,7 @@ export default function ProfileProgressIndicator({
                     ? "bg-green-500 text-white"
                     : step.partial
                     ? "bg-amber-500 text-white"
-                    : "bg-[var(--bg-elevated)] text-[var(--text-tertiary)]"
+                    : "bg-surface-ground text-folio-text-tertiary"
                 )}
               >
                 {step.done ? "✓" : step.partial ? "½" : i + 1}
@@ -75,12 +75,12 @@ export default function ProfileProgressIndicator({
                 <p
                   className={clsx(
                     "text-sm",
-                    step.done ? "text-[var(--text-primary)]" : "text-[var(--text-secondary)]"
+                    step.done ? "text-folio-text-primary" : "text-folio-text-secondary"
                   )}
                 >
                   {step.label}
                 </p>
-                <p className="text-xs text-[var(--text-tertiary)]">{step.detail}</p>
+                <p className="text-xs text-folio-text-tertiary">{step.detail}</p>
               </div>
             </div>
           ))}

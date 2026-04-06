@@ -88,7 +88,7 @@ async function VendorPicker() {
     return (
       <div className="max-w-lg mx-auto text-center space-y-3 p-8">
         <h2 className="folio-h2">No vendor organizations found</h2>
-        <p className="folio-body text-[var(--text-secondary)]">
+        <p className="folio-body text-folio-text-secondary">
           Ask an admin to add you to a vendor organization, or create one if your role allows it.
         </p>
       </div>
@@ -153,7 +153,7 @@ export default async function VendorDashboard() {
   // Use question-led dashboard when flag is enabled, or as default for new dashboard
   if (questionLedEnabled || flagEnabled) {
     return (
-      <section className="p-8 space-y-6 -mx-6 -mt-0 bg-[var(--bg-base)]">
+      <section className="p-8 space-y-6 -mx-6 -mt-0 bg-surface-canvas">
         <div className="mx-6">
           <h1 className="folio-h1 mb-6">Vendor Dashboard</h1>
           <VendorAnalyticsDashboard />
@@ -164,9 +164,9 @@ export default async function VendorDashboard() {
 
   // Existing dashboard (fallback)
   return (
-    <section className="p-8 space-y-6 bg-[var(--bg-base)]">
+    <section className="p-8 space-y-6 bg-surface-canvas">
       <h1 className="folio-h1">Vendor Dashboard</h1>
-      <p className="folio-body text-[var(--text-secondary)]">
+      <p className="folio-body text-folio-text-secondary">
         Showing projects you own or have selections on.
       </p>
       <VendorDashboardClient

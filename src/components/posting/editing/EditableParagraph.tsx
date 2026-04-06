@@ -89,10 +89,10 @@ export default function EditableParagraph({
           onKeyDown={handleKeyDown}
           disabled={saving}
           placeholder={placeholder}
-          className={`w-full resize-none bg-[var(--bg-base)] border border-[var(--accent)] rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] folio-body text-[var(--text-primary)] ${className}`}
+          className={`w-full resize-none bg-surface-canvas border border-[var(--accent)] rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] folio-body text-folio-text-primary ${className}`}
           rows={1}
         />
-        <span className="absolute bottom-1 right-2 folio-meta text-[var(--text-tertiary)]">
+        <span className="absolute bottom-1 right-2 folio-meta text-folio-text-tertiary">
           {saving ? 'Saving...' : 'Cmd+Enter to save · Esc to cancel'}
         </span>
       </div>
@@ -103,9 +103,9 @@ export default function EditableParagraph({
     <div className="group relative">
       <Tag
         onClick={onStartEdit}
-        className={`cursor-pointer rounded px-2 py-1 -mx-2 border border-transparent group-hover:border-[var(--border-default)] transition-colors ${className}`}
+        className={`cursor-pointer rounded px-2 py-1 -mx-2 border border-transparent group-hover:border-folio-border-subtle transition-colors ${className}`}
       >
-        {text || <span className="text-[var(--text-tertiary)] italic">{placeholder || 'Click to add text...'}</span>}
+        {text || <span className="text-folio-text-tertiary italic">{placeholder || 'Click to add text...'}</span>}
       </Tag>
       {isEdited && (
         <span
@@ -113,7 +113,7 @@ export default function EditableParagraph({
             e.stopPropagation();
             onRevert?.();
           }}
-          className="absolute -top-2 -right-1 px-1.5 py-0.5 text-[10px] font-medium bg-[var(--bg-elevated)] border border-[var(--border-default)] rounded-full text-[var(--text-tertiary)] cursor-pointer hover:text-[var(--text-primary)] hover:border-[var(--accent)] transition-colors"
+          className="absolute -top-2 -right-1 px-1.5 py-0.5 text-[10px] font-medium bg-surface-ground border border-folio-border-subtle rounded-full text-folio-text-tertiary cursor-pointer hover:text-folio-text-primary hover:border-[var(--accent)] transition-colors"
           title="Click to revert to original"
         >
           Edited

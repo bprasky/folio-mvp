@@ -15,9 +15,9 @@ interface TopProductsTableProps {
 
 export function TopProductsTable({ products, onHover }: TopProductsTableProps) {
   return (
-    <Card className="bg-white border-[#DAD2CA]">
+    <Card className="bg-white border-folio-border-strong">
       <CardHeader>
-        <CardTitle className="text-lg font-serif text-[#2B2B2B]">
+        <CardTitle className="text-lg font-serif text-folio-text-primary">
           Top Products at This Event
         </CardTitle>
       </CardHeader>
@@ -26,7 +26,7 @@ export function TopProductsTable({ products, onHover }: TopProductsTableProps) {
           {products.map((product, index) => (
             <div 
               key={product.id} 
-              className="flex items-center justify-between p-4 bg-[#F7F4F1] rounded-lg hover:bg-[#F0EDE8] transition-colors cursor-pointer"
+              className="flex items-center justify-between p-4 bg-surface-elevated rounded-lg hover:bg-[#F0EDE8] transition-colors cursor-pointer"
               data-testid={`product-${index}`}
               onMouseEnter={() => onHover?.({
                 type: 'product',
@@ -36,7 +36,7 @@ export function TopProductsTable({ products, onHover }: TopProductsTableProps) {
               onMouseLeave={() => onHover?.(null)}
             >
               <div className="flex items-center space-x-4 flex-1">
-                <div className="w-16 h-16 bg-[#E5E0D7] rounded-lg flex items-center justify-center">
+                <div className="w-16 h-16 bg-folio-border-strong rounded-lg flex items-center justify-center">
                   {product.thumbUrl ? (
                     <img 
                       src={product.thumbUrl} 
@@ -44,19 +44,19 @@ export function TopProductsTable({ products, onHover }: TopProductsTableProps) {
                       className="w-full h-full object-cover rounded-lg"
                     />
                   ) : (
-                    <span className="text-xs text-[#8C8278] text-center px-2">
+                    <span className="text-xs text-folio-text-secondary text-center px-2">
                       Product Image
                     </span>
                   )}
                 </div>
                 <div className="flex-1">
-                  <div className="font-medium text-[#2B2B2B] mb-1">
+                  <div className="font-medium text-folio-text-primary mb-1">
                     {product.name}
                   </div>
-                  <div className="text-sm text-[#8C8278]">
+                  <div className="text-sm text-folio-text-secondary">
                     by {product.vendor}
                   </div>
-                  <Badge className="mt-2 bg-[#8C8278]/10 text-[#8C8278] border-[#8C8278]/20">
+                  <Badge className="mt-2 bg-[#8C8278]/10 text-folio-text-secondary border-[#8C8278]/20">
                     Saved {formatCompactNumber(product.saves)} times
                   </Badge>
                 </div>
@@ -64,7 +64,7 @@ export function TopProductsTable({ products, onHover }: TopProductsTableProps) {
               
               {product.ctaUrl && (
                 <Link href={product.ctaUrl}>
-                  <div className="flex items-center text-[#8C8278] hover:text-[#2B2B2B] transition-colors cursor-pointer">
+                  <div className="flex items-center text-folio-text-secondary hover:text-folio-text-primary transition-colors cursor-pointer">
                     <span className="text-sm mr-2">View</span>
                     <ExternalLink className="w-4 h-4" />
                   </div>

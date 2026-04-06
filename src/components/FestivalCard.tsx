@@ -156,8 +156,8 @@ export default function FestivalCard({
     return (
       <div className="w-full h-48 bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center">
         <div className="text-center">
-          <div className="text-4xl font-bold text-[var(--text-secondary)] mb-2">{initials}</div>
-          <div className="text-sm text-[var(--text-secondary)]">Festival</div>
+          <div className="text-4xl font-bold text-folio-text-secondary mb-2">{initials}</div>
+          <div className="text-sm text-folio-text-secondary">Festival</div>
         </div>
       </div>
     );
@@ -242,36 +242,36 @@ export default function FestivalCard({
       {/* Content Section */}
       <div className="p-6">
         <div className="flex items-start justify-between mb-3">
-          <h3 className="text-xl font-bold text-[var(--text-primary)] line-clamp-2 leading-tight">
+          <h3 className="text-xl font-bold text-folio-text-primary line-clamp-2 leading-tight">
             {festival.title}
           </h3>
           {onToggleExpand && (
             <button
               onClick={onToggleExpand}
-              className="ml-2 p-1 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors"
+              className="ml-2 p-1 text-folio-text-tertiary hover:text-folio-text-secondary transition-colors"
             >
               <FaExpand className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
             </button>
           )}
         </div>
         
-        <p className="text-[var(--text-secondary)] text-sm mb-4 line-clamp-3 leading-relaxed">
+        <p className="text-folio-text-secondary text-sm mb-4 line-clamp-3 leading-relaxed">
           {festival.description}
         </p>
         
         <div className="space-y-3 mb-4">
-          <div className="flex items-center text-sm text-[var(--text-secondary)]">
-            <FaMapMarkerAlt className="w-4 h-4 mr-2 text-[var(--text-tertiary)]" />
+          <div className="flex items-center text-sm text-folio-text-secondary">
+            <FaMapMarkerAlt className="w-4 h-4 mr-2 text-folio-text-tertiary" />
             <span className="truncate">{festival.location}</span>
           </div>
           
-          <div className="flex items-center text-sm text-[var(--text-secondary)]">
-            <FaCalendarAlt className="w-4 h-4 mr-2 text-[var(--text-tertiary)]" />
+          <div className="flex items-center text-sm text-folio-text-secondary">
+            <FaCalendarAlt className="w-4 h-4 mr-2 text-folio-text-tertiary" />
             <span>{formatFestivalDate(startDate)} - {formatFestivalDate(endDate)}</span>
           </div>
           
-          <div className="flex items-center text-sm text-[var(--text-secondary)]">
-            <FaUsers className="w-4 h-4 mr-2 text-[var(--text-tertiary)]" />
+          <div className="flex items-center text-sm text-folio-text-secondary">
+            <FaUsers className="w-4 h-4 mr-2 text-folio-text-tertiary" />
             <span>{festival.subevents.length} events • {festival.rsvps?.length || 0} attendees</span>
           </div>
         </div>
@@ -294,27 +294,27 @@ export default function FestivalCard({
 
         {/* Expanded Content */}
         {isExpanded && (
-          <div className="mt-6 pt-6 border-t border-[var(--ridge-outer)]">
-            <h4 className="font-semibold text-[var(--text-primary)] mb-3">Events in this Festival</h4>
+          <div className="mt-6 pt-6 border-t border-folio-border-subtle">
+            <h4 className="font-semibold text-folio-text-primary mb-3">Events in this Festival</h4>
             <div className="space-y-2 max-h-48 overflow-y-auto">
               {loadingSubevents ? (
-                <div className="text-sm text-[var(--text-secondary)] text-center py-4">Loading events...</div>
+                <div className="text-sm text-folio-text-secondary text-center py-4">Loading events...</div>
               ) : subevents.length > 0 ? (
                 subevents.map((sub) => (
-                  <div key={sub.id} className="flex items-center justify-between p-2 bg-[var(--bg-elevated)] rounded-lg">
+                  <div key={sub.id} className="flex items-center justify-between p-2 bg-surface-ground rounded-lg">
                     <Link 
                       href={`/festivals/${festival.id}/events/${sub.id}`} 
-                      className="text-sm text-[var(--text-primary)] hover:text-folio-accent transition-colors flex-1"
+                      className="text-sm text-folio-text-primary hover:text-folio-accent transition-colors flex-1"
                     >
                       {sub.title}
                     </Link>
-                    <span className="text-xs text-[var(--text-secondary)]">
+                    <span className="text-xs text-folio-text-secondary">
                       {formatFestivalDate(new Date(sub.startDate))}
                     </span>
                   </div>
                 ))
               ) : (
-                <div className="text-sm text-[var(--text-secondary)] text-center py-4">
+                <div className="text-sm text-folio-text-secondary text-center py-4">
                   No events scheduled yet
                 </div>
               )}
@@ -322,9 +322,9 @@ export default function FestivalCard({
 
             {/* EventStories Placeholder */}
             <div className="mt-6">
-              <h4 className="font-semibold text-[var(--text-primary)] mb-3">Stories</h4>
+              <h4 className="font-semibold text-folio-text-primary mb-3">Stories</h4>
               <div className="flex overflow-x-auto space-x-4 pb-4">
-                <div className="flex-shrink-0 w-64 h-36 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center text-[var(--text-secondary)] text-sm">
+                <div className="flex-shrink-0 w-64 h-36 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center text-folio-text-secondary text-sm">
                   <div className="text-center">
                     <div className="text-2xl mb-2">📱</div>
                     <div>No stories yet</div>

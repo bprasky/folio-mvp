@@ -16,16 +16,16 @@ export function OpportunityMapSection() {
   return (
     <section className="space-y-2">
       <div className="flex items-center gap-2">
-        <h3 className="text-lg font-semibold text-[var(--text-primary)]">AI Opportunity Map</h3>
+        <h3 className="text-lg font-semibold text-folio-text-primary">AI Opportunity Map</h3>
         <AIBadge />
       </div>
-      <p className="folio-ui text-[var(--text-secondary)]">
+      <p className="folio-ui text-folio-text-secondary">
         Where to focus events, designers, and products for the next quarter.
       </p>
 
       {!aiUnlocked || !bundle ? (
         <div className="ridge-card p-4 flex items-center justify-between">
-          <span className="folio-ui text-[var(--text-secondary)]">
+          <span className="folio-ui text-folio-text-secondary">
             Unlock AI to see a ranked map of events, designers, and SKUs by impact score.
           </span>
           <button
@@ -63,15 +63,15 @@ type Item = { id: string; label: string; score: number };
 function Column({ title, items }: { title: string; items: Item[] }) {
   return (
     <div className="space-y-2">
-      <div className="folio-meta uppercase tracking-wide text-[var(--text-secondary)]">{title}</div>
+      <div className="folio-meta uppercase tracking-wide text-folio-text-secondary">{title}</div>
       <ul className="space-y-1.5">
         {items.slice(0, 4).map(item => (
           <li
             key={item.id}
-            className="flex items-center justify-between text-sm p-2 rounded-lg bg-[var(--bg-elevated)]/50 hover:bg-[var(--bg-elevated)] transition"
+            className="flex items-center justify-between text-sm p-2 rounded-lg bg-surface-ground/50 hover:bg-surface-ground transition"
           >
-            <span className="truncate flex-1 text-[var(--text-primary)]">{item.label}</span>
-            <span className="ml-2 folio-meta font-mono text-[var(--text-secondary)] font-semibold">{item.score}</span>
+            <span className="truncate flex-1 text-folio-text-primary">{item.label}</span>
+            <span className="ml-2 folio-meta font-mono text-folio-text-secondary font-semibold">{item.score}</span>
           </li>
         ))}
       </ul>

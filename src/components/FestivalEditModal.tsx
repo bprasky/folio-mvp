@@ -87,81 +87,81 @@ export default function FestivalEditModal({ festival, isOpen, onClose, onSave }:
           <h2 className="text-xl font-semibold">Edit Festival</h2>
           <button
             onClick={onClose}
-            className="text-[var(--text-secondary)] hover:text-[var(--text-primary)]">
+            className="text-folio-text-secondary hover:text-folio-text-primary">
             ✕
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">Festival Name</label>
+            <label className="block text-sm font-medium text-folio-text-primary mb-1">Festival Name</label>
             <input
               type="text"
               name="title"
               value={formData.title}
               onChange={handleChange}
               required
-              className="w-full px-3 py-2 border border-[var(--ridge-outer)] rounded-md focus:outline-none focus:ring-2 focus:ring-violet-500"
+              className="w-full px-3 py-2 border border-folio-border-subtle rounded-md focus:outline-none focus:ring-2 focus:ring-violet-500"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">Description</label>
+            <label className="block text-sm font-medium text-folio-text-primary mb-1">Description</label>
             <textarea
               name="description"
               value={formData.description}
               onChange={handleChange}
               required
               rows={3}
-              className="w-full px-3 py-2 border border-[var(--ridge-outer)] rounded-md focus:outline-none focus:ring-2 focus:ring-violet-500"
+              className="w-full px-3 py-2 border border-folio-border-subtle rounded-md focus:outline-none focus:ring-2 focus:ring-violet-500"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">Location</label>
+            <label className="block text-sm font-medium text-folio-text-primary mb-1">Location</label>
             <input
               type="text"
               name="location"
               value={formData.location}
               onChange={handleChange}
               required
-              className="w-full px-3 py-2 border border-[var(--ridge-outer)] rounded-md focus:outline-none focus:ring-2 focus:ring-violet-500"
+              className="w-full px-3 py-2 border border-folio-border-subtle rounded-md focus:outline-none focus:ring-2 focus:ring-violet-500"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">Start Date</label>
+              <label className="block text-sm font-medium text-folio-text-primary mb-1">Start Date</label>
               <input
                 type="date"
                 name="startDate"
                 value={formData.startDate}
                 onChange={handleChange}
                 required
-                className="w-full px-3 py-2 border border-[var(--ridge-outer)] rounded-md focus:outline-none focus:ring-2 focus:ring-violet-500"
+                className="w-full px-3 py-2 border border-folio-border-subtle rounded-md focus:outline-none focus:ring-2 focus:ring-violet-500"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">End Date</label>
+              <label className="block text-sm font-medium text-folio-text-primary mb-1">End Date</label>
               <input
                 type="date"
                 name="endDate"
                 value={formData.endDate}
                 onChange={handleChange}
                 required
-                className="w-full px-3 py-2 border border-[var(--ridge-outer)] rounded-md focus:outline-none focus:ring-2 focus:ring-violet-500"
+                className="w-full px-3 py-2 border border-folio-border-subtle rounded-md focus:outline-none focus:ring-2 focus:ring-violet-500"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">Image URL</label>
+            <label className="block text-sm font-medium text-folio-text-primary mb-1">Image URL</label>
             <input
               type="url"
               name="imageUrl"
               value={formData.imageUrl}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-[var(--ridge-outer)] rounded-md focus:outline-none focus:ring-2 focus:ring-violet-500"
+              className="w-full px-3 py-2 border border-folio-border-subtle rounded-md focus:outline-none focus:ring-2 focus:ring-violet-500"
             />
           </div>
 
@@ -173,7 +173,7 @@ export default function FestivalEditModal({ festival, isOpen, onClose, onSave }:
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-[var(--text-secondary)] border border-[var(--ridge-outer)] rounded-md hover:bg-[var(--bg-elevated)]">
+              className="px-4 py-2 text-folio-text-secondary border border-folio-border-subtle rounded-md hover:bg-surface-ground">
               Cancel
             </button>
             <button

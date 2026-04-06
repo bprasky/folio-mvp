@@ -500,7 +500,7 @@ Total Selections: ${room.selections.length}
           <div className="max-w-7xl mx-auto">
             <div className="text-center py-16">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--accent)] mx-auto"></div>
-              <p className="mt-4 text-[var(--text-secondary)]">Loading room...</p>
+              <p className="mt-4 text-folio-text-secondary">Loading room...</p>
             </div>
           </div>
         </div>
@@ -515,8 +515,8 @@ Total Selections: ${room.selections.length}
         <div className="max-w-7xl mx-auto">
           <div className="text-center py-16">
             <div className="text-red-500 text-6xl mb-4">🚫</div>
-            <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-4">Access Denied</h2>
-            <p className="text-[var(--text-secondary)] mb-6">Only vendors can access this page.</p>
+            <h2 className="text-2xl font-bold text-folio-text-primary mb-4">Access Denied</h2>
+            <p className="text-folio-text-secondary mb-6">Only vendors can access this page.</p>
             <button
               onClick={() => router.push('/vendor')}
               className="bg-[var(--accent)] text-white px-6 py-3 rounded-lg hover:bg-[var(--accent)] transition-colors"
@@ -536,8 +536,8 @@ Total Selections: ${room.selections.length}
           <div className="max-w-7xl mx-auto">
             <div className="text-center py-16">
               <div className="text-red-500 text-6xl mb-4">⚠️</div>
-              <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-4">Room Not Found</h2>
-              <p className="text-[var(--text-secondary)] mb-6">The room you're looking for doesn't exist or you don't have access to it.</p>
+              <h2 className="text-2xl font-bold text-folio-text-primary mb-4">Room Not Found</h2>
+              <p className="text-folio-text-secondary mb-6">The room you're looking for doesn't exist or you don't have access to it.</p>
               <button
                 onClick={() => router.push(`/vendor/project/${projectId}`)}
                 className="bg-[var(--accent)] text-white px-6 py-3 rounded-lg hover:bg-[var(--accent)] transition-colors"
@@ -564,15 +564,15 @@ Total Selections: ${room.selections.length}
             <div className="flex items-center gap-4 mb-6">
               <button
                 onClick={() => router.push(`/vendor/project/${projectId}`)}
-                className="p-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+                className="p-2 text-folio-text-secondary hover:text-folio-text-primary transition-colors"
               >
                 <FaArrowLeft className="w-5 h-5" />
               </button>
               <div className="flex-1">
-                <h1 className="text-3xl font-bold text-[var(--text-primary)]">{room.name}</h1>
-                <p className="text-[var(--text-secondary)]">{project.name}</p>
+                <h1 className="text-3xl font-bold text-folio-text-primary">{room.name}</h1>
+                <p className="text-folio-text-secondary">{project.name}</p>
                 {project.vendorOrgName && (
-                  <p className="text-sm text-[var(--text-secondary)]">Organization: {project.vendorOrgName}</p>
+                  <p className="text-sm text-folio-text-secondary">Organization: {project.vendorOrgName}</p>
                 )}
               </div>
             </div>
@@ -651,24 +651,24 @@ Total Selections: ${room.selections.length}
                 )}
                 
                 <div className="space-y-3">
-                  <h3 className="text-lg font-bold text-[var(--text-primary)]">
+                  <h3 className="text-lg font-bold text-folio-text-primary">
                     {selection.productName || 'Unnamed Product'}
                   </h3>
                   
                   {selection.vendorName && (
-                    <p className="text-sm text-[var(--text-secondary)]">
+                    <p className="text-sm text-folio-text-secondary">
                       <span className="font-medium">Vendor:</span> {selection.vendorName}
                     </p>
                   )}
                   
                   {selection.colorFinish && (
-                    <p className="text-sm text-[var(--text-secondary)]">
+                    <p className="text-sm text-folio-text-secondary">
                       <span className="font-medium">Color/Finish:</span> {selection.colorFinish}
                     </p>
                   )}
                   
                   {selection.unitPrice && (
-                    <p className="text-sm text-[var(--text-secondary)]">
+                    <p className="text-sm text-folio-text-secondary">
                       <span className="font-medium">Price:</span> ${selection.unitPrice}
                       {selection.quantity && selection.quantity > 1 && (
                         <span> × {selection.quantity}</span>
@@ -677,14 +677,14 @@ Total Selections: ${room.selections.length}
                   )}
                   
                   {selection.notes && (
-                    <p className="text-sm text-[var(--text-secondary)]">
+                    <p className="text-sm text-folio-text-secondary">
                       <span className="font-medium">Notes:</span> {selection.notes}
                     </p>
                   )}
                   
                   {selection.productUrl && (
                     <div className="flex items-center">
-                      <FaLink className="w-3 h-3 text-[var(--text-tertiary)] mr-1" />
+                      <FaLink className="w-3 h-3 text-folio-text-tertiary mr-1" />
                       <a
                         href={selection.productUrl}
                         target="_blank"
@@ -701,7 +701,7 @@ Total Selections: ${room.selections.length}
                       {selection.tags.map((tag, index) => (
                         <span
                           key={index}
-                          className="inline-block px-2 py-1 text-xs bg-[var(--bg-elevated)] text-[var(--text-primary)] rounded-full"
+                          className="inline-block px-2 py-1 text-xs bg-surface-ground text-folio-text-primary rounded-full"
                         >
                           {tag}
                         </span>
@@ -729,7 +729,7 @@ Total Selections: ${room.selections.length}
                   )}
                   
                   {canEdit() && (
-                    <div className="flex space-x-2 pt-3 border-t border-[var(--ridge-outer)]">
+                    <div className="flex space-x-2 pt-3 border-t border-folio-border-subtle">
                       <button
                         onClick={() => startEditing(selection)}
                         className="text-[var(--accent)] hover:text-[var(--accent-hover)] text-sm flex items-center gap-1"
@@ -760,9 +760,9 @@ Total Selections: ${room.selections.length}
               className="text-center py-16"
             >
               <div className="bg-white rounded-2xl p-8 shadow-lg max-w-md mx-auto">
-                <FaTag className="w-16 h-16 text-[var(--text-tertiary)] mx-auto mb-4" />
-                <h3 className="text-xl font-bold text-[var(--text-primary)] mb-2">No Selections Yet</h3>
-                <p className="text-[var(--text-secondary)] mb-6">
+                <FaTag className="w-16 h-16 text-folio-text-tertiary mx-auto mb-4" />
+                <h3 className="text-xl font-bold text-folio-text-primary mb-2">No Selections Yet</h3>
+                <p className="text-folio-text-secondary mb-6">
                   Start adding product selections to this room
                 </p>
                 {canEdit() && (
@@ -791,118 +791,118 @@ Total Selections: ${room.selections.length}
             animate={{ scale: 1, opacity: 1 }}
             className="bg-white rounded-2xl p-6 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto"
           >
-            <h3 className="text-xl font-bold text-[var(--text-primary)] mb-4">
+            <h3 className="text-xl font-bold text-folio-text-primary mb-4">
               {editingSelection ? 'Edit Selection' : 'Add Selection'}
             </h3>
             
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">
+                <label className="block text-sm font-medium text-folio-text-primary mb-1">
                   Product Name *
                 </label>
                 <input
                   type="text"
                   value={newSelection.productName}
                   onChange={(e) => setNewSelection(prev => ({ ...prev, productName: e.target.value }))}
-                  className="w-full px-3 py-2 border border-[var(--ridge-outer)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+                  className="w-full px-3 py-2 border border-folio-border-subtle rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                   placeholder="Enter product name"
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">
+                <label className="block text-sm font-medium text-folio-text-primary mb-1">
                   Product URL
                 </label>
                 <input
                   type="url"
                   value={newSelection.productUrl}
                   onChange={(e) => setNewSelection(prev => ({ ...prev, productUrl: e.target.value }))}
-                  className="w-full px-3 py-2 border border-[var(--ridge-outer)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+                  className="w-full px-3 py-2 border border-folio-border-subtle rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                   placeholder="https://example.com/product"
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">
+                <label className="block text-sm font-medium text-folio-text-primary mb-1">
                   Vendor Name
                 </label>
                 <input
                   type="text"
                   value={newSelection.vendorName}
                   onChange={(e) => setNewSelection(prev => ({ ...prev, vendorName: e.target.value }))}
-                  className="w-full px-3 py-2 border border-[var(--ridge-outer)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+                  className="w-full px-3 py-2 border border-folio-border-subtle rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                   placeholder="Enter vendor name"
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">
+                <label className="block text-sm font-medium text-folio-text-primary mb-1">
                   Color/Finish
                 </label>
                 <input
                   type="text"
                   value={newSelection.colorFinish}
                   onChange={(e) => setNewSelection(prev => ({ ...prev, colorFinish: e.target.value }))}
-                  className="w-full px-3 py-2 border border-[var(--ridge-outer)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+                  className="w-full px-3 py-2 border border-folio-border-subtle rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                   placeholder="Enter color or finish"
                 />
               </div>
               
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">
+                  <label className="block text-sm font-medium text-folio-text-primary mb-1">
                     Unit Price
                   </label>
                   <input
                     type="number"
                     value={newSelection.unitPrice}
                     onChange={(e) => setNewSelection(prev => ({ ...prev, unitPrice: e.target.value }))}
-                    className="w-full px-3 py-2 border border-[var(--ridge-outer)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+                    className="w-full px-3 py-2 border border-folio-border-subtle rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                     placeholder="0.00"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">
+                  <label className="block text-sm font-medium text-folio-text-primary mb-1">
                     Quantity
                   </label>
                   <input
                     type="number"
                     value={newSelection.quantity}
                     onChange={(e) => setNewSelection(prev => ({ ...prev, quantity: e.target.value }))}
-                    className="w-full px-3 py-2 border border-[var(--ridge-outer)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+                    className="w-full px-3 py-2 border border-folio-border-subtle rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                     placeholder="1"
                   />
                 </div>
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">
+                <label className="block text-sm font-medium text-folio-text-primary mb-1">
                   Notes
                 </label>
                 <textarea
                   value={newSelection.notes}
                   onChange={(e) => setNewSelection(prev => ({ ...prev, notes: e.target.value }))}
-                  className="w-full px-3 py-2 border border-[var(--ridge-outer)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+                  className="w-full px-3 py-2 border border-folio-border-subtle rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                   rows={3}
                   placeholder="Add notes about this selection"
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">
+                <label className="block text-sm font-medium text-folio-text-primary mb-1">
                   Photo
                 </label>
                 <div className="flex space-x-2">
                   <button
                     onClick={() => setShowCameraCapture(true)}
-                    className="flex items-center px-3 py-2 border border-[var(--ridge-outer)] rounded-lg hover:bg-[var(--bg-elevated)]"
+                    className="flex items-center px-3 py-2 border border-folio-border-subtle rounded-lg hover:bg-surface-ground"
                   >
                     <FaCamera className="mr-2" />
                     Camera
                   </button>
                   <button
                     onClick={() => setShowUploadModal(true)}
-                    className="flex items-center px-3 py-2 border border-[var(--ridge-outer)] rounded-lg hover:bg-[var(--bg-elevated)]"
+                    className="flex items-center px-3 py-2 border border-folio-border-subtle rounded-lg hover:bg-surface-ground"
                   >
                     <FaFileUpload className="mr-2" />
                     Upload
@@ -918,7 +918,7 @@ Total Selections: ${room.selections.length}
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">
+                <label className="block text-sm font-medium text-folio-text-primary mb-1">
                   Tags (comma-separated)
                 </label>
                 <input
@@ -928,13 +928,13 @@ Total Selections: ${room.selections.length}
                     ...prev, 
                     tags: e.target.value.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0)
                   }))}
-                  className="w-full px-3 py-2 border border-[var(--ridge-outer)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+                  className="w-full px-3 py-2 border border-folio-border-subtle rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                   placeholder="modern, luxury, sustainable"
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">
+                <label className="block text-sm font-medium text-folio-text-primary mb-1">
                   Upload Spec Sheet
                 </label>
                 <div className="flex space-x-2">
@@ -947,7 +947,7 @@ Total Selections: ${room.selections.length}
                         await handleSpecSheetUpload(file);
                       }
                     }}
-                    className="flex-1 px-3 py-2 border border-[var(--ridge-outer)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+                    className="flex-1 px-3 py-2 border border-folio-border-subtle rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                   />
                 </div>
                 {newSelection.specSheetUrl && (
@@ -1003,7 +1003,7 @@ Total Selections: ${room.selections.length}
               <button
                 onClick={cancelEditing}
                 disabled={isSubmitting}
-                className="flex-1 bg-[var(--text-tertiary)]/30 text-[var(--text-primary)] py-2 px-4 rounded-lg hover:bg-[var(--text-tertiary)]/30 transition-colors disabled:opacity-50"
+                className="flex-1 bg-[var(--text-tertiary)]/30 text-folio-text-primary py-2 px-4 rounded-lg hover:bg-[var(--text-tertiary)]/30 transition-colors disabled:opacity-50"
               >
                 Cancel
               </button>
@@ -1024,16 +1024,16 @@ Total Selections: ${room.selections.length}
             animate={{ scale: 1, opacity: 1 }}
             className="bg-white rounded-2xl p-6 w-full max-w-md mx-4"
           >
-            <h3 className="text-xl font-bold text-[var(--text-primary)] mb-4">Add Quote</h3>
+            <h3 className="text-xl font-bold text-folio-text-primary mb-4">Add Quote</h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">
+                <label className="block text-sm font-medium text-folio-text-primary mb-1">
                   Quote Type
                 </label>
                 <select
                   value={quoteForm.type}
                   onChange={(e) => setQuoteForm(prev => ({ ...prev, type: e.target.value as 'PDF' | 'IMAGE' | 'TEXT' }))}
-                  className="w-full px-3 py-2 border border-[var(--ridge-outer)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+                  className="w-full px-3 py-2 border border-folio-border-subtle rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                 >
                   <option value="TEXT">Text Note</option>
                   <option value="IMAGE">Image</option>
@@ -1042,27 +1042,27 @@ Total Selections: ${room.selections.length}
               </div>
               {quoteForm.type === 'TEXT' ? (
                 <div>
-                  <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">
+                  <label className="block text-sm font-medium text-folio-text-primary mb-1">
                     Quote Content
                   </label>
                   <textarea
                     value={quoteForm.content}
                     onChange={(e) => setQuoteForm(prev => ({ ...prev, content: e.target.value }))}
-                    className="w-full px-3 py-2 border border-[var(--ridge-outer)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+                    className="w-full px-3 py-2 border border-folio-border-subtle rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                     rows={4}
                     placeholder="Enter quote details..."
                   />
                 </div>
               ) : (
                 <div>
-                  <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">
+                  <label className="block text-sm font-medium text-folio-text-primary mb-1">
                     Upload File
                   </label>
                   <input
                     type="file"
                     accept={quoteForm.type === 'PDF' ? '.pdf' : 'image/*'}
                     onChange={(e) => setQuoteForm(prev => ({ ...prev, file: e.target.files?.[0] || null }))}
-                    className="w-full px-3 py-2 border border-[var(--ridge-outer)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+                    className="w-full px-3 py-2 border border-folio-border-subtle rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                   />
                 </div>
               )}
@@ -1079,7 +1079,7 @@ Total Selections: ${room.selections.length}
                   setShowQuoteModal(false);
                   setQuoteForm({ type: 'TEXT', content: '', file: null });
                 }}
-                className="flex-1 bg-[var(--text-tertiary)]/30 text-[var(--text-primary)] py-2 px-4 rounded-lg hover:bg-[var(--text-tertiary)]/30 transition-colors"
+                className="flex-1 bg-[var(--text-tertiary)]/30 text-folio-text-primary py-2 px-4 rounded-lg hover:bg-[var(--text-tertiary)]/30 transition-colors"
               >
                 Cancel
               </button>
@@ -1111,7 +1111,7 @@ Total Selections: ${room.selections.length}
             animate={{ scale: 1, opacity: 1 }}
             className="bg-white rounded-2xl p-6 w-full max-w-md mx-4"
           >
-            <h3 className="text-xl font-bold text-[var(--text-primary)] mb-4">Upload Photo</h3>
+            <h3 className="text-xl font-bold text-folio-text-primary mb-4">Upload Photo</h3>
             <input
               type="file"
               accept="image/*"
@@ -1125,12 +1125,12 @@ Total Selections: ${room.selections.length}
                 }
                 setShowUploadModal(false);
               }}
-              className="w-full px-3 py-2 border border-[var(--ridge-outer)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+              className="w-full px-3 py-2 border border-folio-border-subtle rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
             />
             <div className="flex justify-end mt-6">
               <button
                 onClick={() => setShowUploadModal(false)}
-                className="px-4 py-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                className="px-4 py-2 text-folio-text-secondary hover:text-folio-text-primary"
               >
                 Cancel
               </button>

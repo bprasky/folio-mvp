@@ -81,7 +81,7 @@ export function TopProductsPost({ products }: TopProductsPostProps) {
                       ? 'bg-green-100 text-green-800 border-green-200'
                       : product.saveToTagRatePct >= 40
                       ? 'bg-yellow-100 text-yellow-800 border-yellow-200'
-                      : 'bg-[var(--bg-elevated)] text-[var(--text-primary)] border-[var(--ridge-outer)]'
+                      : 'bg-surface-ground text-folio-text-primary border-folio-border-subtle'
                   }`}>
                     {formatPercentage(product.saveToTagRatePct, 1)}
                   </Badge>

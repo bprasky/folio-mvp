@@ -34,7 +34,7 @@ export default function MomentExpanded({
         
         <div className="grid md:grid-cols-2 gap-0">
           {/* Image */}
-          <div className="relative aspect-[4/3] bg-[#F5F5F5]">
+          <div className="relative aspect-[4/3] bg-surface-elevated">
             <Image
               src={moment.imageUrl}
               alt={moment.projectTitle}
@@ -46,7 +46,7 @@ export default function MomentExpanded({
           
           {/* Details */}
           <div className="p-8">
-            <h2 className="font-serif text-3xl mb-4 text-[#1A1A1A]">
+            <h2 className="font-serif text-3xl mb-4 text-folio-text-primary">
               {moment.projectTitle}
             </h2>
             
@@ -66,7 +66,7 @@ export default function MomentExpanded({
                   />
                 )}
                 <div>
-                  <p className="font-medium text-[#1A1A1A]">
+                  <p className="font-medium text-folio-text-primary">
                     {moment.designerName}
                   </p>
                   <p className="text-sm text-[#666]">Designer</p>
@@ -77,16 +77,16 @@ export default function MomentExpanded({
             {/* Tagged Products */}
             {moment.products.length > 0 && (
               <div className="mb-6">
-                <h3 className="font-serif text-lg mb-3 text-[#1A1A1A]">
+                <h3 className="font-serif text-lg mb-3 text-folio-text-primary">
                   Products
                 </h3>
                 <div className="space-y-2">
                   {moment.products.map((product) => (
                     <div
                       key={product.id}
-                      className="flex items-center justify-between py-2 border-b border-[#E0E0E0]"
+                      className="flex items-center justify-between py-2 border-b border-folio-border-subtle"
                     >
-                      <span className="text-[#1A1A1A]">{product.name}</span>
+                      <span className="text-folio-text-primary">{product.name}</span>
                       {product.vendorName && (
                         <span className="text-sm text-[#666]">
                           {product.vendorName}
@@ -101,14 +101,14 @@ export default function MomentExpanded({
             {/* Tags */}
             {moment.tags.length > 0 && (
               <div className="mb-6">
-                <h3 className="font-serif text-lg mb-3 text-[#1A1A1A]">
+                <h3 className="font-serif text-lg mb-3 text-folio-text-primary">
                   Tags
                 </h3>
                 <div className="flex flex-wrap gap-2">
                   {moment.tags.slice(0, 10).map((tag, idx) => (
                     <span
                       key={idx}
-                      className="px-3 py-1 bg-[#F5F5F5] rounded-full text-sm text-[#666]"
+                      className="px-3 py-1 bg-surface-elevated rounded-full text-sm text-[#666]"
                     >
                       {tag}
                     </span>
@@ -118,7 +118,7 @@ export default function MomentExpanded({
             )}
             
             {/* Actions */}
-            <div className="flex gap-3 pt-6 border-t border-[#E0E0E0]">
+            <div className="flex gap-3 pt-6 border-t border-folio-border-subtle">
               <Link
                 href={`/project/${moment.projectId}?image=${moment.id}`}
                 className="flex-1 bg-[#1A1A1A] text-white px-6 py-3 rounded text-center font-medium hover:bg-[#333] transition-colors"
@@ -128,7 +128,7 @@ export default function MomentExpanded({
               {onSave && (
                 <button
                   onClick={onSave}
-                  className="px-6 py-3 border border-[#E0E0E0] rounded font-medium hover:bg-[#F5F5F5] transition-colors"
+                  className="px-6 py-3 border border-folio-border-subtle rounded font-medium hover:bg-surface-elevated transition-colors"
                 >
                   Save
                 </button>
@@ -136,7 +136,7 @@ export default function MomentExpanded({
               {onShare && (
                 <button
                   onClick={onShare}
-                  className="px-6 py-3 border border-[#E0E0E0] rounded font-medium hover:bg-[#F5F5F5] transition-colors"
+                  className="px-6 py-3 border border-folio-border-subtle rounded font-medium hover:bg-surface-elevated transition-colors"
                 >
                   Share
                 </button>

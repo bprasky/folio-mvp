@@ -147,7 +147,7 @@ const StatsCard = React.forwardRef<HTMLDivElement, StatsCardProps>(
               'text-sm font-medium',
               trend.direction === 'up' && 'text-green-600',
               trend.direction === 'down' && 'text-red-600',
-              trend.direction === 'neutral' && 'text-[var(--text-tertiary)]'
+              trend.direction === 'neutral' && 'text-folio-text-tertiary'
             )}
           >
             {trend.direction === 'up' && '↑'}

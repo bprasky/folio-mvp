@@ -199,10 +199,10 @@ export function VendorDashboardNew() {
       {/* Reports / Exports */}
       <div className="flex flex-col md:flex-row gap-3">
         <Card className="flex-1">
-          <h3 className="font-semibold mb-2 text-[var(--text-primary)]">Standard Report</h3>
-          <p className="folio-ui text-[var(--text-secondary)]">Export your current period metrics.</p>
+          <h3 className="font-semibold mb-2 text-folio-text-primary">Standard Report</h3>
+          <p className="folio-ui text-folio-text-secondary">Export your current period metrics.</p>
           <div className="mt-3">
-            <button className="rounded-xl px-4 py-2 border border-[var(--ridge-outer)] hover:bg-[var(--bg-elevated)] text-[var(--text-primary)] transition">
+            <button className="rounded-xl px-4 py-2 border border-folio-border-subtle hover:bg-surface-ground text-folio-text-primary transition">
               Export CSV
             </button>
           </div>
@@ -211,21 +211,21 @@ export function VendorDashboardNew() {
           <div className="absolute right-4 top-4">
             {aiUnlocked && <AIBadge />}
           </div>
-          <h3 className="font-semibold mb-2 text-[var(--text-primary)]">AI Forecast Report</h3>
-          <p className="folio-ui text-[var(--text-secondary)]">
+          <h3 className="font-semibold mb-2 text-folio-text-primary">AI Forecast Report</h3>
+          <p className="folio-ui text-folio-text-secondary">
             Predictive demand, designer affinity, and budget optimization.
           </p>
           <div className="mt-3 flex items-center justify-between">
             {aiUnlocked ? (
               <>
-                <span className="folio-meta text-[var(--text-secondary)]">
+                <span className="folio-meta text-folio-text-secondary">
                   Export the current AI forecast/QBR as a report for your internal meetings.
                 </span>
                 <QBRExportButton />
               </>
             ) : (
               <>
-                <span className="folio-meta text-[var(--text-secondary)]">
+                <span className="folio-meta text-folio-text-secondary">
                   Unlock to generate AI-powered quarterly business review reports.
                 </span>
                 <button
@@ -268,14 +268,14 @@ function KPI({
 }) {
   return (
     <div aria-labelledby={id} data-testid={testId}>
-      <div className="folio-meta text-[var(--text-secondary)] mb-1 font-medium" id={id}>
+      <div className="folio-meta text-folio-text-secondary mb-1 font-medium" id={id}>
         {label}
       </div>
-      <div className="text-2xl md:text-3xl font-semibold text-[var(--text-primary)] mb-0.5">
+      <div className="text-2xl md:text-3xl font-semibold text-folio-text-primary mb-0.5">
         {value}
       </div>
       {sublabel && (
-        <div className="text-[11px] text-[var(--text-secondary)]">{sublabel}</div>
+        <div className="text-[11px] text-folio-text-secondary">{sublabel}</div>
       )}
     </div>
   );
@@ -294,10 +294,10 @@ function TabButton({
     <button
       onClick={onClick}
       className={[
-        'px-4 py-2 rounded-xl border text-[var(--text-primary)] transition',
+        'px-4 py-2 rounded-xl border text-folio-text-primary transition',
         active
-          ? 'bg-[var(--bg-base)]/50 border-[var(--ridge-outer)] shadow-md text-[var(--text-primary)] font-medium'
-          : 'bg-[var(--bg-base)]/30 border-[var(--ridge-inner)] hover:bg-[var(--bg-base)]/40 text-[var(--text-primary)]'
+          ? 'bg-surface-canvas/50 border-folio-border-subtle shadow-md text-folio-text-primary font-medium'
+          : 'bg-surface-canvas/30 border-[var(--ridge-inner)] hover:bg-surface-canvas/40 text-folio-text-primary'
       ].join(' ')}
     >
       {children}

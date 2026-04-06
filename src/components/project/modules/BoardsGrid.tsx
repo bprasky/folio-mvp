@@ -12,10 +12,10 @@ export function BoardsGrid({ modules }: { modules: any[] }) {
           href={m.media?.[0]?.boardUrl || "#"}
           className="ridge-card p-4 flex flex-col gap-2"
         >
-          <div className="folio-meta font-medium text-[var(--text-primary)]">
+          <div className="folio-meta font-medium text-folio-text-primary">
             {m.title || "Design Board"}
           </div>
-          <p className="folio-meta text-[var(--text-secondary)] line-clamp-3">
+          <p className="folio-meta text-folio-text-secondary line-clamp-3">
             {m.description || "Open the selections and moodboard for this project."}
           </p>
         </a>

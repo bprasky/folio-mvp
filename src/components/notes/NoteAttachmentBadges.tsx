@@ -73,14 +73,14 @@ export default function NoteAttachmentBadges({
           return (
             <span
               key={attachment.id}
-              className="inline-flex items-center gap-1 px-2 py-1 bg-[var(--bg-elevated)] text-[var(--text-primary)] text-xs rounded-full"
+              className="inline-flex items-center gap-1 px-2 py-1 bg-surface-ground text-folio-text-primary text-xs rounded-full"
             >
               <FaFolder />
               {attachment.project.title}
               {onRemove && (
                 <button
                   onClick={() => onRemove(attachment.id)}
-                  className="ml-1 hover:text-[var(--text-primary)]"
+                  className="ml-1 hover:text-folio-text-primary"
                 >
                   ×
                 </button>

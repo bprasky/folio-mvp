@@ -280,7 +280,7 @@ export default function SelectionEditor(props: SelectionEditorProps) {
         <button
           type="button"
           onClick={onCancel}
-          className="px-4 py-2 border border-[var(--ridge-outer)] rounded-lg hover:bg-[var(--bg-elevated)]"
+          className="px-4 py-2 border border-folio-border-subtle rounded-lg hover:bg-surface-ground"
         >
           Cancel
         </button>

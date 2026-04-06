@@ -70,7 +70,7 @@ export default function RepDashboardPage() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--accent)] mx-auto"></div>
-          <p className="mt-4 text-[var(--text-secondary)]">Loading dashboard...</p>
+          <p className="mt-4 text-folio-text-secondary">Loading dashboard...</p>
         </div>
       </div>
     );
@@ -78,10 +78,10 @@ export default function RepDashboardPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[var(--bg-elevated)] px-4">
+      <div className="min-h-screen flex items-center justify-center bg-surface-ground px-4">
         <div className="max-w-md w-full bg-white rounded-lg shadow-md p-8 text-center">
           <h1 className="text-2xl font-bold mb-4 text-red-600">Error</h1>
-          <p className="text-[var(--text-secondary)] mb-6">{error}</p>
+          <p className="text-folio-text-secondary mb-6">{error}</p>
           <Link
             href="/"
             className="inline-block bg-[var(--accent)] text-white py-2 px-4 rounded hover:bg-[var(--accent-hover)]"
@@ -94,7 +94,7 @@ export default function RepDashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--bg-elevated)]">
+    <div className="min-h-screen bg-surface-ground">
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="flex gap-8">
           {/* Left Sidebar */}
@@ -102,14 +102,14 @@ export default function RepDashboardPage() {
             <div className="bg-white rounded-lg shadow p-6">
               <h2 className="text-lg font-semibold mb-4">Following</h2>
               {following.length === 0 ? (
-                <p className="text-sm text-[var(--text-secondary)]">No designers yet</p>
+                <p className="text-sm text-folio-text-secondary">No designers yet</p>
               ) : (
                 <div className="space-y-3">
                   {following.map((designer) => (
                     <Link
                       key={designer.id}
                       href={`/designer/${designer.id}`}
-                      className="flex items-center gap-3 p-2 rounded hover:bg-[var(--bg-elevated)]"
+                      className="flex items-center gap-3 p-2 rounded hover:bg-surface-ground"
                     >
                       {designer.profileImage ? (
                         <img
@@ -118,15 +118,15 @@ export default function RepDashboardPage() {
                           className="w-10 h-10 rounded-full"
                         />
                       ) : (
-                        <div className="w-10 h-10 rounded-full bg-[var(--bg-elevated)] flex items-center justify-center">
-                          <span className="text-[var(--text-secondary)] text-sm">
+                        <div className="w-10 h-10 rounded-full bg-surface-ground flex items-center justify-center">
+                          <span className="text-folio-text-secondary text-sm">
                             {designer.name.charAt(0).toUpperCase()}
                           </span>
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium truncate">{designer.name}</p>
-                        <p className="text-xs text-[var(--text-secondary)] truncate">{designer.email}</p>
+                        <p className="text-xs text-folio-text-secondary truncate">{designer.email}</p>
                       </div>
                     </Link>
                   ))}
@@ -139,14 +139,14 @@ export default function RepDashboardPage() {
           <main className="flex-1">
             <div className="bg-white rounded-lg shadow p-6 mb-6">
               <h1 className="text-2xl font-bold mb-2">Rep Mode Dashboard</h1>
-              <p className="text-[var(--text-secondary)] text-sm">
+              <p className="text-folio-text-secondary text-sm">
                 This feed is automatically populated with designers and projects that have tagged your organization on Folio.
               </p>
             </div>
 
             {feedItems.length === 0 ? (
               <div className="bg-white rounded-lg shadow p-12 text-center">
-                <p className="text-[var(--text-secondary)]">No activity yet. Projects where your organization is tagged will appear here.</p>
+                <p className="text-folio-text-secondary">No activity yet. Projects where your organization is tagged will appear here.</p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -177,19 +177,19 @@ export default function RepDashboardPage() {
                             {item.designer && (
                               <Link
                                 href={`/designer/${item.designer.id}`}
-                                className="text-sm text-[var(--text-secondary)] hover:text-[var(--accent)] ml-2"
+                                className="text-sm text-folio-text-secondary hover:text-[var(--accent)] ml-2"
                               >
                                 by {item.designer.name}
                               </Link>
                             )}
                           </div>
-                          <span className="text-xs text-[var(--text-secondary)]">
+                          <span className="text-xs text-folio-text-secondary">
                             {new Date(item.createdAt).toLocaleDateString()}
                           </span>
                         </div>
-                        <p className="text-sm text-[var(--text-secondary)] mb-2">{item.summary}</p>
+                        <p className="text-sm text-folio-text-secondary mb-2">{item.summary}</p>
                         {item.productCount > 0 && (
-                          <div className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
+                          <div className="flex items-center gap-2 text-sm text-folio-text-secondary">
                             <span>{item.productCount} product{item.productCount !== 1 ? 's' : ''} tagged</span>
                           </div>
                         )}

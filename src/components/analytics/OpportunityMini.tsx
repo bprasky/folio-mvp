@@ -17,7 +17,7 @@ export function OpportunityMini({ opportunities }: OpportunityMiniProps) {
       case 'Build': return 'bg-[var(--emerald)]/10 text-[var(--emerald)] border-[var(--emerald)]/20';
       case 'Maintain': return 'bg-[var(--teal)]/10 text-[var(--teal)] border-[var(--teal)]/20';
       case 'Watch': return 'bg-[var(--slate)]/10 text-[var(--slate)] border-[var(--slate)]/20';
-      default: return 'bg-[var(--bg-elevated)] text-[var(--text-primary)] border-[var(--ridge-outer)]';
+      default: return 'bg-surface-ground text-folio-text-primary border-folio-border-subtle';
     }
   };
 

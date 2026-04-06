@@ -60,7 +60,7 @@ export function GalleryBlock({ images, roomName }: GalleryBlockProps) {
       {/* Room Label (if provided) */}
       {roomName && (
         <div className="mb-6">
-          <div className="folio-ui uppercase tracking-wider text-[var(--text-secondary)]">
+          <div className="folio-ui uppercase tracking-wider text-folio-text-secondary">
             {roomName}
           </div>
         </div>

@@ -88,7 +88,7 @@ export default function ContactsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[var(--bg-base)] p-6">
+      <div className="min-h-screen bg-surface-canvas p-6">
         <div className="max-w-3xl mx-auto">
           <div className="h-8 w-48 rounded-lg animate-pulse" style={{ backgroundColor: '#E8E4DF' }} />
           <div className="mt-8 space-y-4">
@@ -102,11 +102,11 @@ export default function ContactsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--bg-base)] p-6">
+    <div className="min-h-screen bg-surface-canvas p-6">
       <div className="max-w-3xl mx-auto">
         <div className="mb-8">
-          <h1 className="folio-h1 text-[var(--text-primary)] mb-3">Contacts</h1>
-          <p className="folio-body text-[var(--text-secondary)]">
+          <h1 className="folio-h1 text-folio-text-primary mb-3">Contacts</h1>
+          <p className="folio-body text-folio-text-secondary">
             Import your professional contacts so Folio can connect you with your vendor reps automatically.
           </p>
         </div>
@@ -125,10 +125,10 @@ export default function ContactsPage() {
           <div>
             {importStats && (
               <div className="glass-surface rounded-xl p-4 mb-6">
-                <p className="text-sm text-[var(--text-primary)] font-medium">
+                <p className="text-sm text-folio-text-primary font-medium">
                   Import complete
                 </p>
-                <p className="text-xs text-[var(--text-secondary)] mt-1">
+                <p className="text-xs text-folio-text-secondary mt-1">
                   {importStats.totalRaw} contacts processed · {importStats.totalFiltered} professional · {importStats.matchedCount} matched to vendors
                 </p>
               </div>
@@ -146,7 +146,7 @@ export default function ContactsPage() {
         {viewState === 'manage' && (
           <div>
             <div className="flex items-center justify-between mb-6">
-              <p className="text-sm text-[var(--text-secondary)]">
+              <p className="text-sm text-folio-text-secondary">
                 {totalContacts} contacts imported
               </p>
               <Button
@@ -159,14 +159,14 @@ export default function ContactsPage() {
 
             {vendorGroups.length === 0 && unmatchedContacts.length === 0 ? (
               <div className="text-center py-16">
-                <p className="text-sm text-[var(--text-tertiary)]">No contacts imported yet.</p>
+                <p className="text-sm text-folio-text-tertiary">No contacts imported yet.</p>
               </div>
             ) : (
               <div className="space-y-6">
                 {vendorGroups.map(group => (
                   <div key={group.vendorName} className="glass-surface rounded-xl p-4">
                     <div className="flex items-center gap-2 mb-3">
-                      <h3 className="text-sm font-medium text-[var(--text-primary)]">
+                      <h3 className="text-sm font-medium text-folio-text-primary">
                         {group.vendorName}
                       </h3>
                       <span className="text-xs px-1.5 py-0.5 rounded-full" style={{
@@ -183,8 +183,8 @@ export default function ContactsPage() {
                       {group.contacts.map(contact => (
                         <div key={contact.id} className="flex items-center justify-between py-2 border-b border-[#F0EDE9] last:border-b-0">
                           <div>
-                            <p className="text-sm text-[var(--text-primary)]">{contact.name}</p>
-                            <p className="text-xs text-[var(--text-tertiary)]">
+                            <p className="text-sm text-folio-text-primary">{contact.name}</p>
+                            <p className="text-xs text-folio-text-tertiary">
                               {contact.email}
                               {contact.title && ` · ${contact.title}`}
                             </p>
@@ -202,7 +202,7 @@ export default function ContactsPage() {
                             </button>
                             <button
                               onClick={() => handleDeleteContact(contact.id)}
-                              className="text-xs text-[var(--text-tertiary)] hover:text-red-500 transition-colors"
+                              className="text-xs text-folio-text-tertiary hover:text-red-500 transition-colors"
                             >
                               Remove
                             </button>
@@ -215,26 +215,26 @@ export default function ContactsPage() {
 
                 {unmatchedContacts.length > 0 && (
                   <div className="glass-surface rounded-xl p-4">
-                    <h3 className="text-sm font-medium text-[var(--text-tertiary)] mb-3">
+                    <h3 className="text-sm font-medium text-folio-text-tertiary mb-3">
                       Unmatched Contacts ({unmatchedContacts.length})
                     </h3>
                     <div className="space-y-2">
                       {unmatchedContacts.slice(0, 10).map(contact => (
                         <div key={contact.id} className="flex items-center justify-between py-2 border-b border-[#F0EDE9] last:border-b-0">
                           <div>
-                            <p className="text-sm text-[var(--text-secondary)]">{contact.name}</p>
-                            <p className="text-xs text-[var(--text-tertiary)]">{contact.email}{contact.company && ` · ${contact.company}`}</p>
+                            <p className="text-sm text-folio-text-secondary">{contact.name}</p>
+                            <p className="text-xs text-folio-text-tertiary">{contact.email}{contact.company && ` · ${contact.company}`}</p>
                           </div>
                           <button
                             onClick={() => handleDeleteContact(contact.id)}
-                            className="text-xs text-[var(--text-tertiary)] hover:text-red-500 transition-colors"
+                            className="text-xs text-folio-text-tertiary hover:text-red-500 transition-colors"
                           >
                             Remove
                           </button>
                         </div>
                       ))}
                       {unmatchedContacts.length > 10 && (
-                        <p className="text-xs text-[var(--text-tertiary)] pt-2">
+                        <p className="text-xs text-folio-text-tertiary pt-2">
                           + {unmatchedContacts.length - 10} more
                         </p>
                       )}

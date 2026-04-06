@@ -18,7 +18,7 @@ type EventCard = {
 export default function EventMosaic({ events, canEdit = false }: { events: EventCard[]; canEdit?: boolean }) {
   if (!events?.length) {
     return (
-      <div className="rounded-xl border border-[var(--ridge-outer)] bg-[var(--bg-base)] p-6 text-[var(--text-secondary)]">
+      <div className="rounded-xl border border-folio-border-subtle bg-surface-canvas p-6 text-folio-text-secondary">
         No events yet—check back soon.
       </div>
     );
@@ -46,7 +46,7 @@ export default function EventMosaic({ events, canEdit = false }: { events: Event
                 {e.title}
               </div>
               {e.location ? (
-                <div className="text-sm text-[var(--text-secondary)]">{e.location}</div>
+                <div className="text-sm text-folio-text-secondary">{e.location}</div>
               ) : null}
             </div>
           </Link>

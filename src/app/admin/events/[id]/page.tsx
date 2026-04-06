@@ -61,10 +61,10 @@ export default async function EventAdminPage({ params }: EventAdminPageProps) {
 
     if (!event) {
       return (
-        <div className="min-h-screen bg-[var(--bg-base)] flex items-center justify-center">
+        <div className="min-h-screen bg-surface-canvas flex items-center justify-center">
           <div className="text-center">
-            <h1 className="folio-h2 text-[var(--text-primary)] mb-2">Event Not Found</h1>
-            <p className="folio-body text-[var(--text-secondary)]">The event you're looking for doesn't exist.</p>
+            <h1 className="folio-h2 text-folio-text-primary mb-2">Event Not Found</h1>
+            <p className="folio-body text-folio-text-secondary">The event you're looking for doesn't exist.</p>
           </div>
         </div>
       );
@@ -88,14 +88,14 @@ export default async function EventAdminPage({ params }: EventAdminPageProps) {
     });
 
     return (
-      <div className="min-h-screen bg-[var(--bg-base)] py-8">
+      <div className="min-h-screen bg-surface-canvas py-8">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <RidgeCard padding="none">
-            <div className="px-6 py-4 border-b border-[var(--border-subtle)] bg-[var(--bg-elevated)]">
-              <h1 className="folio-h2 text-[var(--text-primary)]">
+            <div className="px-6 py-4 border-b border-[var(--border-subtle)] bg-surface-ground">
+              <h1 className="folio-h2 text-folio-text-primary">
                 Edit Event: {event.title}
               </h1>
-              <p className="folio-meta text-[var(--text-secondary)] mt-1">
+              <p className="folio-meta text-folio-text-secondary mt-1">
                 Created by {event.createdBy.name} ({event.createdBy.email})
               </p>
             </div>
@@ -113,10 +113,10 @@ export default async function EventAdminPage({ params }: EventAdminPageProps) {
   } catch (error) {
     console.error('Error loading event:', error);
     return (
-      <div className="min-h-screen bg-[var(--bg-base)] flex items-center justify-center">
+      <div className="min-h-screen bg-surface-canvas flex items-center justify-center">
         <div className="text-center">
-          <h1 className="folio-h2 text-[var(--text-primary)] mb-2">Error Loading Event</h1>
-          <p className="folio-body text-[var(--text-secondary)]">Something went wrong while loading the event.</p>
+          <h1 className="folio-h2 text-folio-text-primary mb-2">Error Loading Event</h1>
+          <p className="folio-body text-folio-text-secondary">Something went wrong while loading the event.</p>
         </div>
       </div>
     );

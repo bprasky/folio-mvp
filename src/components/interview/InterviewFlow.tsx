@@ -142,10 +142,10 @@ export function InterviewFlow({
       return (
         <motion.div {...modeToInterviewTransition} className="h-full flex items-center justify-center">
           <div className="max-w-md text-center space-y-6 px-8">
-            <h3 className="text-xl font-serif text-[var(--text-primary)]">
+            <h3 className="text-xl font-serif text-folio-text-primary">
               Welcome back
             </h3>
-            <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
+            <p className="text-sm text-folio-text-secondary leading-relaxed">
               You have an interview in progress. Would you like to pick up where you left off?
             </p>
             <div className="flex flex-col gap-3 pt-2">
@@ -164,7 +164,7 @@ export function InterviewFlow({
                   setShowDraftResume(false);
                   // If initialMode was set, startSession will fire via useEffect
                 }}
-                className="px-6 py-3 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+                className="px-6 py-3 text-sm font-medium text-folio-text-secondary hover:text-folio-text-primary transition-colors"
               >
                 Start over
               </button>
@@ -220,7 +220,7 @@ export function InterviewFlow({
             className="h-full flex items-center justify-center"
           >
             <div className="text-center">
-              <p className="text-[var(--text-secondary)] mb-4">
+              <p className="text-folio-text-secondary mb-4">
                 Voice interview coming soon.
               </p>
               <button
@@ -258,7 +258,7 @@ export function InterviewFlow({
       <button
         type="button"
         onClick={onCancel}
-        className="absolute top-4 right-4 z-10 p-2 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors"
+        className="absolute top-4 right-4 z-10 p-2 text-folio-text-tertiary hover:text-folio-text-secondary transition-colors"
         aria-label="Close interview"
       >
         <X className="w-5 h-5" />
@@ -276,7 +276,7 @@ export function InterviewFlow({
       {/* Loading overlay for initial session start */}
       {isLoading && session.step === "mode-selection" && (
         <div className="absolute inset-0 bg-white/80 flex items-center justify-center z-20">
-          <Loader2 className="w-6 h-6 text-[var(--text-tertiary)] animate-spin" />
+          <Loader2 className="w-6 h-6 text-folio-text-tertiary animate-spin" />
         </div>
       )}
 

@@ -75,7 +75,7 @@ export default function ConfirmDialog({
         <div className="mb-4">
           <h2 
             id="dialog-title"
-            className="text-lg font-semibold text-[var(--text-primary)]"
+            className="text-lg font-semibold text-folio-text-primary"
           >
             {title}
           </h2>
@@ -85,7 +85,7 @@ export default function ConfirmDialog({
         <div className="mb-6">
           <p 
             id="dialog-description"
-            className="text-sm text-[var(--text-secondary)] leading-relaxed"
+            className="text-sm text-folio-text-secondary leading-relaxed"
           >
             {description}
           </p>
@@ -95,7 +95,7 @@ export default function ConfirmDialog({
         <div className="flex items-center justify-end gap-3">
           <button
             onClick={onCancel}
-            className="px-4 py-2 text-sm font-medium text-[var(--text-primary)] bg-[var(--bg-base)] border border-[var(--ridge-outer)] rounded-lg hover:bg-[var(--bg-elevated)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent transition-colors"
+            className="px-4 py-2 text-sm font-medium text-folio-text-primary bg-surface-canvas border border-folio-border-subtle rounded-lg hover:bg-surface-ground focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent transition-colors"
           >
             {cancelText}
           </button>

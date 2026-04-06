@@ -21,7 +21,7 @@ interface ProgressIndicatorProps {
  * - If total > 5, show first few filled + "..." + remaining
  *
  * Line variant:
- * - Thin line: h-1 bg-[var(--bg-elevated)] rounded-full
+ * - Thin line: h-1 bg-surface-ground rounded-full
  * - Fill: h-1 bg-[var(--text-primary)] rounded-full, width = (current/total * 100)%
  *
  * DO NOT show: "Question 3 of 12" or "0/4" counters
@@ -36,7 +36,7 @@ export function ProgressIndicator({
 
     return (
       <div className="w-full max-w-xs">
-        <div className="h-1 bg-[var(--bg-elevated)] rounded-full overflow-hidden">
+        <div className="h-1 bg-surface-ground rounded-full overflow-hidden">
           <div
             className="h-1 bg-[var(--text-primary)] rounded-full transition-all duration-300 ease-out"
             style={{ width: `${progress}%` }}
@@ -73,7 +73,7 @@ export function ProgressIndicator({
         );
       })}
       {showEllipsis && (
-        <span className="text-[var(--text-tertiary)] text-xs tracking-wider">...</span>
+        <span className="text-folio-text-tertiary text-xs tracking-wider">...</span>
       )}
     </div>
   );

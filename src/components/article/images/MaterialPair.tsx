@@ -32,7 +32,7 @@ export default function MaterialPair({
               className="w-full h-auto"
             />
             {caption ? (
-              <figcaption className="p-2 folio-meta text-[var(--text-secondary)]">
+              <figcaption className="p-2 folio-meta text-folio-text-secondary">
                 {caption}
               </figcaption>
             ) : null}
@@ -50,7 +50,7 @@ export default function MaterialPair({
               className="w-full h-auto"
             />
             {detail.caption ? (
-              <figcaption className="p-2 folio-meta text-[var(--text-secondary)]">
+              <figcaption className="p-2 folio-meta text-folio-text-secondary">
                 {detail.caption}
               </figcaption>
             ) : null}

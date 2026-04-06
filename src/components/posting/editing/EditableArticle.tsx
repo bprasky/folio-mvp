@@ -127,7 +127,7 @@ function PullQuotePicker({
           isEdited={isEdited}
           isEditing={isEditing}
           as="blockquote"
-          className="font-[var(--font-headline)] text-lg md:text-xl italic leading-relaxed text-[var(--text-secondary)]"
+          className="font-[var(--font-headline)] text-lg md:text-xl italic leading-relaxed text-folio-text-secondary"
           onStartEdit={onStartEdit}
           onSave={onSave}
           onCancel={onCancel}
@@ -136,7 +136,7 @@ function PullQuotePicker({
 
         {/* Attribution line */}
         {selectedContext && (
-          <p className="mt-2 folio-meta tracking-wide uppercase text-[var(--text-tertiary)]">
+          <p className="mt-2 folio-meta tracking-wide uppercase text-folio-text-tertiary">
             — {selectedContext}
           </p>
         )}
@@ -149,19 +149,19 @@ function PullQuotePicker({
                 <button
                   onClick={() => handleCycle(-1)}
                   disabled={saving}
-                  className="text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] disabled:opacity-40 transition-colors p-0.5"
+                  className="text-folio-text-tertiary hover:text-folio-text-secondary disabled:opacity-40 transition-colors p-0.5"
                   title="Previous quote"
                   aria-label="Previous pull quote"
                 >
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 12L6 8L10 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                 </button>
-                <span className="folio-meta text-[var(--text-tertiary)] tabular-nums">
+                <span className="folio-meta text-folio-text-tertiary tabular-nums">
                   {currentIndex >= 0 ? currentIndex + 1 : 1} of {alternatives.length}
                 </span>
                 <button
                   onClick={() => handleCycle(1)}
                   disabled={saving}
-                  className="text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] disabled:opacity-40 transition-colors p-0.5"
+                  className="text-folio-text-tertiary hover:text-folio-text-secondary disabled:opacity-40 transition-colors p-0.5"
                   title="Next quote"
                   aria-label="Next pull quote"
                 >
@@ -173,7 +173,7 @@ function PullQuotePicker({
           <button
             onClick={handleRemove}
             disabled={saving}
-            className="flex items-center gap-1 folio-meta text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] disabled:opacity-40 transition-colors"
+            className="flex items-center gap-1 folio-meta text-folio-text-tertiary hover:text-folio-text-secondary disabled:opacity-40 transition-colors"
             title="Remove pull quote"
             aria-label="Remove pull quote"
           >
@@ -192,7 +192,7 @@ function PullQuotePicker({
         <button
           onClick={handleAdd}
           disabled={saving}
-          className="folio-meta text-[var(--accent)] hover:text-[var(--text-primary)] disabled:opacity-40 transition-colors flex items-center gap-1"
+          className="folio-meta text-[var(--accent)] hover:text-folio-text-primary disabled:opacity-40 transition-colors flex items-center gap-1"
         >
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 3V11M3 7H11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
           Add pull quote
@@ -274,16 +274,16 @@ export default function EditableArticle({
     <div className="max-w-3xl mx-auto space-y-8 py-6">
       {/* Section header */}
       <div className="flex items-center gap-2 mb-2">
-        <h2 className="folio-h3 text-[var(--text-primary)]">Edit Article</h2>
-        <span className="folio-meta text-[var(--text-tertiary)]">
+        <h2 className="folio-h3 text-folio-text-primary">Edit Article</h2>
+        <span className="folio-meta text-folio-text-tertiary">
           Click any text to edit
         </span>
       </div>
 
       {/* Lead */}
       {lead && (
-        <div className="space-y-3 pb-6 border-b border-[var(--border-default)]">
-          <label className="folio-meta font-medium text-[var(--text-tertiary)] uppercase tracking-wider">
+        <div className="space-y-3 pb-6 border-b border-folio-border-subtle">
+          <label className="folio-meta font-medium text-folio-text-tertiary uppercase tracking-wider">
             Headline
           </label>
           <EditableParagraph
@@ -300,7 +300,7 @@ export default function EditableArticle({
           />
           {lead.deck !== undefined && (
             <>
-              <label className="folio-meta font-medium text-[var(--text-tertiary)] uppercase tracking-wider">
+              <label className="folio-meta font-medium text-folio-text-tertiary uppercase tracking-wider">
                 Subtitle
               </label>
               <EditableParagraph
@@ -308,7 +308,7 @@ export default function EditableArticle({
                 isEdited={isEdited(-1, 0, 'deck')}
                 isEditing={isEditing(-1, 0, 'deck')}
                 placeholder="Article subtitle..."
-                className="folio-body text-[var(--text-secondary)]"
+                className="folio-body text-folio-text-secondary"
                 onStartEdit={() => setEditingField({ chapterIndex: -1, paragraphIndex: 0, field: 'deck' })}
                 onSave={(t) => handleSave(-1, 0, 'deck', t)}
                 onCancel={() => setEditingField(null)}
@@ -321,8 +321,8 @@ export default function EditableArticle({
 
       {/* Introduction */}
       {blocks.introduction && Array.isArray(blocks.introduction) && (blocks.introduction as string[]).length > 0 && (
-        <div className="space-y-3 pb-6 border-b border-[var(--border-default)]">
-          <label className="folio-meta font-medium text-[var(--text-tertiary)] uppercase tracking-wider">
+        <div className="space-y-3 pb-6 border-b border-folio-border-subtle">
+          <label className="folio-meta font-medium text-folio-text-tertiary uppercase tracking-wider">
             Introduction
           </label>
           {(blocks.introduction as string[]).map((para: string, pi: number) => (
@@ -332,7 +332,7 @@ export default function EditableArticle({
               isEdited={isEdited(-2, pi, 'introduction')}
               isEditing={isEditing(-2, pi, 'introduction')}
               placeholder="Introduction paragraph..."
-              className="folio-body text-[var(--text-primary)]"
+              className="folio-body text-folio-text-primary"
               onStartEdit={() => setEditingField({ chapterIndex: -2, paragraphIndex: pi, field: 'introduction' })}
               onSave={(t) => handleSave(-2, pi, 'introduction', t)}
               onCancel={() => setEditingField(null)}
@@ -344,11 +344,11 @@ export default function EditableArticle({
 
       {/* Gallery Chapters */}
       {chapters.map((chapter, ci) => (
-        <div key={ci} className="space-y-4 pb-6 border-b border-[var(--border-default)] last:border-b-0">
+        <div key={ci} className="space-y-4 pb-6 border-b border-folio-border-subtle last:border-b-0">
           {/* Chapter title */}
           {chapter.title !== undefined && (
             <div>
-              <label className="folio-meta font-medium text-[var(--text-tertiary)] uppercase tracking-wider">
+              <label className="folio-meta font-medium text-folio-text-tertiary uppercase tracking-wider">
                 Section {ci + 1}
               </label>
               <EditableParagraph
@@ -373,7 +373,7 @@ export default function EditableArticle({
                 const img = imageMap.get(imgId);
                 if (!img) return null;
                 return (
-                  <div key={imgId} className="flex-shrink-0 w-16 h-16 rounded overflow-hidden bg-[var(--bg-base)]">
+                  <div key={imgId} className="flex-shrink-0 w-16 h-16 rounded overflow-hidden bg-surface-canvas">
                     <SafeImage
                       src={img.url}
                       alt={img.name || ''}
@@ -385,7 +385,7 @@ export default function EditableArticle({
                 );
               })}
               {chapter.imageIds.length > 6 && (
-                <span className="flex-shrink-0 w-16 h-16 rounded bg-[var(--bg-base)] flex items-center justify-center folio-meta text-[var(--text-tertiary)]">
+                <span className="flex-shrink-0 w-16 h-16 rounded bg-surface-canvas flex items-center justify-center folio-meta text-folio-text-tertiary">
                   +{chapter.imageIds.length - 6}
                 </span>
               )}
@@ -402,7 +402,7 @@ export default function EditableArticle({
                   isEdited={isEdited(ci, pi, 'body')}
                   isEditing={isEditing(ci, pi, 'body')}
                   placeholder="Paragraph text..."
-                  className="folio-body text-[var(--text-primary)] leading-relaxed"
+                  className="folio-body text-folio-text-primary leading-relaxed"
                   onStartEdit={() => setEditingField({ chapterIndex: ci, paragraphIndex: pi, field: 'body' })}
                   onSave={(t) => handleSave(ci, pi, 'body', t)}
                   onCancel={() => setEditingField(null)}
@@ -437,7 +437,7 @@ export default function EditableArticle({
       ))}
 
       {chapters.length === 0 && (
-        <p className="folio-body text-[var(--text-tertiary)] text-center py-8">
+        <p className="folio-body text-folio-text-tertiary text-center py-8">
           No article content yet. Generate an article first.
         </p>
       )}

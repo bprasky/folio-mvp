@@ -16,7 +16,7 @@ interface ModeSwitcherProps {
  *
  * Styling:
  * - Centered at bottom of screen
- * - text-sm text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]
+ * - text-sm text-folio-text-tertiary hover:text-folio-text-secondary
  * - Icon + text: "Switch to voice" or "Switch to typing"
  * - Subtle, not prominent
  * - 24px bottom margin from screen edge
@@ -35,7 +35,7 @@ export function ModeSwitcher({
       type="button"
       onClick={onSwitch}
       disabled={disabled}
-      className="flex items-center gap-2 text-sm text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      className="flex items-center gap-2 text-sm text-folio-text-tertiary hover:text-folio-text-secondary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
     >
       <Icon className="w-4 h-4" />
       <span>{label}</span>

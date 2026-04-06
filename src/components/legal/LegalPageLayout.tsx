@@ -67,21 +67,21 @@ export function LegalPageLayout({
   };
 
   return (
-    <div className="min-h-screen bg-[var(--bg-base)]">
+    <div className="min-h-screen bg-surface-canvas">
       {/* Header */}
-      <header className="border-b border-[var(--border)] bg-[var(--bg-base)]">
+      <header className="border-b border-folio-border-subtle bg-surface-canvas">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <Link
             href="/"
-            className="inline-flex items-center gap-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors mb-4"
+            className="inline-flex items-center gap-2 text-folio-text-secondary hover:text-folio-text-primary transition-colors mb-4"
           >
             <ArrowLeft className="w-4 h-4" />
             <span className="text-sm">Back to Folio</span>
           </Link>
-          <h1 className="text-3xl md:text-4xl font-[var(--font-headline)] font-semibold text-[var(--text-primary)]">
+          <h1 className="text-3xl md:text-4xl font-[var(--font-headline)] font-semibold text-folio-text-primary">
             {title}
           </h1>
-          <div className="mt-2 flex flex-wrap gap-4 text-sm text-[var(--text-secondary)]">
+          <div className="mt-2 flex flex-wrap gap-4 text-sm text-folio-text-secondary">
             <span>Last Updated: {lastUpdated}</span>
             <span>Effective Date: {effectiveDate}</span>
           </div>
@@ -100,7 +100,7 @@ export function LegalPageLayout({
           <aside className="hidden lg:block">
             <nav className="sticky top-24">
               <div className="ridge-card p-5">
-                <h2 className="text-sm font-semibold text-[var(--text-primary)] mb-4 uppercase tracking-wide">
+                <h2 className="text-sm font-semibold text-folio-text-primary mb-4 uppercase tracking-wide">
                   Table of Contents
                 </h2>
                 <ul className="space-y-2">
@@ -115,7 +115,7 @@ export function LegalPageLayout({
                           'text-left text-sm transition-colors w-full',
                           activeSection === item.id
                             ? 'text-[var(--accent)] font-medium'
-                            : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                            : 'text-folio-text-secondary hover:text-folio-text-primary'
                         )}
                       >
                         {item.title}

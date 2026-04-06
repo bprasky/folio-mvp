@@ -96,16 +96,16 @@ export default function RepResolverModal({
         {step === 'loading' && (
           <div className="py-8 text-center">
             <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-[var(--accent)]" />
-            <p className="mt-2 text-sm text-[var(--text-secondary)]">Finding your rep...</p>
+            <p className="mt-2 text-sm text-folio-text-secondary">Finding your rep...</p>
           </div>
         )}
 
         {step === 'search' && (
           <>
-            <h3 className="folio-h3 text-[var(--text-primary)] mb-1">
+            <h3 className="folio-h3 text-folio-text-primary mb-1">
               Find your rep at {resolution?.vendorOrgName || vendorName}
             </h3>
-            <p className="text-sm text-[var(--text-secondary)] mb-4">
+            <p className="text-sm text-folio-text-secondary mb-4">
               Select who should receive your request for {productName}.
             </p>
 
@@ -114,7 +114,7 @@ export default function RepResolverModal({
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search by name..."
-              className="w-full px-3 py-2 mb-3 bg-white border border-[#E8E6E3] rounded-lg text-[#2C2925] placeholder-[#A39E97] focus:outline-none focus:border-[#C9C4BC] transition-all"
+              className="w-full px-3 py-2 mb-3 bg-white border border-folio-border-subtle rounded-lg text-folio-text-primary placeholder-[#A39E97] focus:outline-none focus:border-folio-border-strong transition-all"
             />
 
             <div className="space-y-2 max-h-64 overflow-y-auto">
@@ -122,7 +122,7 @@ export default function RepResolverModal({
                 <button
                   key={member.userId}
                   onClick={() => { onRepSelected(member.userId); onClose(); }}
-                  className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-[var(--bg-elevated)] transition-colors text-left"
+                  className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-surface-ground transition-colors text-left"
                 >
                   {member.profileImage ? (
                     <Image
@@ -133,13 +133,13 @@ export default function RepResolverModal({
                       className="rounded-full object-cover"
                     />
                   ) : (
-                    <div className="w-9 h-9 rounded-full bg-[var(--bg-elevated)] flex items-center justify-center text-sm font-medium text-[var(--text-secondary)]">
+                    <div className="w-9 h-9 rounded-full bg-surface-ground flex items-center justify-center text-sm font-medium text-folio-text-secondary">
                       {member.name.charAt(0)}
                     </div>
                   )}
                   <div>
-                    <div className="text-sm font-medium text-[var(--text-primary)]">{member.name}</div>
-                    <div className="text-xs text-[var(--text-tertiary)] capitalize">{member.role.toLowerCase()}</div>
+                    <div className="text-sm font-medium text-folio-text-primary">{member.name}</div>
+                    <div className="text-xs text-folio-text-tertiary capitalize">{member.role.toLowerCase()}</div>
                   </div>
                   <span className="ml-auto text-xs text-[var(--accent)]">Send to</span>
                 </button>
@@ -157,32 +157,32 @@ export default function RepResolverModal({
 
         {step === 'invite' && (
           <>
-            <h3 className="folio-h3 text-[var(--text-primary)] mb-1">
+            <h3 className="folio-h3 text-folio-text-primary mb-1">
               Invite your rep to Folio
             </h3>
-            <p className="text-sm text-[var(--text-secondary)] mb-4">
+            <p className="text-sm text-folio-text-secondary mb-4">
               {vendorName}
             </p>
 
             <div className="space-y-3">
               <div>
-                <label className="block text-sm text-[var(--text-tertiary)] mb-1 font-medium">Rep&apos;s name</label>
+                <label className="block text-sm text-folio-text-tertiary mb-1 font-medium">Rep&apos;s name</label>
                 <input
                   type="text"
                   value={inviteName}
                   onChange={(e) => setInviteName(e.target.value)}
                   placeholder="Jane Smith"
-                  className="w-full px-3 py-2 bg-white border border-[#E8E6E3] rounded-lg text-[#2C2925] placeholder-[#A39E97] focus:outline-none focus:border-[#C9C4BC] transition-all"
+                  className="w-full px-3 py-2 bg-white border border-folio-border-subtle rounded-lg text-folio-text-primary placeholder-[#A39E97] focus:outline-none focus:border-folio-border-strong transition-all"
                 />
               </div>
               <div>
-                <label className="block text-sm text-[var(--text-tertiary)] mb-1 font-medium">Rep&apos;s email</label>
+                <label className="block text-sm text-folio-text-tertiary mb-1 font-medium">Rep&apos;s email</label>
                 <input
                   type="email"
                   value={inviteEmail}
                   onChange={(e) => setInviteEmail(e.target.value)}
                   placeholder="jane@vendor.com"
-                  className="w-full px-3 py-2 bg-white border border-[#E8E6E3] rounded-lg text-[#2C2925] placeholder-[#A39E97] focus:outline-none focus:border-[#C9C4BC] transition-all"
+                  className="w-full px-3 py-2 bg-white border border-folio-border-subtle rounded-lg text-folio-text-primary placeholder-[#A39E97] focus:outline-none focus:border-folio-border-strong transition-all"
                 />
               </div>
             </div>
@@ -222,7 +222,7 @@ export default function RepResolverModal({
             </div>
 
             {onSendViaFolio && (
-              <p className="text-xs text-[var(--text-tertiary)] mt-2 text-center">
+              <p className="text-xs text-folio-text-tertiary mt-2 text-center">
                 Folio sends the email on your behalf. Replies come back to your Folio inbox.
               </p>
             )}
@@ -230,7 +230,7 @@ export default function RepResolverModal({
             {members && members.length > 0 && (
               <button
                 onClick={() => setStep('search')}
-                className="w-full mt-3 text-sm text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] text-center"
+                className="w-full mt-3 text-sm text-folio-text-tertiary hover:text-folio-text-secondary text-center"
               >
                 Back to org members
               </button>

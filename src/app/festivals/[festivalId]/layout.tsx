@@ -1,6 +1,6 @@
 /**
  * FestivalLayout - Root layout for festival pages
- * Folio Design System: Uses FestivalLayoutClient with bg-[var(--bg-base)]
+ * Folio Design System: Uses FestivalLayoutClient with bg-surface-canvas
  */
 import FestivalLayoutClient from "./FestivalLayoutClient";
 

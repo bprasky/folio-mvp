@@ -49,9 +49,9 @@ const roleColors: Record<string, string> = {
   ADMIN: 'bg-amber-100 text-amber-800',
   DESIGNER: 'bg-blue-100 text-blue-800',
   VENDOR: 'bg-green-100 text-green-800',
-  INDIVIDUAL: 'bg-[var(--bg-elevated)] text-[var(--text-primary)]',
-  HOMEOWNER: 'bg-[var(--bg-elevated)] text-[var(--text-primary)]',  // Deprecated, kept for backwards compatibility
-  GUEST: 'bg-[var(--bg-elevated)] text-[var(--text-primary)]',
+  INDIVIDUAL: 'bg-surface-ground text-folio-text-primary',
+  HOMEOWNER: 'bg-surface-ground text-folio-text-primary',  // Deprecated, kept for backwards compatibility
+  GUEST: 'bg-surface-ground text-folio-text-primary',
 };
 
 function formatRelativeTime(dateString: string): string {
@@ -220,14 +220,14 @@ export default function AdminUsersPage() {
 
   if (status === 'loading' || (status === 'authenticated' && session?.user?.role !== 'ADMIN')) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[var(--bg-base)]">
-        <div className="text-[var(--text-secondary)]">Loading...</div>
+      <div className="min-h-screen flex items-center justify-center bg-surface-canvas">
+        <div className="text-folio-text-secondary">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[var(--bg-base)] py-8">
+    <div className="min-h-screen bg-surface-canvas py-8">
       <div className="max-w-7xl mx-auto px-4">
         {/* Header */}
         <div className="mb-8">
@@ -291,27 +291,27 @@ export default function AdminUsersPage() {
         <RidgeCard padding="none" className="overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-[var(--bg-elevated)] border-b border-[var(--border-subtle)]">
+              <thead className="bg-surface-ground border-b border-[var(--border-subtle)]">
                 <tr>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-folio-text-secondary uppercase tracking-wider">
                     User
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-folio-text-secondary uppercase tracking-wider">
                     Role
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-folio-text-secondary uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-folio-text-secondary uppercase tracking-wider">
                     Signed Up
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-folio-text-secondary uppercase tracking-wider">
                     Last Active
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-folio-text-secondary uppercase tracking-wider">
                     Projects
                   </th>
-                  <th className="px-6 py-4 text-right text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
+                  <th className="px-6 py-4 text-right text-xs font-semibold text-folio-text-secondary uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
@@ -319,22 +319,22 @@ export default function AdminUsersPage() {
               <tbody className="divide-y divide-[var(--border-subtle)]">
                 {loading ? (
                   <tr>
-                    <td colSpan={7} className="px-6 py-8 text-center text-[var(--text-secondary)]">
+                    <td colSpan={7} className="px-6 py-8 text-center text-folio-text-secondary">
                       Loading users...
                     </td>
                   </tr>
                 ) : users.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-6 py-8 text-center text-[var(--text-secondary)]">
+                    <td colSpan={7} className="px-6 py-8 text-center text-folio-text-secondary">
                       No users found
                     </td>
                   </tr>
                 ) : (
                   users.map((user) => (
-                    <tr key={user.id} className="hover:bg-[var(--bg-elevated)]/50">
+                    <tr key={user.id} className="hover:bg-surface-ground/50">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-[var(--bg-elevated)] overflow-hidden flex-shrink-0">
+                          <div className="w-10 h-10 rounded-full bg-surface-ground overflow-hidden flex-shrink-0">
                             {user.profileImage ? (
                               <Image
                                 src={user.profileImage}
@@ -344,42 +344,42 @@ export default function AdminUsersPage() {
                                 className="w-full h-full object-cover"
                               />
                             ) : (
-                              <div className="w-full h-full flex items-center justify-center text-[var(--text-secondary)] text-sm font-medium">
+                              <div className="w-full h-full flex items-center justify-center text-folio-text-secondary text-sm font-medium">
                                 {user.name.charAt(0).toUpperCase()}
                               </div>
                             )}
                           </div>
                           <div>
-                            <div className="font-medium text-[var(--text-primary)]">{user.name}</div>
-                            <div className="text-sm text-[var(--text-secondary)]">{user.email}</div>
+                            <div className="font-medium text-folio-text-primary">{user.name}</div>
+                            <div className="text-sm text-folio-text-secondary">{user.email}</div>
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <span className={cn('px-2 py-1 rounded-full text-xs font-medium', roleColors[user.role] || 'bg-[var(--bg-elevated)] text-[var(--text-primary)]')}>
+                        <span className={cn('px-2 py-1 rounded-full text-xs font-medium', roleColors[user.role] || 'bg-surface-ground text-folio-text-primary')}>
                           {user.role}
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        <span className={cn('px-2 py-1 rounded-full text-xs font-medium', statusColors[user.accountStatus] || 'bg-[var(--bg-elevated)] text-[var(--text-primary)]')}>
+                        <span className={cn('px-2 py-1 rounded-full text-xs font-medium', statusColors[user.accountStatus] || 'bg-surface-ground text-folio-text-primary')}>
                           {user.accountStatus}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-sm text-[var(--text-secondary)]">
+                      <td className="px-6 py-4 text-sm text-folio-text-secondary">
                         {formatRelativeTime(user.createdAt)}
                       </td>
-                      <td className="px-6 py-4 text-sm text-[var(--text-secondary)]">
+                      <td className="px-6 py-4 text-sm text-folio-text-secondary">
                         {formatRelativeTime(user.updatedAt)}
                       </td>
-                      <td className="px-6 py-4 text-sm text-[var(--text-secondary)]">
+                      <td className="px-6 py-4 text-sm text-folio-text-secondary">
                         {user._count.ownedProjects}
                       </td>
                       <td className="px-6 py-4 text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <button className="p-2 hover:bg-[var(--bg-elevated)] rounded-lg transition-colors">
+                            <button className="p-2 hover:bg-surface-ground rounded-lg transition-colors">
                               <svg
-                                className="w-5 h-5 text-[var(--text-secondary)]"
+                                className="w-5 h-5 text-folio-text-secondary"
                                 fill="none"
                                 stroke="currentColor"
                                 viewBox="0 0 24 24"

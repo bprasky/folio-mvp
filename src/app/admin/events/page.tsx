@@ -112,10 +112,10 @@ export default function AdminEventsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[var(--bg-base)] py-8">
+      <div className="min-h-screen bg-surface-canvas py-8">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center">
-            <div className="text-[var(--text-secondary)]">Loading events...</div>
+            <div className="text-folio-text-secondary">Loading events...</div>
           </div>
         </div>
       </div>
@@ -123,7 +123,7 @@ export default function AdminEventsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--bg-base)] py-8">
+    <div className="min-h-screen bg-surface-canvas py-8">
       <div className="max-w-7xl mx-auto px-4">
         {/* Breadcrumb Navigation */}
         <div className="mb-4">
@@ -136,10 +136,10 @@ export default function AdminEventsPage() {
               </li>
               <li>
                 <div className="flex items-center">
-                  <svg className="w-6 h-6 text-[var(--text-tertiary)]" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-6 h-6 text-folio-text-tertiary" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd"></path>
                   </svg>
-                  <span className="ml-1 folio-meta text-[var(--text-secondary)] md:ml-2">Manage Events</span>
+                  <span className="ml-1 folio-meta text-folio-text-secondary md:ml-2">Manage Events</span>
                 </div>
               </li>
             </ol>
@@ -228,44 +228,44 @@ export default function AdminEventsPage() {
         {/* Events List */}
         <RidgeCard padding="none" className="overflow-hidden">
           {filteredEvents.length === 0 ? (
-            <div className="p-8 text-center text-[var(--text-secondary)]">
+            <div className="p-8 text-center text-folio-text-secondary">
               No events found matching your filter.
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-[var(--border-subtle)]">
-                <thead className="bg-[var(--bg-elevated)]">
+                <thead className="bg-surface-ground">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-folio-text-secondary uppercase tracking-wider">
                       Event
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-folio-text-secondary uppercase tracking-wider">
                       Type
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-folio-text-secondary uppercase tracking-wider">
                       Location
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-folio-text-secondary uppercase tracking-wider">
                       Date
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-folio-text-secondary uppercase tracking-wider">
                       Created By
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-folio-text-secondary uppercase tracking-wider">
                       Status
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-folio-text-secondary uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-[var(--bg-base)] divide-y divide-[var(--border-subtle)]">
+                <tbody className="bg-surface-canvas divide-y divide-[var(--border-subtle)]">
                   {filteredEvents.map((event) => (
-                    <tr key={event.id} className="hover:bg-[var(--bg-elevated)]/50">
+                    <tr key={event.id} className="hover:bg-surface-ground/50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div>
-                          <div className="text-sm font-medium text-[var(--text-primary)]">{event.title}</div>
-                          <div className="text-sm text-[var(--text-secondary)] line-clamp-2">{event.description}</div>
+                          <div className="text-sm font-medium text-folio-text-primary">{event.title}</div>
+                          <div className="text-sm text-folio-text-secondary line-clamp-2">{event.description}</div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -273,20 +273,20 @@ export default function AdminEventsPage() {
                           event.type === 'festival' ? 'bg-purple-100 text-purple-800' :
                           event.type === 'panel' ? 'bg-blue-100 text-blue-800' :
                           event.type === 'booth' ? 'bg-green-100 text-green-800' :
-                          'bg-[var(--bg-elevated)] text-[var(--text-primary)]'
+                          'bg-surface-ground text-folio-text-primary'
                         }`}>
                           {event.type}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--text-primary)]">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-folio-text-primary">
                         {event.location}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--text-primary)]">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-folio-text-primary">
                         {formatDate(event.startDate)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--text-primary)]">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-folio-text-primary">
                         {event.createdBy.name}
-                        <div className="text-xs text-[var(--text-secondary)]">{event.createdBy.role}</div>
+                        <div className="text-xs text-folio-text-secondary">{event.createdBy.role}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${

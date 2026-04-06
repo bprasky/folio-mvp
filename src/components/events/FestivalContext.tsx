@@ -22,22 +22,22 @@ export default function FestivalContext({ festival, eventTitle }: FestivalContex
     <div className="bg-white border-b border-folio-border">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         {/* Breadcrumb */}
-        <nav className="flex items-center space-x-2 text-sm text-[var(--text-secondary)] mb-3">
+        <nav className="flex items-center space-x-2 text-sm text-folio-text-secondary mb-3">
           <Link 
             href="/events" 
             className="hover:text-folio-accent transition-colors"
           >
             Events
           </Link>
-          <span className="text-[var(--text-tertiary)]">›</span>
+          <span className="text-folio-text-tertiary">›</span>
           <Link 
             href={`/events/${festival.id}`}
             className="hover:text-folio-accent transition-colors"
           >
             {festival.title}
           </Link>
-          <span className="text-[var(--text-tertiary)]">›</span>
-          <span className="text-[var(--text-primary)] font-medium">{eventTitle}</span>
+          <span className="text-folio-text-tertiary">›</span>
+          <span className="text-folio-text-primary font-medium">{eventTitle}</span>
         </nav>
 
         {/* Festival Info */}
@@ -62,7 +62,7 @@ export default function FestivalContext({ festival, eventTitle }: FestivalContex
             </div>
 
             {/* Festival Details */}
-            <div className="text-sm text-[var(--text-secondary)]">
+            <div className="text-sm text-folio-text-secondary">
               <span className="font-medium">{festival.title}</span>
               {festival.location && (
                 <>

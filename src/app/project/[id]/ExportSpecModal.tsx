@@ -49,21 +49,21 @@ export default function ExportSpecModal({
 
       {/* Modal */}
       <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-md">
-        <div className="rounded-[20px] border border-[var(--border-default)] bg-[var(--bg-elevated)] shadow-lg p-6">
+        <div className="rounded-[20px] border border-folio-border-subtle bg-surface-ground shadow-lg p-6">
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
-            <h3 className="folio-h3 text-[var(--text-primary)]">Export Spec</h3>
+            <h3 className="folio-h3 text-folio-text-primary">Export Spec</h3>
             <button
               onClick={onClose}
-              className="p-1 hover:bg-[var(--bg-base)] rounded-full transition-colors"
+              className="p-1 hover:bg-surface-canvas rounded-full transition-colors"
             >
-              <FaTimes className="w-4 h-4 text-[var(--text-tertiary)]" />
+              <FaTimes className="w-4 h-4 text-folio-text-tertiary" />
             </button>
           </div>
 
           {/* Scope Selection */}
           <div className="mb-6">
-            <label className="block folio-ui font-medium text-[var(--text-primary)] mb-3">Scope</label>
+            <label className="block folio-ui font-medium text-folio-text-primary mb-3">Scope</label>
             <div className="space-y-2">
               <label className="flex items-center space-x-3 cursor-pointer">
                 <input
@@ -74,7 +74,7 @@ export default function ExportSpecModal({
                   onChange={(e) => setScope(e.target.value as ExportScope)}
                   className="w-4 h-4 text-[var(--accent)] focus:ring-[var(--accent)]"
                 />
-                <span className="folio-ui text-[var(--text-primary)]">All rooms</span>
+                <span className="folio-ui text-folio-text-primary">All rooms</span>
               </label>
               {currentRoomId && (
                 <label className="flex items-center space-x-3 cursor-pointer">
@@ -86,7 +86,7 @@ export default function ExportSpecModal({
                     onChange={(e) => setScope(e.target.value as ExportScope)}
                     className="w-4 h-4 text-[var(--accent)] focus:ring-[var(--accent)]"
                   />
-                  <span className="folio-ui text-[var(--text-primary)]">Current room</span>
+                  <span className="folio-ui text-folio-text-primary">Current room</span>
                 </label>
               )}
             </div>
@@ -94,7 +94,7 @@ export default function ExportSpecModal({
 
           {/* Format Selection */}
           <div className="mb-6">
-            <label className="block folio-ui font-medium text-[var(--text-primary)] mb-3">Format</label>
+            <label className="block folio-ui font-medium text-folio-text-primary mb-3">Format</label>
             <div className="space-y-2">
               <label className="flex items-center space-x-3 cursor-pointer">
                 <input
@@ -105,7 +105,7 @@ export default function ExportSpecModal({
                   onChange={(e) => setFormat(e.target.value as ExportFormat)}
                   className="w-4 h-4 text-[var(--accent)] focus:ring-[var(--accent)]"
                 />
-                <span className="folio-ui text-[var(--text-primary)]">Excel (.xlsx)</span>
+                <span className="folio-ui text-folio-text-primary">Excel (.xlsx)</span>
               </label>
               <label className="flex items-center space-x-3 cursor-pointer">
                 <input
@@ -116,7 +116,7 @@ export default function ExportSpecModal({
                   onChange={(e) => setFormat(e.target.value as ExportFormat)}
                   className="w-4 h-4 text-[var(--accent)] focus:ring-[var(--accent)]"
                 />
-                <span className="folio-ui text-[var(--text-primary)]">PDF (.pdf)</span>
+                <span className="folio-ui text-folio-text-primary">PDF (.pdf)</span>
               </label>
             </div>
           </div>
@@ -126,7 +126,7 @@ export default function ExportSpecModal({
             <button
               onClick={onClose}
               disabled={isExporting}
-              className="px-4 py-2 folio-ui font-medium text-[var(--text-primary)] border border-[var(--border-default)] rounded-lg hover:bg-[var(--bg-base)] transition-colors disabled:opacity-50"
+              className="px-4 py-2 folio-ui font-medium text-folio-text-primary border border-folio-border-subtle rounded-lg hover:bg-surface-canvas transition-colors disabled:opacity-50"
             >
               Cancel
             </button>

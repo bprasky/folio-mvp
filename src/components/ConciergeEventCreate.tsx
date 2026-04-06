@@ -246,7 +246,7 @@ export default function ConciergeEventCreate({ isOpen, onClose, onSubmit, classN
   };
 
   const renderReviewSection = () => (
-    <div className="bg-[var(--bg-elevated)] rounded-lg p-4 mb-4">
+    <div className="bg-surface-ground rounded-lg p-4 mb-4">
       <h3 className="text-lg font-semibold mb-3">Event Details</h3>
       <div className="space-y-3">
         {Object.entries(extractedData).map(([key, value]) => {
@@ -254,11 +254,11 @@ export default function ConciergeEventCreate({ isOpen, onClose, onSubmit, classN
           
           return (
             <div key={key} className="flex items-center justify-between">
-              <span className="text-sm font-medium text-[var(--text-primary)] capitalize">
+              <span className="text-sm font-medium text-folio-text-primary capitalize">
                 {key.replace(/([A-Z])/g, ' $1').trim()}:
               </span>
               <div className="flex items-center space-x-2">
-                <span className="text-sm text-[var(--text-primary)]">
+                <span className="text-sm text-folio-text-primary">
                   {Array.isArray(value) ? value.join(', ') : String(value)}
                 </span>
                 <button
@@ -283,7 +283,7 @@ export default function ConciergeEventCreate({ isOpen, onClose, onSubmit, classN
         </button>
         <button
           onClick={() => setCurrentStep('input')}
-          className="px-4 py-2 border border-[var(--ridge-outer)] rounded-md hover:bg-[var(--bg-elevated)] transition-colors"
+          className="px-4 py-2 border border-folio-border-subtle rounded-md hover:bg-surface-ground transition-colors"
         >
           Edit
         </button>
@@ -294,7 +294,7 @@ export default function ConciergeEventCreate({ isOpen, onClose, onSubmit, classN
   const renderImportSection = () => (
     <div className="space-y-4">
       <div>
-        <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
+        <label className="block text-sm font-medium text-folio-text-primary mb-2">
           Event URL or File
         </label>
         <div className="flex space-x-2">
@@ -303,7 +303,7 @@ export default function ConciergeEventCreate({ isOpen, onClose, onSubmit, classN
             placeholder="Paste Eventbrite, Instagram, or other event URL..."
             value={importUrl}
             onChange={(e) => setImportUrl(e.target.value)}
-            className="flex-1 px-3 py-2 border border-[var(--ridge-outer)] rounded-md focus:outline-none focus:ring-2 focus:ring-folio-accent focus:border-transparent"
+            className="flex-1 px-3 py-2 border border-folio-border-subtle rounded-md focus:outline-none focus:ring-2 focus:ring-folio-accent focus:border-transparent"
           />
           <button
             onClick={handleImport}
@@ -316,7 +316,7 @@ export default function ConciergeEventCreate({ isOpen, onClose, onSubmit, classN
       </div>
       
       {importPreview && (
-        <div className="bg-white border border-[var(--ridge-outer)] rounded-lg p-4">
+        <div className="bg-white border border-folio-border-subtle rounded-lg p-4">
           <h4 className="font-medium mb-2">Preview</h4>
           <div className="space-y-2 text-sm">
             <div><strong>Title:</strong> {importPreview.title}</div>
@@ -347,28 +347,28 @@ export default function ConciergeEventCreate({ isOpen, onClose, onSubmit, classN
         className
       )}>
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-[var(--ridge-outer)]">
+        <div className="flex items-center justify-between p-4 border-b border-folio-border-subtle">
           <div className="flex items-center space-x-2">
             <FaRobot className="text-folio-accent w-5 h-5" />
             <h2 className="text-lg font-semibold">Event Concierge</h2>
           </div>
           <button
             onClick={onClose}
-            className="text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
+            className="text-folio-text-tertiary hover:text-folio-text-secondary"
           >
             <FaTimes className="w-5 h-5" />
           </button>
         </div>
 
         {/* Mode Tabs */}
-        <div className="flex border-b border-[var(--ridge-outer)]">
+        <div className="flex border-b border-folio-border-subtle">
           <button
             onClick={() => setMode('chat')}
             className={clsx(
               "flex-1 py-3 text-sm font-medium transition-colors",
               mode === 'chat'
                 ? "text-folio-accent border-b-2 border-folio-accent"
-                : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                : "text-folio-text-secondary hover:text-folio-text-primary"
             )}
           >
             Chat
@@ -379,7 +379,7 @@ export default function ConciergeEventCreate({ isOpen, onClose, onSubmit, classN
               "flex-1 py-3 text-sm font-medium transition-colors",
               mode === 'import'
                 ? "text-folio-accent border-b-2 border-folio-accent"
-                : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                : "text-folio-text-secondary hover:text-folio-text-primary"
             )}
           >
             Import
@@ -392,7 +392,7 @@ export default function ConciergeEventCreate({ isOpen, onClose, onSubmit, classN
             <>
               {/* Review Section - Show prominently when in review mode */}
               {currentStep === 'review' && (
-                <div className="p-4 border-b border-[var(--ridge-outer)]">
+                <div className="p-4 border-b border-folio-border-subtle">
                   {renderReviewSection()}
                 </div>
               )}
@@ -412,7 +412,7 @@ export default function ConciergeEventCreate({ isOpen, onClose, onSubmit, classN
                         "max-w-[80%] rounded-lg px-3 py-2",
                         message.type === 'user'
                           ? "bg-folio-accent text-white"
-                          : "bg-[var(--bg-elevated)] text-[var(--text-primary)]"
+                          : "bg-surface-ground text-folio-text-primary"
                       )}
                     >
                       <p className="text-sm">{message.content}</p>
@@ -422,10 +422,10 @@ export default function ConciergeEventCreate({ isOpen, onClose, onSubmit, classN
                 
                 {isProcessing && (
                   <div className="flex justify-start">
-                    <div className="bg-[var(--bg-elevated)] rounded-lg px-3 py-2">
+                    <div className="bg-surface-ground rounded-lg px-3 py-2">
                       <div className="flex items-center space-x-2">
                         <FaSpinner className="w-4 h-4 animate-spin" />
-                        <span className="text-sm text-[var(--text-secondary)]">Processing...</span>
+                        <span className="text-sm text-folio-text-secondary">Processing...</span>
                       </div>
                     </div>
                   </div>
@@ -436,14 +436,14 @@ export default function ConciergeEventCreate({ isOpen, onClose, onSubmit, classN
 
               {/* Input */}
               {currentStep === 'input' && (
-                <div className="p-4 border-t border-[var(--ridge-outer)]">
+                <div className="p-4 border-t border-folio-border-subtle">
                   <div className="flex space-x-2">
                     <textarea
                       ref={inputRef}
                       value={inputValue}
                       onChange={(e) => setInputValue(e.target.value)}
                       placeholder="Describe your event..."
-                      className="flex-1 px-3 py-2 border border-[var(--ridge-outer)] rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-folio-accent focus:border-transparent"
+                      className="flex-1 px-3 py-2 border border-folio-border-subtle rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-folio-accent focus:border-transparent"
                       rows={2}
                       onKeyPress={(e) => {
                         if (e.key === 'Enter' && !e.shiftKey) {
@@ -458,7 +458,7 @@ export default function ConciergeEventCreate({ isOpen, onClose, onSubmit, classN
                         "px-3 py-2 rounded-md transition-colors",
                         isListening
                           ? "bg-red-500 text-white hover:bg-red-600"
-                          : "bg-[var(--bg-elevated)] text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)]"
+                          : "bg-surface-ground text-folio-text-secondary hover:bg-surface-ground"
                       )}
                     >
                       {isListening ? <FaMicrophoneSlash className="w-4 h-4" /> : <FaMicrophone className="w-4 h-4" />}
@@ -484,9 +484,9 @@ export default function ConciergeEventCreate({ isOpen, onClose, onSubmit, classN
 
         {/* Rating (after completion) */}
         {currentStep === 'complete' && (
-          <div className="p-4 border-t border-[var(--ridge-outer)]">
+          <div className="p-4 border-t border-folio-border-subtle">
             <div className="text-center">
-              <p className="text-sm text-[var(--text-secondary)] mb-2">How was your concierge experience?</p>
+              <p className="text-sm text-folio-text-secondary mb-2">How was your concierge experience?</p>
               <div className="flex justify-center space-x-2">
                 {[1, 2, 3, 4, 5].map((rating) => (
                   <button
@@ -496,7 +496,7 @@ export default function ConciergeEventCreate({ isOpen, onClose, onSubmit, classN
                       "w-8 h-8 rounded-full transition-colors",
                       userRating && userRating >= rating
                         ? "bg-yellow-400 text-white"
-                        : "bg-[var(--bg-elevated)] text-[var(--text-tertiary)] hover:bg-[var(--text-tertiary)]/20"
+                        : "bg-surface-ground text-folio-text-tertiary hover:bg-[var(--text-tertiary)]/20"
                     )}
                   >
                     ★

@@ -9,13 +9,13 @@ interface ChartCardProps {
 
 export function ChartCard({ title, subtitle, children, ...props }: ChartCardProps) {
   return (
-    <Card className="bg-white border-[#DAD2CA]" {...props}>
+    <Card className="bg-white border-folio-border-strong" {...props}>
       <CardHeader className="pb-4">
-        <CardTitle className="text-lg font-serif text-[#2B2B2B]">
+        <CardTitle className="text-lg font-serif text-folio-text-primary">
           {title}
         </CardTitle>
         {subtitle && (
-          <p className="text-sm text-[#8C8278]">
+          <p className="text-sm text-folio-text-secondary">
             {subtitle}
           </p>
         )}

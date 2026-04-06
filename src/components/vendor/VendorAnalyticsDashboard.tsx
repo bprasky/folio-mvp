@@ -26,10 +26,10 @@ export default function VendorAnalyticsDashboard() {
       <div className="max-w-7xl mx-auto px-6 py-6">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <h1 className="text-lg font-semibold text-[var(--text-primary)]">
+            <h1 className="text-lg font-semibold text-folio-text-primary">
               Vendor Dashboard
             </h1>
-            <p className="folio-meta text-[var(--text-secondary)]">Viewing as {vendor.name}</p>
+            <p className="folio-meta text-folio-text-secondary">Viewing as {vendor.name}</p>
           </div>
         </div>
       </div>

@@ -199,7 +199,7 @@ export default function ProjectMatchingEngine({ preferences }: ProjectMatchingEn
       case 'ready-to-start': return { label: 'Ready to Start', color: 'bg-green-100 text-green-800' };
       case 'interviewing': return { label: 'Interviewing', color: 'bg-[var(--accent)]/10 text-blue-800' };
       case 'planning': return { label: 'Planning', color: 'bg-yellow-100 text-yellow-800' };
-      default: return { label: status, color: 'bg-[var(--bg-elevated)] text-[var(--text-primary)]' };
+      default: return { label: status, color: 'bg-surface-ground text-folio-text-primary' };
     }
   };
 
@@ -215,11 +215,11 @@ export default function ProjectMatchingEngine({ preferences }: ProjectMatchingEn
         animate={{ opacity: 1, y: 0 }}
         className="bg-white rounded-2xl shadow-lg p-8 text-center"
       >
-        <div className="w-16 h-16 bg-[var(--bg-elevated)] rounded-full flex items-center justify-center mx-auto mb-4">
-          <FaSearch className="w-8 h-8 text-[var(--text-tertiary)]" />
+        <div className="w-16 h-16 bg-surface-ground rounded-full flex items-center justify-center mx-auto mb-4">
+          <FaSearch className="w-8 h-8 text-folio-text-tertiary" />
         </div>
-        <h3 className="text-xl font-bold text-[var(--text-primary)] mb-2">Set Your Preferences First</h3>
-        <p className="text-[var(--text-secondary)]">
+        <h3 className="text-xl font-bold text-folio-text-primary mb-2">Set Your Preferences First</h3>
+        <p className="text-folio-text-secondary">
           Complete your lead preferences above to see matching homeowner projects.
         </p>
       </motion.div>
@@ -236,8 +236,8 @@ export default function ProjectMatchingEngine({ preferences }: ProjectMatchingEn
       <div className="bg-white rounded-2xl shadow-lg p-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
           <div>
-            <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-2">Matching Projects</h2>
-            <p className="text-[var(--text-secondary)]">
+            <h2 className="text-2xl font-bold text-folio-text-primary mb-2">Matching Projects</h2>
+            <p className="text-folio-text-secondary">
               {processedProjects.length} project{processedProjects.length !== 1 ? 's' : ''} found
             </p>
           </div>
@@ -246,7 +246,7 @@ export default function ProjectMatchingEngine({ preferences }: ProjectMatchingEn
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as 'match' | 'recent' | 'budget')}
-              className="px-4 py-2 border border-[var(--ridge-outer)] rounded-lg focus:ring-2 focus:ring-[var(--accent)]"
+              className="px-4 py-2 border border-folio-border-subtle rounded-lg focus:ring-2 focus:ring-[var(--accent)]"
             >
               <option value="match">Sort by Match Score</option>
               <option value="recent">Sort by Most Recent</option>
@@ -260,7 +260,7 @@ export default function ProjectMatchingEngine({ preferences }: ProjectMatchingEn
           <select
             value={filterBudget}
             onChange={(e) => setFilterBudget(e.target.value)}
-            className="px-3 py-2 border border-[var(--ridge-outer)] rounded-lg text-sm"
+            className="px-3 py-2 border border-folio-border-subtle rounded-lg text-sm"
           >
             <option value="all">All Budgets</option>
             {BUDGET_ORDER.map(budget => (
@@ -273,7 +273,7 @@ export default function ProjectMatchingEngine({ preferences }: ProjectMatchingEn
             placeholder="Filter by location..."
             value={filterLocation}
             onChange={(e) => setFilterLocation(e.target.value)}
-            className="px-3 py-2 border border-[var(--ridge-outer)] rounded-lg text-sm flex-1 max-w-xs"
+            className="px-3 py-2 border border-folio-border-subtle rounded-lg text-sm flex-1 max-w-xs"
           />
         </div>
       </div>
@@ -296,10 +296,10 @@ export default function ProjectMatchingEngine({ preferences }: ProjectMatchingEn
               <div className="p-6 border-b border-gray-100">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1">
-                    <h3 className="text-lg font-bold text-[var(--text-primary)] mb-1">
+                    <h3 className="text-lg font-bold text-folio-text-primary mb-1">
                       {project.projectName}
                     </h3>
-                    <p className="text-[var(--text-secondary)] text-sm">by {project.homeownerName}</p>
+                    <p className="text-folio-text-secondary text-sm">by {project.homeownerName}</p>
                   </div>
                   
                   <div className="flex items-center gap-2">
@@ -320,7 +320,7 @@ export default function ProjectMatchingEngine({ preferences }: ProjectMatchingEn
                   )}
                 </div>
 
-                <p className="text-[var(--text-primary)] text-sm leading-relaxed">
+                <p className="text-folio-text-primary text-sm leading-relaxed">
                   {project.description}
                 </p>
               </div>
@@ -330,21 +330,21 @@ export default function ProjectMatchingEngine({ preferences }: ProjectMatchingEn
                 <div className="grid grid-cols-2 gap-4 mb-4">
                   <div className="flex items-center gap-2">
                     <FaDollarSign className="w-4 h-4 text-green-600" />
-                    <span className="text-sm text-[var(--text-primary)]">{project.budget}</span>
+                    <span className="text-sm text-folio-text-primary">{project.budget}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <FaMapMarkerAlt className="w-4 h-4 text-[var(--accent)]" />
-                    <span className="text-sm text-[var(--text-primary)]">{project.location}</span>
+                    <span className="text-sm text-folio-text-primary">{project.location}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <FaHome className="w-4 h-4 text-purple-600" />
-                    <span className="text-sm text-[var(--text-primary)]">
+                    <span className="text-sm text-folio-text-primary">
                       {project.rooms.join(', ')}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <FaBookmark className="w-4 h-4 text-orange-600" />
-                    <span className="text-sm text-[var(--text-primary)]">
+                    <span className="text-sm text-folio-text-primary">
                       {project.savedPosts} saves
                     </span>
                   </div>
@@ -352,10 +352,10 @@ export default function ProjectMatchingEngine({ preferences }: ProjectMatchingEn
 
                 {/* Styles */}
                 <div className="mb-4">
-                  <p className="text-xs text-[var(--text-secondary)] mb-2">Preferred Styles:</p>
+                  <p className="text-xs text-folio-text-secondary mb-2">Preferred Styles:</p>
                   <div className="flex flex-wrap gap-1">
                     {project.styles.map(style => (
-                      <span key={style} className="px-2 py-1 bg-[var(--bg-elevated)] text-[var(--text-primary)] rounded text-xs">
+                      <span key={style} className="px-2 py-1 bg-surface-ground text-folio-text-primary rounded text-xs">
                         {style}
                       </span>
                     ))}
@@ -378,11 +378,11 @@ export default function ProjectMatchingEngine({ preferences }: ProjectMatchingEn
 
       {processedProjects.length === 0 && (
         <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
-          <div className="w-16 h-16 bg-[var(--bg-elevated)] rounded-full flex items-center justify-center mx-auto mb-4">
-            <FaSearch className="w-8 h-8 text-[var(--text-tertiary)]" />
+          <div className="w-16 h-16 bg-surface-ground rounded-full flex items-center justify-center mx-auto mb-4">
+            <FaSearch className="w-8 h-8 text-folio-text-tertiary" />
           </div>
-          <h3 className="text-xl font-bold text-[var(--text-primary)] mb-2">No Projects Found</h3>
-          <p className="text-[var(--text-secondary)]">
+          <h3 className="text-xl font-bold text-folio-text-primary mb-2">No Projects Found</h3>
+          <p className="text-folio-text-secondary">
             Try adjusting your filters or check back later for new projects.
           </p>
         </div>

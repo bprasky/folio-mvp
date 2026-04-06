@@ -158,10 +158,10 @@ export default function ProjectClaimPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[var(--bg-base)] flex items-center justify-center">
+      <div className="min-h-screen bg-surface-canvas flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--accent)] mx-auto"></div>
-          <p className="mt-4 folio-body text-[var(--text-secondary)]">Loading project details...</p>
+          <p className="mt-4 folio-body text-folio-text-secondary">Loading project details...</p>
         </div>
       </div>
     );
@@ -169,10 +169,10 @@ export default function ProjectClaimPage() {
 
   if (!project) {
     return (
-      <div className="min-h-screen bg-[var(--bg-base)] flex items-center justify-center">
+      <div className="min-h-screen bg-surface-canvas flex items-center justify-center">
         <div className="text-center">
-          <h1 className="folio-h2 text-[var(--text-primary)] mb-4">Project Not Found</h1>
-          <p className="folio-body text-[var(--text-secondary)] mb-4">The project you're looking for doesn't exist or has been removed.</p>
+          <h1 className="folio-h2 text-folio-text-primary mb-4">Project Not Found</h1>
+          <p className="folio-body text-folio-text-secondary mb-4">The project you're looking for doesn't exist or has been removed.</p>
           <Link href="/" className="text-[var(--accent)] hover:text-[var(--accent-hover)]">
             Return to Home
           </Link>
@@ -182,24 +182,24 @@ export default function ProjectClaimPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--bg-base)] py-8">
+    <div className="min-h-screen bg-surface-canvas py-8">
       <div className="max-w-4xl mx-auto px-4">
         {/* Header */}
         <RidgeCard className="p-6 mb-6">
-          <h1 className="folio-h1 text-[var(--text-primary)] mb-2">{project.name}</h1>
+          <h1 className="folio-h1 text-folio-text-primary mb-2">{project.name}</h1>
           {project.description && (
-            <p className="folio-body text-[var(--text-secondary)] mb-4">{project.description}</p>
+            <p className="folio-body text-folio-text-secondary mb-4">{project.description}</p>
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <div>
-              <span className="folio-ui font-medium text-[var(--text-primary)]">Created by:</span>
-              <p className="folio-meta text-[var(--text-secondary)]">{project.owner.name} ({project.owner.email})</p>
+              <span className="folio-ui font-medium text-folio-text-primary">Created by:</span>
+              <p className="folio-meta text-folio-text-secondary">{project.owner.name} ({project.owner.email})</p>
             </div>
             {project.vendorOrg && (
               <div>
-                <span className="folio-ui font-medium text-[var(--text-primary)]">Vendor Organization:</span>
-                <p className="folio-meta text-[var(--text-secondary)]">{project.vendorOrg.name}</p>
+                <span className="folio-ui font-medium text-folio-text-primary">Vendor Organization:</span>
+                <p className="folio-meta text-folio-text-secondary">{project.vendorOrg.name}</p>
               </div>
             )}
           </div>
@@ -207,48 +207,48 @@ export default function ProjectClaimPage() {
 
         {/* Project Summary */}
         <RidgeCard className="p-6 mb-6">
-          <h2 className="folio-h2 text-[var(--text-primary)] mb-4">Project Summary</h2>
+          <h2 className="folio-h2 text-folio-text-primary mb-4">Project Summary</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div className="text-center p-4 bg-[var(--bg-base)] rounded-lg border border-[var(--border)]">
+            <div className="text-center p-4 bg-surface-canvas rounded-lg border border-folio-border-subtle">
               <div className="folio-h2 text-[var(--accent)]">{project.rooms.length}</div>
-              <div className="folio-meta text-[var(--text-secondary)]">Rooms</div>
+              <div className="folio-meta text-folio-text-secondary">Rooms</div>
             </div>
-            <div className="text-center p-4 bg-[var(--bg-base)] rounded-lg border border-[var(--border)]">
+            <div className="text-center p-4 bg-surface-canvas rounded-lg border border-folio-border-subtle">
               <div className="folio-h2 text-[var(--accent)]">{project.selections.length}</div>
-              <div className="folio-meta text-[var(--text-secondary)]">Selections</div>
+              <div className="folio-meta text-folio-text-secondary">Selections</div>
             </div>
-            <div className="text-center p-4 bg-[var(--bg-base)] rounded-lg border border-[var(--border)]">
+            <div className="text-center p-4 bg-surface-canvas rounded-lg border border-folio-border-subtle">
               <div className="folio-h2 text-[var(--accent)]">
                 {project.isHandoffReady ? 'Ready' : 'Active'}
               </div>
-              <div className="folio-meta text-[var(--text-secondary)]">Status</div>
+              <div className="folio-meta text-folio-text-secondary">Status</div>
             </div>
           </div>
 
           {/* Rooms and Selections Preview */}
           <div className="space-y-4">
             {project.rooms.map((room) => (
-              <div key={room.id} className="border border-[var(--border)] rounded-lg p-4 bg-[var(--bg-base)]">
-                <h3 className="folio-h3 text-[var(--text-primary)] mb-2">{room.name}</h3>
+              <div key={room.id} className="border border-folio-border-subtle rounded-lg p-4 bg-surface-canvas">
+                <h3 className="folio-h3 text-folio-text-primary mb-2">{room.name}</h3>
                 {room.selections.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
                     {room.selections.slice(0, 4).map((selection) => (
                       <div key={selection.id} className="flex items-center space-x-2">
                         <div className="w-2 h-2 bg-[var(--accent)] rounded-full"></div>
-                        <span className="folio-meta text-[var(--text-secondary)]">
+                        <span className="folio-meta text-folio-text-secondary">
                           {selection.productName || selection.vendorName || 'Product'}
                         </span>
                       </div>
                     ))}
                     {room.selections.length > 4 && (
-                      <div className="folio-meta text-[var(--text-tertiary)]">
+                      <div className="folio-meta text-folio-text-tertiary">
                         +{room.selections.length - 4} more selections
                       </div>
                     )}
                   </div>
                 ) : (
-                  <p className="folio-meta text-[var(--text-tertiary)]">No selections yet</p>
+                  <p className="folio-meta text-folio-text-tertiary">No selections yet</p>
                 )}
               </div>
             ))}
@@ -258,11 +258,11 @@ export default function ProjectClaimPage() {
         {/* Claim Project Section */}
         {project.isHandoffReady && (
           <RidgeCard className="p-6 mb-6">
-            <h2 className="folio-h2 text-[var(--text-primary)] mb-4">Claim This Project</h2>
+            <h2 className="folio-h2 text-folio-text-primary mb-4">Claim This Project</h2>
 
             {!currentUser ? (
               <div className="text-center py-8">
-                <p className="folio-body text-[var(--text-secondary)] mb-4">Please log in to claim this project</p>
+                <p className="folio-body text-folio-text-secondary mb-4">Please log in to claim this project</p>
                 <Link href="/auth/signin">
                   <Button variant="accent">
                     Sign In
@@ -272,13 +272,13 @@ export default function ProjectClaimPage() {
             ) : (
               <div className="space-y-4">
                 <div>
-                  <label className="block folio-ui font-medium text-[var(--text-primary)] mb-2">
+                  <label className="block folio-ui font-medium text-folio-text-primary mb-2">
                     Select Your Organization (Optional)
                   </label>
                   <select
                     value={selectedOrgId}
                     onChange={(e) => setSelectedOrgId(e.target.value)}
-                    className="w-full px-3 py-2 border border-[var(--border)] rounded-md bg-[var(--bg-elevated)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                    className="w-full px-3 py-2 border border-folio-border-subtle rounded-md bg-surface-ground text-folio-text-primary focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
                   >
                     <option value="">No organization</option>
                     {userOrgs.map((org) => (
@@ -321,9 +321,9 @@ export default function ProjectClaimPage() {
         )}
 
         {/* CTA Section */}
-        <RidgeCard className="p-6 bg-[var(--bg-elevated)] text-center">
-          <h2 className="folio-h2 text-[var(--text-primary)] mb-2">Ready to Organize Your Selections?</h2>
-          <p className="folio-body text-[var(--text-secondary)] mb-4">
+        <RidgeCard className="p-6 bg-surface-ground text-center">
+          <h2 className="folio-h2 text-folio-text-primary mb-2">Ready to Organize Your Selections?</h2>
+          <p className="folio-body text-folio-text-secondary mb-4">
             Take ownership of this project to organize your selections, add additional products,
             and generate client-ready presentations instantly.
           </p>

@@ -36,7 +36,7 @@ export default function ProductInsightsHeader({
           />
         </div>
         <div className="flex-1 text-center md:text-left">
-          <h1 className="text-3xl font-bold text-[var(--text-primary)] mb-2">{productName}</h1>
+          <h1 className="text-3xl font-bold text-folio-text-primary mb-2">{productName}</h1>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
             <div className="flex items-center gap-2 text-[var(--accent)]">
               <FaEye /> <span className="font-medium">{totalViews.toLocaleString()} Views</span>
@@ -51,7 +51,7 @@ export default function ProductInsightsHeader({
               <FaMousePointer /> <span className="font-medium">{outboundClicks.toLocaleString()} Clicks</span>
             </div>
           </div>
-          <p className="text-[var(--text-secondary)] mb-4">
+          <p className="text-folio-text-secondary mb-4">
             Featured in: {eventsFeatured.length > 0 ? eventsFeatured.join(', ') : 'None'}
           </p>
           <button

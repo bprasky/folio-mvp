@@ -130,15 +130,15 @@ export function ApproveHighlightsClient({
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-[var(--ridge-outer)] p-8 space-y-6">
+    <div className="bg-white rounded-lg shadow-sm border border-folio-border-subtle p-8 space-y-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-xl font-medium text-[var(--text-primary)]">Extracted Quotes</h2>
-          <p className="text-sm text-[var(--text-secondary)] mt-1">
+          <h2 className="text-xl font-medium text-folio-text-primary">Extracted Quotes</h2>
+          <p className="text-sm text-folio-text-secondary mt-1">
             Review and approve quotes to publish. {interviewSession.highlights.length} total.
           </p>
         </div>
-        <div className="text-sm text-[var(--text-secondary)]">
+        <div className="text-sm text-folio-text-secondary">
           {approvedIds.length} approved
         </div>
       </div>
@@ -165,23 +165,23 @@ export function ApproveHighlightsClient({
                   ? "border-green-200 bg-green-50"
                   : isRejected
                   ? "border-red-200 bg-red-50 opacity-60"
-                  : "border-[var(--ridge-outer)]"
+                  : "border-folio-border-subtle"
               }`}
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center space-x-2 mb-2">
-                    <span className="text-xs font-medium px-2 py-1 rounded bg-[var(--bg-elevated)] text-[var(--text-primary)]">
+                    <span className="text-xs font-medium px-2 py-1 rounded bg-surface-ground text-folio-text-primary">
                       {USE_CASE_LABELS[highlight.useCase] || highlight.useCase}
                     </span>
-                    <span className="text-xs text-[var(--text-secondary)]">
+                    <span className="text-xs text-folio-text-secondary">
                       Score: {(highlight.score * 100).toFixed(0)}%
                     </span>
-                    <span className="text-xs text-[var(--text-secondary)]">
+                    <span className="text-xs text-folio-text-secondary">
                       {formatTime(highlight.startMs)} - {formatTime(highlight.endMs)}
                     </span>
                   </div>
-                  <p className="text-[var(--text-primary)] leading-relaxed text-lg font-light">
+                  <p className="text-folio-text-primary leading-relaxed text-lg font-light">
                     "{highlight.quoteText}"
                   </p>
                 </div>
@@ -225,8 +225,8 @@ export function ApproveHighlightsClient({
         })}
       </div>
 
-      <div className="border-t border-[var(--ridge-outer)] pt-6 flex items-center justify-between">
-        <div className="text-sm text-[var(--text-secondary)]">
+      <div className="border-t border-folio-border-subtle pt-6 flex items-center justify-between">
+        <div className="text-sm text-folio-text-secondary">
           {approvedIds.length} of {interviewSession.highlights.length} quotes approved
         </div>
         <div className="flex items-center space-x-3">

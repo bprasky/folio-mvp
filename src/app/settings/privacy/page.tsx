@@ -100,7 +100,7 @@ export default function PrivacySettingsPage() {
 
   if (status === 'loading' || loading) {
     return (
-      <div className="min-h-screen bg-[var(--bg-elevated)] flex items-center justify-center">
+      <div className="min-h-screen bg-surface-ground flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent)]" />
       </div>
     );
@@ -108,7 +108,7 @@ export default function PrivacySettingsPage() {
 
   if (error && !visibility) {
     return (
-      <div className="min-h-screen bg-[var(--bg-elevated)] p-8">
+      <div className="min-h-screen bg-surface-ground p-8">
         <div className="max-w-2xl mx-auto">
           <RidgeCard>
             <RidgeCardContent className="p-6">
@@ -124,12 +124,12 @@ export default function PrivacySettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--bg-elevated)]">
+    <div className="min-h-screen bg-surface-ground">
       <div className="max-w-2xl mx-auto p-6 md:p-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-2xl font-semibold text-[var(--text-primary)]">Privacy Settings</h1>
-          <p className="text-[var(--text-secondary)] mt-1">
+          <h1 className="text-2xl font-semibold text-folio-text-primary">Privacy Settings</h1>
+          <p className="text-folio-text-secondary mt-1">
             Control how your information is shared with vendors
           </p>
         </div>
@@ -165,7 +165,7 @@ export default function PrivacySettingsPage() {
 
               {/* Description */}
               <div className="flex-1">
-                <p className="text-[var(--text-primary)] text-sm leading-relaxed">
+                <p className="text-folio-text-primary text-sm leading-relaxed">
                   Let vendors see when you&apos;re specifying their products. This unlocks appreciation
                   events, priority samples, and rep support—but means vendors can reach out about
                   your active projects.
@@ -173,7 +173,7 @@ export default function PrivacySettingsPage() {
 
                 {/* Status indicator */}
                 {visibility?.enabled && visibility.enabledAt && (
-                  <p className="text-[var(--text-tertiary)] text-xs mt-2">
+                  <p className="text-folio-text-tertiary text-xs mt-2">
                     Enabled {formatDate(visibility.enabledAt)}
                   </p>
                 )}
@@ -192,7 +192,7 @@ export default function PrivacySettingsPage() {
           <DialogContent className="max-w-md">
             <DialogHeader className="space-y-3">
               <DialogTitle>Enable Vendor Visibility?</DialogTitle>
-              <DialogDescription className="text-[var(--text-secondary)] leading-relaxed">
+              <DialogDescription className="text-folio-text-secondary leading-relaxed">
                 When enabled, vendors can see when you&apos;re actively specifying their products.
                 They may reach out with samples, pricing, and event invitations. You can turn this
                 off anytime.

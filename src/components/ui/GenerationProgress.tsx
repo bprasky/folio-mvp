@@ -106,12 +106,12 @@ export function GenerationProgress({
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-red-50">
             <Sparkles className="h-6 w-6 text-red-400" strokeWidth={1.5} />
           </div>
-          <h3 className="text-xl font-headline text-[var(--text-primary)]">
+          <h3 className="text-xl font-headline text-folio-text-primary">
             {generationAttempts >= maxAttempts
               ? "Generation unavailable"
               : `Generation failed — attempt ${generationAttempts} of ${maxAttempts}`}
           </h3>
-          <p className="text-sm text-[var(--text-secondary)] max-w-md mx-auto">
+          <p className="text-sm text-folio-text-secondary max-w-md mx-auto">
             {error}
           </p>
         </div>
@@ -138,14 +138,14 @@ export function GenerationProgress({
 
           {/* Title + phase message */}
           <div className="space-y-2">
-            <h3 className="text-2xl font-headline text-[var(--text-primary)]">
+            <h3 className="text-2xl font-headline text-folio-text-primary">
               Creating your story
             </h3>
             <AnimatePresence mode="wait">
               <motion.p
                 key={currentStep}
                 {...textAnimation}
-                className="text-sm text-[var(--text-secondary)]"
+                className="text-sm text-folio-text-secondary"
               >
                 {messages[currentStep]}
               </motion.p>

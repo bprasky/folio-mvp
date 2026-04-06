@@ -27,7 +27,7 @@ export default function DesignerQuotes({ quotes, className = '' }: DesignerQuote
 
   return (
     <div className={`space-y-4 ${className}`}>
-      <h3 className="text-folio-ui font-semibold text-[var(--text-primary)]">
+      <h3 className="text-folio-ui font-semibold text-folio-text-primary">
         What designers are saying
       </h3>
 
@@ -35,18 +35,18 @@ export default function DesignerQuotes({ quotes, className = '' }: DesignerQuote
         {quotes.map((item, i) => (
           <motion.div
             key={`${item.designerProfileUrl}-${i}`}
-            className="bg-[#F5F3EF] rounded-neu-sm p-5"
+            className="bg-surface-elevated rounded-neu-sm p-5"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.1 }}
           >
-            <blockquote className="text-folio-body text-[var(--text-primary)] italic mb-3">
+            <blockquote className="text-folio-body text-folio-text-primary italic mb-3">
               &ldquo;{item.quote}&rdquo;
             </blockquote>
 
             <div className="flex items-center gap-3">
               {/* Designer avatar */}
-              <div className="relative w-8 h-8 rounded-full overflow-hidden bg-[#E8E4DF] flex-shrink-0">
+              <div className="relative w-8 h-8 rounded-full overflow-hidden bg-folio-border-subtle flex-shrink-0">
                 {item.designerProfileImage ? (
                   <Image
                     src={item.designerProfileImage}
@@ -55,18 +55,18 @@ export default function DesignerQuotes({ quotes, className = '' }: DesignerQuote
                     className="object-cover"
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-folio-meta text-[var(--text-tertiary)] font-medium">
+                  <div className="w-full h-full flex items-center justify-center text-folio-meta text-folio-text-tertiary font-medium">
                     {item.designerName.charAt(0)}
                   </div>
                 )}
               </div>
 
               {/* Attribution */}
-              <div className="text-folio-meta text-[var(--text-secondary)]">
+              <div className="text-folio-meta text-folio-text-secondary">
                 <span>&mdash; </span>
                 <Link
                   href={item.designerProfileUrl}
-                  className="text-[var(--text-primary)] font-medium hover:text-[var(--accent)] transition-colors"
+                  className="text-folio-text-primary font-medium hover:text-[var(--accent)] transition-colors"
                 >
                   {item.designerName}
                 </Link>
@@ -74,7 +74,7 @@ export default function DesignerQuotes({ quotes, className = '' }: DesignerQuote
                 <span>used at </span>
                 <Link
                   href={item.projectUrl}
-                  className="text-[var(--text-primary)] hover:text-[var(--accent)] transition-colors"
+                  className="text-folio-text-primary hover:text-[var(--accent)] transition-colors"
                 >
                   {item.projectName}
                 </Link>

@@ -168,10 +168,10 @@ export default function ProfilePage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[var(--bg-elevated)] flex items-center justify-center">
+      <div className="min-h-screen bg-surface-ground flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--accent)] mx-auto"></div>
-          <p className="mt-4 text-[var(--text-secondary)]">Loading profile...</p>
+          <p className="mt-4 text-folio-text-secondary">Loading profile...</p>
         </div>
       </div>
     );
@@ -179,11 +179,11 @@ export default function ProfilePage() {
 
   if (!profile) {
     return (
-      <div className="min-h-screen bg-[var(--bg-elevated)] flex items-center justify-center">
+      <div className="min-h-screen bg-surface-ground flex items-center justify-center">
         <div className="text-center">
           <div className="text-red-500 text-6xl mb-4">⚠️</div>
-          <h3 className="text-lg font-medium text-[var(--text-primary)] mb-2">Profile Not Found</h3>
-          <p className="text-[var(--text-secondary)] mb-4">Unable to load your profile information.</p>
+          <h3 className="text-lg font-medium text-folio-text-primary mb-2">Profile Not Found</h3>
+          <p className="text-folio-text-secondary mb-4">Unable to load your profile information.</p>
           <Link
             href="/"
             className="bg-[var(--accent)] text-white px-4 py-2 rounded-md hover:bg-[var(--accent-hover)]"
@@ -196,24 +196,24 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--bg-elevated)]">
+    <div className="min-h-screen bg-surface-ground">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
           <Link
             href="/"
-            className="inline-flex items-center text-[var(--text-secondary)] hover:text-[var(--text-primary)] mb-4"
+            className="inline-flex items-center text-folio-text-secondary hover:text-folio-text-primary mb-4"
           >
             <FaArrowLeft className="mr-2" />
             Back to Home
           </Link>
-          <h1 className="text-3xl font-bold text-[var(--text-primary)]">My Profile</h1>
-          <p className="text-[var(--text-secondary)] mt-2">Manage your account information and preferences</p>
+          <h1 className="text-3xl font-bold text-folio-text-primary">My Profile</h1>
+          <p className="text-folio-text-secondary mt-2">Manage your account information and preferences</p>
         </div>
 
         <div className="glass-surface">
           {/* Profile Header */}
-          <div className="p-6 border-b border-[var(--ridge-outer)]">
+          <div className="p-6 border-b border-folio-border-subtle">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
                 <div
@@ -248,11 +248,11 @@ export default function ProfilePage() {
                   />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold text-[var(--text-primary)]">{profile.name}</h2>
+                  <h2 className="text-2xl font-bold text-folio-text-primary">{profile.name}</h2>
                   {profile.title && (
-                    <p className="text-[var(--text-secondary)]">{profile.title}</p>
+                    <p className="text-folio-text-secondary">{profile.title}</p>
                   )}
-                  <p className="text-[var(--text-secondary)] text-sm">{profile.email}</p>
+                  <p className="text-folio-text-secondary text-sm">{profile.email}</p>
                   <span className="inline-block bg-[var(--accent)]/10 text-[var(--accent-hover)] text-xs px-2 py-1 rounded-full mt-1 capitalize">
                     {profile.role}
                   </span>
@@ -273,102 +273,102 @@ export default function ProfilePage() {
               <form onSubmit={(e) => { e.preventDefault(); handleSave(); }}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
+                    <label className="block text-sm font-medium text-folio-text-primary mb-2">
                       Full Name
                     </label>
                     <input
                       type="text"
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="w-full px-3 py-2 border border-[var(--ridge-outer)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                      className="w-full px-3 py-2 border border-folio-border-subtle rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
+                    <label className="block text-sm font-medium text-folio-text-primary mb-2">
                       Title / Role
                     </label>
                     <input
                       type="text"
                       value={formData.title}
                       onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                      className="w-full px-3 py-2 border border-[var(--ridge-outer)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                      className="w-full px-3 py-2 border border-folio-border-subtle rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
                       placeholder="e.g. Interior Designer, Architect"
                     />
                   </div>
 
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
+                    <label className="block text-sm font-medium text-folio-text-primary mb-2">
                       Bio
                     </label>
                     <textarea
                       value={formData.bio}
                       onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
                       rows={4}
-                      className="w-full px-3 py-2 border border-[var(--ridge-outer)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                      className="w-full px-3 py-2 border border-folio-border-subtle rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
                       placeholder="Tell us about yourself..."
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
+                    <label className="block text-sm font-medium text-folio-text-primary mb-2">
                       Location
                     </label>
                     <div className="relative">
-                      <FaMapMarkerAlt className="absolute left-3 top-3 text-[var(--text-tertiary)]" />
+                      <FaMapMarkerAlt className="absolute left-3 top-3 text-folio-text-tertiary" />
                       <input
                         type="text"
                         value={formData.location}
                         onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                        className="w-full pl-10 pr-3 py-2 border border-[var(--ridge-outer)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                        className="w-full pl-10 pr-3 py-2 border border-folio-border-subtle rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
                         placeholder="City, State"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
+                    <label className="block text-sm font-medium text-folio-text-primary mb-2">
                       Website
                     </label>
                     <div className="relative">
-                      <FaGlobe className="absolute left-3 top-3 text-[var(--text-tertiary)]" />
+                      <FaGlobe className="absolute left-3 top-3 text-folio-text-tertiary" />
                       <input
                         type="url"
                         value={formData.website}
                         onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-                        className="w-full pl-10 pr-3 py-2 border border-[var(--ridge-outer)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                        className="w-full pl-10 pr-3 py-2 border border-folio-border-subtle rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
                         placeholder="https://yourwebsite.com"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
+                    <label className="block text-sm font-medium text-folio-text-primary mb-2">
                       Instagram
                     </label>
                     <div className="relative">
-                      <FaInstagram className="absolute left-3 top-3 text-[var(--text-tertiary)]" />
+                      <FaInstagram className="absolute left-3 top-3 text-folio-text-tertiary" />
                       <input
                         type="text"
                         value={formData.instagram}
                         onChange={(e) => setFormData({ ...formData, instagram: e.target.value })}
-                        className="w-full pl-10 pr-3 py-2 border border-[var(--ridge-outer)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                        className="w-full pl-10 pr-3 py-2 border border-folio-border-subtle rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
                         placeholder="@username"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
+                    <label className="block text-sm font-medium text-folio-text-primary mb-2">
                       LinkedIn
                     </label>
                     <div className="relative">
-                      <FaLinkedin className="absolute left-3 top-3 text-[var(--text-tertiary)]" />
+                      <FaLinkedin className="absolute left-3 top-3 text-folio-text-tertiary" />
                       <input
                         type="url"
                         value={formData.linkedin}
                         onChange={(e) => setFormData({ ...formData, linkedin: e.target.value })}
-                        className="w-full pl-10 pr-3 py-2 border border-[var(--ridge-outer)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                        className="w-full pl-10 pr-3 py-2 border border-folio-border-subtle rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
                         placeholder="https://linkedin.com/in/username"
                       />
                     </div>
@@ -379,7 +379,7 @@ export default function ProfilePage() {
                   <button
                     type="button"
                     onClick={() => setIsEditing(false)}
-                    className="px-4 py-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                    className="px-4 py-2 text-folio-text-secondary hover:text-folio-text-primary"
                   >
                     Cancel
                   </button>
@@ -395,62 +395,62 @@ export default function ProfilePage() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <h3 className="text-lg font-medium text-[var(--text-primary)] mb-4">Personal Information</h3>
+                  <h3 className="text-lg font-medium text-folio-text-primary mb-4">Personal Information</h3>
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-[var(--text-primary)]">Full Name</label>
-                      <p className="text-[var(--text-primary)]">{profile.name}</p>
+                      <label className="block text-sm font-medium text-folio-text-primary">Full Name</label>
+                      <p className="text-folio-text-primary">{profile.name}</p>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-[var(--text-primary)]">Title / Role</label>
-                      <p className="text-[var(--text-primary)]">{profile.title || 'No title added yet'}</p>
+                      <label className="block text-sm font-medium text-folio-text-primary">Title / Role</label>
+                      <p className="text-folio-text-primary">{profile.title || 'No title added yet'}</p>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-[var(--text-primary)]">Email</label>
-                      <p className="text-[var(--text-primary)]">{profile.email}</p>
+                      <label className="block text-sm font-medium text-folio-text-primary">Email</label>
+                      <p className="text-folio-text-primary">{profile.email}</p>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-[var(--text-primary)]">Bio</label>
-                      <p className="text-[var(--text-primary)]">{profile.bio || 'No bio added yet'}</p>
+                      <label className="block text-sm font-medium text-folio-text-primary">Bio</label>
+                      <p className="text-folio-text-primary">{profile.bio || 'No bio added yet'}</p>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-[var(--text-primary)]">Location</label>
-                      <p className="text-[var(--text-primary)]">{profile.location || 'No location specified'}</p>
+                      <label className="block text-sm font-medium text-folio-text-primary">Location</label>
+                      <p className="text-folio-text-primary">{profile.location || 'No location specified'}</p>
                     </div>
                   </div>
                 </div>
 
                 <div>
-                  <h3 className="text-lg font-medium text-[var(--text-primary)] mb-4">Social Links</h3>
+                  <h3 className="text-lg font-medium text-folio-text-primary mb-4">Social Links</h3>
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-[var(--text-primary)]">Website</label>
+                      <label className="block text-sm font-medium text-folio-text-primary">Website</label>
                       {profile.website ? (
                         <a href={profile.website} target="_blank" rel="noopener noreferrer" className="text-[var(--accent)] hover:text-[var(--accent-hover)]">
                           {profile.website}
                         </a>
                       ) : (
-                        <p className="text-[var(--text-secondary)]">No website added</p>
+                        <p className="text-folio-text-secondary">No website added</p>
                       )}
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-[var(--text-primary)]">Instagram</label>
+                      <label className="block text-sm font-medium text-folio-text-primary">Instagram</label>
                       {profile.instagram ? (
                         <a href={`https://instagram.com/${profile.instagram.replace('@', '')}`} target="_blank" rel="noopener noreferrer" className="text-[var(--accent)] hover:text-[var(--accent-hover)]">
                           {profile.instagram}
                         </a>
                       ) : (
-                        <p className="text-[var(--text-secondary)]">No Instagram added</p>
+                        <p className="text-folio-text-secondary">No Instagram added</p>
                       )}
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-[var(--text-primary)]">LinkedIn</label>
+                      <label className="block text-sm font-medium text-folio-text-primary">LinkedIn</label>
                       {profile.linkedin ? (
                         <a href={profile.linkedin} target="_blank" rel="noopener noreferrer" className="text-[var(--accent)] hover:text-[var(--accent-hover)]">
                           {profile.linkedin}
                         </a>
                       ) : (
-                        <p className="text-[var(--text-secondary)]">No LinkedIn added</p>
+                        <p className="text-folio-text-secondary">No LinkedIn added</p>
                       )}
                     </div>
                   </div>
@@ -505,9 +505,9 @@ export default function ProfilePage() {
 
         {/* Organization Memberships */}
         <div className="glass-surface mt-6">
-          <div className="p-6 border-b border-[var(--ridge-outer)]">
+          <div className="p-6 border-b border-folio-border-subtle">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-medium text-[var(--text-primary)]">Organization Memberships</h3>
+              <h3 className="text-lg font-medium text-folio-text-primary">Organization Memberships</h3>
               <Link
                 href="/professionals/join"
                 className="text-sm text-[var(--accent)] hover:text-[var(--accent-hover)]"
@@ -520,9 +520,9 @@ export default function ProfilePage() {
           <div className="p-6">
             {orgMemberships.length === 0 ? (
               <div className="text-center py-8">
-                <FaBuilding className="w-12 h-12 text-[var(--text-tertiary)] mx-auto mb-4" />
-                <h4 className="text-[var(--text-primary)] font-medium mb-2">No Organization Memberships</h4>
-                <p className="text-[var(--text-secondary)] text-sm mb-4">
+                <FaBuilding className="w-12 h-12 text-folio-text-tertiary mx-auto mb-4" />
+                <h4 className="text-folio-text-primary font-medium mb-2">No Organization Memberships</h4>
+                <p className="text-folio-text-secondary text-sm mb-4">
                   Join an organization to unlock professional features like project creation, image generation, and affiliate earnings.
                 </p>
                 <Link
@@ -538,10 +538,10 @@ export default function ProfilePage() {
                 {orgMemberships.map((membership) => (
                   <div
                     key={membership.id}
-                    className="flex items-center justify-between p-4 bg-[var(--bg-elevated)] rounded-lg"
+                    className="flex items-center justify-between p-4 bg-surface-ground rounded-lg"
                   >
                     <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-[var(--bg-elevated)] rounded-lg flex items-center justify-center flex-shrink-0">
+                      <div className="w-12 h-12 bg-surface-ground rounded-lg flex items-center justify-center flex-shrink-0">
                         {membership.org.logo ? (
                           <img
                             src={membership.org.logo}
@@ -549,22 +549,22 @@ export default function ProfilePage() {
                             className="w-full h-full object-cover rounded-lg"
                           />
                         ) : (
-                          <FaBuilding className="w-6 h-6 text-[var(--text-tertiary)]" />
+                          <FaBuilding className="w-6 h-6 text-folio-text-tertiary" />
                         )}
                       </div>
                       <div>
                         <Link
                           href={`/org/${membership.org.id}`}
-                          className="font-medium text-[var(--text-primary)] hover:text-[var(--accent)]"
+                          className="font-medium text-folio-text-primary hover:text-[var(--accent)]"
                         >
                           {membership.org.name}
                         </Link>
                         <div className="flex items-center gap-2 mt-1">
-                          <span className="text-sm text-[var(--text-secondary)]">
+                          <span className="text-sm text-folio-text-secondary">
                             {membership.org.type.replace('_', ' ')}
                           </span>
-                          <span className="text-[var(--text-tertiary)]">•</span>
-                          <span className="flex items-center gap-1 text-sm text-[var(--text-secondary)]">
+                          <span className="text-folio-text-tertiary">•</span>
+                          <span className="flex items-center gap-1 text-sm text-folio-text-secondary">
                             {membership.role === 'OWNER' && (
                               <FaCrown className="text-amber-500" />
                             )}
@@ -575,7 +575,7 @@ export default function ProfilePage() {
                           </span>
                           {membership.org.status === 'PROFESSIONAL' && (
                             <>
-                              <span className="text-[var(--text-tertiary)]">•</span>
+                              <span className="text-folio-text-tertiary">•</span>
                               <span className="flex items-center gap-1 text-sm text-purple-600">
                                 <FaStar className="text-purple-500" />
                                 Pro
@@ -584,7 +584,7 @@ export default function ProfilePage() {
                           )}
                           {membership.org.status === 'CLAIMED' && (
                             <>
-                              <span className="text-[var(--text-tertiary)]">•</span>
+                              <span className="text-folio-text-tertiary">•</span>
                               <span className="flex items-center gap-1 text-sm text-[var(--accent)]">
                                 <FaCheck className="text-[var(--accent)]" />
                                 Verified
@@ -602,7 +602,7 @@ export default function ProfilePage() {
                         className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm transition-colors ${
                           membership.showOnProfile
                             ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                            : 'bg-[var(--bg-elevated)] text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)]'
+                            : 'bg-surface-ground text-folio-text-secondary hover:bg-surface-ground'
                         } ${togglingVisibility === membership.id ? 'opacity-50 cursor-not-allowed' : ''}`}
                         title={membership.showOnProfile ? 'Visible on public profile' : 'Hidden from public profile'}
                       >

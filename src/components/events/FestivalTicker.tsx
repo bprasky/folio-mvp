@@ -37,7 +37,7 @@ export default function FestivalTicker({ festivals, className }: Props) {
         <ChevronRight className="h-4 w-4 opacity-60" />
       </div>
 
-      <div className="group relative overflow-hidden rounded-2xl border border-[var(--ridge-outer)] bg-[var(--bg-base)]">
+      <div className="group relative overflow-hidden rounded-2xl border border-folio-border-subtle bg-surface-canvas">
         {/* scroller */}
         <div
           className="
@@ -49,7 +49,7 @@ export default function FestivalTicker({ festivals, className }: Props) {
             return (
               <div
                 key={f.id}
-                className="w-[320px] shrink-0 rounded-xl border border-[var(--ridge-outer)] bg-[var(--bg-base)] shadow-sm hover:shadow-md transition-shadow"
+                className="w-[320px] shrink-0 rounded-xl border border-folio-border-subtle bg-surface-canvas shadow-sm hover:shadow-md transition-shadow"
               >
                 <Link href={href} className="block">
                   <CoverImage src={f.imageUrl ?? null} alt={f.title} ratio="4/3" className="rounded-b-none rounded-t-xl" />
@@ -58,7 +58,7 @@ export default function FestivalTicker({ festivals, className }: Props) {
                   <Link href={href} className="line-clamp-2 font-medium leading-snug hover:underline">
                     {f.title}
                   </Link>
-                  <div className="mt-1 text-sm text-[var(--text-secondary)]">{formatRange(f.startDate, f.endDate)}</div>
+                  <div className="mt-1 text-sm text-folio-text-secondary">{formatRange(f.startDate, f.endDate)}</div>
 
                   <div className="mt-3 flex items-center gap-2">
                     <Link
@@ -69,7 +69,7 @@ export default function FestivalTicker({ festivals, className }: Props) {
                     </Link>
                     <Link
                       href={href}
-                      className="rounded-md border border-[var(--ridge-outer)] px-3 py-1.5 text-sm font-medium hover:bg-[var(--bg-elevated)]"
+                      className="rounded-md border border-folio-border-subtle px-3 py-1.5 text-sm font-medium hover:bg-surface-ground"
                     >
                       View Details
                     </Link>

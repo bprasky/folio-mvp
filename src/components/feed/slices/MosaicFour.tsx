@@ -71,7 +71,7 @@ export default function MosaicFour({ items, onClick, canEdit = false }: MosaicFo
                 TILE ok · {String(item?.title ?? '')}
               </div>
             )}
-            <div className="relative aspect-square overflow-hidden rounded-xl bg-[var(--bg-elevated)]">
+            <div className="relative aspect-square overflow-hidden rounded-xl bg-surface-ground">
               <SafeImage
                 src={getImageUrl(item)}
                 alt={String(item?.title ?? '')}

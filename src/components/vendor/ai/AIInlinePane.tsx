@@ -58,14 +58,14 @@ export function AIInlinePane({ sectionId, className }: Props) {
     <>
       <div
         className={
-          'mt-2 -mx-4 md:-mx-6 flex flex-col gap-1 rounded-b-2xl border-t border-[var(--ridge-outer)] bg-[var(--bg-base)]/70 backdrop-blur-md px-4 md:px-6 py-2 folio-meta ' +
+          'mt-2 -mx-4 md:-mx-6 flex flex-col gap-1 rounded-b-2xl border-t border-folio-border-subtle bg-surface-canvas/70 backdrop-blur-md px-4 md:px-6 py-2 folio-meta ' +
           (className ?? '')
         }
       >
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <AIBadge />
-            <span className="uppercase tracking-wide text-[10px] text-[var(--text-secondary)]">
+            <span className="uppercase tracking-wide text-[10px] text-folio-text-secondary">
               AI for this section
             </span>
           </div>
@@ -81,7 +81,7 @@ export function AIInlinePane({ sectionId, className }: Props) {
                       'px-2.5 py-1 rounded-full capitalize text-[10px] transition ' +
                       (activeTab === tab && aiUnlocked
                         ? 'bg-[var(--text-primary)] text-[var(--bg-base)]'
-                        : 'bg-[var(--bg-elevated)] text-[var(--text-primary)] hover:bg-[var(--ridge-inner)]')
+                        : 'bg-surface-ground text-folio-text-primary hover:bg-[var(--ridge-inner)]')
                     }
                   >
                     {tab}
@@ -89,8 +89,8 @@ export function AIInlinePane({ sectionId, className }: Props) {
                 </PopoverTrigger>
                 {aiUnlocked && (
                   <PopoverContent className="text-[11px] leading-relaxed">
-                    <div className="font-semibold mb-2 capitalize text-[var(--text-primary)]">{tab}</div>
-                    <p className="text-[var(--text-primary)]">{content.details[tab]}</p>
+                    <div className="font-semibold mb-2 capitalize text-folio-text-primary">{tab}</div>
+                    <p className="text-folio-text-primary">{content.details[tab]}</p>
                   </PopoverContent>
                 )}
               </Popover>
@@ -99,7 +99,7 @@ export function AIInlinePane({ sectionId, className }: Props) {
         </div>
 
         <div className="flex items-center justify-between gap-3">
-          <div className="text-[11px] leading-snug text-[var(--text-primary)] flex-1 line-clamp-2">
+          <div className="text-[11px] leading-snug text-folio-text-primary flex-1 line-clamp-2">
             {aiUnlocked
               ? content.summary[activeTab]
               : 'Unlock Folio AI to interpret this metric, compare you to peers, and recommend the next steps.'}
@@ -107,7 +107,7 @@ export function AIInlinePane({ sectionId, className }: Props) {
           <button
             type="button"
             onClick={handleWhyClick}
-            className="shrink-0 text-[11px] underline underline-offset-4 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition opacity-70 hover:opacity-100"
+            className="shrink-0 text-[11px] underline underline-offset-4 text-folio-text-secondary hover:text-folio-text-primary transition opacity-70 hover:opacity-100"
           >
             Why this?
           </button>

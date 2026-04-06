@@ -37,7 +37,7 @@ export default function SigninPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[var(--bg-base)] px-4 py-12">
+    <div className="min-h-screen flex items-center justify-center bg-surface-canvas px-4 py-12">
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
@@ -54,7 +54,7 @@ export default function SigninPage() {
 
           <form className="space-y-5" onSubmit={handleSubmit}>
             <div>
-              <label htmlFor="email" className="block folio-ui text-[var(--text-primary)] mb-1.5">
+              <label htmlFor="email" className="block folio-ui text-folio-text-primary mb-1.5">
                 Email
               </label>
               <Input
@@ -71,7 +71,7 @@ export default function SigninPage() {
             </div>
 
             <div>
-              <label htmlFor="password" className="block folio-ui text-[var(--text-primary)] mb-1.5">
+              <label htmlFor="password" className="block folio-ui text-folio-text-primary mb-1.5">
                 Password
               </label>
               <Input
@@ -117,9 +117,9 @@ export default function SigninPage() {
         {/* Footer */}
         <p className="text-center folio-meta mt-8">
           By signing in, you agree to our{" "}
-          <a href="/terms" className="underline hover:text-[var(--text-secondary)]">Terms</a>
+          <a href="/terms" className="underline hover:text-folio-text-secondary">Terms</a>
           {" "}and{" "}
-          <a href="/privacy" className="underline hover:text-[var(--text-secondary)]">Privacy Policy</a>
+          <a href="/privacy" className="underline hover:text-folio-text-secondary">Privacy Policy</a>
         </p>
       </div>
     </div>

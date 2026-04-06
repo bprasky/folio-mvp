@@ -99,10 +99,10 @@ export default function CreateOrganizationPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[var(--bg-base)] flex items-center justify-center">
+      <div className="min-h-screen bg-surface-canvas flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--accent)] mx-auto"></div>
-          <p className="mt-4 folio-body text-[var(--text-secondary)]">Loading...</p>
+          <p className="mt-4 folio-body text-folio-text-secondary">Loading...</p>
         </div>
       </div>
     );
@@ -110,10 +110,10 @@ export default function CreateOrganizationPage() {
 
   if (!currentUser) {
     return (
-      <div className="min-h-screen bg-[var(--bg-base)] flex items-center justify-center">
+      <div className="min-h-screen bg-surface-canvas flex items-center justify-center">
         <div className="text-center">
           <h1 className="folio-h2 mb-4">Please Sign In</h1>
-          <p className="folio-body text-[var(--text-secondary)] mb-4">You need to be signed in to create an organization.</p>
+          <p className="folio-body text-folio-text-secondary mb-4">You need to be signed in to create an organization.</p>
           <a href="/auth/signin" className="text-[var(--accent)] hover:text-[var(--accent-hover)]">
             Sign In
           </a>
@@ -123,12 +123,12 @@ export default function CreateOrganizationPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--bg-base)] py-8">
+    <div className="min-h-screen bg-surface-canvas py-8">
       <div className="max-w-2xl mx-auto px-4">
         <RidgeCard padding="xl">
           <div className="mb-6">
             <h1 className="folio-h1 mb-2">Create Vendor Organization</h1>
-            <p className="folio-body text-[var(--text-secondary)]">
+            <p className="folio-body text-folio-text-secondary">
               Set up your organization to start creating projects for designers.
             </p>
           </div>
@@ -145,7 +145,7 @@ export default function CreateOrganizationPage() {
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label htmlFor="name" className="block folio-body font-medium text-[var(--text-primary)] mb-2">
+              <label htmlFor="name" className="block folio-body font-medium text-folio-text-primary mb-2">
                 Organization Name *
               </label>
               <Input
@@ -160,7 +160,7 @@ export default function CreateOrganizationPage() {
             </div>
 
             <div>
-              <label htmlFor="description" className="block folio-body font-medium text-[var(--text-primary)] mb-2">
+              <label htmlFor="description" className="block folio-body font-medium text-folio-text-primary mb-2">
                 Description
               </label>
               <textarea
@@ -175,7 +175,7 @@ export default function CreateOrganizationPage() {
             </div>
 
             <div>
-              <label htmlFor="website" className="block folio-body font-medium text-[var(--text-primary)] mb-2">
+              <label htmlFor="website" className="block folio-body font-medium text-folio-text-primary mb-2">
                 Website
               </label>
               <Input

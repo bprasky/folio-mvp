@@ -14,7 +14,7 @@ const GlassCard = forwardRef<HTMLDivElement, GlassCardProps>(
       default: "glass-surface",
       subtle: "glass-surface glass-surface-sm",
       strong: "glass-overlay",
-      solid: "bg-white border border-[var(--ridge-outer)]/50 shadow-lg",
+      solid: "bg-white border border-folio-border-subtle/50 shadow-lg",
     };
     
     const paddings = {

@@ -53,7 +53,7 @@ const typeOptions = [
 ];
 
 const statusColors: Record<string, string> = {
-  UNCLAIMED: 'bg-[var(--bg-elevated)] text-[var(--text-secondary)]',
+  UNCLAIMED: 'bg-surface-ground text-folio-text-secondary',
   CLAIMED: 'bg-blue-100 text-blue-700',
   PROFESSIONAL: 'bg-purple-100 text-purple-700',
 };
@@ -169,7 +169,7 @@ export default function AdminOrganizationsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--bg-base)] py-8">
+    <div className="min-h-screen bg-surface-canvas py-8">
       <div className="max-w-7xl mx-auto px-4">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
@@ -198,7 +198,7 @@ export default function AdminOrganizationsPage() {
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1">
               <div className="relative">
-                <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[var(--text-tertiary)]" />
+                <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-folio-text-tertiary" />
                 <Input
                   type="text"
                   placeholder="Search organizations..."
@@ -238,8 +238,8 @@ export default function AdminOrganizationsPage() {
         {/* Organizations List */}
         {loading ? (
           <RidgeCard padding="xl" className="text-center">
-            <FaSpinner className="w-8 h-8 animate-spin text-[var(--text-tertiary)] mx-auto" />
-            <p className="text-[var(--text-secondary)] mt-4">Loading organizations...</p>
+            <FaSpinner className="w-8 h-8 animate-spin text-folio-text-tertiary mx-auto" />
+            <p className="text-folio-text-secondary mt-4">Loading organizations...</p>
           </RidgeCard>
         ) : error ? (
           <RidgeCard padding="xl" className="text-center">
@@ -247,8 +247,8 @@ export default function AdminOrganizationsPage() {
           </RidgeCard>
         ) : organizations.length === 0 ? (
           <RidgeCard padding="xl" className="text-center">
-            <FaBuilding className="w-12 h-12 text-[var(--text-tertiary)] mx-auto mb-4" />
-            <p className="text-[var(--text-secondary)]">No organizations found</p>
+            <FaBuilding className="w-12 h-12 text-folio-text-tertiary mx-auto mb-4" />
+            <p className="text-folio-text-secondary">No organizations found</p>
           </RidgeCard>
         ) : (
           <div className="space-y-4">
@@ -256,7 +256,7 @@ export default function AdminOrganizationsPage() {
               <RidgeCard key={org.id} padding="lg">
                 <div className="flex items-start justify-between">
                   <div className="flex items-start gap-4">
-                    <div className="w-16 h-16 bg-[var(--bg-elevated)] rounded-lg flex items-center justify-center flex-shrink-0">
+                    <div className="w-16 h-16 bg-surface-ground rounded-lg flex items-center justify-center flex-shrink-0">
                       {org.logo ? (
                         <img
                           src={org.logo}
@@ -264,14 +264,14 @@ export default function AdminOrganizationsPage() {
                           className="w-full h-full object-cover rounded-lg"
                         />
                       ) : (
-                        <FaBuilding className="w-8 h-8 text-[var(--text-tertiary)]" />
+                        <FaBuilding className="w-8 h-8 text-folio-text-tertiary" />
                       )}
                     </div>
                     <div>
                       <div className="flex items-center gap-3 mb-1">
                         <Link
                           href={`/org/${org.id}`}
-                          className="folio-h3 text-[var(--text-primary)] hover:text-[var(--accent)]"
+                          className="folio-h3 text-folio-text-primary hover:text-[var(--accent)]"
                         >
                           {org.name}
                         </Link>
@@ -340,7 +340,7 @@ export default function AdminOrganizationsPage() {
                       <FaNotes className="w-4 h-4" />
                       <span className="font-medium">Sales Notes</span>
                       {org.salesContactedAt && (
-                        <span className="text-[var(--text-tertiary)]">
+                        <span className="text-folio-text-tertiary">
                           (Last contacted: {new Date(org.salesContactedAt).toLocaleDateString()})
                         </span>
                       )}
@@ -351,7 +351,7 @@ export default function AdminOrganizationsPage() {
                           setEditingNotesId(org.id);
                           setEditingNotesValue(org.salesNotes || '');
                         }}
-                        className="text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
+                        className="text-folio-text-tertiary hover:text-folio-text-secondary"
                       >
                         <FaEdit className="w-4 h-4" />
                       </button>
@@ -395,7 +395,7 @@ export default function AdminOrganizationsPage() {
                       </div>
                     </div>
                   ) : (
-                    <p className="folio-meta text-[var(--text-secondary)]">
+                    <p className="folio-meta text-folio-text-secondary">
                       {org.salesNotes || 'No notes yet. Click edit to add notes.'}
                     </p>
                   )}

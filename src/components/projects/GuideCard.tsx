@@ -73,7 +73,7 @@ export function GuideCard({
       {/* Header */}
       <div className="flex items-center justify-between mb-5">
         <div>
-          <h3 className="folio-h3 text-[var(--text-primary)]">
+          <h3 className="folio-h3 text-folio-text-primary">
             Getting Started
           </h3>
           <p className="folio-meta mt-0.5">
@@ -127,18 +127,18 @@ export function GuideCard({
                 "w-8 h-8 rounded-lg flex items-center justify-center mb-2 transition-all duration-300",
                 step.completed
                   ? "bg-[var(--accent)] shadow-[0_4px_12px_rgba(184,132,92,0.2)]"
-                  : "bg-[var(--bg-elevated)]"
+                  : "bg-surface-ground"
               )}>
                 <StepIcon className={cn(
                   "h-4 w-4",
-                  step.completed ? "text-white" : "text-[var(--text-secondary)]"
+                  step.completed ? "text-white" : "text-folio-text-secondary"
                 )} />
               </div>
 
               {/* Title & description */}
               <h4 className={cn(
                 "folio-ui font-medium mb-0.5 transition-colors",
-                step.completed ? "text-[var(--text-primary)]" : "text-[var(--text-secondary)]"
+                step.completed ? "text-folio-text-primary" : "text-folio-text-secondary"
               )}>
                 {step.title}
               </h4>

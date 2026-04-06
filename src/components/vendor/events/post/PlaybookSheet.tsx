@@ -145,13 +145,13 @@ export function PlaybookSheet({ isOpen, onClose, onSubmit, playItem, type, desig
             type="number"
             value={value}
             onChange={(e) => setFormData({...formData, [field.key]: e.target.value})}
-            className="border-[#DAD2CA]"
+            className="border-folio-border-strong"
           />
         );
       case 'select':
         return (
           <Select value={value} onValueChange={(val) => setFormData({...formData, [field.key]: val})}>
-            <SelectTrigger className="border-[#DAD2CA]">
+            <SelectTrigger className="border-folio-border-strong">
               <SelectValue placeholder={`Select ${field.label.toLowerCase()}`} />
             </SelectTrigger>
             <SelectContent>
@@ -166,7 +166,7 @@ export function PlaybookSheet({ isOpen, onClose, onSubmit, playItem, type, desig
           <Textarea
             value={value}
             onChange={(e) => setFormData({...formData, [field.key]: e.target.value})}
-            className="border-[#DAD2CA]"
+            className="border-folio-border-strong"
             rows={3}
             placeholder={`Enter ${field.label.toLowerCase()}...`}
           />
@@ -177,7 +177,7 @@ export function PlaybookSheet({ isOpen, onClose, onSubmit, playItem, type, desig
             type="text"
             value={value}
             onChange={(e) => setFormData({...formData, [field.key]: e.target.value})}
-            className="border-[#DAD2CA]"
+            className="border-folio-border-strong"
           />
         );
     }
@@ -191,10 +191,10 @@ export function PlaybookSheet({ isOpen, onClose, onSubmit, playItem, type, desig
         <SheetHeader>
           <div className="flex items-center justify-between">
             <div>
-              <SheetTitle className="text-xl font-serif text-[#2B2B2B]">
+              <SheetTitle className="text-xl font-serif text-folio-text-primary">
                 {config.title}
               </SheetTitle>
-              <p className="text-sm text-[#8C8278] mt-1">
+              <p className="text-sm text-folio-text-secondary mt-1">
                 {config.description}
               </p>
             </div>
@@ -205,23 +205,23 @@ export function PlaybookSheet({ isOpen, onClose, onSubmit, playItem, type, desig
         </SheetHeader>
 
         {/* Target Summary */}
-        <div className="bg-[#F7F4F1] rounded-lg p-4 my-4">
+        <div className="bg-surface-elevated rounded-lg p-4 my-4">
           <div className="flex items-center space-x-2 mb-2">
-            <Users className="w-4 h-4 text-[#8C8278]" />
-            <span className="text-sm font-medium text-[#2B2B2B]">Target Audience</span>
+            <Users className="w-4 h-4 text-folio-text-secondary" />
+            <span className="text-sm font-medium text-folio-text-primary">Target Audience</span>
           </div>
-          <p className="text-sm text-[#8C8278]">
+          <p className="text-sm text-folio-text-secondary">
             {targetCount} designer{targetCount !== 1 ? 's' : ''} selected
           </p>
           
           <div className="flex flex-wrap gap-1 mt-2">
             {designers.slice(0, 3).map((designer) => (
-              <Badge key={designer.id} className="text-xs bg-[#8C8278]/10 text-[#8C8278] border-[#8C8278]/20">
+              <Badge key={designer.id} className="text-xs bg-[#8C8278]/10 text-folio-text-secondary border-[#8C8278]/20">
                 {designer.name}
               </Badge>
             ))}
             {designers.length > 3 && (
-              <Badge className="text-xs bg-[#8C8278]/10 text-[#8C8278] border-[#8C8278]/20">
+              <Badge className="text-xs bg-[#8C8278]/10 text-folio-text-secondary border-[#8C8278]/20">
                 +{designers.length - 3} more
               </Badge>
             )}
@@ -232,7 +232,7 @@ export function PlaybookSheet({ isOpen, onClose, onSubmit, playItem, type, desig
         <form onSubmit={handleSubmit} className="flex flex-col flex-grow space-y-4">
           {config.fields.map((field) => (
             <div key={field.key} className="space-y-2">
-              <Label htmlFor={field.key} className="text-sm font-medium text-[#2B2B2B]">
+              <Label htmlFor={field.key} className="text-sm font-medium text-folio-text-primary">
                 {field.label}
                 {field.key === 'discountPct' && <Percent className="w-3 h-3 inline ml-1" />}
               </Label>
@@ -240,7 +240,7 @@ export function PlaybookSheet({ isOpen, onClose, onSubmit, playItem, type, desig
             </div>
           ))}
 
-          <div className="mt-auto pt-4 border-t border-[#DAD2CA]">
+          <div className="mt-auto pt-4 border-t border-folio-border-strong">
             <Button 
               type="submit" 
               className="w-full bg-[#2B2B2B] hover:bg-[#8C8278] text-white" 

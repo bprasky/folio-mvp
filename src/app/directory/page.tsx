@@ -153,13 +153,13 @@ export default function DirectoryPage() {
   const isInitialLoad = loading && isEmpty;
 
   return (
-    <div className="min-h-screen bg-[var(--bg-base)] p-6">
+    <div className="min-h-screen bg-surface-canvas p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
             {/* Tabs */}
-            <div className="flex gap-1 p-1 bg-[var(--bg-elevated)] rounded-lg">
+            <div className="flex gap-1 p-1 bg-surface-ground rounded-lg">
               {TABS.map(tab => (
                 <button
                   key={tab.id}
@@ -167,8 +167,8 @@ export default function DirectoryPage() {
                   className={cn(
                     'px-4 py-2 text-sm font-medium rounded-md transition-colors',
                     activeTab === tab.id
-                      ? 'bg-[var(--bg-card)] text-[var(--text-primary)] shadow-sm'
-                      : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                      ? 'bg-[var(--bg-card)] text-folio-text-primary shadow-sm'
+                      : 'text-folio-text-secondary hover:text-folio-text-primary'
                   )}
                 >
                   {tab.label}
@@ -177,14 +177,14 @@ export default function DirectoryPage() {
             </div>
 
             {/* View Mode Toggle */}
-            <div className="flex gap-1 p-1 bg-[var(--bg-elevated)] rounded-lg">
+            <div className="flex gap-1 p-1 bg-surface-ground rounded-lg">
               <button
                 onClick={() => setViewMode('browse')}
                 className={cn(
                   'px-3 py-1.5 text-sm font-medium rounded-md transition-colors',
                   viewMode === 'browse'
-                    ? 'bg-[var(--bg-card)] text-[var(--text-primary)] shadow-sm'
-                    : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                    ? 'bg-[var(--bg-card)] text-folio-text-primary shadow-sm'
+                    : 'text-folio-text-secondary hover:text-folio-text-primary'
                 )}
               >
                 Browse
@@ -194,8 +194,8 @@ export default function DirectoryPage() {
                 className={cn(
                   'px-3 py-1.5 text-sm font-medium rounded-md transition-colors',
                   viewMode === 'ranked'
-                    ? 'bg-[var(--bg-card)] text-[var(--text-primary)] shadow-sm'
-                    : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                    ? 'bg-[var(--bg-card)] text-folio-text-primary shadow-sm'
+                    : 'text-folio-text-secondary hover:text-folio-text-primary'
                 )}
               >
                 Ranked
@@ -210,7 +210,7 @@ export default function DirectoryPage() {
                 <select
                   value={browseSort}
                   onChange={(e) => { setBrowseSort(e.target.value as BrowseSort); setPage(1); }}
-                  className="px-3 py-2 text-sm bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-lg text-[var(--text-primary)]"
+                  className="px-3 py-2 text-sm bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-lg text-folio-text-primary"
                 >
                   {BROWSE_SORTS.map(opt => (
                     <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -220,7 +220,7 @@ export default function DirectoryPage() {
                 <select
                   value={selectedRegion}
                   onChange={(e) => { setSelectedRegion(e.target.value); setPage(1); }}
-                  className="px-3 py-2 text-sm bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-lg text-[var(--text-primary)]"
+                  className="px-3 py-2 text-sm bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-lg text-folio-text-primary"
                 >
                   <option value="">All Locations</option>
                   {REGIONS.map(r => <option key={r} value={r}>{r}</option>)}
@@ -230,7 +230,7 @@ export default function DirectoryPage() {
                   <select
                     value={selectedStyle}
                     onChange={(e) => { setSelectedStyle(e.target.value); setPage(1); }}
-                    className="px-3 py-2 text-sm bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-lg text-[var(--text-primary)]"
+                    className="px-3 py-2 text-sm bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-lg text-folio-text-primary"
                   >
                     <option value="">All Styles</option>
                     {STYLES.map(s => <option key={s} value={s}>{s}</option>)}
@@ -244,7 +244,7 @@ export default function DirectoryPage() {
                       'px-3 py-2 text-sm rounded-lg border transition-colors',
                       showBookmarked
                         ? 'bg-[var(--accent)]/10 border-[var(--accent)]/30 text-[var(--accent)]'
-                        : 'bg-[var(--bg-card)] border-[var(--border-subtle)] text-[var(--text-secondary)]'
+                        : 'bg-[var(--bg-card)] border-[var(--border-subtle)] text-folio-text-secondary'
                     )}
                   >
                     Bookmarked
@@ -255,7 +255,7 @@ export default function DirectoryPage() {
               <select
                 value={rankedView}
                 onChange={(e) => { setRankedView(e.target.value as RankedView); setPage(1); }}
-                className="px-3 py-2 text-sm bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-lg text-[var(--text-primary)]"
+                className="px-3 py-2 text-sm bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-lg text-folio-text-primary"
               >
                 <option value="overall">Overall</option>
                 <option value="rising">Rising</option>
@@ -265,10 +265,10 @@ export default function DirectoryPage() {
 
           {/* Title */}
           <div className="mt-4">
-            <h1 className="folio-h1 text-[var(--text-primary)] mb-1">
+            <h1 className="folio-h1 text-folio-text-primary mb-1">
               {viewMode === 'browse' ? 'Directory' : rankedView === 'rising' ? 'Rising This Week' : 'Folio Top 100'}
             </h1>
-            <p className="folio-body text-[var(--text-secondary)]">
+            <p className="folio-body text-folio-text-secondary">
               {viewMode === 'browse'
                 ? 'Discover design professionals on Folio.'
                 : `The most ${activeTab === 'vendors' ? 'specified vendors' : 'influential professionals'} on Folio, ranked by quality and engagement.`}
@@ -281,7 +281,7 @@ export default function DirectoryPage() {
           <div className="flex items-center justify-center py-32">
             <div className="text-center">
               <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent)]" />
-              <p className="mt-4 folio-body text-[var(--text-secondary)]">Loading directory...</p>
+              <p className="mt-4 folio-body text-folio-text-secondary">Loading directory...</p>
             </div>
           </div>
         ) : error && isEmpty ? (
@@ -314,7 +314,7 @@ export default function DirectoryPage() {
                 <Button variant="ridge" onClick={handleLoadMore} disabled={loading}>
                   {loading ? 'Loading...' : 'Load More'}
                 </Button>
-                <p className="mt-2 text-sm text-[var(--text-tertiary)]">
+                <p className="mt-2 text-sm text-folio-text-tertiary">
                   Showing {isProfessionalTab ? designers.length : vendors.length} of {total}
                 </p>
               </div>
@@ -344,7 +344,7 @@ export default function DirectoryPage() {
                 <Button variant="ridge" onClick={handleLoadMore} disabled={loading}>
                   {loading ? 'Loading...' : 'Load More'}
                 </Button>
-                <p className="mt-2 text-sm text-[var(--text-tertiary)]">
+                <p className="mt-2 text-sm text-folio-text-tertiary">
                   Showing {isProfessionalTab ? designers.length : vendors.length} of {total}
                 </p>
               </div>
@@ -360,10 +360,10 @@ function DirectoryEmptyState({ tab }: { tab: Tab }) {
   return (
     <div className="flex items-center justify-center py-32">
       <div className="text-center max-w-md">
-        <h2 className="folio-h1 text-[var(--text-primary)] mb-6">
+        <h2 className="folio-h1 text-folio-text-primary mb-6">
           {tab === 'vendors' ? 'No vendors yet.' : '#1 is open.'}
         </h2>
-        <p className="folio-body text-[var(--text-secondary)] mb-8 leading-relaxed">
+        <p className="folio-body text-folio-text-secondary mb-8 leading-relaxed">
           {tab === 'vendors'
             ? 'The Folio Directory launches with our first founding vendor partners. Check back soon.'
             : 'The Folio Directory launches with our first founding members. Early entrants start at the top while the field is wide open.'}
@@ -379,7 +379,7 @@ function DirectoryEmptyState({ tab }: { tab: Tab }) {
 }
 
 function RankChange({ change }: { change: number }) {
-  if (change === 0) return <span className="text-xs text-[var(--text-tertiary)]">&mdash;</span>;
+  if (change === 0) return <span className="text-xs text-folio-text-tertiary">&mdash;</span>;
   if (change > 0) return <span className="text-xs text-green-600">+{change}</span>;
   return <span className="text-xs text-red-500">{change}</span>;
 }
@@ -389,7 +389,7 @@ function DesignerRow({ designer }: { designer: DirectoryDesigner }) {
     <RidgeCard padding="lg">
       <div className="flex items-center gap-4">
         <div className="flex-shrink-0 w-16 text-center">
-          <div className="text-2xl font-semibold text-[var(--text-primary)]">{designer.rank}</div>
+          <div className="text-2xl font-semibold text-folio-text-primary">{designer.rank}</div>
           <RankChange change={designer.rankChange} />
         </div>
 
@@ -403,8 +403,8 @@ function DesignerRow({ designer }: { designer: DirectoryDesigner }) {
               className="rounded-full object-cover"
             />
           ) : (
-            <div className="w-16 h-16 rounded-full bg-[var(--bg-elevated)] flex items-center justify-center">
-              <span className="text-xl font-medium text-[var(--text-secondary)]">
+            <div className="w-16 h-16 rounded-full bg-surface-ground flex items-center justify-center">
+              <span className="text-xl font-medium text-folio-text-secondary">
                 {designer.user.name.charAt(0)}
               </span>
             </div>
@@ -413,19 +413,19 @@ function DesignerRow({ designer }: { designer: DirectoryDesigner }) {
 
         <div className="flex-grow min-w-0">
           <Link href={`/profile/${designer.user.id}`}>
-            <h3 className="text-lg font-semibold text-[var(--text-primary)] hover:text-[var(--accent)] truncate">
+            <h3 className="text-lg font-semibold text-folio-text-primary hover:text-[var(--accent)] truncate">
               {designer.user.name}
             </h3>
           </Link>
           {designer.user.location && (
-            <p className="text-sm text-[var(--text-secondary)]">{designer.user.location}</p>
+            <p className="text-sm text-folio-text-secondary">{designer.user.location}</p>
           )}
           {designer.user.bio && (
-            <p className="text-sm text-[var(--text-tertiary)] line-clamp-1 mt-1">
+            <p className="text-sm text-folio-text-tertiary line-clamp-1 mt-1">
               &ldquo;{designer.user.bio}&rdquo;
             </p>
           )}
-          <div className="flex items-center gap-4 mt-2 text-xs text-[var(--text-tertiary)]">
+          <div className="flex items-center gap-4 mt-2 text-xs text-folio-text-tertiary">
             <span>{designer.stats.totalSaves} saves</span>
             <span>{designer.stats.followerCount.toLocaleString()} followers</span>
             <span>{designer.stats.projectCount} projects</span>
@@ -434,7 +434,7 @@ function DesignerRow({ designer }: { designer: DirectoryDesigner }) {
 
         {designer.featuredProject && (
           <Link href={`/projects/${designer.featuredProject.id}`} className="flex-shrink-0 hidden md:block">
-            <div className="w-32 h-20 rounded-lg overflow-hidden bg-[var(--bg-elevated)]">
+            <div className="w-32 h-20 rounded-lg overflow-hidden bg-surface-ground">
               {designer.featuredProject.heroImage ? (
                 <Image
                   src={designer.featuredProject.heroImage}
@@ -444,7 +444,7 @@ function DesignerRow({ designer }: { designer: DirectoryDesigner }) {
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-xs text-[var(--text-tertiary)]">
+                <div className="w-full h-full flex items-center justify-center text-xs text-folio-text-tertiary">
                   No image
                 </div>
               )}
@@ -461,11 +461,11 @@ function VendorRow({ vendor }: { vendor: DirectoryVendor }) {
     <RidgeCard padding="lg">
       <div className="flex items-center gap-4">
         <div className="flex-shrink-0 w-16 text-center">
-          <div className="text-2xl font-semibold text-[var(--text-primary)]">{vendor.rank}</div>
+          <div className="text-2xl font-semibold text-folio-text-primary">{vendor.rank}</div>
           <RankChange change={vendor.rankChange} />
         </div>
 
-        <div className="flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden bg-[var(--bg-elevated)] flex items-center justify-center">
+        <div className="flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden bg-surface-ground flex items-center justify-center">
           {vendor.organization.logo ? (
             <Image
               src={vendor.organization.logo}
@@ -475,20 +475,20 @@ function VendorRow({ vendor }: { vendor: DirectoryVendor }) {
               className="object-contain"
             />
           ) : (
-            <span className="text-xl font-medium text-[var(--text-secondary)]">
+            <span className="text-xl font-medium text-folio-text-secondary">
               {vendor.organization.name.charAt(0)}
             </span>
           )}
         </div>
 
         <div className="flex-grow min-w-0">
-          <h3 className="text-lg font-semibold text-[var(--text-primary)] truncate">
+          <h3 className="text-lg font-semibold text-folio-text-primary truncate">
             {vendor.organization.name}
           </h3>
-          <p className="text-sm text-[var(--text-secondary)] capitalize">
+          <p className="text-sm text-folio-text-secondary capitalize">
             {vendor.organization.type.replace(/_/g, ' ').toLowerCase()}
           </p>
-          <div className="flex items-center gap-4 mt-2 text-xs text-[var(--text-tertiary)]">
+          <div className="flex items-center gap-4 mt-2 text-xs text-folio-text-tertiary">
             <span>{vendor.stats.designersTagging} designers</span>
             <span>{vendor.stats.projectsIncluded} projects</span>
             <span>{vendor.stats.catalogSize} products</span>

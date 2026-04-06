@@ -49,7 +49,7 @@ export default function DevDebugPanel() {
   }
 
   return (
-    <div className="mt-6 rounded-lg border p-3 text-xs bg-[var(--bg-elevated)]">
+    <div className="mt-6 rounded-lg border p-3 text-xs bg-surface-ground">
       <div className="font-semibold mb-2">Dev Debug — Designer Create</div>
       <div>Status: {status}</div>
       <div>User ID: {(session?.user as any)?.id || '—'}</div>
@@ -57,13 +57,13 @@ export default function DevDebugPanel() {
       <div className="break-all">Cookie (client, HttpOnly so often blank): {cookie || '—'}</div>
       <button
         onClick={testCreate}
-        className="mt-2 rounded border px-2 py-2 bg-white hover:bg-[var(--bg-elevated)]"
+        className="mt-2 rounded border px-2 py-2 bg-white hover:bg-surface-ground"
       >
         Test POST /api/projects
       </button>
       <button
         onClick={readServerSession}
-        className="mt-2 ml-2 rounded border px-2 py-2 bg-white hover:bg-[var(--bg-elevated)]"
+        className="mt-2 ml-2 rounded border px-2 py-2 bg-white hover:bg-surface-ground"
       >
         Read /api/debug/session
       </button>

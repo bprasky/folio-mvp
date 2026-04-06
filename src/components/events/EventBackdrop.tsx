@@ -18,7 +18,7 @@ export default function EventBackdrop({ src, alt = "Event background" }: Props) 
           unoptimized   // ← ensures we still render even if a new host appears
         />
       ) : (
-        <div className="h-full w-full bg-[var(--bg-elevated)]" />
+        <div className="h-full w-full bg-surface-ground" />
       )}
       {/* Scrim to keep content readable */}
       <div className="absolute inset-0 bg-black/30" />

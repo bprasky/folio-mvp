@@ -273,7 +273,7 @@ export default function ShopProductModal({
                         <Link
                           key={project.id}
                           href={`/project/${project.id}`}
-                          className="flex items-center justify-between p-3 rounded-lg transition-colors hover:bg-[#F5F3F0]"
+                          className="flex items-center justify-between p-3 rounded-lg transition-colors hover:bg-surface-elevated"
                         >
                           <span className="text-sm" style={{ color: '#2C2825' }}>
                             {project.title}
@@ -318,7 +318,7 @@ export default function ShopProductModal({
                       color: '#2C2825',
                     }}
                   >
-                    <FaBookmark className={saved ? 'text-[#2C2825]' : ''} />
+                    <FaBookmark className={saved ? 'text-folio-text-primary' : ''} />
                     {saved ? 'Saved' : saving ? 'Saving...' : 'Save'}
                   </button>
 

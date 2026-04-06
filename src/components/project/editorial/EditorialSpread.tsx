@@ -114,8 +114,8 @@ export function EditorialSpread({
               )}
             </>
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-[var(--bg-elevated)]">
-              <div className="text-center p-8 text-[var(--text-tertiary)]">
+            <div className="w-full h-full flex items-center justify-center bg-surface-ground">
+              <div className="text-center p-8 text-folio-text-tertiary">
                 <p className="folio-ui">Image not available</p>
               </div>
             </div>
@@ -151,8 +151,8 @@ export function EditorialSpread({
               )}
             </>
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-[var(--bg-elevated)]">
-              <div className="text-center p-8 text-[var(--text-tertiary)]">
+            <div className="w-full h-full flex items-center justify-center bg-surface-ground">
+              <div className="text-center p-8 text-folio-text-tertiary">
                 <p className="folio-ui">Image not available</p>
               </div>
             </div>

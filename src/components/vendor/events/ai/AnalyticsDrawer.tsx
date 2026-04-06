@@ -52,9 +52,9 @@ export function AnalyticsDrawer({ data }: AnalyticsDrawerProps) {
 
   return (
     <Sheet open={state.open} onOpenChange={closeDrawer}>
-      <SheetContent side="right" className="w-[720px] bg-[#F7F4F1] overflow-y-auto">
+      <SheetContent side="right" className="w-[720px] bg-surface-elevated overflow-y-auto">
         <SheetHeader>
-          <SheetTitle className="text-[#2B2B2B] font-serif">
+          <SheetTitle className="text-folio-text-primary font-serif">
             More Analytics
           </SheetTitle>
         </SheetHeader>
@@ -62,7 +62,7 @@ export function AnalyticsDrawer({ data }: AnalyticsDrawerProps) {
         {/* Simple anchor routing */}
         {(!state.section || state.section === "roomPhase") && (
           <div id="roomPhase" className="scroll-mt-6">
-            <h3 className="mt-6 mb-2 text-[#2B2B2B] font-medium">Room × Phase Matrix</h3>
+            <h3 className="mt-6 mb-2 text-folio-text-primary font-medium">Room × Phase Matrix</h3>
             <RoomPhaseMatrix 
               data={data.roomPhase} 
               onHover={() => {}} // Disable hover in drawer
@@ -72,7 +72,7 @@ export function AnalyticsDrawer({ data }: AnalyticsDrawerProps) {
 
         {(!state.section || state.section === "timeline") && (
           <div id="timeline" className="scroll-mt-6">
-            <h3 className="mt-8 mb-2 text-[#2B2B2B] font-medium">Save → Tag Over Time</h3>
+            <h3 className="mt-8 mb-2 text-folio-text-primary font-medium">Save → Tag Over Time</h3>
             <SavesOverTime 
               data={timelineData} 
               onHover={() => {}} // Disable hover in drawer
@@ -82,7 +82,7 @@ export function AnalyticsDrawer({ data }: AnalyticsDrawerProps) {
 
         {(!state.section || state.section === "geo") && (
           <div id="geo" className="scroll-mt-6">
-            <h3 className="mt-8 mb-2 text-[#2B2B2B] font-medium">Geography</h3>
+            <h3 className="mt-8 mb-2 text-folio-text-primary font-medium">Geography</h3>
             <GeoPopularity 
               data={geoData} 
               onHover={() => {}} // Disable hover in drawer
@@ -92,7 +92,7 @@ export function AnalyticsDrawer({ data }: AnalyticsDrawerProps) {
 
         {(!state.section || state.section === "designers") && (
           <div id="designers" className="scroll-mt-6">
-            <h3 className="mt-8 mb-2 text-[#2B2B2B] font-medium">Top Designers/Firms</h3>
+            <h3 className="mt-8 mb-2 text-folio-text-primary font-medium">Top Designers/Firms</h3>
             <TopDesignersTable 
               designers={designersData} 
               onHover={() => {}} // Disable hover in drawer
@@ -102,7 +102,7 @@ export function AnalyticsDrawer({ data }: AnalyticsDrawerProps) {
 
         {(!state.section || state.section === "products") && (
           <div id="products" className="scroll-mt-6">
-            <h3 className="mt-8 mb-2 text-[#2B2B2B] font-medium">Top Products</h3>
+            <h3 className="mt-8 mb-2 text-folio-text-primary font-medium">Top Products</h3>
             <TopProductsPost 
               products={data.products}
             />

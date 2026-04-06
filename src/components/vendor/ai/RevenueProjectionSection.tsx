@@ -17,16 +17,16 @@ export function RevenueProjectionSection() {
   return (
     <section className="space-y-2">
       <div className="flex items-center gap-2">
-        <h3 className="text-lg font-semibold text-[var(--text-primary)]">AI Revenue Projection</h3>
+        <h3 className="text-lg font-semibold text-folio-text-primary">AI Revenue Projection</h3>
         <AIBadge />
       </div>
-      <p className="folio-ui text-[var(--text-secondary)]">
+      <p className="folio-ui text-folio-text-secondary">
         Estimated influence value for the next quarter, based on designer and event activity.
       </p>
 
       {!aiUnlocked || !bundle ? (
         <div className="ridge-card p-4 flex items-center justify-between">
-          <span className="folio-ui text-[var(--text-secondary)]">
+          <span className="folio-ui text-folio-text-secondary">
             Unlock AI to see projected quarterly influence and the drivers behind it.
           </span>
           <button
@@ -42,17 +42,17 @@ export function RevenueProjectionSection() {
       ) : (
         <div className="ridge-card p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <div className="folio-meta uppercase tracking-wide text-[var(--text-secondary)] mb-1">
+            <div className="folio-meta uppercase tracking-wide text-folio-text-secondary mb-1">
               {bundle.revenueProjection.quarter}
             </div>
-            <div className="text-2xl font-semibold text-[var(--text-primary)]">
+            <div className="text-2xl font-semibold text-folio-text-primary">
               {fmtUsd(bundle.revenueProjection.projectedInfluenceUsd)}
               <span className="ml-2 text-sm font-normal text-emerald-700">
                 (+{bundle.revenueProjection.changePct}%)
               </span>
             </div>
           </div>
-          <ul className="folio-meta text-[var(--text-secondary)] space-y-1">
+          <ul className="folio-meta text-folio-text-secondary space-y-1">
             {bundle.revenueProjection.drivers.map((d, i) => (
               <li key={i} className="flex items-center gap-1.5">
                 <span className="text-emerald-600">•</span>

@@ -183,13 +183,13 @@ export function EditorialProjectLayout({
   // Show generating state if draft is missing in published mode
   if (mode === 'published' && !editorialDraft && !draftError) {
     return (
-      <div className="w-full bg-[var(--bg-base)] min-h-screen">
+      <div className="w-full bg-surface-canvas min-h-screen">
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-24">
           <div className="text-center space-y-4">
-            <h1 className="text-3xl md:text-4xl font-serif font-light text-[var(--text-primary)]">
+            <h1 className="text-3xl md:text-4xl font-serif font-light text-folio-text-primary">
               {project.title}
             </h1>
-            <p className="text-lg text-[var(--text-secondary)]">
+            <p className="text-lg text-folio-text-secondary">
               Editorial is generating... Please refresh in a moment.
             </p>
           </div>
@@ -201,13 +201,13 @@ export function EditorialProjectLayout({
   // Show error state if draft generation failed
   if (mode === 'published' && draftError) {
     return (
-      <div className="w-full bg-[var(--bg-base)] min-h-screen">
+      <div className="w-full bg-surface-canvas min-h-screen">
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-24">
           <div className="text-center space-y-4">
-            <h1 className="text-3xl md:text-4xl font-serif font-light text-[var(--text-primary)]">
+            <h1 className="text-3xl md:text-4xl font-serif font-light text-folio-text-primary">
               {project.title}
             </h1>
-            <p className="text-lg text-[var(--text-secondary)]">
+            <p className="text-lg text-folio-text-secondary">
               Editorial generation encountered an issue. Please try again later.
             </p>
           </div>
@@ -218,7 +218,7 @@ export function EditorialProjectLayout({
 
   if (images.length === 0) {
     return (
-      <div className="w-full py-24 text-center text-[var(--text-secondary)]">
+      <div className="w-full py-24 text-center text-folio-text-secondary">
         <p className="text-lg">No images available for this project.</p>
       </div>
     );
@@ -236,7 +236,7 @@ export function EditorialProjectLayout({
   const heroBlock = blocks.find(b => b.type === 'hero');
 
   return (
-    <div className="w-full bg-[var(--bg-base)] min-h-screen">
+    <div className="w-full bg-surface-canvas min-h-screen">
       {/* 12-column grid system - magazine layout */}
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-12 gap-x-6">
@@ -264,11 +264,11 @@ export function EditorialProjectLayout({
           <div className="fixed bottom-4 right-4 bg-black/80 text-white text-xs p-3 rounded-lg font-mono z-50 backdrop-blur-sm max-w-xs">
             <div className="space-y-1">
               <div>
-                <span className="text-[var(--text-tertiary)]">Hero:</span>{' '}
+                <span className="text-folio-text-tertiary">Hero:</span>{' '}
                 <span className="text-white">{heroBlock?.roomName || 'none'}</span>
               </div>
               <div>
-                <span className="text-[var(--text-tertiary)]">Rooms:</span>{' '}
+                <span className="text-folio-text-tertiary">Rooms:</span>{' '}
                 <span className="text-white">
                   {Array.from(new Set(
                     blocks
@@ -278,11 +278,11 @@ export function EditorialProjectLayout({
                 </span>
               </div>
               <div>
-                <span className="text-[var(--text-tertiary)]">Blocks:</span>{' '}
+                <span className="text-folio-text-tertiary">Blocks:</span>{' '}
                 <span className="text-white">{blocks.map(b => b.type).join(', ')}</span>
               </div>
               <div>
-                <span className="text-[var(--text-tertiary)]">Count:</span>{' '}
+                <span className="text-folio-text-tertiary">Count:</span>{' '}
                 <span className="text-white">{blocks.length} blocks, {images.length} images</span>
               </div>
             </div>

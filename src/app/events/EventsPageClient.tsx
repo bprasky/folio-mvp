@@ -146,7 +146,7 @@ const EventsPageClient: React.FC<EventsPageClientProps> = ({
 
     return (
       <div className="mb-8">
-        <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-4">Featured Festivals</h2>
+        <h2 className="text-lg font-semibold text-folio-text-primary mb-4">Featured Festivals</h2>
         <div className="flex overflow-x-auto space-x-4 pb-4">
           {festivals.map((festival) => {
             const tags = getFestivalTags(festival);
@@ -158,11 +158,11 @@ const EventsPageClient: React.FC<EventsPageClientProps> = ({
             return (
               <div
                 key={festival.id}
-                className={`flex-shrink-0 w-72 bg-[var(--bg-elevated)] rounded-lg shadow-sm border cursor-pointer transition-all ${isExpanded ? 'border-[var(--accent)] ring-2 ring-folio-accent ring-opacity-50' : 'border-[var(--border)] hover:shadow-md'} ${isLive ? 'shadow-[0_0_15px_rgba(34,197,94,0.3)]' : ''}`}
+                className={`flex-shrink-0 w-72 bg-surface-ground rounded-lg shadow-sm border cursor-pointer transition-all ${isExpanded ? 'border-[var(--accent)] ring-2 ring-folio-accent ring-opacity-50' : 'border-folio-border-subtle hover:shadow-md'} ${isLive ? 'shadow-[0_0_15px_rgba(34,197,94,0.3)]' : ''}`}
                 onClick={() => setExpandedFestival(isExpanded ? null : festival.id)}
               >
                 {/* Image placeholder */}
-                <div className="w-full h-32 bg-[var(--bg-base)] rounded-t-lg flex items-center justify-center text-4xl">
+                <div className="w-full h-32 bg-surface-canvas rounded-t-lg flex items-center justify-center text-4xl">
                   🎪
                 </div>
                 <div className="p-4">
@@ -174,18 +174,18 @@ const EventsPageClient: React.FC<EventsPageClientProps> = ({
                         </span>
                       ))}
                     </div>
-                    <span className="text-xs text-[var(--text-primary)]-muted">
+                    <span className="text-xs text-folio-text-primary-muted">
                       {festival.subevents.length} events
                     </span>
                   </div>
-                  <h3 className="font-semibold text-[var(--text-primary)] mb-2 line-clamp-2">{festival.title}</h3>
-                  <p className="text-sm text-[var(--text-primary)]-muted mb-3 line-clamp-3">{festival.description}</p>
+                  <h3 className="font-semibold text-folio-text-primary mb-2 line-clamp-2">{festival.title}</h3>
+                  <p className="text-sm text-folio-text-primary-muted mb-3 line-clamp-3">{festival.description}</p>
                   <div className="space-y-1">
-                    <div className="flex items-center text-xs text-[var(--text-primary)]-muted">
+                    <div className="flex items-center text-xs text-folio-text-primary-muted">
                       <FaCalendarAlt className="w-3 h-3 mr-2" />
                       {formatDate(festival.startDate)} - {formatDate(festival.endDate)}
                     </div>
-                    <div className="flex items-center text-xs text-[var(--text-primary)]-muted">
+                    <div className="flex items-center text-xs text-folio-text-primary-muted">
                       <FaMapMarkerAlt className="w-3 h-3 mr-2" />
                       {festival.location}
                     </div>
@@ -204,12 +204,12 @@ const EventsPageClient: React.FC<EventsPageClientProps> = ({
                           </li>
                         ))
                       ) : (
-                        <li className="text-sm text-[var(--text-secondary)]">No events yet</li>
+                        <li className="text-sm text-folio-text-secondary">No events yet</li>
                       )}
                     </ul>
                     <h4 className="font-semibold mt-4 mb-2">Stories</h4>
                     <div className="flex overflow-x-auto space-x-4 pb-4">
-                      <div className="flex-shrink-0 w-64 h-36 bg-[var(--bg-base)] rounded-lg flex items-center justify-center text-[var(--text-secondary)]">
+                      <div className="flex-shrink-0 w-64 h-36 bg-surface-canvas rounded-lg flex items-center justify-center text-folio-text-secondary">
                         No stories yet — be the first!
                       </div>
                       {/* Future: map over actual stories */}
@@ -280,11 +280,11 @@ const EventsPageClient: React.FC<EventsPageClientProps> = ({
     return (
       <Link
         href={`/events/${event.id}`}
-        className={`block bg-[var(--bg-elevated)] rounded-xl shadow-sm border border-[var(--border)] hover:shadow-md transition-all duration-300 overflow-hidden ${getLayoutClasses()}`}
+        className={`block bg-surface-ground rounded-xl shadow-sm border border-folio-border-subtle hover:shadow-md transition-all duration-300 overflow-hidden ${getLayoutClasses()}`}
       >
         {/* Image Container */}
         <div className={`relative ${layoutSize === 'XL' ? 'h-64' : layoutSize === 'L' ? 'h-48' : layoutSize === 'M' ? 'h-40' : 'h-32'} overflow-hidden`}>
-          <div className="w-full h-full bg-[var(--bg-base)] flex items-center justify-center">
+          <div className="w-full h-full bg-surface-canvas flex items-center justify-center">
                             <span className="text-4xl">{getEventTypeIcon(event.eventTypes && event.eventTypes.length > 0 ? event.eventTypes[0] : 'OTHER')}</span>
           </div>
           
@@ -313,13 +313,13 @@ const EventsPageClient: React.FC<EventsPageClientProps> = ({
         {/* Content */}
         <div className="p-4 space-y-3">
           {/* Title */}
-          <h3 className={`${typography.title} text-[var(--text-primary)] line-clamp-2 leading-tight`}>
+          <h3 className={`${typography.title} text-folio-text-primary line-clamp-2 leading-tight`}>
             {event.title}
           </h3>
 
           {/* Description - only show for larger tiles */}
           {(layoutSize === 'XL' || layoutSize === 'L') && event.description && (
-            <p className={`${typography.description} text-[var(--text-secondary)] line-clamp-2`}>
+            <p className={`${typography.description} text-folio-text-secondary line-clamp-2`}>
               {event.description}
             </p>
           )}
@@ -327,7 +327,7 @@ const EventsPageClient: React.FC<EventsPageClientProps> = ({
           {/* Event Details */}
           <div className="space-y-2">
             {/* Date and Time */}
-            <div className="flex items-center text-[var(--text-secondary)]">
+            <div className="flex items-center text-folio-text-secondary">
               <FaCalendarAlt className={`${typography.meta} mr-2 flex-shrink-0`} />
               <span className={`${typography.meta}`}>
                 {formatDate(event.startDate)}
@@ -336,7 +336,7 @@ const EventsPageClient: React.FC<EventsPageClientProps> = ({
             </div>
 
             {/* Location */}
-            <div className="flex items-center text-[var(--text-secondary)]">
+            <div className="flex items-center text-folio-text-secondary">
               <FaMapMarkerAlt className={`${typography.meta} mr-2 flex-shrink-0`} />
               <span className={`${typography.meta} line-clamp-1`}>
                 {event.location}
@@ -345,7 +345,7 @@ const EventsPageClient: React.FC<EventsPageClientProps> = ({
 
             {/* RSVP Count */}
             <div className="flex items-center justify-between">
-              <div className="flex items-center text-[var(--text-secondary)]">
+              <div className="flex items-center text-folio-text-secondary">
                 <FaUser className={`${typography.meta} mr-2 flex-shrink-0`} />
                 <span className={`${typography.meta}`}>
                   {Math.floor(Math.random() * 100)} RSVPs
@@ -353,7 +353,7 @@ const EventsPageClient: React.FC<EventsPageClientProps> = ({
               </div>
               
               {/* Event Type Icon */}
-              <div className="flex items-center text-[var(--text-tertiary)]">
+              <div className="flex items-center text-folio-text-tertiary">
                 <span className={`${typography.meta} mr-1`}>
                   {getEventTypeIcon(event.eventTypes && event.eventTypes.length > 0 ? event.eventTypes[0] : 'OTHER')}
                 </span>
@@ -366,7 +366,7 @@ const EventsPageClient: React.FC<EventsPageClientProps> = ({
 
           {/* Festival Badge - only show for larger tiles */}
           {(layoutSize === 'XL' || layoutSize === 'L') && event.parentFestival && (
-            <div className="pt-2 border-t border-[var(--border)]">
+            <div className="pt-2 border-t border-folio-border-subtle">
               <span className="inline-flex items-center px-2 py-1 text-xs font-medium text-[var(--accent)] bg-[var(--accent)]/10 rounded-full">
                 {event.parentFestival.title}
               </span>
@@ -437,8 +437,8 @@ const EventsPageClient: React.FC<EventsPageClientProps> = ({
       {/* Header with Role Actions - now top of page */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-8">
         <div>
-          <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-2">{selectedFest ? `Events in ${selectedFest.title}` : 'Upcoming Events'}</h2>
-          <p className="text-[var(--text-primary)]-muted">{selectedFest ? 'Explore events within this festival' : 'Discover all design events'}</p>
+          <h2 className="text-2xl font-bold text-folio-text-primary mb-2">{selectedFest ? `Events in ${selectedFest.title}` : 'Upcoming Events'}</h2>
+          <p className="text-folio-text-primary-muted">{selectedFest ? 'Explore events within this festival' : 'Discover all design events'}</p>
         </div>
         
         <div className="mt-4 lg:mt-0">
@@ -467,13 +467,13 @@ const EventsPageClient: React.FC<EventsPageClientProps> = ({
       <FestivalCarouselSection />
 
       {/* Filters - updated options */}
-      <div className="flex flex-wrap gap-4 mb-6 sticky top-0 bg-[var(--bg-base)] z-10 py-4">
+      <div className="flex flex-wrap gap-4 mb-6 sticky top-0 bg-surface-canvas z-10 py-4">
         <div className="flex items-center space-x-2">
-          <FaFilter className="text-[var(--text-primary)]-muted" />
+          <FaFilter className="text-folio-text-primary-muted" />
           <select
             value={eventTypeFilter}
             onChange={(e) => setEventTypeFilter(e.target.value as EventTypeFilter)}
-            className="px-3 py-2 border border-[var(--border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+            className="px-3 py-2 border border-folio-border-subtle rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
           >
             <option value="all">All Types</option>
             <option value="booth">Booth</option>
@@ -488,7 +488,7 @@ const EventsPageClient: React.FC<EventsPageClientProps> = ({
         <select
           value={tagFilter}
           onChange={(e) => setTagFilter(e.target.value as BuzzTag)}
-          className="px-3 py-2 border border-[var(--border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+          className="px-3 py-2 border border-folio-border-subtle rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
         >
           <option value="all">All Buzz</option>
           <option value="trending">Trending</option>
@@ -505,10 +505,10 @@ const EventsPageClient: React.FC<EventsPageClientProps> = ({
         <div className="text-center py-16">
           <div className="max-w-md mx-auto">
             <div className="text-6xl mb-6">🎭</div>
-            <h3 className="text-2xl font-bold text-[var(--text-primary)] mb-4">
+            <h3 className="text-2xl font-bold text-folio-text-primary mb-4">
               { (eventTypeFilter !== 'all' || tagFilter !== 'all') ? 'No events match your filters' : 'No events yet'}
             </h3>
-            <p className="text-[var(--text-primary)]-muted mb-8">
+            <p className="text-folio-text-primary-muted mb-8">
               { (eventTypeFilter !== 'all' || tagFilter !== 'all') 
                 ? 'Try adjusting your filters or check back later for new events. We\'re constantly adding exciting design events!'
                 : 'We\'re working hard to bring you amazing design events. Check back soon for workshops, exhibitions, and networking opportunities!'
@@ -525,7 +525,7 @@ const EventsPageClient: React.FC<EventsPageClientProps> = ({
                   <FaPlus className="mr-2" />
                   Create Your First Event
                 </Link>
-                <p className="text-sm text-[var(--text-primary)]-muted">
+                <p className="text-sm text-folio-text-primary-muted">
                   As an admin, you can create festivals and events to get the community engaged.
                 </p>
               </div>
@@ -540,7 +540,7 @@ const EventsPageClient: React.FC<EventsPageClientProps> = ({
                   <FaPlus className="mr-2" />
                   Create an Event
                 </Link>
-                <p className="text-sm text-[var(--text-primary)]-muted">
+                <p className="text-sm text-folio-text-primary-muted">
                   Host workshops, product launches, or networking events to connect with designers.
                 </p>
               </div>
@@ -555,7 +555,7 @@ const EventsPageClient: React.FC<EventsPageClientProps> = ({
                   <FaUser className="mr-2" />
                   Explore Design Inspiration
                 </Link>
-                <p className="text-sm text-[var(--text-primary)]-muted">
+                <p className="text-sm text-folio-text-primary-muted">
                   While you wait for events, discover amazing design projects from the community.
                 </p>
               </div>
@@ -570,7 +570,7 @@ const EventsPageClient: React.FC<EventsPageClientProps> = ({
                   <FaUser className="mr-2" />
                   Sign In to Get Notified
                 </Link>
-                <p className="text-sm text-[var(--text-primary)]-muted">
+                <p className="text-sm text-folio-text-primary-muted">
                   Join our community to be the first to know about new events and opportunities.
                 </p>
               </div>

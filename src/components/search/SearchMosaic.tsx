@@ -114,9 +114,9 @@ export default function SearchMosaic({
 
       {/* Unpublished Moments Section (Private Scope Only) */}
       {unpublishedMoments.length > 0 && (
-        <div className="pt-8 border-t border-[#E0E0E0]">
+        <div className="pt-8 border-t border-folio-border-subtle">
           <div className="mb-6">
-            <h2 className="font-serif text-2xl text-[#1A1A1A] mb-2">
+            <h2 className="font-serif text-2xl text-folio-text-primary mb-2">
               Draft Moments
             </h2>
             <p className="text-sm text-[#6A6A6A]">

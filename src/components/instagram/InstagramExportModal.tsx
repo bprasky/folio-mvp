@@ -439,24 +439,24 @@ export default function InstagramExportModal({
       <div className="fixed inset-0 flex items-center justify-center p-4">
         <DialogPanel className="mx-auto max-w-4xl w-full bg-white rounded-2xl shadow-xl max-h-[90vh] overflow-hidden flex flex-col">
           {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-[var(--ridge-outer)]">
+          <div className="flex items-center justify-between p-6 border-b border-folio-border-subtle">
             <div className="flex items-center gap-3">
               <FaInstagram className="w-6 h-6 text-pink-600" />
-              <DialogTitle className="text-2xl font-serif font-bold text-[var(--text-primary)]">
+              <DialogTitle className="text-2xl font-serif font-bold text-folio-text-primary">
                 Export to Instagram
               </DialogTitle>
             </div>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-[var(--bg-elevated)] rounded-full transition-colors"
+              className="p-2 hover:bg-surface-ground rounded-full transition-colors"
               aria-label="Close"
             >
-              <FaTimes className="w-5 h-5 text-[var(--text-secondary)]" />
+              <FaTimes className="w-5 h-5 text-folio-text-secondary" />
             </button>
           </div>
 
           {/* Tabs */}
-          <div className="flex border-b border-[var(--ridge-outer)]">
+          <div className="flex border-b border-folio-border-subtle">
             {[
               { id: 'reorder', label: 'Reorder Images' },
               { id: 'quotes', label: 'Select Quotes' },
@@ -469,7 +469,7 @@ export default function InstagramExportModal({
                 className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
                   activeTab === tab.id
                     ? 'text-[var(--accent)] border-b-2 border-[var(--accent)] bg-[var(--accent)]/5'
-                    : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]'
+                    : 'text-folio-text-secondary hover:text-folio-text-primary hover:bg-surface-ground'
                 }`}
               >
                 {tab.label}
@@ -481,17 +481,17 @@ export default function InstagramExportModal({
           <div className="flex-1 overflow-y-auto p-6">
             {activeTab === 'reorder' && (
               <div className="space-y-4">
-                <p className="text-sm text-[var(--text-secondary)]">
+                <p className="text-sm text-folio-text-secondary">
                   Drag and drop images to reorder them for your Instagram carousel.
                 </p>
                 {images.length === 0 ? (
-                  <div className="text-center py-12 text-[var(--text-secondary)]">
+                  <div className="text-center py-12 text-folio-text-secondary">
                     <p className="mb-2">No images found for this project.</p>
                     <p className="text-sm">Please upload images to the project first.</p>
                   </div>
                 ) : (
                   <>
-                    <p className="text-xs text-[var(--text-secondary)] mb-2">
+                    <p className="text-xs text-folio-text-secondary mb-2">
                       {images.length} image{images.length !== 1 ? 's' : ''} available
                     </p>
                     <ImageReorderGrid images={images} onReorder={handleReorder} />
@@ -512,7 +512,7 @@ export default function InstagramExportModal({
 
             {activeTab === 'preview' && (
               <div className="space-y-4">
-                <p className="text-sm text-[var(--text-secondary)]">
+                <p className="text-sm text-folio-text-secondary">
                   Preview your Instagram carousel. Swipe horizontally to navigate.
                 </p>
                 <CarouselPreview
@@ -530,35 +530,35 @@ export default function InstagramExportModal({
                 {loadingCaption ? (
                   <div className="text-center py-8">
                     <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent)]"></div>
-                    <p className="mt-2 text-sm text-[var(--text-secondary)]">Generating caption...</p>
+                    <p className="mt-2 text-sm text-folio-text-secondary">Generating caption...</p>
                   </div>
                 ) : (
                   <>
                     <div>
-                      <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
+                      <label className="block text-sm font-medium text-folio-text-primary mb-2">
                         Caption
                       </label>
                       <textarea
                         value={caption}
                         onChange={(e) => setCaption(e.target.value)}
                         rows={8}
-                        className="w-full px-4 py-3 border border-[var(--ridge-outer)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent resize-none"
+                        className="w-full px-4 py-3 border border-folio-border-subtle rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent resize-none"
                         placeholder="Caption will be generated automatically..."
                       />
-                      <p className="mt-1 text-xs text-[var(--text-secondary)]">
+                      <p className="mt-1 text-xs text-folio-text-secondary">
                         {caption.length} / 2200 characters
                       </p>
                     </div>
                     {hashtags.length > 0 && (
                       <div>
-                        <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
+                        <label className="block text-sm font-medium text-folio-text-primary mb-2">
                           Hashtags
                         </label>
                         <div className="flex flex-wrap gap-2">
                           {hashtags.map((tag, index) => (
                             <span
                               key={index}
-                              className="px-3 py-1 bg-[var(--bg-elevated)] text-[var(--text-primary)] rounded-full text-sm"
+                              className="px-3 py-1 bg-surface-ground text-folio-text-primary rounded-full text-sm"
                             >
                               {tag}
                             </span>
@@ -573,7 +573,7 @@ export default function InstagramExportModal({
           </div>
 
           {/* Footer */}
-          <div className="p-6 border-t border-[var(--ridge-outer)] bg-gray-50">
+          <div className="p-6 border-t border-folio-border-subtle bg-gray-50">
             {/* Show re-upload status */}
             {(reuploadingImages || facebookImageCount > 0 || reuploadComplete) && (
               <div className={`mb-4 p-3 rounded-lg ${

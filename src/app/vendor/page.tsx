@@ -122,7 +122,7 @@ export default function VendorProfile() {
   };
 
   return (
-    <div className="p-6 bg-[var(--bg-base)] min-h-screen">
+    <div className="p-6 bg-surface-canvas min-h-screen">
       <div className="max-w-7xl mx-auto">
         {/* Admin Vendor Selection */}
         {role === 'admin' && (
@@ -146,14 +146,14 @@ export default function VendorProfile() {
                         <FaStore className="w-5 h-5 text-[var(--accent)]" />
                       </div>
                       <div>
-                        <h3 className="font-medium text-[var(--text-primary)]">{vendor.name}</h3>
+                        <h3 className="font-medium text-folio-text-primary">{vendor.name}</h3>
                         <p className="folio-meta">{vendor.products?.length || 0} products</p>
                       </div>
                     </div>
                     {selectedVendorId === vendor.id ? (
                       <FaToggleOn className="w-6 h-6 text-[var(--accent)]" />
                     ) : (
-                      <FaToggleOff className="w-6 h-6 text-[var(--text-tertiary)]" />
+                      <FaToggleOff className="w-6 h-6 text-folio-text-tertiary" />
                     )}
                   </div>
                 </RidgeCard>
@@ -171,7 +171,7 @@ export default function VendorProfile() {
                 : 'Vendor Dashboard'
               }
             </h1>
-            <p className="folio-body text-[var(--text-secondary)]">
+            <p className="folio-body text-folio-text-secondary">
               {role === 'admin' && !selectedVendorId
                 ? 'Select a vendor profile above to view their dashboard'
                 : 'Manage your products and track performance'
@@ -258,18 +258,18 @@ export default function VendorProfile() {
         {activeTab === 'orders' && (role !== 'admin' || selectedVendorId) && (
           <RidgeCard padding="lg">
             <h2 className="folio-h2 mb-4">Order Management</h2>
-            <p className="folio-body text-[var(--text-secondary)]">Order management content coming soon...</p>
+            <p className="folio-body text-folio-text-secondary">Order management content coming soon...</p>
           </RidgeCard>
         )}
 
         {/* Show message when admin hasn't selected a profile */}
         {role === 'admin' && !selectedVendorId && (
           <div className="text-center py-12">
-            <div className="w-16 h-16 bg-[var(--bg-elevated)] rounded-full flex items-center justify-center mx-auto mb-4">
-              <FaStore className="w-8 h-8 text-[var(--text-tertiary)]" />
+            <div className="w-16 h-16 bg-surface-ground rounded-full flex items-center justify-center mx-auto mb-4">
+              <FaStore className="w-8 h-8 text-folio-text-tertiary" />
             </div>
             <h3 className="folio-h3 mb-2">No Vendor Selected</h3>
-            <p className="folio-body text-[var(--text-secondary)]">Select a vendor profile above to view their dashboard and manage their products.</p>
+            <p className="folio-body text-folio-text-secondary">Select a vendor profile above to view their dashboard and manage their products.</p>
           </div>
         )}
       </div>

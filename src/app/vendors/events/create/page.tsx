@@ -71,14 +71,14 @@ export default function VendorCreateEventPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--bg-elevated)] py-8">
+    <div className="min-h-screen bg-surface-ground py-8">
       <div className="max-w-2xl mx-auto px-4">
         <div className="bg-white rounded-lg shadow-md p-6">
-          <h1 className="text-2xl font-bold text-[var(--text-primary)] mb-6">Create Vendor Event</h1>
+          <h1 className="text-2xl font-bold text-folio-text-primary mb-6">Create Vendor Event</h1>
           
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label htmlFor="title" className="block text-sm font-medium text-[var(--text-primary)] mb-2">
+              <label htmlFor="title" className="block text-sm font-medium text-folio-text-primary mb-2">
                 Event Title *
               </label>
               <input
@@ -88,13 +88,13 @@ export default function VendorCreateEventPage() {
                 required
                 value={formData.title}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-[var(--ridge-outer)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                className="w-full px-3 py-2 border border-folio-border-subtle rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
                 placeholder="Enter event title"
               />
             </div>
 
             <div>
-              <label htmlFor="description" className="block text-sm font-medium text-[var(--text-primary)] mb-2">
+              <label htmlFor="description" className="block text-sm font-medium text-folio-text-primary mb-2">
                 Description *
               </label>
               <textarea
@@ -104,13 +104,13 @@ export default function VendorCreateEventPage() {
                 rows={4}
                 value={formData.description}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-[var(--ridge-outer)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                className="w-full px-3 py-2 border border-folio-border-subtle rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
                 placeholder="Describe your event"
               />
             </div>
 
             <div>
-              <label htmlFor="eventType" className="block text-sm font-medium text-[var(--text-primary)] mb-2">
+              <label htmlFor="eventType" className="block text-sm font-medium text-folio-text-primary mb-2">
                 Event Type *
               </label>
               <select
@@ -119,7 +119,7 @@ export default function VendorCreateEventPage() {
                 required
                 value={formData.eventType}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-[var(--ridge-outer)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                className="w-full px-3 py-2 border border-folio-border-subtle rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
               >
                 <option value="booth">Booth/Exhibition</option>
                 <option value="dinner">Dinner/Networking</option>
@@ -132,7 +132,7 @@ export default function VendorCreateEventPage() {
             </div>
 
             <div>
-              <label htmlFor="location" className="block text-sm font-medium text-[var(--text-primary)] mb-2">
+              <label htmlFor="location" className="block text-sm font-medium text-folio-text-primary mb-2">
                 Location *
               </label>
               <input
@@ -142,13 +142,13 @@ export default function VendorCreateEventPage() {
                 required
                 value={formData.location}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-[var(--ridge-outer)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                className="w-full px-3 py-2 border border-folio-border-subtle rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
                 placeholder="Enter location"
               />
             </div>
 
             <div>
-              <label htmlFor="parentFestivalId" className="block text-sm font-medium text-[var(--text-primary)] mb-2">
+              <label htmlFor="parentFestivalId" className="block text-sm font-medium text-folio-text-primary mb-2">
                 Join Existing Festival (Optional)
               </label>
               <select
@@ -156,7 +156,7 @@ export default function VendorCreateEventPage() {
                 name="parentFestivalId"
                 value={formData.parentFestivalId}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-[var(--ridge-outer)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                className="w-full px-3 py-2 border border-folio-border-subtle rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
               >
                 <option value="">Create standalone event</option>
                 {festivals.map((festival) => (
@@ -165,14 +165,14 @@ export default function VendorCreateEventPage() {
                   </option>
                 ))}
               </select>
-              <p className="text-sm text-[var(--text-secondary)] mt-1">
+              <p className="text-sm text-folio-text-secondary mt-1">
                 Joining a festival helps increase visibility and attendance
               </p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="startDate" className="block text-sm font-medium text-[var(--text-primary)] mb-2">
+                <label htmlFor="startDate" className="block text-sm font-medium text-folio-text-primary mb-2">
                   Start Date *
                 </label>
                 <input
@@ -182,12 +182,12 @@ export default function VendorCreateEventPage() {
                   required
                   value={formData.startDate}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-[var(--ridge-outer)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                  className="w-full px-3 py-2 border border-folio-border-subtle rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
                 />
               </div>
 
               <div>
-                <label htmlFor="endDate" className="block text-sm font-medium text-[var(--text-primary)] mb-2">
+                <label htmlFor="endDate" className="block text-sm font-medium text-folio-text-primary mb-2">
                   End Date *
                 </label>
                 <input
@@ -197,7 +197,7 @@ export default function VendorCreateEventPage() {
                   required
                   value={formData.endDate}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-[var(--ridge-outer)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                  className="w-full px-3 py-2 border border-folio-border-subtle rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
                 />
               </div>
             </div>
@@ -224,7 +224,7 @@ export default function VendorCreateEventPage() {
               <button
                 type="button"
                 onClick={() => router.back()}
-                className="flex-1 bg-[var(--text-tertiary)]/30 text-[var(--text-primary)] py-2 px-4 rounded-md hover:bg-[var(--text-tertiary)]/30 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                className="flex-1 bg-[var(--text-tertiary)]/30 text-folio-text-primary py-2 px-4 rounded-md hover:bg-[var(--text-tertiary)]/30 focus:outline-none focus:ring-2 focus:ring-gray-500"
               >
                 Cancel
               </button>

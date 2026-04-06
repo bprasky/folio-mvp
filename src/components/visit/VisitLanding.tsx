@@ -70,7 +70,7 @@ export default function VisitLanding({ visit, session }: VisitLandingProps) {
 
   if (visit.expired) {
     return (
-      <div className="min-h-screen bg-[var(--bg-elevated)] flex items-center justify-center p-4">
+      <div className="min-h-screen bg-surface-ground flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <CardTitle className="text-red-600">Visit Expired</CardTitle>
@@ -89,13 +89,13 @@ export default function VisitLanding({ visit, session }: VisitLandingProps) {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--bg-elevated)] py-8">
+    <div className="min-h-screen bg-surface-ground py-8">
       <div className="max-w-4xl mx-auto px-4">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-[var(--text-primary)] mb-2">
+          <h1 className="text-3xl font-bold text-folio-text-primary mb-2">
             Vendor Visit
           </h1>
-          <p className="text-[var(--text-secondary)]">
+          <p className="text-folio-text-secondary">
             You've been invited to view products and specifications from{' '}
             <span className="font-medium">{visit.vendor?.name || 'a vendor'}</span>
           </p>
@@ -116,7 +116,7 @@ export default function VisitLanding({ visit, session }: VisitLandingProps) {
                 <div className="space-y-2">
                   <p className="font-medium">{visit.vendor?.name || 'Unknown Vendor'}</p>
                   {visit.vendor?.email && (
-                    <p className="text-sm text-[var(--text-secondary)]">{visit.vendor.email}</p>
+                    <p className="text-sm text-folio-text-secondary">{visit.vendor.email}</p>
                   )}
                 </div>
               </CardContent>
@@ -135,7 +135,7 @@ export default function VisitLanding({ visit, session }: VisitLandingProps) {
                   <div className="space-y-2">
                     <p className="font-medium">{visit.project.title || 'Untitled Project'}</p>
                     {(visit.project.city || visit.project.regionState) && (
-                      <p className="text-sm text-[var(--text-secondary)]">
+                      <p className="text-sm text-folio-text-secondary">
                         {visit.project.city && visit.project.regionState
                           ? `${visit.project.city}, ${visit.project.regionState}`
                           : visit.project.city || visit.project.regionState}
@@ -177,11 +177,11 @@ export default function VisitLanding({ visit, session }: VisitLandingProps) {
                             <p className="font-medium text-sm truncate">
                               {product.productName || 'Unnamed Product'}
                             </p>
-                            <p className="text-xs text-[var(--text-secondary)] truncate">
+                            <p className="text-xs text-folio-text-secondary truncate">
                               {product.vendorName}
                             </p>
                             {product.colorFinish && (
-                              <p className="text-xs text-[var(--text-secondary)] truncate">
+                              <p className="text-xs text-folio-text-secondary truncate">
                                 {product.colorFinish}
                               </p>
                             )}
@@ -206,7 +206,7 @@ export default function VisitLanding({ visit, session }: VisitLandingProps) {
                   <CardTitle>Message from Vendor</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-[var(--text-primary)]">{visit.note}</p>
+                  <p className="text-folio-text-primary">{visit.note}</p>
                 </CardContent>
               </Card>
             )}
@@ -239,7 +239,7 @@ export default function VisitLanding({ visit, session }: VisitLandingProps) {
                     >
                       Sign In to Save
                     </Button>
-                    <p className="text-xs text-[var(--text-secondary)] text-center">
+                    <p className="text-xs text-folio-text-secondary text-center">
                       You'll need to sign in to save this visit to your projects
                     </p>
                   </div>
@@ -257,17 +257,17 @@ export default function VisitLanding({ visit, session }: VisitLandingProps) {
               </CardHeader>
               <CardContent className="space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-[var(--text-secondary)]">Created:</span>
+                  <span className="text-folio-text-secondary">Created:</span>
                   <span>{new Date(visit.createdAt).toLocaleDateString()}</span>
                 </div>
                 {visit.expiresAt && (
                   <div className="flex justify-between text-sm">
-                    <span className="text-[var(--text-secondary)]">Expires:</span>
+                    <span className="text-folio-text-secondary">Expires:</span>
                     <span>{new Date(visit.expiresAt).toLocaleDateString()}</span>
                   </div>
                 )}
                 <div className="flex justify-between text-sm">
-                  <span className="text-[var(--text-secondary)]">Status:</span>
+                  <span className="text-folio-text-secondary">Status:</span>
                   <Badge variant="outline">Active</Badge>
                 </div>
               </CardContent>

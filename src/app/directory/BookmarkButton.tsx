@@ -44,7 +44,7 @@ export default function BookmarkButton({
     <button
       onClick={handleToggle}
       disabled={loading}
-      className="p-1.5 rounded-md transition-colors hover:bg-[var(--bg-elevated)]"
+      className="p-1.5 rounded-md transition-colors hover:bg-surface-ground"
       aria-label={bookmarked ? 'Remove bookmark' : 'Add bookmark'}
       title={bookmarked ? 'Remove bookmark' : 'Bookmark'}
     >

@@ -90,7 +90,7 @@ export default function SubscriptionSettingsPage() {
 
   if (status === 'loading' || loading) {
     return (
-      <div className="min-h-screen bg-[var(--bg-elevated)] flex items-center justify-center">
+      <div className="min-h-screen bg-surface-ground flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent)]" />
       </div>
     );
@@ -98,7 +98,7 @@ export default function SubscriptionSettingsPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-[var(--bg-elevated)] flex items-center justify-center">
+      <div className="min-h-screen bg-surface-ground flex items-center justify-center">
         <RidgeCard padding="lg" className="text-center max-w-md">
           <p className="folio-body text-red-600 mb-4">{error}</p>
           <button
@@ -125,12 +125,12 @@ export default function SubscriptionSettingsPage() {
   const currentConfig = subscription.config;
 
   return (
-    <div className="min-h-screen bg-[var(--bg-elevated)]">
+    <div className="min-h-screen bg-surface-ground">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Header */}
         <div className="mb-8">
           <h1 className="folio-h2">Subscription</h1>
-          <p className="folio-body text-[var(--text-secondary)] mt-1">
+          <p className="folio-body text-folio-text-secondary mt-1">
             Manage your subscription and billing
           </p>
         </div>
@@ -154,23 +154,23 @@ export default function SubscriptionSettingsPage() {
                   </span>
                 )}
               </div>
-              <p className="folio-meta text-[var(--text-secondary)] mt-1">{currentConfig.tagline}</p>
+              <p className="folio-meta text-folio-text-secondary mt-1">{currentConfig.tagline}</p>
             </div>
             <div className="text-right">
               {currentConfig.pricing ? (
                 <>
-                  <div className="folio-stat text-[var(--text-primary)]">
+                  <div className="folio-stat text-folio-text-primary">
                     ${currentConfig.pricing.monthly}
-                    <span className="folio-meta text-[var(--text-tertiary)]">/mo</span>
+                    <span className="folio-meta text-folio-text-tertiary">/mo</span>
                   </div>
                   {currentConfig.pricing.monthly > 0 && (
-                    <div className="folio-meta text-[var(--text-tertiary)]">
+                    <div className="folio-meta text-folio-text-tertiary">
                       or ${currentConfig.pricing.annually}/year
                     </div>
                   )}
                 </>
               ) : (
-                <div className="folio-ui font-semibold text-[var(--text-primary)]">
+                <div className="folio-ui font-semibold text-folio-text-primary">
                   Custom Pricing
                 </div>
               )}
@@ -179,9 +179,9 @@ export default function SubscriptionSettingsPage() {
 
           {/* Subscription Status */}
           {subscription.status.expiresAt && (
-            <div className="mt-4 pt-4 border-t border-[var(--border)]">
+            <div className="mt-4 pt-4 border-t border-folio-border-subtle">
               {subscription.status.daysUntilExpiry !== null && subscription.status.daysUntilExpiry > 0 ? (
-                <p className="folio-meta text-[var(--text-secondary)]">
+                <p className="folio-meta text-folio-text-secondary">
                   Your subscription renews in{' '}
                   <span className="font-medium">{subscription.status.daysUntilExpiry} days</span>
                   {' '}on {new Date(subscription.status.expiresAt).toLocaleDateString()}
@@ -195,7 +195,7 @@ export default function SubscriptionSettingsPage() {
           )}
 
           {subscription.status.isFoundingDesigner && (
-            <div className="mt-4 pt-4 border-t border-[var(--border)]">
+            <div className="mt-4 pt-4 border-t border-folio-border-subtle">
               <p className="folio-meta text-[var(--accent)]">
                 As a Founding Designer, you have lifetime Pro access at no cost.
               </p>
@@ -276,7 +276,7 @@ export default function SubscriptionSettingsPage() {
             <RidgeCardContent>
               <div className="space-y-4">
                 <div>
-                  <p className="folio-meta text-[var(--text-secondary)]">
+                  <p className="folio-meta text-folio-text-secondary">
                     Publishing Commitment: {foundingDesigner.publishingCommitment.fulfilled} of{' '}
                     {foundingDesigner.publishingCommitment.required} projects this month
                   </p>
@@ -290,10 +290,10 @@ export default function SubscriptionSettingsPage() {
                   </div>
                 </div>
                 <div>
-                  <h4 className="folio-ui font-medium text-[var(--text-primary)] mb-2">Your Benefits</h4>
+                  <h4 className="folio-ui font-medium text-folio-text-primary mb-2">Your Benefits</h4>
                   <ul className="space-y-1.5">
                     {foundingDesigner.benefits.map((benefit, index) => (
-                      <li key={index} className="folio-meta text-[var(--text-secondary)] flex items-center gap-2">
+                      <li key={index} className="folio-meta text-folio-text-secondary flex items-center gap-2">
                         <svg className="w-4 h-4 text-[var(--accent)] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                         </svg>
@@ -328,11 +328,11 @@ export default function SubscriptionSettingsPage() {
                         tier.highlighted ? '!border-[var(--accent)]' : ''
                       }`}
                     >
-                      <h4 className="folio-ui font-semibold text-[var(--text-primary)]">{tier.name}</h4>
-                      <p className="folio-meta text-[var(--text-tertiary)] mt-1">{tier.tagline}</p>
+                      <h4 className="folio-ui font-semibold text-folio-text-primary">{tier.name}</h4>
+                      <p className="folio-meta text-folio-text-tertiary mt-1">{tier.tagline}</p>
                       <div className="mt-3">
                         {tier.pricing ? (
-                          <span className="folio-stat-lg">${tier.pricing.monthly}<span className="folio-meta text-[var(--text-tertiary)]">/mo</span></span>
+                          <span className="folio-stat-lg">${tier.pricing.monthly}<span className="folio-meta text-folio-text-tertiary">/mo</span></span>
                         ) : (
                           <span className="folio-ui font-semibold">Custom</span>
                         )}
@@ -352,7 +352,7 @@ export default function SubscriptionSettingsPage() {
                 })}
               </div>
               <div className="mt-6 text-center">
-                <Link href="/pricing" className="folio-meta text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors">
+                <Link href="/pricing" className="folio-meta text-folio-text-secondary hover:text-[var(--accent)] transition-colors">
                   Compare all plans
                 </Link>
               </div>
@@ -382,8 +382,8 @@ function UsageItem({
   return (
     <div>
       <div className="flex justify-between folio-meta mb-1.5">
-        <span className="text-[var(--text-secondary)]">{label}</span>
-        <span className={isNearLimit ? 'text-[var(--accent)] font-medium' : 'text-[var(--text-primary)]'}>
+        <span className="text-folio-text-secondary">{label}</span>
+        <span className={isNearLimit ? 'text-[var(--accent)] font-medium' : 'text-folio-text-primary'}>
           {current}
           {unit && ` ${unit}`}
           {!isUnlimited && ` / ${limit}${unit && ` ${unit}`}`}
@@ -406,9 +406,9 @@ function UsageItem({
 
 function FeatureItem({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-center justify-between py-2.5 border-b border-[var(--border)] last:border-0">
-      <span className="folio-meta text-[var(--text-secondary)]">{label}</span>
-      <span className="folio-ui font-medium text-[var(--text-primary)]">{value}</span>
+    <div className="flex items-center justify-between py-2.5 border-b border-folio-border-subtle last:border-0">
+      <span className="folio-meta text-folio-text-secondary">{label}</span>
+      <span className="folio-ui font-medium text-folio-text-primary">{value}</span>
     </div>
   );
 }

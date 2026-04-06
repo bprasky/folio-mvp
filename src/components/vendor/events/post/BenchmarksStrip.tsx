@@ -32,19 +32,19 @@ export function BenchmarksStrip({ benchmarks }: BenchmarksStripProps) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* vs Prior Event */}
-      <Card className="bg-white border-[#DAD2CA]">
+      <Card className="bg-white border-folio-border-strong">
         <CardContent className="p-4">
           <div className="flex items-center space-x-3 mb-4">
-            <TrendingUp className="w-5 h-5 text-[#8C8278]" />
-            <h3 className="font-medium text-[#2B2B2B]">vs Prior Event</h3>
+            <TrendingUp className="w-5 h-5 text-folio-text-secondary" />
+            <h3 className="font-medium text-folio-text-primary">vs Prior Event</h3>
           </div>
           
           <div className="space-y-3">
             {vsPriorItems.map((item, index) => (
               <div key={index} className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
-                  <item.icon className="w-4 h-4 text-[#8C8278]" />
-                  <span className="text-sm text-[#2B2B2B]">{item.label}</span>
+                  <item.icon className="w-4 h-4 text-folio-text-secondary" />
+                  <span className="text-sm text-folio-text-primary">{item.label}</span>
                 </div>
                 <Badge className={`text-xs ${
                   item.value >= 0 
@@ -65,16 +65,16 @@ export function BenchmarksStrip({ benchmarks }: BenchmarksStripProps) {
       </Card>
 
       {/* vs Vendor Cohort */}
-      <Card className="bg-white border-[#DAD2CA]">
+      <Card className="bg-white border-folio-border-strong">
         <CardContent className="p-4">
           <div className="flex items-center space-x-3 mb-4">
-            <Users className="w-5 h-5 text-[#8C8278]" />
-            <h3 className="font-medium text-[#2B2B2B]">vs Vendor Cohort</h3>
+            <Users className="w-5 h-5 text-folio-text-secondary" />
+            <h3 className="font-medium text-folio-text-primary">vs Vendor Cohort</h3>
           </div>
           
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-[#2B2B2B]">Save→Tag Rate</span>
+              <span className="text-sm text-folio-text-primary">Save→Tag Rate</span>
               <Badge className={`text-xs ${
                 benchmarks.vsCohort.percentileSaveToTag >= 70
                   ? 'bg-green-100 text-green-800 border-green-200'
@@ -86,11 +86,11 @@ export function BenchmarksStrip({ benchmarks }: BenchmarksStripProps) {
               </Badge>
             </div>
             
-            <div className="bg-[#F7F4F1] rounded-lg p-3">
-              <p className="text-sm text-[#2B2B2B] font-medium mb-1">
+            <div className="bg-surface-elevated rounded-lg p-3">
+              <p className="text-sm text-folio-text-primary font-medium mb-1">
                 Performance Note
               </p>
-              <p className="text-xs text-[#8C8278]">
+              <p className="text-xs text-folio-text-secondary">
                 {benchmarks.vsCohort.note}
               </p>
             </div>

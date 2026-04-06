@@ -13,7 +13,7 @@ export function CohortBenchmarksMini({ benchmarks }: CohortBenchmarksMiniProps) 
   const getComparisonColor = (you: number, baseline: number) => {
     if (you > baseline) return 'text-green-600';
     if (you < baseline) return 'text-red-600';
-    return 'text-[var(--text-secondary)]';
+    return 'text-folio-text-secondary';
   };
 
   const getComparisonIcon = (you: number, baseline: number) => {
@@ -46,16 +46,16 @@ export function CohortBenchmarksMini({ benchmarks }: CohortBenchmarksMiniProps) 
 
     return (
       <div className="space-y-3">
-        <div className="text-sm font-medium text-[#2B2B2B]">
+        <div className="text-sm font-medium text-folio-text-primary">
           {label}
         </div>
         
         <div className="space-y-2">
           {/* You */}
           <div className="flex items-center space-x-3">
-            <div className="w-16 text-xs text-[#8C8278]">You</div>
+            <div className="w-16 text-xs text-folio-text-secondary">You</div>
             <div className="flex-1 flex items-center space-x-2">
-              <div className="bg-[#F7F4F1] rounded-full h-3 relative overflow-hidden" style={{ width: barWidth + 40 }}>
+              <div className="bg-surface-elevated rounded-full h-3 relative overflow-hidden" style={{ width: barWidth + 40 }}>
                 <div 
                   className="h-3 rounded-full bg-[#8C8278] transition-all duration-500"
                   style={{ width: `${youWidth}px` }}
@@ -70,15 +70,15 @@ export function CohortBenchmarksMini({ benchmarks }: CohortBenchmarksMiniProps) 
 
           {/* Prev 3 */}
           <div className="flex items-center space-x-3">
-            <div className="w-16 text-xs text-[#8C8278]">Prev 3</div>
+            <div className="w-16 text-xs text-folio-text-secondary">Prev 3</div>
             <div className="flex-1 flex items-center space-x-2">
-              <div className="bg-[#F7F4F1] rounded-full h-3 relative overflow-hidden" style={{ width: barWidth + 40 }}>
+              <div className="bg-surface-elevated rounded-full h-3 relative overflow-hidden" style={{ width: barWidth + 40 }}>
                 <div 
                   className="h-3 rounded-full bg-[#8C8278]/60 transition-all duration-500"
                   style={{ width: `${prev3Width}px` }}
                 />
               </div>
-              <div className="text-xs text-[#8C8278]">
+              <div className="text-xs text-folio-text-secondary">
                 {formatValue(prev3, type)}
               </div>
             </div>
@@ -86,15 +86,15 @@ export function CohortBenchmarksMini({ benchmarks }: CohortBenchmarksMiniProps) 
 
           {/* Cohort */}
           <div className="flex items-center space-x-3">
-            <div className="w-16 text-xs text-[#8C8278]">Cohort</div>
+            <div className="w-16 text-xs text-folio-text-secondary">Cohort</div>
             <div className="flex-1 flex items-center space-x-2">
-              <div className="bg-[#F7F4F1] rounded-full h-3 relative overflow-hidden" style={{ width: barWidth + 40 }}>
+              <div className="bg-surface-elevated rounded-full h-3 relative overflow-hidden" style={{ width: barWidth + 40 }}>
                 <div 
                   className="h-3 rounded-full bg-[#DAD2CA] transition-all duration-500"
                   style={{ width: `${cohortWidth}px` }}
                 />
               </div>
-              <div className="text-xs text-[#8C8278]">
+              <div className="text-xs text-folio-text-secondary">
                 {formatValue(cohort, type)}
               </div>
             </div>
@@ -105,13 +105,13 @@ export function CohortBenchmarksMini({ benchmarks }: CohortBenchmarksMiniProps) 
   };
 
   return (
-    <Card className="bg-white border-[#DAD2CA]">
+    <Card className="bg-white border-folio-border-strong">
       <CardHeader>
-        <CardTitle className="text-lg font-serif text-[#2B2B2B] flex items-center space-x-2">
-          <BarChart3 className="w-5 h-5 text-[#8C8278]" />
+        <CardTitle className="text-lg font-serif text-folio-text-primary flex items-center space-x-2">
+          <BarChart3 className="w-5 h-5 text-folio-text-secondary" />
           <span>Performance in context</span>
         </CardTitle>
-        <p className="text-sm text-[#8C8278]">
+        <p className="text-sm text-folio-text-secondary">
           You vs previous 3 events vs vendor cohort median
         </p>
       </CardHeader>
@@ -143,9 +143,9 @@ export function CohortBenchmarksMini({ benchmarks }: CohortBenchmarksMiniProps) 
           )}
         </div>
 
-        <div className="mt-6 pt-4 border-t border-[#DAD2CA]">
+        <div className="mt-6 pt-4 border-t border-folio-border-strong">
           <div className="flex items-center justify-between">
-            <div className="text-xs text-[#8C8278]">
+            <div className="text-xs text-folio-text-secondary">
               Legend: You • Previous 3 Events • Vendor Cohort
             </div>
             <Badge variant="secondary" className="text-xs">

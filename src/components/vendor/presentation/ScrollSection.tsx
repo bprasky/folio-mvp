@@ -18,9 +18,9 @@ interface ScrollSectionProps {
 }
 
 const bgClasses: Record<string, string> = {
-  default: 'bg-[var(--bg-base)]',
-  elevated: 'bg-[var(--bg-elevated)]',
-  warm: 'bg-[#F5F3EF]',
+  default: 'bg-surface-canvas',
+  elevated: 'bg-surface-ground',
+  warm: 'bg-surface-elevated',
   dark: 'bg-[#1A1A1A] text-white',
 };
 

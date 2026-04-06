@@ -67,7 +67,7 @@ const taskCategories = [
 
 export default function AdminTasks() {
   return (
-    <div className="min-h-screen bg-[var(--bg-base)] py-8">
+    <div className="min-h-screen bg-surface-canvas py-8">
       <div className="max-w-7xl mx-auto px-4">
         {/* Back Button */}
         <motion.div
@@ -77,7 +77,7 @@ export default function AdminTasks() {
         >
           <Link
             href="/admin"
-            className="inline-flex items-center space-x-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+            className="inline-flex items-center space-x-2 text-folio-text-secondary hover:text-folio-text-primary transition-colors"
           >
             <FaArrowLeft />
             <span>Back to Admin Dashboard</span>
@@ -146,10 +146,10 @@ export default function AdminTasks() {
 
                           {/* Action Indicator */}
                           <div className="flex items-center justify-between">
-                            <span className="folio-meta group-hover:text-[var(--text-primary)] transition-colors">
+                            <span className="folio-meta group-hover:text-folio-text-primary transition-colors">
                               Click to start
                             </span>
-                            <div className="w-8 h-8 bg-[var(--bg-elevated)] rounded-full flex items-center justify-center group-hover:bg-[var(--accent)] group-hover:text-white transition-colors">
+                            <div className="w-8 h-8 bg-surface-ground rounded-full flex items-center justify-center group-hover:bg-[var(--accent)] group-hover:text-white transition-colors">
                               <FaPlus className="text-sm" />
                             </div>
                           </div>

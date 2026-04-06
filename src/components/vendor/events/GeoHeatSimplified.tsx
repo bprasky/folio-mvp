@@ -21,7 +21,7 @@ export function GeoHeatSimplified({ data, onHover }: GeoHeatSimplifiedProps) {
         return (
           <div 
             key={city.city} 
-            className="flex items-center justify-between cursor-pointer hover:bg-[#F7F4F1] rounded-lg p-2 transition-colors"
+            className="flex items-center justify-between cursor-pointer hover:bg-surface-elevated rounded-lg p-2 transition-colors"
             onMouseEnter={() => onHover?.({
               type: 'city',
               key: city.city,
@@ -30,7 +30,7 @@ export function GeoHeatSimplified({ data, onHover }: GeoHeatSimplifiedProps) {
             onMouseLeave={() => onHover?.(null)}
           >
             <div className="flex items-center space-x-3 flex-1">
-              <div className="w-20 text-sm font-medium text-[#2B2B2B]">
+              <div className="w-20 text-sm font-medium text-folio-text-primary">
                 {city.city}
               </div>
               <div className="flex-1 bg-[#F0EDE8] rounded-full h-3 overflow-hidden">
@@ -40,7 +40,7 @@ export function GeoHeatSimplified({ data, onHover }: GeoHeatSimplifiedProps) {
                 />
               </div>
             </div>
-            <div className="w-12 text-right text-sm font-semibold text-[#2B2B2B]">
+            <div className="w-12 text-right text-sm font-semibold text-folio-text-primary">
               {formatCompactNumber(city.count)}
             </div>
           </div>

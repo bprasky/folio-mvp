@@ -20,14 +20,14 @@ export function TextInterludeBlock({ roomName, text }: TextInterludeBlockProps) 
         <div className="space-y-4">
           {/* Room Label */}
           {roomName && (
-            <div className="folio-ui uppercase tracking-wider text-[var(--text-secondary)] mb-2">
+            <div className="folio-ui uppercase tracking-wider text-folio-text-secondary mb-2">
               {roomName}
             </div>
           )}
 
           {/* Editorial Text */}
           <div className="prose prose-neutral max-w-none">
-            <p className="text-lg md:text-xl leading-relaxed text-[var(--text-primary)] font-light">
+            <p className="text-lg md:text-xl leading-relaxed text-folio-text-primary font-light">
               {text}
             </p>
           </div>

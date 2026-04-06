@@ -153,7 +153,7 @@ export function AiDashboard({ eventId, onExport, onShare, onViewEvent }: AiDashb
                     {report.timeToSpec.medianHours}h
                   </div>
                   <div className="text-xs text-folio-text-secondary mb-2">Median response time</div>
-                  <div className="text-xs text-[#645C53]">
+                  <div className="text-xs text-folio-text-secondary">
                     {report.timeToSpec.medianHours < 24 
                       ? "🔥 Fast responders - strike while hot!" 
                       : report.timeToSpec.medianHours < 72 

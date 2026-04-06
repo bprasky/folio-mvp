@@ -57,14 +57,14 @@ export function BoardsEmptyState({
   return (
     <div className="max-w-2xl mx-auto py-16 px-4">
       <div className="text-center mb-8">
-        <h2 className="text-2xl font-light text-[var(--text-primary)] mb-2">
+        <h2 className="text-2xl font-light text-folio-text-primary mb-2">
           {projectName}
         </h2>
-        <p className="text-[var(--text-tertiary)]">No rooms yet</p>
+        <p className="text-folio-text-tertiary">No rooms yet</p>
       </div>
 
       <div className="space-y-4">
-        <p className="text-center text-[var(--text-secondary)] mb-6">
+        <p className="text-center text-folio-text-secondary mb-6">
           Get started by uploading project files:
         </p>
 
@@ -123,17 +123,17 @@ export function BoardsEmptyState({
         {/* Divider */}
         <div className="relative py-4">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-[var(--border-default)]" />
+            <div className="w-full border-t border-folio-border-subtle" />
           </div>
           <div className="relative flex justify-center">
-            <span className="px-4 bg-[var(--bg-base)] text-sm text-[var(--text-tertiary)]">or</span>
+            <span className="px-4 bg-surface-canvas text-sm text-folio-text-tertiary">or</span>
           </div>
         </div>
 
         {/* Manual room creation */}
         <button
           onClick={onCreateRoom}
-          className="w-full py-3 border border-dashed border-[var(--border-default)] rounded-lg text-[var(--text-tertiary)] hover:border-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors flex items-center justify-center gap-2"
+          className="w-full py-3 border border-dashed border-folio-border-subtle rounded-lg text-folio-text-tertiary hover:border-folio-text-tertiary hover:text-folio-text-secondary transition-colors flex items-center justify-center gap-2"
         >
           <Plus className="w-4 h-4" />
           Create Room Manually

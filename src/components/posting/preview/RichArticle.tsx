@@ -54,13 +54,13 @@ function renderParagraphWithTags({
   onAddToBoard?: (id: string) => void;
 }) {
   if (!productIds?.length) {
-    return <p className="leading-relaxed text-base md:text-lg text-[var(--text-secondary)]">{text}</p>;
+    return <p className="leading-relaxed text-base md:text-lg text-folio-text-secondary">{text}</p>;
   }
 
   // For now, append inline tag links at the end of the paragraph
   // In the future, this could be enhanced to tokenize and insert tags in-text
   return (
-    <p className="leading-relaxed text-base md:text-lg text-[var(--text-secondary)]" data-product-ids={productIds.join(',')}>
+    <p className="leading-relaxed text-base md:text-lg text-folio-text-secondary" data-product-ids={productIds.join(',')}>
       {text}{' '}
       {productIds.map((id) => (
         <InlineTagLink key={id} productId={id} label="↗ view" onAddToBoard={onAddToBoard} />
@@ -152,14 +152,14 @@ export function RichArticle({
   const hasContent = narrativeParagraphs.length > 0 || pullQuotes.length > 0;
 
   return (
-    <article className="rounded-[20px] shadow-xl backdrop-blur-sm bg-[var(--bg-base)] p-6 md:p-10 max-w-7xl mx-auto prose prose-neutral dark:prose-invert max-w-none prose-p:leading-relaxed prose-headings:font-semibold">
+    <article className="rounded-[20px] shadow-xl backdrop-blur-sm bg-surface-canvas p-6 md:p-10 max-w-7xl mx-auto prose prose-neutral dark:prose-invert max-w-none prose-p:leading-relaxed prose-headings:font-semibold">
       {/* Title */}
       <header className="mb-8">
-        <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-[var(--text-primary)] mb-4">
+        <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-folio-text-primary mb-4">
           {title}
         </h1>
         {dek && (
-          <p className="text-lg md:text-xl text-[var(--text-secondary)] max-w-3xl leading-relaxed opacity-80">
+          <p className="text-lg md:text-xl text-folio-text-secondary max-w-3xl leading-relaxed opacity-80">
             {dek}
           </p>
         )}
@@ -169,7 +169,7 @@ export function RichArticle({
       {article.introduction && Array.isArray(article.introduction) && article.introduction.length > 0 && (
         <div className="mb-8 max-w-3xl">
           {article.introduction.map((para: string, idx: number) => (
-            <p key={idx} className="text-base leading-relaxed text-[var(--text-primary)] mb-4">
+            <p key={idx} className="text-base leading-relaxed text-folio-text-primary mb-4">
               {para}
             </p>
           ))}
@@ -178,7 +178,7 @@ export function RichArticle({
 
       {/* Hero Image */}
       {heroImage && (
-        <div className="mb-10 md:rounded-2xl bg-[var(--bg-elevated)]">
+        <div className="mb-10 md:rounded-2xl bg-surface-ground">
           <Image
             src={heroImage.url}
             alt={title}
@@ -225,9 +225,9 @@ export function RichArticle({
           {pullQuotes.length > 0 && (
             <div className="space-y-6 my-8">
               {pullQuotes.map((quote, idx) => (
-                <blockquote key={`quote-${idx}`} className="border-l-4 border-[var(--ridge-outer)] pl-6 text-lg text-[var(--text-secondary)]">
+                <blockquote key={`quote-${idx}`} className="border-l-4 border-folio-border-subtle pl-6 text-lg text-folio-text-secondary">
                   {quote.context && (
-                    <span className="block text-xs uppercase tracking-wider text-[var(--text-tertiary)] mb-2 not-italic">
+                    <span className="block text-xs uppercase tracking-wider text-folio-text-tertiary mb-2 not-italic">
                       {quote.context}
                     </span>
                   )}
@@ -287,14 +287,14 @@ export function RichArticle({
             return (
               <section key={idx} className="space-y-6">
                 {chapter.title && idx > 0 && (
-                  <h2 className="text-2xl md:text-3xl font-semibold tracking-tight text-[var(--text-primary)]">
+                  <h2 className="text-2xl md:text-3xl font-semibold tracking-tight text-folio-text-primary">
                     {chapter.title}
                   </h2>
                 )}
 
                 {/* Body paragraphs (only for subsequent chapters or if first chapter body wasn't rendered above) */}
                 {!skipBody && chapter.body && chapter.body.length > 0 && (
-                  <div className="space-y-4 text-[var(--text-secondary)] leading-relaxed">
+                  <div className="space-y-4 text-folio-text-secondary leading-relaxed">
                     {chapter.body.map((paragraph, pIdx) => (
                       <p key={pIdx} className="text-base md:text-lg">
                         {paragraph}
@@ -305,7 +305,7 @@ export function RichArticle({
 
                 {/* Pull quote within chapter */}
                 {getSelectedPullQuoteText(chapter.pullQuote) && (
-                  <blockquote className="border-l-4 border-[var(--ridge-outer)] pl-6 italic text-lg text-[var(--text-secondary)] my-6">
+                  <blockquote className="border-l-4 border-folio-border-subtle pl-6 italic text-lg text-folio-text-secondary my-6">
                     "{getSelectedPullQuoteText(chapter.pullQuote)}"
                   </blockquote>
                 )}
@@ -324,7 +324,7 @@ export function RichArticle({
                             imgIdx === 0 && chapter.imageIds!.length > 2
                               ? "md:col-span-2"
                               : ""
-                          } bg-[var(--bg-elevated)] rounded-lg overflow-hidden`}
+                          } bg-surface-ground rounded-lg overflow-hidden`}
                         >
                           <Image
                             src={image.url}
@@ -353,15 +353,15 @@ export function RichArticle({
       {/* Materials Ledger */}
       {article.materialsLedger?.items && article.materialsLedger.items.length > 0 && (
         <section className="mb-10 mt-12">
-          <h2 className="text-2xl md:text-3xl font-semibold tracking-tight text-[var(--text-primary)] mb-4">
+          <h2 className="text-2xl md:text-3xl font-semibold tracking-tight text-folio-text-primary mb-4">
             Materials
           </h2>
           <ul className="space-y-2">
             {article.materialsLedger.items.map((item, idx) => (
-              <li key={idx} className="text-base text-[var(--text-secondary)]">
+              <li key={idx} className="text-base text-folio-text-secondary">
                 <span className="font-medium">{item.name}</span>
-                {item.finish && <span className="text-[var(--text-tertiary)]"> • {item.finish}</span>}
-                {item.note && <span className="text-[var(--text-tertiary)] text-sm"> • {item.note}</span>}
+                {item.finish && <span className="text-folio-text-tertiary"> • {item.finish}</span>}
+                {item.note && <span className="text-folio-text-tertiary text-sm"> • {item.note}</span>}
               </li>
             ))}
           </ul>
@@ -375,8 +375,8 @@ export function RichArticle({
           : article.credits;
         if (!displayCredits || displayCredits.length === 0) return null;
         return (
-          <footer className="mt-12 pt-8 border-t border-[var(--ridge-outer)]">
-            <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-[var(--text-secondary)]">
+          <footer className="mt-12 pt-8 border-t border-folio-border-subtle">
+            <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-folio-text-secondary">
               {displayCredits.map((credit, idx) => {
                 // Build link: prefer Folio profile if userId present, then url
                 const userId = (credit as CreditEntry).userId;
@@ -403,7 +403,7 @@ export function RichArticle({
               })}
             </div>
             {author?.name && (
-              <div className="mt-4 text-sm text-[var(--text-tertiary)]">
+              <div className="mt-4 text-sm text-folio-text-tertiary">
                 By {author.name}
               </div>
             )}

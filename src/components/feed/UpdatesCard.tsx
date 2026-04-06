@@ -25,9 +25,9 @@ export function UpdatesCard({ module }: { module: any }) {
   return (
     <Link
       href={`${projectSlug}#module-${module.id}`}
-      className="group rounded-[20px] ring-1 ring-black/5 bg-[var(--bg-base)] overflow-hidden flex flex-col"
+      className="group rounded-[20px] ring-1 ring-black/5 bg-surface-canvas overflow-hidden flex flex-col"
     >
-      <div className="relative h-[220px] bg-[var(--bg-elevated)]">
+      <div className="relative h-[220px] bg-surface-ground">
         {thumb ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -40,21 +40,21 @@ export function UpdatesCard({ module }: { module: any }) {
           <span className="rounded-full bg-black/70 text-[11px] text-white px-2 py-0.5">
             {typeLabel}
           </span>
-          <span className="rounded-full bg-white/80 text-[11px] text-[var(--text-primary)] px-2 py-0.5">
+          <span className="rounded-full bg-white/80 text-[11px] text-folio-text-primary px-2 py-0.5">
             {module.project.title}
           </span>
         </div>
       </div>
       <div className="p-3 flex-1 flex flex-col gap-1">
-        <div className="text-[14px] font-semibold text-[var(--text-primary)] line-clamp-2">
+        <div className="text-[14px] font-semibold text-folio-text-primary line-clamp-2">
           {module.title || `Update on ${module.project.title}`}
         </div>
         {module.description && (
-          <p className="text-[12px] text-[var(--text-secondary)] line-clamp-3">
+          <p className="text-[12px] text-folio-text-secondary line-clamp-3">
             {module.description}
           </p>
         )}
-        <p className="mt-auto pt-2 text-[11px] text-[var(--text-secondary)]">
+        <p className="mt-auto pt-2 text-[11px] text-folio-text-secondary">
           by {name}
         </p>
       </div>

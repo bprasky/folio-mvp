@@ -31,14 +31,14 @@ export default function LensBar({ scope, onLensChange }: LensBarProps) {
   };
   
   return (
-    <div className="flex flex-wrap gap-2 pb-4 border-b border-[#E0E0E0]">
+    <div className="flex flex-wrap gap-2 pb-4 border-b border-folio-border-subtle">
       {/* All Moments (default) */}
       <button
         onClick={() => handleLensClick(null)}
         className={`px-4 py-2 text-sm font-medium transition-colors ${
           selectedLens === null
-            ? 'text-[#1A1A1A] border-b-2 border-[#1A1A1A]'
-            : 'text-[#666] hover:text-[#1A1A1A]'
+            ? 'text-folio-text-primary border-b-2 border-[#1A1A1A]'
+            : 'text-[#666] hover:text-folio-text-primary'
         }`}
       >
         All
@@ -53,8 +53,8 @@ export default function LensBar({ scope, onLensChange }: LensBarProps) {
               onClick={() => handleLensClick(lens.id)}
               className={`px-4 py-2 text-sm font-medium transition-colors ${
                 selectedLens === lens.id
-                  ? 'text-[#1A1A1A] border-b-2 border-[#1A1A1A]'
-                  : 'text-[#666] hover:text-[#1A1A1A]'
+                  ? 'text-folio-text-primary border-b-2 border-[#1A1A1A]'
+                  : 'text-[#666] hover:text-folio-text-primary'
               }`}
             >
               {lens.label}
@@ -72,8 +72,8 @@ export default function LensBar({ scope, onLensChange }: LensBarProps) {
               onClick={() => handleLensClick(lens.id)}
               className={`px-4 py-2 text-sm font-medium transition-colors ${
                 selectedLens === lens.id
-                  ? 'text-[#1A1A1A] border-b-2 border-[#1A1A1A]'
-                  : 'text-[#666] hover:text-[#1A1A1A]'
+                  ? 'text-folio-text-primary border-b-2 border-[#1A1A1A]'
+                  : 'text-[#666] hover:text-folio-text-primary'
               }`}
             >
               {lens.label}
@@ -91,8 +91,8 @@ export default function LensBar({ scope, onLensChange }: LensBarProps) {
               onClick={() => handleLensClick(lens.id)}
               className={`px-4 py-2 text-sm font-medium transition-colors ${
                 selectedLens === lens.id
-                  ? 'text-[#1A1A1A] border-b-2 border-[#1A1A1A]'
-                  : 'text-[#666] hover:text-[#1A1A1A]'
+                  ? 'text-folio-text-primary border-b-2 border-[#1A1A1A]'
+                  : 'text-[#666] hover:text-folio-text-primary'
               }`}
             >
               {lens.label}
@@ -110,8 +110,8 @@ export default function LensBar({ scope, onLensChange }: LensBarProps) {
               onClick={() => handleLensClick(lens.id)}
               className={`px-4 py-2 text-sm font-medium transition-colors ${
                 selectedLens === lens.id
-                  ? 'text-[#1A1A1A] border-b-2 border-[#1A1A1A]'
-                  : 'text-[#666] hover:text-[#1A1A1A]'
+                  ? 'text-folio-text-primary border-b-2 border-[#1A1A1A]'
+                  : 'text-[#666] hover:text-folio-text-primary'
               }`}
             >
               {lens.label}

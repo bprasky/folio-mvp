@@ -47,10 +47,10 @@ export default function RepOnboardingPage() {
   // If not authenticated, show signup/signin prompt
   if (status === 'unauthenticated' && !loading && !error && inviteData) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[var(--bg-elevated)] px-4">
+      <div className="min-h-screen flex items-center justify-center bg-surface-ground px-4">
         <div className="max-w-md w-full bg-white rounded-lg shadow-md p-8">
           <h1 className="text-2xl font-bold mb-4">Join Folio as a Vendor Rep</h1>
-          <p className="text-[var(--text-secondary)] mb-6">
+          <p className="text-folio-text-secondary mb-6">
             You've been invited to join Folio. Please sign in or create an account to continue.
           </p>
           <div className="space-y-4">
@@ -62,7 +62,7 @@ export default function RepOnboardingPage() {
             </Link>
             <Link
               href={`/auth/signup?callbackUrl=/auth/rep-onboarding?inviteId=${inviteId}&token=${token}`}
-              className="block w-full text-center bg-[var(--bg-elevated)] text-[var(--text-primary)] py-2 px-4 rounded hover:bg-[var(--text-tertiary)]/20"
+              className="block w-full text-center bg-surface-ground text-folio-text-primary py-2 px-4 rounded hover:bg-[var(--text-tertiary)]/20"
             >
               Create Account
             </Link>
@@ -116,7 +116,7 @@ export default function RepOnboardingPage() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--accent)] mx-auto"></div>
-          <p className="mt-4 text-[var(--text-secondary)]">Loading...</p>
+          <p className="mt-4 text-folio-text-secondary">Loading...</p>
         </div>
       </div>
     );
@@ -124,10 +124,10 @@ export default function RepOnboardingPage() {
 
   if (error && !inviteData) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[var(--bg-elevated)] px-4">
+      <div className="min-h-screen flex items-center justify-center bg-surface-ground px-4">
         <div className="max-w-md w-full bg-white rounded-lg shadow-md p-8">
           <h1 className="text-2xl font-bold mb-4 text-red-600">Invalid Invite</h1>
-          <p className="text-[var(--text-secondary)] mb-6">{error}</p>
+          <p className="text-folio-text-secondary mb-6">{error}</p>
           <Link
             href="/"
             className="block w-full text-center bg-[var(--accent)] text-white py-2 px-4 rounded hover:bg-[var(--accent-hover)]"
@@ -144,21 +144,21 @@ export default function RepOnboardingPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[var(--bg-elevated)] px-4">
+    <div className="min-h-screen flex items-center justify-center bg-surface-ground px-4">
       <div className="max-w-md w-full bg-white rounded-lg shadow-md p-8">
         <h1 className="text-2xl font-bold mb-4">Set Up Your Rep Profile</h1>
-        <p className="text-[var(--text-secondary)] mb-6">
+        <p className="text-folio-text-secondary mb-6">
           You were invited using <strong>{inviteData?.email}</strong>. This might be your personal email.
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <p className="text-sm font-medium text-[var(--text-primary)] mb-3">
+            <p className="text-sm font-medium text-folio-text-primary mb-3">
               Choose your professional email for work notifications:
             </p>
             
             <div className="space-y-3">
-              <label className="flex items-center p-4 border rounded-lg cursor-pointer hover:bg-[var(--bg-elevated)]">
+              <label className="flex items-center p-4 border rounded-lg cursor-pointer hover:bg-surface-ground">
                 <input
                   type="radio"
                   name="emailChoice"
@@ -169,11 +169,11 @@ export default function RepOnboardingPage() {
                 />
                 <div>
                   <div className="font-medium">Use this email as my work email</div>
-                  <div className="text-sm text-[var(--text-secondary)]">{inviteData?.email}</div>
+                  <div className="text-sm text-folio-text-secondary">{inviteData?.email}</div>
                 </div>
               </label>
 
-              <label className="flex items-center p-4 border rounded-lg cursor-pointer hover:bg-[var(--bg-elevated)]">
+              <label className="flex items-center p-4 border rounded-lg cursor-pointer hover:bg-surface-ground">
                 <input
                   type="radio"
                   name="emailChoice"
@@ -214,7 +214,7 @@ export default function RepOnboardingPage() {
           </button>
         </form>
 
-        <p className="mt-6 text-xs text-[var(--text-secondary)] text-center">
+        <p className="mt-6 text-xs text-folio-text-secondary text-center">
           Once set up, you'll automatically follow designers who have tagged your organization.
         </p>
       </div>

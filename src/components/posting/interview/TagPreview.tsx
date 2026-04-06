@@ -14,7 +14,7 @@ export function TagPreview({ materials }: TagPreviewProps) {
   return (
     <aside className="w-full md:w-72 shrink-0 md:pl-4">
       <div className="rounded-xl border p-3 bg-white">
-        <div className="font-semibold mb-2 text-[var(--text-primary)]">Tagged Materials</div>
+        <div className="font-semibold mb-2 text-folio-text-primary">Tagged Materials</div>
         <ul className="space-y-2">
           {materials.map((m, i) => (
             <li key={i} className="flex items-center gap-2">
@@ -25,18 +25,18 @@ export function TagPreview({ materials }: TagPreviewProps) {
                   className="w-8 h-8 rounded object-cover"
                 />
               ) : (
-                <div className="w-8 h-8 bg-[var(--bg-elevated)] rounded" />
+                <div className="w-8 h-8 bg-surface-ground rounded" />
               )}
               <div className="text-sm flex-1 min-w-0">
-                <div className="font-medium text-[var(--text-primary)] truncate">{m.name}</div>
+                <div className="font-medium text-folio-text-primary truncate">{m.name}</div>
                 {m.vendor && (
-                  <div className="text-xs text-[var(--text-secondary)] truncate">{m.vendor}</div>
+                  <div className="text-xs text-folio-text-secondary truncate">{m.vendor}</div>
                 )}
               </div>
             </li>
           ))}
         </ul>
-        <p className="mt-3 text-xs text-[var(--text-secondary)]">
+        <p className="mt-3 text-xs text-folio-text-secondary">
           These will be woven into the article automatically.
         </p>
       </div>

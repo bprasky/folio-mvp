@@ -104,18 +104,18 @@ export default function PhotographerSettingsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[var(--bg-base)]">
-        <div className="text-[var(--text-tertiary)]">Loading...</div>
+      <div className="min-h-screen flex items-center justify-center bg-surface-canvas">
+        <div className="text-folio-text-tertiary">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[var(--bg-base)] px-4 py-12">
+    <div className="min-h-screen bg-surface-canvas px-4 py-12">
       <div className="max-w-xl mx-auto">
         <div className="mb-8">
           <h1 className="folio-h2 mb-2">Profile Settings</h1>
-          <p className="folio-body text-[var(--text-secondary)]">
+          <p className="folio-body text-folio-text-secondary">
             Update your photographer profile and booking information.
           </p>
         </div>
@@ -123,7 +123,7 @@ export default function PhotographerSettingsPage() {
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Name */}
           <div>
-            <label className="block text-sm font-medium text-[var(--text-primary)] mb-1.5">
+            <label className="block text-sm font-medium text-folio-text-primary mb-1.5">
               Name / Studio Name *
             </label>
             <Input
@@ -136,7 +136,7 @@ export default function PhotographerSettingsPage() {
 
           {/* Location */}
           <div>
-            <label className="block text-sm font-medium text-[var(--text-primary)] mb-1.5">
+            <label className="block text-sm font-medium text-folio-text-primary mb-1.5">
               Location
             </label>
             <Input
@@ -148,7 +148,7 @@ export default function PhotographerSettingsPage() {
 
           {/* Bio */}
           <div>
-            <label className="block text-sm font-medium text-[var(--text-primary)] mb-1.5">
+            <label className="block text-sm font-medium text-folio-text-primary mb-1.5">
               About
             </label>
             <textarea
@@ -157,13 +157,13 @@ export default function PhotographerSettingsPage() {
               placeholder="Tell designers about your work, style, and experience..."
               rows={4}
               maxLength={2000}
-              className="w-full rounded-lg border border-[var(--ridge-outer)] bg-white px-3 py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)] resize-none"
+              className="w-full rounded-lg border border-folio-border-subtle bg-white px-3 py-2 text-sm text-folio-text-primary placeholder:text-folio-text-tertiary focus:outline-none focus:ring-1 focus:ring-[var(--accent)] resize-none"
             />
           </div>
 
           {/* Photography Styles */}
           <div>
-            <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
+            <label className="block text-sm font-medium text-folio-text-primary mb-2">
               Photography Styles
             </label>
             <div className="flex flex-wrap gap-2">
@@ -175,7 +175,7 @@ export default function PhotographerSettingsPage() {
                   className={`px-3 py-1.5 text-sm rounded-full border transition-colors ${
                     form.photographyStyles.includes(style.toLowerCase())
                       ? 'bg-[var(--accent)] text-white border-[var(--accent)]'
-                      : 'bg-white text-[var(--text-secondary)] border-[var(--ridge-outer)] hover:border-[var(--accent)]'
+                      : 'bg-white text-folio-text-secondary border-folio-border-subtle hover:border-[var(--accent)]'
                   }`}
                 >
                   {style}
@@ -186,7 +186,7 @@ export default function PhotographerSettingsPage() {
 
           {/* Travel Radius */}
           <div>
-            <label className="block text-sm font-medium text-[var(--text-primary)] mb-1.5">
+            <label className="block text-sm font-medium text-folio-text-primary mb-1.5">
               Travel Radius
             </label>
             <Input
@@ -200,12 +200,12 @@ export default function PhotographerSettingsPage() {
           <div className="h-px bg-[var(--ridge-outer)]" />
 
           {/* Booking Info */}
-          <h2 className="text-sm font-semibold text-[var(--text-primary)] uppercase tracking-wider">
+          <h2 className="text-sm font-semibold text-folio-text-primary uppercase tracking-wider">
             Booking & Contact
           </h2>
 
           <div>
-            <label className="block text-sm font-medium text-[var(--text-primary)] mb-1.5">
+            <label className="block text-sm font-medium text-folio-text-primary mb-1.5">
               Booking URL
             </label>
             <Input
@@ -218,7 +218,7 @@ export default function PhotographerSettingsPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-[var(--text-primary)] mb-1.5">
+            <label className="block text-sm font-medium text-folio-text-primary mb-1.5">
               Booking Email
             </label>
             <Input
@@ -231,7 +231,7 @@ export default function PhotographerSettingsPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-[var(--text-primary)] mb-1.5">
+            <label className="block text-sm font-medium text-folio-text-primary mb-1.5">
               Website
             </label>
             <Input
@@ -243,7 +243,7 @@ export default function PhotographerSettingsPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-[var(--text-primary)] mb-1.5">
+            <label className="block text-sm font-medium text-folio-text-primary mb-1.5">
               Instagram
             </label>
             <Input

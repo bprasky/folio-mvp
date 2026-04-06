@@ -67,7 +67,7 @@ export function StoryViewer({ groups, index: startIndex, onClose }: Props) {
         <div className="relative h-full w-full max-w-[900px]" onClick={(e) => e.stopPropagation()}>
           {/* HEADER: Designer — Project */}
           <div className="absolute left-0 right-0 top-0 z-10 flex items-center justify-between p-3">
-            <div className="rounded-full bg-white/85 px-3 py-1 text-[12px] text-[var(--text-primary)] shadow">
+            <div className="rounded-full bg-white/85 px-3 py-1 text-[12px] text-folio-text-primary shadow">
               {g.designer.name ? (
                 <Link href={getMonographUrl({ name: g.designer.name })} className="hover:underline">
                   {designerName}
@@ -75,7 +75,7 @@ export function StoryViewer({ groups, index: startIndex, onClose }: Props) {
               ) : (
                 <span>{designerName}</span>
               )}
-              <span className="mx-1 text-[var(--text-tertiary)]">—</span>
+              <span className="mx-1 text-folio-text-tertiary">—</span>
               {g.project.slug ? (
                 <Link href={`/p/${g.project.slug}`} className="hover:underline">
                   {projectTitle}
@@ -115,7 +115,7 @@ export function StoryViewer({ groups, index: startIndex, onClose }: Props) {
                 className={`max-h-[88vh] ${isVertical ? "h-[88vh] w-auto" : "w-full"} object-contain rounded-2xl shadow-2xl`}
               />
             ) : (
-              <div className="h-[70vh] w-[60vw] rounded-2xl bg-[var(--bg-elevated)]" />
+              <div className="h-[70vh] w-[60vw] rounded-2xl bg-surface-ground" />
             )}
           </div>
 

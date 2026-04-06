@@ -48,7 +48,7 @@ export function AIResponse({
         {/* Speaker indicator */}
         <div className="flex items-center justify-center gap-2 mt-8">
           <Volume2 className="w-5 h-5 text-[var(--accent)] animate-pulse" />
-          <span className="text-sm text-[var(--text-secondary)]">AI speaking...</span>
+          <span className="text-sm text-folio-text-secondary">AI speaking...</span>
         </div>
       </div>
 
@@ -56,13 +56,13 @@ export function AIResponse({
       <div className="p-6 flex justify-center gap-4 border-t">
         <button
           onClick={onSkip}
-          className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-sm"
+          className="text-folio-text-secondary hover:text-folio-text-primary text-sm"
         >
           Skip this question
         </button>
         <button
           onClick={onEndInterview}
-          className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-sm"
+          className="text-folio-text-secondary hover:text-folio-text-primary text-sm"
         >
           End interview early
         </button>

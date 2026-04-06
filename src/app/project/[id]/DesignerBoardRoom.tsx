@@ -498,11 +498,11 @@ export default function DesignerBoardRoom({
       {/* Room Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
-          <h3 className="folio-h3 text-[var(--text-primary)]">{formatRoomName(room.name)}</h3>
+          <h3 className="folio-h3 text-folio-text-primary">{formatRoomName(room.name)}</h3>
 
           {/* Room Type Badge */}
           {room.type && (
-            <span className="px-2 py-0.5 folio-meta text-[var(--text-tertiary)] bg-[var(--bg-elevated)] rounded border border-[var(--border-default)]">
+            <span className="px-2 py-0.5 folio-meta text-folio-text-tertiary bg-surface-ground rounded border border-folio-border-subtle">
               {typeKeyToDisplay(room.type)}
             </span>
           )}
@@ -511,7 +511,7 @@ export default function DesignerBoardRoom({
           <div className="relative" ref={roomMenuRef}>
             <button
               onClick={() => setRoomMenuOpen(!roomMenuOpen)}
-              className="p-1.5 rounded-md hover:bg-[var(--bg-elevated)] text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors"
+              className="p-1.5 rounded-md hover:bg-surface-ground text-folio-text-tertiary hover:text-folio-text-primary transition-colors"
               title="Room options"
             >
               <HiOutlineDotsVertical className="w-4 h-4" />
@@ -519,13 +519,13 @@ export default function DesignerBoardRoom({
 
             {/* Dropdown Menu */}
             {roomMenuOpen && (
-              <div className="absolute left-0 top-full mt-1 w-40 bg-[var(--bg-base)] border border-[var(--border-default)] rounded-lg shadow-lg z-50 overflow-hidden">
+              <div className="absolute left-0 top-full mt-1 w-40 bg-surface-canvas border border-folio-border-subtle rounded-lg shadow-lg z-50 overflow-hidden">
                 <button
                   onClick={() => {
                     setRoomMenuOpen(false);
                     setRoomEditOpen(true);
                   }}
-                  className="w-full px-3 py-2 text-left folio-ui text-[var(--text-primary)] hover:bg-[var(--bg-elevated)] flex items-center gap-2"
+                  className="w-full px-3 py-2 text-left folio-ui text-folio-text-primary hover:bg-surface-ground flex items-center gap-2"
                 >
                   <FaEdit className="w-3 h-3" />
                   Edit Room
@@ -546,11 +546,11 @@ export default function DesignerBoardRoom({
           {room.paintColor && (
             <div className="flex items-center space-x-2">
               <div
-                className="w-6 h-6 rounded-full border border-[var(--border-default)] shadow-sm"
+                className="w-6 h-6 rounded-full border border-folio-border-subtle shadow-sm"
                 style={{ backgroundColor: room.paintColor.hex || '#f3f4f6' }}
                 title={room.paintColor.name || 'Paint color'}
               />
-              <span className="folio-ui text-[var(--text-secondary)]">
+              <span className="folio-ui text-folio-text-secondary">
                 {room.paintColor.name || room.paintColor.hex}
               </span>
             </div>
@@ -566,14 +566,14 @@ export default function DesignerBoardRoom({
                 "px-3 py-1 folio-meta rounded-full border transition-colors",
                 paintAccentEnabled
                   ? "bg-[var(--text-primary)] text-white border-[var(--text-primary)]"
-                  : "bg-[var(--bg-elevated)] text-[var(--text-secondary)] border-[var(--border-default)] hover:border-[var(--text-tertiary)]"
+                  : "bg-surface-ground text-folio-text-secondary border-folio-border-subtle hover:border-folio-text-tertiary"
               )}
             >
               Paint Accent
             </button>
           )}
 
-          <div className="folio-ui text-[var(--text-tertiary)]">
+          <div className="folio-ui text-folio-text-tertiary">
             {realTiles.length} item{realTiles.length !== 1 ? 's' : ''}
           </div>
 
@@ -605,10 +605,10 @@ export default function DesignerBoardRoom({
               <article
                 key={selection.id}
               className={clsx(
-                "group relative rounded-[20px] border shadow-sm bg-[var(--bg-elevated)] overflow-hidden",
+                "group relative rounded-[20px] border shadow-sm bg-surface-ground overflow-hidden",
                 paintAccentEnabled && room.paintColor
-                  ? "border-[var(--border-default)]" // Subtle border, not overwhelming
-                  : "border-[var(--border-default)]",
+                  ? "border-folio-border-subtle" // Subtle border, not overwhelming
+                  : "border-folio-border-subtle",
                 `col-span-${colSpan}`
               )}
               style={{ 
@@ -640,7 +640,7 @@ export default function DesignerBoardRoom({
                     alt={selection.productName || "Product"}
                     fill
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
-                    className="object-contain bg-[var(--bg-elevated)]"
+                    className="object-contain bg-surface-ground"
                     loading="lazy"
                   />
                   <div className="absolute inset-0 z-10 pointer-events-none bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
@@ -716,10 +716,10 @@ export default function DesignerBoardRoom({
               <article
                 key={`${room.id}:${slot.key}`}
                 className={clsx(
-                  "group relative rounded-[20px] border-2 border-dashed border-[var(--border-default)] bg-[var(--bg-base)] opacity-60",
+                  "group relative rounded-[20px] border-2 border-dashed border-folio-border-subtle bg-surface-canvas opacity-60",
                   paintAccentEnabled && room.paintColor
                     ? "border-[var(--text-tertiary)]"
-                    : "border-[var(--border-default)]",
+                    : "border-folio-border-subtle",
                   `col-span-${colSpan}`
                 )}
                 style={{
@@ -732,13 +732,13 @@ export default function DesignerBoardRoom({
               >
                 <div className="relative h-full flex flex-col items-center justify-center p-4 text-center">
                   {/* Placeholder Content */}
-                  <div className="text-[var(--text-secondary)] mb-4">
+                  <div className="text-folio-text-secondary mb-4">
                     <div className={clsx("font-semibold mb-2",
                       slot.defaultSize === 'large' ? "text-lg" : slot.defaultSize === 'medium' ? "text-base" : "folio-ui"
                     )}>
                       {slot.label}
                     </div>
-                    <div className="folio-meta text-[var(--text-tertiary)]">
+                    <div className="folio-meta text-folio-text-tertiary">
                       {slot.category}
                     </div>
                   </div>
@@ -798,23 +798,23 @@ export default function DesignerBoardRoom({
       {replacingImage.open && (
         <div className="fixed inset-0 z-50 overflow-hidden">
           <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setReplacingImage({ open: false })} />
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-[var(--bg-elevated)] rounded-lg shadow-xl p-6">
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-surface-ground rounded-lg shadow-xl p-6">
             <h3 className="folio-h3 mb-4">Replace Image</h3>
             <div className="space-y-4">
               <div>
-                <label className="block folio-ui font-medium text-[var(--text-primary)] mb-1">
+                <label className="block folio-ui font-medium text-folio-text-primary mb-1">
                   Image URL
                 </label>
                 <input
                   type="url"
                   placeholder="https://example.com/image.jpg"
-                  className="w-full border border-[var(--border-default)] rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] bg-[var(--bg-base)]"
+                  className="w-full border border-folio-border-subtle rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] bg-surface-canvas"
                 />
               </div>
               <div className="flex justify-end gap-3">
                 <button
                   onClick={() => setReplacingImage({ open: false })}
-                  className="px-4 py-2 text-[var(--text-primary)] border border-[var(--border-default)] rounded-md hover:bg-[var(--bg-base)]"
+                  className="px-4 py-2 text-folio-text-primary border border-folio-border-subtle rounded-md hover:bg-surface-canvas"
                 >
                   Cancel
                 </button>
@@ -838,12 +838,12 @@ export default function DesignerBoardRoom({
       {roleChangePopover.open && roomTemplate && (
         <div className="fixed inset-0 z-50 overflow-hidden">
           <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setRoleChangePopover({ open: false })} />
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-sm bg-[var(--bg-elevated)] rounded-lg shadow-xl p-6">
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-sm bg-surface-ground rounded-lg shadow-xl p-6">
             <h3 className="folio-h3 mb-4">Change Role</h3>
             <div className="space-y-2">
               <button
                 onClick={() => handleRoleChange(roleChangePopover.selectionId!, '')}
-                className="w-full text-left px-3 py-2 folio-ui hover:bg-[var(--bg-base)] rounded"
+                className="w-full text-left px-3 py-2 folio-ui hover:bg-surface-canvas rounded"
               >
                 None / Unassigned
               </button>
@@ -865,7 +865,7 @@ export default function DesignerBoardRoom({
                         ? "bg-[var(--accent)]/10 text-[var(--accent)]"
                         : isTaken
                           ? "bg-stone-100 text-[rgb(74,44,59)] hover:bg-stone-200"
-                          : "hover:bg-[var(--bg-base)]"
+                          : "hover:bg-surface-canvas"
                     )}
                   >
                     <div className="flex items-center justify-between">
@@ -880,7 +880,7 @@ export default function DesignerBoardRoom({
             <div className="flex justify-end mt-4">
               <button
                 onClick={() => setRoleChangePopover({ open: false })}
-                className="px-4 py-2 text-[var(--text-primary)] border border-[var(--border-default)] rounded-md hover:bg-[var(--bg-base)]"
+                className="px-4 py-2 text-folio-text-primary border border-folio-border-subtle rounded-md hover:bg-surface-canvas"
               >
                 Cancel
               </button>
@@ -893,12 +893,12 @@ export default function DesignerBoardRoom({
       {roomEditOpen && (
         <div className="fixed inset-0 z-50 overflow-hidden">
           <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setRoomEditOpen(false)} />
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-[var(--bg-elevated)] rounded-lg shadow-xl p-6">
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-surface-ground rounded-lg shadow-xl p-6">
             <h3 className="folio-h3 mb-4">Edit Room</h3>
             <div className="space-y-4">
               {/* Room Name */}
               <div>
-                <label className="block folio-ui font-medium text-[var(--text-primary)] mb-1">
+                <label className="block folio-ui font-medium text-folio-text-primary mb-1">
                   Room Name
                 </label>
                 <input
@@ -906,17 +906,17 @@ export default function DesignerBoardRoom({
                   value={editingRoomName}
                   onChange={(e) => setEditingRoomName(e.target.value)}
                   placeholder="e.g., Primary Bedroom"
-                  className="w-full border border-[var(--border-default)] rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] bg-[var(--bg-base)]"
+                  className="w-full border border-folio-border-subtle rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] bg-surface-canvas"
                   autoFocus
                 />
               </div>
 
               {/* Room Type */}
               <div>
-                <label className="block folio-ui font-medium text-[var(--text-primary)] mb-1">
+                <label className="block folio-ui font-medium text-folio-text-primary mb-1">
                   Room Type
                 </label>
-                <p className="folio-meta text-[var(--text-tertiary)] mb-2">
+                <p className="folio-meta text-folio-text-tertiary mb-2">
                   Determines placeholder tiles. Pick a suggestion or type your own.
                 </p>
                 <input
@@ -924,7 +924,7 @@ export default function DesignerBoardRoom({
                   value={editingRoomType}
                   onChange={(e) => setEditingRoomType(e.target.value)}
                   placeholder="e.g., Bar, Wine Cellar, Gym"
-                  className="w-full border border-[var(--border-default)] rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] bg-[var(--bg-base)]"
+                  className="w-full border border-folio-border-subtle rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] bg-surface-canvas"
                 />
                 <datalist id="room-type-suggestions">
                   {ROOM_TYPE_SUGGESTIONS.map(s => (
@@ -937,7 +937,7 @@ export default function DesignerBoardRoom({
               <div className="flex justify-end gap-3 pt-2">
                 <button
                   onClick={() => setRoomEditOpen(false)}
-                  className="px-4 py-2 text-[var(--text-primary)] border border-[var(--border-default)] rounded-md hover:bg-[var(--bg-base)]"
+                  className="px-4 py-2 text-folio-text-primary border border-folio-border-subtle rounded-md hover:bg-surface-canvas"
                 >
                   Cancel
                 </button>

@@ -100,7 +100,7 @@ export default function DemoRoleSwitcher() {
       data-demo-id="demo-role-switcher"
     >
       <div className="flex items-center gap-2">
-        <span className="text-xs font-semibold text-[var(--text-primary)] mr-2">Demo Mode:</span>
+        <span className="text-xs font-semibold text-folio-text-primary mr-2">Demo Mode:</span>
         {roles.map((role) => {
           const config = roleConfig[role];
           const Icon = config.icon;
@@ -115,7 +115,7 @@ export default function DemoRoleSwitcher() {
                 relative flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200
                 ${isActive
                   ? `${config.color} text-white shadow-md scale-105`
-                  : 'bg-[var(--bg-elevated)] text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)]'
+                  : 'bg-surface-ground text-folio-text-secondary hover:bg-surface-ground'
                 }
                 ${isChanging ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
               `}

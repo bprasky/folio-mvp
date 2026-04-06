@@ -181,14 +181,14 @@ export function PostExpanded({ payload }: PostExpandedProps) {
       {!heroImage?.url && (
         <header className="mb-8">
           {blocks.lead?.kicker && (
-            <p className="text-sm uppercase tracking-wider text-[var(--text-tertiary)] mb-2">
+            <p className="text-sm uppercase tracking-wider text-folio-text-tertiary mb-2">
               {blocks.lead.kicker}
             </p>
           )}
-          <h1 className="text-4xl font-bold text-[var(--text-primary)] mb-4">
+          <h1 className="text-4xl font-bold text-folio-text-primary mb-4">
             {leadTitle}
           </h1>
-          {leadDeck && <p className="text-xl text-[var(--text-secondary)] mb-4">{leadDeck}</p>}
+          {leadDeck && <p className="text-xl text-folio-text-secondary mb-4">{leadDeck}</p>}
         </header>
       )}
 
@@ -220,7 +220,7 @@ export function PostExpanded({ payload }: PostExpandedProps) {
           {blocks.introduction.map((para: string, idx: number) => (
             <p
               key={idx}
-              className="text-[15px] leading-7 text-[var(--text-primary)] mb-4"
+              className="text-[15px] leading-7 text-folio-text-primary mb-4"
             >
               {para}
             </p>
@@ -235,7 +235,7 @@ export function PostExpanded({ payload }: PostExpandedProps) {
             {blocks.galleryChapters.map((chapter: any, idx: number) => (
               <div key={idx} className="space-y-6">
                 {chapter.title && (
-                  <h2 className="text-2xl font-semibold text-[var(--text-primary)]">
+                  <h2 className="text-2xl font-semibold text-folio-text-primary">
                     {chapter.title}
                   </h2>
                 )}
@@ -245,7 +245,7 @@ export function PostExpanded({ payload }: PostExpandedProps) {
                       <p
                         key={pIdx}
                         data-paragraph-idx={pIdx}
-                        className="text-[15px] leading-7 text-[var(--text-primary)] mb-4"
+                        className="text-[15px] leading-7 text-folio-text-primary mb-4"
                       >
                         {para}
                       </p>
@@ -291,13 +291,13 @@ export function PostExpanded({ payload }: PostExpandedProps) {
                 .map((section: any, idx: number) => (
                   <div key={idx} className="mb-6">
                     {section.heading && (
-                      <h2 className="text-2xl font-semibold text-[var(--text-primary)] mb-4">
+                      <h2 className="text-2xl font-semibold text-folio-text-primary mb-4">
                         {section.heading}
                       </h2>
                     )}
                     <p
                       data-paragraph-idx={idx}
-                      className="text-[15px] leading-7 text-[var(--text-primary)]"
+                      className="text-[15px] leading-7 text-folio-text-primary"
                     >
                       {section.body}
                     </p>
@@ -316,8 +316,8 @@ export function PostExpanded({ payload }: PostExpandedProps) {
       {/* Method */}
       {blocks.method && Array.isArray(blocks.method) && (
         <div className="mb-12">
-          <h2 className="text-2xl font-semibold text-[var(--text-primary)] mb-4">Method</h2>
-          <ul className="space-y-2 list-disc list-inside text-[var(--text-secondary)]">
+          <h2 className="text-2xl font-semibold text-folio-text-primary mb-4">Method</h2>
+          <ul className="space-y-2 list-disc list-inside text-folio-text-secondary">
             {blocks.method.map((item: string, idx: number) => (
               <li key={idx}>{item}</li>
             ))}
@@ -328,15 +328,15 @@ export function PostExpanded({ payload }: PostExpandedProps) {
       {/* Q&A */}
       {blocks.qa && Array.isArray(blocks.qa) && (
         <div className="mb-12">
-          <h2 className="text-2xl font-semibold text-[var(--text-primary)] mb-4">Q&A</h2>
+          <h2 className="text-2xl font-semibold text-folio-text-primary mb-4">Q&A</h2>
           <div className="space-y-6">
             {blocks.qa.map((item: any, idx: number) => (
               <div key={idx}>
-                <h3 className="font-semibold text-[var(--text-primary)] mb-2">
+                <h3 className="font-semibold text-folio-text-primary mb-2">
                   {item.q}
                 </h3>
-                <p className="text-[var(--text-secondary)]">{item.a}</p>
-                <p className="text-xs text-[var(--text-tertiary)] mt-1">— {item.role}</p>
+                <p className="text-folio-text-secondary">{item.a}</p>
+                <p className="text-xs text-folio-text-tertiary mt-1">— {item.role}</p>
               </div>
             ))}
           </div>

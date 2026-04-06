@@ -93,8 +93,8 @@ export default function EditorialsPage() {
         <div className="max-w-7xl mx-auto p-6 space-y-8">
           {/* Header */}
           <div className="text-center space-y-4">
-            <h1 className="text-4xl font-bold text-[var(--text-primary)]">Editorial Features</h1>
-            <p className="text-lg text-[var(--text-secondary)] max-w-2xl mx-auto">
+            <h1 className="text-4xl font-bold text-folio-text-primary">Editorial Features</h1>
+            <p className="text-lg text-folio-text-secondary max-w-2xl mx-auto">
               Immersive stories that showcase exceptional design, featuring in-depth project narratives and the creative minds behind them.
             </p>
           </div>
@@ -102,13 +102,13 @@ export default function EditorialsPage() {
           {/* Search and Filters */}
           <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-white p-6 rounded-xl shadow-sm border">
             <div className="relative flex-1 max-w-md">
-              <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[var(--text-tertiary)]" />
+              <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-folio-text-tertiary" />
               <input
                 type="text"
                 placeholder="Search editorials..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-[var(--ridge-outer)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)]"
+                className="w-full pl-10 pr-4 py-2 border border-folio-border-subtle rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)]"
               />
             </div>
             
@@ -116,7 +116,7 @@ export default function EditorialsPage() {
               <select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
-                className="px-4 py-2 border border-[var(--ridge-outer)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)]"
+                className="px-4 py-2 border border-folio-border-subtle rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)]"
               >
                 {categories.map(category => (
                   <option key={category} value={category}>{category}</option>
@@ -126,7 +126,7 @@ export default function EditorialsPage() {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="px-4 py-2 border border-[var(--ridge-outer)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)]"
+                className="px-4 py-2 border border-folio-border-subtle rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)]"
               >
                 <option value="newest">Newest</option>
                 <option value="popular">Most Popular</option>
@@ -138,7 +138,7 @@ export default function EditorialsPage() {
           {/* Featured Editorial */}
           {featuredEditorial && (
             <div className="relative">
-              <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-6">Featured Editorial</h2>
+              <h2 className="text-2xl font-bold text-folio-text-primary mb-6">Featured Editorial</h2>
               <Link href={`/editorials/${featuredEditorial.slug}`}>
                 <div className="relative h-[500px] rounded-[20px] overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300 group cursor-pointer">
                   <SafeImage
@@ -156,7 +156,7 @@ export default function EditorialsPage() {
                     </div>
                     <h3 className="text-3xl font-bold mb-2">{featuredEditorial.title}</h3>
                     <p className="text-xl text-white/80 mb-4">{featuredEditorial.subtitle}</p>
-                    <div className="flex items-center gap-6 text-sm text-[var(--text-tertiary)]">
+                    <div className="flex items-center gap-6 text-sm text-folio-text-tertiary">
                       <div className="flex items-center gap-2">
                         <SafeImage
                           src={featuredEditorial.designerImage}
@@ -182,7 +182,7 @@ export default function EditorialsPage() {
 
           {/* Editorial Grid */}
           <div>
-            <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-6">All Editorials</h2>
+            <h2 className="text-2xl font-bold text-folio-text-primary mb-6">All Editorials</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
               {filteredEditorials.map((editorial) => (
                 <Link key={editorial.id} href={`/editorials/${editorial.slug}`}>
@@ -194,17 +194,17 @@ export default function EditorialsPage() {
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                       <div className="absolute top-4 left-4">
-                        <span className="bg-white/90 backdrop-blur-sm text-[var(--text-primary)] px-3 py-1 rounded-full text-sm font-medium">
+                        <span className="bg-white/90 backdrop-blur-sm text-folio-text-primary px-3 py-1 rounded-full text-sm font-medium">
                           {editorial.category}
                         </span>
                       </div>
                     </div>
                     
                     <div className="p-6">
-                      <h3 className="text-xl font-bold text-[var(--text-primary)] mb-2 group-hover:text-[var(--accent)] transition-colors">
+                      <h3 className="text-xl font-bold text-folio-text-primary mb-2 group-hover:text-[var(--accent)] transition-colors">
                         {editorial.title}
                       </h3>
-                      <p className="text-[var(--text-secondary)] mb-4 line-clamp-3">{editorial.excerpt}</p>
+                      <p className="text-folio-text-secondary mb-4 line-clamp-3">{editorial.excerpt}</p>
                       
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
@@ -213,10 +213,10 @@ export default function EditorialsPage() {
                             alt={editorial.designerName}
                             className="w-8 h-8 rounded-full"
                           />
-                          <span className="text-sm font-medium text-[var(--text-primary)]">{editorial.designerName}</span>
+                          <span className="text-sm font-medium text-folio-text-primary">{editorial.designerName}</span>
                         </div>
                         
-                        <div className="flex items-center gap-4 text-sm text-[var(--text-secondary)]">
+                        <div className="flex items-center gap-4 text-sm text-folio-text-secondary">
                           <div className="flex items-center gap-1">
                             <FaClock className="w-3 h-3" />
                             <span>{editorial.readTime}</span>
@@ -230,7 +230,7 @@ export default function EditorialsPage() {
                       
                       <div className="flex flex-wrap gap-2 mt-4">
                         {editorial.tags.slice(0, 3).map(tag => (
-                          <span key={tag} className="bg-[var(--bg-elevated)] text-[var(--text-secondary)] px-2 py-1 rounded text-xs">
+                          <span key={tag} className="bg-surface-ground text-folio-text-secondary px-2 py-1 rounded text-xs">
                             {tag}
                           </span>
                         ))}
@@ -254,7 +254,7 @@ export default function EditorialsPage() {
           {/* No Results */}
           {filteredEditorials.length === 0 && (
             <div className="text-center py-12">
-              <p className="text-[var(--text-secondary)] text-lg">No editorials found matching your criteria.</p>
+              <p className="text-folio-text-secondary text-lg">No editorials found matching your criteria.</p>
             </div>
           )}
         </div>

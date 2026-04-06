@@ -111,7 +111,7 @@ export default function OverviewSection({ project, isOwner }: OverviewSectionPro
   return (
     <div className="space-y-12">
       {/* Overview Section */}
-      <section className="bg-[var(--bg-elevated)] p-8 rounded-[20px] shadow-md">
+      <section className="bg-surface-ground p-8 rounded-[20px] shadow-md">
         <div className="flex items-center justify-between mb-4">
           <h2 className="folio-h2">Overview</h2>
           {isOwner && (
@@ -153,14 +153,14 @@ export default function OverviewSection({ project, isOwner }: OverviewSectionPro
             value={currentProject.description || ''}
             onChange={(e) => setEditedProject({ ...currentProject, description: e.target.value })}
             rows={4}
-            className="w-full p-3 border border-[var(--border-default)] rounded-lg mb-6 resize-none bg-[var(--bg-base)]"
+            className="w-full p-3 border border-folio-border-subtle rounded-lg mb-6 resize-none bg-surface-canvas"
             placeholder="Project description..."
           />
         ) : (
-          <p className="text-[var(--text-secondary)] leading-relaxed mb-6">{currentProject.description || 'No description yet.'}</p>
+          <p className="text-folio-text-secondary leading-relaxed mb-6">{currentProject.description || 'No description yet.'}</p>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-[var(--text-secondary)]">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-folio-text-secondary">
           <div>
             <span className="font-semibold">Stage:</span>
             <span className="ml-2">{getStageLabel(currentProject.stage)}</span>
@@ -209,28 +209,28 @@ export default function OverviewSection({ project, isOwner }: OverviewSectionPro
       </section>
 
       {/* Project Stats Section */}
-      <section className="bg-[var(--bg-elevated)] p-8 rounded-[20px] shadow-md">
+      <section className="bg-surface-ground p-8 rounded-[20px] shadow-md">
         <h2 className="folio-h2 mb-6">Project Insights</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="text-center p-4 bg-[var(--accent)]/10 rounded-lg">
             <div className="text-3xl font-bold text-[var(--accent)]">{currentProject.views.toLocaleString()}</div>
-            <div className="text-[var(--text-secondary)]">Views</div>
+            <div className="text-folio-text-secondary">Views</div>
           </div>
           <div className="text-center p-4 bg-[var(--accent)]/5 rounded-lg">
             <div className="text-3xl font-bold text-[var(--accent)]">{currentProject.saves.toLocaleString()}</div>
-            <div className="text-[var(--text-secondary)]">Saves</div>
+            <div className="text-folio-text-secondary">Saves</div>
           </div>
           <div className="text-center p-4 bg-[var(--text-tertiary)]/5 rounded-lg">
-            <div className="text-3xl font-bold text-[var(--text-secondary)]">{currentProject.shares.toLocaleString()}</div>
-            <div className="text-[var(--text-secondary)]">Shares</div>
+            <div className="text-3xl font-bold text-folio-text-secondary">{currentProject.shares.toLocaleString()}</div>
+            <div className="text-folio-text-secondary">Shares</div>
           </div>
         </div>
       </section>
 
       {/* Placeholder for Images Section */}
-      <section className="bg-[var(--bg-elevated)] p-8 rounded-[20px] shadow-md">
+      <section className="bg-surface-ground p-8 rounded-[20px] shadow-md">
         <h2 className="folio-h2 mb-6">Project Images</h2>
-        <div className="text-center py-12 text-[var(--text-secondary)]">
+        <div className="text-center py-12 text-folio-text-secondary">
           <p>No images uploaded yet.</p>
           {isOwner && (
             <p className="folio-ui mt-2">Upload images to showcase your project.</p>

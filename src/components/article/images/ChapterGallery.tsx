@@ -16,7 +16,7 @@ export default function ChapterGallery({ images }: { images: ImageLike[] }) {
         {unique.map((im, i) => (
           <figure
             key={i}
-            className="rounded-2xl overflow-hidden ring-1 ring-black/5 cursor-zoom-in bg-[var(--bg-elevated)]"
+            className="rounded-2xl overflow-hidden ring-1 ring-black/5 cursor-zoom-in bg-surface-ground"
             onClick={() => setOpen(i)}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -26,7 +26,7 @@ export default function ChapterGallery({ images }: { images: ImageLike[] }) {
               className="w-full h-auto"
             />
             {im.caption ? (
-              <figcaption className="p-2 folio-meta text-[var(--text-secondary)]">
+              <figcaption className="p-2 folio-meta text-folio-text-secondary">
                 {im.caption}
               </figcaption>
             ) : null}

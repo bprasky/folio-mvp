@@ -36,7 +36,7 @@ export function CreditsSection({ post }: CreditsSectionProps) {
     <section className="mx-auto max-w-4xl px-3 md:px-0">
       <div className="px-6 py-5 md:px-8 md:py-6 space-y-4">
         {credits.length > 0 && (
-          <div className="flex flex-wrap gap-x-6 gap-y-2 folio-meta text-[var(--text-secondary)]">
+          <div className="flex flex-wrap gap-x-6 gap-y-2 folio-meta text-folio-text-secondary">
             {credits.map((credit: CreditEntry, idx: number) => {
               const isPhotographer = credit.role.toLowerCase() === "photographer";
               const href = credit.userId
@@ -52,7 +52,7 @@ export function CreditsSection({ post }: CreditsSectionProps) {
                       href={href}
                       target={credit.userId ? undefined : "_blank"}
                       rel={credit.userId ? undefined : "noopener noreferrer"}
-                      className="text-[var(--text-primary)] hover:underline"
+                      className="text-folio-text-primary hover:underline"
                     >
                       {credit.name}
                     </a>
@@ -65,7 +65,7 @@ export function CreditsSection({ post }: CreditsSectionProps) {
           </div>
         )}
         {author?.name && (
-          <div className="folio-meta text-[var(--text-secondary)] pt-2 border-t border-[var(--ridge-outer)]">
+          <div className="folio-meta text-folio-text-secondary pt-2 border-t border-folio-border-subtle">
             By {titleCase(author.name)}
           </div>
         )}

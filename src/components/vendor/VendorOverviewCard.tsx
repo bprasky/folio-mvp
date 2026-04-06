@@ -30,7 +30,7 @@ export default function VendorOverviewCard({
             <FaEye className="text-xl" />
             <h3 className="font-semibold mb-1">Total Views</h3>
           </div>
-          <p className="text-3xl font-bold text-[var(--text-primary)]">{totalViews.toLocaleString()}</p>
+          <p className="text-3xl font-bold text-folio-text-primary">{totalViews.toLocaleString()}</p>
         </div>
 
         {/* Total Saves */}
@@ -39,7 +39,7 @@ export default function VendorOverviewCard({
             <FaBookmark className="text-xl" />
             <h3 className="font-semibold mb-1">Total Saves</h3>
           </div>
-          <p className="text-3xl font-bold text-[var(--text-primary)]">{totalSaves.toLocaleString()}</p>
+          <p className="text-3xl font-bold text-folio-text-primary">{totalSaves.toLocaleString()}</p>
         </div>
 
         {/* Events Featured */}
@@ -48,7 +48,7 @@ export default function VendorOverviewCard({
             <FaCalendarAlt className="text-xl" />
             <h3 className="font-semibold mb-1">Events Featured</h3>
           </div>
-          <p className="text-3xl font-bold text-[var(--text-primary)]">{eventsFeatured}</p>
+          <p className="text-3xl font-bold text-folio-text-primary">{eventsFeatured}</p>
         </div>
 
         {/* Top Products */}
@@ -60,8 +60,8 @@ export default function VendorOverviewCard({
           <div className="space-y-2 pt-2">
             {topProducts.map((product, index) => (
               <div key={product.product_id} className="flex items-center justify-between">
-                <span className="text-base truncate text-[var(--text-primary)]">{product.product_name}</span>
-                <span className="text-base font-semibold text-[var(--text-primary)]">{product.saves_total} saves</span>
+                <span className="text-base truncate text-folio-text-primary">{product.product_name}</span>
+                <span className="text-base font-semibold text-folio-text-primary">{product.saves_total} saves</span>
               </div>
             ))}
           </div>

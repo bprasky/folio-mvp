@@ -92,7 +92,7 @@ export default function DesignerAnalyticsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--bg-base)] p-8 lg:p-12">
+    <div className="min-h-screen bg-surface-canvas p-8 lg:p-12">
       <div className="max-w-7xl mx-auto">
         {/* Designer Overview Header */}
         <div className="mb-10 flex flex-col md:flex-row items-center md:justify-between">
@@ -106,7 +106,7 @@ export default function DesignerAnalyticsPage() {
             />
             <div>
               <h1 className="folio-h1 text-[var(--accent)] mb-1">{productData.designer_name}</h1>
-              <p className="folio-body text-[var(--text-secondary)]">Your Analytics Dashboard</p>
+              <p className="folio-body text-folio-text-secondary">Your Analytics Dashboard</p>
             </div>
           </div>
           <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 text-center w-full md:w-auto">
@@ -139,12 +139,12 @@ export default function DesignerAnalyticsPage() {
         </div>
 
         {/* Analytics Tabs */}
-        <div className="flex space-x-2 mb-8 p-1 bg-[var(--bg-elevated)] rounded-xl">
+        <div className="flex space-x-2 mb-8 p-1 bg-surface-ground rounded-xl">
           <button
             className={`px-4 py-3 rounded-lg font-semibold transition-all ${
               activeTab === 'product'
-                ? 'bg-[var(--bg-base)] text-[var(--accent)] shadow-sm'
-                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                ? 'bg-surface-canvas text-[var(--accent)] shadow-sm'
+                : 'text-folio-text-secondary hover:text-folio-text-primary'
             }`}
             onClick={() => setActiveTab('product')}
           >
@@ -153,8 +153,8 @@ export default function DesignerAnalyticsPage() {
           <button
             className={`px-4 py-3 rounded-lg font-semibold transition-all ${
               activeTab === 'project'
-                ? 'bg-[var(--bg-base)] text-[var(--accent)] shadow-sm'
-                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                ? 'bg-surface-canvas text-[var(--accent)] shadow-sm'
+                : 'text-folio-text-secondary hover:text-folio-text-primary'
             }`}
             onClick={() => setActiveTab('project')}
           >
@@ -163,8 +163,8 @@ export default function DesignerAnalyticsPage() {
           <button
             className={`px-4 py-3 rounded-lg font-semibold transition-all ${
               activeTab === 'opportunities'
-                ? 'bg-[var(--bg-base)] text-[var(--accent)] shadow-sm'
-                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                ? 'bg-surface-canvas text-[var(--accent)] shadow-sm'
+                : 'text-folio-text-secondary hover:text-folio-text-primary'
             }`}
             onClick={() => setActiveTab('opportunities')}
           >
@@ -179,18 +179,18 @@ export default function DesignerAnalyticsPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-left table-auto">
                 <thead>
-                  <tr className="bg-[var(--bg-elevated)]">
-                    <th className="px-4 py-3 rounded-tl-lg text-[var(--text-primary)] folio-body font-semibold">Product</th>
-                    <th className="px-4 py-3 text-[var(--text-primary)] folio-body font-semibold">Views</th>
-                    <th className="px-4 py-3 text-[var(--text-primary)] folio-body font-semibold">Saves</th>
-                    <th className="px-4 py-3 text-[var(--text-primary)] folio-body font-semibold">Clicks</th>
-                    <th className="px-4 py-3 text-[var(--text-primary)] folio-body font-semibold">Events</th>
-                    <th className="px-4 py-3 rounded-tr-lg text-[var(--text-primary)] folio-body font-semibold">Actions</th>
+                  <tr className="bg-surface-ground">
+                    <th className="px-4 py-3 rounded-tl-lg text-folio-text-primary folio-body font-semibold">Product</th>
+                    <th className="px-4 py-3 text-folio-text-primary folio-body font-semibold">Views</th>
+                    <th className="px-4 py-3 text-folio-text-primary folio-body font-semibold">Saves</th>
+                    <th className="px-4 py-3 text-folio-text-primary folio-body font-semibold">Clicks</th>
+                    <th className="px-4 py-3 text-folio-text-primary folio-body font-semibold">Events</th>
+                    <th className="px-4 py-3 rounded-tr-lg text-folio-text-primary folio-body font-semibold">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {productData.top_tagged_products.map((product, index) => (
-                    <tr key={index} className="border-t border-[var(--border-subtle)] hover:bg-[var(--bg-elevated)]/50">
+                    <tr key={index} className="border-t border-[var(--border-subtle)] hover:bg-surface-ground/50">
                       <td className="px-4 py-4 flex items-center">
                         <SafeImage
                           src={product.product_image}
@@ -201,23 +201,23 @@ export default function DesignerAnalyticsPage() {
                         />
                         <Link
                           href={`#/product/${product.product_name.toLowerCase().replace(/\s/g, '-')}`}
-                          className="font-medium text-[var(--text-primary)] hover:text-[var(--accent)] transition-colors"
+                          className="font-medium text-folio-text-primary hover:text-[var(--accent)] transition-colors"
                         >
                           {product.product_name}
                         </Link>
                       </td>
-                      <td className="px-4 py-4 text-[var(--text-primary)]">{product.views_from_designer}</td>
-                      <td className="px-4 py-4 text-[var(--text-primary)]">{product.saves_from_designer}</td>
-                      <td className="px-4 py-4 text-[var(--text-primary)]">{product.outbound_clicks_from_designer}</td>
+                      <td className="px-4 py-4 text-folio-text-primary">{product.views_from_designer}</td>
+                      <td className="px-4 py-4 text-folio-text-primary">{product.saves_from_designer}</td>
+                      <td className="px-4 py-4 text-folio-text-primary">{product.outbound_clicks_from_designer}</td>
                       <td className="px-4 py-4">
                         {product.events_featured_in.length > 0 ? (
-                          <ul className="list-disc list-inside text-[var(--text-secondary)]">
+                          <ul className="list-disc list-inside text-folio-text-secondary">
                             {product.events_featured_in.map((event, i) => (
                               <li key={i}>{event}</li>
                             ))}
                           </ul>
                         ) : (
-                          <span className="text-[var(--text-tertiary)]">N/A</span>
+                          <span className="text-folio-text-tertiary">N/A</span>
                         )}
                       </td>
                       <td className="px-4 py-4">
@@ -244,23 +244,23 @@ export default function DesignerAnalyticsPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-left table-auto">
                 <thead>
-                  <tr className="bg-[var(--bg-elevated)]">
-                    <th className="px-4 py-3 rounded-tl-lg text-[var(--text-primary)] folio-body font-semibold">Project</th>
-                    <th className="px-4 py-3 text-[var(--text-primary)] folio-body font-semibold">Views</th>
-                    <th className="px-4 py-3 text-[var(--text-primary)] folio-body font-semibold">Saves</th>
-                    <th className="px-4 py-3 text-[var(--text-primary)] folio-body font-semibold">Top Comment</th>
-                    <th className="px-4 py-3 text-[var(--text-primary)] folio-body font-semibold">Products Tagged</th>
-                    <th className="px-4 py-3 rounded-tr-lg text-[var(--text-primary)] folio-body font-semibold">Actions</th>
+                  <tr className="bg-surface-ground">
+                    <th className="px-4 py-3 rounded-tl-lg text-folio-text-primary folio-body font-semibold">Project</th>
+                    <th className="px-4 py-3 text-folio-text-primary folio-body font-semibold">Views</th>
+                    <th className="px-4 py-3 text-folio-text-primary folio-body font-semibold">Saves</th>
+                    <th className="px-4 py-3 text-folio-text-primary folio-body font-semibold">Top Comment</th>
+                    <th className="px-4 py-3 text-folio-text-primary folio-body font-semibold">Products Tagged</th>
+                    <th className="px-4 py-3 rounded-tr-lg text-folio-text-primary folio-body font-semibold">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {projectsData.map((project, index) => (
                     <>
-                      <tr key={index} className="border-t border-[var(--border-subtle)] hover:bg-[var(--bg-elevated)]/50">
+                      <tr key={index} className="border-t border-[var(--border-subtle)] hover:bg-surface-ground/50">
                         <td className="px-4 py-4 flex items-center">
                           <button
                             onClick={() => toggleProjectDetails(project.project_name)}
-                            className="mr-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                            className="mr-2 text-folio-text-secondary hover:text-folio-text-primary"
                           >
                             {expandedProjects[project.project_name] ? '▼' : '▶'}
                           </button>
@@ -271,24 +271,24 @@ export default function DesignerAnalyticsPage() {
                             height={48}
                             className="rounded-md object-cover mr-3"
                           />
-                          <span className="font-medium text-[var(--text-primary)]">{project.project_name}</span>
+                          <span className="font-medium text-folio-text-primary">{project.project_name}</span>
                         </td>
-                        <td className="px-4 py-4 text-[var(--text-primary)]">{project.total_views}</td>
-                        <td className="px-4 py-4 text-[var(--text-primary)]">{project.project_saves}</td>
+                        <td className="px-4 py-4 text-folio-text-primary">{project.total_views}</td>
+                        <td className="px-4 py-4 text-folio-text-primary">{project.project_saves}</td>
                         <td className="px-4 py-4">
                           {project.comments.length > 0 ? (
-                            <span className="text-[var(--text-secondary)] text-sm italic">"{project.comments[0].comment_text}"</span>
+                            <span className="text-folio-text-secondary text-sm italic">"{project.comments[0].comment_text}"</span>
                           ) : (
-                            <span className="text-[var(--text-tertiary)]">N/A</span>
+                            <span className="text-folio-text-tertiary">N/A</span>
                           )}
                         </td>
                         <td className="px-4 py-4">
                           {project.products_tagged.length > 0 ? (
-                            <span className="text-[var(--text-secondary)] text-sm">
+                            <span className="text-folio-text-secondary text-sm">
                               {project.products_tagged.length} products
                             </span>
                           ) : (
-                            <span className="text-[var(--text-tertiary)]">None</span>
+                            <span className="text-folio-text-tertiary">None</span>
                           )}
                         </td>
                         <td className="px-4 py-4">
@@ -303,7 +303,7 @@ export default function DesignerAnalyticsPage() {
                         </td>
                       </tr>
                       {expandedProjects[project.project_name] && (
-                        <tr className="bg-[var(--bg-elevated)]">
+                        <tr className="bg-surface-ground">
                           <td colSpan={6} className="px-4 py-4">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                               <div>
@@ -319,7 +319,7 @@ export default function DesignerAnalyticsPage() {
                                         className="rounded-md object-cover mr-3"
                                       />
                                       <div>
-                                        <p className="font-medium text-[var(--text-primary)]">{product.product_name}</p>
+                                        <p className="font-medium text-folio-text-primary">{product.product_name}</p>
                                         <p className="folio-meta">
                                           Views: {product.views_from_project} | Saves: {product.saves_from_project} | Clicks: {product.outbound_clicks_from_project}
                                         </p>
@@ -369,15 +369,15 @@ export default function DesignerAnalyticsPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-left table-auto">
                 <thead>
-                  <tr className="bg-[var(--bg-elevated)]">
-                    <th className="px-4 py-3 rounded-tl-lg text-[var(--text-primary)] folio-body font-semibold">Project</th>
-                    <th className="px-4 py-3 text-[var(--text-primary)] folio-body font-semibold">Eligibility</th>
-                    <th className="px-4 py-3 rounded-tr-lg text-[var(--text-primary)] folio-body font-semibold">Actions</th>
+                  <tr className="bg-surface-ground">
+                    <th className="px-4 py-3 rounded-tl-lg text-folio-text-primary folio-body font-semibold">Project</th>
+                    <th className="px-4 py-3 text-folio-text-primary folio-body font-semibold">Eligibility</th>
+                    <th className="px-4 py-3 rounded-tr-lg text-folio-text-primary folio-body font-semibold">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {projectsData.map((project, index) => (
-                    <tr key={index} className="border-t border-[var(--border-subtle)] hover:bg-[var(--bg-elevated)]/50">
+                    <tr key={index} className="border-t border-[var(--border-subtle)] hover:bg-surface-ground/50">
                       <td className="px-4 py-4 flex items-center">
                         <SafeImage
                           src={project.project_image}
@@ -386,7 +386,7 @@ export default function DesignerAnalyticsPage() {
                           height={48}
                           className="rounded-md object-cover mr-3"
                         />
-                        <span className="font-medium text-[var(--text-primary)]">{project.project_name}</span>
+                        <span className="font-medium text-folio-text-primary">{project.project_name}</span>
                       </td>
                       <td className="px-4 py-4">
                         <div className="flex flex-col space-y-2">
@@ -401,7 +401,7 @@ export default function DesignerAnalyticsPage() {
                             </span>
                           )}
                           {!project.eligible_for_editorial && !project.eligible_for_print && (
-                            <span className="text-[var(--text-tertiary)]">Not Eligible</span>
+                            <span className="text-folio-text-tertiary">Not Eligible</span>
                           )}
                         </div>
                       </td>
@@ -428,7 +428,7 @@ export default function DesignerAnalyticsPage() {
                             </Button>
                           )}
                           {!project.eligible_for_editorial && !project.eligible_for_print && (
-                            <span className="text-[var(--text-tertiary)] text-sm">No actions available</span>
+                            <span className="text-folio-text-tertiary text-sm">No actions available</span>
                           )}
                         </div>
                       </td>
@@ -446,15 +446,15 @@ export default function DesignerAnalyticsPage() {
             <RidgeCard padding="lg" className="w-full max-w-md relative">
               <button
                 onClick={() => setShowBoostModal(false)}
-                className="absolute top-4 right-4 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+                className="absolute top-4 right-4 text-folio-text-secondary hover:text-folio-text-primary transition-colors"
               >
                 <FaTimes className="text-2xl" />
               </button>
               <h2 className="folio-h2 text-[var(--accent)] mb-6 text-center">Boost {boostedItem?.type === 'product' ? 'Product' : 'Project'}</h2>
               {!showConfirmation ? (
                 <>
-                  <p className="folio-body text-[var(--text-secondary)] mb-6 text-center">
-                    Are you sure you want to request a boost for <span className="font-semibold text-[var(--text-primary)]">{boostedItem?.name}</span>?
+                  <p className="folio-body text-folio-text-secondary mb-6 text-center">
+                    Are you sure you want to request a boost for <span className="font-semibold text-folio-text-primary">{boostedItem?.name}</span>?
                   </p>
                   {boostedItem?.type === 'project' && (
                     <div className="mb-6">
@@ -487,8 +487,8 @@ export default function DesignerAnalyticsPage() {
               ) : (
                 <div className="text-center">
                   <FaRocket className="text-6xl text-green-500 mx-auto mb-4 animate-bounce" />
-                  <p className="folio-h3 text-[var(--text-primary)]">Boost request sent for {boostedItem?.name}!</p>
-                  <p className="folio-body text-[var(--text-secondary)] mt-2">The vendor will be notified.</p>
+                  <p className="folio-h3 text-folio-text-primary">Boost request sent for {boostedItem?.name}!</p>
+                  <p className="folio-body text-folio-text-secondary mt-2">The vendor will be notified.</p>
                 </div>
               )}
             </RidgeCard>

@@ -148,13 +148,13 @@ export default function PublishWorkflow({
   const location = [project.city, project.regionState].filter(Boolean).join(', ');
 
   return (
-    <div className="min-h-screen bg-[var(--bg-base)]">
+    <div className="min-h-screen bg-surface-canvas">
       {/* Header */}
-      <div className="bg-[var(--bg-elevated)] border-b border-[var(--border-default)]">
+      <div className="bg-surface-ground border-b border-folio-border-subtle">
         <div className="container mx-auto px-6 py-4">
           <Link
             href={`/project/${project.id}`}
-            className="inline-flex items-center gap-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+            className="inline-flex items-center gap-2 text-folio-text-secondary hover:text-folio-text-primary transition-colors"
           >
             <FaArrowLeft className="w-4 h-4" />
             Back to Project
@@ -171,34 +171,34 @@ export default function PublishWorkflow({
               <div className="w-16 h-16 rounded-full bg-[var(--accent)]/10 flex items-center justify-center mx-auto mb-4">
                 <FaRocket className="w-8 h-8 text-[var(--accent)]" />
               </div>
-              <h1 className="folio-h1 text-[var(--text-primary)] mb-2">
+              <h1 className="folio-h1 text-folio-text-primary mb-2">
                 Ready to Publish?
               </h1>
-              <p className="folio-body text-[var(--text-secondary)]">
+              <p className="folio-body text-folio-text-secondary">
                 Review your project before sharing it with the design community.
               </p>
             </div>
 
             {/* Project Summary Card */}
-            <div className="bg-[var(--bg-elevated)] rounded-2xl shadow-sm border border-[var(--border-default)] overflow-hidden mb-8">
-              <div className="p-6 border-b border-[var(--border-default)]">
-                <h2 className="folio-h2 text-[var(--text-primary)]">{project.title}</h2>
+            <div className="bg-surface-ground rounded-2xl shadow-sm border border-folio-border-subtle overflow-hidden mb-8">
+              <div className="p-6 border-b border-folio-border-subtle">
+                <h2 className="folio-h2 text-folio-text-primary">{project.title}</h2>
                 {location && (
-                  <p className="text-[var(--text-secondary)] mt-1">{location}</p>
+                  <p className="text-folio-text-secondary mt-1">{location}</p>
                 )}
                 {project.description && (
-                  <p className="text-[var(--text-secondary)] mt-3 line-clamp-2">{project.description}</p>
+                  <p className="text-folio-text-secondary mt-3 line-clamp-2">{project.description}</p>
                 )}
               </div>
 
               {/* Image Preview */}
               {images.length > 0 && (
-                <div className="p-4 bg-[var(--bg-base)]">
+                <div className="p-4 bg-surface-canvas">
                   <div className="grid grid-cols-4 gap-2">
                     {images.slice(0, 4).map((img, idx) => (
                       <div
                         key={img.id}
-                        className="aspect-square rounded-lg overflow-hidden bg-[var(--bg-elevated)] relative"
+                        className="aspect-square rounded-lg overflow-hidden bg-surface-ground relative"
                       >
                         <img
                           src={img.url}
@@ -214,7 +214,7 @@ export default function PublishWorkflow({
                     ))}
                   </div>
                   {images.length > 4 && (
-                    <p className="folio-meta text-[var(--text-tertiary)] mt-2 text-center">
+                    <p className="folio-meta text-folio-text-tertiary mt-2 text-center">
                       +{images.length - 4} more images
                     </p>
                   )}
@@ -224,26 +224,26 @@ export default function PublishWorkflow({
               {/* Readiness Stats */}
               <div className="p-6 grid grid-cols-3 gap-4">
                 <div className="text-center">
-                  <div className={`text-2xl font-bold ${readiness.imageCount > 0 ? 'text-[var(--accent)]' : 'text-[var(--text-tertiary)]'}`}>
+                  <div className={`text-2xl font-bold ${readiness.imageCount > 0 ? 'text-[var(--accent)]' : 'text-folio-text-tertiary'}`}>
                     {readiness.imageCount}
                   </div>
-                  <div className="folio-ui text-[var(--text-secondary)] flex items-center justify-center gap-1">
+                  <div className="folio-ui text-folio-text-secondary flex items-center justify-center gap-1">
                     <FaImage className="w-3 h-3" /> Images
                   </div>
                 </div>
                 <div className="text-center">
-                  <div className={`text-2xl font-bold ${readiness.tagCount > 0 ? 'text-[var(--accent)]' : 'text-[var(--text-tertiary)]'}`}>
+                  <div className={`text-2xl font-bold ${readiness.tagCount > 0 ? 'text-[var(--accent)]' : 'text-folio-text-tertiary'}`}>
                     {readiness.tagCount}
                   </div>
-                  <div className="folio-ui text-[var(--text-secondary)] flex items-center justify-center gap-1">
+                  <div className="folio-ui text-folio-text-secondary flex items-center justify-center gap-1">
                     <FaTag className="w-3 h-3" /> Tags
                   </div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-[var(--text-secondary)]">
+                  <div className="text-2xl font-bold text-folio-text-secondary">
                     {readiness.roomCount}
                   </div>
-                  <div className="folio-ui text-[var(--text-secondary)]">Rooms</div>
+                  <div className="folio-ui text-folio-text-secondary">Rooms</div>
                 </div>
               </div>
             </div>
@@ -253,8 +253,8 @@ export default function PublishWorkflow({
               <div className="bg-[var(--accent)]/10 border border-[var(--accent)]/20 rounded-xl p-4 mb-8 flex items-start gap-3">
                 <FaExclamationTriangle className="w-5 h-5 text-[var(--accent)] shrink-0 mt-0.5" />
                 <div>
-                  <h3 className="font-medium text-[var(--text-primary)]">Not quite ready</h3>
-                  <p className="folio-ui text-[var(--text-secondary)] mt-1">
+                  <h3 className="font-medium text-folio-text-primary">Not quite ready</h3>
+                  <p className="folio-ui text-folio-text-secondary mt-1">
                     {readiness.imageCount === 0
                       ? 'Upload at least one image to your project.'
                       : 'Tag at least one product in your images to unlock publishing.'}
@@ -273,7 +273,7 @@ export default function PublishWorkflow({
             <div className="flex items-center justify-between">
               <Link
                 href={`/project/${project.id}`}
-                className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+                className="text-folio-text-secondary hover:text-folio-text-primary transition-colors"
               >
                 I'll do this later
               </Link>
@@ -297,50 +297,50 @@ export default function PublishWorkflow({
               <div className="w-16 h-16 rounded-full bg-[var(--accent)]/10 flex items-center justify-center mx-auto mb-4">
                 <FaFileAlt className="w-8 h-8 text-[var(--accent)]" />
               </div>
-              <h1 className="folio-h1 text-[var(--text-primary)] mb-2">
+              <h1 className="folio-h1 text-folio-text-primary mb-2">
                 Draft Ready for Review
               </h1>
-              <p className="folio-body text-[var(--text-secondary)]">
+              <p className="folio-body text-folio-text-secondary">
                 Your draft is saved. Review the details below, then publish when ready.
               </p>
             </div>
 
             {/* Draft Preview Card */}
-            <div className="bg-[var(--bg-elevated)] rounded-2xl shadow-sm border border-[var(--border-default)] overflow-hidden mb-8">
-              <div className="p-6 border-b border-[var(--border-default)]">
+            <div className="bg-surface-ground rounded-2xl shadow-sm border border-folio-border-subtle overflow-hidden mb-8">
+              <div className="p-6 border-b border-folio-border-subtle">
                 <div className="flex items-center gap-2 mb-2">
                   <span className="px-2 py-1 folio-meta font-medium bg-[var(--accent)]/10 text-[var(--accent)] rounded-full">
                     DRAFT
                   </span>
                 </div>
-                <h2 className="folio-h2 text-[var(--text-primary)]">{project.title}</h2>
+                <h2 className="folio-h2 text-folio-text-primary">{project.title}</h2>
                 {location && (
-                  <p className="text-[var(--text-secondary)] mt-1">{location}</p>
+                  <p className="text-folio-text-secondary mt-1">{location}</p>
                 )}
                 {project.description && (
-                  <p className="text-[var(--text-secondary)] mt-3 line-clamp-2">{project.description}</p>
+                  <p className="text-folio-text-secondary mt-3 line-clamp-2">{project.description}</p>
                 )}
               </div>
 
               {/* Cover Image Selection */}
               {images.length > 0 && (
-                <div className="p-4 bg-[var(--bg-base)] border-b border-[var(--border-default)]">
-                  <p className="folio-ui font-medium text-[var(--text-primary)] mb-2">Cover Image</p>
-                  <div className="aspect-video rounded-lg overflow-hidden bg-[var(--bg-elevated)] max-w-md">
+                <div className="p-4 bg-surface-canvas border-b border-folio-border-subtle">
+                  <p className="folio-ui font-medium text-folio-text-primary mb-2">Cover Image</p>
+                  <div className="aspect-video rounded-lg overflow-hidden bg-surface-ground max-w-md">
                     <img
                       src={images[0].url}
                       alt={images[0].name || 'Cover image'}
                       className="w-full h-full object-cover"
                     />
                   </div>
-                  <p className="folio-meta text-[var(--text-tertiary)] mt-2">First uploaded image will be used as the cover</p>
+                  <p className="folio-meta text-folio-text-tertiary mt-2">First uploaded image will be used as the cover</p>
                 </div>
               )}
 
               {/* What will be published */}
               <div className="p-6">
-                <h3 className="folio-ui font-medium text-[var(--text-primary)] mb-3">What will be published:</h3>
-                <ul className="space-y-2 folio-ui text-[var(--text-secondary)]">
+                <h3 className="folio-ui font-medium text-folio-text-primary mb-3">What will be published:</h3>
+                <ul className="space-y-2 folio-ui text-folio-text-secondary">
                   <li className="flex items-center gap-2">
                     <FaCheckCircle className="w-4 h-4 text-[var(--accent)]" />
                     {readiness.imageCount} images across {readiness.roomCount} room(s)
@@ -362,14 +362,14 @@ export default function PublishWorkflow({
               <div className="flex items-center gap-4">
                 <Link
                   href={`/project/${project.id}?view=media`}
-                  className="inline-flex items-center gap-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+                  className="inline-flex items-center gap-2 text-folio-text-secondary hover:text-folio-text-primary transition-colors"
                 >
                   <FaEdit className="w-4 h-4" />
                   Edit project
                 </Link>
                 <Link
                   href={`/project/${project.id}`}
-                  className="text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors"
+                  className="text-folio-text-tertiary hover:text-folio-text-secondary transition-colors"
                 >
                   Back to overview
                 </Link>
@@ -392,8 +392,8 @@ export default function PublishWorkflow({
             <div className="w-16 h-16 rounded-full bg-[var(--accent)]/10 flex items-center justify-center mx-auto mb-6">
               <div className="animate-spin rounded-full h-8 w-8 border-2 border-[var(--accent)] border-t-transparent" />
             </div>
-            <h2 className="folio-h2 text-[var(--text-primary)] mb-2">Publishing...</h2>
-            <p className="folio-body text-[var(--text-secondary)]">Sharing your project with the community.</p>
+            <h2 className="folio-h2 text-folio-text-primary mb-2">Publishing...</h2>
+            <p className="folio-body text-folio-text-secondary">Sharing your project with the community.</p>
           </div>
         )}
 
@@ -402,8 +402,8 @@ export default function PublishWorkflow({
             <div className="w-16 h-16 rounded-full bg-[var(--accent)]/10 flex items-center justify-center mx-auto mb-6">
               <FaCheckCircle className="w-10 h-10 text-[var(--accent)]" />
             </div>
-            <h2 className="folio-h2 text-[var(--text-primary)] mb-2">Published!</h2>
-            <p className="folio-body text-[var(--text-secondary)] mb-6">Your project is now live. Redirecting to your post...</p>
+            <h2 className="folio-h2 text-folio-text-primary mb-2">Published!</h2>
+            <p className="folio-body text-folio-text-secondary mb-6">Your project is now live. Redirecting to your post...</p>
             <Link
               href={`/project/${project.id}?view=story`}
               className="inline-flex items-center gap-2 text-[var(--accent)] hover:text-[var(--accent-hover)] font-medium"

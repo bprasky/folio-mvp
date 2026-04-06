@@ -87,15 +87,15 @@ export default function RequestSampleModal({
       <div className="relative glass-surface rounded-2xl p-6 w-full max-w-lg mx-4 shadow-xl">
         <div className="flex items-center gap-2 mb-1">
           <span className="text-lg">📦</span>
-          <h3 className="folio-h3 text-[var(--text-primary)]">Request a Sample</h3>
+          <h3 className="folio-h3 text-folio-text-primary">Request a Sample</h3>
         </div>
-        <p className="text-sm text-[var(--text-secondary)] mb-4">
+        <p className="text-sm text-folio-text-secondary mb-4">
           {productName} — {vendorName}
         </p>
 
         <div className="space-y-4">
           <div>
-            <label className="block text-sm text-[var(--text-tertiary)] mb-1 font-medium">
+            <label className="block text-sm text-folio-text-tertiary mb-1 font-medium">
               Specific finish or colorway (optional)
             </label>
             <input
@@ -103,12 +103,12 @@ export default function RequestSampleModal({
               value={finishOrColorway}
               onChange={(e) => setFinishOrColorway(e.target.value)}
               placeholder="e.g. Brass, Matte Black, Weathered White"
-              className="w-full px-3 py-2 bg-white border border-[#E8E6E3] rounded-lg text-[#2C2925] placeholder-[#A39E97] focus:outline-none focus:border-[#C9C4BC] transition-all"
+              className="w-full px-3 py-2 bg-white border border-folio-border-subtle rounded-lg text-folio-text-primary placeholder-[#A39E97] focus:outline-none focus:border-folio-border-strong transition-all"
             />
           </div>
 
           <div>
-            <label className="block text-sm text-[var(--text-tertiary)] mb-1 font-medium">
+            <label className="block text-sm text-folio-text-tertiary mb-1 font-medium">
               Ship to (optional)
             </label>
             <textarea
@@ -116,12 +116,12 @@ export default function RequestSampleModal({
               onChange={(e) => setShippingAddress(e.target.value)}
               placeholder="Your studio or project site address"
               rows={3}
-              className="w-full px-3 py-2 bg-white border border-[#E8E6E3] rounded-lg text-[#2C2925] placeholder-[#A39E97] focus:outline-none focus:border-[#C9C4BC] transition-all resize-none"
+              className="w-full px-3 py-2 bg-white border border-folio-border-subtle rounded-lg text-folio-text-primary placeholder-[#A39E97] focus:outline-none focus:border-folio-border-strong transition-all resize-none"
             />
           </div>
 
           <div>
-            <label className="block text-sm text-[var(--text-tertiary)] mb-1 font-medium">
+            <label className="block text-sm text-folio-text-tertiary mb-1 font-medium">
               Note to vendor (optional)
             </label>
             <textarea
@@ -129,7 +129,7 @@ export default function RequestSampleModal({
               onChange={(e) => setDesignerNote(e.target.value)}
               placeholder="I'm specifying this for an upcoming residential project..."
               rows={3}
-              className="w-full px-3 py-2 bg-white border border-[#E8E6E3] rounded-lg text-[#2C2925] placeholder-[#A39E97] focus:outline-none focus:border-[#C9C4BC] transition-all resize-none"
+              className="w-full px-3 py-2 bg-white border border-folio-border-subtle rounded-lg text-folio-text-primary placeholder-[#A39E97] focus:outline-none focus:border-folio-border-strong transition-all resize-none"
             />
           </div>
         </div>

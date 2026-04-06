@@ -19,15 +19,15 @@ export function FeaturedProductCard({ product, user, eventId, subeventId }: Prop
   const showAdd = debugShowPlus || isDesigner;
 
   return (
-    <div className="group relative overflow-hidden rounded-2xl shadow-2xl bg-[var(--bg-elevated)]/90 backdrop-blur-xl ring-1 ring-[var(--ridge-outer)]">
+    <div className="group relative overflow-hidden rounded-2xl shadow-2xl bg-surface-ground/90 backdrop-blur-xl ring-1 ring-[var(--ridge-outer)]">
       {/* image */}
       <img src={product.thumb} alt={product.name} className="h-40 w-full object-cover" />
-      <div className="px-3 py-2 bg-[var(--bg-elevated)]/90 text-[var(--text-primary)] backdrop-blur ring-1 ring-[var(--ridge-outer)]">{product.name}</div>
+      <div className="px-3 py-2 bg-surface-ground/90 text-folio-text-primary backdrop-blur ring-1 ring-[var(--ridge-outer)]">{product.name}</div>
 
       {/* small "+" button (designer only) */}
       {showAdd && (
         <button
-          className="absolute right-2 top-2 z-20 grid h-8 w-8 place-items-center rounded-full bg-[var(--bg-elevated)]/90 text-[var(--text-primary)] backdrop-blur hover:bg-[var(--bg-elevated)] focus:outline-none focus:ring-2 focus:ring-[var(--ridge-outer)] opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity pointer-events-auto"
+          className="absolute right-2 top-2 z-20 grid h-8 w-8 place-items-center rounded-full bg-surface-ground/90 text-folio-text-primary backdrop-blur hover:bg-surface-ground focus:outline-none focus:ring-2 focus:ring-[var(--ridge-outer)] opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity pointer-events-auto"
           onClick={(e)=>{ e.stopPropagation(); setOpen(true); }}
           aria-label="Quick add to project"
           title="Quick add to project"

@@ -53,7 +53,7 @@ export default function NewProductPage() {
         <h1 className="text-2xl font-semibold">Add Outside Product</h1>
         <button
           onClick={() => router.back()}
-          className="text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+          className="text-folio-text-secondary hover:text-folio-text-primary"
         >
           ← Back
         </button>

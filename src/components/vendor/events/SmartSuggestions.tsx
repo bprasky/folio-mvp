@@ -28,14 +28,14 @@ export default function SmartSuggestions({ suggestions, onAction }: SmartSuggest
   if (suggestions.length === 0) {
     return (
       <div className="sticky top-6">
-        <Card className="bg-white border-[#DAD2CA]">
+        <Card className="bg-white border-folio-border-strong">
           <CardHeader className="pb-3">
-            <CardTitle className="text-lg font-serif text-[#2B2B2B]">
+            <CardTitle className="text-lg font-serif text-folio-text-primary">
               Smart Suggestions
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-[#8C8278]">
+            <p className="text-sm text-folio-text-secondary">
               Hover over charts or data to get contextual suggestions.
             </p>
           </CardContent>
@@ -46,9 +46,9 @@ export default function SmartSuggestions({ suggestions, onAction }: SmartSuggest
 
   return (
     <div className="sticky top-6 space-y-4">
-      <Card className="bg-white border-[#DAD2CA]">
+      <Card className="bg-white border-folio-border-strong">
         <CardHeader className="pb-3">
-          <CardTitle className="text-lg font-serif text-[#2B2B2B]">
+          <CardTitle className="text-lg font-serif text-folio-text-primary">
             Smart Suggestions
           </CardTitle>
         </CardHeader>
@@ -62,13 +62,13 @@ export default function SmartSuggestions({ suggestions, onAction }: SmartSuggest
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
               >
-                <div className="p-4 bg-[#F7F4F1] rounded-lg border border-[#DAD2CA]">
+                <div className="p-4 bg-surface-elevated rounded-lg border border-folio-border-strong">
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex-1">
-                      <h4 className="text-sm font-medium text-[#2B2B2B] mb-1">
+                      <h4 className="text-sm font-medium text-folio-text-primary mb-1">
                         {suggestion.title}
                       </h4>
-                      <p className="text-xs text-[#8C8278] mb-2">
+                      <p className="text-xs text-folio-text-secondary mb-2">
                         {suggestion.reason}
                       </p>
                     </div>

@@ -672,7 +672,7 @@ function DesignerRow({
     return (
       <Link
         href={`/designer/${designer.id}?tab=shop`}
-        className="flex items-center gap-3 hover:bg-[var(--bg-elevated)] -mx-2 px-2 py-1 rounded-lg transition-colors"
+        className="flex items-center gap-3 hover:bg-surface-ground -mx-2 px-2 py-1 rounded-lg transition-colors"
       >
         {content}
       </Link>

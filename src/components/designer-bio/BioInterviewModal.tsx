@@ -189,7 +189,7 @@ export default function BioInterviewModal({ onComplete, onClose }: BioInterviewM
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-4 right-4 z-10 p-2 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors"
+          className="absolute top-4 right-4 z-10 p-2 text-folio-text-tertiary hover:text-folio-text-secondary transition-colors"
           aria-label="Close interview"
         >
           <X className="w-5 h-5" />
@@ -198,7 +198,7 @@ export default function BioInterviewModal({ onComplete, onClose }: BioInterviewM
         {/* Loading overlay for initial load */}
         {loading && (
           <div className="absolute inset-0 bg-white/80 flex items-center justify-center z-20">
-            <Loader2 className="w-6 h-6 text-[var(--text-tertiary)] animate-spin" />
+            <Loader2 className="w-6 h-6 text-folio-text-tertiary animate-spin" />
           </div>
         )}
 
@@ -228,8 +228,8 @@ export default function BioInterviewModal({ onComplete, onClose }: BioInterviewM
               className="min-h-[600px] flex items-center justify-center"
             >
               <div className="text-center space-y-4">
-                <Loader2 className="w-8 h-8 text-[var(--text-tertiary)] animate-spin mx-auto" />
-                <p className="text-[var(--text-secondary)]">Crafting your bio...</p>
+                <Loader2 className="w-8 h-8 text-folio-text-tertiary animate-spin mx-auto" />
+                <p className="text-folio-text-secondary">Crafting your bio...</p>
               </div>
             </motion.div>
           ) : state === 'end-of-round' ? (
@@ -242,10 +242,10 @@ export default function BioInterviewModal({ onComplete, onClose }: BioInterviewM
               className="min-h-[600px] flex items-center justify-center"
             >
               <div className="max-w-md text-center space-y-6 px-8">
-                <h3 className="text-xl font-serif text-[var(--text-primary)]">
+                <h3 className="text-xl font-serif text-folio-text-primary">
                   Great answers!
                 </h3>
-                <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
+                <p className="text-sm text-folio-text-secondary leading-relaxed">
                   Ready to generate your bio, or want to go deeper with follow-up questions?
                 </p>
                 <div className="flex flex-col gap-3 pt-2">
@@ -259,7 +259,7 @@ export default function BioInterviewModal({ onComplete, onClose }: BioInterviewM
                   {round === 'base' && (
                     <button
                       onClick={handleGoDeeper}
-                      className="px-6 py-3 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+                      className="px-6 py-3 text-sm font-medium text-folio-text-secondary hover:text-folio-text-primary transition-colors"
                     >
                       Go Deeper
                     </button>
@@ -297,9 +297,9 @@ export default function BioInterviewModal({ onComplete, onClose }: BioInterviewM
                       rows={6}
                       className={cn(
                         'w-full min-h-[160px] md:min-h-[200px] p-4 md:p-6',
-                        'bg-[var(--bg-elevated)]/50 rounded-xl text-lg',
-                        'placeholder:text-[var(--text-tertiary)]',
-                        'border-transparent focus:border-[var(--ridge-outer)]',
+                        'bg-surface-ground/50 rounded-xl text-lg',
+                        'placeholder:text-folio-text-tertiary',
+                        'border-transparent focus:border-folio-border-subtle',
                         'focus:outline-none focus:ring-2 focus:ring-gray-200',
                         'resize-none leading-relaxed transition-all'
                       )}
@@ -308,7 +308,7 @@ export default function BioInterviewModal({ onComplete, onClose }: BioInterviewM
                     />
 
                     {/* Helper text */}
-                    <p className="text-sm text-[var(--text-tertiary)] mt-2">
+                    <p className="text-sm text-folio-text-tertiary mt-2">
                       Write as much or as little as you&apos;d like
                     </p>
                   </div>
@@ -319,7 +319,7 @@ export default function BioInterviewModal({ onComplete, onClose }: BioInterviewM
                       type="button"
                       onClick={handleSkip}
                       disabled={submitting}
-                      className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-sm py-2 px-3 transition-colors disabled:opacity-50"
+                      className="text-folio-text-secondary hover:text-folio-text-primary text-sm py-2 px-3 transition-colors disabled:opacity-50"
                     >
                       Skip
                     </button>
@@ -332,7 +332,7 @@ export default function BioInterviewModal({ onComplete, onClose }: BioInterviewM
                         'py-3 px-6 rounded-lg font-medium transition-all',
                         answer.trim() && !submitting
                           ? 'bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)]'
-                          : 'bg-[var(--bg-elevated)] text-[var(--text-tertiary)] cursor-not-allowed'
+                          : 'bg-surface-ground text-folio-text-tertiary cursor-not-allowed'
                       )}
                     >
                       {submitting ? '...' : 'Continue →'}

@@ -58,7 +58,7 @@ export function MobileMenu() {
     <div className="md:hidden">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="p-2 rounded-lg hover:bg-[var(--bg-elevated)] transition-colors"
+        className="p-2 rounded-lg hover:bg-surface-ground transition-colors"
         aria-label="Toggle menu"
       >
         {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
@@ -69,7 +69,7 @@ export function MobileMenu() {
           className="fixed top-16 left-0 right-0 border-b border-white/15 z-50 glass-overlay rounded-none"
         >
           {/* Mobile search */}
-          <div className="p-4 border-b border-[var(--ridge-outer)]">
+          <div className="p-4 border-b border-folio-border-subtle">
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -85,17 +85,17 @@ export function MobileMenu() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search..."
-                className="w-full h-10 pl-4 pr-4 rounded-full border border-[var(--ridge-outer)] bg-[var(--bg-elevated)] folio-ui"
+                className="w-full h-10 pl-4 pr-4 rounded-full border border-folio-border-subtle bg-surface-ground folio-ui"
               />
             </form>
           </div>
 
           {/* Create Section - Role-based */}
           {user && (
-            <div className="py-2 border-b border-[var(--ridge-outer)]">
+            <div className="py-2 border-b border-folio-border-subtle">
               {isVendor ? (
                 <>
-                  <p className="px-4 py-2 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
+                  <p className="px-4 py-2 text-xs font-medium text-folio-text-secondary uppercase tracking-wider">
                     Create
                   </p>
                   <button
@@ -103,20 +103,20 @@ export function MobileMenu() {
                       setIsOpen(false);
                       setShowCollaborationModal(true);
                     }}
-                    className="flex w-full items-center gap-3 px-4 py-3 folio-ui text-[var(--text-primary)] hover:bg-[var(--bg-elevated)] transition-colors"
+                    className="flex w-full items-center gap-3 px-4 py-3 folio-ui text-folio-text-primary hover:bg-surface-ground transition-colors"
                   >
-                    <FileText className="h-4 w-4 text-[var(--text-secondary)]" />
+                    <FileText className="h-4 w-4 text-folio-text-secondary" />
                     Collaboration Story
                   </button>
                   <MobileNavLink href="/vendor/products/new" onClick={() => setIsOpen(false)}>
                     <span className="flex items-center gap-3">
-                      <Package className="h-4 w-4 text-[var(--text-secondary)]" />
+                      <Package className="h-4 w-4 text-folio-text-secondary" />
                       Add Product
                     </span>
                   </MobileNavLink>
                   <MobileNavLink href="/vendor/create-project" onClick={() => setIsOpen(false)}>
                     <span className="flex items-center gap-3">
-                      <FolderPlus className="h-4 w-4 text-[var(--text-secondary)]" />
+                      <FolderPlus className="h-4 w-4 text-folio-text-secondary" />
                       Project Handoff
                     </span>
                   </MobileNavLink>
@@ -152,7 +152,7 @@ export function MobileMenu() {
 
             {isDesigner && (
               <>
-                <div className="border-t border-[var(--ridge-outer)] my-2" />
+                <div className="border-t border-folio-border-subtle my-2" />
                 <MobileNavLink href="/designer/projects" onClick={() => setIsOpen(false)}>
                   Projects
                 </MobileNavLink>
@@ -164,7 +164,7 @@ export function MobileMenu() {
 
             {isVendor && (
               <>
-                <div className="border-t border-[var(--ridge-outer)] my-2" />
+                <div className="border-t border-folio-border-subtle my-2" />
                 <MobileNavLink href="/vendor/dashboard" onClick={() => setIsOpen(false)}>
                   Dashboard
                 </MobileNavLink>
@@ -173,7 +173,7 @@ export function MobileMenu() {
 
             {role === "ADMIN" && (
               <>
-                <div className="border-t border-[var(--ridge-outer)] my-2" />
+                <div className="border-t border-folio-border-subtle my-2" />
                 <MobileNavLink href="/admin" onClick={() => setIsOpen(false)}>
                   Admin Panel
                 </MobileNavLink>
@@ -182,7 +182,7 @@ export function MobileMenu() {
 
             {user && (isDesigner || isVendor || role === "ADMIN" || role === "STUDENT") && (
               <>
-                <div className="border-t border-[var(--ridge-outer)] my-2" />
+                <div className="border-t border-folio-border-subtle my-2" />
                 <MobileNavLink
                   href={isDesigner ? "/designer/dashboard" : isVendor ? "/vendor/dashboard" : getDashboardLink(role || "")}
                   onClick={() => setIsOpen(false)}
@@ -195,11 +195,11 @@ export function MobileMenu() {
 
           {/* User section */}
           {user && (
-            <div className="p-4 border-t border-[var(--ridge-outer)] flex items-center gap-3">
+            <div className="p-4 border-t border-folio-border-subtle flex items-center gap-3">
               <UserAvatar src={user.image} alt={user.name || "User"} size="sm" />
               <div className="flex-1 min-w-0">
-                <p className="folio-ui text-[var(--text-primary)] truncate">{user.name || "User"}</p>
-                <p className="folio-meta text-[var(--text-secondary)] truncate">{user.email}</p>
+                <p className="folio-ui text-folio-text-primary truncate">{user.name || "User"}</p>
+                <p className="folio-meta text-folio-text-secondary truncate">{user.email}</p>
               </div>
             </div>
           )}
@@ -226,7 +226,7 @@ function MobileNavLink({ href, children, onClick }: MobileNavLinkProps) {
     <Link
       href={href}
       onClick={onClick}
-      className="block px-4 py-3 folio-ui text-[var(--text-primary)] hover:bg-[var(--bg-elevated)] transition-colors"
+      className="block px-4 py-3 folio-ui text-folio-text-primary hover:bg-surface-ground transition-colors"
     >
       {children}
     </Link>

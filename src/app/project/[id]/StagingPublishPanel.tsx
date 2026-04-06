@@ -164,14 +164,14 @@ export default function StagingPublishPanel({
   return (
     <div className="relative">
       {/* PREVIEW BANNER — sticky at top */}
-      <div className="sticky top-0 z-50 border-b border-[var(--border-default)] bg-[var(--bg-elevated)]/95 backdrop-blur-sm">
+      <div className="sticky top-0 z-50 border-b border-folio-border-subtle bg-surface-ground/95 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             {isPublishedStatus ? (
               <>
                 <span className="flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-[rgb(74,44,59)]" />
-                  <span className="folio-ui font-medium text-[var(--text-primary)]">Published</span>
+                  <span className="folio-ui font-medium text-folio-text-primary">Published</span>
                 </span>
                 {slug && (
                   <a
@@ -187,7 +187,7 @@ export default function StagingPublishPanel({
             ) : (
               <span className="flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full border-2 border-[var(--text-tertiary)] bg-transparent" />
-                <span className="folio-ui font-medium text-[var(--text-primary)]">
+                <span className="folio-ui font-medium text-folio-text-primary">
                   Preview — not yet published
                 </span>
               </span>
@@ -197,13 +197,13 @@ export default function StagingPublishPanel({
           <div className="flex items-center gap-2">
             {/* Edit / Preview toggle */}
             {initialPostData?.expandedBlocks && (
-              <div className="flex rounded-lg border border-[var(--border-default)] overflow-hidden">
+              <div className="flex rounded-lg border border-folio-border-subtle overflow-hidden">
                 <button
                   onClick={() => setViewMode('edit')}
                   className={`flex items-center gap-1 px-3 py-1.5 folio-meta font-medium transition-colors ${
                     viewMode === 'edit'
                       ? 'bg-[var(--accent)] text-white'
-                      : 'bg-[var(--bg-base)] text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)]'
+                      : 'bg-surface-canvas text-folio-text-secondary hover:bg-surface-ground'
                   }`}
                 >
                   Edit
@@ -213,7 +213,7 @@ export default function StagingPublishPanel({
                   className={`flex items-center gap-1 px-3 py-1.5 folio-meta font-medium transition-colors ${
                     viewMode === 'preview'
                       ? 'bg-[var(--accent)] text-white'
-                      : 'bg-[var(--bg-base)] text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)]'
+                      : 'bg-surface-canvas text-folio-text-secondary hover:bg-surface-ground'
                   }`}
                 >
                   <Eye className="w-3.5 h-3.5" />
@@ -224,7 +224,7 @@ export default function StagingPublishPanel({
             {(editorialState === 'GENERATED' || editorialState === 'UNPUBLISHED') && (
               <button
                 onClick={() => setShowInterviewModal(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 folio-meta font-medium text-[var(--text-secondary)] bg-[var(--bg-base)] border border-[var(--border-default)] rounded-lg hover:bg-[var(--bg-elevated)] transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 folio-meta font-medium text-folio-text-secondary bg-surface-canvas border border-folio-border-subtle rounded-lg hover:bg-surface-ground transition-colors"
               >
                 Redo Interview
               </button>
@@ -232,7 +232,7 @@ export default function StagingPublishPanel({
             <button
               onClick={() => setShowRegenDialog(true)}
               disabled={regenBusy}
-              className="flex items-center gap-1.5 px-3 py-1.5 folio-meta font-medium text-[var(--text-secondary)] bg-[var(--bg-base)] border border-[var(--border-default)] rounded-lg hover:bg-[var(--bg-elevated)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 folio-meta font-medium text-folio-text-secondary bg-surface-canvas border border-folio-border-subtle rounded-lg hover:bg-surface-ground disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${regenBusy ? "animate-spin" : ""}`} />
               {regenBusy ? "Regenerating..." : "Regenerate"}
@@ -254,7 +254,7 @@ export default function StagingPublishPanel({
       {/* UNPUBLISHED STATE BANNER */}
       {editorialState === 'UNPUBLISHED' && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
-          <div className="flex items-start gap-2 p-4 bg-[var(--accent)]/5 border border-[var(--accent)]/20 rounded-[20px] folio-ui text-[var(--text-primary)]">
+          <div className="flex items-start gap-2 p-4 bg-[var(--accent)]/5 border border-[var(--accent)]/20 rounded-[20px] folio-ui text-folio-text-primary">
             <AlertCircle className="w-4 h-4 mt-0.5 shrink-0 text-[var(--accent)]" />
             <span>This project was previously published and is now a draft. Review your changes and re-publish when ready.</span>
           </div>
@@ -264,13 +264,13 @@ export default function StagingPublishPanel({
       {/* EDITORIAL CONTEXT TOGGLES */}
       {!isPublishedStatus && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-3">
-          <div className="flex flex-wrap items-center gap-4 folio-meta text-[var(--text-tertiary)]">
+          <div className="flex flex-wrap items-center gap-4 folio-meta text-folio-text-tertiary">
             <label className="flex items-center gap-1.5 cursor-pointer select-none">
               <input
                 type="checkbox"
                 checked={contextToggles.includeBio}
                 onChange={(e) => setContextToggle('includeBio', e.target.checked)}
-                className="w-3.5 h-3.5 rounded border-[var(--border-default)] accent-[var(--accent)]"
+                className="w-3.5 h-3.5 rounded border-folio-border-subtle accent-[var(--accent)]"
               />
               <span>Include my bio</span>
             </label>
@@ -279,13 +279,13 @@ export default function StagingPublishPanel({
                 type="checkbox"
                 checked={contextToggles.includeProjectHistory}
                 onChange={(e) => setContextToggle('includeProjectHistory', e.target.checked)}
-                className="w-3.5 h-3.5 rounded border-[var(--border-default)] accent-[var(--accent)]"
+                className="w-3.5 h-3.5 rounded border-folio-border-subtle accent-[var(--accent)]"
               />
               <span>Reference my other projects</span>
             </label>
           </div>
           {generationMeta?.designerBioMissing && contextToggles.includeBio && (
-            <p className="mt-2 folio-meta text-[var(--text-tertiary)]">
+            <p className="mt-2 folio-meta text-folio-text-tertiary">
               Your bio helps Folio write features that sound like you.{" "}
               <a href="/settings/profile" className="text-[var(--accent)] hover:text-[var(--accent-hover)] underline">
                 Add one now
@@ -301,7 +301,7 @@ export default function StagingPublishPanel({
           {hasTags ? (
             <div className="flex items-center gap-3">
               <Tag className="w-4 h-4 text-[var(--accent)] shrink-0" />
-              <span className="folio-meta text-[var(--text-secondary)]">
+              <span className="folio-meta text-folio-text-secondary">
                 {taggedCount} {taggedCount === 1 ? "image" : "images"} tagged
               </span>
               <button
@@ -314,10 +314,10 @@ export default function StagingPublishPanel({
           ) : (
             <button
               onClick={() => setShowTagger(true)}
-              className="flex items-center gap-2 p-3 w-full rounded-xl border border-dashed border-[var(--border-default)] hover:border-[var(--accent)] hover:bg-[var(--accent)]/5 transition-all text-left"
+              className="flex items-center gap-2 p-3 w-full rounded-xl border border-dashed border-folio-border-subtle hover:border-[var(--accent)] hover:bg-[var(--accent)]/5 transition-all text-left"
             >
-              <Tag className="w-4 h-4 text-[var(--text-tertiary)] shrink-0" />
-              <span className="folio-meta text-[var(--text-secondary)]">
+              <Tag className="w-4 h-4 text-folio-text-tertiary shrink-0" />
+              <span className="folio-meta text-folio-text-secondary">
                 No products tagged yet. Tag now to enrich your editorial.
               </span>
             </button>
@@ -337,13 +337,13 @@ export default function StagingPublishPanel({
             </p>
           )}
           <h2
-            className="text-3xl font-medium text-[var(--text-primary)] leading-tight"
+            className="text-3xl font-medium text-folio-text-primary leading-tight"
             style={{ fontFamily: "var(--font-headline)" }}
           >
             {currentLead.title}
           </h2>
           {(currentLead.deck || currentLead.dek) && (
-            <p className="mt-2 folio-body text-[var(--text-secondary)] leading-relaxed max-w-3xl">
+            <p className="mt-2 folio-body text-folio-text-secondary leading-relaxed max-w-3xl">
               {currentLead.deck || currentLead.dek}
             </p>
           )}
@@ -352,7 +352,7 @@ export default function StagingPublishPanel({
 
       {/* CONTENT AREA — Edit mode or Preview mode */}
       {viewMode === 'edit' && initialPostData?.expandedBlocks ? (
-        <div className="bg-[var(--bg-base)]">
+        <div className="bg-surface-canvas">
           <EditableArticle
             projectId={projectId}
             blocks={initialPostData.expandedBlocks}
@@ -368,7 +368,7 @@ export default function StagingPublishPanel({
       )}
 
       {/* STAGING FOOTER — sticky at bottom */}
-      <div className="sticky bottom-0 z-50 border-t border-[var(--border-default)] bg-[var(--bg-elevated)]/95 backdrop-blur-sm">
+      <div className="sticky bottom-0 z-50 border-t border-folio-border-subtle bg-surface-ground/95 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
           {/* Readiness summary + action */}
           <div className="flex items-center justify-between">
@@ -376,7 +376,7 @@ export default function StagingPublishPanel({
               onClick={() => setChecklistExpanded(!checklistExpanded)}
               className="flex items-center gap-2 text-left"
             >
-              <span className="folio-ui font-medium text-[var(--text-primary)]">
+              <span className="folio-ui font-medium text-folio-text-primary">
                 Readiness
               </span>
               <span
@@ -389,9 +389,9 @@ export default function StagingPublishPanel({
                 {totalPassed}/{totalChecks}
               </span>
               {checklistExpanded ? (
-                <ChevronDown className="w-4 h-4 text-[var(--text-tertiary)]" />
+                <ChevronDown className="w-4 h-4 text-folio-text-tertiary" />
               ) : (
-                <ChevronUp className="w-4 h-4 text-[var(--text-tertiary)]" />
+                <ChevronUp className="w-4 h-4 text-folio-text-tertiary" />
               )}
             </button>
 
@@ -435,7 +435,7 @@ export default function StagingPublishPanel({
 
           {/* Expanded readiness checklist */}
           {checklistExpanded && (
-            <div className="mt-3 pt-3 border-t border-[var(--border-default)]">
+            <div className="mt-3 pt-3 border-t border-folio-border-subtle">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-1">
                 <ReadinessItem
                   done={hasImages}
@@ -486,15 +486,15 @@ export default function StagingPublishPanel({
       {showRegenDialog && (
         <div className="fixed inset-0 z-50 overflow-hidden">
           <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setShowRegenDialog(false)} />
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-[var(--bg-elevated)] rounded-lg shadow-xl p-6">
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-surface-ground rounded-lg shadow-xl p-6">
             <h3 className="folio-h3 mb-2">Regenerate Article</h3>
-            <p className="folio-meta text-[var(--text-tertiary)] mb-4">
+            <p className="folio-meta text-folio-text-tertiary mb-4">
               This will regenerate the entire article using AI. Any unpreserved edits will be lost.
             </p>
 
             <div className="space-y-4">
               <div>
-                <label className="block folio-meta font-medium text-[var(--text-primary)] mb-1">
+                <label className="block folio-meta font-medium text-folio-text-primary mb-1">
                   Any direction for the rewrite? (optional)
                 </label>
                 <input
@@ -502,7 +502,7 @@ export default function StagingPublishPanel({
                   value={regenFeedback}
                   onChange={(e) => setRegenFeedback(e.target.value)}
                   placeholder="e.g., More conversational tone, focus on the materials"
-                  className="w-full border border-[var(--border-default)] rounded-md px-3 py-2 folio-meta focus:outline-none focus:ring-2 focus:ring-[var(--accent)] bg-[var(--bg-base)]"
+                  className="w-full border border-folio-border-subtle rounded-md px-3 py-2 folio-meta focus:outline-none focus:ring-2 focus:ring-[var(--accent)] bg-surface-canvas"
                 />
               </div>
 
@@ -512,9 +512,9 @@ export default function StagingPublishPanel({
                     type="checkbox"
                     checked={keepEdits}
                     onChange={(e) => setKeepEdits(e.target.checked)}
-                    className="rounded border-[var(--border-default)] text-[var(--accent)] focus:ring-[var(--accent)]"
+                    className="rounded border-folio-border-subtle text-[var(--accent)] focus:ring-[var(--accent)]"
                   />
-                  <span className="folio-meta text-[var(--text-primary)]">
+                  <span className="folio-meta text-folio-text-primary">
                     Keep my manual edits
                   </span>
                 </label>
@@ -523,7 +523,7 @@ export default function StagingPublishPanel({
               <div className="flex justify-end gap-3 pt-2">
                 <button
                   onClick={() => setShowRegenDialog(false)}
-                  className="px-4 py-2 folio-meta text-[var(--text-primary)] border border-[var(--border-default)] rounded-md hover:bg-[var(--bg-base)]"
+                  className="px-4 py-2 folio-meta text-folio-text-primary border border-folio-border-subtle rounded-md hover:bg-surface-canvas"
                 >
                   Cancel
                 </button>
@@ -566,11 +566,11 @@ export function NoDraftState({ projectId }: { projectId: string }) {
 
   return (
     <div className="max-w-xl mx-auto text-center py-16 px-4">
-      <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-[var(--bg-elevated)] border border-[var(--border-default)] flex items-center justify-center">
-        <Eye className="w-8 h-8 text-[var(--text-tertiary)]" />
+      <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-surface-ground border border-folio-border-subtle flex items-center justify-center">
+        <Eye className="w-8 h-8 text-folio-text-tertiary" />
       </div>
-      <h2 className="folio-h2 text-[var(--text-primary)] mb-3">No draft yet</h2>
-      <p className="folio-body text-[var(--text-secondary)] mb-6">
+      <h2 className="folio-h2 text-folio-text-primary mb-3">No draft yet</h2>
+      <p className="folio-body text-folio-text-secondary mb-6">
         Generate a draft to preview your article exactly as readers will see it.
       </p>
       <button
@@ -607,17 +607,17 @@ function ReadinessItem({
       {done ? (
         <CheckCircle2 className="w-4 h-4 text-[var(--accent)] shrink-0" />
       ) : (
-        <Circle className="w-4 h-4 text-[var(--text-tertiary)] shrink-0" />
+        <Circle className="w-4 h-4 text-folio-text-tertiary shrink-0" />
       )}
       <span
         className={`folio-meta ${
-          done ? "text-[var(--text-primary)]" : "text-[var(--text-secondary)]"
+          done ? "text-folio-text-primary" : "text-folio-text-secondary"
         }`}
       >
         {label}
       </span>
       {recommended && !done && (
-        <span className="folio-meta text-[var(--text-tertiary)]">(recommended)</span>
+        <span className="folio-meta text-folio-text-tertiary">(recommended)</span>
       )}
     </>
   );

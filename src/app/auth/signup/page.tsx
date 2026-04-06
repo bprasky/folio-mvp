@@ -112,7 +112,7 @@ export default function SignupPage() {
   const renderDetailsForm = () => (
     <form onSubmit={handleSubmit} className="space-y-5">
       <div>
-        <label htmlFor="name" className="block folio-ui text-[var(--text-primary)] mb-1.5">
+        <label htmlFor="name" className="block folio-ui text-folio-text-primary mb-1.5">
           Full Name *
         </label>
         <Input
@@ -130,7 +130,7 @@ export default function SignupPage() {
       </div>
 
       <div>
-        <label htmlFor="email" className="block folio-ui text-[var(--text-primary)] mb-1.5">
+        <label htmlFor="email" className="block folio-ui text-folio-text-primary mb-1.5">
           Email Address *
         </label>
         <Input
@@ -146,7 +146,7 @@ export default function SignupPage() {
       </div>
 
       <div>
-        <label htmlFor="password" className="block folio-ui text-[var(--text-primary)] mb-1.5">
+        <label htmlFor="password" className="block folio-ui text-folio-text-primary mb-1.5">
           Password *
         </label>
         <Input
@@ -165,7 +165,7 @@ export default function SignupPage() {
       </div>
 
       <div>
-        <label htmlFor="confirmPassword" className="block folio-ui text-[var(--text-primary)] mb-1.5">
+        <label htmlFor="confirmPassword" className="block folio-ui text-folio-text-primary mb-1.5">
           Confirm Password *
         </label>
         <Input
@@ -189,9 +189,9 @@ export default function SignupPage() {
           type="checkbox"
           checked={acceptedTerms}
           onChange={(e) => setAcceptedTerms(e.target.checked)}
-          className="mt-1 h-4 w-4 rounded border-[var(--ridge-outer)] text-[var(--accent)] focus:ring-[var(--accent)] focus:ring-offset-0 cursor-pointer"
+          className="mt-1 h-4 w-4 rounded border-folio-border-subtle text-[var(--accent)] focus:ring-[var(--accent)] focus:ring-offset-0 cursor-pointer"
         />
-        <label htmlFor="acceptedTerms" className="text-sm text-[var(--text-secondary)] cursor-pointer">
+        <label htmlFor="acceptedTerms" className="text-sm text-folio-text-secondary cursor-pointer">
           I agree to the{' '}
           <Link
             href="/terms"
@@ -237,7 +237,7 @@ export default function SignupPage() {
   );
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[var(--bg-base)] px-4 py-12">
+    <div className="min-h-screen flex items-center justify-center bg-surface-canvas px-4 py-12">
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
@@ -267,7 +267,7 @@ export default function SignupPage() {
 
         <p className="text-center folio-meta mt-8">
           Read our{" "}
-          <Link href="/cookies" className="underline hover:text-[var(--text-secondary)]">Cookie Policy</Link>
+          <Link href="/cookies" className="underline hover:text-folio-text-secondary">Cookie Policy</Link>
           {" "}for information about how we use cookies.
         </p>
       </div>

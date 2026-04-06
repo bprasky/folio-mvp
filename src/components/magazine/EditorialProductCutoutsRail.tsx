@@ -58,7 +58,7 @@ export default function EditorialProductCutoutsRail({ products }: Props) {
                 />
               ) : (
                 <div
-                  className="absolute inset-0 rounded-[20px] border border-[var(--ridge-outer)]"
+                  className="absolute inset-0 rounded-[20px] border border-folio-border-subtle"
                   style={{ backgroundColor: 'rgb(200, 195, 190)' }}
                 />
               )}

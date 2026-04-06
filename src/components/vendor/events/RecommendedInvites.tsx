@@ -14,9 +14,9 @@ interface RecommendedInvitesProps {
 
 export function RecommendedInvites({ invites, onHover }: RecommendedInvitesProps) {
   return (
-    <Card className="bg-white border-[#DAD2CA]">
+    <Card className="bg-white border-folio-border-strong">
       <CardHeader>
-        <CardTitle className="text-lg font-serif text-[#2B2B2B]">
+        <CardTitle className="text-lg font-serif text-folio-text-primary">
           Recommended Invites
         </CardTitle>
       </CardHeader>
@@ -25,7 +25,7 @@ export function RecommendedInvites({ invites, onHover }: RecommendedInvitesProps
           {invites.map((invite, index) => (
             <div 
               key={invite.id} 
-              className="flex items-start justify-between p-4 bg-[#F7F4F1] rounded-lg cursor-pointer hover:bg-[#F0EDE8] transition-colors"
+              className="flex items-start justify-between p-4 bg-surface-elevated rounded-lg cursor-pointer hover:bg-[#F0EDE8] transition-colors"
               data-testid={`invite-${index}`}
               onMouseEnter={() => onHover?.({
                 type: 'designer', // Treat invites as designers for suggestion purposes
@@ -39,13 +39,13 @@ export function RecommendedInvites({ invites, onHover }: RecommendedInvitesProps
                   <div className="w-8 h-8 bg-[#8C8278] rounded-full flex items-center justify-center text-white font-semibold text-xs">
                     {invite.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
                   </div>
-                  <div className="font-medium text-[#2B2B2B] text-sm">
+                  <div className="font-medium text-folio-text-primary text-sm">
                     {invite.name}
                   </div>
                 </div>
                 <Badge 
                   variant="outline" 
-                  className="text-xs bg-[#8C8278]/10 text-[#8C8278] border-[#8C8278]/20"
+                  className="text-xs bg-[#8C8278]/10 text-folio-text-secondary border-[#8C8278]/20"
                 >
                   {invite.reason}
                 </Badge>
@@ -55,7 +55,7 @@ export function RecommendedInvites({ invites, onHover }: RecommendedInvitesProps
                 <Button 
                   size="sm" 
                   variant="outline"
-                  className="text-xs border-[#DAD2CA]"
+                  className="text-xs border-folio-border-strong"
                 >
                   <UserPlus className="w-3 h-3 mr-1" />
                   Invite
@@ -63,7 +63,7 @@ export function RecommendedInvites({ invites, onHover }: RecommendedInvitesProps
                 <Button 
                   size="sm" 
                   variant="outline"
-                  className="text-xs border-[#DAD2CA]"
+                  className="text-xs border-folio-border-strong"
                 >
                   <Mail className="w-3 h-3 mr-1" />
                   Message

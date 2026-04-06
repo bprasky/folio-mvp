@@ -44,11 +44,11 @@ export function FooterBar({
   const maxAttemptsReached = generationAttempts >= MAX_GENERATION_ATTEMPTS;
 
   return (
-    <div className="px-8 py-4 border-t border-[var(--ridge-outer)]/50 bg-white/25">
+    <div className="px-8 py-4 border-t border-folio-border-subtle/50 bg-white/25">
       {/* Near-finish hint — one question before "Finish & Generate Story" appears */}
       {phase === "question" && isNearFinish && (
         <p
-          className="text-xs text-[var(--text-secondary)] text-center mb-3 max-w-md mx-auto"
+          className="text-xs text-folio-text-secondary text-center mb-3 max-w-md mx-auto"
           style={{ fontFamily: "var(--font-headline)", fontStyle: "italic" }}
         >
           You&apos;ve answered enough for a great story. One more question, then you can finish or keep going for more depth.
@@ -60,7 +60,7 @@ export function FooterBar({
           {phase === "question" && onBack && (
             <button
               onClick={onBack}
-              className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-[var(--ridge-outer)]/30 rounded-full hover:border-[var(--ridge-outer)]/60 transition-colors"
+              className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-folio-text-secondary hover:text-folio-text-primary border border-folio-border-subtle/30 rounded-full hover:border-folio-border-subtle/60 transition-colors"
             >
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="opacity-70">
                 <path d="M10 12L6 8L10 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -75,7 +75,7 @@ export function FooterBar({
               {onSkipRoom && (
                 <button
                   onClick={onSkipRoom}
-                  className="px-4 py-2 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+                  className="px-4 py-2 text-sm font-medium text-folio-text-secondary hover:text-folio-text-primary transition-colors"
                 >
                   {skipRoomLabel || "Skip room \u2192"}
                 </button>
@@ -117,7 +117,7 @@ export function FooterBar({
                 <button
                   onClick={onSkip}
                   disabled={isGenerating}
-                  className="px-4 py-2 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] disabled:opacity-50 transition-colors"
+                  className="px-4 py-2 text-sm font-medium text-folio-text-secondary hover:text-folio-text-primary disabled:opacity-50 transition-colors"
                 >
                   Skip
                 </button>
@@ -139,7 +139,7 @@ export function FooterBar({
               disabled={maxAttemptsReached}
               className={`px-6 py-2 text-sm font-medium rounded-full transition-colors ${
                 maxAttemptsReached
-                  ? "text-[var(--text-tertiary)] bg-[var(--bg-base)] border border-[var(--border-default)] cursor-not-allowed"
+                  ? "text-folio-text-tertiary bg-surface-canvas border border-folio-border-subtle cursor-not-allowed"
                   : "text-white bg-[var(--accent)] hover:bg-[var(--accent-hover)]"
               }`}
               type="button"

@@ -156,10 +156,10 @@ export default function ProductUploader({ onProductAdded, onClose }: ProductUplo
         <div className="p-8">
           {/* Header */}
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-3xl font-bold text-[var(--text-primary)]">Add New Product</h2>
+            <h2 className="text-3xl font-bold text-folio-text-primary">Add New Product</h2>
             <button
               onClick={onClose}
-              className="text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors"
+              className="text-folio-text-tertiary hover:text-folio-text-secondary transition-colors"
             >
               <FaTimes className="w-6 h-6" />
             </button>
@@ -168,18 +168,18 @@ export default function ProductUploader({ onProductAdded, onClose }: ProductUplo
           {/* URL Input Section */}
           {!scrapedData && (
             <div className="mb-8">
-              <label className="block text-sm font-medium text-[var(--text-primary)] mb-3">
+              <label className="block text-sm font-medium text-folio-text-primary mb-3">
                 Product URL
               </label>
               <div className="flex gap-3">
                 <div className="flex-1 relative">
-                  <FaLink className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[var(--text-tertiary)]" />
+                  <FaLink className="absolute left-3 top-1/2 transform -translate-y-1/2 text-folio-text-tertiary" />
                   <input
                     type="url"
                     value={url}
                     onChange={(e) => setUrl(e.target.value)}
                     placeholder="https://example.com/product-page"
-                    className="w-full pl-10 pr-4 py-3 border border-[var(--ridge-outer)] rounded-xl focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+                    className="w-full pl-10 pr-4 py-3 border border-folio-border-subtle rounded-xl focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                     disabled={isLoading}
                   />
                 </div>
@@ -258,10 +258,10 @@ export default function ProductUploader({ onProductAdded, onClose }: ProductUplo
                   <div className="space-y-4">
                     {/* Product Image */}
                     <div>
-                      <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
+                      <label className="block text-sm font-medium text-folio-text-primary mb-2">
                         Product Image
                       </label>
-                      <div className="relative aspect-square rounded-xl overflow-hidden bg-[var(--bg-elevated)]">
+                      <div className="relative aspect-square rounded-xl overflow-hidden bg-surface-ground">
                         {formData.image ? (
                           <img
                             src={formData.image}
@@ -269,7 +269,7 @@ export default function ProductUploader({ onProductAdded, onClose }: ProductUplo
                             className="w-full h-full object-cover"
                           />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center text-[var(--text-tertiary)]">
+                          <div className="w-full h-full flex items-center justify-center text-folio-text-tertiary">
                             <FaImage className="w-12 h-12" />
                           </div>
                         )}
@@ -280,7 +280,7 @@ export default function ProductUploader({ onProductAdded, onClose }: ProductUplo
                           value={formData.image}
                           onChange={(e) => updateFormField('image', e.target.value)}
                           placeholder="Image URL"
-                          className="w-full mt-2 px-3 py-2 border border-[var(--ridge-outer)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+                          className="w-full mt-2 px-3 py-2 border border-folio-border-subtle rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                         />
                       )}
                     </div>
@@ -289,7 +289,7 @@ export default function ProductUploader({ onProductAdded, onClose }: ProductUplo
                     <div className="space-y-4">
                       {/* Product Name */}
                       <div>
-                        <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
+                        <label className="block text-sm font-medium text-folio-text-primary mb-2">
                           Product Name
                         </label>
                         {editMode ? (
@@ -297,27 +297,27 @@ export default function ProductUploader({ onProductAdded, onClose }: ProductUplo
                             type="text"
                             value={formData.name}
                             onChange={(e) => updateFormField('name', e.target.value)}
-                            className="w-full px-3 py-2 border border-[var(--ridge-outer)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+                            className="w-full px-3 py-2 border border-folio-border-subtle rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                             required
                           />
                         ) : (
-                          <p className="text-lg font-semibold text-[var(--text-primary)]">{formData.name}</p>
+                          <p className="text-lg font-semibold text-folio-text-primary">{formData.name}</p>
                         )}
                       </div>
 
                       {/* Price */}
                       <div>
-                        <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
+                        <label className="block text-sm font-medium text-folio-text-primary mb-2">
                           Price
                         </label>
                         {editMode ? (
                           <div className="relative">
-                            <FaDollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[var(--text-tertiary)]" />
+                            <FaDollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-folio-text-tertiary" />
                             <input
                               type="text"
                               value={formData.price}
                               onChange={(e) => updateFormField('price', e.target.value)}
-                              className="w-full pl-10 pr-3 py-2 border border-[var(--ridge-outer)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+                              className="w-full pl-10 pr-3 py-2 border border-folio-border-subtle rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                               placeholder="$0.00"
                             />
                           </div>
@@ -328,7 +328,7 @@ export default function ProductUploader({ onProductAdded, onClose }: ProductUplo
 
                       {/* Brand */}
                       <div>
-                        <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
+                        <label className="block text-sm font-medium text-folio-text-primary mb-2">
                           Brand
                         </label>
                         {editMode ? (
@@ -336,23 +336,23 @@ export default function ProductUploader({ onProductAdded, onClose }: ProductUplo
                             type="text"
                             value={formData.brand}
                             onChange={(e) => updateFormField('brand', e.target.value)}
-                            className="w-full px-3 py-2 border border-[var(--ridge-outer)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+                            className="w-full px-3 py-2 border border-folio-border-subtle rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                           />
                         ) : (
-                          <p className="text-[var(--text-primary)]">{formData.brand}</p>
+                          <p className="text-folio-text-primary">{formData.brand}</p>
                         )}
                       </div>
 
                       {/* Category */}
                       <div>
-                        <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
+                        <label className="block text-sm font-medium text-folio-text-primary mb-2">
                           Category
                         </label>
                         {editMode ? (
                           <select
                             value={formData.category}
                             onChange={(e) => updateFormField('category', e.target.value)}
-                            className="w-full px-3 py-2 border border-[var(--ridge-outer)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+                            className="w-full px-3 py-2 border border-folio-border-subtle rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                           >
                             <option value="">Select Category</option>
                             <option value="Furniture">Furniture</option>
@@ -363,7 +363,7 @@ export default function ProductUploader({ onProductAdded, onClose }: ProductUplo
                             <option value="Art">Art</option>
                           </select>
                         ) : (
-                          <p className="text-[var(--text-primary)]">{formData.category}</p>
+                          <p className="text-folio-text-primary">{formData.category}</p>
                         )}
                       </div>
                     </div>
@@ -373,7 +373,7 @@ export default function ProductUploader({ onProductAdded, onClose }: ProductUplo
                   <div className="space-y-4">
                     {/* Description */}
                     <div>
-                      <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
+                      <label className="block text-sm font-medium text-folio-text-primary mb-2">
                         Description
                       </label>
                       {editMode ? (
@@ -381,16 +381,16 @@ export default function ProductUploader({ onProductAdded, onClose }: ProductUplo
                           value={formData.description}
                           onChange={(e) => updateFormField('description', e.target.value)}
                           rows={4}
-                          className="w-full px-3 py-2 border border-[var(--ridge-outer)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent resize-none"
+                          className="w-full px-3 py-2 border border-folio-border-subtle rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent resize-none"
                         />
                       ) : (
-                        <p className="text-[var(--text-primary)] text-sm leading-relaxed">{formData.description}</p>
+                        <p className="text-folio-text-primary text-sm leading-relaxed">{formData.description}</p>
                       )}
                     </div>
 
                     {/* Tags */}
                     <div>
-                      <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
+                      <label className="block text-sm font-medium text-folio-text-primary mb-2">
                         Tags
                       </label>
                       <div className="flex flex-wrap gap-2 mb-2">
@@ -417,7 +417,7 @@ export default function ProductUploader({ onProductAdded, onClose }: ProductUplo
                         <input
                           type="text"
                           placeholder="Add tag and press Enter"
-                          className="w-full px-3 py-2 border border-[var(--ridge-outer)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+                          className="w-full px-3 py-2 border border-folio-border-subtle rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                           onKeyPress={(e) => {
                             if (e.key === 'Enter') {
                               e.preventDefault();
@@ -431,7 +431,7 @@ export default function ProductUploader({ onProductAdded, onClose }: ProductUplo
 
                     {/* Dimensions */}
                     <div>
-                      <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
+                      <label className="block text-sm font-medium text-folio-text-primary mb-2">
                         Dimensions
                       </label>
                       {editMode ? (
@@ -440,16 +440,16 @@ export default function ProductUploader({ onProductAdded, onClose }: ProductUplo
                           value={formData.dimensions}
                           onChange={(e) => updateFormField('dimensions', e.target.value)}
                           placeholder="e.g., 84&quot;W x 36&quot;D x 32&quot;H"
-                          className="w-full px-3 py-2 border border-[var(--ridge-outer)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+                          className="w-full px-3 py-2 border border-folio-border-subtle rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                         />
                       ) : (
-                        <p className="text-[var(--text-primary)]">{formData.dimensions || 'Not specified'}</p>
+                        <p className="text-folio-text-primary">{formData.dimensions || 'Not specified'}</p>
                       )}
                     </div>
 
                     {/* Materials */}
                     <div>
-                      <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
+                      <label className="block text-sm font-medium text-folio-text-primary mb-2">
                         Materials
                       </label>
                       {editMode ? (
@@ -458,10 +458,10 @@ export default function ProductUploader({ onProductAdded, onClose }: ProductUplo
                           value={formData.materials.join(', ')}
                           onChange={(e) => updateFormField('materials', e.target.value.split(',').map(m => m.trim()))}
                           placeholder="e.g., Solid wood, Steel, Fabric"
-                          className="w-full px-3 py-2 border border-[var(--ridge-outer)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+                          className="w-full px-3 py-2 border border-folio-border-subtle rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                         />
                       ) : (
-                        <p className="text-[var(--text-primary)]">{formData.materials.join(', ') || 'Not specified'}</p>
+                        <p className="text-folio-text-primary">{formData.materials.join(', ') || 'Not specified'}</p>
                       )}
                     </div>
                   </div>
@@ -478,7 +478,7 @@ export default function ProductUploader({ onProductAdded, onClose }: ProductUplo
                         tags: [], materials: [], dimensions: '', colors: []
                       });
                     }}
-                    className="px-6 py-3 border border-[var(--ridge-outer)] text-[var(--text-primary)] rounded-xl hover:bg-[var(--bg-elevated)] transition-colors font-medium"
+                    className="px-6 py-3 border border-folio-border-subtle text-folio-text-primary rounded-xl hover:bg-surface-ground transition-colors font-medium"
                   >
                     Start Over
                   </button>

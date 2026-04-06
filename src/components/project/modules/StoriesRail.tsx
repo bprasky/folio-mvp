@@ -15,7 +15,7 @@ export function StoriesRail({ modules }: { modules: any[] }) {
             href={`#module-${m.id}`} // can link to detail later
             className="min-w-[180px] max-w-[220px] ridge-card overflow-hidden flex-shrink-0"
           >
-            <div className="relative h-[140px] bg-[var(--bg-elevated)]">
+            <div className="relative h-[140px] bg-surface-ground">
               {thumb ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={thumb} alt={m.title || ""} className="h-full w-full object-cover" />
@@ -26,7 +26,7 @@ export function StoriesRail({ modules }: { modules: any[] }) {
               </div>
             </div>
             {m.description ? (
-              <p className="p-3 folio-meta text-[var(--text-secondary)] line-clamp-3">{m.description}</p>
+              <p className="p-3 folio-meta text-folio-text-secondary line-clamp-3">{m.description}</p>
             ) : null}
           </a>
         );

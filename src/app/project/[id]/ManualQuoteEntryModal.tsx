@@ -80,18 +80,18 @@ export default function ManualQuoteEntryModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={onClose} />
       <div className="relative glass-surface rounded-2xl p-6 w-full max-w-md mx-4 shadow-xl">
-        <h3 className="folio-h3 text-[var(--text-primary)] mb-1">Enter Quote</h3>
-        <p className="text-sm text-[var(--text-secondary)] mb-4">
+        <h3 className="folio-h3 text-folio-text-primary mb-1">Enter Quote</h3>
+        <p className="text-sm text-folio-text-secondary mb-4">
           {productName} — {vendorName}
         </p>
 
         <div className="space-y-4">
           <div>
-            <label className="block text-sm text-[var(--text-tertiary)] mb-1 font-medium">
+            <label className="block text-sm text-folio-text-tertiary mb-1 font-medium">
               Unit price (trade) *
             </label>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)]">$</span>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-folio-text-tertiary">$</span>
               <input
                 type="number"
                 step="0.01"
@@ -99,13 +99,13 @@ export default function ManualQuoteEntryModal({
                 value={unitPrice}
                 onChange={(e) => setUnitPrice(e.target.value)}
                 placeholder="0.00"
-                className="w-full pl-7 pr-3 py-2 bg-white border border-[#E8E6E3] rounded-lg text-[#2C2925] placeholder-[#A39E97] focus:outline-none focus:border-[#C9C4BC] transition-all"
+                className="w-full pl-7 pr-3 py-2 bg-white border border-folio-border-subtle rounded-lg text-folio-text-primary placeholder-[#A39E97] focus:outline-none focus:border-folio-border-strong transition-all"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm text-[var(--text-tertiary)] mb-1 font-medium">
+            <label className="block text-sm text-folio-text-tertiary mb-1 font-medium">
               Lead time (weeks)
             </label>
             <input
@@ -114,38 +114,38 @@ export default function ManualQuoteEntryModal({
               value={leadTimeWeeks}
               onChange={(e) => setLeadTimeWeeks(e.target.value)}
               placeholder="e.g. 14"
-              className="w-full px-3 py-2 bg-white border border-[#E8E6E3] rounded-lg text-[#2C2925] placeholder-[#A39E97] focus:outline-none focus:border-[#C9C4BC] transition-all"
+              className="w-full px-3 py-2 bg-white border border-folio-border-subtle rounded-lg text-folio-text-primary placeholder-[#A39E97] focus:outline-none focus:border-folio-border-strong transition-all"
             />
           </div>
 
           <div>
-            <label className="block text-sm text-[var(--text-tertiary)] mb-1 font-medium">
+            <label className="block text-sm text-folio-text-tertiary mb-1 font-medium">
               Valid through
             </label>
             <input
               type="date"
               value={validThrough}
               onChange={(e) => setValidThrough(e.target.value)}
-              className="w-full px-3 py-2 bg-white border border-[#E8E6E3] rounded-lg text-[#2C2925] focus:outline-none focus:border-[#C9C4BC] transition-all"
+              className="w-full px-3 py-2 bg-white border border-folio-border-subtle rounded-lg text-folio-text-primary focus:outline-none focus:border-folio-border-strong transition-all"
             />
           </div>
 
-          <div className="border-t border-[#E8E6E3] pt-3">
-            <div className="text-xs text-[var(--text-tertiary)] mb-2">Who provided this quote? (optional)</div>
+          <div className="border-t border-folio-border-subtle pt-3">
+            <div className="text-xs text-folio-text-tertiary mb-2">Who provided this quote? (optional)</div>
             <div className="grid grid-cols-2 gap-3">
               <input
                 type="text"
                 value={quotedByName}
                 onChange={(e) => setQuotedByName(e.target.value)}
                 placeholder="Rep name"
-                className="px-3 py-2 bg-white border border-[#E8E6E3] rounded-lg text-sm text-[#2C2925] placeholder-[#A39E97] focus:outline-none focus:border-[#C9C4BC] transition-all"
+                className="px-3 py-2 bg-white border border-folio-border-subtle rounded-lg text-sm text-folio-text-primary placeholder-[#A39E97] focus:outline-none focus:border-folio-border-strong transition-all"
               />
               <input
                 type="email"
                 value={quotedByEmail}
                 onChange={(e) => setQuotedByEmail(e.target.value)}
                 placeholder="Rep email"
-                className="px-3 py-2 bg-white border border-[#E8E6E3] rounded-lg text-sm text-[#2C2925] placeholder-[#A39E97] focus:outline-none focus:border-[#C9C4BC] transition-all"
+                className="px-3 py-2 bg-white border border-folio-border-subtle rounded-lg text-sm text-folio-text-primary placeholder-[#A39E97] focus:outline-none focus:border-folio-border-strong transition-all"
               />
             </div>
           </div>

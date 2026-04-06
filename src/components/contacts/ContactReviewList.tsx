@@ -87,13 +87,13 @@ export default function ContactReviewList({
 
   return (
     <div className="space-y-6">
-      <h2 className="folio-h2 text-[var(--text-primary)]">
+      <h2 className="folio-h2 text-folio-text-primary">
         We Found Your Vendor Contacts
       </h2>
 
       {matchedGroups.length > 0 && (
         <div>
-          <p className="text-xs font-medium text-[var(--text-tertiary)] uppercase tracking-wider mb-3">
+          <p className="text-xs font-medium text-folio-text-tertiary uppercase tracking-wider mb-3">
             Your Vendors
           </p>
           <div className="space-y-3">
@@ -111,7 +111,7 @@ export default function ContactReviewList({
 
       {otherGroups.length > 0 && (
         <div>
-          <p className="text-xs font-medium text-[var(--text-tertiary)] uppercase tracking-wider mb-3">
+          <p className="text-xs font-medium text-folio-text-tertiary uppercase tracking-wider mb-3">
             Other Vendor Matches
           </p>
           <div className="space-y-3">
@@ -158,7 +158,7 @@ function VendorGroupCard({
   return (
     <div className="glass-surface rounded-xl p-4">
       <div className="flex items-center gap-2 mb-3">
-        <h3 className="text-sm font-medium text-[var(--text-primary)]">
+        <h3 className="text-sm font-medium text-folio-text-primary">
           {group.vendorName}
         </h3>
         <span
@@ -177,28 +177,28 @@ function VendorGroupCard({
           return (
             <label
               key={contact.id}
-              className="flex items-center gap-3 py-2 cursor-pointer rounded-lg px-2 hover:bg-[var(--bg-elevated)] transition-colors"
+              className="flex items-center gap-3 py-2 cursor-pointer rounded-lg px-2 hover:bg-surface-ground transition-colors"
             >
               <input
                 type="checkbox"
                 checked={isSelected}
                 onChange={() => onToggleRep(contact.id, group.vendorName)}
-                className="rounded border-[#C9C4BC] text-[#2C2825] focus:ring-[var(--accent)]"
+                className="rounded border-folio-border-strong text-folio-text-primary focus:ring-[var(--accent)]"
               />
               <div className="flex-1 min-w-0">
-                <p className="text-sm text-[var(--text-primary)]">
+                <p className="text-sm text-folio-text-primary">
                   {contact.name}
                   {isGeneric && (
-                    <span className="text-[10px] text-[var(--text-tertiary)] ml-2">General</span>
+                    <span className="text-[10px] text-folio-text-tertiary ml-2">General</span>
                   )}
                 </p>
-                <p className="text-xs text-[var(--text-tertiary)] truncate">
+                <p className="text-xs text-folio-text-tertiary truncate">
                   {contact.email}
                   {contact.title && ` · ${contact.title}`}
                 </p>
               </div>
               {isSelected && (
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#2C2825] text-white whitespace-nowrap">
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-folio-text-primary text-white whitespace-nowrap">
                   My Rep
                 </span>
               )}

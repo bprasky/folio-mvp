@@ -23,13 +23,13 @@ export default function Error({
           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <FaExclamationTriangle className="w-8 h-8 text-red-600" />
           </div>
-          <h1 className="text-3xl font-bold text-[var(--text-primary)] mb-2">Something went wrong!</h1>
-          <p className="text-[var(--text-secondary)] mb-4">
+          <h1 className="text-3xl font-bold text-folio-text-primary mb-2">Something went wrong!</h1>
+          <p className="text-folio-text-secondary mb-4">
             We encountered an unexpected error. Please try refreshing the page or go back to the homepage.
           </p>
           {error.message && (
-            <details className="text-left bg-[var(--bg-elevated)] p-4 rounded-lg mb-4">
-              <summary className="cursor-pointer font-medium text-[var(--text-primary)] mb-2">
+            <details className="text-left bg-surface-ground p-4 rounded-lg mb-4">
+              <summary className="cursor-pointer font-medium text-folio-text-primary mb-2">
                 Error Details
               </summary>
               <code className="text-sm text-red-600 break-all">
@@ -50,7 +50,7 @@ export default function Error({
           
           <Link
             href="/"
-            className="inline-flex items-center px-6 py-3 border border-[var(--ridge-outer)] text-[var(--text-primary)] rounded-lg hover:bg-[var(--bg-elevated)] transition-colors font-medium"
+            className="inline-flex items-center px-6 py-3 border border-folio-border-subtle text-folio-text-primary rounded-lg hover:bg-surface-ground transition-colors font-medium"
           >
             <FaHome className="mr-2" />
             Go Home

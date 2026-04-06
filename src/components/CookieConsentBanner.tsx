@@ -53,7 +53,7 @@ export function CookieConsentBanner() {
           <div className="flex flex-col sm:flex-row sm:items-center gap-4">
             {/* Text Content */}
             <div className="flex-1">
-              <p className="text-sm text-[var(--text-secondary)]">
+              <p className="text-sm text-folio-text-secondary">
                 We use essential cookies to make Folio work. By continuing to use this site, you agree to our use of cookies.{' '}
                 <Link
                   href="/cookies"
@@ -74,7 +74,7 @@ export function CookieConsentBanner() {
               </button>
               <button
                 onClick={handleDismiss}
-                className="p-2 text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors rounded-lg hover:bg-[var(--bg-elevated)]"
+                className="p-2 text-folio-text-tertiary hover:text-folio-text-primary transition-colors rounded-lg hover:bg-surface-ground"
                 aria-label="Dismiss"
               >
                 <X className="w-4 h-4" />

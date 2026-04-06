@@ -1,6 +1,6 @@
 export default function PhotographerLoading() {
   return (
-    <div className="min-h-screen bg-[#fdfbf8]">
+    <div className="min-h-screen bg-surface-ground">
       <div className="max-w-5xl mx-auto px-6 py-24">
         {/* Profile header skeleton */}
         <div className="text-center space-y-4 mb-16">

@@ -72,10 +72,10 @@ export const SaveModal: React.FC<SaveModalProps> = ({
             <div className="bg-white rounded-lg shadow-xl max-w-md w-full" onClick={(e) => e.stopPropagation()}>
         <div className="p-6">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold text-[var(--text-primary)]">Save to Folder</h2>
+            <h2 className="text-xl font-semibold text-folio-text-primary">Save to Folder</h2>
             <button
               onClick={onClose}
-              className="text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
+              className="text-folio-text-tertiary hover:text-folio-text-secondary"
             >
               <span className="sr-only">Close</span>
               <svg
@@ -101,7 +101,7 @@ export const SaveModal: React.FC<SaveModalProps> = ({
                   <button
                     key={folder.id}
                     onClick={() => onSave(folder.id)}
-                    className="w-full text-left px-4 py-2 hover:bg-[var(--bg-elevated)] rounded-md transition-colors duration-200"
+                    className="w-full text-left px-4 py-2 hover:bg-surface-ground rounded-md transition-colors duration-200"
                   >
                     {folder.name}
                   </button>
@@ -110,7 +110,7 @@ export const SaveModal: React.FC<SaveModalProps> = ({
 
               <button
                 onClick={() => setIsCreating(true)}
-                className="mt-4 w-full py-2 px-4 border border-[var(--ridge-outer)] rounded-md text-[var(--text-primary)] hover:bg-[var(--bg-elevated)] transition-colors duration-200"
+                className="mt-4 w-full py-2 px-4 border border-folio-border-subtle rounded-md text-folio-text-primary hover:bg-surface-ground transition-colors duration-200"
               >
                 Create New Folder
               </button>
@@ -122,7 +122,7 @@ export const SaveModal: React.FC<SaveModalProps> = ({
                 value={newFolderName}
                 onChange={(e) => setNewFolderName(e.target.value)}
                 placeholder="Enter folder name"
-                className="w-full px-4 py-2 border border-[var(--ridge-outer)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                className="w-full px-4 py-2 border border-folio-border-subtle rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
               />
               <div className="flex gap-2">
                 <button
@@ -136,7 +136,7 @@ export const SaveModal: React.FC<SaveModalProps> = ({
                     setIsCreating(false);
                     setNewFolderName('');
                   }}
-                  className="flex-1 py-2 px-4 border border-[var(--ridge-outer)] rounded-md text-[var(--text-primary)] hover:bg-[var(--bg-elevated)] transition-colors duration-200"
+                  className="flex-1 py-2 px-4 border border-folio-border-subtle rounded-md text-folio-text-primary hover:bg-surface-ground transition-colors duration-200"
                 >
                   Cancel
                 </button>

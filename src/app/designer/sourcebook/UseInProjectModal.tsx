@@ -58,19 +58,19 @@ export default function UseInProjectModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={onClose} />
       <div className="relative glass-surface rounded-2xl p-6 w-full max-w-md mx-4 shadow-xl">
-        <h3 className="folio-h3 text-[var(--text-primary)] mb-1">Use in Project</h3>
-        <p className="text-sm text-[var(--text-secondary)] mb-4">
+        <h3 className="folio-h3 text-folio-text-primary mb-1">Use in Project</h3>
+        <p className="text-sm text-folio-text-secondary mb-4">
           {productName}{productBrand ? ` — ${productBrand}` : ''}
         </p>
 
         {loading ? (
           <div className="py-8 text-center">
             <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-[var(--accent)]" />
-            <p className="mt-2 text-sm text-[var(--text-secondary)]">Loading projects...</p>
+            <p className="mt-2 text-sm text-folio-text-secondary">Loading projects...</p>
           </div>
         ) : projects.length === 0 ? (
           <div className="py-8 text-center">
-            <p className="text-sm text-[var(--text-secondary)]">
+            <p className="text-sm text-folio-text-secondary">
               No other projects available. This product is already in all your projects.
             </p>
           </div>
@@ -82,7 +82,7 @@ export default function UseInProjectModal({
                 className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
                   selectedProjectId === project.id
                     ? 'bg-[var(--accent)]/10 border border-[var(--accent)]/30'
-                    : 'hover:bg-[var(--bg-elevated)] border border-transparent'
+                    : 'hover:bg-surface-ground border border-transparent'
                 }`}
               >
                 <input
@@ -93,7 +93,7 @@ export default function UseInProjectModal({
                   onChange={() => setSelectedProjectId(project.id)}
                   className="accent-[var(--accent)]"
                 />
-                <span className="text-sm text-[var(--text-primary)]">{project.title}</span>
+                <span className="text-sm text-folio-text-primary">{project.title}</span>
               </label>
             ))}
           </div>

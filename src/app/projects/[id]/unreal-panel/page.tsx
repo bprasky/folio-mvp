@@ -149,10 +149,10 @@ export default function UnrealExportPanel() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[var(--bg-base)] flex items-center justify-center">
+      <div className="min-h-screen bg-surface-canvas flex items-center justify-center">
         <div className="text-center">
-          <FaSpinner className="w-8 h-8 text-[var(--text-tertiary)] animate-spin mx-auto mb-4" />
-          <p className="folio-body text-[var(--text-secondary)]">Loading Unreal Export Panel...</p>
+          <FaSpinner className="w-8 h-8 text-folio-text-tertiary animate-spin mx-auto mb-4" />
+          <p className="folio-body text-folio-text-secondary">Loading Unreal Export Panel...</p>
         </div>
       </div>
     );
@@ -160,13 +160,13 @@ export default function UnrealExportPanel() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-[var(--bg-base)] flex items-center justify-center">
+      <div className="min-h-screen bg-surface-canvas flex items-center justify-center">
         <RidgeCard className="max-w-md p-6">
           <h2 className="folio-h3 flex items-center gap-2 text-red-600 mb-4">
             <FaExclamationTriangle className="w-5 h-5" />
             Error
           </h2>
-          <p className="folio-body text-[var(--text-secondary)] mb-4">{error}</p>
+          <p className="folio-body text-folio-text-secondary mb-4">{error}</p>
           <Button onClick={() => router.back()} variant="outline">
             Go Back
           </Button>
@@ -181,15 +181,15 @@ export default function UnrealExportPanel() {
   ).length;
 
   return (
-    <div className="min-h-screen bg-[var(--bg-base)]">
+    <div className="min-h-screen bg-surface-canvas">
       {/* Header */}
-      <div className="bg-[var(--bg-elevated)] border-b border-[var(--border)]">
+      <div className="bg-surface-ground border-b border-folio-border-subtle">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Link
                 href={`/projects/${projectId}`}
-                className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+                className="text-folio-text-secondary hover:text-folio-text-primary transition-colors"
               >
                 <FaArrowLeft className="w-5 h-5" />
               </Link>
@@ -197,7 +197,7 @@ export default function UnrealExportPanel() {
                 <h1 className="folio-h1">
                   Unreal Export Panel
                 </h1>
-                <p className="folio-meta text-[var(--text-secondary)] mt-1">
+                <p className="folio-meta text-folio-text-secondary mt-1">
                   {project?.title || 'Untitled Project'}
                 </p>
               </div>
@@ -238,31 +238,31 @@ export default function UnrealExportPanel() {
         {/* Stats Card */}
         <RidgeCard className="mb-6 p-6">
           <h2 className="folio-h2 mb-2">Export Summary</h2>
-          <p className="folio-meta text-[var(--text-secondary)] mb-6">
+          <p className="folio-meta text-folio-text-secondary mb-6">
             Overview of 3D assets ready for Unreal Engine export
           </p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-[var(--bg-base)] rounded-lg p-4 border border-[var(--border)]">
+            <div className="bg-surface-canvas rounded-lg p-4 border border-folio-border-subtle">
               <div className="folio-h2 text-[var(--accent)]">
                 {assets.length}
               </div>
-              <div className="folio-meta text-[var(--text-secondary)] mt-1">
+              <div className="folio-meta text-folio-text-secondary mt-1">
                 Total 3D Assets
               </div>
             </div>
-            <div className="bg-[var(--bg-base)] rounded-lg p-4 border border-[var(--border)]">
+            <div className="bg-surface-canvas rounded-lg p-4 border border-folio-border-subtle">
               <div className="folio-h2 text-[var(--accent)]">
                 {readyAssetsCount}
               </div>
-              <div className="folio-meta text-[var(--text-secondary)] mt-1">
+              <div className="folio-meta text-folio-text-secondary mt-1">
                 Ready for Export
               </div>
             </div>
-            <div className="bg-[var(--bg-base)] rounded-lg p-4 border border-[var(--border)]">
+            <div className="bg-surface-canvas rounded-lg p-4 border border-folio-border-subtle">
               <div className="folio-h2 text-[var(--accent)]">
                 {includedAssetsCount}
               </div>
-              <div className="folio-meta text-[var(--text-secondary)] mt-1">
+              <div className="folio-meta text-folio-text-secondary mt-1">
                 Included in Export
               </div>
             </div>
@@ -272,7 +272,7 @@ export default function UnrealExportPanel() {
         {/* Assets List */}
         <RidgeCard className="p-6">
           <h2 className="folio-h2 mb-2">3D Assets</h2>
-          <p className="folio-meta text-[var(--text-secondary)] mb-6">
+          <p className="folio-meta text-folio-text-secondary mb-6">
             Manage which assets are included in the Unreal Engine export
           </p>
           <ThreeDAssetList

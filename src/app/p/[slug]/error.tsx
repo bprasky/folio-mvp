@@ -22,8 +22,8 @@ export default function PostError({
           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <FaExclamationTriangle className="w-8 h-8 text-red-600" />
           </div>
-          <h1 className="text-3xl font-bold text-[var(--text-primary)] mb-2">Unable to load this project</h1>
-          <p className="text-[var(--text-secondary)] mb-4">
+          <h1 className="text-3xl font-bold text-folio-text-primary mb-2">Unable to load this project</h1>
+          <p className="text-folio-text-secondary mb-4">
             Something went wrong while loading this project. Please try again or return to the homepage.
           </p>
         </div>
@@ -39,7 +39,7 @@ export default function PostError({
 
           <Link
             href="/"
-            className="inline-flex items-center px-6 py-3 border border-[var(--ridge-outer)] text-[var(--text-primary)] rounded-lg hover:bg-[var(--bg-elevated)] transition-colors font-medium"
+            className="inline-flex items-center px-6 py-3 border border-folio-border-subtle text-folio-text-primary rounded-lg hover:bg-surface-ground transition-colors font-medium"
           >
             <FaHome className="mr-2" />
             Go Home

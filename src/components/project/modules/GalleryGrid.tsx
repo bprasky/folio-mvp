@@ -19,7 +19,7 @@ export function GalleryGrid({ modules }: { modules: any[] }) {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={im.url} alt={im.caption || ""} className="w-full h-auto" />
           {im.caption && (
-            <figcaption className="p-2 folio-meta text-[var(--text-secondary)]">
+            <figcaption className="p-2 folio-meta text-folio-text-secondary">
               {im.caption}
             </figcaption>
           )}

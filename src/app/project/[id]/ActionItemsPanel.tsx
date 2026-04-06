@@ -183,7 +183,7 @@ export default function ActionItemsPanel({
     return (
       <div className="py-16 text-center">
         <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent)]" />
-        <p className="mt-4 text-sm text-[var(--text-secondary)]">Loading action items...</p>
+        <p className="mt-4 text-sm text-folio-text-secondary">Loading action items...</p>
       </div>
     );
   }
@@ -191,7 +191,7 @@ export default function ActionItemsPanel({
   return (
     <div className="space-y-6">
       {/* Stats Bar */}
-      <div className="text-sm text-[var(--text-secondary)]">
+      <div className="text-sm text-folio-text-secondary">
         {totalProducts} products · {vendorCount} vendors · {pricedCount} priced
         {budget && budget.tradeCost > 0 && (
           <> · ${budget.tradeCost.toLocaleString()} estimated</>
@@ -214,25 +214,25 @@ export default function ActionItemsPanel({
       {/* Needs Attention */}
       {(pendingQuotes.length > 0 || discontinued.length > 0 || (timelineBuckets?.approaching.length || 0) > 0) && (
         <RidgeCard padding="lg">
-          <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3">Needs Attention</h3>
+          <h3 className="text-sm font-semibold text-folio-text-primary mb-3">Needs Attention</h3>
           <div className="space-y-2">
             {timelineBuckets && timelineBuckets.approaching.length > 0 && (
-              <div className="text-sm text-[var(--text-secondary)]">
+              <div className="text-sm text-folio-text-secondary">
                 <span className="text-red-500">⚠</span> {timelineBuckets.approaching.length} item{timelineBuckets.approaching.length !== 1 ? 's' : ''} need to be ordered within 4 weeks to meet timeline
                 {timelineBuckets.approaching.map((item, i) => (
-                  <div key={i} className="ml-5 text-xs text-[var(--text-tertiary)]">
+                  <div key={i} className="ml-5 text-xs text-folio-text-tertiary">
                     {item.productName} ({item.vendorName}) · {item.leadTimeWeeks} wk lead
                   </div>
                 ))}
               </div>
             )}
             {pendingQuotes.length > 0 && (
-              <div className="text-sm text-[var(--text-secondary)]">
+              <div className="text-sm text-folio-text-secondary">
                 <span className="text-amber-600">⏳</span> {pendingQuotes.length} quote request{pendingQuotes.length !== 1 ? 's' : ''} pending
               </div>
             )}
             {discontinued.length > 0 && (
-              <div className="text-sm text-[var(--text-secondary)]">
+              <div className="text-sm text-folio-text-secondary">
                 <span className="text-red-500">⛔</span> {discontinued.length} product{discontinued.length !== 1 ? 's' : ''} discontinued
               </div>
             )}
@@ -243,28 +243,28 @@ export default function ActionItemsPanel({
       {/* Budget Summary */}
       {budget && (
         <RidgeCard padding="lg">
-          <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3">Budget Summary</h3>
+          <h3 className="text-sm font-semibold text-folio-text-primary mb-3">Budget Summary</h3>
           <div className="grid grid-cols-3 gap-4 mb-4">
             <div>
-              <div className="text-xs text-[var(--text-tertiary)]">Trade Cost</div>
-              <div className="text-lg font-semibold text-[var(--text-primary)]">
+              <div className="text-xs text-folio-text-tertiary">Trade Cost</div>
+              <div className="text-lg font-semibold text-folio-text-primary">
                 ${budget.tradeCost.toLocaleString()}
               </div>
-              <div className="text-xs text-[var(--text-tertiary)]">
+              <div className="text-xs text-folio-text-tertiary">
                 ({budget.pricedCount} of {budget.totalCount} priced)
               </div>
             </div>
             <div>
-              <div className="text-xs text-[var(--text-tertiary)]">Client Price</div>
-              <div className="text-lg font-semibold text-[var(--text-primary)]">
+              <div className="text-xs text-folio-text-tertiary">Client Price</div>
+              <div className="text-lg font-semibold text-folio-text-primary">
                 ${Math.round(budget.clientPrice).toLocaleString()}
               </div>
-              <div className="text-xs text-[var(--text-tertiary)]">
+              <div className="text-xs text-folio-text-tertiary">
                 (at {budget.markupPercent}% markup)
               </div>
             </div>
             <div>
-              <div className="text-xs text-[var(--text-tertiary)]">Margin</div>
+              <div className="text-xs text-folio-text-tertiary">Margin</div>
               <div className="text-lg font-semibold text-green-600">
                 ${Math.round(budget.margin).toLocaleString()}
               </div>
@@ -274,20 +274,20 @@ export default function ActionItemsPanel({
           {/* By Room */}
           {budget.byRoom.length > 0 && (
             <div className="space-y-2">
-              <div className="text-xs font-medium text-[var(--text-tertiary)] uppercase">By Room</div>
+              <div className="text-xs font-medium text-folio-text-tertiary uppercase">By Room</div>
               {budget.byRoom.map(room => (
                 <div key={room.roomId} className="flex items-center gap-3">
-                  <span className="text-sm text-[var(--text-primary)] w-36 truncate">{room.roomName}</span>
-                  <div className="flex-grow h-2 bg-[var(--bg-elevated)] rounded-full overflow-hidden">
+                  <span className="text-sm text-folio-text-primary w-36 truncate">{room.roomName}</span>
+                  <div className="flex-grow h-2 bg-surface-ground rounded-full overflow-hidden">
                     <div
                       className="h-full bg-[var(--accent)] rounded-full transition-all"
                       style={{ width: `${room.percentPriced}%` }}
                     />
                   </div>
-                  <span className="text-xs text-[var(--text-tertiary)] w-20 text-right">
+                  <span className="text-xs text-folio-text-tertiary w-20 text-right">
                     {room.tradeCost > 0 ? `$${room.tradeCost.toLocaleString()}` : '—'}
                   </span>
-                  <span className="text-xs text-[var(--text-tertiary)] w-10 text-right">
+                  <span className="text-xs text-folio-text-tertiary w-10 text-right">
                     {room.percentPriced}%
                   </span>
                 </div>
@@ -311,23 +311,23 @@ export default function ActionItemsPanel({
       {/* By Vendor */}
       {budget && budget.byVendor.length > 0 && (
         <RidgeCard padding="lg">
-          <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3">By Vendor</h3>
+          <h3 className="text-sm font-semibold text-folio-text-primary mb-3">By Vendor</h3>
           <div className="space-y-2">
             {budget.byVendor.map(vendor => (
               <div key={vendor.vendorName} className="flex items-center gap-3 text-sm">
-                <span className="text-[var(--text-primary)] flex-grow truncate">{vendor.vendorName}</span>
-                <span className="text-[var(--text-tertiary)]">{vendor.productCount} products</span>
+                <span className="text-folio-text-primary flex-grow truncate">{vendor.vendorName}</span>
+                <span className="text-folio-text-tertiary">{vendor.productCount} products</span>
                 <span className={
                   vendor.status === 'all_priced' ? 'text-green-600' :
                   vendor.status === 'partial' ? 'text-amber-600' :
-                  'text-[var(--text-tertiary)]'
+                  'text-folio-text-tertiary'
                 }>
                   {vendor.status === 'all_priced' ? '✓ All priced' :
                    vendor.status === 'partial' ? `⏳ ${vendor.pricedCount} priced` :
                    '✗ Not requested'}
                 </span>
                 {vendor.tradeCost > 0 && (
-                  <span className="text-[var(--text-primary)] font-medium w-24 text-right">
+                  <span className="text-folio-text-primary font-medium w-24 text-right">
                     ${vendor.tradeCost.toLocaleString()}
                   </span>
                 )}
@@ -340,7 +340,7 @@ export default function ActionItemsPanel({
       {/* Procurement Timeline */}
       <RidgeCard padding="lg">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold text-[var(--text-primary)]">Procurement Timeline</h3>
+          <h3 className="text-sm font-semibold text-folio-text-primary">Procurement Timeline</h3>
           {!editingInstallDate && (
             <button
               onClick={() => setEditingInstallDate(true)}
@@ -357,7 +357,7 @@ export default function ActionItemsPanel({
               type="date"
               value={installDateInput}
               onChange={(e) => setInstallDateInput(e.target.value)}
-              className="px-3 py-1.5 text-sm bg-white border border-[#E8E6E3] rounded-lg text-[#2C2925]"
+              className="px-3 py-1.5 text-sm bg-white border border-folio-border-subtle rounded-lg text-folio-text-primary"
             />
             <Button variant="accent" size="sm" onClick={saveInstallDate}>Save</Button>
             <Button variant="ridge" size="sm" onClick={() => setEditingInstallDate(false)}>Cancel</Button>
@@ -365,36 +365,36 @@ export default function ActionItemsPanel({
         )}
 
         {!installDate ? (
-          <p className="text-sm text-[var(--text-tertiary)]">
+          <p className="text-sm text-folio-text-tertiary">
             Set a target install date to see backward-scheduled order deadlines.
           </p>
         ) : timelineBuckets ? (
           <div className="space-y-4">
-            <p className="text-xs text-[var(--text-tertiary)]">
+            <p className="text-xs text-folio-text-tertiary">
               Target install: {timelineBuckets.installDateFormatted}
             </p>
 
             {timelineBuckets.buckets.length > 0 ? (
               timelineBuckets.buckets.map(([monthLabel, items]) => (
                 <div key={monthLabel}>
-                  <div className="text-sm font-medium text-[var(--text-primary)] mb-1">
+                  <div className="text-sm font-medium text-folio-text-primary mb-1">
                     Order by {monthLabel}
                   </div>
                   {items.map((item, i) => (
-                    <div key={i} className="ml-4 text-xs text-[var(--text-secondary)] py-0.5">
+                    <div key={i} className="ml-4 text-xs text-folio-text-secondary py-0.5">
                       {item.productName} ({item.vendorName}) · {item.leadTimeWeeks} wk
                     </div>
                   ))}
                 </div>
               ))
             ) : (
-              <p className="text-sm text-[var(--text-tertiary)]">
+              <p className="text-sm text-folio-text-tertiary">
                 No products with lead time data yet.
               </p>
             )}
 
             {timelineBuckets.missingCount > 0 && (
-              <div className="text-sm text-[var(--text-secondary)] mt-2">
+              <div className="text-sm text-folio-text-secondary mt-2">
                 ❓ {timelineBuckets.missingCount} item{timelineBuckets.missingCount !== 1 ? 's' : ''} missing lead time data
                 <button
                   onClick={() => setLeadTimeModalOpen(true)}
@@ -411,8 +411,8 @@ export default function ActionItemsPanel({
       {/* Completed */}
       {pricedCount > 0 && (
         <RidgeCard padding="lg">
-          <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-2">Completed</h3>
-          <div className="text-sm text-[var(--text-secondary)]">
+          <h3 className="text-sm font-semibold text-folio-text-primary mb-2">Completed</h3>
+          <div className="text-sm text-folio-text-secondary">
             ✓ {pricedCount} products priced
           </div>
         </RidgeCard>

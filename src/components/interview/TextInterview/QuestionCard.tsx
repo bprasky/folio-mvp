@@ -129,9 +129,9 @@ export function QuestionCard({
             rows={6}
             className={cn(
               "w-full min-h-[160px] md:min-h-[200px] p-4 md:p-6",
-              "bg-[var(--bg-elevated)]/50 rounded-xl text-lg",
-              "placeholder:text-[var(--text-tertiary)]",
-              "border-transparent focus:border-[var(--ridge-outer)]",
+              "bg-surface-ground/50 rounded-xl text-lg",
+              "placeholder:text-folio-text-tertiary",
+              "border-transparent focus:border-folio-border-subtle",
               "focus:outline-none focus:ring-2 focus:ring-gray-200",
               "resize-none leading-relaxed transition-all"
             )}
@@ -140,7 +140,7 @@ export function QuestionCard({
           />
 
           {/* Helper text */}
-          <p className="text-sm text-[var(--text-tertiary)] mt-2">
+          <p className="text-sm text-folio-text-tertiary mt-2">
             Write as much or as little as you'd like
           </p>
         </div>
@@ -153,7 +153,7 @@ export function QuestionCard({
                 type="button"
                 onClick={onGoBack}
                 disabled={isLoading}
-                className="flex items-center gap-1.5 text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-sm py-2 px-3 border border-[var(--text-tertiary)]/20 rounded-lg hover:border-[var(--text-tertiary)]/40 transition-colors disabled:opacity-50"
+                className="flex items-center gap-1.5 text-folio-text-secondary hover:text-folio-text-primary text-sm py-2 px-3 border border-[var(--text-tertiary)]/20 rounded-lg hover:border-folio-text-tertiary/40 transition-colors disabled:opacity-50"
               >
                 <svg width="14" height="14" viewBox="0 0 16 16" fill="none" className="opacity-70">
                   <path d="M10 12L6 8L10 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -165,7 +165,7 @@ export function QuestionCard({
               type="button"
               onClick={onSkip}
               disabled={isLoading}
-              className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-sm py-2 px-3 transition-colors disabled:opacity-50"
+              className="text-folio-text-secondary hover:text-folio-text-primary text-sm py-2 px-3 transition-colors disabled:opacity-50"
             >
               Skip
             </button>
@@ -179,7 +179,7 @@ export function QuestionCard({
               "py-3 px-6 rounded-lg font-medium transition-all",
               answer.trim() && !isLoading
                 ? "bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)]"
-                : "bg-[var(--bg-elevated)] text-[var(--text-tertiary)] cursor-not-allowed"
+                : "bg-surface-ground text-folio-text-tertiary cursor-not-allowed"
             )}
           >
             {isLoading ? "..." : "Continue →"}

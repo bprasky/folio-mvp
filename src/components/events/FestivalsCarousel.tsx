@@ -58,8 +58,8 @@ export default function FestivalsCarousel({ festivals }: FestivalsCarouselProps)
   if (!festivals.length) {
     return (
       <section aria-label="Festival timeline" className="relative w-screen">
-        <div className="h-[340px] bg-[var(--bg-elevated)] rounded-2xl flex items-center justify-center">
-          <p className="text-[var(--text-secondary)]">No festivals available</p>
+        <div className="h-[340px] bg-surface-ground rounded-2xl flex items-center justify-center">
+          <p className="text-folio-text-secondary">No festivals available</p>
         </div>
       </section>
     );

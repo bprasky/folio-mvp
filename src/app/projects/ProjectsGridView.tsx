@@ -22,10 +22,10 @@ export default function ProjectsGridView({ projects, sortKey }: ProjectsGridView
           <div className="p-6">
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <h3 className="folio-h3 text-[var(--text-primary)] truncate">
+                <h3 className="folio-h3 text-folio-text-primary truncate">
                   {project.description || 'Untitled Project'}
                 </h3>
-                <p className="folio-meta text-[var(--text-secondary)] mt-1 line-clamp-2">
+                <p className="folio-meta text-folio-text-secondary mt-1 line-clamp-2">
                   {project.description || 'No description available'}
                 </p>
               </div>
@@ -34,13 +34,13 @@ export default function ProjectsGridView({ projects, sortKey }: ProjectsGridView
                 project.stage === 'in_procurement' ? 'bg-[var(--accent)]/10 text-[var(--accent)]' :
                 project.stage === 'design_development' ? 'bg-[var(--accent)]/10 text-[var(--accent-hover)]' :
                 project.stage === 'spec_locked' ? 'bg-purple-100 text-purple-800' :
-                'bg-[var(--bg-base)] text-[var(--text-secondary)]'
+                'bg-surface-canvas text-folio-text-secondary'
               }`}>
                 {project.stage.replace('_', ' ').toUpperCase()}
               </span>
             </div>
 
-            <div className="mt-4 flex items-center justify-between folio-meta text-[var(--text-tertiary)]">
+            <div className="mt-4 flex items-center justify-between folio-meta text-folio-text-tertiary">
               <span>Created {new Date(project.createdAt).toLocaleDateString()}</span>
               <span>Updated {new Date(project.updatedAt).toLocaleDateString()}</span>
             </div>

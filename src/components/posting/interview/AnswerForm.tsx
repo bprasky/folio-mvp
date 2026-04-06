@@ -280,12 +280,12 @@ export function AnswerForm({
   return (
     <div className="space-y-8">
       {isSaving && (
-        <div className="text-xs text-[var(--text-secondary)] italic">Saving…</div>
+        <div className="text-xs text-folio-text-secondary italic">Saving…</div>
       )}
 
       {Object.entries(questionsBySection).map(([section, sectionQuestions]) => (
         <div key={section} className="space-y-6">
-          <h3 className="text-lg font-serif text-[var(--text-primary)]">
+          <h3 className="text-lg font-serif text-folio-text-primary">
             {sectionLabels[section] ?? section}
           </h3>
           {sectionQuestions.map((question) => {
@@ -296,11 +296,11 @@ export function AnswerForm({
 
             return (
               <div key={question.id} className="space-y-2">
-                <label className="block text-sm font-medium text-[var(--text-primary)]">
+                <label className="block text-sm font-medium text-folio-text-primary">
                   {question.prompt}
                 </label>
                 {question.helper && (
-                  <p className="text-xs text-[var(--text-secondary)] mb-2">{question.helper}</p>
+                  <p className="text-xs text-folio-text-secondary mb-2">{question.helper}</p>
                 )}
                 <textarea
                   value={currentAnswer}
@@ -315,7 +315,7 @@ export function AnswerForm({
                   style={{ maxWidth: "72ch" }}
                   placeholder="Type your answer here…"
                 />
-                <div className="flex justify-between text-xs text-[var(--text-secondary)]">
+                <div className="flex justify-between text-xs text-folio-text-secondary">
                   <span>
                     {charCount} / {maxLen} characters
                   </span>

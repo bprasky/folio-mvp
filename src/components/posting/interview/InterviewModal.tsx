@@ -1727,10 +1727,10 @@ export function InterviewModal({
         )}
         {/* Modal header with close button and progress */}
         {(phase === "question" || phase === "followup" || phase === "complete") && (
-          <div className="flex items-center justify-between px-8 py-4 border-b border-[var(--ridge-outer)]/50 bg-white/25">
+          <div className="flex items-center justify-between px-8 py-4 border-b border-folio-border-subtle/50 bg-white/25">
             <button 
               onClick={() => onOpenChange(false)}
-              className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors p-1 rounded-full hover:bg-[var(--bg-elevated)]"
+              className="text-folio-text-secondary hover:text-folio-text-primary transition-colors p-1 rounded-full hover:bg-surface-ground"
               aria-label="Close"
             >
               <X className="w-6 h-6" />
@@ -1755,7 +1755,7 @@ export function InterviewModal({
                   />
                 </div>
               ) : (
-                <span className="text-sm text-[var(--text-secondary)]">
+                <span className="text-sm text-folio-text-secondary">
                   Question {currentQuestionIndex + 1} of {displayTotal}
                 </span>
               )
@@ -1794,10 +1794,10 @@ export function InterviewModal({
         {showDraftResume ? (
           <div className="flex-1 flex flex-col items-center justify-center px-8 py-12">
             <div className="max-w-md text-center space-y-6">
-              <h3 className="text-xl font-serif text-[var(--text-primary)]">
+              <h3 className="text-xl font-serif text-folio-text-primary">
                 Welcome back
               </h3>
-              <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
+              <p className="text-sm text-folio-text-secondary leading-relaxed">
                 You have a draft in progress with {draftAnswerCount} answer{draftAnswerCount !== 1 ? 's' : ''} saved.
                 Would you like to pick up where you left off?
               </p>
@@ -1864,7 +1864,7 @@ export function InterviewModal({
                       setIsClearing(false);
                     }
                   }}
-                  className="px-6 py-3 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors disabled:opacity-50"
+                  className="px-6 py-3 text-sm font-medium text-folio-text-secondary hover:text-folio-text-primary transition-colors disabled:opacity-50"
                 >
                   {isClearing ? "Clearing..." : "Start over"}
                 </button>
@@ -1880,12 +1880,12 @@ export function InterviewModal({
           /* Round transition: generating batch follow-ups between rounds */
           <div className="flex-1 flex flex-col items-center justify-center px-8 py-16">
             <div className="max-w-md text-center space-y-4">
-              <p className="text-lg font-serif text-[var(--text-primary)]">
+              <p className="text-lg font-serif text-folio-text-primary">
                 {roomFlow.isProjectPhase
                   ? "Great — thanks for the overview."
                   : `Great answers about your ${roomFlow.currentRoom?.roomName || 'room'}.`}
               </p>
-              <p className="text-sm text-[var(--text-secondary)]">
+              <p className="text-sm text-folio-text-secondary">
                 {roomFlow.isProjectPhase
                   ? "A few follow-ups before we get into the rooms..."
                   : "A couple more questions based on what you shared..."}
@@ -1938,15 +1938,15 @@ export function InterviewModal({
         )}
 
             {showRegeneratePrompt && (
-              <div className="px-8 py-3 border-t border-[var(--ridge-outer)]/30 bg-amber-50/80">
+              <div className="px-8 py-3 border-t border-folio-border-subtle/30 bg-amber-50/80">
                 <div className="max-w-3xl mx-auto flex items-center justify-between gap-4">
-                  <p className="text-sm text-[var(--text-primary)]">
+                  <p className="text-sm text-folio-text-primary">
                     This answer has changed. Regenerate follow-up questions?
                   </p>
                   <div className="flex gap-3 shrink-0">
                     <button
                       onClick={handleKeepExistingFollowUps}
-                      className="px-4 py-1.5 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+                      className="px-4 py-1.5 text-sm font-medium text-folio-text-secondary hover:text-folio-text-primary transition-colors"
                     >
                       Keep existing
                     </button>

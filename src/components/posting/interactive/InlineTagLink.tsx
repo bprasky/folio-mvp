@@ -80,11 +80,11 @@ export default function InlineTagLink({
                     className="h-16 w-16 rounded-xl object-cover"
                   />
                 ) : (
-                  <div className="h-16 w-16 rounded-xl bg-[var(--bg-elevated)]" />
+                  <div className="h-16 w-16 rounded-xl bg-surface-ground" />
                 )}
                 <div className="min-w-0 flex-1">
                   <div className="text-sm font-semibold truncate">{data.name}</div>
-                  <div className="text-xs text-[var(--text-secondary)] truncate">{data.vendorName}</div>
+                  <div className="text-xs text-folio-text-secondary truncate">{data.vendorName}</div>
                   <div className="mt-2 flex gap-2">
                     <a
                       href={data.slug ? `/product/${data.slug}` : `/products/${productId}`}
@@ -107,7 +107,7 @@ export default function InlineTagLink({
                 </div>
               </div>
             ) : (
-              <div className="text-xs text-[var(--text-secondary)]">Loading…</div>
+              <div className="text-xs text-folio-text-secondary">Loading…</div>
             )}
           </motion.div>
         )}
