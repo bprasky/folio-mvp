@@ -21,7 +21,7 @@ export default function VendorAnalyticsDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-[#fdfbf8]">
+    <div className="min-h-screen bg-surface-ground">
       {/* Header */}
       <div className="max-w-7xl mx-auto px-6 py-6">
         <div className="flex items-center justify-between gap-4">
