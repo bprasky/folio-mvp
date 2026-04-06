@@ -91,11 +91,11 @@ export default function RemoteConnectModal({ open, onOpenChange }: RemoteConnect
     <GlassModal open={open} onOpenChange={onOpenChange} size="md">
       <GlassModalBody className="px-6 md:px-8 py-8">
         <h2
+          className="text-folio-text-primary"
           style={{
             fontFamily: 'Georgia, serif',
             fontSize: '20px',
             fontWeight: 400,
-            color: '#2C2825',
             margin: '0 0 16px',
           }}
         >
@@ -103,10 +103,10 @@ export default function RemoteConnectModal({ open, onOpenChange }: RemoteConnect
         </h2>
 
         <p
+          className="text-folio-text-secondary"
           style={{
             fontFamily: 'var(--font-body, "Instrument Sans", sans-serif)',
             fontSize: '13px',
-            color: '#8B8178',
             margin: '0 0 16px',
           }}
         >
@@ -120,11 +120,8 @@ export default function RemoteConnectModal({ open, onOpenChange }: RemoteConnect
           onChange={handleInputChange}
           placeholder="Search by name or email..."
           autoFocus
-          className="w-full px-4 py-3 rounded-xl border text-sm"
+          className="w-full px-4 py-3 rounded-xl border text-sm border-folio-border-subtle bg-surface-ground text-folio-text-primary"
           style={{
-            borderColor: '#E8E4DF',
-            backgroundColor: '#FAF9F7',
-            color: '#2C2825',
             fontFamily: 'var(--font-body, "Instrument Sans", sans-serif)',
             outline: 'none',
           }}
@@ -154,8 +151,7 @@ export default function RemoteConnectModal({ open, onOpenChange }: RemoteConnect
           {results.map((user) => (
             <div
               key={user.id}
-              className="flex items-center gap-3 p-3 rounded-lg border hover:bg-stone-50 transition-colors"
-              style={{ borderColor: '#E8E4DF' }}
+              className="flex items-center gap-3 p-3 rounded-lg border hover:bg-stone-50 transition-colors border-folio-border-subtle"
             >
               {user.profileImage ? (
                 <Image
@@ -182,8 +178,7 @@ export default function RemoteConnectModal({ open, onOpenChange }: RemoteConnect
               <button
                 onClick={() => handleConnect(user.id)}
                 disabled={connecting === user.id}
-                className="px-4 py-1.5 rounded-full text-xs font-medium text-white transition-colors disabled:opacity-50"
-                style={{ backgroundColor: '#2C2825' }}
+                className="px-4 py-1.5 rounded-full text-xs font-medium text-white transition-colors disabled:opacity-50 bg-folio-text-primary"
               >
                 {connecting === user.id ? 'Connecting...' : 'Connect'}
               </button>

@@ -174,15 +174,14 @@ export default function InviteTeamModal({
       <GlassModalHeader>
         <div className="flex items-center justify-between">
           <h3
-            className="text-lg font-medium"
-            style={{ fontFamily: 'var(--font-headline)', color: '#2C2825' }}
+            className="text-lg font-medium text-folio-text-primary"
+            style={{ fontFamily: 'var(--font-headline)' }}
           >
             Invite to {orgName || 'your studio'}
           </h3>
           <button
             onClick={() => onOpenChange(false)}
-            className="text-sm hover:opacity-70"
-            style={{ color: '#8B8178' }}
+            className="text-sm hover:opacity-70 text-folio-text-secondary"
           >
             &#10005;
           </button>
@@ -198,11 +197,8 @@ export default function InviteTeamModal({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by name or email"
-              className="w-full px-4 py-2.5 text-sm rounded-xl border outline-none transition-colors focus:border-[#B8845C]"
+              className="w-full px-4 py-2.5 text-sm rounded-xl border outline-none transition-colors focus:border-[#B8845C] border-folio-border-subtle bg-surface-ground text-folio-text-primary"
               style={{
-                borderColor: '#E8E4DF',
-                backgroundColor: '#FAF9F7',
-                color: '#2C2825',
                 fontFamily: 'var(--font-body)',
               }}
             />
@@ -211,19 +207,17 @@ export default function InviteTeamModal({
             {(searching || searchResults.length > 0) && (
               <div className="mt-2 flex flex-col gap-1">
                 {searching && (
-                  <p className="text-xs py-2 px-3" style={{ color: '#8B8178' }}>
+                  <p className="text-xs py-2 px-3 text-folio-text-secondary">
                     Searching...
                   </p>
                 )}
                 {searchResults.map((user) => (
                   <div
                     key={user.id}
-                    className="flex items-center gap-3 p-3 rounded-xl"
-                    style={{ backgroundColor: '#FAF9F7', border: '1px solid #E8E4DF' }}
+                    className="flex items-center gap-3 p-3 rounded-xl bg-surface-ground border border-folio-border-subtle"
                   >
                     <div
-                      className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium flex-shrink-0"
-                      style={{ backgroundColor: '#E8E4DF', color: '#6B635B' }}
+                      className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium flex-shrink-0 bg-folio-border-subtle text-folio-text-secondary"
                     >
                       {user.profileImage ? (
                         <img
@@ -236,18 +230,17 @@ export default function InviteTeamModal({
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate" style={{ color: '#2C2825' }}>
+                      <p className="text-sm font-medium truncate text-folio-text-primary">
                         {user.name}
                       </p>
-                      <p className="text-xs truncate" style={{ color: '#8B8178' }}>
+                      <p className="text-xs truncate text-folio-text-secondary">
                         {user.email}
                       </p>
                     </div>
                     <button
                       onClick={() => handleInviteUser(user)}
                       disabled={invitingUserId === user.id}
-                      className="px-3 py-1 text-xs rounded-full transition-all hover:opacity-80 disabled:opacity-50"
-                      style={{ backgroundColor: '#2C2825', color: '#FAF9F7' }}
+                      className="px-3 py-1 text-xs rounded-full transition-all hover:opacity-80 disabled:opacity-50 bg-folio-text-primary text-surface-ground"
                     >
                       {invitingUserId === user.id ? '...' : 'Invite'}
                     </button>
@@ -259,11 +252,11 @@ export default function InviteTeamModal({
 
           {/* Divider */}
           <div className="flex items-center gap-3">
-            <div className="flex-1 h-px" style={{ backgroundColor: '#E8E4DF' }} />
-            <span className="text-xs" style={{ color: '#8B8178' }}>
+            <div className="flex-1 h-px bg-folio-border-subtle" />
+            <span className="text-xs text-folio-text-secondary">
               or invite by email
             </span>
-            <div className="flex-1 h-px" style={{ backgroundColor: '#E8E4DF' }} />
+            <div className="flex-1 h-px bg-folio-border-subtle" />
           </div>
 
           {/* Email invite */}
@@ -273,26 +266,22 @@ export default function InviteTeamModal({
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter email address"
-              className="w-full px-4 py-2.5 text-sm rounded-xl border outline-none transition-colors focus:border-[#B8845C]"
+              className="w-full px-4 py-2.5 text-sm rounded-xl border outline-none transition-colors focus:border-[#B8845C] border-folio-border-subtle bg-surface-ground text-folio-text-primary"
               style={{
-                borderColor: '#E8E4DF',
-                backgroundColor: '#FAF9F7',
-                color: '#2C2825',
                 fontFamily: 'var(--font-body)',
               }}
             />
 
             <div className="flex items-center gap-3">
-              <label className="text-xs font-medium" style={{ color: '#6B635B' }}>
+              <label className="text-xs font-medium text-folio-text-secondary">
                 Role
               </label>
               <select
                 value={role}
                 onChange={(e) => setRole(e.target.value)}
-                className="text-xs px-3 py-1.5 rounded-full border appearance-none cursor-pointer"
+                className="text-xs px-3 py-1.5 rounded-full border appearance-none cursor-pointer text-folio-text-secondary"
                 style={{
                   borderColor: '#D4CEC6',
-                  color: '#6B635B',
                   backgroundColor: 'transparent',
                 }}
               >
@@ -308,8 +297,7 @@ export default function InviteTeamModal({
               <button
                 onClick={handleEmailInvite}
                 disabled={!email.trim() || !email.includes('@') || sending}
-                className="px-5 py-2 text-sm rounded-full transition-all hover:opacity-80 disabled:opacity-50"
-                style={{ backgroundColor: '#2C2825', color: '#FAF9F7' }}
+                className="px-5 py-2 text-sm rounded-full transition-all hover:opacity-80 disabled:opacity-50 bg-folio-text-primary text-surface-ground"
               >
                 {sending ? 'Sending...' : 'Send Invite'}
               </button>
@@ -320,29 +308,27 @@ export default function InviteTeamModal({
           {pendingInvites.length > 0 && (
             <div>
               <div className="flex items-center gap-3 mb-3">
-                <div className="flex-1 h-px" style={{ backgroundColor: '#E8E4DF' }} />
-                <span className="text-xs" style={{ color: '#8B8178' }}>
+                <div className="flex-1 h-px bg-folio-border-subtle" />
+                <span className="text-xs text-folio-text-secondary">
                   Pending Invites
                 </span>
-                <div className="flex-1 h-px" style={{ backgroundColor: '#E8E4DF' }} />
+                <div className="flex-1 h-px bg-folio-border-subtle" />
               </div>
 
               <div className="flex flex-col gap-2">
                 {pendingInvites.map((invite) => (
                   <div
                     key={invite.id}
-                    className="flex items-center gap-3 px-3 py-2 rounded-xl text-xs"
-                    style={{ backgroundColor: '#FAF9F7' }}
+                    className="flex items-center gap-3 px-3 py-2 rounded-xl text-xs bg-surface-ground"
                   >
-                    <span className="flex-1 truncate" style={{ color: '#2C2825' }}>
+                    <span className="flex-1 truncate text-folio-text-primary">
                       {invite.email}
                     </span>
-                    <span style={{ color: '#8B8178' }}>
+                    <span className="text-folio-text-secondary">
                       {formatTimeAgo(invite.createdAt)}
                     </span>
                     <span
-                      className="px-2 py-0.5 rounded-full"
-                      style={{ backgroundColor: '#E8E4DF', color: '#6B635B' }}
+                      className="px-2 py-0.5 rounded-full bg-folio-border-subtle text-folio-text-secondary"
                     >
                       {invite.role}
                     </span>

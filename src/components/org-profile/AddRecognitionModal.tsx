@@ -106,15 +106,14 @@ export default function AddRecognitionModal({
       <GlassModalHeader>
         <div className="flex items-center justify-between">
           <h3
-            className="text-lg font-medium"
-            style={{ fontFamily: 'var(--font-headline)', color: '#2C2825' }}
+            className="text-lg font-medium text-folio-text-primary"
+            style={{ fontFamily: 'var(--font-headline)' }}
           >
             Add a Recognition
           </h3>
           <button
             onClick={() => onOpenChange(false)}
-            className="text-sm hover:opacity-70"
-            style={{ color: '#8B8178' }}
+            className="text-sm hover:opacity-70 text-folio-text-secondary"
           >
             &#10005;
           </button>
@@ -125,7 +124,7 @@ export default function AddRecognitionModal({
         <div className="flex flex-col gap-5">
           {/* URL field */}
           <div>
-            <label className="text-xs font-medium mb-1.5 block" style={{ color: '#6B635B' }}>
+            <label className="text-xs font-medium mb-1.5 block text-folio-text-secondary">
               Paste a link (optional)
             </label>
             <input
@@ -134,11 +133,8 @@ export default function AddRecognitionModal({
               onChange={(e) => setUrl(e.target.value)}
               onBlur={handleUrlBlur}
               placeholder="https://luxeinteriors.com/feature/..."
-              className="w-full px-4 py-2.5 text-sm rounded-xl border outline-none transition-colors focus:border-[#B8845C]"
+              className="w-full px-4 py-2.5 text-sm rounded-xl border border-folio-border-subtle bg-surface-ground text-folio-text-primary outline-none transition-colors focus:border-[#B8845C]"
               style={{
-                borderColor: '#E8E4DF',
-                backgroundColor: '#FAF9F7',
-                color: '#2C2825',
                 fontFamily: 'var(--font-body)',
               }}
             />
@@ -151,7 +147,7 @@ export default function AddRecognitionModal({
 
           {/* Title */}
           <div>
-            <label className="text-xs font-medium mb-1.5 block" style={{ color: '#6B635B' }}>
+            <label className="text-xs font-medium mb-1.5 block text-folio-text-secondary">
               Title *
             </label>
             <input
@@ -159,11 +155,8 @@ export default function AddRecognitionModal({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Featured in Luxe Interiors + Design"
-              className="w-full px-4 py-2.5 text-sm rounded-xl border outline-none transition-colors focus:border-[#B8845C]"
+              className="w-full px-4 py-2.5 text-sm rounded-xl border border-folio-border-subtle bg-surface-ground text-folio-text-primary outline-none transition-colors focus:border-[#B8845C]"
               style={{
-                borderColor: '#E8E4DF',
-                backgroundColor: '#FAF9F7',
-                color: '#2C2825',
                 fontFamily: 'var(--font-body)',
               }}
             />
@@ -171,7 +164,7 @@ export default function AddRecognitionModal({
 
           {/* Publication / Source */}
           <div>
-            <label className="text-xs font-medium mb-1.5 block" style={{ color: '#6B635B' }}>
+            <label className="text-xs font-medium mb-1.5 block text-folio-text-secondary">
               Publication / Source
             </label>
             <input
@@ -179,11 +172,8 @@ export default function AddRecognitionModal({
               value={source}
               onChange={(e) => setSource(e.target.value)}
               placeholder="Luxe Interiors + Design"
-              className="w-full px-4 py-2.5 text-sm rounded-xl border outline-none transition-colors focus:border-[#B8845C]"
+              className="w-full px-4 py-2.5 text-sm rounded-xl border border-folio-border-subtle bg-surface-ground text-folio-text-primary outline-none transition-colors focus:border-[#B8845C]"
               style={{
-                borderColor: '#E8E4DF',
-                backgroundColor: '#FAF9F7',
-                color: '#2C2825',
                 fontFamily: 'var(--font-body)',
               }}
             />
@@ -191,7 +181,7 @@ export default function AddRecognitionModal({
 
           {/* Type */}
           <div>
-            <label className="text-xs font-medium mb-1.5 block" style={{ color: '#6B635B' }}>
+            <label className="text-xs font-medium mb-1.5 block text-folio-text-secondary">
               Type
             </label>
             <div className="flex flex-wrap gap-2">
@@ -214,18 +204,15 @@ export default function AddRecognitionModal({
 
           {/* Date */}
           <div>
-            <label className="text-xs font-medium mb-1.5 block" style={{ color: '#6B635B' }}>
+            <label className="text-xs font-medium mb-1.5 block text-folio-text-secondary">
               Date (optional)
             </label>
             <input
               type="month"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="w-full px-4 py-2.5 text-sm rounded-xl border outline-none transition-colors focus:border-[#B8845C]"
+              className="w-full px-4 py-2.5 text-sm rounded-xl border border-folio-border-subtle bg-surface-ground text-folio-text-primary outline-none transition-colors focus:border-[#B8845C]"
               style={{
-                borderColor: '#E8E4DF',
-                backgroundColor: '#FAF9F7',
-                color: '#2C2825',
                 fontFamily: 'var(--font-body)',
               }}
             />
@@ -233,7 +220,7 @@ export default function AddRecognitionModal({
 
           {/* Note / Excerpt */}
           <div>
-            <label className="text-xs font-medium mb-1.5 block" style={{ color: '#6B635B' }}>
+            <label className="text-xs font-medium mb-1.5 block text-folio-text-secondary">
               Note (optional)
             </label>
             <textarea
@@ -241,11 +228,8 @@ export default function AddRecognitionModal({
               onChange={(e) => setExcerpt(e.target.value)}
               placeholder="Our Coral Gables residence was the cover story for the Spring 2024 issue."
               rows={3}
-              className="w-full px-4 py-2.5 text-sm rounded-xl border outline-none transition-colors focus:border-[#B8845C] resize-none"
+              className="w-full px-4 py-2.5 text-sm rounded-xl border border-folio-border-subtle bg-surface-ground text-folio-text-primary outline-none transition-colors focus:border-[#B8845C] resize-none"
               style={{
-                borderColor: '#E8E4DF',
-                backgroundColor: '#FAF9F7',
-                color: '#2C2825',
                 fontFamily: 'var(--font-body)',
               }}
             />
@@ -254,10 +238,10 @@ export default function AddRecognitionModal({
           {/* Thumbnail preview */}
           {imageUrl && (
             <div>
-              <label className="text-xs font-medium mb-1.5 block" style={{ color: '#6B635B' }}>
+              <label className="text-xs font-medium mb-1.5 block text-folio-text-secondary">
                 Thumbnail
               </label>
-              <div className="rounded-xl overflow-hidden border" style={{ borderColor: '#E8E4DF' }}>
+              <div className="rounded-xl overflow-hidden border border-folio-border-subtle">
                 <img
                   src={imageUrl}
                   alt="Thumbnail preview"
@@ -276,16 +260,15 @@ export default function AddRecognitionModal({
               resetForm();
               onOpenChange(false);
             }}
-            className="px-5 py-2 text-sm rounded-full transition-all hover:opacity-80"
-            style={{ color: '#6B635B', border: '1px solid #D4CEC6' }}
+            className="px-5 py-2 text-sm rounded-full transition-all hover:opacity-80 text-folio-text-secondary"
+            style={{ border: '1px solid #D4CEC6' }}
           >
             Cancel
           </button>
           <button
             onClick={handleSubmit}
             disabled={!title.trim() || saving}
-            className="px-5 py-2 text-sm rounded-full transition-all hover:opacity-80 disabled:opacity-50"
-            style={{ backgroundColor: '#2C2825', color: '#FAF9F7' }}
+            className="px-5 py-2 text-sm rounded-full transition-all hover:opacity-80 disabled:opacity-50 bg-folio-text-primary text-surface-ground"
           >
             {saving ? 'Adding...' : 'Add Recognition'}
           </button>
