@@ -43,13 +43,12 @@ export default function ProfileHero({
     .toUpperCase();
 
   return (
-    <div className="border-b" style={{ borderColor: '#E8E4DF' }}>
+    <div className="border-b border-folio-border-subtle">
       <div className="max-w-6xl mx-auto px-6 py-8">
         <div className="flex flex-col md:flex-row items-start gap-6 md:gap-8">
           {/* Profile Image */}
           <div
-            className="w-24 h-24 md:w-28 md:h-28 rounded-full overflow-hidden flex-shrink-0 ring-2"
-            style={{ ringColor: '#E8E4DF' }}
+            className="w-24 h-24 md:w-28 md:h-28 rounded-full overflow-hidden flex-shrink-0 ring-2 ring-folio-border-subtle"
           >
             {user.profileImage ? (
               <SafeImage
@@ -61,8 +60,7 @@ export default function ProfileHero({
               />
             ) : (
               <div
-                className="w-full h-full flex items-center justify-center text-2xl md:text-3xl font-light"
-                style={{ backgroundColor: '#E8E4DF', color: '#6B635B' }}
+                className="w-full h-full flex items-center justify-center text-2xl md:text-3xl font-light bg-folio-border-subtle text-folio-text-secondary"
               >
                 {initials}
               </div>
@@ -74,20 +72,20 @@ export default function ProfileHero({
             <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
               <div className="min-w-0">
                 <h1
-                  className="text-2xl md:text-3xl font-light tracking-tight"
-                  style={{ fontFamily: 'Georgia, serif', color: '#2C2825' }}
+                  className="text-2xl md:text-3xl font-light tracking-tight text-folio-text-primary"
+                  style={{ fontFamily: 'Georgia, serif' }}
                 >
                   {user.name}
                 </h1>
-                <p className="text-sm mt-1" style={{ color: '#8B8178' }}>
+                <p className="text-sm mt-1 text-folio-text-secondary">
                   {user.title || 'Designer'}
                   {user.location && ` · ${user.location}`}
                 </p>
 
                 {tagline && (
                   <p
-                    className="mt-3 text-base line-clamp-2"
-                    style={{ color: '#5C564F', maxWidth: '480px' }}
+                    className="mt-3 text-base line-clamp-2 text-folio-text-secondary"
+                    style={{ maxWidth: '480px' }}
                   >
                     {tagline}
                   </p>
@@ -99,16 +97,14 @@ export default function ProfileHero({
                     {user.specialties.slice(0, 5).map(tag => (
                       <span
                         key={tag}
-                        className="px-3 py-1 text-xs rounded-full"
-                        style={{ backgroundColor: '#F0EDE9', color: '#6B635B' }}
+                        className="px-3 py-1 text-xs rounded-full bg-surface-elevated text-folio-text-secondary"
                       >
                         {tag}
                       </span>
                     ))}
                     {user.specialties.length > 5 && (
                       <span
-                        className="px-3 py-1 text-xs rounded-full"
-                        style={{ backgroundColor: '#F0EDE9', color: '#8B8178' }}
+                        className="px-3 py-1 text-xs rounded-full bg-surface-elevated text-folio-text-secondary"
                       >
                         +{user.specialties.length - 5}
                       </span>
@@ -129,22 +125,19 @@ export default function ProfileHero({
                   {isOwner ? (
                     <Link
                       href="/profile"
-                      className="px-5 py-2 text-sm rounded-full transition-all hover:opacity-80"
-                      style={{ backgroundColor: '#2C2825', color: '#FAF9F7' }}
+                      className="px-5 py-2 text-sm rounded-full transition-all hover:opacity-80 bg-folio-text-primary text-surface-ground"
                     >
                       Edit Profile
                     </Link>
                   ) : (
                     <>
                       <button
-                        className="px-5 py-2 text-sm rounded-full transition-all hover:opacity-80"
-                        style={{ backgroundColor: '#2C2825', color: '#FAF9F7' }}
+                        className="px-5 py-2 text-sm rounded-full transition-all hover:opacity-80 bg-folio-text-primary text-surface-ground"
                       >
                         Follow
                       </button>
                       <button
-                        className="px-5 py-2 text-sm rounded-full border transition-all hover:bg-stone-50"
-                        style={{ borderColor: '#2C2825', color: '#2C2825' }}
+                        className="px-5 py-2 text-sm rounded-full border transition-all hover:bg-stone-50 border-folio-text-primary text-folio-text-primary"
                       >
                         Contact
                       </button>
@@ -154,7 +147,7 @@ export default function ProfileHero({
 
                 {/* Social Links */}
                 {(user.website || user.instagram || user.linkedin) && (
-                  <div className="flex gap-4 text-sm" style={{ color: '#8B8178' }}>
+                  <div className="flex gap-4 text-sm text-folio-text-secondary">
                     {user.website && (
                       <a
                         href={user.website}
@@ -201,10 +194,10 @@ function Stat({ label, value }: { label: string; value: number }) {
 
   return (
     <div className="text-center">
-      <div className="text-xl md:text-2xl font-light" style={{ color: '#2C2825' }}>
+      <div className="text-xl md:text-2xl font-light text-folio-text-primary">
         {formatted}
       </div>
-      <div className="text-xs" style={{ color: '#8B8178' }}>
+      <div className="text-xs text-folio-text-secondary">
         {label}
       </div>
     </div>

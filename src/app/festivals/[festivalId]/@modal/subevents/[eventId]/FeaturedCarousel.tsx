@@ -36,7 +36,7 @@ export default function FeaturedCarousel({
         <Button
           variant="ridge"
           size="sm"
-          className="rounded-full bg-[var(--bg-base)]/20 border-[var(--bg-base)]/30 text-white hover:bg-[var(--bg-base)]/30"
+          className="rounded-full bg-surface-canvas/20 border-[var(--bg-base)]/30 text-white hover:bg-surface-canvas/30"
           onClick={() => scrollBy(-360)}
         >
           ◀
@@ -44,7 +44,7 @@ export default function FeaturedCarousel({
         <Button
           variant="ridge"
           size="sm"
-          className="rounded-full bg-[var(--bg-base)]/20 border-[var(--bg-base)]/30 text-white hover:bg-[var(--bg-base)]/30"
+          className="rounded-full bg-surface-canvas/20 border-[var(--bg-base)]/30 text-white hover:bg-surface-canvas/30"
           onClick={() => scrollBy(360)}
         >
           ▶

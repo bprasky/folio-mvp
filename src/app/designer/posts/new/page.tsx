@@ -132,16 +132,16 @@ export default function CreatePostPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[var(--bg-elevated)] p-6">
+      <div className="min-h-screen bg-surface-ground p-6">
         <div className="max-w-4xl mx-auto">
           <div className="animate-pulse">
-            <div className="h-8 bg-[var(--bg-elevated)] rounded-lg w-1/3 mb-6"></div>
+            <div className="h-8 bg-surface-ground rounded-lg w-1/3 mb-6"></div>
             <div className="space-y-4">
-              <div className="h-12 bg-[var(--bg-elevated)] rounded-lg"></div>
-              <div className="h-32 bg-[var(--bg-elevated)] rounded-lg"></div>
+              <div className="h-12 bg-surface-ground rounded-lg"></div>
+              <div className="h-32 bg-surface-ground rounded-lg"></div>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 {Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className="bg-[var(--bg-elevated)] rounded-xl h-32"></div>
+                  <div key={i} className="bg-surface-ground rounded-xl h-32"></div>
                 ))}
               </div>
             </div>
@@ -152,22 +152,22 @@ export default function CreatePostPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--bg-elevated)]">
+    <div className="min-h-screen bg-surface-ground">
       {/* Header */}
-      <div className="bg-white border-b border-[var(--ridge-outer)]">
+      <div className="bg-white border-b border-folio-border-subtle">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="py-6">
             <div className="flex items-center gap-4">
               <button
                 onClick={() => router.back()}
-                className="p-2 hover:bg-[var(--bg-elevated)] rounded-lg transition-colors"
+                className="p-2 hover:bg-surface-ground rounded-lg transition-colors"
               >
-                <ArrowLeft className="w-5 h-5 text-[var(--text-secondary)]" />
+                <ArrowLeft className="w-5 h-5 text-folio-text-secondary" />
               </button>
               
               <div>
-                <h1 className="text-2xl font-bold text-[var(--text-primary)]">Create New Post</h1>
-                <p className="text-sm text-[var(--text-secondary)]">
+                <h1 className="text-2xl font-bold text-folio-text-primary">Create New Post</h1>
+                <p className="text-sm text-folio-text-secondary">
                   Share your curated products with the community
                 </p>
               </div>
@@ -181,11 +181,11 @@ export default function CreatePostPage() {
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* Post Details */}
           <div className="bg-white rounded-[20px] p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-4">Post Details</h2>
+            <h2 className="text-lg font-semibold text-folio-text-primary mb-4">Post Details</h2>
             
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
+                <label className="block text-sm font-medium text-folio-text-primary mb-2">
                   Post Title *
                 </label>
                 <input
@@ -193,16 +193,16 @@ export default function CreatePostPage() {
                   value={formData.title}
                   onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
                   placeholder="e.g., Kitchen Mood Board, Bathroom Essentials..."
-                  className="w-full px-4 py-3 border border-[var(--ridge-outer)] rounded-xl focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent transition-all"
+                  className="w-full px-4 py-3 border border-folio-border-subtle rounded-xl focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent transition-all"
                   maxLength={100}
                 />
-                <p className="text-xs text-[var(--text-secondary)] mt-1">
+                <p className="text-xs text-folio-text-secondary mt-1">
                   {formData.title.length}/100 characters
                 </p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
+                <label className="block text-sm font-medium text-folio-text-primary mb-2">
                   Description (Optional)
                 </label>
                 <textarea
@@ -210,10 +210,10 @@ export default function CreatePostPage() {
                   onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
                   placeholder="Share your inspiration, design philosophy, or project details..."
                   rows={4}
-                  className="w-full px-4 py-3 border border-[var(--ridge-outer)] rounded-xl focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent transition-all resize-none"
+                  className="w-full px-4 py-3 border border-folio-border-subtle rounded-xl focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent transition-all resize-none"
                   maxLength={500}
                 />
-                <p className="text-xs text-[var(--text-secondary)] mt-1">
+                <p className="text-xs text-folio-text-secondary mt-1">
                   {formData.content.length}/500 characters
                 </p>
               </div>
@@ -224,9 +224,9 @@ export default function CreatePostPage() {
                   id="affiliate"
                   checked={formData.affiliate}
                   onChange={(e) => setFormData(prev => ({ ...prev, affiliate: e.target.checked }))}
-                  className="w-4 h-4 text-[var(--accent)] border-[var(--ridge-outer)] rounded focus:ring-[var(--accent)]"
+                  className="w-4 h-4 text-[var(--accent)] border-folio-border-subtle rounded focus:ring-[var(--accent)]"
                 />
-                <label htmlFor="affiliate" className="text-sm text-[var(--text-primary)]">
+                <label htmlFor="affiliate" className="text-sm text-folio-text-primary">
                   Enable affiliate tracking for product links
                 </label>
               </div>
@@ -236,7 +236,7 @@ export default function CreatePostPage() {
           {/* Product Selection */}
           <div className="bg-white rounded-[20px] p-6 shadow-sm">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-[var(--text-primary)]">
+              <h2 className="text-lg font-semibold text-folio-text-primary">
                 Select Products ({formData.selectedItems.size} selected)
               </h2>
               
@@ -259,7 +259,7 @@ export default function CreatePostPage() {
                   className={`relative group rounded-2xl border-2 transition-all duration-200 cursor-pointer ${
                     formData.selectedItems.has(item.id)
                       ? "border-[var(--accent)] bg-[var(--accent)]/5 shadow-blue-100"
-                      : "border-[var(--ridge-outer)] hover:border-[var(--ridge-outer)] bg-white"
+                      : "border-folio-border-subtle hover:border-folio-border-subtle bg-white"
                   }`}
                   onClick={() => handleItemToggle(item.id)}
                 >
@@ -268,7 +268,7 @@ export default function CreatePostPage() {
                     <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
                       formData.selectedItems.has(item.id)
                         ? "bg-[var(--accent)] border-[var(--accent)] text-white"
-                        : "bg-white border-[var(--ridge-outer)]"
+                        : "bg-white border-folio-border-subtle"
                     }`}>
                       {formData.selectedItems.has(item.id) && (
                         <div className="w-2 h-2 bg-white rounded-full"></div>
@@ -277,7 +277,7 @@ export default function CreatePostPage() {
                   </div>
 
                   {/* Product Image */}
-                  <div className="relative h-40 bg-[var(--bg-elevated)] rounded-t-2xl overflow-hidden">
+                  <div className="relative h-40 bg-surface-ground rounded-t-2xl overflow-hidden">
                     <SafeImage
                       src={item.product.imageUrl || "/images/product-placeholder.jpg"}
                       alt={item.product.name}
@@ -288,7 +288,7 @@ export default function CreatePostPage() {
                     {/* Section Badge */}
                     {item.section && (
                       <div className="absolute top-2 right-2">
-                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-white/90 backdrop-blur-sm text-xs font-medium text-[var(--text-primary)]">
+                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-white/90 backdrop-blur-sm text-xs font-medium text-folio-text-primary">
                           <Tag className="w-3 h-3" />
                           {item.section}
                         </span>
@@ -298,12 +298,12 @@ export default function CreatePostPage() {
 
                   {/* Product Info */}
                   <div className="p-4">
-                    <h3 className="font-medium text-[var(--text-primary)] mb-1 line-clamp-2">
+                    <h3 className="font-medium text-folio-text-primary mb-1 line-clamp-2">
                       {item.product.name}
                     </h3>
                     
                     {item.product.vendor && (
-                      <p className="text-sm text-[var(--text-secondary)] mb-2">
+                      <p className="text-sm text-folio-text-secondary mb-2">
                         {item.product.vendor.companyName || item.product.vendor.name}
                       </p>
                     )}
@@ -324,7 +324,7 @@ export default function CreatePostPage() {
             <button
               type="button"
               onClick={() => router.back()}
-              className="px-6 py-3 text-[var(--text-primary)] bg-[var(--bg-elevated)] rounded-xl hover:bg-[var(--bg-elevated)] transition-colors font-medium"
+              className="px-6 py-3 text-folio-text-primary bg-surface-ground rounded-xl hover:bg-surface-ground transition-colors font-medium"
             >
               Cancel
             </button>

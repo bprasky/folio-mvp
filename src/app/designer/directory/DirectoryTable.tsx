@@ -34,11 +34,11 @@ export default function DirectoryTable({
 
   const getSortIcon = (field: SortField) => {
     if (sortField !== field) {
-      return <FaSort className="text-[#B5B0A9]" />;
+      return <FaSort className="text-folio-text-tertiary" />;
     }
     return sortDirection === 'asc' 
-      ? <FaSortUp className="text-[#7C7268]" />
-      : <FaSortDown className="text-[#7C7268]" />;
+      ? <FaSortUp className="text-folio-text-secondary" />
+      : <FaSortDown className="text-folio-text-secondary" />;
   };
 
   const formatDate = (date: Date) => {
@@ -53,13 +53,13 @@ export default function DirectoryTable({
     <div className="glass-surface overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full">
-          <thead className="bg-[#F8F7F5] border-b border-[#F0EFED]">
+          <thead className="bg-surface-ground border-b border-folio-border-subtle">
             <tr>
-              <th className="px-4 py-3 text-left text-[11px] font-medium text-[#6B6560] uppercase tracking-[0.05em]">
+              <th className="px-4 py-3 text-left text-[11px] font-medium text-folio-text-secondary uppercase tracking-[0.05em]">
                 Product
               </th>
               <th 
-                className="px-4 py-3 text-left text-[11px] font-medium text-[#6B6560] uppercase tracking-[0.05em] cursor-pointer hover:bg-[#FDFCFB] transition-colors"
+                className="px-4 py-3 text-left text-[11px] font-medium text-folio-text-secondary uppercase tracking-[0.05em] cursor-pointer hover:bg-surface-ground transition-colors"
                 onClick={() => onSort('productBrand')}
               >
                 <div className="flex items-center gap-2">
@@ -68,7 +68,7 @@ export default function DirectoryTable({
                 </div>
               </th>
               <th 
-                className="px-4 py-3 text-left text-[11px] font-medium text-[#6B6560] uppercase tracking-[0.05em] cursor-pointer hover:bg-[#FDFCFB] transition-colors"
+                className="px-4 py-3 text-left text-[11px] font-medium text-folio-text-secondary uppercase tracking-[0.05em] cursor-pointer hover:bg-surface-ground transition-colors"
                 onClick={() => onSort('category')}
               >
                 <div className="flex items-center gap-2">
@@ -77,7 +77,7 @@ export default function DirectoryTable({
                 </div>
               </th>
               <th 
-                className="px-4 py-3 text-left text-[11px] font-medium text-[#6B6560] uppercase tracking-[0.05em] cursor-pointer hover:bg-[#FDFCFB] transition-colors"
+                className="px-4 py-3 text-left text-[11px] font-medium text-folio-text-secondary uppercase tracking-[0.05em] cursor-pointer hover:bg-surface-ground transition-colors"
                 onClick={() => onSort('projectCount')}
               >
                 <div className="flex items-center gap-2">
@@ -85,14 +85,14 @@ export default function DirectoryTable({
                   {getSortIcon('projectCount')}
                 </div>
               </th>
-              <th className="px-4 py-3 text-left text-[11px] font-medium text-[#6B6560] uppercase tracking-[0.05em]">
+              <th className="px-4 py-3 text-left text-[11px] font-medium text-folio-text-secondary uppercase tracking-[0.05em]">
                 Rooms
               </th>
-              <th className="px-4 py-3 text-left text-[11px] font-medium text-[#6B6560] uppercase tracking-[0.05em]">
+              <th className="px-4 py-3 text-left text-[11px] font-medium text-folio-text-secondary uppercase tracking-[0.05em]">
                 Rep Email
               </th>
               <th 
-                className="px-4 py-3 text-left text-[11px] font-medium text-[#6B6560] uppercase tracking-[0.05em] cursor-pointer hover:bg-[#FDFCFB] transition-colors"
+                className="px-4 py-3 text-left text-[11px] font-medium text-folio-text-secondary uppercase tracking-[0.05em] cursor-pointer hover:bg-surface-ground transition-colors"
                 onClick={() => onSort('lastUsedAt')}
               >
                 <div className="flex items-center gap-2">
@@ -101,7 +101,7 @@ export default function DirectoryTable({
                 </div>
               </th>
               <th 
-                className="px-4 py-3 text-left text-[11px] font-medium text-[#6B6560] uppercase tracking-[0.05em] cursor-pointer hover:bg-[#FDFCFB] transition-colors"
+                className="px-4 py-3 text-left text-[11px] font-medium text-folio-text-secondary uppercase tracking-[0.05em] cursor-pointer hover:bg-surface-ground transition-colors"
                 onClick={() => onSort('tagCount')}
               >
                 <div className="flex items-center gap-2">
@@ -111,7 +111,7 @@ export default function DirectoryTable({
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-[#F0EFED]">
+          <tbody className="divide-y divide-folio-border-subtle">
             {entries.map((entry) => {
               const isExpanded = expandedRows.has(entry.productId);
               const projectsPreview = entry.projects.slice(0, 2);
@@ -121,12 +121,12 @@ export default function DirectoryTable({
                 <>
                   <tr 
                     key={entry.productId}
-                    className="bg-white hover:bg-[#FDFCFB] transition-colors"
+                    className="bg-white hover:bg-surface-ground transition-colors"
                   >
                     {/* Product */}
                     <td className="px-4 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-3">
-                        <div className="flex-shrink-0 h-10 w-10 relative rounded-md overflow-hidden bg-[#F8F7F5]" style={{ boxShadow: '0 1px 3px rgba(0, 0, 0, 0.08)' }}>
+                        <div className="flex-shrink-0 h-10 w-10 relative rounded-md overflow-hidden bg-surface-ground" style={{ boxShadow: '0 1px 3px rgba(0, 0, 0, 0.08)' }}>
                           {entry.productImageUrl ? (
                             <Image
                               src={entry.productImageUrl}
@@ -135,13 +135,13 @@ export default function DirectoryTable({
                               className="object-cover"
                             />
                           ) : (
-                            <div className="w-full h-full flex items-center justify-center text-[#B5B0A9] text-xs">
+                            <div className="w-full h-full flex items-center justify-center text-folio-text-tertiary text-xs">
                               No Image
                             </div>
                           )}
                         </div>
                         <div>
-                          <div className="text-sm font-medium text-[#2C2925]">
+                          <div className="text-sm font-medium text-folio-text-primary">
                             {entry.productName}
                           </div>
                         </div>
@@ -150,26 +150,26 @@ export default function DirectoryTable({
 
                     {/* Vendor */}
                     <td className="px-4 py-4 whitespace-nowrap">
-                      <div className="text-sm text-[#8A857F]">
+                      <div className="text-sm text-folio-text-secondary">
                         {entry.productBrand || '—'}
                       </div>
                     </td>
 
                     {/* Category */}
                     <td className="px-4 py-4 whitespace-nowrap">
-                      <div className="text-sm text-[#8A857F]">
+                      <div className="text-sm text-folio-text-secondary">
                         {entry.productCategory || '—'}
                       </div>
                     </td>
 
                     {/* Projects */}
                     <td className="px-4 py-4">
-                      <div className="text-sm text-[#8A857F]">
+                      <div className="text-sm text-folio-text-secondary">
                         {projectsPreview.map((project, idx) => (
                           <div key={project.projectId}>
                             <Link
                               href={`/project/${project.projectId}`}
-                              className="hover:text-[#7C7268] hover:underline transition-colors"
+                              className="hover:text-folio-text-secondary hover:underline transition-colors"
                             >
                               {project.projectTitle}
                             </Link>
@@ -178,7 +178,7 @@ export default function DirectoryTable({
                         {hasMoreProjects && (
                           <button
                             onClick={() => toggleRow(entry.productId)}
-                            className="text-[#7C7268] hover:text-[#5C554D] text-sm mt-1 flex items-center gap-1 transition-colors"
+                            className="text-folio-text-secondary hover:text-folio-text-secondary text-sm mt-1 flex items-center gap-1 transition-colors"
                           >
                             {isExpanded ? (
                               <>
@@ -198,7 +198,7 @@ export default function DirectoryTable({
 
                     {/* Rooms */}
                     <td className="px-4 py-4">
-                      <div className="text-sm text-[#8A857F]">
+                      <div className="text-sm text-folio-text-secondary">
                         {isExpanded ? (
                           <div>
                             {entry.projects.map((project, idx) => (
@@ -213,7 +213,7 @@ export default function DirectoryTable({
                               entry.projects.map(p => p.roomName).filter(Boolean)
                             )).slice(0, 2).join(', ') || '—'}
                             {entry.projects.filter(p => p.roomName).length > 2 && !isExpanded && (
-                              <span className="text-[#B5B0A9]">...</span>
+                              <span className="text-folio-text-tertiary">...</span>
                             )}
                           </div>
                         )}
@@ -233,14 +233,14 @@ export default function DirectoryTable({
 
                     {/* Last Used */}
                     <td className="px-4 py-4 whitespace-nowrap">
-                      <div className="text-sm text-[#8A857F]">
+                      <div className="text-sm text-folio-text-secondary">
                         {formatDate(entry.lastUsedAt)}
                       </div>
                     </td>
 
                     {/* Times Used */}
                     <td className="px-4 py-4 whitespace-nowrap">
-                      <div className="text-sm text-[#8A857F]">
+                      <div className="text-sm text-folio-text-secondary">
                         {entry.tagCount}
                       </div>
                     </td>
@@ -248,23 +248,23 @@ export default function DirectoryTable({
 
                   {/* Expanded Row */}
                   {isExpanded && (
-                    <tr className="bg-[#FDFCFB]">
+                    <tr className="bg-surface-ground">
                       <td colSpan={8} className="px-4 py-4">
                         <div className="pl-12">
-                          <div className="text-sm font-medium text-[#6B6560] mb-2">
+                          <div className="text-sm font-medium text-folio-text-secondary mb-2">
                             All Projects & Rooms:
                           </div>
                           <div className="space-y-1">
                             {entry.projects.map((project, idx) => (
-                              <div key={idx} className="text-sm text-[#8A857F]">
+                              <div key={idx} className="text-sm text-folio-text-secondary">
                                 <Link
                                   href={`/project/${project.projectId}`}
-                                  className="hover:text-[#7C7268] hover:underline transition-colors"
+                                  className="hover:text-folio-text-secondary hover:underline transition-colors"
                                 >
                                   {project.projectTitle}
                                 </Link>
                                 {project.roomName && (
-                                  <span className="text-[#B5B0A9] ml-2">
+                                  <span className="text-folio-text-tertiary ml-2">
                                     • {project.roomName}
                                   </span>
                                 )}

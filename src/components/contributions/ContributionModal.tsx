@@ -83,7 +83,7 @@ export function ContributionModal({
               </svg>
             </div>
             <h2 className="folio-h2 mb-2">Your voice has been added</h2>
-            <p className="folio-body text-[var(--text-secondary)] mb-6">
+            <p className="folio-body text-folio-text-secondary mb-6">
               We&apos;ll notify you when it&apos;s published.
             </p>
             <Button variant="accent" onClick={onClose}>
@@ -97,7 +97,7 @@ export function ContributionModal({
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <h2 className="folio-h2 mb-1">{topic.title}</h2>
-                  <div className="flex items-center gap-2 folio-meta text-[var(--text-secondary)]">
+                  <div className="flex items-center gap-2 folio-meta text-folio-text-secondary">
                     <span className="flex items-center gap-1">
                       <span className="w-2 h-2 rounded-full bg-[var(--accent)]" />
                       {topic.contributionCount} voice{topic.contributionCount !== 1 ? 's' : ''} so far
@@ -106,10 +106,10 @@ export function ContributionModal({
                 </div>
                 <button
                   onClick={onClose}
-                  className="p-2 hover:bg-[var(--bg-elevated)] rounded-lg transition-colors"
+                  className="p-2 hover:bg-surface-ground rounded-lg transition-colors"
                 >
                   <svg
-                    className="w-5 h-5 text-[var(--text-secondary)]"
+                    className="w-5 h-5 text-folio-text-secondary"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -129,17 +129,17 @@ export function ContributionModal({
             <div className="p-6">
               {/* Question */}
               <div className="mb-4">
-                <label className="block folio-meta text-[var(--text-secondary)] mb-2">
+                <label className="block folio-meta text-folio-text-secondary mb-2">
                   The question:
                 </label>
-                <p className="folio-body text-[var(--text-primary)] font-medium">
+                <p className="folio-body text-folio-text-primary font-medium">
                   &ldquo;{topic.promptQuestion}&rdquo;
                 </p>
               </div>
 
               {/* Textarea */}
               <div className="mb-4">
-                <label className="block folio-meta text-[var(--text-secondary)] mb-2">
+                <label className="block folio-meta text-folio-text-secondary mb-2">
                   Your perspective:
                 </label>
                 <textarea
@@ -154,7 +154,7 @@ export function ContributionModal({
                 />
                 <div className="flex justify-between mt-2 folio-meta">
                   <span className={cn(
-                    'text-[var(--text-secondary)]',
+                    'text-folio-text-secondary',
                     isOverLimit && 'text-red-500'
                   )}>
                     {charsRemaining} characters remaining
@@ -163,7 +163,7 @@ export function ContributionModal({
               </div>
 
               {/* Disclaimer */}
-              <p className="folio-meta text-[var(--text-secondary)] mb-4">
+              <p className="folio-meta text-folio-text-secondary mb-4">
                 Your response may be quoted in the published article.
               </p>
 
@@ -176,7 +176,7 @@ export function ContributionModal({
             </div>
 
             {/* Footer */}
-            <div className="px-6 py-4 bg-[var(--bg-elevated)] border-t border-[var(--border-subtle)] flex justify-end gap-3">
+            <div className="px-6 py-4 bg-surface-ground border-t border-[var(--border-subtle)] flex justify-end gap-3">
               <Button variant="ridge" onClick={onClose} disabled={loading}>
                 Cancel
               </Button>

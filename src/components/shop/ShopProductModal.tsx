@@ -116,8 +116,7 @@ export default function ShopProductModal({
 
         {/* Modal Content */}
         <motion.div
-          className="relative z-10 w-full max-w-5xl max-h-[90vh] overflow-hidden rounded-2xl"
-          style={{ backgroundColor: '#FAF9F7' }}
+          className="relative z-10 w-full max-w-5xl max-h-[90vh] overflow-hidden rounded-2xl bg-surface-ground"
           initial={{ scale: 0.95, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.95, opacity: 0 }}
@@ -129,18 +128,17 @@ export default function ShopProductModal({
             className="absolute top-4 right-4 z-20 p-2 rounded-full transition-colors"
             style={{ backgroundColor: 'rgba(255,255,255,0.9)' }}
           >
-            <FaTimes className="w-5 h-5" style={{ color: '#2C2825' }} />
+            <FaTimes className="w-5 h-5 text-folio-text-primary" />
           </button>
 
           {loading ? (
             <ModalSkeleton />
           ) : error ? (
             <div className="p-8 text-center">
-              <p style={{ color: '#8B8178' }}>{error}</p>
+              <p className="text-folio-text-secondary">{error}</p>
               <button
                 onClick={onClose}
-                className="mt-4 px-6 py-2 rounded-lg"
-                style={{ backgroundColor: '#2C2825', color: '#FFFFFF' }}
+                className="mt-4 px-6 py-2 rounded-lg bg-folio-text-primary text-white"
               >
                 Close
               </button>
@@ -151,8 +149,7 @@ export default function ShopProductModal({
               <div className="md:w-3/5 flex flex-col">
                 {/* Main Product Image */}
                 <div
-                  className="relative aspect-square md:aspect-[4/3]"
-                  style={{ backgroundColor: '#F5F3F0' }}
+                  className="relative aspect-square md:aspect-[4/3] bg-surface-elevated"
                 >
                   {data.product.imageUrl ? (
                     <Image
@@ -164,11 +161,10 @@ export default function ShopProductModal({
                   ) : (
                     <div className="absolute inset-0 flex items-center justify-center">
                       <svg
-                        className="w-20 h-20"
+                        className="w-20 h-20 text-folio-text-tertiary"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
-                        style={{ color: '#C4BEB5' }}
                       >
                         <path
                           strokeLinecap="round"
@@ -183,7 +179,7 @@ export default function ShopProductModal({
 
                 {/* Context Photos Grid */}
                 {data.contextImages.length > 0 && (
-                  <div className="grid grid-cols-4 gap-1 p-1" style={{ backgroundColor: '#E8E4DF' }}>
+                  <div className="grid grid-cols-4 gap-1 p-1 bg-folio-border-subtle">
                     {data.contextImages.slice(0, 4).map((img) => (
                       <Link
                         key={img.id}
@@ -212,16 +208,14 @@ export default function ShopProductModal({
                 {/* Product Info */}
                 <div className="mb-6">
                   <h2
-                    className="text-2xl font-semibold mb-2"
-                    style={{ color: '#2C2825' }}
+                    className="text-2xl font-semibold mb-2 text-folio-text-primary"
                   >
                     {data.product.name}
                   </h2>
                   {data.product.brand && (
                     <Link
                       href={data.product.vendorId ? `/vendor/${data.product.vendorId}` : '#'}
-                      className="text-base hover:underline"
-                      style={{ color: '#8B8178' }}
+                      className="text-base hover:underline text-folio-text-secondary"
                     >
                       by {data.product.brand}
                     </Link>
@@ -230,11 +224,10 @@ export default function ShopProductModal({
 
                 {/* Designer Quote */}
                 {data.quote && (
-                  <div className="mb-8 p-6 rounded-xl" style={{ backgroundColor: '#F5F3F0' }}>
-                    <FaQuoteLeft className="w-5 h-5 mb-3" style={{ color: '#C4BEB5' }} />
+                  <div className="mb-8 p-6 rounded-xl bg-surface-elevated">
+                    <FaQuoteLeft className="w-5 h-5 mb-3 text-folio-text-tertiary" />
                     <blockquote
-                      className="text-base italic mb-4 leading-relaxed"
-                      style={{ color: '#2C2825' }}
+                      className="text-base italic mb-4 leading-relaxed text-folio-text-primary"
                     >
                       {data.quote}
                     </blockquote>
@@ -249,13 +242,12 @@ export default function ShopProductModal({
                         />
                       ) : (
                         <div
-                          className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium"
-                          style={{ backgroundColor: '#E8E4DF', color: '#8B8178' }}
+                          className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium bg-folio-border-subtle text-folio-text-secondary"
                         >
                           {data.designer.name.charAt(0)}
                         </div>
                       )}
-                      <span className="text-sm font-medium" style={{ color: '#2C2825' }}>
+                      <span className="text-sm font-medium text-folio-text-primary">
                         {data.designer.name}
                       </span>
                     </div>
@@ -265,7 +257,7 @@ export default function ShopProductModal({
                 {/* Featured In Projects */}
                 {data.featuredProjects.length > 0 && (
                   <div className="mb-8">
-                    <h3 className="text-sm font-medium mb-3" style={{ color: '#8B8178' }}>
+                    <h3 className="text-sm font-medium mb-3 text-folio-text-secondary">
                       Featured in
                     </h3>
                     <div className="space-y-2">
@@ -273,17 +265,16 @@ export default function ShopProductModal({
                         <Link
                           key={project.id}
                           href={`/project/${project.id}`}
-                          className="flex items-center justify-between p-3 rounded-lg transition-colors hover:bg-[#F5F3F0]"
+                          className="flex items-center justify-between p-3 rounded-lg transition-colors hover:bg-surface-elevated"
                         >
-                          <span className="text-sm" style={{ color: '#2C2825' }}>
+                          <span className="text-sm text-folio-text-primary">
                             {project.title}
                           </span>
                           <svg
-                            className="w-4 h-4"
+                            className="w-4 h-4 text-folio-text-secondary"
                             fill="none"
                             viewBox="0 0 24 24"
                             stroke="currentColor"
-                            style={{ color: '#8B8178' }}
                           >
                             <path
                               strokeLinecap="round"
@@ -302,8 +293,7 @@ export default function ShopProductModal({
                 <div className="mt-auto space-y-3">
                   <button
                     onClick={handleRequestQuote}
-                    className="w-full py-3 px-6 rounded-xl font-medium transition-colors"
-                    style={{ backgroundColor: '#2C2825', color: '#FFFFFF' }}
+                    className="w-full py-3 px-6 rounded-xl font-medium transition-colors bg-folio-text-primary text-white"
                   >
                     Request Quote
                   </button>
@@ -311,21 +301,15 @@ export default function ShopProductModal({
                   <button
                     onClick={handleSave}
                     disabled={saving || saved}
-                    className="w-full py-3 px-6 rounded-xl font-medium border transition-colors flex items-center justify-center gap-2"
-                    style={{
-                      borderColor: '#E8E4DF',
-                      backgroundColor: saved ? '#F5F3F0' : '#FFFFFF',
-                      color: '#2C2825',
-                    }}
+                    className={`w-full py-3 px-6 rounded-xl font-medium border border-folio-border-subtle transition-colors flex items-center justify-center gap-2 text-folio-text-primary ${saved ? 'bg-surface-elevated' : 'bg-surface-canvas'}`}
                   >
-                    <FaBookmark className={saved ? 'text-[#2C2825]' : ''} />
+                    <FaBookmark className={saved ? 'text-folio-text-primary' : ''} />
                     {saved ? 'Saved' : saving ? 'Saving...' : 'Save'}
                   </button>
 
                   <Link
                     href={`/product/${data.productId}`}
-                    className="w-full py-3 px-6 rounded-xl font-medium border transition-colors text-center block"
-                    style={{ borderColor: '#E8E4DF', color: '#8B8178' }}
+                    className="w-full py-3 px-6 rounded-xl font-medium border border-folio-border-subtle transition-colors text-center block text-folio-text-secondary"
                   >
                     View Full Product Page
                   </Link>
@@ -343,17 +327,17 @@ function ModalSkeleton() {
   return (
     <div className="flex flex-col md:flex-row h-full min-h-[400px]">
       <div className="md:w-3/5">
-        <div className="aspect-square md:aspect-[4/3] animate-pulse" style={{ backgroundColor: '#E8E4DF' }} />
+        <div className="aspect-square md:aspect-[4/3] animate-pulse bg-folio-border-subtle" />
       </div>
       <div className="md:w-2/5 p-6 md:p-8 space-y-6">
         <div className="space-y-2">
-          <div className="h-8 w-3/4 rounded animate-pulse" style={{ backgroundColor: '#E8E4DF' }} />
-          <div className="h-5 w-1/2 rounded animate-pulse" style={{ backgroundColor: '#E8E4DF' }} />
+          <div className="h-8 w-3/4 rounded animate-pulse bg-folio-border-subtle" />
+          <div className="h-5 w-1/2 rounded animate-pulse bg-folio-border-subtle" />
         </div>
-        <div className="h-32 rounded-xl animate-pulse" style={{ backgroundColor: '#F5F3F0' }} />
+        <div className="h-32 rounded-xl animate-pulse bg-surface-elevated" />
         <div className="space-y-2">
-          <div className="h-10 rounded-lg animate-pulse" style={{ backgroundColor: '#E8E4DF' }} />
-          <div className="h-10 rounded-lg animate-pulse" style={{ backgroundColor: '#E8E4DF' }} />
+          <div className="h-10 rounded-lg animate-pulse bg-folio-border-subtle" />
+          <div className="h-10 rounded-lg animate-pulse bg-folio-border-subtle" />
         </div>
       </div>
     </div>

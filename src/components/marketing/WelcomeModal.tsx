@@ -121,7 +121,7 @@ export function WelcomeModal() {
             className="sticky top-0 z-10 flex items-center justify-between px-7 py-4"
             style={{ borderBottom: '1px solid rgba(201, 169, 110, 0.12)' }}
           >
-            <span className="font-headline text-xl tracking-wide font-semibold text-[#1a1410]">
+            <span className="font-headline text-xl tracking-wide font-semibold text-folio-text-primary">
               FOLIO
             </span>
             <button
@@ -137,7 +137,7 @@ export function WelcomeModal() {
           <div className="flex-1 overflow-y-auto overscroll-contain">
             {/* Hero */}
             <div className="px-7 pt-8 pb-6 text-center">
-              <h2 className="font-headline italic text-4xl text-[#1a1410] leading-[1.1]">
+              <h2 className="font-headline italic text-4xl text-folio-text-primary leading-[1.1]">
                 Your work is the product.
                 <br />
                 Folio treats it that way.
@@ -161,7 +161,7 @@ export function WelcomeModal() {
               >
                 The Process
               </p>
-              <h3 className="font-headline italic text-2xl text-[#1a1410] mb-6">
+              <h3 className="font-headline italic text-2xl text-folio-text-primary mb-6">
                 How it works
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -176,7 +176,7 @@ export function WelcomeModal() {
                     >
                       {i + 1}
                     </p>
-                    <h4 className="text-xs font-medium text-[#1a1410] mb-1">
+                    <h4 className="text-xs font-medium text-folio-text-primary mb-1">
                       {step.title}
                     </h4>
                     <p className="text-xs leading-relaxed" style={{ color: 'rgba(40, 30, 24, 0.65)' }}>
@@ -200,7 +200,7 @@ export function WelcomeModal() {
               >
                 What You Get
               </p>
-              <h3 className="font-headline italic text-2xl text-[#1a1410] mb-5">
+              <h3 className="font-headline italic text-2xl text-folio-text-primary mb-5">
                 Built around your work. Not theirs.
               </h3>
               <div className="space-y-2.5">
@@ -223,7 +223,7 @@ export function WelcomeModal() {
                     <span className="uppercase tracking-widest text-[10px] whitespace-nowrap min-w-[100px]" style={{ color: 'rgba(40, 30, 24, 0.6)' }}>
                       {pillar.label}
                     </span>
-                    <span className="font-headline italic text-sm text-[#1a1410] group-hover:text-[#c9a96e] transition-colors">
+                    <span className="font-headline italic text-sm text-folio-text-primary group-hover:text-[#c9a96e] transition-colors">
                       {pillar.title}
                     </span>
                     <span className="text-[#c9a96e]/40 text-sm ml-auto shrink-0">
@@ -247,7 +247,7 @@ export function WelcomeModal() {
               >
                 Founding Designers
               </p>
-              <h3 className="font-headline italic text-2xl text-[#1a1410] mb-5">
+              <h3 className="font-headline italic text-2xl text-folio-text-primary mb-5">
                 We&rsquo;re building the founding cohort now.
               </h3>
               <p className="text-xs leading-relaxed mb-3" style={{ color: 'rgba(40, 30, 24, 0.75)' }}>
@@ -255,7 +255,7 @@ export function WelcomeModal() {
                 receive permanent recognition on the platform and structural
                 advantages that don&rsquo;t go away as the platform grows.
               </p>
-              <p className="text-xs font-medium text-[#1a1410]">
+              <p className="text-xs font-medium text-folio-text-primary">
                 If your work is ready, so are we.
               </p>
             </div>
@@ -275,7 +275,7 @@ export function WelcomeModal() {
                 e.stopPropagation();
                 handleClose();
               }}
-              className="text-xs hover:text-[#1a1410] transition-colors"
+              className="text-xs hover:text-folio-text-primary transition-colors"
               style={{ color: 'rgba(40, 30, 24, 0.6)' }}
             >
               Already have an account? Sign in

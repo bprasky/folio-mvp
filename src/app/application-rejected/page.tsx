@@ -52,7 +52,7 @@ export default function ApplicationRejectedPage() {
   // Show loading while checking auth
   if (status === 'loading' || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[var(--bg-base)]">
+      <div className="min-h-screen flex items-center justify-center bg-surface-canvas">
         <div className="folio-body">Loading...</div>
       </div>
     );
@@ -65,7 +65,7 @@ export default function ApplicationRejectedPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[var(--bg-base)] px-4 py-12">
+    <div className="min-h-screen flex items-center justify-center bg-surface-canvas px-4 py-12">
       <div className="w-full max-w-lg text-center">
         <RidgeCard size="lg" padding="xl">
           <div className="space-y-8">
@@ -83,7 +83,7 @@ export default function ApplicationRejectedPage() {
 
               {/* Rejection reason if provided */}
               {rejectionReason && (
-                <div className="mt-6 ridge-card ridge-card-sm p-4 bg-[var(--bg-elevated)]">
+                <div className="mt-6 ridge-card ridge-card-sm p-4 bg-surface-ground">
                   <p className="folio-meta mb-2">Note from our team:</p>
                   <p className="folio-quote text-base">{rejectionReason}</p>
                 </div>
@@ -99,7 +99,7 @@ export default function ApplicationRejectedPage() {
               expand access soon. Feel free to reach out at{' '}
               <a
                 href="mailto:hello@folioad.com"
-                className="text-[var(--text-secondary)] underline hover:text-[var(--text-primary)] transition-colors"
+                className="text-folio-text-secondary underline hover:text-folio-text-primary transition-colors"
               >
                 hello@folioad.com
               </a>
@@ -109,7 +109,7 @@ export default function ApplicationRejectedPage() {
 
         {/* Folio logo/wordmark */}
         <div className="mt-8">
-          <span className="folio-logo-text text-[var(--text-tertiary)]">Folio</span>
+          <span className="folio-logo-text text-folio-text-tertiary">Folio</span>
         </div>
       </div>
     </div>

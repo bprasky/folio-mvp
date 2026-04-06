@@ -84,7 +84,7 @@ export default function CatalogPicker({
             Browse all vendors
           </label>
           {!showAllVendors && (
-            <span className="text-xs text-[var(--text-secondary)]">
+            <span className="text-xs text-folio-text-secondary">
               Showing only your products
             </span>
           )}
@@ -94,14 +94,14 @@ export default function CatalogPicker({
       {/* Products List */}
       <div className="max-h-96 overflow-y-auto space-y-2">
         {loading ? (
-          <div className="text-center py-4 text-[var(--text-secondary)]">Loading products...</div>
+          <div className="text-center py-4 text-folio-text-secondary">Loading products...</div>
         ) : products.length === 0 ? (
-          <div className="text-center py-4 text-[var(--text-secondary)]">No products found</div>
+          <div className="text-center py-4 text-folio-text-secondary">No products found</div>
         ) : (
           products.map((product) => (
             <div
               key={product.id}
-              className="border rounded-lg p-3 hover:bg-[var(--bg-elevated)] cursor-pointer"
+              className="border rounded-lg p-3 hover:bg-surface-ground cursor-pointer"
               onClick={() => handleProductPick(product)}
             >
               <div className="flex items-start gap-3">
@@ -115,10 +115,10 @@ export default function CatalogPicker({
                 <div className="flex-1 min-w-0">
                   <h4 className="font-medium text-sm truncate">{product.name}</h4>
                   {product.sku && (
-                    <p className="text-xs text-[var(--text-secondary)]">SKU: {product.sku}</p>
+                    <p className="text-xs text-folio-text-secondary">SKU: {product.sku}</p>
                   )}
                   {product.finish && (
-                    <p className="text-xs text-[var(--text-secondary)]">Finish: {product.finish}</p>
+                    <p className="text-xs text-folio-text-secondary">Finish: {product.finish}</p>
                   )}
                   {product.vendorName && (
                     <p className="text-xs text-[var(--accent)]">{product.vendorName}</p>

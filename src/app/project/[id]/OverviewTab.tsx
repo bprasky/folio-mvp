@@ -252,13 +252,13 @@ export default function OverviewTab({ projectId, project, isOwner }: OverviewTab
     <div className="space-y-12">
       {/* Resume CTA */}
       {resumeCTA && (
-        <div className="bg-[var(--bg-elevated)] border border-[var(--border-default)] rounded-[20px] p-4 flex items-center justify-between">
+        <div className="bg-surface-ground border border-folio-border-subtle rounded-[20px] p-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-[var(--accent)] flex items-center justify-center shrink-0">
               <FaPlay className="w-5 h-5 text-white" />
             </div>
             <div>
-              <p className="folio-ui font-medium text-[var(--text-primary)]">{resumeCTA.label}</p>
+              <p className="folio-ui font-medium text-folio-text-primary">{resumeCTA.label}</p>
             </div>
           </div>
           <button
@@ -276,12 +276,12 @@ export default function OverviewTab({ projectId, project, isOwner }: OverviewTab
           <div className="mb-4">
             <div className="flex items-center gap-3 mb-1">
               <FaMagic className="w-5 h-5 text-[var(--accent)]" />
-              <h2 className="folio-h3 text-[var(--text-primary)]">Opportunities Detected</h2>
+              <h2 className="folio-h3 text-folio-text-primary">Opportunities Detected</h2>
               <span className="bg-[var(--accent)]/10 text-[var(--accent)] text-xs font-semibold px-3 py-1 rounded-full">
                 {approvals.length}
               </span>
             </div>
-            <p className="folio-body text-[var(--text-secondary)] ml-8">
+            <p className="folio-body text-folio-text-secondary ml-8">
               Folio found ways to turn this project into leverage.
             </p>
           </div>
@@ -296,7 +296,7 @@ export default function OverviewTab({ projectId, project, isOwner }: OverviewTab
               return (
                 <div
                   key={approval.id}
-                  className="relative bg-[var(--bg-elevated)] border border-[var(--border-default)] rounded-[20px] p-5 flex items-start justify-between gap-4 shadow-sm hover:shadow-md transition-all group"
+                  className="relative bg-surface-ground border border-folio-border-subtle rounded-[20px] p-5 flex items-start justify-between gap-4 shadow-sm hover:shadow-md transition-all group"
                 >
                   {/* Left accent strip */}
                   <div className={`absolute left-0 top-0 bottom-0 w-1 ${accentColor} rounded-l-xl`} />
@@ -306,12 +306,12 @@ export default function OverviewTab({ projectId, project, isOwner }: OverviewTab
                       <Icon className={`w-6 h-6 ${accentColor.replace('bg-', 'text-')}`} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="folio-body font-semibold text-[var(--text-primary)]">{approval.title}</h3>
-                      <p className="folio-ui text-[var(--text-secondary)] mt-0.5">{approval.description}</p>
+                      <h3 className="folio-body font-semibold text-folio-text-primary">{approval.title}</h3>
+                      <p className="folio-ui text-folio-text-secondary mt-0.5">{approval.description}</p>
 
                       {/* Value line for key approvals */}
                       {valueLine && (
-                        <p className="folio-meta text-[var(--text-tertiary)] mt-2 italic">
+                        <p className="folio-meta text-folio-text-tertiary mt-2 italic">
                           {valueLine}
                         </p>
                       )}
@@ -339,7 +339,7 @@ export default function OverviewTab({ projectId, project, isOwner }: OverviewTab
                       )}
 
                       {approval.source && (
-                        <p className="folio-meta text-[var(--text-tertiary)] mt-2">
+                        <p className="folio-meta text-folio-text-tertiary mt-2">
                           From: {approval.source.noteTitle || 'Meeting Note'} • {' '}
                           {new Date(approval.source.timestamp!).toLocaleDateString()}
                         </p>
@@ -373,12 +373,12 @@ export default function OverviewTab({ projectId, project, isOwner }: OverviewTab
 
       {/* Editorial Hint - shown when editorial drafts aren't available yet */}
       {editorialHint && !project.isPublic && (
-        <div className="bg-[var(--bg-elevated)] border border-[var(--border-default)] rounded-[20px] p-4 flex items-start gap-3">
+        <div className="bg-surface-ground border border-folio-border-subtle rounded-[20px] p-4 flex items-start gap-3">
           <div className="w-8 h-8 rounded-lg bg-[var(--accent)]/10 flex items-center justify-center shrink-0">
             <FaFileAlt className="w-4 h-4 text-[var(--accent)]" />
           </div>
           <div>
-            <p className="folio-ui text-[var(--text-primary)]">{editorialHint}</p>
+            <p className="folio-ui text-folio-text-primary">{editorialHint}</p>
             <button
               onClick={() => router.push(`/project/${projectId}?view=media`)}
               className="folio-ui font-medium text-[var(--accent)] hover:text-[var(--accent-hover)] mt-1 inline-flex items-center gap-1"
@@ -395,9 +395,9 @@ export default function OverviewTab({ projectId, project, isOwner }: OverviewTab
           <div>
             <div className="flex items-center gap-2 mb-1">
               <FaStickyNote className="w-5 h-5 text-[var(--accent)]" />
-              <h2 className="folio-h3 text-[var(--text-primary)]">Project Trail</h2>
+              <h2 className="folio-h3 text-folio-text-primary">Project Trail</h2>
             </div>
-            <p className="folio-body text-[var(--text-secondary)] ml-7">
+            <p className="folio-body text-folio-text-secondary ml-7">
               Context and decisions you can reference anytime.
             </p>
           </div>
@@ -410,10 +410,10 @@ export default function OverviewTab({ projectId, project, isOwner }: OverviewTab
         </div>
 
         {recentNotes.length === 0 ? (
-          <div className="bg-[var(--bg-base)] border border-[var(--border-default)] border-dashed rounded-[20px] p-8 text-center">
-            <FaStickyNote className="w-8 h-8 text-[var(--text-tertiary)] mx-auto mb-3" />
-            <p className="text-[var(--text-secondary)]">No notes yet</p>
-            <p className="folio-meta text-[var(--text-tertiary)] mt-1">
+          <div className="bg-surface-canvas border border-folio-border-subtle border-dashed rounded-[20px] p-8 text-center">
+            <FaStickyNote className="w-8 h-8 text-folio-text-tertiary mx-auto mb-3" />
+            <p className="text-folio-text-secondary">No notes yet</p>
+            <p className="folio-meta text-folio-text-tertiary mt-1">
               Meeting notes will appear here as you add them.
             </p>
           </div>
@@ -423,20 +423,20 @@ export default function OverviewTab({ projectId, project, isOwner }: OverviewTab
               <button
                 key={note.id}
                 onClick={goToNotes}
-                className="w-full bg-[var(--bg-elevated)] border border-[var(--border-default)] rounded-[20px] p-4 text-left hover:border-[var(--accent)] hover:shadow-sm transition-all"
+                className="w-full bg-surface-ground border border-folio-border-subtle rounded-[20px] p-4 text-left hover:border-[var(--accent)] hover:shadow-sm transition-all"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-medium text-[var(--text-primary)] truncate">
+                    <h3 className="font-medium text-folio-text-primary truncate">
                       {note.title || 'Untitled Note'}
                     </h3>
                     {note.rawText && (
-                      <p className="folio-body text-[var(--text-secondary)] mt-1 line-clamp-2">
+                      <p className="folio-body text-folio-text-secondary mt-1 line-clamp-2">
                         {note.rawText.substring(0, 150)}
                         {note.rawText.length > 150 ? '...' : ''}
                       </p>
                     )}
-                    <p className="folio-meta text-[var(--text-tertiary)] mt-2">
+                    <p className="folio-meta text-folio-text-tertiary mt-2">
                       {new Date(note.createdAt).toLocaleDateString('en-US', {
                         month: 'short',
                         day: 'numeric',

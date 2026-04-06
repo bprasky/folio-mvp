@@ -246,18 +246,18 @@ export const DynamicInsightPanel: React.FC<DynamicInsightPanelProps> = ({
     <>
       <section className="mt-4 ridge-card p-4">
         <header className="flex items-center justify-between gap-2">
-          <h2 className="folio-ui font-semibold text-[var(--text-primary)]">
+          <h2 className="folio-ui font-semibold text-folio-text-primary">
             {mode === "strategy" ? "AI Strategy Session" : "Analytics Conversation"}
           </h2>
           {mode === "analytics" && (
-            <p className="text-[11px] uppercase tracking-wide text-[var(--text-tertiary)]">
+            <p className="text-[11px] uppercase tracking-wide text-folio-text-tertiary">
               Ask anything about your events, products, designers, or projects.
             </p>
           )}
         </header>
 
         {messages.length === 0 && !isLoading && (
-          <p className="mt-3 folio-ui text-[var(--text-secondary)]">
+          <p className="mt-3 folio-ui text-folio-text-secondary">
             Ask a question above or click a suggested question to start a
             conversation about your data.
           </p>
@@ -277,7 +277,7 @@ export const DynamicInsightPanel: React.FC<DynamicInsightPanelProps> = ({
               <div className={`max-w-xl rounded-2xl px-3 py-2 text-sm ${
                 error
                   ? "bg-red-50 border border-red-200 text-red-800"
-                  : "bg-[var(--bg-elevated)] text-[var(--text-primary)]"
+                  : "bg-surface-ground text-folio-text-primary"
               }`}>
                 <p style={{ whiteSpace: "pre-line" }}>
                   {currentAnswer.answer}
@@ -292,8 +292,8 @@ export const DynamicInsightPanel: React.FC<DynamicInsightPanelProps> = ({
             )}
 
             {currentAnswer.actions && currentAnswer.actions.length > 0 && (
-              <div className="mt-4 max-w-xl border-t border-[var(--ridge-outer)] pt-3">
-                <p className="folio-meta font-semibold uppercase tracking-wide text-[var(--text-secondary)]">
+              <div className="mt-4 max-w-xl border-t border-folio-border-subtle pt-3">
+                <p className="folio-meta font-semibold uppercase tracking-wide text-folio-text-secondary">
                   Suggested Folio actions
                 </p>
                 <div className="mt-2 flex flex-wrap gap-2">
@@ -307,7 +307,7 @@ export const DynamicInsightPanel: React.FC<DynamicInsightPanelProps> = ({
                         key={a.actionId + a.reason}
                         type="button"
                         onClick={() => openActionWorkflow(a.actionId, a.reason)}
-                        className="rounded-full border border-[var(--ridge-outer)] bg-[var(--bg-base)]/80 px-3 py-1 folio-meta text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]"
+                        className="rounded-full border border-folio-border-subtle bg-surface-canvas/80 px-3 py-1 folio-meta text-folio-text-primary hover:bg-surface-ground"
                       >
                         {label}
                       </button>
@@ -323,7 +323,7 @@ export const DynamicInsightPanel: React.FC<DynamicInsightPanelProps> = ({
                     return (
                       <li
                         key={a.actionId + "_reason"}
-                        className="text-[11px] text-[var(--text-secondary)]"
+                        className="text-[11px] text-folio-text-secondary"
                       >
                         <span className="font-medium">{label}</span>
                         {": "}
@@ -338,7 +338,7 @@ export const DynamicInsightPanel: React.FC<DynamicInsightPanelProps> = ({
             {currentAnswer.followUpQuestions &&
               currentAnswer.followUpQuestions.length > 0 && (
                 <div className="mt-4 max-w-xl">
-                  <p className="folio-meta font-semibold uppercase tracking-wide text-[var(--text-secondary)]">
+                  <p className="folio-meta font-semibold uppercase tracking-wide text-folio-text-secondary">
                     Suggested follow-ups
                   </p>
                   <div className="mt-2 flex flex-wrap gap-2">
@@ -347,7 +347,7 @@ export const DynamicInsightPanel: React.FC<DynamicInsightPanelProps> = ({
                         key={q}
                         type="button"
                         onClick={() => handleFollowUp(q)}
-                        className="rounded-full border border-[var(--ridge-outer)] bg-[var(--bg-base)]/80 px-3 py-1 folio-meta text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]"
+                        className="rounded-full border border-folio-border-subtle bg-surface-canvas/80 px-3 py-1 folio-meta text-folio-text-primary hover:bg-surface-ground"
                       >
                         {q}
                       </button>
@@ -359,7 +359,7 @@ export const DynamicInsightPanel: React.FC<DynamicInsightPanelProps> = ({
         )}
 
         {isLoading && (
-          <p className="mt-3 folio-meta text-[var(--text-secondary)]">Thinking with your data...</p>
+          <p className="mt-3 folio-meta text-folio-text-secondary">Thinking with your data...</p>
         )}
 
         {/* Follow-up input */}
@@ -375,7 +375,7 @@ export const DynamicInsightPanel: React.FC<DynamicInsightPanelProps> = ({
             value={followupInput}
             onChange={(e) => setFollowupInput(e.target.value)}
             placeholder="Ask a follow-up question..."
-            className="flex-1 rounded-full border border-[var(--ridge-outer)] bg-[var(--bg-base)]/70 px-3 py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:border-[var(--ridge-outer)] focus:outline-none"
+            className="flex-1 rounded-full border border-folio-border-subtle bg-surface-canvas/70 px-3 py-2 text-sm text-folio-text-primary placeholder:text-folio-text-tertiary focus:border-folio-border-subtle focus:outline-none"
           />
           <button
             type="submit"
@@ -389,47 +389,47 @@ export const DynamicInsightPanel: React.FC<DynamicInsightPanelProps> = ({
       {/* Micro-workflow drawer */}
       {activeAction && (
         <div className="fixed inset-0 z-40 flex justify-end bg-black/30">
-          <div className="h-full w-full max-w-md bg-[var(--bg-base)] shadow-xl flex flex-col">
-            <div className="flex items-center justify-between border-b border-[var(--ridge-outer)] px-4 py-3">
+          <div className="h-full w-full max-w-md bg-surface-canvas shadow-xl flex flex-col">
+            <div className="flex items-center justify-between border-b border-folio-border-subtle px-4 py-3">
               <div>
-                <p className="folio-meta uppercase tracking-wide text-[var(--text-tertiary)]">
+                <p className="folio-meta uppercase tracking-wide text-folio-text-tertiary">
                   Folio action
                 </p>
-                <h3 className="folio-ui font-semibold text-[var(--text-primary)]">
+                <h3 className="folio-ui font-semibold text-folio-text-primary">
                   {activeAction.action.label}
                 </h3>
               </div>
               <button
                 type="button"
                 onClick={() => setActiveAction(null)}
-                className="text-[var(--text-tertiary)] hover:text-[var(--text-primary)] text-lg"
+                className="text-folio-text-tertiary hover:text-folio-text-primary text-lg"
               >
                 ×
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto px-4 py-3 text-sm text-[var(--text-primary)] space-y-4">
-              <p className="text-[var(--text-secondary)]">
+            <div className="flex-1 overflow-y-auto px-4 py-3 text-sm text-folio-text-primary space-y-4">
+              <p className="text-folio-text-secondary">
                 {activeAction.action.description}
               </p>
-              <p className="folio-meta text-[var(--text-secondary)]">
+              <p className="folio-meta text-folio-text-secondary">
                 Why now: {activeAction.reason}
               </p>
 
               {/* Mock micro-workflow steps based on category */}
               {activeAction.action.category === "events" && (
                 <div className="space-y-3">
-                  <p className="font-medium text-[var(--text-primary)]">
+                  <p className="font-medium text-folio-text-primary">
                     Step 1 — Choose the event or projects to focus on
                   </p>
-                  <p className="text-sm text-[var(--text-secondary)]">
+                  <p className="text-sm text-folio-text-secondary">
                     In a full implementation, this step would list the events
                     and projects that drove the metrics we just discussed so you
                     can confirm what to boost or recap.
                   </p>
-                  <p className="font-medium text-[var(--text-primary)]">
+                  <p className="font-medium text-folio-text-primary">
                     Step 2 — Confirm target designer segment
                   </p>
-                  <p className="text-sm text-[var(--text-secondary)]">
+                  <p className="text-sm text-folio-text-secondary">
                     Folio will use your engagement data to propose a guest list
                     or audience segment and show you a preview before sending
                     invitations or highlighting content.
@@ -439,18 +439,18 @@ export const DynamicInsightPanel: React.FC<DynamicInsightPanelProps> = ({
 
               {activeAction.action.category === "products" && (
                 <div className="space-y-3">
-                  <p className="font-medium text-[var(--text-primary)]">
+                  <p className="font-medium text-folio-text-primary">
                     Step 1 — Review suggested SKUs
                   </p>
-                  <p className="text-sm text-[var(--text-secondary)]">
+                  <p className="text-sm text-folio-text-secondary">
                     Here you would see the SKUs that the AI identified as top
                     candidates for boosting or monitoring, drawn directly from
                     your analytics.
                   </p>
-                  <p className="font-medium text-[var(--text-primary)]">
+                  <p className="font-medium text-folio-text-primary">
                     Step 2 — Choose how to highlight them
                   </p>
-                  <p className="text-sm text-[var(--text-secondary)]">
+                  <p className="text-sm text-folio-text-secondary">
                     Options could include boosted discovery placement, a
                     curated board, or inclusion in upcoming event materials.
                   </p>
@@ -459,18 +459,18 @@ export const DynamicInsightPanel: React.FC<DynamicInsightPanelProps> = ({
 
               {activeAction.action.category === "designers" && (
                 <div className="space-y-3">
-                  <p className="font-medium text-[var(--text-primary)]">
+                  <p className="font-medium text-folio-text-primary">
                     Step 1 — Preview designer segment
                   </p>
-                  <p className="text-sm text-[var(--text-secondary)]">
+                  <p className="text-sm text-folio-text-secondary">
                     Folio would show you the designers selected for this
                     segment—based on engagement, alignment, and project value—
                     so you can refine the list.
                   </p>
-                  <p className="font-medium text-[var(--text-primary)]">
+                  <p className="font-medium text-folio-text-primary">
                     Step 2 — Decide next touchpoint
                   </p>
-                  <p className="text-sm text-[var(--text-secondary)]">
+                  <p className="text-sm text-folio-text-secondary">
                     In the full product, you could connect this segment to
                     boards, invitations, or upcoming events with one click.
                   </p>
@@ -479,17 +479,17 @@ export const DynamicInsightPanel: React.FC<DynamicInsightPanelProps> = ({
 
               {activeAction.action.category === "editorial" && (
                 <div className="space-y-3">
-                  <p className="font-medium text-[var(--text-primary)]">
+                  <p className="font-medium text-folio-text-primary">
                     Step 1 — Select projects or boards to feature
                   </p>
-                  <p className="text-sm text-[var(--text-secondary)]">
+                  <p className="text-sm text-folio-text-secondary">
                     Here you would confirm which projects or boards should be
                     boosted in the feed or featured on your profile.
                   </p>
-                  <p className="font-medium text-[var(--text-primary)]">
+                  <p className="font-medium text-folio-text-primary">
                     Step 2 — Confirm placement and timing
                   </p>
-                  <p className="text-sm text-[var(--text-secondary)]">
+                  <p className="text-sm text-folio-text-secondary">
                     You would then choose how prominently and for how long
                     these assets should appear in Folio surfaces.
                   </p>
@@ -498,17 +498,17 @@ export const DynamicInsightPanel: React.FC<DynamicInsightPanelProps> = ({
 
               {activeAction.action.category === "analytics" && (
                 <div className="space-y-3">
-                  <p className="font-medium text-[var(--text-primary)]">
+                  <p className="font-medium text-folio-text-primary">
                     Step 1 — Define what to track
                   </p>
-                  <p className="text-sm text-[var(--text-secondary)]">
+                  <p className="text-sm text-folio-text-secondary">
                     This step would let you choose events, SKUs, or segments
                     that should be monitored in a saved report or watchlist.
                   </p>
-                  <p className="font-medium text-[var(--text-primary)]">
+                  <p className="font-medium text-folio-text-primary">
                     Step 2 — Choose cadence and format
                   </p>
-                  <p className="text-sm text-[var(--text-secondary)]">
+                  <p className="text-sm text-folio-text-secondary">
                     In the full implementation, you could choose how often you
                     want updates and in what format (dashboard card, export,
                     email summary, etc.).
@@ -516,7 +516,7 @@ export const DynamicInsightPanel: React.FC<DynamicInsightPanelProps> = ({
                 </div>
               )}
             </div>
-            <div className="border-t border-[var(--ridge-outer)] px-4 py-3">
+            <div className="border-t border-folio-border-subtle px-4 py-3">
               <button
                 type="button"
                 className="w-full rounded-full bg-[var(--text-primary)] py-2 folio-meta font-medium text-[var(--bg-base)] hover:opacity-90"

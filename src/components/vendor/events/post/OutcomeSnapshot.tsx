@@ -14,7 +14,7 @@ export function OutcomeSnapshot({ outcome }: OutcomeSnapshotProps) {
   const getDeltaColor = (delta: number) => {
     if (delta > 0) return 'text-green-600 bg-green-50';
     if (delta < 0) return 'text-red-600 bg-red-50';
-    return 'text-[var(--text-secondary)] bg-gray-50';
+    return 'text-folio-text-secondary bg-gray-50';
   };
 
   const getDeltaIcon = (delta: number) => {
@@ -70,16 +70,16 @@ export function OutcomeSnapshot({ outcome }: OutcomeSnapshotProps) {
   return (
     <div className="space-y-6">
       {/* KPI Strip */}
-      <Card className="bg-white border-[#DAD2CA]">
+      <Card className="bg-white border-folio-border-strong">
         <CardContent className="p-6">
           <div className="grid grid-cols-2 lg:grid-cols-6 gap-6">
             {kpiItems.map((item, index) => (
               <div key={index} className="text-center">
                 <div className="flex items-center justify-center w-10 h-10 bg-[#8C8278]/10 rounded-full mb-3 mx-auto">
-                  <item.icon className="w-5 h-5 text-[#8C8278]" />
+                  <item.icon className="w-5 h-5 text-folio-text-secondary" />
                 </div>
-                <p className="text-sm text-[#8C8278] mb-2">{item.label}</p>
-                <p className="text-lg font-semibold text-[#2B2B2B] mb-2">
+                <p className="text-sm text-folio-text-secondary mb-2">{item.label}</p>
+                <p className="text-lg font-semibold text-folio-text-primary mb-2">
                   {item.formatter(item.value)}
                 </p>
                 <div className="flex items-center justify-center space-x-1">
@@ -97,8 +97,8 @@ export function OutcomeSnapshot({ outcome }: OutcomeSnapshotProps) {
       </Card>
 
       {/* Headline Insight */}
-      <div className="bg-[#F7F4F1] border-l-4 border-[#8C8278] pl-6 py-4">
-        <p className="text-[#2B2B2B] font-medium">{outcome.headline}</p>
+      <div className="bg-surface-elevated border-l-4 border-[#8C8278] pl-6 py-4">
+        <p className="text-folio-text-primary font-medium">{outcome.headline}</p>
       </div>
     </div>
   );

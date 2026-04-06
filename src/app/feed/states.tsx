@@ -10,10 +10,10 @@ export function EmptyFeedOutline() {
       {/* Main */}
       <div className="col-span-12 lg:col-span-9">
         <RidgeCard padding="xl" className="text-center">
-          <h2 className="folio-h2 text-[var(--text-secondary)] mb-4">
+          <h2 className="folio-h2 text-folio-text-secondary mb-4">
             No projects yet
           </h2>
-          <p className="folio-body text-[var(--text-secondary)] mb-6">
+          <p className="folio-body text-folio-text-secondary mb-6">
             Be the first to share your work
           </p>
           <Link href="/projects/new">
@@ -26,14 +26,14 @@ export function EmptyFeedOutline() {
       {/* Side */}
       <div className="col-span-12 lg:col-span-3 space-y-6">
         <RidgeCard padding="none" className="overflow-hidden">
-          <div className="aspect-[4/5] w-full bg-[var(--bg-elevated)] grid place-items-center">
-            <span className="folio-meta text-[var(--text-tertiary)]">Trending Projects</span>
+          <div className="aspect-[4/5] w-full bg-surface-ground grid place-items-center">
+            <span className="folio-meta text-folio-text-tertiary">Trending Projects</span>
           </div>
         </RidgeCard>
 
         <RidgeCard padding="none" className="overflow-hidden">
-          <div className="aspect-[4/5] w-full bg-[var(--bg-elevated)] grid place-items-center">
-            <span className="folio-meta text-[var(--text-tertiary)]">AI Suggested Matches</span>
+          <div className="aspect-[4/5] w-full bg-surface-ground grid place-items-center">
+            <span className="folio-meta text-folio-text-tertiary">AI Suggested Matches</span>
           </div>
         </RidgeCard>
       </div>

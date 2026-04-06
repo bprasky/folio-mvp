@@ -6,7 +6,7 @@ export default function MoodyShell({ designer, projects, aesthetic, viewerContex
   const heroImage = projects[0]?.heroImageUrl || projects[0]?.coverImageUrl || projects[0]?.imageUrl;
 
   return (
-    <div className="min-h-screen bg-[var(--bg-base)]">
+    <div className="min-h-screen bg-surface-canvas">
       {/* Full Bleed Dark Hero */}
       {heroImage && (
         <div className="relative h-[60vh] w-full">
@@ -20,7 +20,7 @@ export default function MoodyShell({ designer, projects, aesthetic, viewerContex
           <div className="absolute bottom-0 left-0 right-0 p-12">
             <h1 className="text-5xl font-medium text-gray-100 mb-3">{designer.name}</h1>
             {designer.title && (
-              <p className="text-xl text-[var(--text-tertiary)]">{designer.title}</p>
+              <p className="text-xl text-folio-text-tertiary">{designer.title}</p>
             )}
           </div>
         </div>
@@ -31,9 +31,9 @@ export default function MoodyShell({ designer, projects, aesthetic, viewerContex
         {/* Bio - Muted text colors */}
         {designer.bio && (
           <div className="mb-16">
-            <p className="text-lg text-[var(--text-tertiary)] leading-relaxed mb-6">{designer.bio}</p>
+            <p className="text-lg text-folio-text-tertiary leading-relaxed mb-6">{designer.bio}</p>
             {designer.location && (
-              <p className="text-[var(--text-secondary)]">{designer.location}</p>
+              <p className="text-folio-text-secondary">{designer.location}</p>
             )}
           </div>
         )}

@@ -108,13 +108,13 @@ export default function FoldersPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[var(--bg-base)] p-6">
+      <div className="min-h-screen bg-surface-canvas p-6">
         <div className="max-w-7xl mx-auto">
           <div className="animate-pulse">
-            <div className="h-8 bg-[var(--bg-elevated)] rounded-lg w-1/3 mb-6"></div>
+            <div className="h-8 bg-surface-ground rounded-lg w-1/3 mb-6"></div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="bg-[var(--bg-elevated)] rounded-xl h-32"></div>
+                <div key={i} className="bg-surface-ground rounded-xl h-32"></div>
               ))}
             </div>
           </div>
@@ -124,14 +124,14 @@ export default function FoldersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--bg-base)]">
+    <div className="min-h-screen bg-surface-canvas">
       {/* Header */}
       <RidgeCard padding="lg" className="rounded-none border-x-0 border-t-0">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="folio-h1 text-[var(--text-primary)]">Project Folders</h1>
-              <p className="folio-body text-[var(--text-secondary)] mt-2">
+              <h1 className="folio-h1 text-folio-text-primary">Project Folders</h1>
+              <p className="folio-body text-folio-text-secondary mt-2">
                 Organize and manage your saved products
               </p>
             </div>
@@ -152,9 +152,9 @@ export default function FoldersPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {folders.length === 0 ? (
           <div className="text-center py-16">
-            <Folder className="w-24 h-24 mx-auto text-[var(--text-tertiary)] mb-6" />
-            <h3 className="folio-h2 text-[var(--text-primary)] mb-2">No folders yet</h3>
-            <p className="folio-body text-[var(--text-secondary)] mb-6">
+            <Folder className="w-24 h-24 mx-auto text-folio-text-tertiary mb-6" />
+            <h3 className="folio-h2 text-folio-text-primary mb-2">No folders yet</h3>
+            <p className="folio-body text-folio-text-secondary mb-6">
               Create your first project folder to start organizing products
             </p>
             <Button
@@ -178,7 +178,7 @@ export default function FoldersPage() {
                       <Folder className="w-6 h-6 text-[var(--accent)]" />
                     </div>
                     <div>
-                      <h3 className="folio-h3 text-[var(--text-primary)]">{folder.name}</h3>
+                      <h3 className="folio-h3 text-folio-text-primary">{folder.name}</h3>
                       <p className="folio-meta">
                         {folder.productCount} product{folder.productCount !== 1 ? 's' : ''}
                       </p>
@@ -188,9 +188,9 @@ export default function FoldersPage() {
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => router.push(`/designer/folders/${folder.id}`)}
-                      className="p-2 hover:bg-[var(--bg-elevated)] rounded-lg transition-colors"
+                      className="p-2 hover:bg-surface-ground rounded-lg transition-colors"
                     >
-                      <ArrowRight className="w-4 h-4 text-[var(--text-secondary)]" />
+                      <ArrowRight className="w-4 h-4 text-folio-text-secondary" />
                     </button>
                   </div>
                 </div>
@@ -224,11 +224,11 @@ export default function FoldersPage() {
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <RidgeCard padding="lg" className="w-full max-w-md">
-            <h2 className="folio-h2 text-[var(--text-primary)] mb-4">Create New Folder</h2>
+            <h2 className="folio-h2 text-folio-text-primary mb-4">Create New Folder</h2>
 
             <form onSubmit={handleCreateFolder} className="space-y-4">
               <div>
-                <label className="block folio-body font-medium text-[var(--text-primary)] mb-2">
+                <label className="block folio-body font-medium text-folio-text-primary mb-2">
                   Folder Name
                 </label>
                 <Input

@@ -269,12 +269,12 @@ export default function GenerateDialog({
           <div className="space-y-6">
             {/* Generated Images Preview */}
             <div>
-              <Label className="text-sm font-medium text-[var(--text-primary)]">
+              <Label className="text-sm font-medium text-folio-text-primary">
                 Generated Images
               </Label>
               <div className="mt-2 grid grid-cols-2 gap-2">
                 {generatedAssets.map((asset) => (
-                  <div key={asset.id} className="relative aspect-square rounded-lg overflow-hidden bg-[var(--bg-elevated)]">
+                  <div key={asset.id} className="relative aspect-square rounded-lg overflow-hidden bg-surface-ground">
                     <img
                       src={asset.url}
                       alt="Generated"
@@ -287,8 +287,8 @@ export default function GenerateDialog({
 
             {/* Feedback Prompt */}
             {feedback.rating === null && (
-              <div className="p-4 bg-[var(--bg-elevated)] rounded-lg">
-                <p className="text-sm font-medium text-[var(--text-primary)] mb-3">
+              <div className="p-4 bg-surface-ground rounded-lg">
+                <p className="text-sm font-medium text-folio-text-primary mb-3">
                   How did we do?
                 </p>
                 <div className="flex gap-3">
@@ -332,9 +332,9 @@ export default function GenerateDialog({
                           type="checkbox"
                           checked={feedback.reasons.includes(key)}
                           onChange={() => toggleReason(key)}
-                          className="rounded border-[var(--ridge-outer)]"
+                          className="rounded border-folio-border-subtle"
                         />
-                        <span className="text-sm text-[var(--text-primary)]">{label}</span>
+                        <span className="text-sm text-folio-text-primary">{label}</span>
                       </label>
                     ))}
                   </div>
@@ -379,20 +379,20 @@ export default function GenerateDialog({
             {/* Readiness Score */}
             <div className="p-4 rounded-lg border bg-gray-50">
               <div className="flex items-center justify-between mb-2">
-                <Label className="text-sm font-medium text-[var(--text-primary)]">
+                <Label className="text-sm font-medium text-folio-text-primary">
                   Generation Readiness
                 </Label>
                 <span className={`text-sm font-semibold ${getReadinessTextColor()}`}>
                   {readiness.score}%
                 </span>
               </div>
-              <div className="w-full bg-[var(--bg-elevated)] rounded-full h-2 mb-2">
+              <div className="w-full bg-surface-ground rounded-full h-2 mb-2">
                 <div
                   className={`h-2 rounded-full transition-all duration-300 ${getReadinessColor()}`}
                   style={{ width: `${readiness.score}%` }}
                 />
               </div>
-              <p className="text-xs text-[var(--text-secondary)]">{readiness.message}</p>
+              <p className="text-xs text-folio-text-secondary">{readiness.message}</p>
 
               {/* Suggestions */}
               {readiness.suggestions.length > 0 && readiness.score < 75 && (
@@ -427,28 +427,28 @@ export default function GenerateDialog({
 
             {/* Selections Preview */}
             <div>
-              <Label className="text-sm font-medium text-[var(--text-primary)]">
+              <Label className="text-sm font-medium text-folio-text-primary">
                 Based on your room selections ({selections.length} items)
               </Label>
-              <div className="mt-2 p-3 bg-[var(--bg-elevated)] rounded-lg">
-                <div className="text-sm text-[var(--text-secondary)] space-y-1">
+              <div className="mt-2 p-3 bg-surface-ground rounded-lg">
+                <div className="text-sm text-folio-text-secondary space-y-1">
                   {selections.slice(0, 6).map((selection, i) => (
                     <div key={i} className="flex items-center gap-2">
                       {selection.photo ? (
-                        <div className="w-6 h-6 rounded bg-[var(--bg-elevated)] overflow-hidden flex-shrink-0">
+                        <div className="w-6 h-6 rounded bg-surface-ground overflow-hidden flex-shrink-0">
                           <img src={selection.photo} alt="" className="w-full h-full object-cover" />
                         </div>
                       ) : (
-                        <div className="w-6 h-6 rounded bg-[var(--bg-elevated)] flex-shrink-0" />
+                        <div className="w-6 h-6 rounded bg-surface-ground flex-shrink-0" />
                       )}
                       <span className="font-medium truncate">{selection.productName || 'Untitled Product'}</span>
                       {selection.vendorName && (
-                        <span className="text-[var(--text-tertiary)] text-xs">by {selection.vendorName}</span>
+                        <span className="text-folio-text-tertiary text-xs">by {selection.vendorName}</span>
                       )}
                     </div>
                   ))}
                   {selections.length > 6 && (
-                    <div className="text-[var(--text-secondary)]">+{selections.length - 6} more items</div>
+                    <div className="text-folio-text-secondary">+{selections.length - 6} more items</div>
                   )}
                 </div>
               </div>
@@ -456,7 +456,7 @@ export default function GenerateDialog({
 
             {/* Modifiers */}
             <div>
-              <Label htmlFor="modifiers" className="text-sm font-medium text-[var(--text-primary)]">
+              <Label htmlFor="modifiers" className="text-sm font-medium text-folio-text-primary">
                 Style & Mood Modifiers
               </Label>
               <Textarea
@@ -467,7 +467,7 @@ export default function GenerateDialog({
                 className="mt-1"
                 rows={3}
               />
-              <p className="mt-1 text-xs text-[var(--text-secondary)]">
+              <p className="mt-1 text-xs text-folio-text-secondary">
                 Suggested: "warm neutral palette, soft afternoon light, human eye-level camera, editorial crop" for consistent results
               </p>
             </div>
@@ -475,7 +475,7 @@ export default function GenerateDialog({
             {/* Generation Settings */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="count" className="text-sm font-medium text-[var(--text-primary)]">
+                <Label htmlFor="count" className="text-sm font-medium text-folio-text-primary">
                   Number of Images
                 </Label>
                 <Select value={count.toString()} onValueChange={(value) => setCount(parseInt(value))}>
@@ -492,7 +492,7 @@ export default function GenerateDialog({
               </div>
 
               <div>
-                <Label htmlFor="seed" className="text-sm font-medium text-[var(--text-primary)]">
+                <Label htmlFor="seed" className="text-sm font-medium text-folio-text-primary">
                   Seed (optional)
                 </Label>
                 <Input
@@ -508,7 +508,7 @@ export default function GenerateDialog({
 
             {/* Size Presets */}
             <div>
-              <Label className="text-sm font-medium text-[var(--text-primary)]">
+              <Label className="text-sm font-medium text-folio-text-primary">
                 Image Size
               </Label>
               <div className="mt-2 grid grid-cols-3 gap-2">
@@ -526,7 +526,7 @@ export default function GenerateDialog({
               </div>
               <div className="mt-2 grid grid-cols-2 gap-2">
                 <div>
-                  <Label htmlFor="width" className="text-xs text-[var(--text-secondary)]">Width</Label>
+                  <Label htmlFor="width" className="text-xs text-folio-text-secondary">Width</Label>
                   <Input
                     id="width"
                     type="number"
@@ -539,7 +539,7 @@ export default function GenerateDialog({
                   />
                 </div>
                 <div>
-                  <Label htmlFor="height" className="text-xs text-[var(--text-secondary)]">Height</Label>
+                  <Label htmlFor="height" className="text-xs text-folio-text-secondary">Height</Label>
                   <Input
                     id="height"
                     type="number"
@@ -557,11 +557,11 @@ export default function GenerateDialog({
             {/* Progress Bar */}
             {isGenerating && (
               <div>
-                <div className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
+                <div className="flex items-center gap-2 text-sm text-folio-text-secondary">
                   <FaSpinner className="w-4 h-4 animate-spin" />
                   Generating images...
                 </div>
-                <div className="mt-2 w-full bg-[var(--bg-elevated)] rounded-full h-2">
+                <div className="mt-2 w-full bg-surface-ground rounded-full h-2">
                   <div
                     className="bg-[var(--accent)] h-2 rounded-full transition-all duration-300"
                     style={{ width: `${generationProgress}%` }}

@@ -119,23 +119,23 @@ export default function BatchRequestModal({
       <div className="relative glass-surface rounded-2xl p-6 w-full max-w-2xl mx-4 shadow-xl max-h-[85vh] overflow-y-auto">
         <div className="flex items-center gap-2 mb-1">
           <span className="text-lg">{config.icon}</span>
-          <h3 className="folio-h3 text-[var(--text-primary)]">{config.title}</h3>
+          <h3 className="folio-h3 text-folio-text-primary">{config.title}</h3>
         </div>
-        <p className="text-sm text-[var(--text-secondary)] mb-4">
+        <p className="text-sm text-folio-text-secondary mb-4">
           {projectName} — {config.description}
         </p>
 
         <div className="space-y-4 mb-4">
           {byVendor.map(([vendorName, vendorProducts]) => (
             <div key={vendorName}>
-              <h4 className="text-sm font-semibold text-[var(--text-primary)] mb-2">
+              <h4 className="text-sm font-semibold text-folio-text-primary mb-2">
                 {vendorName} ({vendorProducts.length})
               </h4>
               <div className="space-y-1.5">
                 {vendorProducts.map(sel => (
                   <label
                     key={sel.productId}
-                    className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-[var(--bg-elevated)] transition-colors cursor-pointer"
+                    className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-surface-ground transition-colors cursor-pointer"
                   >
                     <input
                       type="checkbox"
@@ -143,9 +143,9 @@ export default function BatchRequestModal({
                       onChange={() => toggleProduct(sel.productId)}
                       className="accent-[var(--accent)]"
                     />
-                    <span className="text-sm text-[var(--text-primary)]">{sel.productName}</span>
+                    <span className="text-sm text-folio-text-primary">{sel.productName}</span>
                     {sel.roomName && (
-                      <span className="text-xs text-[var(--text-tertiary)] ml-auto">{sel.roomName}</span>
+                      <span className="text-xs text-folio-text-tertiary ml-auto">{sel.roomName}</span>
                     )}
                   </label>
                 ))}
@@ -154,7 +154,7 @@ export default function BatchRequestModal({
           ))}
         </div>
 
-        <p className="text-sm text-[var(--text-secondary)]">
+        <p className="text-sm text-folio-text-secondary">
           This will send {vendorCount} request{vendorCount !== 1 ? 's' : ''} to {vendorCount} vendor{vendorCount !== 1 ? 's' : ''} for {selectedCount} product{selectedCount !== 1 ? 's' : ''}.
         </p>
 

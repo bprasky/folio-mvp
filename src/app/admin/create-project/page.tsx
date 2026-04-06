@@ -62,18 +62,18 @@ const CreateProjectPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--bg-base)] pl-20 lg:pl-56">
+    <div className="min-h-screen bg-surface-canvas pl-20 lg:pl-56">
       <div className="p-4 lg:p-8">
         <div className="mb-8">
-          <h1 className="folio-h1 text-[var(--text-primary)]">Create Project</h1>
-          <p className="folio-body text-[var(--text-secondary)]">Add a new project to the platform</p>
+          <h1 className="folio-h1 text-folio-text-primary">Create Project</h1>
+          <p className="folio-body text-folio-text-secondary">Add a new project to the platform</p>
         </div>
 
         <div className="max-w-2xl mx-auto">
           <RidgeCard padding="lg">
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <label htmlFor="name" className="block folio-meta font-medium text-[var(--text-primary)] mb-2">
+                <label htmlFor="name" className="block folio-meta font-medium text-folio-text-primary mb-2">
                   Project Name *
                 </label>
                 <Input
@@ -88,7 +88,7 @@ const CreateProjectPage = () => {
               </div>
 
               <div>
-                <label htmlFor="description" className="block folio-meta font-medium text-[var(--text-primary)] mb-2">
+                <label htmlFor="description" className="block folio-meta font-medium text-folio-text-primary mb-2">
                   Description
                 </label>
                 <textarea
@@ -103,7 +103,7 @@ const CreateProjectPage = () => {
               </div>
 
               <div>
-                <label htmlFor="category" className="block folio-meta font-medium text-[var(--text-primary)] mb-2">
+                <label htmlFor="category" className="block folio-meta font-medium text-folio-text-primary mb-2">
                   Project Category *
                 </label>
                 <select
@@ -123,7 +123,7 @@ const CreateProjectPage = () => {
               </div>
 
               <div>
-                <label htmlFor="client" className="block folio-meta font-medium text-[var(--text-primary)] mb-2">
+                <label htmlFor="client" className="block folio-meta font-medium text-folio-text-primary mb-2">
                   Client
                 </label>
                 <Input
@@ -137,7 +137,7 @@ const CreateProjectPage = () => {
               </div>
 
               <div>
-                <label htmlFor="designerId" className="block folio-meta font-medium text-[var(--text-primary)] mb-2">
+                <label htmlFor="designerId" className="block folio-meta font-medium text-folio-text-primary mb-2">
                   Designer ID *
                 </label>
                 <Input

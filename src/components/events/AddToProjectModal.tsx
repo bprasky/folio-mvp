@@ -242,17 +242,17 @@ export default function AddToProjectModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-[var(--bg-base)] rounded-xl shadow-xl max-w-md w-full max-h-[80vh] flex flex-col">
+      <div className="bg-surface-canvas rounded-xl shadow-xl max-w-md w-full max-h-[80vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--ridge-outer)]">
-          <h2 className="text-lg font-semibold text-[var(--text-primary)]">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-folio-border-subtle">
+          <h2 className="text-lg font-semibold text-folio-text-primary">
             Save to Project
           </h2>
           <button
             onClick={onClose}
-            className="p-1 hover:bg-[var(--bg-elevated)] rounded-lg transition-colors"
+            className="p-1 hover:bg-surface-ground rounded-lg transition-colors"
           >
-            <X className="h-5 w-5 text-[var(--text-secondary)]" />
+            <X className="h-5 w-5 text-folio-text-secondary" />
           </button>
         </div>
 
@@ -261,7 +261,7 @@ export default function AddToProjectModal({
           <div className="flex-1 overflow-y-auto px-6 py-4">
             {loading ? (
               <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin text-[var(--text-tertiary)]" />
+                <Loader2 className="h-6 w-6 animate-spin text-folio-text-tertiary" />
               </div>
             ) : (
               <div className="space-y-4">
@@ -308,7 +308,7 @@ export default function AddToProjectModal({
                 )}
 
                 {/* Create New Project */}
-                <div className="border-t border-[var(--ridge-outer)] pt-4">
+                <div className="border-t border-folio-border-subtle pt-4">
                   <button
                     type="button"
                     onClick={() => {
@@ -319,7 +319,7 @@ export default function AddToProjectModal({
                       "w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-left",
                       createNew
                         ? "bg-[var(--text-primary)] text-[var(--bg-base)]"
-                        : "hover:bg-[var(--bg-elevated)] text-[var(--text-primary)]"
+                        : "hover:bg-surface-ground text-folio-text-primary"
                     )}
                   >
                     <FolderPlus className="h-4 w-4" />
@@ -332,7 +332,7 @@ export default function AddToProjectModal({
                         type="text"
                         value={newProjectTitle}
                         onChange={(e) => setNewProjectTitle(e.target.value)}
-                        className="w-full px-3 py-2 border border-[var(--ridge-outer)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--text-primary)]/20 bg-[var(--bg-base)]"
+                        className="w-full px-3 py-2 border border-folio-border-subtle rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--text-primary)]/20 bg-surface-canvas"
                         placeholder="Project name"
                         autoFocus
                       />
@@ -344,7 +344,7 @@ export default function AddToProjectModal({
           </div>
 
           {/* Footer */}
-          <div className="px-6 py-4 border-t border-[var(--ridge-outer)] bg-[var(--bg-elevated)]">
+          <div className="px-6 py-4 border-t border-folio-border-subtle bg-surface-ground">
             {/* Multi-select toggle */}
             <label className="flex items-center gap-2 mb-4 cursor-pointer">
               <input
@@ -358,16 +358,16 @@ export default function AddToProjectModal({
                     setSelectedProjectIds(first ? new Set([first]) : new Set());
                   }
                 }}
-                className="rounded border-[var(--ridge-outer)] text-[var(--text-primary)] focus:ring-[var(--text-secondary)]"
+                className="rounded border-folio-border-subtle text-folio-text-primary focus:ring-[var(--text-secondary)]"
               />
-              <span className="text-sm text-[var(--text-secondary)]">Select multiple projects</span>
+              <span className="text-sm text-folio-text-secondary">Select multiple projects</span>
             </label>
 
             <div className="flex gap-3">
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 px-4 py-2 border border-[var(--ridge-outer)] rounded-lg text-[var(--text-primary)] hover:bg-[var(--bg-elevated)] transition-colors text-sm font-medium"
+                className="flex-1 px-4 py-2 border border-folio-border-subtle rounded-lg text-folio-text-primary hover:bg-surface-ground transition-colors text-sm font-medium"
               >
                 Cancel
               </button>
@@ -419,7 +419,7 @@ function ProjectSection({
       <button
         type="button"
         onClick={onToggle}
-        className="w-full flex items-center gap-2 px-2 py-1.5 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+        className="w-full flex items-center gap-2 px-2 py-1.5 text-sm font-medium text-folio-text-secondary hover:text-folio-text-primary transition-colors"
       >
         {expanded ? (
           <ChevronDown className="h-4 w-4" />
@@ -428,7 +428,7 @@ function ProjectSection({
         )}
         {icon}
         <span>{title}</span>
-        <span className="text-[var(--text-tertiary)]">({projects.length})</span>
+        <span className="text-folio-text-tertiary">({projects.length})</span>
       </button>
 
       {expanded && (
@@ -441,8 +441,8 @@ function ProjectSection({
               className={cn(
                 "w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-left",
                 selectedIds.has(project.id)
-                  ? "bg-[var(--bg-elevated)] ring-1 ring-[var(--text-primary)]"
-                  : "hover:bg-[var(--bg-elevated)]"
+                  ? "bg-surface-ground ring-1 ring-[var(--text-primary)]"
+                  : "hover:bg-surface-ground"
               )}
             >
               <div className={cn(
@@ -455,7 +455,7 @@ function ProjectSection({
                   <Check className="h-3 w-3 text-[var(--bg-base)]" />
                 )}
               </div>
-              <span className="text-sm text-[var(--text-primary)] truncate flex-1">
+              <span className="text-sm text-folio-text-primary truncate flex-1">
                 {project.title}
               </span>
             </button>

@@ -40,13 +40,13 @@ export function AttributionTiming({ attribution }: AttributionTimingProps) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Attribution */}
-      <Card className="bg-white border-[#DAD2CA]">
+      <Card className="bg-white border-folio-border-strong">
         <CardHeader>
-          <CardTitle className="text-lg font-serif text-[#2B2B2B] flex items-center space-x-2">
-            <Clock className="w-5 h-5 text-[#8C8278]" />
+          <CardTitle className="text-lg font-serif text-folio-text-primary flex items-center space-x-2">
+            <Clock className="w-5 h-5 text-folio-text-secondary" />
             <span>Attribution</span>
           </CardTitle>
-          <p className="text-sm text-[#8C8278]">
+          <p className="text-sm text-folio-text-secondary">
             What sparked engagement
           </p>
         </CardHeader>
@@ -76,10 +76,10 @@ export function AttributionTiming({ attribution }: AttributionTimingProps) {
               return (
                 <div key={touchpoint.channel} className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
-                    <IconComponent className="w-4 h-4 text-[#8C8278]" />
-                    <span className="text-sm text-[#2B2B2B]">{touchpoint.channel}</span>
+                    <IconComponent className="w-4 h-4 text-folio-text-secondary" />
+                    <span className="text-sm text-folio-text-primary">{touchpoint.channel}</span>
                   </div>
-                  <Badge className="bg-[#F7F4F1] text-[#2B2B2B] border-[#DAD2CA]">
+                  <Badge className="bg-surface-elevated text-folio-text-primary border-folio-border-strong">
                     {formatPercentage(touchpoint.pct, 1)}
                   </Badge>
                 </div>
@@ -90,27 +90,27 @@ export function AttributionTiming({ attribution }: AttributionTimingProps) {
       </Card>
 
       {/* Best Send Times */}
-      <Card className="bg-white border-[#DAD2CA]">
+      <Card className="bg-white border-folio-border-strong">
         <CardHeader>
-          <CardTitle className="text-lg font-serif text-[#2B2B2B] flex items-center space-x-2">
-            <Calendar className="w-5 h-5 text-[#8C8278]" />
+          <CardTitle className="text-lg font-serif text-folio-text-primary flex items-center space-x-2">
+            <Calendar className="w-5 h-5 text-folio-text-secondary" />
             <span>Best Send Times</span>
           </CardTitle>
-          <p className="text-sm text-[#8C8278]">
+          <p className="text-sm text-folio-text-secondary">
             Top engagement windows from event week
           </p>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             {attribution.bestHours.map((hour, index) => (
-              <div key={index} className="flex items-center justify-between p-3 bg-[#F7F4F1] rounded-lg">
+              <div key={index} className="flex items-center justify-between p-3 bg-surface-elevated rounded-lg">
                 <div className="flex items-center space-x-3">
                   <div className="w-8 h-8 bg-[#8C8278] text-white rounded-full flex items-center justify-center text-sm font-medium">
                     {index + 1}
                   </div>
                   <div>
-                    <p className="font-medium text-[#2B2B2B]">{hour.dow}</p>
-                    <p className="text-sm text-[#8C8278]">
+                    <p className="font-medium text-folio-text-primary">{hour.dow}</p>
+                    <p className="text-sm text-folio-text-secondary">
                       {hour.hour}:00 {(hour.hour >= 12 ? 'PM' : 'AM')}
                     </p>
                   </div>
@@ -122,7 +122,7 @@ export function AttributionTiming({ attribution }: AttributionTimingProps) {
             ))}
           </div>
 
-          <div className="mt-6 pt-4 border-t border-[#DAD2CA]">
+          <div className="mt-6 pt-4 border-t border-folio-border-strong">
             <Button className="w-full bg-[#2B2B2B] hover:bg-[#8C8278] text-white">
               Schedule Follow-ups at Best Times
             </Button>

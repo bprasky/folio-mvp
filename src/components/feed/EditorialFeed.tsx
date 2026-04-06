@@ -41,7 +41,7 @@ export default function EditorialFeed({ items, canEdit = false, onItemClick }: E
   if (!items || items.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-[var(--text-secondary)]">No events to display</p>
+        <p className="text-folio-text-secondary">No events to display</p>
       </div>
     );
   }

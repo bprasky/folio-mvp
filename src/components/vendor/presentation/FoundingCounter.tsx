@@ -41,14 +41,14 @@ export default function FoundingCounter({
       {/* Progress bar */}
       <div className="mb-6">
         <div className="flex justify-between text-folio-meta mb-2">
-          <span className="text-[var(--text-secondary)] font-medium">
+          <span className="text-folio-text-secondary font-medium">
             Founding Vendor Program
           </span>
-          <span className="text-[var(--text-tertiary)]">
+          <span className="text-folio-text-tertiary">
             {animatedRemaining} of {totalSlots} spots remaining
           </span>
         </div>
-        <div className="h-3 bg-[#F5F3EF] rounded-full overflow-hidden">
+        <div className="h-3 bg-surface-elevated rounded-full overflow-hidden">
           <motion.div
             className="h-full bg-gradient-to-r from-[var(--accent)] to-[#D4A574] rounded-full"
             initial={{ width: 0 }}
@@ -73,7 +73,7 @@ export default function FoundingCounter({
                   ? 'bg-[var(--accent)] text-white ring-2 ring-[var(--accent)] ring-offset-2'
                   : isClaimed
                     ? 'bg-[var(--text-primary)] text-white'
-                    : 'bg-[#F5F3EF] text-[var(--text-tertiary)]'
+                    : 'bg-surface-elevated text-folio-text-tertiary'
                 }
               `}
               initial={{ scale: 0, opacity: 0 }}
@@ -89,28 +89,28 @@ export default function FoundingCounter({
       {/* Stats */}
       <div className="flex gap-6 mb-6 text-folio-meta">
         <div>
-          <span className="font-semibold text-[var(--text-primary)] text-lg">
+          <span className="font-semibold text-folio-text-primary text-lg">
             {invitesSent}
           </span>
-          <span className="text-[var(--text-tertiary)] ml-1">invites sent</span>
+          <span className="text-folio-text-tertiary ml-1">invites sent</span>
         </div>
         <div>
-          <span className="font-semibold text-[var(--text-primary)] text-lg">
+          <span className="font-semibold text-folio-text-primary text-lg">
             {spotsRemaining}
           </span>
-          <span className="text-[var(--text-tertiary)] ml-1">spots remaining</span>
+          <span className="text-folio-text-tertiary ml-1">spots remaining</span>
         </div>
       </div>
 
       {/* CTA */}
       {currentSlot ? (
-        <div className="flex items-center gap-2 px-4 py-3 bg-[#F5F3EF] rounded-neu-sm">
+        <div className="flex items-center gap-2 px-4 py-3 bg-surface-elevated rounded-neu-sm">
           <div className="w-6 h-6 rounded-full bg-[var(--accent)] flex items-center justify-center">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="20 6 9 17 4 12" />
             </svg>
           </div>
-          <span className="text-folio-body text-[var(--text-primary)] font-medium">
+          <span className="text-folio-body text-folio-text-primary font-medium">
             You&apos;re Founding Vendor #{currentSlot}
           </span>
         </div>
@@ -122,7 +122,7 @@ export default function FoundingCounter({
           Claim Your Founding Vendor Spot
         </button>
       ) : (
-        <div className="text-center text-folio-meta text-[var(--text-tertiary)] py-3">
+        <div className="text-center text-folio-meta text-folio-text-tertiary py-3">
           {spotsRemaining === 0 ? 'All founding vendor spots have been claimed' : 'Not currently eligible for the founding program'}
         </div>
       )}

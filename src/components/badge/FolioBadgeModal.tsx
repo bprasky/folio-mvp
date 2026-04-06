@@ -118,10 +118,9 @@ export default function FolioBadgeModal({
               />
             ) : (
               <div
-                className="w-14 h-14 rounded-full flex items-center justify-center"
+                className="w-14 h-14 rounded-full flex items-center justify-center text-surface-ground"
                 style={{
                   background: 'linear-gradient(135deg, #5C554D 0%, #8B8178 100%)',
-                  color: '#FAF9F7',
                   fontSize: '18px',
                   fontWeight: 600,
                   letterSpacing: '0.05em',
@@ -133,11 +132,11 @@ export default function FolioBadgeModal({
           </div>
 
           <h3
+            className="text-folio-text-primary"
             style={{
               fontFamily: 'Georgia, serif',
               fontSize: '20px',
               fontWeight: 400,
-              color: '#2C2825',
               margin: '0 0 4px',
             }}
           >
@@ -146,10 +145,10 @@ export default function FolioBadgeModal({
 
           {(user.title || organization) && (
             <p
+              className="text-folio-text-secondary"
               style={{
                 fontFamily: 'var(--font-body, "Instrument Sans", sans-serif)',
                 fontSize: '13px',
-                color: '#8B8178',
                 margin: '0 0 8px',
               }}
             >
@@ -161,10 +160,10 @@ export default function FolioBadgeModal({
 
           {truncatedTagline && (
             <p
+              className="text-folio-text-tertiary"
               style={{
                 fontFamily: 'var(--font-body, "Instrument Sans", sans-serif)',
                 fontSize: '13px',
-                color: '#A69E96',
                 lineHeight: 1.5,
                 margin: 0,
                 fontStyle: 'italic',
@@ -179,11 +178,9 @@ export default function FolioBadgeModal({
         <div className="flex justify-center mb-5">
           {qrDataUrl ? (
             <div
-              className="rounded-2xl overflow-hidden"
+              className="rounded-2xl overflow-hidden border border-folio-border-subtle bg-surface-ground"
               style={{
                 padding: '16px',
-                background: '#FAF9F7',
-                border: '1px solid #E8E4DF',
               }}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -218,10 +215,10 @@ export default function FolioBadgeModal({
             }}
           >
             <p
+              className="text-folio-text-secondary"
               style={{
                 fontFamily: 'var(--font-body, "Instrument Sans", sans-serif)',
                 fontSize: '12px',
-                color: '#5C554D',
                 margin: 0,
               }}
             >
@@ -230,15 +227,15 @@ export default function FolioBadgeModal({
               {' · '}
               {formatEventDate(nearestEvent.eventStartDate)}
               {nearestEvent.eventLocation && (
-                <span style={{ color: '#8B8178' }}> · {nearestEvent.eventLocation}</span>
+                <span className="text-folio-text-secondary"> · {nearestEvent.eventLocation}</span>
               )}
             </p>
             {upcomingEventRSVPs.length > 1 && (
               <p
+                className="text-folio-text-tertiary"
                 style={{
                   fontFamily: 'var(--font-body, "Instrument Sans", sans-serif)',
                   fontSize: '11px',
-                  color: '#A69E96',
                   margin: '4px 0 0',
                 }}
               >
@@ -254,17 +251,14 @@ export default function FolioBadgeModal({
           <button
             onClick={handleDownload}
             disabled={!qrDataUrl}
-            className="px-5 py-2.5 rounded-full text-[13px] font-medium text-white transition-colors disabled:opacity-40"
-            style={{ backgroundColor: '#2C2825' }}
+            className="px-5 py-2.5 rounded-full text-[13px] font-medium text-white transition-colors disabled:opacity-40 bg-folio-text-primary"
           >
             Save Badge
           </button>
           <button
             onClick={handleCopyLink}
-            className="px-5 py-2.5 rounded-full text-[13px] font-medium border transition-colors"
+            className="px-5 py-2.5 rounded-full text-[13px] font-medium border transition-colors border-folio-border-subtle text-folio-text-secondary"
             style={{
-              borderColor: '#E8E4DF',
-              color: '#5C554D',
               backgroundColor: copied ? '#F0EDE9' : 'transparent',
             }}
           >

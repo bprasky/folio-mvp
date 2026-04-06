@@ -60,11 +60,11 @@ export function DesignerTestimonials({ productId }: DesignerTestimonialsProps) {
         <div className="animate-pulse space-y-4">
           {[1, 2].map((i) => (
             <div key={i} className="space-y-2">
-              <div className="h-4 bg-[var(--bg-elevated)] rounded w-3/4" />
-              <div className="h-4 bg-[var(--bg-elevated)] rounded w-1/2" />
+              <div className="h-4 bg-surface-ground rounded w-3/4" />
+              <div className="h-4 bg-surface-ground rounded w-1/2" />
               <div className="flex items-center gap-2 mt-3">
-                <div className="w-8 h-8 bg-[var(--bg-elevated)] rounded-full" />
-                <div className="h-3 bg-[var(--bg-elevated)] rounded w-24" />
+                <div className="w-8 h-8 bg-surface-ground rounded-full" />
+                <div className="h-3 bg-surface-ground rounded w-24" />
               </div>
             </div>
           ))}

@@ -43,28 +43,28 @@ export function GlobalSearch({ placeholder = "Search..." }: GlobalSearchProps) {
   return (
     <form onSubmit={handleSubmit} className="relative w-full">
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-tertiary)]" />
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-folio-text-tertiary" />
         <input
           ref={inputRef}
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder={placeholder}
-          className="h-10 w-full rounded-full border border-[var(--ridge-outer)] bg-[var(--bg-elevated)] pl-10 pr-10 folio-ui text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] focus:border-[var(--ridge-outer)] focus:bg-[var(--bg-base)] focus:outline-none focus:ring-1 focus:ring-[var(--ridge-outer)] transition-colors"
+          className="h-10 w-full rounded-full border border-folio-border-subtle bg-surface-ground pl-10 pr-10 folio-ui text-folio-text-primary placeholder:text-folio-text-secondary focus:border-folio-border-subtle focus:bg-surface-canvas focus:outline-none focus:ring-1 focus:ring-[var(--ridge-outer)] transition-colors"
         />
         {query && (
           <button
             type="button"
             onClick={() => setQuery("")}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-folio-text-tertiary hover:text-folio-text-secondary"
           >
             <X className="h-4 w-4" />
           </button>
         )}
       </div>
       {/* Keyboard shortcut hint */}
-      <div className="absolute right-12 top-1/2 -translate-y-1/2 hidden sm:flex items-center gap-1 folio-meta text-[var(--text-tertiary)]">
-        <kbd className="px-1.5 py-0.5 rounded border border-[var(--ridge-outer)] bg-[var(--bg-elevated)] font-mono">
+      <div className="absolute right-12 top-1/2 -translate-y-1/2 hidden sm:flex items-center gap-1 folio-meta text-folio-text-tertiary">
+        <kbd className="px-1.5 py-0.5 rounded border border-folio-border-subtle bg-surface-ground font-mono">
           ⌘K
         </kbd>
       </div>

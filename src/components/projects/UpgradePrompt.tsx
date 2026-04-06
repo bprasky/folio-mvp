@@ -33,14 +33,14 @@ export function UpgradePrompt({ className, variant = 'subtle' }: UpgradePromptPr
           <Sparkles className="h-5 w-5 text-white" />
         </div>
         <div className="flex-1 min-w-0">
-          <div className="folio-ui text-[var(--text-primary)]">
+          <div className="folio-ui text-folio-text-primary">
             Unlock AI image generation
           </div>
           <div className="folio-meta mt-0.5">
             Generate room concepts and earn affiliate revenue
           </div>
         </div>
-        <ChevronRight className="h-4 w-4 text-[var(--text-tertiary)] group-hover:text-[var(--text-secondary)] group-hover:translate-x-0.5 transition-all" />
+        <ChevronRight className="h-4 w-4 text-folio-text-tertiary group-hover:text-folio-text-secondary group-hover:translate-x-0.5 transition-all" />
       </Link>
     );
   }
@@ -56,10 +56,10 @@ export function UpgradePrompt({ className, variant = 'subtle' }: UpgradePromptPr
           <Sparkles className="h-6 w-6 text-white" />
         </div>
         <div className="flex-1">
-          <h3 className="folio-h3 text-[var(--text-primary)] mb-1">
+          <h3 className="folio-h3 text-folio-text-primary mb-1">
             Professional Features Available
           </h3>
-          <p className="folio-body text-[var(--text-secondary)] mb-4">
+          <p className="folio-body text-folio-text-secondary mb-4">
             Upgrade to generate AI room concepts, make your product tags visible
             on the feed, and earn affiliate commissions on every click.
           </p>

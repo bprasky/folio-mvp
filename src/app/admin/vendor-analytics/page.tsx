@@ -143,12 +143,12 @@ export default function VendorAnalyticsPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[var(--bg-base)] py-8">
+      <div className="min-h-screen bg-surface-canvas py-8">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center justify-center h-full">
             <div className="text-center">
               <div className="w-8 h-8 border-4 border-[var(--accent)] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-              <p className="text-[var(--text-secondary)]">Loading analytics...</p>
+              <p className="text-folio-text-secondary">Loading analytics...</p>
             </div>
           </div>
         </div>
@@ -157,7 +157,7 @@ export default function VendorAnalyticsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--bg-base)] py-8">
+    <div className="min-h-screen bg-surface-canvas py-8">
       <div className="max-w-7xl mx-auto px-4">
         {/* Header */}
         <motion.div
@@ -270,7 +270,7 @@ export default function VendorAnalyticsPage() {
             >
               <RidgeCard padding="none" className="overflow-hidden hover:shadow-lg transition-shadow">
                 {/* Image */}
-                <div className="aspect-square bg-[var(--bg-elevated)] relative">
+                <div className="aspect-square bg-surface-ground relative">
                   {selection.photo ? (
                     <img
                       src={selection.photo}
@@ -279,7 +279,7 @@ export default function VendorAnalyticsPage() {
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
-                      <FaCamera className="w-12 h-12 text-[var(--text-tertiary)]" />
+                      <FaCamera className="w-12 h-12 text-folio-text-tertiary" />
                     </div>
                   )}
 
@@ -288,7 +288,7 @@ export default function VendorAnalyticsPage() {
                     <span className={`px-2 py-1 text-xs rounded-full ${
                       selection.source === 'camera'
                         ? 'bg-purple-100 text-purple-800'
-                        : 'bg-[var(--bg-elevated)] text-[var(--text-secondary)]'
+                        : 'bg-surface-ground text-folio-text-secondary'
                     }`}>
                       {selection.source}
                     </span>
@@ -300,9 +300,9 @@ export default function VendorAnalyticsPage() {
                   {/* Product Information */}
                   {selection.productName && (
                     <div className="mb-2">
-                      <h4 className="font-semibold text-[var(--text-primary)] text-sm">{selection.productName}</h4>
+                      <h4 className="font-semibold text-folio-text-primary text-sm">{selection.productName}</h4>
                       {selection.vendorName && (
-                        <p className="text-xs text-[var(--text-secondary)]">{selection.vendorName}</p>
+                        <p className="text-xs text-folio-text-secondary">{selection.vendorName}</p>
                       )}
                     </div>
                   )}
@@ -310,7 +310,7 @@ export default function VendorAnalyticsPage() {
                   {/* Color/Finish */}
                   {selection.colorFinish && (
                     <div className="mb-2">
-                      <div className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
+                      <div className="flex items-center gap-2 text-sm text-folio-text-secondary">
                         <FaPalette className="w-3 h-3" />
                         <span>{selection.colorFinish}</span>
                       </div>
@@ -334,10 +334,10 @@ export default function VendorAnalyticsPage() {
 
                   {/* Project Info */}
                   <div className="mb-2">
-                    <p className="text-xs text-[var(--text-secondary)]">
+                    <p className="text-xs text-folio-text-secondary">
                       <span className="font-medium">{selection.room.project.name}</span> - {selection.room.name}
                     </p>
-                    <p className="text-xs text-[var(--text-tertiary)]">
+                    <p className="text-xs text-folio-text-tertiary">
                       Designer: {selection.room.project.designer.name}
                     </p>
                   </div>
@@ -346,14 +346,14 @@ export default function VendorAnalyticsPage() {
                   {selection.notes && (
                     <div className="mb-3">
                       <div className="flex items-start gap-2">
-                        <FaStickyNote className="w-3 h-3 text-[var(--text-tertiary)] mt-0.5 flex-shrink-0" />
-                        <p className="text-xs text-[var(--text-secondary)] line-clamp-2">{selection.notes}</p>
+                        <FaStickyNote className="w-3 h-3 text-folio-text-tertiary mt-0.5 flex-shrink-0" />
+                        <p className="text-xs text-folio-text-secondary line-clamp-2">{selection.notes}</p>
                       </div>
                     </div>
                   )}
 
                   {/* Date */}
-                  <div className="text-xs text-[var(--text-tertiary)]">
+                  <div className="text-xs text-folio-text-tertiary">
                     {new Date(selection.createdAt).toLocaleDateString()}
                   </div>
                 </div>
@@ -371,7 +371,7 @@ export default function VendorAnalyticsPage() {
             className="text-center py-16"
           >
             <RidgeCard padding="xl" className="max-w-md mx-auto">
-              <FaChartBar className="w-16 h-16 text-[var(--text-tertiary)] mx-auto mb-4" />
+              <FaChartBar className="w-16 h-16 text-folio-text-tertiary mx-auto mb-4" />
               <h3 className="folio-h3 mb-2">No Selections Found</h3>
               <p className="folio-body mb-6">
                 Try adjusting your filters to see more results

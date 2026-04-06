@@ -18,8 +18,8 @@ export function DesignerFunnelSection() {
 
   return (
     <section className="space-y-3">
-      <h3 className="text-lg font-semibold text-[var(--text-primary)]">Designer Activity Funnel (Standard)</h3>
-      <p className="text-sm text-[var(--text-secondary)]">
+      <h3 className="text-lg font-semibold text-folio-text-primary">Designer Activity Funnel (Standard)</h3>
+      <p className="text-sm text-folio-text-secondary">
         How designers move from exploring your catalog to closing projects.
       </p>
       <div className="rounded-2xl ridge-card p-4 grid md:grid-cols-5 gap-3 text-sm">
@@ -33,12 +33,12 @@ export function DesignerFunnelSection() {
       {/* AI Hot Designers */}
       <section className="space-y-2">
         <div className="flex items-center gap-2">
-          <h4 className="text-sm font-semibold text-[var(--text-primary)]">AI: Hot Designers</h4>
+          <h4 className="text-sm font-semibold text-folio-text-primary">AI: Hot Designers</h4>
           <AIBadge />
         </div>
         {!aiUnlocked ? (
           <div className="rounded-2xl ridge-card p-3 flex items-center justify-between text-sm">
-            <span className="text-[var(--text-secondary)]">
+            <span className="text-folio-text-secondary">
               Unlock AI to see which designers are most likely to spec your products next.
             </span>
             <button 
@@ -57,14 +57,14 @@ export function DesignerFunnelSection() {
               {f.hotDesigners.map(d => (
                 <li 
                   key={d.name} 
-                  className="flex items-center justify-between p-2 rounded-lg bg-[var(--bg-elevated)]/50 hover:bg-[var(--bg-elevated)] transition"
+                  className="flex items-center justify-between p-2 rounded-lg bg-surface-ground/50 hover:bg-surface-ground transition"
                 >
-                  <span className="text-[var(--text-primary)]">{d.name}</span>
-                  <span className="text-xs font-mono text-[var(--text-secondary)]">{d.score}% likelihood</span>
+                  <span className="text-folio-text-primary">{d.name}</span>
+                  <span className="text-xs font-mono text-folio-text-secondary">{d.score}% likelihood</span>
                 </li>
               ))}
             </ul>
-            <div className="mt-2 text-[11px] text-[var(--text-secondary)]">
+            <div className="mt-2 text-[11px] text-folio-text-secondary">
               Based on saves, tags, and event activity for your products.
             </div>
           </div>
@@ -80,15 +80,15 @@ function Stage({ label, value, total }: { label: string; value: number; total: n
   const pct = total ? Math.round((value / total) * 100) : 0;
   return (
     <div className="space-y-1">
-      <div className="text-xs uppercase tracking-wide text-[var(--text-secondary)]">{label}</div>
-      <div className="text-base font-semibold text-[var(--text-primary)]">{value.toLocaleString()}</div>
+      <div className="text-xs uppercase tracking-wide text-folio-text-secondary">{label}</div>
+      <div className="text-base font-semibold text-folio-text-primary">{value.toLocaleString()}</div>
       <div className="h-1 rounded-full bg-[var(--ridge-inner)]">
         <div 
           className="h-1 rounded-full bg-[var(--text-primary)] transition-all" 
           style={{ width: `${pct}%` }} 
         />
       </div>
-      <div className="text-[11px] text-[var(--text-secondary)]">{pct}% of designers</div>
+      <div className="text-[11px] text-folio-text-secondary">{pct}% of designers</div>
     </div>
   );
 }

@@ -36,7 +36,7 @@ export default function VendorCreateProduct() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--bg-base)] flex">
+    <div className="min-h-screen bg-surface-canvas flex">
 
 
       <div className="flex-1 lg:ml-20 xl:ml-56">
@@ -49,7 +49,7 @@ export default function VendorCreateProduct() {
           >
             <Link
               href="/vendor"
-              className="inline-flex items-center space-x-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+              className="inline-flex items-center space-x-2 text-folio-text-secondary hover:text-folio-text-primary transition-colors"
             >
               <FaArrowLeft />
               <span>Back to Vendor Dashboard</span>
@@ -63,7 +63,7 @@ export default function VendorCreateProduct() {
             className="text-center mb-8"
           >
             <h1 className="folio-h1 mb-2">Add New Product</h1>
-            <p className="folio-body text-[var(--text-secondary)]">
+            <p className="folio-body text-folio-text-secondary">
               Upload your products to reach designers and homeowners in our community
             </p>
           </motion.div>
@@ -85,7 +85,7 @@ export default function VendorCreateProduct() {
             >
               <RidgeCard padding="xl" className="max-w-md mx-auto">
                 <h2 className="folio-h2 mb-4">Ready to Upload?</h2>
-                <p className="folio-body text-[var(--text-secondary)] mb-6">
+                <p className="folio-body text-folio-text-secondary mb-6">
                   Click the button below to start uploading your product
                 </p>
                 <Button

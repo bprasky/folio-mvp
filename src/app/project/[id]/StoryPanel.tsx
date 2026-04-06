@@ -300,21 +300,21 @@ export default function StoryPanel({ projectId, project, images, isOwner }: Stor
 
   if (isLoading) {
     return (
-      <div className="p-8 text-center text-[var(--text-secondary)]">Loading...</div>
+      <div className="p-8 text-center text-folio-text-secondary">Loading...</div>
     );
   }
 
   return (
     <div className="max-w-3xl space-y-12">
       {/* Intro */}
-      <p className="folio-body text-[var(--text-secondary)]">
+      <p className="folio-body text-folio-text-secondary">
         Tell us about this project. Your reflections and credits shape the published post.
       </p>
 
       {/* Project Credits */}
-      <div className="rounded-[20px] border border-[var(--border-default)] bg-[var(--bg-elevated)] p-6 shadow-sm">
-        <h2 className="folio-h3 text-[var(--text-primary)] mb-1">Project Credits</h2>
-        <p className="folio-meta text-[var(--text-tertiary)] mb-4">
+      <div className="rounded-[20px] border border-folio-border-subtle bg-surface-ground p-6 shadow-sm">
+        <h2 className="folio-h3 text-folio-text-primary mb-1">Project Credits</h2>
+        <p className="folio-meta text-folio-text-tertiary mb-4">
           Who else brought this project to life? Credits appear on your published post.
         </p>
         <CreditsEditor
@@ -347,9 +347,9 @@ export default function StoryPanel({ projectId, project, images, isOwner }: Stor
       )}
 
       {/* Your Reflections Section */}
-      <div className="rounded-[20px] border border-[var(--border-default)] bg-[var(--bg-elevated)] p-6 shadow-sm">
+      <div className="rounded-[20px] border border-folio-border-subtle bg-surface-ground p-6 shadow-sm">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="folio-h3 text-[var(--text-primary)]">Your Reflections</h2>
+          <h2 className="folio-h3 text-folio-text-primary">Your Reflections</h2>
           <button
             className="px-3 py-1.5 folio-ui font-medium text-white bg-[var(--accent)] rounded-lg hover:bg-[var(--accent-hover)] transition-colors"
             onClick={addAnswer}
@@ -359,7 +359,7 @@ export default function StoryPanel({ projectId, project, images, isOwner }: Stor
         </div>
         <div className="space-y-3 max-h-[420px] overflow-y-auto pr-2">
           {filteredAnswers.length === 0 && (
-            <p className="folio-ui text-[var(--text-tertiary)] italic">
+            <p className="folio-ui text-folio-text-tertiary italic">
               No reflections yet. Add your first reflection above.
             </p>
           )}
@@ -369,11 +369,11 @@ export default function StoryPanel({ projectId, project, images, isOwner }: Stor
               className={`rounded-[20px] p-4 mb-3 transition-colors ${
                 qa.isFeatured
                   ? "border-l-4 border-l-[var(--accent)] border border-[var(--accent)]/30 bg-[var(--accent)]/5"
-                  : "border border-[var(--border-default)]"
+                  : "border border-folio-border-subtle"
               }`}
             >
               <div className="flex items-start justify-between gap-2 mb-2">
-                <label className="block folio-ui font-medium text-[var(--text-primary)]">
+                <label className="block folio-ui font-medium text-folio-text-primary">
                   {qa.q || qa.question || "Your reflection"}
                 </label>
                 <button
@@ -381,7 +381,7 @@ export default function StoryPanel({ projectId, project, images, isOwner }: Stor
                   className={`shrink-0 p-1.5 rounded transition-colors ${
                     qa.isFeatured
                       ? "text-[var(--accent)] bg-[var(--accent)]/10"
-                      : "text-[var(--text-tertiary)] hover:text-[var(--accent)] hover:bg-[var(--accent)]/5"
+                      : "text-folio-text-tertiary hover:text-[var(--accent)] hover:bg-[var(--accent)]/5"
                   }`}
                   aria-label={qa.isFeatured ? "Remove from featured quotes" : "Mark as featured quote"}
                   title={qa.isFeatured ? "Featured quote" : "Feature this quote"}
@@ -391,7 +391,7 @@ export default function StoryPanel({ projectId, project, images, isOwner }: Stor
               </div>
               {qa.isFeatured && (
                 <div className="mb-2 pl-3 border-l-2 border-[var(--accent)]/40">
-                  <p className="folio-ui italic text-[var(--text-secondary)] leading-relaxed">
+                  <p className="folio-ui italic text-folio-text-secondary leading-relaxed">
                     {qa.a || qa.answer || ""}
                   </p>
                 </div>
@@ -399,7 +399,7 @@ export default function StoryPanel({ projectId, project, images, isOwner }: Stor
               <textarea
                 value={qa.a || qa.answer || ""}
                 onChange={(e) => setAnswer(i, "a", e.target.value)}
-                className={`w-full min-h-[80px] p-2 border border-[var(--border-default)] rounded-[20px] resize-y bg-[var(--bg-base)] focus:ring-1 focus:ring-[var(--accent)] focus:border-[var(--accent)] ${
+                className={`w-full min-h-[80px] p-2 border border-folio-border-subtle rounded-[20px] resize-y bg-surface-canvas focus:ring-1 focus:ring-[var(--accent)] focus:border-[var(--accent)] ${
                   qa.isFeatured ? "min-h-[60px]" : ""
                 }`}
                 style={{ fontFamily: "var(--font-headline)", fontStyle: "italic", fontSize: "16px", lineHeight: "1.5" }}
@@ -414,7 +414,7 @@ export default function StoryPanel({ projectId, project, images, isOwner }: Stor
                 <div className="flex-1" />
                 <button
                   onClick={() => removeAnswer(i)}
-                  className="text-[var(--text-tertiary)] hover:text-[rgb(74,44,59)]"
+                  className="text-folio-text-tertiary hover:text-[rgb(74,44,59)]"
                   aria-label="Remove"
                 >
                   <X className="w-4 h-4" />
@@ -426,9 +426,9 @@ export default function StoryPanel({ projectId, project, images, isOwner }: Stor
       </div>
 
       {/* Follow-up Questions Section */}
-      <div className="rounded-[20px] border border-[var(--border-default)] bg-[var(--bg-elevated)] p-6 shadow-sm">
+      <div className="rounded-[20px] border border-folio-border-subtle bg-surface-ground p-6 shadow-sm">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="folio-h3 text-[var(--text-primary)]">Follow-up Questions</h2>
+          <h2 className="folio-h3 text-folio-text-primary">Follow-up Questions</h2>
           <div className="flex gap-2">
             <button
               className="px-3 py-1.5 folio-ui font-medium text-white bg-[var(--accent)] rounded-lg hover:bg-[var(--accent-hover)] transition-colors"
@@ -437,7 +437,7 @@ export default function StoryPanel({ projectId, project, images, isOwner }: Stor
               + Add
             </button>
             <button
-              className="px-3 py-1.5 folio-ui font-medium text-[var(--text-primary)] bg-[var(--bg-base)] border border-[var(--border-default)] rounded-lg hover:bg-[var(--bg-elevated)] transition-colors"
+              className="px-3 py-1.5 folio-ui font-medium text-folio-text-primary bg-surface-canvas border border-folio-border-subtle rounded-lg hover:bg-surface-ground transition-colors"
               onClick={reAskFollowups}
             >
               Ask
@@ -446,23 +446,23 @@ export default function StoryPanel({ projectId, project, images, isOwner }: Stor
         </div>
         <div className="space-y-3 max-h-[280px] overflow-y-auto pr-2">
           {filteredFollowups.length === 0 && (
-            <p className="folio-ui text-[var(--text-tertiary)] italic">
+            <p className="folio-ui text-folio-text-tertiary italic">
               Deeper questions based on your reflections. Click Ask to generate.
             </p>
           )}
           {filteredFollowups.map((qa, i) => (
             <div
               key={i}
-              className="grid grid-cols-12 gap-3 items-start p-3 rounded-lg border border-[var(--border-default)] hover:border-[var(--accent)] transition-colors"
+              className="grid grid-cols-12 gap-3 items-start p-3 rounded-lg border border-folio-border-subtle hover:border-[var(--accent)] transition-colors"
             >
               <input
-                className="col-span-5 px-3 py-2 folio-ui border border-[var(--border-default)] rounded-lg focus:ring-1 focus:ring-[var(--accent)] focus:border-[var(--accent)] min-w-0 bg-[var(--bg-base)]"
+                className="col-span-5 px-3 py-2 folio-ui border border-folio-border-subtle rounded-lg focus:ring-1 focus:ring-[var(--accent)] focus:border-[var(--accent)] min-w-0 bg-surface-canvas"
                 value={qa.q || qa.question || ""}
                 placeholder="Follow-up Question"
                 onChange={(e) => setFollowup(i, "q", e.target.value)}
               />
               <textarea
-                className="col-span-6 px-3 py-2 border border-[var(--border-default)] rounded-lg focus:ring-1 focus:ring-[var(--accent)] focus:border-[var(--accent)] resize-none bg-[var(--bg-base)]"
+                className="col-span-6 px-3 py-2 border border-folio-border-subtle rounded-lg focus:ring-1 focus:ring-[var(--accent)] focus:border-[var(--accent)] resize-none bg-surface-canvas"
                 style={{ fontFamily: "var(--font-headline)", fontStyle: "italic", fontSize: "15px", lineHeight: "1.5" }}
                 value={qa.a || qa.answer || ""}
                 placeholder="Answer"
@@ -470,7 +470,7 @@ export default function StoryPanel({ projectId, project, images, isOwner }: Stor
                 onChange={(e) => setFollowup(i, "a", e.target.value)}
               />
               <button
-                className="col-span-1 px-2 py-1 text-[var(--text-tertiary)] hover:text-[rgb(74,44,59)] hover:bg-stone-100 rounded transition-colors"
+                className="col-span-1 px-2 py-1 text-folio-text-tertiary hover:text-[rgb(74,44,59)] hover:bg-stone-100 rounded transition-colors"
                 onClick={() => removeFollowup(i)}
                 aria-label="Remove"
               >
@@ -547,33 +547,33 @@ function EditorialContextSection({ projectId }: { projectId: string }) {
   }
 
   return (
-    <div className="rounded-[20px] border border-[var(--border-default)] bg-[var(--bg-elevated)] p-6 shadow-sm">
-      <h2 className="folio-h3 text-[var(--text-primary)] mb-1">Editorial Context</h2>
-      <p className="folio-meta text-[var(--text-tertiary)] mb-4">
+    <div className="rounded-[20px] border border-folio-border-subtle bg-surface-ground p-6 shadow-sm">
+      <h2 className="folio-h3 text-folio-text-primary mb-1">Editorial Context</h2>
+      <p className="folio-meta text-folio-text-tertiary mb-4">
         Control what background context Folio uses when writing about your project.
       </p>
       <div className="space-y-3">
-        <label className="flex items-center gap-2 cursor-pointer select-none folio-ui text-[var(--text-secondary)]">
+        <label className="flex items-center gap-2 cursor-pointer select-none folio-ui text-folio-text-secondary">
           <input
             type="checkbox"
             checked={contextToggles.includeBio}
             onChange={(e) => handleToggle('includeBio', e.target.checked)}
-            className="w-4 h-4 rounded border-[var(--border-default)] accent-[var(--accent)]"
+            className="w-4 h-4 rounded border-folio-border-subtle accent-[var(--accent)]"
           />
           Include my bio for richer editorial context
         </label>
-        <label className="flex items-center gap-2 cursor-pointer select-none folio-ui text-[var(--text-secondary)]">
+        <label className="flex items-center gap-2 cursor-pointer select-none folio-ui text-folio-text-secondary">
           <input
             type="checkbox"
             checked={contextToggles.includeProjectHistory}
             onChange={(e) => handleToggle('includeProjectHistory', e.target.checked)}
-            className="w-4 h-4 rounded border-[var(--border-default)] accent-[var(--accent)]"
+            className="w-4 h-4 rounded border-folio-border-subtle accent-[var(--accent)]"
           />
           Reference my other Folio projects
         </label>
       </div>
       {generationMeta?.designerBioMissing && contextToggles.includeBio && (
-        <p className="mt-3 folio-meta text-[var(--text-tertiary)]">
+        <p className="mt-3 folio-meta text-folio-text-tertiary">
           Your bio helps Folio write features that sound like you.{" "}
           <a href="/settings/profile" className="text-[var(--accent)] hover:text-[var(--accent-hover)] underline">
             Add one now

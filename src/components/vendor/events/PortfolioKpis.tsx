@@ -43,12 +43,12 @@ export function PortfolioKpis({ data }: PortfolioKpisProps) {
   ];
 
   return (
-    <Card className="bg-white border-[#DAD2CA]">
+    <Card className="bg-white border-folio-border-strong">
       <CardHeader>
-        <CardTitle className="text-lg font-serif text-[#2B2B2B]">
+        <CardTitle className="text-lg font-serif text-folio-text-primary">
           Portfolio Totals
         </CardTitle>
-        <p className="text-sm text-[#8C8278]">
+        <p className="text-sm text-folio-text-secondary">
           Combined performance across all events
         </p>
       </CardHeader>
@@ -57,10 +57,10 @@ export function PortfolioKpis({ data }: PortfolioKpisProps) {
           {kpiItems.map((item, index) => (
             <div key={index} className="text-center">
               <div className="flex items-center justify-center w-12 h-12 bg-[#8C8278]/10 rounded-full mb-3 mx-auto">
-                <item.icon className="w-6 h-6 text-[#8C8278]" />
+                <item.icon className="w-6 h-6 text-folio-text-secondary" />
               </div>
-              <p className="text-sm text-[#8C8278] mb-2">{item.label}</p>
-              <p className="text-xl font-semibold text-[#2B2B2B] mb-2">
+              <p className="text-sm text-folio-text-secondary mb-2">{item.label}</p>
+              <p className="text-xl font-semibold text-folio-text-primary mb-2">
                 {item.formatter(item.value)}
               </p>
               <div className="flex items-center justify-center">

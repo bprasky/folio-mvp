@@ -370,7 +370,7 @@ export default function DesignerBoard({
       {/* Controls Bar */}
       <div className="ridge-card p-4 flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <label htmlFor="room-filter" className="folio-ui font-medium text-[var(--text-primary)]">
+          <label htmlFor="room-filter" className="folio-ui font-medium text-folio-text-primary">
             Filter by room:
           </label>
           <select
@@ -389,7 +389,7 @@ export default function DesignerBoard({
         </div>
 
         <div className="flex items-center space-x-4">
-          <div className="folio-ui text-[var(--text-secondary)]">
+          <div className="folio-ui text-folio-text-secondary">
             {filteredRooms.length} room{filteredRooms.length !== 1 ? 's' : ''} • {filteredRooms.reduce((sum, room) => sum + room.selections.length, 0)} items
           </div>
 
@@ -436,20 +436,20 @@ export default function DesignerBoard({
           {isAnalyzing ? (
             <>
               <FaSpinner className="w-8 h-8 mx-auto mb-4 text-[var(--accent)] animate-spin" />
-              <h3 className="folio-ui font-semibold text-[var(--text-primary)] mb-2">
+              <h3 className="folio-ui font-semibold text-folio-text-primary mb-2">
                 Analyzing your photos
               </h3>
-              <p className="folio-body text-[var(--text-secondary)] mb-6">
+              <p className="folio-body text-folio-text-secondary mb-6">
                 AI is detecting rooms and products from your {imageCount} image{imageCount !== 1 ? 's' : ''}.
                 This usually takes 30-60 seconds.
               </p>
             </>
           ) : (
             <>
-              <h3 className="folio-ui font-semibold text-[var(--text-primary)] mb-2">
+              <h3 className="folio-ui font-semibold text-folio-text-primary mb-2">
                 Analysis complete
               </h3>
-              <p className="folio-body text-[var(--text-secondary)] mb-6">
+              <p className="folio-body text-folio-text-secondary mb-6">
                 No rooms were detected. Try uploading more interior photos.
               </p>
             </>
@@ -475,7 +475,7 @@ export default function DesignerBoard({
       )}
 
       {filteredRooms.length === 0 && project.rooms.length > 0 && (
-        <div className="text-center py-12 text-[var(--text-secondary)]">
+        <div className="text-center py-12 text-folio-text-secondary">
           <p className="folio-body">No rooms match your filter</p>
           <p className="folio-ui mt-2">Try selecting a different room or "All Rooms"</p>
         </div>
@@ -484,9 +484,9 @@ export default function DesignerBoard({
       {/* Orphaned ProductTags — tags not linked to any Selection */}
       {orphanedTags.length > 0 && (
         <div className="space-y-4">
-          <h3 className="folio-ui font-semibold text-[var(--text-primary)]">
+          <h3 className="folio-ui font-semibold text-folio-text-primary">
             Tagged Products
-            <span className="ml-2 folio-meta font-normal text-[var(--text-secondary)]">
+            <span className="ml-2 folio-meta font-normal text-folio-text-secondary">
               {orphanedTags.length} product{orphanedTags.length !== 1 ? 's' : ''} not yet in a room
             </span>
           </h3>
@@ -500,7 +500,7 @@ export default function DesignerBoard({
                   className="ridge-card overflow-hidden"
                 >
                   {/* Image thumbnail with tag dot */}
-                  <div className="relative aspect-[4/3] bg-[var(--bg-elevated)]">
+                  <div className="relative aspect-[4/3] bg-surface-ground">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={tag.image.url}
@@ -520,7 +520,7 @@ export default function DesignerBoard({
                   </div>
                   {/* Product info */}
                   <div className="px-3 py-2">
-                    <p className="folio-meta font-medium text-[var(--text-primary)] truncate">
+                    <p className="folio-meta font-medium text-folio-text-primary truncate">
                       {tag.product?.name ?? 'Unknown Product'}
                     </p>
                   </div>
@@ -533,7 +533,7 @@ export default function DesignerBoard({
 
       {/* Generated Images Section */}
       {selectedRoomId && (
-        <div className="mt-8 pt-8 border-t border-[var(--border-default)]">
+        <div className="mt-8 pt-8 border-t border-folio-border-subtle">
           <GeneratedGrid
             projectId={projectId}
             roomId={selectedRoomId}

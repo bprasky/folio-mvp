@@ -81,7 +81,7 @@ export default function GlassCreateButton() {
               }}
               role="menuitem"
               className={clsx(
-                'block w-full px-4 py-2 text-left text-sm text-[var(--text-primary)] hover:bg-black/5'
+                'block w-full px-4 py-2 text-left text-sm text-folio-text-primary hover:bg-black/5'
               )}
             >
               {a.label}

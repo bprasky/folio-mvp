@@ -31,15 +31,15 @@ export function VoiceInterview({
 }: VoiceInterviewProps) {
   return (
     <div className="flex flex-col items-center justify-center min-h-[400px] px-6 py-8">
-      <div className="w-16 h-16 rounded-full bg-[var(--bg-elevated)] flex items-center justify-center mb-6">
-        <Mic className="w-8 h-8 text-[var(--text-tertiary)]" />
+      <div className="w-16 h-16 rounded-full bg-surface-ground flex items-center justify-center mb-6">
+        <Mic className="w-8 h-8 text-folio-text-tertiary" />
       </div>
 
-      <h2 className="text-xl font-medium text-[var(--text-primary)] mb-2">
+      <h2 className="text-xl font-medium text-folio-text-primary mb-2">
         Voice Interview
       </h2>
 
-      <p className="text-[var(--text-secondary)] text-center max-w-md mb-8">
+      <p className="text-folio-text-secondary text-center max-w-md mb-8">
         Voice interviews are coming soon. For now, you can use the text
         interview to share your project story.
       </p>

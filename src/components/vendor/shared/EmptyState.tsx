@@ -12,8 +12,8 @@ export function EmptyState({
 }) {
   return (
     <div className="ridge-card p-6 text-center">
-      <div className="folio-ui text-[var(--text-primary)]">{title}</div>
-      {subtitle && <div className="folio-meta text-[var(--text-secondary)] mt-1">{subtitle}</div>}
+      <div className="folio-ui text-folio-text-primary">{title}</div>
+      {subtitle && <div className="folio-meta text-folio-text-secondary mt-1">{subtitle}</div>}
     </div>
   );
 }

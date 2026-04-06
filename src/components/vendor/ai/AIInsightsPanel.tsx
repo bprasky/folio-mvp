@@ -35,7 +35,7 @@ export function AIInsightsPanel() {
   return (
     <section className="space-y-3">
       <div className="flex items-center gap-2">
-        <h3 className="text-lg font-semibold text-[var(--text-primary)]">AI Insights & Actions</h3>
+        <h3 className="text-lg font-semibold text-folio-text-primary">AI Insights & Actions</h3>
         <AIBadge />
       </div>
       
@@ -54,7 +54,7 @@ export function AIInsightsPanel() {
               ))}
             </div>
           ) : (
-            <div className="ridge-card p-4 text-center folio-ui text-[var(--text-secondary)]">
+            <div className="ridge-card p-4 text-center folio-ui text-folio-text-secondary">
               Computing insights...
             </div>
           )}
@@ -81,11 +81,11 @@ export function AIInsightsPanel() {
 function LockedTeaser() {
   return (
     <div className="ridge-card p-4 flex items-center justify-between shadow-md">
-      <div className="folio-ui text-[var(--text-secondary)]">
+      <div className="folio-ui text-folio-text-secondary">
         Predictive demand, affinity targeting, and budget optimization.
       </div>
       <div className="flex gap-2">
-        <button className="rounded-xl px-4 py-2 border border-[var(--ridge-outer)] hover:bg-[var(--bg-elevated)] text-[var(--text-primary)] transition">
+        <button className="rounded-xl px-4 py-2 border border-folio-border-subtle hover:bg-surface-ground text-folio-text-primary transition">
           Preview
         </button>
         <button className="rounded-xl px-4 py-2 bg-[var(--text-primary)] text-[var(--bg-base)] hover:opacity-90 transition">
@@ -117,9 +117,9 @@ function InsightCard({
       <div className={`folio-meta uppercase tracking-wide px-2 py-1 rounded-full border inline-block ${impactColors[insight.impact]}`}>
         Impact: {insight.impact}
       </div>
-      <div className="font-semibold text-[var(--text-primary)]">{insight.title}</div>
-      <p className="folio-ui text-[var(--text-secondary)]">{insight.summary}</p>
-      <div className="folio-meta font-mono text-[var(--text-secondary)]">
+      <div className="font-semibold text-folio-text-primary">{insight.title}</div>
+      <p className="folio-ui text-folio-text-secondary">{insight.summary}</p>
+      <div className="folio-meta font-mono text-folio-text-secondary">
         {Object.entries(insight.metrics)
           .map(([k, v]) => `${k}: ${v}`)
           .join(' . ')}
@@ -129,7 +129,7 @@ function InsightCard({
           <button
             key={a.id}
             onClick={() => onAction(a)}
-            className="rounded-xl px-3 py-1.5 border border-[var(--ridge-outer)] hover:bg-[var(--bg-elevated)] folio-ui text-[var(--text-primary)] transition"
+            className="rounded-xl px-3 py-1.5 border border-folio-border-subtle hover:bg-surface-ground folio-ui text-folio-text-primary transition"
           >
             {a.label}
           </button>

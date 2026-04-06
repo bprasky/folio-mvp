@@ -87,12 +87,12 @@ export default function RoomSkeletonInbox({
   return (
     <div className="bg-white border rounded-lg p-4">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="font-medium text-[var(--text-primary)]">Unfinished details</h3>
-        {loading && <span className="text-sm text-[var(--text-secondary)]">Loading...</span>}
+        <h3 className="font-medium text-folio-text-primary">Unfinished details</h3>
+        {loading && <span className="text-sm text-folio-text-secondary">Loading...</span>}
       </div>
 
       {skeletons.length === 0 ? (
-        <p className="text-sm text-[var(--text-secondary)] text-center py-4">
+        <p className="text-sm text-folio-text-secondary text-center py-4">
           No unconfirmed details in this room
         </p>
       ) : (
@@ -104,10 +104,10 @@ export default function RoomSkeletonInbox({
               <button
                 key={skeleton.id}
                 onClick={() => onSkeletonClick(skeleton.id, skeleton.projectImageId)}
-                className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-[var(--bg-elevated)] transition-colors text-left"
+                className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-surface-ground transition-colors text-left"
               >
                 {image && (
-                  <div className="relative w-16 h-16 rounded overflow-hidden flex-shrink-0 bg-[var(--bg-elevated)]">
+                  <div className="relative w-16 h-16 rounded overflow-hidden flex-shrink-0 bg-surface-ground">
                     <Image
                       src={image.url}
                       alt={image.name || 'Project image'}
@@ -118,10 +118,10 @@ export default function RoomSkeletonInbox({
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium text-[var(--text-primary)] truncate">
+                  <div className="text-sm font-medium text-folio-text-primary truncate">
                     Unconfirmed detail
                   </div>
-                  <div className="text-xs text-[var(--text-secondary)]">
+                  <div className="text-xs text-folio-text-secondary">
                     {(skeleton.confidence * 100).toFixed(0)}% confidence
                   </div>
                 </div>

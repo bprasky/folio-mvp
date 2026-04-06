@@ -35,13 +35,13 @@ export function InfluenceFlow({ nodes, links, onHover, variant = 'bars' }: Influ
 
   if (variant === 'bars') {
     return (
-      <Card className="bg-white border-[#DAD2CA]">
+      <Card className="bg-white border-folio-border-strong">
         <CardHeader>
-          <CardTitle className="text-lg font-serif text-[#2B2B2B] flex items-center space-x-2">
-            <TrendingUp className="w-5 h-5 text-[#8C8278]" />
+          <CardTitle className="text-lg font-serif text-folio-text-primary flex items-center space-x-2">
+            <TrendingUp className="w-5 h-5 text-folio-text-secondary" />
             <span>Influence Flow</span>
           </CardTitle>
-          <p className="text-sm text-[#8C8278]">
+          <p className="text-sm text-folio-text-secondary">
             Where attention became intent — and where it leaked
           </p>
         </CardHeader>
@@ -64,11 +64,11 @@ export function InfluenceFlow({ nodes, links, onHover, variant = 'bars' }: Influ
               >
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center space-x-4">
-                    <div className="text-sm font-medium text-[#2B2B2B]">
+                    <div className="text-sm font-medium text-folio-text-primary">
                       {sourceNode.label}
                     </div>
-                    <ArrowRight className="w-4 h-4 text-[#8C8278]" />
-                    <div className="text-sm font-medium text-[#2B2B2B]">
+                    <ArrowRight className="w-4 h-4 text-folio-text-secondary" />
+                    <div className="text-sm font-medium text-folio-text-primary">
                       {targetNode.label}
                     </div>
                     <Badge variant="secondary" className="text-xs">
@@ -85,7 +85,7 @@ export function InfluenceFlow({ nodes, links, onHover, variant = 'bars' }: Influ
                 </div>
 
                 <div className="relative">
-                  <div className="w-full bg-[#F7F4F1] rounded-full h-6">
+                  <div className="w-full bg-surface-elevated rounded-full h-6">
                     <div 
                       className={`h-6 rounded-full transition-all duration-300 ${
                         isHovered ? 'bg-[#8C8278]' : 'bg-[#3A332E]'
@@ -119,18 +119,18 @@ export function InfluenceFlow({ nodes, links, onHover, variant = 'bars' }: Influ
 
   // Fallback for when Sankey chart is not available
   return (
-    <Card className="bg-white border-[#DAD2CA]">
+    <Card className="bg-white border-folio-border-strong">
       <CardHeader>
-        <CardTitle className="text-lg font-serif text-[#2B2B2B]">
+        <CardTitle className="text-lg font-serif text-folio-text-primary">
           Influence Flow
         </CardTitle>
-        <p className="text-sm text-[#8C8278]">
+        <p className="text-sm text-folio-text-secondary">
           Where attention became intent — and where it leaked
         </p>
       </CardHeader>
       
       <CardContent>
-        <div className="text-center py-8 text-[#8C8278]">
+        <div className="text-center py-8 text-folio-text-secondary">
           Flow visualization loading...
         </div>
       </CardContent>

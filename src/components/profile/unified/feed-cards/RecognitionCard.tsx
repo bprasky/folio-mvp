@@ -33,14 +33,13 @@ export default function RecognitionCard({ recognition }: RecognitionCardProps) {
   return (
     <article
       onClick={handleClick}
-      className={`group overflow-hidden rounded-xl transition-all duration-300 hover:shadow-lg ${
+      className={`group overflow-hidden rounded-xl transition-all duration-300 hover:shadow-lg bg-surface-canvas ${
         recognition.url ? 'cursor-pointer' : ''
       }`}
-      style={{ backgroundColor: 'white' }}
     >
       {/* Image section */}
       {recognition.imageUrl && (
-        <div className="relative aspect-[16/9] overflow-hidden" style={{ backgroundColor: '#E8E4DF' }}>
+        <div className="relative aspect-[16/9] overflow-hidden bg-folio-border-subtle">
           <SafeImage
             src={recognition.imageUrl}
             alt={recognition.title}
@@ -52,15 +51,14 @@ export default function RecognitionCard({ recognition }: RecognitionCardProps) {
       )}
 
       {/* Content */}
-      <div className="p-5" style={{ borderTop: recognition.imageUrl ? '1px solid #E8E4DF' : 'none' }}>
+      <div className={`p-5 ${recognition.imageUrl ? 'border-t border-folio-border-subtle' : ''}`}>
         {/* Header with badge and source logo */}
         <div className="flex items-start justify-between gap-3 mb-3">
           <span
-            className="px-2 py-1 text-xs rounded-full flex-shrink-0"
-            style={{
-              backgroundColor: isAward ? '#FEF3C7' : '#F0EDE9',
-              color: isAward ? '#92400E' : '#6B635B',
-            }}
+            className={`px-2 py-1 text-xs rounded-full flex-shrink-0 ${
+              isAward ? '' : 'bg-surface-elevated text-folio-text-secondary'
+            }`}
+            style={isAward ? { backgroundColor: '#FEF3C7', color: '#92400E' } : undefined}
           >
             {isAward && <span className="mr-1">&#127942;</span>}
             {formatRecognitionType(recognition.type)}
@@ -68,8 +66,7 @@ export default function RecognitionCard({ recognition }: RecognitionCardProps) {
 
           {recognition.sourceLogoUrl && (
             <div
-              className="w-8 h-8 rounded flex-shrink-0 overflow-hidden"
-              style={{ backgroundColor: '#F5F3F0' }}
+              className="w-8 h-8 rounded flex-shrink-0 overflow-hidden bg-surface-elevated"
             >
               <SafeImage
                 src={recognition.sourceLogoUrl}
@@ -84,14 +81,14 @@ export default function RecognitionCard({ recognition }: RecognitionCardProps) {
 
         {/* Title */}
         <h3
-          className="font-medium leading-tight line-clamp-2 mb-2"
-          style={{ color: '#2C2825', fontFamily: 'Georgia, serif' }}
+          className="font-medium leading-tight line-clamp-2 mb-2 text-folio-text-primary"
+          style={{ fontFamily: 'Georgia, serif' }}
         >
           {recognition.title}
         </h3>
 
         {/* Source and date */}
-        <div className="flex items-center gap-2 text-sm" style={{ color: '#8B8178' }}>
+        <div className="flex items-center gap-2 text-sm text-folio-text-secondary">
           <span className="font-medium">{recognition.source}</span>
           <span>·</span>
           <span>{formattedDate}</span>
@@ -100,8 +97,7 @@ export default function RecognitionCard({ recognition }: RecognitionCardProps) {
         {/* Excerpt */}
         {recognition.excerpt && (
           <p
-            className="text-sm mt-3 line-clamp-3 italic"
-            style={{ color: '#5C564F', borderLeft: '2px solid #E8E4DF', paddingLeft: '12px' }}
+            className="text-sm mt-3 line-clamp-3 italic text-folio-text-secondary border-l-2 border-folio-border-subtle pl-3"
           >
             "{recognition.excerpt}"
           </p>
@@ -109,7 +105,7 @@ export default function RecognitionCard({ recognition }: RecognitionCardProps) {
 
         {/* External link indicator */}
         {recognition.url && (
-          <div className="mt-4 flex items-center gap-1 text-xs" style={{ color: '#8B8178' }}>
+          <div className="mt-4 flex items-center gap-1 text-xs text-folio-text-secondary">
             <span>Read more</span>
             <ExternalLinkIcon />
           </div>

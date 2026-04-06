@@ -45,8 +45,8 @@ export default function NewArticleTopicPage() {
   // Auth check
   if (status === 'loading') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[var(--bg-base)]">
-        <div className="text-[var(--text-secondary)]">Loading...</div>
+      <div className="min-h-screen flex items-center justify-center bg-surface-canvas">
+        <div className="text-folio-text-secondary">Loading...</div>
       </div>
     );
   }
@@ -104,12 +104,12 @@ export default function NewArticleTopicPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--bg-base)] py-8">
+    <div className="min-h-screen bg-surface-canvas py-8">
       <div className="max-w-2xl mx-auto px-4">
         {/* Header */}
         <div className="mb-8">
           <h1 className="folio-h1 mb-2">Create Article Topic</h1>
-          <p className="folio-body text-[var(--text-secondary)]">
+          <p className="folio-body text-folio-text-secondary">
             Define a topic to gather voices from your community
           </p>
         </div>
@@ -127,7 +127,7 @@ export default function NewArticleTopicPage() {
                 placeholder="The Quiet Return of Travertine"
                 required
               />
-              <p className="mt-1 text-xs text-[var(--text-secondary)]">
+              <p className="mt-1 text-xs text-folio-text-secondary">
                 This will be the article headline
               </p>
             </div>
@@ -144,7 +144,7 @@ export default function NewArticleTopicPage() {
                 className="ridge-input w-full px-3 py-2 min-h-[80px]"
                 required
               />
-              <p className="mt-1 text-xs text-[var(--text-secondary)]">
+              <p className="mt-1 text-xs text-folio-text-secondary">
                 The question users will answer when contributing
               </p>
             </div>
@@ -190,7 +190,7 @@ export default function NewArticleTopicPage() {
                 onChange={(e) => setTags(e.target.value)}
                 placeholder="stone, natural, warm-tones"
               />
-              <p className="mt-1 text-xs text-[var(--text-secondary)]">
+              <p className="mt-1 text-xs text-folio-text-secondary">
                 Comma-separated tags for categorization
               </p>
             </div>
@@ -216,7 +216,7 @@ export default function NewArticleTopicPage() {
                   </label>
                 ))}
               </div>
-              <p className="mt-1 text-xs text-[var(--text-secondary)]">
+              <p className="mt-1 text-xs text-folio-text-secondary">
                 Who can contribute to this topic (leave all checked for everyone)
               </p>
             </div>
@@ -233,7 +233,7 @@ export default function NewArticleTopicPage() {
                   onChange={(e) => setMinContributions(parseInt(e.target.value) || 5)}
                   min={1}
                 />
-                <p className="mt-1 text-xs text-[var(--text-secondary)]">
+                <p className="mt-1 text-xs text-folio-text-secondary">
                   Minimum to progress to writing
                 </p>
               </div>
@@ -247,7 +247,7 @@ export default function NewArticleTopicPage() {
                   onChange={(e) => setTargetContributions(parseInt(e.target.value) || 15)}
                   min={1}
                 />
-                <p className="mt-1 text-xs text-[var(--text-secondary)]">
+                <p className="mt-1 text-xs text-folio-text-secondary">
                   Ideal number for the article
                 </p>
               </div>
@@ -301,7 +301,7 @@ export default function NewArticleTopicPage() {
                 value={targetPublishDate}
                 onChange={(e) => setTargetPublishDate(e.target.value)}
               />
-              <p className="mt-1 text-xs text-[var(--text-secondary)]">
+              <p className="mt-1 text-xs text-folio-text-secondary">
                 Creates urgency for contributors
               </p>
             </div>

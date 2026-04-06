@@ -15,28 +15,28 @@ export function KpiStrip({ kpis }: KpiStripProps) {
       label: "RSVPs",
       value: formatCompactNumber(kpis.rsvps),
       icon: Users,
-      color: "text-[#8C8278]",
+      color: "text-folio-text-secondary",
       bgColor: "bg-[#8C8278]/10"
     },
     {
       label: "Attendance",
       value: kpis.attendanceRatePct ? `${kpis.attendanceRatePct}%` : "—",
       icon: TrendingUp,
-      color: "text-[#8C8278]",
+      color: "text-folio-text-secondary",
       bgColor: "bg-[#8C8278]/10"
     },
     {
       label: "Products Saved",
       value: formatCompactNumber(kpis.productsSaved),
       icon: Package,
-      color: "text-[#8C8278]",
+      color: "text-folio-text-secondary",
       bgColor: "bg-[#8C8278]/10"
     },
     {
       label: "Est. Project Value",
       value: formatCurrency(kpis.estProjectValueUsd, 'USD', true),
       icon: DollarSign,
-      color: "text-[#8C8278]",
+      color: "text-folio-text-secondary",
       bgColor: "bg-[#8C8278]/10"
     }
   ];
@@ -48,7 +48,7 @@ export function KpiStrip({ kpis }: KpiStripProps) {
         return (
           <Card 
             key={item.label} 
-            className="bg-white border-[#DAD2CA] hover:shadow-md transition-shadow"
+            className="bg-white border-folio-border-strong hover:shadow-md transition-shadow"
             data-testid={`kpi-${index}`}
           >
             <CardContent className="p-6">
@@ -57,10 +57,10 @@ export function KpiStrip({ kpis }: KpiStripProps) {
                   <Icon className={`w-6 h-6 ${item.color}`} />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-[#8C8278] mb-1">
+                  <p className="text-sm font-medium text-folio-text-secondary mb-1">
                     {item.label}
                   </p>
-                  <p className="text-2xl font-semibold text-[#2B2B2B]">
+                  <p className="text-2xl font-semibold text-folio-text-primary">
                     {item.value}
                   </p>
                 </div>

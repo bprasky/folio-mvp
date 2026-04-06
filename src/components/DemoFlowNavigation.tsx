@@ -34,7 +34,7 @@ export default function DemoFlowNavigation() {
 
   return (
     <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-40">
-      <div className="bg-white rounded-2xl shadow-lg border border-[var(--ridge-outer)] px-4 py-3">
+      <div className="bg-white rounded-2xl shadow-lg border border-folio-border-subtle px-4 py-3">
         <div className="flex items-center gap-6">
           {navItems.map((item) => {
             const Icon = item.icon;
@@ -47,7 +47,7 @@ export default function DemoFlowNavigation() {
                 className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all duration-200 ${
                   isActive
                     ? "bg-[var(--accent)]/10 text-[var(--accent)]"
-                    : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]"
+                    : "text-folio-text-secondary hover:text-folio-text-primary hover:bg-surface-ground"
                 }`}
                 title={item.description}
               >

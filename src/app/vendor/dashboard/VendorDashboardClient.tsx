@@ -163,16 +163,16 @@ export default function VendorDashboardClient({ user, projects, stats }: VendorD
   const followUpProjects = projects.filter(p => p.followUpDue && new Date(p.followUpDue) <= new Date());
 
   return (
-    <div className="min-h-screen bg-[var(--bg-base)]">
+    <div className="min-h-screen bg-surface-canvas">
       {/* Header */}
-      <div className="bg-[var(--bg-elevated)] shadow-[var(--neu-raised)] border-b border-[var(--border-subtle)]">
+      <div className="bg-surface-ground shadow-[var(--neu-raised)] border-b border-[var(--border-subtle)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="folio-h1">
                 Welcome back, {user?.name}
               </h1>
-              <p className="folio-body text-[var(--text-secondary)] mt-1">
+              <p className="folio-body text-folio-text-secondary mt-1">
                 Here's your current pipeline at a glance
               </p>
             </div>
@@ -200,7 +200,7 @@ export default function VendorDashboardClient({ user, projects, stats }: VendorD
               </div>
               <div className="ml-4">
                 <p className="folio-meta">Active Projects</p>
-                <p className="text-2xl font-bold text-[var(--text-primary)]">{stats.activeProjects}</p>
+                <p className="text-2xl font-bold text-folio-text-primary">{stats.activeProjects}</p>
               </div>
             </div>
           </RidgeCard>
@@ -212,7 +212,7 @@ export default function VendorDashboardClient({ user, projects, stats }: VendorD
               </div>
               <div className="ml-4">
                 <p className="folio-meta">Sent to Designers</p>
-                <p className="text-2xl font-bold text-[var(--text-primary)]">{stats.projectsSentToDesigners}</p>
+                <p className="text-2xl font-bold text-folio-text-primary">{stats.projectsSentToDesigners}</p>
               </div>
             </div>
           </RidgeCard>
@@ -224,7 +224,7 @@ export default function VendorDashboardClient({ user, projects, stats }: VendorD
               </div>
               <div className="ml-4">
                 <p className="folio-meta">Claimed by Designers</p>
-                <p className="text-2xl font-bold text-[var(--text-primary)]">{stats.projectsClaimedByDesigners}</p>
+                <p className="text-2xl font-bold text-folio-text-primary">{stats.projectsClaimedByDesigners}</p>
               </div>
             </div>
           </RidgeCard>
@@ -236,7 +236,7 @@ export default function VendorDashboardClient({ user, projects, stats }: VendorD
               </div>
               <div className="ml-4">
                 <p className="folio-meta">Open Follow-ups</p>
-                <p className="text-2xl font-bold text-[var(--text-primary)]">{stats.openFollowUps}</p>
+                <p className="text-2xl font-bold text-folio-text-primary">{stats.openFollowUps}</p>
               </div>
             </div>
           </RidgeCard>
@@ -248,7 +248,7 @@ export default function VendorDashboardClient({ user, projects, stats }: VendorD
               </div>
               <div className="ml-4">
                 <p className="folio-meta">Recent Wins</p>
-                <p className="text-2xl font-bold text-[var(--text-primary)]">{stats.recentWins}</p>
+                <p className="text-2xl font-bold text-folio-text-primary">{stats.recentWins}</p>
               </div>
             </div>
           </RidgeCard>
@@ -268,7 +268,7 @@ export default function VendorDashboardClient({ user, projects, stats }: VendorD
                   <h2 className="folio-h3">Active Projects</h2>
                   <div className="flex items-center space-x-4">
                     <div className="relative">
-                      <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[var(--text-tertiary)]" />
+                      <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-folio-text-tertiary" />
                       <Input
                         type="text"
                         placeholder="Search projects..."
@@ -293,34 +293,34 @@ export default function VendorDashboardClient({ user, projects, stats }: VendorD
               
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-[var(--border-subtle)]">
-                  <thead className="bg-[var(--bg-elevated)]">
+                  <thead className="bg-surface-ground">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-tertiary)] uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-folio-text-tertiary uppercase tracking-wider">
                         Project
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-tertiary)] uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-folio-text-tertiary uppercase tracking-wider">
                         Designer
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-tertiary)] uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-folio-text-tertiary uppercase tracking-wider">
                         Created
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-tertiary)] uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-folio-text-tertiary uppercase tracking-wider">
                         Status
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-tertiary)] uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-folio-text-tertiary uppercase tracking-wider">
                         AI Summary
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-tertiary)] uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-folio-text-tertiary uppercase tracking-wider">
                         Actions
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="bg-[var(--bg-base)] divide-y divide-[var(--border-subtle)]">
+                  <tbody className="bg-surface-canvas divide-y divide-[var(--border-subtle)]">
                     {filteredProjects.map((project) => (
-                      <tr key={project.id} className="hover:bg-[var(--bg-elevated)]">
+                      <tr key={project.id} className="hover:bg-surface-ground">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div>
-                            <div className="text-sm font-medium text-[var(--text-primary)]">
+                            <div className="text-sm font-medium text-folio-text-primary">
                               {project?.name || project?.title || "Untitled project"}
                             </div>
                             <div className="folio-meta">
@@ -329,7 +329,7 @@ export default function VendorDashboardClient({ user, projects, stats }: VendorD
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-[var(--text-primary)]">
+                          <div className="text-sm text-folio-text-primary">
                             {project.designerName || 'Not assigned'}
                           </div>
                         </td>
@@ -340,7 +340,7 @@ export default function VendorDashboardClient({ user, projects, stats }: VendorD
                           {getStatusBadge(project)}
                         </td>
                         <td className="px-6 py-4">
-                          <div className="text-sm text-[var(--text-primary)] max-w-xs">
+                          <div className="text-sm text-folio-text-primary max-w-xs">
                             {generateAISummary(project)}
                           </div>
                           <div className="folio-meta mt-1">
@@ -377,9 +377,9 @@ export default function VendorDashboardClient({ user, projects, stats }: VendorD
                 
                 {filteredProjects.length === 0 && (
                   <div className="text-center py-12">
-                    <div className="text-[var(--text-tertiary)] text-6xl mb-4">📋</div>
+                    <div className="text-folio-text-tertiary text-6xl mb-4">📋</div>
                     <h3 className="folio-h3 mb-2">No projects found</h3>
-                    <p className="folio-body text-[var(--text-secondary)] mb-4">
+                    <p className="folio-body text-folio-text-secondary mb-4">
                       {searchTerm || filterStatus !== 'all'
                         ? 'Try adjusting your search or filters'
                         : 'Get started by creating your first project'
@@ -411,13 +411,13 @@ export default function VendorDashboardClient({ user, projects, stats }: VendorD
                 <div className="space-y-4">
                   {followUpProjects.slice(0, 3).map((project) => (
                     <div key={project.id} className="border-l-4 border-[var(--accent)] pl-4">
-                      <div className="text-sm font-medium text-[var(--text-primary)]">
+                      <div className="text-sm font-medium text-folio-text-primary">
                         {project?.name || "Untitled project"}
                       </div>
                       <div className="folio-meta mt-1">
                         {getNextAction(project)}
                       </div>
-                      <div className="text-xs text-[var(--text-tertiary)] mt-1">
+                      <div className="text-xs text-folio-text-tertiary mt-1">
                         Due: {project.followUpDue && formatDate(project.followUpDue)}
                       </div>
                       <button
@@ -439,35 +439,35 @@ export default function VendorDashboardClient({ user, projects, stats }: VendorD
               <div className="space-y-3">
                 <button
                   onClick={() => router.push('/vendor/create-project')}
-                  className="w-full flex items-center justify-between p-3 border border-[var(--border-subtle)] rounded-lg hover:bg-[var(--bg-elevated)] transition-colors"
+                  className="w-full flex items-center justify-between p-3 border border-[var(--border-subtle)] rounded-lg hover:bg-surface-ground transition-colors"
                 >
                   <div className="flex items-center">
                     <FaPlus className="text-[var(--accent)] mr-3" />
-                    <span className="text-sm font-medium text-[var(--text-primary)]">Create New Project</span>
+                    <span className="text-sm font-medium text-folio-text-primary">Create New Project</span>
                   </div>
-                  <FaArrowRight className="text-[var(--text-tertiary)]" />
+                  <FaArrowRight className="text-folio-text-tertiary" />
                 </button>
 
                 <button
                   onClick={() => router.push('/vendor/analytics')}
-                  className="w-full flex items-center justify-between p-3 border border-[var(--border-subtle)] rounded-lg hover:bg-[var(--bg-elevated)] transition-colors"
+                  className="w-full flex items-center justify-between p-3 border border-[var(--border-subtle)] rounded-lg hover:bg-surface-ground transition-colors"
                 >
                   <div className="flex items-center">
                     <FaChartLine className="text-green-600 mr-3" />
-                    <span className="text-sm font-medium text-[var(--text-primary)]">View Analytics</span>
+                    <span className="text-sm font-medium text-folio-text-primary">View Analytics</span>
                   </div>
-                  <FaArrowRight className="text-[var(--text-tertiary)]" />
+                  <FaArrowRight className="text-folio-text-tertiary" />
                 </button>
 
                 <button
                   onClick={() => router.push('/vendor/organization')}
-                  className="w-full flex items-center justify-between p-3 border border-[var(--border-subtle)] rounded-lg hover:bg-[var(--bg-elevated)] transition-colors"
+                  className="w-full flex items-center justify-between p-3 border border-[var(--border-subtle)] rounded-lg hover:bg-surface-ground transition-colors"
                 >
                   <div className="flex items-center">
                     <FaUsers className="text-purple-600 mr-3" />
-                    <span className="text-sm font-medium text-[var(--text-primary)]">Manage Team</span>
+                    <span className="text-sm font-medium text-folio-text-primary">Manage Team</span>
                   </div>
-                  <FaArrowRight className="text-[var(--text-tertiary)]" />
+                  <FaArrowRight className="text-folio-text-tertiary" />
                 </button>
               </div>
             </RidgeCard>
@@ -482,10 +482,10 @@ export default function VendorDashboardClient({ user, projects, stats }: VendorD
                       <div className="w-2 h-2 bg-[var(--accent)] rounded-full mt-2"></div>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm text-[var(--text-primary)] truncate">
+                      <p className="text-sm text-folio-text-primary truncate">
                         {project?.name || "Untitled project"}
                       </p>
-                      <p className="text-xs text-[var(--text-tertiary)]">
+                      <p className="text-xs text-folio-text-tertiary">
                         {project.lastActivity ? formatDate(project.lastActivity) : formatDate(project.createdAt)}
                       </p>
                     </div>

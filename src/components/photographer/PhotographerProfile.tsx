@@ -52,7 +52,7 @@ export function PhotographerProfile({ photographer, projects }: PhotographerProf
     || (photographer.bookingEmail ? `mailto:${photographer.bookingEmail}` : null);
 
   return (
-    <main className="min-h-screen bg-[#fdfbf8]">
+    <main className="min-h-screen bg-surface-ground">
       {/* Profile Header */}
       <div className="max-w-5xl mx-auto px-6 pt-24 pb-16">
         <div className="text-center space-y-6">

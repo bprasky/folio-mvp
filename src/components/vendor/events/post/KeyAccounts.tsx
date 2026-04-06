@@ -20,23 +20,23 @@ export function KeyAccounts({ firms }: KeyAccountsProps) {
   return (
     <div className="space-y-6">
       {/* Top Firms by Influence */}
-      <Card className="bg-white border-[#DAD2CA]">
+      <Card className="bg-white border-folio-border-strong">
         <CardHeader>
-          <CardTitle className="text-lg font-serif text-[#2B2B2B] flex items-center space-x-2">
-            <Building2 className="w-5 h-5 text-[#8C8278]" />
+          <CardTitle className="text-lg font-serif text-folio-text-primary flex items-center space-x-2">
+            <Building2 className="w-5 h-5 text-folio-text-secondary" />
             <span>Key Accounts & Influence</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             {firms.slice(0, 5).map((firm, index) => (
-              <div key={firm.firm} className="flex items-center justify-between p-4 bg-[#F7F4F1] rounded-lg">
+              <div key={firm.firm} className="flex items-center justify-between p-4 bg-surface-elevated rounded-lg">
                 <div className="flex-1">
                   <div className="flex items-center space-x-3 mb-2">
-                    <span className="text-sm font-medium text-[#8C8278] w-6">
+                    <span className="text-sm font-medium text-folio-text-secondary w-6">
                       #{index + 1}
                     </span>
-                    <h4 className="font-medium text-[#2B2B2B]">{firm.firm}</h4>
+                    <h4 className="font-medium text-folio-text-primary">{firm.firm}</h4>
                     <div className="flex space-x-2">
                       {firm.isNew && (
                         <Badge className="text-xs bg-green-100 text-green-800 border-green-200">
@@ -51,7 +51,7 @@ export function KeyAccounts({ firms }: KeyAccountsProps) {
                     </div>
                   </div>
                   
-                  <div className="flex items-center space-x-6 text-sm text-[#8C8278] ml-9">
+                  <div className="flex items-center space-x-6 text-sm text-folio-text-secondary ml-9">
                     <div className="flex items-center space-x-1">
                       <Users className="w-3 h-3" />
                       <span>{firm.contacts.length} contacts</span>
@@ -60,7 +60,7 @@ export function KeyAccounts({ firms }: KeyAccountsProps) {
                       <Calendar className="w-3 h-3" />
                       <span>{firm.projects} projects</span>
                     </div>
-                    <span className="font-medium text-[#2B2B2B]">
+                    <span className="font-medium text-folio-text-primary">
                       {formatCurrency(firm.valueUsd, 'USD', true)}
                     </span>
                   </div>
@@ -83,15 +83,15 @@ export function KeyAccounts({ firms }: KeyAccountsProps) {
       {/* Account Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* New Accounts */}
-        <Card className="bg-white border-[#DAD2CA]">
+        <Card className="bg-white border-folio-border-strong">
           <CardContent className="p-4">
             <div className="flex items-center space-x-3 mb-3">
               <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
                 <UserCheck className="w-4 h-4 text-green-600" />
               </div>
               <div>
-                <h4 className="font-medium text-[#2B2B2B]">New Accounts</h4>
-                <p className="text-sm text-[#8C8278]">
+                <h4 className="font-medium text-folio-text-primary">New Accounts</h4>
+                <p className="text-sm text-folio-text-secondary">
                   {newAccounts.length} acquired this event
                 </p>
               </div>
@@ -100,29 +100,29 @@ export function KeyAccounts({ firms }: KeyAccountsProps) {
               <div className="space-y-2">
                 {newAccounts.map((account) => (
                   <div key={account.firm} className="flex items-center justify-between">
-                    <span className="text-sm text-[#2B2B2B]">{account.firm}</span>
-                    <span className="text-xs text-[#8C8278]">
+                    <span className="text-sm text-folio-text-primary">{account.firm}</span>
+                    <span className="text-xs text-folio-text-secondary">
                       {formatCurrency(account.valueUsd, 'USD', true)}
                     </span>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-[#8C8278]">No new accounts this event</p>
+              <p className="text-sm text-folio-text-secondary">No new accounts this event</p>
             )}
           </CardContent>
         </Card>
 
         {/* Reactivated Accounts */}
-        <Card className="bg-white border-[#DAD2CA]">
+        <Card className="bg-white border-folio-border-strong">
           <CardContent className="p-4">
             <div className="flex items-center space-x-3 mb-3">
               <div className="w-8 h-8 bg-[var(--accent)]/10 rounded-full flex items-center justify-center">
                 <Building2 className="w-4 h-4 text-[var(--accent)]" />
               </div>
               <div>
-                <h4 className="font-medium text-[#2B2B2B]">Reactivated Accounts</h4>
-                <p className="text-sm text-[#8C8278]">
+                <h4 className="font-medium text-folio-text-primary">Reactivated Accounts</h4>
+                <p className="text-sm text-folio-text-secondary">
                   {reactivatedAccounts.length} dormant accounts
                 </p>
               </div>
@@ -131,15 +131,15 @@ export function KeyAccounts({ firms }: KeyAccountsProps) {
               <div className="space-y-2">
                 {reactivatedAccounts.map((account) => (
                   <div key={account.firm} className="flex items-center justify-between">
-                    <span className="text-sm text-[#2B2B2B]">{account.firm}</span>
-                    <span className="text-xs text-[#8C8278]">
+                    <span className="text-sm text-folio-text-primary">{account.firm}</span>
+                    <span className="text-xs text-folio-text-secondary">
                       {formatCurrency(account.valueUsd, 'USD', true)}
                     </span>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-[#8C8278]">No reactivated accounts this event</p>
+              <p className="text-sm text-folio-text-secondary">No reactivated accounts this event</p>
             )}
           </CardContent>
         </Card>

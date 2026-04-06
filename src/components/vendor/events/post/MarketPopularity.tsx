@@ -33,7 +33,7 @@ export function MarketPopularity({ data, onHover }: MarketPopularityProps) {
       {data.map((market, index) => (
         <div 
           key={market.city}
-          className={`flex items-center justify-between p-4 bg-[#F7F4F1] rounded-lg hover:bg-[#F0EDE8] transition-colors cursor-pointer ${
+          className={`flex items-center justify-between p-4 bg-surface-elevated rounded-lg hover:bg-[#F0EDE8] transition-colors cursor-pointer ${
             hoveredMarket?.city === market.city ? 'bg-[#F0EDE8]' : ''
           }`}
           onMouseEnter={() => handleMarketHover(market)}
@@ -41,8 +41,8 @@ export function MarketPopularity({ data, onHover }: MarketPopularityProps) {
         >
           <div className="flex-1">
             <div className="flex items-center space-x-3 mb-2">
-              <MapPin className="w-4 h-4 text-[#8C8278]" />
-              <h4 className="font-medium text-[#2B2B2B]">{market.city}</h4>
+              <MapPin className="w-4 h-4 text-folio-text-secondary" />
+              <h4 className="font-medium text-folio-text-primary">{market.city}</h4>
               <div className="flex items-center space-x-2">
                 {market.badge && (
                   <Badge className={`text-xs ${
@@ -56,7 +56,7 @@ export function MarketPopularity({ data, onHover }: MarketPopularityProps) {
               </div>
             </div>
             
-            <div className="flex items-center space-x-6 text-sm text-[#8C8278]">
+            <div className="flex items-center space-x-6 text-sm text-folio-text-secondary">
               <span>{formatCompactNumber(market.saves)} saves</span>
               <span>{formatPercentage(market.sharePct, 1)} share</span>
               <div className="flex items-center space-x-1">
@@ -85,8 +85,8 @@ export function MarketPopularity({ data, onHover }: MarketPopularityProps) {
   );
 
   const renderMapView = () => (
-    <div className="h-64 bg-[#F7F4F1] rounded-lg flex items-center justify-center">
-      <div className="text-center text-[#8C8278]">
+    <div className="h-64 bg-surface-elevated rounded-lg flex items-center justify-center">
+      <div className="text-center text-folio-text-secondary">
         <MapPin className="w-12 h-12 mx-auto mb-3 opacity-50" />
         <p className="text-sm font-medium mb-1">Market Map</p>
         <p className="text-xs">Geographic visualization coming soon</p>
@@ -95,18 +95,18 @@ export function MarketPopularity({ data, onHover }: MarketPopularityProps) {
   );
 
   return (
-    <Card className="bg-white border-[#DAD2CA]">
+    <Card className="bg-white border-folio-border-strong">
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle className="text-lg font-serif text-[#2B2B2B]">
+            <CardTitle className="text-lg font-serif text-folio-text-primary">
               Market Map
             </CardTitle>
-            <p className="text-sm text-[#8C8278] mt-1">
+            <p className="text-sm text-folio-text-secondary mt-1">
               Where to close now — and where to grow.
             </p>
           </div>
-          <div className="flex items-center bg-[#F7F4F1] rounded-lg p-1">
+          <div className="flex items-center bg-surface-elevated rounded-lg p-1">
             <Button
               variant="ghost"
               size="sm"

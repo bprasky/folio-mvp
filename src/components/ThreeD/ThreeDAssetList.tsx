@@ -100,20 +100,20 @@ export default function ThreeDAssetList({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <FaSpinner className="w-8 h-8 text-[var(--text-tertiary)] animate-spin" />
-        <span className="ml-3 text-[var(--text-secondary)]">Loading 3D assets...</span>
+        <FaSpinner className="w-8 h-8 text-folio-text-tertiary animate-spin" />
+        <span className="ml-3 text-folio-text-secondary">Loading 3D assets...</span>
       </div>
     );
   }
 
   if (assets.length === 0) {
     return (
-      <div className="text-center py-12 bg-[var(--bg-elevated)] rounded-lg border-2 border-dashed border-[var(--ridge-outer)]">
-        <FaCube className="w-16 h-16 mx-auto mb-4 text-[var(--text-tertiary)]" />
-        <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-2">
+      <div className="text-center py-12 bg-surface-ground rounded-lg border-2 border-dashed border-folio-border-subtle">
+        <FaCube className="w-16 h-16 mx-auto mb-4 text-folio-text-tertiary" />
+        <h3 className="text-lg font-semibold text-folio-text-primary mb-2">
           No 3D assets yet
         </h3>
-        <p className="text-[var(--text-secondary)] max-w-md mx-auto">
+        <p className="text-folio-text-secondary max-w-md mx-auto">
           Generate 3D models from your project images in the Media section.
         </p>
       </div>
@@ -131,12 +131,12 @@ export default function ThreeDAssetList({
           return (
             <div
               key={asset.id}
-              className="bg-white rounded-lg border border-[var(--ridge-outer)] p-4 hover:shadow-md transition-shadow"
+              className="bg-white rounded-lg border border-folio-border-subtle p-4 hover:shadow-md transition-shadow"
             >
               <div className="flex items-start gap-4">
                 {/* Thumbnail */}
                 {thumbnailUrl ? (
-                  <div className="relative w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-[var(--bg-elevated)]">
+                  <div className="relative w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-surface-ground">
                     <Image
                       src={thumbnailUrl}
                       alt={assetName}
@@ -146,8 +146,8 @@ export default function ThreeDAssetList({
                     />
                   </div>
                 ) : (
-                  <div className="w-24 h-24 flex-shrink-0 rounded-lg bg-[var(--bg-elevated)] flex items-center justify-center">
-                    <FaCube className="w-8 h-8 text-[var(--text-tertiary)]" />
+                  <div className="w-24 h-24 flex-shrink-0 rounded-lg bg-surface-ground flex items-center justify-center">
+                    <FaCube className="w-8 h-8 text-folio-text-tertiary" />
                   </div>
                 )}
 
@@ -155,16 +155,16 @@ export default function ThreeDAssetList({
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-[var(--text-primary)] truncate">
+                      <h3 className="font-semibold text-folio-text-primary truncate">
                         {assetName}
                       </h3>
                       {asset.projectImage && (
-                        <p className="text-sm text-[var(--text-secondary)] mt-1">
+                        <p className="text-sm text-folio-text-secondary mt-1">
                           From project image
                         </p>
                       )}
                       {asset.product && (
-                        <p className="text-sm text-[var(--text-secondary)] mt-1">
+                        <p className="text-sm text-folio-text-secondary mt-1">
                           Product: {asset.product.name}
                         </p>
                       )}
@@ -189,11 +189,11 @@ export default function ThreeDAssetList({
                         disabled={isToggling || asset.status !== 'READY'}
                         className="w-4 h-4 text-[var(--accent)] rounded focus:ring-[var(--accent)] disabled:opacity-50"
                       />
-                      <span className="text-sm text-[var(--text-primary)]">
+                      <span className="text-sm text-folio-text-primary">
                         Include in Unreal Export
                       </span>
                       {isToggling && (
-                        <FaSpinner className="w-3 h-3 text-[var(--text-tertiary)] animate-spin" />
+                        <FaSpinner className="w-3 h-3 text-folio-text-tertiary animate-spin" />
                       )}
                     </label>
 

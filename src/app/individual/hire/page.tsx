@@ -110,14 +110,14 @@ export default function IndividualHirePage() {
   // Show loading state
   if (status === 'loading') {
     return (
-      <div className="min-h-screen bg-[var(--bg-base)] p-6">
+      <div className="min-h-screen bg-surface-canvas p-6">
         <div className="max-w-7xl mx-auto">
           <div className="animate-pulse">
-            <div className="h-8 bg-[var(--bg-elevated)] rounded w-1/3 mb-4"></div>
-            <div className="h-4 bg-[var(--bg-elevated)] rounded w-1/2 mb-8"></div>
+            <div className="h-8 bg-surface-ground rounded w-1/3 mb-4"></div>
+            <div className="h-4 bg-surface-ground rounded w-1/2 mb-8"></div>
             <div className="space-y-6">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="h-64 bg-[var(--bg-elevated)] rounded-2xl"></div>
+                <div key={i} className="h-64 bg-surface-ground rounded-2xl"></div>
               ))}
             </div>
           </div>
@@ -184,7 +184,7 @@ export default function IndividualHirePage() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--bg-base)] p-6">
+    <div className="min-h-screen bg-surface-canvas p-6">
       <div className="max-w-7xl mx-auto">
         {/* Page Header */}
         <motion.div
@@ -193,16 +193,16 @@ export default function IndividualHirePage() {
           transition={{ duration: 0.6 }}
           className="mb-8"
         >
-          <h1 className="folio-h1 text-[var(--text-primary)] mb-3">
+          <h1 className="folio-h1 text-folio-text-primary mb-3">
             {uiCopy.pageTitle}
           </h1>
-          <p className="folio-body text-[var(--text-secondary)] mb-6">
+          <p className="folio-body text-folio-text-secondary mb-6">
             {uiCopy.pageSubtitle}
           </p>
 
           {/* Project Summary Pill */}
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-[var(--bg-elevated)] rounded-full border border-[var(--border-color)] shadow-sm">
-            <span className="folio-ui text-[var(--text-secondary)]">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-surface-ground rounded-full border border-[var(--border-color)] shadow-sm">
+            <span className="folio-ui text-folio-text-secondary">
               {projectSummary}
             </span>
           </div>
@@ -218,7 +218,7 @@ export default function IndividualHirePage() {
         {/* Designer Matches */}
         {loadingMatches ? (
           <div className="flex justify-center items-center py-12">
-            <FaSpinner className="w-8 h-8 animate-spin text-[var(--text-tertiary)]" />
+            <FaSpinner className="w-8 h-8 animate-spin text-folio-text-tertiary" />
           </div>
         ) : (
           <div className="space-y-8 mb-12">
@@ -245,10 +245,10 @@ export default function IndividualHirePage() {
                       </div>
 
                       {/* Designer Name & Location */}
-                      <h2 className="folio-h2 text-[var(--text-primary)] mb-2">
+                      <h2 className="folio-h2 text-folio-text-primary mb-2">
                         {designer.name}
                       </h2>
-                      <div className="flex items-center gap-2 text-[var(--text-secondary)] mb-4">
+                      <div className="flex items-center gap-2 text-folio-text-secondary mb-4">
                         <FaMapMarkerAlt className="w-4 h-4" />
                         <span className="folio-meta">{designer.location}</span>
                       </div>
@@ -264,14 +264,14 @@ export default function IndividualHirePage() {
 
                       {/* Offerings */}
                       <div className="mb-6">
-                        <h3 className="folio-ui font-semibold text-[var(--text-primary)] mb-2">
+                        <h3 className="folio-ui font-semibold text-folio-text-primary mb-2">
                           Services
                         </h3>
                         <div className="flex flex-wrap gap-2">
                           {designer.offerings.map((offering, idx) => (
                             <span
                               key={idx}
-                              className="px-3 py-1 folio-meta bg-[var(--bg-base)] text-[var(--text-secondary)] rounded-full"
+                              className="px-3 py-1 folio-meta bg-surface-canvas text-folio-text-secondary rounded-full"
                             >
                               {offering}
                             </span>
@@ -280,14 +280,14 @@ export default function IndividualHirePage() {
                       </div>
 
                       {/* Project Range */}
-                      <div className="folio-meta text-[var(--text-secondary)]">
-                        <p className="font-medium text-[var(--text-primary)] mb-1">
+                      <div className="folio-meta text-folio-text-secondary">
+                        <p className="font-medium text-folio-text-primary mb-1">
                           Budget Range
                         </p>
                         <p>
                           ${designer.projectRange.minBudget.toLocaleString()} - ${designer.projectRange.maxBudget.toLocaleString()}
                         </p>
-                        <p className="mt-1 text-[var(--text-tertiary)]">
+                        <p className="mt-1 text-folio-text-tertiary">
                           {designer.projectRange.typicalScope}
                         </p>
                       </div>
@@ -312,7 +312,7 @@ export default function IndividualHirePage() {
                     {/* Preview Projects */}
                     {designer.previewProjects.length > 0 && (
                       <div className="mb-6">
-                        <h3 className="folio-ui font-semibold text-[var(--text-primary)] mb-3">
+                        <h3 className="folio-ui font-semibold text-folio-text-primary mb-3">
                           Similar Projects
                         </h3>
                         <div className="grid grid-cols-2 gap-4">
@@ -339,29 +339,29 @@ export default function IndividualHirePage() {
                     )}
 
                     {/* Match Score Breakdown (optional, can be collapsed) */}
-                    <div className="mb-6 p-4 bg-[var(--bg-base)] rounded-lg">
+                    <div className="mb-6 p-4 bg-surface-canvas rounded-lg">
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 folio-meta">
                         <div>
-                          <p className="text-[var(--text-secondary)] mb-1">Style</p>
-                          <p className="font-semibold text-[var(--text-primary)]">
+                          <p className="text-folio-text-secondary mb-1">Style</p>
+                          <p className="font-semibold text-folio-text-primary">
                             {formatMatchScore(designer.matchScores.styleOverlap)}%
                           </p>
                         </div>
                         <div>
-                          <p className="text-[var(--text-secondary)] mb-1">Project Fit</p>
-                          <p className="font-semibold text-[var(--text-primary)]">
+                          <p className="text-folio-text-secondary mb-1">Project Fit</p>
+                          <p className="font-semibold text-folio-text-primary">
                             {formatMatchScore(designer.matchScores.projectTierFit)}%
                           </p>
                         </div>
                         <div>
-                          <p className="text-[var(--text-secondary)] mb-1">Vendor Overlap</p>
-                          <p className="font-semibold text-[var(--text-primary)]">
+                          <p className="text-folio-text-secondary mb-1">Vendor Overlap</p>
+                          <p className="font-semibold text-folio-text-primary">
                             {formatMatchScore(designer.matchScores.vendorOverlap)}%
                           </p>
                         </div>
                         <div>
-                          <p className="text-[var(--text-secondary)] mb-1">Location</p>
-                          <p className="font-semibold text-[var(--text-primary)]">
+                          <p className="text-folio-text-secondary mb-1">Location</p>
+                          <p className="font-semibold text-folio-text-primary">
                             {formatMatchScore(designer.matchScores.locationFit)}%
                           </p>
                         </div>
@@ -388,7 +388,7 @@ export default function IndividualHirePage() {
                       {designer.cta.secondary && (
                         <Link
                           href={designer.cta.secondary.action}
-                          className="inline-flex items-center gap-2 px-6 py-3 bg-[var(--bg-base)] text-[var(--text-secondary)] rounded-lg border border-[var(--border-color)] hover:bg-[var(--bg-elevated)] transition-colors folio-ui"
+                          className="inline-flex items-center gap-2 px-6 py-3 bg-surface-canvas text-folio-text-secondary rounded-lg border border-[var(--border-color)] hover:bg-surface-ground transition-colors folio-ui"
                         >
                           {designer.cta.secondary.label}
                           <FaExternalLinkAlt className="w-3 h-3" />
@@ -410,10 +410,10 @@ export default function IndividualHirePage() {
           transition={{ duration: 0.6, delay: 0.4 }}
         >
           <RidgeCard className="p-8 mb-8">
-            <h2 className="folio-h2 text-[var(--text-primary)] mb-4">
+            <h2 className="folio-h2 text-folio-text-primary mb-4">
               {uiCopy.sections.howWeMatchTitle}
             </h2>
-            <p className="folio-body text-[var(--text-secondary)] leading-relaxed max-w-3xl">
+            <p className="folio-body text-folio-text-secondary leading-relaxed max-w-3xl">
               {uiCopy.sections.howWeMatchBody}
             </p>
           </RidgeCard>

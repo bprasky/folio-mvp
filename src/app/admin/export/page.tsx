@@ -137,7 +137,7 @@ export default function AdminExportDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[var(--bg-base)] py-8">
+      <div className="min-h-screen bg-surface-canvas py-8">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
@@ -152,7 +152,7 @@ export default function AdminExportDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--bg-base)] py-8">
+    <div className="min-h-screen bg-surface-canvas py-8">
       <div className="max-w-7xl mx-auto px-4">
         <div className="mb-8">
           <h1 className="folio-h1 mb-2">Export Dashboard</h1>
@@ -176,7 +176,7 @@ export default function AdminExportDashboard() {
         {/* Filters */}
         <RidgeCard padding="md" className="mb-6">
           <div className="flex items-center gap-2 mb-4">
-            <FaFilter className="text-[var(--text-tertiary)]" />
+            <FaFilter className="text-folio-text-tertiary" />
             <h2 className="folio-h3">Filters & Search</h2>
           </div>
 
@@ -184,7 +184,7 @@ export default function AdminExportDashboard() {
             <div>
               <label className="block folio-meta mb-1">Search</label>
               <div className="relative">
-                <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[var(--text-tertiary)]" />
+                <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-folio-text-tertiary" />
                 <Input
                   type="text"
                   value={filters.search}
@@ -279,24 +279,24 @@ export default function AdminExportDashboard() {
 
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-[var(--border-subtle)]">
-              <thead className="bg-[var(--bg-elevated)]">
+              <thead className="bg-surface-ground">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Project</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Product</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Vendor</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Room</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Price</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-folio-text-secondary uppercase tracking-wider">Project</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-folio-text-secondary uppercase tracking-wider">Product</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-folio-text-secondary uppercase tracking-wider">Vendor</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-folio-text-secondary uppercase tracking-wider">Room</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-folio-text-secondary uppercase tracking-wider">Price</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-folio-text-secondary uppercase tracking-wider">Status</th>
                 </tr>
               </thead>
-              <tbody className="bg-[var(--bg-base)] divide-y divide-[var(--border-subtle)]">
+              <tbody className="bg-surface-canvas divide-y divide-[var(--border-subtle)]">
                 {filteredData.slice(0, 50).map((product, index) => (
-                  <tr key={index} className="hover:bg-[var(--bg-elevated)]/50">
-                    <td className="px-6 py-4 text-sm text-[var(--text-primary)]">{product.project as string}</td>
-                    <td className="px-6 py-4 text-sm text-[var(--text-primary)]">{product.productName as string}</td>
-                    <td className="px-6 py-4 text-sm text-[var(--text-primary)]">{product.vendorName as string}</td>
-                    <td className="px-6 py-4 text-sm text-[var(--text-primary)]">{product.room as string}</td>
-                    <td className="px-6 py-4 text-sm text-[var(--text-primary)]">${product.productPrice as string}</td>
+                  <tr key={index} className="hover:bg-surface-ground/50">
+                    <td className="px-6 py-4 text-sm text-folio-text-primary">{product.project as string}</td>
+                    <td className="px-6 py-4 text-sm text-folio-text-primary">{product.productName as string}</td>
+                    <td className="px-6 py-4 text-sm text-folio-text-primary">{product.vendorName as string}</td>
+                    <td className="px-6 py-4 text-sm text-folio-text-primary">{product.room as string}</td>
+                    <td className="px-6 py-4 text-sm text-folio-text-primary">${product.productPrice as string}</td>
                     <td className="px-6 py-4">
                       <span className={`px-2 py-1 text-xs rounded-full ${
                         product.isPending
@@ -311,7 +311,7 @@ export default function AdminExportDashboard() {
               </tbody>
             </table>
             {filteredData.length > 50 && (
-              <div className="p-4 text-center text-[var(--text-secondary)] folio-meta">
+              <div className="p-4 text-center text-folio-text-secondary folio-meta">
                 Showing first 50 results. Export CSV to see all {filteredData.length} products.
               </div>
             )}

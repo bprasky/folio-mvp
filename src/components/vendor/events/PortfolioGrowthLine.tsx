@@ -35,9 +35,9 @@ export function PortfolioGrowthLine({ data }: PortfolioGrowthLineProps) {
             content={({ active, payload, label }) => {
               if (active && payload && payload.length) {
                 return (
-                  <div className="bg-white border border-[#DAD2CA] rounded-lg px-3 py-2 shadow-lg">
-                    <p className="text-[#2B2B2B] font-medium">{label}</p>
-                    <p className="text-[#8C8278]">
+                  <div className="bg-white border border-folio-border-strong rounded-lg px-3 py-2 shadow-lg">
+                    <p className="text-folio-text-primary font-medium">{label}</p>
+                    <p className="text-folio-text-secondary">
                       Products Saved: <span className="font-semibold">{formatCompactNumber(payload[0].value)}</span>
                     </p>
                   </div>

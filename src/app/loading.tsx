@@ -5,8 +5,8 @@ export default function Loading() {
         <div className="relative">
           <div className="w-16 h-16 border-4 border-secondary/20 border-t-secondary rounded-full animate-spin mx-auto mb-4"></div>
         </div>
-        <h2 className="text-xl font-semibold text-[var(--text-primary)] mb-2">Loading...</h2>
-        <p className="text-[var(--text-secondary)]">Please wait while we load your content</p>
+        <h2 className="text-xl font-semibold text-folio-text-primary mb-2">Loading...</h2>
+        <p className="text-folio-text-secondary">Please wait while we load your content</p>
       </div>
     </div>
   );

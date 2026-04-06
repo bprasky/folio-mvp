@@ -116,12 +116,12 @@ export default function IndividualProfile() {
       case 'Completed':
         return 'bg-green-100 text-green-800';
       default:
-        return 'bg-[var(--bg-elevated)] text-[var(--text-secondary)]';
+        return 'bg-surface-ground text-folio-text-secondary';
     }
   };
 
   return (
-    <div className="min-h-screen bg-[var(--bg-base)] p-6">
+    <div className="min-h-screen bg-surface-canvas p-6">
       <div className="max-w-7xl mx-auto">
           {/* Profile Header */}
           <motion.div
@@ -142,8 +142,8 @@ export default function IndividualProfile() {
                 </div>
 
                 <div className="flex-1">
-                  <h1 className="folio-h1 text-[var(--text-primary)] mb-2">{profileData.name}</h1>
-                  <div className="flex items-center gap-4 text-[var(--text-secondary)] mb-3">
+                  <h1 className="folio-h1 text-folio-text-primary mb-2">{profileData.name}</h1>
+                  <div className="flex items-center gap-4 text-folio-text-secondary mb-3">
                     <div className="flex items-center gap-1">
                       <FaMapMarkerAlt className="w-4 h-4" />
                       <span className="folio-meta">{profileData.location}</span>
@@ -153,25 +153,25 @@ export default function IndividualProfile() {
                       <span className="folio-meta">Member since {profileData.memberSince}</span>
                     </div>
                   </div>
-                  <p className="folio-body text-[var(--text-secondary)] mb-4">{profileData.bio}</p>
+                  <p className="folio-body text-folio-text-secondary mb-4">{profileData.bio}</p>
 
                   {/* Stats */}
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div className="text-center">
                       <div className="folio-h2 text-[var(--accent)]">{profileData.stats.projectsCreated}</div>
-                      <div className="folio-meta text-[var(--text-secondary)]">Projects</div>
+                      <div className="folio-meta text-folio-text-secondary">Projects</div>
                     </div>
                     <div className="text-center">
                       <div className="folio-h2 text-[var(--accent)]">{profileData.stats.itemsSaved}</div>
-                      <div className="folio-meta text-[var(--text-secondary)]">Saved Items</div>
+                      <div className="folio-meta text-folio-text-secondary">Saved Items</div>
                     </div>
                     <div className="text-center">
                       <div className="folio-h2 text-[var(--accent)]">{profileData.stats.designersFollowed}</div>
-                      <div className="folio-meta text-[var(--text-secondary)]">Designers</div>
+                      <div className="folio-meta text-folio-text-secondary">Designers</div>
                     </div>
                     <div className="text-center">
                       <div className="folio-h2 text-[var(--accent)]">{profileData.stats.inspirationBoards}</div>
-                      <div className="folio-meta text-[var(--text-secondary)]">Boards</div>
+                      <div className="folio-meta text-folio-text-secondary">Boards</div>
                     </div>
                   </div>
                 </div>
@@ -208,7 +208,7 @@ export default function IndividualProfile() {
                       className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl transition-all duration-300 ${
                         activeTab === tab.id
                           ? 'bg-[var(--accent)] text-white shadow-lg'
-                          : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-base)]'
+                          : 'text-folio-text-secondary hover:text-folio-text-primary hover:bg-surface-canvas'
                       }`}
                     >
                       <Icon className="w-4 h-4" />
@@ -230,7 +230,7 @@ export default function IndividualProfile() {
             {activeTab === 'projects' && (
               <div className="space-y-6">
                 <div className="flex justify-between items-center">
-                  <h2 className="folio-h2 text-[var(--text-primary)]">My Projects</h2>
+                  <h2 className="folio-h2 text-folio-text-primary">My Projects</h2>
                   <Link href="/individual-demo">
                     <Button variant="accent">
                       <FaPlus className="w-4 h-4 mr-2" />
@@ -258,7 +258,7 @@ export default function IndividualProfile() {
 
                           <div className="flex-1">
                             <div className="flex justify-between items-start mb-3">
-                              <h3 className="folio-h3 text-[var(--text-primary)]">{project.name}</h3>
+                              <h3 className="folio-h3 text-folio-text-primary">{project.name}</h3>
                               <span className={`px-3 py-1 rounded-full folio-meta font-medium ${getStatusColor(project.status)}`}>
                                 {project.status}
                               </span>
@@ -266,25 +266,25 @@ export default function IndividualProfile() {
 
                             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
                               <div>
-                                <span className="folio-meta text-[var(--text-secondary)]">Budget</span>
-                                <div className="folio-ui font-semibold text-[var(--text-primary)]">{project.budget}</div>
+                                <span className="folio-meta text-folio-text-secondary">Budget</span>
+                                <div className="folio-ui font-semibold text-folio-text-primary">{project.budget}</div>
                               </div>
                               <div>
-                                <span className="folio-meta text-[var(--text-secondary)]">Timeline</span>
-                                <div className="folio-ui font-semibold text-[var(--text-primary)]">{project.timeline}</div>
+                                <span className="folio-meta text-folio-text-secondary">Timeline</span>
+                                <div className="folio-ui font-semibold text-folio-text-primary">{project.timeline}</div>
                               </div>
                               <div>
-                                <span className="folio-meta text-[var(--text-secondary)]">Last Updated</span>
-                                <div className="folio-ui font-semibold text-[var(--text-primary)]">{project.lastUpdated}</div>
+                                <span className="folio-meta text-folio-text-secondary">Last Updated</span>
+                                <div className="folio-ui font-semibold text-folio-text-primary">{project.lastUpdated}</div>
                               </div>
                             </div>
 
                             <div className="mb-4">
                               <div className="flex justify-between items-center mb-2">
-                                <span className="folio-meta text-[var(--text-secondary)]">Progress</span>
-                                <span className="folio-meta font-semibold text-[var(--text-primary)]">{project.progress}%</span>
+                                <span className="folio-meta text-folio-text-secondary">Progress</span>
+                                <span className="folio-meta font-semibold text-folio-text-primary">{project.progress}%</span>
                               </div>
-                              <div className="w-full bg-[var(--bg-base)] rounded-full h-2">
+                              <div className="w-full bg-surface-canvas rounded-full h-2">
                                 <div
                                   className="bg-[var(--accent)] h-2 rounded-full transition-all duration-300"
                                   style={{ width: `${project.progress}%` }}
@@ -314,7 +314,7 @@ export default function IndividualProfile() {
             {activeTab === 'saved' && (
               <div className="space-y-6" data-demo-id="saved-items">
                 <div className="flex justify-between items-center">
-                  <h2 className="folio-h2 text-[var(--text-primary)]">Saved Items</h2>
+                  <h2 className="folio-h2 text-folio-text-primary">Saved Items</h2>
                   <Link href="/individual/hire">
                     <Button variant="accent">
                       <FaUserTie className="w-4 h-4 mr-2" />
@@ -343,9 +343,9 @@ export default function IndividualProfile() {
                         </div>
 
                         <div className="p-4">
-                          <div className="folio-meta text-[var(--text-tertiary)] mb-1">{item.category}</div>
-                          <h3 className="folio-ui font-semibold text-[var(--text-primary)] mb-1">{item.name}</h3>
-                          <div className="folio-meta text-[var(--text-secondary)] mb-2">{item.brand}</div>
+                          <div className="folio-meta text-folio-text-tertiary mb-1">{item.category}</div>
+                          <h3 className="folio-ui font-semibold text-folio-text-primary mb-1">{item.name}</h3>
+                          <div className="folio-meta text-folio-text-secondary mb-2">{item.brand}</div>
                           <div className="folio-h3 text-[var(--accent)]">{item.price}</div>
                         </div>
                       </RidgeCard>
@@ -357,11 +357,11 @@ export default function IndividualProfile() {
 
             {activeTab === 'profile' && (
               <RidgeCard className="p-8">
-                <h2 className="folio-h2 text-[var(--text-primary)] mb-6">Profile Settings</h2>
+                <h2 className="folio-h2 text-folio-text-primary mb-6">Profile Settings</h2>
 
                 <div className="space-y-6">
                   <div>
-                    <label className="block folio-ui font-medium text-[var(--text-secondary)] mb-2">Full Name</label>
+                    <label className="block folio-ui font-medium text-folio-text-secondary mb-2">Full Name</label>
                     <Input
                       type="text"
                       defaultValue={profileData.name}
@@ -369,7 +369,7 @@ export default function IndividualProfile() {
                   </div>
 
                   <div>
-                    <label className="block folio-ui font-medium text-[var(--text-secondary)] mb-2">Location</label>
+                    <label className="block folio-ui font-medium text-folio-text-secondary mb-2">Location</label>
                     <Input
                       type="text"
                       defaultValue={profileData.location}
@@ -377,11 +377,11 @@ export default function IndividualProfile() {
                   </div>
 
                   <div>
-                    <label className="block folio-ui font-medium text-[var(--text-secondary)] mb-2">Bio</label>
+                    <label className="block folio-ui font-medium text-folio-text-secondary mb-2">Bio</label>
                     <textarea
                       rows={4}
                       defaultValue={profileData.bio}
-                      className="w-full px-4 py-3 bg-[var(--bg-base)] border border-[var(--border-color)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent resize-none folio-body text-[var(--text-primary)]"
+                      className="w-full px-4 py-3 bg-surface-canvas border border-[var(--border-color)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent resize-none folio-body text-folio-text-primary"
                     />
                   </div>
 

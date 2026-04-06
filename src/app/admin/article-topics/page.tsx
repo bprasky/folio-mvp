@@ -137,14 +137,14 @@ export default function AdminArticleTopicsPage() {
 
   if (status === 'loading' || (status === 'authenticated' && session?.user?.role !== 'ADMIN')) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[var(--bg-base)]">
-        <div className="text-[var(--text-secondary)]">Loading...</div>
+      <div className="min-h-screen flex items-center justify-center bg-surface-canvas">
+        <div className="text-folio-text-secondary">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[var(--bg-base)] py-8">
+    <div className="min-h-screen bg-surface-canvas py-8">
       <div className="max-w-7xl mx-auto px-4">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
@@ -182,12 +182,12 @@ export default function AdminArticleTopicsPage() {
 
         {/* Topics by Status */}
         {loading ? (
-          <div className="text-center py-12 text-[var(--text-secondary)]">
+          <div className="text-center py-12 text-folio-text-secondary">
             Loading topics...
           </div>
         ) : topics.length === 0 ? (
           <RidgeCard padding="lg" className="text-center">
-            <p className="folio-body text-[var(--text-secondary)] mb-4">
+            <p className="folio-body text-folio-text-secondary mb-4">
               No article topics found
             </p>
             <Link href="/admin/article-topics/new">
@@ -206,7 +206,7 @@ export default function AdminArticleTopicsPage() {
                     <span className={cn('px-3 py-1 rounded-full text-sm font-medium', statusColors[statusKey])}>
                       {statusKey.replace('_', ' ')}
                     </span>
-                    <span className="folio-meta text-[var(--text-secondary)]">
+                    <span className="folio-meta text-folio-text-secondary">
                       {statusTopics.length} topic{statusTopics.length !== 1 ? 's' : ''}
                     </span>
                   </div>
@@ -223,19 +223,19 @@ export default function AdminArticleTopicsPage() {
                               >
                                 {topic.title}
                               </Link>
-                              <span className="px-2 py-0.5 rounded text-xs bg-[var(--bg-elevated)] text-[var(--text-secondary)]">
+                              <span className="px-2 py-0.5 rounded text-xs bg-surface-ground text-folio-text-secondary">
                                 {categoryLabels[topic.category] || topic.category}
                               </span>
                             </div>
 
-                            <p className="folio-body text-[var(--text-secondary)] mb-3 line-clamp-1">
+                            <p className="folio-body text-folio-text-secondary mb-3 line-clamp-1">
                               {topic.promptQuestion}
                             </p>
 
-                            <div className="flex flex-wrap gap-4 folio-meta text-[var(--text-secondary)]">
+                            <div className="flex flex-wrap gap-4 folio-meta text-folio-text-secondary">
                               {/* Progress bar */}
                               <div className="flex items-center gap-2">
-                                <div className="w-24 h-2 bg-[var(--bg-elevated)] rounded-full overflow-hidden">
+                                <div className="w-24 h-2 bg-surface-ground rounded-full overflow-hidden">
                                   <div
                                     className="h-full bg-[var(--accent)] transition-all"
                                     style={{

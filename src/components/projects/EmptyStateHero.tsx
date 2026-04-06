@@ -36,13 +36,13 @@ export function EmptyStateHero({ userType, userName }: EmptyStateHeroProps) {
         <div className="flex justify-center gap-3 mb-6">
           <div className="p-3 ridge-card ridge-card-sm">
             {isDesigner ? (
-              <FolderPlus className="h-6 w-6 text-[var(--text-secondary)]" />
+              <FolderPlus className="h-6 w-6 text-folio-text-secondary" />
             ) : (
-              <BookOpen className="h-6 w-6 text-[var(--text-secondary)]" />
+              <BookOpen className="h-6 w-6 text-folio-text-secondary" />
             )}
           </div>
           <div className="p-3 ridge-card ridge-card-sm">
-            <Layers className="h-6 w-6 text-[var(--text-secondary)]" />
+            <Layers className="h-6 w-6 text-folio-text-secondary" />
           </div>
           {isDesigner && (
             <div className="p-3 ridge-card ridge-card-sm">
@@ -52,12 +52,12 @@ export function EmptyStateHero({ userType, userName }: EmptyStateHeroProps) {
         </div>
 
         {/* Heading */}
-        <h2 className="folio-h1 text-[var(--text-primary)] mb-3">
+        <h2 className="folio-h1 text-folio-text-primary mb-3">
           {headline}
         </h2>
 
         {/* Subheading - different per user type */}
-        <p className="folio-body text-[var(--text-secondary)] mb-8 max-w-lg mx-auto leading-relaxed">
+        <p className="folio-body text-folio-text-secondary mb-8 max-w-lg mx-auto leading-relaxed">
           {subtext}
         </p>
 

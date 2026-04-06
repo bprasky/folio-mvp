@@ -41,17 +41,17 @@ export function QBRExportButton() {
       </button>
       {preview && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/30 backdrop-blur-sm">
-          <div className="w-full max-w-xl rounded-2xl bg-[var(--bg-base)]/95 backdrop-blur-xl border border-[var(--ridge-outer)] shadow-2xl p-5 space-y-3 text-sm">
+          <div className="w-full max-w-xl rounded-2xl bg-surface-canvas/95 backdrop-blur-xl border border-folio-border-subtle shadow-2xl p-5 space-y-3 text-sm">
             <div className="flex items-center justify-between">
-              <h4 className="font-semibold text-[var(--text-primary)]">AI QBR Overview (Preview)</h4>
+              <h4 className="font-semibold text-folio-text-primary">AI QBR Overview (Preview)</h4>
               <button
                 onClick={() => setPreview(null)}
-                className="folio-meta text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition"
+                className="folio-meta text-folio-text-secondary hover:text-folio-text-primary transition"
               >
                 Close
               </button>
             </div>
-            <p className="folio-meta text-[var(--text-secondary)]">{preview.period}</p>
+            <p className="folio-meta text-folio-text-secondary">{preview.period}</p>
             <div className="grid grid-cols-2 gap-2 text-xs">
               <Stat label="RSVPs" value={preview.totals.rsvps} />
               <Stat label="Saves" value={preview.totals.saves} />
@@ -62,14 +62,14 @@ export function QBRExportButton() {
               />
             </div>
             <div className="space-y-1">
-              <div className="folio-meta uppercase tracking-wide text-[var(--text-secondary)]">Key Insights</div>
-              <ul className="list-disc list-inside folio-meta text-[var(--text-secondary)] space-y-0.5">
+              <div className="folio-meta uppercase tracking-wide text-folio-text-secondary">Key Insights</div>
+              <ul className="list-disc list-inside folio-meta text-folio-text-secondary space-y-0.5">
                 {preview.topInsights.map((t: string, i: number) => (
                   <li key={i}>{t}</li>
                 ))}
               </ul>
             </div>
-            <p className="text-[11px] text-[var(--text-secondary)] italic">
+            <p className="text-[11px] text-folio-text-secondary italic">
               In the full product this will export as a branded PDF for your internal reporting.
             </p>
           </div>
@@ -81,9 +81,9 @@ export function QBRExportButton() {
 
 function Stat({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="rounded-xl border border-[var(--ridge-outer)] bg-[var(--bg-elevated)] px-3 py-2">
-      <div className="text-[11px] uppercase tracking-wide text-[var(--text-secondary)]">{label}</div>
-      <div className="folio-ui font-semibold text-[var(--text-primary)]">
+    <div className="rounded-xl border border-folio-border-subtle bg-surface-ground px-3 py-2">
+      <div className="text-[11px] uppercase tracking-wide text-folio-text-secondary">{label}</div>
+      <div className="folio-ui font-semibold text-folio-text-primary">
         {typeof value === 'number' ? value.toLocaleString() : value}
       </div>
     </div>

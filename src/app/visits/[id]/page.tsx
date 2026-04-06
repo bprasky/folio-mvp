@@ -87,7 +87,7 @@ export default async function VisitDetailPage({ params }: Props) {
   };
 
   return (
-    <main className="min-h-screen bg-[#fdfbf8]">
+    <main className="min-h-screen bg-surface-ground">
       <div className="max-w-3xl mx-auto px-6 py-12">
         {/* Header */}
         <div className="mb-8">

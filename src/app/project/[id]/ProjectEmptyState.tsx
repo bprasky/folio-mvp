@@ -224,9 +224,9 @@ export default function ProjectEmptyState({ project }: ProjectEmptyStateProps) {
 
   return (
     <>
-      <div className="min-h-screen bg-[var(--bg-base)]">
+      <div className="min-h-screen bg-surface-canvas">
         {/* Back Navigation */}
-        <div className="p-4 bg-[var(--bg-elevated)] border-b border-[var(--ridge-outer)]">
+        <div className="p-4 bg-surface-ground border-b border-folio-border-subtle">
           <div className="max-w-4xl mx-auto">
             <Link
               href="/projects"
@@ -238,16 +238,16 @@ export default function ProjectEmptyState({ project }: ProjectEmptyStateProps) {
         </div>
 
         {/* Collapsed Header - Single Line */}
-        <header className="border-b border-[var(--ridge-outer)] bg-[var(--bg-base)]">
+        <header className="border-b border-folio-border-subtle bg-surface-canvas">
           <div className="max-w-4xl mx-auto px-6 py-5 flex items-center justify-between">
             <div className="flex items-center gap-4 flex-wrap">
               {/* Project Name - Serif Italic */}
-              <h1 className="font-serif italic text-2xl text-[var(--text-primary)] tracking-tight">
+              <h1 className="font-serif italic text-2xl text-folio-text-primary tracking-tight">
                 {project.title}
               </h1>
 
               {/* Metadata Inline */}
-              <div className="flex items-center gap-3 text-[var(--text-tertiary)]">
+              <div className="flex items-center gap-3 text-folio-text-tertiary">
                 <span className="folio-meta">
                   {project.category || 'Uncategorized'}
                 </span>
@@ -261,10 +261,10 @@ export default function ProjectEmptyState({ project }: ProjectEmptyStateProps) {
             {/* Overview Menu Button */}
             <button
               onClick={() => setShowOverviewModal(true)}
-              className="inline-flex items-center justify-center rounded-full bg-[var(--bg-base)] hover:bg-[var(--bg-elevated)] border border-[var(--ridge-outer)] shadow-sm transition h-9 w-9 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30"
+              className="inline-flex items-center justify-center rounded-full bg-surface-canvas hover:bg-surface-ground border border-folio-border-subtle shadow-sm transition h-9 w-9 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30"
               aria-label="Project overview menu"
             >
-              <HiOutlineDotsHorizontal className="h-5 w-5 text-[var(--text-primary)]" />
+              <HiOutlineDotsHorizontal className="h-5 w-5 text-folio-text-primary" />
             </button>
           </div>
         </header>
@@ -277,7 +277,7 @@ export default function ProjectEmptyState({ project }: ProjectEmptyStateProps) {
               {/* NEW PROJECT FLOW - Primary CTA first */}
               <div className="flex flex-col items-center gap-6">
                 <div className="text-center">
-                  <p className="folio-meta text-[var(--text-secondary)] mb-4">
+                  <p className="folio-meta text-folio-text-secondary mb-4">
                     Start building your project from the ground up
                   </p>
                   {/* Primary CTA - Add Room */}
@@ -293,9 +293,9 @@ export default function ProjectEmptyState({ project }: ProjectEmptyStateProps) {
 
                 {/* Divider */}
                 <div className="w-full max-w-md flex items-center gap-4">
-                  <div className="flex-1 border-t border-[var(--ridge-outer)]" />
-                  <span className="folio-meta text-[var(--text-tertiary)]">or add files</span>
-                  <div className="flex-1 border-t border-[var(--ridge-outer)]" />
+                  <div className="flex-1 border-t border-folio-border-subtle" />
+                  <span className="folio-meta text-folio-text-tertiary">or add files</span>
+                  <div className="flex-1 border-t border-folio-border-subtle" />
                 </div>
 
                 {/* Drop Zone - Compact */}
@@ -311,7 +311,7 @@ export default function ProjectEmptyState({ project }: ProjectEmptyStateProps) {
                     transition-all duration-200 ease-out cursor-pointer
                     ${isDragOver
                       ? 'border-[var(--accent)] bg-[var(--accent)]/5 scale-[1.01]'
-                      : 'border-[var(--ridge-outer)] hover:border-[var(--text-tertiary)] bg-[var(--bg-elevated)]'
+                      : 'border-folio-border-subtle hover:border-folio-text-tertiary bg-surface-ground'
                     }
                   `}
                   onClick={() => setShowUploadModal(true)}
@@ -328,11 +328,11 @@ export default function ProjectEmptyState({ project }: ProjectEmptyStateProps) {
                     <FaCloudUploadAlt
                       className={`
                         w-8 h-8 flex-shrink-0 transition-colors duration-200
-                        ${isDragOver ? 'text-[var(--accent)]' : 'text-[var(--text-tertiary)]'}
+                        ${isDragOver ? 'text-[var(--accent)]' : 'text-folio-text-tertiary'}
                       `}
                     />
                     <div className="text-left">
-                      <p className="text-[var(--text-primary)] folio-ui">
+                      <p className="text-folio-text-primary folio-ui">
                         {isDragOver ? 'Drop files here' : 'Drag files here to upload'}
                       </p>
                       <p className="folio-meta">
@@ -378,7 +378,7 @@ export default function ProjectEmptyState({ project }: ProjectEmptyStateProps) {
                   transition-all duration-200 ease-out cursor-pointer
                   ${isDragOver
                     ? 'border-[var(--accent)] bg-[var(--accent)]/5 scale-[1.01]'
-                    : 'border-[var(--ridge-outer)] hover:border-[var(--text-tertiary)] bg-[var(--bg-elevated)]'
+                    : 'border-folio-border-subtle hover:border-folio-text-tertiary bg-surface-ground'
                   }
                 `}
                 onClick={() => setShowUploadModal(true)}
@@ -395,11 +395,11 @@ export default function ProjectEmptyState({ project }: ProjectEmptyStateProps) {
                   <FaCloudUploadAlt
                     className={`
                       w-8 h-8 flex-shrink-0 transition-colors duration-200
-                      ${isDragOver ? 'text-[var(--accent)]' : 'text-[var(--text-tertiary)]'}
+                      ${isDragOver ? 'text-[var(--accent)]' : 'text-folio-text-tertiary'}
                     `}
                   />
                   <div className="text-left">
-                    <p className="text-[var(--text-primary)] folio-ui">
+                    <p className="text-folio-text-primary folio-ui">
                       {isDragOver ? 'Drop files here' : 'Drag files here to upload'}
                     </p>
                     <p className="folio-meta">
@@ -444,7 +444,7 @@ export default function ProjectEmptyState({ project }: ProjectEmptyStateProps) {
                 <button
                   onClick={handleAddRoom}
                   disabled={isCreatingRoom}
-                  className="px-6 py-3 text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors folio-ui flex items-center gap-2 mx-auto"
+                  className="px-6 py-3 text-folio-text-secondary hover:text-[var(--accent)] transition-colors folio-ui flex items-center gap-2 mx-auto"
                 >
                   <FaDoorOpen className="w-4 h-4" />
                   {isCreatingRoom ? 'Creating...' : 'Add Room'}
@@ -458,11 +458,11 @@ export default function ProjectEmptyState({ project }: ProjectEmptyStateProps) {
             {/* Photos Card */}
             <div className="ridge-card ridge-card-sm p-5">
               <div className="flex items-start gap-3">
-                <div className="p-2 rounded-lg bg-[var(--bg-elevated)]">
+                <div className="p-2 rounded-lg bg-surface-ground">
                   <FaImage className="w-5 h-5 text-[var(--accent)]" />
                 </div>
                 <div>
-                  <h3 className="folio-ui text-[var(--text-primary)] mb-1">Photos</h3>
+                  <h3 className="folio-ui text-folio-text-primary mb-1">Photos</h3>
                   <p className="folio-meta leading-relaxed">
                     Upload project images to create a visual story and publish to your portfolio.
                   </p>
@@ -473,11 +473,11 @@ export default function ProjectEmptyState({ project }: ProjectEmptyStateProps) {
             {/* Presentations Card */}
             <div className="ridge-card ridge-card-sm p-5">
               <div className="flex items-start gap-3">
-                <div className="p-2 rounded-lg bg-[var(--bg-elevated)]">
+                <div className="p-2 rounded-lg bg-surface-ground">
                   <FaFileAlt className="w-5 h-5 text-[var(--accent)]" />
                 </div>
                 <div>
-                  <h3 className="folio-ui text-[var(--text-primary)] mb-1">Presentations</h3>
+                  <h3 className="folio-ui text-folio-text-primary mb-1">Presentations</h3>
                   <p className="folio-meta leading-relaxed">
                     Import decks to automatically extract rooms, products, and selections.
                   </p>
@@ -488,11 +488,11 @@ export default function ProjectEmptyState({ project }: ProjectEmptyStateProps) {
             {/* Schedules Card */}
             <div className="ridge-card ridge-card-sm p-5">
               <div className="flex items-start gap-3">
-                <div className="p-2 rounded-lg bg-[var(--bg-elevated)]">
+                <div className="p-2 rounded-lg bg-surface-ground">
                   <FaCalendarAlt className="w-5 h-5 text-[var(--accent)]" />
                 </div>
                 <div>
-                  <h3 className="folio-ui text-[var(--text-primary)] mb-1">Schedules</h3>
+                  <h3 className="folio-ui text-folio-text-primary mb-1">Schedules</h3>
                   <p className="folio-meta leading-relaxed">
                     Upload finish schedules to populate your spec library with product data.
                   </p>

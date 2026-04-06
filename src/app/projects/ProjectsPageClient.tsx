@@ -249,12 +249,12 @@ export default function ProjectsPageClient({ projectsRaw, operatingAsOrgId }: Pr
     <div className="min-h-screen w-full -mx-6">
       <div className="relative w-full">
         {/* Designer Header */}
-        <div className="border-b border-[var(--border)]">
+        <div className="border-b border-folio-border-subtle">
           <div className="max-w-7xl mx-auto px-4 md:px-8 py-8">
             <div className="flex items-center gap-6 mb-6">
               {/* Designer Avatar */}
               <div className="relative">
-                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[var(--accent)] to-[var(--accent-hover)] flex items-center justify-center shadow-[var(--neu-raised)] border-2 border-[var(--ridge-outer)]">
+                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[var(--accent)] to-[var(--accent-hover)] flex items-center justify-center shadow-[var(--neu-raised)] border-2 border-folio-border-subtle">
                   {session?.user?.image ? (
                     <Image
                       src={session.user.image}
@@ -271,10 +271,10 @@ export default function ProjectsPageClient({ projectsRaw, operatingAsOrgId }: Pr
 
               {/* Designer Info */}
               <div className="flex-1">
-                <h1 className="folio-h1 text-[var(--text-primary)] mb-1">
+                <h1 className="folio-h1 text-folio-text-primary mb-1">
                   {pageTitle}
                 </h1>
-                <p className="folio-body text-[var(--text-secondary)]">
+                <p className="folio-body text-folio-text-secondary">
                   {totals.totalProjects} {totals.totalProjects === 1 ? 'project' : 'projects'} in portfolio
                 </p>
               </div>
@@ -298,7 +298,7 @@ export default function ProjectsPageClient({ projectsRaw, operatingAsOrgId }: Pr
                     "px-4 py-2 folio-ui font-medium rounded-full transition-colors",
                     activeContextTab === 'all'
                       ? "bg-[var(--text-primary)] text-[var(--bg-elevated)]"
-                      : "bg-[var(--bg-base)] text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)]"
+                      : "bg-surface-canvas text-folio-text-secondary hover:bg-surface-ground"
                   )}
                 >
                   All ({contextCounts.total})
@@ -309,7 +309,7 @@ export default function ProjectsPageClient({ projectsRaw, operatingAsOrgId }: Pr
                     "px-4 py-2 folio-ui font-medium rounded-full transition-colors flex items-center gap-2",
                     activeContextTab === 'personal'
                       ? "bg-[var(--text-primary)] text-[var(--bg-elevated)]"
-                      : "bg-[var(--bg-base)] text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)]"
+                      : "bg-surface-canvas text-folio-text-secondary hover:bg-surface-ground"
                   )}
                 >
                   <User className="h-4 w-4" />
@@ -321,7 +321,7 @@ export default function ProjectsPageClient({ projectsRaw, operatingAsOrgId }: Pr
                     "px-4 py-2 folio-ui font-medium rounded-full transition-colors flex items-center gap-2",
                     activeContextTab === 'organization'
                       ? "bg-[var(--text-primary)] text-[var(--bg-elevated)]"
-                      : "bg-[var(--bg-base)] text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)]"
+                      : "bg-surface-canvas text-folio-text-secondary hover:bg-surface-ground"
                   )}
                 >
                   <Building2 className="h-4 w-4" />
@@ -339,13 +339,13 @@ export default function ProjectsPageClient({ projectsRaw, operatingAsOrgId }: Pr
         <div className="px-4 md:px-8 pt-6 pb-4">
           <div className="max-w-7xl mx-auto">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[var(--text-secondary)]" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-folio-text-secondary" />
               <input
                 type="text"
                 placeholder="Search projects by name..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="glass-inset w-full pl-10 pr-4 py-3 rounded-lg text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20"
+                className="glass-inset w-full pl-10 pr-4 py-3 rounded-lg text-folio-text-primary placeholder:text-folio-text-tertiary focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20"
               />
             </div>
           </div>
@@ -631,16 +631,16 @@ function TopImpactBar({ totals, capabilities }: TopImpactBarProps) {
       <RidgeCard className="mx-4 md:mx-8 mt-4">
         <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className="w-full px-4 py-3 flex items-center justify-between hover:bg-[var(--bg-base)] transition-all duration-150 rounded-2xl"
+          className="w-full px-4 py-3 flex items-center justify-between hover:bg-surface-canvas transition-all duration-150 rounded-2xl"
         >
           <div className="flex items-center gap-3">
-            <div className="p-1.5 rounded-lg bg-[var(--bg-base)] border border-[var(--border)]">
-              <TrendingUp className="h-4 w-4 text-[var(--text-secondary)]" />
+            <div className="p-1.5 rounded-lg bg-surface-canvas border border-folio-border-subtle">
+              <TrendingUp className="h-4 w-4 text-folio-text-secondary" />
             </div>
-            <h3 className="folio-h3 text-[var(--text-primary)]">Portfolio Stats</h3>
+            <h3 className="folio-h3 text-folio-text-primary">Portfolio Stats</h3>
           </div>
           <div className={cn(
-            "text-[var(--text-secondary)] transition-transform",
+            "text-folio-text-secondary transition-transform",
             isExpanded ? "rotate-180" : ""
           )}>
             <ChevronDown className="h-4 w-4" />
@@ -664,19 +664,19 @@ function TopImpactBar({ totals, capabilities }: TopImpactBarProps) {
     <RidgeCard className="mx-4 md:mx-8 mt-4">
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full px-4 py-3 flex items-center justify-between hover:bg-[var(--bg-base)] transition-all duration-150 rounded-2xl"
+        className="w-full px-4 py-3 flex items-center justify-between hover:bg-surface-canvas transition-all duration-150 rounded-2xl"
       >
         <div className="flex items-center gap-3">
-          <div className="p-1.5 rounded-lg bg-[var(--bg-base)] border border-[var(--border)]">
-            <TrendingUp className="h-4 w-4 text-[var(--text-secondary)]" />
+          <div className="p-1.5 rounded-lg bg-surface-canvas border border-folio-border-subtle">
+            <TrendingUp className="h-4 w-4 text-folio-text-secondary" />
           </div>
-          <h3 className="folio-h3 text-[var(--text-primary)]">Portfolio Stats</h3>
-          <span className="folio-meta text-[var(--text-secondary)]">
+          <h3 className="folio-h3 text-folio-text-primary">Portfolio Stats</h3>
+          <span className="folio-meta text-folio-text-secondary">
             {formatNumber(totals.totalProjects)} projects, {formatNumber(totals.totalViews)} views
           </span>
         </div>
         <div className={cn(
-          "text-[var(--text-secondary)] transition-transform",
+          "text-folio-text-secondary transition-transform",
           isExpanded ? "rotate-180" : ""
         )}>
           <ChevronDown className="h-4 w-4" />
@@ -710,7 +710,7 @@ function TopImpactBar({ totals, capabilities }: TopImpactBarProps) {
             <div className="mt-3 flex justify-end">
               <Link
                 href="/designer/profile"
-                className="inline-flex items-center gap-1.5 folio-meta text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+                className="inline-flex items-center gap-1.5 folio-meta text-folio-text-secondary hover:text-folio-text-primary transition-colors"
               >
                 <Users className="h-3.5 w-3.5" />
                 View your directory listing
@@ -738,18 +738,18 @@ function MetricPill({
 }) {
   return (
     <div className={cn(
-      "px-4 py-3 flex items-center gap-3 rounded-lg border border-[var(--border)] bg-[var(--bg-base)]",
+      "px-4 py-3 flex items-center gap-3 rounded-lg border border-folio-border-subtle bg-surface-canvas",
       muted && "opacity-60"
     )}>
       <Icon className={cn(
-        "h-5 w-5 text-[var(--text-secondary)]",
+        "h-5 w-5 text-folio-text-secondary",
         emphasis && "text-[var(--accent)]"
       )} />
       <div className="flex flex-col leading-tight">
-        <span className="folio-meta uppercase tracking-wider text-[var(--text-secondary)]">{label}</span>
+        <span className="folio-meta uppercase tracking-wider text-folio-text-secondary">{label}</span>
         <span className={cn(
           "folio-h3",
-          muted ? "text-[var(--text-tertiary)]" : "text-[var(--text-primary)]",
+          muted ? "text-folio-text-tertiary" : "text-folio-text-primary",
           emphasis && "text-[var(--accent)]"
         )}>{value}</span>
       </div>
@@ -801,20 +801,20 @@ function SectionBand({
     <div>
       <header className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-[var(--bg-base)] border border-[var(--border)]">
-            <config.icon className="h-5 w-5 text-[var(--text-secondary)]" />
+          <div className="p-2 rounded-lg bg-surface-canvas border border-folio-border-subtle">
+            <config.icon className="h-5 w-5 text-folio-text-secondary" />
           </div>
-          <h2 className="folio-h2 text-[var(--text-primary)]">
+          <h2 className="folio-h2 text-folio-text-primary">
             {config.title}
           </h2>
         </div>
-        <div className="flex items-center gap-2 folio-meta text-[var(--text-secondary)]">
+        <div className="flex items-center gap-2 folio-meta text-folio-text-secondary">
           {projects.length} {projects.length === 1 ? 'project' : 'projects'}
         </div>
       </header>
 
       {projects.length === 0 ? (
-        <div className="folio-body text-[var(--text-secondary)] italic py-8 px-2">{config.emptyMessage}</div>
+        <div className="folio-body text-folio-text-secondary italic py-8 px-2">{config.emptyMessage}</div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {projects.map(p => (
@@ -876,21 +876,21 @@ function CollapsibleSectionBand({
     )}>
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full px-4 py-3 flex items-center justify-between hover:bg-[var(--bg-base)] transition-all duration-150 rounded-lg"
+        className="w-full px-4 py-3 flex items-center justify-between hover:bg-surface-canvas transition-all duration-150 rounded-lg"
       >
         <div className="flex items-center gap-3">
-          <div className="p-1.5 rounded-lg bg-[var(--bg-base)] border border-[var(--border)]">
-            <config.icon className="h-4 w-4 text-[var(--text-secondary)]" />
+          <div className="p-1.5 rounded-lg bg-surface-canvas border border-folio-border-subtle">
+            <config.icon className="h-4 w-4 text-folio-text-secondary" />
           </div>
-          <h3 className="folio-h3 text-[var(--text-primary)]">
+          <h3 className="folio-h3 text-folio-text-primary">
             {config.title}
           </h3>
-          <span className="folio-meta text-[var(--text-secondary)]">
+          <span className="folio-meta text-folio-text-secondary">
             ({projects.length})
           </span>
         </div>
         <div className={cn(
-          "text-[var(--text-secondary)] transition-transform",
+          "text-folio-text-secondary transition-transform",
           isExpanded ? "rotate-180" : ""
         )}>
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -902,7 +902,7 @@ function CollapsibleSectionBand({
       {isExpanded && (
         <div className="px-4 pb-4">
           {projects.length === 0 ? (
-            <div className="folio-body text-[var(--text-secondary)] italic py-8">{config.emptyMessage}</div>
+            <div className="folio-body text-folio-text-secondary italic py-8">{config.emptyMessage}</div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {projects.map(p => (
@@ -1075,8 +1075,8 @@ function ProjectCard({ p, onRename, onDelete, onForceDelete }: {
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               />
             ) : (
-              <div className="w-full h-full bg-[var(--bg-base)] flex items-center justify-center">
-                <div className="folio-meta text-[var(--text-tertiary)]">No image</div>
+              <div className="w-full h-full bg-surface-canvas flex items-center justify-center">
+                <div className="folio-meta text-folio-text-tertiary">No image</div>
               </div>
             )}
 
@@ -1085,7 +1085,7 @@ function ProjectCard({ p, onRename, onDelete, onForceDelete }: {
               <Link
                 href={`/project/${p.id}`}
                 onClick={(e) => e.stopPropagation()}
-                className="px-3 py-1.5 bg-[var(--bg-elevated)] text-[var(--text-primary)] rounded-lg folio-ui font-medium hover:bg-[var(--bg-base)] transition-colors flex items-center gap-1.5"
+                className="px-3 py-1.5 bg-surface-ground text-folio-text-primary rounded-lg folio-ui font-medium hover:bg-surface-canvas transition-colors flex items-center gap-1.5"
               >
                 <Edit className="w-4 h-4" />
                 Edit
@@ -1093,7 +1093,7 @@ function ProjectCard({ p, onRename, onDelete, onForceDelete }: {
               <Link
                 href={`/project/${p.id}`}
                 onClick={(e) => e.stopPropagation()}
-                className="px-3 py-1.5 bg-[var(--bg-elevated)] text-[var(--text-primary)] rounded-lg folio-ui font-medium hover:bg-[var(--bg-base)] transition-colors flex items-center gap-1.5"
+                className="px-3 py-1.5 bg-surface-ground text-folio-text-primary rounded-lg folio-ui font-medium hover:bg-surface-canvas transition-colors flex items-center gap-1.5"
               >
                 <ExternalLink className="w-4 h-4" />
                 Preview
@@ -1106,7 +1106,7 @@ function ProjectCard({ p, onRename, onDelete, onForceDelete }: {
                     handleTogglePublish();
                   }}
                   disabled={isPublishing}
-                  className="px-3 py-1.5 bg-[var(--bg-elevated)] text-[var(--text-primary)] rounded-lg folio-ui font-medium hover:bg-[var(--bg-base)] transition-colors flex items-center gap-1.5 disabled:opacity-50"
+                  className="px-3 py-1.5 bg-surface-ground text-folio-text-primary rounded-lg folio-ui font-medium hover:bg-surface-canvas transition-colors flex items-center gap-1.5 disabled:opacity-50"
                 >
                   {p.isPublic ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   {isPublishing ? '...' : p.isPublic ? 'Unpublish' : 'Publish'}
@@ -1140,7 +1140,7 @@ function ProjectCard({ p, onRename, onDelete, onForceDelete }: {
 
               {/* Dropdown Menu */}
               {isMenuOpen && (
-                <div className="absolute right-0 top-full mt-1 w-48 bg-[var(--bg-elevated)] border border-[var(--border)] rounded-lg shadow-lg py-1 z-50">
+                <div className="absolute right-0 top-full mt-1 w-48 bg-surface-ground border border-folio-border-subtle rounded-lg shadow-lg py-1 z-50">
                   {!isRenaming ? (
                     <>
                       <Link
@@ -1149,7 +1149,7 @@ function ProjectCard({ p, onRename, onDelete, onForceDelete }: {
                           e.stopPropagation();
                           setIsMenuOpen(false);
                         }}
-                        className="w-full text-left px-3 py-2 folio-ui hover:bg-[var(--bg-base)] text-[var(--text-primary)] flex items-center gap-2"
+                        className="w-full text-left px-3 py-2 folio-ui hover:bg-surface-canvas text-folio-text-primary flex items-center gap-2"
                       >
                         <Edit className="w-4 h-4" />
                         Edit
@@ -1160,7 +1160,7 @@ function ProjectCard({ p, onRename, onDelete, onForceDelete }: {
                           e.stopPropagation();
                           setIsMenuOpen(false);
                         }}
-                        className="w-full text-left px-3 py-2 folio-ui hover:bg-[var(--bg-base)] text-[var(--text-primary)] flex items-center gap-2"
+                        className="w-full text-left px-3 py-2 folio-ui hover:bg-surface-canvas text-folio-text-primary flex items-center gap-2"
                       >
                         <ExternalLink className="w-4 h-4" />
                         Preview
@@ -1174,7 +1174,7 @@ function ProjectCard({ p, onRename, onDelete, onForceDelete }: {
                             setIsMenuOpen(false);
                           }}
                           disabled={isPublishing}
-                          className="w-full text-left px-3 py-2 folio-ui hover:bg-[var(--bg-base)] text-[var(--text-primary)] flex items-center gap-2 disabled:opacity-50"
+                          className="w-full text-left px-3 py-2 folio-ui hover:bg-surface-canvas text-folio-text-primary flex items-center gap-2 disabled:opacity-50"
                         >
                           {p.isPublic ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                           {isPublishing ? 'Updating...' : p.isPublic ? 'Unpublish' : 'Publish'}
@@ -1186,7 +1186,7 @@ function ProjectCard({ p, onRename, onDelete, onForceDelete }: {
                           e.stopPropagation();
                           setIsRenaming(true);
                         }}
-                        className="w-full text-left px-3 py-2 folio-ui hover:bg-[var(--bg-base)] text-[var(--text-primary)] flex items-center gap-2"
+                        className="w-full text-left px-3 py-2 folio-ui hover:bg-surface-canvas text-folio-text-primary flex items-center gap-2"
                       >
                         <Edit className="w-4 h-4" />
                         Rename
@@ -1199,7 +1199,7 @@ function ProjectCard({ p, onRename, onDelete, onForceDelete }: {
                             handleForceDelete();
                           }}
                           disabled={isDeleting}
-                          className="w-full text-left px-3 py-2 folio-ui hover:bg-[var(--bg-base)] text-red-600 flex items-center gap-2 disabled:opacity-50"
+                          className="w-full text-left px-3 py-2 folio-ui hover:bg-surface-canvas text-red-600 flex items-center gap-2 disabled:opacity-50"
                         >
                           <Trash2 className="w-4 h-4" />
                           {isDeleting ? 'Deleting...' : 'Permanently Delete'}
@@ -1212,7 +1212,7 @@ function ProjectCard({ p, onRename, onDelete, onForceDelete }: {
                             handleDelete();
                           }}
                           disabled={isDeleting}
-                          className="w-full text-left px-3 py-2 folio-ui hover:bg-[var(--bg-base)] text-red-600 flex items-center gap-2 disabled:opacity-50"
+                          className="w-full text-left px-3 py-2 folio-ui hover:bg-surface-canvas text-red-600 flex items-center gap-2 disabled:opacity-50"
                         >
                           <Trash2 className="w-4 h-4" />
                           {isDeleting ? 'Deleting...' : 'Delete'}
@@ -1234,7 +1234,7 @@ function ProjectCard({ p, onRename, onDelete, onForceDelete }: {
                             setIsRenaming(false);
                           }
                         }}
-                        className="w-full px-2 py-1 folio-ui border border-[var(--border)] rounded bg-[var(--bg-elevated)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20"
+                        className="w-full px-2 py-1 folio-ui border border-folio-border-subtle rounded bg-surface-ground text-folio-text-primary focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20"
                         onClick={(e) => e.stopPropagation()}
                       />
                       <div className="flex gap-2 mt-2">
@@ -1255,7 +1255,7 @@ function ProjectCard({ p, onRename, onDelete, onForceDelete }: {
                             setNewTitle(p.title);
                             setIsRenaming(false);
                           }}
-                          className="flex-1 px-2 py-1 folio-meta bg-[var(--bg-base)] text-[var(--text-secondary)] rounded hover:bg-[var(--bg-elevated)]"
+                          className="flex-1 px-2 py-1 folio-meta bg-surface-canvas text-folio-text-secondary rounded hover:bg-surface-ground"
                         >
                           Cancel
                         </button>
@@ -1289,7 +1289,7 @@ function StatusBadge({ status }: { status: string }) {
   const displayStatus = status === 'Published' ? 'Published' : 'Draft';
 
   const styles = {
-    'Draft': 'bg-[var(--bg-base)]/80 text-[var(--text-secondary)] border-[var(--border)] backdrop-blur-sm',
+    'Draft': 'bg-surface-canvas/80 text-folio-text-secondary border-folio-border-subtle backdrop-blur-sm',
     'Published': 'bg-[var(--accent)]/90 text-white border-[var(--accent)] backdrop-blur-sm',
   };
 
@@ -1319,7 +1319,7 @@ function EditorialBadge({ variant }: { variant: 'featured' | 'candidate' }) {
   }
 
   return (
-    <div className="flex items-center gap-1.5 rounded-full px-3 py-1 folio-meta border border-[var(--border)] bg-[var(--bg-base)] text-[var(--text-secondary)]">
+    <div className="flex items-center gap-1.5 rounded-full px-3 py-1 folio-meta border border-folio-border-subtle bg-surface-canvas text-folio-text-secondary">
       <Newspaper className="h-3.5 w-3.5" />
       <span>Editorial Candidate</span>
     </div>
@@ -1328,7 +1328,7 @@ function EditorialBadge({ variant }: { variant: 'featured' | 'candidate' }) {
 
 function Badge({ label, icon: Icon }: { label: string; icon: any }) {
   return (
-    <div className="flex items-center gap-1.5 rounded-full px-3 py-1 folio-meta border border-[var(--border)] bg-[var(--bg-base)] text-[var(--text-secondary)]">
+    <div className="flex items-center gap-1.5 rounded-full px-3 py-1 folio-meta border border-folio-border-subtle bg-surface-canvas text-folio-text-secondary">
       <Icon className="h-3.5 w-3.5" />
       <span>{label}</span>
     </div>
@@ -1339,13 +1339,13 @@ function EditorialProgress({ value }: { value: number }) {
   // 0..100
   return (
     <div className="mt-2">
-      <div className="h-2 w-full rounded-full bg-[var(--bg-base)] overflow-hidden">
+      <div className="h-2 w-full rounded-full bg-surface-canvas overflow-hidden">
         <div
           className="h-full rounded-full bg-[var(--accent)] transition-all duration-500"
           style={{ width: `${Math.min(100, Math.max(0, value))}%` }}
         />
       </div>
-      <div className="mt-1 folio-meta text-[var(--text-secondary)]">
+      <div className="mt-1 folio-meta text-folio-text-secondary">
         Editorial readiness: {Math.round(value)}%
       </div>
     </div>
@@ -1441,32 +1441,32 @@ function FolioIndexDrawer({ projects }: { projects: ProjectLite[] }) {
 
       {open && (
         <div
-          className="fixed inset-0 z-40 bg-[var(--bg-base)]/80 backdrop-blur-sm"
+          className="fixed inset-0 z-40 bg-surface-canvas/80 backdrop-blur-sm"
           onClick={() => setOpen(false)}
         >
           <aside
             onClick={e => e.stopPropagation()}
-            className="absolute right-0 top-0 h-full w-[360px] bg-[var(--bg-elevated)] border-l border-[var(--border)] p-5 overflow-y-auto shadow-lg"
+            className="absolute right-0 top-0 h-full w-[360px] bg-surface-ground border-l border-folio-border-subtle p-5 overflow-y-auto shadow-lg"
           >
-            <h3 className="folio-h3 mb-4 text-[var(--text-primary)]">Portfolio Intelligence</h3>
+            <h3 className="folio-h3 mb-4 text-folio-text-primary">Portfolio Intelligence</h3>
 
             {/* Section Breakdown */}
             <div className="mb-6">
-              <h4 className="folio-meta uppercase tracking-wider text-[var(--text-secondary)] mb-2">By Section</h4>
+              <h4 className="folio-meta uppercase tracking-wider text-folio-text-secondary mb-2">By Section</h4>
               <ul className="space-y-2 folio-body">
-                <li className="flex justify-between text-[var(--text-primary)]">
+                <li className="flex justify-between text-folio-text-primary">
                   <span>Drafts</span>
                   <span className="font-medium">{aggregates.bySection.DRAFTS.length}</span>
                 </li>
-                <li className="flex justify-between text-[var(--text-primary)]">
+                <li className="flex justify-between text-folio-text-primary">
                   <span>In Progress</span>
                   <span className="font-medium">{aggregates.bySection.IN_PROGRESS.length}</span>
                 </li>
-                <li className="flex justify-between text-[var(--text-primary)]">
+                <li className="flex justify-between text-folio-text-primary">
                   <span>Published</span>
                   <span className="font-medium">{aggregates.bySection.PUBLISHED.length}</span>
                 </li>
-                <li className="flex justify-between text-[var(--text-secondary)]">
+                <li className="flex justify-between text-folio-text-secondary">
                   <span>Archived</span>
                   <span className="font-medium">{aggregates.bySection.ARCHIVED.length}</span>
                 </li>
@@ -1475,8 +1475,8 @@ function FolioIndexDrawer({ projects }: { projects: ProjectLite[] }) {
 
             {/* Engagement Stats */}
             <div className="mb-6">
-              <h4 className="folio-meta uppercase tracking-wider text-[var(--text-secondary)] mb-2">Engagement</h4>
-              <ul className="space-y-2 folio-body text-[var(--text-primary)]">
+              <h4 className="folio-meta uppercase tracking-wider text-folio-text-secondary mb-2">Engagement</h4>
+              <ul className="space-y-2 folio-body text-folio-text-primary">
                 <li className="flex justify-between">
                   <span>Avg Saves / Project</span>
                   <span className="font-medium">{aggregates.avgSaves}</span>
@@ -1490,8 +1490,8 @@ function FolioIndexDrawer({ projects }: { projects: ProjectLite[] }) {
 
             {/* Editorial Overlay Stats */}
             <div className="mb-6">
-              <h4 className="folio-meta uppercase tracking-wider text-[var(--text-secondary)] mb-2">Editorial Status</h4>
-              <ul className="space-y-2 folio-body text-[var(--text-primary)]">
+              <h4 className="folio-meta uppercase tracking-wider text-folio-text-secondary mb-2">Editorial Status</h4>
+              <ul className="space-y-2 folio-body text-folio-text-primary">
                 <li className="flex justify-between">
                   <span>Editorial Candidates</span>
                   <span className="font-medium">{aggregates.editorialCandidates}</span>
@@ -1503,7 +1503,7 @@ function FolioIndexDrawer({ projects }: { projects: ProjectLite[] }) {
               </ul>
             </div>
 
-            <div className="mt-6 folio-meta text-[var(--text-tertiary)]">
+            <div className="mt-6 folio-meta text-folio-text-tertiary">
               *All metrics computed non-destructively from current data. No uploads or schema changes required.
             </div>
           </aside>

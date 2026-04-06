@@ -93,8 +93,7 @@ export function StoryRenderer({ post }: StoryRendererProps) {
 
   return (
     <div
-      className="min-h-screen"
-      style={{ background: "#FFFCF8" }}
+      className="min-h-screen bg-surface-ground"
     >
       <div className="w-full py-6 md:py-10">
         {/* Hero + Intro: orientation-aware layout */}

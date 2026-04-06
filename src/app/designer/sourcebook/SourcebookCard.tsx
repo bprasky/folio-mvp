@@ -53,7 +53,7 @@ export default function SourcebookCard({
     <RidgeCard padding="none" className={entry.archived ? 'opacity-60' : ''}>
       <div className="flex gap-4 p-4 sm:p-5">
         {/* Product Image */}
-        <div className="flex-shrink-0 w-20 h-20 sm:w-24 sm:h-24 rounded-lg overflow-hidden bg-[var(--bg-elevated)]">
+        <div className="flex-shrink-0 w-20 h-20 sm:w-24 sm:h-24 rounded-lg overflow-hidden bg-surface-ground">
           {entry.productImageUrl ? (
             <Image
               src={entry.productImageUrl}
@@ -63,7 +63,7 @@ export default function SourcebookCard({
               className="w-full h-full object-cover"
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-[var(--text-tertiary)] text-xs">
+            <div className="w-full h-full flex items-center justify-center text-folio-text-tertiary text-xs">
               No image
             </div>
           )}
@@ -73,10 +73,10 @@ export default function SourcebookCard({
         <div className="flex-grow min-w-0">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <h3 className="text-base font-semibold text-[var(--text-primary)] truncate">
+              <h3 className="text-base font-semibold text-folio-text-primary truncate">
                 {entry.productName}
               </h3>
-              <p className="text-sm text-[var(--text-secondary)]">
+              <p className="text-sm text-folio-text-secondary">
                 {[entry.productBrand, entry.productCategory].filter(Boolean).join(' · ')}
               </p>
             </div>
@@ -85,7 +85,7 @@ export default function SourcebookCard({
             <div className="relative flex-shrink-0" ref={menuRef}>
               <button
                 onClick={() => setMenuOpen(!menuOpen)}
-                className="p-1.5 rounded-md text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)] transition-colors"
+                className="p-1.5 rounded-md text-folio-text-tertiary hover:text-folio-text-primary hover:bg-surface-ground transition-colors"
                 aria-label="More actions"
               >
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
@@ -99,38 +99,38 @@ export default function SourcebookCard({
                 <div className="absolute right-0 top-8 z-20 w-52 bg-white rounded-lg shadow-lg border border-[var(--border-subtle)] py-1">
                   <button
                     onClick={() => { onRequestSample(entry); setMenuOpen(false); }}
-                    className="w-full text-left px-4 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-elevated)] transition-colors"
+                    className="w-full text-left px-4 py-2 text-sm text-folio-text-primary hover:bg-surface-ground transition-colors"
                   >
                     📦 Request Sample
                   </button>
                   <button
                     onClick={() => { onRequestQuote(entry); setMenuOpen(false); }}
-                    className="w-full text-left px-4 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-elevated)] transition-colors"
+                    className="w-full text-left px-4 py-2 text-sm text-folio-text-primary hover:bg-surface-ground transition-colors"
                   >
                     💰 Request Quote
                   </button>
                   <button
                     onClick={() => { onContactRep(entry); setMenuOpen(false); }}
-                    className="w-full text-left px-4 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-elevated)] transition-colors"
+                    className="w-full text-left px-4 py-2 text-sm text-folio-text-primary hover:bg-surface-ground transition-colors"
                   >
                     💬 Contact Rep
                   </button>
                   <div className="border-t border-[var(--border-subtle)] my-1" />
                   <button
                     onClick={() => { onEditNotes(entry); setMenuOpen(false); }}
-                    className="w-full text-left px-4 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-elevated)] transition-colors"
+                    className="w-full text-left px-4 py-2 text-sm text-folio-text-primary hover:bg-surface-ground transition-colors"
                   >
                     {entry.notes ? 'Edit Notes' : 'Add Notes'}
                   </button>
                   <button
                     onClick={() => { onUseInProject(entry); setMenuOpen(false); }}
-                    className="w-full text-left px-4 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-elevated)] transition-colors"
+                    className="w-full text-left px-4 py-2 text-sm text-folio-text-primary hover:bg-surface-ground transition-colors"
                   >
                     Use in Another Project
                   </button>
                   <button
                     onClick={() => { onArchive(entry.productId, !entry.archived); setMenuOpen(false); }}
-                    className="w-full text-left px-4 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-elevated)] transition-colors"
+                    className="w-full text-left px-4 py-2 text-sm text-folio-text-primary hover:bg-surface-ground transition-colors"
                   >
                     {entry.archived ? 'Unarchive' : 'Archive'}
                   </button>
@@ -140,8 +140,8 @@ export default function SourcebookCard({
           </div>
 
           {/* Project usage */}
-          <div className="mt-2 text-sm text-[var(--text-secondary)]">
-            <span className="text-[var(--text-tertiary)]">Used in: </span>
+          <div className="mt-2 text-sm text-folio-text-secondary">
+            <span className="text-folio-text-tertiary">Used in: </span>
             {uniqueProjects.length > 0 ? (
               uniqueProjects.map((p, i) => (
                 <span key={p.projectId}>
@@ -158,20 +158,20 @@ export default function SourcebookCard({
               <span>—</span>
             )}
             {uniqueProjects.length > 0 && (
-              <span className="text-[var(--text-tertiary)]">
+              <span className="text-folio-text-tertiary">
                 {' '}({uniqueProjects.length} {uniqueProjects.length === 1 ? 'project' : 'projects'})
               </span>
             )}
           </div>
 
           {/* Last used */}
-          <div className="mt-1 text-sm text-[var(--text-tertiary)]">
+          <div className="mt-1 text-sm text-folio-text-tertiary">
             Last used: {formatDate(entry.lastUsedAt)}
           </div>
 
           {/* Notes */}
           {entry.notes && (
-            <div className="mt-2 text-sm text-[var(--text-secondary)] italic line-clamp-2">
+            <div className="mt-2 text-sm text-folio-text-secondary italic line-clamp-2">
               &ldquo;{entry.notes}&rdquo;
             </div>
           )}

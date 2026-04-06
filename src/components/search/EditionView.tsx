@@ -192,17 +192,17 @@ export default function EditionView({
   }, [filterOptions]);
   
   return (
-    <div className="min-h-screen bg-[var(--bg-base)] w-full max-w-[100vw] overflow-hidden">
+    <div className="min-h-screen bg-surface-canvas w-full max-w-[100vw] overflow-hidden">
       {/* Edition Title Treatment - Below FOLIO masthead, tight spacing */}
       <div className="w-full px-2 sm:px-3 pt-4 pb-8">
         <div className="text-center">
           {/* Edition Title - Italic serif, centered, elegant spacing */}
-          <h1 className="font-serif italic text-3xl md:text-4xl lg:text-5xl text-[var(--text-primary)] mb-6">
+          <h1 className="font-serif italic text-3xl md:text-4xl lg:text-5xl text-folio-text-primary mb-6">
             {dynamicEditionTitle}
           </h1>
           
           {/* Metadata Line - Moment count and filter pills, muted styling */}
-          <div className="flex items-center justify-center gap-3 text-sm text-[var(--text-tertiary)] flex-wrap">
+          <div className="flex items-center justify-center gap-3 text-sm text-folio-text-tertiary flex-wrap">
             <span className="font-sans">{moments.length} {moments.length === 1 ? 'moment' : 'moments'}</span>
             {activeFilterChips.length > 0 && (
               <div className="flex items-center gap-2 flex-wrap justify-center">
@@ -210,11 +210,11 @@ export default function EditionView({
                   <button
                     key={`${chip.filterType}-${chip.label}`}
                     onClick={() => onFilterChange?.(chip.filterType, null)}
-                    className="group inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--bg-elevated)] hover:bg-[var(--bg-elevated)] text-[var(--text-primary)] hover:text-[var(--text-primary)] transition-all font-sans text-xs backdrop-blur-sm border border-[var(--ridge-outer)] hover:border-[var(--ridge-outer)]"
+                    className="group inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-ground hover:bg-surface-ground text-folio-text-primary hover:text-folio-text-primary transition-all font-sans text-xs backdrop-blur-sm border border-folio-border-subtle hover:border-folio-border-subtle"
                     title={`Remove ${chip.label} filter`}
                   >
                     <span>{chip.label}</span>
-                    <span className="opacity-0 group-hover:opacity-100 transition-opacity text-[var(--text-tertiary)]">×</span>
+                    <span className="opacity-0 group-hover:opacity-100 transition-opacity text-folio-text-tertiary">×</span>
                   </button>
                 ))}
               </div>
@@ -224,13 +224,13 @@ export default function EditionView({
           {/* Scope Toggle - Only for designers, positioned below metadata with tight spacing */}
           {isDesigner && onScopeChange && (
             <div className="flex items-center justify-center gap-2 mt-4">
-              <div className="flex items-center gap-2 bg-[var(--bg-base)] border border-[var(--ridge-outer)] rounded-sm p-1">
+              <div className="flex items-center gap-2 bg-surface-canvas border border-folio-border-subtle rounded-sm p-1">
                 <button
                   onClick={() => onScopeChange('public')}
                   className={`px-4 py-2 text-sm font-medium transition-colors ${
                     scope === 'public'
                       ? 'bg-neutral-900 text-white'
-                      : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                      : 'text-folio-text-secondary hover:text-folio-text-primary'
                   }`}
                 >
                   All Folio
@@ -240,7 +240,7 @@ export default function EditionView({
                   className={`px-4 py-2 text-sm font-medium transition-colors ${
                     scope === 'private'
                       ? 'bg-neutral-900 text-white'
-                      : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                      : 'text-folio-text-secondary hover:text-folio-text-primary'
                   }`}
                 >
                   My Work

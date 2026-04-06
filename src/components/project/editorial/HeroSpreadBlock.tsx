@@ -75,7 +75,7 @@ export function HeroSpreadBlock({ image, project, roomName, showTitle = true }: 
               <div className="space-y-2">
                 {/* Room Label */}
                 {roomName && (
-                  <div className="folio-ui uppercase tracking-wider text-[var(--text-secondary)] mb-2">
+                  <div className="folio-ui uppercase tracking-wider text-folio-text-secondary mb-2">
                     {roomName}
                   </div>
                 )}
@@ -83,12 +83,12 @@ export function HeroSpreadBlock({ image, project, roomName, showTitle = true }: 
                 {/* Project Title - Only on first hero */}
                 {showTitle && (
                   <>
-                    <h1 className="text-3xl md:text-4xl lg:text-5xl font-serif font-light tracking-tight text-[var(--text-primary)]">
+                    <h1 className="text-3xl md:text-4xl lg:text-5xl font-serif font-light tracking-tight text-folio-text-primary">
                       {project.title}
                     </h1>
 
                     {/* Project Meta */}
-                    <div className="flex flex-wrap items-center gap-4 folio-ui text-[var(--text-secondary)] mt-3">
+                    <div className="flex flex-wrap items-center gap-4 folio-ui text-folio-text-secondary mt-3">
                       {project.category && (
                         <span>{project.category}</span>
                       )}

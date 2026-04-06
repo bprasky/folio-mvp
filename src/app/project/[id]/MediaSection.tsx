@@ -257,14 +257,14 @@ export default function MediaSection({ project, isOwner, images, projectPost, is
   return (
     <div className="space-y-6">
       {/* Intro */}
-      <p className="folio-body text-[var(--text-secondary)]">
+      <p className="folio-body text-folio-text-secondary">
         Upload your project materials. We'll extract products, rooms, and specifications automatically.
       </p>
 
       {/* Publish prompt banner — shown when enough images exist but no interview yet */}
       {images.length >= 3 && (!editorialState || editorialState === 'EMPTY' || editorialState === 'INTERVIEWED') && isOwner && (
         <div className="flex items-center justify-between px-4 py-3 rounded-xl border border-[var(--accent)]/20 bg-[var(--accent)]/5">
-          <span className="folio-ui text-[var(--text-primary)]">
+          <span className="folio-ui text-folio-text-primary">
             {photoCount} photos uploaded &middot; Ready to publish
           </span>
           <button
@@ -285,11 +285,11 @@ export default function MediaSection({ project, isOwner, images, projectPost, is
           {/* Photos Card */}
           <button
             onClick={() => setShowUploadModal(true)}
-            className="group text-left rounded-[20px] border border-[var(--border-default)] bg-[var(--bg-elevated)] p-5 hover:border-[var(--accent)] hover:shadow-sm transition-all"
+            className="group text-left rounded-[20px] border border-folio-border-subtle bg-surface-ground p-5 hover:border-[var(--accent)] hover:shadow-sm transition-all"
           >
             <Camera className="w-6 h-6 text-[var(--accent)] mb-3" />
-            <h3 className="folio-ui font-semibold text-[var(--text-primary)] mb-1">Photos</h3>
-            <p className="folio-meta text-[var(--text-tertiary)] mb-3">
+            <h3 className="folio-ui font-semibold text-folio-text-primary mb-1">Photos</h3>
+            <p className="folio-meta text-folio-text-tertiary mb-3">
               JPG, PNG, HEIC, WebP
             </p>
             {photoCount > 0 ? (
@@ -306,11 +306,11 @@ export default function MediaSection({ project, isOwner, images, projectPost, is
           {/* Presentation Card */}
           <button
             onClick={handleImportPresentation}
-            className="group text-left rounded-[20px] border border-[var(--border-default)] bg-[var(--bg-elevated)] p-5 hover:border-[var(--accent)] hover:shadow-sm transition-all"
+            className="group text-left rounded-[20px] border border-folio-border-subtle bg-surface-ground p-5 hover:border-[var(--accent)] hover:shadow-sm transition-all"
           >
             <Presentation className="w-6 h-6 text-[var(--accent)] mb-3" />
-            <h3 className="folio-ui font-semibold text-[var(--text-primary)] mb-1">Presentation</h3>
-            <p className="folio-meta text-[var(--text-tertiary)] mb-3">
+            <h3 className="folio-ui font-semibold text-folio-text-primary mb-1">Presentation</h3>
+            <p className="folio-meta text-folio-text-tertiary mb-3">
               PPTX, PDF, Keynote
             </p>
             {presentationCount > 0 ? (
@@ -327,11 +327,11 @@ export default function MediaSection({ project, isOwner, images, projectPost, is
           {/* Material Schedule Card */}
           <button
             onClick={handleImportPdfSpecs}
-            className="group text-left rounded-[20px] border border-[var(--border-default)] bg-[var(--bg-elevated)] p-5 hover:border-[var(--accent)] hover:shadow-sm transition-all"
+            className="group text-left rounded-[20px] border border-folio-border-subtle bg-surface-ground p-5 hover:border-[var(--accent)] hover:shadow-sm transition-all"
           >
             <FileSpreadsheet className="w-6 h-6 text-[var(--accent)] mb-3" />
-            <h3 className="folio-ui font-semibold text-[var(--text-primary)] mb-1">Material Schedule</h3>
-            <p className="folio-meta text-[var(--text-tertiary)] mb-3">
+            <h3 className="folio-ui font-semibold text-folio-text-primary mb-1">Material Schedule</h3>
+            <p className="folio-meta text-folio-text-tertiary mb-3">
               XLSX, CSV, PDF specs
             </p>
             <span className="folio-meta text-[var(--accent)] group-hover:text-[var(--accent-hover)]">
@@ -354,13 +354,13 @@ export default function MediaSection({ project, isOwner, images, projectPost, is
       >
         {images.length > 0 && (
           <div className="flex items-center justify-between mb-4">
-            <h3 className="folio-ui font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
+            <h3 className="folio-ui font-semibold text-folio-text-secondary uppercase tracking-wider">
               Uploaded Media
             </h3>
             {isOwner && (
               <button
                 onClick={() => setShowUploadModal(true)}
-                className="flex items-center gap-2 px-3 py-1.5 folio-meta font-medium text-[var(--accent)] hover:text-[var(--accent-hover)] border border-[var(--border-default)] rounded-lg hover:bg-[var(--bg-elevated)] transition-colors"
+                className="flex items-center gap-2 px-3 py-1.5 folio-meta font-medium text-[var(--accent)] hover:text-[var(--accent-hover)] border border-folio-border-subtle rounded-lg hover:bg-surface-ground transition-colors"
               >
                 <FaUpload className="w-3 h-3" />
                 Add More
@@ -382,7 +382,7 @@ export default function MediaSection({ project, isOwner, images, projectPost, is
               transition-all duration-200 ease-out cursor-pointer
               ${isDragOver
                 ? 'border-[var(--accent)] bg-[var(--accent)]/5 scale-[1.01]'
-                : 'border-[var(--ridge-outer)] hover:border-[var(--text-tertiary)] bg-[var(--bg-base)]'
+                : 'border-folio-border-subtle hover:border-folio-text-tertiary bg-surface-canvas'
               }
             `}
             onClick={() => setShowUploadModal(true)}
@@ -417,10 +417,10 @@ export default function MediaSection({ project, isOwner, images, projectPost, is
               <FaCloudUploadAlt
                 className={`
                   w-12 h-12 mx-auto mb-3 transition-colors duration-200
-                  ${isDragOver ? 'text-[var(--accent)]' : 'text-[var(--text-tertiary)]'}
+                  ${isDragOver ? 'text-[var(--accent)]' : 'text-folio-text-tertiary'}
                 `}
               />
-              <p className="text-lg text-[var(--text-primary)] mb-1">
+              <p className="text-lg text-folio-text-primary mb-1">
                 {isDragOver ? 'Drop files here' : 'Drag files here to upload'}
               </p>
               <p className="folio-meta mb-4">
@@ -462,8 +462,8 @@ export default function MediaSection({ project, isOwner, images, projectPost, is
               return (
                 <div
                   key={image.id}
-                  className={`relative group aspect-[4/3] bg-[var(--bg-base)] rounded-[20px] overflow-hidden border-2 ${
-                    isCover ? 'border-[var(--accent)]' : 'border-[var(--border-default)] hover:border-[var(--accent)]'
+                  className={`relative group aspect-[4/3] bg-surface-canvas rounded-[20px] overflow-hidden border-2 ${
+                    isCover ? 'border-[var(--accent)]' : 'border-folio-border-subtle hover:border-[var(--accent)]'
                   } transition-all`}
                 >
                   {/* Designed empty state fallback — visible when image fails to load */}
@@ -503,7 +503,7 @@ export default function MediaSection({ project, isOwner, images, projectPost, is
                         className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                           isCover
                             ? 'bg-[var(--accent)] text-white'
-                            : 'bg-[var(--bg-base)] text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]'
+                            : 'bg-surface-canvas text-folio-text-primary hover:bg-surface-ground'
                         }`}
                       >
                         {isCover ? 'Cover Selected' : 'Set as Cover'}

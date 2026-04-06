@@ -27,10 +27,10 @@ export const DesignerProductMap: React.FC<DesignerProductMapProps> = ({
   // For now, we fake a simple engagement score matrix using existing totals
   return (
     <section className="mt-8 ridge-card p-4">
-      <h2 className="folio-ui font-semibold text-[var(--text-primary)]">
+      <h2 className="folio-ui font-semibold text-folio-text-primary">
         Designer × Product map
       </h2>
-      <p className="mt-1 folio-meta text-[var(--text-secondary)]">
+      <p className="mt-1 folio-meta text-folio-text-secondary">
         A high-level view of how your key designers and products relate. Darker
         cells indicate stronger engagement.
       </p>
@@ -39,7 +39,7 @@ export const DesignerProductMap: React.FC<DesignerProductMapProps> = ({
         <table className="min-w-full text-xs">
           <thead>
             <tr>
-              <th className="px-2 py-2 text-left text-[11px] uppercase tracking-wide text-[var(--text-secondary)]">
+              <th className="px-2 py-2 text-left text-[11px] uppercase tracking-wide text-folio-text-secondary">
                 Product / Designer
               </th>
               {topDesigners.map((d) => {
@@ -47,7 +47,7 @@ export const DesignerProductMap: React.FC<DesignerProductMapProps> = ({
                 return (
                   <th
                     key={d.designerId}
-                    className="px-2 py-2 text-[11px] uppercase tracking-wide text-[var(--text-secondary)] text-left"
+                    className="px-2 py-2 text-[11px] uppercase tracking-wide text-folio-text-secondary text-left"
                   >
                     {designer?.name || d.designerId}
                   </th>
@@ -58,9 +58,9 @@ export const DesignerProductMap: React.FC<DesignerProductMapProps> = ({
           <tbody>
             {topProducts.map((p) => (
               <tr key={p.productId} className="border-t border-[var(--ridge-inner)]">
-                <td className="px-2 py-2 text-[var(--text-primary)]">
+                <td className="px-2 py-2 text-folio-text-primary">
                   <div className="font-medium">{p.name}</div>
-                  <div className="text-[11px] text-[var(--text-secondary)]">
+                  <div className="text-[11px] text-folio-text-secondary">
                     {p.collectionName}
                   </div>
                 </td>

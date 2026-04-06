@@ -244,16 +244,16 @@ export default function ArticleTopicDetailPage() {
 
   if (status === 'loading' || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[var(--bg-base)]">
-        <div className="text-[var(--text-secondary)]">Loading...</div>
+      <div className="min-h-screen flex items-center justify-center bg-surface-canvas">
+        <div className="text-folio-text-secondary">Loading...</div>
       </div>
     );
   }
 
   if (!topic) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[var(--bg-base)]">
-        <div className="text-[var(--text-secondary)]">Topic not found</div>
+      <div className="min-h-screen flex items-center justify-center bg-surface-canvas">
+        <div className="text-folio-text-secondary">Topic not found</div>
       </div>
     );
   }
@@ -261,12 +261,12 @@ export default function ArticleTopicDetailPage() {
   const contributions = topic.contributionsByStatus[activeTab as keyof typeof topic.contributionsByStatus] || [];
 
   return (
-    <div className="min-h-screen bg-[var(--bg-base)] py-8">
+    <div className="min-h-screen bg-surface-canvas py-8">
       <div className="max-w-6xl mx-auto px-4">
         {/* Back link */}
         <Link
           href="/admin/article-topics"
-          className="inline-flex items-center gap-1 folio-meta text-[var(--text-secondary)] hover:text-[var(--text-primary)] mb-4"
+          className="inline-flex items-center gap-1 folio-meta text-folio-text-secondary hover:text-folio-text-primary mb-4"
         >
           &larr; Back to Topics
         </Link>
@@ -280,7 +280,7 @@ export default function ArticleTopicDetailPage() {
                 {topic.status.replace('_', ' ')}
               </span>
             </div>
-            <p className="folio-body text-[var(--text-secondary)]">
+            <p className="folio-body text-folio-text-secondary">
               {topic.promptQuestion}
             </p>
           </div>
@@ -329,9 +329,9 @@ export default function ArticleTopicDetailPage() {
         <RidgeCard padding="md" className="mb-6">
           <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
             <div>
-              <div className="folio-meta text-[var(--text-secondary)] mb-1">Progress</div>
+              <div className="folio-meta text-folio-text-secondary mb-1">Progress</div>
               <div className="flex items-center gap-2">
-                <div className="flex-1 h-3 bg-[var(--bg-elevated)] rounded-full overflow-hidden">
+                <div className="flex-1 h-3 bg-surface-ground rounded-full overflow-hidden">
                   <div
                     className="h-full bg-[var(--accent)] transition-all"
                     style={{
@@ -345,19 +345,19 @@ export default function ArticleTopicDetailPage() {
               </div>
             </div>
             <div>
-              <div className="folio-meta text-[var(--text-secondary)] mb-1">Designers</div>
+              <div className="folio-meta text-folio-text-secondary mb-1">Designers</div>
               <div className="folio-h3">{topic.designerCount}</div>
             </div>
             <div>
-              <div className="folio-meta text-[var(--text-secondary)] mb-1">Vendors</div>
+              <div className="folio-meta text-folio-text-secondary mb-1">Vendors</div>
               <div className="folio-h3">{topic.vendorCount}</div>
             </div>
             <div>
-              <div className="folio-meta text-[var(--text-secondary)] mb-1">Individuals</div>
+              <div className="folio-meta text-folio-text-secondary mb-1">Individuals</div>
               <div className="folio-h3">{topic.individualCount}</div>
             </div>
             <div>
-              <div className="folio-meta text-[var(--text-secondary)] mb-1">Target Date</div>
+              <div className="folio-meta text-folio-text-secondary mb-1">Target Date</div>
               <div className="folio-body">{formatDate(topic.targetPublishDate)}</div>
             </div>
           </div>
@@ -375,7 +375,7 @@ export default function ArticleTopicDetailPage() {
                   'px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors',
                   activeTab === tabStatus
                     ? 'bg-[var(--accent)] text-white'
-                    : 'bg-[var(--bg-elevated)] text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)]/80'
+                    : 'bg-surface-ground text-folio-text-secondary hover:bg-surface-ground/80'
                 )}
               >
                 {tabStatus} ({count})
@@ -387,7 +387,7 @@ export default function ArticleTopicDetailPage() {
         {/* Contributions List */}
         {contributions.length === 0 ? (
           <RidgeCard padding="lg" className="text-center">
-            <p className="folio-body text-[var(--text-secondary)]">
+            <p className="folio-body text-folio-text-secondary">
               No {activeTab.toLowerCase()} contributions
             </p>
           </RidgeCard>
@@ -397,7 +397,7 @@ export default function ArticleTopicDetailPage() {
               <RidgeCard key={contribution.id} padding="md">
                 <div className="flex items-start gap-4">
                   {/* Avatar */}
-                  <div className="w-12 h-12 rounded-full bg-[var(--bg-elevated)] overflow-hidden flex-shrink-0">
+                  <div className="w-12 h-12 rounded-full bg-surface-ground overflow-hidden flex-shrink-0">
                     {contribution.user.profileImage ? (
                       <Image
                         src={contribution.user.profileImage}
@@ -407,7 +407,7 @@ export default function ArticleTopicDetailPage() {
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-[var(--text-secondary)] text-lg font-medium">
+                      <div className="w-full h-full flex items-center justify-center text-folio-text-secondary text-lg font-medium">
                         {contribution.user.name.charAt(0).toUpperCase()}
                       </div>
                     )}
@@ -417,13 +417,13 @@ export default function ArticleTopicDetailPage() {
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
                       <span className="font-medium">{contribution.user.name}</span>
-                      <span className="px-2 py-0.5 rounded text-xs bg-[var(--bg-elevated)] text-[var(--text-secondary)]">
+                      <span className="px-2 py-0.5 rounded text-xs bg-surface-ground text-folio-text-secondary">
                         {roleLabels[contribution.userRole] || contribution.userRole}
                       </span>
-                      <span className="px-2 py-0.5 rounded text-xs bg-[var(--bg-elevated)] text-[var(--text-secondary)]">
+                      <span className="px-2 py-0.5 rounded text-xs bg-surface-ground text-folio-text-secondary">
                         {typeLabels[contribution.type] || contribution.type}
                       </span>
-                      <span className="folio-meta text-[var(--text-secondary)]">
+                      <span className="folio-meta text-folio-text-secondary">
                         {formatDate(contribution.createdAt)}
                       </span>
                     </div>
@@ -433,8 +433,8 @@ export default function ArticleTopicDetailPage() {
                     </p>
 
                     {contribution.pullQuote && (
-                      <div className="p-3 bg-[var(--bg-elevated)] rounded-lg mb-3 border-l-4 border-[var(--accent)]">
-                        <div className="folio-meta text-[var(--text-secondary)] mb-1">Pull Quote</div>
+                      <div className="p-3 bg-surface-ground rounded-lg mb-3 border-l-4 border-[var(--accent)]">
+                        <div className="folio-meta text-folio-text-secondary mb-1">Pull Quote</div>
                         <p className="folio-body italic">&ldquo;{contribution.pullQuote}&rdquo;</p>
                       </div>
                     )}
@@ -522,10 +522,10 @@ export default function ArticleTopicDetailPage() {
           <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
             <RidgeCard padding="lg" className="max-w-lg w-full">
               <h2 className="folio-h2 mb-4">Edit Pull Quote</h2>
-              <p className="folio-body text-[var(--text-secondary)] mb-4">
+              <p className="folio-body text-folio-text-secondary mb-4">
                 Extract a quotable snippet from this contribution
               </p>
-              <div className="mb-4 p-3 bg-[var(--bg-elevated)] rounded-lg">
+              <div className="mb-4 p-3 bg-surface-ground rounded-lg">
                 <p className="folio-body text-sm">{editingContribution.content}</p>
               </div>
               <textarea

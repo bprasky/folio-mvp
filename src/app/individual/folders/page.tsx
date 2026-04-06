@@ -82,12 +82,12 @@ export default function IndividualFolders() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--bg-base)] p-6">
+    <div className="min-h-screen bg-surface-canvas p-6">
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="folio-h1 text-[var(--text-primary)] mb-2">My Folders</h1>
-            <p className="folio-body text-[var(--text-secondary)]">Organize your saved items and inspiration</p>
+            <h1 className="folio-h1 text-folio-text-primary mb-2">My Folders</h1>
+            <p className="folio-body text-folio-text-secondary">Organize your saved items and inspiration</p>
           </div>
           <Button
             variant="accent"
@@ -107,7 +107,7 @@ export default function IndividualFolders() {
             <RidgeCard className="p-6">
               <form onSubmit={handleCreateFolder} className="space-y-4">
                 <div>
-                  <label className="block folio-ui font-medium text-[var(--text-secondary)] mb-2">Folder Name</label>
+                  <label className="block folio-ui font-medium text-folio-text-secondary mb-2">Folder Name</label>
                   <Input
                     type="text"
                     value={newFolderName}
@@ -117,11 +117,11 @@ export default function IndividualFolders() {
                   />
                 </div>
                 <div>
-                  <label className="block folio-ui font-medium text-[var(--text-secondary)] mb-2">Description (optional)</label>
+                  <label className="block folio-ui font-medium text-folio-text-secondary mb-2">Description (optional)</label>
                   <textarea
                     value={newFolderDescription}
                     onChange={(e) => setNewFolderDescription(e.target.value)}
-                    className="w-full px-4 py-2 bg-[var(--bg-base)] border border-[var(--border-color)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent resize-none folio-body text-[var(--text-primary)]"
+                    className="w-full px-4 py-2 bg-surface-canvas border border-[var(--border-color)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent resize-none folio-body text-folio-text-primary"
                     rows={3}
                     placeholder="Describe what this folder contains..."
                   />
@@ -155,7 +155,7 @@ export default function IndividualFolders() {
             >
               <RidgeCard className="overflow-hidden">
                 <Link href={`/individual/folders/${folder.id}`}>
-                  <div className="relative h-48 bg-[var(--bg-base)]">
+                  <div className="relative h-48 bg-surface-canvas">
                     {folder.coverImage ? (
                       <Image
                         src={folder.coverImage}
@@ -165,14 +165,14 @@ export default function IndividualFolders() {
                       />
                     ) : (
                       <div className="h-full flex items-center justify-center">
-                        <FaFolderOpen className="w-16 h-16 text-[var(--text-tertiary)]" />
+                        <FaFolderOpen className="w-16 h-16 text-folio-text-tertiary" />
                       </div>
                     )}
                     <div className="absolute top-3 right-3">
                       <span className={`px-3 py-1 rounded-full folio-meta font-medium ${
                         folder.isPublic
                           ? 'bg-green-100 text-green-800'
-                          : 'bg-[var(--bg-elevated)] text-[var(--text-secondary)]'
+                          : 'bg-surface-ground text-folio-text-secondary'
                       }`}>
                         {folder.isPublic ? 'Public' : 'Private'}
                       </span>
@@ -183,13 +183,13 @@ export default function IndividualFolders() {
                 <div className="p-4">
                   <div className="flex justify-between items-start mb-2">
                     <div>
-                      <h3 className="folio-ui font-semibold text-[var(--text-primary)] mb-1">{folder.name}</h3>
-                      <p className="folio-meta text-[var(--text-secondary)] line-clamp-2">{folder.description}</p>
+                      <h3 className="folio-ui font-semibold text-folio-text-primary mb-1">{folder.name}</h3>
+                      <p className="folio-meta text-folio-text-secondary line-clamp-2">{folder.description}</p>
                     </div>
                   </div>
 
                   <div className="flex items-center justify-between mt-4">
-                    <div className="flex items-center gap-2 folio-meta text-[var(--text-secondary)]">
+                    <div className="flex items-center gap-2 folio-meta text-folio-text-secondary">
                       <FaImage className="w-4 h-4" />
                       <span>{folder.imageCount} items</span>
                     </div>
@@ -203,7 +203,7 @@ export default function IndividualFolders() {
                         <FaTrash className="w-4 h-4" />
                       </button>
                       <button
-                        className="p-2 text-[var(--text-secondary)] hover:bg-[var(--bg-base)] rounded-lg transition-colors"
+                        className="p-2 text-folio-text-secondary hover:bg-surface-canvas rounded-lg transition-colors"
                         title="Edit folder"
                       >
                         <FaEdit className="w-4 h-4" />

@@ -18,9 +18,9 @@ interface InterviewQuestionProps {
  * THIS IS THE COMPONENT THE USER LIKES - preserve the styling.
  *
  * Styling:
- * - Question text: text-2xl md:text-3xl font-serif italic text-[var(--text-primary)]
+ * - Question text: text-2xl md:text-3xl font-serif italic text-folio-text-primary
  * - Leading: leading-relaxed (1.625)
- * - Context (if present): text-lg text-[var(--text-secondary)] mb-2, not italic
+ * - Context (if present): text-lg text-folio-text-secondary mb-2, not italic
  * - Container: max-w-2xl mx-auto text-center md:text-left
  * - Image thumbnail: w-16 h-16 rounded-lg object-cover mb-4
  */
@@ -48,13 +48,13 @@ export function InterviewQuestion({
 
       {/* Context lead-in if present */}
       {context && (
-        <p className="text-lg text-[var(--text-secondary)] mb-3 text-center md:text-left">
+        <p className="text-lg text-folio-text-secondary mb-3 text-center md:text-left">
           {context}
         </p>
       )}
 
       {/* Question text - THE STYLING USER LIKES */}
-      <h2 className="text-2xl md:text-3xl font-serif italic text-[var(--text-primary)] leading-relaxed text-center md:text-left">
+      <h2 className="text-2xl md:text-3xl font-serif italic text-folio-text-primary leading-relaxed text-center md:text-left">
         {question}
       </h2>
     </div>

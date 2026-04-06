@@ -34,7 +34,7 @@ export default function VendorAnalyticsInfluence({
       </CardHeader>
       <CardContent>
         {data.length === 0 ? (
-          <p className="text-[var(--text-secondary)] text-sm">No designer data available</p>
+          <p className="text-folio-text-secondary text-sm">No designer data available</p>
         ) : (
           <div className="space-y-4">
             {data.slice(0, 5).map((designer, index) => (
@@ -48,7 +48,7 @@ export default function VendorAnalyticsInfluence({
                   <p className="font-medium text-sm truncate">
                     Designer {designer.designerId.slice(0, 8)}...
                   </p>
-                  <div className="flex items-center gap-2 text-xs text-[var(--text-secondary)]">
+                  <div className="flex items-center gap-2 text-xs text-folio-text-secondary">
                     <span>{designer.projectCount} projects</span>
                     <span>•</span>
                     <span>{designer.selectionCount} specs</span>
@@ -67,7 +67,7 @@ export default function VendorAnalyticsInfluence({
               </div>
             ))}
             {data.length > 5 && (
-              <p className="text-xs text-[var(--text-secondary)] text-center pt-2">
+              <p className="text-xs text-folio-text-secondary text-center pt-2">
                 +{data.length - 5} more designers
               </p>
             )}

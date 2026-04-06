@@ -118,7 +118,7 @@ export default function DesignerUpgradePage() {
         {/* Back link */}
         <Link
           href="/projects"
-          className="inline-flex items-center gap-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] mb-8"
+          className="inline-flex items-center gap-2 text-folio-text-secondary hover:text-folio-text-primary mb-8"
         >
           <ArrowLeft className="w-4 h-4" />
           Back to projects
@@ -129,16 +129,16 @@ export default function DesignerUpgradePage() {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-[var(--accent)] mb-6 shadow-[0_8px_24px_rgba(184,132,92,0.35)]">
             <Sparkles className="w-8 h-8 text-white" />
           </div>
-          <h1 className="folio-h1 text-[var(--text-primary)] mb-3">
+          <h1 className="folio-h1 text-folio-text-primary mb-3">
             Upgrade to Professional
           </h1>
-          <p className="folio-body text-[var(--text-secondary)] max-w-xl mx-auto">
+          <p className="folio-body text-folio-text-secondary max-w-xl mx-auto">
             Unlock the full potential of Folio with AI image generation, affiliate revenue, and premium visibility.
           </p>
           {orgDetails && (
             <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 ridge-card ridge-card-sm">
-              <Building2 className="w-4 h-4 text-[var(--text-secondary)]" />
-              <span className="folio-ui text-[var(--text-primary)]">{orgDetails.name}</span>
+              <Building2 className="w-4 h-4 text-folio-text-secondary" />
+              <span className="folio-ui text-folio-text-primary">{orgDetails.name}</span>
             </div>
           )}
         </div>
@@ -151,7 +151,7 @@ export default function DesignerUpgradePage() {
               className={`px-4 py-2 rounded-lg folio-ui transition-all ${
                 !isYearly
                   ? 'bg-[var(--accent)] text-white shadow-sm'
-                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                  : 'text-folio-text-secondary hover:text-folio-text-primary'
               }`}
             >
               Monthly
@@ -161,7 +161,7 @@ export default function DesignerUpgradePage() {
               className={`px-4 py-2 rounded-lg folio-ui transition-all ${
                 isYearly
                   ? 'bg-[var(--accent)] text-white shadow-sm'
-                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                  : 'text-folio-text-secondary hover:text-folio-text-primary'
               }`}
             >
               Yearly
@@ -176,15 +176,15 @@ export default function DesignerUpgradePage() {
             <div>
               <div className="folio-ui text-[var(--accent)] font-medium mb-1">Professional</div>
               <div className="flex items-baseline gap-2">
-                <span className="text-4xl font-bold text-[var(--text-primary)]">
+                <span className="text-4xl font-bold text-folio-text-primary">
                   ${Math.round(price)}
                 </span>
-                <span className="folio-body text-[var(--text-secondary)]">
+                <span className="folio-body text-folio-text-secondary">
                   /month
                 </span>
               </div>
               {isYearly && (
-                <div className="folio-meta text-[var(--text-secondary)] mt-1">
+                <div className="folio-meta text-folio-text-secondary mt-1">
                   ${proConfig.pricing?.annually}/year billed annually
                 </div>
               )}
@@ -200,12 +200,12 @@ export default function DesignerUpgradePage() {
             </Button>
           </div>
 
-          <div className="mt-6 pt-6 border-t border-[var(--border)]">
+          <div className="mt-6 pt-6 border-t border-folio-border-subtle">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {proFeatures.slice(0, 8).map((feature) => (
                 <div key={feature.key} className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
-                  <span className="folio-ui text-[var(--text-secondary)]">{feature.label}</span>
+                  <span className="folio-ui text-folio-text-secondary">{feature.label}</span>
                 </div>
               ))}
             </div>
@@ -213,7 +213,7 @@ export default function DesignerUpgradePage() {
         </div>
 
         {/* Benefits grid */}
-        <h2 className="folio-h2 text-[var(--text-primary)] text-center mb-8">
+        <h2 className="folio-h2 text-folio-text-primary text-center mb-8">
           What you'll unlock
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
@@ -222,30 +222,30 @@ export default function DesignerUpgradePage() {
               <div className={`w-12 h-12 rounded-xl ${benefit.color} flex items-center justify-center mb-4`}>
                 <benefit.icon className="w-6 h-6" />
               </div>
-              <h3 className="folio-h3 text-[var(--text-primary)] mb-2">{benefit.title}</h3>
-              <p className="folio-body text-[var(--text-secondary)]">{benefit.description}</p>
+              <h3 className="folio-h3 text-folio-text-primary mb-2">{benefit.title}</h3>
+              <p className="folio-body text-folio-text-secondary">{benefit.description}</p>
             </div>
           ))}
         </div>
 
         {/* ROI section */}
         <div className="ridge-card ridge-card-lg p-8 bg-gradient-to-br from-[var(--accent)]/5 to-[var(--accent)]/10 text-center">
-          <h3 className="folio-h2 text-[var(--text-primary)] mb-4">
+          <h3 className="folio-h2 text-folio-text-primary mb-4">
             The math works in your favor
           </h3>
-          <p className="folio-body text-[var(--text-secondary)] max-w-2xl mx-auto mb-6">
+          <p className="folio-body text-folio-text-secondary max-w-2xl mx-auto mb-6">
             Save {roi.timeSavingsValue / 100} hours per project with AI editorial generation.
             At ${100}/hr, that's ${roi.timeSavingsValue} in time savings per project.
             Plus earn up to ${roi.affiliatePotential.toLocaleString()} in affiliate revenue on a typical project.
           </p>
-          <div className="folio-meta text-[var(--text-secondary)]">
+          <div className="folio-meta text-folio-text-secondary">
             Break even in less than {Math.ceil(roi.monthlyBreakeven * 10) / 10} projects per month
           </div>
         </div>
 
         {/* Guarantee */}
         <div className="text-center mt-12">
-          <p className="folio-body text-[var(--text-secondary)]">
+          <p className="folio-body text-folio-text-secondary">
             14-day money-back guarantee. Cancel anytime.
           </p>
         </div>

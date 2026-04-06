@@ -276,16 +276,16 @@ export default function ActionSheet({ suggestion, isOpen, onClose }: ActionSheet
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent className="bg-[#F7F4F1] border-[#DAD2CA] w-[500px] sm:w-[600px]">
+      <SheetContent className="bg-surface-elevated border-folio-border-strong w-[500px] sm:w-[600px]">
         <SheetHeader>
-          <SheetTitle className="text-[#2B2B2B] font-serif">
+          <SheetTitle className="text-folio-text-primary font-serif">
             {suggestion.title}
           </SheetTitle>
         </SheetHeader>
         
         <div className="mt-6 space-y-6">
-          <div className="p-4 bg-white rounded-lg border border-[#DAD2CA]">
-            <p className="text-sm text-[#8C8278]">{suggestion.reason}</p>
+          <div className="p-4 bg-white rounded-lg border border-folio-border-strong">
+            <p className="text-sm text-folio-text-secondary">{suggestion.reason}</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -304,7 +304,7 @@ export default function ActionSheet({ suggestion, isOpen, onClose }: ActionSheet
                 variant="outline"
                 onClick={onClose}
                 disabled={isSubmitting}
-                className="border-[#DAD2CA] text-[#8C8278] hover:bg-white"
+                className="border-folio-border-strong text-folio-text-secondary hover:bg-white"
               >
                 Cancel
               </Button>

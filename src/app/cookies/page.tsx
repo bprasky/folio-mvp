@@ -371,7 +371,7 @@ export default function CookiePolicyPage() {
       </section>
 
       <hr />
-      <p className="text-center text-[var(--text-tertiary)]">
+      <p className="text-center text-folio-text-tertiary">
         &copy; 2026 Folio AD, LLC. All rights reserved.
       </p>
     </LegalPageLayout>

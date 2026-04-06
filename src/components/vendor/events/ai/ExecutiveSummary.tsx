@@ -25,20 +25,20 @@ export function ExecutiveSummary({ outcome }: ExecutiveSummaryProps) {
   const StatusIcon = status.icon;
 
   return (
-    <Card className="bg-white border-[#DAD2CA]">
+    <Card className="bg-white border-folio-border-strong">
       <CardContent className="p-6">
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center space-x-3">
-            <StatusIcon className="w-6 h-6 text-[#8C8278]" />
+            <StatusIcon className="w-6 h-6 text-folio-text-secondary" />
             <div>
-              <h2 className="text-xl font-serif text-[#2B2B2B] mb-1">
+              <h2 className="text-xl font-serif text-folio-text-primary mb-1">
                 Executive Summary
               </h2>
               <div className="flex items-center space-x-2">
                 <Badge className={status.color}>
                   {status.label}
                 </Badge>
-                <span className="text-sm text-[#8C8278]">
+                <span className="text-sm text-folio-text-secondary">
                   vs prior event • vs portfolio
                 </span>
               </div>
@@ -48,12 +48,12 @@ export function ExecutiveSummary({ outcome }: ExecutiveSummaryProps) {
 
         {/* Headline */}
         <div className="mb-6">
-          <p className="text-lg text-[#2B2B2B] font-medium leading-relaxed mb-3">
+          <p className="text-lg text-folio-text-primary font-medium leading-relaxed mb-3">
             {outcome.headline}
           </p>
-          <div className="flex items-start space-x-2 p-3 bg-[#F7F4F1] rounded-lg border-l-4 border-[#8C8278]">
-            <Info className="w-4 h-4 text-[#8C8278] mt-0.5 flex-shrink-0" />
-            <div className="text-sm text-[#645C53] leading-relaxed">
+          <div className="flex items-start space-x-2 p-3 bg-surface-elevated rounded-lg border-l-4 border-[#8C8278]">
+            <Info className="w-4 h-4 text-folio-text-secondary mt-0.5 flex-shrink-0" />
+            <div className="text-sm text-folio-text-secondary leading-relaxed">
               <p className="font-medium mb-1">What this means:</p>
               <p>
                 {isPositive 
@@ -70,8 +70,8 @@ export function ExecutiveSummary({ outcome }: ExecutiveSummaryProps) {
         {/* Key Metrics Row */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="text-center">
-            <div className="text-sm text-[#8C8278] mb-1">Pipeline Value</div>
-            <div className="text-xl font-semibold text-[#2B2B2B]">
+            <div className="text-sm text-folio-text-secondary mb-1">Pipeline Value</div>
+            <div className="text-xl font-semibold text-folio-text-primary">
               {formatCurrency(outcome.estPipelineUsd, 'USD', true)}
             </div>
             <div className="flex items-center justify-center space-x-1 mt-1">
@@ -87,39 +87,39 @@ export function ExecutiveSummary({ outcome }: ExecutiveSummaryProps) {
           </div>
 
           <div className="text-center">
-            <div className="text-sm text-[#8C8278] mb-1">Designers</div>
-            <div className="text-xl font-semibold text-[#2B2B2B]">
+            <div className="text-sm text-folio-text-secondary mb-1">Designers</div>
+            <div className="text-xl font-semibold text-folio-text-primary">
               {outcome.attendedDesigners}
             </div>
-            <div className="text-xs text-[#8C8278] mt-1">
+            <div className="text-xs text-folio-text-secondary mt-1">
               {outcome.uniqueFirms} firms
             </div>
           </div>
 
           <div className="text-center">
-            <div className="text-sm text-[#8C8278] mb-1">Engagement</div>
-            <div className="text-xl font-semibold text-[#2B2B2B]">
+            <div className="text-sm text-folio-text-secondary mb-1">Engagement</div>
+            <div className="text-xl font-semibold text-folio-text-primary">
               {Math.round((outcome.productsSaved / outcome.attendedDesigners) * 10) / 10}
             </div>
-            <div className="text-xs text-[#8C8278] mt-1">
+            <div className="text-xs text-folio-text-secondary mt-1">
               saves per designer
             </div>
           </div>
 
           <div className="text-center">
-            <div className="text-sm text-[#8C8278] mb-1">Conversion</div>
-            <div className="text-xl font-semibold text-[#2B2B2B]">
+            <div className="text-sm text-folio-text-secondary mb-1">Conversion</div>
+            <div className="text-xl font-semibold text-folio-text-primary">
               {Math.round((outcome.tags / outcome.productsSaved) * 100)}%
             </div>
-            <div className="text-xs text-[#8C8278] mt-1">
+            <div className="text-xs text-folio-text-secondary mt-1">
               save → tag rate
             </div>
           </div>
         </div>
 
         {/* Quick insight */}
-        <div className="mt-4 p-3 bg-[#F7F4F1] rounded-lg border-l-4 border-[#8C8278]">
-          <p className="text-sm text-[#2B2B2B]">
+        <div className="mt-4 p-3 bg-surface-elevated rounded-lg border-l-4 border-[#8C8278]">
+          <p className="text-sm text-folio-text-primary">
             {isPositive 
               ? "Event exceeded expectations. Focus on scaling successful tactics and expanding to new markets."
               : isMixed 

@@ -285,12 +285,12 @@ export default function SourcebookPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[var(--bg-base)] p-6">
+    <div className="min-h-screen bg-surface-canvas p-6">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="folio-h1 text-[var(--text-primary)] mb-3">Sourcebook</h1>
-          <p className="folio-body text-[var(--text-secondary)]">
+          <h1 className="folio-h1 text-folio-text-primary mb-3">Sourcebook</h1>
+          <p className="folio-body text-folio-text-secondary">
             Your product specification catalog — every product you&apos;ve tagged across all projects.
           </p>
         </div>
@@ -298,26 +298,26 @@ export default function SourcebookPage() {
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           <div className="glass-surface rounded-xl p-4">
-            <div className="text-[var(--text-tertiary)] text-sm mb-1 font-medium">Products</div>
-            <div className="text-2xl font-semibold text-[var(--text-primary)]" style={{ fontFamily: 'var(--font-serif)' }}>
+            <div className="text-folio-text-tertiary text-sm mb-1 font-medium">Products</div>
+            <div className="text-2xl font-semibold text-folio-text-primary" style={{ fontFamily: 'var(--font-serif)' }}>
               {stats.totalProducts}
             </div>
           </div>
           <div className="glass-surface rounded-xl p-4">
-            <div className="text-[var(--text-tertiary)] text-sm mb-1 font-medium">Vendors</div>
-            <div className="text-2xl font-semibold text-[var(--text-primary)]" style={{ fontFamily: 'var(--font-serif)' }}>
+            <div className="text-folio-text-tertiary text-sm mb-1 font-medium">Vendors</div>
+            <div className="text-2xl font-semibold text-folio-text-primary" style={{ fontFamily: 'var(--font-serif)' }}>
               {stats.totalVendors}
             </div>
           </div>
           <div className="glass-surface rounded-xl p-4">
-            <div className="text-[var(--text-tertiary)] text-sm mb-1 font-medium">Projects</div>
-            <div className="text-2xl font-semibold text-[var(--text-primary)]" style={{ fontFamily: 'var(--font-serif)' }}>
+            <div className="text-folio-text-tertiary text-sm mb-1 font-medium">Projects</div>
+            <div className="text-2xl font-semibold text-folio-text-primary" style={{ fontFamily: 'var(--font-serif)' }}>
               {stats.totalProjects}
             </div>
           </div>
           <div className="glass-surface rounded-xl p-4">
-            <div className="text-[var(--text-tertiary)] text-sm mb-1 font-medium">Archived</div>
-            <div className="text-2xl font-semibold text-[var(--text-primary)]" style={{ fontFamily: 'var(--font-serif)' }}>
+            <div className="text-folio-text-tertiary text-sm mb-1 font-medium">Archived</div>
+            <div className="text-2xl font-semibold text-folio-text-primary" style={{ fontFamily: 'var(--font-serif)' }}>
               {stats.archivedCount}
             </div>
           </div>
@@ -332,10 +332,10 @@ export default function SourcebookPage() {
               onChange={(e) => setSearchTerm(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') loadSourcebook(); }}
               placeholder="Search products, vendors, projects..."
-              className="w-full px-4 py-2.5 pl-10 bg-white border border-[#E8E6E3] rounded-lg text-[#2C2925] placeholder-[#A39E97] focus:outline-none focus:border-[#C9C4BC] focus:shadow-[0_0_0_3px_rgba(0,0,0,0.03)] transition-all"
+              className="w-full px-4 py-2.5 pl-10 bg-white border border-folio-border-subtle rounded-lg text-folio-text-primary placeholder-[#A39E97] focus:outline-none focus:border-folio-border-strong focus:shadow-[0_0_0_3px_rgba(0,0,0,0.03)] transition-all"
             />
             <svg
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]"
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-folio-text-tertiary"
               fill="none" stroke="currentColor" viewBox="0 0 24 24"
             >
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -345,7 +345,7 @@ export default function SourcebookPage() {
           <select
             value={sortField}
             onChange={(e) => handleSort(e.target.value as SourcebookSortField)}
-            className="px-3 py-2.5 bg-white border border-[#E8E6E3] rounded-lg text-sm text-[#2C2925] focus:outline-none focus:border-[#C9C4BC] transition-all"
+            className="px-3 py-2.5 bg-white border border-folio-border-subtle rounded-lg text-sm text-folio-text-primary focus:outline-none focus:border-folio-border-strong transition-all"
           >
             {SORT_OPTIONS.map(opt => (
               <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -359,11 +359,11 @@ export default function SourcebookPage() {
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className="text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors font-medium"
+                className="text-sm text-folio-text-secondary hover:text-folio-text-primary transition-colors font-medium"
               >
                 {showFilters ? 'Hide Filters' : 'Show Filters'}
               </button>
-              <label className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
+              <label className="flex items-center gap-2 text-sm text-folio-text-secondary">
                 <input
                   type="checkbox"
                   checked={showArchived}
@@ -376,7 +376,7 @@ export default function SourcebookPage() {
             {hasActiveFilters && (
               <button
                 onClick={clearFilters}
-                className="text-sm text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors"
+                className="text-sm text-folio-text-tertiary hover:text-folio-text-secondary transition-colors"
               >
                 Clear All
               </button>
@@ -386,11 +386,11 @@ export default function SourcebookPage() {
           {showFilters && (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm text-[var(--text-tertiary)] mb-1 font-medium">Vendor</label>
+                <label className="block text-sm text-folio-text-tertiary mb-1 font-medium">Vendor</label>
                 <select
                   value={filters.vendor || ''}
                   onChange={(e) => handleFilterChange('vendor', e.target.value)}
-                  className="w-full px-3 py-2 bg-white border border-[#E8E6E3] rounded-lg text-[#2C2925] focus:outline-none focus:border-[#C9C4BC] transition-all"
+                  className="w-full px-3 py-2 bg-white border border-folio-border-subtle rounded-lg text-folio-text-primary focus:outline-none focus:border-folio-border-strong transition-all"
                 >
                   <option value="">All Vendors</option>
                   {uniqueVendors.map(v => (
@@ -400,11 +400,11 @@ export default function SourcebookPage() {
               </div>
 
               <div>
-                <label className="block text-sm text-[var(--text-tertiary)] mb-1 font-medium">Project</label>
+                <label className="block text-sm text-folio-text-tertiary mb-1 font-medium">Project</label>
                 <select
                   value={filters.project || ''}
                   onChange={(e) => handleFilterChange('project', e.target.value)}
-                  className="w-full px-3 py-2 bg-white border border-[#E8E6E3] rounded-lg text-[#2C2925] focus:outline-none focus:border-[#C9C4BC] transition-all"
+                  className="w-full px-3 py-2 bg-white border border-folio-border-subtle rounded-lg text-folio-text-primary focus:outline-none focus:border-folio-border-strong transition-all"
                 >
                   <option value="">All Projects</option>
                   {uniqueProjects.map(p => (
@@ -414,11 +414,11 @@ export default function SourcebookPage() {
               </div>
 
               <div>
-                <label className="block text-sm text-[var(--text-tertiary)] mb-1 font-medium">Category</label>
+                <label className="block text-sm text-folio-text-tertiary mb-1 font-medium">Category</label>
                 <select
                   value={filters.category || ''}
                   onChange={(e) => handleFilterChange('category', e.target.value)}
-                  className="w-full px-3 py-2 bg-white border border-[#E8E6E3] rounded-lg text-[#2C2925] focus:outline-none focus:border-[#C9C4BC] transition-all"
+                  className="w-full px-3 py-2 bg-white border border-folio-border-subtle rounded-lg text-folio-text-primary focus:outline-none focus:border-folio-border-strong transition-all"
                 >
                   <option value="">All Categories</option>
                   {uniqueCategories.map(c => (
@@ -434,7 +434,7 @@ export default function SourcebookPage() {
         {loading ? (
           <RidgeCard padding="xl" className="text-center">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent)]" />
-            <p className="mt-4 folio-body text-[var(--text-secondary)]">Loading sourcebook...</p>
+            <p className="mt-4 folio-body text-folio-text-secondary">Loading sourcebook...</p>
           </RidgeCard>
         ) : error ? (
           <RidgeCard padding="xl" className="text-center">
@@ -443,7 +443,7 @@ export default function SourcebookPage() {
           </RidgeCard>
         ) : sortedEntries.length === 0 ? (
           <RidgeCard padding="xl" className="text-center">
-            <p className="folio-body text-[var(--text-secondary)] mb-4">
+            <p className="folio-body text-folio-text-secondary mb-4">
               {hasActiveFilters
                 ? 'No products found matching your filters.'
                 : "You haven\u2019t tagged any products yet."}

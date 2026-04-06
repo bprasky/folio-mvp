@@ -80,7 +80,7 @@ export default function HomeownerFolders() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--bg-base)] p-6">
+    <div className="min-h-screen bg-surface-canvas p-6">
       <div className="max-w-7xl mx-auto">
         <div className="max-w-7xl mx-auto px-6 py-12">
           {/* Header */}
@@ -89,8 +89,8 @@ export default function HomeownerFolders() {
             animate={{ opacity: 1, y: 0 }}
             className="mb-8"
           >
-            <h1 className="folio-h1 text-[var(--text-primary)] mb-2">My Project Folders</h1>
-            <p className="folio-body text-[var(--text-secondary)]">Organize your design inspiration and project ideas</p>
+            <h1 className="folio-h1 text-folio-text-primary mb-2">My Project Folders</h1>
+            <p className="folio-body text-folio-text-secondary">Organize your design inspiration and project ideas</p>
           </motion.div>
 
           {/* Create New Folder Section */}
@@ -103,11 +103,11 @@ export default function HomeownerFolders() {
             {!isCreating ? (
               <button
                 onClick={() => setIsCreating(true)}
-                className="bg-[var(--bg-elevated)] rounded-[20px] p-6 shadow-[var(--ridge-shadow)] hover:shadow-lg transition-all duration-300 border-2 border-dashed border-[var(--border-color)] hover:border-[var(--accent)] w-full max-w-md"
+                className="bg-surface-ground rounded-[20px] p-6 shadow-[var(--ridge-shadow)] hover:shadow-lg transition-all duration-300 border-2 border-dashed border-[var(--border-color)] hover:border-[var(--accent)] w-full max-w-md"
               >
                 <div className="flex items-center justify-center space-x-3">
                   <FaPlus className="text-[var(--accent)] text-xl" />
-                  <span className="folio-ui text-[var(--text-secondary)] font-medium">Create New Folder</span>
+                  <span className="folio-ui text-folio-text-secondary font-medium">Create New Folder</span>
                 </div>
               </button>
             ) : (
@@ -118,7 +118,7 @@ export default function HomeownerFolders() {
                 <RidgeCard className="p-6 max-w-md">
                   <form onSubmit={handleCreateFolder} className="space-y-4">
                     <div>
-                      <label className="block folio-ui font-medium text-[var(--text-secondary)] mb-2">
+                      <label className="block folio-ui font-medium text-folio-text-secondary mb-2">
                         Folder Name
                       </label>
                       <Input
@@ -130,14 +130,14 @@ export default function HomeownerFolders() {
                       />
                     </div>
                     <div>
-                      <label className="block folio-ui font-medium text-[var(--text-secondary)] mb-2">
+                      <label className="block folio-ui font-medium text-folio-text-secondary mb-2">
                         Description (Optional)
                       </label>
                       <textarea
                         value={newFolderDescription}
                         onChange={(e) => setNewFolderDescription(e.target.value)}
                         rows={3}
-                        className="w-full px-4 py-3 bg-[var(--bg-base)] border border-[var(--border-color)] rounded-xl focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent resize-none folio-body text-[var(--text-primary)]"
+                        className="w-full px-4 py-3 bg-surface-canvas border border-[var(--border-color)] rounded-xl focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent resize-none folio-body text-folio-text-primary"
                         placeholder="Brief description of your project..."
                       />
                     </div>
@@ -223,7 +223,7 @@ export default function HomeownerFolders() {
                   {/* Content */}
                   <div className="p-6">
                     <div className="flex items-start justify-between mb-3">
-                      <h3 className="folio-h3 text-[var(--text-primary)] leading-tight">{folder.name}</h3>
+                      <h3 className="folio-h3 text-folio-text-primary leading-tight">{folder.name}</h3>
                       {folder.isPublic && (
                         <span className="bg-green-100 text-green-800 folio-meta px-2 py-1 rounded-full">
                           Public
@@ -232,10 +232,10 @@ export default function HomeownerFolders() {
                     </div>
 
                     {folder.description && (
-                      <p className="folio-body text-[var(--text-secondary)] mb-4 line-clamp-2">{folder.description}</p>
+                      <p className="folio-body text-folio-text-secondary mb-4 line-clamp-2">{folder.description}</p>
                     )}
 
-                    <div className="flex items-center justify-between folio-meta text-[var(--text-tertiary)] mb-4">
+                    <div className="flex items-center justify-between folio-meta text-folio-text-tertiary mb-4">
                       <span>Created {folder.createdAt}</span>
                     </div>
 
@@ -249,10 +249,10 @@ export default function HomeownerFolders() {
                           Open Folder
                         </Button>
                       </Link>
-                      <button className="p-2 text-[var(--text-tertiary)] hover:text-red-500 transition-colors">
+                      <button className="p-2 text-folio-text-tertiary hover:text-red-500 transition-colors">
                         <FaHeart />
                       </button>
-                      <button className="p-2 text-[var(--text-tertiary)] hover:text-[var(--accent)] transition-colors">
+                      <button className="p-2 text-folio-text-tertiary hover:text-[var(--accent)] transition-colors">
                         <FaShare />
                       </button>
                     </div>
@@ -269,9 +269,9 @@ export default function HomeownerFolders() {
               animate={{ opacity: 1 }}
               className="text-center py-16"
             >
-              <FaFolder className="text-[var(--text-tertiary)] text-6xl mx-auto mb-4" />
-              <h3 className="folio-h3 text-[var(--text-secondary)] mb-2">No folders yet</h3>
-              <p className="folio-body text-[var(--text-tertiary)] mb-6">Create your first project folder to get started</p>
+              <FaFolder className="text-folio-text-tertiary text-6xl mx-auto mb-4" />
+              <h3 className="folio-h3 text-folio-text-secondary mb-2">No folders yet</h3>
+              <p className="folio-body text-folio-text-tertiary mb-6">Create your first project folder to get started</p>
               <Button
                 variant="accent"
                 onClick={() => setIsCreating(true)}

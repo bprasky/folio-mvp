@@ -25,17 +25,17 @@ export function TopicCard({ topic, onContribute, className }: TopicCardProps) {
     <div
       className={cn(
         'rounded-[20px] border border-[var(--border-subtle)] bg-white p-5 transition-all',
-        'hover:border-[var(--border-default)]',
+        'hover:border-folio-border-subtle',
         className
       )}
     >
       {/* Header */}
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="flex-1">
-          <h3 className="folio-h3 text-[var(--text-primary)] mb-1">
+          <h3 className="folio-h3 text-folio-text-primary mb-1">
             {topic.title}
           </h3>
-          <div className="flex items-center gap-2 folio-meta text-[var(--text-secondary)]">
+          <div className="flex items-center gap-2 folio-meta text-folio-text-secondary">
             <span className="flex items-center gap-1">
               <span className="w-2 h-2 rounded-full bg-[var(--accent)]" />
               {topic.contributionCount} voice{topic.contributionCount !== 1 ? 's' : ''}
@@ -50,25 +50,25 @@ export function TopicCard({ topic, onContribute, className }: TopicCardProps) {
         </div>
 
         {/* Category badge */}
-        <span className="px-2 py-1 rounded-full text-xs bg-[var(--bg-elevated)] text-[var(--text-secondary)] capitalize">
+        <span className="px-2 py-1 rounded-full text-xs bg-surface-ground text-folio-text-secondary capitalize">
           {topic.category}
         </span>
       </div>
 
       {/* Prompt question */}
-      <p className="folio-body text-[var(--text-secondary)] mb-4 line-clamp-2">
+      <p className="folio-body text-folio-text-secondary mb-4 line-clamp-2">
         &ldquo;{topic.promptQuestion}&rdquo;
       </p>
 
       {/* Progress bar */}
       <div className="mb-4">
-        <div className="h-1.5 bg-[var(--bg-elevated)] rounded-full overflow-hidden">
+        <div className="h-1.5 bg-surface-ground rounded-full overflow-hidden">
           <div
             className="h-full bg-[rgb(74,44,59)] transition-all duration-500"
             style={{ width: `${progress}%` }}
           />
         </div>
-        <div className="flex justify-between mt-1 folio-meta text-[var(--text-secondary)]">
+        <div className="flex justify-between mt-1 folio-meta text-folio-text-secondary">
           <span>{topic.designerCount}D / {topic.vendorCount}V / {topic.individualCount}I</span>
           <span>{Math.round(progress)}% to goal</span>
         </div>

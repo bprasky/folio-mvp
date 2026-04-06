@@ -17,23 +17,23 @@ interface VoiceTranscriptProps {
  */
 export function VoiceTranscript({ segments, isRecording }: VoiceTranscriptProps) {
   return (
-    <div className="bg-[var(--bg-elevated)] rounded-lg p-4 max-h-60 overflow-y-auto">
-      <p className="text-xs text-[var(--text-tertiary)] uppercase tracking-wide mb-3">
+    <div className="bg-surface-ground rounded-lg p-4 max-h-60 overflow-y-auto">
+      <p className="text-xs text-folio-text-tertiary uppercase tracking-wide mb-3">
         Transcript
       </p>
 
       {segments.length === 0 ? (
-        <p className="text-[var(--text-tertiary)] text-sm">No transcript yet...</p>
+        <p className="text-folio-text-tertiary text-sm">No transcript yet...</p>
       ) : (
         <div className="space-y-3">
           {segments.map((segment, index) => (
             <div
               key={index}
               className={`text-sm ${
-                segment.speaker === "ai" ? "text-[var(--accent)]" : "text-[var(--text-primary)]"
+                segment.speaker === "ai" ? "text-[var(--accent)]" : "text-folio-text-primary"
               }`}
             >
-              <span className="text-xs text-[var(--text-tertiary)] mr-2">
+              <span className="text-xs text-folio-text-tertiary mr-2">
                 {segment.speaker === "ai" ? "AI" : "You"}:
               </span>
               {segment.text}
@@ -46,7 +46,7 @@ export function VoiceTranscript({ segments, isRecording }: VoiceTranscriptProps)
       {isRecording && (
         <div className="flex items-center gap-2 mt-3 pt-3 border-t">
           <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-          <span className="text-xs text-[var(--text-tertiary)]">Recording...</span>
+          <span className="text-xs text-folio-text-tertiary">Recording...</span>
         </div>
       )}
     </div>

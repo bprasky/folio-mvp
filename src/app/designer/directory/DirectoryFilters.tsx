@@ -67,14 +67,14 @@ export default function DirectoryFilters({
       <div className="flex items-center justify-between mb-4">
         <button
           onClick={() => setShowFilters(!showFilters)}
-          className="text-sm text-[#6B6560] hover:text-[#2C2925] transition-colors font-medium"
+          className="text-sm text-folio-text-secondary hover:text-folio-text-primary transition-colors font-medium"
         >
           {showFilters ? 'Hide Filters' : 'Show Filters'}
         </button>
         {hasActiveFilters && (
           <button
             onClick={clearFilters}
-            className="text-sm text-[#7C7268] hover:text-[#5C554D] transition-colors"
+            className="text-sm text-folio-text-secondary hover:text-folio-text-secondary transition-colors"
           >
             Clear All
           </button>
@@ -85,11 +85,11 @@ export default function DirectoryFilters({
       {showFilters && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
-            <label className="block text-sm text-[#6B6560] mb-1 font-medium">Vendor</label>
+            <label className="block text-sm text-folio-text-secondary mb-1 font-medium">Vendor</label>
             <select
               value={filters.vendor || ''}
               onChange={(e) => handleFilterChange('vendor', e.target.value)}
-              className="w-full px-3 py-2 bg-white border border-[#E8E6E3] rounded-lg text-[#2C2925] focus:outline-none focus:border-[#C9C4BC] focus:shadow-[0_0_0_3px_rgba(0,0,0,0.03)] transition-all"
+              className="w-full px-3 py-2 bg-white border border-folio-border-subtle rounded-lg text-folio-text-primary focus:outline-none focus:border-folio-border-strong focus:shadow-[0_0_0_3px_rgba(0,0,0,0.03)] transition-all"
             >
               <option value="">All Vendors</option>
               {uniqueVendors.map(vendor => (
@@ -99,11 +99,11 @@ export default function DirectoryFilters({
           </div>
 
           <div>
-            <label className="block text-sm text-[#6B6560] mb-1 font-medium">Project</label>
+            <label className="block text-sm text-folio-text-secondary mb-1 font-medium">Project</label>
             <select
               value={filters.project || ''}
               onChange={(e) => handleFilterChange('project', e.target.value)}
-              className="w-full px-3 py-2 bg-white border border-[#E8E6E3] rounded-lg text-[#2C2925] focus:outline-none focus:border-[#C9C4BC] focus:shadow-[0_0_0_3px_rgba(0,0,0,0.03)] transition-all"
+              className="w-full px-3 py-2 bg-white border border-folio-border-subtle rounded-lg text-folio-text-primary focus:outline-none focus:border-folio-border-strong focus:shadow-[0_0_0_3px_rgba(0,0,0,0.03)] transition-all"
             >
               <option value="">All Projects</option>
               {uniqueProjects.map(project => (
@@ -113,11 +113,11 @@ export default function DirectoryFilters({
           </div>
 
           <div>
-            <label className="block text-sm text-[#6B6560] mb-1 font-medium">Room</label>
+            <label className="block text-sm text-folio-text-secondary mb-1 font-medium">Room</label>
             <select
               value={filters.room || ''}
               onChange={(e) => handleFilterChange('room', e.target.value)}
-              className="w-full px-3 py-2 bg-white border border-[#E8E6E3] rounded-lg text-[#2C2925] focus:outline-none focus:border-[#C9C4BC] focus:shadow-[0_0_0_3px_rgba(0,0,0,0.03)] transition-all"
+              className="w-full px-3 py-2 bg-white border border-folio-border-subtle rounded-lg text-folio-text-primary focus:outline-none focus:border-folio-border-strong focus:shadow-[0_0_0_3px_rgba(0,0,0,0.03)] transition-all"
             >
               <option value="">All Rooms</option>
               {uniqueRooms.map(room => (
@@ -127,11 +127,11 @@ export default function DirectoryFilters({
           </div>
 
           <div>
-            <label className="block text-sm text-[#6B6560] mb-1 font-medium">Category</label>
+            <label className="block text-sm text-folio-text-secondary mb-1 font-medium">Category</label>
             <select
               value={filters.category || ''}
               onChange={(e) => handleFilterChange('category', e.target.value)}
-              className="w-full px-3 py-2 bg-white border border-[#E8E6E3] rounded-lg text-[#2C2925] focus:outline-none focus:border-[#C9C4BC] focus:shadow-[0_0_0_3px_rgba(0,0,0,0.03)] transition-all"
+              className="w-full px-3 py-2 bg-white border border-folio-border-subtle rounded-lg text-folio-text-primary focus:outline-none focus:border-folio-border-strong focus:shadow-[0_0_0_3px_rgba(0,0,0,0.03)] transition-all"
             >
               <option value="">All Categories</option>
               {uniqueCategories.map(category => (

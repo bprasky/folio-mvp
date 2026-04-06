@@ -8,7 +8,7 @@ interface GlassBadgeProps {
 
 const GlassBadge = ({ children, variant = "default", className }: GlassBadgeProps) => {
   const variants = {
-    default: "glass-badge text-[var(--text-primary)]",
+    default: "glass-badge text-folio-text-primary",
     success: "glass-badge bg-green-100/80 text-green-800",
     warning: "glass-badge bg-amber-100/80 text-amber-800",
     error: "glass-badge bg-red-100/80 text-red-800",

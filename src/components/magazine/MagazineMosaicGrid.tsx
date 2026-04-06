@@ -153,7 +153,7 @@ export default function MagazineMosaicGrid({ items }: Props) {
                     className="object-cover"
                   />
                 ) : (
-                  <div className="absolute inset-0 bg-[var(--bg-elevated)]" />
+                  <div className="absolute inset-0 bg-surface-ground" />
                 )}
                 <div className="absolute inset-0 z-10 pointer-events-none bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
               </div>

@@ -17,10 +17,10 @@ interface InsightFlowProps {
 
 export default function InsightFlow({ nodes, onHover }: InsightFlowProps) {
   return (
-    <div className="bg-white rounded-xl border border-[#DAD2CA] p-6">
+    <div className="bg-white rounded-xl border border-folio-border-strong p-6">
       <div className="mb-4">
-        <h3 className="text-lg font-serif text-[#2B2B2B] mb-1">Insight Flow</h3>
-        <p className="text-sm text-[#8C8278]">From exposure to intent to value.</p>
+        <h3 className="text-lg font-serif text-folio-text-primary mb-1">Insight Flow</h3>
+        <p className="text-sm text-folio-text-secondary">From exposure to intent to value.</p>
       </div>
       
       <div className="flex items-center justify-between relative">
@@ -39,14 +39,14 @@ export default function InsightFlow({ nodes, onHover }: InsightFlowProps) {
                 </span>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-serif text-[#2B2B2B] font-semibold">
+                <div className="text-2xl font-serif text-folio-text-primary font-semibold">
                   {node.value.toLocaleString()}
                 </div>
-                <div className="text-sm text-[#8C8278] capitalize">
+                <div className="text-sm text-folio-text-secondary capitalize">
                   {node.label}
                 </div>
                 {node.help && (
-                  <div className="text-xs text-[#8C8278] mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="text-xs text-folio-text-secondary mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     {node.help}
                   </div>
                 )}

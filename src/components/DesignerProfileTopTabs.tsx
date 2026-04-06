@@ -35,7 +35,7 @@ export default function DesignerProfileTopTabs({ activeTab, onTabChange }: Desig
               className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl transition-all duration-300 ${
                 activeTab === tab.id
                   ? 'bg-[var(--accent)] text-white shadow-lg'
-                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]'
+                  : 'text-folio-text-secondary hover:text-folio-text-primary hover:bg-surface-ground'
               }`}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}

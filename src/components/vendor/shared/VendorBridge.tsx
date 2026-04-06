@@ -42,9 +42,9 @@ export function VendorBridge({ activeTab, bridgeData, loading = false }: VendorB
       ) : (
         <div className="ridge-card p-4 md:p-6">
           <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-            <div className="folio-ui text-[var(--text-secondary)]">Conversion Rate</div>
-            <div className="text-3xl font-semibold text-[var(--text-primary)]">{fmtPct(conversion)}</div>
-            <div className="folio-ui text-[var(--text-secondary)]">
+            <div className="folio-ui text-folio-text-secondary">Conversion Rate</div>
+            <div className="text-3xl font-semibold text-folio-text-primary">{fmtPct(conversion)}</div>
+            <div className="folio-ui text-folio-text-secondary">
               Avg. Time: {avgDays == null ? '—' : `${avgDays} days`}
             </div>
           </div>
@@ -55,7 +55,7 @@ export function VendorBridge({ activeTab, bridgeData, loading = false }: VendorB
               style={{ width: conversion != null ? `${Math.min(conversion, 100)}%` : '0%' }}
             />
           </div>
-          <div className="mt-2 folio-meta text-[var(--text-secondary)]">
+          <div className="mt-2 folio-meta text-folio-text-secondary">
             Events → Saves → Project Tags → Editorial Mentions
           </div>
           {/* Inline AI Pane for Events Section */}

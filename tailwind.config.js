@@ -11,6 +11,15 @@ module.exports = {
     extend: {
       colors: {
         // ========================================
+        // CANONICAL FOLIO SURFACE PALETTE
+        // ========================================
+        surface: {
+          canvas: 'var(--surface-canvas)',     // Level 0 — page bg, nav
+          ground: 'var(--surface-ground)',     // Level 1 — filter bars, tabs
+          elevated: 'var(--surface-elevated)', // Level 2 — card base
+        },
+
+        // ========================================
         // FOLIO NEUMORPHIC DESIGN SYSTEM
         // ========================================
 
@@ -71,7 +80,19 @@ module.exports = {
           line: 'rgba(255,255,255,0.06)' // grid lines
         },
         folio: {
-          // New design system tokens
+          // === CANONICAL TOKENS ===
+          gold: 'var(--folio-gold)',
+          text: {
+            primary: 'var(--folio-text-primary)',
+            secondary: 'var(--folio-text-secondary)',
+            tertiary: 'var(--folio-text-tertiary)',
+          },
+          border: {
+            DEFAULT: "var(--folio-border)",
+            subtle: 'var(--folio-border-subtle)',
+            strong: 'var(--folio-border-strong)',
+          },
+          // === LEGACY TOKENS (backward compat) ===
           bg: "var(--folio-bg)",
           surface: "var(--folio-surface)",
           ink: "var(--folio-ink)",
@@ -86,10 +107,8 @@ module.exports = {
             400: "var(--folio-accent-400)",
             700: "var(--folio-accent-700)",
           },
-          border: "var(--folio-border)",
-          // Legacy tokens (backward compatibility)
           background: "#F4F2F0",
-          text: "#1E1E1E",
+          textLegacy: "#1E1E1E",
           system: "#4A2C3B",
           success: "#A47B62",
           muted: "#F8F6F4",

@@ -22,7 +22,7 @@ interface EmptyStateProps {
  */
 export default function EmptyState({ username, designer }: EmptyStateProps) {
   return (
-    <main className="min-h-screen bg-[#fdfbf8] flex items-center justify-center px-6">
+    <main className="min-h-screen bg-surface-ground flex items-center justify-center px-6">
       <div className="max-w-2xl text-center">
         <div className="mb-12">
           <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl text-stone-900 mb-6 font-light">

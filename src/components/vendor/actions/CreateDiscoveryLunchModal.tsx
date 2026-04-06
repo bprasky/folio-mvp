@@ -140,13 +140,13 @@ export function CreateDiscoveryLunchModal({
         }
       }}
     >
-      <div className="bg-[#fdfbf8] border border-[#b89a72] rounded-2xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto p-0 relative">
+      <div className="bg-surface-ground border border-[#b89a72] rounded-2xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto p-0 relative">
         <button
           onClick={onClose}
           className="absolute right-4 top-4 z-10 rounded-sm opacity-70 hover:opacity-100 transition-opacity focus:outline-none focus:ring-2 focus:ring-[#b89a72] focus:ring-offset-2"
           aria-label="Close"
         >
-          <X className="h-5 w-5 text-[var(--text-primary)]" />
+          <X className="h-5 w-5 text-folio-text-primary" />
         </button>
 
         <div className="absolute right-16 top-4 z-10 flex items-center gap-1.5 px-3 py-1.5 bg-[#b89a72]/10 border border-[#b89a72]/30 rounded-full">
@@ -156,13 +156,13 @@ export function CreateDiscoveryLunchModal({
 
         <div className="p-8">
           <div className="mb-8">
-            <h2 className="text-[32px] font-serif text-[var(--text-primary)] leading-tight">
+            <h2 className="text-[32px] font-serif text-folio-text-primary leading-tight">
               {plan?.eventName || "Discovery Lunch – January 2025"}
             </h2>
           </div>
 
           {isLoading && (
-            <div className="py-12 text-center text-[var(--text-secondary)]">
+            <div className="py-12 text-center text-folio-text-secondary">
               <p>Generating your discovery lunch plan...</p>
             </div>
           )}
@@ -176,30 +176,30 @@ export function CreateDiscoveryLunchModal({
           {plan && !isLoading && (
             <div className="space-y-8">
               <section>
-                <h3 className="text-lg font-serif text-[var(--text-primary)] mb-4">Guest List</h3>
-                <div className="border border-[var(--ridge-outer)] rounded-lg overflow-hidden bg-[var(--bg-base)]">
+                <h3 className="text-lg font-serif text-folio-text-primary mb-4">Guest List</h3>
+                <div className="border border-folio-border-subtle rounded-lg overflow-hidden bg-surface-canvas">
                   <table className="w-full text-sm">
-                    <thead className="bg-[var(--bg-elevated)] border-b border-[var(--ridge-outer)]">
+                    <thead className="bg-surface-ground border-b border-folio-border-subtle">
                       <tr>
-                        <th className="px-4 py-3 text-left font-medium text-[var(--text-primary)]">Designer</th>
-                        <th className="px-4 py-3 text-left font-medium text-[var(--text-primary)]">Firm</th>
-                        <th className="px-4 py-3 text-right font-medium text-[var(--text-primary)]">YTD Influence</th>
-                        <th className="px-4 py-3 text-left font-medium text-[var(--text-primary)]">Similar Product Signal</th>
-                        <th className="px-4 py-3 text-left font-medium text-[var(--text-primary)]">Reason</th>
+                        <th className="px-4 py-3 text-left font-medium text-folio-text-primary">Designer</th>
+                        <th className="px-4 py-3 text-left font-medium text-folio-text-primary">Firm</th>
+                        <th className="px-4 py-3 text-right font-medium text-folio-text-primary">YTD Influence</th>
+                        <th className="px-4 py-3 text-left font-medium text-folio-text-primary">Similar Product Signal</th>
+                        <th className="px-4 py-3 text-left font-medium text-folio-text-primary">Reason</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[var(--ridge-outer)]">
                       {plan.guests.map((guest) => (
-                        <tr key={guest.designerId} className="hover:bg-[var(--bg-elevated)]">
-                          <td className="px-4 py-3 font-medium text-[var(--text-primary)]">{guest.name}</td>
-                          <td className="px-4 py-3 text-[var(--text-secondary)]">{guest.firm}</td>
-                          <td className="px-4 py-3 text-right text-[var(--text-primary)]">
+                        <tr key={guest.designerId} className="hover:bg-surface-ground">
+                          <td className="px-4 py-3 font-medium text-folio-text-primary">{guest.name}</td>
+                          <td className="px-4 py-3 text-folio-text-secondary">{guest.firm}</td>
+                          <td className="px-4 py-3 text-right text-folio-text-primary">
                             ${(guest.ytdInfluence / 1000).toFixed(0)}k
                           </td>
-                          <td className="px-4 py-3 text-[var(--text-secondary)] text-xs max-w-xs">
+                          <td className="px-4 py-3 text-folio-text-secondary text-xs max-w-xs">
                             {guest.similarProductSignal}
                           </td>
-                          <td className="px-4 py-3 text-[var(--text-secondary)] text-xs max-w-xs">
+                          <td className="px-4 py-3 text-folio-text-secondary text-xs max-w-xs">
                             {guest.personalizedReason}
                           </td>
                         </tr>
@@ -210,50 +210,50 @@ export function CreateDiscoveryLunchModal({
               </section>
 
               <section>
-                <h3 className="text-lg font-serif text-[var(--text-primary)] mb-4">Choose Your Event Concept</h3>
-                <p className="text-sm text-[var(--text-secondary)] mb-6">
+                <h3 className="text-lg font-serif text-folio-text-primary mb-4">Choose Your Event Concept</h3>
+                <p className="text-sm text-folio-text-secondary mb-6">
                   <span className="font-medium">Recommended Date:</span> {plan.recommendedDate}
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 overflow-x-auto md:overflow-visible">
                   {plan.options.map((option, index) => (
                     <div
                       key={index}
-                      className="flex-shrink-0 w-full md:w-auto bg-[var(--bg-base)] border border-[var(--ridge-outer)] rounded-xl overflow-hidden hover:shadow-lg transition-shadow"
+                      className="flex-shrink-0 w-full md:w-auto bg-surface-canvas border border-folio-border-subtle rounded-xl overflow-hidden hover:shadow-lg transition-shadow"
                     >
                       {/* Hero image placeholder */}
                       <div className="h-32 bg-[var(--ridge-inner)] flex items-center justify-center">
-                        <span className="text-xs text-[var(--text-secondary)] uppercase tracking-wide">Event Image</span>
+                        <span className="text-xs text-folio-text-secondary uppercase tracking-wide">Event Image</span>
                       </div>
                       
                       <div className="p-4 space-y-3">
                         <div>
-                          <h4 className="text-base font-serif text-[var(--text-primary)]">{option.conceptName}</h4>
-                          <p className="text-xs text-[var(--text-secondary)] mt-1">{option.venue.name}</p>
-                          <p className="text-xs text-[var(--text-secondary)]">{option.venue.city}</p>
+                          <h4 className="text-base font-serif text-folio-text-primary">{option.conceptName}</h4>
+                          <p className="text-xs text-folio-text-secondary mt-1">{option.venue.name}</p>
+                          <p className="text-xs text-folio-text-secondary">{option.venue.city}</p>
                         </div>
 
                         <div className="space-y-2 text-sm">
                           <div className="flex justify-between">
-                            <span className="text-[var(--text-secondary)]">Cost:</span>
-                            <span className="font-medium text-[var(--text-primary)]">{option.costRange}</span>
+                            <span className="text-folio-text-secondary">Cost:</span>
+                            <span className="font-medium text-folio-text-primary">{option.costRange}</span>
                           </div>
                           <div className="flex justify-between">
-                            <span className="text-[var(--text-secondary)]">Capacity:</span>
-                            <span className="font-medium text-[var(--text-primary)]">{option.guestCapacity} guests</span>
+                            <span className="text-folio-text-secondary">Capacity:</span>
+                            <span className="font-medium text-folio-text-primary">{option.guestCapacity} guests</span>
                           </div>
                           <div className="flex justify-between items-start">
-                            <span className="text-[var(--text-secondary)]">Unlock:</span>
-                            <span className="font-serif text-[var(--text-primary)] text-right">
+                            <span className="text-folio-text-secondary">Unlock:</span>
+                            <span className="font-serif text-folio-text-primary text-right">
                               ${(option.projectedUnlock / 1000000).toFixed(1)}M+
                             </span>
                           </div>
                         </div>
 
-                        <p className="text-xs text-[var(--text-secondary)] italic pt-2 border-t border-[var(--ridge-inner)]">
+                        <p className="text-xs text-folio-text-secondary italic pt-2 border-t border-[var(--ridge-inner)]">
                           {option.whyThisWorks}
                         </p>
 
-                        <div className="text-xs text-[var(--text-secondary)] pt-2 border-t border-[var(--ridge-inner)]">
+                        <div className="text-xs text-folio-text-secondary pt-2 border-t border-[var(--ridge-inner)]">
                           <p className="font-medium mb-1">Format:</p>
                           <p>{option.format}</p>
                         </div>
@@ -270,8 +270,8 @@ export function CreateDiscoveryLunchModal({
                 </div>
               </section>
 
-              <div className="pt-6 border-t border-[var(--ridge-outer)] text-right">
-                <p className="text-xs text-[var(--text-secondary)]">
+              <div className="pt-6 border-t border-folio-border-subtle text-right">
+                <p className="text-xs text-folio-text-secondary">
                   Powered by <span className="font-medium">Grok-4</span>
                 </p>
               </div>

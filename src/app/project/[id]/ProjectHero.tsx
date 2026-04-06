@@ -63,10 +63,10 @@ export default function ProjectHero({ project, images = [], expandedBlocks }: Pr
       <section className="relative w-full ridge-card ridge-card-lg overflow-hidden h-56 md:h-64 mx-4 mt-4">
         {/* Content */}
         <div className="absolute left-6 bottom-6 right-20">
-          <h1 className="folio-h1 font-serif italic tracking-tight mb-2 text-[var(--text-primary)]">
+          <h1 className="folio-h1 font-serif italic tracking-tight mb-2 text-folio-text-primary">
             {project.title}
           </h1>
-          <p className="mt-1 folio-body text-[var(--text-secondary)]">
+          <p className="mt-1 folio-body text-folio-text-secondary">
             {project.category || 'Uncategorized'}
           </p>
         </div>
@@ -78,7 +78,7 @@ export default function ProjectHero({ project, images = [], expandedBlocks }: Pr
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setShowShareDropdown(!showShareDropdown)}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--bg-base)] hover:bg-[var(--bg-elevated)] border border-[var(--border-default)] shadow-sm transition folio-ui font-medium text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-surface-canvas hover:bg-surface-ground border border-folio-border-subtle shadow-sm transition folio-ui font-medium text-folio-text-primary focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30"
                 aria-label="Share to Instagram"
               >
                 <FaInstagram className="w-4 h-4" />
@@ -88,19 +88,19 @@ export default function ProjectHero({ project, images = [], expandedBlocks }: Pr
 
               {/* Dropdown Menu */}
               {showShareDropdown && (
-                <div className="absolute right-0 mt-2 w-64 rounded-lg bg-white border border-[var(--ridge-outer)] shadow-lg z-10">
+                <div className="absolute right-0 mt-2 w-64 rounded-lg bg-surface-canvas border border-folio-border-subtle shadow-lg z-10">
                   <div className="py-1">
                     <button
                       onClick={() => {
                         setShowCampaignWizard(true);
                         setShowShareDropdown(false);
                       }}
-                      className="w-full px-4 py-3 text-left hover:bg-[var(--bg-elevated)] flex items-start gap-3 transition"
+                      className="w-full px-4 py-3 text-left hover:bg-surface-ground flex items-start gap-3 transition"
                     >
                       <MdCampaign className="w-5 h-5 text-[var(--accent)] flex-shrink-0 mt-0.5" />
                       <div>
-                        <div className="font-medium text-[var(--text-primary)] text-sm">Instagram Campaign</div>
-                        <div className="text-xs text-[var(--text-secondary)] mt-0.5">
+                        <div className="font-medium text-folio-text-primary text-sm">Instagram Campaign</div>
+                        <div className="text-xs text-folio-text-secondary mt-0.5">
                           Generate 8-12 posts with room spotlights
                         </div>
                       </div>
@@ -110,12 +110,12 @@ export default function ProjectHero({ project, images = [], expandedBlocks }: Pr
                         setShowInstagramModal(true);
                         setShowShareDropdown(false);
                       }}
-                      className="w-full px-4 py-3 text-left hover:bg-[var(--bg-elevated)] flex items-start gap-3 transition"
+                      className="w-full px-4 py-3 text-left hover:bg-surface-ground flex items-start gap-3 transition"
                     >
-                      <MdDownload className="w-5 h-5 text-[var(--text-secondary)] flex-shrink-0 mt-0.5" />
+                      <MdDownload className="w-5 h-5 text-folio-text-secondary flex-shrink-0 mt-0.5" />
                       <div>
-                        <div className="font-medium text-[var(--text-primary)] text-sm">Quick Export</div>
-                        <div className="text-xs text-[var(--text-secondary)] mt-0.5">
+                        <div className="font-medium text-folio-text-primary text-sm">Quick Export</div>
+                        <div className="text-xs text-folio-text-secondary mt-0.5">
                           Single carousel with selected images
                         </div>
                       </div>
@@ -129,10 +129,10 @@ export default function ProjectHero({ project, images = [], expandedBlocks }: Pr
           {/* Kebab Menu */}
           <button
             onClick={() => setShowOverviewModal(true)}
-            className="inline-flex items-center justify-center rounded-full bg-[var(--bg-base)] hover:bg-[var(--bg-elevated)] border border-[var(--border-default)] shadow-sm transition h-9 w-9 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30"
+            className="inline-flex items-center justify-center rounded-full bg-surface-canvas hover:bg-surface-ground border border-folio-border-subtle shadow-sm transition h-9 w-9 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30"
             aria-label="Project overview menu"
           >
-            <HiOutlineDotsHorizontal className="h-5 w-5 text-[var(--text-primary)]" />
+            <HiOutlineDotsHorizontal className="h-5 w-5 text-folio-text-primary" />
           </button>
         </div>
       </section>

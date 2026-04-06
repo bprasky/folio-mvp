@@ -44,18 +44,18 @@ export default function EventTypeFilter({ selectedTypes, onTypeChange, className
     <div className={clsx("mb-6", className)}>
       {/* Header with clear/select all buttons */}
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-[var(--text-primary)]">Filter by Event Type</h3>
+        <h3 className="text-lg font-semibold text-folio-text-primary">Filter by Event Type</h3>
         <div className="flex space-x-2">
           <button
             onClick={clearAll}
-            className="text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+            className="text-sm text-folio-text-secondary hover:text-folio-text-primary transition-colors"
           >
             Clear All
           </button>
-          <span className="text-[var(--text-tertiary)]">|</span>
+          <span className="text-folio-text-tertiary">|</span>
           <button
             onClick={selectAll}
-            className="text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+            className="text-sm text-folio-text-secondary hover:text-folio-text-primary transition-colors"
           >
             Select All
           </button>
@@ -72,7 +72,7 @@ export default function EventTypeFilter({ selectedTypes, onTypeChange, className
               "px-3 py-1 rounded-full text-sm font-medium border transition-all duration-200",
               selectedTypes.includes(value)
                 ? "bg-folio-accent text-white border-folio-accent shadow-sm"
-                : "bg-white text-[var(--text-primary)] border-[var(--ridge-outer)] hover:bg-[var(--bg-elevated)] hover:border-gray-400"
+                : "bg-white text-folio-text-primary border-folio-border-subtle hover:bg-surface-ground hover:border-gray-400"
             )}
           >
             {label}
@@ -82,7 +82,7 @@ export default function EventTypeFilter({ selectedTypes, onTypeChange, className
 
       {/* Active filters count */}
       {selectedTypes.length > 0 && (
-        <div className="mt-3 text-sm text-[var(--text-secondary)]">
+        <div className="mt-3 text-sm text-folio-text-secondary">
           {selectedTypes.length} of {eventTypeOptions.length} event types selected
         </div>
       )}

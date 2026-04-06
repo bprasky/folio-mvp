@@ -59,9 +59,9 @@ export function PromptedAnswerModal({
         {submitted ? (
           /* Success state */
           <div className="p-8 text-center">
-            <div className="w-12 h-12 rounded-full bg-[#2C2825]/10 flex items-center justify-center mx-auto mb-4">
+            <div className="w-12 h-12 rounded-full bg-folio-text-primary/10 flex items-center justify-center mx-auto mb-4">
               <svg
-                className="w-6 h-6 text-[#2C2825]"
+                className="w-6 h-6 text-folio-text-primary"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -75,20 +75,20 @@ export function PromptedAnswerModal({
               </svg>
             </div>
             <h3
-              className="text-lg text-[#2C2825] mb-2"
+              className="text-lg text-folio-text-primary mb-2"
               style={{ fontFamily: 'var(--font-headline)' }}
             >
               Answer saved
             </h3>
             <p
-              className="text-sm text-[#8B8178] mb-6"
+              className="text-sm text-folio-text-secondary mb-6"
               style={{ fontFamily: 'var(--font-body)' }}
             >
               Your response has been added to your profile.
             </p>
             <button
               onClick={onClose}
-              className="px-6 py-2.5 rounded-lg bg-[#2C2825] text-[#FAF9F7] text-sm font-medium hover:bg-[#3D3632] transition-colors"
+              className="px-6 py-2.5 rounded-lg bg-folio-text-primary text-surface-ground text-sm font-medium hover:bg-[#3D3632] transition-colors"
               style={{ fontFamily: 'var(--font-body)' }}
             >
               Done
@@ -100,7 +100,7 @@ export function PromptedAnswerModal({
             {/* Question */}
             <div className="p-6 pb-0">
               <p
-                className="text-[17px] leading-relaxed text-[#5C564F]"
+                className="text-[17px] leading-relaxed text-folio-text-secondary"
                 style={{
                   fontFamily: 'var(--font-headline)',
                   fontStyle: 'italic',
@@ -119,7 +119,7 @@ export function PromptedAnswerModal({
                 onChange={(e) => setAnswerText(e.target.value)}
                 placeholder="A few sentences is perfect..."
                 rows={5}
-                className="w-full resize-none rounded-lg border border-[rgba(139,129,120,0.2)] bg-[#FAF9F7] p-4 text-[15px] text-[#2C2825] placeholder:text-[#A39B93] focus:border-[rgba(139,129,120,0.4)] focus:outline-none focus:ring-0 transition-colors"
+                className="w-full resize-none rounded-lg border border-[rgba(139,129,120,0.2)] bg-surface-ground p-4 text-[15px] text-folio-text-primary placeholder:text-folio-text-tertiary focus:border-[rgba(139,129,120,0.4)] focus:outline-none focus:ring-0 transition-colors"
                 style={{ fontFamily: 'var(--font-body)' }}
               />
 
@@ -132,7 +132,7 @@ export function PromptedAnswerModal({
             <div className="flex items-center justify-between px-6 pb-6">
               <button
                 onClick={onClose}
-                className="text-sm text-[#8B8178] hover:text-[#5C564F] transition-colors"
+                className="text-sm text-folio-text-secondary hover:text-folio-text-secondary transition-colors"
                 style={{ fontFamily: 'var(--font-body)' }}
               >
                 Cancel
@@ -140,7 +140,7 @@ export function PromptedAnswerModal({
               <button
                 onClick={handleSubmit}
                 disabled={!answerText.trim() || submitting}
-                className="px-6 py-2.5 rounded-lg bg-[#2C2825] text-[#FAF9F7] text-sm font-medium hover:bg-[#3D3632] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                className="px-6 py-2.5 rounded-lg bg-folio-text-primary text-surface-ground text-sm font-medium hover:bg-[#3D3632] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 style={{ fontFamily: 'var(--font-body)' }}
               >
                 {submitting ? 'Saving...' : 'Submit'}

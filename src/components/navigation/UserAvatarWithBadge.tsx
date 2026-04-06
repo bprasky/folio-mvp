@@ -55,18 +55,18 @@ export function UserAvatarWithBadge({
           alt={alt}
           width={48}
           height={48}
-          className={`${sizeConfig.avatar} rounded-full object-cover border border-[var(--ridge-outer)]`}
+          className={`${sizeConfig.avatar} rounded-full object-cover border border-folio-border-subtle`}
         />
       ) : (
-        <div className={`${sizeConfig.avatar} rounded-full bg-[var(--bg-elevated)] border border-[var(--ridge-outer)] flex items-center justify-center`}>
-          <User className={`${sizeConfig.iconSize} text-[var(--text-tertiary)]`} />
+        <div className={`${sizeConfig.avatar} rounded-full bg-surface-ground border border-folio-border-subtle flex items-center justify-center`}>
+          <User className={`${sizeConfig.iconSize} text-folio-text-tertiary`} />
         </div>
       )}
 
       {/* Firm logo badge - only show if firmLogo is provided */}
       {firmLogo && (
         <div
-          className={`absolute ${sizeConfig.offset} ${sizeConfig.badge} rounded-full bg-[var(--bg-base)] border border-[var(--ridge-outer)] shadow-sm overflow-hidden flex items-center justify-center`}
+          className={`absolute ${sizeConfig.offset} ${sizeConfig.badge} rounded-full bg-surface-canvas border border-folio-border-subtle shadow-sm overflow-hidden flex items-center justify-center`}
         >
           <Image
             src={firmLogo}

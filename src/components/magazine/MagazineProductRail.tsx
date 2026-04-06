@@ -21,7 +21,7 @@ export default function MagazineProductRail({ products }: Props) {
   return (
     <section className="space-y-3">
       <div className="flex items-center justify-between">
-        <h3 className="folio-ui text-sm font-medium text-[var(--text-primary)]">
+        <h3 className="folio-ui text-sm font-medium text-folio-text-primary">
           Products from this story
         </h3>
       </div>
@@ -31,7 +31,7 @@ export default function MagazineProductRail({ products }: Props) {
             key={product.id}
             className="ridge-card min-w-[180px] max-w-[220px] flex-shrink-0 overflow-hidden rounded-[20px]"
           >
-            <div className="relative aspect-[4/3] w-full bg-[var(--bg-base)]">
+            <div className="relative aspect-[4/3] w-full bg-surface-canvas">
               {product.imageUrl && (
                 <Image
                   src={product.imageUrl}
@@ -42,11 +42,11 @@ export default function MagazineProductRail({ products }: Props) {
               )}
             </div>
             <div className="space-y-1 px-3 py-2">
-              <p className="folio-body line-clamp-2 text-xs font-medium text-[var(--text-primary)]">
+              <p className="folio-body line-clamp-2 text-xs font-medium text-folio-text-primary">
                 {decodeHtmlEntities(product.name)}
               </p>
               {product.vendorName && (
-                <p className="folio-meta text-[11px] text-[var(--text-secondary)]">
+                <p className="folio-meta text-[11px] text-folio-text-secondary">
                   {product.vendorName}
                 </p>
               )}

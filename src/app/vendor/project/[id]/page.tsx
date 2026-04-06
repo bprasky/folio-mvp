@@ -208,13 +208,13 @@ export default function VendorProjectDetailPage() {
       <div className="p-6">
         <div className="max-w-7xl mx-auto">
           <div className="animate-pulse">
-            <div className="h-8 bg-[var(--bg-elevated)] rounded w-1/3 mb-4"></div>
-            <div className="h-4 bg-[var(--bg-elevated)] rounded w-1/2 mb-8"></div>
+            <div className="h-8 bg-surface-ground rounded w-1/3 mb-4"></div>
+            <div className="h-4 bg-surface-ground rounded w-1/2 mb-8"></div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {[1, 2, 3].map((i) => (
                 <div key={i} className="bg-white rounded-2xl p-6 shadow-lg">
-                  <div className="h-6 bg-[var(--bg-elevated)] rounded w-1/2 mb-4"></div>
-                  <div className="h-4 bg-[var(--bg-elevated)] rounded w-1/3"></div>
+                  <div className="h-6 bg-surface-ground rounded w-1/2 mb-4"></div>
+                  <div className="h-4 bg-surface-ground rounded w-1/3"></div>
                 </div>
               ))}
             </div>
@@ -229,8 +229,8 @@ export default function VendorProjectDetailPage() {
       <div className="p-6">
         <div className="max-w-7xl mx-auto">
           <div className="text-center py-16">
-            <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-4">Project Not Found</h2>
-            <p className="text-[var(--text-secondary)] mb-6">The project you're looking for doesn't exist or you don't have access to it.</p>
+            <h2 className="text-2xl font-bold text-folio-text-primary mb-4">Project Not Found</h2>
+            <p className="text-folio-text-secondary mb-6">The project you're looking for doesn't exist or you don't have access to it.</p>
             <button
               onClick={() => router.push('/vendor/dashboard')}
               className="bg-[var(--accent)] text-white px-6 py-3 rounded-lg hover:bg-[var(--accent)] transition-colors"
@@ -255,13 +255,13 @@ export default function VendorProjectDetailPage() {
           <div className="flex items-center gap-4 mb-6">
             <button
               onClick={() => router.back()}
-              className="p-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+              className="p-2 text-folio-text-secondary hover:text-folio-text-primary transition-colors"
             >
               <FaArrowLeft className="w-5 h-5" />
             </button>
             <div className="flex-1">
-              <h1 className="text-3xl font-bold text-[var(--text-primary)]">{project.name}</h1>
-              <p className="text-[var(--text-secondary)]">{project.category} • {project.description}</p>
+              <h1 className="text-3xl font-bold text-folio-text-primary">{project.name}</h1>
+              <p className="text-folio-text-secondary">{project.category} • {project.description}</p>
             </div>
           </div>
 
@@ -331,13 +331,13 @@ export default function VendorProjectDetailPage() {
               className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100"
             >
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-bold text-[var(--text-primary)]">{room.name}</h3>
-                <span className="text-sm text-[var(--text-secondary)]">{room.selections.length} selections</span>
+                <h3 className="text-xl font-bold text-folio-text-primary">{room.name}</h3>
+                <span className="text-sm text-folio-text-secondary">{room.selections.length} selections</span>
               </div>
               
               <div className="space-y-3">
                 {room.selections.slice(0, 3).map((selection) => (
-                  <div key={selection.id} className="flex items-center gap-3 p-3 bg-[var(--bg-elevated)] rounded-lg">
+                  <div key={selection.id} className="flex items-center gap-3 p-3 bg-surface-ground rounded-lg">
                     {selection.photo ? (
                       <img 
                         src={selection.photo} 
@@ -345,15 +345,15 @@ export default function VendorProjectDetailPage() {
                         className="w-12 h-12 object-cover rounded-lg"
                       />
                     ) : (
-                      <div className="w-12 h-12 bg-[var(--bg-elevated)] rounded-lg flex items-center justify-center">
-                        <FaFileAlt className="w-5 h-5 text-[var(--text-tertiary)]" />
+                      <div className="w-12 h-12 bg-surface-ground rounded-lg flex items-center justify-center">
+                        <FaFileAlt className="w-5 h-5 text-folio-text-tertiary" />
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-[var(--text-primary)] truncate">
+                      <p className="text-sm font-medium text-folio-text-primary truncate">
                         {selection.productName || 'Untitled Selection'}
                       </p>
-                      <p className="text-xs text-[var(--text-secondary)]">
+                      <p className="text-xs text-folio-text-secondary">
                         {selection.vendorName || 'No vendor assigned'}
                       </p>
                     </div>
@@ -361,7 +361,7 @@ export default function VendorProjectDetailPage() {
                 ))}
                 
                 {room.selections.length > 3 && (
-                  <p className="text-sm text-[var(--text-secondary)] text-center">
+                  <p className="text-sm text-folio-text-secondary text-center">
                     +{room.selections.length - 3} more selections
                   </p>
                 )}
@@ -381,13 +381,13 @@ export default function VendorProjectDetailPage() {
         {showAddRoom && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-2xl p-6 w-full max-w-md mx-4">
-              <h3 className="text-xl font-bold text-[var(--text-primary)] mb-4">Add New Room</h3>
+              <h3 className="text-xl font-bold text-folio-text-primary mb-4">Add New Room</h3>
               <input
                 type="text"
                 value={newRoomName}
                 onChange={(e) => setNewRoomName(e.target.value)}
                 placeholder="Room name (e.g., Living Room, Kitchen)"
-                className="w-full p-3 border border-[var(--ridge-outer)] rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                className="w-full p-3 border border-folio-border-subtle rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
                 onKeyPress={(e) => e.key === 'Enter' && handleAddRoom()}
               />
               <div className="flex gap-3">
@@ -396,7 +396,7 @@ export default function VendorProjectDetailPage() {
                   disabled={isAddingRoom}
                   className={`flex-1 py-2 rounded-lg transition-colors flex items-center justify-center ${
                     isAddingRoom 
-                      ? 'bg-[var(--text-tertiary)]/40 text-[var(--text-secondary)] cursor-not-allowed' 
+                      ? 'bg-[var(--text-tertiary)]/40 text-folio-text-secondary cursor-not-allowed' 
                       : 'bg-[var(--accent)] text-white hover:bg-[var(--accent)]'
                   }`}
                 >
@@ -411,7 +411,7 @@ export default function VendorProjectDetailPage() {
                 </button>
                 <button
                   onClick={() => setShowAddRoom(false)}
-                  className="flex-1 bg-[var(--text-tertiary)]/30 text-[var(--text-primary)] py-2 rounded-lg hover:bg-[var(--text-tertiary)]/30 transition-colors"
+                  className="flex-1 bg-[var(--text-tertiary)]/30 text-folio-text-primary py-2 rounded-lg hover:bg-[var(--text-tertiary)]/30 transition-colors"
                 >
                   Cancel
                 </button>

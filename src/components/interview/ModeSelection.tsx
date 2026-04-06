@@ -22,7 +22,7 @@ interface ModeSelectionProps {
  * - Cards: bg-white, rounded-xl, p-8, hover:shadow-lg transition
  * - Icons: 48px, muted gray, centered
  * - Headline: text-lg font-medium
- * - Description: text-sm text-[var(--text-secondary)], 2 lines max
+ * - Description: text-sm text-folio-text-secondary, 2 lines max
  * - CTA: Full-width button at bottom of card
  * - Footer: Centered text below both cards "Both create the same editorial draft"
  *
@@ -42,10 +42,10 @@ export function ModeSelection({
     <div className="flex flex-col items-center justify-center min-h-[400px] px-4 py-8">
       {/* Header */}
       <div className="text-center mb-8">
-        <h2 className="text-2xl font-medium text-[var(--text-primary)] mb-2">
+        <h2 className="text-2xl font-medium text-folio-text-primary mb-2">
           Tell us about {projectTitle}
         </h2>
-        <p className="text-[var(--text-secondary)]">
+        <p className="text-folio-text-secondary">
           {imageCount} {imageCount === 1 ? "image" : "images"} to discuss
         </p>
       </div>
@@ -62,13 +62,13 @@ export function ModeSelection({
           )}
           onClick={voiceAvailable ? onSelectVoice : undefined}
         >
-          <div className="w-12 h-12 rounded-full bg-[var(--bg-elevated)] flex items-center justify-center mb-4">
-            <Mic className="w-6 h-6 text-[var(--text-secondary)]" />
+          <div className="w-12 h-12 rounded-full bg-surface-ground flex items-center justify-center mb-4">
+            <Mic className="w-6 h-6 text-folio-text-secondary" />
           </div>
-          <h3 className="text-lg font-medium text-[var(--text-primary)] mb-2">
+          <h3 className="text-lg font-medium text-folio-text-primary mb-2">
             Have a conversation
           </h3>
-          <p className="text-sm text-[var(--text-secondary)] mb-6 line-clamp-2">
+          <p className="text-sm text-folio-text-secondary mb-6 line-clamp-2">
             Talk through your project naturally for 3-5 minutes
           </p>
           {voiceAvailable ? (
@@ -81,12 +81,12 @@ export function ModeSelection({
             </button>
           ) : (
             <div className="w-full text-center">
-              <span className="text-[var(--text-tertiary)] text-sm">
+              <span className="text-folio-text-tertiary text-sm">
                 Unavailable right now
               </span>
               <button
                 type="button"
-                className="ml-2 text-xs text-[var(--text-tertiary)] underline hover:text-[var(--text-secondary)]"
+                className="ml-2 text-xs text-folio-text-tertiary underline hover:text-folio-text-secondary"
                 onClick={(e) => {
                   e.stopPropagation();
                   // Could show a tooltip or modal explaining why
@@ -103,18 +103,18 @@ export function ModeSelection({
           className={cn(
             "bg-white rounded-xl p-8 flex flex-col items-center text-center transition-all duration-200 hover:shadow-lg cursor-pointer",
             !voiceAvailable
-              ? "border-2 border-[var(--ridge-outer)]"
+              ? "border-2 border-folio-border-subtle"
               : "border border-gray-100"
           )}
           onClick={onSelectText}
         >
-          <div className="w-12 h-12 rounded-full bg-[var(--bg-elevated)] flex items-center justify-center mb-4">
-            <PenLine className="w-6 h-6 text-[var(--text-secondary)]" />
+          <div className="w-12 h-12 rounded-full bg-surface-ground flex items-center justify-center mb-4">
+            <PenLine className="w-6 h-6 text-folio-text-secondary" />
           </div>
-          <h3 className="text-lg font-medium text-[var(--text-primary)] mb-2">
+          <h3 className="text-lg font-medium text-folio-text-primary mb-2">
             Write your responses
           </h3>
-          <p className="text-sm text-[var(--text-secondary)] mb-6 line-clamp-2">
+          <p className="text-sm text-folio-text-secondary mb-6 line-clamp-2">
             Answer at your own pace with guided questions
           </p>
           <button
@@ -128,7 +128,7 @@ export function ModeSelection({
       </div>
 
       {/* Footer */}
-      <p className="text-sm text-[var(--text-tertiary)]">
+      <p className="text-sm text-folio-text-tertiary">
         Both create the same editorial draft
       </p>
     </div>

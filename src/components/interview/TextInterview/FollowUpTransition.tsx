@@ -31,11 +31,11 @@ export function FollowUpTransition({
     <div className="flex flex-col items-center justify-center min-h-[400px] px-6 py-8">
       {/* Previous answer card */}
       <div className="w-full max-w-md mb-8">
-        <div className="bg-[var(--bg-elevated)] rounded-lg p-4">
-          <p className="text-xs text-[var(--text-tertiary)] uppercase tracking-wide mb-2">
+        <div className="bg-surface-ground rounded-lg p-4">
+          <p className="text-xs text-folio-text-tertiary uppercase tracking-wide mb-2">
             Your answer
           </p>
-          <p className="text-[var(--text-primary)] line-clamp-3 text-sm leading-relaxed">
+          <p className="text-folio-text-primary line-clamp-3 text-sm leading-relaxed">
             {previousAnswer}
           </p>
         </div>
@@ -45,7 +45,7 @@ export function FollowUpTransition({
       {isGenerating && (
         <div className="flex flex-col items-center">
           <LoadingDots />
-          <p className="text-sm text-[var(--text-secondary)] mt-3">Finding a follow-up...</p>
+          <p className="text-sm text-folio-text-secondary mt-3">Finding a follow-up...</p>
         </div>
       )}
     </div>

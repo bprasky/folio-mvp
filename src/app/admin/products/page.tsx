@@ -288,12 +288,12 @@ export default function AdminProductsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[var(--bg-base)] py-8">
+      <div className="min-h-screen bg-surface-canvas py-8">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--accent)] mx-auto mb-4"></div>
-              <p className="text-[var(--text-secondary)]">Loading products...</p>
+              <p className="text-folio-text-secondary">Loading products...</p>
             </div>
           </div>
         </div>
@@ -302,7 +302,7 @@ export default function AdminProductsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--bg-base)] py-8">
+    <div className="min-h-screen bg-surface-canvas py-8">
       <div className="max-w-7xl mx-auto px-4">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
@@ -343,7 +343,7 @@ export default function AdminProductsPage() {
         <RidgeCard padding="md" className="mb-6">
           <div className="flex flex-wrap gap-4 items-center">
             <div className="flex items-center gap-2">
-              <FaFilter className="text-[var(--text-tertiary)]" />
+              <FaFilter className="text-folio-text-tertiary" />
               <select
                 value={filterBy}
                 onChange={(e) => setFilterBy(e.target.value as 'all' | 'pending' | 'approved')}
@@ -355,7 +355,7 @@ export default function AdminProductsPage() {
               </select>
             </div>
             <div className="flex items-center gap-2">
-              <FaSort className="text-[var(--text-tertiary)]" />
+              <FaSort className="text-folio-text-tertiary" />
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as 'name' | 'vendor' | 'tags' | 'date')}
@@ -381,31 +381,31 @@ export default function AdminProductsPage() {
         <RidgeCard padding="none" className="overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-[var(--bg-elevated)]">
+              <thead className="bg-surface-ground">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-folio-text-secondary uppercase tracking-wider">
                     Product
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-folio-text-secondary uppercase tracking-wider">
                     Vendor
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-folio-text-secondary uppercase tracking-wider">
                     Usage
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-folio-text-secondary uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-folio-text-secondary uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[var(--border-subtle)]">
                 {getSortedProducts().map((product) => (
-                  <tr key={product.id} className="hover:bg-[var(--bg-elevated)]/50 transition-colors">
+                  <tr key={product.id} className="hover:bg-surface-ground/50 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <div className="h-12 w-12 rounded-lg overflow-hidden bg-[var(--bg-elevated)] mr-4">
+                        <div className="h-12 w-12 rounded-lg overflow-hidden bg-surface-ground mr-4">
                           <img
                             src={product.image}
                             alt={product.name}
@@ -413,18 +413,18 @@ export default function AdminProductsPage() {
                           />
                         </div>
                         <div>
-                          <div className="text-sm font-medium text-[var(--text-primary)]">{product.name}</div>
-                          <div className="text-sm text-[var(--text-secondary)]">{product.price}</div>
+                          <div className="text-sm font-medium text-folio-text-primary">{product.name}</div>
+                          <div className="text-sm text-folio-text-secondary">{product.price}</div>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-[var(--text-primary)]">{product.vendorName}</div>
-                      <div className="text-sm text-[var(--text-secondary)]">{product.category}</div>
+                      <div className="text-sm text-folio-text-primary">{product.vendorName}</div>
+                      <div className="text-sm text-folio-text-secondary">{product.category}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-[var(--text-primary)]">{product.totalTags} tags</div>
-                      <div className="text-sm text-[var(--text-secondary)]">
+                      <div className="text-sm text-folio-text-primary">{product.totalTags} tags</div>
+                      <div className="text-sm text-folio-text-secondary">
                         {product.taggedBy.length} designer{product.taggedBy.length !== 1 ? 's' : ''}
                       </div>
                     </td>

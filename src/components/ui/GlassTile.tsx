@@ -13,7 +13,7 @@ export default function GlassTile({ children, className, as = "section", ...rest
     <Comp
       className={cn(
         "glass-surface rounded-2xl",
-        "dark:bg-[var(--bg-base)] dark:border-white/10",
+        "dark:bg-surface-canvas dark:border-white/10",
         className
       )}
       {...rest}

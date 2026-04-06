@@ -89,7 +89,7 @@ export default function ActionStrip({ event }: ActionStripProps) {
           className={`px-3 py-1 rounded-full border text-sm ${
             rsvp === "ATTENDING"
               ? "bg-folio-accent text-white border-folio-accent"
-              : "bg-white hover:bg-[var(--bg-elevated)] border-[var(--ridge-outer)]"
+              : "bg-white hover:bg-surface-ground border-folio-border-subtle"
           }`}
         >
           Attending
@@ -99,7 +99,7 @@ export default function ActionStrip({ event }: ActionStripProps) {
           className={`px-3 py-1 rounded-full border text-sm ${
             rsvp === "INTERESTED"
               ? "bg-folio-accent/90 text-white border-folio-accent"
-              : "bg-white hover:bg-[var(--bg-elevated)] border-[var(--ridge-outer)]"
+              : "bg-white hover:bg-surface-ground border-folio-border-subtle"
           }`}
         >
           Interested
@@ -109,7 +109,7 @@ export default function ActionStrip({ event }: ActionStripProps) {
           className={`px-3 py-1 rounded-full border text-sm ${
             rsvp === "SEND_TO_TEAM"
               ? "bg-folio-accent/80 text-white border-folio-accent"
-              : "bg-white hover:bg-[var(--bg-elevated)] border-[var(--ridge-outer)]"
+              : "bg-white hover:bg-surface-ground border-folio-border-subtle"
           }`}
         >
           Send to team
@@ -121,21 +121,21 @@ export default function ActionStrip({ event }: ActionStripProps) {
         target="_blank"
         rel="noreferrer"
         onClick={() => track("calendar_add_click", { eventId: event.id, type: "google" })}
-        className="px-3 py-1 rounded-full border border-[var(--ridge-outer)] text-sm bg-white hover:bg-[var(--bg-elevated)]"
+        className="px-3 py-1 rounded-full border border-folio-border-subtle text-sm bg-white hover:bg-surface-ground"
       >
         Add to Google Calendar
       </a>
 
       <button
         onClick={onFollow}
-        className="px-3 py-1 rounded-full border border-[var(--ridge-outer)] text-sm bg-white hover:bg-[var(--bg-elevated)]"
+        className="px-3 py-1 rounded-full border border-folio-border-subtle text-sm bg-white hover:bg-surface-ground"
       >
         Follow {vendorName}
       </button>
 
       <button
         onClick={onShare}
-        className="px-3 py-1 rounded-full border border-[var(--ridge-outer)] text-sm bg-white hover:bg-[var(--bg-elevated)]"
+        className="px-3 py-1 rounded-full border border-folio-border-subtle text-sm bg-white hover:bg-surface-ground"
       >
         Share
       </button>

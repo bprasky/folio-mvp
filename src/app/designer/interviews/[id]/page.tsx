@@ -63,13 +63,13 @@ export default async function InterviewPage({
   }
 
   return (
-    <div className="min-h-screen bg-[var(--bg-elevated)]">
+    <div className="min-h-screen bg-surface-ground">
       <div className="max-w-4xl mx-auto py-12 px-4">
         <div className="mb-8">
-          <h1 className="text-3xl font-light text-[var(--text-primary)] mb-2">
+          <h1 className="text-3xl font-light text-folio-text-primary mb-2">
             {interviewSession.project?.title || interviewSession.product?.name || "Interview"}
           </h1>
-          <p className="text-[var(--text-secondary)]">
+          <p className="text-folio-text-secondary">
             {interviewSession.project
               ? "Project Reflection"
               : interviewSession.product
@@ -80,7 +80,7 @@ export default async function InterviewPage({
 
         {/* Show recording interface if not uploaded yet */}
         {(interviewSession.status === "DRAFT" || interviewSession.status === "UPLOADED") && (
-          <div className="bg-white rounded-lg shadow-sm border border-[var(--ridge-outer)] p-8">
+          <div className="bg-white rounded-lg shadow-sm border border-folio-border-subtle p-8">
             <RecordingInterface
               interviewId={interviewSession.id}
               onUploadComplete={() => {

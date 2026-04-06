@@ -49,14 +49,14 @@ export function AiDashboard({ eventId, onExport, onShare, onViewEvent }: AiDashb
   return (
     <div className="space-y-8">
       {/* Header */}
-      <Card className="bg-white border-[#DAD2CA]">
+      <Card className="bg-white border-folio-border-strong">
         <CardContent className="p-6">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-serif text-[#2B2B2B] mb-2">
+              <h1 className="text-2xl font-serif text-folio-text-primary mb-2">
                 {report.name}
               </h1>
-              <div className="flex flex-col sm:flex-row sm:items-center gap-4 text-sm text-[#8C8278]">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-4 text-sm text-folio-text-secondary">
                 <div className="flex items-center space-x-2">
                   <Calendar className="w-4 h-4" />
                   <span>{formatDateRange(report.dates.start, report.dates.end)}</span>
@@ -74,7 +74,7 @@ export function AiDashboard({ eventId, onExport, onShare, onViewEvent }: AiDashb
                 variant="outline" 
                 size="sm"
                 onClick={onShare}
-                className="border-[#DAD2CA]"
+                className="border-folio-border-strong"
               >
                 <Share className="w-4 h-4 mr-2" />
                 Share
@@ -102,13 +102,13 @@ export function AiDashboard({ eventId, onExport, onShare, onViewEvent }: AiDashb
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Influence Flow (mini) */}
         <div className="lg:col-span-2">
-          <Card className="bg-white border-[#DAD2CA] hover:shadow-md transition-shadow">
+          <Card className="bg-white border-folio-border-strong hover:shadow-md transition-shadow">
             <CardContent className="p-5">
               <div className="mb-4">
-                <h3 className="text-sm font-semibold text-[#2B2B2B] mb-1">
+                <h3 className="text-sm font-semibold text-folio-text-primary mb-1">
                   Conversion Funnel
                 </h3>
-                <p className="text-xs text-[#8C8278] leading-relaxed">
+                <p className="text-xs text-folio-text-secondary leading-relaxed">
                   How designer attention flows from initial engagement to project decisions
                 </p>
               </div>
@@ -123,9 +123,9 @@ export function AiDashboard({ eventId, onExport, onShare, onViewEvent }: AiDashb
                 </div>
                 
                 {/* Flow explanation overlay */}
-                <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm border border-[#DAD2CA] rounded-lg p-3 text-xs max-w-[200px]">
-                  <div className="font-medium text-[#2B2B2B] mb-1">What you're seeing:</div>
-                  <div className="text-[#8C8278] leading-relaxed">
+                <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm border border-folio-border-strong rounded-lg p-3 text-xs max-w-[200px]">
+                  <div className="font-medium text-folio-text-primary mb-1">What you're seeing:</div>
+                  <div className="text-folio-text-secondary leading-relaxed">
                     Wider bars = higher engagement. Follow the flow to identify where attention leaks or converts.
                   </div>
                 </div>
@@ -136,24 +136,24 @@ export function AiDashboard({ eventId, onExport, onShare, onViewEvent }: AiDashb
 
         {/* Time-to-Spec mini */}
         <div className="lg:col-span-1">
-          <Card className="bg-white border-[#DAD2CA] hover:shadow-md transition-shadow">
+          <Card className="bg-white border-folio-border-strong hover:shadow-md transition-shadow">
             <CardContent className="p-5">
               <div className="mb-4">
-                <h3 className="text-sm font-semibold text-[#2B2B2B] mb-1">
+                <h3 className="text-sm font-semibold text-folio-text-primary mb-1">
                   Response Timing
                 </h3>
-                <p className="text-xs text-[#8C8278] leading-relaxed">
+                <p className="text-xs text-folio-text-secondary leading-relaxed">
                   When designers are most likely to engage with follow-ups
                 </p>
               </div>
               
               <div className="space-y-5">
-                <div className="text-center p-4 bg-[#F7F4F1] rounded-lg">
-                  <div className="text-3xl font-bold text-[#2B2B2B] mb-1">
+                <div className="text-center p-4 bg-surface-elevated rounded-lg">
+                  <div className="text-3xl font-bold text-folio-text-primary mb-1">
                     {report.timeToSpec.medianHours}h
                   </div>
-                  <div className="text-xs text-[#8C8278] mb-2">Median response time</div>
-                  <div className="text-xs text-[#645C53]">
+                  <div className="text-xs text-folio-text-secondary mb-2">Median response time</div>
+                  <div className="text-xs text-folio-text-secondary">
                     {report.timeToSpec.medianHours < 24 
                       ? "🔥 Fast responders - strike while hot!" 
                       : report.timeToSpec.medianHours < 72 
@@ -164,12 +164,12 @@ export function AiDashboard({ eventId, onExport, onShare, onViewEvent }: AiDashb
                 </div>
                 
                 <div>
-                  <div className="text-xs font-medium text-[#8C8278] mb-3">Optimal contact windows:</div>
+                  <div className="text-xs font-medium text-folio-text-secondary mb-3">Optimal contact windows:</div>
                   <div className="space-y-2">
                     {report.timeToSpec.bestHours.map((window, index) => (
-                      <div key={index} className="flex items-center justify-between p-2 bg-white border border-[#DAD2CA] rounded">
-                        <div className="text-sm font-medium text-[#2B2B2B] capitalize">{window.dow}</div>
-                        <div className="text-sm text-[#8C8278]">{String(window.hour).padStart(2, '0')}:00</div>
+                      <div key={index} className="flex items-center justify-between p-2 bg-white border border-folio-border-strong rounded">
+                        <div className="text-sm font-medium text-folio-text-primary capitalize">{window.dow}</div>
+                        <div className="text-sm text-folio-text-secondary">{String(window.hour).padStart(2, '0')}:00</div>
                       </div>
                     ))}
                   </div>
@@ -197,16 +197,16 @@ export function AiDashboard({ eventId, onExport, onShare, onViewEvent }: AiDashb
         <div className="mb-6">
           <div className="flex items-center justify-between mb-3">
             <div>
-              <h2 className="text-xl font-serif text-[#2B2B2B]">
+              <h2 className="text-xl font-serif text-folio-text-primary">
                 AI-Powered Action Plan
               </h2>
-              <p className="text-sm text-[#8C8278] mt-1">
+              <p className="text-sm text-folio-text-secondary mt-1">
                 Data-driven recommendations with expected impact and urgency indicators
               </p>
             </div>
             <div className="text-right">
-              <div className="text-xs text-[#8C8278]">Total expected lift</div>
-              <div className="text-lg font-bold text-[#2B2B2B]">
+              <div className="text-xs text-folio-text-secondary">Total expected lift</div>
+              <div className="text-lg font-bold text-folio-text-primary">
                 ${(insights.reduce((sum, i) => sum + i.impact.expectedLiftUsd, 0) / 1000).toFixed(0)}k
               </div>
             </div>
@@ -217,7 +217,7 @@ export function AiDashboard({ eventId, onExport, onShare, onViewEvent }: AiDashb
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowMoreInsights(!showMoreInsights)}
-                className="text-[#8C8278]"
+                className="text-folio-text-secondary"
               >
                 {showMoreInsights ? (
                   <>
@@ -248,7 +248,7 @@ export function AiDashboard({ eventId, onExport, onShare, onViewEvent }: AiDashb
         <Button
           variant="outline"
           onClick={() => openDrawer({ section: 'roomPhase' })}
-          className="border-[#DAD2CA] text-[#8C8278]"
+          className="border-folio-border-strong text-folio-text-secondary"
         >
           More Analytics
         </Button>

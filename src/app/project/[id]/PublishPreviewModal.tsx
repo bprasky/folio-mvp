@@ -81,15 +81,15 @@ export default function PublishPreviewModal({
       />
 
       {/* Modal */}
-      <div className="relative bg-[var(--bg-elevated)] rounded-[20px] shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+      <div className="relative bg-surface-ground rounded-[20px] shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border-default)]">
-          <h2 className="folio-h3 text-[var(--text-primary)]">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-folio-border-subtle">
+          <h2 className="folio-h3 text-folio-text-primary">
             {justPublished ? "Published" : "Preview"}
           </h2>
           <button
             onClick={justPublished ? handleDone : onClose}
-            className="p-2 rounded-lg text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-base)] transition-colors"
+            className="p-2 rounded-lg text-folio-text-tertiary hover:text-folio-text-primary hover:bg-surface-canvas transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -119,7 +119,7 @@ export default function PublishPreviewModal({
                 {PROGRESS_MESSAGES.map((msg, i) => (
                   <p
                     key={i}
-                    className="absolute inset-0 flex items-center justify-center text-xl text-[var(--text-secondary)] transition-opacity duration-700 ease-in-out"
+                    className="absolute inset-0 flex items-center justify-center text-xl text-folio-text-secondary transition-opacity duration-700 ease-in-out"
                     style={{
                       fontFamily: "var(--font-headline)",
                       fontStyle: "italic",
@@ -146,13 +146,13 @@ export default function PublishPreviewModal({
                 </p>
               )}
               <h3
-                className="text-2xl text-[var(--text-primary)] leading-tight"
+                className="text-2xl text-folio-text-primary leading-tight"
                 style={{ fontFamily: "var(--font-headline)", fontWeight: 500 }}
               >
                 {flow.currentLead?.title}
               </h3>
               {(flow.currentLead?.deck || (flow.currentLead as any)?.dek) && (
-                <p className="folio-body text-[var(--text-secondary)] leading-relaxed">
+                <p className="folio-body text-folio-text-secondary leading-relaxed">
                   {flow.currentLead?.deck || (flow.currentLead as any)?.dek}
                 </p>
               )}
@@ -164,7 +164,7 @@ export default function PublishPreviewModal({
                 .map((s: any, i: number) => (
                   <p
                     key={i}
-                    className="folio-ui text-[var(--text-secondary)] leading-relaxed"
+                    className="folio-ui text-folio-text-secondary leading-relaxed"
                   >
                     {s.body}
                   </p>
@@ -173,7 +173,7 @@ export default function PublishPreviewModal({
               {flow.currentSections.filter(
                 (s: any) => s.type === "narrative" && s.body
               ).length === 0 && (
-                <p className="folio-ui text-[var(--text-tertiary)] italic">
+                <p className="folio-ui text-folio-text-tertiary italic">
                   No narrative sections generated. You can still publish with the title and summary.
                 </p>
               )}
@@ -184,7 +184,7 @@ export default function PublishPreviewModal({
           {!isGenerating && !hasDraft && !justPublished && (
             <div className="flex flex-col items-center justify-center py-16">
               <p
-                className="text-xl text-[var(--text-secondary)] italic"
+                className="text-xl text-folio-text-secondary italic"
                 style={{ fontFamily: "var(--font-headline)" }}
               >
                 Preparing preview...
@@ -197,12 +197,12 @@ export default function PublishPreviewModal({
             <div className="flex flex-col items-center justify-center py-12 space-y-4">
               <CheckCircle2 className="w-12 h-12 text-[var(--accent)]" />
               <h3
-                className="text-2xl text-[var(--text-primary)]"
+                className="text-2xl text-folio-text-primary"
                 style={{ fontFamily: "var(--font-headline)", fontWeight: 500 }}
               >
                 Your project is live
               </h3>
-              <p className="folio-body text-[var(--text-secondary)] text-center">
+              <p className="folio-body text-folio-text-secondary text-center">
                 Your Story tab is now available for editing.
               </p>
               {publishedSlug && (
@@ -221,10 +221,10 @@ export default function PublishPreviewModal({
 
         {/* Footer actions */}
         {!justPublished && (
-          <div className="px-6 py-4 border-t border-[var(--border-default)] flex items-center justify-between">
+          <div className="px-6 py-4 border-t border-folio-border-subtle flex items-center justify-between">
             <button
               onClick={onClose}
-              className="px-4 py-2 folio-ui font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+              className="px-4 py-2 folio-ui font-medium text-folio-text-secondary hover:text-folio-text-primary transition-colors"
             >
               Back
             </button>
@@ -240,7 +240,7 @@ export default function PublishPreviewModal({
 
         {/* Footer for success state */}
         {justPublished && (
-          <div className="px-6 py-4 border-t border-[var(--border-default)] flex justify-end">
+          <div className="px-6 py-4 border-t border-folio-border-subtle flex justify-end">
             <button
               onClick={handleDone}
               className="px-6 py-2.5 folio-ui font-semibold text-white bg-[var(--accent)] rounded-lg hover:bg-[var(--accent-hover)] transition-colors"

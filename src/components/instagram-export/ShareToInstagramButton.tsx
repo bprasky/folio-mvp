@@ -50,7 +50,7 @@ export function ShareToInstagramButton({
   return (
     <Link
       href={`/designer/projects/${projectId}/instagram`}
-      className="inline-flex items-center gap-2 rounded-xl border border-[#E8E0D8] bg-white px-4 py-2 text-[14px] font-medium text-[#2C2420] shadow-sm transition-all duration-200 hover:border-[#C4B5A0] hover:shadow-md"
+      className="inline-flex items-center gap-2 rounded-xl border border-folio-border-subtle bg-white px-4 py-2 text-[14px] font-medium text-folio-text-primary shadow-sm transition-all duration-200 hover:border-[#C4B5A0] hover:shadow-md"
     >
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
         <rect

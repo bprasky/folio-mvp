@@ -20,8 +20,8 @@ export default function JobsPage() {
             <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <FaBriefcase className="w-8 h-8 text-orange-600" />
             </div>
-            <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-2">Designer Only Feature</h2>
-            <p className="text-[var(--text-secondary)]">
+            <h2 className="text-2xl font-bold text-folio-text-primary mb-2">Designer Only Feature</h2>
+            <p className="text-folio-text-secondary">
               This feature is only available for designers. Please sign in with a designer account.
             </p>
           </div>
@@ -44,9 +44,9 @@ export default function JobsPage() {
               <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
                 <FaBriefcase className="w-5 h-5 text-white" />
               </div>
-              <h1 className="text-3xl font-bold text-[var(--text-primary)]">Job Matching</h1>
+              <h1 className="text-3xl font-bold text-folio-text-primary">Job Matching</h1>
             </div>
-            <p className="text-[var(--text-secondary)]">
+            <p className="text-folio-text-secondary">
               Find homeowner projects that match your expertise and preferences
             </p>
           </motion.div>

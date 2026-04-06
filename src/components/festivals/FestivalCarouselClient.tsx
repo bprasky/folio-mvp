@@ -119,9 +119,9 @@ export default function FestivalCarouselClient({
                 router.push(`/festivals/${f.slug ?? String(f.id)}`);
               }}
             >
-              <article className="rounded-2xl overflow-hidden shadow-sm ring-1 ring-black/5 bg-[var(--bg-base)] hover:shadow-md transition-shadow">
+              <article className="rounded-2xl overflow-hidden shadow-sm ring-1 ring-black/5 bg-surface-canvas hover:shadow-md transition-shadow">
                 {/* Wider aspect lowers visual height */}
-                <div className="aspect-[21/9] overflow-hidden bg-[var(--bg-elevated)] relative">
+                <div className="aspect-[21/9] overflow-hidden bg-surface-ground relative">
                   {f.imageUrl ? (
                     <Image
                       alt={f.title}
@@ -132,15 +132,15 @@ export default function FestivalCarouselClient({
                       sizes="(max-width: 640px) 80vw, (max-width: 768px) 70vw, (max-width: 1024px) 60vw, 55vw"
                     />
                   ) : (
-                    <div className="h-full w-full grid place-items-center text-sm text-[var(--text-tertiary)]">No image</div>
+                    <div className="h-full w-full grid place-items-center text-sm text-folio-text-tertiary">No image</div>
                   )}
                 </div>
 
                 {/* Tight text block to save vertical space */}
                 <div className="p-3 md:p-4">
                   <h3 className="text-base md:text-lg font-semibold tracking-tight line-clamp-1">{f.title}</h3>
-                  <p className="text-xs md:text-sm text-[var(--text-secondary)] line-clamp-1 mt-0.5">{f.location ?? ""}</p>
-                  <p className="mt-0.5 text-xs text-[var(--text-tertiary)]">{fmtRange(f.startDate, f.endDate)}</p>
+                  <p className="text-xs md:text-sm text-folio-text-secondary line-clamp-1 mt-0.5">{f.location ?? ""}</p>
+                  <p className="mt-0.5 text-xs text-folio-text-tertiary">{fmtRange(f.startDate, f.endDate)}</p>
                 </div>
               </article>
             </motion.div>

@@ -53,9 +53,9 @@ export default function ActionItemsAnalytics() {
     return (
       <RidgeCard padding="lg">
         <div className="animate-pulse space-y-3">
-          <div className="h-4 bg-[var(--bg-elevated)] rounded w-1/3" />
-          <div className="h-8 bg-[var(--bg-elevated)] rounded w-1/2" />
-          <div className="h-4 bg-[var(--bg-elevated)] rounded w-2/3" />
+          <div className="h-4 bg-surface-ground rounded w-1/3" />
+          <div className="h-8 bg-surface-ground rounded w-1/2" />
+          <div className="h-4 bg-surface-ground rounded w-2/3" />
         </div>
       </RidgeCard>
     );
@@ -64,8 +64,8 @@ export default function ActionItemsAnalytics() {
   if (!data || data.volume.total === 0) {
     return (
       <RidgeCard padding="lg">
-        <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-2">Specification Activity</h3>
-        <p className="text-sm text-[var(--text-tertiary)]">
+        <h3 className="text-sm font-semibold text-folio-text-primary mb-2">Specification Activity</h3>
+        <p className="text-sm text-folio-text-tertiary">
           No designer activity yet. When designers request quotes, samples, or lead times for your products, analytics will appear here.
         </p>
       </RidgeCard>
@@ -76,14 +76,14 @@ export default function ActionItemsAnalytics() {
     <div className="space-y-4">
       {/* Volume Summary */}
       <RidgeCard padding="lg">
-        <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3">Specification Activity (30 days)</h3>
+        <h3 className="text-sm font-semibold text-folio-text-primary mb-3">Specification Activity (30 days)</h3>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
           <div>
-            <div className="text-2xl font-semibold text-[var(--text-primary)]" style={{ fontFamily: 'var(--font-serif)' }}>
+            <div className="text-2xl font-semibold text-folio-text-primary" style={{ fontFamily: 'var(--font-serif)' }}>
               {data.volume.total}
             </div>
-            <div className="text-xs text-[var(--text-tertiary)]">
+            <div className="text-xs text-folio-text-tertiary">
               Total requests
               {data.volume.changePercent !== null && (
                 <span className={data.volume.changePercent >= 0 ? ' text-green-600' : ' text-red-500'}>
@@ -93,26 +93,26 @@ export default function ActionItemsAnalytics() {
             </div>
           </div>
           <div>
-            <div className="text-2xl font-semibold text-[var(--text-primary)]" style={{ fontFamily: 'var(--font-serif)' }}>
+            <div className="text-2xl font-semibold text-folio-text-primary" style={{ fontFamily: 'var(--font-serif)' }}>
               {data.designers.activeCount}
             </div>
-            <div className="text-xs text-[var(--text-tertiary)]">Active designers</div>
+            <div className="text-xs text-folio-text-tertiary">Active designers</div>
           </div>
           <div>
-            <div className="text-2xl font-semibold text-[var(--text-primary)]" style={{ fontFamily: 'var(--font-serif)' }}>
+            <div className="text-2xl font-semibold text-folio-text-primary" style={{ fontFamily: 'var(--font-serif)' }}>
               {data.response.avgResponseHours !== null
                 ? data.response.avgResponseHours < 24
                   ? `${data.response.avgResponseHours}h`
                   : `${Math.round(data.response.avgResponseHours / 24)}d`
                 : '—'}
             </div>
-            <div className="text-xs text-[var(--text-tertiary)]">Avg response time</div>
+            <div className="text-xs text-folio-text-tertiary">Avg response time</div>
           </div>
           <div>
-            <div className="text-2xl font-semibold text-[var(--text-primary)]" style={{ fontFamily: 'var(--font-serif)' }}>
+            <div className="text-2xl font-semibold text-folio-text-primary" style={{ fontFamily: 'var(--font-serif)' }}>
               {100 - data.response.offPlatformRate}%
             </div>
-            <div className="text-xs text-[var(--text-tertiary)]">On-platform rate</div>
+            <div className="text-xs text-folio-text-tertiary">On-platform rate</div>
           </div>
         </div>
 
@@ -123,7 +123,7 @@ export default function ActionItemsAnalytics() {
             .map(([type, count]) => (
               <span
                 key={type}
-                className="px-2.5 py-1 rounded-full text-xs bg-[var(--bg-elevated)] text-[var(--text-secondary)]"
+                className="px-2.5 py-1 rounded-full text-xs bg-surface-ground text-folio-text-secondary"
               >
                 {ACTION_TYPE_LABELS[type] || type}: {count}
               </span>
@@ -134,14 +134,14 @@ export default function ActionItemsAnalytics() {
       {/* Top Products */}
       {data.topProducts.length > 0 && (
         <RidgeCard padding="lg">
-          <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3">Most Requested Products</h3>
+          <h3 className="text-sm font-semibold text-folio-text-primary mb-3">Most Requested Products</h3>
           <div className="space-y-2">
             {data.topProducts.slice(0, 8).map((product, i) => (
               <div key={product.productId} className="flex items-center gap-3 text-sm">
-                <span className="text-xs text-[var(--text-tertiary)] w-5 text-right">{i + 1}.</span>
-                <span className="text-[var(--text-primary)] flex-grow truncate">{product.productName}</span>
+                <span className="text-xs text-folio-text-tertiary w-5 text-right">{i + 1}.</span>
+                <span className="text-folio-text-primary flex-grow truncate">{product.productName}</span>
                 {product.category && (
-                  <span className="text-xs text-[var(--text-tertiary)]">{product.category}</span>
+                  <span className="text-xs text-folio-text-tertiary">{product.category}</span>
                 )}
                 <span className="text-xs font-medium text-[var(--accent)]">{product.requestCount} requests</span>
               </div>
@@ -153,31 +153,31 @@ export default function ActionItemsAnalytics() {
       {/* Shadow Profile Summary (for unclaimed vendors or as bonus insight) */}
       {data.shadowProfile && (
         <RidgeCard padding="lg">
-          <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3">Ecosystem Overview</h3>
+          <h3 className="text-sm font-semibold text-folio-text-primary mb-3">Ecosystem Overview</h3>
           <div className="grid grid-cols-3 gap-4 mb-3">
             <div>
-              <div className="text-lg font-semibold text-[var(--text-primary)]">{data.shadowProfile.totalProducts}</div>
-              <div className="text-xs text-[var(--text-tertiary)]">Products specified</div>
+              <div className="text-lg font-semibold text-folio-text-primary">{data.shadowProfile.totalProducts}</div>
+              <div className="text-xs text-folio-text-tertiary">Products specified</div>
             </div>
             <div>
-              <div className="text-lg font-semibold text-[var(--text-primary)]">{data.shadowProfile.totalProjects}</div>
-              <div className="text-xs text-[var(--text-tertiary)]">Projects</div>
+              <div className="text-lg font-semibold text-folio-text-primary">{data.shadowProfile.totalProjects}</div>
+              <div className="text-xs text-folio-text-tertiary">Projects</div>
             </div>
             <div>
-              <div className="text-lg font-semibold text-[var(--text-primary)]">{data.shadowProfile.totalDesigners}</div>
-              <div className="text-xs text-[var(--text-tertiary)]">Designers</div>
+              <div className="text-lg font-semibold text-folio-text-primary">{data.shadowProfile.totalDesigners}</div>
+              <div className="text-xs text-folio-text-tertiary">Designers</div>
             </div>
           </div>
 
           {data.shadowProfile.geoDistribution && (
             <div className="mt-3">
-              <div className="text-xs font-medium text-[var(--text-tertiary)] mb-1">Geographic Distribution</div>
+              <div className="text-xs font-medium text-folio-text-tertiary mb-1">Geographic Distribution</div>
               <div className="flex flex-wrap gap-1.5">
                 {Object.entries(data.shadowProfile.geoDistribution as Record<string, number>)
                   .sort(([, a], [, b]) => b - a)
                   .slice(0, 5)
                   .map(([location, pct]) => (
-                    <span key={location} className="text-xs px-2 py-0.5 rounded-full bg-[var(--bg-elevated)] text-[var(--text-secondary)]">
+                    <span key={location} className="text-xs px-2 py-0.5 rounded-full bg-surface-ground text-folio-text-secondary">
                       {location} {Math.round(pct * 100)}%
                     </span>
                   ))}

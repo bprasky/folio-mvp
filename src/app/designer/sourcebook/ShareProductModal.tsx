@@ -56,13 +56,13 @@ export default function ShareProductModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={onClose} />
       <div className="relative glass-surface rounded-2xl p-6 w-full max-w-md mx-4 shadow-xl">
-        <h3 className="folio-h3 text-[var(--text-primary)] mb-1">Share Product</h3>
-        <p className="text-sm text-[var(--text-secondary)] mb-4">
+        <h3 className="folio-h3 text-folio-text-primary mb-1">Share Product</h3>
+        <p className="text-sm text-folio-text-secondary mb-4">
           {productName} — {vendorName}
         </p>
 
         <div className="space-y-3 mb-4">
-          <div className="text-sm font-medium text-[var(--text-tertiary)]">Share via:</div>
+          <div className="text-sm font-medium text-folio-text-tertiary">Share via:</div>
           {[
             { id: 'link' as ShareMethod, label: 'Folio link (client can view on folioad.com)' },
             { id: 'email' as ShareMethod, label: 'Email (opens mail client)' },
@@ -77,13 +77,13 @@ export default function ShareProductModal({
                 onChange={() => setMethod(opt.id)}
                 className="accent-[var(--accent)]"
               />
-              <span className="text-sm text-[var(--text-primary)]">{opt.label}</span>
+              <span className="text-sm text-folio-text-primary">{opt.label}</span>
             </label>
           ))}
         </div>
 
         <div className="space-y-2 mb-4">
-          <div className="text-sm font-medium text-[var(--text-tertiary)]">Include:</div>
+          <div className="text-sm font-medium text-folio-text-tertiary">Include:</div>
           {[
             { id: 'image', label: 'Product image', checked: includeImage, onChange: setIncludeImage, show: !!productImageUrl },
             { id: 'name', label: 'Vendor & product name', checked: true, onChange: () => {}, show: true, disabled: true },
@@ -98,7 +98,7 @@ export default function ShareProductModal({
                 disabled={opt.disabled}
                 className="accent-[var(--accent)]"
               />
-              <span className="text-sm text-[var(--text-primary)]">{opt.label}</span>
+              <span className="text-sm text-folio-text-primary">{opt.label}</span>
             </label>
           ))}
         </div>

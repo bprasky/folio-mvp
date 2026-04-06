@@ -180,23 +180,23 @@ export default function DemoTour() {
 
       {/* Tooltip */}
       <div
-        className="fixed z-50 bg-[var(--bg-elevated)] rounded-lg shadow-xl p-4 max-w-sm"
+        className="fixed z-50 bg-surface-ground rounded-lg shadow-xl p-4 max-w-sm"
         style={tooltipStyle}
       >
         <div className="flex items-start justify-between mb-2">
           <div>
-            <h3 className="font-semibold text-[var(--text-primary)]">{step.title}</h3>
-            <p className="folio-ui text-[var(--text-secondary)] mt-1">{step.description}</p>
+            <h3 className="font-semibold text-folio-text-primary">{step.title}</h3>
+            <p className="folio-ui text-folio-text-secondary mt-1">{step.description}</p>
           </div>
         </div>
         <div className="flex items-center justify-between mt-4">
-          <span className="folio-meta text-[var(--text-tertiary)]">
+          <span className="folio-meta text-folio-text-tertiary">
             Step {currentStep + 1} of {tourSteps.length}
           </span>
           <div className="flex gap-2">
             <button
               onClick={handleSkip}
-              className="folio-meta text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+              className="folio-meta text-folio-text-secondary hover:text-folio-text-primary"
             >
               Skip
             </button>

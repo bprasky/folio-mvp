@@ -90,15 +90,15 @@ export default function ContactImportUploader({
         {isImporting ? (
           <div>
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent)] mb-3" />
-            <p className="text-sm text-[var(--text-secondary)]">Processing contacts...</p>
+            <p className="text-sm text-folio-text-secondary">Processing contacts...</p>
           </div>
         ) : (
           <div>
             <div className="text-3xl mb-3">📎</div>
-            <p className="text-sm font-medium text-[var(--text-primary)] mb-1">
+            <p className="text-sm font-medium text-folio-text-primary mb-1">
               Drop your contacts file here
             </p>
-            <p className="text-xs text-[var(--text-tertiary)]">
+            <p className="text-xs text-folio-text-tertiary">
               CSV or VCF/vCard format
             </p>
           </div>
@@ -109,7 +109,7 @@ export default function ContactImportUploader({
         <p className="text-sm text-red-600 mt-3">{error}</p>
       )}
 
-      <p className="text-xs text-[var(--text-tertiary)] mt-4">
+      <p className="text-xs text-folio-text-tertiary mt-4">
         Folio only reads your contacts to match them with vendors. We never send emails to your contacts without your explicit action.
       </p>
     </div>

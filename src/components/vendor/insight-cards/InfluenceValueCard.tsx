@@ -10,7 +10,7 @@ interface InsightCardProps {
 function InsightCard({ title, children }: InsightCardProps) {
   return (
     <div className="ridge-card p-6">
-      <h3 className="folio-ui font-semibold text-[var(--text-primary)] mb-4">{title}</h3>
+      <h3 className="folio-ui font-semibold text-folio-text-primary mb-4">{title}</h3>
       {children}
     </div>
   );
@@ -29,7 +29,7 @@ function ActionButton({
     "rounded-full px-3 py-1.5 folio-meta font-medium transition-colors";
   const classes =
     variant === "outline"
-      ? `${baseClasses} border border-[var(--ridge-outer)] bg-[var(--bg-base)] text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]`
+      ? `${baseClasses} border border-folio-border-subtle bg-surface-canvas text-folio-text-primary hover:bg-surface-ground`
       : `${baseClasses} bg-[var(--text-primary)] text-[var(--bg-base)] hover:opacity-90`;
 
   return (
@@ -85,11 +85,11 @@ export function InfluenceValueCard({
 
   return (
     <InsightCard title="What is my current influence value across active projects?">
-      <div className="text-5xl font-light text-[var(--text-primary)]">
+      <div className="text-5xl font-light text-folio-text-primary">
         ${(totalInfluence / 1000000).toFixed(2)}M
       </div>
       <div className="folio-ui text-green-600 mt-1">↑{change}% vs last 30 days</div>
-      <div className="folio-ui text-[var(--text-secondary)] mt-2">
+      <div className="folio-ui text-folio-text-secondary mt-2">
         across {activeProjects.length} active projects . {influencePercentage.toFixed(1)}% of total budget
       </div>
 
@@ -107,7 +107,7 @@ export function InfluenceValueCard({
 
       <button
         onClick={handleClick}
-        className="mt-4 folio-ui text-[var(--text-secondary)] underline underline-offset-4 hover:text-[var(--text-primary)]"
+        className="mt-4 folio-ui text-folio-text-secondary underline underline-offset-4 hover:text-folio-text-primary"
       >
         Dive deeper →
       </button>

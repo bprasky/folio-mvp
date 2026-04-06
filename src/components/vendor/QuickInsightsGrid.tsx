@@ -50,9 +50,9 @@ export default function QuickInsightsGrid({ data, onSelectInsight }: QuickInsigh
       // Simple number with delta
       return (
         <div className="mt-2 flex items-baseline gap-2">
-          <span className="text-2xl font-semibold text-[var(--text-primary)]">{insight.metricValue}</span>
+          <span className="text-2xl font-semibold text-folio-text-primary">{insight.metricValue}</span>
           {insight.metricDelta !== undefined && (
-            <span className="text-sm text-[var(--text-secondary)]">
+            <span className="text-sm text-folio-text-secondary">
               {insight.metricDelta > 0 ? "↑" : "↓"} {Math.abs(insight.metricDelta)}%
             </span>
           )}
@@ -63,9 +63,9 @@ export default function QuickInsightsGrid({ data, onSelectInsight }: QuickInsigh
     // Default: simple metric display
     return (
       <div className="mt-2">
-        <div className="text-2xl font-semibold text-[var(--text-primary)]">{insight.metricValue}</div>
+        <div className="text-2xl font-semibold text-folio-text-primary">{insight.metricValue}</div>
         {insight.metricDelta !== undefined && (
-          <div className="text-sm text-[var(--text-secondary)] mt-1">
+          <div className="text-sm text-folio-text-secondary mt-1">
             {insight.metricDelta > 0 ? "↑" : "↓"} {Math.abs(insight.metricDelta)}
           </div>
         )}
@@ -81,10 +81,10 @@ export default function QuickInsightsGrid({ data, onSelectInsight }: QuickInsigh
           onClick={() => onSelectInsight?.(insight.id)}
           className="text-left ridge-card p-6 hover:shadow-md transition-all duration-200"
         >
-          <h3 className="folio-ui font-semibold text-[var(--text-primary)] mb-2 line-clamp-2">
+          <h3 className="folio-ui font-semibold text-folio-text-primary mb-2 line-clamp-2">
             {insight.question}
           </h3>
-          <p className="folio-ui text-[var(--text-secondary)] mb-4 line-clamp-2">
+          <p className="folio-ui text-folio-text-secondary mb-4 line-clamp-2">
             {insight.summary}
           </p>
           {renderMiniVisual(insight)}

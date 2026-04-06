@@ -15,15 +15,15 @@ export function MaterialsSection({ post }: MaterialsSectionProps) {
   return (
     <section className="mx-auto max-w-4xl px-3 md:px-0">
       <div className="px-6 py-5 md:px-8 md:py-6 space-y-4">
-        <h2 className="folio-ui tracking-[0.16em] uppercase text-[var(--text-secondary)]">
+        <h2 className="folio-ui tracking-[0.16em] uppercase text-folio-text-secondary">
           Materials
         </h2>
         <ul className="space-y-2">
           {items.map((item: any, idx: number) => (
-            <li key={idx} className="folio-meta text-[var(--text-primary)]">
+            <li key={idx} className="folio-meta text-folio-text-primary">
               <span className="font-medium">{item.name}</span>
-              {item.finish && <span className="text-[var(--text-secondary)]"> • {item.finish}</span>}
-              {item.note && <span className="text-[var(--text-secondary)] folio-meta"> • {item.note}</span>}
+              {item.finish && <span className="text-folio-text-secondary"> • {item.finish}</span>}
+              {item.note && <span className="text-folio-text-secondary folio-meta"> • {item.note}</span>}
             </li>
           ))}
         </ul>

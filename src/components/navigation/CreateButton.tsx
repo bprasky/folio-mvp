@@ -40,7 +40,7 @@ export function CreateButton() {
         <div ref={menuRef} className="relative">
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="flex items-center gap-1.5 px-3 py-1.5 folio-ui text-[var(--bg-base)] bg-[var(--text-primary)] rounded-full hover:opacity-90 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 folio-ui text-surface-canvas bg-folio-text-primary rounded-full hover:opacity-90 transition-colors"
             aria-label="Create menu"
           >
             <Plus className="h-4 w-4" />
@@ -49,42 +49,42 @@ export function CreateButton() {
           </button>
 
           {isOpen && (
-            <div className="absolute right-0 mt-2 w-56 rounded-xl border border-[var(--ridge-outer)] bg-[var(--bg-base)] shadow-lg py-2 z-50">
+            <div className="absolute right-0 mt-2 w-56 rounded-xl border border-folio-border-subtle bg-surface-canvas shadow-lg py-2 z-50">
               <button
                 onClick={() => {
                   setIsOpen(false);
                   setShowCollaborationModal(true);
                 }}
-                className="flex w-full items-center gap-3 px-4 py-2.5 folio-ui text-[var(--text-primary)] hover:bg-[var(--bg-elevated)] transition-colors"
+                className="flex w-full items-center gap-3 px-4 py-2.5 folio-ui text-folio-text-primary hover:bg-surface-ground transition-colors"
               >
-                <FileText className="h-4 w-4 text-[var(--text-secondary)]" />
+                <FileText className="h-4 w-4 text-folio-text-secondary" />
                 <div className="text-left">
                   <span className="block">Collaboration Story</span>
-                  <span className="text-xs text-[var(--text-secondary)]">Invite a designer</span>
+                  <span className="text-xs text-folio-text-secondary">Invite a designer</span>
                 </div>
               </button>
 
               <Link
                 href="/vendor/products/new"
                 onClick={() => setIsOpen(false)}
-                className="flex items-center gap-3 px-4 py-2.5 folio-ui text-[var(--text-primary)] hover:bg-[var(--bg-elevated)] transition-colors"
+                className="flex items-center gap-3 px-4 py-2.5 folio-ui text-folio-text-primary hover:bg-surface-ground transition-colors"
               >
-                <Package className="h-4 w-4 text-[var(--text-secondary)]" />
+                <Package className="h-4 w-4 text-folio-text-secondary" />
                 <div className="text-left">
                   <span className="block">Add Product</span>
-                  <span className="text-xs text-[var(--text-secondary)]">Import from URL</span>
+                  <span className="text-xs text-folio-text-secondary">Import from URL</span>
                 </div>
               </Link>
 
               <Link
                 href="/vendor/create-project"
                 onClick={() => setIsOpen(false)}
-                className="flex items-center gap-3 px-4 py-2.5 folio-ui text-[var(--text-primary)] hover:bg-[var(--bg-elevated)] transition-colors"
+                className="flex items-center gap-3 px-4 py-2.5 folio-ui text-folio-text-primary hover:bg-surface-ground transition-colors"
               >
-                <FolderPlus className="h-4 w-4 text-[var(--text-secondary)]" />
+                <FolderPlus className="h-4 w-4 text-folio-text-secondary" />
                 <div className="text-left">
                   <span className="block">Project Handoff</span>
-                  <span className="text-xs text-[var(--text-secondary)]">Create for a designer</span>
+                  <span className="text-xs text-folio-text-secondary">Create for a designer</span>
                 </div>
               </Link>
             </div>
@@ -104,7 +104,7 @@ export function CreateButton() {
   return (
     <Link
       href="/projects/new"
-      className="flex items-center gap-1.5 px-3 py-1.5 folio-ui text-[var(--bg-base)] bg-[var(--text-primary)] rounded-full hover:opacity-90 transition-colors"
+      className="flex items-center gap-1.5 px-3 py-1.5 folio-ui text-surface-canvas bg-folio-text-primary rounded-full hover:opacity-90 transition-colors"
     >
       <Plus className="h-4 w-4" />
       <span className="hidden sm:inline">Create</span>

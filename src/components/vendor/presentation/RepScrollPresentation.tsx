@@ -92,7 +92,7 @@ export default function RepScrollPresentation({
   const designer = triggerTag?.designer;
 
   return (
-    <div className="min-h-screen bg-[var(--bg-base)]">
+    <div className="min-h-screen bg-surface-canvas">
 
       {/* Section 1: The Hook */}
       <ScrollSection
@@ -129,21 +129,21 @@ export default function RepScrollPresentation({
                 </div>
               )}
 
-              <h1 className="font-[var(--font-headline)] text-folio-h2 md:text-folio-h1 text-[var(--text-primary)] mb-4">
+              <h1 className="font-[var(--font-headline)] text-folio-h2 md:text-folio-h1 text-folio-text-primary mb-4">
                 {designer?.name || 'A designer'} tagged your {triggerTag?.product?.name || 'product'}
               </h1>
 
               {triggerTag?.project && (
-                <p className="text-folio-body text-[var(--text-secondary)] mb-4">
+                <p className="text-folio-body text-folio-text-secondary mb-4">
                   In their project: <strong>{triggerTag.project.title}</strong>
                 </p>
               )}
 
               {triggerTag?.quote && (
-                <blockquote className="border-l-3 border-[var(--accent)] pl-4 text-folio-body text-[var(--text-secondary)] italic mb-4">
+                <blockquote className="border-l-3 border-[var(--accent)] pl-4 text-folio-body text-folio-text-secondary italic mb-4">
                   &ldquo;{triggerTag.quote}&rdquo;
                   {designer && (
-                    <span className="block text-folio-meta text-[var(--text-tertiary)] mt-1 not-italic">
+                    <span className="block text-folio-meta text-folio-text-tertiary mt-1 not-italic">
                       — {designer.name}{designer.companyName ? `, ${designer.companyName}` : ''}
                     </span>
                   )}
@@ -151,7 +151,7 @@ export default function RepScrollPresentation({
               )}
 
               {designer && (
-                <p className="text-folio-meta text-[var(--text-tertiary)]">
+                <p className="text-folio-meta text-folio-text-tertiary">
                   {designer.followerCount.toLocaleString()} followers on Folio
                 </p>
               )}
@@ -167,10 +167,10 @@ export default function RepScrollPresentation({
         animation="fade-up"
       >
         <div className="text-center mb-12">
-          <h2 className="font-[var(--font-headline)] text-folio-h2 text-[var(--text-primary)] mb-4">
+          <h2 className="font-[var(--font-headline)] text-folio-h2 text-folio-text-primary mb-4">
             What just happened
           </h2>
-          <p className="text-folio-body text-[var(--text-secondary)] max-w-2xl mx-auto">
+          <p className="text-folio-body text-folio-text-secondary max-w-2xl mx-auto">
             A designer used your product in their project and tagged it on Folio.
             This creates automatic attribution — visible to their followers and your entire industry.
           </p>
@@ -194,11 +194,11 @@ export default function RepScrollPresentation({
               <div className="w-10 h-10 rounded-full bg-[var(--text-primary)] text-white flex items-center justify-center font-semibold text-sm">
                 {step.icon}
               </div>
-              <span className="text-folio-body text-[var(--text-primary)] font-medium">
+              <span className="text-folio-body text-folio-text-primary font-medium">
                 {step.label}
               </span>
               {i < 2 && (
-                <span className="hidden md:block text-[var(--text-tertiary)] text-2xl ml-4">
+                <span className="hidden md:block text-folio-text-tertiary text-2xl ml-4">
                   &rarr;
                 </span>
               )}
@@ -208,7 +208,7 @@ export default function RepScrollPresentation({
 
         {/* Live stats */}
         {stats && (
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-6 bg-[#F5F3EF] rounded-neu-lg p-8">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-6 bg-surface-elevated rounded-neu-lg p-8">
             <LiveMetric value={stats.productsTagged} label="Products Tagged" />
             <LiveMetric value={stats.uniqueDesigners} label="Unique Designers" />
             <LiveMetric value={stats.projectsFeaturedIn} label="Projects Featured In" />
@@ -223,7 +223,7 @@ export default function RepScrollPresentation({
         animation="fade-up"
         bg="elevated"
       >
-        <h2 className="font-[var(--font-headline)] text-folio-h2 text-[var(--text-primary)] text-center mb-12">
+        <h2 className="font-[var(--font-headline)] text-folio-h2 text-folio-text-primary text-center mb-12">
           What you can do
         </h2>
 
@@ -264,19 +264,19 @@ export default function RepScrollPresentation({
           ].map((card, i) => (
             <motion.div
               key={card.title}
-              className="bg-[var(--bg-base)] rounded-neu p-6 shadow-neu-raised"
+              className="bg-surface-canvas rounded-neu p-6 shadow-neu-raised"
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.15, duration: 0.5 }}
             >
-              <div className="w-12 h-12 rounded-neu-sm bg-[#F5F3EF] flex items-center justify-center text-[var(--accent)] mb-4">
+              <div className="w-12 h-12 rounded-neu-sm bg-surface-elevated flex items-center justify-center text-[var(--accent)] mb-4">
                 {card.icon}
               </div>
-              <h3 className="text-folio-ui text-[var(--text-primary)] font-semibold mb-2">
+              <h3 className="text-folio-ui text-folio-text-primary font-semibold mb-2">
                 {card.title}
               </h3>
-              <p className="text-folio-meta text-[var(--text-secondary)]">
+              <p className="text-folio-meta text-folio-text-secondary">
                 {card.description}
               </p>
             </motion.div>
@@ -291,10 +291,10 @@ export default function RepScrollPresentation({
         animation="fade-up"
       >
         <div className="text-center mb-10">
-          <h2 className="font-[var(--font-headline)] text-folio-h2 text-[var(--text-primary)] mb-4">
+          <h2 className="font-[var(--font-headline)] text-folio-h2 text-folio-text-primary mb-4">
             Earn Folio Credits
           </h2>
-          <p className="text-folio-body text-[var(--text-secondary)] max-w-2xl mx-auto">
+          <p className="text-folio-body text-folio-text-secondary max-w-2xl mx-auto">
             When designers tag your products, they earn credits. When you engage and
             activate your vendor page, you earn them too. Credits unlock premium
             features across the Folio platform.
@@ -302,11 +302,11 @@ export default function RepScrollPresentation({
         </div>
 
         {/* Invite admin CTA */}
-        <div className="bg-[#F5F3EF] rounded-neu-lg p-8 max-w-lg mx-auto">
-          <h3 className="text-folio-ui text-[var(--text-primary)] font-semibold mb-2">
+        <div className="bg-surface-elevated rounded-neu-lg p-8 max-w-lg mx-auto">
+          <h3 className="text-folio-ui text-folio-text-primary font-semibold mb-2">
             Invite your admin to unlock everything
           </h3>
-          <p className="text-folio-meta text-[var(--text-secondary)] mb-4">
+          <p className="text-folio-meta text-folio-text-secondary mb-4">
             Full designer details, analytics, and the founding vendor program
             require admin activation.
           </p>
@@ -325,7 +325,7 @@ export default function RepScrollPresentation({
                 value={inviteEmail}
                 onChange={(e) => setInviteEmail(e.target.value)}
                 placeholder="admin@yourcompany.com"
-                className="flex-1 px-4 py-2.5 border border-[#E8E4DF] rounded-neu-btn text-folio-body bg-white focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                className="flex-1 px-4 py-2.5 border border-folio-border-subtle rounded-neu-btn text-folio-body bg-white focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
               />
               <button
                 onClick={handleInviteAdmin}
@@ -346,7 +346,7 @@ export default function RepScrollPresentation({
         animation="fade-up"
         bg="warm"
       >
-        <h2 className="font-[var(--font-headline)] text-folio-h2 text-[var(--text-primary)] text-center mb-12">
+        <h2 className="font-[var(--font-headline)] text-folio-h2 text-folio-text-primary text-center mb-12">
           What happens next
         </h2>
 
@@ -389,7 +389,7 @@ export default function RepScrollPresentation({
                 className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
                   item.done
                     ? 'bg-[var(--accent)] text-white'
-                    : 'bg-[#E8E4DF] text-[var(--text-tertiary)]'
+                    : 'bg-folio-border-subtle text-folio-text-tertiary'
                 }`}
               >
                 {item.done ? (
@@ -401,10 +401,10 @@ export default function RepScrollPresentation({
                 )}
               </div>
               <div>
-                <h3 className="text-folio-ui font-medium text-[var(--text-primary)]">
+                <h3 className="text-folio-ui font-medium text-folio-text-primary">
                   {item.title}
                 </h3>
-                <p className="text-folio-meta text-[var(--text-secondary)]">
+                <p className="text-folio-meta text-folio-text-secondary">
                   {item.description}
                 </p>
               </div>

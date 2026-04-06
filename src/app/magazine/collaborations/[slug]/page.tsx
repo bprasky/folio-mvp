@@ -79,7 +79,7 @@ export default async function CollaborationStoryPage({ params }: PageProps) {
   const blocks = (story.finalContent as any[]) || [];
 
   return (
-    <div className="min-h-screen bg-[#F6F4F1]">
+    <div className="min-h-screen bg-surface-elevated">
       <div className="max-w-4xl mx-auto px-4 py-8 md:py-12">
         <CollaborationStoryView
           story={{

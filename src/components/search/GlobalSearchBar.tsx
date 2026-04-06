@@ -49,7 +49,7 @@ export default function GlobalSearchBar({
         {!isExpanded ? (
           <button
             onClick={() => setIsExpanded(true)}
-            className="p-2 text-[#4A4A4A] hover:text-[#1A1A1A] transition-colors"
+            className="p-2 text-[#4A4A4A] hover:text-folio-text-primary transition-colors"
             aria-label="Open search"
           >
             <Search size={20} />
@@ -65,9 +65,9 @@ export default function GlobalSearchBar({
                 onKeyDown={handleKeyDown}
                 onBlur={() => { if (!query) setIsExpanded(false); }}
                 placeholder={placeholder}
-                className="w-48 md:w-64 pl-3 pr-8 py-1.5 text-sm border border-[#E0E0E0] rounded-sm 
+                className="w-48 md:w-64 pl-3 pr-8 py-1.5 text-sm border border-folio-border-subtle rounded-sm 
                            focus:outline-none focus:border-[#1A1A1A] bg-white
-                           font-sans text-[#1A1A1A] placeholder:text-[#9A9A9A]"
+                           font-sans text-folio-text-primary placeholder:text-[#9A9A9A]"
               />
               <button
                 type="button"
@@ -94,9 +94,9 @@ export default function GlobalSearchBar({
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
-          className="w-full pl-9 pr-4 py-2 text-sm border border-[#E0E0E0] rounded-sm 
+          className="w-full pl-9 pr-4 py-2 text-sm border border-folio-border-subtle rounded-sm 
                      focus:outline-none focus:border-[#1A1A1A] bg-white
-                     font-sans text-[#1A1A1A] placeholder:text-[#9A9A9A] transition-colors"
+                     font-sans text-folio-text-primary placeholder:text-[#9A9A9A] transition-colors"
         />
         {query && (
           <button

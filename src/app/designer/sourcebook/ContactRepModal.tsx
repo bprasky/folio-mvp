@@ -81,9 +81,9 @@ export default function ContactRepModal({
       <div className="relative glass-surface rounded-2xl p-6 w-full max-w-lg mx-4 shadow-xl">
         <div className="flex items-center gap-2 mb-1">
           <span className="text-lg">💬</span>
-          <h3 className="folio-h3 text-[var(--text-primary)]">Contact Rep</h3>
+          <h3 className="folio-h3 text-folio-text-primary">Contact Rep</h3>
         </div>
-        <p className="text-sm text-[var(--text-secondary)] mb-4">
+        <p className="text-sm text-folio-text-secondary mb-4">
           {productName} — {vendorName}
         </p>
 
@@ -92,7 +92,7 @@ export default function ContactRepModal({
           onChange={(e) => setMessage(e.target.value)}
           placeholder="Quick question about finishes, lead times, pricing..."
           rows={5}
-          className="w-full px-3 py-2 bg-white border border-[#E8E6E3] rounded-lg text-[#2C2925] placeholder-[#A39E97] focus:outline-none focus:border-[#C9C4BC] transition-all resize-none"
+          className="w-full px-3 py-2 bg-white border border-folio-border-subtle rounded-lg text-folio-text-primary placeholder-[#A39E97] focus:outline-none focus:border-folio-border-strong transition-all resize-none"
         />
 
         {error && <p className="text-sm text-red-600 mt-3">{error}</p>}

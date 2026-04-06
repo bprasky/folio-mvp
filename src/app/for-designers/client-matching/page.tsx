@@ -12,7 +12,7 @@ export default function ClientMatchingPillarPage() {
     <div className="bg-[#FAF9F6]">
       {/* Breadcrumb */}
       <div className="max-w-3xl mx-auto px-6 pt-8">
-        <Link href="/for-designers" className="text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">
+        <Link href="/for-designers" className="text-sm text-folio-text-secondary hover:text-folio-text-primary transition-colors">
           &larr; For Designers
         </Link>
       </div>
@@ -20,10 +20,10 @@ export default function ClientMatchingPillarPage() {
       {/* Hero */}
       <section className="pt-12 pb-8 px-6">
         <div className="max-w-3xl mx-auto">
-          <h1 className="font-headline italic text-5xl md:text-6xl text-[var(--text-primary)] leading-[1.1] mb-6">
+          <h1 className="font-headline italic text-5xl md:text-6xl text-folio-text-primary leading-[1.1] mb-6">
             Find clients whose taste already matches yours.
           </h1>
-          <p className="text-lg text-[var(--text-secondary)] leading-relaxed">
+          <p className="text-lg text-folio-text-secondary leading-relaxed">
             The right client relationship starts before the first conversation.
           </p>
         </div>
@@ -31,7 +31,7 @@ export default function ClientMatchingPillarPage() {
 
       {/* Body */}
       <section className="py-8 px-6">
-        <div className="max-w-3xl mx-auto space-y-6 text-[var(--text-primary)] leading-relaxed">
+        <div className="max-w-3xl mx-auto space-y-6 text-folio-text-primary leading-relaxed">
           <p>
             The most common source of friction in a design engagement isn&rsquo;t budget or
             timeline &mdash; it&rsquo;s misaligned taste. A client who found you through a generic
@@ -53,7 +53,7 @@ export default function ClientMatchingPillarPage() {
 
       {/* Coming soon badge */}
       <div className="max-w-3xl mx-auto px-6 pb-4">
-        <p className="text-sm text-[var(--text-tertiary)] italic">
+        <p className="text-sm text-folio-text-tertiary italic">
           Client matching &mdash; coming soon.
         </p>
       </div>

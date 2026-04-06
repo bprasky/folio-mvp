@@ -153,17 +153,17 @@ export default function AIOnboardingFlow({
               <FaRobot className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="font-bold text-[var(--text-primary)]">{projectName}</h1>
-              <p className="text-sm text-[var(--text-secondary)]">Step {currentStep} of {totalSteps}</p>
+              <h1 className="font-bold text-folio-text-primary">{projectName}</h1>
+              <p className="text-sm text-folio-text-secondary">Step {currentStep} of {totalSteps}</p>
             </div>
           </div>
-          <button onClick={onClose} className="text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]">
+          <button onClick={onClose} className="text-folio-text-tertiary hover:text-folio-text-secondary">
             <FaTimes className="w-6 h-6" />
           </button>
         </div>
 
         <div className="mb-8">
-          <div className="w-full bg-[var(--bg-elevated)] rounded-full h-2">
+          <div className="w-full bg-surface-ground rounded-full h-2">
             <motion.div
               className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full"
               animate={{ width: `${(currentStep / totalSteps) * 100}%` }}
@@ -172,15 +172,15 @@ export default function AIOnboardingFlow({
         </div>
 
         <div className="mb-8">
-          <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-2">AI Setup Step {currentStep}</h2>
-          <p className="text-[var(--text-secondary)]">Configuring your project preferences...</p>
+          <h2 className="text-2xl font-bold text-folio-text-primary mb-2">AI Setup Step {currentStep}</h2>
+          <p className="text-folio-text-secondary">Configuring your project preferences...</p>
         </div>
 
         <div className="flex justify-between">
           <button
             onClick={handleBack}
             disabled={currentStep === 1}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)]"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-folio-text-secondary hover:bg-surface-ground"
           >
             <FaArrowLeft className="w-4 h-4" />
             Back

@@ -55,7 +55,7 @@ export default function ThreeDPreview({ glbUrl, onClose }: ThreeDPreviewProps) {
             <div className="flex items-center justify-center h-full text-white">
               <div className="text-center">
                 <p className="text-lg mb-2">Failed to load 3D model</p>
-                <p className="text-sm text-[var(--text-tertiary)]">{error}</p>
+                <p className="text-sm text-folio-text-tertiary">{error}</p>
               </div>
             </div>
           ) : (

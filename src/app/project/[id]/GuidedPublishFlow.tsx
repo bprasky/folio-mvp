@@ -122,23 +122,23 @@ export default function GuidedPublishFlow({ project, imageCount, images, project
   return (
     <div className="mt-8 space-y-4">
       {/* Divider */}
-      <div className="border-t border-[var(--border-default)] pt-6">
-        <h3 className="folio-ui font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-4">
+      <div className="border-t border-folio-border-subtle pt-6">
+        <h3 className="folio-ui font-semibold text-folio-text-secondary uppercase tracking-wider mb-4">
           Ready to publish?
         </h3>
       </div>
 
       {/* Project Summary Card */}
-      <div className="rounded-[20px] border border-[var(--border-default)] bg-[var(--bg-elevated)] shadow-sm overflow-hidden">
+      <div className="rounded-[20px] border border-folio-border-subtle bg-surface-ground shadow-sm overflow-hidden">
         <button
           onClick={() => setSummaryExpanded(!summaryExpanded)}
           className="w-full flex items-center justify-between px-6 py-4 text-left"
         >
-          <h3 className="folio-h3 text-[var(--text-primary)]">Project Details</h3>
+          <h3 className="folio-h3 text-folio-text-primary">Project Details</h3>
           {summaryExpanded ? (
-            <ChevronUp className="w-5 h-5 text-[var(--text-tertiary)]" />
+            <ChevronUp className="w-5 h-5 text-folio-text-tertiary" />
           ) : (
-            <ChevronDown className="w-5 h-5 text-[var(--text-tertiary)]" />
+            <ChevronDown className="w-5 h-5 text-folio-text-tertiary" />
           )}
         </button>
 
@@ -148,8 +148,8 @@ export default function GuidedPublishFlow({ project, imageCount, images, project
             <div className="flex items-start gap-3">
               <Sparkles className="w-4 h-4 text-[var(--accent)] mt-0.5 shrink-0" />
               <div>
-                <p className="folio-meta text-[var(--text-tertiary)]">Title</p>
-                <p className="folio-body text-[var(--text-primary)]">{project.title || "Untitled Project"}</p>
+                <p className="folio-meta text-folio-text-tertiary">Title</p>
+                <p className="folio-body text-folio-text-primary">{project.title || "Untitled Project"}</p>
               </div>
             </div>
 
@@ -158,8 +158,8 @@ export default function GuidedPublishFlow({ project, imageCount, images, project
               <div className="flex items-start gap-3">
                 <LayoutGrid className="w-4 h-4 text-[var(--accent)] mt-0.5 shrink-0" />
                 <div>
-                  <p className="folio-meta text-[var(--text-tertiary)]">Type</p>
-                  <p className="folio-body text-[var(--text-primary)]">{typeLabel}</p>
+                  <p className="folio-meta text-folio-text-tertiary">Type</p>
+                  <p className="folio-body text-folio-text-primary">{typeLabel}</p>
                 </div>
               </div>
             )}
@@ -169,8 +169,8 @@ export default function GuidedPublishFlow({ project, imageCount, images, project
               <div className="flex items-start gap-3">
                 <MapPin className="w-4 h-4 text-[var(--accent)] mt-0.5 shrink-0" />
                 <div>
-                  <p className="folio-meta text-[var(--text-tertiary)]">Location</p>
-                  <p className="folio-body text-[var(--text-primary)]">{location}</p>
+                  <p className="folio-meta text-folio-text-tertiary">Location</p>
+                  <p className="folio-body text-folio-text-primary">{location}</p>
                 </div>
               </div>
             )}
@@ -179,11 +179,11 @@ export default function GuidedPublishFlow({ project, imageCount, images, project
             <div className="flex items-center gap-3 pt-2">
               <ImageIcon className="w-4 h-4 text-[var(--accent)] shrink-0" />
               <div className="flex items-center gap-4">
-                <span className="folio-ui text-[var(--text-secondary)]">
+                <span className="folio-ui text-folio-text-secondary">
                   {imageCount} {imageCount === 1 ? "image" : "images"}
                 </span>
                 {roomCount > 0 && (
-                  <span className="folio-ui text-[var(--text-secondary)]">
+                  <span className="folio-ui text-folio-text-secondary">
                     {roomCount} {roomCount === 1 ? "room" : "rooms"}
                   </span>
                 )}
@@ -197,9 +197,9 @@ export default function GuidedPublishFlow({ project, imageCount, images, project
           Only EMPTY and INTERVIEWED render here; GENERATED/UNPUBLISHED use the Publish tab. */}
       {/* Skip decision branch — shown after declining finish schedule upload */}
       {showSkipDecision && (
-        <div className="rounded-[20px] border border-[var(--border-default)] bg-[var(--bg-elevated)] p-6 space-y-3">
-          <h4 className="folio-ui font-semibold text-[var(--text-primary)]">What would you like to do?</h4>
-          <p className="folio-meta text-[var(--text-secondary)]">
+        <div className="rounded-[20px] border border-folio-border-subtle bg-surface-ground p-6 space-y-3">
+          <h4 className="folio-ui font-semibold text-folio-text-primary">What would you like to do?</h4>
+          <p className="folio-meta text-folio-text-secondary">
             You can tag products on your images now, or go straight to the interview.
           </p>
           <div className="flex gap-3">
@@ -211,7 +211,7 @@ export default function GuidedPublishFlow({ project, imageCount, images, project
             </button>
             <button
               onClick={handleSkipDecisionTag}
-              className="flex-1 px-4 py-3 folio-ui font-medium text-[var(--text-primary)] bg-[var(--bg-base)] border border-[var(--border-default)] rounded-2xl hover:bg-[var(--bg-elevated)] transition-colors flex items-center justify-center gap-2"
+              className="flex-1 px-4 py-3 folio-ui font-medium text-folio-text-primary bg-surface-canvas border border-folio-border-subtle rounded-2xl hover:bg-surface-ground transition-colors flex items-center justify-center gap-2"
             >
               <Tag className="w-4 h-4" />
               Tag Products First
@@ -231,7 +231,7 @@ export default function GuidedPublishFlow({ project, imageCount, images, project
           </button>
           <button
             onClick={handleOpenInterview}
-            className="px-6 py-4 folio-ui font-medium text-[var(--text-secondary)] bg-[var(--bg-base)] border border-[var(--border-default)] rounded-2xl hover:bg-[var(--bg-elevated)] transition-colors"
+            className="px-6 py-4 folio-ui font-medium text-folio-text-secondary bg-surface-canvas border border-folio-border-subtle rounded-2xl hover:bg-surface-ground transition-colors"
           >
             Redo Interview
           </button>
@@ -249,7 +249,7 @@ export default function GuidedPublishFlow({ project, imageCount, images, project
       {/* Entry Point B: Tag Products secondary button — always visible */}
       <button
         onClick={() => setShowTagger(true)}
-        className="w-full px-4 py-3 folio-ui font-medium text-[var(--text-secondary)] bg-transparent border border-[var(--border-default)] rounded-2xl hover:bg-[var(--bg-elevated)] transition-colors flex items-center justify-center gap-2"
+        className="w-full px-4 py-3 folio-ui font-medium text-folio-text-secondary bg-transparent border border-folio-border-subtle rounded-2xl hover:bg-surface-ground transition-colors flex items-center justify-center gap-2"
       >
         <Tag className="w-4 h-4" />
         Tag Products

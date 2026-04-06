@@ -93,23 +93,23 @@ export default function PublishPanel({ projectId, project, images, isOwner }: Pu
 
   if (isLoading) {
     return (
-      <div className="p-8 text-center text-[var(--text-secondary)]">Loading...</div>
+      <div className="p-8 text-center text-folio-text-secondary">Loading...</div>
     );
   }
 
   return (
     <div className="max-w-3xl space-y-6">
       {/* Readiness Checklist */}
-      <div className="rounded-[20px] border border-[var(--border-default)] bg-[var(--bg-elevated)] shadow-sm overflow-hidden">
+      <div className="rounded-[20px] border border-folio-border-subtle bg-surface-ground shadow-sm overflow-hidden">
         <button
           onClick={() => setChecklistExpanded(!checklistExpanded)}
           className="w-full flex items-center justify-between px-6 py-4 text-left"
         >
-          <h2 className="folio-h3 text-[var(--text-primary)]">Readiness</h2>
+          <h2 className="folio-h3 text-folio-text-primary">Readiness</h2>
           {checklistExpanded ? (
-            <ChevronUp className="w-5 h-5 text-[var(--text-tertiary)]" />
+            <ChevronUp className="w-5 h-5 text-folio-text-tertiary" />
           ) : (
-            <ChevronDown className="w-5 h-5 text-[var(--text-tertiary)]" />
+            <ChevronDown className="w-5 h-5 text-folio-text-tertiary" />
           )}
         </button>
 
@@ -129,7 +129,7 @@ export default function PublishPanel({ projectId, project, images, isOwner }: Pu
             <ReadinessItem done={hasCover} label="Cover image selected" required />
 
             {/* Recommended items */}
-            <div className="border-t border-[var(--border-default)] pt-2 mt-3">
+            <div className="border-t border-folio-border-subtle pt-2 mt-3">
               <ReadinessItem
                 done={hasReflections}
                 label="Story reflections added"
@@ -146,8 +146,8 @@ export default function PublishPanel({ projectId, project, images, isOwner }: Pu
       </div>
 
       {/* Draft Section */}
-      <div className="rounded-[20px] border border-[var(--border-default)] bg-[var(--bg-elevated)] p-6 shadow-sm">
-        <h2 className="folio-h3 text-[var(--text-primary)] mb-4">Draft</h2>
+      <div className="rounded-[20px] border border-folio-border-subtle bg-surface-ground p-6 shadow-sm">
+        <h2 className="folio-h3 text-folio-text-primary mb-4">Draft</h2>
 
         {currentLead?.kicker || currentLead?.title ? (
           <div className="space-y-3">
@@ -158,7 +158,7 @@ export default function PublishPanel({ projectId, project, images, isOwner }: Pu
                   className={`px-2 py-1 rounded folio-meta font-medium ${
                     currentPost.status === "PUBLISHED"
                       ? "bg-[var(--accent)]/10 text-[var(--accent)]"
-                      : "bg-[var(--bg-base)] text-[var(--text-secondary)]"
+                      : "bg-surface-canvas text-folio-text-secondary"
                   }`}
                 >
                   {currentPost.status}
@@ -166,16 +166,16 @@ export default function PublishPanel({ projectId, project, images, isOwner }: Pu
               </div>
             )}
 
-            <p className="folio-body font-medium text-[var(--text-primary)]">
+            <p className="folio-body font-medium text-folio-text-primary">
               {currentLead.kicker || currentLead.title}
             </p>
             {(currentLead.deck || (currentLead as any).dek) && (
-              <p className="folio-ui text-[var(--text-secondary)] leading-relaxed">
+              <p className="folio-ui text-folio-text-secondary leading-relaxed">
                 {currentLead.deck || (currentLead as any).dek}
               </p>
             )}
 
-            <div className="mt-4 space-y-2 folio-ui text-[var(--text-secondary)]">
+            <div className="mt-4 space-y-2 folio-ui text-folio-text-secondary">
               {currentSections
                 .filter((s: any) => s.type === "narrative" && s.body)
                 .slice(0, 3)
@@ -188,14 +188,14 @@ export default function PublishPanel({ projectId, project, images, isOwner }: Pu
 
             {currentSections.filter((s: any) => s.type === "narrative" && s.body)
               .length === 0 && (
-              <p className="folio-ui text-[var(--text-tertiary)] italic">
+              <p className="folio-ui text-folio-text-tertiary italic">
                 No narrative sections yet. Generate a draft to see preview.
               </p>
             )}
 
             {/* Published post link */}
             {currentPost?.status === "PUBLISHED" && currentPost?.slug && (
-              <div className="mt-4 pt-4 border-t border-[var(--border-default)]">
+              <div className="mt-4 pt-4 border-t border-folio-border-subtle">
                 <a
                   href={`/p/${currentPost.slug}`}
                   target="_blank"
@@ -208,11 +208,11 @@ export default function PublishPanel({ projectId, project, images, isOwner }: Pu
             )}
 
             {/* Draft Action Buttons */}
-            <div className="flex gap-3 mt-4 pt-4 border-t border-[var(--border-default)]">
+            <div className="flex gap-3 mt-4 pt-4 border-t border-folio-border-subtle">
               <button
                 onClick={handleGenerateDraft}
                 disabled={regenBusy}
-                className="px-4 py-2 folio-ui font-medium text-[var(--text-primary)] bg-[var(--bg-base)] border border-[var(--border-default)] rounded-lg hover:bg-[var(--bg-elevated)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="px-4 py-2 folio-ui font-medium text-folio-text-primary bg-surface-canvas border border-folio-border-subtle rounded-lg hover:bg-surface-ground disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {regenBusy ? "Generating..." : "Regenerate"}
               </button>
@@ -228,7 +228,7 @@ export default function PublishPanel({ projectId, project, images, isOwner }: Pu
           </div>
         ) : (
           <div className="text-center py-8">
-            <p className="folio-body text-[var(--text-tertiary)] mb-4">
+            <p className="folio-body text-folio-text-tertiary mb-4">
               Your post is ready to be written.
             </p>
             <button
@@ -251,10 +251,10 @@ export default function PublishPanel({ projectId, project, images, isOwner }: Pu
 
       {/* Publish Actions */}
       {publishSuccess ? (
-        <div className="rounded-[20px] border border-[var(--ridge-outer)] bg-[var(--bg-elevated)] p-6 shadow-sm text-center">
+        <div className="rounded-[20px] border border-folio-border-subtle bg-surface-ground p-6 shadow-sm text-center">
           <CheckCircle2 className="w-8 h-8 text-[var(--accent)] mx-auto mb-3" />
-          <h3 className="folio-h3 text-[var(--text-primary)] mb-2">Published!</h3>
-          <p className="folio-body text-[var(--text-secondary)] mb-4">
+          <h3 className="folio-h3 text-folio-text-primary mb-2">Published!</h3>
+          <p className="folio-body text-folio-text-secondary mb-4">
             Your project post is now live.
           </p>
           {publishedSlug && (
@@ -268,7 +268,7 @@ export default function PublishPanel({ projectId, project, images, isOwner }: Pu
             </a>
           )}
 
-          <div className="mt-6 pt-4 border-t border-[var(--border-default)]">
+          <div className="mt-6 pt-4 border-t border-folio-border-subtle">
             <button
               onClick={() => setShowUnpublishDialog(true)}
               disabled={isUnpublishing}
@@ -289,7 +289,7 @@ export default function PublishPanel({ projectId, project, images, isOwner }: Pu
           />
         </div>
       ) : (
-        <div className="rounded-[20px] border border-[var(--border-default)] bg-[var(--bg-elevated)] p-6 shadow-sm">
+        <div className="rounded-[20px] border border-folio-border-subtle bg-surface-ground p-6 shadow-sm">
           <button
             onClick={handlePublish}
             disabled={isPublishing || !currentPost}
@@ -298,7 +298,7 @@ export default function PublishPanel({ projectId, project, images, isOwner }: Pu
             {isPublishing ? "Publishing..." : "Publish to Folio"}
           </button>
           {!currentPost && (
-            <p className="folio-meta text-[var(--text-tertiary)] text-center mt-2">
+            <p className="folio-meta text-folio-text-tertiary text-center mt-2">
               Generate a draft before publishing.
             </p>
           )}
@@ -324,17 +324,17 @@ function ReadinessItem({
       {done ? (
         <CheckCircle2 className="w-4 h-4 text-[var(--accent)] shrink-0" />
       ) : (
-        <Circle className="w-4 h-4 text-[var(--text-tertiary)] shrink-0" />
+        <Circle className="w-4 h-4 text-folio-text-tertiary shrink-0" />
       )}
       <span
         className={`folio-ui ${
-          done ? "text-[var(--text-primary)]" : "text-[var(--text-secondary)]"
+          done ? "text-folio-text-primary" : "text-folio-text-secondary"
         }`}
       >
         {label}
       </span>
       {recommended && !done && (
-        <span className="folio-meta text-[var(--text-tertiary)]">(recommended)</span>
+        <span className="folio-meta text-folio-text-tertiary">(recommended)</span>
       )}
     </div>
   );

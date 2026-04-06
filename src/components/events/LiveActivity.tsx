@@ -70,11 +70,11 @@ export default function LiveActivity({ eventId, initialActivity }: LiveActivityP
       <div className="space-y-3">
         {Array.from({ length: 3 }).map((_, index) => (
           <div key={index} className="animate-pulse">
-            <div className="flex items-start space-x-3 p-3 bg-[var(--bg-elevated)] rounded-lg">
-              <div className="w-8 h-8 bg-[var(--bg-base)] rounded-full"></div>
+            <div className="flex items-start space-x-3 p-3 bg-surface-ground rounded-lg">
+              <div className="w-8 h-8 bg-surface-canvas rounded-full"></div>
               <div className="flex-1">
-                <div className="h-4 bg-[var(--bg-base)] rounded mb-2"></div>
-                <div className="h-3 bg-[var(--bg-base)] rounded w-2/3"></div>
+                <div className="h-4 bg-surface-canvas rounded mb-2"></div>
+                <div className="h-3 bg-surface-canvas rounded w-2/3"></div>
               </div>
             </div>
           </div>
@@ -87,7 +87,7 @@ export default function LiveActivity({ eventId, initialActivity }: LiveActivityP
   if (!activity || activity.length === 0) {
     return (
       <div className="text-center py-8">
-        <p className="text-sm text-[var(--text-secondary)]">No live activity yet.</p>
+        <p className="text-sm text-folio-text-secondary">No live activity yet.</p>
       </div>
     );
   }
@@ -116,7 +116,7 @@ export default function LiveActivity({ eventId, initialActivity }: LiveActivityP
       )}
       
       {activity.map((item) => (
-        <div key={item.id} className="flex items-start space-x-3 p-3 bg-[var(--bg-elevated)] rounded-lg">
+        <div key={item.id} className="flex items-start space-x-3 p-3 bg-surface-ground rounded-lg">
           {/* Activity Icon */}
           <div className="flex-shrink-0 w-8 h-8 bg-[var(--accent)]/10 rounded-full flex items-center justify-center">
             <svg className="w-4 h-4 text-[var(--accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -126,14 +126,14 @@ export default function LiveActivity({ eventId, initialActivity }: LiveActivityP
 
           {/* Activity Content */}
           <div className="flex-1 min-w-0">
-            <p className="text-sm text-[var(--text-primary)]">
+            <p className="text-sm text-folio-text-primary">
               <span className="font-medium">{item.user.name}</span>
               {" saved "}
               <span className="font-medium">{item.product.name}</span>
               {" to "}
               <span className="font-medium">{item.project.name}</span>
             </p>
-            <p className="text-xs text-[var(--text-secondary)] mt-1">
+            <p className="text-xs text-folio-text-secondary mt-1">
               {formatTimeAgo(item.createdAt)}
             </p>
           </div>

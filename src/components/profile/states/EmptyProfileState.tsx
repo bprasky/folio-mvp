@@ -16,9 +16,9 @@ export default function EmptyProfileState({ designer, isOwner }: Props) {
   if (!isOwner) {
     // Public view of empty profile
     return (
-      <div className="min-h-screen bg-[var(--bg-base)] flex items-center justify-center">
+      <div className="min-h-screen bg-surface-canvas flex items-center justify-center">
         <div className="text-center max-w-md px-6">
-          <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-[var(--bg-elevated)] flex items-center justify-center overflow-hidden">
+          <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-surface-ground flex items-center justify-center overflow-hidden">
             {designer.profileImage ? (
               <SafeImage
                 src={designer.profileImage}
@@ -28,19 +28,19 @@ export default function EmptyProfileState({ designer, isOwner }: Props) {
                 className="w-full h-full object-cover"
               />
             ) : (
-              <span className="text-3xl text-[var(--text-tertiary)]">
+              <span className="text-3xl text-folio-text-tertiary">
                 {designer.name.charAt(0)}
               </span>
             )}
           </div>
-          <h1 className="text-2xl font-semibold text-[var(--text-primary)]">{designer.name}</h1>
+          <h1 className="text-2xl font-semibold text-folio-text-primary">{designer.name}</h1>
           {designer.title && (
-            <p className="mt-2 text-[var(--text-secondary)]">{designer.title}</p>
+            <p className="mt-2 text-folio-text-secondary">{designer.title}</p>
           )}
           {designer.location && (
-            <p className="mt-1 text-[var(--text-secondary)]">{designer.location}</p>
+            <p className="mt-1 text-folio-text-secondary">{designer.location}</p>
           )}
-          <p className="mt-6 text-[var(--text-tertiary)]">
+          <p className="mt-6 text-folio-text-tertiary">
             This designer is setting up their portfolio. Check back soon.
           </p>
         </div>
@@ -52,10 +52,10 @@ export default function EmptyProfileState({ designer, isOwner }: Props) {
   return (
     <div className="min-h-screen bg-gradient-to-b from-[var(--bg-base)] to-[var(--bg-base)]">
       <div className="max-w-2xl mx-auto px-6 py-24 text-center">
-        <h1 className="text-3xl font-semibold text-[var(--text-primary)]">
+        <h1 className="text-3xl font-semibold text-folio-text-primary">
           Welcome to Folio, {designer.name.split(' ')[0]}
         </h1>
-        <p className="mt-4 text-lg text-[var(--text-secondary)]">
+        <p className="mt-4 text-lg text-folio-text-secondary">
           Let's build your profile. You can start with either:
         </p>
 
@@ -63,7 +63,7 @@ export default function EmptyProfileState({ designer, isOwner }: Props) {
           {/* Upload Projects Card */}
           <Link
             href="/designer/projects/new"
-            className="group p-8 bg-[var(--bg-base)] rounded-2xl border border-[var(--ridge-outer)] hover:border-[var(--ridge-outer)] hover:shadow-lg transition-all text-left"
+            className="group p-8 bg-surface-canvas rounded-2xl border border-folio-border-subtle hover:border-folio-border-subtle hover:shadow-lg transition-all text-left"
           >
             <div className="w-12 h-12 rounded-xl bg-[var(--text-primary)] text-white flex items-center justify-center mb-4">
               <svg
@@ -80,13 +80,13 @@ export default function EmptyProfileState({ designer, isOwner }: Props) {
                 />
               </svg>
             </div>
-            <h3 className="text-lg font-semibold text-[var(--text-primary)]">
+            <h3 className="text-lg font-semibold text-folio-text-primary">
               Upload Projects
             </h3>
-            <p className="mt-2 text-sm text-[var(--text-secondary)]">
+            <p className="mt-2 text-sm text-folio-text-secondary">
               Add 2-3 completed projects and we'll generate your profile automatically.
             </p>
-            <p className="mt-4 text-sm font-medium text-[var(--text-primary)] group-hover:underline">
+            <p className="mt-4 text-sm font-medium text-folio-text-primary group-hover:underline">
               Start uploading →
             </p>
           </Link>
@@ -94,9 +94,9 @@ export default function EmptyProfileState({ designer, isOwner }: Props) {
           {/* Brand Assets Card */}
           <Link
             href="/designer/brand"
-            className="group p-8 bg-[var(--bg-base)] rounded-2xl border border-[var(--ridge-outer)] hover:border-[var(--ridge-outer)] hover:shadow-lg transition-all text-left"
+            className="group p-8 bg-surface-canvas rounded-2xl border border-folio-border-subtle hover:border-folio-border-subtle hover:shadow-lg transition-all text-left"
           >
-            <div className="w-12 h-12 rounded-xl bg-[var(--bg-base)] border-2 border-[var(--text-primary)] text-[var(--text-primary)] flex items-center justify-center mb-4">
+            <div className="w-12 h-12 rounded-xl bg-surface-canvas border-2 border-[var(--text-primary)] text-folio-text-primary flex items-center justify-center mb-4">
               <svg
                 className="w-6 h-6"
                 fill="none"
@@ -111,19 +111,19 @@ export default function EmptyProfileState({ designer, isOwner }: Props) {
                 />
               </svg>
             </div>
-            <h3 className="text-lg font-semibold text-[var(--text-primary)]">
+            <h3 className="text-lg font-semibold text-folio-text-primary">
               Add Brand Assets
             </h3>
-            <p className="mt-2 text-sm text-[var(--text-secondary)]">
+            <p className="mt-2 text-sm text-folio-text-secondary">
               Upload your logo, colors, and mood images to shape your profile's look.
             </p>
-            <p className="mt-4 text-sm font-medium text-[var(--text-primary)] group-hover:underline">
+            <p className="mt-4 text-sm font-medium text-folio-text-primary group-hover:underline">
               Set up brand →
             </p>
           </Link>
         </div>
 
-        <p className="mt-12 text-sm text-[var(--text-secondary)]">
+        <p className="mt-12 text-sm text-folio-text-secondary">
           The more you add, the better we can represent your aesthetic.
         </p>
       </div>

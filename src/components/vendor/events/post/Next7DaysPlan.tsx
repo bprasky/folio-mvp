@@ -32,7 +32,7 @@ export function Next7DaysPlan({ suggestions }: Next7DaysPlanProps) {
     switch (impact) {
       case 'High': return 'bg-red-100 text-red-800 border-red-200';
       case 'Medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'Low': return 'bg-[var(--bg-elevated)] text-[var(--text-primary)] border-[var(--ridge-outer)]';
+      case 'Low': return 'bg-surface-ground text-folio-text-primary border-folio-border-subtle';
       default: return 'bg-[var(--accent)]/10 text-blue-800 border-[var(--accent)]/20';
     }
   };
@@ -113,13 +113,13 @@ export function Next7DaysPlan({ suggestions }: Next7DaysPlanProps) {
   return (
     <>
       <div className="sticky top-4 space-y-4">
-        <Card className="bg-white border-[#DAD2CA]">
+        <Card className="bg-white border-folio-border-strong">
           <CardHeader>
-            <CardTitle className="text-lg font-serif text-[#2B2B2B] flex items-center space-x-2">
-              <Calendar className="w-5 h-5 text-[#8C8278]" />
+            <CardTitle className="text-lg font-serif text-folio-text-primary flex items-center space-x-2">
+              <Calendar className="w-5 h-5 text-folio-text-secondary" />
               <span>Next 7 Days Plan</span>
             </CardTitle>
-            <p className="text-sm text-[#8C8278]">
+            <p className="text-sm text-folio-text-secondary">
               {suggestions.length > 0 
                 ? 'Contextual actions based on your selection'
                 : 'Prebuilt playbooks with expected lift'
@@ -131,24 +131,24 @@ export function Next7DaysPlan({ suggestions }: Next7DaysPlanProps) {
             {activePlaybooks.map((playbook, index) => (
               <div 
                 key={playbook.id}
-                className="border border-[#DAD2CA] rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
+                className="border border-folio-border-strong rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
                 onClick={() => handlePlaybookClick(playbook)}
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 rounded-full bg-[#F7F4F1] flex items-center justify-center flex-shrink-0">
-                      <playbook.icon className="w-4 h-4 text-[#8C8278]" />
+                    <div className="w-8 h-8 rounded-full bg-surface-elevated flex items-center justify-center flex-shrink-0">
+                      <playbook.icon className="w-4 h-4 text-folio-text-secondary" />
                     </div>
                     <div>
-                      <h4 className="font-medium text-[#2B2B2B] text-sm">
+                      <h4 className="font-medium text-folio-text-primary text-sm">
                         {playbook.title}
                       </h4>
-                      <p className="text-xs text-[#8C8278]">
+                      <p className="text-xs text-folio-text-secondary">
                         {playbook.description}
                       </p>
                     </div>
                   </div>
-                  <ArrowRight className="w-4 h-4 text-[#8C8278] flex-shrink-0" />
+                  <ArrowRight className="w-4 h-4 text-folio-text-secondary flex-shrink-0" />
                 </div>
 
                 <div className="flex items-center justify-between">
@@ -157,7 +157,7 @@ export function Next7DaysPlan({ suggestions }: Next7DaysPlanProps) {
                       {playbook.expectedLift}
                     </Badge>
                   </div>
-                  <p className="text-xs text-[#8C8278]">
+                  <p className="text-xs text-folio-text-secondary">
                     {playbook.target}
                   </p>
                 </div>

@@ -16,31 +16,60 @@
    ============================================== */
 
 :root {
+  /* ===========================================
+     CANONICAL FOLIO PALETTE
+     Three-level surface system + 3-tier text
+     =========================================== */
+
+  /* === SURFACES === */
+  --surface-canvas: #FFFFFF;        /* Level 0 — page bg, nav, breadcrumbs */
+  --surface-ground: #FAF8F5;        /* Level 1 — filter bars, tab trays, footer */
+  --surface-elevated: #F5F0EB;      /* Level 2 — card base before glass */
+
+  /* === TEXT === */
+  --folio-text-primary: #1a1a1a;    /* Near-black for headings */
+  --folio-text-secondary: #6b6b6b;  /* Mid-gray for body/secondary */
+  --folio-text-tertiary: #9b9b9b;   /* Light gray for captions/metadata */
+
+  /* === BORDERS === */
+  --folio-border-subtle: #e8e4df;   /* Warm border — ONE border color for subtle divisions */
+  --folio-border-strong: #d4cfc8;   /* For emphasized borders */
+
+  /* === ACCENT === */
+  --folio-gold: #c9a96e;            /* Gold — active states, CTAs, selected indicators */
+
+  /* ===========================================
+     DEPRECATED ALIASES — migrate to canonical
+     =========================================== */
+
   /* Typography */
   --font-logo: 'Cormorant Garamond', Georgia, serif;
   --font-headline: 'Cormorant Garamond', Georgia, serif;
   --font-body: 'Instrument Sans', -apple-system, sans-serif;
 
-  /* Base */
-  --bg-base: #FFFFFF;
-  --bg-elevated: #FAFAF9;
+  /* DEPRECATED — migrate to --surface-canvas */
+  --bg-base: var(--surface-canvas);
+  /* DEPRECATED — migrate to --surface-ground */
+  --bg-elevated: var(--surface-ground);
 
   /* Neumorphic shadows - more visible warm gray */
   --shadow-dark: #D4CFC8;
   --shadow-light: #FFFFFF;
 
-  /* Text */
-  --text-primary: #1A1A1A;
-  --text-secondary: #5C5C5C;
-  --text-tertiary: #8C8C8C;
+  /* DEPRECATED — migrate to --folio-text-primary */
+  --text-primary: var(--folio-text-primary);
+  /* DEPRECATED — migrate to --folio-text-secondary */
+  --text-secondary: var(--folio-text-secondary);
+  /* DEPRECATED — migrate to --folio-text-tertiary */
+  --text-tertiary: var(--folio-text-tertiary);
 
   /* Accent */
   --accent: #B8845C;
   --accent-hover: #A67548;
 
-  /* Border - unified border color for components */
-  --border: rgba(0, 0, 0, 0.08);
-  --border-default: var(--ridge-outer);
+  /* DEPRECATED — migrate to --folio-border-subtle */
+  --border: var(--folio-border-subtle);
+  --border-default: var(--folio-border-subtle);
 
   /* Ridge border system - more visible borders */
   --ridge-outer: rgba(0, 0, 0, 0.08);
@@ -530,22 +559,30 @@ html[data-compact="true"] main { padding-top: 0 !important; }
   --folio-system: #4A2C3B;
   --folio-success: #A47B62;
   
-  /* Legacy support - mapped to new theme */
+  /* DEPRECATED LEGACY — these values are no longer authoritative.
+     Canonical values come from --folio-text-primary etc at top of file.
+     Keeping for any stray references. */
   --foreground-rgb: 30, 30, 30;
   --background-rgb: 244, 240;
-  --primary-color: #F4F2; --secondary-color: #10;
   --accent-color: #7C1E3D;
-  --text-primary: #1E1E1E;
-  --text-secondary: #4A2C3B;
   --text-light: #A47B62;
-  
-  /* Additional utility colors (legacy) */
   --folio-muted: #F8F6F4;
   --folio-card: #FFFFFF;
 }
 
 /* Dark Mode (optional) */
 [data-theme="dark"] {
+  /* Canonical dark overrides */
+  --surface-canvas: #1B1B19;
+  --surface-ground: #22221F;
+  --surface-elevated: #2E2E2B;
+  --folio-text-primary: #F5F5F3;
+  --folio-text-secondary: #8B8B88;
+  --folio-text-tertiary: #5D5D58;
+  --folio-border-subtle: #3A3A36;
+  --folio-border-strong: #4A4A46;
+  --folio-gold: #9B8874;
+
   --folio-bg: #1B1B19;
   --folio-surface: #22221F;
   --folio-stone-100: #2E2E2B;
@@ -553,11 +590,11 @@ html[data-compact="true"] main { padding-top: 0 !important; }
   --folio-stone-500: #5D5D58;
   --folio-stone-700: #8B8B88;
   --folio-ink: #F5F5F3;
-  
+
   --folio-accent-200: #3C352C;
   --folio-accent-400: #5F5433;
   --folio-accent-700: #9B8874;
-  
+
   --folio-border: color-mix(in srgb, var(--folio-stone-100) 35%, #fff 0%);
   --folio-overlay: rgba(245,245,243,0.06);
   

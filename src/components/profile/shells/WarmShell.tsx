@@ -6,7 +6,7 @@ export default function WarmShell({ designer, projects, aesthetic, viewerContext
   const heroImage = projects[0]?.heroImageUrl || projects[0]?.coverImageUrl || projects[0]?.imageUrl;
 
   return (
-    <div className="min-h-screen bg-[#F5F0EA]">
+    <div className="min-h-screen bg-surface-elevated">
       {/* Rounded Inset Hero */}
       {heroImage && (
         <div className="max-w-6xl mx-auto px-6 pt-12">
@@ -28,7 +28,7 @@ export default function WarmShell({ designer, projects, aesthetic, viewerContext
         <div className="text-center mb-12">
           <h1 className="text-5xl font-serif font-normal mb-4">{designer.name}</h1>
           {designer.title && (
-            <p className="text-xl font-serif text-[var(--text-primary)]">{designer.title}</p>
+            <p className="text-xl font-serif text-folio-text-primary">{designer.title}</p>
           )}
         </div>
 
@@ -38,7 +38,7 @@ export default function WarmShell({ designer, projects, aesthetic, viewerContext
             <div className="inline-flex items-center justify-center mb-6">
               <div className="w-12 h-px bg-[var(--text-tertiary)]/30 mr-4" />
               <svg
-                className="w-6 h-6 text-[var(--text-tertiary)]"
+                className="w-6 h-6 text-folio-text-tertiary"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -52,11 +52,11 @@ export default function WarmShell({ designer, projects, aesthetic, viewerContext
               </svg>
               <div className="w-12 h-px bg-[var(--text-tertiary)]/30 ml-4" />
             </div>
-            <p className="text-lg font-serif italic text-[var(--text-primary)] leading-relaxed max-w-2xl mx-auto">
+            <p className="text-lg font-serif italic text-folio-text-primary leading-relaxed max-w-2xl mx-auto">
               {designer.bio}
             </p>
             {designer.location && (
-              <p className="mt-6 text-[var(--text-secondary)] font-serif">{designer.location}</p>
+              <p className="mt-6 text-folio-text-secondary font-serif">{designer.location}</p>
             )}
           </div>
         )}

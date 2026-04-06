@@ -135,7 +135,7 @@ export function ProfessionalUpgradeModal({
             </div>
             <div>
               <div className="text-lg font-semibold">Unlock {getFeatureTitle()}</div>
-              <div className="text-sm font-normal text-[var(--text-secondary)]">
+              <div className="text-sm font-normal text-folio-text-secondary">
                 Professional tier required
               </div>
             </div>
@@ -153,7 +153,7 @@ export function ProfessionalUpgradeModal({
                 <div className={`w-8 h-8 rounded-lg ${feature.color} flex items-center justify-center mb-2`}>
                   <feature.icon className="w-4 h-4" />
                 </div>
-                <div className="folio-ui text-[var(--text-primary)] text-sm">{feature.title}</div>
+                <div className="folio-ui text-folio-text-primary text-sm">{feature.title}</div>
                 <div className="folio-meta text-xs mt-0.5">{feature.description}</div>
               </div>
             ))}
@@ -163,18 +163,18 @@ export function ProfessionalUpgradeModal({
           <div className="ridge-card ridge-card-lg p-4 bg-gradient-to-br from-[var(--accent)]/5 to-[var(--accent)]/10">
             <div className="flex items-baseline justify-between">
               <div>
-                <span className="text-2xl font-bold text-[var(--text-primary)]">
+                <span className="text-2xl font-bold text-folio-text-primary">
                   ${proConfig.pricing?.monthly}
                 </span>
-                <span className="text-[var(--text-secondary)]">/month</span>
+                <span className="text-folio-text-secondary">/month</span>
               </div>
               <div className="text-right">
                 <div className="folio-meta">or ${proConfig.pricing?.annualMonthlyEquivalent.toFixed(0)}/mo</div>
                 <div className="folio-meta">billed annually</div>
               </div>
             </div>
-            <div className="mt-3 pt-3 border-t border-[var(--border)]">
-              <div className="folio-meta text-[var(--text-secondary)]">
+            <div className="mt-3 pt-3 border-t border-folio-border-subtle">
+              <div className="folio-meta text-folio-text-secondary">
                 {proConfig.description}
               </div>
             </div>
@@ -217,7 +217,7 @@ export function ProfessionalUpgradeModal({
                 </div>
               ) : (
                 <div className="space-y-3">
-                  <div className="text-sm text-[var(--text-secondary)]">
+                  <div className="text-sm text-folio-text-secondary">
                     Enter the email of someone who can upgrade this account:
                   </div>
                   <div className="flex gap-2">
@@ -260,7 +260,7 @@ export function ProfessionalUpgradeModal({
                 ].map((item) => (
                   <div key={item} className="flex items-center gap-2 text-sm">
                     <Check className="w-4 h-4 text-green-600" />
-                    <span className="text-[var(--text-secondary)]">{item}</span>
+                    <span className="text-folio-text-secondary">{item}</span>
                   </div>
                 ))}
               </div>
@@ -282,7 +282,7 @@ export function ProfessionalUpgradeModal({
           {/* No org context - shouldn't happen but handle gracefully */}
           {!orgStatus && (
             <div className="text-center space-y-4">
-              <div className="text-[var(--text-secondary)]">
+              <div className="text-folio-text-secondary">
                 Join or create a design firm to access professional features.
               </div>
               <Button

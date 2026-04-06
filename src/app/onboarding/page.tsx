@@ -231,7 +231,7 @@ export default function OnboardingPage() {
   const screen = screens[currentScreen - 1];
 
   return (
-    <div className="min-h-screen flex flex-col bg-[var(--bg-base)]">
+    <div className="min-h-screen flex flex-col bg-surface-canvas">
       {/* Main content */}
       <div className="flex-1 flex items-center justify-center px-6 py-12">
         <div className="w-full max-w-xl">
@@ -295,7 +295,7 @@ export default function OnboardingPage() {
 
       {/* Folio wordmark */}
       <div className="absolute top-6 left-6">
-        <span className="folio-logo-text text-[var(--text-tertiary)]">Folio</span>
+        <span className="folio-logo-text text-folio-text-tertiary">Folio</span>
       </div>
     </div>
   );

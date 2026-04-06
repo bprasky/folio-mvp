@@ -109,7 +109,7 @@ export default function FibonacciEventFeed({ events, onEventClick, className, us
       {/* Controls Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 space-y-4 sm:space-y-0">
         <div className="flex items-center space-x-4">
-          <h2 className="text-2xl font-bold text-[var(--text-primary)]">
+          <h2 className="text-2xl font-bold text-folio-text-primary">
             Events ({filteredEvents.length})
           </h2>
           
@@ -120,7 +120,7 @@ export default function FibonacciEventFeed({ events, onEventClick, className, us
               "flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors",
               showFilters
                 ? "bg-folio-accent text-white"
-                : "bg-[var(--bg-elevated)] text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]"
+                : "bg-surface-ground text-folio-text-primary hover:bg-surface-ground"
             )}
           >
             <FaFilter className="w-4 h-4" />
@@ -131,11 +131,11 @@ export default function FibonacciEventFeed({ events, onEventClick, className, us
         <div className="flex items-center space-x-4">
           {/* Sort Dropdown */}
           <div className="flex items-center space-x-2">
-            <FaSort className="w-4 h-4 text-[var(--text-secondary)]" />
+            <FaSort className="w-4 h-4 text-folio-text-secondary" />
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as SortOption)}
-              className="px-3 py-2 border border-[var(--ridge-outer)] rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-folio-accent focus:border-transparent"
+              className="px-3 py-2 border border-folio-border-subtle rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-folio-accent focus:border-transparent"
             >
               <option value="date">Sort by Date</option>
               <option value="promotion">Sort by Promotion</option>
@@ -145,14 +145,14 @@ export default function FibonacciEventFeed({ events, onEventClick, className, us
           </div>
 
           {/* View Mode Toggle */}
-          <div className="flex items-center bg-[var(--bg-elevated)] rounded-md p-1">
+          <div className="flex items-center bg-surface-ground rounded-md p-1">
             <button
               onClick={() => setViewMode('grid')}
               className={clsx(
                 "p-2 rounded-md transition-colors",
                 viewMode === 'grid'
                   ? "bg-white text-folio-accent shadow-sm"
-                  : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                  : "text-folio-text-secondary hover:text-folio-text-primary"
               )}
             >
               <FaTh className="w-4 h-4" />
@@ -163,7 +163,7 @@ export default function FibonacciEventFeed({ events, onEventClick, className, us
                 "p-2 rounded-md transition-colors",
                 viewMode === 'list'
                   ? "bg-white text-folio-accent shadow-sm"
-                  : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                  : "text-folio-text-secondary hover:text-folio-text-primary"
               )}
             >
               <FaList className="w-4 h-4" />
@@ -174,7 +174,7 @@ export default function FibonacciEventFeed({ events, onEventClick, className, us
 
       {/* Filters Section */}
       {showFilters && (
-        <div className="mb-6 p-4 bg-[var(--bg-elevated)] rounded-lg">
+        <div className="mb-6 p-4 bg-surface-ground rounded-lg">
           <EventTypeFilter
             selectedTypes={selectedTypes}
             onTypeChange={setSelectedTypes}
@@ -214,13 +214,13 @@ export default function FibonacciEventFeed({ events, onEventClick, className, us
       {/* Empty State */}
       {filteredEvents.length === 0 && (
         <div className="text-center py-12">
-          <div className="text-[var(--text-tertiary)] mb-4">
+          <div className="text-folio-text-tertiary mb-4">
             <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
           </div>
-          <h3 className="text-lg font-medium text-[var(--text-primary)] mb-2">No events found</h3>
-          <p className="text-[var(--text-secondary)]">
+          <h3 className="text-lg font-medium text-folio-text-primary mb-2">No events found</h3>
+          <p className="text-folio-text-secondary">
             {selectedTypes.length > 0 
               ? "Try adjusting your filters to see more events."
               : "There are no events available at the moment."

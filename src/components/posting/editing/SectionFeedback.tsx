@@ -88,7 +88,7 @@ export default function SectionFeedback({
           className={`flex items-center gap-1.5 px-2.5 py-1 folio-meta font-medium rounded-md border transition-colors ${
             feedbackOpen
               ? 'border-[var(--accent)] text-[var(--accent)] bg-[var(--accent)]/5'
-              : 'border-[var(--border-default)] text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] hover:border-[var(--text-tertiary)]'
+              : 'border-folio-border-subtle text-folio-text-tertiary hover:text-folio-text-secondary hover:border-folio-text-tertiary'
           }`}
           title="Give feedback and regenerate this section"
         >
@@ -101,7 +101,7 @@ export default function SectionFeedback({
           <button
             onClick={handleUndo}
             disabled={undoing}
-            className="flex items-center gap-1 px-2.5 py-1 folio-meta font-medium text-[var(--text-tertiary)] hover:text-[var(--text-primary)] border border-[var(--border-default)] rounded-md transition-colors disabled:opacity-50"
+            className="flex items-center gap-1 px-2.5 py-1 folio-meta font-medium text-folio-text-tertiary hover:text-folio-text-primary border border-folio-border-subtle rounded-md transition-colors disabled:opacity-50"
           >
             <Undo2 className="w-3.5 h-3.5" />
             {undoing ? 'Undoing...' : 'Undo'}
@@ -117,7 +117,7 @@ export default function SectionFeedback({
             value={feedback}
             onChange={(e) => setFeedback(e.target.value)}
             placeholder="e.g., Make it more casual, focus on the material choices"
-            className="flex-1 border border-[var(--border-default)] rounded-md px-3 py-1.5 folio-meta focus:outline-none focus:ring-2 focus:ring-[var(--accent)] bg-[var(--bg-base)] text-[var(--text-primary)]"
+            className="flex-1 border border-folio-border-subtle rounded-md px-3 py-1.5 folio-meta focus:outline-none focus:ring-2 focus:ring-[var(--accent)] bg-surface-canvas text-folio-text-primary"
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !regenerating) handleRegenerate();
               if (e.key === 'Escape') setFeedbackOpen(false);

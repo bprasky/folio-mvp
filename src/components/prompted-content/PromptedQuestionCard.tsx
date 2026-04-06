@@ -35,7 +35,7 @@ export function PromptedQuestionCard({
     >
       {/* Question text — Cormorant Garamond Italic */}
       <p
-        className="text-[17px] leading-relaxed text-[#5C564F] mb-6"
+        className="text-[17px] leading-relaxed text-folio-text-secondary mb-6"
         style={{
           fontFamily: 'var(--font-headline)',
           fontStyle: 'italic',
@@ -49,7 +49,7 @@ export function PromptedQuestionCard({
       <div className="flex items-center justify-between">
         <button
           onClick={() => onAnswer(question)}
-          className="px-5 py-2 rounded-lg bg-[#2C2825] text-[#FAF9F7] text-sm font-medium hover:bg-[#3D3632] transition-colors"
+          className="px-5 py-2 rounded-lg bg-folio-text-primary text-surface-ground text-sm font-medium hover:bg-[#3D3632] transition-colors"
           style={{ fontFamily: 'var(--font-body)' }}
         >
           Answer
@@ -57,7 +57,7 @@ export function PromptedQuestionCard({
 
         {/* Provenance line */}
         <span
-          className="text-[11px] text-[#A39B93] tracking-wide"
+          className="text-[11px] text-folio-text-tertiary tracking-wide"
           style={{ fontFamily: 'var(--font-body)' }}
         >
           Folio &middot; Asked based on your interview

@@ -23,7 +23,7 @@ export default async function CheckInPage({
   if (!event) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <p className="text-[var(--text-secondary)]">Event not found.</p>
+        <p className="text-folio-text-secondary">Event not found.</p>
       </div>
     );
   }
@@ -37,7 +37,7 @@ export default async function CheckInPage({
   if (!allowed) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <p className="text-[var(--text-secondary)]">
+        <p className="text-folio-text-secondary">
           You don&apos;t have permission to check in attendees for this event.
         </p>
       </div>

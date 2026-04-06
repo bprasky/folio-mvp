@@ -26,7 +26,7 @@ export function AboutPageContent() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
         >
-          <h1 className="font-headline italic text-5xl md:text-6xl lg:text-7xl text-[var(--text-primary)] leading-[1.1]">
+          <h1 className="font-headline italic text-5xl md:text-6xl lg:text-7xl text-folio-text-primary leading-[1.1]">
             Design work deserves a better home.
           </h1>
         </motion.div>
@@ -34,12 +34,12 @@ export function AboutPageContent() {
 
       {/* Divider */}
       <div className="max-w-3xl mx-auto px-6">
-        <hr className="border-t border-[var(--ridge-outer)]" />
+        <hr className="border-t border-folio-border-subtle" />
       </div>
 
       {/* Prose block 1: The problem */}
       <section className="py-16 px-6">
-        <div className="max-w-3xl mx-auto space-y-6 text-[var(--text-primary)] leading-relaxed">
+        <div className="max-w-3xl mx-auto space-y-6 text-folio-text-primary leading-relaxed">
           <motion.p {...fade}>
             For too long, the interior design industry has operated across a
             patchwork of Instagram posts, PDF portfolios, shared Dropbox folders,
@@ -55,17 +55,17 @@ export function AboutPageContent() {
           className="max-w-3xl mx-auto text-center"
           {...slowFade}
         >
-          <hr className="border-t border-[var(--ridge-outer)] mb-10 max-w-xs mx-auto" />
-          <p className="font-headline italic text-3xl md:text-4xl text-[var(--text-primary)] leading-snug">
+          <hr className="border-t border-folio-border-subtle mb-10 max-w-xs mx-auto" />
+          <p className="font-headline italic text-3xl md:text-4xl text-folio-text-primary leading-snug">
             Folio exists to fix that.
           </p>
-          <hr className="border-t border-[var(--ridge-outer)] mt-10 max-w-xs mx-auto" />
+          <hr className="border-t border-folio-border-subtle mt-10 max-w-xs mx-auto" />
         </motion.div>
       </section>
 
       {/* Prose block 2: What Folio does */}
       <section className="py-16 px-6">
-        <div className="max-w-3xl mx-auto space-y-6 text-[var(--text-primary)] leading-relaxed">
+        <div className="max-w-3xl mx-auto space-y-6 text-folio-text-primary leading-relaxed">
           <motion.p {...fade}>
             We built Folio as a professional platform where designers can publish
             their work the way it deserves to be published &mdash; with editorial
@@ -91,7 +91,7 @@ export function AboutPageContent() {
 
       {/* Prose block 3: Why designers */}
       <section className="py-16 px-6">
-        <div className="max-w-3xl mx-auto space-y-6 text-[var(--text-primary)] leading-relaxed">
+        <div className="max-w-3xl mx-auto space-y-6 text-folio-text-primary leading-relaxed">
           <motion.p {...fade}>
             We started with designers because they are the center of gravity for
             everything that happens in this industry. Their decisions shape
@@ -108,7 +108,7 @@ export function AboutPageContent() {
 
       {/* Divider */}
       <div className="max-w-3xl mx-auto px-6">
-        <hr className="border-t border-[var(--ridge-outer)]" />
+        <hr className="border-t border-folio-border-subtle" />
       </div>
 
       {/* CTA */}
@@ -118,7 +118,7 @@ export function AboutPageContent() {
           {...slowFade}
         >
           <div className="glass-surface rounded-2xl p-10 md:p-14">
-            <p className="font-headline italic text-3xl md:text-4xl text-[var(--text-primary)] mb-8">
+            <p className="font-headline italic text-3xl md:text-4xl text-folio-text-primary mb-8">
               We&rsquo;d like to talk.
             </p>
             <Link

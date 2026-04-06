@@ -70,14 +70,14 @@ export default function BoardTileMenu({
         
         {/* Dropdown Menu */}
         {isOpen && (
-        <div className="absolute right-0 top-full mt-1 w-48 bg-[var(--bg-elevated)] rounded-lg shadow-lg border border-[var(--border-default)] py-1 z-50">
+        <div className="absolute right-0 top-full mt-1 w-48 bg-surface-ground rounded-lg shadow-lg border border-folio-border-subtle py-1 z-50">
           <button
             onClick={(e) => {
               e.stopPropagation();
               setIsOpen(false);
               onEdit(selection.id, product?.id);
             }}
-            className="w-full text-left px-3 py-2 folio-ui hover:bg-[var(--bg-base)] text-[var(--text-primary)] flex items-center gap-2"
+            className="w-full text-left px-3 py-2 folio-ui hover:bg-surface-canvas text-folio-text-primary flex items-center gap-2"
           >
             <FaEdit className="w-3 h-3" />
             Edit
@@ -90,7 +90,7 @@ export default function BoardTileMenu({
                 setIsOpen(false);
                 onReplaceImage(selection.id);
               }}
-              className="w-full text-left px-3 py-2 folio-ui hover:bg-[var(--bg-base)] text-[var(--text-primary)] flex items-center gap-2"
+              className="w-full text-left px-3 py-2 folio-ui hover:bg-surface-canvas text-folio-text-primary flex items-center gap-2"
             >
               <FaImage className="w-3 h-3" />
               Replace Image
@@ -104,7 +104,7 @@ export default function BoardTileMenu({
                 setIsOpen(false);
                 onSaveToProject(selection);
               }}
-              className="w-full text-left px-3 py-2 folio-ui hover:bg-[var(--bg-base)] text-[var(--text-primary)] flex items-center gap-2"
+              className="w-full text-left px-3 py-2 folio-ui hover:bg-surface-canvas text-folio-text-primary flex items-center gap-2"
             >
               <FaFolderPlus className="w-3 h-3" />
               Save to Another Project
@@ -118,7 +118,7 @@ export default function BoardTileMenu({
                 setIsOpen(false);
                 onEnterQuote(selection);
               }}
-              className="w-full text-left px-3 py-2 folio-ui hover:bg-[var(--bg-base)] text-[var(--text-primary)] flex items-center gap-2"
+              className="w-full text-left px-3 py-2 folio-ui hover:bg-surface-canvas text-folio-text-primary flex items-center gap-2"
             >
               💰 Enter Quote
             </button>
@@ -126,7 +126,7 @@ export default function BoardTileMenu({
 
           {onOverrideSize && (
             <>
-              <div className="border-t border-[var(--border-default)] my-1"></div>
+              <div className="border-t border-folio-border-subtle my-1"></div>
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -134,8 +134,8 @@ export default function BoardTileMenu({
                   onOverrideSize(selection.id, 'large');
                 }}
                 className={clsx(
-                  "w-full text-left px-3 py-2 folio-ui hover:bg-[var(--bg-base)]",
-                  currentOverride === 'L' ? "text-[var(--accent)] font-medium" : "text-[var(--text-primary)]"
+                  "w-full text-left px-3 py-2 folio-ui hover:bg-surface-canvas",
+                  currentOverride === 'L' ? "text-[var(--accent)] font-medium" : "text-folio-text-primary"
                 )}
               >
                 Feature tile (Large)
@@ -147,8 +147,8 @@ export default function BoardTileMenu({
                   onOverrideSize(selection.id, 'small');
                 }}
                 className={clsx(
-                  "w-full text-left px-3 py-2 folio-ui hover:bg-[var(--bg-base)]",
-                  currentOverride === 'S' ? "text-[var(--accent)] font-medium" : "text-[var(--text-primary)]"
+                  "w-full text-left px-3 py-2 folio-ui hover:bg-surface-canvas",
+                  currentOverride === 'S' ? "text-[var(--accent)] font-medium" : "text-folio-text-primary"
                 )}
               >
                 Demote tile (Small)
@@ -160,8 +160,8 @@ export default function BoardTileMenu({
                   onOverrideSize(selection.id, 'auto');
                 }}
                 className={clsx(
-                  "w-full text-left px-3 py-2 folio-ui hover:bg-[var(--bg-base)]",
-                  !currentOverride ? "text-[var(--accent)] font-medium" : "text-[var(--text-primary)]"
+                  "w-full text-left px-3 py-2 folio-ui hover:bg-surface-canvas",
+                  !currentOverride ? "text-[var(--accent)] font-medium" : "text-folio-text-primary"
                 )}
               >
                 Reset to Auto
@@ -171,7 +171,7 @@ export default function BoardTileMenu({
 
           {onDelete && (
             <>
-              <div className="border-t border-[var(--border-default)] my-1"></div>
+              <div className="border-t border-folio-border-subtle my-1"></div>
               <button
                 onClick={(e) => {
                   e.stopPropagation();

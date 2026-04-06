@@ -61,16 +61,16 @@ export default function PhotographerDashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[var(--bg-base)]">
-        <div className="text-[var(--text-tertiary)]">Loading...</div>
+      <div className="min-h-screen flex items-center justify-center bg-surface-canvas">
+        <div className="text-folio-text-tertiary">Loading...</div>
       </div>
     );
   }
 
   if (!data) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[var(--bg-base)]">
-        <div className="text-[var(--text-secondary)]">Unable to load dashboard.</div>
+      <div className="min-h-screen flex items-center justify-center bg-surface-canvas">
+        <div className="text-folio-text-secondary">Unable to load dashboard.</div>
       </div>
     );
   }
@@ -78,27 +78,27 @@ export default function PhotographerDashboardPage() {
   const profileSlug = data.profile.name.replace(/\s+/g, '').toLowerCase();
 
   return (
-    <div className="min-h-screen bg-[var(--bg-base)]">
+    <div className="min-h-screen bg-surface-canvas">
       <div className="max-w-4xl mx-auto px-6 py-12">
         {/* Header */}
         <div className="flex items-center justify-between mb-10">
           <div>
             <h1 className="folio-h2">Dashboard</h1>
-            <p className="folio-body text-[var(--text-secondary)] mt-1">
+            <p className="folio-body text-folio-text-secondary mt-1">
               Welcome back, {data.profile.name}
             </p>
           </div>
           <div className="flex items-center gap-3">
             <Link
               href={`/photographer/${profileSlug}`}
-              className="inline-flex items-center gap-2 px-4 py-2 text-sm text-[var(--text-secondary)] border border-[var(--ridge-outer)] rounded-lg hover:border-[var(--accent)] transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm text-folio-text-secondary border border-folio-border-subtle rounded-lg hover:border-[var(--accent)] transition-colors"
             >
               <Eye className="w-4 h-4" />
               View Profile
             </Link>
             <Link
               href="/photographer/settings"
-              className="inline-flex items-center gap-2 px-4 py-2 text-sm text-[var(--text-secondary)] border border-[var(--ridge-outer)] rounded-lg hover:border-[var(--accent)] transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm text-folio-text-secondary border border-folio-border-subtle rounded-lg hover:border-[var(--accent)] transition-colors"
             >
               <Settings className="w-4 h-4" />
               Settings
@@ -108,12 +108,12 @@ export default function PhotographerDashboardPage() {
 
         {/* Profile completeness */}
         {data.profileCompleteness < 100 && (
-          <div className="mb-8 p-4 rounded-xl border border-[var(--ridge-outer)] bg-white">
+          <div className="mb-8 p-4 rounded-xl border border-folio-border-subtle bg-white">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-[var(--text-primary)]">
+              <span className="text-sm font-medium text-folio-text-primary">
                 Profile completeness
               </span>
-              <span className="text-sm text-[var(--text-secondary)]">
+              <span className="text-sm text-folio-text-secondary">
                 {data.profileCompleteness}%
               </span>
             </div>
@@ -134,25 +134,25 @@ export default function PhotographerDashboardPage() {
 
         {/* Stats */}
         <div className="grid grid-cols-2 gap-4 mb-10">
-          <div className="p-5 rounded-xl border border-[var(--ridge-outer)] bg-white">
+          <div className="p-5 rounded-xl border border-folio-border-subtle bg-white">
             <div className="flex items-center gap-2 mb-1">
-              <Eye className="w-4 h-4 text-[var(--text-tertiary)]" />
-              <span className="text-xs text-[var(--text-secondary)] uppercase tracking-wider">
+              <Eye className="w-4 h-4 text-folio-text-tertiary" />
+              <span className="text-xs text-folio-text-secondary uppercase tracking-wider">
                 Profile Views
               </span>
             </div>
-            <span className="text-2xl font-light text-[var(--text-primary)]">
+            <span className="text-2xl font-light text-folio-text-primary">
               {data.stats.profileViews}
             </span>
           </div>
-          <div className="p-5 rounded-xl border border-[var(--ridge-outer)] bg-white">
+          <div className="p-5 rounded-xl border border-folio-border-subtle bg-white">
             <div className="flex items-center gap-2 mb-1">
-              <Camera className="w-4 h-4 text-[var(--text-tertiary)]" />
-              <span className="text-xs text-[var(--text-secondary)] uppercase tracking-wider">
+              <Camera className="w-4 h-4 text-folio-text-tertiary" />
+              <span className="text-xs text-folio-text-secondary uppercase tracking-wider">
                 Credited Projects
               </span>
             </div>
-            <span className="text-2xl font-light text-[var(--text-primary)]">
+            <span className="text-2xl font-light text-folio-text-primary">
               {data.stats.creditedProjectCount}
             </span>
           </div>
@@ -160,14 +160,14 @@ export default function PhotographerDashboardPage() {
 
         {/* Credited Projects */}
         <div>
-          <h2 className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-widest mb-4">
+          <h2 className="text-xs font-semibold text-folio-text-secondary uppercase tracking-widest mb-4">
             Your Credited Projects
           </h2>
 
           {data.creditedProjects.length === 0 ? (
-            <div className="p-8 text-center rounded-xl border border-dashed border-[var(--ridge-outer)]">
-              <Camera className="w-8 h-8 text-[var(--text-tertiary)] mx-auto mb-3" />
-              <p className="text-[var(--text-secondary)] text-sm">
+            <div className="p-8 text-center rounded-xl border border-dashed border-folio-border-subtle">
+              <Camera className="w-8 h-8 text-folio-text-tertiary mx-auto mb-3" />
+              <p className="text-folio-text-secondary text-sm">
                 No credited projects yet. When designers publish projects with your photography, they&apos;ll appear here.
               </p>
             </div>
@@ -177,7 +177,7 @@ export default function PhotographerDashboardPage() {
                 <Link
                   key={project.id}
                   href={`/p/${project.slug}`}
-                  className="flex items-center gap-4 p-4 rounded-xl border border-[var(--ridge-outer)] bg-white hover:border-[var(--accent)] transition-colors group"
+                  className="flex items-center gap-4 p-4 rounded-xl border border-folio-border-subtle bg-white hover:border-[var(--accent)] transition-colors group"
                 >
                   {project.heroImageUrl ? (
                     <div className="w-16 h-12 rounded-lg overflow-hidden bg-stone-100 shrink-0">
@@ -193,16 +193,16 @@ export default function PhotographerDashboardPage() {
                     <div className="w-16 h-12 rounded-lg bg-stone-100 shrink-0" />
                   )}
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-sm font-medium text-[var(--text-primary)] truncate">
+                    <h3 className="text-sm font-medium text-folio-text-primary truncate">
                       {project.projectTitle}
                     </h3>
                     {project.designerName && (
-                      <p className="text-xs text-[var(--text-secondary)] mt-0.5">
+                      <p className="text-xs text-folio-text-secondary mt-0.5">
                         by {project.designerName}
                       </p>
                     )}
                   </div>
-                  <ExternalLink className="w-4 h-4 text-[var(--text-tertiary)] group-hover:text-[var(--accent)] transition-colors shrink-0" />
+                  <ExternalLink className="w-4 h-4 text-folio-text-tertiary group-hover:text-[var(--accent)] transition-colors shrink-0" />
                 </Link>
               ))}
             </div>

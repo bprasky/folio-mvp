@@ -20,7 +20,7 @@ export function RelatedProjects({
 
   return (
     <section className="mt-16">
-      <h3 className="text-[15px] font-semibold tracking-tight text-[var(--text-primary)]">
+      <h3 className="text-[15px] font-semibold tracking-tight text-folio-text-primary">
         In Collaboration With
       </h3>
       <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -34,7 +34,7 @@ export function RelatedProjects({
             <Link
               key={p.id}
               href={`/p/${p.slug}`}
-              className="group rounded-2xl ring-1 ring-black/5 overflow-hidden bg-[var(--bg-elevated)] hover:bg-[var(--bg-elevated)] transition"
+              className="group rounded-2xl ring-1 ring-black/5 overflow-hidden bg-surface-ground hover:bg-surface-ground transition"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -44,7 +44,7 @@ export function RelatedProjects({
                 loading="lazy"
               />
               <div className="p-3">
-                <p className="line-clamp-2 folio-meta text-[var(--text-primary)]">
+                <p className="line-clamp-2 folio-meta text-folio-text-primary">
                   {p.project.title}
                 </p>
               </div>

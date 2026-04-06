@@ -62,10 +62,10 @@ export default function AdminDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[var(--bg-base)] py-8">
+      <div className="min-h-screen bg-surface-canvas py-8">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center">
-            <div className="text-[var(--text-secondary)]">Loading dashboard...</div>
+            <div className="text-folio-text-secondary">Loading dashboard...</div>
           </div>
         </div>
       </div>
@@ -73,7 +73,7 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--bg-base)] py-8">
+    <div className="min-h-screen bg-surface-canvas py-8">
       <div className="max-w-7xl mx-auto px-4">
         {/* Header */}
         <div className="mb-8">
@@ -159,7 +159,7 @@ export default function AdminDashboard() {
         {/* Recent Activity */}
         <RidgeCard padding="lg">
           <h2 className="folio-h2 mb-4">Recent Activity</h2>
-          <div className="text-center text-[var(--text-secondary)] py-8">
+          <div className="text-center text-folio-text-secondary py-8">
             <p className="folio-body">No recent activity to display</p>
             <p className="folio-meta mt-2">Activity tracking coming soon...</p>
           </div>

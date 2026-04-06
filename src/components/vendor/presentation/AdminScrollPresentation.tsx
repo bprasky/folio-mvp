@@ -127,7 +127,7 @@ export default function AdminScrollPresentation({
   };
 
   return (
-    <div className="min-h-screen bg-[var(--bg-base)]">
+    <div className="min-h-screen bg-surface-canvas">
 
       {/* Section 1: The Opening — Full-bleed hero */}
       <ScrollSection
@@ -204,10 +204,10 @@ export default function AdminScrollPresentation({
         animation="fade-up"
       >
         <div className="text-center mb-12">
-          <h2 className="font-[var(--font-headline)] text-folio-h2 md:text-folio-h1 text-[var(--text-primary)] mb-6">
+          <h2 className="font-[var(--font-headline)] text-folio-h2 md:text-folio-h1 text-folio-text-primary mb-6">
             The blind spot in your marketing
           </h2>
-          <p className="text-folio-body text-[var(--text-secondary)] max-w-2xl mx-auto mb-8">
+          <p className="text-folio-body text-folio-text-secondary max-w-2xl mx-auto mb-8">
             You spend on trade shows, showroom visits, and rep programs.
             But do you know which designers are actually specifying your products?
           </p>
@@ -221,19 +221,19 @@ export default function AdminScrollPresentation({
           ].map((item, i) => (
             <motion.div
               key={item.label}
-              className="bg-[#F5F3EF] rounded-neu p-6 text-center"
+              className="bg-surface-elevated rounded-neu p-6 text-center"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.15 }}
             >
-              <div className="text-2xl font-semibold text-[var(--text-primary)] mb-1">
+              <div className="text-2xl font-semibold text-folio-text-primary mb-1">
                 {item.value}
               </div>
-              <div className="text-folio-ui text-[var(--text-secondary)] font-medium mb-2">
+              <div className="text-folio-ui text-folio-text-secondary font-medium mb-2">
                 {item.label}
               </div>
-              <div className="text-folio-meta text-[var(--text-tertiary)]">
+              <div className="text-folio-meta text-folio-text-tertiary">
                 {item.detail}
               </div>
             </motion.div>
@@ -248,7 +248,7 @@ export default function AdminScrollPresentation({
         animation="fade-up"
         bg="warm"
       >
-        <h2 className="font-[var(--font-headline)] text-folio-h2 text-[var(--text-primary)] text-center mb-12">
+        <h2 className="font-[var(--font-headline)] text-folio-h2 text-folio-text-primary text-center mb-12">
           What Folio captured for {organizationName}
         </h2>
 
@@ -263,7 +263,7 @@ export default function AdminScrollPresentation({
           </div>
         )}
 
-        <p className="text-center text-folio-meta text-[var(--text-tertiary)]">
+        <p className="text-center text-folio-meta text-folio-text-tertiary">
           Live data — updated as designers tag your products
         </p>
       </ScrollSection>
@@ -275,10 +275,10 @@ export default function AdminScrollPresentation({
         animation="fade-up"
       >
         <div className="text-center mb-12">
-          <h2 className="font-[var(--font-headline)] text-folio-h2 text-[var(--text-primary)] mb-4">
+          <h2 className="font-[var(--font-headline)] text-folio-h2 text-folio-text-primary mb-4">
             How this happened
           </h2>
-          <p className="text-folio-body text-[var(--text-secondary)] max-w-2xl mx-auto">
+          <p className="text-folio-body text-folio-text-secondary max-w-2xl mx-auto">
             Folio is the operating platform for interior designers. When they document
             their projects, they tag the products they used — including yours.
           </p>
@@ -315,10 +315,10 @@ export default function AdminScrollPresentation({
                 {i + 1}
               </div>
               <div>
-                <h3 className="text-folio-ui font-semibold text-[var(--text-primary)] mb-1">
+                <h3 className="text-folio-ui font-semibold text-folio-text-primary mb-1">
                   {step.title}
                 </h3>
-                <p className="text-folio-body text-[var(--text-secondary)]">
+                <p className="text-folio-body text-folio-text-secondary">
                   {step.description}
                 </p>
               </div>
@@ -336,10 +336,10 @@ export default function AdminScrollPresentation({
         fullBleed
       >
         <div className="mx-auto max-w-4xl px-6 mb-8">
-          <h2 className="font-[var(--font-headline)] text-folio-h2 text-[var(--text-primary)] text-center mb-4">
+          <h2 className="font-[var(--font-headline)] text-folio-h2 text-folio-text-primary text-center mb-4">
             Meet your designers
           </h2>
-          <p className="text-folio-body text-[var(--text-secondary)] text-center">
+          <p className="text-folio-body text-folio-text-secondary text-center">
             {isActivated
               ? `These ${designers.length} designers have tagged your products in their projects.`
               : 'Activate your account to see who\'s specifying your products.'}
@@ -400,10 +400,10 @@ export default function AdminScrollPresentation({
         animation="fade-up"
       >
         <div className="text-center">
-          <h2 className="font-[var(--font-headline)] text-folio-h2 text-[var(--text-primary)] mb-4">
+          <h2 className="font-[var(--font-headline)] text-folio-h2 text-folio-text-primary mb-4">
             Your influence map
           </h2>
-          <p className="text-folio-body text-[var(--text-secondary)] max-w-2xl mx-auto mb-8">
+          <p className="text-folio-body text-folio-text-secondary max-w-2xl mx-auto mb-8">
             See how your products flow through the design community. Every tag creates
             a connection in your network.
           </p>
@@ -416,7 +416,7 @@ export default function AdminScrollPresentation({
           onCTA={handleActivate}
         >
           {/* Network visualization teaser */}
-          <div className="relative aspect-[16/9] bg-[#F5F3EF] rounded-neu-lg overflow-hidden">
+          <div className="relative aspect-[16/9] bg-surface-elevated rounded-neu-lg overflow-hidden">
             <div className="absolute inset-0 flex items-center justify-center">
               {/* Abstract network visualization */}
               <svg viewBox="0 0 400 250" className="w-full h-full p-8 opacity-60">
@@ -443,10 +443,10 @@ export default function AdminScrollPresentation({
             </div>
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="text-center">
-                <p className="font-[var(--font-headline)] text-2xl text-[var(--text-primary)]">
+                <p className="font-[var(--font-headline)] text-2xl text-folio-text-primary">
                   {stats ? stats.uniqueDesigners : '...'} connections
                 </p>
-                <p className="text-folio-meta text-[var(--text-tertiary)]">
+                <p className="text-folio-meta text-folio-text-tertiary">
                   and growing
                 </p>
               </div>
@@ -462,10 +462,10 @@ export default function AdminScrollPresentation({
         animation="fade-up"
         bg="warm"
       >
-        <h2 className="font-[var(--font-headline)] text-folio-h2 text-[var(--text-primary)] text-center mb-4">
+        <h2 className="font-[var(--font-headline)] text-folio-h2 text-folio-text-primary text-center mb-4">
           Events, transformed
         </h2>
-        <p className="text-folio-body text-[var(--text-secondary)] text-center max-w-2xl mx-auto mb-12">
+        <p className="text-folio-body text-folio-text-secondary text-center max-w-2xl mx-auto mb-12">
           Stop guessing who to invite. Know exactly which designers are already
           specifying your products.
         </p>
@@ -478,24 +478,24 @@ export default function AdminScrollPresentation({
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
           >
-            <div className="text-folio-meta uppercase tracking-wide text-[var(--text-tertiary)] font-medium mb-4">
+            <div className="text-folio-meta uppercase tracking-wide text-folio-text-tertiary font-medium mb-4">
               Before Folio
             </div>
-            <ul className="space-y-3 text-folio-body text-[var(--text-secondary)]">
+            <ul className="space-y-3 text-folio-body text-folio-text-secondary">
               <li className="flex items-start gap-2">
-                <span className="text-[var(--text-tertiary)]">-</span>
+                <span className="text-folio-text-tertiary">-</span>
                 Generic invite lists from outdated CRMs
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-[var(--text-tertiary)]">-</span>
+                <span className="text-folio-text-tertiary">-</span>
                 No way to know who actually specs your products
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-[var(--text-tertiary)]">-</span>
+                <span className="text-folio-text-tertiary">-</span>
                 Post-event follow-up with unqualified leads
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-[var(--text-tertiary)]">-</span>
+                <span className="text-folio-text-tertiary">-</span>
                 ROI measured in business cards collected
               </li>
             </ul>
@@ -538,18 +538,18 @@ export default function AdminScrollPresentation({
         trackRef={sectionRef('comparison')}
         animation="fade-up"
       >
-        <h2 className="font-[var(--font-headline)] text-folio-h2 text-[var(--text-primary)] text-center mb-12">
+        <h2 className="font-[var(--font-headline)] text-folio-h2 text-folio-text-primary text-center mb-12">
           What trade shows can&apos;t deliver
         </h2>
 
         <div className="overflow-x-auto">
           <table className="w-full min-w-[600px]">
             <thead>
-              <tr className="border-b border-[#E8E4DF]">
-                <th className="text-left py-4 px-4 text-folio-ui text-[var(--text-tertiary)] font-medium w-1/3">
+              <tr className="border-b border-folio-border-subtle">
+                <th className="text-left py-4 px-4 text-folio-ui text-folio-text-tertiary font-medium w-1/3">
                   Feature
                 </th>
-                <th className="text-center py-4 px-4 text-folio-ui text-[var(--text-tertiary)] font-medium">
+                <th className="text-center py-4 px-4 text-folio-ui text-folio-text-tertiary font-medium">
                   Trade Shows
                 </th>
                 <th className="text-center py-4 px-4 text-folio-ui font-semibold text-[var(--accent)]">
@@ -568,21 +568,21 @@ export default function AdminScrollPresentation({
                 { feature: 'Physical product display', show: true, folio: false },
               ].map((row) => (
                 <tr key={row.feature} className="border-b border-[#F5F3EF]">
-                  <td className="py-3 px-4 text-folio-body text-[var(--text-primary)]">
+                  <td className="py-3 px-4 text-folio-body text-folio-text-primary">
                     {row.feature}
                   </td>
                   <td className="py-3 px-4 text-center">
                     {row.show ? (
                       <span className="text-[var(--accent)]">&#10003;</span>
                     ) : (
-                      <span className="text-[var(--text-tertiary)]">&#10005;</span>
+                      <span className="text-folio-text-tertiary">&#10005;</span>
                     )}
                   </td>
                   <td className="py-3 px-4 text-center">
                     {row.folio ? (
                       <span className="text-[var(--accent)]">&#10003;</span>
                     ) : (
-                      <span className="text-[var(--text-tertiary)]">&#10005;</span>
+                      <span className="text-folio-text-tertiary">&#10005;</span>
                     )}
                   </td>
                 </tr>
@@ -600,10 +600,10 @@ export default function AdminScrollPresentation({
         bg="elevated"
       >
         <div className="text-center mb-8">
-          <h2 className="font-[var(--font-headline)] text-folio-h2 text-[var(--text-primary)] mb-4">
+          <h2 className="font-[var(--font-headline)] text-folio-h2 text-folio-text-primary mb-4">
             Your voice in the conversation
           </h2>
-          <p className="text-folio-body text-[var(--text-secondary)] max-w-2xl mx-auto">
+          <p className="text-folio-body text-folio-text-secondary max-w-2xl mx-auto">
             Folio&apos;s editorial platform lets vendors collaborate on content with
             designers. Co-create stories that feature your products in real projects.
           </p>
@@ -616,10 +616,10 @@ export default function AdminScrollPresentation({
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <h3 className="text-folio-ui font-semibold text-[var(--text-primary)] mb-2">
+            <h3 className="text-folio-ui font-semibold text-folio-text-primary mb-2">
               Sponsored Content
             </h3>
-            <p className="text-folio-meta text-[var(--text-secondary)]">
+            <p className="text-folio-meta text-folio-text-secondary">
               Feature your products in designer stories. Authentic content,
               real projects, genuine endorsement.
             </p>
@@ -632,10 +632,10 @@ export default function AdminScrollPresentation({
             viewport={{ once: true }}
             transition={{ delay: 0.1 }}
           >
-            <h3 className="text-folio-ui font-semibold text-[var(--text-primary)] mb-2">
+            <h3 className="text-folio-ui font-semibold text-folio-text-primary mb-2">
               Co-created Editorials
             </h3>
-            <p className="text-folio-meta text-[var(--text-secondary)]">
+            <p className="text-folio-meta text-folio-text-secondary">
               Partner with Folio editors to produce high-quality content
               that reaches the design community.
             </p>
@@ -649,7 +649,7 @@ export default function AdminScrollPresentation({
         trackRef={sectionRef('partnership')}
         animation="fade-up"
       >
-        <h2 className="font-[var(--font-headline)] text-folio-h2 text-[var(--text-primary)] text-center mb-12">
+        <h2 className="font-[var(--font-headline)] text-folio-h2 text-folio-text-primary text-center mb-12">
           Partnership options
         </h2>
 
@@ -701,24 +701,24 @@ export default function AdminScrollPresentation({
               className={`rounded-neu p-6 ${
                 plan.highlighted
                   ? 'bg-[var(--text-primary)] text-white ring-2 ring-[var(--accent)] ring-offset-4'
-                  : 'bg-[#F5F3EF]'
+                  : 'bg-surface-elevated'
               }`}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.1 }}
             >
-              <h3 className={`text-xl font-semibold mb-2 ${plan.highlighted ? 'text-white' : 'text-[var(--text-primary)]'}`}>
+              <h3 className={`text-xl font-semibold mb-2 ${plan.highlighted ? 'text-white' : 'text-folio-text-primary'}`}>
                 {plan.tier}
               </h3>
-              <p className={`text-folio-meta mb-4 ${plan.highlighted ? 'text-white/70' : 'text-[var(--text-secondary)]'}`}>
+              <p className={`text-folio-meta mb-4 ${plan.highlighted ? 'text-white/70' : 'text-folio-text-secondary'}`}>
                 {plan.description}
               </p>
               <ul className="space-y-2 mb-6">
                 {plan.features.map((feature) => (
                   <li
                     key={feature}
-                    className={`text-folio-meta flex items-start gap-2 ${plan.highlighted ? 'text-white/80' : 'text-[var(--text-secondary)]'}`}
+                    className={`text-folio-meta flex items-start gap-2 ${plan.highlighted ? 'text-white/80' : 'text-folio-text-secondary'}`}
                   >
                     <span className={plan.highlighted ? 'text-[var(--accent)]' : 'text-[var(--accent)]'}>
                       &#10003;
@@ -732,7 +732,7 @@ export default function AdminScrollPresentation({
                 className={`w-full py-2.5 rounded-neu-btn font-medium text-folio-ui transition-colors ${
                   plan.highlighted
                     ? 'bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)]'
-                    : 'bg-white text-[var(--text-primary)] hover:bg-[#E8E4DF]'
+                    : 'bg-white text-folio-text-primary hover:bg-folio-border-subtle'
                 }`}
               >
                 {plan.cta}
@@ -749,10 +749,10 @@ export default function AdminScrollPresentation({
         animation="fade-up"
         bg="warm"
       >
-        <h2 className="font-[var(--font-headline)] text-folio-h2 text-[var(--text-primary)] text-center mb-4">
+        <h2 className="font-[var(--font-headline)] text-folio-h2 text-folio-text-primary text-center mb-4">
           Founding Vendor Program
         </h2>
-        <p className="text-folio-body text-[var(--text-secondary)] text-center max-w-2xl mx-auto mb-12">
+        <p className="text-folio-body text-folio-text-secondary text-center max-w-2xl mx-auto mb-12">
           Limited to 20 vendors. Founding vendors receive permanent priority placement,
           early feature access, and a direct line to the Folio team.
         </p>

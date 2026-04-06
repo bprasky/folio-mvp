@@ -43,14 +43,14 @@ export default function RoleBasedLayout({ children }: RoleBasedLayoutProps) {
   // Show loading state while session is being determined (authenticated routes only)
   if (status === 'loading') {
     return (
-      <div className="flex flex-col min-h-screen w-full bg-[var(--bg-base)]">
-        <div className="h-16 bg-[var(--bg-base)] border-b border-[var(--ridge-outer)] animate-pulse" />
+      <div className="flex flex-col min-h-screen w-full bg-surface-canvas">
+        <div className="h-16 bg-surface-canvas border-b border-folio-border-subtle animate-pulse" />
         <main className="flex-1 pt-4 px-6 pb-8 overflow-auto">
           <div className="animate-pulse">
-            <div className="h-8 bg-[var(--bg-elevated)] rounded mb-4"></div>
+            <div className="h-8 bg-surface-ground rounded mb-4"></div>
             <div className="space-y-2">
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="h-4 bg-[var(--bg-elevated)] rounded"></div>
+                <div key={i} className="h-4 bg-surface-ground rounded"></div>
               ))}
             </div>
           </div>

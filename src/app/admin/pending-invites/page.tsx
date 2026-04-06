@@ -178,18 +178,18 @@ The Folio Team`;
       case 'INVITED':
         return 'bg-green-100 text-green-800';
       case 'ARCHIVED':
-        return 'bg-[var(--bg-elevated)] text-[var(--text-secondary)]';
+        return 'bg-surface-ground text-folio-text-secondary';
       default:
-        return 'bg-[var(--bg-elevated)] text-[var(--text-secondary)]';
+        return 'bg-surface-ground text-folio-text-secondary';
     }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[var(--bg-base)] py-8">
+      <div className="min-h-screen bg-surface-canvas py-8">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center py-12">
-            <div className="text-[var(--text-secondary)]">Loading pending invites...</div>
+            <div className="text-folio-text-secondary">Loading pending invites...</div>
           </div>
         </div>
       </div>
@@ -197,7 +197,7 @@ The Folio Team`;
   }
 
   return (
-    <div className="min-h-screen bg-[var(--bg-base)] py-8">
+    <div className="min-h-screen bg-surface-canvas py-8">
       <div className="max-w-7xl mx-auto px-4">
         {/* Header */}
         <div className="mb-6 flex items-center justify-between">
@@ -279,45 +279,45 @@ The Folio Team`;
         ) : (
           <RidgeCard padding="none" className="overflow-hidden">
             <table className="min-w-full divide-y divide-[var(--border-subtle)]">
-              <thead className="bg-[var(--bg-elevated)]">
+              <thead className="bg-surface-ground">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-folio-text-secondary uppercase tracking-wider">
                     Vendor
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-folio-text-secondary uppercase tracking-wider">
                     Contacts
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-folio-text-secondary uppercase tracking-wider">
                     Designers
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-folio-text-secondary uppercase tracking-wider">
                     Projects
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-folio-text-secondary uppercase tracking-wider">
                     Tags
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-folio-text-secondary uppercase tracking-wider">
                     First Seen
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-folio-text-secondary uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-folio-text-secondary uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-[var(--bg-base)] divide-y divide-[var(--border-subtle)]">
+              <tbody className="bg-surface-canvas divide-y divide-[var(--border-subtle)]">
                 {candidates.map((candidate) => (
                   <tr
                     key={candidate.id}
-                    className="hover:bg-[var(--bg-elevated)]/50 cursor-pointer"
+                    className="hover:bg-surface-ground/50 cursor-pointer"
                     onClick={() => setSelectedCandidate(candidate)}
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-[var(--text-primary)]">{candidate.vendorName}</div>
+                      <div className="text-sm font-medium text-folio-text-primary">{candidate.vendorName}</div>
                       {candidate.vendorWebsite && (
-                        <div className="text-sm text-[var(--text-secondary)]">
+                        <div className="text-sm text-folio-text-secondary">
                           <a
                             href={candidate.vendorWebsite}
                             target="_blank"
@@ -330,33 +330,33 @@ The Folio Team`;
                         </div>
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--text-primary)]">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-folio-text-primary">
                       {candidate.aggregates.contactCount > 0 ? (
                         <span className="font-medium">
                           {candidate.aggregates.contactCount}
                           {candidate.aggregates.uniqueDomainsCount > 1 && (
-                            <span className="text-[var(--text-secondary)] ml-1">
+                            <span className="text-folio-text-secondary ml-1">
                               ({candidate.aggregates.uniqueDomainsCount} domains)
                             </span>
                           )}
                         </span>
                       ) : (
-                        <span className="text-[var(--text-tertiary)]">-</span>
+                        <span className="text-folio-text-tertiary">-</span>
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--text-primary)]">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-folio-text-primary">
                       {candidate.aggregates.designerCount}
                       {candidate.aggregates.multiDesigner && (
                         <span className="ml-1 text-[var(--accent)]" title="Multiple designers">*</span>
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--text-primary)]">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-folio-text-primary">
                       {candidate.aggregates.projectCount}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--text-primary)]">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-folio-text-primary">
                       {candidate.aggregates.signalCount}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--text-secondary)]">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-folio-text-secondary">
                       {new Date(candidate.createdAt).toLocaleDateString()}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -394,7 +394,7 @@ The Folio Team`;
                 <h2 className="folio-h2">{selectedCandidate.vendorName}</h2>
                 <button
                   onClick={() => setSelectedCandidate(null)}
-                  className="text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
+                  className="text-folio-text-tertiary hover:text-folio-text-secondary"
                 >
                   x
                 </button>
@@ -403,7 +403,7 @@ The Folio Team`;
               <div className="space-y-4 mb-6">
                 <div>
                   <label className="folio-meta font-medium">Website</label>
-                  <p className="text-sm text-[var(--text-primary)]">
+                  <p className="text-sm text-folio-text-primary">
                     {selectedCandidate.vendorWebsite ? (
                       <a
                         href={selectedCandidate.vendorWebsite}
@@ -420,7 +420,7 @@ The Folio Team`;
                 </div>
                 <div>
                   <label className="folio-meta font-medium">Contacts</label>
-                  <p className="text-sm text-[var(--text-primary)]">
+                  <p className="text-sm text-folio-text-primary">
                     {selectedCandidate.aggregates.contactCount} contact
                     {selectedCandidate.aggregates.contactCount !== 1 ? 's' : ''} across{' '}
                     {selectedCandidate.aggregates.uniqueDomainsCount} domain
@@ -441,18 +441,18 @@ The Folio Team`;
                 </div>
                 <div>
                   <label className="folio-meta font-medium">First Seen</label>
-                  <p className="text-sm text-[var(--text-primary)]">
+                  <p className="text-sm text-folio-text-primary">
                     {selectedCandidate.firstSeenByDesigner?.name || 'Unknown'} in project &quot;
                     {selectedCandidate.firstSeenInProject?.title || 'Untitled'}&quot;
                     <br />
-                    <span className="text-[var(--text-secondary)]">
+                    <span className="text-folio-text-secondary">
                       {new Date(selectedCandidate.createdAt).toLocaleString()}
                     </span>
                   </p>
                 </div>
                 <div>
                   <label className="folio-meta font-medium">Aggregates</label>
-                  <p className="text-sm text-[var(--text-primary)]">
+                  <p className="text-sm text-folio-text-primary">
                     {selectedCandidate.aggregates.designerCount} designer
                     {selectedCandidate.aggregates.designerCount !== 1 ? 's' : ''} x{' '}
                     {selectedCandidate.aggregates.projectCount} project
@@ -482,13 +482,13 @@ The Folio Team`;
 
                       return Object.entries(contactsByDomain).map(([domain, contacts]) => (
                         <div key={domain} className="border-b border-[var(--border-subtle)] last:border-b-0 p-3">
-                          <div className="font-medium text-sm text-[var(--text-primary)] mb-2">{domain}</div>
+                          <div className="font-medium text-sm text-folio-text-primary mb-2">{domain}</div>
                           <div className="space-y-1">
                             {contacts.map((contact) => (
-                              <div key={contact.id} className="text-sm text-[var(--text-secondary)]">
+                              <div key={contact.id} className="text-sm text-folio-text-secondary">
                                 <span className="font-medium">{contact.email}</span>
-                                {contact.name && <span className="text-[var(--text-secondary)] ml-2">({contact.name})</span>}
-                                <span className="text-[var(--text-tertiary)] text-xs ml-2">
+                                {contact.name && <span className="text-folio-text-secondary ml-2">({contact.name})</span>}
+                                <span className="text-folio-text-tertiary text-xs ml-2">
                                   via {contact.designer.name} - {new Date(contact.createdAt).toLocaleDateString()}
                                 </span>
                               </div>
@@ -507,21 +507,21 @@ The Folio Team`;
                 </label>
                 <div className="border border-[var(--border-subtle)] rounded-lg max-h-64 overflow-y-auto">
                   <table className="min-w-full divide-y divide-[var(--border-subtle)]">
-                    <thead className="bg-[var(--bg-elevated)]">
+                    <thead className="bg-surface-ground">
                       <tr>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-[var(--text-secondary)]">Designer</th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-[var(--text-secondary)]">Project</th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-[var(--text-secondary)]">Date</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-folio-text-secondary">Designer</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-folio-text-secondary">Project</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-folio-text-secondary">Date</th>
                       </tr>
                     </thead>
-                    <tbody className="bg-[var(--bg-base)] divide-y divide-[var(--border-subtle)]">
+                    <tbody className="bg-surface-canvas divide-y divide-[var(--border-subtle)]">
                       {selectedCandidate.signals.map((signal) => (
                         <tr key={signal.id}>
-                          <td className="px-4 py-2 text-sm text-[var(--text-primary)]">{signal.designer.name}</td>
-                          <td className="px-4 py-2 text-sm text-[var(--text-primary)]">
+                          <td className="px-4 py-2 text-sm text-folio-text-primary">{signal.designer.name}</td>
+                          <td className="px-4 py-2 text-sm text-folio-text-primary">
                             {signal.project?.title || '-'}
                           </td>
-                          <td className="px-4 py-2 text-sm text-[var(--text-secondary)]">
+                          <td className="px-4 py-2 text-sm text-folio-text-secondary">
                             {new Date(signal.createdAt).toLocaleDateString()}
                           </td>
                         </tr>

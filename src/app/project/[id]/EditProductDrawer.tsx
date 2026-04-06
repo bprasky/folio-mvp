@@ -243,16 +243,16 @@ export default function EditProductDrawer({
       />
 
       {/* Drawer */}
-      <div className="absolute right-0 top-0 h-full w-full max-w-2xl bg-[var(--bg-elevated)] shadow-xl transform transition-transform">
+      <div className="absolute right-0 top-0 h-full w-full max-w-2xl bg-surface-ground shadow-xl transform transition-transform">
         <div className="flex flex-col h-full">
           {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-[var(--border-default)]">
-            <h2 className="folio-h2 text-[var(--text-primary)]">
+          <div className="flex items-center justify-between p-6 border-b border-folio-border-subtle">
+            <h2 className="folio-h2 text-folio-text-primary">
               Edit Product
             </h2>
             <button
               onClick={handleClose}
-              className="p-2 text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors"
+              className="p-2 text-folio-text-tertiary hover:text-folio-text-primary transition-colors"
             >
               <FaTimes className="w-5 h-5" />
             </button>
@@ -262,7 +262,7 @@ export default function EditProductDrawer({
           <div className="flex-1 overflow-y-auto p-6">
             {isLoadingData ? (
               <div className="flex items-center justify-center h-64">
-                <div className="flex items-center gap-3 text-[var(--text-secondary)]">
+                <div className="flex items-center gap-3 text-folio-text-secondary">
                   <FaSpinner className="w-5 h-5 animate-spin" />
                   <span>Loading product data...</span>
                 </div>

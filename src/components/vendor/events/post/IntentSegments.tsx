@@ -64,7 +64,7 @@ export function IntentSegments({ segments }: IntentSegmentsProps) {
     <>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {segmentConfig.map((segment) => (
-          <Card key={segment.key} className="bg-white border-[#DAD2CA] hover:shadow-md transition-shadow">
+          <Card key={segment.key} className="bg-white border-folio-border-strong hover:shadow-md transition-shadow">
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
@@ -72,10 +72,10 @@ export function IntentSegments({ segments }: IntentSegmentsProps) {
                     <segment.icon className={`w-5 h-5 ${segment.color.includes('red') ? 'text-red-600' : segment.color.includes('yellow') ? 'text-yellow-600' : 'text-[var(--accent)]'}`} />
                   </div>
                   <div>
-                    <CardTitle className="text-lg font-serif text-[#2B2B2B]">
+                    <CardTitle className="text-lg font-serif text-folio-text-primary">
                       {segment.title}
                     </CardTitle>
-                    <p className="text-sm text-[#8C8278]">
+                    <p className="text-sm text-folio-text-secondary">
                       {segment.designers.length} designers
                     </p>
                   </div>
@@ -87,7 +87,7 @@ export function IntentSegments({ segments }: IntentSegmentsProps) {
             </CardHeader>
             
             <CardContent className="space-y-4">
-              <p className="text-sm text-[#8C8278]">
+              <p className="text-sm text-folio-text-secondary">
                 {segment.description}
               </p>
 
@@ -95,31 +95,31 @@ export function IntentSegments({ segments }: IntentSegmentsProps) {
                 <>
                   <Separator />
                   <div className="space-y-2">
-                    <p className="text-xs font-medium text-[#2B2B2B] uppercase tracking-wide">
+                    <p className="text-xs font-medium text-folio-text-primary uppercase tracking-wide">
                       Top Designers
                     </p>
                     {segment.designers.slice(0, 3).map((designer) => (
                       <div key={designer.id} className="flex items-center justify-between">
                         <div>
-                          <p className="text-sm font-medium text-[#2B2B2B]">
+                          <p className="text-sm font-medium text-folio-text-primary">
                             {designer.name}
                           </p>
-                          <p className="text-xs text-[#8C8278]">
+                          <p className="text-xs text-folio-text-secondary">
                             {designer.firm}
                           </p>
                         </div>
                         <div className="text-right">
-                          <p className="text-xs font-medium text-[#2B2B2B]">
+                          <p className="text-xs font-medium text-folio-text-primary">
                             {formatCurrency(designer.valueEstimateUsd, 'USD', true)}
                           </p>
-                          <p className="text-xs text-[#8C8278]">
+                          <p className="text-xs text-folio-text-secondary">
                             Score: {designer.intentScore}
                           </p>
                         </div>
                       </div>
                     ))}
                     {segment.designers.length > 3 && (
-                      <p className="text-xs text-[#8C8278]">
+                      <p className="text-xs text-folio-text-secondary">
                         +{segment.designers.length - 3} more designers
                       </p>
                     )}

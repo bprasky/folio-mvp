@@ -93,7 +93,7 @@ export function LandingModal() {
             >
               {/* Sticky header */}
               <div className="sticky top-0 z-10 flex items-center justify-between px-8 py-5 border-b border-[rgba(190,175,155,0.24)] bg-[rgba(255,252,248,0.95)] backdrop-blur-md">
-                <span className="font-headline text-xl tracking-wide font-semibold text-[var(--text-primary)]">
+                <span className="font-headline text-xl tracking-wide font-semibold text-folio-text-primary">
                   FOLIO
                 </span>
                 <button
@@ -101,7 +101,7 @@ export function LandingModal() {
                   className="p-2 -mr-2 rounded-full hover:bg-black/5 transition-colors"
                   aria-label="Close"
                 >
-                  <X className="h-5 w-5 text-[var(--text-secondary)]" />
+                  <X className="h-5 w-5 text-folio-text-secondary" />
                 </button>
               </div>
 
@@ -117,12 +117,12 @@ export function LandingModal() {
                 >
                   {/* Hero */}
                   <motion.div variants={item} className="px-8 md:px-12 pt-12 pb-8">
-                    <h2 className="font-headline italic text-3xl md:text-4xl lg:text-5xl text-[var(--text-primary)] leading-[1.1] text-center">
+                    <h2 className="font-headline italic text-3xl md:text-4xl lg:text-5xl text-folio-text-primary leading-[1.1] text-center">
                       Your work is the product.
                       <br />
                       Folio treats it that way.
                     </h2>
-                    <p className="mt-5 text-center text-base md:text-lg text-[var(--text-secondary)] leading-relaxed max-w-xl mx-auto">
+                    <p className="mt-5 text-center text-base md:text-lg text-folio-text-secondary leading-relaxed max-w-xl mx-auto">
                       Folio is where interior designers publish completed projects
                       as structured, documented records.
                     </p>
@@ -130,15 +130,15 @@ export function LandingModal() {
 
                   {/* Divider */}
                   <div className="px-8 md:px-12">
-                    <hr className="border-t border-[var(--ridge-outer)]" />
+                    <hr className="border-t border-folio-border-subtle" />
                   </div>
 
                   {/* How it works */}
                   <motion.div variants={item} className="px-8 md:px-12 py-10">
-                    <p className="uppercase tracking-widest text-xs text-[var(--text-secondary)] mb-2">
+                    <p className="uppercase tracking-widest text-xs text-folio-text-secondary mb-2">
                       The Process
                     </p>
-                    <h3 className="font-headline italic text-2xl md:text-3xl text-[var(--text-primary)] mb-8">
+                    <h3 className="font-headline italic text-2xl md:text-3xl text-folio-text-primary mb-8">
                       How it works
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -153,10 +153,10 @@ export function LandingModal() {
                           <p className="font-headline italic text-2xl text-[var(--accent)] mb-2">
                             {i + 1}
                           </p>
-                          <h4 className="text-sm font-medium text-[var(--text-primary)] mb-1.5">
+                          <h4 className="text-sm font-medium text-folio-text-primary mb-1.5">
                             {step.title}
                           </h4>
-                          <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
+                          <p className="text-sm text-folio-text-secondary leading-relaxed">
                             {step.description}
                           </p>
                         </GlassCard>
@@ -166,15 +166,15 @@ export function LandingModal() {
 
                   {/* Divider */}
                   <div className="px-8 md:px-12">
-                    <hr className="border-t border-[var(--ridge-outer)]" />
+                    <hr className="border-t border-folio-border-subtle" />
                   </div>
 
                   {/* What You Get */}
                   <motion.div variants={item} className="px-8 md:px-12 py-10">
-                    <p className="uppercase tracking-widest text-xs text-[var(--text-secondary)] mb-2">
+                    <p className="uppercase tracking-widest text-xs text-folio-text-secondary mb-2">
                       What You Get
                     </p>
-                    <h3 className="font-headline italic text-2xl md:text-3xl text-[var(--text-primary)] mb-6">
+                    <h3 className="font-headline italic text-2xl md:text-3xl text-folio-text-primary mb-6">
                       Built around your work. Not theirs.
                     </h3>
                     <div className="space-y-3">
@@ -183,15 +183,15 @@ export function LandingModal() {
                           key={i}
                           href={pillar.href}
                           onClick={handleClose}
-                          className="flex items-baseline gap-3 group py-2 border-b border-[var(--ridge-outer)] last:border-b-0 transition-colors hover:bg-black/[0.02] -mx-2 px-2 rounded-lg"
+                          className="flex items-baseline gap-3 group py-2 border-b border-folio-border-subtle last:border-b-0 transition-colors hover:bg-black/[0.02] -mx-2 px-2 rounded-lg"
                         >
-                          <span className="uppercase tracking-widest text-[10px] text-[var(--text-tertiary)] whitespace-nowrap min-w-[100px]">
+                          <span className="uppercase tracking-widest text-[10px] text-folio-text-tertiary whitespace-nowrap min-w-[100px]">
                             {pillar.label}
                           </span>
-                          <span className="font-headline italic text-base text-[var(--text-primary)] group-hover:text-[var(--accent)] transition-colors">
+                          <span className="font-headline italic text-base text-folio-text-primary group-hover:text-[var(--accent)] transition-colors">
                             {pillar.title}
                           </span>
-                          <span className="text-[var(--text-tertiary)] text-sm ml-auto shrink-0">&rarr;</span>
+                          <span className="text-folio-text-tertiary text-sm ml-auto shrink-0">&rarr;</span>
                         </Link>
                       ))}
                     </div>
@@ -199,18 +199,18 @@ export function LandingModal() {
 
                   {/* Divider */}
                   <div className="px-8 md:px-12">
-                    <hr className="border-t border-[var(--ridge-outer)]" />
+                    <hr className="border-t border-folio-border-subtle" />
                   </div>
 
                   {/* Founding cohort */}
                   <motion.div variants={item} className="px-8 md:px-12 py-10 pb-6">
-                    <p className="uppercase tracking-widest text-xs text-[var(--text-secondary)] mb-2">
+                    <p className="uppercase tracking-widest text-xs text-folio-text-secondary mb-2">
                       Founding Designers
                     </p>
-                    <h3 className="font-headline italic text-2xl md:text-3xl text-[var(--text-primary)] mb-6">
+                    <h3 className="font-headline italic text-2xl md:text-3xl text-folio-text-primary mb-6">
                       We&rsquo;re building the founding cohort now.
                     </h3>
-                    <div className="space-y-4 text-[var(--text-primary)] leading-relaxed text-[15px]">
+                    <div className="space-y-4 text-folio-text-primary leading-relaxed text-[15px]">
                       <p>
                         Folio is invite-only during its founding phase. Founding
                         designers receive permanent recognition on the platform and
@@ -230,7 +230,7 @@ export function LandingModal() {
                 <Link
                   href="/auth/signin"
                   onClick={handleClose}
-                  className="text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+                  className="text-sm text-folio-text-secondary hover:text-folio-text-primary transition-colors"
                 >
                   Already have an account? Sign in
                 </Link>

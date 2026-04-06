@@ -152,13 +152,13 @@ export function ImageTagDots({ image, tags: tagsProp }: ImageTagDotsProps) {
             {/* Tooltip card - positioned closer to eliminate gap */}
             {activeId === tag.id && (
               <div
-                className="absolute left-1/2 top-full mt-1 -translate-x-1/2 w-max max-w-[220px] ridge-card px-3 py-2 folio-meta text-[var(--text-primary)] shadow-[0_14px_40px_rgba(15,14,10,0.35)] z-20 pointer-events-auto"
+                className="absolute left-1/2 top-full mt-1 -translate-x-1/2 w-max max-w-[220px] ridge-card px-3 py-2 folio-meta text-folio-text-primary shadow-[0_14px_40px_rgba(15,14,10,0.35)] z-20 pointer-events-auto"
                 onMouseEnter={() => setActiveId(tag.id)}
                 onMouseLeave={() => setActiveId((prev) => (prev === tag.id ? null : prev))}
               >
                 <div className="flex items-center gap-2">
                   {tag.thumbnailUrl && (
-                    <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-xl bg-[var(--bg-elevated)]">
+                    <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-xl bg-surface-ground">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={tag.thumbnailUrl}
@@ -182,7 +182,7 @@ export function ImageTagDots({ image, tags: tagsProp }: ImageTagDotsProps) {
                       )}
                     </div>
                     {tag.vendorName && (
-                      <div className="truncate text-[10px] uppercase tracking-[0.16em] text-[var(--text-secondary)]">
+                      <div className="truncate text-[10px] uppercase tracking-[0.16em] text-folio-text-secondary">
                         {tag.vendorName}
                       </div>
                     )}

@@ -43,7 +43,7 @@ export default function ScrollSyncPanel({
   if (!currentImage) return null;
 
   return (
-    <div ref={containerRef} className="sticky top-28 h-[50vh] rounded-[20px] overflow-hidden shadow-lg bg-[var(--bg-elevated)]">
+    <div ref={containerRef} className="sticky top-28 h-[50vh] rounded-[20px] overflow-hidden shadow-lg bg-surface-ground">
       <AnimatePresence mode="wait">
         <motion.div
           key={currentImage || 'empty'}

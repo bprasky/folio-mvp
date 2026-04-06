@@ -58,14 +58,14 @@ export default async function FeedPage({
   ]);
 
   return (
-    <div className="min-h-screen bg-[var(--bg-elevated)]">
+    <div className="min-h-screen bg-surface-ground">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Page Header */}
         <header className="mb-8">
           <h1 className="folio-h1 mb-4">
             Discover
           </h1>
-          <p className="folio-body text-[var(--text-secondary)] max-w-2xl">
+          <p className="folio-body text-folio-text-secondary max-w-2xl">
             Explore projects from designers around the world
           </p>
         </header>
@@ -77,7 +77,7 @@ export default async function FeedPage({
             className={`rounded-full px-4 py-2 font-medium transition-colors ${
               mode === "featured"
                 ? "bg-[var(--accent)] text-white shadow-[var(--neu-raised)]"
-                : "bg-[var(--bg-elevated)] text-[var(--text-secondary)] border border-[var(--ridge-outer)] hover:bg-[var(--bg-base)]"
+                : "bg-surface-ground text-folio-text-secondary border border-folio-border-subtle hover:bg-surface-canvas"
             }`}
           >
             Featured Projects
@@ -87,7 +87,7 @@ export default async function FeedPage({
             className={`rounded-full px-4 py-2 font-medium transition-colors ${
               mode === "updates"
                 ? "bg-[var(--accent)] text-white shadow-[var(--neu-raised)]"
-                : "bg-[var(--bg-elevated)] text-[var(--text-secondary)] border border-[var(--ridge-outer)] hover:bg-[var(--bg-base)]"
+                : "bg-surface-ground text-folio-text-secondary border border-folio-border-subtle hover:bg-surface-canvas"
             }`}
           >
             Stories & Updates
@@ -100,8 +100,8 @@ export default async function FeedPage({
               {/* Updates Carousel (always show, skeleton when empty) */}
               <section className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <h2 className="folio-ui text-[var(--text-secondary)] uppercase tracking-wide">Updates</h2>
-                  <span className="folio-meta text-[var(--text-tertiary)]">Short clips & stories from ongoing projects</span>
+                  <h2 className="folio-ui text-folio-text-secondary uppercase tracking-wide">Updates</h2>
+                  <span className="folio-meta text-folio-text-tertiary">Short clips & stories from ongoing projects</span>
                 </div>
                 <UpdatesCarousel groups={updates} />
               </section>

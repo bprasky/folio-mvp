@@ -13,30 +13,30 @@ interface EventHeaderProps {
 
 export function EventHeader({ event }: EventHeaderProps) {
   return (
-    <Card className="bg-white border-[#DAD2CA]">
+    <Card className="bg-white border-folio-border-strong">
       <CardHeader className="pb-4">
         <div className="flex items-start justify-between">
           <div className="flex-1">
             {/* Breadcrumb */}
-            <div className="flex items-center space-x-2 text-sm text-[#8C8278] mb-4">
+            <div className="flex items-center space-x-2 text-sm text-folio-text-secondary mb-4">
               <Link 
                 href="/vendor/dashboard" 
-                className="flex items-center space-x-1 hover:text-[#2B2B2B] transition-colors"
+                className="flex items-center space-x-1 hover:text-folio-text-primary transition-colors"
               >
                 <ArrowLeft className="w-4 h-4" />
                 <span>Dashboard</span>
               </Link>
               <span>/</span>
-              <span className="text-[#8C8278]">Analytics</span>
+              <span className="text-folio-text-secondary">Analytics</span>
             </div>
 
             {/* Event Title */}
-            <CardTitle className="text-2xl font-serif text-[#2B2B2B] mb-2">
+            <CardTitle className="text-2xl font-serif text-folio-text-primary mb-2">
               {event.eventName}
             </CardTitle>
 
             {/* Event Details */}
-            <div className="flex flex-wrap items-center gap-6 text-[#8C8278]">
+            <div className="flex flex-wrap items-center gap-6 text-folio-text-secondary">
               <div className="flex items-center space-x-2">
                 <Calendar className="w-4 h-4" />
                 <span>{formatDateRange(event.dates.start, event.dates.end)}</span>

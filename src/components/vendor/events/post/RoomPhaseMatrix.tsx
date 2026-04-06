@@ -42,12 +42,12 @@ export function RoomPhaseMatrix({ data, onHover }: RoomPhaseMatrixProps) {
   };
 
   return (
-    <Card className="bg-white border-[#DAD2CA]">
+    <Card className="bg-white border-folio-border-strong">
       <CardHeader>
-        <CardTitle className="text-lg font-serif text-[#2B2B2B]">
+        <CardTitle className="text-lg font-serif text-folio-text-primary">
           Room × Phase Matrix
         </CardTitle>
-        <p className="text-sm text-[#8C8278]">
+        <p className="text-sm text-folio-text-secondary">
           Real use cases by phase. Hover cells for insights.
         </p>
       </CardHeader>
@@ -59,23 +59,23 @@ export function RoomPhaseMatrix({ data, onHover }: RoomPhaseMatrixProps) {
               <div className="w-24 flex-shrink-0" /> {/* Empty corner */}
               {phases.map((phase) => (
                 <div key={phase} className="flex-1 text-center py-3 px-2">
-                  <p className="text-sm font-medium text-[#2B2B2B]">{phase}</p>
+                  <p className="text-sm font-medium text-folio-text-primary">{phase}</p>
                 </div>
               ))}
             </div>
 
             {/* Rows with room data */}
             {rooms.map((room) => (
-              <div key={room} className="flex border-t border-[#DAD2CA]">
+              <div key={room} className="flex border-t border-folio-border-strong">
                 {/* Room label */}
-                <div className="w-24 flex-shrink-0 px-3 py-4 border-r border-[#DAD2CA]">
-                  <p className="text-sm font-medium text-[#2B2B2B]">{room}</p>
+                <div className="w-24 flex-shrink-0 px-3 py-4 border-r border-folio-border-strong">
+                  <p className="text-sm font-medium text-folio-text-primary">{room}</p>
                 </div>
 
                 {/* Phase cells */}
                 {phases.map((phase) => {
                   const cell = getCellData(room, phase);
-                  if (!cell) return <div key={phase} className="flex-1 border-b border-[#DAD2CA]" />;
+                  if (!cell) return <div key={phase} className="flex-1 border-b border-folio-border-strong" />;
 
                   const isHovered = hoveredCell?.room === cell.room && hoveredCell?.phase === cell.phase;
 
@@ -84,26 +84,26 @@ export function RoomPhaseMatrix({ data, onHover }: RoomPhaseMatrixProps) {
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <div
-                            className={`flex-1 p-3 border-r border-[#DAD2CA] cursor-pointer transition-colors ${
-                              isHovered ? 'bg-[#F7F4F1]' : 'hover:bg-[var(--bg-elevated)]'
+                            className={`flex-1 p-3 border-r border-folio-border-strong cursor-pointer transition-colors ${
+                              isHovered ? 'bg-surface-elevated' : 'hover:bg-surface-ground'
                             }`}
                             onMouseEnter={() => handleCellHover(cell)}
                             onMouseLeave={() => handleCellHover(null)}
                           >
                             <div className="text-center space-y-2">
-                              <p className="text-xs text-[#8C8278]">
+                              <p className="text-xs text-folio-text-secondary">
                                 {formatPercentage(cell.saveToTagRatePct, 1)}
                               </p>
                               
                               {/* Intensity bar */}
-                              <div className="w-full h-2 bg-[var(--bg-elevated)] rounded-full overflow-hidden">
+                              <div className="w-full h-2 bg-surface-ground rounded-full overflow-hidden">
                                 <div 
                                   className={`h-full ${getIntensityColor(cell.saveToTagRatePct)} transition-all duration-200`}
                                   style={{ width: `${Math.min(cell.saveToTagRatePct, 100)}%` }}
                                 />
                               </div>
 
-                              <div className="text-xs text-[#2B2B2B] space-y-1">
+                              <div className="text-xs text-folio-text-primary space-y-1">
                                 <p>{cell.saves} saves</p>
                                 <p>{cell.tags} tags</p>
                               </div>
@@ -142,7 +142,7 @@ export function RoomPhaseMatrix({ data, onHover }: RoomPhaseMatrixProps) {
         </div>
 
         {/* Action Chips */}
-        <div className="flex flex-wrap gap-2 mt-6 pt-4 border-t border-[#DAD2CA]">
+        <div className="flex flex-wrap gap-2 mt-6 pt-4 border-t border-folio-border-strong">
           <Button variant="outline" size="sm" className="text-xs">
             Send Spec Pack
           </Button>

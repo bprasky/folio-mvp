@@ -117,11 +117,11 @@ export function CreditsEditor({ credits, onChange, saving }: CreditsEditorProps)
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-[var(--text-primary)] uppercase tracking-wider">
+        <h3 className="text-sm font-semibold text-folio-text-primary uppercase tracking-wider">
           Credits
         </h3>
         {saving && (
-          <span className="text-xs text-[var(--text-secondary)]">Saving...</span>
+          <span className="text-xs text-folio-text-secondary">Saving...</span>
         )}
       </div>
 
@@ -147,13 +147,13 @@ export function CreditsEditor({ credits, onChange, saving }: CreditsEditorProps)
           return (
             <div
               key={idx}
-              className="flex items-center justify-between gap-3 rounded-lg border border-[var(--ridge-outer)] px-3 py-2 text-sm"
+              className="flex items-center justify-between gap-3 rounded-lg border border-folio-border-subtle px-3 py-2 text-sm"
             >
               <div className="flex items-center gap-2 min-w-0">
-                <span className="font-medium text-[var(--text-primary)] shrink-0">
+                <span className="font-medium text-folio-text-primary shrink-0">
                   {credit.role}:
                 </span>
-                <span className="text-[var(--text-secondary)] truncate">
+                <span className="text-folio-text-secondary truncate">
                   {credit.name}
                 </span>
                 {credit.url && (
@@ -167,26 +167,26 @@ export function CreditsEditor({ credits, onChange, saving }: CreditsEditorProps)
                   </a>
                 )}
                 {credit.instagram && (
-                  <span className="text-[var(--text-tertiary)] text-xs shrink-0">
+                  <span className="text-folio-text-tertiary text-xs shrink-0">
                     @{credit.instagram.replace(/^@/, "")}
                   </span>
                 )}
               </div>
               <div className="flex items-center gap-1 shrink-0">
                 {locked ? (
-                  <Lock className="w-3.5 h-3.5 text-[var(--text-tertiary)]" />
+                  <Lock className="w-3.5 h-3.5 text-folio-text-tertiary" />
                 ) : (
                   <>
                     <button
                       onClick={() => handleEdit(idx)}
-                      className="p-1 rounded hover:bg-[var(--bg-elevated)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+                      className="p-1 rounded hover:bg-surface-ground text-folio-text-secondary hover:text-folio-text-primary transition-colors"
                       title="Edit credit"
                     >
                       <Pencil className="w-3.5 h-3.5" />
                     </button>
                     <button
                       onClick={() => handleRemove(idx)}
-                      className="p-1 rounded hover:bg-red-50 text-[var(--text-secondary)] hover:text-red-600 transition-colors"
+                      className="p-1 rounded hover:bg-red-50 text-folio-text-secondary hover:text-red-600 transition-colors"
                       title="Remove credit"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -294,12 +294,12 @@ function CreditForm({
   };
 
   return (
-    <div className="rounded-lg border border-[var(--accent)]/30 bg-[var(--bg-elevated)] p-3 space-y-2">
+    <div className="rounded-lg border border-[var(--accent)]/30 bg-surface-ground p-3 space-y-2">
       <div className="flex gap-2">
         <select
           value={form.role}
           onChange={(e) => onChange({ ...form, role: e.target.value, customRole: "", instagram: "", userId: undefined })}
-          className="flex-1 rounded-md border border-[var(--ridge-outer)] bg-white px-2 py-1.5 text-sm text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
+          className="flex-1 rounded-md border border-folio-border-subtle bg-white px-2 py-1.5 text-sm text-folio-text-primary focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
         >
           <option value="">Select role...</option>
           {ROLE_OPTIONS.map((role) => (
@@ -314,7 +314,7 @@ function CreditForm({
             value={form.customRole}
             onChange={(e) => onChange({ ...form, customRole: e.target.value })}
             placeholder="Custom role..."
-            className="flex-1 rounded-md border border-[var(--ridge-outer)] bg-white px-2 py-1.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
+            className="flex-1 rounded-md border border-folio-border-subtle bg-white px-2 py-1.5 text-sm text-folio-text-primary placeholder:text-folio-text-tertiary focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
             maxLength={60}
           />
         )}
@@ -327,7 +327,7 @@ function CreditForm({
           value={form.name}
           onChange={(e) => onChange({ ...form, name: e.target.value, userId: undefined })}
           placeholder={showPhotographerFields ? "Search photographer or enter name..." : "Name..."}
-          className="w-full rounded-md border border-[var(--ridge-outer)] bg-white px-2 py-1.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
+          className="w-full rounded-md border border-folio-border-subtle bg-white px-2 py-1.5 text-sm text-folio-text-primary placeholder:text-folio-text-tertiary focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
           maxLength={100}
           onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
         />
@@ -337,18 +337,18 @@ function CreditForm({
           </span>
         )}
         {showSuggestions && suggestions.length > 0 && (
-          <div className="absolute z-10 mt-1 w-full rounded-md border border-[var(--ridge-outer)] bg-white shadow-lg max-h-40 overflow-y-auto">
+          <div className="absolute z-10 mt-1 w-full rounded-md border border-folio-border-subtle bg-white shadow-lg max-h-40 overflow-y-auto">
             {suggestions.map((user) => (
               <button
                 key={user.id}
                 type="button"
                 onClick={() => handleSelectSuggestion(user)}
-                className="w-full text-left px-3 py-2 text-sm hover:bg-[var(--bg-elevated)] transition-colors flex items-center gap-2"
+                className="w-full text-left px-3 py-2 text-sm hover:bg-surface-ground transition-colors flex items-center gap-2"
               >
                 {user.profileImage && (
                   <img src={user.profileImage} alt="" className="w-5 h-5 rounded-full object-cover" />
                 )}
-                <span className="text-[var(--text-primary)]">{user.name}</span>
+                <span className="text-folio-text-primary">{user.name}</span>
               </button>
             ))}
           </div>
@@ -360,7 +360,7 @@ function CreditForm({
         value={form.url}
         onChange={(e) => onChange({ ...form, url: e.target.value })}
         placeholder="Website URL (optional)"
-        className="w-full rounded-md border border-[var(--ridge-outer)] bg-white px-2 py-1.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
+        className="w-full rounded-md border border-folio-border-subtle bg-white px-2 py-1.5 text-sm text-folio-text-primary placeholder:text-folio-text-tertiary focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
       />
 
       {/* Instagram field — shown for Photographer role */}
@@ -370,7 +370,7 @@ function CreditForm({
           value={form.instagram}
           onChange={(e) => onChange({ ...form, instagram: e.target.value })}
           placeholder="Instagram handle (optional)"
-          className="w-full rounded-md border border-[var(--ridge-outer)] bg-white px-2 py-1.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
+          className="w-full rounded-md border border-folio-border-subtle bg-white px-2 py-1.5 text-sm text-folio-text-primary placeholder:text-folio-text-tertiary focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
           maxLength={100}
         />
       )}
@@ -378,7 +378,7 @@ function CreditForm({
       <div className="flex justify-end gap-2">
         <button
           onClick={onCancel}
-          className="flex items-center gap-1 px-2 py-1 text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+          className="flex items-center gap-1 px-2 py-1 text-xs text-folio-text-secondary hover:text-folio-text-primary transition-colors"
         >
           <X className="w-3.5 h-3.5" />
           Cancel

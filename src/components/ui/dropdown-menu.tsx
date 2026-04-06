@@ -53,7 +53,7 @@ const DropdownMenuItem = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      "block px-4 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-elevated)] cursor-pointer",
+      "block px-4 py-2 text-sm text-folio-text-primary hover:bg-surface-ground cursor-pointer",
       className
     )}
     {...props}

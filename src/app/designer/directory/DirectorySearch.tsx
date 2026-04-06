@@ -133,20 +133,20 @@ export default function DirectorySearch({
     <div className="space-y-3">
       {/* Search Bar */}
       <div className="relative">
-        <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-[#B5B0A9]" size={18} />
+        <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-folio-text-tertiary" size={18} />
         <input
           type="text"
           placeholder="Search or ask: 'what lighting did we use in Meru kitchen?'"
           value={localSearchTerm}
           onChange={(e) => handleSearchChange(e.target.value)}
           onKeyDown={handleKeyDown}
-          className="w-full pl-12 pr-24 py-3 bg-white border border-[#E8E6E3] rounded-lg text-[#2C2925] placeholder-[#B5B0A9] focus:outline-none focus:border-[#C9C4BC] focus:ring-0 focus:shadow-[0_0_0_3px_rgba(0,0,0,0.03)] transition-all"
+          className="w-full pl-12 pr-24 py-3 bg-white border border-folio-border-subtle rounded-lg text-folio-text-primary placeholder-folio-text-tertiary focus:outline-none focus:border-folio-border-strong focus:ring-0 focus:shadow-[0_0_0_3px_rgba(0,0,0,0.03)] transition-all"
         />
         <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
           {localSearchTerm && (
             <button
               onClick={clearSearch}
-              className="p-1.5 text-[#B5B0A9] hover:text-[#8A857F] transition-colors"
+              className="p-1.5 text-folio-text-tertiary hover:text-folio-text-secondary transition-colors"
             >
               <X size={16} />
             </button>
@@ -157,7 +157,7 @@ export default function DirectorySearch({
             className={`p-1.5 rounded-lg transition-all ${
               isListening
                 ? 'text-red-500 bg-red-50 animate-pulse'
-                : 'text-[#B5B0A9] hover:text-[#7C7268] hover:bg-[#F8F7F5]'
+                : 'text-folio-text-tertiary hover:text-folio-text-secondary hover:bg-surface-ground'
             } disabled:opacity-50 disabled:cursor-not-allowed`}
             title={isListening ? 'Stop listening' : 'Start voice search'}
           >
@@ -175,7 +175,7 @@ export default function DirectorySearch({
 
       {/* Listening Indicator */}
       {isListening && (
-        <div className="flex items-center gap-2 text-sm text-[#6B6560] bg-[#F8F7F5] border border-[#E8E6E3] rounded-lg px-3 py-2">
+        <div className="flex items-center gap-2 text-sm text-folio-text-secondary bg-surface-ground border border-folio-border-subtle rounded-lg px-3 py-2">
           <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
           <span>Listening...</span>
         </div>
@@ -183,11 +183,11 @@ export default function DirectorySearch({
 
       {/* Interpreted Query Feedback */}
       {interpretedQuery && (
-        <div className="flex items-center justify-between bg-[#F8F7F5] border border-[#E8E6E3] rounded-lg px-4 py-2">
-          <span className="text-sm text-[#6B6560]">{interpretedQuery}</span>
+        <div className="flex items-center justify-between bg-surface-ground border border-folio-border-subtle rounded-lg px-4 py-2">
+          <span className="text-sm text-folio-text-secondary">{interpretedQuery}</span>
           <button
             onClick={clearSearch}
-            className="text-xs text-[#7C7268] hover:text-[#5C554D] underline transition-colors"
+            className="text-xs text-folio-text-secondary hover:text-folio-text-secondary underline transition-colors"
           >
             Clear filters
           </button>

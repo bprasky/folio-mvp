@@ -36,8 +36,8 @@ export default function PhotographerOnboardingPage() {
 
   if (status === 'loading') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[var(--bg-base)]">
-        <div className="text-[var(--text-tertiary)]">Loading...</div>
+      <div className="min-h-screen flex items-center justify-center bg-surface-canvas">
+        <div className="text-folio-text-tertiary">Loading...</div>
       </div>
     );
   }
@@ -91,10 +91,10 @@ export default function PhotographerOnboardingPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[var(--bg-base)]">
+    <div className="min-h-screen flex flex-col bg-surface-canvas">
       {/* Folio wordmark */}
       <div className="absolute top-6 left-6">
-        <span className="folio-logo-text text-[var(--text-tertiary)]">Folio</span>
+        <span className="folio-logo-text text-folio-text-tertiary">Folio</span>
       </div>
 
       <div className="flex-1 flex items-center justify-center px-6 py-12">
@@ -135,7 +135,7 @@ export default function PhotographerOnboardingPage() {
                 </h1>
                 <div className="mx-auto max-w-md text-left space-y-5">
                   <div>
-                    <label className="block text-sm font-medium text-[var(--text-primary)] mb-1.5">
+                    <label className="block text-sm font-medium text-folio-text-primary mb-1.5">
                       Location
                     </label>
                     <Input
@@ -145,7 +145,7 @@ export default function PhotographerOnboardingPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
+                    <label className="block text-sm font-medium text-folio-text-primary mb-2">
                       Photography Styles
                     </label>
                     <div className="flex flex-wrap gap-2">
@@ -157,7 +157,7 @@ export default function PhotographerOnboardingPage() {
                           className={`px-3 py-1.5 text-sm rounded-full border transition-colors ${
                             form.photographyStyles.includes(style.toLowerCase())
                               ? 'bg-[var(--accent)] text-white border-[var(--accent)]'
-                              : 'bg-white text-[var(--text-secondary)] border-[var(--ridge-outer)] hover:border-[var(--accent)]'
+                              : 'bg-white text-folio-text-secondary border-folio-border-subtle hover:border-[var(--accent)]'
                           }`}
                         >
                           {style}
@@ -166,7 +166,7 @@ export default function PhotographerOnboardingPage() {
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-[var(--text-primary)] mb-1.5">
+                    <label className="block text-sm font-medium text-folio-text-primary mb-1.5">
                       Travel Radius
                     </label>
                     <Input
@@ -176,7 +176,7 @@ export default function PhotographerOnboardingPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-[var(--text-primary)] mb-1.5">
+                    <label className="block text-sm font-medium text-folio-text-primary mb-1.5">
                       About
                     </label>
                     <textarea
@@ -184,7 +184,7 @@ export default function PhotographerOnboardingPage() {
                       onChange={(e) => setForm({ ...form, bio: e.target.value })}
                       placeholder="Brief description of your work and style..."
                       rows={3}
-                      className="w-full rounded-lg border border-[var(--ridge-outer)] bg-white px-3 py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)] resize-none"
+                      className="w-full rounded-lg border border-folio-border-subtle bg-white px-3 py-2 text-sm text-folio-text-primary placeholder:text-folio-text-tertiary focus:outline-none focus:ring-1 focus:ring-[var(--accent)] resize-none"
                     />
                   </div>
                 </div>
@@ -198,7 +198,7 @@ export default function PhotographerOnboardingPage() {
                 </h1>
                 <div className="mx-auto max-w-md text-left space-y-5">
                   <div>
-                    <label className="block text-sm font-medium text-[var(--text-primary)] mb-1.5">
+                    <label className="block text-sm font-medium text-folio-text-primary mb-1.5">
                       Booking URL
                     </label>
                     <Input
@@ -207,12 +207,12 @@ export default function PhotographerOnboardingPage() {
                       onChange={(e) => setForm({ ...form, bookingUrl: e.target.value })}
                       placeholder="https://calendly.com/your-link"
                     />
-                    <p className="text-xs text-[var(--text-tertiary)] mt-1">
+                    <p className="text-xs text-folio-text-tertiary mt-1">
                       Calendly, HoneyBook, or other booking page
                     </p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-[var(--text-primary)] mb-1.5">
+                    <label className="block text-sm font-medium text-folio-text-primary mb-1.5">
                       Booking Email
                     </label>
                     <Input
@@ -223,7 +223,7 @@ export default function PhotographerOnboardingPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-[var(--text-primary)] mb-1.5">
+                    <label className="block text-sm font-medium text-folio-text-primary mb-1.5">
                       Website
                     </label>
                     <Input
@@ -234,7 +234,7 @@ export default function PhotographerOnboardingPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-[var(--text-primary)] mb-1.5">
+                    <label className="block text-sm font-medium text-folio-text-primary mb-1.5">
                       Instagram
                     </label>
                     <Input

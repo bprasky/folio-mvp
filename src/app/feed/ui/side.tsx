@@ -12,7 +12,7 @@ export async function SideTrending() {
 
   return (
     <section className="space-y-3">
-      <h4 className="folio-ui text-[var(--text-secondary)]">Trending Projects This Week</h4>
+      <h4 className="folio-ui text-folio-text-secondary">Trending Projects This Week</h4>
       {trending.length > 0 ? (
         trending.map((item) => (
           <TrendingTile
@@ -40,8 +40,8 @@ export async function SideAISuggested() {
   return (
     <section className="space-y-3">
       <div className="flex items-center justify-between">
-        <h4 className="folio-ui text-[var(--text-secondary)]">Folio AI: Suggested Matches</h4>
-        <span className="text-[10px] uppercase tracking-wide text-[var(--text-tertiary)]">Labs</span>
+        <h4 className="folio-ui text-folio-text-secondary">Folio AI: Suggested Matches</h4>
+        <span className="text-[10px] uppercase tracking-wide text-folio-text-tertiary">Labs</span>
       </div>
       {suggestions.length > 0 ? (
         suggestions.map((item) => (
@@ -83,8 +83,8 @@ function TrendingTile({
               className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
             />
           ) : (
-            <div className="h-full w-full flex items-center justify-center bg-[var(--bg-elevated)]">
-              <span className="folio-meta text-[var(--text-tertiary)]">No image</span>
+            <div className="h-full w-full flex items-center justify-center bg-surface-ground">
+              <span className="folio-meta text-folio-text-tertiary">No image</span>
             </div>
           )}
           <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/60 to-transparent">
@@ -99,8 +99,8 @@ function TrendingTile({
 function OutlineTile({ label }: { label: string }) {
   return (
     <RidgeCard padding="none" className="overflow-hidden">
-      <div className="aspect-[4/5] w-full bg-[var(--bg-elevated)] grid place-items-center">
-        <span className="folio-meta text-[var(--text-tertiary)]">{label}</span>
+      <div className="aspect-[4/5] w-full bg-surface-ground grid place-items-center">
+        <span className="folio-meta text-folio-text-tertiary">{label}</span>
       </div>
     </RidgeCard>
   );

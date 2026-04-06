@@ -62,7 +62,7 @@ function ChecklistIcon({ done }: { done: boolean }) {
     );
   }
   return (
-    <div className="w-5 h-5 rounded-full border-2 border-[var(--ridge-outer)] flex-shrink-0" />
+    <div className="w-5 h-5 rounded-full border-2 border-folio-border-subtle flex-shrink-0" />
   );
 }
 
@@ -292,10 +292,10 @@ export function TagDiagnosticModal({
                 <div className="flex items-start gap-3">
                   <ChecklistIcon done={hasPhotos} />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-[var(--text-primary)]">
+                    <p className="text-sm font-medium text-folio-text-primary">
                       Photos uploaded
                     </p>
-                    <p className="text-xs text-[var(--text-tertiary)] mt-0.5">
+                    <p className="text-xs text-folio-text-tertiary mt-0.5">
                       {hasPhotos
                         ? `${diagnostic.summary.totalImages} photo${diagnostic.summary.totalImages !== 1 ? 's' : ''} in your project`
                         : 'Upload project photos to unlock personalized questions'}
@@ -307,10 +307,10 @@ export function TagDiagnosticModal({
                 <div className="flex items-start gap-3">
                   {classifying ? <SpinnerIcon /> : <ChecklistIcon done={hasAIAnalysis} />}
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-[var(--text-primary)]">
+                    <p className="text-sm font-medium text-folio-text-primary">
                       Photos analyzed
                     </p>
-                    <p className="text-xs text-[var(--text-tertiary)] mt-0.5">
+                    <p className="text-xs text-folio-text-tertiary mt-0.5">
                       {classifying
                         ? 'Analyzing your photos for colors, materials & style...'
                         : hasAIAnalysis
@@ -335,10 +335,10 @@ export function TagDiagnosticModal({
                 <div className="flex items-start gap-3">
                   {autoTagging ? <SpinnerIcon /> : <ChecklistIcon done={hasTaggedProducts} />}
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-[var(--text-primary)]">
+                    <p className="text-sm font-medium text-folio-text-primary">
                       Products tagged
                     </p>
-                    <p className="text-xs text-[var(--text-tertiary)] mt-0.5">
+                    <p className="text-xs text-folio-text-tertiary mt-0.5">
                       {autoTagging
                         ? 'Matching products to your photos...'
                         : hasTaggedProducts
@@ -354,13 +354,13 @@ export function TagDiagnosticModal({
               {/* Auto-tag section — only shown when rooms can be auto-tagged */}
               {canAutoTag && !autoTagDone && (
                 <div
-                  className="rounded-xl border border-[var(--ridge-outer)] p-4 mb-5"
+                  className="rounded-xl border border-folio-border-subtle p-4 mb-5"
                   style={{ boxShadow: 'var(--neu-raised, 0 1px 3px rgba(0,0,0,0.06))' }}
                 >
-                  <p className="text-sm font-medium text-[var(--text-primary)] mb-1">
+                  <p className="text-sm font-medium text-folio-text-primary mb-1">
                     Quick-tag from your design board
                   </p>
-                  <p className="text-xs text-[var(--text-tertiary)] mb-3">
+                  <p className="text-xs text-folio-text-tertiary mb-3">
                     We matched products from your board to untagged photos. Select rooms to tag automatically.
                   </p>
 
@@ -375,7 +375,7 @@ export function TagDiagnosticModal({
                             className={`flex items-center gap-3 rounded-[10px] border px-3 py-2 text-sm cursor-pointer transition-all duration-150 ${
                               checked
                                 ? 'border-[var(--accent)] bg-[var(--accent)]/5'
-                                : 'border-[var(--ridge-outer)] hover:border-[var(--accent)]/30'
+                                : 'border-folio-border-subtle hover:border-[var(--accent)]/30'
                             }`}
                           >
                             <input
@@ -398,10 +398,10 @@ export function TagDiagnosticModal({
                               )}
                             </div>
                             <div className="flex-1 min-w-0">
-                              <span className="font-medium text-[var(--text-primary)]">
+                              <span className="font-medium text-folio-text-primary">
                                 {room.roomName}
                               </span>
-                              <span className="text-xs text-[var(--text-tertiary)] ml-2">
+                              <span className="text-xs text-folio-text-tertiary ml-2">
                                 {room.selections.withProductMatch} product{room.selections.withProductMatch !== 1 ? 's' : ''} &middot; {room.images.untagged} photo{room.images.untagged !== 1 ? 's' : ''}
                               </span>
                             </div>
@@ -429,7 +429,7 @@ export function TagDiagnosticModal({
               {/* Auto-tag success */}
               {autoTagDone && (
                 <div
-                  className="rounded-xl border border-[var(--accent)]/20 p-3 mb-5 text-sm text-[var(--text-secondary)]"
+                  className="rounded-xl border border-[var(--accent)]/20 p-3 mb-5 text-sm text-folio-text-secondary"
                   style={{ background: 'var(--accent-bg, rgba(184, 132, 92, 0.05))' }}
                 >
                   Products tagged successfully. Your interview questions will now include product-specific context.
@@ -452,7 +452,7 @@ export function TagDiagnosticModal({
                     </button>
                     <button
                       onClick={() => onOpenChange(false)}
-                      className="rounded-[10px] px-4 py-2.5 text-sm font-medium text-[var(--text-secondary)] border border-[var(--ridge-outer)] hover:bg-[var(--bg-elevated)] transition-all duration-150"
+                      className="rounded-[10px] px-4 py-2.5 text-sm font-medium text-folio-text-secondary border border-folio-border-subtle hover:bg-surface-ground transition-all duration-150"
                     >
                       Not yet
                     </button>
@@ -476,7 +476,7 @@ export function TagDiagnosticModal({
 
               {/* Subtle hint when not ready */}
               {!isReady && !classifying && (
-                <p className="text-xs text-[var(--text-tertiary)] text-center mt-3">
+                <p className="text-xs text-folio-text-tertiary text-center mt-3">
                   Complete the steps above to unlock your personalized interview.
                 </p>
               )}
@@ -484,7 +484,7 @@ export function TagDiagnosticModal({
           ) : (
             // No data / silent error — show gentle fallback
             <div className="py-6 text-center">
-              <p className="text-sm text-[var(--text-secondary)] mb-4">
+              <p className="text-sm text-folio-text-secondary mb-4">
                 We couldn&apos;t check your project&apos;s readiness right now.
               </p>
               <button

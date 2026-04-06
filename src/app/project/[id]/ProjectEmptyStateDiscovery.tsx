@@ -67,9 +67,9 @@ export default function ProjectEmptyStateDiscovery({ project }: ProjectEmptyStat
 
   return (
     <>
-      <div className="min-h-screen bg-[var(--bg-base)]">
+      <div className="min-h-screen bg-surface-canvas">
         {/* Back Navigation */}
-        <div className="p-4 bg-[var(--bg-elevated)] border-b border-[var(--ridge-outer)]">
+        <div className="p-4 bg-surface-ground border-b border-folio-border-subtle">
           <div className="max-w-4xl mx-auto">
             <Link
               href="/projects"
@@ -81,16 +81,16 @@ export default function ProjectEmptyStateDiscovery({ project }: ProjectEmptyStat
         </div>
 
         {/* Collapsed Header - Single Line */}
-        <header className="border-b border-[var(--ridge-outer)] bg-[var(--bg-base)]">
+        <header className="border-b border-folio-border-subtle bg-surface-canvas">
           <div className="max-w-4xl mx-auto px-6 py-5 flex items-center justify-between">
             <div className="flex items-center gap-4 flex-wrap">
               {/* Project Name - Serif Italic */}
-              <h1 className="font-serif italic text-2xl text-[var(--text-primary)] tracking-tight">
+              <h1 className="font-serif italic text-2xl text-folio-text-primary tracking-tight">
                 {project.title}
               </h1>
 
               {/* Metadata Inline */}
-              <div className="flex items-center gap-3 text-[var(--text-tertiary)]">
+              <div className="flex items-center gap-3 text-folio-text-tertiary">
                 <span className="folio-meta">
                   {project.category || 'Uncategorized'}
                 </span>
@@ -104,10 +104,10 @@ export default function ProjectEmptyStateDiscovery({ project }: ProjectEmptyStat
             {/* Overview Menu Button */}
             <button
               onClick={() => setShowOverviewModal(true)}
-              className="inline-flex items-center justify-center rounded-full bg-[var(--bg-base)] hover:bg-[var(--bg-elevated)] border border-[var(--ridge-outer)] shadow-sm transition h-9 w-9 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30"
+              className="inline-flex items-center justify-center rounded-full bg-surface-canvas hover:bg-surface-ground border border-folio-border-subtle shadow-sm transition h-9 w-9 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30"
               aria-label="Project overview menu"
             >
-              <HiOutlineDotsHorizontal className="h-5 w-5 text-[var(--text-primary)]" />
+              <HiOutlineDotsHorizontal className="h-5 w-5 text-folio-text-primary" />
             </button>
           </div>
         </header>
@@ -119,14 +119,14 @@ export default function ProjectEmptyStateDiscovery({ project }: ProjectEmptyStat
             <div
               className={`
                 relative flex items-center w-full h-12 rounded-xl
-                bg-[var(--bg-elevated)] border transition-all duration-200
+                bg-surface-ground border transition-all duration-200
                 ${isSearchFocused
                   ? 'border-[var(--accent)] shadow-md'
-                  : 'border-[var(--ridge-outer)] hover:border-[var(--text-tertiary)]'
+                  : 'border-folio-border-subtle hover:border-folio-text-tertiary'
                 }
               `}
             >
-              <FaSearch className="absolute left-4 w-4 h-4 text-[var(--text-tertiary)]" />
+              <FaSearch className="absolute left-4 w-4 h-4 text-folio-text-tertiary" />
               <input
                 type="text"
                 value={searchQuery}
@@ -134,13 +134,13 @@ export default function ProjectEmptyStateDiscovery({ project }: ProjectEmptyStat
                 onFocus={() => setIsSearchFocused(true)}
                 onBlur={() => setIsSearchFocused(false)}
                 placeholder="Search for ideas, products, or designers"
-                className="w-full h-full pl-11 pr-4 bg-transparent text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none folio-body"
+                className="w-full h-full pl-11 pr-4 bg-transparent text-folio-text-primary placeholder:text-folio-text-tertiary focus:outline-none folio-body"
               />
             </div>
           </form>
 
           {/* Or start exploring */}
-          <p className="mt-6 text-center folio-meta text-[var(--text-tertiary)]">
+          <p className="mt-6 text-center folio-meta text-folio-text-tertiary">
             Or start exploring
           </p>
 
@@ -150,7 +150,7 @@ export default function ProjectEmptyStateDiscovery({ project }: ProjectEmptyStat
               <button
                 key={term}
                 onClick={() => handleChipClick(term)}
-                className="px-4 py-2 rounded-full bg-[var(--bg-elevated)] border border-[var(--ridge-outer)] text-[var(--text-secondary)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors folio-meta"
+                className="px-4 py-2 rounded-full bg-surface-ground border border-folio-border-subtle text-folio-text-secondary hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors folio-meta"
               >
                 {term}
               </button>

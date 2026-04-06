@@ -30,7 +30,7 @@ export default function ProfessionalCard({
     <Link href={`/profile/${designer.user.id}`} className="block group">
       <div className="glass-surface rounded-xl overflow-hidden transition-all hover:shadow-lg">
         {/* Hero Image (3:2 aspect ratio) */}
-        <div className="relative aspect-[3/2] bg-[var(--bg-elevated)] overflow-hidden">
+        <div className="relative aspect-[3/2] bg-surface-ground overflow-hidden">
           {designer.featuredProject?.heroImage ? (
             <Image
               src={designer.featuredProject.heroImage}
@@ -47,7 +47,7 @@ export default function ProfessionalCard({
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
-              <span className="text-4xl font-semibold text-[var(--text-tertiary)]">
+              <span className="text-4xl font-semibold text-folio-text-tertiary">
                 {designer.user.name.charAt(0)}
               </span>
             </div>
@@ -67,18 +67,18 @@ export default function ProfessionalCard({
 
         {/* Info */}
         <div className="p-4">
-          <h3 className="text-base font-semibold text-[var(--text-primary)] truncate group-hover:text-[var(--accent)] transition-colors">
+          <h3 className="text-base font-semibold text-folio-text-primary truncate group-hover:text-[var(--accent)] transition-colors">
             {designer.user.name}
           </h3>
           <p className="text-sm text-[var(--accent)] mt-0.5">
             {roleLabel}
           </p>
           {designer.user.location && (
-            <p className="text-sm text-[var(--text-secondary)] mt-0.5">
+            <p className="text-sm text-folio-text-secondary mt-0.5">
               {designer.user.location}
             </p>
           )}
-          <div className="flex items-center gap-3 mt-2 text-xs text-[var(--text-tertiary)]">
+          <div className="flex items-center gap-3 mt-2 text-xs text-folio-text-tertiary">
             <span>{designer.stats.projectCount} {designer.stats.projectCount === 1 ? 'project' : 'projects'}</span>
             {designer.stats.totalSaves > 0 && (
               <span>{designer.stats.totalSaves} saves</span>

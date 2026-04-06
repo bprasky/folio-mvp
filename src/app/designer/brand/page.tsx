@@ -78,26 +78,26 @@ export default function BrandAssetsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[var(--bg-base)] flex items-center justify-center">
+      <div className="min-h-screen bg-surface-canvas flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--accent)] mx-auto"></div>
-          <p className="mt-4 folio-body text-[var(--text-secondary)]">Loading...</p>
+          <p className="mt-4 folio-body text-folio-text-secondary">Loading...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[var(--bg-base)]">
+    <div className="min-h-screen bg-surface-canvas">
       <div className="max-w-3xl mx-auto px-6 py-12">
-        <h1 className="folio-h1 text-[var(--text-primary)]">Brand Assets</h1>
-        <p className="mt-2 folio-body text-[var(--text-secondary)]">
+        <h1 className="folio-h1 text-folio-text-primary">Brand Assets</h1>
+        <p className="mt-2 folio-body text-folio-text-secondary">
           These help us understand your aesthetic before you upload projects.
         </p>
 
         {/* Tagline */}
         <section className="mt-10">
-          <label className="block folio-body font-medium text-[var(--text-primary)] mb-2">
+          <label className="block folio-body font-medium text-folio-text-primary mb-2">
             Tagline
           </label>
           <Input
@@ -111,7 +111,7 @@ export default function BrandAssetsPage() {
 
         {/* Brand Colors */}
         <RidgeCard padding="lg" className="mt-10">
-          <h2 className="folio-h3 text-[var(--text-primary)] mb-4">Brand Colors</h2>
+          <h2 className="folio-h3 text-folio-text-primary mb-4">Brand Colors</h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {[
               { key: "primaryColor", label: "Primary" },
@@ -147,7 +147,7 @@ export default function BrandAssetsPage() {
 
         {/* Brand Adjectives */}
         <RidgeCard padding="lg" className="mt-10">
-          <h2 className="folio-h3 text-[var(--text-primary)] mb-2">
+          <h2 className="folio-h3 text-folio-text-primary mb-2">
             Describe Your Aesthetic
           </h2>
           <p className="folio-meta mb-4">
@@ -198,7 +198,7 @@ export default function BrandAssetsPage() {
                   className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                     isSelected
                       ? "bg-[var(--accent)] text-white"
-                      : "bg-[var(--bg-base)] border border-[var(--border-subtle)] text-[var(--text-primary)] hover:border-[var(--accent)]"
+                      : "bg-surface-canvas border border-[var(--border-subtle)] text-folio-text-primary hover:border-[var(--accent)]"
                   }`}
                   disabled={!isSelected && assets.brandAdjectives.length >= 5}
                 >

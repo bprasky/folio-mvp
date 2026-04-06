@@ -28,8 +28,8 @@ export function NavLinks() {
             className={cn(
               "px-4 py-2 folio-ui rounded-full transition-colors",
               isActive
-                ? "bg-[var(--bg-elevated)] text-[var(--text-primary)]"
-                : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]"
+                ? "bg-surface-ground text-folio-text-primary"
+                : "text-folio-text-secondary hover:text-folio-text-primary hover:bg-surface-ground"
             )}
           >
             {link.label}

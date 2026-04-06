@@ -69,19 +69,19 @@ export function EventsCompareBar({ events, averages, onEventClick, onHover }: Ev
                 const data = payload[0].payload;
                 return (
                   <div 
-                    className="bg-white border border-[#DAD2CA] rounded-lg px-4 py-3 shadow-lg cursor-pointer"
+                    className="bg-white border border-folio-border-strong rounded-lg px-4 py-3 shadow-lg cursor-pointer"
                     onClick={() => handleEventClick(data.eventId)}
                   >
-                    <p className="text-[#2B2B2B] font-medium mb-2">{label}</p>
+                    <p className="text-folio-text-primary font-medium mb-2">{label}</p>
                     <div className="space-y-1 text-sm">
-                      <p className="text-[#8C8278]">
-                        RSVPs: <span className="font-semibold text-[#2B2B2B]">{formatCompactNumber(data.rsvps)}</span>
+                      <p className="text-folio-text-secondary">
+                        RSVPs: <span className="font-semibold text-folio-text-primary">{formatCompactNumber(data.rsvps)}</span>
                       </p>
-                      <p className="text-[#8C8278]">
-                        Saves: <span className="font-semibold text-[#2B2B2B]">{formatCompactNumber(data.saves)}</span>
+                      <p className="text-folio-text-secondary">
+                        Saves: <span className="font-semibold text-folio-text-primary">{formatCompactNumber(data.saves)}</span>
                       </p>
-                      <p className="text-[#8C8278]">
-                        Est. Value: <span className="font-semibold text-[#2B2B2B]">${data.estValue}M</span>
+                      <p className="text-folio-text-secondary">
+                        Est. Value: <span className="font-semibold text-folio-text-primary">${data.estValue}M</span>
                       </p>
                     </div>
                   </div>

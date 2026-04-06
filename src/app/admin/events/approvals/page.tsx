@@ -68,13 +68,13 @@ const EventApprovalsPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[var(--bg-base)] pl-20 lg:pl-56">
+      <div className="min-h-screen bg-surface-canvas pl-20 lg:pl-56">
         <div className="p-4 lg:p-8">
           <div className="animate-pulse">
-            <div className="h-8 bg-[var(--bg-elevated)] rounded mb-4"></div>
+            <div className="h-8 bg-surface-ground rounded mb-4"></div>
             <div className="space-y-4">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="h-32 bg-[var(--bg-elevated)] rounded"></div>
+                <div key={i} className="h-32 bg-surface-ground rounded"></div>
               ))}
             </div>
           </div>
@@ -84,19 +84,19 @@ const EventApprovalsPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--bg-base)] pl-20 lg:pl-56">
+    <div className="min-h-screen bg-surface-canvas pl-20 lg:pl-56">
       <div className="p-4 lg:p-8">
         <div className="mb-8">
-          <h1 className="folio-h1 text-[var(--text-primary)] mb-2">Event Approvals</h1>
-          <p className="folio-body text-[var(--text-secondary)]">Review and approve pending events</p>
+          <h1 className="folio-h1 text-folio-text-primary mb-2">Event Approvals</h1>
+          <p className="folio-body text-folio-text-secondary">Review and approve pending events</p>
         </div>
 
         {events.length === 0 ? (
           <RidgeCard padding="lg">
             <div className="text-center py-8">
-              <FaCalendarAlt className="mx-auto text-4xl text-[var(--text-tertiary)] mb-4" />
-              <h3 className="folio-h3 text-[var(--text-primary)] mb-2">No pending events</h3>
-              <p className="folio-body text-[var(--text-secondary)]">All events have been reviewed</p>
+              <FaCalendarAlt className="mx-auto text-4xl text-folio-text-tertiary mb-4" />
+              <h3 className="folio-h3 text-folio-text-primary mb-2">No pending events</h3>
+              <p className="folio-body text-folio-text-secondary">All events have been reviewed</p>
             </div>
           </RidgeCard>
         ) : (
@@ -105,10 +105,10 @@ const EventApprovalsPage = () => {
               <RidgeCard key={event.id} padding="lg">
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
-                    <h3 className="folio-h3 text-[var(--text-primary)] mb-2">{event.title}</h3>
-                    <p className="folio-body text-[var(--text-secondary)] mb-4">{event.description}</p>
+                    <h3 className="folio-h3 text-folio-text-primary mb-2">{event.title}</h3>
+                    <p className="folio-body text-folio-text-secondary mb-4">{event.description}</p>
 
-                    <div className="flex items-center flex-wrap gap-4 folio-meta text-[var(--text-tertiary)]">
+                    <div className="flex items-center flex-wrap gap-4 folio-meta text-folio-text-tertiary">
                       <div className="flex items-center">
                         <FaCalendarAlt className="mr-2" />
                         {new Date(event.startDate).toLocaleDateString()} - {new Date(event.endDate).toLocaleDateString()}

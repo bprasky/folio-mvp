@@ -1,6 +1,6 @@
 /**
  * FestivalPage - Main festival display page
- * Folio Design System: Uses bg-[var(--bg-base)] for background
+ * Folio Design System: Uses bg-surface-canvas for background
  */
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
@@ -99,7 +99,7 @@ export default async function FestivalPage({
     : festival.subevents || [];
 
   return (
-    <div className="w-full max-w-[100vw] overflow-hidden px-0 sm:px-0 lg:px-0 pb-6 bg-[var(--bg-base)]">
+    <div className="w-full max-w-[100vw] overflow-hidden px-0 sm:px-0 lg:px-0 pb-6 bg-surface-canvas">
       <FestivalMosaicAdapter
         subevents={filteredSubevents}
         festivalId={festival.id}

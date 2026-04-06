@@ -69,26 +69,26 @@ export function UploadContractCard({
         border rounded-lg p-6 transition-colors
         ${isDragging
           ? 'border-[var(--accent)] bg-[var(--accent)]/5'
-          : 'border-[var(--border-default)] hover:border-[var(--text-tertiary)]'
+          : 'border-folio-border-subtle hover:border-folio-text-tertiary'
         }
         ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
       `}
     >
       <div className="flex items-start gap-4">
-        <div className="flex-shrink-0 text-[var(--text-tertiary)]">
+        <div className="flex-shrink-0 text-folio-text-tertiary">
           {icon}
         </div>
 
         <div className="flex-1 min-w-0">
-          <h3 className="font-medium text-[var(--text-primary)] mb-3">{title}</h3>
+          <h3 className="font-medium text-folio-text-primary mb-3">{title}</h3>
 
           <div className="grid grid-cols-2 gap-6 text-sm">
             <div>
-              <p className="text-[var(--text-tertiary)] mb-2">We'll extract:</p>
+              <p className="text-folio-text-tertiary mb-2">We'll extract:</p>
               <ul className="space-y-1">
                 {weExtract.map((item, i) => (
-                  <li key={i} className="text-[var(--text-secondary)] flex items-start gap-2">
-                    <span className="text-[var(--text-tertiary)] mt-0.5">•</span>
+                  <li key={i} className="text-folio-text-secondary flex items-start gap-2">
+                    <span className="text-folio-text-tertiary mt-0.5">•</span>
                     <span>{item}</span>
                   </li>
                 ))}
@@ -96,10 +96,10 @@ export function UploadContractCard({
             </div>
 
             <div>
-              <p className="text-[var(--text-tertiary)] mb-2">You'll get:</p>
+              <p className="text-folio-text-tertiary mb-2">You'll get:</p>
               <ul className="space-y-1">
                 {youGet.map((item, i) => (
-                  <li key={i} className="text-[var(--text-secondary)] flex items-start gap-2">
+                  <li key={i} className="text-folio-text-secondary flex items-start gap-2">
                     <span className="text-green-500 mt-0.5">✓</span>
                     <span>{item}</span>
                   </li>
@@ -109,7 +109,7 @@ export function UploadContractCard({
           </div>
 
           <div className="mt-4 flex items-center justify-between">
-            <span className="text-xs text-[var(--text-tertiary)]">Accepts: {accepts}</span>
+            <span className="text-xs text-folio-text-tertiary">Accepts: {accepts}</span>
             <button
               onClick={() => !disabled && inputRef.current?.click()}
               disabled={disabled}

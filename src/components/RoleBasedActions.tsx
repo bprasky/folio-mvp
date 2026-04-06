@@ -99,7 +99,7 @@ export default function RoleBasedActions({ userRole, className = '' }: RoleBased
             className={`inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               isPrimary
                 ? 'bg-folio-accent text-white hover:bg-folio-accent-dark shadow-sm'
-                : 'bg-white text-folio-text border border-folio-border hover:bg-[var(--bg-elevated)]'
+                : 'bg-white text-folio-text border border-folio-border hover:bg-surface-ground'
             }`}
           >
             <Icon className="w-4 h-4 mr-2" />

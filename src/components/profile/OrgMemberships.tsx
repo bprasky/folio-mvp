@@ -114,10 +114,10 @@ export default function OrgMemberships({ userId }: OrgMembershipsProps) {
   if (isLoading) {
     return (
       <div className="animate-pulse">
-        <div className="h-6 bg-[var(--bg-elevated)] rounded w-1/3 mb-4"></div>
+        <div className="h-6 bg-surface-ground rounded w-1/3 mb-4"></div>
         <div className="space-y-3">
-          <div className="h-16 bg-[var(--bg-elevated)] rounded"></div>
-          <div className="h-16 bg-[var(--bg-elevated)] rounded"></div>
+          <div className="h-16 bg-surface-ground rounded"></div>
+          <div className="h-16 bg-surface-ground rounded"></div>
         </div>
       </div>
     );
@@ -126,7 +126,7 @@ export default function OrgMemberships({ userId }: OrgMembershipsProps) {
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-medium text-[var(--text-primary)]">Organizations</h3>
+        <h3 className="text-lg font-medium text-folio-text-primary">Organizations</h3>
         <Link
           href="/professionals/join"
           className="text-sm text-[var(--accent)] hover:text-blue-800"
@@ -136,9 +136,9 @@ export default function OrgMemberships({ userId }: OrgMembershipsProps) {
       </div>
 
       {memberships.length === 0 ? (
-        <div className="text-center py-8 bg-[var(--bg-elevated)] rounded-lg">
-          <Building2 className="w-12 h-12 text-[var(--text-tertiary)] mx-auto mb-3" />
-          <p className="text-[var(--text-secondary)] mb-2">No organizations yet</p>
+        <div className="text-center py-8 bg-surface-ground rounded-lg">
+          <Building2 className="w-12 h-12 text-folio-text-tertiary mx-auto mb-3" />
+          <p className="text-folio-text-secondary mb-2">No organizations yet</p>
           <Link
             href="/professionals"
             className="text-[var(--accent)] hover:text-blue-800 text-sm"
@@ -151,7 +151,7 @@ export default function OrgMemberships({ userId }: OrgMembershipsProps) {
           {memberships.map((membership) => (
             <div
               key={membership.id}
-              className="flex items-center justify-between p-4 bg-[var(--bg-elevated)] rounded-lg"
+              className="flex items-center justify-between p-4 bg-surface-ground rounded-lg"
             >
               <div className="flex items-center gap-3">
                 {membership.organization.logo ? (
@@ -161,15 +161,15 @@ export default function OrgMemberships({ userId }: OrgMembershipsProps) {
                     className="w-10 h-10 rounded-lg object-cover"
                   />
                 ) : (
-                  <div className="w-10 h-10 bg-[var(--bg-elevated)] rounded-lg flex items-center justify-center">
-                    <Building2 className="w-5 h-5 text-[var(--text-tertiary)]" />
+                  <div className="w-10 h-10 bg-surface-ground rounded-lg flex items-center justify-center">
+                    <Building2 className="w-5 h-5 text-folio-text-tertiary" />
                   </div>
                 )}
                 <div>
                   <div className="flex items-center gap-2">
                     <Link
                       href={`/org/${membership.organization.id}`}
-                      className="font-medium text-[var(--text-primary)] hover:text-[var(--accent)] flex items-center gap-1"
+                      className="font-medium text-folio-text-primary hover:text-[var(--accent)] flex items-center gap-1"
                     >
                       {membership.organization.name}
                       <ExternalLink className="w-3 h-3" />
@@ -177,7 +177,7 @@ export default function OrgMemberships({ userId }: OrgMembershipsProps) {
                     {getRoleIcon(membership.role)}
                     {getStatusBadge(membership.organization.status)}
                   </div>
-                  <p className="text-sm text-[var(--text-secondary)] capitalize">
+                  <p className="text-sm text-folio-text-secondary capitalize">
                     {membership.role.toLowerCase()} · {membership.organization.type.replace('_', ' ').toLowerCase()}
                   </p>
                 </div>
@@ -187,8 +187,8 @@ export default function OrgMemberships({ userId }: OrgMembershipsProps) {
                 onClick={() => toggleVisibility(membership.id, membership.organization.id, membership.showOnProfile)}
                 className={`p-2 rounded-lg transition-colors ${
                   membership.showOnProfile
-                    ? 'text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)]'
-                    : 'text-[var(--text-tertiary)] hover:bg-[var(--bg-elevated)]'
+                    ? 'text-folio-text-secondary hover:bg-surface-ground'
+                    : 'text-folio-text-tertiary hover:bg-surface-ground'
                 }`}
                 title={membership.showOnProfile ? 'Visible on profile' : 'Hidden from profile'}
               >

@@ -55,11 +55,11 @@ export function ProjectCard({
   };
 
   return (
-    <div className="group relative rounded-2xl border border-[var(--ridge-outer)] overflow-hidden bg-[var(--bg-base)] shadow-sm hover:shadow-md transition-all duration-200">
+    <div className="group relative rounded-2xl border border-folio-border-subtle overflow-hidden bg-surface-canvas shadow-sm hover:shadow-md transition-all duration-200">
       {/* Cover Image - Clickable Link */}
       <Link
         href={`/project/${project.id}`}
-        className="block relative h-48 w-full bg-[var(--bg-elevated)]"
+        className="block relative h-48 w-full bg-surface-ground"
         title={`View ${project.title}`}
         prefetch
       >
@@ -73,7 +73,7 @@ export function ProjectCard({
         {/* Stage Pill - positioned over image */}
         {project.stage && (
           <div className="absolute top-3 left-3">
-            <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${STAGE_COLORS[project.stage as keyof typeof STAGE_COLORS] || 'bg-[var(--bg-elevated)] text-[var(--text-primary)] border-[var(--ridge-outer)]'}`}>
+            <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${STAGE_COLORS[project.stage as keyof typeof STAGE_COLORS] || 'bg-surface-ground text-folio-text-primary border-folio-border-subtle'}`}>
               {STAGE_LABELS[project.stage as keyof typeof STAGE_LABELS] || project.stage}
             </span>
           </div>
@@ -85,9 +85,9 @@ export function ProjectCard({
         {/* Title */}
         <Link 
           href={`/project/${project.id}`}
-          className="block group-hover:text-[var(--text-primary)] transition-colors"
+          className="block group-hover:text-folio-text-primary transition-colors"
         >
-          <h3 className="font-semibold text-[var(--text-primary)] mb-2 line-clamp-2 group-hover:underline">
+          <h3 className="font-semibold text-folio-text-primary mb-2 line-clamp-2 group-hover:underline">
             {project.title}
           </h3>
         </Link>
@@ -98,7 +98,7 @@ export function ProjectCard({
             <select
               value={project.stage}
               onChange={handleStageChange}
-              className="text-xs border border-[var(--ridge-outer)] rounded-lg px-2 py-1 bg-[var(--bg-base)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+              className="text-xs border border-folio-border-subtle rounded-lg px-2 py-1 bg-surface-canvas focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
               onClick={(e) => e.stopPropagation()}
             >
               {Object.entries(STAGE_LABELS).map(([stage, label]) => (

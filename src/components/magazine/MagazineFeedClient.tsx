@@ -32,7 +32,7 @@ function SkeletonCard({ className }: { className?: string }) {
   return (
     <div
       className={clsx(
-        "rounded-[20px] overflow-hidden bg-[var(--bg-elevated)] animate-pulse",
+        "rounded-[20px] overflow-hidden bg-surface-ground animate-pulse",
         className
       )}
     />
@@ -54,15 +54,15 @@ function SkeletonGridWithStyles() {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-3 auto-rows-[8px]">
       <div
-        className="rounded-[20px] overflow-hidden bg-[var(--bg-elevated)] animate-pulse col-span-1 sm:col-span-2 lg:col-span-3"
+        className="rounded-[20px] overflow-hidden bg-surface-ground animate-pulse col-span-1 sm:col-span-2 lg:col-span-3"
         style={{ gridRowEnd: "span 32" }}
       />
       <div
-        className="rounded-[20px] overflow-hidden bg-[var(--bg-elevated)] animate-pulse col-span-1 sm:col-span-2"
+        className="rounded-[20px] overflow-hidden bg-surface-ground animate-pulse col-span-1 sm:col-span-2"
         style={{ gridRowEnd: "span 26" }}
       />
       <div
-        className="rounded-[20px] overflow-hidden bg-[var(--bg-elevated)] animate-pulse col-span-1"
+        className="rounded-[20px] overflow-hidden bg-surface-ground animate-pulse col-span-1"
         style={{ gridRowEnd: "span 18" }}
       />
     </div>
@@ -75,13 +75,13 @@ function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center py-24 text-center">
       <h3
-        className="text-2xl italic text-[var(--text-primary)]"
+        className="text-2xl italic text-folio-text-primary"
         style={{ fontFamily: "var(--font-cormorant, 'Cormorant Garamond', serif)" }}
       >
         Nothing here yet
       </h3>
       <p
-        className="mt-2 text-sm text-[var(--text-secondary)]"
+        className="mt-2 text-sm text-folio-text-secondary"
         style={{ fontFamily: "var(--font-instrument, 'Instrument Sans', sans-serif)" }}
       >
         Be the first to publish in this collection.
@@ -188,8 +188,8 @@ export default function MagazineFeedClient({
           className={clsx(
             "folio-ui px-4 py-1.5 md:py-2 text-xs md:text-sm font-medium transition-all duration-200 whitespace-nowrap rounded-full",
             activeFilter === null
-              ? "ridge-btn text-[var(--text-primary)] bg-[var(--bg-elevated)]"
-              : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]/50 border border-transparent"
+              ? "ridge-btn text-folio-text-primary bg-surface-ground"
+              : "text-folio-text-secondary hover:text-folio-text-primary hover:bg-surface-ground/50 border border-transparent"
           )}
         >
           All
@@ -205,8 +205,8 @@ export default function MagazineFeedClient({
               className={clsx(
                 "folio-ui px-4 py-1.5 md:py-2 text-xs md:text-sm font-medium transition-all duration-200 whitespace-nowrap rounded-full",
                 isActive
-                  ? "ridge-btn text-[var(--text-primary)] bg-[var(--bg-elevated)]"
-                  : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]/50 border border-transparent"
+                  ? "ridge-btn text-folio-text-primary bg-surface-ground"
+                  : "text-folio-text-secondary hover:text-folio-text-primary hover:bg-surface-ground/50 border border-transparent"
               )}
             >
               {filter.label}
@@ -237,7 +237,7 @@ export default function MagazineFeedClient({
         <div className="flex justify-center mt-10 mb-4">
           <button
             onClick={handleLoadMore}
-            className="folio-ui px-6 py-2.5 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-[var(--border-subtle)] rounded-full transition-all duration-200 hover:border-[var(--border-default)]"
+            className="folio-ui px-6 py-2.5 text-sm font-medium text-folio-text-secondary hover:text-folio-text-primary border border-[var(--border-subtle)] rounded-full transition-all duration-200 hover:border-folio-border-subtle"
             style={{ fontFamily: "var(--font-instrument, 'Instrument Sans', sans-serif)" }}
           >
             More stories

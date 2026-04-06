@@ -165,25 +165,25 @@ export default function SaveToFolderModal({
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-100">
-          <h2 className="text-xl font-semibold text-[var(--text-primary)]">Save to Project Folder</h2>
+          <h2 className="text-xl font-semibold text-folio-text-primary">Save to Project Folder</h2>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-[var(--bg-elevated)] rounded-xl transition-colors"
+            className="p-2 hover:bg-surface-ground rounded-xl transition-colors"
           >
-            <X className="w-5 h-5 text-[var(--text-secondary)]" />
+            <X className="w-5 h-5 text-folio-text-secondary" />
           </button>
         </div>
 
         {/* Content */}
         <div className="p-6">
           {/* Tab Navigation */}
-          <div className="flex bg-[var(--bg-elevated)] rounded-xl p-1 mb-6">
+          <div className="flex bg-surface-ground rounded-xl p-1 mb-6">
             <button
               onClick={() => handleTabChange("select")}
               className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
                 !isCreatingNew
-                  ? "bg-white text-[var(--text-primary)] shadow-sm"
-                  : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                  ? "bg-white text-folio-text-primary shadow-sm"
+                  : "text-folio-text-secondary hover:text-folio-text-primary"
               }`}
             >
               Select Folder
@@ -192,8 +192,8 @@ export default function SaveToFolderModal({
               onClick={() => handleTabChange("new")}
               className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
                 isCreatingNew
-                  ? "bg-white text-[var(--text-primary)] shadow-sm"
-                  : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                  ? "bg-white text-folio-text-primary shadow-sm"
+                  : "text-folio-text-secondary hover:text-folio-text-primary"
               }`}
             >
               New Folder
@@ -207,13 +207,13 @@ export default function SaveToFolderModal({
                 <div className="space-y-3">
                   {Array.from({ length: 3 }).map((_, i) => (
                     <div key={i} className="animate-pulse">
-                      <div className="h-12 bg-[var(--bg-elevated)] rounded-xl"></div>
+                      <div className="h-12 bg-surface-ground rounded-xl"></div>
                     </div>
                   ))}
                 </div>
               ) : folders.length === 0 ? (
-                <div className="text-center py-8 text-[var(--text-secondary)]">
-                  <Folder className="w-12 h-12 mx-auto text-[var(--text-tertiary)] mb-3" />
+                <div className="text-center py-8 text-folio-text-secondary">
+                  <Folder className="w-12 h-12 mx-auto text-folio-text-tertiary mb-3" />
                   <p className="text-sm">No folders yet</p>
                   <button
                     onClick={() => handleTabChange("new")}
@@ -231,15 +231,15 @@ export default function SaveToFolderModal({
                       className={`w-full p-3 text-left rounded-xl border-2 transition-all hover:shadow-sm ${
                         selectedFolderId === folder.id
                           ? "border-[var(--accent)] bg-[var(--accent)]/5"
-                          : "border-[var(--ridge-outer)] hover:border-[var(--ridge-outer)]"
+                          : "border-folio-border-subtle hover:border-folio-border-subtle"
                       }`}
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                          <Folder className="w-5 h-5 text-[var(--text-secondary)]" />
+                          <Folder className="w-5 h-5 text-folio-text-secondary" />
                           <div>
-                            <p className="font-medium text-[var(--text-primary)]">{folder.name}</p>
-                            <p className="text-xs text-[var(--text-secondary)]">
+                            <p className="font-medium text-folio-text-primary">{folder.name}</p>
+                            <p className="text-xs text-folio-text-secondary">
                               Created {new Date(folder.createdAt).toLocaleDateString()}
                             </p>
                           </div>
@@ -259,7 +259,7 @@ export default function SaveToFolderModal({
           {isCreatingNew && (
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
+                <label className="block text-sm font-medium text-folio-text-primary mb-2">
                   Folder Name
                 </label>
                 <input
@@ -267,7 +267,7 @@ export default function SaveToFolderModal({
                   value={newFolderName}
                   onChange={(e) => setNewFolderName(e.target.value)}
                   placeholder="Enter folder name..."
-                  className="w-full px-4 py-3 border border-[var(--ridge-outer)] rounded-xl focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent transition-all"
+                  className="w-full px-4 py-3 border border-folio-border-subtle rounded-xl focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent transition-all"
                   autoFocus
                 />
               </div>
@@ -286,7 +286,7 @@ export default function SaveToFolderModal({
           <div className="flex gap-3 mt-6 pt-6 border-t border-gray-100">
             <button
               onClick={onClose}
-              className="flex-1 px-4 py-3 text-[var(--text-primary)] bg-[var(--bg-elevated)] rounded-xl hover:bg-[var(--bg-elevated)] transition-colors font-medium"
+              className="flex-1 px-4 py-3 text-folio-text-primary bg-surface-ground rounded-xl hover:bg-surface-ground transition-colors font-medium"
             >
               Cancel
             </button>

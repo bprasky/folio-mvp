@@ -4,11 +4,11 @@ import { FaArrowLeft } from 'react-icons/fa';
 
 export default function UnrealDocsPage() {
   return (
-    <div className="min-h-screen bg-[var(--bg-elevated)]">
+    <div className="min-h-screen bg-surface-ground">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Link
           href="/projects"
-          className="inline-flex items-center gap-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] mb-6"
+          className="inline-flex items-center gap-2 text-folio-text-secondary hover:text-folio-text-primary mb-6"
         >
           <FaArrowLeft className="w-4 h-4" />
           Back to Projects
@@ -25,7 +25,7 @@ export default function UnrealDocsPage() {
             <div className="space-y-6">
               <section>
                 <h2 className="text-2xl font-semibold mb-4">Overview</h2>
-                <p className="text-[var(--text-primary)]">
+                <p className="text-folio-text-primary">
                   Folio exports a structured JSON manifest containing all 3D-ready assets
                   for a project. This document describes how to consume this data in Unreal Engine.
                 </p>
@@ -33,7 +33,7 @@ export default function UnrealDocsPage() {
 
               <section>
                 <h2 className="text-2xl font-semibold mb-4">Export JSON Structure</h2>
-                <pre className="bg-[var(--bg-elevated)] p-4 rounded-lg overflow-x-auto text-sm">
+                <pre className="bg-surface-ground p-4 rounded-lg overflow-x-auto text-sm">
 {`{
   "projectId": "string",
   "projectTitle": "string",
@@ -66,7 +66,7 @@ export default function UnrealDocsPage() {
 
               <section>
                 <h2 className="text-2xl font-semibold mb-4">Integration Steps</h2>
-                <ol className="list-decimal list-inside space-y-3 text-[var(--text-primary)]">
+                <ol className="list-decimal list-inside space-y-3 text-folio-text-primary">
                   <li>
                     <strong>Download the JSON:</strong> Use the "Download Unreal Export JSON" button
                     in the Unreal Export Panel to get the latest manifest.
@@ -92,7 +92,7 @@ export default function UnrealDocsPage() {
 
               <section>
                 <h2 className="text-2xl font-semibold mb-4">Asset URLs</h2>
-                <p className="text-[var(--text-primary)]">
+                <p className="text-folio-text-primary">
                   All GLB URLs in the export are publicly accessible. You can download them directly
                   or stream them into Unreal at runtime. Ensure your Unreal project has network
                   access configured if streaming.
@@ -101,15 +101,15 @@ export default function UnrealDocsPage() {
 
               <section>
                 <h2 className="text-2xl font-semibold mb-4">Placement Hints</h2>
-                <p className="text-[var(--text-primary)] mb-3">
-                  The <code className="bg-[var(--bg-elevated)] px-1 rounded">placementHint</code> field provides
+                <p className="text-folio-text-primary mb-3">
+                  The <code className="bg-surface-ground px-1 rounded">placementHint</code> field provides
                   contextual information about where assets should be placed:
                 </p>
-                <ul className="list-disc list-inside space-y-2 text-[var(--text-primary)]">
+                <ul className="list-disc list-inside space-y-2 text-folio-text-primary">
                   <li><code>room</code>: Room name (e.g., "Kitchen", "Bathroom")</li>
                   <li><code>surfaceType</code>: Type of surface (e.g., "countertop", "floor", "wall")</li>
                 </ul>
-                <p className="text-[var(--text-primary)] mt-3">
+                <p className="text-folio-text-primary mt-3">
                   Use these hints to automatically place assets in your Unreal scene or to filter
                   assets by room/surface type.
                 </p>
@@ -117,8 +117,8 @@ export default function UnrealDocsPage() {
 
               <section>
                 <h2 className="text-2xl font-semibold mb-4">Metadata</h2>
-                <p className="text-[var(--text-primary)]">
-                  The <code className="bg-[var(--bg-elevated)] px-1 rounded">meta</code> field contains
+                <p className="text-folio-text-primary">
+                  The <code className="bg-surface-ground px-1 rounded">meta</code> field contains
                   additional asset-specific information such as dimensions, scale factors, and
                   material properties. This data can be used to configure materials, lighting,
                   and physics properties in Unreal.
@@ -127,10 +127,10 @@ export default function UnrealDocsPage() {
 
               <section>
                 <h2 className="text-2xl font-semibold mb-4">Example Blueprint Usage</h2>
-                <p className="text-[var(--text-primary)] mb-3">
+                <p className="text-folio-text-primary mb-3">
                   In Unreal Blueprints, you can:
                 </p>
-                <ul className="list-disc list-inside space-y-2 text-[var(--text-primary)]">
+                <ul className="list-disc list-inside space-y-2 text-folio-text-primary">
                   <li>Use "Parse JSON" node to read the export manifest</li>
                   <li>Loop through the "assets" array</li>
                   <li>Use "HTTP Request" node to download GLB files</li>
@@ -141,7 +141,7 @@ export default function UnrealDocsPage() {
 
               <section>
                 <h2 className="text-2xl font-semibold mb-4">Support</h2>
-                <p className="text-[var(--text-primary)]">
+                <p className="text-folio-text-primary">
                   For questions or issues with the Unreal integration, contact the Folio development team.
                 </p>
               </section>

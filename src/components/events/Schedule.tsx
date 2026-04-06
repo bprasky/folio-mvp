@@ -56,7 +56,7 @@ export default function Schedule({
       <div className="space-y-4">
         {Array.from({ length: 3 }).map((_, index) => (
           <div key={index} className="animate-pulse">
-            <div className="h-20 bg-[var(--bg-elevated)] rounded-xl"></div>
+            <div className="h-20 bg-surface-ground rounded-xl"></div>
           </div>
         ))}
       </div>
@@ -67,7 +67,7 @@ export default function Schedule({
   if (!siblingEvents || siblingEvents.length === 0) {
     return (
       <div className="text-center py-8">
-        <p className="text-sm text-[var(--text-secondary)]">No schedule available yet.</p>
+        <p className="text-sm text-folio-text-secondary">No schedule available yet.</p>
       </div>
     );
   }
@@ -93,8 +93,8 @@ export default function Schedule({
   return (
     <div className="space-y-6">
       {Object.entries(eventsByDate).map(([dateKey, events]) => (
-        <div key={dateKey} className="bg-[var(--bg-elevated)] rounded-2xl p-6">
-          <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4">
+        <div key={dateKey} className="bg-surface-ground rounded-2xl p-6">
+          <h3 className="text-lg font-semibold text-folio-text-primary mb-4">
             {formatEventDate(new Date(dateKey))}
           </h3>
           
@@ -102,26 +102,26 @@ export default function Schedule({
             {events.map((event) => (
               <div
                 key={event.id}
-                className="relative flex items-start space-x-4 p-4 bg-[var(--bg-base)] rounded-xl shadow-sm border border-[var(--ridge-outer)] hover:shadow-md transition-shadow"
+                className="relative flex items-start space-x-4 p-4 bg-surface-canvas rounded-xl shadow-sm border border-folio-border-subtle hover:shadow-md transition-shadow"
               >
                 {/* Time */}
-                <div className="flex-shrink-0 w-20 text-sm font-medium text-[var(--text-primary)]">
+                <div className="flex-shrink-0 w-20 text-sm font-medium text-folio-text-primary">
                   {formatEventTime(new Date(event.startDate))}
                 </div>
 
                 {/* Event Info */}
                 <div className="flex-1 min-w-0">
-                  <h4 className="font-semibold text-[var(--text-primary)] mb-1">
+                  <h4 className="font-semibold text-folio-text-primary mb-1">
                     {event.title}
                   </h4>
 
                   {event.description && (
-                    <p className="text-sm text-[var(--text-secondary)] mb-2 line-clamp-2">
+                    <p className="text-sm text-folio-text-secondary mb-2 line-clamp-2">
                       {event.description}
                     </p>
                   )}
 
-                  <div className="flex items-center space-x-2 text-xs text-[var(--text-secondary)]">
+                  <div className="flex items-center space-x-2 text-xs text-folio-text-secondary">
                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -131,7 +131,7 @@ export default function Schedule({
                 </div>
 
                 {/* Duration */}
-                <div className="flex-shrink-0 text-xs text-[var(--text-secondary)]">
+                <div className="flex-shrink-0 text-xs text-folio-text-secondary">
                   {(() => {
                     try {
                       const startDate = new Date(event.startDate);

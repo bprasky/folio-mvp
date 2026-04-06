@@ -34,17 +34,17 @@ export function ProGate({ potentialRank, className }: ProGateProps) {
           </svg>
         </div>
 
-        <h3 className="text-xl font-semibold text-[var(--text-primary)] mb-2">
+        <h3 className="text-xl font-semibold text-folio-text-primary mb-2">
           Your Ranking
         </h3>
 
-        <p className="text-[var(--text-secondary)] mb-4">
+        <p className="text-folio-text-secondary mb-4">
           You&apos;re not currently ranked in the Folio Directory.
         </p>
 
         {potentialRank && potentialRank <= 100 && (
-          <div className="mb-6 p-4 rounded-lg bg-[var(--bg-elevated)] border border-[var(--border-subtle)]">
-            <p className="text-sm text-[var(--text-tertiary)] mb-1">
+          <div className="mb-6 p-4 rounded-lg bg-surface-ground border border-[var(--border-subtle)]">
+            <p className="text-sm text-folio-text-tertiary mb-1">
               Based on your current activity, you would rank approximately
             </p>
             <p className="text-4xl font-bold text-[var(--accent)]">
@@ -53,7 +53,7 @@ export function ProGate({ potentialRank, className }: ProGateProps) {
           </div>
         )}
 
-        <p className="text-sm text-[var(--text-tertiary)] mb-6">
+        <p className="text-sm text-folio-text-tertiary mb-6">
           Upgrade to Pro to appear in the Folio Directory and compete with the industry&apos;s best.
         </p>
 
@@ -72,10 +72,10 @@ export function ProGate({ potentialRank, className }: ProGateProps) {
         </div>
 
         <div className="mt-8 pt-6 border-t border-[var(--border-subtle)]">
-          <h4 className="text-sm font-medium text-[var(--text-primary)] mb-3">
+          <h4 className="text-sm font-medium text-folio-text-primary mb-3">
             Pro includes:
           </h4>
-          <ul className="text-sm text-[var(--text-secondary)] space-y-2">
+          <ul className="text-sm text-folio-text-secondary space-y-2">
             <li className="flex items-center gap-2">
               <svg
                 width="16"
@@ -171,10 +171,10 @@ export function ProGateBanner({ className }: ProGateBannerProps) {
             </svg>
           </div>
           <div>
-            <p className="text-sm font-medium text-[var(--text-primary)]">
+            <p className="text-sm font-medium text-folio-text-primary">
               Want to appear in the Directory?
             </p>
-            <p className="text-xs text-[var(--text-secondary)]">
+            <p className="text-xs text-folio-text-secondary">
               Upgrade to Pro to compete with the industry&apos;s best designers.
             </p>
           </div>

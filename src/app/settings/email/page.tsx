@@ -55,7 +55,7 @@ export default function EmailPreferencesPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[var(--bg-base)] p-6">
+      <div className="min-h-screen bg-surface-canvas p-6">
         <div className="max-w-xl mx-auto">
           <div className="h-8 w-48 rounded-lg animate-pulse" style={{ backgroundColor: '#E8E4DF' }} />
         </div>
@@ -66,14 +66,14 @@ export default function EmailPreferencesPage() {
   if (!prefs) return null;
 
   return (
-    <div className="min-h-screen bg-[var(--bg-base)] p-6">
+    <div className="min-h-screen bg-surface-canvas p-6">
       <div className="max-w-xl mx-auto">
-        <h1 className="folio-h1 text-[var(--text-primary)] mb-6">Email Preferences</h1>
+        <h1 className="folio-h1 text-folio-text-primary mb-6">Email Preferences</h1>
 
         <div className="glass-surface rounded-xl p-6 space-y-6">
           {/* Send preference */}
           <div>
-            <h3 className="text-sm font-medium text-[var(--text-primary)] mb-3">
+            <h3 className="text-sm font-medium text-folio-text-primary mb-3">
               When sending action item emails:
             </h3>
             <div className="space-y-2">
@@ -88,9 +88,9 @@ export default function EmailPreferencesPage() {
                     name="sendPref"
                     checked={prefs.emailSendPreference === opt.value}
                     onChange={() => setPrefs({ ...prefs, emailSendPreference: opt.value })}
-                    className="text-[#2C2825] focus:ring-[var(--accent)]"
+                    className="text-folio-text-primary focus:ring-[var(--accent)]"
                   />
-                  <span className="text-sm text-[var(--text-secondary)]">{opt.label}</span>
+                  <span className="text-sm text-folio-text-secondary">{opt.label}</span>
                 </label>
               ))}
             </div>
@@ -98,11 +98,11 @@ export default function EmailPreferencesPage() {
 
           {/* Proxy address */}
           <div>
-            <h3 className="text-sm font-medium text-[var(--text-primary)] mb-2">
+            <h3 className="text-sm font-medium text-folio-text-primary mb-2">
               Your Folio email address
             </h3>
             <div className="flex items-center gap-2">
-              <code className="text-xs bg-[#F0EDE9] rounded-lg px-3 py-2 text-[var(--text-secondary)] flex-1">
+              <code className="text-xs bg-surface-elevated rounded-lg px-3 py-2 text-folio-text-secondary flex-1">
                 {prefs.proxyAddress}
               </code>
               <button
@@ -112,14 +112,14 @@ export default function EmailPreferencesPage() {
                 Copy
               </button>
             </div>
-            <p className="text-xs text-[var(--text-tertiary)] mt-1">
+            <p className="text-xs text-folio-text-tertiary mt-1">
               Replies to this address appear in your Folio inbox.
             </p>
           </div>
 
           {/* Signature options */}
           <div>
-            <h3 className="text-sm font-medium text-[var(--text-primary)] mb-3">
+            <h3 className="text-sm font-medium text-folio-text-primary mb-3">
               Email signature
             </h3>
             <div className="space-y-2">
@@ -134,9 +134,9 @@ export default function EmailPreferencesPage() {
                     type="checkbox"
                     checked={prefs[opt.key as keyof EmailPreferences] as boolean}
                     onChange={(e) => setPrefs({ ...prefs, [opt.key]: e.target.checked })}
-                    className="rounded border-[#C9C4BC] text-[#2C2825] focus:ring-[var(--accent)]"
+                    className="rounded border-folio-border-strong text-folio-text-primary focus:ring-[var(--accent)]"
                   />
-                  <span className="text-sm text-[var(--text-secondary)]">{opt.label}</span>
+                  <span className="text-sm text-folio-text-secondary">{opt.label}</span>
                 </label>
               ))}
             </div>

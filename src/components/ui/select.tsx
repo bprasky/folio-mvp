@@ -186,7 +186,7 @@ export function SelectContent({
       style={{ top: pos.top, left: pos.left, width: pos.width, position: "absolute" }}
       className={[
         "z-[95] rounded-xl overflow-hidden",
-        "bg-[var(--bg-elevated)] text-[var(--text-primary)] backdrop-blur-xl",
+        "bg-surface-ground text-folio-text-primary backdrop-blur-xl",
         "ring-1 ring-[var(--ridge-outer)] shadow-2xl",
         className,
       ].join(" ")}

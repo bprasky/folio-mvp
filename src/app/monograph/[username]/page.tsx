@@ -216,7 +216,7 @@ export default async function Monograph({ params, searchParams }: Props) {
   }
 
   return (
-    <main className="min-h-screen bg-[#fdfbf8]">
+    <main className="min-h-screen bg-surface-ground">
       <Hero
         imageUrl={heroImage}
         title={designer.name}
@@ -240,10 +240,10 @@ export default async function Monograph({ params, searchParams }: Props) {
         {/* Opening Quote Spread */}
         {quote && (
           <section className="max-w-3xl mx-auto prose prose-lg">
-            <blockquote className="text-2xl md:text-3xl lg:text-4xl font-light italic text-[var(--text-primary)] leading-relaxed font-serif text-center border-none p-0 m-0">
+            <blockquote className="text-2xl md:text-3xl lg:text-4xl font-light italic text-folio-text-primary leading-relaxed font-serif text-center border-none p-0 m-0">
               "{quote}"
             </blockquote>
-            <footer className="text-right mt-8 text-sm uppercase tracking-widest text-[var(--text-secondary)]">
+            <footer className="text-right mt-8 text-sm uppercase tracking-widest text-folio-text-secondary">
               — {designer.name}
             </footer>
           </section>

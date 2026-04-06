@@ -59,7 +59,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.
   },
   EXPIRED: {
     label: "Expired",
-    color: "text-[var(--text-secondary)]",
+    color: "text-folio-text-secondary",
     icon: <AlertCircle className="h-4 w-4" />,
   },
 };
@@ -136,8 +136,8 @@ export function BoostInboxClient({ requests }: BoostInboxClientProps) {
 
   if (requests.length === 0) {
     return (
-      <div className="bg-white rounded-lg shadow-sm border border-[var(--ridge-outer)] p-12 text-center">
-        <p className="text-[var(--text-secondary)]">No boost requests at this time</p>
+      <div className="bg-white rounded-lg shadow-sm border border-folio-border-subtle p-12 text-center">
+        <p className="text-folio-text-secondary">No boost requests at this time</p>
       </div>
     );
   }
@@ -153,7 +153,7 @@ export function BoostInboxClient({ requests }: BoostInboxClientProps) {
       {requests.map((request) => {
         const statusConfig = STATUS_CONFIG[request.status] || {
           label: request.status,
-          color: "text-[var(--text-secondary)]",
+          color: "text-folio-text-secondary",
           icon: <Clock className="h-4 w-4" />,
         };
 
@@ -162,7 +162,7 @@ export function BoostInboxClient({ requests }: BoostInboxClientProps) {
         return (
           <div
             key={request.id}
-            className="bg-white rounded-lg shadow-sm border border-[var(--ridge-outer)] p-6 space-y-4"
+            className="bg-white rounded-lg shadow-sm border border-folio-border-subtle p-6 space-y-4"
           >
             <div className="flex items-start justify-between">
               <div className="flex items-start space-x-4 flex-1">
@@ -186,23 +186,23 @@ export function BoostInboxClient({ requests }: BoostInboxClientProps) {
                     )}
                   </div>
 
-                  <h3 className="text-lg font-medium text-[var(--text-primary)] mb-1">
+                  <h3 className="text-lg font-medium text-folio-text-primary mb-1">
                     {request.product.brand} {request.product.name}
                   </h3>
-                  <p className="text-sm text-[var(--text-secondary)] mb-2">
+                  <p className="text-sm text-folio-text-secondary mb-2">
                     In project: <span className="font-medium">{request.project.title}</span>
                   </p>
-                  <p className="text-sm text-[var(--text-secondary)]">
+                  <p className="text-sm text-folio-text-secondary">
                     Requested by <span className="font-medium">{request.vendor.name}</span> on{" "}
                     {formatDate(request.requestedAt)}
                   </p>
                   {request.expiresAt && (
-                    <p className="text-xs text-[var(--text-tertiary)] mt-1">
+                    <p className="text-xs text-folio-text-tertiary mt-1">
                       Expires: {formatDate(request.expiresAt)}
                     </p>
                   )}
                   {request.message && (
-                    <div className="mt-3 p-3 bg-[var(--bg-elevated)] rounded text-sm text-[var(--text-primary)]">
+                    <div className="mt-3 p-3 bg-surface-ground rounded text-sm text-folio-text-primary">
                       "{request.message}"
                     </div>
                   )}
@@ -211,7 +211,7 @@ export function BoostInboxClient({ requests }: BoostInboxClientProps) {
             </div>
 
             {/* Actions */}
-            <div className="flex items-center justify-end space-x-3 border-t border-[var(--ridge-outer)] pt-4">
+            <div className="flex items-center justify-end space-x-3 border-t border-folio-border-subtle pt-4">
               {request.status === "PENDING" && !expired && (
                 <>
                   <Button
@@ -243,7 +243,7 @@ export function BoostInboxClient({ requests }: BoostInboxClientProps) {
               )}
 
               {request.status === "COMPLETED" && (
-                <span className="text-sm text-[var(--text-secondary)]">Completed</span>
+                <span className="text-sm text-folio-text-secondary">Completed</span>
               )}
             </div>
           </div>

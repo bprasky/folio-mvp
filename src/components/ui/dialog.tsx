@@ -155,7 +155,7 @@ export function DialogHeader({ className, children }: DialogHeaderProps) {
 
 export function DialogTitle({ className, children }: DialogTitleProps) {
   return (
-    <h2 className={cn("text-lg font-semibold text-[var(--text-primary)]", className)}>
+    <h2 className={cn("text-lg font-semibold text-folio-text-primary", className)}>
       {children}
     </h2>
   );
@@ -168,7 +168,7 @@ interface DialogDescriptionProps {
 
 export function DialogDescription({ className, children }: DialogDescriptionProps) {
   return (
-    <p className={cn("text-sm text-[var(--text-secondary)]", className)}>
+    <p className={cn("text-sm text-folio-text-secondary", className)}>
       {children}
     </p>
   );

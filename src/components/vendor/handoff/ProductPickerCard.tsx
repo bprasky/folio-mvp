@@ -28,7 +28,7 @@ export default function ProductPickerCard({ items, onChange, className }: Props)
   return (
     <div className={`border rounded-2xl p-6 bg-white ${className ?? ''}`}>
       <h3 className="text-lg font-semibold mb-2">Products to include</h3>
-      <p className="text-sm text-[var(--text-secondary)] mb-4">
+      <p className="text-sm text-folio-text-secondary mb-4">
         Add a few key items (SKU and finish if possible). You can swap to a catalog picker later.
       </p>
 
@@ -40,7 +40,7 @@ export default function ProductPickerCard({ items, onChange, className }: Props)
       </div>
       <div className="flex gap-2">
         <button type="button" onClick={addItem} className="px-4 py-2 rounded-xl bg-black text-white">Add item</button>
-        <span className="text-xs text-[var(--text-tertiary)] self-center">Tip: keep it tight — quality over quantity.</span>
+        <span className="text-xs text-folio-text-tertiary self-center">Tip: keep it tight — quality over quantity.</span>
       </div>
 
       {items.length > 0 && (
@@ -51,7 +51,7 @@ export default function ProductPickerCard({ items, onChange, className }: Props)
               <li key={i} className="flex items-center justify-between border rounded-xl p-3">
                 <div className="text-sm">
                   <div className="font-medium">{it.sku ?? it.productId ?? 'Untitled'}</div>
-                  <div className="text-[var(--text-secondary)]">{[it.finish, it.quantity ? `Qty ${it.quantity}` : null].filter(Boolean).join(' • ')}</div>
+                  <div className="text-folio-text-secondary">{[it.finish, it.quantity ? `Qty ${it.quantity}` : null].filter(Boolean).join(' • ')}</div>
                 </div>
                 <button onClick={() => removeAt(i)} className="text-red-600 text-sm">Remove</button>
               </li>

@@ -62,12 +62,12 @@ export default async function ProjectStatsStrip() {
         {stats.map((stat, index) => (
           <div 
             key={index}
-            className="bg-[var(--bg-base)] rounded-2xl border border-[var(--ridge-outer)] p-4 shadow-sm hover:shadow-md transition-shadow"
+            className="bg-surface-canvas rounded-2xl border border-folio-border-subtle p-4 shadow-sm hover:shadow-md transition-shadow"
           >
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-2xl font-bold text-[var(--text-primary)]">{stat.value}</div>
-                <div className="text-sm text-[var(--text-secondary)]">{stat.label}</div>
+                <div className="text-2xl font-bold text-folio-text-primary">{stat.value}</div>
+                <div className="text-sm text-folio-text-secondary">{stat.label}</div>
               </div>
               <div className="text-2xl opacity-60">{stat.icon}</div>
             </div>

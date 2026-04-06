@@ -11,7 +11,7 @@ export default function RecipientEmailCard({ value, onChange, className }: Props
   return (
     <div className={`border rounded-2xl p-6 bg-white ${className ?? ''}`}>
       <h3 className="text-lg font-semibold mb-2">Designer recipient</h3>
-      <p className="text-sm text-[var(--text-secondary)] mb-4">
+      <p className="text-sm text-folio-text-secondary mb-4">
         Enter the designer's email. We'll send a private link; the designer chooses the destination.
       </p>
       <input
@@ -21,7 +21,7 @@ export default function RecipientEmailCard({ value, onChange, className }: Props
         onChange={(e) => onChange(e.target.value)}
         className="w-full border rounded-xl px-4 py-3 outline-none focus:ring-1 focus:ring-gray-300"
       />
-      <p className="text-xs text-[var(--text-tertiary)] mt-2">We'll invite them if they don't have an account yet.</p>
+      <p className="text-xs text-folio-text-tertiary mt-2">We'll invite them if they don't have an account yet.</p>
     </div>
   )
 }

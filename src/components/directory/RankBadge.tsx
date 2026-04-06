@@ -42,7 +42,7 @@ export function RankBadge({
       return 'text-orange-700 bg-orange-50 border-orange-200';
     }
     // Top 100
-    return 'text-[var(--text-secondary)] bg-[var(--bg-elevated)] border-[var(--border-subtle)]';
+    return 'text-folio-text-secondary bg-surface-ground border-[var(--border-subtle)]';
   };
 
   if (variant === 'inline') {
@@ -65,7 +65,7 @@ export function RankBadge({
         href="/directory"
         className={cn(
           'text-xs font-semibold',
-          rank <= 10 ? 'text-amber-600' : 'text-[var(--text-secondary)]',
+          rank <= 10 ? 'text-amber-600' : 'text-folio-text-secondary',
           className
         )}
       >
@@ -146,16 +146,16 @@ export function PotentialRank({ potentialRank, className }: PotentialRankProps) 
   return (
     <div
       className={cn(
-        'p-4 rounded-lg border border-dashed border-[var(--border-subtle)] bg-[var(--bg-elevated)]',
+        'p-4 rounded-lg border border-dashed border-[var(--border-subtle)] bg-surface-ground',
         className
       )}
     >
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm text-[var(--text-secondary)] mb-1">
+          <p className="text-sm text-folio-text-secondary mb-1">
             Your Potential Rank
           </p>
-          <p className="text-2xl font-semibold text-[var(--text-primary)]">
+          <p className="text-2xl font-semibold text-folio-text-primary">
             #{potentialRank}
           </p>
         </div>
@@ -166,7 +166,7 @@ export function PotentialRank({ potentialRank, className }: PotentialRankProps) 
           Upgrade to Pro
         </Link>
       </div>
-      <p className="mt-3 text-xs text-[var(--text-tertiary)]">
+      <p className="mt-3 text-xs text-folio-text-tertiary">
         Upgrade to Pro to appear in the Folio Directory and compete with the industry&apos;s best.
       </p>
     </div>

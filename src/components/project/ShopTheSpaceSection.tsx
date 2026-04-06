@@ -37,10 +37,10 @@ export function ShopTheSpaceSection({ post }: ShopTheSpaceSectionProps) {
     <section className="mx-auto max-w-6xl px-3 md:px-0">
       <div className="px-6 py-5 md:px-8 md:py-6 space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="folio-ui tracking-[0.16em] uppercase text-[var(--text-secondary)]">
+          <h2 className="folio-ui tracking-[0.16em] uppercase text-folio-text-secondary">
             Shop the Space
           </h2>
-          <span className="folio-meta text-[var(--text-tertiary)]">
+          <span className="folio-meta text-folio-text-tertiary">
             {allProducts.length} {allProducts.length === 1 ? "product" : "products"}
           </span>
         </div>

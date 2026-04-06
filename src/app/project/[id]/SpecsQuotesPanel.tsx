@@ -163,7 +163,7 @@ export default function SpecsQuotesPanel({ projectId, userId, userRole }: SpecsQ
       case 'EXPIRED':
         return <AlertCircle className="h-4 w-4 text-[var(--accent)]" />;
       default:
-        return <FileText className="h-4 w-4 text-[var(--text-tertiary)]" />;
+        return <FileText className="h-4 w-4 text-folio-text-tertiary" />;
     }
   };
 
@@ -178,7 +178,7 @@ export default function SpecsQuotesPanel({ projectId, userId, userRole }: SpecsQ
       case 'EXPIRED':
         return 'bg-[var(--accent)]/10 text-[var(--accent)]';
       default:
-        return 'bg-[var(--bg-base)] text-[var(--text-secondary)]';
+        return 'bg-surface-canvas text-folio-text-secondary';
     }
   };
 
@@ -189,7 +189,7 @@ export default function SpecsQuotesPanel({ projectId, userId, userRole }: SpecsQ
           <CardTitle className="folio-h3">Quotes & Specifications</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-[var(--text-secondary)]">Loading quotes...</p>
+          <p className="text-folio-text-secondary">Loading quotes...</p>
         </CardContent>
       </Card>
     );
@@ -316,24 +316,24 @@ export default function SpecsQuotesPanel({ projectId, userId, userRole }: SpecsQ
       <CardContent>
         {quotes.length === 0 ? (
           <div className="text-center py-8">
-            <FileText className="h-12 w-12 text-[var(--text-tertiary)] mx-auto mb-4" />
-            <p className="text-[var(--text-secondary)] folio-body">No quotes available</p>
-            <p className="folio-meta text-[var(--text-tertiary)]">
+            <FileText className="h-12 w-12 text-folio-text-tertiary mx-auto mb-4" />
+            <p className="text-folio-text-secondary folio-body">No quotes available</p>
+            <p className="folio-meta text-folio-text-tertiary">
               {userRole === 'VENDOR' ? 'Upload a quote to get started' : 'Vendors can attach quotes to this project'}
             </p>
           </div>
         ) : (
           <div className="space-y-6">
             {quotes.map((quoteChain, chainIndex) => (
-              <div key={chainIndex} className="border border-[var(--border-default)] rounded-[20px] p-4">
+              <div key={chainIndex} className="border border-folio-border-subtle rounded-[20px] p-4">
                 <div className="space-y-4">
                   {quoteChain.map((quote, quoteIndex) => (
-                    <div key={quote.id} className="flex items-center justify-between p-3 bg-[var(--bg-base)] rounded-lg">
+                    <div key={quote.id} className="flex items-center justify-between p-3 bg-surface-canvas rounded-lg">
                       <div className="flex items-center gap-3">
                         {getStatusIcon(quote.status)}
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="font-medium text-[var(--text-primary)]">
+                            <span className="font-medium text-folio-text-primary">
                               {quote.fileName || `Quote v${quote.version}`}
                             </span>
                             <Badge className={getStatusColor(quote.status)}>
@@ -343,7 +343,7 @@ export default function SpecsQuotesPanel({ projectId, userId, userRole }: SpecsQ
                               <Badge variant="outline">v{quote.version}</Badge>
                             )}
                           </div>
-                          <div className="flex items-center gap-4 folio-meta text-[var(--text-secondary)]">
+                          <div className="flex items-center gap-4 folio-meta text-folio-text-secondary">
                             <span className="flex items-center gap-1">
                               <Calendar className="h-3 w-3" />
                               {new Date(quote.createdAt).toLocaleDateString()}

@@ -314,8 +314,8 @@ export default function DesignerProfile() {
                 className="object-cover"
               />
             ) : (
-              <div className="w-full h-full bg-stone-100 flex items-center justify-center">
-                <FaBriefcase className="w-12 h-12 text-stone-300" />
+              <div className="w-full h-full bg-surface-elevated flex items-center justify-center">
+                <FaBriefcase className="w-12 h-12 text-folio-text-tertiary" />
               </div>
             )}
             <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
@@ -406,11 +406,11 @@ export default function DesignerProfile() {
 
   const renderEmptyState = () => (
     <div className="flex flex-col items-center justify-center py-24 text-center">
-      <div className="w-20 h-20 bg-stone-100 rounded-[20px] flex items-center justify-center mb-4">
-        <FaBriefcase className="w-8 h-8 text-stone-300" />
+      <div className="w-20 h-20 bg-surface-elevated rounded-[20px] flex items-center justify-center mb-4">
+        <FaBriefcase className="w-8 h-8 text-folio-text-tertiary" />
       </div>
-      <h3 className="font-serif text-xl text-[rgb(30,30,30)] mb-2">No Projects Yet</h3>
-      <p className="text-sm text-[var(--text-secondary)] mb-6">
+      <h3 className="font-serif text-xl text-folio-text-primary mb-2">No Projects Yet</h3>
+      <p className="text-sm text-folio-text-secondary mb-6">
         Create your first project to get started
       </p>
       <Link href="/designer/create">
@@ -427,7 +427,7 @@ export default function DesignerProfile() {
       {/* Profile Switcher — only for admin with loaded designers */}
       {role === 'admin' && designers.length > 0 && (
         <div className="mb-4">
-          <h2 className="font-serif text-lg font-medium text-[rgb(30,30,30)] mb-3">Select Designer Profile</h2>
+          <h2 className="font-serif text-lg font-medium text-folio-text-primary mb-3">Select Designer Profile</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {designers.map((designer) => (
               <RidgeCard
@@ -446,14 +446,14 @@ export default function DesignerProfile() {
                       <FaUser className="w-4 h-4 text-[var(--accent)]" />
                     </div>
                     <div>
-                      <h3 className="font-medium text-sm text-[var(--text-primary)]">{designer.name}</h3>
-                      <p className="text-xs text-[var(--text-secondary)]">{designer.folders?.length || 0} projects</p>
+                      <h3 className="font-medium text-sm text-folio-text-primary">{designer.name}</h3>
+                      <p className="text-xs text-folio-text-secondary">{designer.folders?.length || 0} projects</p>
                     </div>
                   </div>
                   {selectedDesignerId === designer.id ? (
                     <FaToggleOn className="w-5 h-5 text-[var(--accent)]" />
                   ) : (
-                    <FaToggleOff className="w-5 h-5 text-[var(--text-tertiary)]" />
+                    <FaToggleOff className="w-5 h-5 text-folio-text-tertiary" />
                   )}
                 </div>
               </RidgeCard>
@@ -465,21 +465,21 @@ export default function DesignerProfile() {
       {/* ── Compact Header Band ── */}
       <div className="flex items-center justify-between py-4">
         <div>
-          <h1 className="font-serif text-2xl font-medium text-[rgb(30,30,30)] leading-tight">
+          <h1 className="font-serif text-2xl font-medium text-folio-text-primary leading-tight">
             {role === 'admin' && getCurrentDesigner()
               ? `${getCurrentDesigner()?.name}'s Projects`
               : 'My Projects'
             }
           </h1>
           {(role !== 'admin' || selectedDesignerId) && (
-            <span className="font-sans text-sm text-[rgb(74,44,59)]">
+            <span className="font-sans text-sm text-folio-text-secondary">
               {totalProjects} project{totalProjects !== 1 ? 's' : ''}
               {' · '}{publishedCount} published
               {totalRooms > 0 && <> · {totalRooms} room{totalRooms !== 1 ? 's' : ''}</>}
             </span>
           )}
           {role === 'admin' && !selectedDesignerId && (
-            <span className="font-sans text-sm text-[var(--text-secondary)]">
+            <span className="font-sans text-sm text-folio-text-secondary">
               Select a designer profile above to view their projects
             </span>
           )}
@@ -507,12 +507,12 @@ export default function DesignerProfile() {
       </div>
 
       {/* ── Compact Tabs ── */}
-      <div className="flex items-center gap-1 mb-4 border-b border-[var(--ridge-outer)]">
+      <div className="flex items-center gap-1 mb-4 border-b border-folio-border-subtle">
         <button
           className={`px-3 py-2 text-sm font-sans transition-colors border-b-2 -mb-px ${
             activeTab === 'projects'
-              ? 'border-[rgb(74,44,59)] text-[rgb(30,30,30)] font-medium'
-              : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+              ? 'border-folio-text-secondary text-folio-text-primary font-medium'
+              : 'border-transparent text-folio-text-secondary hover:text-folio-text-primary'
           }`}
           onClick={() => setActiveTab('projects')}
         >
@@ -521,8 +521,8 @@ export default function DesignerProfile() {
         <button
           className={`px-3 py-2 text-sm font-sans transition-colors border-b-2 -mb-px ${
             activeTab === 'portfolio'
-              ? 'border-[rgb(74,44,59)] text-[rgb(30,30,30)] font-medium'
-              : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+              ? 'border-folio-text-secondary text-folio-text-primary font-medium'
+              : 'border-transparent text-folio-text-secondary hover:text-folio-text-primary'
           }`}
           onClick={() => setActiveTab('portfolio')}
         >
@@ -530,13 +530,13 @@ export default function DesignerProfile() {
         </button>
         <Link
           href="/designer/analytics"
-          className="px-3 py-2 text-sm font-sans text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors border-b-2 border-transparent -mb-px"
+          className="px-3 py-2 text-sm font-sans text-folio-text-secondary hover:text-folio-text-primary transition-colors border-b-2 border-transparent -mb-px"
         >
           Analytics
         </Link>
         <Link
           href="/designer/sourcebook"
-          className="px-3 py-2 text-sm font-sans text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors border-b-2 border-transparent -mb-px"
+          className="px-3 py-2 text-sm font-sans text-folio-text-secondary hover:text-folio-text-primary transition-colors border-b-2 border-transparent -mb-px"
         >
           Sourcebook
         </Link>

@@ -66,13 +66,13 @@ export function InsightConfirmation({
       {/* Header */}
       <div className="flex items-center gap-2 mb-2">
         <span className="text-lg">{getAttributeIcon()}</span>
-        <p className="text-sm text-[var(--text-secondary)]">
+        <p className="text-sm text-folio-text-secondary">
           We noticed something
         </p>
       </div>
 
       {/* Main insight */}
-      <p className="font-medium text-[var(--text-primary)] mb-1">
+      <p className="font-medium text-folio-text-primary mb-1">
         You seem drawn to{' '}
         <span className="text-[var(--accent)]">
           {formatAttribute(inference.attribute)}
@@ -80,7 +80,7 @@ export function InsightConfirmation({
       </p>
 
       {/* Evidence */}
-      <p className="text-sm text-[var(--text-secondary)] mb-4">
+      <p className="text-sm text-folio-text-secondary mb-4">
         {inference.evidence}
       </p>
 
@@ -119,7 +119,7 @@ export function InsightConfirmation({
         <button
           onClick={onSkip}
           disabled={isLoading}
-          className="px-3 py-1.5 text-sm text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors"
+          className="px-3 py-1.5 text-sm text-[var(--text-muted)] hover:text-folio-text-secondary transition-colors"
         >
           Skip
         </button>
@@ -156,14 +156,14 @@ export function InsightConfirmationBanner({
   return (
     <div
       className={cn(
-        'bg-[var(--bg-elevated)] rounded-lg p-3',
+        'bg-surface-ground rounded-lg p-3',
         'border border-[var(--border-subtle)]',
         'flex items-center gap-3',
         className
       )}
     >
       <div className="flex-1 min-w-0">
-        <p className="text-sm text-[var(--text-primary)] truncate">
+        <p className="text-sm text-folio-text-primary truncate">
           You seem drawn to{' '}
           <span className="font-medium text-[var(--accent)]">
             {formatAttribute(inference.attribute)}
@@ -182,14 +182,14 @@ export function InsightConfirmationBanner({
         <button
           onClick={onDeny}
           disabled={isLoading}
-          className="px-2.5 py-1 text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors disabled:opacity-50"
+          className="px-2.5 py-1 text-xs text-folio-text-secondary hover:text-folio-text-primary transition-colors disabled:opacity-50"
         >
           No
         </button>
         {onDismiss && (
           <button
             onClick={onDismiss}
-            className="p-1 text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
+            className="p-1 text-[var(--text-muted)] hover:text-folio-text-secondary"
             aria-label="Dismiss"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -267,7 +267,7 @@ export function TasteDiscoveryMilestone({
       {onDismiss && (
         <button
           onClick={onDismiss}
-          className="absolute top-2 right-2 p-1 text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
+          className="absolute top-2 right-2 p-1 text-[var(--text-muted)] hover:text-folio-text-secondary"
           aria-label="Dismiss"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -279,10 +279,10 @@ export function TasteDiscoveryMilestone({
       <div className="flex items-center gap-3">
         <span className="text-2xl">{message.emoji}</span>
         <div>
-          <p className="font-medium text-[var(--text-primary)]">
+          <p className="font-medium text-folio-text-primary">
             {message.title}
           </p>
-          <p className="text-sm text-[var(--text-secondary)]">
+          <p className="text-sm text-folio-text-secondary">
             {message.subtitle}
           </p>
         </div>

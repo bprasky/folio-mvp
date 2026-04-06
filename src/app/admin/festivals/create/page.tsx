@@ -81,18 +81,18 @@ export default function CreateFestivalPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--bg-base)] p-6">
+    <div className="min-h-screen bg-surface-canvas p-6">
       <div className="max-w-7xl mx-auto">
-        <div className="bg-[var(--bg-elevated)] border-b border-[var(--border-subtle)] mb-8 -mx-6 -mt-6 px-6 py-4">
-          <h1 className="folio-h2 text-[var(--text-primary)]">Create New Festival</h1>
-          <p className="folio-body text-[var(--text-secondary)] mt-1">Set up a new festival to showcase design events and connect the community</p>
+        <div className="bg-surface-ground border-b border-[var(--border-subtle)] mb-8 -mx-6 -mt-6 px-6 py-4">
+          <h1 className="folio-h2 text-folio-text-primary">Create New Festival</h1>
+          <p className="folio-body text-folio-text-secondary mt-1">Set up a new festival to showcase design events and connect the community</p>
         </div>
 
         <div className="max-w-2xl">
           <RidgeCard padding="lg">
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <label htmlFor="title" className="block folio-meta font-medium text-[var(--text-primary)] mb-2">
+                <label htmlFor="title" className="block folio-meta font-medium text-folio-text-primary mb-2">
                   Festival Title *
                 </label>
                 <Input
@@ -107,7 +107,7 @@ export default function CreateFestivalPage() {
               </div>
 
               <div>
-                <label htmlFor="description" className="block folio-meta font-medium text-[var(--text-primary)] mb-2">
+                <label htmlFor="description" className="block folio-meta font-medium text-folio-text-primary mb-2">
                   Description *
                 </label>
                 <textarea
@@ -123,7 +123,7 @@ export default function CreateFestivalPage() {
               </div>
 
               <div>
-                <label htmlFor="location" className="block folio-meta font-medium text-[var(--text-primary)] mb-2">
+                <label htmlFor="location" className="block folio-meta font-medium text-folio-text-primary mb-2">
                   Location *
                 </label>
                 <Input
@@ -139,7 +139,7 @@ export default function CreateFestivalPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <label htmlFor="city" className="block folio-meta font-medium text-[var(--text-primary)] mb-2">
+                  <label htmlFor="city" className="block folio-meta font-medium text-folio-text-primary mb-2">
                     City
                   </label>
                   <Input
@@ -153,7 +153,7 @@ export default function CreateFestivalPage() {
                 </div>
 
                 <div>
-                  <label htmlFor="state" className="block folio-meta font-medium text-[var(--text-primary)] mb-2">
+                  <label htmlFor="state" className="block folio-meta font-medium text-folio-text-primary mb-2">
                     State/Province
                   </label>
                   <Input
@@ -167,7 +167,7 @@ export default function CreateFestivalPage() {
                 </div>
 
                 <div>
-                  <label htmlFor="country" className="block folio-meta font-medium text-[var(--text-primary)] mb-2">
+                  <label htmlFor="country" className="block folio-meta font-medium text-folio-text-primary mb-2">
                     Country
                   </label>
                   <Input
@@ -182,7 +182,7 @@ export default function CreateFestivalPage() {
               </div>
 
               <div>
-                <label htmlFor="image" className="block folio-meta font-medium text-[var(--text-primary)] mb-2">
+                <label htmlFor="image" className="block folio-meta font-medium text-folio-text-primary mb-2">
                   Festival Image (optional)
                 </label>
                 <input
@@ -197,7 +197,7 @@ export default function CreateFestivalPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="startDate" className="block folio-meta font-medium text-[var(--text-primary)] mb-2">
+                  <label htmlFor="startDate" className="block folio-meta font-medium text-folio-text-primary mb-2">
                     Start Date *
                   </label>
                   <Input
@@ -211,7 +211,7 @@ export default function CreateFestivalPage() {
                 </div>
 
                 <div>
-                  <label htmlFor="endDate" className="block folio-meta font-medium text-[var(--text-primary)] mb-2">
+                  <label htmlFor="endDate" className="block folio-meta font-medium text-folio-text-primary mb-2">
                     End Date *
                   </label>
                   <Input

@@ -9,7 +9,7 @@ const GlassDivider = ({ className, orientation = "horizontal" }: GlassDividerPro
   return (
     <div
       className={cn(
-        "bg-[var(--bg-elevated)]/50",
+        "bg-surface-ground/50",
         orientation === "horizontal" ? "h-px w-full my-6" : "w-px h-full mx-6",
         className
       )}

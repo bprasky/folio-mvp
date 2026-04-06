@@ -12,24 +12,24 @@ export default function DirectoryStats({ stats }: DirectoryStatsProps) {
       <div
         className="glass-surface rounded-xl p-6"
       >
-        <div className="text-[#6B6560] text-sm mb-1 font-medium">Total Products</div>
-        <div className="text-3xl font-semibold text-[#2C2925]" style={{ fontFamily: 'var(--font-serif)' }}>
+        <div className="text-folio-text-secondary text-sm mb-1 font-medium">Total Products</div>
+        <div className="text-3xl font-semibold text-folio-text-primary" style={{ fontFamily: 'var(--font-serif)' }}>
           {stats.totalProducts}
         </div>
       </div>
       <div
         className="glass-surface rounded-xl p-6"
       >
-        <div className="text-[#6B6560] text-sm mb-1 font-medium">Total Vendors</div>
-        <div className="text-3xl font-semibold text-[#2C2925]" style={{ fontFamily: 'var(--font-serif)' }}>
+        <div className="text-folio-text-secondary text-sm mb-1 font-medium">Total Vendors</div>
+        <div className="text-3xl font-semibold text-folio-text-primary" style={{ fontFamily: 'var(--font-serif)' }}>
           {stats.totalVendors}
         </div>
       </div>
       <div
         className="glass-surface rounded-xl p-6"
       >
-        <div className="text-[#6B6560] text-sm mb-1 font-medium">Projects with Tags</div>
-        <div className="text-3xl font-semibold text-[#2C2925]" style={{ fontFamily: 'var(--font-serif)' }}>
+        <div className="text-folio-text-secondary text-sm mb-1 font-medium">Projects with Tags</div>
+        <div className="text-3xl font-semibold text-folio-text-primary" style={{ fontFamily: 'var(--font-serif)' }}>
           {stats.totalProjects}
         </div>
       </div>

@@ -81,7 +81,7 @@ export default function ProjectTabs({ project, currentView, isPublished, hasDraf
   const tabs = allTabs.filter(tab => tab.visible);
 
   return (
-    <div className="bg-[var(--bg-elevated)] py-4">
+    <div className="bg-surface-ground py-4">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <nav className="ridge-toggle-group" role="tablist">
           {tabs.map((tab) => {
@@ -101,7 +101,7 @@ export default function ProjectTabs({ project, currentView, isPublished, hasDraf
                 {Icon && <Icon className="w-4 h-4" />}
                 <span>{tab.label}</span>
                 {tab.badge !== undefined && tab.badge > 0 && (
-                  <span className="ml-2 bg-[var(--bg-base)] text-[var(--text-secondary)] text-xs px-2 py-0.5 rounded-full border border-[var(--ridge-outer)]">
+                  <span className="ml-2 bg-surface-canvas text-folio-text-secondary text-xs px-2 py-0.5 rounded-full border border-folio-border-subtle">
                     ({tab.badge})
                   </span>
                 )}

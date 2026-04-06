@@ -116,7 +116,7 @@ export function EditorialMasthead() {
             {/* FOLIO Logo - mobile: always visible, clickable */}
             <Link
               href="/"
-              className="md:hidden font-serif text-xl tracking-tight font-semibold text-[var(--text-primary)] hover:text-[var(--text-primary)]"
+              className="md:hidden font-serif text-xl tracking-tight font-semibold text-folio-text-primary hover:text-folio-text-primary"
             >
               FOLIO
             </Link>
@@ -136,7 +136,7 @@ export function EditorialMasthead() {
                 className={`font-serif text-xl tracking-tight font-semibold transition-colors whitespace-nowrap ${
                   isMagazinePage && !isScrolled
                     ? 'text-white hover:text-white/80 drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)]'
-                    : 'text-[var(--text-primary)] hover:text-[var(--text-primary)]'
+                    : 'text-folio-text-primary hover:text-folio-text-primary'
                 }`}
               >
                 <motion.span
@@ -176,7 +176,7 @@ export function EditorialMasthead() {
       {/* Hidden on magazine & designer pages — nav-bar logo is sufficient context */}
       {!hidesMasthead && (
         <div
-          className="relative w-full bg-[var(--bg-base)]"
+          className="relative w-full bg-surface-canvas"
           style={{
             paddingTop: "20px",
             paddingBottom: "20px",
@@ -195,7 +195,7 @@ export function EditorialMasthead() {
               >
                 <Link
                   href="/"
-                  className="block font-serif text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-light uppercase text-[var(--text-primary)] hover:text-[var(--text-primary)] transition-colors cursor-pointer"
+                  className="block font-serif text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-light uppercase text-folio-text-primary hover:text-folio-text-primary transition-colors cursor-pointer"
                   style={{
                     letterSpacing: "0.05em",
                     fontWeight: 300,

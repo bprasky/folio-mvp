@@ -40,16 +40,16 @@ export function ItemSection({
       {/* Section header */}
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full p-4 bg-[var(--bg-elevated)] flex items-center justify-between hover:bg-[var(--bg-elevated)] transition-colors"
+        className="w-full p-4 bg-surface-ground flex items-center justify-between hover:bg-surface-ground transition-colors"
       >
         <div className="text-left">
           <div className="flex items-center gap-2">
-            <h3 className="font-medium text-[var(--text-primary)]">{title}</h3>
-            <span className="text-sm text-[var(--text-secondary)]">
+            <h3 className="font-medium text-folio-text-primary">{title}</h3>
+            <span className="text-sm text-folio-text-secondary">
               ({selectedCount}/{items.length} selected)
             </span>
           </div>
-          <p className="text-sm text-[var(--text-secondary)] mt-0.5">{subtitle}</p>
+          <p className="text-sm text-folio-text-secondary mt-0.5">{subtitle}</p>
         </div>
         <ChevronIcon expanded={expanded} />
       </button>
@@ -77,7 +77,7 @@ export function ItemSection({
 function ChevronIcon({ expanded }: { expanded: boolean }) {
   return (
     <svg
-      className={`w-5 h-5 text-[var(--text-secondary)] transition-transform ${expanded ? 'rotate-180' : ''}`}
+      className={`w-5 h-5 text-folio-text-secondary transition-transform ${expanded ? 'rotate-180' : ''}`}
       fill="none"
       viewBox="0 0 24 24"
       stroke="currentColor"

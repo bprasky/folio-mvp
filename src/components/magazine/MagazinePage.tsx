@@ -141,7 +141,7 @@ export default async function MagazinePage({ editionSlug }: Props) {
   ]);
 
   return (
-    <div className="min-h-screen bg-[var(--bg-base)] w-full max-w-[100vw] overflow-hidden">
+    <div className="min-h-screen bg-surface-canvas w-full max-w-[100vw] overflow-hidden">
       {/* Zone 1: Magazine Cover Hero - Full-bleed editorial treatment */}
       {data.hero && (
         <MagazineCoverHero hero={data.hero} edition={data.edition} />

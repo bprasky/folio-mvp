@@ -509,7 +509,7 @@ export default function DraftsPanel({ projectId }: { projectId: string }) {
 
   if (isLoading) {
     return (
-      <div className="p-8 text-center text-[var(--text-secondary)]">Loading drafts...</div>
+      <div className="p-8 text-center text-folio-text-secondary">Loading drafts...</div>
     );
   }
 
@@ -527,9 +527,9 @@ export default function DraftsPanel({ projectId }: { projectId: string }) {
       )}
       <div className="col-span-8 space-y-12">
         {/* Your Reflections Section */}
-        <div className="rounded-[20px] border border-[var(--border-default)] bg-[var(--bg-elevated)] p-6 shadow-sm">
+        <div className="rounded-[20px] border border-folio-border-subtle bg-surface-ground p-6 shadow-sm">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="folio-h3 text-[var(--text-primary)]">Your Reflections</h2>
+            <h2 className="folio-h3 text-folio-text-primary">Your Reflections</h2>
             <div className="flex gap-2">
               <button
                 className="px-3 py-1.5 folio-ui font-medium text-white bg-[var(--accent)] rounded-lg hover:bg-[var(--accent-hover)] transition-colors"
@@ -541,29 +541,29 @@ export default function DraftsPanel({ projectId }: { projectId: string }) {
           </div>
           <div className="space-y-3 max-h-[420px] overflow-y-auto pr-2">
             {filteredAnswers.length === 0 && (
-              <p className="folio-ui text-[var(--text-tertiary)] italic">
+              <p className="folio-ui text-folio-text-tertiary italic">
                 No reflections yet. Add your first reflection above.
               </p>
             )}
             {filteredAnswers.map((qa, i) => (
               <div
                 key={i}
-                className="border border-[var(--border-default)] rounded-[20px] p-4 mb-3"
+                className="border border-folio-border-subtle rounded-[20px] p-4 mb-3"
               >
-                <label className="block folio-ui font-medium text-[var(--text-primary)] mb-2">
+                <label className="block folio-ui font-medium text-folio-text-primary mb-2">
                   {qa.q || qa.question || "Your reflection"}
                 </label>
                 <textarea
                   value={qa.a || qa.answer || ""}
                   onChange={(e) => setAnswer(i, "a", e.target.value)}
-                  className="w-full min-h-[80px] p-2 border border-[var(--border-default)] rounded-[20px] resize-y bg-[var(--bg-base)]"
+                  className="w-full min-h-[80px] p-2 border border-folio-border-subtle rounded-[20px] resize-y bg-surface-canvas"
                   style={{ fontFamily: "var(--font-headline)", fontStyle: "italic", fontSize: "16px", lineHeight: "1.5" }}
                   placeholder="Share your thoughts..."
                 />
                 <div className="flex justify-end mt-2">
                   <button
                     onClick={() => removeAnswer(i)}
-                    className="text-[var(--text-tertiary)] hover:text-[rgb(74,44,59)]"
+                    className="text-folio-text-tertiary hover:text-[rgb(74,44,59)]"
                     aria-label="Remove"
                   >
                     <X className="w-4 h-4" />
@@ -575,9 +575,9 @@ export default function DraftsPanel({ projectId }: { projectId: string }) {
         </div>
 
         {/* Follow-up Questions Section */}
-        <div className="rounded-[20px] border border-[var(--border-default)] bg-[var(--bg-elevated)] p-6 shadow-sm">
+        <div className="rounded-[20px] border border-folio-border-subtle bg-surface-ground p-6 shadow-sm">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="folio-h3 text-[var(--text-primary)]">Follow-up Questions</h2>
+            <h2 className="folio-h3 text-folio-text-primary">Follow-up Questions</h2>
             <div className="flex gap-2">
               <button
                 className="px-3 py-1.5 folio-ui font-medium text-white bg-[var(--accent)] rounded-lg hover:bg-[var(--accent-hover)] transition-colors"
@@ -586,7 +586,7 @@ export default function DraftsPanel({ projectId }: { projectId: string }) {
                 + Add
               </button>
               <button
-                className="px-3 py-1.5 folio-ui font-medium text-[var(--text-primary)] bg-[var(--bg-base)] border border-[var(--border-default)] rounded-lg hover:bg-[var(--bg-elevated)] transition-colors"
+                className="px-3 py-1.5 folio-ui font-medium text-folio-text-primary bg-surface-canvas border border-folio-border-subtle rounded-lg hover:bg-surface-ground transition-colors"
                 onClick={reAskFollowups}
               >
                 Ask
@@ -595,23 +595,23 @@ export default function DraftsPanel({ projectId }: { projectId: string }) {
           </div>
           <div className="space-y-3 max-h-[280px] overflow-y-auto pr-2">
             {filteredFollowups.length === 0 && (
-              <p className="folio-ui text-[var(--text-tertiary)] italic">
+              <p className="folio-ui text-folio-text-tertiary italic">
                 Deeper questions based on your reflections. Click Ask to generate.
               </p>
             )}
             {filteredFollowups.map((qa, i) => (
               <div
                 key={i}
-                className="grid grid-cols-12 gap-3 items-start p-3 rounded-lg border border-[var(--border-default)] hover:border-[var(--accent)] transition-colors"
+                className="grid grid-cols-12 gap-3 items-start p-3 rounded-lg border border-folio-border-subtle hover:border-[var(--accent)] transition-colors"
               >
                 <input
-                  className="col-span-5 px-3 py-2 folio-ui border border-[var(--border-default)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)] min-w-0 bg-[var(--bg-base)]"
+                  className="col-span-5 px-3 py-2 folio-ui border border-folio-border-subtle rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)] min-w-0 bg-surface-canvas"
                   value={qa.q || qa.question || ""}
                   placeholder="Follow-up Question"
                   onChange={(e) => setFollowup(i, "q", e.target.value)}
                 />
                 <textarea
-                  className="col-span-6 px-3 py-2 border border-[var(--border-default)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)] resize-none bg-[var(--bg-base)]"
+                  className="col-span-6 px-3 py-2 border border-folio-border-subtle rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)] resize-none bg-surface-canvas"
                   style={{ fontFamily: "var(--font-headline)", fontStyle: "italic", fontSize: "15px", lineHeight: "1.5" }}
                   value={qa.a || qa.answer || ""}
                   placeholder="Answer"
@@ -619,7 +619,7 @@ export default function DraftsPanel({ projectId }: { projectId: string }) {
                   onChange={(e) => setFollowup(i, "a", e.target.value)}
                 />
                 <button
-                  className="col-span-1 px-2 py-1 text-[var(--text-tertiary)] hover:text-[rgb(74,44,59)] hover:bg-stone-100 rounded transition-colors"
+                  className="col-span-1 px-2 py-1 text-folio-text-tertiary hover:text-[rgb(74,44,59)] hover:bg-stone-100 rounded transition-colors"
                   onClick={() => removeFollowup(i)}
                   aria-label="Remove"
                 >
@@ -650,7 +650,7 @@ export default function DraftsPanel({ projectId }: { projectId: string }) {
         <div className="mt-6 text-center">
           <button
             onClick={handleStartOver}
-            className="folio-ui text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] underline"
+            className="folio-ui text-folio-text-tertiary hover:text-folio-text-secondary underline"
           >
             Start Over
           </button>
@@ -660,8 +660,8 @@ export default function DraftsPanel({ projectId }: { projectId: string }) {
       {/* Sidebar */}
       <div className="col-span-4 space-y-6">
         {/* Story Draft Preview */}
-        <div className="rounded-[20px] border border-[var(--border-default)] bg-[var(--bg-elevated)] p-6 shadow-sm">
-          <h3 className="font-semibold folio-h3 text-[var(--text-primary)] mb-4">
+        <div className="rounded-[20px] border border-folio-border-subtle bg-surface-ground p-6 shadow-sm">
+          <h3 className="font-semibold folio-h3 text-folio-text-primary mb-4">
             Story Draft
           </h3>
           {currentLead?.kicker || currentLead?.title ? (
@@ -673,22 +673,22 @@ export default function DraftsPanel({ projectId }: { projectId: string }) {
                     className={`px-2 py-1 rounded folio-meta font-medium ${
                       currentPost.status === "PUBLISHED"
                         ? "bg-[var(--accent)]/10 text-[var(--accent)]"
-                        : "bg-[var(--bg-base)] text-[var(--text-secondary)]"
+                        : "bg-surface-canvas text-folio-text-secondary"
                     }`}
                   >
                     {currentPost.status}
                   </span>
                 </div>
               )}
-              <p className="folio-body font-medium text-[var(--text-primary)]">
+              <p className="folio-body font-medium text-folio-text-primary">
                 {currentLead.kicker || currentLead.title}
               </p>
               {(currentLead.deck || (currentLead as any).dek) && (
-                <p className="folio-ui text-[var(--text-secondary)] leading-relaxed">
+                <p className="folio-ui text-folio-text-secondary leading-relaxed">
                   {currentLead.deck || (currentLead as any).dek}
                 </p>
               )}
-              <div className="mt-4 space-y-2 folio-ui text-[var(--text-secondary)]">
+              <div className="mt-4 space-y-2 folio-ui text-folio-text-secondary">
                 {currentSections
                   .filter((s: any) => s.type === "narrative" && s.body)
                   .slice(0, 3)
@@ -701,13 +701,13 @@ export default function DraftsPanel({ projectId }: { projectId: string }) {
               {currentSections.filter(
                 (s: any) => s.type === "narrative" && s.body
               ).length === 0 && (
-                <p className="folio-ui text-[var(--text-tertiary)] italic">
+                <p className="folio-ui text-folio-text-tertiary italic">
                   No narrative sections yet. Generate a draft to see preview.
                 </p>
               )}
               {/* Published post link */}
               {currentPost?.status === 'PUBLISHED' && currentPost?.slug && (
-                <div className="mt-4 pt-4 border-t border-[var(--border-default)]">
+                <div className="mt-4 pt-4 border-t border-folio-border-subtle">
                   <a
                     href={`/p/${currentPost.slug}`}
                     target="_blank"
@@ -720,12 +720,12 @@ export default function DraftsPanel({ projectId }: { projectId: string }) {
               )}
             </div>
           ) : (
-            <p className="folio-ui text-[var(--text-tertiary)] italic">
+            <p className="folio-ui text-folio-text-tertiary italic">
               No story draft yet. Save your reflections and click &quot;Create Story&quot; to generate one.
             </p>
           )}
           {data?.drafts && data.drafts.length > 0 && (
-            <div className="mt-4 pt-4 border-t border-[var(--border-default)]">
+            <div className="mt-4 pt-4 border-t border-folio-border-subtle">
               <button
                 className="w-full px-4 py-2 folio-ui font-medium text-[var(--accent)] bg-[var(--accent)]/10 border border-[var(--accent)]/20 rounded-lg hover:bg-[var(--accent)]/20 transition-colors"
                 onClick={() => router.push(`/designer/projects/${projectId}/preview`)}
@@ -744,7 +744,7 @@ export default function DraftsPanel({ projectId }: { projectId: string }) {
             <DialogTitle>Generate Debug (Dry-Run)</DialogTitle>
           </DialogHeader>
           <div className="mt-4">
-            <pre className="text-xs whitespace-pre-wrap overflow-auto max-h-[70vh] p-4 rounded-[20px] bg-[var(--bg-elevated)] border border-[var(--ridge-outer)] folio-ui">
+            <pre className="text-xs whitespace-pre-wrap overflow-auto max-h-[70vh] p-4 rounded-[20px] bg-surface-ground border border-folio-border-subtle folio-ui">
               {JSON.stringify(debugPayload, null, 2)}
             </pre>
           </div>

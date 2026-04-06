@@ -169,7 +169,7 @@ export default function CarouselPreview({
             
             return (
               <div key={`image-${image.id}-${index}`} className="min-w-full snap-center flex-shrink-0">
-                <div className="relative w-full aspect-[4/5] bg-[#F9F7F4] rounded-lg overflow-hidden border" style={{ borderColor: '#E8E4DE', borderWidth: '1px' }}>
+                <div className="relative w-full aspect-[4/5] bg-surface-ground rounded-lg overflow-hidden border" style={{ borderColor: '#E8E4DE', borderWidth: '1px' }}>
                   <Image
                     src={image.url}
                     alt={image.name || 'Project image'}
@@ -209,7 +209,7 @@ export default function CarouselPreview({
           if (slide.type === 'cta') {
             return (
               <div key={`cta-${index}`} className="min-w-full snap-center flex-shrink-0">
-                <div className="relative w-full aspect-[4/5] bg-[#F9F7F4] rounded-lg flex items-center justify-center border" style={{ borderColor: '#E8E4DE', borderWidth: '1px' }}>
+                <div className="relative w-full aspect-[4/5] bg-surface-ground rounded-lg flex items-center justify-center border" style={{ borderColor: '#E8E4DE', borderWidth: '1px' }}>
                   <div className="text-center">
                     {/* Center: "Explore the full feature on Folio" in large serif */}
                     <h3 className="text-4xl md:text-5xl font-serif font-semibold mb-2" style={{ color: '#1A1A1A' }}>
@@ -219,7 +219,7 @@ export default function CarouselPreview({
                       on Folio
                     </h3>
                     {/* Below: shortlink in medium gray */}
-                    <p className="text-2xl text-[var(--text-secondary)] mb-8">folio.com/p/[slug]</p>
+                    <p className="text-2xl text-folio-text-secondary mb-8">folio.com/p/[slug]</p>
                     
                     {/* Folio wordmark bottom-left (same style as cover) */}
                     <p className="text-xs font-serif tracking-wider absolute bottom-6 left-6" style={{ 
@@ -254,7 +254,7 @@ export default function CarouselPreview({
         ))}
       </div>
 
-      <p className="text-xs text-[var(--text-secondary)] text-center mt-2">
+      <p className="text-xs text-folio-text-secondary text-center mt-2">
         Slide {currentIndex + 1} of {totalSlides}
       </p>
     </div>

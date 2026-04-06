@@ -63,7 +63,7 @@ export default function HandoffComposer({ vendorCtx }: HandoffComposerProps = {}
     <div className="max-w-5xl mx-auto space-y-6">
       <div>
         <h1 className="text-2xl font-semibold">Create Handoff</h1>
-        <p className="text-[var(--text-secondary)]">Package products & a quote. The designer chooses where it lands.</p>
+        <p className="text-folio-text-secondary">Package products & a quote. The designer chooses where it lands.</p>
       </div>
 
       <RecipientEmailCard value={designerEmail} onChange={setDesignerEmail} />
@@ -86,7 +86,7 @@ export default function HandoffComposer({ vendorCtx }: HandoffComposerProps = {}
         >
           {sending ? 'Creating…' : 'Create Handoff'}
         </button>
-        <span className="text-sm text-[var(--text-secondary)]">You'll get a private link to share; we can email it too.</span>
+        <span className="text-sm text-folio-text-secondary">You'll get a private link to share; we can email it too.</span>
       </div>
 
       {/* Copy Invite Link Modal */}
@@ -94,7 +94,7 @@ export default function HandoffComposer({ vendorCtx }: HandoffComposerProps = {}
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4">
             <h3 className="text-lg font-semibold mb-2">Invite Link Created</h3>
-            <p className="text-sm text-[var(--text-secondary)] mb-4">
+            <p className="text-sm text-folio-text-secondary mb-4">
               Share this link with the designer (we'll email it too if email is configured).
             </p>
             <div className="flex gap-2 mb-4">
@@ -105,7 +105,7 @@ export default function HandoffComposer({ vendorCtx }: HandoffComposerProps = {}
               />
               <button
                 onClick={() => navigator.clipboard.writeText(inviteUrl)}
-                className="px-4 py-2 rounded-xl border hover:bg-[var(--bg-elevated)]"
+                className="px-4 py-2 rounded-xl border hover:bg-surface-ground"
               >
                 Copy
               </button>

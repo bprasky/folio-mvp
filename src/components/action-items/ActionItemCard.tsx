@@ -34,7 +34,7 @@ interface ActionItemCardProps {
 }
 
 const priorityColors = {
-  LOW: 'bg-[var(--bg-elevated)] text-[var(--text-primary)]',
+  LOW: 'bg-surface-ground text-folio-text-primary',
   MEDIUM: 'bg-[var(--accent)]/10 text-[var(--accent-hover)]',
   HIGH: 'bg-orange-100 text-orange-700',
   URGENT: 'bg-red-100 text-red-700',
@@ -62,22 +62,22 @@ export default function ActionItemCard({ actionItem, onStatusChange, onComplete 
   return (
     <div
       className={`bg-white rounded-lg border-2 p-4 shadow-sm transition-all hover:shadow-md ${
-        isCompleted ? 'opacity-60 border-[var(--ridge-outer)]' : 'border-[var(--ridge-outer)]'
+        isCompleted ? 'opacity-60 border-folio-border-subtle' : 'border-folio-border-subtle'
       }`}
     >
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-start gap-2 flex-1">
           <StatusIcon
             className={`mt-1 ${
-              isCompleted ? 'text-green-500' : 'text-[var(--text-tertiary)]'
+              isCompleted ? 'text-green-500' : 'text-folio-text-tertiary'
             }`}
           />
           <div className="flex-1">
-            <h3 className={`font-medium text-[var(--text-primary)] ${isCompleted ? 'line-through' : ''}`}>
+            <h3 className={`font-medium text-folio-text-primary ${isCompleted ? 'line-through' : ''}`}>
               {actionItem.title}
             </h3>
             {actionItem.description && (
-              <p className="text-sm text-[var(--text-secondary)] mt-1">{actionItem.description}</p>
+              <p className="text-sm text-folio-text-secondary mt-1">{actionItem.description}</p>
             )}
           </div>
         </div>
@@ -88,7 +88,7 @@ export default function ActionItemCard({ actionItem, onStatusChange, onComplete 
         </span>
       </div>
 
-      <div className="flex items-center justify-between mt-3 text-xs text-[var(--text-secondary)]">
+      <div className="flex items-center justify-between mt-3 text-xs text-folio-text-secondary">
         <div className="flex items-center gap-3">
           {actionItem.assignedTo && (
             <span>Assigned to: {actionItem.assignedTo.name}</span>
@@ -110,8 +110,8 @@ export default function ActionItemCard({ actionItem, onStatusChange, onComplete 
       </div>
 
       {actionItem.sourceNote && (
-        <div className="mt-2 pt-2 border-t border-[var(--ridge-outer)]">
-          <span className="text-xs text-[var(--text-secondary)]">
+        <div className="mt-2 pt-2 border-t border-folio-border-subtle">
+          <span className="text-xs text-folio-text-secondary">
             From note: {actionItem.sourceNote.title || 'Untitled'}
           </span>
         </div>

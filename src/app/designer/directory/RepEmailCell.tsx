@@ -67,7 +67,7 @@ export default function RepEmailCell({ entry, onUpdate }: RepEmailCellProps) {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="rep@vendor.com"
-          className="px-2 py-1 bg-white border border-[#E8E6E3] rounded-lg text-[#2C2925] text-sm w-32 focus:outline-none focus:border-[#C9C4BC] focus:shadow-[0_0_0_3px_rgba(0,0,0,0.03)]"
+          className="px-2 py-1 bg-white border border-folio-border-subtle rounded-lg text-folio-text-primary text-sm w-32 focus:outline-none focus:border-folio-border-strong focus:shadow-[0_0_0_3px_rgba(0,0,0,0.03)]"
           autoFocus
         />
         <input
@@ -75,7 +75,7 @@ export default function RepEmailCell({ entry, onUpdate }: RepEmailCellProps) {
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Rep Name"
-          className="px-2 py-1 bg-white border border-[#E8E6E3] rounded-lg text-[#2C2925] text-sm w-24 focus:outline-none focus:border-[#C9C4BC] focus:shadow-[0_0_0_3px_rgba(0,0,0,0.03)]"
+          className="px-2 py-1 bg-white border border-folio-border-subtle rounded-lg text-folio-text-primary text-sm w-24 focus:outline-none focus:border-folio-border-strong focus:shadow-[0_0_0_3px_rgba(0,0,0,0.03)]"
         />
         <button
           onClick={handleSave}
@@ -97,15 +97,15 @@ export default function RepEmailCell({ entry, onUpdate }: RepEmailCellProps) {
   if (entry.repEmail) {
     return (
       <div className="flex items-center gap-2 group">
-        <div className="text-sm text-[#8A857F]">
+        <div className="text-sm text-folio-text-secondary">
           <div>{entry.repEmail}</div>
           {entry.repName && (
-            <div className="text-xs text-[#B5B0A9]">{entry.repName}</div>
+            <div className="text-xs text-folio-text-tertiary">{entry.repName}</div>
           )}
         </div>
         <button
           onClick={() => setIsEditing(true)}
-          className="opacity-0 group-hover:opacity-100 text-[#B5B0A9] hover:text-[#7C7268] transition-opacity"
+          className="opacity-0 group-hover:opacity-100 text-folio-text-tertiary hover:text-folio-text-secondary transition-opacity"
         >
           <FaEdit className="text-xs" />
         </button>
@@ -116,7 +116,7 @@ export default function RepEmailCell({ entry, onUpdate }: RepEmailCellProps) {
   return (
     <button
       onClick={() => setIsEditing(true)}
-      className="text-sm text-[#7C7268] hover:text-[#5C554D] flex items-center gap-1 transition-colors"
+      className="text-sm text-folio-text-secondary hover:text-folio-text-secondary flex items-center gap-1 transition-colors"
     >
       <FaEdit className="text-xs" />
       Add rep

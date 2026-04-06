@@ -17,16 +17,16 @@ export function EditorialPullQuote({ text, attribution }: EditorialPullQuoteProp
     <section className="w-full py-14 md:py-20 col-span-12">
       <div className="max-w-3xl mx-auto px-6 md:px-8 text-center">
         {/* Thin centered rule */}
-        <hr className="border-t border-[var(--ridge-outer)] mb-10 max-w-[120px] mx-auto" />
+        <hr className="border-t border-folio-border-subtle mb-10 max-w-[120px] mx-auto" />
 
         {/* Quote text — Cormorant Garamond italic */}
-        <blockquote className="font-[var(--font-headline)] text-[22px] md:text-[26px] lg:text-[28px] font-normal italic leading-relaxed text-[var(--text-primary)]">
+        <blockquote className="font-[var(--font-headline)] text-[22px] md:text-[26px] lg:text-[28px] font-normal italic leading-relaxed text-folio-text-primary">
           {text}
         </blockquote>
 
         {/* Attribution — Instrument Sans, muted */}
         {attribution && (
-          <p className="mt-6 font-[var(--font-body)] text-sm tracking-wide uppercase text-[var(--text-tertiary)]">
+          <p className="mt-6 font-[var(--font-body)] text-sm tracking-wide uppercase text-folio-text-tertiary">
             — {attribution}
           </p>
         )}

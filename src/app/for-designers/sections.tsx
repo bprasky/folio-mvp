@@ -25,11 +25,11 @@ export function ForDesignersHero() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, ease: "easeOut" }}
       >
-        <h1 className="font-headline italic text-5xl md:text-6xl lg:text-7xl text-[var(--text-primary)] leading-[1.1]">
+        <h1 className="font-headline italic text-5xl md:text-6xl lg:text-7xl text-folio-text-primary leading-[1.1]">
           Your work is the product. Folio treats it that way.
         </h1>
         <motion.p
-          className="mt-8 text-lg md:text-xl text-[var(--text-secondary)] leading-relaxed max-w-2xl mx-auto"
+          className="mt-8 text-lg md:text-xl text-folio-text-secondary leading-relaxed max-w-2xl mx-auto"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6, delay: 0.4, ease: "easeOut" }}
@@ -64,10 +64,10 @@ export function HowItWorks() {
     <section className="py-24 px-6 bg-[#FAF9F6]">
       <div className="max-w-5xl mx-auto">
         <motion.div {...fade}>
-          <p className="uppercase tracking-widest text-sm text-[var(--text-secondary)] mb-3">
+          <p className="uppercase tracking-widest text-sm text-folio-text-secondary mb-3">
             The Process
           </p>
-          <h2 className="font-headline italic text-4xl md:text-5xl text-[var(--text-primary)] mb-14">
+          <h2 className="font-headline italic text-4xl md:text-5xl text-folio-text-primary mb-14">
             How it works
           </h2>
         </motion.div>
@@ -93,10 +93,10 @@ export function HowItWorks() {
                 <p className="font-headline italic text-3xl text-[var(--accent)] mb-3">
                   {i + 1}
                 </p>
-                <h3 className="text-lg font-medium text-[var(--text-primary)] mb-3">
+                <h3 className="text-lg font-medium text-folio-text-primary mb-3">
                   {step.title}
                 </h3>
-                <p className="text-[var(--text-secondary)] leading-relaxed">
+                <p className="text-folio-text-secondary leading-relaxed">
                   {step.description}
                 </p>
               </GlassCard>
@@ -146,10 +146,10 @@ export function WhatYouGet() {
     <section className="py-24 px-6 bg-[#FAF9F6]">
       <div className="max-w-5xl mx-auto">
         <motion.div {...fade}>
-          <p className="uppercase tracking-widest text-sm text-[var(--text-secondary)] mb-3">
+          <p className="uppercase tracking-widest text-sm text-folio-text-secondary mb-3">
             What You Get
           </p>
-          <h2 className="font-headline italic text-4xl md:text-5xl text-[var(--text-primary)] mb-14">
+          <h2 className="font-headline italic text-4xl md:text-5xl text-folio-text-primary mb-14">
             Built around your work. Not theirs.
           </h2>
         </motion.div>
@@ -169,13 +169,13 @@ export function WhatYouGet() {
                 rounded="xl"
                 className="border border-stone-200/60 h-full flex flex-col"
               >
-                <p className="uppercase tracking-widest text-xs text-[var(--text-secondary)] mb-2">
+                <p className="uppercase tracking-widest text-xs text-folio-text-secondary mb-2">
                   {card.label}
                 </p>
-                <h3 className="font-headline italic text-xl text-[var(--text-primary)] mb-2">
+                <h3 className="font-headline italic text-xl text-folio-text-primary mb-2">
                   {card.title}
                 </h3>
-                <p className="text-sm text-[var(--text-secondary)] leading-relaxed mb-4 flex-1">
+                <p className="text-sm text-folio-text-secondary leading-relaxed mb-4 flex-1">
                   {card.description}
                 </p>
                 <Link
@@ -198,16 +198,16 @@ export function FoundingCohort() {
     <section id="apply" className="py-24 px-6 bg-[#FAF9F6]">
       <div className="max-w-3xl mx-auto">
         <motion.div {...fade}>
-          <p className="uppercase tracking-widest text-sm text-[var(--text-secondary)] mb-3">
+          <p className="uppercase tracking-widest text-sm text-folio-text-secondary mb-3">
             Founding Designers
           </p>
-          <h2 className="font-headline italic text-4xl md:text-5xl text-[var(--text-primary)] mb-10">
+          <h2 className="font-headline italic text-4xl md:text-5xl text-folio-text-primary mb-10">
             We&rsquo;re building the founding cohort now.
           </h2>
         </motion.div>
 
         <motion.p
-          className="text-[var(--text-primary)] leading-relaxed mb-6"
+          className="text-folio-text-primary leading-relaxed mb-6"
           {...fade}
         >
           Folio is invite-only during its founding phase. Founding designers
@@ -217,10 +217,10 @@ export function FoundingCohort() {
 
         <motion.div {...slowFade}>
           <div className="glass-surface rounded-2xl p-10 md:p-14 mt-10">
-            <p className="font-headline italic text-2xl md:text-3xl text-[var(--text-primary)] mb-3">
+            <p className="font-headline italic text-2xl md:text-3xl text-folio-text-primary mb-3">
               If your work is ready, so are we.
             </p>
-            <p className="text-[var(--text-secondary)] leading-relaxed mb-8">
+            <p className="text-folio-text-secondary leading-relaxed mb-8">
               Apply to join Folio&rsquo;s founding designer cohort and help shape
               the platform from the ground up.
             </p>

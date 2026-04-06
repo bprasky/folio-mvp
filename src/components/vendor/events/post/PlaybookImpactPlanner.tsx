@@ -28,7 +28,7 @@ export function PlaybookImpactPlanner({ playItems, onActionClick }: PlaybookImpa
       case 'High': return 'bg-green-100 text-green-800 border-green-200';
       case 'Medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
       case 'Test': return 'bg-[var(--accent)]/10 text-blue-800 border-[var(--accent)]/20';
-      default: return 'bg-[var(--bg-elevated)] text-[var(--text-primary)] border-[var(--ridge-outer)]';
+      default: return 'bg-surface-ground text-folio-text-primary border-folio-border-subtle';
     }
   };
 
@@ -44,13 +44,13 @@ export function PlaybookImpactPlanner({ playItems, onActionClick }: PlaybookImpa
 
   return (
     <div className="sticky top-4 space-y-4">
-      <Card className="bg-white border-[#DAD2CA]">
+      <Card className="bg-white border-folio-border-strong">
         <CardHeader>
-          <CardTitle className="text-lg font-serif text-[#2B2B2B] flex items-center space-x-2">
-            <TrendingUp className="w-5 h-5 text-[#8C8278]" />
+          <CardTitle className="text-lg font-serif text-folio-text-primary flex items-center space-x-2">
+            <TrendingUp className="w-5 h-5 text-folio-text-secondary" />
             <span>Highest return actions this week</span>
           </CardTitle>
-          <p className="text-sm text-[#8C8278]">
+          <p className="text-sm text-folio-text-secondary">
             Ranked by expected lift vs effort, with decay urgency
           </p>
         </CardHeader>
@@ -63,7 +63,7 @@ export function PlaybookImpactPlanner({ playItems, onActionClick }: PlaybookImpa
             return (
               <div 
                 key={item.id}
-                className={`border border-[#DAD2CA] rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer ${
+                className={`border border-folio-border-strong rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer ${
                   selectedItem?.id === item.id ? 'ring-2 ring-[#8C8278]' : ''
                 }`}
                 onClick={() => {
@@ -74,7 +74,7 @@ export function PlaybookImpactPlanner({ playItems, onActionClick }: PlaybookImpa
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1">
                     <div className="flex items-center space-x-2 mb-2">
-                      <h4 className="font-medium text-[#2B2B2B] text-sm">
+                      <h4 className="font-medium text-folio-text-primary text-sm">
                         {item.title}
                       </h4>
                       {index === 0 && (
@@ -84,7 +84,7 @@ export function PlaybookImpactPlanner({ playItems, onActionClick }: PlaybookImpa
                       )}
                     </div>
                     
-                    <div className="flex items-center space-x-4 text-xs text-[#8C8278] mb-2">
+                    <div className="flex items-center space-x-4 text-xs text-folio-text-secondary mb-2">
                       <div className="flex items-center space-x-1">
                         <Target className="w-3 h-3" />
                         <span>{item.target.key} ({item.target.count})</span>
@@ -96,7 +96,7 @@ export function PlaybookImpactPlanner({ playItems, onActionClick }: PlaybookImpa
                     </div>
                   </div>
                   
-                  <ArrowRight className="w-4 h-4 text-[#8C8278] flex-shrink-0" />
+                  <ArrowRight className="w-4 h-4 text-folio-text-secondary flex-shrink-0" />
                 </div>
 
                 <div className="flex items-center justify-between mb-3">
@@ -110,7 +110,7 @@ export function PlaybookImpactPlanner({ playItems, onActionClick }: PlaybookImpa
                   </div>
                   
                   <div className="flex items-center space-x-2">
-                    <div className="text-xs text-[#8C8278]">
+                    <div className="text-xs text-folio-text-secondary">
                       -{item.decayPctByDay}%/day
                     </div>
                   </div>
@@ -124,7 +124,7 @@ export function PlaybookImpactPlanner({ playItems, onActionClick }: PlaybookImpa
                 )}
 
                 <div className="flex justify-between items-center">
-                  <div className="text-xs text-[#8C8278]">
+                  <div className="text-xs text-folio-text-secondary">
                     ROI Score: {score.toFixed(1)}
                   </div>
                   <Button 

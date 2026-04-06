@@ -134,10 +134,10 @@ export function RecordingInterface({ interviewId, onUploadComplete }: RecordingI
     <div className="flex flex-col items-center justify-center min-h-[400px] p-8 space-y-8">
       {/* Question Display Area - Large, Editorial */}
       <div className="w-full max-w-2xl text-center">
-        <div className="text-4xl font-light text-[var(--text-primary)] leading-relaxed mb-4">
+        <div className="text-4xl font-light text-folio-text-primary leading-relaxed mb-4">
           Tell us about your design process
         </div>
-        <div className="text-lg text-[var(--text-secondary)] font-light">
+        <div className="text-lg text-folio-text-secondary font-light">
           Share your thoughts on materials, decisions, and the story behind this project
         </div>
       </div>
@@ -152,7 +152,7 @@ export function RecordingInterface({ interviewId, onUploadComplete }: RecordingI
         )}
 
         {status === "recorded" && audioUrl && (
-          <div className="flex items-center space-x-3 text-[var(--text-secondary)]">
+          <div className="flex items-center space-x-3 text-folio-text-secondary">
             <span className="text-sm">Recording complete: {formatTime(recordingTime)}</span>
           </div>
         )}

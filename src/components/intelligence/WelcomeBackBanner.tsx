@@ -90,7 +90,7 @@ export function WelcomeBackBanner({
       {onDismiss && (
         <button
           onClick={onDismiss}
-          className="absolute top-3 right-3 p-1 text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors"
+          className="absolute top-3 right-3 p-1 text-[var(--text-muted)] hover:text-folio-text-secondary transition-colors"
           aria-label="Dismiss"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -100,26 +100,26 @@ export function WelcomeBackBanner({
       )}
 
       {/* Header */}
-      <h3 className="font-medium text-lg text-[var(--text-primary)] mb-2">
+      <h3 className="font-medium text-lg text-folio-text-primary mb-2">
         Welcome back to {projectTitle}
       </h3>
 
-      <p className="text-sm text-[var(--text-secondary)] mb-4">
+      <p className="text-sm text-folio-text-secondary mb-4">
         Since your last visit:
       </p>
 
       {/* Engagement stats */}
       <ul className="text-sm space-y-1.5 mb-4">
-        <li className="flex items-center gap-2 text-[var(--text-primary)]">
+        <li className="flex items-center gap-2 text-folio-text-primary">
           <span className="text-[var(--accent)]">👁</span>
           <span>{engagement.views.toLocaleString()} people viewed your project</span>
         </li>
-        <li className="flex items-center gap-2 text-[var(--text-primary)]">
+        <li className="flex items-center gap-2 text-folio-text-primary">
           <span className="text-[var(--accent)]">💾</span>
           <span>{engagement.saves.toLocaleString()} people saved it</span>
         </li>
         {engagement.topInterest && (
-          <li className="flex items-center gap-2 text-[var(--text-primary)]">
+          <li className="flex items-center gap-2 text-folio-text-primary">
             <span className="text-[var(--accent)]">✨</span>
             <span>
               {engagement.topInterest.count.toLocaleString()} people were interested in{' '}
@@ -134,7 +134,7 @@ export function WelcomeBackBanner({
         <div className="mt-4 pt-4 border-t border-[var(--border-subtle)]">
           {!showForm ? (
             <div>
-              <p className="text-sm font-medium text-[var(--text-primary)] mb-2">
+              <p className="text-sm font-medium text-folio-text-primary mb-2">
                 Want to add a note about the {engagement.topInterest.productName}?
               </p>
               <Button
@@ -147,7 +147,7 @@ export function WelcomeBackBanner({
             </div>
           ) : (
             <div>
-              <p className="text-sm font-medium text-[var(--text-primary)] mb-2">
+              <p className="text-sm font-medium text-folio-text-primary mb-2">
                 What drew you to the {engagement.topInterest.productName}?
               </p>
               <textarea
@@ -158,7 +158,7 @@ export function WelcomeBackBanner({
                   'w-full p-3 rounded-lg text-sm',
                   'bg-[var(--bg-sunken)]',
                   'border border-[var(--border-subtle)]',
-                  'text-[var(--text-primary)]',
+                  'text-folio-text-primary',
                   'placeholder:text-[var(--text-muted)]',
                   'focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30',
                   'resize-none'
@@ -179,7 +179,7 @@ export function WelcomeBackBanner({
                     setShowForm(false);
                     setAnswer('');
                   }}
-                  className="px-3 py-1.5 text-sm text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors"
+                  className="px-3 py-1.5 text-sm text-[var(--text-muted)] hover:text-folio-text-secondary transition-colors"
                 >
                   Maybe later
                 </button>
@@ -192,7 +192,7 @@ export function WelcomeBackBanner({
       {/* Success message */}
       {submitted && (
         <div className="mt-4 pt-4 border-t border-[var(--border-subtle)]">
-          <p className="text-sm text-[var(--text-secondary)] flex items-center gap-2">
+          <p className="text-sm text-folio-text-secondary flex items-center gap-2">
             <span className="text-green-500">✓</span>
             Note added! It will appear alongside the product.
           </p>
@@ -225,17 +225,17 @@ export function WelcomeBackInline({
   return (
     <div
       className={cn(
-        'bg-[var(--bg-elevated)] rounded-lg p-3',
+        'bg-surface-ground rounded-lg p-3',
         'border border-[var(--border-subtle)]',
         'flex items-center justify-between gap-4',
         className
       )}
     >
       <div className="flex-1 min-w-0">
-        <p className="text-sm text-[var(--text-primary)] truncate">
+        <p className="text-sm text-folio-text-primary truncate">
           <span className="font-medium">{projectTitle}</span>
           {' · '}
-          <span className="text-[var(--text-secondary)]">
+          <span className="text-folio-text-secondary">
             {engagement.views} views, {engagement.saves} saves since last visit
           </span>
         </p>

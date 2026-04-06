@@ -21,7 +21,7 @@ interface EditorialPreviewProps {
  * - Hero image: aspect-[16/9] object-cover (if provided)
  * - Content padding: p-6
  * - Title: text-xl font-serif
- * - Excerpt: text-[var(--text-secondary)] line-clamp-4
+ * - Excerpt: text-folio-text-secondary line-clamp-4
  * - Label: "Preview" in small caps, bottom right
  *
  * Shimmer effect (isGenerating: true):
@@ -36,7 +36,7 @@ export function EditorialPreview({
 }: EditorialPreviewProps) {
   return (
     <div className="space-y-4">
-      <p className="text-center text-sm text-[var(--text-secondary)]">
+      <p className="text-center text-sm text-folio-text-secondary">
         Your story is taking shape
       </p>
 
@@ -59,18 +59,18 @@ export function EditorialPreview({
           {isGenerating ? (
             // Shimmer placeholders
             <>
-              <div className="h-6 bg-[var(--bg-elevated)] rounded animate-pulse w-3/4" />
+              <div className="h-6 bg-surface-ground rounded animate-pulse w-3/4" />
               <div className="space-y-2">
-                <div className="h-4 bg-[var(--bg-elevated)] rounded animate-pulse" />
-                <div className="h-4 bg-[var(--bg-elevated)] rounded animate-pulse" />
-                <div className="h-4 bg-[var(--bg-elevated)] rounded animate-pulse w-2/3" />
+                <div className="h-4 bg-surface-ground rounded animate-pulse" />
+                <div className="h-4 bg-surface-ground rounded animate-pulse" />
+                <div className="h-4 bg-surface-ground rounded animate-pulse w-2/3" />
               </div>
             </>
           ) : (
             // Actual content
             <>
-              <h3 className="text-xl font-serif text-[var(--text-primary)]">{title}</h3>
-              <p className="text-[var(--text-secondary)] line-clamp-4 text-sm leading-relaxed">
+              <h3 className="text-xl font-serif text-folio-text-primary">{title}</h3>
+              <p className="text-folio-text-secondary line-clamp-4 text-sm leading-relaxed">
                 {excerpt}
               </p>
             </>
@@ -78,7 +78,7 @@ export function EditorialPreview({
 
           {/* Preview label */}
           <div className="flex justify-end pt-2">
-            <span className="text-xs text-[var(--text-tertiary)] uppercase tracking-wide">
+            <span className="text-xs text-folio-text-tertiary uppercase tracking-wide">
               Preview
             </span>
           </div>

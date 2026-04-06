@@ -112,7 +112,7 @@ export function BrandSetupWizard({ brandProfile, isEditMode = false }: BrandSetu
               value={formData.logoImageUrl}
               onChange={(e) => setFormData({ ...formData, logoImageUrl: e.target.value })}
             />
-            <p className="text-xs text-[var(--text-tertiary)]">
+            <p className="text-xs text-folio-text-tertiary">
               Paste a URL to your logo image. Image upload coming soon.
             </p>
           </div>
@@ -215,7 +215,7 @@ export function BrandSetupWizard({ brandProfile, isEditMode = false }: BrandSetu
               value={formData.websiteUrl}
               onChange={(e) => setFormData({ ...formData, websiteUrl: e.target.value })}
             />
-            <p className="text-xs text-[var(--text-tertiary)]">
+            <p className="text-xs text-folio-text-tertiary">
               Used later for AI brand scanning and analysis.
             </p>
           </div>
