@@ -193,3 +193,67 @@ export function generateGeneralContactHtml(
 
   return wrapHtml(body, signature);
 }
+
+// ─── Multi-Request Templates ──────────────────────────────────
+
+const REQUEST_TYPE_LABELS: Record<string, string> = {
+  SAMPLE_REQUEST: 'Product sample',
+  QUOTE_REQUEST: 'Quote/pricing',
+  LEAD_TIME_REQUEST: 'Lead time information',
+  PHOTO_REQUEST: 'Product photos/tearsheets',
+  SPEC_REQUEST: 'Specs/technical data',
+};
+
+export function generateMultiRequestEmail(
+  requestTypes: string[],
+  productName: string,
+  vendorName: string,
+  designer: DesignerProfile,
+  repName?: string,
+): { subject: string; body: string } {
+  const subject = requestTypes.length === 1
+    ? `${REQUEST_TYPE_LABELS[requestTypes[0]] || 'Request'} \u2013 ${productName} | via Folio`
+    : `Request regarding ${productName} | via Folio`;
+
+  const requestList = requestTypes
+    .map(t => `- ${REQUEST_TYPE_LABELS[t] || t}`)
+    .join('\n');
+
+  const body = `Hi ${repName || 'there'},
+
+I'm ${designer.name}${designer.firmName ? ` with ${designer.firmName}` : ''}. I'm reaching out regarding the ${productName} by ${vendorName}.
+
+I'd like to request the following:
+${requestList}
+
+Please let me know if you need any additional details.
+
+I manage my product specifications through Folio (folioad.com). You can view my profile and respond directly there:
+${designer.profileUrl}
+
+Best,
+${designer.name}${designer.firmName ? `\n${designer.firmName}` : ''}${designer.phone ? `\n${designer.phone}` : ''}`;
+
+  return { subject, body };
+}
+
+export function generateMultiRequestHtml(
+  requestTypes: string[],
+  productName: string,
+  vendorName: string,
+  designer: DesignerProfile,
+  signature: string,
+  repName?: string,
+): string {
+  const listItems = requestTypes
+    .map(t => `<li>${escapeHtml(REQUEST_TYPE_LABELS[t] || t)}</li>`)
+    .join('');
+
+  const body = `<p>Hi ${escapeHtml(repName || 'there')},</p>
+<p>I'm ${escapeHtml(designer.name)}${designer.firmName ? ` with ${escapeHtml(designer.firmName)}` : ''}. I'm reaching out regarding the <strong>${escapeHtml(productName)}</strong> by ${escapeHtml(vendorName)}.</p>
+<p>I'd like to request the following:</p>
+<ul style="margin:8px 0">${listItems}</ul>
+<p>Please let me know if you need any additional details.</p>`;
+
+  return wrapHtml(body, signature);
+}

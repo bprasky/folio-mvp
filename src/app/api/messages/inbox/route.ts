@@ -19,23 +19,43 @@ export async function GET(req: Request) {
     quotes: "QUOTE_REQUEST",
     general: "GENERAL",
     collaborations: "COLLABORATION",
+    lead_time: "LEAD_TIME_REQUEST",
+    photos: "PHOTO_REQUEST",
+    specs: "SPEC_REQUEST",
   };
   const effectiveCategory = category
     ? categoryMap[category] || category
     : undefined;
 
-  const conversations = await prisma.conversation.findMany({
-    where: {
+  // Build AND conditions to avoid conflicting OR keys
+  const andConditions: Record<string, unknown>[] = [
+    {
       OR: [
         { recipientUserId: userId },
         ...(orgId ? [{ recipientOrgId: orgId }] : []),
         { initiatorUserId: userId },
+        { participants: { some: { userId } } },
+      ],
+    },
+  ];
+
+  if (effectiveCategory) {
+    andConditions.push({
+      OR: [
+        { category: effectiveCategory },
         {
-          participants: {
-            some: { userId },
+          structuredData: {
+            path: ['requestTypes'],
+            array_contains: effectiveCategory,
           },
         },
       ],
+    });
+  }
+
+  const conversations = await prisma.conversation.findMany({
+    where: {
+      AND: andConditions,
       status: "ACTIVE",
       ...(filter === "unread"
         ? {
@@ -49,7 +69,6 @@ export async function GET(req: Request) {
         : {}),
       ...(filter === "inquiries" ? { context: "CLIENT_INQUIRY" } : {}),
       ...(filter === "emails" ? { context: "FOLIO_EMAIL" } : {}),
-      ...(effectiveCategory ? { category: effectiveCategory } : {}),
     },
     include: {
       messages: {
@@ -78,6 +97,7 @@ export async function GET(req: Request) {
   });
 
   // Compute category counts for vendor inbox tabs
+  // Primary category counts
   const categoryCounts = await prisma.conversation.groupBy({
     by: ['category'],
     where: {
@@ -95,6 +115,32 @@ export async function GET(req: Request) {
   const counts: Record<string, number> = {};
   for (const row of categoryCounts) {
     counts[row.category] = row._count.id;
+  }
+
+  // Supplement with requestTypes from structuredData for multi-request conversations
+  try {
+    const supplementCounts = await prisma.$queryRawUnsafe<{ rt: string; cnt: bigint }[]>(`
+      SELECT rt, COUNT(DISTINCT c.id) as cnt
+      FROM conversations c,
+           jsonb_array_elements_text(c.structured_data->'requestTypes') AS rt
+      WHERE c.status = 'ACTIVE'
+        AND c.structured_data->'requestTypes' IS NOT NULL
+        AND jsonb_typeof(c.structured_data->'requestTypes') = 'array'
+        AND (
+          c.recipient_user_id = $1
+          OR c.initiator_user_id = $1
+          ${orgId ? `OR c.recipient_org_id = '${orgId}'` : ''}
+        )
+        AND rt != c.category
+      GROUP BY rt
+    `, userId);
+
+    for (const row of supplementCounts) {
+      const key = row.rt;
+      counts[key] = (counts[key] || 0) + Number(row.cnt);
+    }
+  } catch {
+    // Gracefully handle if raw query fails (e.g., column naming differences)
   }
 
   return NextResponse.json({ conversations, categoryCounts: counts });
