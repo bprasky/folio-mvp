@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 import SourcebookGridCard from '@/components/designer/sourcebook/SourcebookGridCard';
 import SourcebookFilters from '@/components/designer/sourcebook/SourcebookFilters';
 import NotesModal from './NotesModal';
@@ -10,6 +11,7 @@ import RequestSampleModal from './RequestSampleModal';
 import RequestQuoteModal from './RequestQuoteModal';
 import ContactRepModal from './ContactRepModal';
 import RepResolverModal from './RepResolverModal';
+import { CATEGORY_LABELS } from '@/types/structured-requests';
 import type {
   SourcebookEntry,
   SourcebookSortField,
@@ -50,7 +52,7 @@ export default function SourcebookPage() {
     setResolverModal(entry);
   };
 
-  const handleRepSelected = (repUserId: string) => {
+  const handleRepSelected = (repUserId: string, requestTypes?: string[]) => {
     setSelectedRepUserId(repUserId);
     if (resolverModal) {
       if (resolverActionType === 'SAMPLE_REQUEST') setSampleModal(resolverModal);
@@ -58,58 +60,46 @@ export default function SourcebookPage() {
       else setContactModal(resolverModal);
     }
     setResolverModal(null);
+
+    // Show toast for on-platform rep notification
+    const typeLabels = (requestTypes || [resolverActionType])
+      .map(t => CATEGORY_LABELS[t] || t)
+      .join(', ');
+    toast.success(`Rep was notified for your ${typeLabels.toLowerCase()} request`);
   };
 
-  const handleInviteRep = async (repName: string, repEmail: string, sendInvite: boolean) => {
-    if (!resolverModal) return;
-    await fetch('/api/designer/sourcebook/invite-rep', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        productId: resolverModal.productId,
-        actionType: resolverActionType,
-        repName,
-        repEmail,
-        sendInvite,
-      }),
+  const handleEmailSent = (result: { repName: string; repEmail: string; conversationId: string }) => {
+    const vendorName = resolverModal?.productBrand || '';
+    setResolverModal(null);
+
+    // Save rep as contact prompt via actionable toast
+    toast(`Email sent to ${result.repEmail}`, {
+      description: `Would you like to confirm ${result.repName} as your rep for ${vendorName}? You can edit this in your vendor directory.`,
+      action: {
+        label: 'Confirm Rep',
+        onClick: () => {
+          fetch('/api/rep-contacts', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              vendorName,
+              repName: result.repName,
+              repEmail: result.repEmail,
+            }),
+          }).then(() => {
+            toast.success(`${result.repName} confirmed as your rep for ${vendorName}`);
+          }).catch(() => {
+            toast.error('Failed to save rep contact');
+          });
+        },
+      },
+      duration: 10000,
     });
-  };
-
-  const handleSendViaFolio = async (recipientName: string, recipientEmail: string) => {
-    if (!resolverModal) return;
-
-    const payload: Record<string, unknown> = {
-      type: resolverActionType,
-      productId: resolverModal.productId,
-      productName: resolverModal.productName,
-      vendorName: resolverModal.productBrand || '',
-    };
-
-    try {
-      const res = await fetch('/api/email/send', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          actionType: resolverActionType,
-          productId: resolverModal.productId,
-          recipientEmail,
-          recipientName,
-          payload,
-        }),
-      });
-
-      const data = await res.json();
-      if (res.ok && data.conversationId) {
-        setResolverModal(null);
-        window.location.href = `/inbox/${data.conversationId}`;
-      }
-    } catch {
-      // Silently fail — user can retry
-    }
   };
 
   const handleRequestSent = (conversationId: string) => {
     setSelectedRepUserId(undefined);
+    toast.success('Request sent successfully');
     window.location.href = `/inbox/${conversationId}`;
   };
 
@@ -401,9 +391,9 @@ export default function SourcebookPage() {
         productId={resolverModal?.productId || ''}
         productName={resolverModal?.productName || ''}
         vendorName={resolverModal?.productBrand || ''}
+        actionType={resolverActionType}
         onRepSelected={handleRepSelected}
-        onInviteRep={handleInviteRep}
-        onSendViaFolio={handleSendViaFolio}
+        onEmailSent={handleEmailSent}
       />
     </div>
   );

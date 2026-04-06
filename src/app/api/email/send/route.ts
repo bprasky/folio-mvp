@@ -11,9 +11,11 @@ import {
   generateQuoteRequestEmail,
   generateSampleRequestEmail,
   generateGeneralContactEmail,
+  generateMultiRequestEmail,
   generateQuoteRequestHtml,
   generateSampleRequestHtml,
   generateGeneralContactHtml,
+  generateMultiRequestHtml,
 } from '@/lib/messaging/email-templates';
 import { recordActionSignal, getDesignerOrgId } from '@/lib/intelligence/action-signals';
 import type { StructuredRequestPayload } from '@/types/structured-requests';
@@ -39,6 +41,7 @@ export async function POST(request: NextRequest) {
       vendorOrgId,
       payload,
       projectId,
+      requestTypes,
     } = await request.json();
 
     if (!recipientEmail || !actionType || !productId) {
@@ -94,32 +97,56 @@ export async function POST(request: NextRequest) {
 
     // Generate email content based on action type
     const typedPayload = payload as StructuredRequestPayload;
+    const effectiveRequestTypes = requestTypes as string[] | undefined;
     let subject: string;
     let textBody: string;
     let htmlBody: string;
 
-    switch (actionType) {
-      case 'SAMPLE_REQUEST': {
-        const template = generateSampleRequestEmail(typedPayload as any, designerProfile, recipientName);
+    // Multi-request flow: use unified template when multiple types are checked
+    if (effectiveRequestTypes && effectiveRequestTypes.length > 0) {
+      const pObj = payload as Record<string, unknown>;
+      const productName = (pObj?.productName as string) || 'Product';
+      const vendorName = (pObj?.vendorName as string) || '';
+      const customMessage = pObj?.customMessage as string | undefined;
+
+      if (customMessage) {
+        // Designer customized the message preview — use it directly
+        subject = effectiveRequestTypes.length === 1
+          ? `Request \u2013 ${productName} | via Folio`
+          : `Request regarding ${productName} | via Folio`;
+        textBody = customMessage + '\n\n' + textSig;
+        htmlBody = `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:14px;line-height:1.6;color:#2C2825"><p>${customMessage.replace(/\n/g, '<br>')}</p>${htmlSig}</div>`;
+      } else {
+        const template = generateMultiRequestEmail(effectiveRequestTypes, productName, vendorName, designerProfile, recipientName);
         subject = template.subject;
         textBody = template.body + '\n\n' + textSig;
-        htmlBody = generateSampleRequestHtml(typedPayload as any, designerProfile, htmlSig, recipientName);
-        break;
+        htmlBody = generateMultiRequestHtml(effectiveRequestTypes, productName, vendorName, designerProfile, htmlSig, recipientName);
       }
-      case 'QUOTE_REQUEST': {
-        const template = generateQuoteRequestEmail(typedPayload as any, designerProfile, recipientName);
-        subject = template.subject;
-        textBody = template.body + '\n\n' + textSig;
-        htmlBody = generateQuoteRequestHtml(typedPayload as any, designerProfile, htmlSig, recipientName);
-        break;
-      }
-      default: {
-        const msg = (payload as Record<string, unknown>)?.message as string || `Regarding ${(payload as any)?.productName}`;
-        const template = generateGeneralContactEmail(msg, (payload as any)?.productName || 'Product', designerProfile, recipientName);
-        subject = template.subject;
-        textBody = template.body + '\n\n' + textSig;
-        htmlBody = generateGeneralContactHtml(msg, (payload as any)?.productName || 'Product', designerProfile, htmlSig, recipientName);
-        break;
+    } else {
+      // Legacy single-request flow
+      switch (actionType) {
+        case 'SAMPLE_REQUEST': {
+          const template = generateSampleRequestEmail(typedPayload as any, designerProfile, recipientName);
+          subject = template.subject;
+          textBody = template.body + '\n\n' + textSig;
+          htmlBody = generateSampleRequestHtml(typedPayload as any, designerProfile, htmlSig, recipientName);
+          break;
+        }
+        case 'QUOTE_REQUEST': {
+          const template = generateQuoteRequestEmail(typedPayload as any, designerProfile, recipientName);
+          subject = template.subject;
+          textBody = template.body + '\n\n' + textSig;
+          htmlBody = generateQuoteRequestHtml(typedPayload as any, designerProfile, htmlSig, recipientName);
+          break;
+        }
+        default: {
+          const msg = (payload as Record<string, unknown>)?.message as string || `Regarding ${(payload as any)?.productName}`;
+          const template = generateGeneralContactEmail(msg, (payload as any)?.productName || 'Product', designerProfile, recipientName);
+          subject = template.subject;
+          textBody = template.body + '\n\n' + textSig;
+          htmlBody = generateGeneralContactHtml(msg, (payload as any)?.productName || 'Product', designerProfile, htmlSig, recipientName);
+          break;
+        }
       }
     }
 
@@ -150,7 +177,10 @@ export async function POST(request: NextRequest) {
         subject,
         context: 'FOLIO_EMAIL',
         category: actionType === 'SAMPLE_REQUEST' || actionType === 'QUOTE_REQUEST' ? actionType : 'GENERAL',
-        structuredData: payload,
+        structuredData: {
+          ...(payload || {}),
+          ...(effectiveRequestTypes?.length ? { requestTypes: effectiveRequestTypes } : {}),
+        },
         productId: productId || null,
         lastMessageAt: now,
         messages: {

@@ -47,6 +47,9 @@ export const CATEGORY_LABELS: Record<string, string> = {
   SAMPLE_REQUEST: 'Sample Request',
   QUOTE_REQUEST: 'Quote Request',
   REORDER_REQUEST: 'Reorder Request',
+  LEAD_TIME_REQUEST: 'Lead Time',
+  PHOTO_REQUEST: 'Photos/Tearsheets',
+  SPEC_REQUEST: 'Specs/Tech Data',
   COLLABORATION: 'Collaboration',
   GENERAL: 'General',
 };
@@ -55,10 +58,22 @@ export const CATEGORY_ICONS: Record<string, string> = {
   SAMPLE_REQUEST: '\uD83D\uDCE6',
   QUOTE_REQUEST: '\uD83D\uDCB0',
   REORDER_REQUEST: '\uD83D\uDD04',
+  LEAD_TIME_REQUEST: '\u23F1\uFE0F',
+  PHOTO_REQUEST: '\uD83D\uDCF8',
+  SPEC_REQUEST: '\uD83D\uDCCB',
   COLLABORATION: '\uD83E\uDD1D',
   GENERAL: '\uD83D\uDCAC',
   FOLIO_EMAIL: '\u2709\uFE0F',
 };
+
+/** Request types available as checkboxes in the compose flow */
+export const REQUEST_TYPE_OPTIONS: { value: string; label: string }[] = [
+  { value: 'SAMPLE_REQUEST', label: 'Sample' },
+  { value: 'QUOTE_REQUEST', label: 'Quote/Pricing' },
+  { value: 'LEAD_TIME_REQUEST', label: 'Lead Time' },
+  { value: 'PHOTO_REQUEST', label: 'Photos/Tearsheets' },
+  { value: 'SPEC_REQUEST', label: 'Specs/Tech Data' },
+];
 
 /** Result from the email send API */
 export interface EmailSendResult {
