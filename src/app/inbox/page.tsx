@@ -24,7 +24,7 @@ interface ConversationPreview {
 }
 
 type Filter = 'all' | 'unread' | 'inquiries' | 'emails';
-type CategoryFilter = 'all' | 'SAMPLE_REQUEST' | 'QUOTE_REQUEST' | 'GENERAL' | 'COLLABORATION';
+type CategoryFilter = 'all' | 'SAMPLE_REQUEST' | 'QUOTE_REQUEST' | 'LEAD_TIME_REQUEST' | 'PHOTO_REQUEST' | 'SPEC_REQUEST' | 'GENERAL' | 'COLLABORATION';
 
 export default function InboxPage() {
   const { data: session } = useSession();
@@ -68,6 +68,8 @@ export default function InboxPage() {
     { id: 'all', label: 'All', icon: '' },
     { id: 'SAMPLE_REQUEST', label: 'Samples', icon: CATEGORY_ICONS.SAMPLE_REQUEST },
     { id: 'QUOTE_REQUEST', label: 'Quotes', icon: CATEGORY_ICONS.QUOTE_REQUEST },
+    { id: 'LEAD_TIME_REQUEST', label: 'Lead Time', icon: CATEGORY_ICONS.LEAD_TIME_REQUEST },
+    { id: 'PHOTO_REQUEST', label: 'Photos', icon: CATEGORY_ICONS.PHOTO_REQUEST },
     { id: 'GENERAL', label: 'General', icon: CATEGORY_ICONS.GENERAL },
     { id: 'COLLABORATION', label: 'Collaborations', icon: CATEGORY_ICONS.COLLABORATION },
   ];

@@ -1,9 +1,20 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
+import { REQUEST_TYPE_OPTIONS } from '@/types/structured-requests';
 import type { RepResolutionResult } from '@/types/structured-requests';
+
+interface FolioUser {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  profileImage: string | null;
+  studio: string | null;
+}
 
 interface RepResolverModalProps {
   isOpen: boolean;
@@ -11,15 +22,14 @@ interface RepResolverModalProps {
   productId: string;
   productName: string;
   vendorName: string;
-  /** Called when user selects a rep — passes their userId */
-  onRepSelected: (repUserId: string) => void;
-  /** Called when user wants to invite a new rep */
-  onInviteRep: (repName: string, repEmail: string, sendInvite: boolean) => void;
-  /** Called when user wants to send email via Folio proxy instead of inviting */
-  onSendViaFolio?: (recipientName: string, recipientEmail: string) => void;
+  actionType: 'SAMPLE_REQUEST' | 'QUOTE_REQUEST' | 'GENERAL';
+  /** Called when user selects a rep on Folio */
+  onRepSelected: (repUserId: string, requestTypes: string[]) => void;
+  /** Called after email is sent to an off-platform rep */
+  onEmailSent: (result: { repName: string; repEmail: string; conversationId: string }) => void;
 }
 
-type Step = 'loading' | 'search' | 'invite';
+type Step = 'loading' | 'search' | 'compose';
 
 export default function RepResolverModal({
   isOpen,
@@ -27,23 +37,119 @@ export default function RepResolverModal({
   productId,
   productName,
   vendorName,
+  actionType,
   onRepSelected,
-  onInviteRep,
-  onSendViaFolio,
+  onEmailSent,
 }: RepResolverModalProps) {
   const [step, setStep] = useState<Step>('loading');
   const [resolution, setResolution] = useState<RepResolutionResult | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [members, setMembers] = useState<RepResolutionResult['orgMembers']>([]);
-  const [inviteName, setInviteName] = useState('');
-  const [inviteEmail, setInviteEmail] = useState('');
+
+  // Compose step state
+  const [requestTypes, setRequestTypes] = useState<string[]>([actionType]);
+  const [repName, setRepName] = useState('');
+  const [repEmail, setRepEmail] = useState('');
+  const [messagePreview, setMessagePreview] = useState('');
   const [sending, setSending] = useState(false);
 
+  // Folio search state
+  const [folioResults, setFolioResults] = useState<FolioUser[]>([]);
+  const [selectedFolioUser, setSelectedFolioUser] = useState<FolioUser | null>(null);
+  const [searchingFolio, setSearchingFolio] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Reset state when modal opens
   useEffect(() => {
     if (isOpen) {
+      setRequestTypes([actionType]);
+      setRepName('');
+      setRepEmail('');
+      setMessagePreview('');
+      setFolioResults([]);
+      setSelectedFolioUser(null);
+      setShowDropdown(false);
       resolveRep();
     }
   }, [isOpen, productId]);
+
+  // Generate message preview when inputs change
+  const generatePreview = useCallback(() => {
+    const name = selectedFolioUser?.name || repName || 'there';
+    const typeLabels: Record<string, string> = {
+      SAMPLE_REQUEST: 'Product sample',
+      QUOTE_REQUEST: 'Quote/pricing',
+      LEAD_TIME_REQUEST: 'Lead time information',
+      PHOTO_REQUEST: 'Product photos/tearsheets',
+      SPEC_REQUEST: 'Specs/technical data',
+    };
+    const requestList = requestTypes
+      .map(t => `- ${typeLabels[t] || t}`)
+      .join('\n');
+
+    return `Hi ${name},
+
+I'm reaching out regarding the ${productName} by ${vendorName}.
+
+I'd like to request the following:
+${requestList}
+
+Please let me know if you need any additional details.
+
+Best`;
+  }, [requestTypes, repName, selectedFolioUser, productName, vendorName]);
+
+  useEffect(() => {
+    if (step === 'compose') {
+      setMessagePreview(generatePreview());
+    }
+  }, [step, requestTypes, repName, selectedFolioUser, generatePreview]);
+
+  // Debounced Folio user search
+  useEffect(() => {
+    if (selectedFolioUser) return; // Don't search when user already selected
+
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    if (repName.trim().length < 2) {
+      setFolioResults([]);
+      setShowDropdown(false);
+      return;
+    }
+
+    searchTimeoutRef.current = setTimeout(async () => {
+      setSearchingFolio(true);
+      try {
+        const res = await fetch(`/api/users/search?q=${encodeURIComponent(repName.trim())}&limit=5`);
+        const data = await res.json();
+        setFolioResults(data.users || []);
+        setShowDropdown((data.users || []).length > 0);
+      } catch {
+        setFolioResults([]);
+      } finally {
+        setSearchingFolio(false);
+      }
+    }, 300);
+
+    return () => {
+      if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+    };
+  }, [repName, selectedFolioUser]);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setShowDropdown(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
 
   const resolveRep = async () => {
     setStep('loading');
@@ -57,8 +163,7 @@ export default function RepResolverModal({
       setResolution(data);
 
       if (data.status === 'DIRECT_REP' && data.rep) {
-        // Auto-select the rep
-        onRepSelected(data.rep.userId);
+        onRepSelected(data.rep.userId, [actionType]);
         onClose();
         return;
       }
@@ -67,10 +172,15 @@ export default function RepResolverModal({
         setMembers(data.orgMembers);
         setStep('search');
       } else {
-        setStep('invite');
+        // Pre-fill from preferred contact if available
+        if (data.preferredContact) {
+          setRepName(data.preferredContact.name);
+          setRepEmail(data.preferredContact.email);
+        }
+        setStep('compose');
       }
     } catch {
-      setStep('invite');
+      setStep('compose');
     }
   };
 
@@ -78,20 +188,90 @@ export default function RepResolverModal({
     m.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleInvite = async (sendInvite: boolean) => {
-    if (!inviteName.trim() || !inviteEmail.trim()) return;
-    setSending(true);
-    onInviteRep(inviteName.trim(), inviteEmail.trim(), sendInvite);
-    setSending(false);
-    onClose();
+  const handleSelectFolioUser = (user: FolioUser) => {
+    setSelectedFolioUser(user);
+    setRepName(user.name);
+    setRepEmail('');
+    setShowDropdown(false);
   };
+
+  const handleClearFolioUser = () => {
+    setSelectedFolioUser(null);
+    setRepName('');
+    setRepEmail('');
+    setFolioResults([]);
+  };
+
+  const toggleRequestType = (type: string) => {
+    setRequestTypes(prev =>
+      prev.includes(type)
+        ? prev.filter(t => t !== type)
+        : [...prev, type]
+    );
+  };
+
+  const handleSubmit = async () => {
+    if (requestTypes.length === 0) return;
+
+    setSending(true);
+    try {
+      if (selectedFolioUser) {
+        // On-platform: pass to parent to handle via request API
+        onRepSelected(selectedFolioUser.id, requestTypes);
+        onClose();
+      } else {
+        // Off-platform: send email via Folio
+        if (!repEmail.trim()) return;
+
+        const res = await fetch('/api/email/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            actionType: requestTypes[0],
+            productId,
+            recipientEmail: repEmail.trim(),
+            recipientName: repName.trim(),
+            requestTypes,
+            payload: {
+              type: requestTypes[0],
+              productId,
+              productName,
+              vendorName,
+              requestTypes,
+              customMessage: messagePreview,
+            },
+          }),
+        });
+
+        const data = await res.json();
+        if (res.ok && data.conversationId) {
+          onEmailSent({
+            repName: repName.trim(),
+            repEmail: repEmail.trim(),
+            conversationId: data.conversationId,
+          });
+          onClose();
+        } else {
+          toast.error('Failed to send email. Please try again.');
+        }
+      }
+    } catch {
+      toast.error('Something went wrong. Please try again.');
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const canSubmit = requestTypes.length > 0 && (
+    selectedFolioUser || (repName.trim() && repEmail.trim())
+  );
 
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative glass-surface rounded-2xl p-6 w-full max-w-md mx-4 shadow-xl">
+      <div className="relative glass-surface rounded-2xl p-6 w-full max-w-md mx-4 shadow-xl max-h-[90vh] overflow-y-auto">
 
         {step === 'loading' && (
           <div className="py-8 text-center">
@@ -121,7 +301,7 @@ export default function RepResolverModal({
               {filteredMembers.map(member => (
                 <button
                   key={member.userId}
-                  onClick={() => { onRepSelected(member.userId); onClose(); }}
+                  onClick={() => { onRepSelected(member.userId, [actionType]); onClose(); }}
                   className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-surface-ground transition-colors text-left"
                 >
                   {member.profileImage ? (
@@ -147,81 +327,172 @@ export default function RepResolverModal({
             </div>
 
             <button
-              onClick={() => setStep('invite')}
+              onClick={() => setStep('compose')}
               className="w-full mt-3 text-sm text-[var(--accent)] hover:underline text-center"
             >
-              Don&apos;t see your rep? Invite them to Folio
+              Don&apos;t see your rep? Send a request directly
             </button>
           </>
         )}
 
-        {step === 'invite' && (
+        {step === 'compose' && (
           <>
             <h3 className="folio-h3 text-folio-text-primary mb-1">
-              Invite your rep to Folio
+              Send request to rep
             </h3>
             <p className="text-sm text-folio-text-secondary mb-4">
-              {vendorName}
+              {vendorName} &middot; {productName}
             </p>
 
-            <div className="space-y-3">
-              <div>
-                <label className="block text-sm text-folio-text-tertiary mb-1 font-medium">Rep&apos;s name</label>
-                <input
-                  type="text"
-                  value={inviteName}
-                  onChange={(e) => setInviteName(e.target.value)}
-                  placeholder="Jane Smith"
-                  className="w-full px-3 py-2 bg-white border border-folio-border-subtle rounded-lg text-folio-text-primary placeholder-[#A39E97] focus:outline-none focus:border-folio-border-strong transition-all"
-                />
+            {/* Request type checkboxes */}
+            <div className="mb-4">
+              <label className="block text-sm text-folio-text-tertiary mb-2 font-medium">
+                What would you like to request?
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {REQUEST_TYPE_OPTIONS.map(opt => (
+                  <label
+                    key={opt.value}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium cursor-pointer transition-colors border ${
+                      requestTypes.includes(opt.value)
+                        ? 'bg-[var(--accent)] text-white border-[var(--accent)]'
+                        : 'bg-white text-folio-text-secondary border-folio-border-subtle hover:border-folio-border-strong'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={requestTypes.includes(opt.value)}
+                      onChange={() => toggleRequestType(opt.value)}
+                      className="sr-only"
+                    />
+                    {opt.label}
+                  </label>
+                ))}
               </div>
-              <div>
-                <label className="block text-sm text-folio-text-tertiary mb-1 font-medium">Rep&apos;s email</label>
+            </div>
+
+            {/* Rep name with Folio search */}
+            <div className="mb-3 relative" ref={dropdownRef}>
+              <label className="block text-sm text-folio-text-tertiary mb-1 font-medium">
+                Rep&apos;s name
+              </label>
+              {selectedFolioUser ? (
+                <div className="flex items-center gap-2 px-3 py-2 bg-white border border-folio-border-subtle rounded-lg">
+                  {selectedFolioUser.profileImage ? (
+                    <Image
+                      src={selectedFolioUser.profileImage}
+                      alt={selectedFolioUser.name}
+                      width={24}
+                      height={24}
+                      className="rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-6 h-6 rounded-full bg-surface-ground flex items-center justify-center text-xs font-medium text-folio-text-secondary">
+                      {selectedFolioUser.name.charAt(0)}
+                    </div>
+                  )}
+                  <span className="text-sm text-folio-text-primary font-medium">{selectedFolioUser.name}</span>
+                  <span className="text-xs text-[var(--accent)] bg-[var(--accent)]/10 px-1.5 py-0.5 rounded">on Folio</span>
+                  <button
+                    onClick={handleClearFolioUser}
+                    className="ml-auto text-folio-text-tertiary hover:text-folio-text-secondary text-sm"
+                  >
+                    &times;
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <input
+                    type="text"
+                    value={repName}
+                    onChange={(e) => setRepName(e.target.value)}
+                    placeholder="Search Folio or enter name..."
+                    className="w-full px-3 py-2 bg-white border border-folio-border-subtle rounded-lg text-folio-text-primary placeholder-[#A39E97] focus:outline-none focus:border-folio-border-strong transition-all"
+                  />
+                  {searchingFolio && (
+                    <div className="absolute right-3 top-[calc(50%+4px)] -translate-y-1/2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[var(--accent)]" />
+                    </div>
+                  )}
+                  {/* Folio search dropdown */}
+                  {showDropdown && folioResults.length > 0 && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border border-folio-border-subtle rounded-lg shadow-lg overflow-hidden">
+                      {folioResults.map(user => (
+                        <button
+                          key={user.id}
+                          onClick={() => handleSelectFolioUser(user)}
+                          className="w-full flex items-center gap-3 p-3 hover:bg-surface-ground transition-colors text-left border-b border-folio-border-subtle last:border-b-0"
+                        >
+                          {user.profileImage ? (
+                            <Image
+                              src={user.profileImage}
+                              alt={user.name}
+                              width={28}
+                              height={28}
+                              className="rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-7 h-7 rounded-full bg-surface-ground flex items-center justify-center text-xs font-medium text-folio-text-secondary">
+                              {user.name.charAt(0)}
+                            </div>
+                          )}
+                          <div>
+                            <div className="text-sm font-medium text-folio-text-primary">{user.name}</div>
+                            <div className="text-xs text-folio-text-tertiary">
+                              {user.studio || user.email}
+                            </div>
+                          </div>
+                          <span className="ml-auto text-xs text-[var(--accent)]">on Folio</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+
+            {/* Email field - only for off-platform reps */}
+            {!selectedFolioUser && (
+              <div className="mb-3">
+                <label className="block text-sm text-folio-text-tertiary mb-1 font-medium">
+                  Rep&apos;s email
+                </label>
                 <input
                   type="email"
-                  value={inviteEmail}
-                  onChange={(e) => setInviteEmail(e.target.value)}
+                  value={repEmail}
+                  onChange={(e) => setRepEmail(e.target.value)}
                   placeholder="jane@vendor.com"
                   className="w-full px-3 py-2 bg-white border border-folio-border-subtle rounded-lg text-folio-text-primary placeholder-[#A39E97] focus:outline-none focus:border-folio-border-strong transition-all"
                 />
               </div>
-            </div>
+            )}
 
-            <div className="flex flex-col gap-2 mt-5">
-              {onSendViaFolio && (
-                <Button
-                  variant="accent"
-                  onClick={() => {
-                    if (inviteName.trim() && inviteEmail.trim()) {
-                      onSendViaFolio(inviteName.trim(), inviteEmail.trim());
-                      onClose();
-                    }
-                  }}
-                  disabled={!inviteName.trim() || !inviteEmail.trim() || sending}
-                  className="w-full"
-                >
-                  Send from Folio
-                </Button>
-              )}
-              <Button
-                variant={onSendViaFolio ? 'ridge' : 'accent'}
-                onClick={() => handleInvite(true)}
-                disabled={!inviteName.trim() || !inviteEmail.trim() || sending}
-                className="w-full"
-              >
-                Send Folio Invite
-              </Button>
-              <Button
-                variant="ridge"
-                onClick={() => handleInvite(false)}
-                disabled={!inviteName.trim() || !inviteEmail.trim() || sending}
-                className="w-full"
-              >
-                Just send me the email template
-              </Button>
-            </div>
+            {/* Message preview */}
+            {!selectedFolioUser && (
+              <div className="mb-4">
+                <label className="block text-sm text-folio-text-tertiary mb-1 font-medium">
+                  Message preview
+                </label>
+                <textarea
+                  value={messagePreview}
+                  onChange={(e) => setMessagePreview(e.target.value)}
+                  rows={6}
+                  className="w-full px-3 py-2 bg-white border border-folio-border-subtle rounded-lg text-folio-text-primary text-sm focus:outline-none focus:border-folio-border-strong transition-all resize-none"
+                />
+              </div>
+            )}
 
-            {onSendViaFolio && (
+            {/* Submit button */}
+            <Button
+              variant="accent"
+              onClick={handleSubmit}
+              disabled={!canSubmit || sending}
+              className="w-full"
+            >
+              {sending ? 'Sending...' : 'Submit Request'}
+            </Button>
+
+            {!selectedFolioUser && repEmail.trim() && (
               <p className="text-xs text-folio-text-tertiary mt-2 text-center">
                 Folio sends the email on your behalf. Replies come back to your Folio inbox.
               </p>

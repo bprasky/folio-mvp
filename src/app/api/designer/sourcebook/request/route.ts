@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { actionType, productId, recipientUserId, payload, message } = await request.json();
+    const { actionType, productId, recipientUserId, payload, message, requestTypes } = await request.json();
 
     if (!actionType || !productId) {
       return NextResponse.json({ error: 'actionType and productId are required' }, { status: 400 });
@@ -83,7 +83,10 @@ export async function POST(request: NextRequest) {
         subject: buildSubject(actionType, payload as StructuredRequestPayload),
         context: 'VENDOR_OUTREACH',
         category: actionType,
-        structuredData: payload,
+        structuredData: {
+          ...(payload || {}),
+          ...(requestTypes?.length ? { requestTypes } : {}),
+        },
         productId,
         lastMessageAt: now,
         messages: {
@@ -175,6 +178,23 @@ function buildSubject(actionType: string, payload: StructuredRequestPayload): st
 
 function buildMessageBody(actionType: string, payload: StructuredRequestPayload): string {
   const p = payload as unknown as Record<string, unknown>;
+  const types = (p.requestTypes as string[]) || [actionType];
+
+  // Multi-request body
+  if (types.length > 1) {
+    const typeLabels: Record<string, string> = {
+      SAMPLE_REQUEST: 'Product sample',
+      QUOTE_REQUEST: 'Quote/pricing',
+      LEAD_TIME_REQUEST: 'Lead time information',
+      PHOTO_REQUEST: 'Product photos/tearsheets',
+      SPEC_REQUEST: 'Specs/technical data',
+    };
+    const requestList = types.map(t => `- ${typeLabels[t] || t}`).join('\n');
+    let body = `I'm reaching out regarding the ${p.productName} from ${p.vendorName}.\n\nI'd like to request the following:\n${requestList}`;
+    if (p.notes || p.designerNote) body += `\n\n${p.notes || p.designerNote}`;
+    body += '\n\nPlease let me know if you need any additional details.';
+    return body;
+  }
 
   if (actionType === 'SAMPLE_REQUEST') {
     let body = `I'm requesting a sample of the ${p.productName} from ${p.vendorName}.`;
