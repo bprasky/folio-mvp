@@ -93,9 +93,9 @@ export default async function ProductPage({ params }: ProductPageProps) {
   );
 
   return (
-    <div className="min-h-screen bg-[var(--bg-elevated)]">
+    <div className="min-h-screen bg-surface-ground">
       {/* Header */}
-      <div className="bg-white border-b">
+      <div className="bg-surface-canvas border-b">
         <div className="container mx-auto px-4 py-4">
           <Link
             href="/magazine"
@@ -111,10 +111,10 @@ export default async function ProductPage({ params }: ProductPageProps) {
         <div className="mb-8">
           <div className="flex items-start justify-between mb-4">
             <div>
-              <h1 className="text-4xl font-bold text-[var(--text-primary)] mb-2">
+              <h1 className="text-4xl font-bold text-folio-text-primary mb-2">
                 {product.name}
               </h1>
-              <div className="flex items-center gap-4 text-[var(--text-secondary)]">
+              <div className="flex items-center gap-4 text-folio-text-secondary">
                 {product.brand && (
                   <span className="font-medium">{product.brand}</span>
                 )}
@@ -130,7 +130,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
             </div>
             {product.vendorRecord && (
               <div className="text-right">
-                <p className="text-sm text-[var(--text-secondary)]">Vendor</p>
+                <p className="text-sm text-folio-text-secondary">Vendor</p>
                 <p className="font-medium">{product.vendorRecord.name}</p>
               </div>
             )}
@@ -142,7 +142,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
           <div className="lg:col-span-2 space-y-8">
             {/* Image Gallery */}
             {productImages.length > 0 && (
-              <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+              <div className="bg-surface-canvas rounded-lg shadow-sm overflow-hidden">
                 <div className="relative aspect-video w-full">
                   <Image
                     src={productImages[0]}
@@ -171,20 +171,20 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
             {/* Description */}
             {product.description && (
-              <div className="bg-white rounded-lg shadow-sm p-6">
+              <div className="bg-surface-canvas rounded-lg shadow-sm p-6">
                 <h2 className="text-2xl font-semibold mb-4">Description</h2>
-                <p className="text-[var(--text-primary)] leading-relaxed">{product.description}</p>
+                <p className="text-folio-text-primary leading-relaxed">{product.description}</p>
               </div>
             )}
 
             {/* Specifications */}
             {(Object.keys(specs).length > 0 || product.price) && (
-              <div className="bg-white rounded-lg shadow-sm p-6">
+              <div className="bg-surface-canvas rounded-lg shadow-sm p-6">
                 <h2 className="text-2xl font-semibold mb-4">Specifications</h2>
                 <dl className="space-y-3">
                   {product.price && (
                     <div>
-                      <dt className="text-sm font-medium text-[var(--text-secondary)]">Price</dt>
+                      <dt className="text-sm font-medium text-folio-text-secondary">Price</dt>
                       <dd className="text-lg font-semibold">
                         {product.priceCurrency || "$"}
                         {product.price.toLocaleString()}
@@ -194,20 +194,20 @@ export default async function ProductPage({ params }: ProductPageProps) {
                   )}
                   {specs.dimensions && (
                     <div>
-                      <dt className="text-sm font-medium text-[var(--text-secondary)]">Dimensions</dt>
-                      <dd className="text-[var(--text-primary)]">{specs.dimensions}</dd>
+                      <dt className="text-sm font-medium text-folio-text-secondary">Dimensions</dt>
+                      <dd className="text-folio-text-primary">{specs.dimensions}</dd>
                     </div>
                   )}
                   {specs.materials && Array.isArray(specs.materials) && (
                     <div>
-                      <dt className="text-sm font-medium text-[var(--text-secondary)]">Materials</dt>
-                      <dd className="text-[var(--text-primary)]">{specs.materials.join(", ")}</dd>
+                      <dt className="text-sm font-medium text-folio-text-secondary">Materials</dt>
+                      <dd className="text-folio-text-primary">{specs.materials.join(", ")}</dd>
                     </div>
                   )}
                   {specs.colors && Array.isArray(specs.colors) && (
                     <div>
-                      <dt className="text-sm font-medium text-[var(--text-secondary)]">Colors</dt>
-                      <dd className="text-[var(--text-primary)]">{specs.colors.join(", ")}</dd>
+                      <dt className="text-sm font-medium text-folio-text-secondary">Colors</dt>
+                      <dd className="text-folio-text-primary">{specs.colors.join(", ")}</dd>
                     </div>
                   )}
                 </dl>
@@ -216,7 +216,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
             {/* Used in Projects */}
             {uniqueProjects.length > 0 && (
-              <div className="bg-white rounded-lg shadow-sm p-6">
+              <div className="bg-surface-canvas rounded-lg shadow-sm p-6">
                 <h2 className="text-2xl font-semibold mb-4">
                   Used in {uniqueProjects.length} {uniqueProjects.length === 1 ? "Project" : "Projects"}
                 </h2>
@@ -242,7 +242,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
                           {project.title || "Untitled Project"}
                         </h3>
                         {project.designer && (
-                          <p className="text-sm text-[var(--text-secondary)]">
+                          <p className="text-sm text-folio-text-secondary">
                             by {project.designer.name}
                           </p>
                         )}
@@ -261,7 +261,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
           <aside className="space-y-6">
             {/* Vendor Info */}
             {(product.vendorRecord || product.vendor) && (
-              <div className="bg-white rounded-lg shadow-sm p-6">
+              <div className="bg-surface-canvas rounded-lg shadow-sm p-6">
                 <h3 className="font-semibold mb-4">Vendor Information</h3>
                 {product.vendorRecord ? (
                   <div>
@@ -287,9 +287,9 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
             {/* Source Info */}
             {product.sourceUrl && (
-              <div className="bg-white rounded-lg shadow-sm p-6">
+              <div className="bg-surface-canvas rounded-lg shadow-sm p-6">
                 <h3 className="font-semibold mb-4">Source</h3>
-                <p className="text-sm text-[var(--text-secondary)] mb-2">
+                <p className="text-sm text-folio-text-secondary mb-2">
                   {product.sourceType || "Unknown source"}
                 </p>
                 <a
@@ -304,15 +304,15 @@ export default async function ProductPage({ params }: ProductPageProps) {
             )}
 
             {/* Stats */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="bg-surface-canvas rounded-lg shadow-sm p-6">
               <h3 className="font-semibold mb-4">Statistics</h3>
               <div className="space-y-2">
                 <div className="flex justify-between">
-                  <span className="text-[var(--text-secondary)]">Projects</span>
+                  <span className="text-folio-text-secondary">Projects</span>
                   <span className="font-medium">{uniqueProjects.length}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-[var(--text-secondary)]">Tags</span>
+                  <span className="text-folio-text-secondary">Tags</span>
                   <span className="font-medium">{product.projectTags.length}</span>
                 </div>
               </div>

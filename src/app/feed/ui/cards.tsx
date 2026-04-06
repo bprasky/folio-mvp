@@ -32,7 +32,7 @@ function DesignerLogoChip({
   if (!url) return null; // no logo? no chip.
 
   return (
-    <div className="absolute right-3 top-3 rounded-xl bg-[var(--bg-base)] shadow-[var(--neu-raised)] ring-1 ring-[var(--ridge-outer)] p-1.5">
+    <div className="absolute right-3 top-3 rounded-xl bg-surface-canvas shadow-[var(--neu-raised)] ring-1 ring-folio-border-subtle p-1.5">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={url}
@@ -67,7 +67,7 @@ export function FeedHeroCard({ post, 'data-demo-id': dataDemoId }: { post: Post;
                 decoding="async"
               />
             ) : (
-              <div className="h-full w-full bg-[var(--bg-elevated)]" />
+              <div className="h-full w-full bg-surface-ground" />
             )}
             {/* Optional logo chip (only if profileImage exists) */}
             <DesignerLogoChip
@@ -91,7 +91,7 @@ export function FeedHeroCard({ post, 'data-demo-id': dataDemoId }: { post: Post;
               <p className="folio-meta">by {bylineName}</p>
             ) : null}
             {post.deck && (
-              <p className="folio-body text-[var(--text-secondary)] line-clamp-2 mt-2">{post.deck}</p>
+              <p className="folio-body text-folio-text-secondary line-clamp-2 mt-2">{post.deck}</p>
             )}
             {/* Badges can be injected later (e.g., Folio House, Awards, AI Recommended) */}
           </div>
@@ -123,7 +123,7 @@ export function FeedGridCard({ post }: { post: Post }) {
                 decoding="async"
               />
             ) : (
-              <div className="h-full w-full bg-[var(--bg-elevated)]" />
+              <div className="h-full w-full bg-surface-ground" />
             )}
             {/* Optional logo chip (only if profileImage exists) */}
             <DesignerLogoChip
@@ -147,7 +147,7 @@ export function FeedGridCard({ post }: { post: Post }) {
               <p className="folio-meta">by {bylineName}</p>
             ) : null}
             {post.deck && (
-              <p className="folio-body text-[var(--text-secondary)] line-clamp-2 mt-2">{post.deck}</p>
+              <p className="folio-body text-folio-text-secondary line-clamp-2 mt-2">{post.deck}</p>
             )}
             {/* Reserved badge slot */}
           </div>

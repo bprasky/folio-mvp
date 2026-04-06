@@ -242,20 +242,19 @@ export default function ProfileAbout({ user, team = [], organization }: ProfileA
 
       {/* Footer info */}
       <section
-        className="pt-8 border-t flex flex-wrap gap-6"
-        style={{ borderColor: '#E8E4DF' }}
+        className="pt-8 border-t flex flex-wrap gap-6 border-folio-border-subtle"
       >
         {joinYear && (
-          <div className="text-sm" style={{ color: '#8B8178' }}>
-            <span className="font-medium" style={{ color: '#5C564F' }}>
+          <div className="text-sm text-folio-text-secondary">
+            <span className="font-medium text-folio-text-secondary">
               Member since
             </span>{' '}
             {joinYear}
           </div>
         )}
         {user.location && (
-          <div className="text-sm" style={{ color: '#8B8178' }}>
-            <span className="font-medium" style={{ color: '#5C564F' }}>
+          <div className="text-sm text-folio-text-secondary">
+            <span className="font-medium text-folio-text-secondary">
               Based in
             </span>{' '}
             {user.location}
@@ -269,8 +268,7 @@ export default function ProfileAbout({ user, team = [], organization }: ProfileA
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
     <h2
-      className="text-sm uppercase tracking-wider font-medium mb-4"
-      style={{ color: '#8B8178' }}
+      className="text-sm uppercase tracking-wider font-medium mb-4 text-folio-text-secondary"
     >
       {children}
     </h2>
@@ -280,13 +278,12 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 function InfoCard({ label, value }: { label: string; value: string }) {
   return (
     <div
-      className="p-4 rounded-lg"
-      style={{ backgroundColor: '#F5F3F0' }}
+      className="p-4 rounded-lg bg-surface-elevated"
     >
-      <p className="text-xs uppercase tracking-wider mb-1" style={{ color: '#8B8178' }}>
+      <p className="text-xs uppercase tracking-wider mb-1 text-folio-text-secondary">
         {label}
       </p>
-      <p className="font-medium" style={{ color: '#2C2825' }}>
+      <p className="font-medium text-folio-text-primary">
         {value}
       </p>
     </div>
@@ -305,12 +302,10 @@ function TeamMemberCard({ member }: { member: TeamMember }) {
 
   return (
     <div
-      className="p-4 rounded-xl text-center"
-      style={{ backgroundColor: '#F5F3F0' }}
+      className="p-4 rounded-xl text-center bg-surface-elevated"
     >
       <div
-        className="w-16 h-16 rounded-full overflow-hidden mx-auto mb-3"
-        style={{ backgroundColor: '#E8E4DF' }}
+        className="w-16 h-16 rounded-full overflow-hidden mx-auto mb-3 bg-folio-border-subtle"
       >
         {imageUrl ? (
           <SafeImage
@@ -322,21 +317,20 @@ function TeamMemberCard({ member }: { member: TeamMember }) {
           />
         ) : (
           <div
-            className="w-full h-full flex items-center justify-center text-lg font-light"
-            style={{ color: '#8B8178' }}
+            className="w-full h-full flex items-center justify-center text-lg font-light text-folio-text-secondary"
           >
             {initials}
           </div>
         )}
       </div>
-      <p className="font-medium" style={{ color: '#2C2825' }}>
+      <p className="font-medium text-folio-text-primary">
         {name}
       </p>
-      <p className="text-sm" style={{ color: '#8B8178' }}>
+      <p className="text-sm text-folio-text-secondary">
         {member.role}
       </p>
       {member.bio && (
-        <p className="text-xs mt-2 line-clamp-2" style={{ color: '#5C564F' }}>
+        <p className="text-xs mt-2 line-clamp-2 text-folio-text-secondary">
           {member.bio}
         </p>
       )}

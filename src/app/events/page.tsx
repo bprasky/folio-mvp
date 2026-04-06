@@ -34,7 +34,7 @@ export default async function EventsPage({
       {/* Admin Controls */}
       {isAdmin && (
         <div className="mx-auto max-w-7xl px-4 md:px-6 lg:px-8 mb-4 md:mb-6">
-          <div className="flex flex-wrap gap-3 p-4 bg-[var(--bg-elevated)] border border-[var(--border)] rounded-lg">
+          <div className="flex flex-wrap gap-3 p-4 bg-surface-ground border border-folio-border-subtle rounded-lg">
             <Link 
               href="/admin/festivals/create"
               className="inline-flex items-center gap-2 px-4 py-2 bg-[var(--accent)] text-white font-medium rounded-lg hover:bg-[var(--accent-hover)] transition-colors"
@@ -59,7 +59,7 @@ export default async function EventsPage({
 
       {/* Edge-to-edge Festival Carousel */}
       <section aria-label="Festival timeline" className="mb-12">
-        <Suspense fallback={<div className="h-[400px] bg-[var(--bg-base)]" />}>
+        <Suspense fallback={<div className="h-[400px] bg-surface-canvas" />}>
           <FestivalsCarousel festivals={festivals} />
         </Suspense>
       </section>
