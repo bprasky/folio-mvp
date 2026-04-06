@@ -160,7 +160,7 @@ export function WhatYouGet() {
             One platform for the whole studio.
           </h2>
         </motion.div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="flex flex-wrap justify-center gap-6">
           {pillarCards.map((card, i) => (
             <motion.div
               key={i}
@@ -168,7 +168,7 @@ export function WhatYouGet() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-40px" }}
               transition={{ duration: 0.6, delay: i * 0.1, ease: "easeOut" }}
-              className={i === 4 ? "lg:col-span-3 lg:max-w-md lg:mx-auto" : ""}
+              className="w-full md:w-[calc(50%-0.75rem)] lg:w-[calc(33.333%-1rem)]"
             >
               <GlassCard
                 variant="default"
