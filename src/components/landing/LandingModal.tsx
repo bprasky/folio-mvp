@@ -9,29 +9,29 @@ import { GlassCard } from "@/components/ui/glass-card";
 
 const SESSION_KEY = "folio-landing-seen";
 
-const pillars = [
-  { label: "Your Specifications", title: "A directory that builds itself", href: "/for-designers/directory" },
-  { label: "Your Editorial", title: "Posts that keep working", href: "/for-designers/editorial" },
-  { label: "Your Identity", title: "A bio that evolves with your work", href: "/for-designers/bio" },
-  { label: "Your Credit", title: "Get credited for what you specify", href: "/for-designers/attribution" },
-  { label: "Your Clients", title: "Find clients whose taste already matches yours", href: "/for-designers/client-matching" },
+const whatYouGet = [
+  "Editorial Publishing",
+  "Sourcebook & Actions",
+  "Project Procurement",
+  "Unified Communications",
+  "Directory & Discovery",
 ];
 
 const steps = [
   {
-    title: "Upload your photography",
+    title: "Publish your work",
     description:
-      "Bring in the images from your completed project, room by room.",
+      "Upload your photography, walk through a brief interview, and Folio generates an editorial-quality project post \u2014 in your voice, under your name.",
   },
   {
-    title: "Tell the story",
+    title: "Run your projects",
     description:
-      "A brief interview walks you through the decisions, the brief, and the details that don\u2019t make it into the photos.",
+      "Every product you tag builds your Sourcebook. Request quotes, track lead times, and manage procurement from one project board.",
   },
   {
-    title: "Folio does the rest",
+    title: "Own every conversation",
     description:
-      "Your project is structured into a professional post \u2014 your name, your products, your voice attached to every room.",
+      "Vendor emails, rep texts, contractor updates \u2014 one searchable inbox linked to your projects and products. Nothing gets lost.",
   },
 ];
 
@@ -118,13 +118,12 @@ export function LandingModal() {
                   {/* Hero */}
                   <motion.div variants={item} className="px-8 md:px-12 pt-12 pb-8">
                     <h2 className="font-headline italic text-3xl md:text-4xl lg:text-5xl text-folio-text-primary leading-[1.1] text-center">
-                      Your work is the product.
-                      <br />
-                      Folio treats it that way.
+                      One place for your projects, your products, and every conversation in between.
                     </h2>
                     <p className="mt-5 text-center text-base md:text-lg text-folio-text-secondary leading-relaxed max-w-xl mx-auto">
-                      Folio is where interior designers publish completed projects
-                      as structured, documented records.
+                      Folio is where interior designers publish work, manage
+                      procurement, and keep every vendor communication organized
+                      &mdash; from first quote to final install.
                     </p>
                   </motion.div>
 
@@ -175,26 +174,26 @@ export function LandingModal() {
                       What You Get
                     </p>
                     <h3 className="font-headline italic text-2xl md:text-3xl text-folio-text-primary mb-6">
-                      Built around your work. Not theirs.
+                      One platform for the whole studio.
                     </h3>
-                    <div className="space-y-3">
-                      {pillars.map((pillar, i) => (
-                        <Link
+                    <div className="space-y-2">
+                      {whatYouGet.map((label, i) => (
+                        <p
                           key={i}
-                          href={pillar.href}
-                          onClick={handleClose}
-                          className="flex items-baseline gap-3 group py-2 border-b border-folio-border-subtle last:border-b-0 transition-colors hover:bg-black/[0.02] -mx-2 px-2 rounded-lg"
+                          className="text-sm text-folio-text-primary leading-relaxed"
                         >
-                          <span className="uppercase tracking-widest text-[10px] text-folio-text-tertiary whitespace-nowrap min-w-[100px]">
-                            {pillar.label}
-                          </span>
-                          <span className="font-headline italic text-base text-folio-text-primary group-hover:text-[var(--accent)] transition-colors">
-                            {pillar.title}
-                          </span>
-                          <span className="text-folio-text-tertiary text-sm ml-auto shrink-0">&rarr;</span>
-                        </Link>
+                          <span style={{ color: "#c9a96e" }}>&#10022;</span>
+                          {" "}{label}
+                        </p>
                       ))}
                     </div>
+                    <Link
+                      href="/for-designers"
+                      onClick={handleClose}
+                      className="inline-block mt-4 text-sm font-medium text-[var(--accent)] hover:text-[var(--accent-hover)] transition-colors"
+                    >
+                      Explore all features &rarr;
+                    </Link>
                   </motion.div>
 
                   {/* Divider */}
