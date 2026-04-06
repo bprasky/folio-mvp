@@ -1,11 +1,12 @@
+import { cache } from 'react';
 import { prisma } from '@/lib/prisma';
 import { Product } from '@/lib/mock/product';
-import { MOCK_PRODUCT } from '@/lib/mock/product';
 
 /**
- * Fetch a product from the database by ID and convert to UI format
+ * Fetch a product from the database by ID and convert to UI format.
+ * Wrapped with React cache() for request deduplication (generateMetadata + page component).
  */
-export async function getProductById(id: string): Promise<Product | null> {
+export const getProductById = cache(async (id: string): Promise<Product | null> => {
   const productFromDB = await prisma.product.findUnique({
     where: { id },
     include: {
@@ -22,48 +23,26 @@ export async function getProductById(id: string): Promise<Product | null> {
     return null;
   }
 
-  console.log('🧠 Product name from DB:', productFromDB.name);
-
-  // Convert DB product to UI format
-  // Use mock product as defaults for optional fields, but DB values override
   const product: Product = {
-    // Start with mock defaults for fields that might not be in DB
-    ...MOCK_PRODUCT,
-    
-    // Override with real DB data
     id: productFromDB.id,
-    slug: productFromDB.id, // Use id as slug
-    name: productFromDB.name, // ✅ Real name from DB
-    brand: productFromDB.brand || productFromDB.vendor?.name || "Unknown",
+    slug: productFromDB.id,
+    name: productFromDB.name,
+    brand: productFromDB.brand || productFromDB.vendor?.name || "",
     description: productFromDB.description || "",
-    
-    // Assets - use imageUrl from DB if available
-    assets: productFromDB.imageUrl 
+    assets: productFromDB.imageUrl
       ? [{ type: "image" as const, src: productFromDB.imageUrl, alt: productFromDB.name }]
-      : MOCK_PRODUCT.assets,
-    
-    // TODO: Parse these from DB when available
-    materials: [], // Parse from DB or leave empty
-    finish: "", // Parse from DB or leave empty
-    dimensions: MOCK_PRODUCT.dimensions, // Use mock defaults for now
+      : [],
+    materials: [],
+    finish: "",
+    dimensions: { w: 0, d: 0, h: 0, units: "in" },
     sku: productFromDB.brand || "",
     leadTime: undefined,
     weight: undefined,
-    
-    // Files - use mock defaults for now
-    files: MOCK_PRODUCT.files,
-    
-    // Social/engagement - use mock defaults (TODO: fetch from analytics)
-    inspiration: MOCK_PRODUCT.inspiration,
-    insights: MOCK_PRODUCT.insights,
-    related: MOCK_PRODUCT.related,
+    files: { specSheets: [], _3d: [] },
+    inspiration: [],
+    insights: { saves: 0, tags: 0, saveToTagPct: 0, topRooms: [], topMarkets: [] },
+    related: [],
   };
 
-  console.log('🎭 Product name in returned object:', product.name);
-
   return product;
-}
-
-
-
-
+});

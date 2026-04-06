@@ -73,6 +73,27 @@ export async function PUT(
   { params }: { params: { productId: string } }
 ) {
   try {
+    // Authentication check
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Verify product exists and check permissions
+    const existingProduct = await prisma.product.findUnique({
+      where: { id: params.productId },
+      select: { vendorId: true },
+    });
+    if (!existingProduct) {
+      return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    }
+
+    const isAdmin = session.user.role === 'ADMIN';
+    const isVendorOwner = existingProduct.vendorId === session.user.id;
+    if (!isAdmin && !isVendorOwner) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     const body = await request.json();
     const {
       name,

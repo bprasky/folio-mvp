@@ -13,8 +13,8 @@ export function ProductPage({ product }: { product: Product }) {
     <div className="mx-auto max-w-7xl px-4 py-8">
       {/* Header */}
       <div className="flex flex-col gap-2">
-        <div className="text-2xl font-semibold text-[#1F2937]">{product.name}</div>
-        <div className="text-sm text-[#6B7280]">{product.brand} • {product.sku}</div>
+        <div className="text-2xl font-semibold text-folio-text-primary">{product.name}</div>
+        <div className="text-sm text-folio-text-secondary">{product.brand} • {product.sku}</div>
       </div>
 
       {/* Top grid */}

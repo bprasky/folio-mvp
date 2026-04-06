@@ -1,7 +1,31 @@
+import type { Metadata } from "next";
 import { ProductPage } from "@/components/product/ProductPage";
 import { CinematicProductPage } from "@/components/product/CinematicProductPage";
 import { getProductById } from "@/lib/products/getProductById";
 import { notFound } from "next/navigation";
+
+export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
+  const product = await getProductById(params.slug);
+  if (!product) return { title: "Product Not Found | Folio" };
+
+  const vendorName = product.brand || null;
+  const title = vendorName
+    ? `${product.name} by ${vendorName} | Folio`
+    : `${product.name} | Folio`;
+  const description = product.description
+    || `Discover ${product.name}${vendorName ? ` by ${vendorName}` : ""} — sourced and tagged by the design community on Folio.`;
+  const ogImage = product.assets[0]?.src || null;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      ...(ogImage && { images: [{ url: ogImage }] }),
+    },
+  };
+}
 
 export default async function ProductRoute({ params }: { params: { slug: string } }) {
   // Fetch real product from database
@@ -11,8 +35,6 @@ export default async function ProductRoute({ params }: { params: { slug: string 
     notFound();
   }
 
-  console.log('🎭 Product name in component props:', product.name);
-  
   // Feature flag for cinematic layout
   const useCinematicLayout = process.env.NEXT_PUBLIC_FEATURE_CINEMATIC_PRODUCT === "1";
   

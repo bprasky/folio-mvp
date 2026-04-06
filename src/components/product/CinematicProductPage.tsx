@@ -10,6 +10,7 @@ import { Gallery } from "./Gallery";
 import { InsightsPanel } from "./InsightsPanel";
 import { SpecPanel } from "./SpecPanel";
 import { DownloadsPanel } from "./DownloadsPanel";
+import { DesignerTestimonials } from "./DesignerTestimonials";
 import CinematicBackground from "./CinematicBackground";
 import { motion } from "framer-motion";
 
@@ -208,6 +209,11 @@ export function CinematicProductPage({ product }: CinematicProductPageProps) {
           {/* Inspiration Grid */}
           <div className="lg:pr-80">
             <EditorialInspirationGrid items={product.inspiration} />
+          </div>
+
+          {/* Testimonials */}
+          <div className="lg:pr-80">
+            <DesignerTestimonials productId={product.id} />
           </div>
 
           {/* Related Products */}
