@@ -20,6 +20,7 @@
 
 import MagazinePage from "@/components/magazine/MagazinePage";
 import { WelcomeModal } from "@/components/marketing/WelcomeModal";
+import { FoundingCTABar } from "@/components/marketing/FoundingCTABar";
 
 // Force dynamic rendering to prevent caching of product data
 export const dynamic = 'force-dynamic';
@@ -38,6 +39,7 @@ export default async function Page({ searchParams }: MagazinePageProps) {
     <>
       <MagazinePage editionSlug={edition} />
       <WelcomeModal />
+      <FoundingCTABar />
     </>
   );
 }
