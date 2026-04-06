@@ -21,6 +21,14 @@ export interface SourcebookEntry {
   lastUsedAt: Date;
   tagCount: number;
 
+  // Resolved image (catalog → project tag → placeholder)
+  resolvedImage: {
+    url: string | null;
+    type: 'catalog' | 'project' | 'placeholder';
+    focalX?: number;
+    focalY?: number;
+  };
+
   // Sourcebook-specific fields (from SourcebookEntry model, lazy-created)
   sourcebookEntryId: string | null;
   notes: string | null;

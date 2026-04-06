@@ -46,6 +46,7 @@ export async function getSourcebookEntries(
         },
         image: {
           select: {
+            url: true,
             projectId: true,
             room: true,
             project: {
@@ -72,16 +73,26 @@ export async function getSourcebookEntries(
       }>;
       lastUsedAt: Date;
       tagCount: number;
+      // Best project tag image (most recent tag with a valid image URL)
+      bestTagImage: { url: string; x: number; y: number; createdAt: Date } | null;
     }>();
 
     productTags.forEach(tag => {
       const existing = productMap.get(tag.productId);
       const projectKey = `${tag.image.projectId}-${tag.image.room || 'no-room'}`;
 
+      // Track the most recent tag with a valid image URL for fallback
+      const tagImageCandidate = tag.image.url
+        ? { url: tag.image.url, x: tag.x, y: tag.y, createdAt: tag.createdAt }
+        : null;
+
       if (existing) {
         existing.tagCount += 1;
         if (tag.createdAt > existing.lastUsedAt) {
           existing.lastUsedAt = tag.createdAt;
+        }
+        if (tagImageCandidate && (!existing.bestTagImage || tag.createdAt > existing.bestTagImage.createdAt)) {
+          existing.bestTagImage = tagImageCandidate;
         }
         if (!existing.projects.has(projectKey)) {
           existing.projects.set(projectKey, {
@@ -100,6 +111,7 @@ export async function getSourcebookEntries(
           }]]),
           lastUsedAt: tag.createdAt,
           tagCount: 1,
+          bestTagImage: tagImageCandidate,
         });
       }
     });
@@ -206,12 +218,28 @@ export async function getSourcebookEntries(
         const category = inferCategory(item.product.name, item.product.category);
         const sbEntry = sourcebookMap.get(item.product.id);
 
+        // Resolve image: catalog → project tag → placeholder
+        let resolvedImage: SourcebookEntry['resolvedImage'];
+        if (item.product.imageUrl) {
+          resolvedImage = { url: item.product.imageUrl, type: 'catalog' };
+        } else if (item.bestTagImage) {
+          resolvedImage = {
+            url: item.bestTagImage.url,
+            type: 'project',
+            focalX: item.bestTagImage.x,
+            focalY: item.bestTagImage.y,
+          };
+        } else {
+          resolvedImage = { url: null, type: 'placeholder' };
+        }
+
         return {
           productId: item.product.id,
           productName: item.product.name,
           productBrand: item.product.brand,
           productCategory: category,
           productImageUrl: item.product.imageUrl,
+          resolvedImage,
           projects: Array.from(item.projects.values()),
           repEmail: repInfo?.email || null,
           repName: repInfo?.name || null,

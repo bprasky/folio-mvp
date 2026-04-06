@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { RidgeCard } from '@/components/ui/ridge-card';
 import { Button } from '@/components/ui/button';
-import SourcebookCard from './SourcebookCard';
+import SourcebookGridCard from '@/components/designer/sourcebook/SourcebookGridCard';
+import SourcebookFilters from '@/components/designer/sourcebook/SourcebookFilters';
 import NotesModal from './NotesModal';
 import UseInProjectModal from './UseInProjectModal';
 import RequestSampleModal from './RequestSampleModal';
@@ -14,7 +14,7 @@ import type {
   SourcebookEntry,
   SourcebookSortField,
   SortDirection,
-  SourcebookFilters,
+  SourcebookFilters as SourcebookFiltersType,
   SourcebookStats,
 } from '@/types/sourcebook';
 
@@ -29,12 +29,11 @@ export default function SourcebookPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [filters, setFilters] = useState<SourcebookFilters>({});
+  const [filters, setFilters] = useState<SourcebookFiltersType>({});
   const [sortField, setSortField] = useState<SourcebookSortField>('lastUsedAt');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [searchTerm, setSearchTerm] = useState('');
   const [showArchived, setShowArchived] = useState(false);
-  const [showFilters, setShowFilters] = useState(false);
 
   // Modal state
   const [notesModal, setNotesModal] = useState<SourcebookEntry | null>(null);
@@ -53,7 +52,6 @@ export default function SourcebookPage() {
 
   const handleRepSelected = (repUserId: string) => {
     setSelectedRepUserId(repUserId);
-    // Re-open the original action modal with the selected rep
     if (resolverModal) {
       if (resolverActionType === 'SAMPLE_REQUEST') setSampleModal(resolverModal);
       else if (resolverActionType === 'QUOTE_REQUEST') setQuoteModal(resolverModal);
@@ -80,7 +78,6 @@ export default function SourcebookPage() {
   const handleSendViaFolio = async (recipientName: string, recipientEmail: string) => {
     if (!resolverModal) return;
 
-    // Build payload based on the current action type and modal data
     const payload: Record<string, unknown> = {
       type: resolverActionType,
       productId: resolverModal.productId,
@@ -113,7 +110,6 @@ export default function SourcebookPage() {
 
   const handleRequestSent = (conversationId: string) => {
     setSelectedRepUserId(undefined);
-    // Could show a toast or navigate to inbox
     window.location.href = `/inbox/${conversationId}`;
   };
 
@@ -203,7 +199,7 @@ export default function SourcebookPage() {
     }
   };
 
-  const handleFilterChange = (key: keyof SourcebookFilters, value: string) => {
+  const handleFilterChange = (key: keyof SourcebookFiltersType, value: string) => {
     const newFilters = { ...filters };
     if (value === '') {
       delete newFilters[key];
@@ -226,7 +222,6 @@ export default function SourcebookPage() {
       body: JSON.stringify({ productId, notes }),
     });
     if (res.ok) {
-      // Update local state optimistically
       setEntries(prev =>
         prev.map(e =>
           e.productId === productId ? { ...e, notes } : e
@@ -242,7 +237,6 @@ export default function SourcebookPage() {
       body: JSON.stringify({ productId, archived }),
     });
     if (res.ok) {
-      // Remove from current view if archiving (unless viewing archived)
       if (archived && !showArchived) {
         setEntries(prev => prev.filter(e => e.productId !== productId));
       } else {
@@ -252,7 +246,6 @@ export default function SourcebookPage() {
           )
         );
       }
-      // Refresh stats
       loadSourcebook();
     }
   };
@@ -276,188 +269,67 @@ export default function SourcebookPage() {
 
   const hasActiveFilters = Object.keys(filters).length > 0 || searchTerm.length > 0 || showArchived;
 
-  const SORT_OPTIONS: { value: SourcebookSortField; label: string }[] = [
-    { value: 'lastUsedAt', label: 'Recently Used' },
-    { value: 'projectCount', label: 'Most Used' },
-    { value: 'productBrand', label: 'Vendor A\u2013Z' },
-    { value: 'productName', label: 'Product A\u2013Z' },
-    { value: 'tagCount', label: 'Tag Count' },
-  ];
-
   return (
     <div className="min-h-screen bg-surface-canvas p-6">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="folio-h1 text-folio-text-primary mb-3">Sourcebook</h1>
-          <p className="folio-body text-folio-text-secondary">
-            Your product specification catalog — every product you&apos;ve tagged across all projects.
+        <div className="mb-4">
+          <h1 className="folio-h1 text-folio-text-primary mb-2">Sourcebook</h1>
+          <p className="text-[13px] text-folio-text-tertiary">
+            {stats.totalProducts} products &middot; {stats.totalVendors} vendors &middot; {stats.totalProjects} projects
           </p>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <div className="glass-surface rounded-xl p-4">
-            <div className="text-folio-text-tertiary text-sm mb-1 font-medium">Products</div>
-            <div className="text-2xl font-semibold text-folio-text-primary" style={{ fontFamily: 'var(--font-serif)' }}>
-              {stats.totalProducts}
-            </div>
-          </div>
-          <div className="glass-surface rounded-xl p-4">
-            <div className="text-folio-text-tertiary text-sm mb-1 font-medium">Vendors</div>
-            <div className="text-2xl font-semibold text-folio-text-primary" style={{ fontFamily: 'var(--font-serif)' }}>
-              {stats.totalVendors}
-            </div>
-          </div>
-          <div className="glass-surface rounded-xl p-4">
-            <div className="text-folio-text-tertiary text-sm mb-1 font-medium">Projects</div>
-            <div className="text-2xl font-semibold text-folio-text-primary" style={{ fontFamily: 'var(--font-serif)' }}>
-              {stats.totalProjects}
-            </div>
-          </div>
-          <div className="glass-surface rounded-xl p-4">
-            <div className="text-folio-text-tertiary text-sm mb-1 font-medium">Archived</div>
-            <div className="text-2xl font-semibold text-folio-text-primary" style={{ fontFamily: 'var(--font-serif)' }}>
-              {stats.archivedCount}
-            </div>
-          </div>
-        </div>
+        {/* Filter bar */}
+        <SourcebookFilters
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          filters={filters}
+          onFilterChange={handleFilterChange}
+          sortField={sortField}
+          onSortChange={handleSort}
+          showArchived={showArchived}
+          onShowArchivedChange={setShowArchived}
+          uniqueVendors={uniqueVendors}
+          uniqueCategories={uniqueCategories}
+          uniqueProjects={uniqueProjects}
+        />
 
-        {/* Search + Sort Bar */}
-        <div className="flex flex-col sm:flex-row gap-3 mb-4">
-          <div className="flex-grow relative">
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') loadSourcebook(); }}
-              placeholder="Search products, vendors, projects..."
-              className="w-full px-4 py-2.5 pl-10 bg-white border border-folio-border-subtle rounded-lg text-folio-text-primary placeholder-[#A39E97] focus:outline-none focus:border-folio-border-strong focus:shadow-[0_0_0_3px_rgba(0,0,0,0.03)] transition-all"
-            />
-            <svg
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-folio-text-tertiary"
-              fill="none" stroke="currentColor" viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
+        {/* Entry Grid */}
+        {loading ? (
+          <div className="text-center py-20">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent)]" />
+            <p className="mt-4 text-[13px] text-folio-text-secondary">Loading sourcebook...</p>
           </div>
-
-          <select
-            value={sortField}
-            onChange={(e) => handleSort(e.target.value as SourcebookSortField)}
-            className="px-3 py-2.5 bg-white border border-folio-border-subtle rounded-lg text-sm text-folio-text-primary focus:outline-none focus:border-folio-border-strong transition-all"
-          >
-            {SORT_OPTIONS.map(opt => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
-            ))}
-          </select>
-        </div>
-
-        {/* Filters */}
-        <div className="glass-surface rounded-xl p-4 mb-6">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => setShowFilters(!showFilters)}
-                className="text-sm text-folio-text-secondary hover:text-folio-text-primary transition-colors font-medium"
-              >
-                {showFilters ? 'Hide Filters' : 'Show Filters'}
-              </button>
-              <label className="flex items-center gap-2 text-sm text-folio-text-secondary">
-                <input
-                  type="checkbox"
-                  checked={showArchived}
-                  onChange={(e) => setShowArchived(e.target.checked)}
-                  className="accent-[var(--accent)]"
-                />
-                Show Archived
-              </label>
-            </div>
-            {hasActiveFilters && (
+        ) : error ? (
+          <div className="text-center py-20">
+            <p className="text-red-600 mb-4 text-[13px]">{error}</p>
+            <Button variant="ridge" onClick={loadSourcebook}>Retry</Button>
+          </div>
+        ) : sortedEntries.length === 0 ? (
+          <div className="text-center py-20">
+            <p className="text-[14px] text-folio-text-secondary mb-4">
+              {hasActiveFilters
+                ? 'No products matching these filters.'
+                : 'Your Sourcebook builds itself as you tag products in projects.'}
+            </p>
+            {hasActiveFilters ? (
               <button
                 onClick={clearFilters}
-                className="text-sm text-folio-text-tertiary hover:text-folio-text-secondary transition-colors"
+                className="text-[13px] text-[#c9a96e] hover:underline"
               >
-                Clear All
+                Clear Filters
               </button>
-            )}
-          </div>
-
-          {showFilters && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm text-folio-text-tertiary mb-1 font-medium">Vendor</label>
-                <select
-                  value={filters.vendor || ''}
-                  onChange={(e) => handleFilterChange('vendor', e.target.value)}
-                  className="w-full px-3 py-2 bg-white border border-folio-border-subtle rounded-lg text-folio-text-primary focus:outline-none focus:border-folio-border-strong transition-all"
-                >
-                  <option value="">All Vendors</option>
-                  {uniqueVendors.map(v => (
-                    <option key={v} value={v}>{v}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm text-folio-text-tertiary mb-1 font-medium">Project</label>
-                <select
-                  value={filters.project || ''}
-                  onChange={(e) => handleFilterChange('project', e.target.value)}
-                  className="w-full px-3 py-2 bg-white border border-folio-border-subtle rounded-lg text-folio-text-primary focus:outline-none focus:border-folio-border-strong transition-all"
-                >
-                  <option value="">All Projects</option>
-                  {uniqueProjects.map(p => (
-                    <option key={p.projectId} value={p.projectId}>{p.projectTitle}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm text-folio-text-tertiary mb-1 font-medium">Category</label>
-                <select
-                  value={filters.category || ''}
-                  onChange={(e) => handleFilterChange('category', e.target.value)}
-                  className="w-full px-3 py-2 bg-white border border-folio-border-subtle rounded-lg text-folio-text-primary focus:outline-none focus:border-folio-border-strong transition-all"
-                >
-                  <option value="">All Categories</option>
-                  {uniqueCategories.map(c => (
-                    <option key={c} value={c}>{c}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Entry List */}
-        {loading ? (
-          <RidgeCard padding="xl" className="text-center">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent)]" />
-            <p className="mt-4 folio-body text-folio-text-secondary">Loading sourcebook...</p>
-          </RidgeCard>
-        ) : error ? (
-          <RidgeCard padding="xl" className="text-center">
-            <p className="text-red-600 mb-4">{error}</p>
-            <Button variant="ridge" onClick={loadSourcebook}>Retry</Button>
-          </RidgeCard>
-        ) : sortedEntries.length === 0 ? (
-          <RidgeCard padding="xl" className="text-center">
-            <p className="folio-body text-folio-text-secondary mb-4">
-              {hasActiveFilters
-                ? 'No products found matching your filters.'
-                : "You haven\u2019t tagged any products yet."}
-            </p>
-            {!hasActiveFilters && (
+            ) : (
               <a href="/designer">
-                <Button variant="accent">Start Tagging Products</Button>
+                <Button variant="accent">Go to Projects &rarr;</Button>
               </a>
             )}
-          </RidgeCard>
+          </div>
         ) : (
-          <div className="space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {sortedEntries.map(entry => (
-              <SourcebookCard
+              <SourcebookGridCard
                 key={entry.productId}
                 entry={entry}
                 onEditNotes={setNotesModal}
