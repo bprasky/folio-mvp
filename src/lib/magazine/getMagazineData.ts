@@ -33,6 +33,7 @@ export interface MagazineProduct {
   name: string;
   imageUrl?: string | null;
   cutoutImageUrl?: string | null;
+  cropUrl?: string | null;
   vendorName?: string | null;
   // etc.
 }
@@ -92,6 +93,7 @@ export async function getMagazineData(
               // Also fetch product tags from images for cutout display
               tags: {
                 select: {
+                  cropUrl: true,
                   product: {
                     select: {
                       id: true,
@@ -218,8 +220,12 @@ export async function getMagazineData(
               name: tag.product.name,
               imageUrl: tag.product.imageUrl ?? null,
               cutoutImageUrl: tag.product.cutoutImageUrl ?? null,
+              cropUrl: tag.cropUrl ?? null,
               vendorName: tag.product.vendor?.name ?? tag.product.vendor?.companyName ?? null,
             });
+          } else if (tag.product && tag.cropUrl && !productMap.get(tag.product.id)?.cropUrl) {
+            // Prefer a tag that has a cropUrl
+            productMap.get(tag.product.id)!.cropUrl = tag.cropUrl;
           }
         }
       }
@@ -257,6 +263,7 @@ export async function getMagazineData(
             name: product.name,
             imageUrl: product.imageUrl ?? null,
             cutoutImageUrl: product.cutoutImageUrl ?? null,
+            cropUrl: null,
             vendorName: product.vendor?.name ?? product.vendor?.companyName ?? null,
           });
         }
@@ -264,7 +271,14 @@ export async function getMagazineData(
     }
   }
 
-  const heroProducts: MagazineProduct[] = Array.from(productMap.values());
+  // Sort: products with images first; filter out products with no image at all
+  const heroProducts: MagazineProduct[] = Array.from(productMap.values())
+    .sort((a, b) => {
+      const aHas = !!(a.imageUrl || a.cropUrl);
+      const bHas = !!(b.imageUrl || b.cropUrl);
+      return aHas === bHas ? 0 : aHas ? -1 : 1;
+    })
+    .filter(p => !!(p.imageUrl || p.cutoutImageUrl || p.cropUrl));
 
   // Debug logging to verify cutout data
   if (heroProducts.length > 0) {

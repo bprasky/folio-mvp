@@ -11,6 +11,7 @@
 interface ProductImageFields {
   imageUrl?: string | null;
   cutoutImageUrl?: string | null;
+  cropUrl?: string | null;
   primaryImageUrl?: string | null;
   thumbnailUrl?: string | null;
 }
@@ -41,14 +42,16 @@ interface GetProductDisplayImageOptions {
  * 1. primaryImageUrl
  * 2. imageUrl
  * 3. thumbnailUrl
- * 4. placeholder
+ * 4. cropUrl (cropped region from designer's tagged project photo)
+ * 5. placeholder
  *
  * Fallback order (when use2DCutout is true):
  * 1. cutoutImageUrl (2D cutout from Roboflow SAM3)
  * 2. primaryImageUrl
  * 3. imageUrl
  * 4. thumbnailUrl
- * 5. placeholder
+ * 5. cropUrl (cropped region from designer's tagged project photo)
+ * 6. placeholder
  *
  * @param product - Product object with image URL fields
  * @param options - Configuration options
@@ -91,6 +94,11 @@ export function getProductDisplayImage(
 
   if (isValidUrl(product.thumbnailUrl)) {
     return product.thumbnailUrl!;
+  }
+
+  // Fallback: cropped region from designer's tagged project photo
+  if (isValidUrl(product.cropUrl)) {
+    return product.cropUrl!;
   }
 
   return placeholder;
