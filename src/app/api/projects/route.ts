@@ -19,18 +19,28 @@ export async function GET(request: NextRequest) {
   try {
     const url = new URL(request.url);
     const designerId = url.searchParams.get('designerId');
+    const mine = url.searchParams.get('mine') === 'true';
     const includeDrafts = url.searchParams.get('includeDrafts') === 'true';
-    
+
     const whereClause: any = {};
-    
-    // Filter projects by designer if specified
-    if (designerId) {
-      whereClause.designerId = designerId;
-    }
-    
-    // Filter out drafts unless specifically requested
-    if (!includeDrafts) {
-      whereClause.status = { not: 'draft' };
+
+    if (mine) {
+      // Fetch current user's own projects (includes drafts)
+      const session = await getServerSession(authOptions);
+      if (!session?.user?.id) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+      whereClause.designerId = session.user.id;
+    } else {
+      // Filter projects by designer if specified
+      if (designerId) {
+        whereClause.designerId = designerId;
+      }
+
+      // Filter out drafts unless specifically requested
+      if (!includeDrafts) {
+        whereClause.status = { not: 'draft' };
+      }
     }
     
     const projects = await prisma.project.findMany({
