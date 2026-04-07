@@ -85,7 +85,7 @@ export async function POST(
         projectId,
         productId: tag.productId,
         buffer: result.glbBuffer,
-        mime: 'model/gltf-binary',
+        mime: 'application/octet-stream',
       }),
       uploadGeneratedMask({
         projectId,
