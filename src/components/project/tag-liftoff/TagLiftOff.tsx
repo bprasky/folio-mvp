@@ -1,17 +1,19 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { AnimatePresence, motion } from 'framer-motion';
 import { MaskHighlight } from './MaskHighlight';
 import { CutoutLayer } from './CutoutLayer';
 import { ProductInfoPanel } from './ProductInfoPanel';
+import { ProductExpandModal } from './ProductExpandModal';
+import { isMeshableCategory } from '@/lib/three-d/categories';
 
 const MeshLayer = dynamic(() => import('./MeshLayer'), { ssr: false });
 
 export type LiftOffState = 'resting' | 'hover' | 'lifted' | 'inspect' | 'dismissing';
 
-export type InteractionTier = 'full-3d' | 'mask-only' | 'tooltip-only' | 'loading';
+export type InteractionTier = 'full-3d' | 'mask-only' | 'expand-2d' | 'tooltip-only' | 'loading';
 
 export interface LiftOffTag {
   id: string;
@@ -20,6 +22,7 @@ export interface LiftOffTag {
   productId?: string;
   vendorName?: string | null;
   thumbnailUrl?: string | null;
+  category?: string | null;
   mesh3dUrl?: string | null;
   meshMaskUrl?: string | null;
   meshStatus?: string | null;
@@ -27,6 +30,9 @@ export interface LiftOffTag {
 }
 
 export function getInteractionTier(tag: LiftOffTag): InteractionTier {
+  // Flat/2D products always get the expand modal, never 3D
+  if (!isMeshableCategory(tag.category)) return 'expand-2d';
+  // Meshable products: check for 3D data
   if (tag.meshStatus === 'processing') return 'loading';
   if (tag.mesh3dUrl && tag.meshMaskUrl) return 'full-3d';
   if (tag.meshMaskUrl) return 'mask-only';
@@ -44,11 +50,9 @@ interface TagLiftOffProps {
 }
 
 /**
- * Orchestrates the tag lift-off interaction:
- *   resting → hover (mask highlight) → lifted (cutout rises) → inspect (3D mesh) → dismiss
- *
- * For tags without mesh/mask data, this component renders nothing and the
- * existing tooltip behavior in ImageTagDots takes over.
+ * Orchestrates tag interactions:
+ *   - 3D products: hover (mask highlight) → lifted (cutout rises) → inspect (3D mesh) → dismiss
+ *   - 2D products: click opens expand modal with product image + quick actions
  */
 export function TagLiftOff({
   tag,
@@ -62,9 +66,11 @@ export function TagLiftOff({
   const tier = getInteractionTier(tag);
   const [state, setState] = useState<LiftOffState>('resting');
   const [meshLoaded, setMeshLoaded] = useState(false);
+  const [expandModalOpen, setExpandModalOpen] = useState(false);
 
-  // Sync external hover/lift state into local state machine
+  // Sync external hover/lift state into local state machine (3D tiers only)
   useEffect(() => {
+    if (tier === 'expand-2d') return; // Modal handles its own state
     if (isLifted) {
       if (tier === 'full-3d') {
         setState(meshLoaded ? 'inspect' : 'lifted');
@@ -87,19 +93,46 @@ export function TagLiftOff({
     }
   }, [meshLoaded, isLifted, state]);
 
-  // Escape key dismisses
+  // Escape key dismisses (3D tiers)
   useEffect(() => {
-    if (!isLifted) return;
+    if (!isLifted || tier === 'expand-2d') return;
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onDismiss();
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isLifted, onDismiss]);
+  }, [isLifted, onDismiss, tier]);
+
+  // Open expand modal when 2D product is "lifted" (clicked)
+  useEffect(() => {
+    if (tier === 'expand-2d' && isLifted && !expandModalOpen) {
+      setExpandModalOpen(true);
+    }
+  }, [tier, isLifted, expandModalOpen]);
 
   // tooltip-only tier — render nothing, let ImageTagDots tooltip handle it
   if (tier === 'tooltip-only') return null;
 
+  // expand-2d tier — render the expand modal
+  if (tier === 'expand-2d') {
+    return (
+      <ProductExpandModal
+        isOpen={expandModalOpen}
+        onClose={() => {
+          setExpandModalOpen(false);
+          onDismiss();
+        }}
+        imageUrl={tag.thumbnailUrl || tag.cutoutImageUrl}
+        name={tag.label}
+        vendorName={tag.vendorName}
+        href={tag.href}
+        productId={tag.productId}
+        onAddToProject={onAddToProject}
+      />
+    );
+  }
+
+  // 3D tiers: full-3d, mask-only, loading
   const showMaskHighlight = state === 'hover' || state === 'lifted' || state === 'inspect';
   const showCutout = (state === 'lifted' || state === 'inspect' || state === 'dismissing') && tag.meshMaskUrl;
   const showMesh = (state === 'inspect' || (state === 'lifted' && tier === 'full-3d')) && tag.mesh3dUrl;
@@ -115,7 +148,7 @@ export function TagLiftOff({
         />
       )}
 
-      {/* Contact shadow where the product was (on the photo) */}
+      {/* Contact shadow where the product was */}
       <AnimatePresence>
         {showCutout && (
           <motion.div

@@ -20,7 +20,8 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 // Categories where 3D reconstruction produces poor results — skip by default
-const LOW_QUALITY_CATEGORIES = ['tile', 'textile', 'fabric', 'paint', 'wallpaper'];
+// Matches FLAT_CATEGORIES from src/lib/three-d/categories.ts
+const LOW_QUALITY_CATEGORIES = ['TEXTILES', 'MATERIALS', 'ART', 'OTHER', 'tile', 'textile', 'fabric', 'paint', 'wallpaper'];
 
 async function main() {
   const limitArg = process.argv.find((a) => a.startsWith('--limit='));
