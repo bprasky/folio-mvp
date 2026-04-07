@@ -34,7 +34,7 @@ export default function DemoFlowNavigation() {
 
   return (
     <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-40">
-      <div className="bg-white rounded-2xl shadow-lg border border-folio-border-subtle px-4 py-3">
+      <div className="bg-surface-canvas rounded-2xl shadow-lg border border-folio-border-subtle px-4 py-3">
         <div className="flex items-center gap-6">
           {navItems.map((item) => {
             const Icon = item.icon;

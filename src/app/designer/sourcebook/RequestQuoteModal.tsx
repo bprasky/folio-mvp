@@ -129,7 +129,7 @@ export default function RequestQuoteModal({
                 min={1}
                 value={quantity}
                 onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                className="w-full px-3 py-2 bg-white border border-folio-border-subtle rounded-lg text-folio-text-primary focus:outline-none focus:border-folio-border-strong transition-all"
+                className="w-full px-3 py-2 bg-surface-canvas border border-folio-border-subtle rounded-lg text-folio-text-primary focus:outline-none focus:border-folio-border-strong transition-all"
               />
             </div>
 
@@ -140,7 +140,7 @@ export default function RequestQuoteModal({
               <select
                 value={timeline}
                 onChange={(e) => setTimeline(e.target.value as typeof timeline)}
-                className="w-full px-3 py-2 bg-white border border-folio-border-subtle rounded-lg text-folio-text-primary focus:outline-none focus:border-folio-border-strong transition-all"
+                className="w-full px-3 py-2 bg-surface-canvas border border-folio-border-subtle rounded-lg text-folio-text-primary focus:outline-none focus:border-folio-border-strong transition-all"
               >
                 <option value="urgent">Urgent</option>
                 <option value="2-4_weeks">2–4 weeks</option>
@@ -156,7 +156,7 @@ export default function RequestQuoteModal({
             <select
               value={selectedProjectId}
               onChange={(e) => handleProjectChange(e.target.value)}
-              className="w-full px-3 py-2 bg-white border border-folio-border-subtle rounded-lg text-folio-text-primary focus:outline-none focus:border-folio-border-strong transition-all"
+              className="w-full px-3 py-2 bg-surface-canvas border border-folio-border-subtle rounded-lg text-folio-text-primary focus:outline-none focus:border-folio-border-strong transition-all"
             >
               <option value="">Select a project...</option>
               {projects.map(p => (
@@ -174,7 +174,7 @@ export default function RequestQuoteModal({
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Specific finish, custom dimensions, trade pricing..."
               rows={3}
-              className="w-full px-3 py-2 bg-white border border-folio-border-subtle rounded-lg text-folio-text-primary placeholder-[#A39E97] focus:outline-none focus:border-folio-border-strong transition-all resize-none"
+              className="w-full px-3 py-2 bg-surface-canvas border border-folio-border-subtle rounded-lg text-folio-text-primary placeholder-[#A39E97] focus:outline-none focus:border-folio-border-strong transition-all resize-none"
             />
           </div>
         </div>

@@ -140,7 +140,7 @@ export default function DashboardClient({ event }: { event: EventInfo }) {
         </div>
 
         {/* Arrival Timeline */}
-        <div className="bg-white rounded-xl border border-[var(--border-light,#e7e5e4)] p-4">
+        <div className="bg-surface-canvas rounded-xl border border-[var(--border-light,#e7e5e4)] p-4">
           <h2 className="text-sm font-medium text-[var(--text-primary,#1c1917)] mb-3">
             Arrival Timeline
           </h2>
@@ -148,7 +148,7 @@ export default function DashboardClient({ event }: { event: EventInfo }) {
         </div>
 
         {/* Product Scan Timeline */}
-        <div className="bg-white rounded-xl border border-[var(--border-light,#e7e5e4)] p-4">
+        <div className="bg-surface-canvas rounded-xl border border-[var(--border-light,#e7e5e4)] p-4">
           <h2 className="text-sm font-medium text-[var(--text-primary,#1c1917)] mb-3">
             Product Scan Timeline
           </h2>
@@ -156,7 +156,7 @@ export default function DashboardClient({ event }: { event: EventInfo }) {
         </div>
 
         {/* Attendee Table */}
-        <div className="bg-white rounded-xl border border-[var(--border-light,#e7e5e4)] p-4">
+        <div className="bg-surface-canvas rounded-xl border border-[var(--border-light,#e7e5e4)] p-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
             <div className="flex gap-1">
               {filters.map((f) => (
@@ -166,7 +166,7 @@ export default function DashboardClient({ event }: { event: EventInfo }) {
                   className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                     filter === f.key
                       ? "bg-stone-900 text-white"
-                      : "bg-stone-100 text-stone-600 hover:bg-stone-200"
+                      : "bg-surface-elevated text-folio-text-secondary hover:bg-surface-elevated"
                   }`}
                 >
                   {f.label}
@@ -183,18 +183,18 @@ export default function DashboardClient({ event }: { event: EventInfo }) {
           </div>
 
           {loading ? (
-            <p className="text-sm text-stone-400 text-center py-8">
+            <p className="text-sm text-folio-text-tertiary text-center py-8">
               Loading...
             </p>
           ) : attendees.length === 0 ? (
-            <p className="text-sm text-stone-400 text-center py-8">
+            <p className="text-sm text-folio-text-tertiary text-center py-8">
               No attendees match this filter.
             </p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-stone-100 text-left text-xs text-stone-500 uppercase tracking-wider">
+                  <tr className="border-b border-folio-border-subtle text-left text-xs text-folio-text-tertiary uppercase tracking-wider">
                     <th className="pb-2 pr-4">Name</th>
                     <th className="pb-2 pr-4 hidden md:table-cell">Org</th>
                     <th className="pb-2 pr-4 hidden md:table-cell">Role</th>
@@ -206,7 +206,7 @@ export default function DashboardClient({ event }: { event: EventInfo }) {
                   {attendees.map((a) => (
                     <tr
                       key={a.rsvpId}
-                      className="border-b border-stone-50 last:border-0"
+                      className="border-b border-folio-border-subtle last:border-0"
                     >
                       <td className="py-2.5 pr-4">
                         <div className="flex items-center gap-2">
@@ -217,7 +217,7 @@ export default function DashboardClient({ event }: { event: EventInfo }) {
                               className="w-7 h-7 rounded-full object-cover"
                             />
                           ) : (
-                            <div className="w-7 h-7 rounded-full bg-stone-200 flex items-center justify-center text-stone-500 text-xs font-medium">
+                            <div className="w-7 h-7 rounded-full bg-surface-elevated flex items-center justify-center text-folio-text-tertiary text-xs font-medium">
                               {a.name?.[0]?.toUpperCase() ?? "?"}
                             </div>
                           )}
@@ -226,10 +226,10 @@ export default function DashboardClient({ event }: { event: EventInfo }) {
                           </span>
                         </div>
                       </td>
-                      <td className="py-2.5 pr-4 text-stone-500 hidden md:table-cell truncate max-w-[120px]">
+                      <td className="py-2.5 pr-4 text-folio-text-tertiary hidden md:table-cell truncate max-w-[120px]">
                         {a.orgName || "—"}
                       </td>
-                      <td className="py-2.5 pr-4 text-stone-500 hidden md:table-cell">
+                      <td className="py-2.5 pr-4 text-folio-text-tertiary hidden md:table-cell">
                         {a.role}
                       </td>
                       <td className="py-2.5 pr-4">
@@ -240,10 +240,10 @@ export default function DashboardClient({ event }: { event: EventInfo }) {
                               : "In"}
                           </span>
                         ) : (
-                          <span className="text-xs text-stone-400">—</span>
+                          <span className="text-xs text-folio-text-tertiary">—</span>
                         )}
                       </td>
-                      <td className="py-2.5 text-stone-500">
+                      <td className="py-2.5 text-folio-text-tertiary">
                         {a.checkedInAt
                           ? formatTime(a.checkedInAt)
                           : "—"}
@@ -262,7 +262,7 @@ export default function DashboardClient({ event }: { event: EventInfo }) {
 
 function StatCard({ value, label }: { value: string; label: string }) {
   return (
-    <div className="bg-white rounded-xl border border-[var(--border-light,#e7e5e4)] p-4 text-center">
+    <div className="bg-surface-canvas rounded-xl border border-[var(--border-light,#e7e5e4)] p-4 text-center">
       <p className="text-2xl font-semibold text-[var(--text-primary,#1c1917)]">
         {value}
       </p>

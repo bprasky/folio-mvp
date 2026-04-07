@@ -45,7 +45,7 @@ export function CompactFunnel({ data, onFix }: {
   return (
     <TooltipProvider>
       <div className="chart-card p-4">
-        <div className="mb-2 font-semibold text-[#1F2937]">Compact Funnel</div>
+        <div className="mb-2 font-semibold text-folio-text-primary">Compact Funnel</div>
         <div className="h-key mb-3">Conversion by step (Actual • Cohort • Δ). Click a fix to queue an action.</div>
 
         <div className="grid grid-cols-[140px_1fr_1fr_1fr_120px] gap-y-2 items-center">
@@ -65,15 +65,15 @@ export function CompactFunnel({ data, onFix }: {
 
             return (
               <div key={r.key} className="contents">
-                <div className="text-sm text-[#1F2937] font-medium">{r.label}</div>
+                <div className="text-sm text-folio-text-primary font-medium">{r.label}</div>
 
                 {/* Actual */}
                 <div className="text-right">
-                  <span className="num font-semibold text-[#111827]">{pct(actual)}</span>
+                  <span className="num font-semibold text-folio-text-primary">{pct(actual)}</span>
                 </div>
 
                 {/* Cohort */}
-                <div className="text-right text-[#6B7280]">
+                <div className="text-right text-folio-text-secondary">
                   <span className="num">{pct(cohort)}</span>
                 </div>
 
@@ -108,7 +108,7 @@ export function CompactFunnel({ data, onFix }: {
                       </TooltipContent>
                     </Tooltip>
                   ) : (
-                    <span className="text-xs text-[#9CA3AF]">—</span>
+                    <span className="text-xs text-folio-text-tertiary">—</span>
                   )}
                 </div>
               </div>
@@ -119,7 +119,7 @@ export function CompactFunnel({ data, onFix }: {
         {/* Stage totals row */}
         <div className="mt-4 pt-3 border-t border-[var(--grid)] flex items-center justify-between">
           <div className="h-key">Stage totals</div>
-          <div className="num text-sm text-[#1F2937] space-x-4">
+          <div className="num text-sm text-folio-text-primary space-x-4">
             <span>Saves <strong>{data.steps.Saves.toLocaleString()}</strong></span>
             <span>•</span>
             <span>Boards <strong>{data.steps.Boards.toLocaleString()}</strong></span>

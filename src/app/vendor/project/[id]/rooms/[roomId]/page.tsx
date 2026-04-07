@@ -630,7 +630,7 @@ Total Selections: ${room.selections.length}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
-                className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-shadow relative"
+                className="bg-surface-canvas rounded-2xl shadow-lg p-6 hover:shadow-xl transition-shadow relative"
               >
                 {/* Spec Sheet Badge */}
                 {selection.specSheetUrl && (
@@ -759,7 +759,7 @@ Total Selections: ${room.selections.length}
               transition={{ delay: 0.2 }}
               className="text-center py-16"
             >
-              <div className="bg-white rounded-2xl p-8 shadow-lg max-w-md mx-auto">
+              <div className="bg-surface-canvas rounded-2xl p-8 shadow-lg max-w-md mx-auto">
                 <FaTag className="w-16 h-16 text-folio-text-tertiary mx-auto mb-4" />
                 <h3 className="text-xl font-bold text-folio-text-primary mb-2">No Selections Yet</h3>
                 <p className="text-folio-text-secondary mb-6">
@@ -789,7 +789,7 @@ Total Selections: ${room.selections.length}
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-white rounded-2xl p-6 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto"
+            className="bg-surface-canvas rounded-2xl p-6 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto"
           >
             <h3 className="text-xl font-bold text-folio-text-primary mb-4">
               {editingSelection ? 'Edit Selection' : 'Add Selection'}
@@ -1022,7 +1022,7 @@ Total Selections: ${room.selections.length}
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-white rounded-2xl p-6 w-full max-w-md mx-4"
+            className="bg-surface-canvas rounded-2xl p-6 w-full max-w-md mx-4"
           >
             <h3 className="text-xl font-bold text-folio-text-primary mb-4">Add Quote</h3>
             <div className="space-y-4">
@@ -1109,7 +1109,7 @@ Total Selections: ${room.selections.length}
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-white rounded-2xl p-6 w-full max-w-md mx-4"
+            className="bg-surface-canvas rounded-2xl p-6 w-full max-w-md mx-4"
           >
             <h3 className="text-xl font-bold text-folio-text-primary mb-4">Upload Photo</h3>
             <input

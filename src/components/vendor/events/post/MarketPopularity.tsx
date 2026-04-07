@@ -33,8 +33,8 @@ export function MarketPopularity({ data, onHover }: MarketPopularityProps) {
       {data.map((market, index) => (
         <div 
           key={market.city}
-          className={`flex items-center justify-between p-4 bg-surface-elevated rounded-lg hover:bg-[#F0EDE8] transition-colors cursor-pointer ${
-            hoveredMarket?.city === market.city ? 'bg-[#F0EDE8]' : ''
+          className={`flex items-center justify-between p-4 bg-surface-elevated rounded-lg hover:bg-surface-elevated transition-colors cursor-pointer ${
+            hoveredMarket?.city === market.city ? 'bg-surface-elevated' : ''
           }`}
           onMouseEnter={() => handleMarketHover(market)}
           onMouseLeave={() => handleMarketHover(null)}
@@ -73,7 +73,7 @@ export function MarketPopularity({ data, onHover }: MarketPopularityProps) {
           </div>
           
           {/* Share indicator */}
-          <div className="w-32 bg-[#F0EDE8] rounded-full h-3">
+          <div className="w-32 bg-surface-elevated rounded-full h-3">
             <div 
               className="bg-[#8C8278] h-3 rounded-full transition-all duration-300"
               style={{ width: `${Math.min(market.sharePct * 3, 100)}%` }}
@@ -95,7 +95,7 @@ export function MarketPopularity({ data, onHover }: MarketPopularityProps) {
   );
 
   return (
-    <Card className="bg-white border-folio-border-strong">
+    <Card className="bg-surface-canvas border-folio-border-strong">
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
@@ -110,7 +110,7 @@ export function MarketPopularity({ data, onHover }: MarketPopularityProps) {
             <Button
               variant="ghost"
               size="sm"
-              className={`px-3 py-1 h-auto ${viewMode === 'list' ? 'bg-white shadow-sm' : 'hover:bg-transparent'}`}
+              className={`px-3 py-1 h-auto ${viewMode === 'list' ? 'bg-surface-canvas shadow-sm' : 'hover:bg-transparent'}`}
               onClick={() => setViewMode('list')}
             >
               <span className="text-xs">List</span>
@@ -118,7 +118,7 @@ export function MarketPopularity({ data, onHover }: MarketPopularityProps) {
             <Button
               variant="ghost"
               size="sm"
-              className={`px-3 py-1 h-auto ${viewMode === 'map' ? 'bg-white shadow-sm' : 'hover:bg-transparent'}`}
+              className={`px-3 py-1 h-auto ${viewMode === 'map' ? 'bg-surface-canvas shadow-sm' : 'hover:bg-transparent'}`}
               onClick={() => setViewMode('map')}
             >
               <MapPin className="w-3 h-3" />

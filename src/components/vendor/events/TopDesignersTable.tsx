@@ -35,7 +35,7 @@ export function TopDesignersTable({ designers, onHover }: TopDesignersTableProps
                 </div>
                 <div>
                   <span className="font-medium text-canvas">{designer.name}</span>
-                  <div className="text-xs text-stone-700">
+                  <div className="text-xs text-folio-text-secondary">
                     {formatCompactNumber(designer.saves)} saves • {formatCurrency(designer.estProjectValueUsd, 'USD', true)}
                   </div>
                 </div>

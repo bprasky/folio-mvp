@@ -67,7 +67,7 @@ export function CollaborationInvite({
   });
 
   return (
-    <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm overflow-hidden">
+    <div className="bg-surface-canvas rounded-2xl border border-neutral-200 shadow-sm overflow-hidden">
       {/* Header with gradient */}
       <div className="bg-gradient-to-r from-blue-500 to-purple-500 p-6 text-white">
         <div className="flex items-center gap-2 mb-2">

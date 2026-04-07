@@ -67,7 +67,7 @@ export default function RepEmailCell({ entry, onUpdate }: RepEmailCellProps) {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="rep@vendor.com"
-          className="px-2 py-1 bg-white border border-folio-border-subtle rounded-lg text-folio-text-primary text-sm w-32 focus:outline-none focus:border-folio-border-strong focus:shadow-[0_0_0_3px_rgba(0,0,0,0.03)]"
+          className="px-2 py-1 bg-surface-canvas border border-folio-border-subtle rounded-lg text-folio-text-primary text-sm w-32 focus:outline-none focus:border-folio-border-strong focus:shadow-[0_0_0_3px_rgba(0,0,0,0.03)]"
           autoFocus
         />
         <input
@@ -75,7 +75,7 @@ export default function RepEmailCell({ entry, onUpdate }: RepEmailCellProps) {
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Rep Name"
-          className="px-2 py-1 bg-white border border-folio-border-subtle rounded-lg text-folio-text-primary text-sm w-24 focus:outline-none focus:border-folio-border-strong focus:shadow-[0_0_0_3px_rgba(0,0,0,0.03)]"
+          className="px-2 py-1 bg-surface-canvas border border-folio-border-subtle rounded-lg text-folio-text-primary text-sm w-24 focus:outline-none focus:border-folio-border-strong focus:shadow-[0_0_0_3px_rgba(0,0,0,0.03)]"
         />
         <button
           onClick={handleSave}

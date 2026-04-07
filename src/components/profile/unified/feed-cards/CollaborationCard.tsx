@@ -22,10 +22,10 @@ export default function CollaborationCard({ collaboration }: CollaborationCardPr
   const hasLink = !!collaboration.projectId;
 
   const content = (
-    <article className="group overflow-hidden rounded-xl transition-all duration-300 hover:shadow-lg bg-white">
+    <article className="group overflow-hidden rounded-xl transition-all duration-300 hover:shadow-lg bg-surface-canvas">
       {/* Image section */}
       {collaboration.imageUrl && (
-        <div className="relative aspect-[16/9] overflow-hidden" style={{ backgroundColor: '#E8E4DF' }}>
+        <div className="relative aspect-[16/9] overflow-hidden bg-folio-border-subtle">
           <SafeImage
             src={collaboration.imageUrl}
             alt={collaboration.title}

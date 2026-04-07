@@ -46,10 +46,10 @@ export default function SelectedWorks({ projects }: SelectedWorksProps) {
   return (
     <section>
       <div className="mb-12 text-center">
-        <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl text-stone-900 font-light mb-4">
+        <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl text-folio-text-primary font-light mb-4">
           Selected Works
         </h2>
-        <p className="text-stone-600 text-sm md:text-base font-light">
+        <p className="text-folio-text-secondary text-sm md:text-base font-light">
           A curated selection of published projects
         </p>
       </div>
@@ -67,7 +67,7 @@ export default function SelectedWorks({ projects }: SelectedWorksProps) {
             <Link
               key={project.id}
               href={`/project/${project.id}`}
-              className={`group relative overflow-hidden rounded-lg bg-stone-100 ${getFibonacciSpan(index)}`}
+              className={`group relative overflow-hidden rounded-lg bg-surface-elevated ${getFibonacciSpan(index)}`}
             >
               <Image
                 src={imageUrl}

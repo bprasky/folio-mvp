@@ -136,7 +136,7 @@ export function BoostInboxClient({ requests }: BoostInboxClientProps) {
 
   if (requests.length === 0) {
     return (
-      <div className="bg-white rounded-lg shadow-sm border border-folio-border-subtle p-12 text-center">
+      <div className="bg-surface-canvas rounded-lg shadow-sm border border-folio-border-subtle p-12 text-center">
         <p className="text-folio-text-secondary">No boost requests at this time</p>
       </div>
     );
@@ -162,7 +162,7 @@ export function BoostInboxClient({ requests }: BoostInboxClientProps) {
         return (
           <div
             key={request.id}
-            className="bg-white rounded-lg shadow-sm border border-folio-border-subtle p-6 space-y-4"
+            className="bg-surface-canvas rounded-lg shadow-sm border border-folio-border-subtle p-6 space-y-4"
           >
             <div className="flex items-start justify-between">
               <div className="flex items-start space-x-4 flex-1">

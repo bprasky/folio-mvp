@@ -314,7 +314,7 @@ export default function CameraCapture({
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.9, opacity: 0 }}
-          className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden"
+          className="bg-surface-canvas rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden"
         >
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-folio-border-subtle">
@@ -400,7 +400,7 @@ export default function CameraCapture({
                           <FaCamera className="w-4 h-4" />
                           {isCapturing ? 'Starting Camera...' : 'Start Camera'}
                         </button>
-                        <label className="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-colors flex items-center gap-2 cursor-pointer">
+                        <label className="bg-surface-ground0 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-colors flex items-center gap-2 cursor-pointer">
                           <FaUpload className="w-4 h-4" />
                           Upload Photo
                           <input

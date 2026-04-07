@@ -18,7 +18,7 @@ const slowFade = {
 
 export function ForDesignersHero() {
   return (
-    <section className="pt-28 pb-20 px-6 bg-[#FAF9F6]">
+    <section className="pt-28 pb-20 px-6 bg-surface-ground">
       <motion.div
         className="max-w-3xl mx-auto text-center"
         initial={{ opacity: 0, y: 24 }}
@@ -61,7 +61,7 @@ const steps = [
 
 export function HowItWorks() {
   return (
-    <section className="py-24 px-6 bg-[#FAF9F6]">
+    <section className="py-24 px-6 bg-surface-ground">
       <div className="max-w-5xl mx-auto">
         <motion.div {...fade}>
           <p className="uppercase tracking-widest text-sm text-folio-text-secondary mb-3">
@@ -88,7 +88,7 @@ export function HowItWorks() {
                 variant="default"
                 padding="lg"
                 rounded="xl"
-                className="border border-stone-200/60 h-full"
+                className="border border-folio-border-subtle/60 h-full"
               >
                 <p className="font-headline italic text-3xl text-[var(--accent)] mb-3">
                   {i + 1}
@@ -143,7 +143,7 @@ const pillarCards = [
 
 export function WhatYouGet() {
   return (
-    <section className="py-24 px-6 bg-[#FAF9F6]">
+    <section className="py-24 px-6 bg-surface-ground">
       <div className="max-w-5xl mx-auto">
         <motion.div {...fade}>
           <p className="uppercase tracking-widest text-sm text-folio-text-secondary mb-3">
@@ -167,7 +167,7 @@ export function WhatYouGet() {
                 variant="default"
                 padding="lg"
                 rounded="xl"
-                className="border border-stone-200/60 h-full flex flex-col"
+                className="border border-folio-border-subtle/60 h-full flex flex-col"
               >
                 <p className="uppercase tracking-widest text-xs text-folio-text-secondary mb-2">
                   {card.label}
@@ -195,7 +195,7 @@ export function WhatYouGet() {
 
 export function FoundingCohort() {
   return (
-    <section id="apply" className="py-24 px-6 bg-[#FAF9F6]">
+    <section id="apply" className="py-24 px-6 bg-surface-ground">
       <div className="max-w-3xl mx-auto">
         <motion.div {...fade}>
           <p className="uppercase tracking-widest text-sm text-folio-text-secondary mb-3">

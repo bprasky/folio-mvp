@@ -14,8 +14,8 @@ export function ProductPage({ product }: { product: Product }) {
     <div className="mx-auto max-w-7xl px-4 py-8">
       {/* Header */}
       <div className="flex flex-col gap-2">
-        <div className="text-2xl font-semibold text-[#1F2937]">{product.name}</div>
-        <div className="text-sm text-[#6B7280]">{product.brand} • {product.sku}</div>
+        <div className="text-2xl font-semibold text-folio-text-primary">{product.name}</div>
+        <div className="text-sm text-folio-text-secondary">{product.brand} • {product.sku}</div>
       </div>
 
       {/* Top grid */}
@@ -24,9 +24,9 @@ export function ProductPage({ product }: { product: Product }) {
           <Gallery assets={product.assets} />
         </div>
         <div className="col-span-12 lg:col-span-5 space-y-5">
-          <div className="rounded-2xl border border-[#E5E7EB] bg-white p-4">
-            <div className="text-sm text-[#6B7280]">Description</div>
-            <p className="mt-1 text-[15px] text-[#111827]">{product.description}</p>
+          <div className="rounded-2xl border border-folio-border-subtle bg-surface-canvas p-4">
+            <div className="text-sm text-folio-text-secondary">Description</div>
+            <p className="mt-1 text-[15px] text-folio-text-primary">{product.description}</p>
           </div>
 
           <PrimaryActions product={product} />

@@ -151,7 +151,7 @@ export default function GeneratedGrid({
         {safeImages.map((image) => (
           <div
             key={image.id}
-            className="group relative rounded-lg border border-folio-border-subtle overflow-hidden bg-white hover:shadow-md transition-shadow"
+            className="group relative rounded-lg border border-folio-border-subtle overflow-hidden bg-surface-canvas hover:shadow-md transition-shadow"
           >
             {/* Image */}
             <div className="aspect-square relative">
@@ -170,7 +170,7 @@ export default function GeneratedGrid({
                       size="sm"
                       variant="secondary"
                       onClick={() => setSelectedImage(image)}
-                      className="bg-white/90 hover:bg-white"
+                      className="bg-white/90 hover:bg-surface-canvas"
                       title="View details"
                     >
                       <FaEye className="w-3 h-3" />
@@ -179,7 +179,7 @@ export default function GeneratedGrid({
                       size="sm"
                       variant="secondary"
                       onClick={() => setSaveToProjectImage(image)}
-                      className="bg-white/90 hover:bg-white"
+                      className="bg-white/90 hover:bg-surface-canvas"
                       title="Save to another project"
                     >
                       <FaFolderPlus className="w-3 h-3" />
@@ -188,7 +188,7 @@ export default function GeneratedGrid({
                       size="sm"
                       variant="secondary"
                       onClick={() => handleDownload(image)}
-                      className="bg-white/90 hover:bg-white"
+                      className="bg-white/90 hover:bg-surface-canvas"
                       title="Download"
                     >
                       <FaDownload className="w-3 h-3" />
@@ -198,7 +198,7 @@ export default function GeneratedGrid({
                       variant="secondary"
                       onClick={() => handleDelete(image.id)}
                       disabled={deletingIds.has(image.id)}
-                      className="bg-white/90 hover:bg-white text-red-600 hover:text-red-700"
+                      className="bg-white/90 hover:bg-surface-canvas text-red-600 hover:text-red-700"
                       title="Delete"
                     >
                       {deletingIds.has(image.id) ? (

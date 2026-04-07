@@ -22,7 +22,7 @@ export function SpecPanel({ product }: SpecPanelProps) {
     >
       <GlassPanel
         header={
-          <h2 className="text-lg font-medium text-stone-900 dark:text-stone-100">
+          <h2 className="text-lg font-medium text-folio-text-primary dark:text-folio-text-tertiary">
             Specifications
           </h2>
         }
@@ -65,10 +65,10 @@ export function SpecPanel({ product }: SpecPanelProps) {
 function SpecItem({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <div className="text-xs font-medium text-stone-500 dark:text-stone-400 uppercase tracking-wider mb-1">
+      <div className="text-xs font-medium text-folio-text-tertiary dark:text-folio-text-tertiary uppercase tracking-wider mb-1">
         {label}
       </div>
-      <div className="text-sm text-stone-900 dark:text-stone-100">
+      <div className="text-sm text-folio-text-primary dark:text-folio-text-tertiary">
         {value}
       </div>
     </div>

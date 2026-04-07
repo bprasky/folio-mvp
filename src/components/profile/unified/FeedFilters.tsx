@@ -44,12 +44,11 @@ export default function FeedFilters({
           <button
             key={filter.id}
             onClick={() => updateParams('filter', filter.id)}
-            className="px-4 py-1.5 text-xs rounded-full transition-all"
-            style={{
-              backgroundColor: activeFilter === filter.id ? '#2C2825' : 'transparent',
-              color: activeFilter === filter.id ? '#FAF9F7' : '#6B635B',
-              border: activeFilter === filter.id ? 'none' : '1px solid #D4CEC6',
-            }}
+            className={`px-4 py-1.5 text-xs rounded-full transition-all ${
+              activeFilter === filter.id
+                ? 'bg-folio-text-primary text-surface-ground border-none'
+                : 'bg-transparent text-folio-text-secondary border border-folio-border-strong'
+            }`}
           >
             {filter.label}
           </button>
@@ -63,13 +62,7 @@ export default function FeedFilters({
         <select
           value={activeSort}
           onChange={e => updateParams('sort', e.target.value)}
-          className="text-xs px-4 py-1.5 pr-8 rounded-full border appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-1"
-          style={{
-            borderColor: '#D4CEC6',
-            color: '#6B635B',
-            backgroundColor: 'transparent',
-            focusRing: '#8B8178',
-          }}
+          className="text-xs px-4 py-1.5 pr-8 rounded-full border border-folio-border-strong text-folio-text-secondary bg-transparent appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-1"
         >
           {SORTS.map(sort => (
             <option key={sort.id} value={sort.id}>

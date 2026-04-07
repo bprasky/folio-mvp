@@ -45,7 +45,7 @@ export default function EventBadgeQR({ badgeToken, userName, eventId }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="bg-white rounded-2xl p-6 max-w-sm w-full text-center shadow-xl">
+      <div className="bg-surface-canvas rounded-2xl p-6 max-w-sm w-full text-center shadow-xl">
         <h3 className="text-lg font-semibold text-[var(--text-primary,#1c1917)] mb-1">
           Your Event Badge
         </h3>
@@ -59,14 +59,14 @@ export default function EventBadgeQR({ badgeToken, userName, eventId }: Props) {
             className="mx-auto w-60 h-60 rounded-lg"
           />
         ) : (
-          <div className="mx-auto w-60 h-60 rounded-lg bg-stone-100 animate-pulse" />
+          <div className="mx-auto w-60 h-60 rounded-lg bg-surface-elevated animate-pulse" />
         )}
         <p className="text-xs text-[var(--text-tertiary,#a8a29e)] mt-3 break-all">
           {userName}
         </p>
         <button
           onClick={() => setOpen(false)}
-          className="mt-4 w-full py-2.5 rounded-lg bg-stone-100 text-stone-700 font-medium text-sm hover:bg-stone-200 transition-colors"
+          className="mt-4 w-full py-2.5 rounded-lg bg-surface-elevated text-folio-text-secondary font-medium text-sm hover:bg-surface-elevated transition-colors"
         >
           Close
         </button>

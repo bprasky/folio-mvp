@@ -83,7 +83,7 @@ export default function EventCard({ event, onClick, className, userRole }: Event
   return (
     <div
       className={clsx(
-        "rounded-xl border border-folio-border-subtle shadow-sm p-4 transition-all duration-300 hover:shadow-md cursor-pointer bg-white relative",
+        "rounded-xl border border-folio-border-subtle shadow-sm p-4 transition-all duration-300 hover:shadow-md cursor-pointer bg-surface-canvas relative",
         {
           // Dynamic sizing based on promotion tier
           "col-span-4 row-span-2": event.promotionTier === 2, // Full-width featured

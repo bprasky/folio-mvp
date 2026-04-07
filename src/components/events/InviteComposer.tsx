@@ -27,9 +27,9 @@ export default function InviteComposer({ eventId, onInvitesSent }: InviteCompose
   ];
 
   return (
-    <div className="bg-white rounded-xl border border-stone-200 shadow-sm">
+    <div className="bg-surface-canvas rounded-xl border border-folio-border-subtle shadow-sm">
       {/* Tabs */}
-      <div className="border-b border-stone-200">
+      <div className="border-b border-folio-border-subtle">
         <div className="flex space-x-1 px-4">
           {tabs.map((tab) => (
             <button
@@ -38,7 +38,7 @@ export default function InviteComposer({ eventId, onInvitesSent }: InviteCompose
               className={`px-4 py-3 text-sm font-medium transition-colors ${
                 activeTab === tab.id
                   ? 'text-ink border-b-2 border-accent-700'
-                  : 'text-stone-500 hover:text-ink'
+                  : 'text-folio-text-tertiary hover:text-ink'
               }`}
             >
               {tab.label}

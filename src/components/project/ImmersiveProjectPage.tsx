@@ -22,7 +22,7 @@ type Props = {
 
 export function ImmersiveProjectPage({ post, modules, isOwner = false }: Props) {
   return (
-    <div className="relative min-h-screen bg-white">
+    <div className="relative min-h-screen bg-surface-canvas">
       {/* Instagram export button — floated top-right */}
       <div className="fixed top-4 right-4 z-40">
         <ShareToInstagramButton

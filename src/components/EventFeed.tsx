@@ -325,7 +325,7 @@ export default function EventFeed({
   return (
     <div className={`w-full overflow-x-hidden ${className}`}>
       {/* Sticky Sort & Filter Menu Bar */}
-      <div className="glass-surface border-b border-gray-100 sticky top-0 z-10">
+      <div className="glass-surface border-b border-folio-border-subtle sticky top-0 z-10">
         <div className="w-full max-w-7xl mx-auto py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
@@ -372,7 +372,7 @@ export default function EventFeed({
 
       {/* Collapsible Filters Panel */}
       {filtersVisible && (
-        <div className="glass-surface border-b border-gray-100">
+        <div className="glass-surface border-b border-folio-border-subtle">
           <div className="w-full max-w-7xl mx-auto py-4">
             <EventFilters
               sortBy={sortBy}

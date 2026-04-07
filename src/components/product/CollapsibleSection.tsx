@@ -27,15 +27,15 @@ export function CollapsibleSection({
     : false;
 
   return (
-    <div className="border-b border-stone-200 dark:border-stone-800 last:border-b-0">
+    <div className="border-b border-folio-border-subtle dark:border-folio-border-subtle last:border-b-0">
       <button
         onClick={() => setIsOpen(!isOpen)}
         aria-expanded={isOpen}
         aria-controls={contentId}
         className={cn(
           "w-full flex items-center justify-between py-4 px-1",
-          "text-left font-medium text-stone-900 dark:text-stone-100",
-          "hover:text-stone-700 dark:hover:text-stone-300",
+          "text-left font-medium text-folio-text-primary dark:text-folio-text-tertiary",
+          "hover:text-folio-text-secondary dark:hover:text-folio-text-tertiary",
           "focus:outline-none focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 rounded-lg",
           "transition-colors duration-200"
         )}
@@ -45,7 +45,7 @@ export function CollapsibleSection({
           animate={{ rotate: isOpen ? 180 : 0 }}
           transition={{ duration: prefersReducedMotion ? 0 : 0.2, ease: "easeInOut" }}
         >
-          <ChevronDown className="w-5 h-5 text-stone-500" />
+          <ChevronDown className="w-5 h-5 text-folio-text-tertiary" />
         </motion.div>
       </button>
 

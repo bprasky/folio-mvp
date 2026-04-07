@@ -90,7 +90,7 @@ export function CohortBenchmarksMini({ benchmarks }: CohortBenchmarksMiniProps) 
             <div className="flex-1 flex items-center space-x-2">
               <div className="bg-surface-elevated rounded-full h-3 relative overflow-hidden" style={{ width: barWidth + 40 }}>
                 <div 
-                  className="h-3 rounded-full bg-[#DAD2CA] transition-all duration-500"
+                  className="h-3 rounded-full bg-folio-border-strong transition-all duration-500"
                   style={{ width: `${cohortWidth}px` }}
                 />
               </div>
@@ -105,7 +105,7 @@ export function CohortBenchmarksMini({ benchmarks }: CohortBenchmarksMiniProps) 
   };
 
   return (
-    <Card className="bg-white border-folio-border-strong">
+    <Card className="bg-surface-canvas border-folio-border-strong">
       <CardHeader>
         <CardTitle className="text-lg font-serif text-folio-text-primary flex items-center space-x-2">
           <BarChart3 className="w-5 h-5 text-folio-text-secondary" />

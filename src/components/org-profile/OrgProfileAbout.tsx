@@ -172,7 +172,7 @@ export default function OrgProfileAbout({ org, team, isAdmin = false }: OrgProfi
             >
               <p style={{ color: '#8B8178' }}>No team members added yet</p>
               <button
-                className="mt-4 px-4 py-2 text-sm rounded-full border hover:bg-stone-50"
+                className="mt-4 px-4 py-2 text-sm rounded-full border hover:bg-surface-ground"
                 style={{ borderColor: '#D4CEC6', color: '#6B635B' }}
               >
                 Add Team Members

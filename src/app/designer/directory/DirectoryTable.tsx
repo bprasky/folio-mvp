@@ -121,7 +121,7 @@ export default function DirectoryTable({
                 <>
                   <tr 
                     key={entry.productId}
-                    className="bg-white hover:bg-surface-ground transition-colors"
+                    className="bg-surface-canvas hover:bg-surface-ground transition-colors"
                   >
                     {/* Product */}
                     <td className="px-4 py-4 whitespace-nowrap">

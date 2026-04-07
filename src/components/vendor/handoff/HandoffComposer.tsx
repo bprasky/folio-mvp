@@ -68,7 +68,7 @@ export default function HandoffComposer({ vendorCtx }: HandoffComposerProps = {}
 
       <RecipientEmailCard value={designerEmail} onChange={setDesignerEmail} />
       <ProductPickerCard items={products} onChange={setProducts} />
-      <div className="border rounded-2xl p-6 bg-white">
+      <div className="border rounded-2xl p-6 bg-surface-canvas">
         <h3 className="text-lg font-semibold mb-2">Optional note</h3>
         <textarea className="w-full border rounded-xl px-3 py-2 h-24" placeholder="Context for the designer (optional)"
           value={note} onChange={e => setNote(e.target.value)} />
@@ -92,7 +92,7 @@ export default function HandoffComposer({ vendorCtx }: HandoffComposerProps = {}
       {/* Copy Invite Link Modal */}
       {inviteUrl && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4">
+          <div className="bg-surface-canvas rounded-2xl p-6 max-w-md w-full mx-4">
             <h3 className="text-lg font-semibold mb-2">Invite Link Created</h3>
             <p className="text-sm text-folio-text-secondary mb-4">
               Share this link with the designer (we'll email it too if email is configured).

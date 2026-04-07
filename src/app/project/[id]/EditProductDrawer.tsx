@@ -268,7 +268,7 @@ export default function EditProductDrawer({
                 </div>
               </div>
             ) : error ? (
-              <div className="bg-stone-100 border border-stone-300 rounded-[20px] p-4">
+              <div className="bg-surface-elevated border border-folio-border-strong rounded-[20px] p-4">
                 <p className="text-[rgb(74,44,59)]">{error}</p>
                 <button
                   onClick={fetchProductData}

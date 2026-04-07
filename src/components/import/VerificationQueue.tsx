@@ -113,8 +113,8 @@ export function VerificationQueue({
       {/* Progress header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-xl font-serif text-stone-900">Verify Product Tags</h2>
-          <p className="text-sm text-stone-500">
+          <h2 className="text-xl font-serif text-folio-text-primary">Verify Product Tags</h2>
+          <p className="text-sm text-folio-text-tertiary">
             {reviewed} of {total} verified - {pendingTags.length} remaining
           </p>
         </div>
@@ -146,7 +146,7 @@ export function VerificationQueue({
               {total > 0 ? Math.round((reviewed / total) * 100) : 0}%
             </span>
           </div>
-          <span className="text-sm text-stone-500">Completeness</span>
+          <span className="text-sm text-folio-text-tertiary">Completeness</span>
         </div>
       </div>
 
@@ -228,8 +228,8 @@ export function VerificationQueue({
               </svg>
             </div>
             <div>
-              <h3 className="text-lg font-medium text-stone-900">All tags verified!</h3>
-              <p className="text-stone-500">
+              <h3 className="text-lg font-medium text-folio-text-primary">All tags verified!</h3>
+              <p className="text-folio-text-tertiary">
                 You&apos;ve reviewed all {total} detected products.
               </p>
             </div>

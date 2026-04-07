@@ -325,7 +325,7 @@ export default function RepScrollPresentation({
                 value={inviteEmail}
                 onChange={(e) => setInviteEmail(e.target.value)}
                 placeholder="admin@yourcompany.com"
-                className="flex-1 px-4 py-2.5 border border-folio-border-subtle rounded-neu-btn text-folio-body bg-white focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                className="flex-1 px-4 py-2.5 border border-folio-border-subtle rounded-neu-btn text-folio-body bg-surface-canvas focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
               />
               <button
                 onClick={handleInviteAdmin}

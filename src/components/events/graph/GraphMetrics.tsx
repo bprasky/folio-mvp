@@ -48,7 +48,7 @@ export default function GraphMetrics({ metrics, summary }: GraphMetricsProps) {
       {metricCards.map((card, idx) => (
         <div
           key={idx}
-          className="bg-white rounded-xl border border-stone-200 shadow-sm p-4"
+          className="bg-surface-canvas rounded-xl border border-folio-border-subtle shadow-sm p-4"
         >
           <div className="flex items-center justify-between mb-2">
             <card.icon className={`w-5 h-5 ${card.color}`} />
@@ -56,31 +56,31 @@ export default function GraphMetrics({ metrics, summary }: GraphMetricsProps) {
               {card.value}
             </span>
           </div>
-          <p className="text-sm text-stone-500">{card.label}</p>
+          <p className="text-sm text-folio-text-tertiary">{card.label}</p>
         </div>
       ))}
 
-      <div className="bg-white rounded-xl border border-stone-200 shadow-sm p-4">
+      <div className="bg-surface-canvas rounded-xl border border-folio-border-subtle shadow-sm p-4">
         <h4 className="text-sm font-medium text-ink mb-3">Graph Summary</h4>
         <div className="space-y-2 text-sm">
           <div className="flex justify-between">
-            <span className="text-stone-500">Designers</span>
+            <span className="text-folio-text-tertiary">Designers</span>
             <span className="font-medium text-ink">{summary.totalDesigners}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-stone-500">Vendors</span>
+            <span className="text-folio-text-tertiary">Vendors</span>
             <span className="font-medium text-ink">{summary.totalVendors}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-stone-500">Products</span>
+            <span className="text-folio-text-tertiary">Products</span>
             <span className="font-medium text-ink">{summary.totalProducts}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-stone-500">Reps</span>
+            <span className="text-folio-text-tertiary">Reps</span>
             <span className="font-medium text-ink">{summary.totalReps}</span>
           </div>
-          <div className="flex justify-between pt-2 border-t border-stone-200">
-            <span className="text-stone-500">Relationships</span>
+          <div className="flex justify-between pt-2 border-t border-folio-border-subtle">
+            <span className="text-folio-text-tertiary">Relationships</span>
             <span className="font-medium text-ink">{summary.totalRelationships}</span>
           </div>
         </div>

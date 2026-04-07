@@ -87,10 +87,10 @@ export function StepFiles({ initialData, onNext, onBack }: StepFilesProps) {
             <FileText className="w-6 h-6 text-orange-600 dark:text-orange-400" />
           </div>
           <div>
-            <h2 className="text-2xl font-medium text-stone-900 dark:text-stone-100">
+            <h2 className="text-2xl font-medium text-folio-text-primary dark:text-folio-text-tertiary">
               Add Files
             </h2>
-            <p className="text-sm text-stone-600 dark:text-stone-400">
+            <p className="text-sm text-folio-text-secondary dark:text-folio-text-tertiary">
               Upload spec sheets, 3D models, and other resources (optional)
             </p>
           </div>
@@ -101,14 +101,14 @@ export function StepFiles({ initialData, onNext, onBack }: StepFilesProps) {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <FileText className="w-5 h-5 text-stone-600 dark:text-stone-400" />
-                <h3 className="text-lg font-medium text-stone-900 dark:text-stone-100">
+                <FileText className="w-5 h-5 text-folio-text-secondary dark:text-folio-text-tertiary" />
+                <h3 className="text-lg font-medium text-folio-text-primary dark:text-folio-text-tertiary">
                   Spec Sheets (PDF)
                 </h3>
               </div>
               <button
                 onClick={addSpecSheet}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors text-sm"
+                className="flex items-center gap-2 px-4 py-2 rounded-lg border border-folio-border-strong dark:border-folio-border-subtle hover:bg-surface-ground dark:hover:bg-stone-800 transition-colors text-sm"
               >
                 <Upload className="w-4 h-4" />
                 Add Spec Sheet
@@ -116,9 +116,9 @@ export function StepFiles({ initialData, onNext, onBack }: StepFilesProps) {
             </div>
 
             {specSheets.length === 0 ? (
-              <div className="text-center py-6 border-2 border-dashed border-stone-300 dark:border-stone-700 rounded-xl">
-                <FileText className="w-10 h-10 mx-auto mb-2 text-stone-400" />
-                <p className="text-sm text-stone-600 dark:text-stone-400">
+              <div className="text-center py-6 border-2 border-dashed border-folio-border-strong dark:border-folio-border-subtle rounded-xl">
+                <FileText className="w-10 h-10 mx-auto mb-2 text-folio-text-tertiary" />
+                <p className="text-sm text-folio-text-secondary dark:text-folio-text-tertiary">
                   No spec sheets added
                 </p>
               </div>
@@ -141,31 +141,31 @@ export function StepFiles({ initialData, onNext, onBack }: StepFilesProps) {
           </div>
 
           {/* 3D Files */}
-          <div className="space-y-4 pt-6 border-t border-stone-200 dark:border-stone-700">
+          <div className="space-y-4 pt-6 border-t border-folio-border-subtle dark:border-folio-border-subtle">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Box className="w-5 h-5 text-stone-600 dark:text-stone-400" />
-                <h3 className="text-lg font-medium text-stone-900 dark:text-stone-100">
+                <Box className="w-5 h-5 text-folio-text-secondary dark:text-folio-text-tertiary" />
+                <h3 className="text-lg font-medium text-folio-text-primary dark:text-folio-text-tertiary">
                   3D Models
                 </h3>
               </div>
               <button
                 onClick={add3dFile}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors text-sm"
+                className="flex items-center gap-2 px-4 py-2 rounded-lg border border-folio-border-strong dark:border-folio-border-subtle hover:bg-surface-ground dark:hover:bg-stone-800 transition-colors text-sm"
               >
                 <Upload className="w-4 h-4" />
                 Add 3D File
               </button>
             </div>
 
-            <p className="text-sm text-stone-600 dark:text-stone-400">
+            <p className="text-sm text-folio-text-secondary dark:text-folio-text-tertiary">
               Supported formats: .glb, .gltf, .obj, .fbx, .step, .stp
             </p>
 
             {files3d.length === 0 ? (
-              <div className="text-center py-6 border-2 border-dashed border-stone-300 dark:border-stone-700 rounded-xl">
-                <Box className="w-10 h-10 mx-auto mb-2 text-stone-400" />
-                <p className="text-sm text-stone-600 dark:text-stone-400">
+              <div className="text-center py-6 border-2 border-dashed border-folio-border-strong dark:border-folio-border-subtle rounded-xl">
+                <Box className="w-10 h-10 mx-auto mb-2 text-folio-text-tertiary" />
+                <p className="text-sm text-folio-text-secondary dark:text-folio-text-tertiary">
                   No 3D models added
                 </p>
               </div>
@@ -187,17 +187,17 @@ export function StepFiles({ initialData, onNext, onBack }: StepFilesProps) {
           </div>
 
           {/* Other Files */}
-          <div className="space-y-4 pt-6 border-t border-stone-200 dark:border-stone-700">
+          <div className="space-y-4 pt-6 border-t border-folio-border-subtle dark:border-folio-border-subtle">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <File className="w-5 h-5 text-stone-600 dark:text-stone-400" />
-                <h3 className="text-lg font-medium text-stone-900 dark:text-stone-100">
+                <File className="w-5 h-5 text-folio-text-secondary dark:text-folio-text-tertiary" />
+                <h3 className="text-lg font-medium text-folio-text-primary dark:text-folio-text-tertiary">
                   Additional Resources
                 </h3>
               </div>
               <button
                 onClick={addOther}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors text-sm"
+                className="flex items-center gap-2 px-4 py-2 rounded-lg border border-folio-border-strong dark:border-folio-border-subtle hover:bg-surface-ground dark:hover:bg-stone-800 transition-colors text-sm"
               >
                 <Upload className="w-4 h-4" />
                 Add File
@@ -205,9 +205,9 @@ export function StepFiles({ initialData, onNext, onBack }: StepFilesProps) {
             </div>
 
             {others.length === 0 ? (
-              <div className="text-center py-6 border-2 border-dashed border-stone-300 dark:border-stone-700 rounded-xl">
-                <File className="w-10 h-10 mx-auto mb-2 text-stone-400" />
-                <p className="text-sm text-stone-600 dark:text-stone-400">
+              <div className="text-center py-6 border-2 border-dashed border-folio-border-strong dark:border-folio-border-subtle rounded-xl">
+                <File className="w-10 h-10 mx-auto mb-2 text-folio-text-tertiary" />
+                <p className="text-sm text-folio-text-secondary dark:text-folio-text-tertiary">
                   No additional files added
                 </p>
               </div>
@@ -229,10 +229,10 @@ export function StepFiles({ initialData, onNext, onBack }: StepFilesProps) {
           </div>
         </div>
 
-        <div className="flex items-center justify-between mt-8 pt-6 border-t border-stone-200 dark:border-stone-700">
+        <div className="flex items-center justify-between mt-8 pt-6 border-t border-folio-border-subtle dark:border-folio-border-subtle">
           <button
             onClick={onBack}
-            className="text-sm text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 transition-colors"
+            className="text-sm text-folio-text-secondary dark:text-folio-text-tertiary hover:text-folio-text-primary dark:hover:text-folio-text-tertiary transition-colors"
           >
             ← Back
           </button>
@@ -264,9 +264,9 @@ function FileItem({
   fileExtension?: string;
 }) {
   return (
-    <div className="p-4 border border-stone-200 dark:border-stone-700 rounded-xl space-y-3">
+    <div className="p-4 border border-folio-border-subtle dark:border-folio-border-subtle rounded-xl space-y-3">
       <div className="flex items-center justify-between">
-        <span className="text-sm font-medium text-stone-900 dark:text-stone-100">
+        <span className="text-sm font-medium text-folio-text-primary dark:text-folio-text-tertiary">
           File {index + 1}
         </span>
         <button
@@ -282,7 +282,7 @@ function FileItem({
         value={item.label}
         onChange={(e) => onUpdate('label', e.target.value)}
         placeholder={placeholder}
-        className="w-full px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent text-sm"
+        className="w-full px-4 py-2 rounded-lg border border-folio-border-strong dark:border-folio-border-subtle bg-surface-canvas dark:bg-surface-canvas focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent text-sm"
       />
 
       <input
@@ -290,11 +290,11 @@ function FileItem({
         value={item.url}
         onChange={(e) => onUpdate('url', e.target.value)}
         placeholder={urlPlaceholder}
-        className="w-full px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent text-sm"
+        className="w-full px-4 py-2 rounded-lg border border-folio-border-strong dark:border-folio-border-subtle bg-surface-canvas dark:bg-surface-canvas focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent text-sm"
       />
 
       {fileExtension && (
-        <p className="text-xs text-stone-500 dark:text-stone-400">
+        <p className="text-xs text-folio-text-tertiary dark:text-folio-text-tertiary">
           Required format: {fileExtension}
         </p>
       )}

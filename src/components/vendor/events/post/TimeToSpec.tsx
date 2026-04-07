@@ -15,7 +15,7 @@ export function TimeToSpec({ timeToSpec, onActionClick }: TimeToSpecProps) {
   const maxCount = Math.max(...timeToSpec.bins.map(b => b.count));
 
   return (
-    <Card className="bg-white border-folio-border-strong">
+    <Card className="bg-surface-canvas border-folio-border-strong">
       <CardHeader>
         <CardTitle className="text-lg font-serif text-folio-text-primary flex items-center space-x-2">
           <Clock className="w-5 h-5 text-folio-text-secondary" />

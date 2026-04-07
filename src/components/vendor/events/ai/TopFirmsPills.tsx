@@ -14,7 +14,7 @@ export function TopFirmsPills({ firms }: {
   }>
 }) {
   return (
-    <Card className="p-4 bg-white border-folio-border-strong">
+    <Card className="p-4 bg-surface-canvas border-folio-border-strong">
       <div className="flex items-center justify-between mb-4">
         <div>
           <h3 className="text-sm font-semibold text-folio-text-primary mb-1">Key Account Actions</h3>
@@ -28,7 +28,7 @@ export function TopFirmsPills({ firms }: {
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         {firms.slice(0, 3).map(f => (
-          <div key={f.id} className="group border border-folio-border-strong bg-surface-elevated/50 rounded-lg p-3 hover:bg-white hover:shadow-md transition-all duration-200">
+          <div key={f.id} className="group border border-folio-border-strong bg-surface-elevated/50 rounded-lg p-3 hover:bg-surface-canvas hover:shadow-md transition-all duration-200">
             <div className="flex items-center justify-between mb-2">
               <div className="text-sm font-semibold text-folio-text-primary truncate">{f.name}</div>
               <Badge className="bg-[#8C8278] text-white text-xs px-2 py-0.5">
@@ -43,7 +43,7 @@ export function TopFirmsPills({ firms }: {
               </div>
               <Button 
                 size="sm" 
-                className="h-7 px-3 text-xs bg-[#2B2B2B] hover:bg-[#8C8278] text-white"
+                className="h-7 px-3 text-xs bg-folio-text-primary hover:bg-[#8C8278] text-white"
               >
                 Contact
               </Button>

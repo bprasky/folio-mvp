@@ -32,7 +32,7 @@ export function BenchmarksStrip({ benchmarks }: BenchmarksStripProps) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* vs Prior Event */}
-      <Card className="bg-white border-folio-border-strong">
+      <Card className="bg-surface-canvas border-folio-border-strong">
         <CardContent className="p-4">
           <div className="flex items-center space-x-3 mb-4">
             <TrendingUp className="w-5 h-5 text-folio-text-secondary" />
@@ -65,7 +65,7 @@ export function BenchmarksStrip({ benchmarks }: BenchmarksStripProps) {
       </Card>
 
       {/* vs Vendor Cohort */}
-      <Card className="bg-white border-folio-border-strong">
+      <Card className="bg-surface-canvas border-folio-border-strong">
         <CardContent className="p-4">
           <div className="flex items-center space-x-3 mb-4">
             <Users className="w-5 h-5 text-folio-text-secondary" />

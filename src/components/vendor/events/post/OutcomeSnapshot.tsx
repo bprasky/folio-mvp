@@ -14,7 +14,7 @@ export function OutcomeSnapshot({ outcome }: OutcomeSnapshotProps) {
   const getDeltaColor = (delta: number) => {
     if (delta > 0) return 'text-green-600 bg-green-50';
     if (delta < 0) return 'text-red-600 bg-red-50';
-    return 'text-folio-text-secondary bg-gray-50';
+    return 'text-folio-text-secondary bg-surface-ground';
   };
 
   const getDeltaIcon = (delta: number) => {
@@ -70,7 +70,7 @@ export function OutcomeSnapshot({ outcome }: OutcomeSnapshotProps) {
   return (
     <div className="space-y-6">
       {/* KPI Strip */}
-      <Card className="bg-white border-folio-border-strong">
+      <Card className="bg-surface-canvas border-folio-border-strong">
         <CardContent className="p-6">
           <div className="grid grid-cols-2 lg:grid-cols-6 gap-6">
             {kpiItems.map((item, index) => (

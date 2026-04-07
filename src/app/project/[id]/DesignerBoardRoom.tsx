@@ -533,7 +533,7 @@ export default function DesignerBoardRoom({
                 <button
                   onClick={handleDeleteRoom}
                   disabled={isDeletingRoom}
-                  className="w-full px-3 py-2 text-left folio-ui text-[rgb(74,44,59)] hover:bg-stone-100 flex items-center gap-2"
+                  className="w-full px-3 py-2 text-left folio-ui text-[rgb(74,44,59)] hover:bg-surface-elevated flex items-center gap-2"
                 >
                   <FaTrash className="w-3 h-3" />
                   {isDeletingRoom ? 'Deleting...' : 'Delete Room'}
@@ -864,7 +864,7 @@ export default function DesignerBoardRoom({
                       isCurrent
                         ? "bg-[var(--accent)]/10 text-[var(--accent)]"
                         : isTaken
-                          ? "bg-stone-100 text-[rgb(74,44,59)] hover:bg-stone-200"
+                          ? "bg-surface-elevated text-[rgb(74,44,59)] hover:bg-surface-elevated"
                           : "hover:bg-surface-canvas"
                     )}
                   >

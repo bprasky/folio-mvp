@@ -122,7 +122,7 @@ export function CampaignWizard({ projectId, projectTitle, onClose }: CampaignWiz
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="relative w-full max-w-2xl rounded-lg bg-white shadow-xl">
+      <div className="relative w-full max-w-2xl rounded-lg bg-surface-canvas shadow-xl">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-folio-border-subtle p-6">
           <div>
@@ -244,7 +244,7 @@ export function CampaignWizard({ projectId, projectTitle, onClose }: CampaignWiz
               </div>
 
               {/* Formats */}
-              <div className="rounded-lg border border-folio-border-subtle bg-white p-4">
+              <div className="rounded-lg border border-folio-border-subtle bg-surface-canvas p-4">
                 <h3 className="mb-2 text-sm font-medium text-folio-text-primary">Formats</h3>
                 <div className="space-y-1 text-sm text-folio-text-secondary">
                   <div>✓ Feed (1080×1080, 1080×1350)</div>

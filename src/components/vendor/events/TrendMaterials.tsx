@@ -36,15 +36,15 @@ export function TrendMaterials({ materials, onHover }: TrendMaterialsProps) {
                 className="flex items-center justify-between p-3 bg-canvas/10 rounded-lg animate-pulse"
               >
                 <div className="flex-1">
-                  <div className="h-4 bg-stone-300 rounded w-3/4"></div>
+                  <div className="h-4 bg-surface-elevated rounded w-3/4"></div>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <div className="w-4 h-4 bg-stone-300 rounded"></div>
-                  <div className="h-5 bg-stone-300 rounded w-12"></div>
+                  <div className="w-4 h-4 bg-surface-elevated rounded"></div>
+                  <div className="h-5 bg-surface-elevated rounded w-12"></div>
                 </div>
               </div>
             ))}
-            <div className="text-center py-4 text-sm text-stone-700">
+            <div className="text-center py-4 text-sm text-folio-text-secondary">
               Loading trending materials...
             </div>
           </div>

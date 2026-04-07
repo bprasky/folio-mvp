@@ -8,7 +8,7 @@ export default function ServicesSplit({ designerName }: ServicesSplitProps) {
   return (
     <section>
       <div className="mb-8">
-        <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl text-stone-900 font-light mb-4">
+        <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl text-folio-text-primary font-light mb-4">
           Services
         </h2>
       </div>
@@ -16,10 +16,10 @@ export default function ServicesSplit({ designerName }: ServicesSplitProps) {
       <div className="grid md:grid-cols-2 gap-6 md:gap-8">
         {/* Full-Service Card */}
         <div className="glass-surface p-8 md:p-10">
-          <h3 className="font-serif text-2xl md:text-3xl text-stone-900 font-light mb-4">
+          <h3 className="font-serif text-2xl md:text-3xl text-folio-text-primary font-light mb-4">
             Full-Service Design
           </h3>
-          <p className="text-stone-600 text-base md:text-lg font-light leading-relaxed mb-6">
+          <p className="text-folio-text-secondary text-base md:text-lg font-light leading-relaxed mb-6">
             Complete interior design services from concept to installation. 
             Transform your space with {designerName}'s signature approach to 
             residential and commercial interiors.
@@ -41,19 +41,19 @@ export default function ServicesSplit({ designerName }: ServicesSplitProps) {
             </span>
           </div>
 
-          <h3 className="font-serif text-2xl md:text-3xl text-stone-900 font-light mb-4">
+          <h3 className="font-serif text-2xl md:text-3xl text-folio-text-primary font-light mb-4">
             Folio Atelier AI
           </h3>
-          <p className="text-stone-600 text-base md:text-lg font-light leading-relaxed mb-4">
+          <p className="text-folio-text-secondary text-base md:text-lg font-light leading-relaxed mb-4">
             AI-powered design consultation and space planning. 
             Get expert design direction powered by {designerName}'s aesthetic 
             and Folio's advanced design intelligence.
           </p>
           <div className="mb-6">
-            <span className="text-2xl md:text-3xl font-serif text-stone-900 font-light">
+            <span className="text-2xl md:text-3xl font-serif text-folio-text-primary font-light">
               Starting at $1,200
             </span>
-            <span className="text-stone-600 text-sm ml-2">per room</span>
+            <span className="text-folio-text-secondary text-sm ml-2">per room</span>
           </div>
           <Link
             href="/atelier"

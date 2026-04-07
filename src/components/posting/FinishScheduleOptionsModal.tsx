@@ -108,7 +108,7 @@ export function FinishScheduleOptionsModal({
       />
 
       {/* Modal */}
-      <div className="relative bg-white rounded-2xl shadow-2xl max-w-lg w-full mx-4 overflow-hidden">
+      <div className="relative bg-surface-canvas rounded-2xl shadow-2xl max-w-lg w-full mx-4 overflow-hidden">
         {/* Header */}
         <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-5 text-white">
           <h2 className="text-xl font-bold">Before Your Interview</h2>

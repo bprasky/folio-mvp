@@ -34,7 +34,7 @@ export function ExtractedItemCard({
     <div
       className={`
         border rounded-lg p-4 transition-all
-        ${selected ? 'border-stone-400 bg-stone-50' : 'border-folio-border-subtle'}
+        ${selected ? 'border-folio-border-strong bg-surface-ground' : 'border-folio-border-subtle'}
         ${loading ? 'opacity-60' : ''}
       `}
     >
@@ -46,7 +46,7 @@ export function ExtractedItemCard({
           checked={selected}
           onChange={onToggle}
           disabled={loading}
-          className="mt-1 h-5 w-5 rounded border-folio-border-subtle text-stone-600 focus:ring-stone-500"
+          className="mt-1 h-5 w-5 rounded border-folio-border-subtle text-folio-text-secondary focus:ring-stone-500"
         />
 
         {/* Image thumbnail */}

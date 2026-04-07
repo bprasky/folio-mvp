@@ -28,7 +28,7 @@ export default function SmartSuggestions({ suggestions, onAction }: SmartSuggest
   if (suggestions.length === 0) {
     return (
       <div className="sticky top-6">
-        <Card className="bg-white border-folio-border-strong">
+        <Card className="bg-surface-canvas border-folio-border-strong">
           <CardHeader className="pb-3">
             <CardTitle className="text-lg font-serif text-folio-text-primary">
               Smart Suggestions
@@ -46,7 +46,7 @@ export default function SmartSuggestions({ suggestions, onAction }: SmartSuggest
 
   return (
     <div className="sticky top-6 space-y-4">
-      <Card className="bg-white border-folio-border-strong">
+      <Card className="bg-surface-canvas border-folio-border-strong">
         <CardHeader className="pb-3">
           <CardTitle className="text-lg font-serif text-folio-text-primary">
             Smart Suggestions

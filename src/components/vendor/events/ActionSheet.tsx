@@ -284,7 +284,7 @@ export default function ActionSheet({ suggestion, isOpen, onClose }: ActionSheet
         </SheetHeader>
         
         <div className="mt-6 space-y-6">
-          <div className="p-4 bg-white rounded-lg border border-folio-border-strong">
+          <div className="p-4 bg-surface-canvas rounded-lg border border-folio-border-strong">
             <p className="text-sm text-folio-text-secondary">{suggestion.reason}</p>
           </div>
 
@@ -304,7 +304,7 @@ export default function ActionSheet({ suggestion, isOpen, onClose }: ActionSheet
                 variant="outline"
                 onClick={onClose}
                 disabled={isSubmitting}
-                className="border-folio-border-strong text-folio-text-secondary hover:bg-white"
+                className="border-folio-border-strong text-folio-text-secondary hover:bg-surface-canvas"
               >
                 Cancel
               </Button>

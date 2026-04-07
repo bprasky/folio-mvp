@@ -473,7 +473,7 @@ export default function AdminScrollPresentation({
         {/* Before / After split */}
         <div className="grid md:grid-cols-2 gap-8">
           <motion.div
-            className="bg-white rounded-neu p-6"
+            className="bg-surface-canvas rounded-neu p-6"
             initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
@@ -611,7 +611,7 @@ export default function AdminScrollPresentation({
 
         <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
           <motion.div
-            className="bg-white rounded-neu p-6 shadow-neu-raised"
+            className="bg-surface-canvas rounded-neu p-6 shadow-neu-raised"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -626,7 +626,7 @@ export default function AdminScrollPresentation({
           </motion.div>
 
           <motion.div
-            className="bg-white rounded-neu p-6 shadow-neu-raised"
+            className="bg-surface-canvas rounded-neu p-6 shadow-neu-raised"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -732,7 +732,7 @@ export default function AdminScrollPresentation({
                 className={`w-full py-2.5 rounded-neu-btn font-medium text-folio-ui transition-colors ${
                   plan.highlighted
                     ? 'bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)]'
-                    : 'bg-white text-folio-text-primary hover:bg-folio-border-subtle'
+                    : 'bg-surface-canvas text-folio-text-primary hover:bg-folio-border-subtle'
                 }`}
               >
                 {plan.cta}

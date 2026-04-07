@@ -13,7 +13,7 @@ export function TagPreview({ materials }: TagPreviewProps) {
 
   return (
     <aside className="w-full md:w-72 shrink-0 md:pl-4">
-      <div className="rounded-xl border p-3 bg-white">
+      <div className="rounded-xl border p-3 bg-surface-canvas">
         <div className="font-semibold mb-2 text-folio-text-primary">Tagged Materials</div>
         <ul className="space-y-2">
           {materials.map((m, i) => (

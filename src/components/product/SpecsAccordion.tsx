@@ -5,7 +5,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 export function SpecsAccordion({ product }: { product: Product }) {
   const { dimensions, weight, materials, finish, leadTime, files } = product;
   return (
-    <div className="rounded-2xl border border-[#E5E7EB] bg-white">
+    <div className="rounded-2xl border border-folio-border-subtle bg-surface-canvas">
       <Accordion type="multiple" className="px-3">
         <AccordionItem value="specs">
           <AccordionTrigger>Specifications</AccordionTrigger>
@@ -36,8 +36,8 @@ export function SpecsAccordion({ product }: { product: Product }) {
 function Spec({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <div className="text-xs text-[#6B7280]">{label}</div>
-      <div className="text-[13px] text-[#111827]">{value}</div>
+      <div className="text-xs text-folio-text-secondary">{label}</div>
+      <div className="text-[13px] text-folio-text-primary">{value}</div>
     </div>
   );
 }
@@ -45,7 +45,7 @@ function Spec({ label, value }: { label: string; value: string }) {
 function FileList({ title, items }: { title: string; items: { label: string; href: string }[] }) {
   return (
     <div className="mt-3">
-      <div className="text-sm font-medium text-[#111827]">{title}</div>
+      <div className="text-sm font-medium text-folio-text-primary">{title}</div>
       <div className="mt-2 flex flex-col gap-2">
         {items.map((f, i) => (
           <a key={i} href={f.href} className="text-sm text-[#2563EB] underline">{f.label}</a>

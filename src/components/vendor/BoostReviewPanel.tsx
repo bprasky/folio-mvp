@@ -113,8 +113,8 @@ export function BoostReviewPanel({
     <div className="space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-light text-stone-800">Testimonial Opportunity</h1>
-        <p className="text-stone-500 mt-1">
+        <h1 className="text-2xl font-light text-folio-text-primary">Testimonial Opportunity</h1>
+        <p className="text-folio-text-tertiary mt-1">
           {isAlreadyBoosted
             ? 'You boosted this testimonial'
             : isExpired
@@ -131,19 +131,19 @@ export function BoostReviewPanel({
       )}
 
       {/* Designer & Project Context */}
-      <div className="flex gap-6 p-6 bg-stone-50 rounded-lg">
+      <div className="flex gap-6 p-6 bg-surface-ground rounded-lg">
         <img
           src={opportunity.designer.profileImage || '/default-avatar.png'}
           alt={opportunity.designer.name}
           className="w-16 h-16 rounded-full object-cover"
         />
         <div>
-          <h2 className="font-medium text-stone-800">{opportunity.designer.name}</h2>
-          <p className="text-sm text-stone-500">
+          <h2 className="font-medium text-folio-text-primary">{opportunity.designer.name}</h2>
+          <p className="text-sm text-folio-text-tertiary">
             {opportunity.designer.title}
             {opportunity.designer.location && ` \u00B7 ${opportunity.designer.location}`}
           </p>
-          <p className="text-sm text-stone-600 mt-2">
+          <p className="text-sm text-folio-text-secondary mt-2">
             Project: <strong>{opportunity.project.title}</strong>
           </p>
         </div>
@@ -166,7 +166,7 @@ export function BoostReviewPanel({
       {/* Your Products in This Project */}
       {vendorProducts.length > 0 && (
         <div>
-          <h3 className="text-sm font-medium text-stone-600 mb-3">
+          <h3 className="text-sm font-medium text-folio-text-secondary mb-3">
             Your products in this project
           </h3>
           <div className="flex gap-3 overflow-x-auto pb-2">
@@ -177,7 +177,7 @@ export function BoostReviewPanel({
                   alt={product.name}
                   className="w-32 h-32 object-cover rounded-lg"
                 />
-                <p className="text-xs text-stone-600 mt-2 truncate">{product.name}</p>
+                <p className="text-xs text-folio-text-secondary mt-2 truncate">{product.name}</p>
               </div>
             ))}
           </div>
@@ -186,25 +186,25 @@ export function BoostReviewPanel({
 
       {/* The Quote */}
       <div className="space-y-4">
-        <h3 className="text-sm font-medium text-stone-600">The testimonial</h3>
+        <h3 className="text-sm font-medium text-folio-text-secondary">The testimonial</h3>
 
         {/* Full answer for context */}
-        <div className="p-4 bg-stone-50 rounded-lg">
-          <p className="text-sm text-stone-500 mb-2">Full answer:</p>
-          <p className="text-stone-700 leading-relaxed">{opportunity.fullAnswer}</p>
+        <div className="p-4 bg-surface-ground rounded-lg">
+          <p className="text-sm text-folio-text-tertiary mb-2">Full answer:</p>
+          <p className="text-folio-text-secondary leading-relaxed">{opportunity.fullAnswer}</p>
         </div>
 
         {/* Editable pull quote */}
         {!isAlreadyBoosted && !isExpired && canBoost && (
           <div>
-            <label className="text-sm text-stone-600 block mb-2">
+            <label className="text-sm text-folio-text-secondary block mb-2">
               Pull quote (you can edit this):
             </label>
             <textarea
               value={editedQuote}
               onChange={(e) => setEditedQuote(e.target.value)}
               rows={4}
-              className="w-full p-4 border border-stone-200 rounded-lg text-stone-800 focus:outline-none focus:ring-2 focus:ring-stone-300"
+              className="w-full p-4 border border-folio-border-subtle rounded-lg text-folio-text-primary focus:outline-none focus:ring-2 focus:ring-stone-300"
               placeholder="Select the best quote from the answer above..."
             />
           </div>
@@ -212,28 +212,28 @@ export function BoostReviewPanel({
 
         {/* Display of boosted quote */}
         {isAlreadyBoosted && opportunity.boost && (
-          <div className="border-l-4 border-stone-400 pl-4 py-2">
-            <p className="text-lg text-stone-800 italic">"{opportunity.boost.pullQuote}"</p>
-            <p className="text-sm text-stone-500 mt-2">— {opportunity.designer.name}</p>
+          <div className="border-l-4 border-folio-border-strong pl-4 py-2">
+            <p className="text-lg text-folio-text-primary italic">"{opportunity.boost.pullQuote}"</p>
+            <p className="text-sm text-folio-text-tertiary mt-2">— {opportunity.designer.name}</p>
           </div>
         )}
       </div>
 
       {/* Boost Options */}
       {!isAlreadyBoosted && !isExpired && canBoost && (
-        <div className="space-y-4 p-6 border border-stone-200 rounded-lg">
-          <h3 className="font-medium text-stone-800">Placement options</h3>
+        <div className="space-y-4 p-6 border border-folio-border-subtle rounded-lg">
+          <h3 className="font-medium text-folio-text-primary">Placement options</h3>
 
           <label className="flex items-center gap-3 cursor-pointer">
             <input
               type="checkbox"
               checked={showInArticle}
               onChange={(e) => setShowInArticle(e.target.checked)}
-              className="w-5 h-5 rounded border-stone-300"
+              className="w-5 h-5 rounded border-folio-border-strong"
             />
             <div>
-              <p className="text-stone-800">Show in project editorial</p>
-              <p className="text-sm text-stone-500">
+              <p className="text-folio-text-primary">Show in project editorial</p>
+              <p className="text-sm text-folio-text-tertiary">
                 Quote appears in the published article with attribution
               </p>
             </div>
@@ -244,11 +244,11 @@ export function BoostReviewPanel({
               type="checkbox"
               checked={showOnVendorPage}
               onChange={(e) => setShowOnVendorPage(e.target.checked)}
-              className="w-5 h-5 rounded border-stone-300"
+              className="w-5 h-5 rounded border-folio-border-strong"
             />
             <div>
-              <p className="text-stone-800">Show on your vendor page</p>
-              <p className="text-sm text-stone-500">
+              <p className="text-folio-text-primary">Show on your vendor page</p>
+              <p className="text-sm text-folio-text-tertiary">
                 Testimonial appears in your Folio profile
               </p>
             </div>
@@ -257,17 +257,17 @@ export function BoostReviewPanel({
       )}
 
       {/* Actions */}
-      <div className="flex gap-4 pt-4 border-t border-stone-200">
+      <div className="flex gap-4 pt-4 border-t border-folio-border-subtle">
         {isAlreadyBoosted ? (
           <div className="flex items-center gap-2 text-green-600">
             <CheckCircleIcon className="w-5 h-5" />
             <span>Boosted</span>
           </div>
         ) : isExpired ? (
-          <p className="text-stone-500">This opportunity has expired</p>
+          <p className="text-folio-text-tertiary">This opportunity has expired</p>
         ) : !canBoost ? (
           <div className="flex-1">
-            <p className="text-stone-600 mb-3">
+            <p className="text-folio-text-secondary mb-3">
               Upgrade to a paid plan to boost testimonials
             </p>
             <a
@@ -282,7 +282,7 @@ export function BoostReviewPanel({
             <button
               onClick={handleDecline}
               disabled={isSubmitting}
-              className="px-6 py-2 text-stone-600 hover:text-stone-800 disabled:opacity-50"
+              className="px-6 py-2 text-folio-text-secondary hover:text-folio-text-primary disabled:opacity-50"
             >
               Decline
             </button>

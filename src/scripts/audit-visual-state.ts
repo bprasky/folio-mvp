@@ -126,7 +126,7 @@ export async function auditVisualState() {
   console.log("\n🔎 Checking for Wrapper Backgrounds:");
   const pageWrapper = document.querySelector('div.relative.bg-transparent') || 
                        document.querySelector('main') ||
-                       document.querySelector('[class*="bg-white"]');
+                       document.querySelector('[class*="bg-surface-canvas"]');
   if (pageWrapper) {
     const wrapperStyle = getComputedStyle(pageWrapper as HTMLElement);
     console.log("  Wrapper found with classes:", (pageWrapper as HTMLElement).className);

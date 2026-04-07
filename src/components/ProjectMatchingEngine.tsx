@@ -213,7 +213,7 @@ export default function ProjectMatchingEngine({ preferences }: ProjectMatchingEn
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white rounded-2xl shadow-lg p-8 text-center"
+        className="bg-surface-canvas rounded-2xl shadow-lg p-8 text-center"
       >
         <div className="w-16 h-16 bg-surface-ground rounded-full flex items-center justify-center mx-auto mb-4">
           <FaSearch className="w-8 h-8 text-folio-text-tertiary" />
@@ -233,7 +233,7 @@ export default function ProjectMatchingEngine({ preferences }: ProjectMatchingEn
       className="space-y-6"
     >
       {/* Header and Filters */}
-      <div className="bg-white rounded-2xl shadow-lg p-6">
+      <div className="bg-surface-canvas rounded-2xl shadow-lg p-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
           <div>
             <h2 className="text-2xl font-bold text-folio-text-primary mb-2">Matching Projects</h2>
@@ -290,10 +290,10 @@ export default function ProjectMatchingEngine({ preferences }: ProjectMatchingEn
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
-              className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow"
+              className="bg-surface-canvas rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow"
             >
               {/* Header */}
-              <div className="p-6 border-b border-gray-100">
+              <div className="p-6 border-b border-folio-border-subtle">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1">
                     <h3 className="text-lg font-bold text-folio-text-primary mb-1">
@@ -377,7 +377,7 @@ export default function ProjectMatchingEngine({ preferences }: ProjectMatchingEn
       </div>
 
       {processedProjects.length === 0 && (
-        <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
+        <div className="bg-surface-canvas rounded-2xl shadow-lg p-8 text-center">
           <div className="w-16 h-16 bg-surface-ground rounded-full flex items-center justify-center mx-auto mb-4">
             <FaSearch className="w-8 h-8 text-folio-text-tertiary" />
           </div>

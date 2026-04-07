@@ -254,7 +254,7 @@ function ShopProductContextModal({
 
       {/* Modal */}
       <motion.div
-        className="relative z-10 w-full max-w-3xl max-h-[90vh] overflow-hidden rounded-2xl bg-white shadow-2xl"
+        className="relative z-10 w-full max-w-3xl max-h-[90vh] overflow-hidden rounded-2xl bg-surface-canvas shadow-2xl"
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.95, opacity: 0 }}
@@ -263,7 +263,7 @@ function ShopProductContextModal({
         {/* Close button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 z-20 w-8 h-8 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center hover:bg-white transition-colors"
+          className="absolute top-4 right-4 z-20 w-8 h-8 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center hover:bg-surface-canvas transition-colors"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2C2825" strokeWidth="2" strokeLinecap="round">
             <line x1="18" y1="6" x2="6" y2="18" />
@@ -275,7 +275,7 @@ function ShopProductContextModal({
           {/* Left: Images */}
           <div className="md:w-3/5 flex flex-col">
             {/* Contextual crop — the hero image */}
-            <div className="relative aspect-square md:aspect-[4/3] bg-stone-100">
+            <div className="relative aspect-square md:aspect-[4/3] bg-surface-elevated">
               {displayImage ? (
                 <SafeImage
                   src={displayImage}
@@ -285,7 +285,7 @@ function ShopProductContextModal({
                 />
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="font-['Instrument_Sans'] text-2xl font-medium text-stone-300">
+                  <span className="font-['Instrument_Sans'] text-2xl font-medium text-folio-text-tertiary">
                     {product.name.slice(0, 2).toUpperCase()}
                   </span>
                 </div>
@@ -295,7 +295,7 @@ function ShopProductContextModal({
             {/* Source project image — shows the product in context */}
             {product.sourceImageUrl && (
               <div className="relative">
-                <div className="p-1 bg-stone-100">
+                <div className="p-1 bg-surface-elevated">
                   <div className="relative aspect-[3/1] rounded-lg overflow-hidden">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
@@ -321,16 +321,16 @@ function ShopProductContextModal({
           <div className="md:w-2/5 flex flex-col overflow-y-auto p-6 md:p-8">
             {/* Product info */}
             <div className="mb-6">
-              <h2 className="font-['Instrument_Sans'] text-xl font-semibold text-stone-800">
+              <h2 className="font-['Instrument_Sans'] text-xl font-semibold text-folio-text-primary">
                 {product.name}
               </h2>
               {product.vendor && (
-                <p className="font-['Instrument_Sans'] text-[14px] text-stone-400 mt-1">
+                <p className="font-['Instrument_Sans'] text-[14px] text-folio-text-tertiary mt-1">
                   {product.vendor}
                 </p>
               )}
               {formattedPrice && (
-                <p className="font-['Instrument_Sans'] text-[14px] text-stone-600 mt-1 font-medium">
+                <p className="font-['Instrument_Sans'] text-[14px] text-folio-text-secondary mt-1 font-medium">
                   {formattedPrice}
                 </p>
               )}
@@ -339,7 +339,7 @@ function ShopProductContextModal({
             {/* Category badge */}
             {product.category && (
               <div className="mb-6">
-                <span className="inline-block px-3 py-1 rounded-full bg-stone-100 font-['Instrument_Sans'] text-[12px] text-stone-500">
+                <span className="inline-block px-3 py-1 rounded-full bg-surface-elevated font-['Instrument_Sans'] text-[12px] text-folio-text-tertiary">
                   {getCategoryLabel(product.category)}
                 </span>
               </div>
@@ -347,9 +347,9 @@ function ShopProductContextModal({
 
             {/* Project count */}
             {product.projectCount > 0 && (
-              <div className="mb-6 p-4 rounded-xl bg-stone-50">
-                <p className="font-['Instrument_Sans'] text-[13px] text-stone-500">
-                  Featured in <span className="font-medium text-stone-700">{product.projectCount} project{product.projectCount !== 1 ? 's' : ''}</span> by this designer
+              <div className="mb-6 p-4 rounded-xl bg-surface-ground">
+                <p className="font-['Instrument_Sans'] text-[13px] text-folio-text-tertiary">
+                  Featured in <span className="font-medium text-folio-text-secondary">{product.projectCount} project{product.projectCount !== 1 ? 's' : ''}</span> by this designer
                 </p>
               </div>
             )}
@@ -367,7 +367,7 @@ function ShopProductContextModal({
               {product.projectId && (
                 <a
                   href={`/project/${product.projectId}`}
-                  className="w-full py-3 px-6 rounded-xl font-['Instrument_Sans'] text-[14px] font-medium border border-stone-200 text-stone-600 hover:bg-stone-50 transition-colors text-center block"
+                  className="w-full py-3 px-6 rounded-xl font-['Instrument_Sans'] text-[14px] font-medium border border-folio-border-subtle text-folio-text-secondary hover:bg-surface-ground transition-colors text-center block"
                 >
                   View in Project
                 </a>

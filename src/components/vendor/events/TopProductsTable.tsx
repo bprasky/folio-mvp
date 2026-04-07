@@ -15,7 +15,7 @@ interface TopProductsTableProps {
 
 export function TopProductsTable({ products, onHover }: TopProductsTableProps) {
   return (
-    <Card className="bg-white border-folio-border-strong">
+    <Card className="bg-surface-canvas border-folio-border-strong">
       <CardHeader>
         <CardTitle className="text-lg font-serif text-folio-text-primary">
           Top Products at This Event
@@ -26,7 +26,7 @@ export function TopProductsTable({ products, onHover }: TopProductsTableProps) {
           {products.map((product, index) => (
             <div 
               key={product.id} 
-              className="flex items-center justify-between p-4 bg-surface-elevated rounded-lg hover:bg-[#F0EDE8] transition-colors cursor-pointer"
+              className="flex items-center justify-between p-4 bg-surface-elevated rounded-lg hover:bg-surface-elevated transition-colors cursor-pointer"
               data-testid={`product-${index}`}
               onMouseEnter={() => onHover?.({
                 type: 'product',

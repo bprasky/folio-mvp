@@ -262,7 +262,7 @@ export default function GuidedPublishFlow({ project, imageCount, images, project
 
       {/* Error */}
       {flow.error && (
-        <div className="p-4 bg-stone-100 border border-stone-300 text-[rgb(74,44,59)] rounded-[20px] folio-ui">
+        <div className="p-4 bg-surface-elevated border border-folio-border-strong text-[rgb(74,44,59)] rounded-[20px] folio-ui">
           {flow.error}
         </div>
       )}

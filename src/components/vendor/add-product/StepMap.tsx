@@ -37,7 +37,7 @@ function ConfidenceBadge({ confidence, source }: { confidence?: Confidence; sour
         {labels[confidence]} Confidence
       </span>
       {source && confidence >= 1 && (
-        <span className="text-xs text-stone-500 dark:text-stone-400 flex items-center gap-1">
+        <span className="text-xs text-folio-text-tertiary dark:text-folio-text-tertiary flex items-center gap-1">
           <RefreshCw className="w-3 h-3" />
           from {source}
         </span>
@@ -154,10 +154,10 @@ export function StepMap({ initialData, scrapedData, onNext, onBack }: StepMapPro
                 <MapPin className="w-6 h-6 text-purple-600 dark:text-purple-400" />
               </div>
               <div>
-                <h2 className="text-2xl font-medium text-stone-900 dark:text-stone-100">
+                <h2 className="text-2xl font-medium text-folio-text-primary dark:text-folio-text-tertiary">
                   Map Product Fields
                 </h2>
-                <p className="text-sm text-stone-600 dark:text-stone-400">
+                <p className="text-sm text-folio-text-secondary dark:text-folio-text-tertiary">
                   Review and edit the extracted information
                 </p>
               </div>
@@ -180,14 +180,14 @@ export function StepMap({ initialData, scrapedData, onNext, onBack }: StepMapPro
             <div className="space-y-6">
               {/* Basic Info */}
               <div className="space-y-4">
-                <h3 className="text-lg font-medium text-stone-900 dark:text-stone-100 flex items-center gap-2">
+                <h3 className="text-lg font-medium text-folio-text-primary dark:text-folio-text-tertiary flex items-center gap-2">
                   <Package className="w-5 h-5" />
                   Basic Information
                 </h3>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="col-span-2">
-                    <label className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2">
+                    <label className="block text-sm font-medium text-folio-text-secondary dark:text-folio-text-tertiary mb-2">
                       Product Name *
                     </label>
                     <input
@@ -196,8 +196,8 @@ export function StepMap({ initialData, scrapedData, onNext, onBack }: StepMapPro
                       className={`w-full px-4 py-2 rounded-lg border ${
                         errors.name
                           ? 'border-red-500 focus:ring-red-500'
-                          : 'border-stone-300 dark:border-stone-700 focus:ring-[var(--accent)]'
-                      } bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 focus:ring-2 focus:border-transparent`}
+                          : 'border-folio-border-strong dark:border-folio-border-subtle focus:ring-[var(--accent)]'
+                      } bg-surface-canvas dark:bg-surface-canvas text-folio-text-primary dark:text-folio-text-tertiary placeholder:text-folio-text-tertiary focus:ring-2 focus:border-transparent`}
                     />
                     <ConfidenceBadge {...getFieldConfidence('name')} />
                     {errors.name && (
@@ -206,7 +206,7 @@ export function StepMap({ initialData, scrapedData, onNext, onBack }: StepMapPro
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2">
+                    <label className="block text-sm font-medium text-folio-text-secondary dark:text-folio-text-tertiary mb-2">
                       SKU *
                     </label>
                     <input
@@ -215,8 +215,8 @@ export function StepMap({ initialData, scrapedData, onNext, onBack }: StepMapPro
                       className={`w-full px-4 py-2 rounded-lg border ${
                         errors.sku
                           ? 'border-red-500'
-                          : 'border-stone-300 dark:border-stone-700'
-                      } bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent`}
+                          : 'border-folio-border-strong dark:border-folio-border-subtle'
+                      } bg-surface-canvas dark:bg-surface-canvas text-folio-text-primary dark:text-folio-text-tertiary placeholder:text-folio-text-tertiary focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent`}
                     />
                     <ConfidenceBadge {...getFieldConfidence('sku')} />
                     {errors.sku && (
@@ -225,20 +225,20 @@ export function StepMap({ initialData, scrapedData, onNext, onBack }: StepMapPro
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2">
+                    <label className="block text-sm font-medium text-folio-text-secondary dark:text-folio-text-tertiary mb-2">
                       Price (optional)
                     </label>
                     <input
                       type="number"
                       {...registerTouched('price')}
                       placeholder="1250"
-                      className="w-full px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+                      className="w-full px-4 py-2 rounded-lg border border-folio-border-strong dark:border-folio-border-subtle bg-surface-canvas dark:bg-surface-canvas text-folio-text-primary dark:text-folio-text-tertiary placeholder:text-folio-text-tertiary focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                     />
                     <ConfidenceBadge {...getFieldConfidence('price')} />
                   </div>
 
                   <div className="col-span-2">
-                    <label className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2">
+                    <label className="block text-sm font-medium text-folio-text-secondary dark:text-folio-text-tertiary mb-2">
                       Description * (min 40 characters)
                     </label>
                     <textarea
@@ -248,8 +248,8 @@ export function StepMap({ initialData, scrapedData, onNext, onBack }: StepMapPro
                       className={`w-full px-4 py-2 rounded-lg border ${
                         errors.description
                           ? 'border-red-500'
-                          : 'border-stone-300 dark:border-stone-700'
-                      } bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent resize-none`}
+                          : 'border-folio-border-strong dark:border-folio-border-subtle'
+                      } bg-surface-canvas dark:bg-surface-canvas text-folio-text-primary dark:text-folio-text-tertiary placeholder:text-folio-text-tertiary focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent resize-none`}
                     />
                     <ConfidenceBadge {...getFieldConfidence('description')} />
                     {errors.description && (
@@ -260,20 +260,20 @@ export function StepMap({ initialData, scrapedData, onNext, onBack }: StepMapPro
               </div>
 
               {/* Specifications */}
-              <div className="space-y-4 pt-6 border-t border-stone-200 dark:border-stone-700">
-                <h3 className="text-lg font-medium text-stone-900 dark:text-stone-100">
+              <div className="space-y-4 pt-6 border-t border-folio-border-subtle dark:border-folio-border-subtle">
+                <h3 className="text-lg font-medium text-folio-text-primary dark:text-folio-text-tertiary">
                   Specifications
                 </h3>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="col-span-2">
-                    <label className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2">
+                    <label className="block text-sm font-medium text-folio-text-secondary dark:text-folio-text-tertiary mb-2">
                       Materials (comma-separated)
                     </label>
                     <input
                       {...registerTouched('materials')}
                       placeholder="Travertine, Stone"
-                      className="w-full px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+                      className="w-full px-4 py-2 rounded-lg border border-folio-border-strong dark:border-folio-border-subtle bg-surface-canvas dark:bg-surface-canvas text-folio-text-primary dark:text-folio-text-tertiary placeholder:text-folio-text-tertiary focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                     />
                     <ConfidenceBadge {...getFieldConfidence('materials')} />
                     {errors.materials && (
@@ -282,20 +282,20 @@ export function StepMap({ initialData, scrapedData, onNext, onBack }: StepMapPro
                   </div>
 
                   <div className="col-span-2">
-                    <label className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2">
+                    <label className="block text-sm font-medium text-folio-text-secondary dark:text-folio-text-tertiary mb-2">
                       Finish
                     </label>
                     <input
                       {...registerTouched('finish')}
                       placeholder="Honed Natural"
-                      className="w-full px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+                      className="w-full px-4 py-2 rounded-lg border border-folio-border-strong dark:border-folio-border-subtle bg-surface-canvas dark:bg-surface-canvas text-folio-text-primary dark:text-folio-text-tertiary placeholder:text-folio-text-tertiary focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                     />
                     <ConfidenceBadge {...getFieldConfidence('finish')} />
                   </div>
 
                   {/* Dimensions */}
                   <div className="col-span-2">
-                    <label className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2">
+                    <label className="block text-sm font-medium text-folio-text-secondary dark:text-folio-text-tertiary mb-2">
                       Dimensions (W × D × H)
                     </label>
                     <div className="grid grid-cols-4 gap-2">
@@ -303,23 +303,23 @@ export function StepMap({ initialData, scrapedData, onNext, onBack }: StepMapPro
                         type="number"
                         {...registerTouched('dimensions.w')}
                         placeholder="Width"
-                        className="px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+                        className="px-4 py-2 rounded-lg border border-folio-border-strong dark:border-folio-border-subtle bg-surface-canvas dark:bg-surface-canvas text-folio-text-primary dark:text-folio-text-tertiary placeholder:text-folio-text-tertiary focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                       />
                       <input
                         type="number"
                         {...registerTouched('dimensions.d')}
                         placeholder="Depth"
-                        className="px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+                        className="px-4 py-2 rounded-lg border border-folio-border-strong dark:border-folio-border-subtle bg-surface-canvas dark:bg-surface-canvas text-folio-text-primary dark:text-folio-text-tertiary placeholder:text-folio-text-tertiary focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                       />
                       <input
                         type="number"
                         {...registerTouched('dimensions.h')}
                         placeholder="Height"
-                        className="px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+                        className="px-4 py-2 rounded-lg border border-folio-border-strong dark:border-folio-border-subtle bg-surface-canvas dark:bg-surface-canvas text-folio-text-primary dark:text-folio-text-tertiary placeholder:text-folio-text-tertiary focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                       />
                       <select
                         {...registerTouched('dimensions.units')}
-                        className="px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+                        className="px-4 py-2 rounded-lg border border-folio-border-strong dark:border-folio-border-subtle bg-surface-canvas dark:bg-surface-canvas text-folio-text-primary dark:text-folio-text-tertiary focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                       >
                         <option value="in">in</option>
                         <option value="cm">cm</option>
@@ -329,7 +329,7 @@ export function StepMap({ initialData, scrapedData, onNext, onBack }: StepMapPro
 
                   {/* Weight */}
                   <div>
-                    <label className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2">
+                    <label className="block text-sm font-medium text-folio-text-secondary dark:text-folio-text-tertiary mb-2">
                       Weight (optional)
                     </label>
                     <div className="grid grid-cols-2 gap-2">
@@ -337,11 +337,11 @@ export function StepMap({ initialData, scrapedData, onNext, onBack }: StepMapPro
                         type="number"
                         {...registerTouched('weight.value')}
                         placeholder="25"
-                        className="px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+                        className="px-4 py-2 rounded-lg border border-folio-border-strong dark:border-folio-border-subtle bg-surface-canvas dark:bg-surface-canvas text-folio-text-primary dark:text-folio-text-tertiary placeholder:text-folio-text-tertiary focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                       />
                       <select
                         {...registerTouched('weight.units')}
-                        className="px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+                        className="px-4 py-2 rounded-lg border border-folio-border-strong dark:border-folio-border-subtle bg-surface-canvas dark:bg-surface-canvas text-folio-text-primary dark:text-folio-text-tertiary focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                       >
                         <option value="lb">lb</option>
                         <option value="kg">kg</option>
@@ -350,13 +350,13 @@ export function StepMap({ initialData, scrapedData, onNext, onBack }: StepMapPro
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2">
+                    <label className="block text-sm font-medium text-folio-text-secondary dark:text-folio-text-tertiary mb-2">
                       Lead Time (optional)
                     </label>
                     <input
                       {...registerTouched('leadTime')}
                       placeholder="6–8 weeks"
-                      className="w-full px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+                      className="w-full px-4 py-2 rounded-lg border border-folio-border-strong dark:border-folio-border-subtle bg-surface-canvas dark:bg-surface-canvas text-folio-text-primary dark:text-folio-text-tertiary placeholder:text-folio-text-tertiary focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                     />
                     <ConfidenceBadge {...getFieldConfidence('leadTime')} />
                   </div>
@@ -364,44 +364,44 @@ export function StepMap({ initialData, scrapedData, onNext, onBack }: StepMapPro
               </div>
 
               {/* Categorization */}
-              <div className="space-y-4 pt-6 border-t border-stone-200 dark:border-stone-700">
-                <h3 className="text-lg font-medium text-stone-900 dark:text-stone-100 flex items-center gap-2">
+              <div className="space-y-4 pt-6 border-t border-folio-border-subtle dark:border-folio-border-subtle">
+                <h3 className="text-lg font-medium text-folio-text-primary dark:text-folio-text-tertiary flex items-center gap-2">
                   <Tag className="w-5 h-5" />
                   Categorization
                 </h3>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="col-span-2">
-                    <label className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2">
+                    <label className="block text-sm font-medium text-folio-text-secondary dark:text-folio-text-tertiary mb-2">
                       Category
                     </label>
                     <input
                       {...registerTouched('category')}
                       placeholder="Furniture, Lighting, Textiles..."
-                      className="w-full px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+                      className="w-full px-4 py-2 rounded-lg border border-folio-border-strong dark:border-folio-border-subtle bg-surface-canvas dark:bg-surface-canvas text-folio-text-primary dark:text-folio-text-tertiary placeholder:text-folio-text-tertiary focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                     />
                     <ConfidenceBadge {...getFieldConfidence('category')} />
                   </div>
 
                   <div className="col-span-2">
-                    <label className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2">
+                    <label className="block text-sm font-medium text-folio-text-secondary dark:text-folio-text-tertiary mb-2">
                       Tags (comma-separated)
                     </label>
                     <input
                       {...registerTouched('tags')}
                       placeholder="modern, stone, side-table, luxury"
-                      className="w-full px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+                      className="w-full px-4 py-2 rounded-lg border border-folio-border-strong dark:border-folio-border-subtle bg-surface-canvas dark:bg-surface-canvas text-folio-text-primary dark:text-folio-text-tertiary placeholder:text-folio-text-tertiary focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                     />
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center justify-between mt-8 pt-6 border-t border-stone-200 dark:border-stone-700">
+            <div className="flex items-center justify-between mt-8 pt-6 border-t border-folio-border-subtle dark:border-folio-border-subtle">
               <button
                 type="button"
                 onClick={onBack}
-                className="text-sm text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 transition-colors"
+                className="text-sm text-folio-text-secondary dark:text-folio-text-tertiary hover:text-folio-text-primary dark:hover:text-folio-text-tertiary transition-colors"
               >
                 ← Back
               </button>

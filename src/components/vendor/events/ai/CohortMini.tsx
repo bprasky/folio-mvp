@@ -58,7 +58,7 @@ export function CohortMini({ data }: {
   };
   
   return (
-    <Card className="p-4 bg-white border-folio-border-strong">
+    <Card className="p-4 bg-surface-canvas border-folio-border-strong">
       <div className="flex items-center justify-between mb-3">
         <div className="text-sm font-medium text-folio-text-primary">Performance Benchmarks</div>
         <div className="text-xs text-folio-text-secondary">vs. your history & industry peers</div>

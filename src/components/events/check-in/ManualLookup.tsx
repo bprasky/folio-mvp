@@ -85,7 +85,7 @@ export default function ManualLookup({ eventId, onBack, onCheckIn }: Props) {
         placeholder="Search by name..."
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        className="w-full rounded-lg border border-[var(--border-light,#e7e5e4)] bg-white px-4 py-2.5 text-sm text-[var(--text-primary,#1c1917)] placeholder:text-[var(--text-tertiary,#a8a29e)] focus:outline-none focus:ring-2 focus:ring-[var(--accent,#c8a97e)] mb-4"
+        className="w-full rounded-lg border border-[var(--border-light,#e7e5e4)] bg-surface-canvas px-4 py-2.5 text-sm text-[var(--text-primary,#1c1917)] placeholder:text-[var(--text-tertiary,#a8a29e)] focus:outline-none focus:ring-2 focus:ring-[var(--accent,#c8a97e)] mb-4"
         autoFocus
       />
 
@@ -103,7 +103,7 @@ export default function ManualLookup({ eventId, onBack, onCheckIn }: Props) {
           {attendees.map((a) => (
             <div
               key={a.rsvpId}
-              className="flex items-center justify-between rounded-lg bg-white border border-[var(--border-light,#e7e5e4)] p-3"
+              className="flex items-center justify-between rounded-lg bg-surface-canvas border border-[var(--border-light,#e7e5e4)] p-3"
             >
               <div className="flex items-center gap-3 min-w-0">
                 {a.profileImage ? (
@@ -113,7 +113,7 @@ export default function ManualLookup({ eventId, onBack, onCheckIn }: Props) {
                     className="w-9 h-9 rounded-full object-cover flex-shrink-0"
                   />
                 ) : (
-                  <div className="w-9 h-9 rounded-full bg-stone-200 flex items-center justify-center text-stone-500 font-medium text-sm flex-shrink-0">
+                  <div className="w-9 h-9 rounded-full bg-surface-elevated flex items-center justify-center text-folio-text-tertiary font-medium text-sm flex-shrink-0">
                     {a.name?.[0]?.toUpperCase() ?? "?"}
                   </div>
                 )}

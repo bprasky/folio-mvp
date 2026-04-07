@@ -41,7 +41,7 @@ export default function LogoDriftAnimation({ isVisible, onComplete }: LogoDriftA
       animate={controls}
       initial={{ x: 0, y: 0, scale: 1, opacity: 1 }}
     >
-      <div className="text-4xl font-serif text-stone-800 tracking-wider">
+      <div className="text-4xl font-serif text-folio-text-primary tracking-wider">
         FOLIO
       </div>
     </motion.div>

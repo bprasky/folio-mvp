@@ -15,7 +15,7 @@ export function LinkedImagePreview({ imageId, images }: Props) {
   }
 
   return (
-    <div className="relative w-full h-32 rounded-lg overflow-hidden bg-stone-100 border border-stone-200">
+    <div className="relative w-full h-32 rounded-lg overflow-hidden bg-surface-elevated border border-folio-border-subtle">
       <Image
         src={image.url}
         alt={image.name || "Referenced image"}

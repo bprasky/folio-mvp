@@ -453,7 +453,7 @@ export default function ProjectPostPreviewPage() {
       )}
 
       {/* Credits Editor — editable both before and after article generation */}
-      <div className="mb-8 rounded-lg border border-folio-border-subtle bg-white p-5">
+      <div className="mb-8 rounded-lg border border-folio-border-subtle bg-surface-canvas p-5">
         <CreditsEditor
           credits={credits}
           onChange={handleCreditsChange}
@@ -495,7 +495,7 @@ export default function ProjectPostPreviewPage() {
       )}
 
       {/* Legacy Views */}
-      <div className="bg-white rounded-lg border border-folio-border-subtle p-8">
+      <div className="bg-surface-canvas rounded-lg border border-folio-border-subtle p-8">
         {view === "card" && post && (
           <PostCard
             post={post.post}

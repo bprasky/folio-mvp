@@ -103,7 +103,7 @@ export default function RequestSampleModal({
               value={finishOrColorway}
               onChange={(e) => setFinishOrColorway(e.target.value)}
               placeholder="e.g. Brass, Matte Black, Weathered White"
-              className="w-full px-3 py-2 bg-white border border-folio-border-subtle rounded-lg text-folio-text-primary placeholder-[#A39E97] focus:outline-none focus:border-folio-border-strong transition-all"
+              className="w-full px-3 py-2 bg-surface-canvas border border-folio-border-subtle rounded-lg text-folio-text-primary placeholder-[#A39E97] focus:outline-none focus:border-folio-border-strong transition-all"
             />
           </div>
 
@@ -116,7 +116,7 @@ export default function RequestSampleModal({
               onChange={(e) => setShippingAddress(e.target.value)}
               placeholder="Your studio or project site address"
               rows={3}
-              className="w-full px-3 py-2 bg-white border border-folio-border-subtle rounded-lg text-folio-text-primary placeholder-[#A39E97] focus:outline-none focus:border-folio-border-strong transition-all resize-none"
+              className="w-full px-3 py-2 bg-surface-canvas border border-folio-border-subtle rounded-lg text-folio-text-primary placeholder-[#A39E97] focus:outline-none focus:border-folio-border-strong transition-all resize-none"
             />
           </div>
 
@@ -129,7 +129,7 @@ export default function RequestSampleModal({
               onChange={(e) => setDesignerNote(e.target.value)}
               placeholder="I'm specifying this for an upcoming residential project..."
               rows={3}
-              className="w-full px-3 py-2 bg-white border border-folio-border-subtle rounded-lg text-folio-text-primary placeholder-[#A39E97] focus:outline-none focus:border-folio-border-strong transition-all resize-none"
+              className="w-full px-3 py-2 bg-surface-canvas border border-folio-border-subtle rounded-lg text-folio-text-primary placeholder-[#A39E97] focus:outline-none focus:border-folio-border-strong transition-all resize-none"
             />
           </div>
         </div>

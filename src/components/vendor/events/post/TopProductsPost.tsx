@@ -17,7 +17,7 @@ export function TopProductsPost({ products }: TopProductsPostProps) {
   const sortedProducts = [...products].sort((a, b) => b.saveToTagRatePct - a.saveToTagRatePct);
 
   return (
-    <Card className="bg-white border-folio-border-strong">
+    <Card className="bg-surface-canvas border-folio-border-strong">
       <CardHeader>
         <CardTitle className="text-lg font-serif text-folio-text-primary flex items-center space-x-2">
           <TrendingUp className="w-5 h-5 text-folio-text-secondary" />
@@ -32,7 +32,7 @@ export function TopProductsPost({ products }: TopProductsPostProps) {
           {sortedProducts.map((product, index) => (
             <div 
               key={product.id} 
-              className="flex items-center justify-between p-4 bg-surface-elevated rounded-lg hover:bg-[#F0EDE8] transition-colors"
+              className="flex items-center justify-between p-4 bg-surface-elevated rounded-lg hover:bg-surface-elevated transition-colors"
             >
               {/* Product Info */}
               <div className="flex items-center space-x-4 flex-1">
@@ -41,7 +41,7 @@ export function TopProductsPost({ products }: TopProductsPostProps) {
                 </div>
                 
                 {/* Product Image Placeholder */}
-                <div className="w-12 h-12 bg-[#DAD2CA] rounded-lg flex items-center justify-center flex-shrink-0">
+                <div className="w-12 h-12 bg-folio-border-strong rounded-lg flex items-center justify-center flex-shrink-0">
                   <span className="text-xs text-folio-text-secondary font-medium">
                     {product.name.split(' ').map(word => word[0]).join('').substring(0, 2)}
                   </span>

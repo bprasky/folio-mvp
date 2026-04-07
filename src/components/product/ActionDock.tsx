@@ -57,8 +57,8 @@ export function ActionDock({ product }: ActionDockProps) {
               aria-expanded={isExpanded}
               aria-label={isExpanded ? "Collapse actions" : "Expand actions"}
             >
-              <div className="w-12 h-1.5 bg-stone-300 dark:bg-stone-600 rounded-full" />
-              <div className="flex items-center gap-2 text-sm font-medium text-stone-600 dark:text-stone-400">
+              <div className="w-12 h-1.5 bg-surface-elevated dark:bg-surface-elevated rounded-full" />
+              <div className="flex items-center gap-2 text-sm font-medium text-folio-text-secondary dark:text-folio-text-tertiary">
                 <span>{isExpanded ? "Close" : "Product Actions"}</span>
                 {isExpanded ? (
                   <ChevronDown className="w-4 h-4" />

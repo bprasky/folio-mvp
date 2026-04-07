@@ -6,7 +6,7 @@ export function PlaceholderChart({ title, description }: { title: string; descri
       <div className="text-center">
         <div className="text-2xl mb-2">📊</div>
         <div className="font-serif text-lg mb-1">{title}</div>
-        <div className="text-sm text-stone-400">{description}</div>
+        <div className="text-sm text-folio-text-tertiary">{description}</div>
       </div>
     </div>
   );

@@ -92,7 +92,7 @@ export default function ContactRepModal({
           onChange={(e) => setMessage(e.target.value)}
           placeholder="Quick question about finishes, lead times, pricing..."
           rows={5}
-          className="w-full px-3 py-2 bg-white border border-folio-border-subtle rounded-lg text-folio-text-primary placeholder-[#A39E97] focus:outline-none focus:border-folio-border-strong transition-all resize-none"
+          className="w-full px-3 py-2 bg-surface-canvas border border-folio-border-subtle rounded-lg text-folio-text-primary placeholder-[#A39E97] focus:outline-none focus:border-folio-border-strong transition-all resize-none"
         />
 
         {error && <p className="text-sm text-red-600 mt-3">{error}</p>}

@@ -619,7 +619,7 @@ export default function DraftsPanel({ projectId }: { projectId: string }) {
                   onChange={(e) => setFollowup(i, "a", e.target.value)}
                 />
                 <button
-                  className="col-span-1 px-2 py-1 text-folio-text-tertiary hover:text-[rgb(74,44,59)] hover:bg-stone-100 rounded transition-colors"
+                  className="col-span-1 px-2 py-1 text-folio-text-tertiary hover:text-[rgb(74,44,59)] hover:bg-surface-elevated rounded transition-colors"
                   onClick={() => removeFollowup(i)}
                   aria-label="Remove"
                 >

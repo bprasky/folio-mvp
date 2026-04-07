@@ -26,7 +26,7 @@ export default function ProductPickerCard({ items, onChange, className }: Props)
   }
 
   return (
-    <div className={`border rounded-2xl p-6 bg-white ${className ?? ''}`}>
+    <div className={`border rounded-2xl p-6 bg-surface-canvas ${className ?? ''}`}>
       <h3 className="text-lg font-semibold mb-2">Products to include</h3>
       <p className="text-sm text-folio-text-secondary mb-4">
         Add a few key items (SKU and finish if possible). You can swap to a catalog picker later.

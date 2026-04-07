@@ -74,7 +74,7 @@ export function GeoPopularity({ data, onHover }: GeoPopularityProps) {
                 )}
               </div>
             </div>
-            <div className="flex items-center space-x-4 text-xs text-stone-700">
+            <div className="flex items-center space-x-4 text-xs text-folio-text-secondary">
               <span>{formatCompactNumber(city.count)} saves</span>
               <span>{city.sharePct}% share</span>
               <span className={city.trendDelta >= 0 ? 'text-accent-opp' : 'text-accent-risk'}>
@@ -93,7 +93,7 @@ export function GeoPopularity({ data, onHover }: GeoPopularityProps) {
 
   const renderMapView = () => (
     <div className="h-48 bg-canvas/10 rounded-lg flex items-center justify-center">
-      <div className="text-center text-stone-700">
+      <div className="text-center text-folio-text-secondary">
         <Map className="w-12 h-12 mx-auto mb-2 opacity-50" />
         <p className="text-sm">Mini map view coming soon</p>
         <p className="text-xs">Interactive geographic visualization</p>
@@ -108,7 +108,7 @@ export function GeoPopularity({ data, onHover }: GeoPopularityProps) {
       visual={
         <div>
           <div className="flex items-center justify-between mb-3">
-            <div className="text-sm text-stone-700">Where interest concentrates — and where to grow</div>
+            <div className="text-sm text-folio-text-secondary">Where interest concentrates — and where to grow</div>
             <div className="flex items-center bg-canvas/20 rounded-lg p-1">
               <button
                 className={`px-3 py-1 rounded text-xs ${viewMode === 'list' ? 'bg-canvas/30' : 'hover:bg-canvas/20'}`}

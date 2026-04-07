@@ -8,7 +8,7 @@ interface SavedTogetherPanelProps {
 
 export default function SavedTogetherPanel({ products }: SavedTogetherPanelProps) {
   return (
-    <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
+    <div className="bg-surface-canvas rounded-lg shadow-lg p-6 mb-8">
       <h2 className="text-xl font-semibold text-folio-text-primary mb-6 flex items-center">
         <FaLink className="text-purple-500 mr-3" /> Saved Together
       </h2>

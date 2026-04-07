@@ -31,7 +31,7 @@ export default function QuoteAndDeliveryCard({ quote, onChange, className }: Pro
   }
 
   return (
-    <div className={`border rounded-2xl p-6 bg-white ${className ?? ''}`}>
+    <div className={`border rounded-2xl p-6 bg-surface-canvas ${className ?? ''}`}>
       <h3 className="text-lg font-semibold mb-2">Quote & delivery</h3>
       <p className="text-sm text-folio-text-secondary mb-4">Attach a PDF or enter totals. Versions are tracked automatically.</p>
 

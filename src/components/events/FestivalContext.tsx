@@ -19,7 +19,7 @@ interface FestivalContextProps {
 
 export default function FestivalContext({ festival, eventTitle }: FestivalContextProps) {
   return (
-    <div className="bg-white border-b border-folio-border">
+    <div className="bg-surface-canvas border-b border-folio-border">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         {/* Breadcrumb */}
         <nav className="flex items-center space-x-2 text-sm text-folio-text-secondary mb-3">

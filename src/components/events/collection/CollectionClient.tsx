@@ -65,7 +65,7 @@ export default function CollectionClient({ event }: { event: EventInfo }) {
   if (loading) {
     return (
       <div className="min-h-screen bg-[var(--bg-base,#fdfbf8)] flex items-center justify-center">
-        <p className="text-sm text-stone-400">Loading your collection...</p>
+        <p className="text-sm text-folio-text-tertiary">Loading your collection...</p>
       </div>
     );
   }
@@ -91,7 +91,7 @@ export default function CollectionClient({ event }: { event: EventInfo }) {
           <div key={group.vendorName}>
             <h2 className="text-sm font-semibold text-[var(--text-primary,#1c1917)] uppercase tracking-wider mb-3">
               {group.vendorName}{" "}
-              <span className="text-stone-400 font-normal">
+              <span className="text-folio-text-tertiary font-normal">
                 ({group.products.length})
               </span>
             </h2>
@@ -100,10 +100,10 @@ export default function CollectionClient({ event }: { event: EventInfo }) {
                 <Link
                   key={scan.id}
                   href={`/products/${scan.product.id}`}
-                  className="group bg-white rounded-xl border border-[var(--border-light,#e7e5e4)] overflow-hidden hover:shadow-md transition-shadow"
+                  className="group bg-surface-canvas rounded-xl border border-[var(--border-light,#e7e5e4)] overflow-hidden hover:shadow-md transition-shadow"
                 >
                   {scan.product.imageUrl ? (
-                    <div className="aspect-square bg-stone-100">
+                    <div className="aspect-square bg-surface-elevated">
                       <img
                         src={scan.product.imageUrl}
                         alt={scan.product.name}
@@ -111,9 +111,9 @@ export default function CollectionClient({ event }: { event: EventInfo }) {
                       />
                     </div>
                   ) : (
-                    <div className="aspect-square bg-stone-100 flex items-center justify-center">
+                    <div className="aspect-square bg-surface-elevated flex items-center justify-center">
                       <svg
-                        className="w-10 h-10 text-stone-300"
+                        className="w-10 h-10 text-folio-text-tertiary"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -147,7 +147,7 @@ export default function CollectionClient({ event }: { event: EventInfo }) {
         <div className="flex gap-3 pt-4 border-t border-[var(--border-light,#e7e5e4)]">
           <a
             href={`/api/events/${event.id}/my-collection/export`}
-            className="px-4 py-2 text-sm font-medium rounded-lg border border-[var(--border-light,#e7e5e4)] text-[var(--text-primary,#1c1917)] hover:bg-stone-50 transition-colors"
+            className="px-4 py-2 text-sm font-medium rounded-lg border border-[var(--border-light,#e7e5e4)] text-[var(--text-primary,#1c1917)] hover:bg-surface-ground transition-colors"
           >
             Export as PDF
           </a>

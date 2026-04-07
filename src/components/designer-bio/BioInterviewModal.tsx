@@ -184,7 +184,7 @@ export default function BioInterviewModal({ onComplete, onClose }: BioInterviewM
       />
 
       {/* Modal */}
-      <div className="relative bg-white rounded-[20px] shadow-2xl w-full max-w-3xl mx-4 max-h-[90vh] overflow-hidden">
+      <div className="relative bg-surface-canvas rounded-[20px] shadow-2xl w-full max-w-3xl mx-4 max-h-[90vh] overflow-hidden">
         {/* Close button */}
         <button
           type="button"

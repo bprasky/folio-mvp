@@ -70,12 +70,12 @@ export function PhotographerProfile({ photographer, projects }: PhotographerProf
           )}
 
           {/* Name — Cormorant Garamond Italic per spec */}
-          <h1 className="font-serif text-3xl md:text-4xl lg:text-5xl text-stone-900 font-light italic tracking-tight">
+          <h1 className="font-serif text-3xl md:text-4xl lg:text-5xl text-folio-text-primary font-light italic tracking-tight">
             {photographer.name}
           </h1>
 
           {/* Location + Styles tagline */}
-          <div className="text-stone-500 text-sm md:text-base font-light">
+          <div className="text-folio-text-tertiary text-sm md:text-base font-light">
             {[
               photographer.location,
               photographer.photographyStyles.length > 0
@@ -104,7 +104,7 @@ export function PhotographerProfile({ photographer, projects }: PhotographerProf
                 href={`https://instagram.com/${photographer.instagram.replace(/^@/, "")}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-5 py-2.5 border border-stone-300 text-stone-600 text-sm rounded-full hover:border-stone-400 hover:text-stone-800 transition-colors"
+                className="inline-flex items-center gap-2 px-5 py-2.5 border border-folio-border-strong text-folio-text-secondary text-sm rounded-full hover:border-folio-border-strong hover:text-folio-text-primary transition-colors"
               >
                 Instagram
               </a>
@@ -114,7 +114,7 @@ export function PhotographerProfile({ photographer, projects }: PhotographerProf
                 href={photographer.website}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-5 py-2.5 border border-stone-300 text-stone-600 text-sm rounded-full hover:border-stone-400 hover:text-stone-800 transition-colors"
+                className="inline-flex items-center gap-2 px-5 py-2.5 border border-folio-border-strong text-folio-text-secondary text-sm rounded-full hover:border-folio-border-strong hover:text-folio-text-primary transition-colors"
               >
                 Website
               </a>
@@ -125,7 +125,7 @@ export function PhotographerProfile({ photographer, projects }: PhotographerProf
 
       {/* Divider */}
       <div className="max-w-5xl mx-auto px-6">
-        <div className="h-px bg-stone-200" />
+        <div className="h-px bg-surface-elevated" />
       </div>
 
       {/* About Section */}
@@ -133,10 +133,10 @@ export function PhotographerProfile({ photographer, projects }: PhotographerProf
         <div className="max-w-3xl mx-auto px-6 py-12">
           {photographer.bio && (
             <div className="mb-8">
-              <h2 className="text-xs font-semibold text-stone-400 uppercase tracking-widest mb-3">
+              <h2 className="text-xs font-semibold text-folio-text-tertiary uppercase tracking-widest mb-3">
                 About
               </h2>
-              <p className="text-stone-600 leading-relaxed font-light">
+              <p className="text-folio-text-secondary leading-relaxed font-light">
                 {photographer.bio}
               </p>
             </div>
@@ -145,14 +145,14 @@ export function PhotographerProfile({ photographer, projects }: PhotographerProf
           {/* Styles pills */}
           {photographer.photographyStyles.length > 0 && (
             <div className="mb-6">
-              <h2 className="text-xs font-semibold text-stone-400 uppercase tracking-widest mb-3">
+              <h2 className="text-xs font-semibold text-folio-text-tertiary uppercase tracking-widest mb-3">
                 Styles
               </h2>
               <div className="flex flex-wrap gap-2">
                 {photographer.photographyStyles.map((style) => (
                   <span
                     key={style}
-                    className="px-3 py-1 bg-stone-100 text-stone-600 text-sm rounded-full"
+                    className="px-3 py-1 bg-surface-elevated text-folio-text-secondary text-sm rounded-full"
                   >
                     {capitalize(style)}
                   </span>
@@ -164,10 +164,10 @@ export function PhotographerProfile({ photographer, projects }: PhotographerProf
           {/* Travel radius */}
           {photographer.travelRadius && (
             <div>
-              <h2 className="text-xs font-semibold text-stone-400 uppercase tracking-widest mb-3">
+              <h2 className="text-xs font-semibold text-folio-text-tertiary uppercase tracking-widest mb-3">
                 Travel
               </h2>
-              <p className="text-stone-600 font-light">{photographer.travelRadius}</p>
+              <p className="text-folio-text-secondary font-light">{photographer.travelRadius}</p>
             </div>
           )}
         </div>
@@ -176,7 +176,7 @@ export function PhotographerProfile({ photographer, projects }: PhotographerProf
       {/* Divider */}
       {projects.length > 0 && (
         <div className="max-w-5xl mx-auto px-6">
-          <div className="h-px bg-stone-200" />
+          <div className="h-px bg-surface-elevated" />
         </div>
       )}
 
@@ -184,10 +184,10 @@ export function PhotographerProfile({ photographer, projects }: PhotographerProf
       {projects.length > 0 && (
         <div className="max-w-5xl mx-auto px-6 py-16">
           <div className="flex items-center justify-between mb-8">
-            <h2 className="text-xs font-semibold text-stone-400 uppercase tracking-widest">
+            <h2 className="text-xs font-semibold text-folio-text-tertiary uppercase tracking-widest">
               Portfolio
             </h2>
-            <span className="text-xs text-stone-400">
+            <span className="text-xs text-folio-text-tertiary">
               {projects.length} project{projects.length !== 1 ? "s" : ""}
             </span>
           </div>
@@ -198,7 +198,7 @@ export function PhotographerProfile({ photographer, projects }: PhotographerProf
       {/* Empty state */}
       {projects.length === 0 && (
         <div className="max-w-3xl mx-auto px-6 py-16 text-center">
-          <p className="text-stone-400 font-light">
+          <p className="text-folio-text-tertiary font-light">
             No published projects yet. Projects will appear here as designers credit {photographer.name} on their work.
           </p>
         </div>

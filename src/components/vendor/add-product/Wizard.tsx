@@ -72,16 +72,16 @@ export function ProductWizard({ vendorId }: ProductWizardProps) {
       <div className="mb-8">
         <button
           onClick={goBack}
-          className="flex items-center gap-2 text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 transition-colors mb-4"
+          className="flex items-center gap-2 text-folio-text-secondary dark:text-folio-text-tertiary hover:text-folio-text-primary dark:hover:text-folio-text-tertiary transition-colors mb-4"
         >
           <ArrowLeft className="w-4 h-4" />
           <span className="text-sm">Back</span>
         </button>
         
-        <h1 className="text-3xl font-serif font-light text-stone-900 dark:text-stone-100 mb-2">
+        <h1 className="text-3xl font-serif font-light text-folio-text-primary dark:text-folio-text-tertiary mb-2">
           Add New Product
         </h1>
-        <p className="text-stone-600 dark:text-stone-400">
+        <p className="text-folio-text-secondary dark:text-folio-text-tertiary">
           Scrape product details from a URL or enter manually
         </p>
       </div>
@@ -99,7 +99,7 @@ export function ProductWizard({ vendorId }: ProductWizardProps) {
                         ? 'bg-green-500 text-white'
                         : index === currentStepIndex
                         ? 'bg-[var(--accent)] text-white'
-                        : 'bg-stone-200 dark:bg-stone-700 text-stone-600 dark:text-stone-400'
+                        : 'bg-surface-elevated dark:bg-stone-700 text-folio-text-secondary dark:text-folio-text-tertiary'
                     }`}
                   >
                     {index < currentStepIndex ? (
@@ -111,7 +111,7 @@ export function ProductWizard({ vendorId }: ProductWizardProps) {
                   <div className={`mt-2 text-xs text-center ${
                     index === currentStepIndex
                       ? 'text-[var(--accent)] dark:text-blue-400 font-medium'
-                      : 'text-stone-600 dark:text-stone-400'
+                      : 'text-folio-text-secondary dark:text-folio-text-tertiary'
                   }`}>
                     {step.label}
                   </div>
@@ -121,7 +121,7 @@ export function ProductWizard({ vendorId }: ProductWizardProps) {
                     className={`h-0.5 flex-1 mx-2 ${
                       index < currentStepIndex
                         ? 'bg-green-500'
-                        : 'bg-stone-200 dark:bg-stone-700'
+                        : 'bg-surface-elevated dark:bg-stone-700'
                     }`}
                   />
                 )}

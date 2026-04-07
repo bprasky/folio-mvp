@@ -28,7 +28,7 @@ export function MaterialsLedger({ ledger }: MaterialsLedgerProps) {
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-[var(--ridge-outer)]">
+          <tbody className="bg-surface-canvas divide-y divide-[var(--ridge-outer)]">
             {ledger.map((item, idx) => (
               <tr key={idx}>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-folio-text-primary">

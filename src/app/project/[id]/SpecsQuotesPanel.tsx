@@ -172,7 +172,7 @@ export default function SpecsQuotesPanel({ projectId, userId, userRole }: SpecsQ
       case 'ACCEPTED':
         return 'bg-[var(--accent)]/10 text-[var(--accent)]';
       case 'REJECTED':
-        return 'bg-stone-100 text-[rgb(74,44,59)]';
+        return 'bg-surface-elevated text-[rgb(74,44,59)]';
       case 'SENT':
         return 'bg-[var(--accent)]/10 text-[var(--accent)]';
       case 'EXPIRED':

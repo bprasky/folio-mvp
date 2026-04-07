@@ -25,7 +25,7 @@ export function ExecutiveSummary({ outcome }: ExecutiveSummaryProps) {
   const StatusIcon = status.icon;
 
   return (
-    <Card className="bg-white border-folio-border-strong">
+    <Card className="bg-surface-canvas border-folio-border-strong">
       <CardContent className="p-6">
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center space-x-3">

@@ -43,7 +43,7 @@ export function PortfolioKpis({ data }: PortfolioKpisProps) {
   ];
 
   return (
-    <Card className="bg-white border-folio-border-strong">
+    <Card className="bg-surface-canvas border-folio-border-strong">
       <CardHeader>
         <CardTitle className="text-lg font-serif text-folio-text-primary">
           Portfolio Totals

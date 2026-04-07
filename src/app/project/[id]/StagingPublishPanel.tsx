@@ -244,7 +244,7 @@ export default function StagingPublishPanel({
       {/* ERROR BANNER */}
       {error && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
-          <div className="flex items-start gap-2 p-4 bg-stone-100 border border-stone-300 text-[rgb(74,44,59)] rounded-[20px] folio-ui">
+          <div className="flex items-start gap-2 p-4 bg-surface-elevated border border-folio-border-strong text-[rgb(74,44,59)] rounded-[20px] folio-ui">
             <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
             <span>{error}</span>
           </div>
@@ -383,7 +383,7 @@ export default function StagingPublishPanel({
                 className={`folio-meta px-2 py-0.5 rounded-full ${
                   allRequired
                     ? "bg-[rgb(74,44,59)]/10 text-[rgb(74,44,59)]"
-                    : "bg-stone-100 text-stone-600"
+                    : "bg-surface-elevated text-folio-text-secondary"
                 }`}
               >
                 {totalPassed}/{totalChecks}
@@ -412,7 +412,7 @@ export default function StagingPublishPanel({
                   <button
                     onClick={() => setShowUnpublishDialog(true)}
                     disabled={isUnpublishing}
-                    className="px-4 py-2 folio-ui font-medium text-[rgb(74,44,59)] border border-stone-300 rounded-lg hover:bg-stone-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="px-4 py-2 folio-ui font-medium text-[rgb(74,44,59)] border border-folio-border-strong rounded-lg hover:bg-surface-elevated disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     {isUnpublishing ? "Unpublishing..." : "Unpublish"}
                   </button>
@@ -581,7 +581,7 @@ export function NoDraftState({ projectId }: { projectId: string }) {
         {regenBusy ? "Generating..." : "Generate Draft"}
       </button>
       {error && (
-        <div className="mt-4 p-4 bg-stone-100 border border-stone-300 text-[rgb(74,44,59)] rounded-[20px] folio-ui">
+        <div className="mt-4 p-4 bg-surface-elevated border border-folio-border-strong text-[rgb(74,44,59)] rounded-[20px] folio-ui">
           {error}
         </div>
       )}

@@ -86,7 +86,7 @@ export default function DesignerEventsSchedule() {
           </div>
 
           {/* Placeholder Content */}
-          <div className="bg-white rounded-lg shadow-sm border border-folio-border p-8">
+          <div className="bg-surface-canvas rounded-lg shadow-sm border border-folio-border p-8">
             <div className="text-center">
               <div className="w-16 h-16 bg-folio-muted rounded-full flex items-center justify-center mx-auto mb-4">
                 <FaCalendarAlt className="w-8 h-8 text-folio-accent" />

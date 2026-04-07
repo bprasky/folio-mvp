@@ -38,12 +38,12 @@ export default function ConnectButton({
       <div className="flex flex-col items-end gap-1.5">
         <button
           onClick={() => visitId && router.push(`/visits/${visitId}`)}
-          className="flex items-center gap-2 bg-white/95 backdrop-blur-sm px-4 py-2 rounded border border-stone-200/50 shadow-sm hover:bg-white transition-colors cursor-pointer"
+          className="flex items-center gap-2 bg-white/95 backdrop-blur-sm px-4 py-2 rounded border border-folio-border-subtle/50 shadow-sm hover:bg-surface-canvas transition-colors cursor-pointer"
         >
           <svg className="w-4 h-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
           </svg>
-          <span className="text-sm text-stone-700">Connected {date}</span>
+          <span className="text-sm text-folio-text-secondary">Connected {date}</span>
         </button>
         {territoryWarning && (
           <div className="bg-amber-50 border border-amber-200 rounded px-3 py-2 max-w-xs">
@@ -100,15 +100,15 @@ export default function ConnectButton({
     <button
       onClick={handleConnect}
       disabled={state === 'loading'}
-      className="flex items-center gap-2 bg-white/95 backdrop-blur-sm px-4 py-2 rounded border border-stone-200/50 shadow-sm hover:bg-white transition-colors disabled:opacity-50 cursor-pointer"
+      className="flex items-center gap-2 bg-white/95 backdrop-blur-sm px-4 py-2 rounded border border-folio-border-subtle/50 shadow-sm hover:bg-surface-canvas transition-colors disabled:opacity-50 cursor-pointer"
     >
       {state === 'loading' ? (
         <>
-          <svg className="w-4 h-4 animate-spin text-stone-500" fill="none" viewBox="0 0 24 24">
+          <svg className="w-4 h-4 animate-spin text-folio-text-tertiary" fill="none" viewBox="0 0 24 24">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
           </svg>
-          <span className="text-sm text-stone-500">Connecting...</span>
+          <span className="text-sm text-folio-text-tertiary">Connecting...</span>
         </>
       ) : state === 'error' ? (
         <>
@@ -119,10 +119,10 @@ export default function ConnectButton({
         </>
       ) : (
         <>
-          <svg className="w-4 h-4 text-stone-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <svg className="w-4 h-4 text-folio-text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
           </svg>
-          <span className="text-sm text-stone-700">Connect with {recipientName.split(' ')[0]}</span>
+          <span className="text-sm text-folio-text-secondary">Connect with {recipientName.split(' ')[0]}</span>
         </>
       )}
     </button>

@@ -80,7 +80,7 @@ export default function FestivalCard({ festival, isPast, isNext }: FestivalCardP
             }}
             className={clsx(
               "rounded-xl px-3 py-1 text-sm transition-colors pointer-events-auto",
-              userRsvped ? "bg-white text-[rgb(30,30,30)]" : "bg-[rgba(30,30,30,0.7)] text-white hover:bg-[rgba(30,30,30,0.8)]"
+              userRsvped ? "bg-surface-canvas text-[rgb(30,30,30)]" : "bg-[rgba(30,30,30,0.7)] text-white hover:bg-[rgba(30,30,30,0.8)]"
             )}
           >
             {userRsvped ? "RSVP'd" : "RSVP"} • {rsvpCount.toLocaleString()}

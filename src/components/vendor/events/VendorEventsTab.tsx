@@ -240,7 +240,7 @@ function EventCard({ event, isHovered = false, onHover }: EventCardProps) {
   const statusColors = {
     upcoming: "bg-yellow-100/50 text-yellow-800 border-yellow-200",
     active: "bg-green-100/50 text-green-800 border-green-200", 
-    completed: "bg-stone-100/50 text-stone-800 border-stone-200"
+    completed: "bg-surface-elevated/50 text-folio-text-primary border-folio-border-subtle"
   };
 
   return (

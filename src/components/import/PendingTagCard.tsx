@@ -50,7 +50,7 @@ export function PendingTagCard({
   const imageUrl = tag.tempImageUrl || '';
 
   return (
-    <div className="bg-white border border-stone-200 rounded-lg overflow-hidden">
+    <div className="bg-surface-canvas border border-folio-border-subtle rounded-lg overflow-hidden">
       <div className="flex flex-col sm:flex-row">
         {/* Image preview with tag position indicator */}
         {imageUrl && (
@@ -61,7 +61,7 @@ export function PendingTagCard({
               className="w-full h-full object-cover"
             />
             <div
-              className="absolute w-4 h-4 bg-white border-2 border-stone-900 rounded-full transform -translate-x-1/2 -translate-y-1/2 shadow-lg"
+              className="absolute w-4 h-4 bg-surface-canvas border-2 border-folio-text-primary rounded-full transform -translate-x-1/2 -translate-y-1/2 shadow-lg"
               style={{
                 left: `${tag.x * 100}%`,
                 top: `${tag.y * 100}%`,
@@ -74,20 +74,20 @@ export function PendingTagCard({
         <div className="flex-1 p-4">
           <div className="flex justify-between items-start mb-2">
             <div className="flex-1 min-w-0">
-              <p className="font-medium text-stone-900 truncate">{tag.description}</p>
-              <p className="text-sm text-stone-500">{tag.category}</p>
+              <p className="font-medium text-folio-text-primary truncate">{tag.description}</p>
+              <p className="text-sm text-folio-text-tertiary">{tag.category}</p>
             </div>
             <ConfidenceBadge level={tag.attributionConfidence} className="ml-2 flex-shrink-0" />
           </div>
 
           {/* Suggested product */}
           {tag.topSuggestion && (
-            <div className="flex items-center gap-3 p-3 bg-stone-50 rounded-lg mt-3">
+            <div className="flex items-center gap-3 p-3 bg-surface-ground rounded-lg mt-3">
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-stone-900 truncate">
+                <p className="text-sm font-medium text-folio-text-primary truncate">
                   {tag.topSuggestion.productName}
                 </p>
-                <p className="text-xs text-stone-500 truncate">
+                <p className="text-xs text-folio-text-tertiary truncate">
                   {tag.topSuggestion.vendorName}
                   {tag.topSuggestion.price && ` - ${tag.topSuggestion.price}`}
                 </p>
@@ -107,7 +107,7 @@ export function PendingTagCard({
           {tag.suggestions.length > 1 && (
             <button
               onClick={() => setShowAllSuggestions(!showAllSuggestions)}
-              className="text-xs text-stone-500 hover:text-stone-700 mt-2"
+              className="text-xs text-folio-text-tertiary hover:text-folio-text-secondary mt-2"
             >
               {showAllSuggestions ? 'Hide' : 'Show'} {tag.suggestions.length - 1} more suggestion(s)
             </button>
@@ -118,11 +118,11 @@ export function PendingTagCard({
               {tag.suggestions.slice(1).map((suggestion, idx) => (
                 <div
                   key={idx}
-                  className="flex items-center gap-2 p-2 bg-stone-50 rounded-lg text-sm"
+                  className="flex items-center gap-2 p-2 bg-surface-ground rounded-lg text-sm"
                 >
                   <div className="flex-1 min-w-0">
                     <p className="truncate">{suggestion.productName}</p>
-                    <p className="text-xs text-stone-500 truncate">{suggestion.vendorName}</p>
+                    <p className="text-xs text-folio-text-tertiary truncate">{suggestion.vendorName}</p>
                   </div>
                   <ConfidenceBadge level={suggestion.confidence} />
                 </div>
@@ -160,7 +160,7 @@ export function PendingTagCard({
               variant="ghost"
               onClick={onDismiss}
               disabled={isLoading}
-              className="text-stone-500 hover:text-stone-700"
+              className="text-folio-text-tertiary hover:text-folio-text-secondary"
             >
               Dismiss
             </Button>

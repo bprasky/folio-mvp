@@ -17,7 +17,7 @@ interface EditorialPreviewProps {
  * Displayed after 3-4 responses to show value and maintain motivation.
  *
  * Layout:
- * - Card container: bg-white rounded-xl shadow-lg overflow-hidden
+ * - Card container: bg-surface-canvas rounded-xl shadow-lg overflow-hidden
  * - Hero image: aspect-[16/9] object-cover (if provided)
  * - Content padding: p-6
  * - Title: text-xl font-serif
@@ -40,7 +40,7 @@ export function EditorialPreview({
         Your story is taking shape
       </p>
 
-      <div className="bg-white rounded-xl shadow-lg overflow-hidden max-w-md mx-auto">
+      <div className="bg-surface-canvas rounded-xl shadow-lg overflow-hidden max-w-md mx-auto">
         {/* Hero image */}
         {heroImage && (
           <div className="relative aspect-[16/9]">

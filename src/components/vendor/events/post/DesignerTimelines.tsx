@@ -41,7 +41,7 @@ export function DesignerTimelines({ journeys, onActionClick }: DesignerTimelines
   };
 
   return (
-    <Card className="bg-white border-folio-border-strong">
+    <Card className="bg-surface-canvas border-folio-border-strong">
       <CardHeader>
         <CardTitle className="text-lg font-serif text-folio-text-primary flex items-center space-x-2">
           <Users className="w-5 h-5 text-folio-text-secondary" />
@@ -73,12 +73,12 @@ export function DesignerTimelines({ journeys, onActionClick }: DesignerTimelines
 
               {/* Timeline */}
               <div className="relative mb-4">
-                <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-[#DAD2CA]"></div>
+                <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-folio-border-strong"></div>
                 
                 <div className="space-y-4">
                   {journey.steps.map((step, stepIndex) => (
                     <div key={stepIndex} className="relative flex items-start space-x-4">
-                      <div className="relative z-10 w-8 h-8 rounded-full bg-white border-2 border-folio-border-strong flex items-center justify-center">
+                      <div className="relative z-10 w-8 h-8 rounded-full bg-surface-canvas border-2 border-folio-border-strong flex items-center justify-center">
                         <span className="text-xs">{getStepIcon(step.type)}</span>
                       </div>
                       

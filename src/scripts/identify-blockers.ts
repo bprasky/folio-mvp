@@ -57,11 +57,11 @@ export function identifyBlockers() {
     
     // Suggest fix
     const classes = el.className.toString();
-    if (classes.includes('bg-white')) {
-      console.log("   💡 FIX: Remove 'bg-white' class");
+    if (classes.includes('bg-surface-canvas')) {
+      console.log("   💡 FIX: Remove 'bg-surface-canvas' class");
     } else if (classes.includes('bg-folio-bg')) {
       console.log("   💡 FIX: Remove 'bg-folio-bg' class");
-    } else if (classes.includes('bg-stone-50') || classes.includes('bg-neutral-50')) {
+    } else if (classes.includes('bg-surface-ground') || classes.includes('bg-neutral-50')) {
       console.log("   💡 FIX: Remove background utility class");
     } else if (style.backgroundColor !== 'rgba(0, 0, 0, 0)') {
       console.log("   💡 FIX: Add 'bg-transparent' class or remove inline style");

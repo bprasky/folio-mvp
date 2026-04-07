@@ -107,8 +107,8 @@ export function DesignerInsights({ productId }: DesignerInsightsProps) {
 
   if (loading) {
     return (
-      <div className="rounded-2xl border border-[#E5E7EB] bg-white p-4">
-        <div className="text-sm text-[#6B7280]">Designer Insights</div>
+      <div className="rounded-2xl border border-folio-border-subtle bg-surface-canvas p-4">
+        <div className="text-sm text-folio-text-secondary">Designer Insights</div>
         <div className="mt-2 text-sm text-folio-text-tertiary">Loading...</div>
       </div>
     );
@@ -119,25 +119,25 @@ export function DesignerInsights({ productId }: DesignerInsightsProps) {
   }
 
   return (
-    <div className="rounded-2xl border border-[#E5E7EB] bg-white p-4 space-y-4">
+    <div className="rounded-2xl border border-folio-border-subtle bg-surface-canvas p-4 space-y-4">
       <div className="flex items-center justify-between">
-        <div className="text-sm font-medium text-[#6B7280]">Designer Insights</div>
-        <div className="text-xs text-[#9CA3AF]">{insights.length} insight{insights.length !== 1 ? "s" : ""}</div>
+        <div className="text-sm font-medium text-folio-text-secondary">Designer Insights</div>
+        <div className="text-xs text-folio-text-tertiary">{insights.length} insight{insights.length !== 1 ? "s" : ""}</div>
       </div>
 
       <div className="space-y-4">
         {insights.map((insight) => (
           <div
             key={insight.id}
-            className="border-t border-gray-100 pt-4 first:border-t-0 first:pt-0"
+            className="border-t border-folio-border-subtle pt-4 first:border-t-0 first:pt-0"
           >
             <div className="flex items-start space-x-3">
               <Quote className="h-4 w-4 text-folio-text-tertiary mt-0.5 flex-shrink-0" />
               <div className="flex-1 min-w-0">
-                <p className="text-sm text-[#111827] leading-relaxed italic">
+                <p className="text-sm text-folio-text-primary leading-relaxed italic">
                   "{insight.quoteText}"
                 </p>
-                <div className="mt-2 flex items-center space-x-3 text-xs text-[#6B7280]">
+                <div className="mt-2 flex items-center space-x-3 text-xs text-folio-text-secondary">
                   <div className="flex items-center space-x-1">
                     {insight.designer.profileImage && (
                       <img
@@ -151,7 +151,7 @@ export function DesignerInsights({ productId }: DesignerInsightsProps) {
                   <span>•</span>
                   <Link
                     href={`/p/${insight.project.slug || insight.project.id}`}
-                    className="hover:text-[#111827] flex items-center space-x-1"
+                    className="hover:text-folio-text-primary flex items-center space-x-1"
                   >
                     <span>{insight.project.title}</span>
                     <ExternalLink className="h-3 w-3" />

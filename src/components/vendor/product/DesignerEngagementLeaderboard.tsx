@@ -19,7 +19,7 @@ export default function DesignerEngagementLeaderboard({ designers }: DesignerEng
   const sortedDesigners = [...designers].sort((a, b) => b.total_saves - a.total_saves);
 
   return (
-    <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
+    <div className="bg-surface-canvas rounded-lg shadow-lg p-6 mb-8">
       <h2 className="text-xl font-semibold text-folio-text-primary mb-6 flex items-center">
         <FaTrophy className="text-amber-500 mr-3" /> Designer Engagement Leaderboard
       </h2>

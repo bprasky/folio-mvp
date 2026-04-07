@@ -357,7 +357,7 @@ export default function ActionItemsPanel({
               type="date"
               value={installDateInput}
               onChange={(e) => setInstallDateInput(e.target.value)}
-              className="px-3 py-1.5 text-sm bg-white border border-folio-border-subtle rounded-lg text-folio-text-primary"
+              className="px-3 py-1.5 text-sm bg-surface-canvas border border-folio-border-subtle rounded-lg text-folio-text-primary"
             />
             <Button variant="accent" size="sm" onClick={saveInstallDate}>Save</Button>
             <Button variant="ridge" size="sm" onClick={() => setEditingInstallDate(false)}>Cancel</Button>

@@ -162,9 +162,9 @@ export default function SaveToFolderModal({
 
   return (
     <div className="fixed inset-0 glass-backdrop z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-hidden">
+      <div className="bg-surface-canvas rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-100">
+        <div className="flex items-center justify-between p-6 border-b border-folio-border-subtle">
           <h2 className="text-xl font-semibold text-folio-text-primary">Save to Project Folder</h2>
           <button
             onClick={onClose}
@@ -182,7 +182,7 @@ export default function SaveToFolderModal({
               onClick={() => handleTabChange("select")}
               className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
                 !isCreatingNew
-                  ? "bg-white text-folio-text-primary shadow-sm"
+                  ? "bg-surface-canvas text-folio-text-primary shadow-sm"
                   : "text-folio-text-secondary hover:text-folio-text-primary"
               }`}
             >
@@ -192,7 +192,7 @@ export default function SaveToFolderModal({
               onClick={() => handleTabChange("new")}
               className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
                 isCreatingNew
-                  ? "bg-white text-folio-text-primary shadow-sm"
+                  ? "bg-surface-canvas text-folio-text-primary shadow-sm"
                   : "text-folio-text-secondary hover:text-folio-text-primary"
               }`}
             >
@@ -283,7 +283,7 @@ export default function SaveToFolderModal({
           )}
 
           {/* Action Buttons */}
-          <div className="flex gap-3 mt-6 pt-6 border-t border-gray-100">
+          <div className="flex gap-3 mt-6 pt-6 border-t border-folio-border-subtle">
             <button
               onClick={onClose}
               className="flex-1 px-4 py-3 text-folio-text-primary bg-surface-ground rounded-xl hover:bg-surface-ground transition-colors font-medium"

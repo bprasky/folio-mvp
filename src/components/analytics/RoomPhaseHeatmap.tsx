@@ -51,7 +51,7 @@ function CellBox({ c }: { c: Cell }) {
       className={`
         relative flex flex-col items-center justify-center
         h-20 rounded-lg border-2
-        bg-white
+        bg-surface-canvas
         px-2 text-center
         transition-all duration-200
         hover:scale-105 hover:shadow-md
@@ -65,12 +65,12 @@ function CellBox({ c }: { c: Cell }) {
       ].filter(Boolean).join('\n')}
     >
       {/* % value — NEVER hide 0 */}
-      <div className="num text-[18px] font-bold text-[#111827]">
+      <div className="num text-[18px] font-bold text-folio-text-primary">
         {rate}%
       </div>
 
       {/* Subline: saves → tags (always visible; no opacity toggles) */}
-      <div className="mt-1 text-[11px] text-[#6B7280] whitespace-nowrap">
+      <div className="mt-1 text-[11px] text-folio-text-secondary whitespace-nowrap">
         {saves} → {tags}
       </div>
 

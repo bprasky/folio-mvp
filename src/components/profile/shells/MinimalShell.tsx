@@ -6,7 +6,7 @@ export default function MinimalShell({ designer, projects, aesthetic, viewerCont
   const heroImage = projects[0]?.heroImageUrl || projects[0]?.coverImageUrl || projects[0]?.imageUrl;
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-surface-canvas">
       {/* Hero Section - 70vh full bleed */}
       {heroImage && (
         <div className="relative h-[70vh] w-full">

@@ -151,7 +151,7 @@ export default function FibonacciEventFeed({ events, onEventClick, className, us
               className={clsx(
                 "p-2 rounded-md transition-colors",
                 viewMode === 'grid'
-                  ? "bg-white text-folio-accent shadow-sm"
+                  ? "bg-surface-canvas text-folio-accent shadow-sm"
                   : "text-folio-text-secondary hover:text-folio-text-primary"
               )}
             >
@@ -162,7 +162,7 @@ export default function FibonacciEventFeed({ events, onEventClick, className, us
               className={clsx(
                 "p-2 rounded-md transition-colors",
                 viewMode === 'list'
-                  ? "bg-white text-folio-accent shadow-sm"
+                  ? "bg-surface-canvas text-folio-accent shadow-sm"
                   : "text-folio-text-secondary hover:text-folio-text-primary"
               )}
             >

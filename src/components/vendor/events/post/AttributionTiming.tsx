@@ -40,7 +40,7 @@ export function AttributionTiming({ attribution }: AttributionTimingProps) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Attribution */}
-      <Card className="bg-white border-folio-border-strong">
+      <Card className="bg-surface-canvas border-folio-border-strong">
         <CardHeader>
           <CardTitle className="text-lg font-serif text-folio-text-primary flex items-center space-x-2">
             <Clock className="w-5 h-5 text-folio-text-secondary" />
@@ -90,7 +90,7 @@ export function AttributionTiming({ attribution }: AttributionTimingProps) {
       </Card>
 
       {/* Best Send Times */}
-      <Card className="bg-white border-folio-border-strong">
+      <Card className="bg-surface-canvas border-folio-border-strong">
         <CardHeader>
           <CardTitle className="text-lg font-serif text-folio-text-primary flex items-center space-x-2">
             <Calendar className="w-5 h-5 text-folio-text-secondary" />
@@ -123,7 +123,7 @@ export function AttributionTiming({ attribution }: AttributionTimingProps) {
           </div>
 
           <div className="mt-6 pt-4 border-t border-folio-border-strong">
-            <Button className="w-full bg-[#2B2B2B] hover:bg-[#8C8278] text-white">
+            <Button className="w-full bg-folio-text-primary hover:bg-[#8C8278] text-white">
               Schedule Follow-ups at Best Times
             </Button>
           </div>

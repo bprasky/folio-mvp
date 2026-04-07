@@ -179,7 +179,7 @@ export function CollaborationProgress({
   const steps = getSteps(status);
 
   return (
-    <div className={cn('bg-white rounded-xl border border-neutral-200 p-6', className)}>
+    <div className={cn('bg-surface-canvas rounded-xl border border-neutral-200 p-6', className)}>
       <div className="flex items-center justify-between mb-6">
         <h3 className="font-semibold text-neutral-900">Progress</h3>
         <span

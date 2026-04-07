@@ -41,7 +41,7 @@ export default function ProductScanTimeline({ eventId }: { eventId: string }) {
 
   if (data.length === 0) {
     return (
-      <p className="text-sm text-stone-400 text-center py-6">
+      <p className="text-sm text-folio-text-tertiary text-center py-6">
         No product scans yet — timeline will appear as products are scanned.
       </p>
     );

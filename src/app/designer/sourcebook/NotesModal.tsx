@@ -51,7 +51,7 @@ export default function NotesModal({
           onChange={(e) => setNotes(e.target.value)}
           placeholder="Lead times, quality observations, best use cases, client reactions..."
           rows={6}
-          className="w-full px-3 py-2 bg-white border border-folio-border-subtle rounded-lg text-folio-text-primary placeholder-[#A39E97] focus:outline-none focus:border-folio-border-strong focus:shadow-[0_0_0_3px_rgba(0,0,0,0.03)] transition-all resize-none"
+          className="w-full px-3 py-2 bg-surface-canvas border border-folio-border-subtle rounded-lg text-folio-text-primary placeholder-[#A39E97] focus:outline-none focus:border-folio-border-strong focus:shadow-[0_0_0_3px_rgba(0,0,0,0.03)] transition-all resize-none"
         />
 
         <div className="flex justify-end gap-3 mt-4">

@@ -59,7 +59,7 @@ export default function NewProductPage() {
         </button>
       </div>
 
-      <div className="bg-white rounded-lg border p-6 space-y-4">
+      <div className="bg-surface-canvas rounded-lg border p-6 space-y-4">
         {['name', 'sku', 'vendorName', 'url', 'imageUrl', 'priceCents'].map((key) => (
           <div key={key} className="grid gap-1">
             <label className="text-sm font-medium capitalize">

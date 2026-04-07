@@ -172,13 +172,13 @@ export default function EventAdminForm({ initialEvent, availableFestivals }: Eve
         {/* Basic Information */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-folio-text-secondary mb-2">
               Title *
             </label>
             <input
               type="text"
               {...register('title')}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-folio-border-subtle rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             {errors.title && (
               <p className="mt-1 text-sm text-red-600">{errors.title.message}</p>
@@ -186,13 +186,13 @@ export default function EventAdminForm({ initialEvent, availableFestivals }: Eve
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-folio-text-secondary mb-2">
               Location *
             </label>
             <input
               type="text"
               {...register('location')}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-folio-border-subtle rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             {errors.location && (
               <p className="mt-1 text-sm text-red-600">{errors.location.message}</p>
@@ -201,13 +201,13 @@ export default function EventAdminForm({ initialEvent, availableFestivals }: Eve
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-folio-text-secondary mb-2">
             Description *
           </label>
           <textarea
             {...register('description')}
             rows={4}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-folio-border-subtle rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           {errors.description && (
             <p className="mt-1 text-sm text-red-600">{errors.description.message}</p>
@@ -217,13 +217,13 @@ export default function EventAdminForm({ initialEvent, availableFestivals }: Eve
         {/* Date and Time */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-folio-text-secondary mb-2">
               Start Date & Time *
             </label>
             <input
               type="datetime-local"
               {...register('startDate')}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-folio-border-subtle rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             {errors.startDate && (
               <p className="mt-1 text-sm text-red-600">{errors.startDate.message}</p>
@@ -231,13 +231,13 @@ export default function EventAdminForm({ initialEvent, availableFestivals }: Eve
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-folio-text-secondary mb-2">
               End Date & Time *
             </label>
             <input
               type="datetime-local"
               {...register('endDate')}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-folio-border-subtle rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             {errors.endDate && (
               <p className="mt-1 text-sm text-red-600">{errors.endDate.message}</p>
@@ -247,7 +247,7 @@ export default function EventAdminForm({ initialEvent, availableFestivals }: Eve
 
         {/* Event Types */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-folio-text-secondary mb-2">
             Event Types *
           </label>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -271,12 +271,12 @@ export default function EventAdminForm({ initialEvent, availableFestivals }: Eve
         {/* Festival Selection - Only show for non-festivals */}
         {!isFestival && availableFestivals.length > 0 && (
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-folio-text-secondary mb-2">
               Parent Festival (Optional)
             </label>
             <select
               {...register('parentFestivalId')}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-folio-border-subtle rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">No parent festival</option>
               {availableFestivals.map((festival) => (
@@ -299,13 +299,13 @@ export default function EventAdminForm({ initialEvent, availableFestivals }: Eve
 
         {/* Image URL */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-folio-text-secondary mb-2">
             Image URL
           </label>
           <input
             type="url"
             {...register('imageUrl')}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-folio-border-subtle rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="https://example.com/image.jpg"
           />
           {errors.imageUrl && (
@@ -321,7 +321,7 @@ export default function EventAdminForm({ initialEvent, availableFestivals }: Eve
               {...register('isVirtual')}
               className="mr-2"
             />
-            <span className="text-sm font-medium text-gray-700">Virtual Event</span>
+            <span className="text-sm font-medium text-folio-text-secondary">Virtual Event</span>
           </label>
 
           <label className="flex items-center">
@@ -330,7 +330,7 @@ export default function EventAdminForm({ initialEvent, availableFestivals }: Eve
               {...register('isPublic')}
               className="mr-2"
             />
-            <span className="text-sm font-medium text-gray-700">Public Event</span>
+            <span className="text-sm font-medium text-folio-text-secondary">Public Event</span>
           </label>
 
           <label className="flex items-center">
@@ -339,16 +339,16 @@ export default function EventAdminForm({ initialEvent, availableFestivals }: Eve
               {...register('isApproved')}
               className="mr-2"
             />
-            <span className="text-sm font-medium text-gray-700">Approved</span>
+            <span className="text-sm font-medium text-folio-text-secondary">Approved</span>
           </label>
         </div>
 
         {/* Featured Products - Only show for non-festivals (events and subevents) */}
         {!isFestival && (
           <>
-            <div className="border-t border-gray-200 pt-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Featured Products</h3>
-              <p className="text-sm text-gray-600 mb-4">
+            <div className="border-t border-folio-border-subtle pt-6">
+              <h3 className="text-lg font-medium text-folio-text-primary mb-4">Featured Products</h3>
+              <p className="text-sm text-folio-text-secondary mb-4">
                 Add products to feature at this event. These will be displayed prominently to attendees.
               </p>
               <FeaturedProductsPicker
@@ -368,7 +368,7 @@ export default function EventAdminForm({ initialEvent, availableFestivals }: Eve
         )}
 
         {/* Action Buttons */}
-        <div className="flex justify-between pt-6 border-t border-gray-200">
+        <div className="flex justify-between pt-6 border-t border-folio-border-subtle">
           <div className="flex space-x-4">
             <button
               type="submit"
@@ -381,7 +381,7 @@ export default function EventAdminForm({ initialEvent, availableFestivals }: Eve
             <button
               type="button"
               onClick={() => router.push('/events')}
-              className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500"
+              className="px-4 py-2 bg-gray-300 text-folio-text-secondary rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500"
             >
               Cancel
             </button>
@@ -400,18 +400,18 @@ export default function EventAdminForm({ initialEvent, availableFestivals }: Eve
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">
+          <div className="bg-surface-canvas rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-medium text-folio-text-primary mb-4">
               Delete Event
             </h3>
-            <p className="text-sm text-gray-600 mb-6">
+            <p className="text-sm text-folio-text-secondary mb-6">
               Are you sure you want to delete "{initialEvent.title}"? This action cannot be undone.
             </p>
             <div className="flex justify-end space-x-3">
               <button
                 type="button"
                 onClick={() => setShowDeleteConfirm(false)}
-                className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
+                className="px-4 py-2 bg-gray-300 text-folio-text-secondary rounded-md hover:bg-gray-400"
               >
                 Cancel
               </button>

@@ -185,7 +185,7 @@ export default function EventHero({ event, userRSVP }: EventHeroProps) {
 
       {/* Description */}
       {event.description && (
-        <div className="bg-white py-8">
+        <div className="bg-surface-canvas py-8">
           <div className="max-w-4xl mx-auto px-6 sm:px-8">
             <p className="text-folio-text-primary text-lg leading-relaxed">
               {event.description}

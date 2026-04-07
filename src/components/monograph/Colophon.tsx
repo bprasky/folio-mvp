@@ -15,14 +15,14 @@ export default function Colophon({ name, editorialsFeatured }: ColophonProps) {
   });
 
   return (
-    <footer className="border-t border-stone-200 mt-24 py-12">
+    <footer className="border-t border-folio-border-subtle mt-24 py-12">
       <div className="max-w-7xl mx-auto px-6">
-        <div className="flex items-center justify-between text-sm text-stone-500 font-light">
+        <div className="flex items-center justify-between text-sm text-folio-text-tertiary font-light">
           <div className="text-center flex-1">
             <p className="mb-2">
               Folio Monograph · {currentDate}
             </p>
-            <p className="text-stone-400">
+            <p className="text-folio-text-tertiary">
               {name} on Folio
             </p>
           </div>

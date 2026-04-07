@@ -81,7 +81,7 @@ export default function FeaturedProductsPicker({
   return (
     <div className="space-y-4">
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-folio-text-secondary mb-2">
           Featured Products
         </label>
         
@@ -94,22 +94,22 @@ export default function FeaturedProductsPicker({
               onChange={(e) => setSearchTerm(e.target.value)}
               onFocus={() => setShowDropdown(true)}
               placeholder="Search products to add..."
-              className="w-full px-3 py-2 pl-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-folio-accent"
+              className="w-full px-3 py-2 pl-10 border border-folio-border-subtle rounded-md focus:outline-none focus:ring-2 focus:ring-folio-accent"
             />
-            <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-folio-text-tertiary" />
           </div>
 
           {/* Search Results Dropdown */}
           {showDropdown && (searchResults.length > 0 || isSearching) && (
-            <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
+            <div className="absolute z-10 w-full mt-1 bg-surface-canvas border border-folio-border-subtle rounded-md shadow-lg max-h-60 overflow-y-auto">
               {isSearching ? (
-                <div className="px-3 py-2 text-sm text-gray-500">Searching...</div>
+                <div className="px-3 py-2 text-sm text-folio-text-tertiary">Searching...</div>
               ) : (
                 searchResults.map((product) => (
                   <button
                     key={product.id}
                     onClick={() => addProduct(product)}
-                    className="w-full px-3 py-2 text-left hover:bg-gray-50 flex items-center space-x-3"
+                    className="w-full px-3 py-2 text-left hover:bg-surface-ground flex items-center space-x-3"
                   >
                     {product.imageUrl && (
                       <img
@@ -121,7 +121,7 @@ export default function FeaturedProductsPicker({
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-medium truncate">{product.name}</div>
                       {product.vendorName && (
-                        <div className="text-xs text-gray-500 truncate">{product.vendorName}</div>
+                        <div className="text-xs text-folio-text-tertiary truncate">{product.vendorName}</div>
                       )}
                     </div>
                   </button>
@@ -134,16 +134,16 @@ export default function FeaturedProductsPicker({
         {/* Selected Products */}
         {selectedProducts.length > 0 && (
           <div className="mt-4">
-            <div className="text-sm font-medium text-gray-700 mb-2">
+            <div className="text-sm font-medium text-folio-text-secondary mb-2">
               Selected Products ({selectedProducts.length})
             </div>
             <div className="space-y-2">
               {selectedProducts.map((product, index) => (
                 <div
                   key={product.id}
-                  className="flex items-center space-x-3 p-3 border border-gray-200 rounded-md bg-gray-50"
+                  className="flex items-center space-x-3 p-3 border border-folio-border-subtle rounded-md bg-surface-ground"
                 >
-                  <FaGripVertical className="text-gray-400 cursor-move" />
+                  <FaGripVertical className="text-folio-text-tertiary cursor-move" />
                   
                   {product.imageUrl && (
                     <img
@@ -156,13 +156,13 @@ export default function FeaturedProductsPicker({
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-medium truncate">{product.name}</div>
                     {product.vendorName && (
-                      <div className="text-xs text-gray-500 truncate">{product.vendorName}</div>
+                      <div className="text-xs text-folio-text-tertiary truncate">{product.vendorName}</div>
                     )}
                   </div>
                   
                   <button
                     onClick={() => removeProduct(product.id)}
-                    className="text-gray-400 hover:text-red-500"
+                    className="text-folio-text-tertiary hover:text-red-500"
                   >
                     <FaTimes />
                   </button>
@@ -174,8 +174,8 @@ export default function FeaturedProductsPicker({
 
         {/* No Products Message */}
         {selectedProducts.length === 0 && (
-          <div className="mt-4 p-4 border border-dashed border-gray-300 rounded-md bg-gray-50 text-center">
-            <p className="text-sm text-gray-500">
+          <div className="mt-4 p-4 border border-dashed border-folio-border-subtle rounded-md bg-surface-ground text-center">
+            <p className="text-sm text-folio-text-tertiary">
               No featured products selected. Search above to add products.
             </p>
           </div>

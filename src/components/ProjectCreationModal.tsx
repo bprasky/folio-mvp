@@ -990,7 +990,7 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
             </div>
           )}
 
-          <div className="flex items-center justify-center py-4 border-b border-gray-100">
+          <div className="flex items-center justify-center py-4 border-b border-folio-border-subtle">
             <div className="flex items-center space-x-4">
               {['details', 'images', 'tagging'].map((step, index) => (
                 <div key={step} className="flex items-center">
@@ -1200,7 +1200,7 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
                                   key={user.id}
                                   type="button"
                                   onClick={() => handleAddCredit(user, selectedCreditRole)}
-                                  className="w-full flex items-center gap-3 p-3 hover:bg-surface-ground transition-colors text-left border-b border-gray-100 last:border-b-0"
+                                  className="w-full flex items-center gap-3 p-3 hover:bg-surface-ground transition-colors text-left border-b border-folio-border-subtle last:border-b-0"
                                 >
                                   {user.profileImage ? (
                                     <NextImage
@@ -1498,7 +1498,7 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
                             style={{ left: `${tag.x}%`, top: `${tag.y}%` }}
                           >
                             <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                              <div className="bg-white rounded-lg shadow-lg p-3 min-w-[200px] border">
+                              <div className="bg-surface-canvas rounded-lg shadow-lg p-3 min-w-[200px] border">
                                 <div className="flex items-start gap-3">
                                   <div className="relative w-12 h-12 rounded-md overflow-hidden flex-shrink-0">
                                     <NextImage
@@ -1716,7 +1716,7 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
                       <div
                         key={product.id}
                         onClick={() => handleProductSelect(product)}
-                        className="bg-white border border-folio-border-subtle rounded-xl p-4 cursor-pointer hover:shadow-lg hover:border-[var(--accent)]/30 transition-all"
+                        className="bg-surface-canvas border border-folio-border-subtle rounded-xl p-4 cursor-pointer hover:shadow-lg hover:border-[var(--accent)]/30 transition-all"
                       >
                         <div className="relative aspect-square rounded-lg overflow-hidden mb-3">
                           <NextImage
@@ -1755,7 +1755,7 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
                     
                     <div
                       onClick={() => handleProductSelect(scrapedProduct)}
-                      className="bg-white border-2 border-orange-300 rounded-xl p-6 cursor-pointer hover:shadow-lg hover:border-orange-400 transition-all"
+                      className="bg-surface-canvas border-2 border-orange-300 rounded-xl p-6 cursor-pointer hover:shadow-lg hover:border-orange-400 transition-all"
                     >
                       <div className="relative aspect-square rounded-lg overflow-hidden mb-4">
                         <NextImage

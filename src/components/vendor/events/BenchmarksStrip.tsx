@@ -17,7 +17,7 @@ export function BenchmarksStrip({ benchmarks, events }: BenchmarksStripProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
       {/* Best Performing Event */}
-      <Card className="bg-white border-folio-border-strong">
+      <Card className="bg-surface-canvas border-folio-border-strong">
         <CardContent className="p-4">
           <div className="flex items-start space-x-3">
             <div className="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center flex-shrink-0">
@@ -39,7 +39,7 @@ export function BenchmarksStrip({ benchmarks, events }: BenchmarksStripProps) {
       </Card>
 
       {/* Most Improved Event */}
-      <Card className="bg-white border-folio-border-strong">
+      <Card className="bg-surface-canvas border-folio-border-strong">
         <CardContent className="p-4">
           <div className="flex items-start space-x-3">
             <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
@@ -61,7 +61,7 @@ export function BenchmarksStrip({ benchmarks, events }: BenchmarksStripProps) {
       </Card>
 
       {/* Top Market */}
-      <Card className="bg-white border-folio-border-strong">
+      <Card className="bg-surface-canvas border-folio-border-strong">
         <CardContent className="p-4">
           <div className="flex items-start space-x-3">
             <div className="w-10 h-10 bg-[var(--accent)]/10 rounded-full flex items-center justify-center flex-shrink-0">

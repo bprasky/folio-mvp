@@ -138,7 +138,7 @@ export function ExtractionReviewModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+      <div className="bg-surface-canvas rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
 
         {/* Header with stats */}
         <div className="p-6 border-b">
@@ -227,7 +227,7 @@ export function ExtractionReviewModal({
         </div>
 
         {/* Footer actions */}
-        <div className="p-6 border-t bg-gray-50">
+        <div className="p-6 border-t bg-surface-ground">
           {/* Room selector */}
           <div className="mb-4">
             <label className="block text-sm font-medium text-folio-text-primary mb-1">

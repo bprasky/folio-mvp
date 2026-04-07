@@ -130,7 +130,7 @@ export function ApproveHighlightsClient({
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-folio-border-subtle p-8 space-y-6">
+    <div className="bg-surface-canvas rounded-lg shadow-sm border border-folio-border-subtle p-8 space-y-6">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-xl font-medium text-folio-text-primary">Extracted Quotes</h2>

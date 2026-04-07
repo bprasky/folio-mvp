@@ -38,7 +38,7 @@ export default function LensBar({ scope, onLensChange }: LensBarProps) {
         className={`px-4 py-2 text-sm font-medium transition-colors ${
           selectedLens === null
             ? 'text-folio-text-primary border-b-2 border-[#1A1A1A]'
-            : 'text-[#666] hover:text-folio-text-primary'
+            : 'text-folio-text-secondary hover:text-folio-text-primary'
         }`}
       >
         All
@@ -54,7 +54,7 @@ export default function LensBar({ scope, onLensChange }: LensBarProps) {
               className={`px-4 py-2 text-sm font-medium transition-colors ${
                 selectedLens === lens.id
                   ? 'text-folio-text-primary border-b-2 border-[#1A1A1A]'
-                  : 'text-[#666] hover:text-folio-text-primary'
+                  : 'text-folio-text-secondary hover:text-folio-text-primary'
               }`}
             >
               {lens.label}
@@ -73,7 +73,7 @@ export default function LensBar({ scope, onLensChange }: LensBarProps) {
               className={`px-4 py-2 text-sm font-medium transition-colors ${
                 selectedLens === lens.id
                   ? 'text-folio-text-primary border-b-2 border-[#1A1A1A]'
-                  : 'text-[#666] hover:text-folio-text-primary'
+                  : 'text-folio-text-secondary hover:text-folio-text-primary'
               }`}
             >
               {lens.label}
@@ -92,7 +92,7 @@ export default function LensBar({ scope, onLensChange }: LensBarProps) {
               className={`px-4 py-2 text-sm font-medium transition-colors ${
                 selectedLens === lens.id
                   ? 'text-folio-text-primary border-b-2 border-[#1A1A1A]'
-                  : 'text-[#666] hover:text-folio-text-primary'
+                  : 'text-folio-text-secondary hover:text-folio-text-primary'
               }`}
             >
               {lens.label}
@@ -111,7 +111,7 @@ export default function LensBar({ scope, onLensChange }: LensBarProps) {
               className={`px-4 py-2 text-sm font-medium transition-colors ${
                 selectedLens === lens.id
                   ? 'text-folio-text-primary border-b-2 border-[#1A1A1A]'
-                  : 'text-[#666] hover:text-folio-text-primary'
+                  : 'text-folio-text-secondary hover:text-folio-text-primary'
               }`}
             >
               {lens.label}

@@ -297,7 +297,7 @@ export default function RoomManagementPage() {
               <motion.div
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                className="bg-white rounded-[20px] p-6 w-full max-w-lg mx-4"
+                className="bg-surface-canvas rounded-[20px] p-6 w-full max-w-lg mx-4"
               >
                 <div className="flex justify-between items-center mb-6">
                   <h3 className="text-xl font-bold text-folio-text-primary">Add Selection</h3>
@@ -369,7 +369,7 @@ export default function RoomManagementPage() {
               <motion.div
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                className="bg-white rounded-[20px] p-6 w-full max-w-md mx-4"
+                className="bg-surface-canvas rounded-[20px] p-6 w-full max-w-md mx-4"
               >
                 <div className="flex justify-between items-center mb-6">
                   <h3 className="text-xl font-bold text-folio-text-primary">Add Selection</h3>
@@ -437,7 +437,7 @@ export default function RoomManagementPage() {
               <motion.div
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                className="bg-white rounded-[20px] p-6 w-full max-w-md mx-4"
+                className="bg-surface-canvas rounded-[20px] p-6 w-full max-w-md mx-4"
               >
                 <h3 className="text-xl font-bold text-folio-text-primary mb-4">Edit Selection</h3>
                 
@@ -513,7 +513,7 @@ export default function RoomManagementPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
-                className="bg-white rounded-[20px] shadow-lg overflow-hidden hover:shadow-xl transition-shadow"
+                className="bg-surface-canvas rounded-[20px] shadow-lg overflow-hidden hover:shadow-xl transition-shadow"
               >
                 {/* Image */}
                 <div className="aspect-square bg-surface-ground relative">
@@ -533,13 +533,13 @@ export default function RoomManagementPage() {
                   <div className="absolute top-2 right-2 flex gap-1">
                     <button
                       onClick={() => startEditing(selection)}
-                      className="p-2 bg-white bg-opacity-90 rounded-lg hover:bg-opacity-100 transition-all"
+                      className="p-2 bg-surface-canvas bg-opacity-90 rounded-lg hover:bg-opacity-100 transition-all"
                     >
                       <FaEdit className="w-4 h-4 text-folio-text-secondary" />
                     </button>
                     <button
                       onClick={() => handleDeleteSelection(selection.id)}
-                      className="p-2 bg-white bg-opacity-90 rounded-lg hover:bg-opacity-100 transition-all"
+                      className="p-2 bg-surface-canvas bg-opacity-90 rounded-lg hover:bg-opacity-100 transition-all"
                     >
                       <FaTrash className="w-4 h-4 text-red-500" />
                     </button>
@@ -618,7 +618,7 @@ export default function RoomManagementPage() {
               transition={{ delay: 0.2 }}
               className="text-center py-16"
             >
-              <div className="bg-white rounded-[20px] p-8 shadow-lg max-w-md mx-auto">
+              <div className="bg-surface-canvas rounded-[20px] p-8 shadow-lg max-w-md mx-auto">
                 <FaCamera className="w-16 h-16 text-folio-text-tertiary mx-auto mb-4" />
                 <h3 className="text-xl font-bold text-folio-text-primary mb-2">No Selections Yet</h3>
                 <p className="text-folio-text-secondary mb-6">
@@ -659,7 +659,7 @@ export default function RoomManagementPage() {
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-white rounded-[20px] p-6 w-full max-w-md mx-4"
+            className="bg-surface-canvas rounded-[20px] p-6 w-full max-w-md mx-4"
           >
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-xl font-bold text-folio-text-primary">Upload Image</h3>

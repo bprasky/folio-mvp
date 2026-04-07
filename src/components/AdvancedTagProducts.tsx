@@ -242,7 +242,7 @@ export default function AdvancedTagProducts({
                 <AnimatePresence>
                   {hoveredTag === tag.id && product && (
                     <motion.div
-                      className="absolute bottom-8 left-1/2 transform -translate-x-1/2 bg-white rounded-lg shadow-xl border border-folio-border p-3 min-w-64 z-10"
+                      className="absolute bottom-8 left-1/2 transform -translate-x-1/2 bg-surface-canvas rounded-lg shadow-xl border border-folio-border p-3 min-w-64 z-10"
                       initial={{ opacity: 0, y: 10, scale: 0.9 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 10, scale: 0.9 }}
@@ -328,7 +328,7 @@ export default function AdvancedTagProducts({
             onClick={() => { setShowProductModal(false); resetShopState(); }}
           >
             <motion.div
-              className="bg-white rounded-xl p-6 max-w-2xl w-full max-h-[80vh] overflow-hidden flex flex-col border border-folio-border shadow-xl"
+              className="bg-surface-canvas rounded-xl p-6 max-w-2xl w-full max-h-[80vh] overflow-hidden flex flex-col border border-folio-border shadow-xl"
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
@@ -358,7 +358,7 @@ export default function AdvancedTagProducts({
                   placeholder="Search products by name, brand, or category..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-folio-border rounded-lg focus:ring-1 focus:ring-folio-accent focus:border-folio-accent bg-white text-folio-text placeholder-folio-border"
+                  className="w-full pl-10 pr-4 py-3 border border-folio-border rounded-lg focus:ring-1 focus:ring-folio-accent focus:border-folio-accent bg-surface-canvas text-folio-text placeholder-folio-border"
                 />
               </div>
 
@@ -456,7 +456,7 @@ export default function AdvancedTagProducts({
                             disabled={addQuoteLater}
                             maxLength={500}
                             rows={3}
-                            className={`w-full px-3 py-2 border border-folio-border rounded-lg focus:ring-1 focus:ring-folio-accent focus:border-folio-accent bg-white text-folio-text placeholder-folio-border resize-none ${
+                            className={`w-full px-3 py-2 border border-folio-border rounded-lg focus:ring-1 focus:ring-folio-accent focus:border-folio-accent bg-surface-canvas text-folio-text placeholder-folio-border resize-none ${
                               addQuoteLater ? 'opacity-50' : ''
                             }`}
                           />
@@ -537,7 +537,7 @@ export default function AdvancedTagProducts({
               return (
                 <div
                   key={tag.id}
-                  className="flex items-center gap-3 p-3 bg-white rounded-lg border border-folio-border"
+                  className="flex items-center gap-3 p-3 bg-surface-canvas rounded-lg border border-folio-border"
                 >
                   <Image
                     src={product.image}

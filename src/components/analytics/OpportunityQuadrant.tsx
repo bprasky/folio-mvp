@@ -49,7 +49,7 @@ export function OpportunityQuadrant({ opportunities, onSelect }: OpportunityQuad
           <button
             key={index}
             onClick={() => onSelect?.(item)}
-            className="w-full text-left p-2 bg-white/80 hover:bg-white rounded-lg border border-[var(--grid)] hover:border-[var(--teal)] transition-all"
+            className="w-full text-left p-2 bg-white/80 hover:bg-surface-canvas rounded-lg border border-[var(--grid)] hover:border-[var(--teal)] transition-all"
           >
             <div className="flex items-center justify-between mb-1">
               <span className="text-sm font-medium text-[var(--ink)]">

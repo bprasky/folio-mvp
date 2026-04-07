@@ -28,7 +28,7 @@ export default function KnownFor({ items, productSaves }: KnownForProps) {
     <section>
       <div className="mb-8">
         <div className="flex items-baseline justify-between mb-4">
-          <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl text-stone-900 font-light">
+          <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl text-folio-text-primary font-light">
             Known For
           </h2>
           <div className="text-[13px] leading-tight" style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', color: '#6d6256', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
@@ -38,7 +38,7 @@ export default function KnownFor({ items, productSaves }: KnownForProps) {
             <span className="ml-1">Product Saves this month</span>
           </div>
         </div>
-        <p className="text-stone-600 text-sm md:text-base font-light">
+        <p className="text-folio-text-secondary text-sm md:text-base font-light">
           Signature products and materials across published work
         </p>
       </div>
@@ -52,7 +52,7 @@ export default function KnownFor({ items, productSaves }: KnownForProps) {
               className="flex-shrink-0 w-64 md:w-80 glass-surface overflow-hidden"
             >
               {/* Product Image */}
-              <div className="relative w-full h-48 md:h-56 bg-stone-100">
+              <div className="relative w-full h-48 md:h-56 bg-surface-elevated">
                 {product.imageUrl ? (
                   <Image
                     src={product.imageUrl}
@@ -62,7 +62,7 @@ export default function KnownFor({ items, productSaves }: KnownForProps) {
                     sizes="(max-width: 768px) 256px, 320px"
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-stone-400">
+                  <div className="w-full h-full flex items-center justify-center text-folio-text-tertiary">
                     <span className="text-sm">No image</span>
                   </div>
                 )}
@@ -70,15 +70,15 @@ export default function KnownFor({ items, productSaves }: KnownForProps) {
 
               {/* Product Info */}
               <div className="p-4 md:p-6">
-                <h3 className="font-serif text-lg md:text-xl text-stone-900 font-light mb-1">
+                <h3 className="font-serif text-lg md:text-xl text-folio-text-primary font-light mb-1">
                   {product.name}
                 </h3>
-                <p className="text-stone-600 text-sm font-light mb-4">
+                <p className="text-folio-text-secondary text-sm font-light mb-4">
                   {product.vendor}
                 </p>
 
                 {/* Stats */}
-                <div className="flex items-center justify-between text-xs text-stone-500 border-t border-stone-100 pt-4">
+                <div className="flex items-center justify-between text-xs text-folio-text-tertiary border-t border-folio-border-subtle pt-4">
                   <div className="flex items-center gap-2">
                     <span>💾 {product.tagCount} saves</span>
                   </div>
@@ -88,7 +88,7 @@ export default function KnownFor({ items, productSaves }: KnownForProps) {
                 </div>
 
                 {product.price && (
-                  <div className="mt-3 text-sm text-stone-700 font-light">
+                  <div className="mt-3 text-sm text-folio-text-secondary font-light">
                     ${product.price.toLocaleString()}
                   </div>
                 )}

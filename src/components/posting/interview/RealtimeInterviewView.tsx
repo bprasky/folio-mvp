@@ -44,12 +44,12 @@ interface DataMessage {
 
 function StateIndicator({ state }: { state: InterviewState }) {
   const config = {
-    connecting: { label: 'Connecting...', color: 'text-stone-500', bg: 'bg-stone-100' },
+    connecting: { label: 'Connecting...', color: 'text-folio-text-tertiary', bg: 'bg-surface-elevated' },
     greeting: { label: 'Starting', color: 'text-amber-600', bg: 'bg-amber-100' },
     listening: { label: 'Listening', color: 'text-green-600', bg: 'bg-green-100' },
     processing: { label: 'Processing', color: 'text-amber-600', bg: 'bg-amber-100' },
     speaking: { label: 'Sofia speaking', color: 'text-amber-600', bg: 'bg-amber-100' },
-    paused: { label: 'Paused', color: 'text-stone-500', bg: 'bg-stone-100' },
+    paused: { label: 'Paused', color: 'text-folio-text-tertiary', bg: 'bg-surface-elevated' },
     completed: { label: 'Complete', color: 'text-green-600', bg: 'bg-green-100' },
   }[state];
 
@@ -215,10 +215,10 @@ export function RealtimeInterviewView({
   return (
     <div className="flex flex-col h-[70vh] max-h-[600px]">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-stone-200">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-folio-border-subtle">
         <div>
-          <h3 className="font-medium text-stone-800">{projectName}</h3>
-          <p className="text-xs text-stone-500">Live Interview</p>
+          <h3 className="font-medium text-folio-text-primary">{projectName}</h3>
+          <p className="text-xs text-folio-text-tertiary">Live Interview</p>
         </div>
         <div className="flex items-center gap-2">
           <StateIndicator state={state} />
@@ -234,7 +234,7 @@ export function RealtimeInterviewView({
       {/* Transcript Area */}
       <div
         ref={transcriptContainerRef}
-        className="flex-1 overflow-y-auto p-4 space-y-4 bg-stone-50"
+        className="flex-1 overflow-y-auto p-4 space-y-4 bg-surface-ground"
       >
         <AnimatePresence mode="popLayout">
           {segments.map((segment) => (
@@ -251,8 +251,8 @@ export function RealtimeInterviewView({
                 max-w-[80%] p-4 rounded-2xl
                 ${
                   segment.role === 'designer'
-                    ? 'bg-stone-100 text-stone-800'
-                    : 'bg-amber-50 text-stone-800 border border-amber-100'
+                    ? 'bg-surface-elevated text-folio-text-primary'
+                    : 'bg-amber-50 text-folio-text-primary border border-amber-100'
                 }
               `}
               >
@@ -279,7 +279,7 @@ export function RealtimeInterviewView({
             animate={{ opacity: 1 }}
             className="flex justify-end"
           >
-            <div className="max-w-[80%] p-4 rounded-2xl bg-stone-200/50 text-stone-600">
+            <div className="max-w-[80%] p-4 rounded-2xl bg-surface-elevated/50 text-folio-text-secondary">
               <p className="text-sm">{currentTranscript}</p>
               <span className="inline-block w-2 h-4 bg-stone-400 animate-pulse ml-1" />
             </div>
@@ -320,10 +320,10 @@ export function RealtimeInterviewView({
       )}
 
       {/* Controls */}
-      <div className="flex items-center justify-between px-4 py-3 border-t border-stone-200 bg-white">
+      <div className="flex items-center justify-between px-4 py-3 border-t border-folio-border-subtle bg-surface-canvas">
         <button
           onClick={onSwitchToText}
-          className="text-sm text-stone-500 hover:text-stone-700"
+          className="text-sm text-folio-text-tertiary hover:text-folio-text-secondary"
         >
           Switch to text mode
         </button>
@@ -338,7 +338,7 @@ export function RealtimeInterviewView({
               ${
                 state === 'paused'
                   ? 'bg-amber-100 text-amber-600'
-                  : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+                  : 'bg-surface-elevated text-folio-text-secondary hover:bg-surface-elevated'
               }
               disabled:opacity-50 disabled:cursor-not-allowed
             `}
@@ -359,7 +359,7 @@ export function RealtimeInterviewView({
                 ? 'bg-green-100 text-green-600 ring-4 ring-green-100 animate-pulse'
                 : state === 'speaking'
                 ? 'bg-amber-100 text-amber-600'
-                : 'bg-stone-100 text-stone-400'
+                : 'bg-surface-elevated text-folio-text-tertiary'
             }
           `}
           >

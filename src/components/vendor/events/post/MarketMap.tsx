@@ -47,7 +47,7 @@ export function MarketMap({ markets, onHover, onActionClick }: MarketMapProps) {
   };
 
   return (
-    <Card className="bg-white border-folio-border-strong">
+    <Card className="bg-surface-canvas border-folio-border-strong">
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>

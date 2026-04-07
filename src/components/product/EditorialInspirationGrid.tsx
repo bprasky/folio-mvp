@@ -20,10 +20,10 @@ export function EditorialInspirationGrid({ items }: EditorialInspirationGridProp
         transition={{ duration: 0.6 }}
         className="mb-8"
       >
-        <h2 className="text-2xl lg:text-3xl font-serif font-light text-stone-900 dark:text-stone-100">
+        <h2 className="text-2xl lg:text-3xl font-serif font-light text-folio-text-primary dark:text-folio-text-tertiary">
           Inspiration using this product
         </h2>
-        <p className="mt-2 text-sm text-stone-600 dark:text-stone-400">
+        <p className="mt-2 text-sm text-folio-text-secondary dark:text-folio-text-tertiary">
           Most-liked affiliate-tagged images from the Folio community
         </p>
       </motion.div>
@@ -60,7 +60,7 @@ function EditorialCard({ item, index }: { item: TaggedImage; index: number }) {
       whileHover={prefersReducedMotion ? {} : { y: -4 }}
       className="group relative cursor-pointer"
     >
-      <div className="relative aspect-[3/4] overflow-hidden rounded-2xl bg-stone-200 dark:bg-stone-800">
+      <div className="relative aspect-[3/4] overflow-hidden rounded-2xl bg-surface-elevated dark:bg-surface-elevated">
         {/* Image */}
         <div className="relative w-full h-full">
           <Image

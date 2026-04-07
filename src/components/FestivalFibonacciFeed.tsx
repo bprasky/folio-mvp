@@ -323,7 +323,7 @@ export default function FestivalFibonacciFeed({ events, canEdit = false, viewMod
             <Link
               key={event.id}
               href={`/events/${event.id}`}
-              className="group block bg-white rounded-lg shadow-sm border border-folio-border overflow-hidden hover:shadow-lg hover:border-folio-accent transition-all duration-300"
+              className="group block bg-surface-canvas rounded-lg shadow-sm border border-folio-border overflow-hidden hover:shadow-lg hover:border-folio-accent transition-all duration-300"
             >
               {/* Event Image */}
               <div className="relative overflow-hidden h-48">
@@ -415,7 +415,7 @@ export default function FestivalFibonacciFeed({ events, canEdit = false, viewMod
             <Link
               key={event.id}
               href={`/events/${event.id}`}
-              className="group block bg-white rounded-lg shadow-sm border border-folio-border overflow-hidden hover:shadow-lg hover:border-folio-accent transition-all duration-300"
+              className="group block bg-surface-canvas rounded-lg shadow-sm border border-folio-border overflow-hidden hover:shadow-lg hover:border-folio-accent transition-all duration-300"
             >
               <div className="flex">
                 {/* Event Image */}

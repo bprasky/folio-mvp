@@ -642,7 +642,7 @@ export default function DemoGuidedTour({ role }: DemoGuidedTourProps) {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 10 }}
           style={tooltipStyle}
-          className="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-80 pointer-events-auto"
+          className="bg-surface-canvas rounded-2xl shadow-2xl p-6 max-w-sm w-80 pointer-events-auto"
         >
           <div className="flex items-start justify-between mb-3">
             <div className="flex-1">

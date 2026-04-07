@@ -74,10 +74,10 @@ export default function FilterChips({
   if (isLoading) {
     return (
       <div className="px-8 pb-4">
-        <div className="flex items-center gap-2 text-[#9A9A9A] text-sm">
-          <span className="inline-block w-16 h-4 bg-[#E0E0E0] animate-pulse rounded" />
-          <span className="text-[#D0D0D0]">·</span>
-          <span className="inline-block w-20 h-4 bg-[#E0E0E0] animate-pulse rounded" />
+        <div className="flex items-center gap-2 text-folio-text-tertiary text-sm">
+          <span className="inline-block w-16 h-4 bg-folio-border-subtle animate-pulse rounded" />
+          <span className="text-folio-text-tertiary">·</span>
+          <span className="inline-block w-20 h-4 bg-folio-border-subtle animate-pulse rounded" />
         </div>
       </div>
     );

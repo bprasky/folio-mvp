@@ -42,7 +42,7 @@ export function RoomPhaseMatrix({ data, onHover }: RoomPhaseMatrixProps) {
   };
 
   return (
-    <Card className="bg-white border-folio-border-strong">
+    <Card className="bg-surface-canvas border-folio-border-strong">
       <CardHeader>
         <CardTitle className="text-lg font-serif text-folio-text-primary">
           Room × Phase Matrix

@@ -32,7 +32,7 @@ export default function GraphNode({ node, type }: GraphNodeProps) {
       case 'rep':
         return 'bg-orange-50 border-orange-200';
       default:
-        return 'bg-stone-50 border-stone-200';
+        return 'bg-surface-ground border-folio-border-subtle';
     }
   };
 
@@ -47,18 +47,18 @@ export default function GraphNode({ node, type }: GraphNodeProps) {
             </span>
           </div>
           {node.data.email && (
-            <p className="text-xs text-stone-500 mt-1">{node.data.email}</p>
+            <p className="text-xs text-folio-text-tertiary mt-1">{node.data.email}</p>
           )}
           {node.data.location && (
-            <p className="text-xs text-stone-400 mt-1">{node.data.location}</p>
+            <p className="text-xs text-folio-text-tertiary mt-1">{node.data.location}</p>
           )}
         </div>
         <div className="text-right">
-          <div className="text-xs font-medium text-stone-600">
+          <div className="text-xs font-medium text-folio-text-secondary">
             Weight: {node.edge.weight.toFixed(2)}
           </div>
           {node.edge.views !== undefined && (
-            <div className="text-xs text-stone-400 mt-1">
+            <div className="text-xs text-folio-text-tertiary mt-1">
               {node.edge.views} views
             </div>
           )}

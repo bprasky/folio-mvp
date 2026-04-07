@@ -17,10 +17,10 @@ export function InterviewModeSelector({
 
   return (
     <div className="flex flex-col items-center py-8 px-4">
-      <h2 className="text-2xl font-semibold text-stone-800 mb-2 text-center">
+      <h2 className="text-2xl font-semibold text-folio-text-primary mb-2 text-center">
         Tell the story of {projectName}
       </h2>
-      <p className="text-stone-600 text-center max-w-md mb-8">
+      <p className="text-folio-text-secondary text-center max-w-md mb-8">
         Share the decisions, inspirations, and moments that shaped this project.
       </p>
 
@@ -37,7 +37,7 @@ export function InterviewModeSelector({
             ${
               hoveredMode === 'realtime'
                 ? 'border-amber-400 bg-amber-50/50'
-                : 'border-stone-200 bg-white hover:border-stone-300'
+                : 'border-folio-border-subtle bg-surface-canvas hover:border-folio-border-strong'
             }
           `}
         >
@@ -45,18 +45,18 @@ export function InterviewModeSelector({
             <div
               className={`
               p-3 rounded-full transition-colors shrink-0
-              ${hoveredMode === 'realtime' ? 'bg-amber-100' : 'bg-stone-100'}
+              ${hoveredMode === 'realtime' ? 'bg-amber-100' : 'bg-surface-elevated'}
             `}
             >
               <Mic
                 className={`w-6 h-6 ${
-                  hoveredMode === 'realtime' ? 'text-amber-600' : 'text-stone-600'
+                  hoveredMode === 'realtime' ? 'text-amber-600' : 'text-folio-text-secondary'
                 }`}
               />
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
-                <span className="font-semibold text-stone-800">
+                <span className="font-semibold text-folio-text-primary">
                   Live Conversation
                 </span>
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-100 text-amber-700 text-xs font-medium rounded-full">
@@ -64,12 +64,12 @@ export function InterviewModeSelector({
                   Recommended
                 </span>
               </div>
-              <p className="text-sm text-stone-600 mb-2">
+              <p className="text-sm text-folio-text-secondary mb-2">
                 Have a natural conversation about your project. Our story AI
                 will guide you through the story with questions tailored to your
                 work.
               </p>
-              <p className="text-xs text-stone-500">
+              <p className="text-xs text-folio-text-tertiary">
                 ~10-15 minutes &bull; Uses microphone
               </p>
             </div>
@@ -100,8 +100,8 @@ export function InterviewModeSelector({
             relative w-full p-6 rounded-xl border-2 transition-all text-left
             ${
               hoveredMode === 'text'
-                ? 'border-stone-400 bg-stone-50/50'
-                : 'border-stone-200 bg-white hover:border-stone-300'
+                ? 'border-folio-border-strong bg-surface-ground/50'
+                : 'border-folio-border-subtle bg-surface-canvas hover:border-folio-border-strong'
             }
           `}
         >
@@ -109,24 +109,24 @@ export function InterviewModeSelector({
             <div
               className={`
               p-3 rounded-full transition-colors shrink-0
-              ${hoveredMode === 'text' ? 'bg-stone-200' : 'bg-stone-100'}
+              ${hoveredMode === 'text' ? 'bg-surface-elevated' : 'bg-surface-elevated'}
             `}
             >
               <MessageSquare
                 className={`w-6 h-6 ${
-                  hoveredMode === 'text' ? 'text-stone-700' : 'text-stone-600'
+                  hoveredMode === 'text' ? 'text-folio-text-secondary' : 'text-folio-text-secondary'
                 }`}
               />
             </div>
             <div className="flex-1 min-w-0">
-              <span className="font-semibold text-stone-800">
+              <span className="font-semibold text-folio-text-primary">
                 Written Responses
               </span>
-              <p className="text-sm text-stone-600 mt-1 mb-2">
+              <p className="text-sm text-folio-text-secondary mt-1 mb-2">
                 Answer questions at your own pace by typing. Good for quiet
                 environments or when you prefer to write.
               </p>
-              <p className="text-xs text-stone-500">
+              <p className="text-xs text-folio-text-tertiary">
                 ~15-20 minutes &bull; Text only
               </p>
             </div>
@@ -134,7 +134,7 @@ export function InterviewModeSelector({
         </motion.button>
       </div>
 
-      <p className="text-xs text-stone-500 mt-6 text-center">
+      <p className="text-xs text-folio-text-tertiary mt-6 text-center">
         You can switch modes at any time during the interview.
       </p>
     </div>

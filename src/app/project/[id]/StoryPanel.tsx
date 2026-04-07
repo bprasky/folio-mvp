@@ -470,7 +470,7 @@ export default function StoryPanel({ projectId, project, images, isOwner }: Stor
                 onChange={(e) => setFollowup(i, "a", e.target.value)}
               />
               <button
-                className="col-span-1 px-2 py-1 text-folio-text-tertiary hover:text-[rgb(74,44,59)] hover:bg-stone-100 rounded transition-colors"
+                className="col-span-1 px-2 py-1 text-folio-text-tertiary hover:text-[rgb(74,44,59)] hover:bg-surface-elevated rounded transition-colors"
                 onClick={() => removeFollowup(i)}
                 aria-label="Remove"
               >
@@ -513,7 +513,7 @@ export default function StoryPanel({ projectId, project, images, isOwner }: Stor
             className="absolute inset-0 bg-black/50 backdrop-blur-sm"
             onClick={() => setShowInterviewModal(false)}
           />
-          <div className="relative bg-white rounded-[20px] shadow-2xl w-full max-w-3xl mx-4 max-h-[90vh] overflow-hidden">
+          <div className="relative bg-surface-canvas rounded-[20px] shadow-2xl w-full max-w-3xl mx-4 max-h-[90vh] overflow-hidden">
             <InterviewFlow
               projectId={project.id}
               projectName={project.title}

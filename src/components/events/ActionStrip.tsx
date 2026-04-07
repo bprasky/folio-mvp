@@ -80,7 +80,7 @@ export default function ActionStrip({ event }: ActionStripProps) {
   };
 
   return (
-    <div className="w-full border border-folio-border rounded-xl bg-white shadow-sm px-4 py-3 flex flex-wrap items-center gap-2">
+    <div className="w-full border border-folio-border rounded-xl bg-surface-canvas shadow-sm px-4 py-3 flex flex-wrap items-center gap-2">
       <div className="font-medium mr-2">Quick actions:</div>
 
       <div className="flex items-center gap-1 mr-3">
@@ -89,7 +89,7 @@ export default function ActionStrip({ event }: ActionStripProps) {
           className={`px-3 py-1 rounded-full border text-sm ${
             rsvp === "ATTENDING"
               ? "bg-folio-accent text-white border-folio-accent"
-              : "bg-white hover:bg-surface-ground border-folio-border-subtle"
+              : "bg-surface-canvas hover:bg-surface-ground border-folio-border-subtle"
           }`}
         >
           Attending
@@ -99,7 +99,7 @@ export default function ActionStrip({ event }: ActionStripProps) {
           className={`px-3 py-1 rounded-full border text-sm ${
             rsvp === "INTERESTED"
               ? "bg-folio-accent/90 text-white border-folio-accent"
-              : "bg-white hover:bg-surface-ground border-folio-border-subtle"
+              : "bg-surface-canvas hover:bg-surface-ground border-folio-border-subtle"
           }`}
         >
           Interested
@@ -109,7 +109,7 @@ export default function ActionStrip({ event }: ActionStripProps) {
           className={`px-3 py-1 rounded-full border text-sm ${
             rsvp === "SEND_TO_TEAM"
               ? "bg-folio-accent/80 text-white border-folio-accent"
-              : "bg-white hover:bg-surface-ground border-folio-border-subtle"
+              : "bg-surface-canvas hover:bg-surface-ground border-folio-border-subtle"
           }`}
         >
           Send to team
@@ -121,21 +121,21 @@ export default function ActionStrip({ event }: ActionStripProps) {
         target="_blank"
         rel="noreferrer"
         onClick={() => track("calendar_add_click", { eventId: event.id, type: "google" })}
-        className="px-3 py-1 rounded-full border border-folio-border-subtle text-sm bg-white hover:bg-surface-ground"
+        className="px-3 py-1 rounded-full border border-folio-border-subtle text-sm bg-surface-canvas hover:bg-surface-ground"
       >
         Add to Google Calendar
       </a>
 
       <button
         onClick={onFollow}
-        className="px-3 py-1 rounded-full border border-folio-border-subtle text-sm bg-white hover:bg-surface-ground"
+        className="px-3 py-1 rounded-full border border-folio-border-subtle text-sm bg-surface-canvas hover:bg-surface-ground"
       >
         Follow {vendorName}
       </button>
 
       <button
         onClick={onShare}
-        className="px-3 py-1 rounded-full border border-folio-border-subtle text-sm bg-white hover:bg-surface-ground"
+        className="px-3 py-1 rounded-full border border-folio-border-subtle text-sm bg-surface-canvas hover:bg-surface-ground"
       >
         Share
       </button>

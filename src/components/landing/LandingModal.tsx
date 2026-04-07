@@ -148,7 +148,7 @@ export function LandingModal() {
                           variant="subtle"
                           padding="md"
                           rounded="xl"
-                          className="border border-stone-200/60"
+                          className="border border-folio-border-subtle/60"
                         >
                           <p className="font-headline italic text-2xl text-[var(--accent)] mb-2">
                             {i + 1}

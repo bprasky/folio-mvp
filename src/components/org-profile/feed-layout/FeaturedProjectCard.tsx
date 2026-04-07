@@ -11,11 +11,11 @@ interface FeaturedProjectCardProps {
 export default function FeaturedProjectCard({ project }: FeaturedProjectCardProps) {
   return (
     <Link href={`/project/${project.id}`}>
-      <div className="group rounded-2xl overflow-hidden border border-stone-200
-                      bg-white hover:shadow-md transition-shadow duration-300">
+      <div className="group rounded-2xl overflow-hidden border border-folio-border-subtle
+                      bg-surface-canvas hover:shadow-md transition-shadow duration-300">
 
         {/* Hero image — 16:9, full width */}
-        <div className="relative w-full aspect-[16/9] overflow-hidden bg-stone-100">
+        <div className="relative w-full aspect-[16/9] overflow-hidden bg-surface-elevated">
           {project.heroImage ? (
             <SafeImage
               src={project.heroImage}
@@ -25,7 +25,7 @@ export default function FeaturedProjectCard({ project }: FeaturedProjectCardProp
                          duration-500"
             />
           ) : (
-            <div className="w-full h-full bg-stone-100" />
+            <div className="w-full h-full bg-surface-elevated" />
           )}
 
           {/* Editorial badge */}
@@ -42,23 +42,23 @@ export default function FeaturedProjectCard({ project }: FeaturedProjectCardProp
 
         {/* Metadata */}
         <div className="px-5 py-4">
-          <h3 className="font-medium text-stone-900 text-base leading-snug
-                         group-hover:text-stone-600 transition-colors">
+          <h3 className="font-medium text-folio-text-primary text-base leading-snug
+                         group-hover:text-folio-text-secondary transition-colors">
             {project.title}
           </h3>
 
           {project.location && (
-            <p className="text-xs text-stone-400 mt-1">{project.location}</p>
+            <p className="text-xs text-folio-text-tertiary mt-1">{project.location}</p>
           )}
 
           <div className="flex items-center gap-4 mt-3">
             {project.roomCount > 0 && (
-              <span className="text-xs text-stone-400">
+              <span className="text-xs text-folio-text-tertiary">
                 {project.roomCount} {project.roomCount === 1 ? 'room' : 'rooms'}
               </span>
             )}
             {project.saveCount > 0 && (
-              <span className="text-xs text-stone-400">
+              <span className="text-xs text-folio-text-tertiary">
                 {project.saveCount} {project.saveCount === 1 ? 'save' : 'saves'}
               </span>
             )}

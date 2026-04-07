@@ -141,34 +141,34 @@ export function CinematicProductPage({ product }: CinematicProductPageProps) {
             >
               <GlassPanel
                 header={
-                  <h2 className="text-lg font-medium text-stone-900 dark:text-stone-100">
+                  <h2 className="text-lg font-medium text-folio-text-primary dark:text-folio-text-tertiary">
                     About This Product
                   </h2>
                 }
               >
                 <div className="prose prose-stone dark:prose-invert max-w-none">
-                  <p className="text-base leading-relaxed text-stone-700 dark:text-stone-300">
+                  <p className="text-base leading-relaxed text-folio-text-secondary dark:text-folio-text-tertiary">
                     {product.description}
                   </p>
                   
                   {/* Key Details */}
-                  <div className="mt-6 pt-6 border-t border-stone-200 dark:border-stone-700">
+                  <div className="mt-6 pt-6 border-t border-folio-border-subtle dark:border-folio-border-subtle">
                     <dl className="grid grid-cols-2 gap-4 text-sm">
                       <div>
-                        <dt className="font-medium text-stone-900 dark:text-stone-100">Brand</dt>
-                        <dd className="mt-1 text-stone-600 dark:text-stone-400">{product.brand}</dd>
+                        <dt className="font-medium text-folio-text-primary dark:text-folio-text-tertiary">Brand</dt>
+                        <dd className="mt-1 text-folio-text-secondary dark:text-folio-text-tertiary">{product.brand}</dd>
                       </div>
                       <div>
-                        <dt className="font-medium text-stone-900 dark:text-stone-100">SKU</dt>
-                        <dd className="mt-1 font-mono text-xs text-stone-600 dark:text-stone-400">{product.sku}</dd>
+                        <dt className="font-medium text-folio-text-primary dark:text-folio-text-tertiary">SKU</dt>
+                        <dd className="mt-1 font-mono text-xs text-folio-text-secondary dark:text-folio-text-tertiary">{product.sku}</dd>
                       </div>
                       <div>
-                        <dt className="font-medium text-stone-900 dark:text-stone-100">Materials</dt>
-                        <dd className="mt-1 text-stone-600 dark:text-stone-400">{product.materials.join(", ")}</dd>
+                        <dt className="font-medium text-folio-text-primary dark:text-folio-text-tertiary">Materials</dt>
+                        <dd className="mt-1 text-folio-text-secondary dark:text-folio-text-tertiary">{product.materials.join(", ")}</dd>
                       </div>
                       <div>
-                        <dt className="font-medium text-stone-900 dark:text-stone-100">Finish</dt>
-                        <dd className="mt-1 text-stone-600 dark:text-stone-400">{product.finish}</dd>
+                        <dt className="font-medium text-folio-text-primary dark:text-folio-text-tertiary">Finish</dt>
+                        <dd className="mt-1 text-folio-text-secondary dark:text-folio-text-tertiary">{product.finish}</dd>
                       </div>
                     </dl>
                   </div>

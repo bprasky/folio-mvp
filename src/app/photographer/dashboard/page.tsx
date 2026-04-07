@@ -108,7 +108,7 @@ export default function PhotographerDashboardPage() {
 
         {/* Profile completeness */}
         {data.profileCompleteness < 100 && (
-          <div className="mb-8 p-4 rounded-xl border border-folio-border-subtle bg-white">
+          <div className="mb-8 p-4 rounded-xl border border-folio-border-subtle bg-surface-canvas">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium text-folio-text-primary">
                 Profile completeness
@@ -117,7 +117,7 @@ export default function PhotographerDashboardPage() {
                 {data.profileCompleteness}%
               </span>
             </div>
-            <div className="h-2 bg-stone-100 rounded-full overflow-hidden">
+            <div className="h-2 bg-surface-elevated rounded-full overflow-hidden">
               <div
                 className="h-full bg-[var(--accent)] rounded-full transition-all duration-500"
                 style={{ width: `${data.profileCompleteness}%` }}
@@ -134,7 +134,7 @@ export default function PhotographerDashboardPage() {
 
         {/* Stats */}
         <div className="grid grid-cols-2 gap-4 mb-10">
-          <div className="p-5 rounded-xl border border-folio-border-subtle bg-white">
+          <div className="p-5 rounded-xl border border-folio-border-subtle bg-surface-canvas">
             <div className="flex items-center gap-2 mb-1">
               <Eye className="w-4 h-4 text-folio-text-tertiary" />
               <span className="text-xs text-folio-text-secondary uppercase tracking-wider">
@@ -145,7 +145,7 @@ export default function PhotographerDashboardPage() {
               {data.stats.profileViews}
             </span>
           </div>
-          <div className="p-5 rounded-xl border border-folio-border-subtle bg-white">
+          <div className="p-5 rounded-xl border border-folio-border-subtle bg-surface-canvas">
             <div className="flex items-center gap-2 mb-1">
               <Camera className="w-4 h-4 text-folio-text-tertiary" />
               <span className="text-xs text-folio-text-secondary uppercase tracking-wider">
@@ -177,10 +177,10 @@ export default function PhotographerDashboardPage() {
                 <Link
                   key={project.id}
                   href={`/p/${project.slug}`}
-                  className="flex items-center gap-4 p-4 rounded-xl border border-folio-border-subtle bg-white hover:border-[var(--accent)] transition-colors group"
+                  className="flex items-center gap-4 p-4 rounded-xl border border-folio-border-subtle bg-surface-canvas hover:border-[var(--accent)] transition-colors group"
                 >
                   {project.heroImageUrl ? (
-                    <div className="w-16 h-12 rounded-lg overflow-hidden bg-stone-100 shrink-0">
+                    <div className="w-16 h-12 rounded-lg overflow-hidden bg-surface-elevated shrink-0">
                       <Image
                         src={project.heroImageUrl}
                         alt={project.projectTitle}
@@ -190,7 +190,7 @@ export default function PhotographerDashboardPage() {
                       />
                     </div>
                   ) : (
-                    <div className="w-16 h-12 rounded-lg bg-stone-100 shrink-0" />
+                    <div className="w-16 h-12 rounded-lg bg-surface-elevated shrink-0" />
                   )}
                   <div className="flex-1 min-w-0">
                     <h3 className="text-sm font-medium text-folio-text-primary truncate">

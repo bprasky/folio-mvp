@@ -37,7 +37,7 @@ export function LowestProducts({ products }: LowestProductsProps) {
         return (
           <div
             key={'productId' in product ? product.productId : product.id}
-            className="p-4 bg-white border border-[var(--grid)] rounded-lg hover:border-[var(--amber)] transition-all"
+            className="p-4 bg-surface-canvas border border-[var(--grid)] rounded-lg hover:border-[var(--amber)] transition-all"
           >
             <div className="grid grid-cols-12 gap-4">
               {/* Product info */}

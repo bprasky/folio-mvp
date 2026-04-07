@@ -25,21 +25,21 @@ export default function EmptyState({ username, designer }: EmptyStateProps) {
     <main className="min-h-screen bg-surface-ground flex items-center justify-center px-6">
       <div className="max-w-2xl text-center">
         <div className="mb-12">
-          <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl text-stone-900 mb-6 font-light">
+          <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl text-folio-text-primary mb-6 font-light">
             {designer.name}
           </h1>
           {designer.bio && (
-            <p className="text-stone-600 text-lg md:text-xl font-light leading-relaxed max-w-xl mx-auto">
+            <p className="text-folio-text-secondary text-lg md:text-xl font-light leading-relaxed max-w-xl mx-auto">
               {designer.bio}
             </p>
           )}
         </div>
 
-        <div className="mt-20 p-12 md:p-16 bg-white rounded-lg border border-stone-200 shadow-sm">
-          <h2 className="font-serif text-2xl md:text-3xl lg:text-4xl text-stone-900 mb-6 font-light">
+        <div className="mt-20 p-12 md:p-16 bg-surface-canvas rounded-lg border border-folio-border-subtle shadow-sm">
+          <h2 className="font-serif text-2xl md:text-3xl lg:text-4xl text-folio-text-primary mb-6 font-light">
             Begin Your Monograph
           </h2>
-          <p className="text-stone-600 mb-10 font-light leading-relaxed text-base md:text-lg">
+          <p className="text-folio-text-secondary mb-10 font-light leading-relaxed text-base md:text-lg">
             Your public profile will showcase your published projects, design signature, 
             and signature products. Start by uploading your first project.
           </p>

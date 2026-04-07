@@ -119,7 +119,7 @@ export default function SearchMosaic({
             <h2 className="font-serif text-2xl text-folio-text-primary mb-2">
               Draft Moments
             </h2>
-            <p className="text-sm text-[#6A6A6A]">
+            <p className="text-sm text-folio-text-secondary">
               {unpublishedMoments.length} unpublished {unpublishedMoments.length === 1 ? 'moment' : 'moments'}
             </p>
           </div>
@@ -130,7 +130,7 @@ export default function SearchMosaic({
                 className={`${getTileSizeClass(moment.tagCompletionScore)} relative`}
               >
                 {/* Draft Badge */}
-                <div className="absolute top-2 left-2 z-10 bg-[#9A9A9A] text-white px-2 py-1 rounded text-xs font-medium">
+                <div className="absolute top-2 left-2 z-10 bg-folio-text-tertiary text-white px-2 py-1 rounded text-xs font-medium">
                   Draft
                 </div>
                 <MomentCard
@@ -148,7 +148,7 @@ export default function SearchMosaic({
       {/* Empty State */}
       {moments.length === 0 && (
         <div className="text-center py-24">
-          <p className="text-[#6A6A6A] font-serif text-xl">
+          <p className="text-folio-text-secondary font-serif text-xl">
             No moments found. Try a different search or lens.
           </p>
         </div>

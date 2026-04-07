@@ -38,7 +38,7 @@ export default function VisitNotesForm({ visitId, initialNotes }: VisitNotesForm
         value={notes}
         onChange={(e) => setNotes(e.target.value)}
         placeholder="Add notes about this connection..."
-        className="w-full min-h-[80px] p-3 text-sm border border-stone-200 rounded-lg resize-y focus:outline-none focus:ring-1 focus:ring-stone-400"
+        className="w-full min-h-[80px] p-3 text-sm border border-folio-border-subtle rounded-lg resize-y focus:outline-none focus:ring-1 focus:ring-stone-400"
       />
       <div className="flex items-center justify-between mt-2">
         <button

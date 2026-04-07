@@ -14,7 +14,7 @@ interface EventMetricsPanelProps {
 
 export default function EventMetricsPanel({ events }: EventMetricsPanelProps) {
   return (
-    <div className="bg-white rounded-lg shadow-lg p-6">
+    <div className="bg-surface-canvas rounded-lg shadow-lg p-6">
       <h2 className="text-xl font-semibold text-folio-text-primary mb-6">Event Performance</h2>
       <div className="space-y-6">
         {events.map((event) => (

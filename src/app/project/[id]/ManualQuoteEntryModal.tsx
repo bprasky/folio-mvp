@@ -99,7 +99,7 @@ export default function ManualQuoteEntryModal({
                 value={unitPrice}
                 onChange={(e) => setUnitPrice(e.target.value)}
                 placeholder="0.00"
-                className="w-full pl-7 pr-3 py-2 bg-white border border-folio-border-subtle rounded-lg text-folio-text-primary placeholder-[#A39E97] focus:outline-none focus:border-folio-border-strong transition-all"
+                className="w-full pl-7 pr-3 py-2 bg-surface-canvas border border-folio-border-subtle rounded-lg text-folio-text-primary placeholder-[#A39E97] focus:outline-none focus:border-folio-border-strong transition-all"
               />
             </div>
           </div>
@@ -114,7 +114,7 @@ export default function ManualQuoteEntryModal({
               value={leadTimeWeeks}
               onChange={(e) => setLeadTimeWeeks(e.target.value)}
               placeholder="e.g. 14"
-              className="w-full px-3 py-2 bg-white border border-folio-border-subtle rounded-lg text-folio-text-primary placeholder-[#A39E97] focus:outline-none focus:border-folio-border-strong transition-all"
+              className="w-full px-3 py-2 bg-surface-canvas border border-folio-border-subtle rounded-lg text-folio-text-primary placeholder-[#A39E97] focus:outline-none focus:border-folio-border-strong transition-all"
             />
           </div>
 
@@ -126,7 +126,7 @@ export default function ManualQuoteEntryModal({
               type="date"
               value={validThrough}
               onChange={(e) => setValidThrough(e.target.value)}
-              className="w-full px-3 py-2 bg-white border border-folio-border-subtle rounded-lg text-folio-text-primary focus:outline-none focus:border-folio-border-strong transition-all"
+              className="w-full px-3 py-2 bg-surface-canvas border border-folio-border-subtle rounded-lg text-folio-text-primary focus:outline-none focus:border-folio-border-strong transition-all"
             />
           </div>
 
@@ -138,14 +138,14 @@ export default function ManualQuoteEntryModal({
                 value={quotedByName}
                 onChange={(e) => setQuotedByName(e.target.value)}
                 placeholder="Rep name"
-                className="px-3 py-2 bg-white border border-folio-border-subtle rounded-lg text-sm text-folio-text-primary placeholder-[#A39E97] focus:outline-none focus:border-folio-border-strong transition-all"
+                className="px-3 py-2 bg-surface-canvas border border-folio-border-subtle rounded-lg text-sm text-folio-text-primary placeholder-[#A39E97] focus:outline-none focus:border-folio-border-strong transition-all"
               />
               <input
                 type="email"
                 value={quotedByEmail}
                 onChange={(e) => setQuotedByEmail(e.target.value)}
                 placeholder="Rep email"
-                className="px-3 py-2 bg-white border border-folio-border-subtle rounded-lg text-sm text-folio-text-primary placeholder-[#A39E97] focus:outline-none focus:border-folio-border-strong transition-all"
+                className="px-3 py-2 bg-surface-canvas border border-folio-border-subtle rounded-lg text-sm text-folio-text-primary placeholder-[#A39E97] focus:outline-none focus:border-folio-border-strong transition-all"
               />
             </div>
           </div>

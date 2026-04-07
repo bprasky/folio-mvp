@@ -142,7 +142,7 @@ export function CreateCollaborationModal({
 
             {/* Search Results Dropdown */}
             {searchResults.length > 0 && !selectedDesigner && (
-              <div className="absolute z-10 w-full mt-1 bg-white rounded-lg border border-neutral-200 shadow-lg max-h-60 overflow-y-auto">
+              <div className="absolute z-10 w-full mt-1 bg-surface-canvas rounded-lg border border-neutral-200 shadow-lg max-h-60 overflow-y-auto">
                 {searchResults.map((designer) => (
                   <button
                     key={designer.id}

@@ -170,7 +170,7 @@ export function InterviewRound({
       </div>
 
       {/* Question Card */}
-      <div className="bg-white rounded-xl border border-neutral-200 shadow-sm overflow-hidden mb-6">
+      <div className="bg-surface-canvas rounded-xl border border-neutral-200 shadow-sm overflow-hidden mb-6">
         {/* Question navigation */}
         <div className="flex border-b border-neutral-100 overflow-x-auto">
           {questions.map((q, index) => (

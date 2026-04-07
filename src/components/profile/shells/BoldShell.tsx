@@ -6,7 +6,7 @@ export default function BoldShell({ designer, projects, aesthetic, viewerContext
   const heroImage = projects[0]?.heroImageUrl || projects[0]?.coverImageUrl || projects[0]?.imageUrl;
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-surface-canvas">
       {/* Centered Hero with Text Overlay */}
       {heroImage && (
         <div className="relative h-[65vh] w-full">

@@ -17,7 +17,7 @@ const slowFade = {
 
 export function AboutPageContent() {
   return (
-    <div className="bg-[#FAF9F6]">
+    <div className="bg-surface-ground">
       {/* Hero */}
       <section className="pt-28 pb-16 px-6">
         <motion.div

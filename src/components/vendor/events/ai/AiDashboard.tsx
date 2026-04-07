@@ -49,7 +49,7 @@ export function AiDashboard({ eventId, onExport, onShare, onViewEvent }: AiDashb
   return (
     <div className="space-y-8">
       {/* Header */}
-      <Card className="bg-white border-folio-border-strong">
+      <Card className="bg-surface-canvas border-folio-border-strong">
         <CardContent className="p-6">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div>
@@ -82,7 +82,7 @@ export function AiDashboard({ eventId, onExport, onShare, onViewEvent }: AiDashb
               <Button 
                 size="sm"
                 onClick={onViewEvent}
-                className="bg-[#2B2B2B] hover:bg-[#8C8278] text-white"
+                className="bg-folio-text-primary hover:bg-[#8C8278] text-white"
               >
                 <ExternalLink className="w-4 h-4 mr-2" />
                 View Event
@@ -102,7 +102,7 @@ export function AiDashboard({ eventId, onExport, onShare, onViewEvent }: AiDashb
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Influence Flow (mini) */}
         <div className="lg:col-span-2">
-          <Card className="bg-white border-folio-border-strong hover:shadow-md transition-shadow">
+          <Card className="bg-surface-canvas border-folio-border-strong hover:shadow-md transition-shadow">
             <CardContent className="p-5">
               <div className="mb-4">
                 <h3 className="text-sm font-semibold text-folio-text-primary mb-1">
@@ -136,7 +136,7 @@ export function AiDashboard({ eventId, onExport, onShare, onViewEvent }: AiDashb
 
         {/* Time-to-Spec mini */}
         <div className="lg:col-span-1">
-          <Card className="bg-white border-folio-border-strong hover:shadow-md transition-shadow">
+          <Card className="bg-surface-canvas border-folio-border-strong hover:shadow-md transition-shadow">
             <CardContent className="p-5">
               <div className="mb-4">
                 <h3 className="text-sm font-semibold text-folio-text-primary mb-1">
@@ -167,7 +167,7 @@ export function AiDashboard({ eventId, onExport, onShare, onViewEvent }: AiDashb
                   <div className="text-xs font-medium text-folio-text-secondary mb-3">Optimal contact windows:</div>
                   <div className="space-y-2">
                     {report.timeToSpec.bestHours.map((window, index) => (
-                      <div key={index} className="flex items-center justify-between p-2 bg-white border border-folio-border-strong rounded">
+                      <div key={index} className="flex items-center justify-between p-2 bg-surface-canvas border border-folio-border-strong rounded">
                         <div className="text-sm font-medium text-folio-text-primary capitalize">{window.dow}</div>
                         <div className="text-sm text-folio-text-secondary">{String(window.hour).padStart(2, '0')}:00</div>
                       </div>

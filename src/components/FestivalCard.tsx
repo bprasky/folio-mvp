@@ -179,7 +179,7 @@ export default function FestivalCard({
         );
       case 'past':
         return (
-          <span className="bg-gray-500 text-white text-xs font-medium px-3 py-1 rounded-full shadow-lg">
+          <span className="bg-surface-ground0 text-white text-xs font-medium px-3 py-1 rounded-full shadow-lg">
             PAST
           </span>
         );
@@ -189,7 +189,7 @@ export default function FestivalCard({
   };
 
   return (
-    <div className={`bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden ${className}`}>
+    <div className={`bg-surface-canvas rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden ${className}`}>
       {/* Image Section */}
       <div className="relative h-48 overflow-hidden">
         {festival.imageUrl && !imageError ? (

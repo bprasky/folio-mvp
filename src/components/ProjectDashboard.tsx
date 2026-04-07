@@ -103,7 +103,7 @@ export default function ProjectDashboard({
 
               {/* AI Project Details */}
               {project.isAIEnabled && project.aiData && (
-                <div className="space-y-2 pt-4 border-t border-gray-100">
+                <div className="space-y-2 pt-4 border-t border-folio-border-subtle">
                   <div className="flex items-center gap-2 text-xs text-folio-text-secondary">
                     <FaCalendarAlt className="w-3 h-3" />
                     <span>{project.aiData.timeline}</span>
@@ -132,7 +132,7 @@ export default function ProjectDashboard({
 
               {/* Progress indicator for non-AI projects */}
               {!project.isAIEnabled && project.savedItemsCount > 0 && (
-                <div className="pt-4 border-t border-gray-100">
+                <div className="pt-4 border-t border-folio-border-subtle">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs text-folio-text-secondary">Progress to AI upgrade</span>
                     <span className="text-xs text-folio-text-secondary">{project.savedItemsCount}/5</span>

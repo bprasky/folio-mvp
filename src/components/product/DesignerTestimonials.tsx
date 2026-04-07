@@ -55,7 +55,7 @@ export function DesignerTestimonials({ productId }: DesignerTestimonialsProps) {
 
   if (loading) {
     return (
-      <div className="bg-white rounded-lg shadow-sm p-6">
+      <div className="bg-surface-canvas rounded-lg shadow-sm p-6">
         <h2 className="text-2xl font-semibold mb-4">What Designers Are Saying</h2>
         <div className="animate-pulse space-y-4">
           {[1, 2].map((i) => (
@@ -78,12 +78,12 @@ export function DesignerTestimonials({ productId }: DesignerTestimonialsProps) {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm p-6">
+    <div className="bg-surface-canvas rounded-lg shadow-sm p-6">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-semibold" style={{ color: '#2C2825' }}>
+        <h2 className="text-2xl font-semibold text-folio-text-primary">
           What Designers Are Saying
         </h2>
-        <span className="text-sm" style={{ color: '#8B8178' }}>
+        <span className="text-sm text-folio-text-secondary">
           {testimonials.length} testimonial{testimonials.length !== 1 ? 's' : ''}
         </span>
       </div>
@@ -101,11 +101,7 @@ export function DesignerTestimonials({ productId }: DesignerTestimonialsProps) {
 function TestimonialCard({ testimonial }: { testimonial: Testimonial }) {
   return (
     <div
-      className="relative rounded-xl p-5 border transition-shadow hover:shadow-md"
-      style={{
-        backgroundColor: '#FAF9F7',
-        borderColor: '#E8E4DF',
-      }}
+      className="relative rounded-xl p-5 border transition-shadow hover:shadow-md bg-surface-ground border-folio-border-subtle"
     >
       {/* Featured badge */}
       {testimonial.isFeatured && (
@@ -120,19 +116,16 @@ function TestimonialCard({ testimonial }: { testimonial: Testimonial }) {
 
       {/* Quote */}
       <blockquote
-        className="text-base leading-relaxed italic mb-4"
-        style={{ color: '#2C2825' }}
+        className="text-base leading-relaxed italic mb-4 text-folio-text-primary"
       >
         <span
-          className="text-3xl font-serif leading-none mr-1"
-          style={{ color: '#C4BEB5' }}
+          className="text-3xl font-serif leading-none mr-1 text-folio-text-tertiary"
         >
           "
         </span>
         {testimonial.quote}
         <span
-          className="text-3xl font-serif leading-none ml-1"
-          style={{ color: '#C4BEB5' }}
+          className="text-3xl font-serif leading-none ml-1 text-folio-text-tertiary"
         >
           "
         </span>
@@ -155,8 +148,7 @@ function TestimonialCard({ testimonial }: { testimonial: Testimonial }) {
             />
           ) : (
             <div
-              className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium"
-              style={{ backgroundColor: '#E8E4DF', color: '#8B8178' }}
+              className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium bg-folio-border-subtle text-folio-text-secondary"
             >
               {(testimonial.designer.name || 'D').charAt(0).toUpperCase()}
             </div>
@@ -167,15 +159,13 @@ function TestimonialCard({ testimonial }: { testimonial: Testimonial }) {
         <div className="min-w-0 flex-1">
           <Link
             href={`/designer/${testimonial.designer.id}?tab=shop`}
-            className="font-medium text-sm hover:underline block truncate"
-            style={{ color: '#2C2825' }}
+            className="font-medium text-sm hover:underline block truncate text-folio-text-primary"
           >
             {testimonial.designer.name || 'Anonymous Designer'}
           </Link>
           {testimonial.designer.companyName && (
             <p
-              className="text-xs truncate"
-              style={{ color: '#8B8178' }}
+              className="text-xs truncate text-folio-text-secondary"
             >
               {testimonial.designer.companyName}
             </p>
@@ -183,8 +173,7 @@ function TestimonialCard({ testimonial }: { testimonial: Testimonial }) {
           {testimonial.project && (
             <Link
               href={`/project/${testimonial.project.id}`}
-              className="text-xs hover:underline block truncate"
-              style={{ color: '#A9A29A' }}
+              className="text-xs hover:underline block truncate text-folio-text-tertiary"
             >
               from {testimonial.project.title}
             </Link>

@@ -299,7 +299,7 @@ function CreditForm({
         <select
           value={form.role}
           onChange={(e) => onChange({ ...form, role: e.target.value, customRole: "", instagram: "", userId: undefined })}
-          className="flex-1 rounded-md border border-folio-border-subtle bg-white px-2 py-1.5 text-sm text-folio-text-primary focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
+          className="flex-1 rounded-md border border-folio-border-subtle bg-surface-canvas px-2 py-1.5 text-sm text-folio-text-primary focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
         >
           <option value="">Select role...</option>
           {ROLE_OPTIONS.map((role) => (
@@ -314,7 +314,7 @@ function CreditForm({
             value={form.customRole}
             onChange={(e) => onChange({ ...form, customRole: e.target.value })}
             placeholder="Custom role..."
-            className="flex-1 rounded-md border border-folio-border-subtle bg-white px-2 py-1.5 text-sm text-folio-text-primary placeholder:text-folio-text-tertiary focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
+            className="flex-1 rounded-md border border-folio-border-subtle bg-surface-canvas px-2 py-1.5 text-sm text-folio-text-primary placeholder:text-folio-text-tertiary focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
             maxLength={60}
           />
         )}
@@ -327,7 +327,7 @@ function CreditForm({
           value={form.name}
           onChange={(e) => onChange({ ...form, name: e.target.value, userId: undefined })}
           placeholder={showPhotographerFields ? "Search photographer or enter name..." : "Name..."}
-          className="w-full rounded-md border border-folio-border-subtle bg-white px-2 py-1.5 text-sm text-folio-text-primary placeholder:text-folio-text-tertiary focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
+          className="w-full rounded-md border border-folio-border-subtle bg-surface-canvas px-2 py-1.5 text-sm text-folio-text-primary placeholder:text-folio-text-tertiary focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
           maxLength={100}
           onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
         />
@@ -337,7 +337,7 @@ function CreditForm({
           </span>
         )}
         {showSuggestions && suggestions.length > 0 && (
-          <div className="absolute z-10 mt-1 w-full rounded-md border border-folio-border-subtle bg-white shadow-lg max-h-40 overflow-y-auto">
+          <div className="absolute z-10 mt-1 w-full rounded-md border border-folio-border-subtle bg-surface-canvas shadow-lg max-h-40 overflow-y-auto">
             {suggestions.map((user) => (
               <button
                 key={user.id}
@@ -360,7 +360,7 @@ function CreditForm({
         value={form.url}
         onChange={(e) => onChange({ ...form, url: e.target.value })}
         placeholder="Website URL (optional)"
-        className="w-full rounded-md border border-folio-border-subtle bg-white px-2 py-1.5 text-sm text-folio-text-primary placeholder:text-folio-text-tertiary focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
+        className="w-full rounded-md border border-folio-border-subtle bg-surface-canvas px-2 py-1.5 text-sm text-folio-text-primary placeholder:text-folio-text-tertiary focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
       />
 
       {/* Instagram field — shown for Photographer role */}
@@ -370,7 +370,7 @@ function CreditForm({
           value={form.instagram}
           onChange={(e) => onChange({ ...form, instagram: e.target.value })}
           placeholder="Instagram handle (optional)"
-          className="w-full rounded-md border border-folio-border-subtle bg-white px-2 py-1.5 text-sm text-folio-text-primary placeholder:text-folio-text-tertiary focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
+          className="w-full rounded-md border border-folio-border-subtle bg-surface-canvas px-2 py-1.5 text-sm text-folio-text-primary placeholder:text-folio-text-tertiary focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
           maxLength={100}
         />
       )}

@@ -85,7 +85,7 @@ export default function RoomSkeletonInbox({
   const imageMap = new Map(projectImages.map(img => [img.id, img]));
 
   return (
-    <div className="bg-white border rounded-lg p-4">
+    <div className="bg-surface-canvas border rounded-lg p-4">
       <div className="flex items-center justify-between mb-3">
         <h3 className="font-medium text-folio-text-primary">Unfinished details</h3>
         {loading && <span className="text-sm text-folio-text-secondary">Loading...</span>}

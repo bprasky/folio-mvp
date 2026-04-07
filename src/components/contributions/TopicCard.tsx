@@ -24,7 +24,7 @@ export function TopicCard({ topic, onContribute, className }: TopicCardProps) {
   return (
     <div
       className={cn(
-        'rounded-[20px] border border-[var(--border-subtle)] bg-white p-5 transition-all',
+        'rounded-[20px] border border-[var(--border-subtle)] bg-surface-canvas p-5 transition-all',
         'hover:border-folio-border-subtle',
         className
       )}

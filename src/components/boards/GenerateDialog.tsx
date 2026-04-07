@@ -377,7 +377,7 @@ export default function GenerateDialog({
           /* Main Generation Form */
           <div className="space-y-6">
             {/* Readiness Score */}
-            <div className="p-4 rounded-lg border bg-gray-50">
+            <div className="p-4 rounded-lg border bg-surface-ground">
               <div className="flex items-center justify-between mb-2">
                 <Label className="text-sm font-medium text-folio-text-primary">
                   Generation Readiness

@@ -100,7 +100,7 @@ export default function EditorialsPage() {
           </div>
 
           {/* Search and Filters */}
-          <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-white p-6 rounded-xl shadow-sm border">
+          <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-surface-canvas p-6 rounded-xl shadow-sm border">
             <div className="relative flex-1 max-w-md">
               <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-folio-text-tertiary" />
               <input
@@ -186,7 +186,7 @@ export default function EditorialsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
               {filteredEditorials.map((editorial) => (
                 <Link key={editorial.id} href={`/editorials/${editorial.slug}`}>
-                  <article className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden group cursor-pointer">
+                  <article className="bg-surface-canvas rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden group cursor-pointer">
                     <div className="relative h-64 overflow-hidden">
                       <SafeImage
                         src={editorial.heroImage}

@@ -33,7 +33,7 @@ export function ImportProgress({ step, className }: ImportProgressProps) {
                 {
                   'bg-emerald-500 text-white': isCompleted,
                   'bg-[var(--accent)] text-white': isCurrent,
-                  'bg-stone-200 text-stone-500': !isCompleted && !isCurrent,
+                  'bg-surface-elevated text-folio-text-tertiary': !isCompleted && !isCurrent,
                 }
               )}
             >
@@ -57,8 +57,8 @@ export function ImportProgress({ step, className }: ImportProgressProps) {
             </div>
             <span
               className={cn('ml-2 text-sm hidden sm:inline', {
-                'text-stone-900 font-medium': isCurrent,
-                'text-stone-500': !isCurrent,
+                'text-folio-text-primary font-medium': isCurrent,
+                'text-folio-text-tertiary': !isCurrent,
               })}
             >
               {s.label}
@@ -67,7 +67,7 @@ export function ImportProgress({ step, className }: ImportProgressProps) {
               <div
                 className={cn('w-8 h-0.5 mx-2', {
                   'bg-emerald-500': isCompleted,
-                  'bg-stone-200': !isCompleted,
+                  'bg-surface-elevated': !isCompleted,
                 })}
               />
             )}

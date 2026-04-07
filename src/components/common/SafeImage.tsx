@@ -33,8 +33,8 @@ export default function SafeImage({
   if (shouldUseFallback && showIcon && rest.fill) {
     // For fill images, show a placeholder icon
     return (
-      <div className={`flex items-center justify-center bg-stone-100 dark:bg-stone-800 ${className || ''}`}>
-        <Package className="w-8 h-8 text-stone-400" />
+      <div className={`flex items-center justify-center bg-surface-elevated dark:bg-surface-elevated ${className || ''}`}>
+        <Package className="w-8 h-8 text-folio-text-tertiary" />
       </div>
     );
   }

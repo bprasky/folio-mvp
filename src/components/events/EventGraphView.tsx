@@ -70,7 +70,7 @@ export default function EventGraphView({ eventId }: EventGraphViewProps) {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-16">
-        <Loader2 className="w-8 h-8 animate-spin text-stone-400" />
+        <Loader2 className="w-8 h-8 animate-spin text-folio-text-tertiary" />
       </div>
     );
   }
@@ -109,7 +109,7 @@ export default function EventGraphView({ eventId }: EventGraphViewProps) {
         <div>
           <Link
             href={`/events/${eventId}`}
-            className="inline-flex items-center text-sm text-stone-500 hover:text-ink mb-2"
+            className="inline-flex items-center text-sm text-folio-text-tertiary hover:text-ink mb-2"
           >
             <ArrowLeft className="w-4 h-4 mr-1" />
             Back to Event
@@ -127,13 +127,13 @@ export default function EventGraphView({ eventId }: EventGraphViewProps) {
       <GraphFilters filters={filters} onFiltersChange={setFilters} />
 
       {/* Graph Visualization */}
-      <div className="bg-white rounded-xl border border-stone-200 shadow-sm p-6">
+      <div className="bg-surface-canvas rounded-xl border border-folio-border-subtle shadow-sm p-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Designers */}
           {filteredNodes.designers.length > 0 && (
             <div>
               <div className="flex items-center space-x-2 mb-4">
-                <Users className="w-5 h-5 text-stone-500" />
+                <Users className="w-5 h-5 text-folio-text-tertiary" />
                 <h3 className="font-medium text-ink">
                   Designers ({filteredNodes.designers.length})
                 </h3>
@@ -150,7 +150,7 @@ export default function EventGraphView({ eventId }: EventGraphViewProps) {
           {filteredNodes.vendors.length > 0 && (
             <div>
               <div className="flex items-center space-x-2 mb-4">
-                <Building2 className="w-5 h-5 text-stone-500" />
+                <Building2 className="w-5 h-5 text-folio-text-tertiary" />
                 <h3 className="font-medium text-ink">
                   Vendors ({filteredNodes.vendors.length})
                 </h3>
@@ -167,7 +167,7 @@ export default function EventGraphView({ eventId }: EventGraphViewProps) {
           {filteredNodes.products.length > 0 && (
             <div>
               <div className="flex items-center space-x-2 mb-4">
-                <Package className="w-5 h-5 text-stone-500" />
+                <Package className="w-5 h-5 text-folio-text-tertiary" />
                 <h3 className="font-medium text-ink">
                   Products ({filteredNodes.products.length})
                 </h3>
@@ -184,7 +184,7 @@ export default function EventGraphView({ eventId }: EventGraphViewProps) {
           {filteredNodes.reps.length > 0 && (
             <div>
               <div className="flex items-center space-x-2 mb-4">
-                <UserCheck className="w-5 h-5 text-stone-500" />
+                <UserCheck className="w-5 h-5 text-folio-text-tertiary" />
                 <h3 className="font-medium text-ink">
                   Reps ({filteredNodes.reps.length})
                 </h3>
@@ -199,7 +199,7 @@ export default function EventGraphView({ eventId }: EventGraphViewProps) {
         </div>
 
         {Object.values(filteredNodes).every((nodes) => nodes.length === 0) && (
-          <div className="text-center py-12 text-stone-500">
+          <div className="text-center py-12 text-folio-text-tertiary">
             No nodes match the current filters
           </div>
         )}
@@ -207,9 +207,9 @@ export default function EventGraphView({ eventId }: EventGraphViewProps) {
 
       {/* Relationships */}
       {graphData.edges.length > 0 && (
-        <div className="bg-white rounded-xl border border-stone-200 shadow-sm p-6">
+        <div className="bg-surface-canvas rounded-xl border border-folio-border-subtle shadow-sm p-6">
           <div className="flex items-center space-x-2 mb-4">
-            <TrendingUp className="w-5 h-5 text-stone-500" />
+            <TrendingUp className="w-5 h-5 text-folio-text-tertiary" />
             <h3 className="font-medium text-ink">
               Relationships ({graphData.edges.length})
             </h3>
@@ -218,20 +218,20 @@ export default function EventGraphView({ eventId }: EventGraphViewProps) {
             {graphData.edges.slice(0, 20).map((edge) => (
               <div
                 key={edge.id}
-                className="p-3 bg-stone-50 rounded-lg text-sm"
+                className="p-3 bg-surface-ground rounded-lg text-sm"
               >
                 <span className="font-medium">{edge.sourceType}</span>
                 {' → '}
                 <span className="font-medium">{edge.targetType}</span>
                 {' ('}
-                <span className="text-stone-500">{edge.relationshipType}</span>
+                <span className="text-folio-text-tertiary">{edge.relationshipType}</span>
                 {', weight: '}
-                <span className="text-stone-500">{edge.weight.toFixed(2)}</span>
+                <span className="text-folio-text-tertiary">{edge.weight.toFixed(2)}</span>
                 {')'}
               </div>
             ))}
             {graphData.edges.length > 20 && (
-              <div className="text-xs text-stone-400 pt-2">
+              <div className="text-xs text-folio-text-tertiary pt-2">
                 +{graphData.edges.length - 20} more relationships
               </div>
             )}

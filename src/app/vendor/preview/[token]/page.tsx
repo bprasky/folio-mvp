@@ -129,7 +129,7 @@ export default async function VendorPreviewPage({ params }: VendorPreviewPagePro
         <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
             {/* Product Info */}
-            <div className="bg-white rounded-2xl shadow-xl p-8">
+            <div className="bg-surface-canvas rounded-2xl shadow-xl p-8">
               <h2 className="text-2xl font-bold mb-4">{product.name}</h2>
               {product.brand && (
                 <p className="text-folio-text-secondary mb-4">{product.brand}</p>
@@ -161,7 +161,7 @@ export default async function VendorPreviewPage({ params }: VendorPreviewPagePro
             </div>
 
             {/* Project Info */}
-            <div className="bg-white rounded-2xl shadow-xl p-8">
+            <div className="bg-surface-canvas rounded-2xl shadow-xl p-8">
               <h2 className="text-2xl font-bold mb-4">Featured In</h2>
               <h3 className="text-xl font-semibold mb-2">
                 {project.title || "Untitled Project"}
@@ -210,7 +210,7 @@ export default async function VendorPreviewPage({ params }: VendorPreviewPagePro
           </div>
 
           {/* Call to Action Section */}
-          <div className="bg-white rounded-2xl shadow-xl p-8">
+          <div className="bg-surface-canvas rounded-2xl shadow-xl p-8">
             <h2 className="text-2xl font-bold mb-4">Next Steps</h2>
             <p className="text-folio-text-secondary mb-6">
               Claim this product to complete its specifications and connect with designers using your products.

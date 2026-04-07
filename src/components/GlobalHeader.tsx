@@ -99,7 +99,7 @@ export default function GlobalHeader() {
           {status !== 'authenticated' ? (
             <button
               onClick={goToSigninFresh}
-              className="px-3 py-1 rounded-md border border-folio-border bg-white text-folio-text text-sm hover:bg-folio-muted transition-colors"
+              className="px-3 py-1 rounded-md border border-folio-border bg-surface-canvas text-folio-text text-sm hover:bg-folio-muted transition-colors"
             >
               Sign In
             </button>
@@ -124,7 +124,7 @@ export default function GlobalHeader() {
           <div className="relative ml-auto" ref={dropdownRef}>
             <motion.button
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className="flex items-center gap-3 px-4 py-2 bg-white/90 backdrop-blur-sm rounded-lg shadow-sm border border-folio-border hover:bg-white transition-all duration-200"
+              className="flex items-center gap-3 px-4 py-2 bg-white/90 backdrop-blur-sm rounded-lg shadow-sm border border-folio-border hover:bg-surface-canvas transition-all duration-200"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
@@ -145,7 +145,7 @@ export default function GlobalHeader() {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -10, scale: 0.95 }}
                 transition={{ duration: 0.2 }}
-                className="absolute right-0 mt-2 w-64 bg-white border border-folio-border-subtle rounded-xl shadow-lg z-50 overflow-hidden"
+                className="absolute right-0 mt-2 w-64 bg-surface-canvas border border-folio-border-subtle rounded-xl shadow-lg z-50 overflow-hidden"
               >
                 {/* User Info */}
                 <div className="p-4 border-b border-folio-muted">

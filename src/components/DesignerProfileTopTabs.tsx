@@ -20,7 +20,7 @@ interface DesignerProfileTopTabsProps {
 export default function DesignerProfileTopTabs({ activeTab, onTabChange }: DesignerProfileTopTabsProps) {
   return (
     <motion.div 
-      className="bg-white rounded-2xl p-2 shadow-lg mb-8"
+      className="bg-surface-canvas rounded-2xl p-2 shadow-lg mb-8"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, delay: 0.2 }}

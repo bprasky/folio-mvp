@@ -47,7 +47,7 @@ export default function EventManagementDashboard({ eventId }: EventManagementDas
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-16">
-        <Loader2 className="w-8 h-8 animate-spin text-stone-400" />
+        <Loader2 className="w-8 h-8 animate-spin text-folio-text-tertiary" />
       </div>
     );
   }
@@ -66,13 +66,13 @@ export default function EventManagementDashboard({ eventId }: EventManagementDas
         <h1 className="text-2xl font-serif font-medium text-ink mb-2">
           {event?.title || 'Event Management'}
         </h1>
-        <p className="text-sm text-stone-500">
+        <p className="text-sm text-folio-text-tertiary">
           Manage invites, workflows, and analytics for your event
         </p>
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-stone-200">
+      <div className="border-b border-folio-border-subtle">
         <div className="flex space-x-1">
           {tabs.map((tab) => {
             const Icon = tab.icon;
@@ -83,7 +83,7 @@ export default function EventManagementDashboard({ eventId }: EventManagementDas
                 className={`px-4 py-3 text-sm font-medium transition-colors flex items-center space-x-2 ${
                   activeTab === tab.id
                     ? 'text-ink border-b-2 border-accent-700'
-                    : 'text-stone-500 hover:text-ink'
+                    : 'text-folio-text-tertiary hover:text-ink'
                 }`}
               >
                 <Icon className="w-4 h-4" />
@@ -98,34 +98,34 @@ export default function EventManagementDashboard({ eventId }: EventManagementDas
       <div>
         {activeTab === 'overview' && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-white rounded-xl border border-stone-200 shadow-sm p-6">
+            <div className="bg-surface-canvas rounded-xl border border-folio-border-subtle shadow-sm p-6">
               <div className="flex items-center justify-between mb-2">
-                <Users className="w-5 h-5 text-stone-500" />
+                <Users className="w-5 h-5 text-folio-text-tertiary" />
                 <span className="text-2xl font-serif font-medium text-ink">
                   {metrics?.totalInvites || 0}
                 </span>
               </div>
-              <p className="text-sm text-stone-500">Total Invites</p>
+              <p className="text-sm text-folio-text-tertiary">Total Invites</p>
             </div>
-            <div className="bg-white rounded-xl border border-stone-200 shadow-sm p-6">
+            <div className="bg-surface-canvas rounded-xl border border-folio-border-subtle shadow-sm p-6">
               <div className="flex items-center justify-between mb-2">
-                <TrendingUp className="w-5 h-5 text-stone-500" />
+                <TrendingUp className="w-5 h-5 text-folio-text-tertiary" />
                 <span className="text-2xl font-serif font-medium text-ink">
                   {metrics?.totalRSVPs || 0}
                 </span>
               </div>
-              <p className="text-sm text-stone-500">Total RSVPs</p>
+              <p className="text-sm text-folio-text-tertiary">Total RSVPs</p>
             </div>
-            <div className="bg-white rounded-xl border border-stone-200 shadow-sm p-6">
+            <div className="bg-surface-canvas rounded-xl border border-folio-border-subtle shadow-sm p-6">
               <div className="flex items-center justify-between mb-2">
-                <DollarSign className="w-5 h-5 text-stone-500" />
+                <DollarSign className="w-5 h-5 text-folio-text-tertiary" />
                 <span className="text-2xl font-serif font-medium text-ink">
                   {metrics?.estimatedRevenue 
                     ? `$${(metrics.estimatedRevenue / 1000).toFixed(1)}k`
                     : 'N/A'}
                 </span>
               </div>
-              <p className="text-sm text-stone-500">Estimated Revenue</p>
+              <p className="text-sm text-folio-text-tertiary">Estimated Revenue</p>
             </div>
           </div>
         )}
@@ -138,7 +138,7 @@ export default function EventManagementDashboard({ eventId }: EventManagementDas
 
         {activeTab === 'workflow' && (
           <div className="space-y-4">
-            <div className="bg-white rounded-xl border border-stone-200 shadow-sm p-6">
+            <div className="bg-surface-canvas rounded-xl border border-folio-border-subtle shadow-sm p-6">
               <h3 className="font-medium text-ink mb-4">Post-Event Workflows</h3>
               <div className="space-y-3">
                 <WorkflowButton
@@ -188,7 +188,7 @@ export default function EventManagementDashboard({ eventId }: EventManagementDas
                   description="Create designer product follow-up suggestions"
                 />
               </div>
-              <div className="mt-4 pt-4 border-t border-stone-200">
+              <div className="mt-4 pt-4 border-t border-folio-border-subtle">
                 <Link
                   href={`/events/${eventId}/dashboard`}
                   className="inline-flex items-center text-sm font-medium text-emerald-700 bg-emerald-50 px-4 py-2 rounded-lg hover:bg-emerald-100 transition-colors"
@@ -204,16 +204,16 @@ export default function EventManagementDashboard({ eventId }: EventManagementDas
           <div className="space-y-4">
             <Link
               href={`/events/${eventId}/graph`}
-              className="block bg-white rounded-xl border border-stone-200 shadow-sm p-6 hover:shadow-md transition-shadow"
+              className="block bg-surface-canvas rounded-xl border border-folio-border-subtle shadow-sm p-6 hover:shadow-md transition-shadow"
             >
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="font-medium text-ink mb-1">Event Graph</h3>
-                  <p className="text-sm text-stone-500">
+                  <p className="text-sm text-folio-text-tertiary">
                     View complete event relationship graph
                   </p>
                 </div>
-                <TrendingUp className="w-5 h-5 text-stone-400" />
+                <TrendingUp className="w-5 h-5 text-folio-text-tertiary" />
               </div>
             </Link>
           </div>
@@ -264,17 +264,17 @@ function WorkflowButton({
     <button
       onClick={handleRun}
       disabled={isRunning}
-      className="w-full text-left p-4 border border-stone-200 rounded-lg hover:bg-stone-50 transition-colors disabled:opacity-50"
+      className="w-full text-left p-4 border border-folio-border-subtle rounded-lg hover:bg-surface-ground transition-colors disabled:opacity-50"
     >
       <div className="flex items-center justify-between">
         <div>
           <h4 className="font-medium text-ink">{label}</h4>
-          <p className="text-sm text-stone-500 mt-1">{description}</p>
+          <p className="text-sm text-folio-text-tertiary mt-1">{description}</p>
         </div>
         {isRunning ? (
-          <Loader2 className="w-4 h-4 animate-spin text-stone-400" />
+          <Loader2 className="w-4 h-4 animate-spin text-folio-text-tertiary" />
         ) : (
-          <Settings className="w-4 h-4 text-stone-400" />
+          <Settings className="w-4 h-4 text-folio-text-tertiary" />
         )}
       </div>
     </button>

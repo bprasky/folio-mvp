@@ -35,10 +35,10 @@ export default function SearchInput({
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder={placeholder}
-          className="w-full px-4 py-3 pl-12 border border-folio-border-subtle rounded focus:outline-none focus:border-[#1A1A1A] transition-colors bg-white text-folio-text-primary placeholder:text-[#999]"
+          className="w-full px-4 py-3 pl-12 border border-folio-border-subtle rounded focus:outline-none focus:border-[#1A1A1A] transition-colors bg-surface-canvas text-folio-text-primary placeholder:text-folio-text-tertiary"
         />
         <svg
-          className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#666]"
+          className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-folio-text-secondary"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"

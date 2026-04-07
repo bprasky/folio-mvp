@@ -14,7 +14,7 @@ const screens = [
     id: 1,
     headline: 'Welcome to Folio.',
     body: (
-      <p className="text-stone-600 leading-relaxed text-lg">
+      <p className="text-folio-text-secondary leading-relaxed text-lg">
         You're joining a small group of designers building something new—a
         professional home for interior design that rewards merit, not marketing
         budgets.
@@ -26,7 +26,7 @@ const screens = [
     id: 2,
     headline: 'Publish your best work.',
     body: (
-      <div className="space-y-4 text-stone-600 leading-relaxed">
+      <div className="space-y-4 text-folio-text-secondary leading-relaxed">
         <ul className="space-y-3 text-left">
           <li className="flex items-start gap-3">
             <span className="text-green-600 mt-0.5">&#10003;</span>
@@ -56,7 +56,7 @@ const screens = [
             </span>
           </li>
         </ul>
-        <p className="text-sm text-stone-400 pt-2">
+        <p className="text-sm text-folio-text-tertiary pt-2">
           Instagram sharing is coming soon—one click, Folio attribution built in.
         </p>
       </div>
@@ -67,34 +67,34 @@ const screens = [
     id: 3,
     headline: "This is just the beginning.",
     body: (
-      <div className="space-y-4 text-stone-600 leading-relaxed">
+      <div className="space-y-4 text-folio-text-secondary leading-relaxed">
         <ul className="space-y-4 text-left">
           <li className="flex items-start gap-3">
-            <span className="text-stone-400">&#8594;</span>
+            <span className="text-folio-text-tertiary">&#8594;</span>
             <span>
               Your designer fingerprint—Atelier is learning your aesthetic from
               how you work, not what you fill in
             </span>
           </li>
           <li className="flex items-start gap-3">
-            <span className="text-stone-400">&#8594;</span>
+            <span className="text-folio-text-tertiary">&#8594;</span>
             <span>
               Vendor attribution—when brands join, they'll see you've been
               specifying their products all along
             </span>
           </li>
           <li className="flex items-start gap-3">
-            <span className="text-stone-400">&#8594;</span>
+            <span className="text-folio-text-tertiary">&#8594;</span>
             <span>AI that drafts moodboards in your style</span>
           </li>
           <li className="flex items-start gap-3">
-            <span className="text-stone-400">&#8594;</span>
+            <span className="text-folio-text-tertiary">&#8594;</span>
             <span>
               Income from influence you already have but never captured
             </span>
           </li>
         </ul>
-        <p className="text-sm text-stone-400 pt-2">
+        <p className="text-sm text-folio-text-tertiary pt-2">
           We're building this with you, not for you.
         </p>
       </div>
@@ -105,24 +105,24 @@ const screens = [
     id: 4,
     headline: "Here's the ask.",
     body: (
-      <div className="space-y-4 text-stone-600 leading-relaxed">
+      <div className="space-y-4 text-folio-text-secondary leading-relaxed">
         <ul className="space-y-3 text-left">
           <li className="flex items-start gap-3">
-            <span className="text-stone-400">&#8226;</span>
+            <span className="text-folio-text-tertiary">&#8226;</span>
             <span>Publish 1-2 completed projects</span>
           </li>
           <li className="flex items-start gap-3">
-            <span className="text-stone-400">&#8226;</span>
+            <span className="text-folio-text-tertiary">&#8226;</span>
             <span>
               Share to Instagram with Folio attribution (when it launches)
             </span>
           </li>
           <li className="flex items-start gap-3">
-            <span className="text-stone-400">&#8226;</span>
+            <span className="text-folio-text-tertiary">&#8226;</span>
             <span>Tell us what's working and what isn't</span>
           </li>
         </ul>
-        <p className="text-stone-500 pt-4 italic">
+        <p className="text-folio-text-tertiary pt-4 italic">
           Your feedback shapes what this becomes.
         </p>
       </div>
@@ -133,18 +133,18 @@ const screens = [
     id: 5,
     headline: "You're a founding designer.",
     body: (
-      <div className="space-y-4 text-stone-600 leading-relaxed">
+      <div className="space-y-4 text-folio-text-secondary leading-relaxed">
         <ul className="space-y-3 text-left">
           <li className="flex items-start gap-3">
-            <span className="text-stone-400">&#8226;</span>
+            <span className="text-folio-text-tertiary">&#8226;</span>
             <span>Free premium features during beta and beyond</span>
           </li>
           <li className="flex items-start gap-3">
-            <span className="text-stone-400">&#8226;</span>
+            <span className="text-folio-text-tertiary">&#8226;</span>
             <span>Direct line to product decisions</span>
           </li>
           <li className="flex items-start gap-3">
-            <span className="text-stone-400">&#8226;</span>
+            <span className="text-folio-text-tertiary">&#8226;</span>
             <span>Recognition that lasts—you helped build this</span>
           </li>
         </ul>
@@ -187,7 +187,7 @@ export default function OnboardingPage() {
   if (status === 'loading') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-stone-50 via-white to-stone-100">
-        <div className="text-stone-500">Loading...</div>
+        <div className="text-folio-text-tertiary">Loading...</div>
       </div>
     );
   }

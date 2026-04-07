@@ -140,7 +140,7 @@ export default function DirectorySearch({
           value={localSearchTerm}
           onChange={(e) => handleSearchChange(e.target.value)}
           onKeyDown={handleKeyDown}
-          className="w-full pl-12 pr-24 py-3 bg-white border border-folio-border-subtle rounded-lg text-folio-text-primary placeholder-folio-text-tertiary focus:outline-none focus:border-folio-border-strong focus:ring-0 focus:shadow-[0_0_0_3px_rgba(0,0,0,0.03)] transition-all"
+          className="w-full pl-12 pr-24 py-3 bg-surface-canvas border border-folio-border-subtle rounded-lg text-folio-text-primary placeholder-folio-text-tertiary focus:outline-none focus:border-folio-border-strong focus:ring-0 focus:shadow-[0_0_0_3px_rgba(0,0,0,0.03)] transition-all"
         />
         <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
           {localSearchTerm && (

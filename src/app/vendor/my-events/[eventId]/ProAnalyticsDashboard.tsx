@@ -119,7 +119,7 @@ export function ProAnalyticsDashboard({ eventId }: ProAnalyticsDashboardProps) {
 
       {/* Tabs */}
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="bg-white border border-[var(--grid)]">
+        <TabsList className="bg-surface-canvas border border-[var(--grid)]">
           <TabsTrigger value="overview" className="data-[state=active]:bg-[var(--ink)] data-[state=active]:text-white">
             Overview
           </TabsTrigger>
@@ -188,7 +188,7 @@ export function ProAnalyticsDashboard({ eventId }: ProAnalyticsDashboardProps) {
               
               {/* Expandable full flow */}
               <details className="chart-card">
-                <summary className="px-4 py-3 cursor-pointer text-sm text-[#1F2937] font-medium hover:bg-[var(--grid)]/20 rounded transition-colors">
+                <summary className="px-4 py-3 cursor-pointer text-sm text-folio-text-primary font-medium hover:bg-[var(--grid)]/20 rounded transition-colors">
                   Expand full flow chart
                 </summary>
                 <div className="p-4 border-t border-[var(--grid)]">

@@ -135,7 +135,7 @@ const EditorialDetailPage = () => {
         {/* Editorial Content */}
         <div className="max-w-4xl mx-auto">
           {/* Editorial Header */}
-          <div className="bg-white rounded-lg shadow-sm border border-folio-border p-6 mb-6">
+          <div className="bg-surface-canvas rounded-lg shadow-sm border border-folio-border p-6 mb-6">
             <div className="flex items-center justify-between mb-4">
               <span className="px-3 py-1 bg-folio-accent text-white text-sm font-medium rounded-full">
                 {editorial.category}
@@ -195,7 +195,7 @@ const EditorialDetailPage = () => {
           </div>
 
           {/* Editorial Content */}
-          <div className="bg-white rounded-lg shadow-sm border border-folio-border p-6 mb-6">
+          <div className="bg-surface-canvas rounded-lg shadow-sm border border-folio-border p-6 mb-6">
             <div className="prose prose-folio max-w-none">
               <div 
                 className="text-folio-text leading-relaxed"
@@ -206,7 +206,7 @@ const EditorialDetailPage = () => {
 
           {/* Tags */}
           {editorial.tags && editorial.tags.length > 0 && (
-            <div className="bg-white rounded-lg shadow-sm border border-folio-border p-6 mb-6">
+            <div className="bg-surface-canvas rounded-lg shadow-sm border border-folio-border p-6 mb-6">
               <h2 className="text-xl font-bold text-folio-text mb-4">Tags</h2>
               <div className="flex flex-wrap gap-2">
                 {editorial.tags.map((tag, index) => (
@@ -222,7 +222,7 @@ const EditorialDetailPage = () => {
           )}
 
           {/* Author Info */}
-          <div className="bg-white rounded-lg shadow-sm border border-folio-border p-6">
+          <div className="bg-surface-canvas rounded-lg shadow-sm border border-folio-border p-6">
             <h2 className="text-xl font-bold text-folio-text mb-4">About the Author</h2>
             <div className="flex items-center">
               <div className="w-16 h-16 bg-folio-accent rounded-full flex items-center justify-center text-white font-bold text-xl mr-4">

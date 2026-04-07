@@ -13,14 +13,14 @@ export function ProductThumbnail({ imageUrl, productName }: ProductThumbnailProp
 
   if (!imageUrl || hasError) {
     return (
-      <div className="h-10 w-10 rounded overflow-hidden bg-stone-100 dark:bg-stone-800 flex-shrink-0 flex items-center justify-center">
-        <Package className="w-4 h-4 text-stone-400" />
+      <div className="h-10 w-10 rounded overflow-hidden bg-surface-elevated dark:bg-surface-elevated flex-shrink-0 flex items-center justify-center">
+        <Package className="w-4 h-4 text-folio-text-tertiary" />
       </div>
     );
   }
 
   return (
-    <div className="h-10 w-10 rounded overflow-hidden bg-stone-100 dark:bg-stone-800 flex-shrink-0">
+    <div className="h-10 w-10 rounded overflow-hidden bg-surface-elevated dark:bg-surface-elevated flex-shrink-0">
       <img
         src={imageUrl}
         alt={productName}

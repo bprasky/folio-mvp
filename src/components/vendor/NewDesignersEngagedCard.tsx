@@ -8,7 +8,7 @@ interface NewDesignersEngagedCardProps {
 
 export default function NewDesignersEngagedCard({ newDesigners }: NewDesignersEngagedCardProps) {
   return (
-    <div className="bg-white rounded-lg shadow-lg p-6 flex items-center justify-between">
+    <div className="bg-surface-canvas rounded-lg shadow-lg p-6 flex items-center justify-between">
       <div>
         <h2 className="text-lg font-semibold text-folio-text-primary">New Designers Engaged (Last 30 Days)</h2>
         <p className="text-4xl font-bold text-[var(--accent)] mt-2">{newDesigners.toLocaleString()}</p>

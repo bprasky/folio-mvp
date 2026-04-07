@@ -75,7 +75,7 @@ export default function InboxPage() {
   return (
     <div className="max-w-2xl mx-auto py-8 px-4">
       <div className="flex items-center justify-between mb-4">
-        <h1 className="text-xl font-medium" style={{ color: '#2C2825' }}>
+        <h1 className="text-xl font-medium text-folio-text-primary">
           Inbox
         </h1>
         <div className="flex gap-1">
@@ -83,11 +83,9 @@ export default function InboxPage() {
             <button
               key={f.id}
               onClick={() => setFilter(f.id)}
-              className="px-3 py-1.5 rounded-full text-xs transition-colors"
-              style={{
-                backgroundColor: filter === f.id ? '#2C2825' : '#F0EDE9',
-                color: filter === f.id ? '#fff' : '#5C554D',
-              }}
+              className={`px-3 py-1.5 rounded-full text-xs transition-colors ${
+                filter === f.id ? 'bg-folio-text-primary text-white' : 'bg-surface-elevated text-folio-text-secondary'
+              }`}
             >
               {f.label}
             </button>
@@ -107,11 +105,9 @@ export default function InboxPage() {
               <button
                 key={cf.id}
                 onClick={() => setCategoryFilter(cf.id)}
-                className="px-3 py-1.5 rounded-full text-xs transition-colors whitespace-nowrap flex items-center gap-1"
-                style={{
-                  backgroundColor: categoryFilter === cf.id ? '#2C2825' : '#F0EDE9',
-                  color: categoryFilter === cf.id ? '#fff' : '#5C554D',
-                }}
+                className={`px-3 py-1.5 rounded-full text-xs transition-colors whitespace-nowrap flex items-center gap-1 ${
+                  categoryFilter === cf.id ? 'bg-folio-text-primary text-white' : 'bg-surface-elevated text-folio-text-secondary'
+                }`}
               >
                 {cf.icon && <span>{cf.icon}</span>}
                 {cf.label}
@@ -136,8 +132,7 @@ export default function InboxPage() {
           {[1, 2, 3].map((i) => (
             <div
               key={i}
-              className="h-20 rounded-xl animate-pulse"
-              style={{ backgroundColor: '#E8E4DF' }}
+              className="h-20 rounded-xl animate-pulse bg-folio-border-subtle"
             />
           ))}
         </div>

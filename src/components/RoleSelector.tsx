@@ -110,7 +110,7 @@ export default function RoleSelector() {
         onClick={() => setIsOpen(!isOpen)}
         className={`
           flex items-center gap-3 px-4 py-2 rounded-xl border border-folio-border-subtle 
-          bg-white shadow-sm hover:shadow-md transition-all duration-200
+          bg-surface-canvas shadow-sm hover:shadow-md transition-all duration-200
           ${isOpen ? 'ring-2 ring-[var(--accent)] ring-opacity-50' : ''}
         `}
         whileHover={{ scale: 1.02 }}
@@ -148,7 +148,7 @@ export default function RoleSelector() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="absolute right-0 mt-2 w-64 bg-white border border-folio-border-subtle rounded-xl shadow-lg z-50 overflow-hidden"
+            className="absolute right-0 mt-2 w-64 bg-surface-canvas border border-folio-border-subtle rounded-xl shadow-lg z-50 overflow-hidden"
           >
             <div className="p-2">
               {roleOptions.map((option, index) => {

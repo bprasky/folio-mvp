@@ -89,7 +89,7 @@ export default function DirectoryFilters({
             <select
               value={filters.vendor || ''}
               onChange={(e) => handleFilterChange('vendor', e.target.value)}
-              className="w-full px-3 py-2 bg-white border border-folio-border-subtle rounded-lg text-folio-text-primary focus:outline-none focus:border-folio-border-strong focus:shadow-[0_0_0_3px_rgba(0,0,0,0.03)] transition-all"
+              className="w-full px-3 py-2 bg-surface-canvas border border-folio-border-subtle rounded-lg text-folio-text-primary focus:outline-none focus:border-folio-border-strong focus:shadow-[0_0_0_3px_rgba(0,0,0,0.03)] transition-all"
             >
               <option value="">All Vendors</option>
               {uniqueVendors.map(vendor => (
@@ -103,7 +103,7 @@ export default function DirectoryFilters({
             <select
               value={filters.project || ''}
               onChange={(e) => handleFilterChange('project', e.target.value)}
-              className="w-full px-3 py-2 bg-white border border-folio-border-subtle rounded-lg text-folio-text-primary focus:outline-none focus:border-folio-border-strong focus:shadow-[0_0_0_3px_rgba(0,0,0,0.03)] transition-all"
+              className="w-full px-3 py-2 bg-surface-canvas border border-folio-border-subtle rounded-lg text-folio-text-primary focus:outline-none focus:border-folio-border-strong focus:shadow-[0_0_0_3px_rgba(0,0,0,0.03)] transition-all"
             >
               <option value="">All Projects</option>
               {uniqueProjects.map(project => (
@@ -117,7 +117,7 @@ export default function DirectoryFilters({
             <select
               value={filters.room || ''}
               onChange={(e) => handleFilterChange('room', e.target.value)}
-              className="w-full px-3 py-2 bg-white border border-folio-border-subtle rounded-lg text-folio-text-primary focus:outline-none focus:border-folio-border-strong focus:shadow-[0_0_0_3px_rgba(0,0,0,0.03)] transition-all"
+              className="w-full px-3 py-2 bg-surface-canvas border border-folio-border-subtle rounded-lg text-folio-text-primary focus:outline-none focus:border-folio-border-strong focus:shadow-[0_0_0_3px_rgba(0,0,0,0.03)] transition-all"
             >
               <option value="">All Rooms</option>
               {uniqueRooms.map(room => (
@@ -131,7 +131,7 @@ export default function DirectoryFilters({
             <select
               value={filters.category || ''}
               onChange={(e) => handleFilterChange('category', e.target.value)}
-              className="w-full px-3 py-2 bg-white border border-folio-border-subtle rounded-lg text-folio-text-primary focus:outline-none focus:border-folio-border-strong focus:shadow-[0_0_0_3px_rgba(0,0,0,0.03)] transition-all"
+              className="w-full px-3 py-2 bg-surface-canvas border border-folio-border-subtle rounded-lg text-folio-text-primary focus:outline-none focus:border-folio-border-strong focus:shadow-[0_0_0_3px_rgba(0,0,0,0.03)] transition-all"
             >
               <option value="">All Categories</option>
               {uniqueCategories.map(category => (

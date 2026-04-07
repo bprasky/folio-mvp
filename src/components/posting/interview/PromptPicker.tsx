@@ -94,7 +94,7 @@ export function PromptPicker({
               return (
                 <li
                   key={q.id}
-                  className="flex items-start justify-between rounded-lg border border-[var(--accent)]/20 bg-white px-3 py-2 hover:bg-[var(--accent)]/5 transition-colors"
+                  className="flex items-start justify-between rounded-lg border border-[var(--accent)]/20 bg-surface-canvas px-3 py-2 hover:bg-[var(--accent)]/5 transition-colors"
                 >
                   <div className="flex-1">
                     <div className="font-medium text-sm text-folio-text-primary">{q.prompt}</div>

@@ -20,7 +20,7 @@ export function InsightsPanel({ product }: InsightsPanelProps) {
     >
       <GlassPanel
         header={
-          <h2 className="text-lg font-medium text-stone-900 dark:text-stone-100">
+          <h2 className="text-lg font-medium text-folio-text-primary dark:text-folio-text-tertiary">
             Product Insights
           </h2>
         }

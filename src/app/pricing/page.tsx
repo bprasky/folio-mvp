@@ -88,7 +88,7 @@ export default function PricingPage() {
   return (
     <div className="min-h-screen bg-neutral-50">
       {/* Header */}
-      <div className="bg-white border-b border-neutral-200">
+      <div className="bg-surface-canvas border-b border-neutral-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
           <h1 className="text-4xl font-bold text-neutral-900 mb-4">
             Simple pricing for every stage
@@ -114,7 +114,7 @@ export default function PricingPage() {
               className="relative w-14 h-7 bg-neutral-200 rounded-full transition-colors"
             >
               <span
-                className={`absolute top-1 w-5 h-5 bg-white rounded-full shadow transition-transform ${
+                className={`absolute top-1 w-5 h-5 bg-surface-canvas rounded-full shadow transition-transform ${
                   billingCycle === 'annually' ? 'translate-x-8' : 'translate-x-1'
                 }`}
               />
@@ -174,7 +174,7 @@ export default function PricingPage() {
       {/* Feature Comparison Table */}
       {showComparison && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
-          <div className="bg-white rounded-xl border border-neutral-200 p-6">
+          <div className="bg-surface-canvas rounded-xl border border-neutral-200 p-6">
             <FeatureComparison
               featureGroups={pricingData.featureGroups}
               tiers={TIER_ORDER}
@@ -184,7 +184,7 @@ export default function PricingPage() {
       )}
 
       {/* ROI Section */}
-      <div className="bg-white border-y border-neutral-200">
+      <div className="bg-surface-canvas border-y border-neutral-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <h2 className="text-2xl font-bold text-neutral-900 mb-8 text-center">
             Why the subscription pays for itself
@@ -221,7 +221,7 @@ export default function PricingPage() {
           {pricingData.competitiveBenchmarks.map((benchmark) => (
             <div
               key={benchmark.name}
-              className="bg-white rounded-xl border border-neutral-200 p-6"
+              className="bg-surface-canvas rounded-xl border border-neutral-200 p-6"
             >
               <h3 className="font-medium text-neutral-900">{benchmark.name}</h3>
               <div className="text-lg font-semibold text-neutral-700 mt-1">
@@ -277,7 +277,7 @@ function FaqItem({ question, answer }: { question: string; answer: string }) {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="bg-white rounded-lg border border-neutral-200">
+    <div className="bg-surface-canvas rounded-lg border border-neutral-200">
       <button
         onClick={() => setOpen(!open)}
         className="w-full px-6 py-4 flex items-center justify-between text-left"

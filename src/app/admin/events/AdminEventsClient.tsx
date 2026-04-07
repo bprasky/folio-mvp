@@ -180,7 +180,7 @@ const AdminEventsClient: React.FC<AdminEventsClientProps> = ({ events, stats, us
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-folio-border">
+        <div className="bg-surface-canvas p-6 rounded-lg shadow-sm border border-folio-border">
           <div className="flex items-center">
             <div className="p-3 rounded-full bg-blue-100 text-blue-600 mr-4">
               <FaCalendarAlt className="w-6 h-6" />
@@ -192,7 +192,7 @@ const AdminEventsClient: React.FC<AdminEventsClientProps> = ({ events, stats, us
           </div>
         </div>
         
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-folio-border">
+        <div className="bg-surface-canvas p-6 rounded-lg shadow-sm border border-folio-border">
           <div className="flex items-center">
             <div className="p-3 rounded-full bg-purple-100 text-purple-600 mr-4">
               <span className="text-xl">🎪</span>
@@ -204,7 +204,7 @@ const AdminEventsClient: React.FC<AdminEventsClientProps> = ({ events, stats, us
           </div>
         </div>
         
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-folio-border">
+        <div className="bg-surface-canvas p-6 rounded-lg shadow-sm border border-folio-border">
           <div className="flex items-center">
             <div className="p-3 rounded-full bg-green-100 text-green-600 mr-4">
               <FaCheck className="w-6 h-6" />
@@ -216,7 +216,7 @@ const AdminEventsClient: React.FC<AdminEventsClientProps> = ({ events, stats, us
           </div>
         </div>
         
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-folio-border">
+        <div className="bg-surface-canvas p-6 rounded-lg shadow-sm border border-folio-border">
           <div className="flex items-center">
             <div className="p-3 rounded-full bg-yellow-100 text-yellow-600 mr-4">
               <FaCalendarAlt className="w-6 h-6" />
@@ -228,7 +228,7 @@ const AdminEventsClient: React.FC<AdminEventsClientProps> = ({ events, stats, us
           </div>
         </div>
         
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-folio-border">
+        <div className="bg-surface-canvas p-6 rounded-lg shadow-sm border border-folio-border">
           <div className="flex items-center">
             <div className="p-3 rounded-full bg-red-100 text-red-600 mr-4">
               <FaTimes className="w-6 h-6" />
@@ -256,7 +256,7 @@ const AdminEventsClient: React.FC<AdminEventsClientProps> = ({ events, stats, us
             className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
               filter === tab.key
                 ? 'bg-folio-accent text-white'
-                : 'bg-white text-folio-text hover:bg-folio-muted border border-folio-border'
+                : 'bg-surface-canvas text-folio-text hover:bg-folio-muted border border-folio-border'
             }`}
           >
             {tab.label}
@@ -266,7 +266,7 @@ const AdminEventsClient: React.FC<AdminEventsClientProps> = ({ events, stats, us
 
       {/* Events Grid */}
       {filteredEvents.length === 0 ? (
-        <div className="bg-white rounded-lg shadow-sm border border-folio-border p-12">
+        <div className="bg-surface-canvas rounded-lg shadow-sm border border-folio-border p-12">
           <div className="text-center">
             <FaCalendarAlt className="mx-auto h-12 w-12 text-folio-text-muted mb-4" />
             <h3 className="text-lg font-medium text-folio-text mb-2">No events found</h3>
@@ -285,7 +285,7 @@ const AdminEventsClient: React.FC<AdminEventsClientProps> = ({ events, stats, us
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
           {filteredEvents.map((event) => (
-            <div key={event.id} className="bg-white rounded-lg shadow-sm border border-folio-border p-6">
+            <div key={event.id} className="bg-surface-canvas rounded-lg shadow-sm border border-folio-border p-6">
               {/* Event Header */}
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center">

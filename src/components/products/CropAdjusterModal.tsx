@@ -149,27 +149,27 @@ export function CropAdjusterModal({
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
         transition={{ duration: 0.15 }}
-        className="relative z-10 w-full max-w-lg bg-white rounded-2xl shadow-2xl overflow-hidden"
+        className="relative z-10 w-full max-w-lg bg-surface-canvas rounded-2xl shadow-2xl overflow-hidden"
       >
         {/* Header */}
-        <div className="px-5 py-4 border-b border-stone-100">
-          <h3 className="font-['Instrument_Sans'] text-[15px] font-medium text-stone-800">
+        <div className="px-5 py-4 border-b border-folio-border-subtle">
+          <h3 className="font-['Instrument_Sans'] text-[15px] font-medium text-folio-text-primary">
             Adjust crop
           </h3>
-          <p className="font-['Instrument_Sans'] text-[12px] text-stone-400 mt-0.5">
+          <p className="font-['Instrument_Sans'] text-[12px] text-folio-text-tertiary mt-0.5">
             {productName}
           </p>
         </div>
 
         {/* Image + Crop Region */}
         <div className="px-5 py-4 space-y-4">
-          <p className="font-['Instrument_Sans'] text-[11px] text-stone-400">
+          <p className="font-['Instrument_Sans'] text-[11px] text-folio-text-tertiary">
             Click or drag to move center. Scroll to zoom. Slider below for fine control.
           </p>
 
           <div
             ref={containerRef}
-            className="relative w-full aspect-[4/3] rounded-xl overflow-hidden cursor-crosshair select-none bg-stone-100"
+            className="relative w-full aspect-[4/3] rounded-xl overflow-hidden cursor-crosshair select-none bg-surface-elevated"
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
@@ -217,7 +217,7 @@ export function CropAdjusterModal({
 
           {/* Scale slider */}
           <div className="flex items-center gap-3">
-            <span className="font-['Instrument_Sans'] text-[11px] text-stone-400 w-8">Tight</span>
+            <span className="font-['Instrument_Sans'] text-[11px] text-folio-text-tertiary w-8">Tight</span>
             <input
               type="range"
               min={MIN_SCALE}
@@ -227,16 +227,16 @@ export function CropAdjusterModal({
               onChange={(e) => setCropScale(parseFloat(e.target.value))}
               className="flex-1 h-1.5 accent-stone-700 cursor-pointer"
             />
-            <span className="font-['Instrument_Sans'] text-[11px] text-stone-400 w-8">Wide</span>
+            <span className="font-['Instrument_Sans'] text-[11px] text-folio-text-tertiary w-8">Wide</span>
           </div>
 
           {/* Preview */}
           <div className="flex items-start gap-4">
             <div>
-              <p className="font-['Instrument_Sans'] text-[10px] text-stone-400 uppercase tracking-wider mb-1.5">
+              <p className="font-['Instrument_Sans'] text-[10px] text-folio-text-tertiary uppercase tracking-wider mb-1.5">
                 Preview
               </p>
-              <div className="w-24 h-24 rounded-lg overflow-hidden bg-stone-100 ring-1 ring-stone-200">
+              <div className="w-24 h-24 rounded-lg overflow-hidden bg-surface-elevated ring-1 ring-stone-200">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={sourceImageUrl}
@@ -251,10 +251,10 @@ export function CropAdjusterModal({
               </div>
             </div>
             <div className="flex-1 pt-5">
-              <p className="font-['Instrument_Sans'] text-[11px] text-stone-500">
+              <p className="font-['Instrument_Sans'] text-[11px] text-folio-text-tertiary">
                 Position: {Math.round(clampedX)}%, {Math.round(clampedY)}%
               </p>
-              <p className="font-['Instrument_Sans'] text-[11px] text-stone-500">
+              <p className="font-['Instrument_Sans'] text-[11px] text-folio-text-tertiary">
                 Zoom: {Math.round(cropScale * 100)}%
               </p>
             </div>
@@ -268,11 +268,11 @@ export function CropAdjusterModal({
         </div>
 
         {/* Footer */}
-        <div className="px-5 py-4 border-t border-stone-100 flex items-center justify-between">
+        <div className="px-5 py-4 border-t border-folio-border-subtle flex items-center justify-between">
           <button
             type="button"
             onClick={handleReset}
-            className="font-['Instrument_Sans'] text-[12px] text-stone-400 hover:text-stone-600 transition-colors duration-150"
+            className="font-['Instrument_Sans'] text-[12px] text-folio-text-tertiary hover:text-folio-text-secondary transition-colors duration-150"
           >
             Reset to default
           </button>
@@ -280,7 +280,7 @@ export function CropAdjusterModal({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-lg font-['Instrument_Sans'] text-[13px] text-stone-600 hover:bg-stone-100 transition-colors duration-150"
+              className="px-4 py-2 rounded-lg font-['Instrument_Sans'] text-[13px] text-folio-text-secondary hover:bg-surface-elevated transition-colors duration-150"
             >
               Cancel
             </button>

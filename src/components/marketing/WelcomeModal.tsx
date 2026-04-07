@@ -129,7 +129,7 @@ export function WelcomeModal() {
               className="p-2 -mr-2 rounded-full hover:bg-black/5 transition-colors"
               aria-label="Close"
             >
-              <X className="h-5 w-5 text-[#7a6e68]" />
+              <X className="h-5 w-5 text-folio-text-secondary" />
             </button>
           </div>
 

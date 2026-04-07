@@ -113,7 +113,7 @@ export function Next7DaysPlan({ suggestions }: Next7DaysPlanProps) {
   return (
     <>
       <div className="sticky top-4 space-y-4">
-        <Card className="bg-white border-folio-border-strong">
+        <Card className="bg-surface-canvas border-folio-border-strong">
           <CardHeader>
             <CardTitle className="text-lg font-serif text-folio-text-primary flex items-center space-x-2">
               <Calendar className="w-5 h-5 text-folio-text-secondary" />

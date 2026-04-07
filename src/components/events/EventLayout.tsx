@@ -43,7 +43,7 @@ export default function EventLayout({
   const isChildEvent = !!event.parentFestivalId;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-surface-ground">
       {/* Hero Section */}
       <EventHero event={event} userRSVP={userRSVP} />
 

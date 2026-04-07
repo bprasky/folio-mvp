@@ -73,7 +73,7 @@ export default function VendorCreateEventPage() {
   return (
     <div className="min-h-screen bg-surface-ground py-8">
       <div className="max-w-2xl mx-auto px-4">
-        <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="bg-surface-canvas rounded-lg shadow-md p-6">
           <h1 className="text-2xl font-bold text-folio-text-primary mb-6">Create Vendor Event</h1>
           
           <form onSubmit={handleSubmit} className="space-y-6">

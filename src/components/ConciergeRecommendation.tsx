@@ -70,7 +70,7 @@ export default function ConciergeRecommendation({
 
   return (
     <div className={clsx(
-      "fixed top-4 right-4 max-w-sm bg-white rounded-lg shadow-lg border border-folio-border-subtle p-4 z-50 animate-in slide-in-from-right duration-300",
+      "fixed top-4 right-4 max-w-sm bg-surface-canvas rounded-lg shadow-lg border border-folio-border-subtle p-4 z-50 animate-in slide-in-from-right duration-300",
       className
     )}>
       <div className="flex items-start space-x-3">
@@ -119,7 +119,7 @@ export default function ConciergeRecommendation({
       
       {/* Progress indicator for first-time users */}
       {isFirstTimeUser && (
-        <div className="mt-3 pt-3 border-t border-gray-100">
+        <div className="mt-3 pt-3 border-t border-folio-border-subtle">
           <div className="flex items-center justify-between text-xs text-folio-text-secondary">
             <span>Getting started with Folio</span>
             <span>1 of 3</span>

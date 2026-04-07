@@ -38,7 +38,7 @@ export function RSVPPresence({ data }: RSVPPresenceProps) {
         {top.map(attendee => (
           <div
             key={attendee.id}
-            className="inline-flex items-center justify-center w-6 h-6 rounded-full border-2 border-white bg-stone-200 overflow-hidden"
+            className="inline-flex items-center justify-center w-6 h-6 rounded-full border-2 border-white bg-surface-elevated overflow-hidden"
             role="listitem"
           >
             {attendee.avatarUrl ? (
@@ -48,7 +48,7 @@ export function RSVPPresence({ data }: RSVPPresenceProps) {
                 className="w-full h-full object-cover"
               />
             ) : (
-              <span className="text-[10px] font-medium text-stone-700">
+              <span className="text-[10px] font-medium text-folio-text-secondary">
                 {initials(attendee.name)}
               </span>
             )}
@@ -57,7 +57,7 @@ export function RSVPPresence({ data }: RSVPPresenceProps) {
       </div>
 
       {/* Count display */}
-      <span className="ml-2 text-xs text-stone-700 font-medium">
+      <span className="ml-2 text-xs text-folio-text-secondary font-medium">
         {extra > 0 ? `+${extra}` : data.total} attending
       </span>
     </div>

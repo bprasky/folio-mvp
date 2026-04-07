@@ -61,7 +61,7 @@ export default function ActionItemCard({ actionItem, onStatusChange, onComplete 
 
   return (
     <div
-      className={`bg-white rounded-lg border-2 p-4 shadow-sm transition-all hover:shadow-md ${
+      className={`bg-surface-canvas rounded-lg border-2 p-4 shadow-sm transition-all hover:shadow-md ${
         isCompleted ? 'opacity-60 border-folio-border-subtle' : 'border-folio-border-subtle'
       }`}
     >

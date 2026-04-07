@@ -35,7 +35,7 @@ export function InfluenceFlow({ nodes, links, onHover, variant = 'bars' }: Influ
 
   if (variant === 'bars') {
     return (
-      <Card className="bg-white border-folio-border-strong">
+      <Card className="bg-surface-canvas border-folio-border-strong">
         <CardHeader>
           <CardTitle className="text-lg font-serif text-folio-text-primary flex items-center space-x-2">
             <TrendingUp className="w-5 h-5 text-folio-text-secondary" />
@@ -119,7 +119,7 @@ export function InfluenceFlow({ nodes, links, onHover, variant = 'bars' }: Influ
 
   // Fallback for when Sankey chart is not available
   return (
-    <Card className="bg-white border-folio-border-strong">
+    <Card className="bg-surface-canvas border-folio-border-strong">
       <CardHeader>
         <CardTitle className="text-lg font-serif text-folio-text-primary">
           Influence Flow

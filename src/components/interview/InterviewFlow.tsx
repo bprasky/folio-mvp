@@ -253,7 +253,7 @@ export function InterviewFlow({
   };
 
   return (
-    <div className="relative h-full min-h-[600px] bg-white">
+    <div className="relative h-full min-h-[600px] bg-surface-canvas">
       {/* Close button */}
       <button
         type="button"

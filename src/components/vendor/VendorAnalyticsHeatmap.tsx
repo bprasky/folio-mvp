@@ -39,7 +39,7 @@ export default function VendorAnalyticsHeatmap({
             {entries.slice(0, 8).map(([region, count]) => {
               const intensity = maxCount > 0 ? count / maxCount : 0;
               const bgColor = intensity > 0.7 ? 'bg-[var(--accent)]/10' : 
-                             intensity > 0.4 ? 'bg-[var(--accent)]/5' : 'bg-gray-50';
+                             intensity > 0.4 ? 'bg-[var(--accent)]/5' : 'bg-surface-ground';
               const textColor = intensity > 0.7 ? 'text-blue-900' : 
                                intensity > 0.4 ? 'text-[var(--accent-hover)]' : 'text-folio-text-secondary';
               

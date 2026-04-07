@@ -38,7 +38,7 @@ export default function InspireCard({ post }: InspireCardProps) {
       case 'viral':
         return 'bg-gradient-to-r from-green-500 to-emerald-500';
       default:
-        return 'bg-gray-500';
+        return 'bg-surface-ground0';
     }
   };
 
@@ -60,7 +60,7 @@ export default function InspireCard({ post }: InspireCardProps) {
   return (
     <motion.div
       whileHover={{ scale: 1.02 }}
-      className="group relative overflow-hidden rounded-lg shadow-lg bg-[#1a1a1a] border border-[#2e2e2e]"
+      className="group relative overflow-hidden rounded-lg shadow-lg bg-[#1a1a1a] border border-folio-border-subtle"
       style={{ aspectRatio: post.aspectRatio }}
     >
       {/* Image Container */}
@@ -105,7 +105,7 @@ export default function InspireCard({ post }: InspireCardProps) {
                                 alt={post.author}
                                 width={24}
                                 height={24}
-                                className="rounded-full border border-gray-600 group-hover/author:border-amber-400 transition-colors"
+                                className="rounded-full border border-folio-border-strong group-hover/author:border-amber-400 transition-colors"
                                 priority={true}
                             />
                             <span className="text-folio-text-tertiary text-sm group-hover/author:text-amber-400 transition-colors">{post.author}</span>
@@ -117,7 +117,7 @@ export default function InspireCard({ post }: InspireCardProps) {
                                 alt={post.author}
                                 width={24}
                                 height={24}
-                                className="rounded-full border border-gray-600"
+                                className="rounded-full border border-folio-border-strong"
                                 priority={true}
                             />
                             <span className="text-folio-text-tertiary text-sm">{post.author}</span>
@@ -160,13 +160,13 @@ export default function InspireCard({ post }: InspireCardProps) {
 
         {/* Quick Actions */}
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex space-x-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          <button className="bg-white/90 hover:bg-white text-folio-text-primary rounded-full p-2.5 transition-colors duration-200 shadow-md">
+          <button className="bg-white/90 hover:bg-surface-canvas text-folio-text-primary rounded-full p-2.5 transition-colors duration-200 shadow-md">
             <FaHeart className="text-lg" />
           </button>
-          <button className="bg-white/90 hover:bg-white text-folio-text-primary rounded-full p-2.5 transition-colors duration-200 shadow-md">
+          <button className="bg-white/90 hover:bg-surface-canvas text-folio-text-primary rounded-full p-2.5 transition-colors duration-200 shadow-md">
             <FaBookmark className="text-lg" />
           </button>
-          <button className="bg-white/90 hover:bg-white text-folio-text-primary rounded-full p-2.5 transition-colors duration-200 shadow-md">
+          <button className="bg-white/90 hover:bg-surface-canvas text-folio-text-primary rounded-full p-2.5 transition-colors duration-200 shadow-md">
             <FaEye className="text-lg" />
           </button>
         </div>

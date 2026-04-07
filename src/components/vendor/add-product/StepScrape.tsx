@@ -107,13 +107,13 @@ export function StepScrape({ url, onComplete, onBack }: StepScrapeProps) {
               <Globe className="w-16 h-16 text-[var(--accent)] dark:text-blue-400" />
               <Loader2 className="w-6 h-6 text-[var(--accent)] dark:text-blue-400 animate-spin absolute -top-1 -right-1" />
             </div>
-            <h2 className="text-2xl font-medium mb-2 text-stone-900 dark:text-stone-100">
+            <h2 className="text-2xl font-medium mb-2 text-folio-text-primary dark:text-folio-text-tertiary">
               Scraping Product...
             </h2>
-            <p className="text-stone-600 dark:text-stone-400 mb-4">
+            <p className="text-folio-text-secondary dark:text-folio-text-tertiary mb-4">
               Extracting product information from {hostname}
             </p>
-            <div className="max-w-md mx-auto space-y-2 text-sm text-stone-500 dark:text-stone-400">
+            <div className="max-w-md mx-auto space-y-2 text-sm text-folio-text-tertiary dark:text-folio-text-tertiary">
               <div className="flex items-center justify-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-[var(--accent)] animate-pulse" />
                 <span>Fetching page content...</span>
@@ -138,10 +138,10 @@ export function StepScrape({ url, onComplete, onBack }: StepScrapeProps) {
           <div className="py-8">
             <div className="text-center mb-8">
               <CheckCircle className="w-16 h-16 mx-auto mb-4 text-green-500" />
-              <h2 className="text-2xl font-medium mb-2 text-stone-900 dark:text-stone-100">
+              <h2 className="text-2xl font-medium mb-2 text-folio-text-primary dark:text-folio-text-tertiary">
                 Extraction Complete!
               </h2>
-              <p className="text-stone-600 dark:text-stone-400">
+              <p className="text-folio-text-secondary dark:text-folio-text-tertiary">
                 Product data extracted with confidence scoring
               </p>
             </div>
@@ -247,7 +247,7 @@ export function StepScrape({ url, onComplete, onBack }: StepScrapeProps) {
             <div className="flex items-center justify-center gap-4">
               <button
                 onClick={onBack}
-                className="px-6 py-2 rounded-lg border border-stone-300 dark:border-stone-700 hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors text-stone-700 dark:text-stone-300"
+                className="px-6 py-2 rounded-lg border border-folio-border-strong dark:border-folio-border-subtle hover:bg-surface-ground dark:hover:bg-stone-800 transition-colors text-folio-text-secondary dark:text-folio-text-tertiary"
               >
                 Try Different URL
               </button>
@@ -261,10 +261,10 @@ export function StepScrape({ url, onComplete, onBack }: StepScrapeProps) {
         {status === 'error' && (
           <div className="text-center py-12">
             <XCircle className="w-16 h-16 mx-auto mb-4 text-red-500" />
-            <h2 className="text-2xl font-medium mb-2 text-stone-900 dark:text-stone-100">
+            <h2 className="text-2xl font-medium mb-2 text-folio-text-primary dark:text-folio-text-tertiary">
               Scraping Failed
             </h2>
-            <p className="text-stone-600 dark:text-stone-400 mb-6">
+            <p className="text-folio-text-secondary dark:text-folio-text-tertiary mb-6">
               {error}
             </p>
             
@@ -284,7 +284,7 @@ export function StepScrape({ url, onComplete, onBack }: StepScrapeProps) {
             <div className="flex items-center justify-center gap-4">
               <button
                 onClick={onBack}
-                className="px-6 py-2 rounded-lg border border-stone-300 dark:border-stone-700 hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors"
+                className="px-6 py-2 rounded-lg border border-folio-border-strong dark:border-folio-border-subtle hover:bg-surface-ground dark:hover:bg-stone-800 transition-colors"
               >
                 Try Different URL
               </button>

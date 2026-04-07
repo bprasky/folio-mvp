@@ -60,7 +60,7 @@ export default function ProjectCard({ project }: ProjectCardProps) {
         </div>
 
         {/* Footer */}
-        <div className="p-3 bg-white" style={{ borderTop: '1px solid #E8E4DF' }}>
+        <div className="p-3 bg-surface-canvas" style={{ borderTop: '1px solid #E8E4DF' }}>
           <div className="flex items-center justify-between text-xs" style={{ color: '#8B8178' }}>
             <span>{project.projectType || 'Design Project'}</span>
             {saves > 0 && (

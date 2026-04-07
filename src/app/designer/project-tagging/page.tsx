@@ -118,7 +118,7 @@ export default function ProjectTaggingDemo() {
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
-                className="mb-4 p-4 bg-white rounded-lg border border-folio-border-subtle"
+                className="mb-4 p-4 bg-surface-canvas rounded-lg border border-folio-border-subtle"
               >
                 <div className="flex gap-3">
                   <input
@@ -180,7 +180,7 @@ export default function ProjectTaggingDemo() {
           </div>
 
           {/* Main Tagging Interface */}
-          <div className="bg-white rounded-xl shadow-lg p-6">
+          <div className="bg-surface-canvas rounded-xl shadow-lg p-6">
             <div className="mb-6">
               <h2 className="text-xl font-semibold text-folio-text-primary mb-2">
                 Tag Products in: {selectedImage.name}
@@ -202,7 +202,7 @@ export default function ProjectTaggingDemo() {
 
           {/* Instructions */}
           <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-white rounded-lg p-6 border border-folio-border-subtle">
+            <div className="bg-surface-canvas rounded-lg p-6 border border-folio-border-subtle">
               <div className="w-12 h-12 bg-[var(--accent)]/10 rounded-lg flex items-center justify-center mb-4">
                 <FaImage className="w-6 h-6 text-[var(--accent)]" />
               </div>
@@ -212,7 +212,7 @@ export default function ProjectTaggingDemo() {
               </p>
             </div>
 
-            <div className="bg-white rounded-lg p-6 border border-folio-border-subtle">
+            <div className="bg-surface-canvas rounded-lg p-6 border border-folio-border-subtle">
               <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
                 <FaTag className="w-6 h-6 text-green-600" />
               </div>
@@ -222,7 +222,7 @@ export default function ProjectTaggingDemo() {
               </p>
             </div>
 
-            <div className="bg-white rounded-lg p-6 border border-folio-border-subtle">
+            <div className="bg-surface-canvas rounded-lg p-6 border border-folio-border-subtle">
               <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
                 <FaCheck className="w-6 h-6 text-purple-600" />
               </div>

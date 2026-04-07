@@ -23,7 +23,7 @@ export function DownloadsPanel({ product }: DownloadsPanelProps) {
     >
       <GlassPanel
         header={
-          <h2 className="text-lg font-medium text-stone-900 dark:text-stone-100">
+          <h2 className="text-lg font-medium text-folio-text-primary dark:text-folio-text-tertiary">
             Files & Downloads
           </h2>
         }
@@ -74,7 +74,7 @@ function FileList({
       'dwg': 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
       'rvt': 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300',
     };
-    return colors[type] || 'bg-stone-100 text-stone-700 dark:bg-stone-800 dark:text-stone-300';
+    return colors[type] || 'bg-surface-elevated text-folio-text-secondary dark:bg-surface-elevated dark:text-folio-text-tertiary';
   };
 
   return (
@@ -85,13 +85,13 @@ function FileList({
           <a
             key={index}
             href={file.href}
-            className="flex items-center gap-3 p-3 rounded-lg border border-white/10 dark:border-white/5 bg-white/5 dark:bg-stone-800/20 hover:bg-white/10 dark:hover:bg-stone-800/40 transition-all group"
+            className="flex items-center gap-3 p-3 rounded-lg border border-white/10 dark:border-white/5 bg-white/5 dark:bg-surface-elevated/20 hover:bg-white/10 dark:hover:bg-stone-800/40 transition-all group"
             download
           >
-            <Icon className="w-5 h-5 text-stone-500 dark:text-stone-400 group-hover:text-stone-700 dark:group-hover:text-stone-200 transition-colors flex-shrink-0" />
+            <Icon className="w-5 h-5 text-folio-text-tertiary dark:text-folio-text-tertiary group-hover:text-folio-text-secondary dark:group-hover:text-folio-text-tertiary transition-colors flex-shrink-0" />
             
             <div className="flex-1 min-w-0">
-              <div className="text-sm font-medium text-stone-900 dark:text-stone-100 truncate">
+              <div className="text-sm font-medium text-folio-text-primary dark:text-folio-text-tertiary truncate">
                 {file.label}
               </div>
               <div className="flex items-center gap-2 mt-1">
@@ -99,13 +99,13 @@ function FileList({
                   {fileType}
                 </span>
                 {/* Placeholder for file size - would come from actual file metadata */}
-                <span className="text-xs text-stone-500 dark:text-stone-400">
+                <span className="text-xs text-folio-text-tertiary dark:text-folio-text-tertiary">
                   Updated recently
                 </span>
               </div>
             </div>
             
-            <Download className="w-4 h-4 text-stone-400 group-hover:text-stone-600 dark:group-hover:text-stone-300 transition-colors flex-shrink-0" />
+            <Download className="w-4 h-4 text-folio-text-tertiary group-hover:text-folio-text-secondary dark:group-hover:text-folio-text-tertiary transition-colors flex-shrink-0" />
           </a>
         );
       })}

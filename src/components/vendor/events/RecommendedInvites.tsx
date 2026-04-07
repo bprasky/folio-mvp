@@ -14,7 +14,7 @@ interface RecommendedInvitesProps {
 
 export function RecommendedInvites({ invites, onHover }: RecommendedInvitesProps) {
   return (
-    <Card className="bg-white border-folio-border-strong">
+    <Card className="bg-surface-canvas border-folio-border-strong">
       <CardHeader>
         <CardTitle className="text-lg font-serif text-folio-text-primary">
           Recommended Invites
@@ -25,7 +25,7 @@ export function RecommendedInvites({ invites, onHover }: RecommendedInvitesProps
           {invites.map((invite, index) => (
             <div 
               key={invite.id} 
-              className="flex items-start justify-between p-4 bg-surface-elevated rounded-lg cursor-pointer hover:bg-[#F0EDE8] transition-colors"
+              className="flex items-start justify-between p-4 bg-surface-elevated rounded-lg cursor-pointer hover:bg-surface-elevated transition-colors"
               data-testid={`invite-${index}`}
               onMouseEnter={() => onHover?.({
                 type: 'designer', // Treat invites as designers for suggestion purposes

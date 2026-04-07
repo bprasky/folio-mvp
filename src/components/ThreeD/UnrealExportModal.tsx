@@ -47,7 +47,7 @@ export default function UnrealExportModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
-      <div className="relative w-full h-full max-w-4xl max-h-[90vh] bg-white rounded-lg overflow-hidden flex flex-col">
+      <div className="relative w-full h-full max-w-4xl max-h-[90vh] bg-surface-canvas rounded-lg overflow-hidden flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-folio-border-subtle">
           <div>
@@ -68,14 +68,14 @@ export default function UnrealExportModal({
         </div>
 
         {/* JSON Content */}
-        <div className="flex-1 overflow-auto p-6 bg-gray-50">
+        <div className="flex-1 overflow-auto p-6 bg-surface-ground">
           <pre className="text-xs font-mono text-folio-text-primary whitespace-pre-wrap break-words">
             {jsonString}
           </pre>
         </div>
 
         {/* Footer Actions */}
-        <div className="flex items-center justify-between p-6 border-t border-folio-border-subtle bg-white">
+        <div className="flex items-center justify-between p-6 border-t border-folio-border-subtle bg-surface-canvas">
           <div className="text-sm text-folio-text-secondary">
             {exportData.assets?.length || 0} asset(s) included
           </div>

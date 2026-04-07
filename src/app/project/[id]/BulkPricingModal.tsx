@@ -156,7 +156,7 @@ export default function BulkPricingModal({
                             ...prev,
                             [sel.productId]: Math.max(1, parseInt(e.target.value) || 1),
                           }))}
-                          className="w-16 px-2 py-1 text-xs bg-white border border-folio-border-subtle rounded text-center"
+                          className="w-16 px-2 py-1 text-xs bg-surface-canvas border border-folio-border-subtle rounded text-center"
                           onClick={(e) => e.stopPropagation()}
                         />
                       </div>
@@ -175,7 +175,7 @@ export default function BulkPricingModal({
               <select
                 value={timeline}
                 onChange={(e) => setTimeline(e.target.value)}
-                className="w-full px-3 py-2 bg-white border border-folio-border-subtle rounded-lg text-sm text-folio-text-primary"
+                className="w-full px-3 py-2 bg-surface-canvas border border-folio-border-subtle rounded-lg text-sm text-folio-text-primary"
               >
                 <option value="urgent">Urgent</option>
                 <option value="2-4_weeks">2–4 weeks</option>
@@ -193,7 +193,7 @@ export default function BulkPricingModal({
               onChange={(e) => setDesignerNote(e.target.value)}
               placeholder="Residential project targeting Fall 2026 install. Please provide trade pricing."
               rows={2}
-              className="w-full px-3 py-2 bg-white border border-folio-border-subtle rounded-lg text-folio-text-primary placeholder-[#A39E97] text-sm resize-none"
+              className="w-full px-3 py-2 bg-surface-canvas border border-folio-border-subtle rounded-lg text-folio-text-primary placeholder-[#A39E97] text-sm resize-none"
             />
           </div>
         </div>

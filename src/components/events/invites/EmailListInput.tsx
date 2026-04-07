@@ -51,7 +51,7 @@ export default function EmailListInput({ eventId, onSuccess }: EmailListInputPro
     <div className="space-y-4">
       <div>
         <h3 className="text-lg font-medium text-ink mb-2">Enter Email Addresses</h3>
-        <p className="text-sm text-stone-500 mb-4">
+        <p className="text-sm text-folio-text-tertiary mb-4">
           Enter email addresses separated by commas or new lines
         </p>
       </div>
@@ -61,9 +61,9 @@ export default function EmailListInput({ eventId, onSuccess }: EmailListInputPro
           value={emails}
           onChange={(e) => setEmails(e.target.value)}
           placeholder="email1@example.com, email2@example.com&#10;email3@example.com"
-          className="w-full h-32 px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-accent-400 focus:border-accent-400 resize-none"
+          className="w-full h-32 px-4 py-3 border border-folio-border-strong rounded-lg focus:ring-2 focus:ring-accent-400 focus:border-accent-400 resize-none"
         />
-        <div className="absolute bottom-2 right-2 text-xs text-stone-400">
+        <div className="absolute bottom-2 right-2 text-xs text-folio-text-tertiary">
           {emailCount} email{emailCount !== 1 ? 's' : ''}
         </div>
       </div>

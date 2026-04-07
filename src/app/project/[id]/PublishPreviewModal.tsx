@@ -253,7 +253,7 @@ export default function PublishPreviewModal({
         {/* Error */}
         {flow.error && (
           <div className="px-6 pb-4">
-            <div className="p-3 bg-stone-100 border border-stone-300 text-[rgb(74,44,59)] rounded-[20px] folio-meta">
+            <div className="p-3 bg-surface-elevated border border-folio-border-strong text-[rgb(74,44,59)] rounded-[20px] folio-meta">
               {flow.error}
             </div>
           </div>

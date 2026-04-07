@@ -173,7 +173,7 @@ export function CollaborationStoryView({ story }: CollaborationStoryViewProps) {
             </button>
 
             {showShareMenu && (
-              <div className="absolute right-0 mt-2 w-40 bg-white rounded-lg shadow-lg border border-neutral-200 py-1 z-10">
+              <div className="absolute right-0 mt-2 w-40 bg-surface-canvas rounded-lg shadow-lg border border-neutral-200 py-1 z-10">
                 <button
                   onClick={() => handleShare('copy')}
                   className="w-full px-4 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-50"

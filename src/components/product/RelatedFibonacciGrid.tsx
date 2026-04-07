@@ -27,10 +27,10 @@ export function RelatedFibonacciGrid({ items }: RelatedFibonacciGridProps) {
         transition={{ duration: 0.6 }}
         className="mb-8"
       >
-        <h2 className="text-2xl lg:text-3xl font-serif font-light text-stone-900 dark:text-stone-100">
+        <h2 className="text-2xl lg:text-3xl font-serif font-light text-folio-text-primary dark:text-folio-text-tertiary">
           Related products
         </h2>
-        <p className="mt-2 text-sm text-stone-600 dark:text-stone-400">
+        <p className="mt-2 text-sm text-folio-text-secondary dark:text-folio-text-tertiary">
           From the same collection or similar materials
         </p>
       </motion.div>
@@ -89,7 +89,7 @@ function RelatedCard({
     >
       <Link 
         href={`/products/${item.slug}`}
-        className="group relative block w-full h-full overflow-hidden rounded-2xl bg-stone-200 dark:bg-stone-800"
+        className="group relative block w-full h-full overflow-hidden rounded-2xl bg-surface-elevated dark:bg-surface-elevated"
       >
         {/* Image */}
         <div className="relative w-full h-full">

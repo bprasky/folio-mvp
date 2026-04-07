@@ -23,11 +23,11 @@ export function VendorInsightsMini({ product }: { product: Product }) {
 
 function Kpi({ label, value }: { label: string; value: number|string }) {
   return (
-    <div className="rounded-xl border border-stone-200 dark:border-stone-700 bg-white/50 dark:bg-stone-800/50 p-3">
-      <div className="text-xs font-medium uppercase tracking-wider text-stone-500 dark:text-stone-400">
+    <div className="rounded-xl border border-folio-border-subtle dark:border-folio-border-subtle bg-white/50 dark:bg-surface-elevated/50 p-3">
+      <div className="text-xs font-medium uppercase tracking-wider text-folio-text-tertiary dark:text-folio-text-tertiary">
         {label}
       </div>
-      <div className="mt-1 text-2xl font-semibold text-stone-900 dark:text-stone-100">
+      <div className="mt-1 text-2xl font-semibold text-folio-text-primary dark:text-folio-text-tertiary">
         {value}
       </div>
     </div>
@@ -37,13 +37,13 @@ function Kpi({ label, value }: { label: string; value: number|string }) {
 function List({ label, items }: { label: string; items: string[] }) {
   return (
     <div>
-      <div className="text-xs font-medium uppercase tracking-wider text-stone-500 dark:text-stone-400 mb-2">
+      <div className="text-xs font-medium uppercase tracking-wider text-folio-text-tertiary dark:text-folio-text-tertiary mb-2">
         {label}
       </div>
       <ul className="space-y-1">
         {items.map((t,i)=>(
-          <li key={i} className="text-sm text-stone-700 dark:text-stone-300 flex items-center gap-2">
-            <span className="w-1 h-1 rounded-full bg-stone-400 dark:bg-stone-600" />
+          <li key={i} className="text-sm text-folio-text-secondary dark:text-folio-text-tertiary flex items-center gap-2">
+            <span className="w-1 h-1 rounded-full bg-stone-400 dark:bg-surface-elevated" />
             {t}
           </li>
         ))}

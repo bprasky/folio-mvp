@@ -18,7 +18,7 @@ export function LeakDrivers({ drivers }: LeakDriversProps) {
     <div className="chart-card p-4">
       <div className="flex items-center gap-2 mb-2">
         <AlertCircle className="w-4 h-4 text-[var(--amber)]" />
-        <div className="font-semibold text-[#1F2937]">Leak Drivers</div>
+        <div className="font-semibold text-folio-text-primary">Leak Drivers</div>
       </div>
       <div className="h-key mb-3">Top factors behind conversion gaps and the quickest fixes.</div>
       
@@ -26,8 +26,8 @@ export function LeakDrivers({ drivers }: LeakDriversProps) {
         {drivers.slice(0, 3).map((d, i) => (
           <div key={i} className="py-3 flex items-start justify-between gap-4">
             <div className="flex-1">
-              <div className="text-sm font-medium text-[#111827] mb-1">{d.driver}</div>
-              <div className="text-xs text-[#6B7280] leading-relaxed">{d.why}</div>
+              <div className="text-sm font-medium text-folio-text-primary mb-1">{d.driver}</div>
+              <div className="text-xs text-folio-text-secondary leading-relaxed">{d.why}</div>
               {d.action && (
                 <div className="mt-1 text-xs text-[var(--teal)]">→ {d.action.label}</div>
               )}

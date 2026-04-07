@@ -296,10 +296,10 @@ export default function SearchPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#FAFAFA] flex items-center justify-center">
+      <div className="min-h-screen bg-surface-ground flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1A1A1A] mx-auto mb-4"></div>
-          <p className="text-[#6A6A6A] font-serif">Curating edition...</p>
+          <p className="text-folio-text-secondary font-serif">Curating edition...</p>
         </div>
       </div>
     );
@@ -307,7 +307,7 @@ export default function SearchPage() {
   
   if (error) {
     return (
-      <div className="min-h-screen bg-[#FFFAF5] flex items-center justify-center p-8">
+      <div className="min-h-screen bg-surface-ground flex items-center justify-center p-8">
         <div className="text-center max-w-md">
           <p className="text-red-600 mb-4 font-serif">{error}</p>
           <button

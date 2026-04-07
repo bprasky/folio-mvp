@@ -55,7 +55,7 @@ export function PromptedAnswerModal({
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="w-full max-w-lg rounded-[20px] bg-white shadow-2xl overflow-hidden">
+      <div className="w-full max-w-lg rounded-[20px] bg-surface-canvas shadow-2xl overflow-hidden">
         {submitted ? (
           /* Success state */
           <div className="p-8 text-center">

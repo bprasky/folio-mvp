@@ -64,7 +64,7 @@ export function IntentSegments({ segments }: IntentSegmentsProps) {
     <>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {segmentConfig.map((segment) => (
-          <Card key={segment.key} className="bg-white border-folio-border-strong hover:shadow-md transition-shadow">
+          <Card key={segment.key} className="bg-surface-canvas border-folio-border-strong hover:shadow-md transition-shadow">
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
@@ -128,7 +128,7 @@ export function IntentSegments({ segments }: IntentSegmentsProps) {
               )}
 
               <Button
-                className="w-full bg-[#2B2B2B] hover:bg-[#8C8278] text-white"
+                className="w-full bg-folio-text-primary hover:bg-[#8C8278] text-white"
                 onClick={() => handleSegmentAction(getSheetType(segment.action), segment.designers)}
                 disabled={segment.designers.length === 0}
               >

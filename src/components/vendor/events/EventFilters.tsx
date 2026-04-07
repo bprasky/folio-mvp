@@ -25,7 +25,7 @@ export function EventFilters({ eventId }: EventFiltersProps) {
   };
 
   return (
-    <Card className="bg-white border-folio-border-strong">
+    <Card className="bg-surface-canvas border-folio-border-strong">
       <CardContent className="py-4">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
           {/* Date Range */}
@@ -92,7 +92,7 @@ export function EventFilters({ eventId }: EventFiltersProps) {
             <Button 
               size="sm" 
               onClick={handleApply}
-              className="bg-[#2B2B2B] hover:bg-[#8C8278]"
+              className="bg-folio-text-primary hover:bg-[#8C8278]"
             >
               <Filter className="w-4 h-4 mr-2" />
               Apply

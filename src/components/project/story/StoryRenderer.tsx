@@ -224,7 +224,7 @@ export function StoryRenderer({ post }: Props) {
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 28, stiffness: 300 }}
-              className="fixed inset-0 z-50 bg-white overflow-y-auto"
+              className="fixed inset-0 z-50 bg-surface-canvas overflow-y-auto"
             >
               <RoomExpanded
                 card={expandedCard}

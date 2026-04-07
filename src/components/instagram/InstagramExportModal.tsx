@@ -437,7 +437,7 @@ export default function InstagramExportModal({
       <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
 
       <div className="fixed inset-0 flex items-center justify-center p-4">
-        <DialogPanel className="mx-auto max-w-4xl w-full bg-white rounded-2xl shadow-xl max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogPanel className="mx-auto max-w-4xl w-full bg-surface-canvas rounded-2xl shadow-xl max-h-[90vh] overflow-hidden flex flex-col">
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-folio-border-subtle">
             <div className="flex items-center gap-3">
@@ -573,7 +573,7 @@ export default function InstagramExportModal({
           </div>
 
           {/* Footer */}
-          <div className="p-6 border-t border-folio-border-subtle bg-gray-50">
+          <div className="p-6 border-t border-folio-border-subtle bg-surface-ground">
             {/* Show re-upload status */}
             {(reuploadingImages || facebookImageCount > 0 || reuploadComplete) && (
               <div className={`mb-4 p-3 rounded-lg ${

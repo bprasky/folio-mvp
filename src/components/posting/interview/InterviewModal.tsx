@@ -1709,18 +1709,18 @@ export function InterviewModal({
             {/* Loading state for questions */}
             {questionsLoading && (
               <div className="flex items-center justify-center p-12">
-                <div className="animate-spin h-8 w-8 border-2 border-stone-900 border-t-transparent rounded-full" />
-                <span className="ml-3 text-sm text-stone-500">Preparing your interview...</span>
+                <div className="animate-spin h-8 w-8 border-2 border-folio-text-primary border-t-transparent rounded-full" />
+                <span className="ml-3 text-sm text-folio-text-tertiary">Preparing your interview...</span>
               </div>
             )}
 
             {/* Error state for questions */}
             {!questionsLoading && fetchedQuestions.length === 0 && phase === "question" && (
           <div className="p-8 text-center">
-            <p className="text-stone-600 mb-4">
+            <p className="text-folio-text-secondary mb-4">
               No questions available for this project. Please ensure your project has images or product selections.
             </p>
-            <button onClick={() => onOpenChange(false)} className="text-stone-900 underline">
+            <button onClick={() => onOpenChange(false)} className="text-folio-text-primary underline">
               Close
             </button>
           </div>

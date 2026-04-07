@@ -47,7 +47,7 @@ export function InsightCard({ insight }: { insight: AiInsight }) {
   };
 
   return (
-    <Card className="p-5 bg-white border-folio-border-strong hover:shadow-md transition-all duration-200 hover:border-[#8C8278]">
+    <Card className="p-5 bg-surface-canvas border-folio-border-strong hover:shadow-md transition-all duration-200 hover:border-[#8C8278]">
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1">
           <div className="flex items-start justify-between mb-2">
@@ -103,7 +103,7 @@ export function InsightCard({ insight }: { insight: AiInsight }) {
           
           <Button 
             size="sm" 
-            className="bg-[#2B2B2B] hover:bg-[#8C8278] text-white text-xs px-3 py-2"
+            className="bg-folio-text-primary hover:bg-[#8C8278] text-white text-xs px-3 py-2"
           >
             {insight.action.label}
           </Button>

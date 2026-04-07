@@ -65,7 +65,7 @@ export default function EventFilters({
   };
 
   return (
-    <div className={`bg-white border-b border-gray-100 ${className}`}>
+    <div className={`bg-surface-canvas border-b border-folio-border-subtle ${className}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between py-4">
           {/* Search Bar Placeholder - can be expanded later */}
@@ -74,7 +74,7 @@ export default function EventFilters({
               <input
                 type="text"
                 placeholder="Search events..."
-                className="w-full pl-4 pr-10 py-2 border border-folio-border-subtle rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-folio-accent/20 focus:border-folio-accent/30 bg-gray-50"
+                className="w-full pl-4 pr-10 py-2 border border-folio-border-subtle rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-folio-accent/20 focus:border-folio-accent/30 bg-surface-ground"
               />
               <div className="absolute inset-y-0 right-0 flex items-center pr-3">
                 <svg className="h-4 w-4 text-folio-text-tertiary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -88,7 +88,7 @@ export default function EventFilters({
           <div className="relative">
             <button
               onClick={() => setIsExpanded(!isExpanded)}
-              className="flex items-center px-4 py-2 text-sm font-medium text-folio-text-primary bg-white border border-folio-border-subtle rounded-lg hover:bg-surface-ground hover:border-folio-border-subtle transition-colors focus:outline-none focus:ring-2 focus:ring-folio-accent/20"
+              className="flex items-center px-4 py-2 text-sm font-medium text-folio-text-primary bg-surface-canvas border border-folio-border-subtle rounded-lg hover:bg-surface-ground hover:border-folio-border-subtle transition-colors focus:outline-none focus:ring-2 focus:ring-folio-accent/20"
             >
               <FaFilter className="mr-2 h-4 w-4" />
               Sort & Filter
@@ -101,7 +101,7 @@ export default function EventFilters({
 
             {/* Dropdown Panel */}
             {isExpanded && (
-              <div className="absolute right-0 top-full mt-1 w-80 bg-white border border-folio-border-subtle rounded-lg shadow-lg z-20">
+              <div className="absolute right-0 top-full mt-1 w-80 bg-surface-canvas border border-folio-border-subtle rounded-lg shadow-lg z-20">
                 <div className="p-4 space-y-4">
                   {/* Festival Filter */}
                   <div>
@@ -159,7 +159,7 @@ export default function EventFilters({
                   </div>
 
                   {/* Active Filters Summary */}
-                  <div className="pt-3 border-t border-gray-100">
+                  <div className="pt-3 border-t border-folio-border-subtle">
                     <div className="text-xs text-folio-text-secondary space-y-1">
                       <div>Festival: {getCurrentFestivalLabel()}</div>
                       <div>Type: {getCurrentEventTypeLabel()}</div>

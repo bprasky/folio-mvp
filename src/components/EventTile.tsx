@@ -67,7 +67,7 @@ export default function EventTile({
   return (
     <div
       className={`
-        relative bg-white rounded-xl overflow-hidden border border-gray-100
+        relative bg-surface-canvas rounded-xl overflow-hidden border border-folio-border-subtle
         ${getHoverAnimationClasses(size)}
         ${getTileGridClasses(size)}
         ${className}
@@ -197,7 +197,7 @@ export default function EventTile({
 
           {/* Festival Badge - only show for larger tiles */}
           {(size === 'XL' || size === 'L') && event.parentFestival && (
-            <div className="pt-2 border-t border-gray-100">
+            <div className="pt-2 border-t border-folio-border-subtle">
               <span className="inline-flex items-center px-2 py-1 text-xs font-medium text-folio-accent bg-folio-accent/10 rounded-full">
                 {event.parentFestival.title}
               </span>

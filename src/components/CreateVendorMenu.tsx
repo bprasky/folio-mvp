@@ -19,8 +19,8 @@ export default function CreateVendorMenu({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center glass-backdrop">
-      <div className="bg-white dark:bg-stone-900 rounded-2xl shadow-xl w-full max-w-md p-6">
-        <h2 className="text-xl font-semibold mb-4 text-stone-900 dark:text-stone-100">
+      <div className="bg-surface-canvas dark:bg-surface-canvas rounded-2xl shadow-xl w-full max-w-md p-6">
+        <h2 className="text-xl font-semibold mb-4 text-folio-text-primary dark:text-folio-text-tertiary">
           Create New
         </h2>
         <div className="grid gap-3">
@@ -44,16 +44,16 @@ export default function CreateVendorMenu({
 
           {/* Create Project */}
           <button
-            className="w-full rounded-xl border border-stone-200 dark:border-stone-700 px-4 py-3 text-left hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors group"
+            className="w-full rounded-xl border border-folio-border-subtle dark:border-folio-border-subtle px-4 py-3 text-left hover:bg-surface-ground dark:hover:bg-stone-800 transition-colors group"
             onClick={createProject}
           >
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-stone-100 dark:bg-stone-800 group-hover:bg-stone-200 dark:group-hover:bg-stone-700">
-                <FolderKanban className="w-5 h-5 text-stone-600 dark:text-stone-400" />
+              <div className="p-2 rounded-lg bg-surface-elevated dark:bg-surface-elevated group-hover:bg-surface-elevated dark:group-hover:bg-stone-700">
+                <FolderKanban className="w-5 h-5 text-folio-text-secondary dark:text-folio-text-tertiary" />
               </div>
               <div className="flex-1">
-                <div className="font-medium text-stone-900 dark:text-stone-100">Create Project</div>
-                <div className="text-sm text-stone-600 dark:text-stone-400">
+                <div className="font-medium text-folio-text-primary dark:text-folio-text-tertiary">Create Project</div>
+                <div className="text-sm text-folio-text-secondary dark:text-folio-text-tertiary">
                   Organize samples and client work
                 </div>
               </div>
@@ -63,7 +63,7 @@ export default function CreateVendorMenu({
 
         <div className="mt-5 flex justify-end">
           <button 
-            className="text-sm text-stone-600 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200 transition-colors" 
+            className="text-sm text-folio-text-secondary dark:text-folio-text-tertiary hover:text-folio-text-primary dark:hover:text-folio-text-tertiary transition-colors" 
             onClick={onClose}
           >
             Cancel

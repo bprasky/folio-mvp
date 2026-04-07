@@ -23,7 +23,7 @@ export default function ProductInsightsHeader({
   onBoostClick,
 }: ProductInsightsHeaderProps) {
   return (
-    <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
+    <div className="bg-surface-canvas rounded-lg shadow-lg p-6 mb-8">
       <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
         <div className="relative w-32 h-32 md:w-48 md:h-48 flex-shrink-0">
           <Image

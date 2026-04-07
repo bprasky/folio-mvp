@@ -14,7 +14,7 @@ export function PrimaryActions({ product }: { product: Product }) {
       {/* Primary Action - Visually Dominant */}
       <Button 
         onClick={()=>act("Material Bank sample requested")} 
-        className="w-full bg-stone-900 hover:bg-stone-800 dark:bg-stone-100 dark:hover:bg-stone-200 text-white dark:text-stone-900 py-3"
+        className="w-full bg-stone-900 hover:bg-stone-800 dark:bg-surface-elevated dark:hover:bg-surface-elevated text-white dark:text-folio-text-primary py-3"
         size="lg"
       >
         <ShoppingCart className="w-4 h-4 mr-2" />
@@ -26,7 +26,7 @@ export function PrimaryActions({ product }: { product: Product }) {
         <Button 
           onClick={()=>act("Saved to Moodboard")} 
           variant="ghost"
-          className="w-full justify-start text-stone-700 dark:text-stone-300 hover:bg-white/10 dark:hover:bg-white/5"
+          className="w-full justify-start text-folio-text-secondary dark:text-folio-text-tertiary hover:bg-white/10 dark:hover:bg-white/5"
           size="sm"
         >
           <Heart className="w-3.5 h-3.5 mr-2" />
@@ -35,7 +35,7 @@ export function PrimaryActions({ product }: { product: Product }) {
         <Button 
           onClick={()=>act("Added to Project")} 
           variant="ghost"
-          className="w-full justify-start text-stone-700 dark:text-stone-300 hover:bg-white/10 dark:hover:bg-white/5"
+          className="w-full justify-start text-folio-text-secondary dark:text-folio-text-tertiary hover:bg-white/10 dark:hover:bg-white/5"
           size="sm"
         >
           <FolderPlus className="w-3.5 h-3.5 mr-2" />
@@ -44,7 +44,7 @@ export function PrimaryActions({ product }: { product: Product }) {
         <Button 
           onClick={()=>act("Spec Sheet download")} 
           variant="ghost"
-          className="w-full justify-start text-stone-700 dark:text-stone-300 hover:bg-white/10 dark:hover:bg-white/5"
+          className="w-full justify-start text-folio-text-secondary dark:text-folio-text-tertiary hover:bg-white/10 dark:hover:bg-white/5"
           size="sm"
         >
           <FileDown className="w-3.5 h-3.5 mr-2" />
@@ -53,7 +53,7 @@ export function PrimaryActions({ product }: { product: Product }) {
         <Button 
           onClick={()=>act("3D File download")} 
           variant="ghost"
-          className="w-full justify-start text-stone-700 dark:text-stone-300 hover:bg-white/10 dark:hover:bg-white/5"
+          className="w-full justify-start text-folio-text-secondary dark:text-folio-text-tertiary hover:bg-white/10 dark:hover:bg-white/5"
           size="sm"
         >
           <Box className="w-3.5 h-3.5 mr-2" />
@@ -62,7 +62,7 @@ export function PrimaryActions({ product }: { product: Product }) {
         <Button 
           onClick={()=>act("Shared product link")} 
           variant="ghost"
-          className="w-full justify-start text-stone-700 dark:text-stone-300 hover:bg-white/10 dark:hover:bg-white/5"
+          className="w-full justify-start text-folio-text-secondary dark:text-folio-text-tertiary hover:bg-white/10 dark:hover:bg-white/5"
           size="sm"
         >
           <Share2 className="w-3.5 h-3.5 mr-2" />
@@ -70,7 +70,7 @@ export function PrimaryActions({ product }: { product: Product }) {
         </Button>
       </div>
       
-      <div className="text-xs text-stone-500/80 dark:text-stone-400/80 pt-3 border-t border-white/10 dark:border-white/5 leading-relaxed">
+      <div className="text-xs text-folio-text-tertiary/80 dark:text-folio-text-tertiary/80 pt-3 border-t border-white/10 dark:border-white/5 leading-relaxed">
         💡 Connect Material Bank + Folio to auto-log sampling
       </div>
     </div>

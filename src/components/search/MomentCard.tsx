@@ -71,7 +71,7 @@ export default function MomentCard({
               e.stopPropagation();
               onSave();
             }}
-            className="bg-white/90 backdrop-blur-sm px-3 py-2 rounded text-xs font-medium hover:bg-white transition-colors"
+            className="bg-white/90 backdrop-blur-sm px-3 py-2 rounded text-xs font-medium hover:bg-surface-canvas transition-colors"
           >
             Save
           </button>
@@ -82,7 +82,7 @@ export default function MomentCard({
               e.stopPropagation();
               onShare();
             }}
-            className="bg-white/90 backdrop-blur-sm px-3 py-2 rounded text-xs font-medium hover:bg-white transition-colors"
+            className="bg-white/90 backdrop-blur-sm px-3 py-2 rounded text-xs font-medium hover:bg-surface-canvas transition-colors"
           >
             Share
           </button>

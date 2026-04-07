@@ -85,20 +85,20 @@ export default function FeaturedProductSelect({
             }}
             onFocus={() => setShowResults(true)}
             placeholder="Search products by name or brand..."
-            className="w-full rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 px-4 py-2 pl-10 focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+            className="w-full rounded-lg border border-folio-border-strong dark:border-folio-border-subtle bg-surface-canvas dark:bg-surface-canvas text-folio-text-primary dark:text-folio-text-tertiary placeholder:text-folio-text-tertiary px-4 py-2 pl-10 focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
           />
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-folio-text-tertiary" />
         </div>
 
         {/* Search Results Dropdown */}
         {showResults && query && (
-          <div className="absolute z-10 mt-2 w-full max-h-64 overflow-auto rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 shadow-lg">
+          <div className="absolute z-10 mt-2 w-full max-h-64 overflow-auto rounded-lg border border-folio-border-strong dark:border-folio-border-subtle bg-surface-canvas dark:bg-surface-canvas shadow-lg">
             {isSearching ? (
-              <div className="px-4 py-8 text-center text-sm text-stone-500 dark:text-stone-400">
+              <div className="px-4 py-8 text-center text-sm text-folio-text-tertiary dark:text-folio-text-tertiary">
                 Searching...
               </div>
             ) : results.length === 0 ? (
-              <div className="px-4 py-8 text-center text-sm text-stone-500 dark:text-stone-400">
+              <div className="px-4 py-8 text-center text-sm text-folio-text-tertiary dark:text-folio-text-tertiary">
                 No products found
               </div>
             ) : (
@@ -111,9 +111,9 @@ export default function FeaturedProductSelect({
                       type="button"
                       onClick={() => !isAdded && addProduct(product)}
                       disabled={isAdded}
-                      className="flex w-full items-center gap-3 px-4 py-3 hover:bg-stone-50 dark:hover:bg-stone-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors border-b border-stone-200 dark:border-stone-700 last:border-0"
+                      className="flex w-full items-center gap-3 px-4 py-3 hover:bg-surface-ground dark:hover:bg-stone-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors border-b border-folio-border-subtle dark:border-folio-border-subtle last:border-0"
                     >
-                      <div className="h-10 w-10 rounded overflow-hidden bg-stone-100 dark:bg-stone-800 flex-shrink-0">
+                      <div className="h-10 w-10 rounded overflow-hidden bg-surface-elevated dark:bg-surface-elevated flex-shrink-0">
                         {product.thumbnailUrl ? (
                           <img
                             src={product.thumbnailUrl}
@@ -122,15 +122,15 @@ export default function FeaturedProductSelect({
                           />
                         ) : (
                           <div className="h-full w-full flex items-center justify-center">
-                            <Package className="w-4 h-4 text-stone-400" />
+                            <Package className="w-4 h-4 text-folio-text-tertiary" />
                           </div>
                         )}
                       </div>
                       <div className="flex-1 text-left">
-                        <div className="text-sm font-medium text-stone-900 dark:text-stone-100">
+                        <div className="text-sm font-medium text-folio-text-primary dark:text-folio-text-tertiary">
                           {product.name}
                         </div>
-                        <div className="text-xs text-stone-500 dark:text-stone-400">
+                        <div className="text-xs text-folio-text-tertiary dark:text-folio-text-tertiary">
                           {product.vendor?.name || 'Unknown'} • {product.sku || '—'}
                         </div>
                       </div>
@@ -139,7 +139,7 @@ export default function FeaturedProductSelect({
                           Added
                         </span>
                       ) : (
-                        <Plus className="w-4 h-4 text-stone-400" />
+                        <Plus className="w-4 h-4 text-folio-text-tertiary" />
                       )}
                     </button>
                   );
@@ -153,16 +153,16 @@ export default function FeaturedProductSelect({
       {/* Selected Products */}
       {value.length > 0 && (
         <div className="space-y-2">
-          <div className="text-sm font-medium text-stone-700 dark:text-stone-300">
+          <div className="text-sm font-medium text-folio-text-secondary dark:text-folio-text-tertiary">
             Featured Products ({value.length})
           </div>
           <div className="space-y-2">
             {value.map((product) => (
               <div
                 key={product.id}
-                className="flex items-center gap-3 rounded-lg border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 px-3 py-2"
+                className="flex items-center gap-3 rounded-lg border border-folio-border-subtle dark:border-folio-border-subtle bg-surface-ground dark:bg-surface-elevated px-3 py-2"
               >
-                <div className="h-8 w-8 rounded overflow-hidden bg-stone-100 dark:bg-stone-700 flex-shrink-0">
+                <div className="h-8 w-8 rounded overflow-hidden bg-surface-elevated dark:bg-stone-700 flex-shrink-0">
                   {product.thumbnailUrl ? (
                     <img
                       src={product.thumbnailUrl}
@@ -171,22 +171,22 @@ export default function FeaturedProductSelect({
                     />
                   ) : (
                     <div className="h-full w-full flex items-center justify-center">
-                      <Package className="w-3 h-3 text-stone-400" />
+                      <Package className="w-3 h-3 text-folio-text-tertiary" />
                     </div>
                   )}
                 </div>
                 <div className="flex-1">
-                  <div className="text-sm font-medium text-stone-900 dark:text-stone-100">
+                  <div className="text-sm font-medium text-folio-text-primary dark:text-folio-text-tertiary">
                     {product.name}
                   </div>
-                  <div className="text-xs text-stone-500 dark:text-stone-400">
+                  <div className="text-xs text-folio-text-tertiary dark:text-folio-text-tertiary">
                     {product.vendor?.name || 'Unknown'}
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={() => removeProduct(product.id)}
-                  className="p-1 rounded hover:bg-stone-200 dark:hover:bg-stone-700 text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 transition-colors"
+                  className="p-1 rounded hover:bg-surface-elevated dark:hover:bg-stone-700 text-folio-text-tertiary dark:text-folio-text-tertiary hover:text-folio-text-secondary dark:hover:text-folio-text-tertiary transition-colors"
                 >
                   <X className="w-4 h-4" />
                 </button>

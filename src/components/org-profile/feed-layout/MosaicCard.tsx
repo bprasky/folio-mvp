@@ -20,7 +20,7 @@ export default function MosaicCard({ project, size }: MosaicCardProps) {
     <Link href={`/project/${project.id}`}>
       <div
         className={`
-          group relative overflow-hidden rounded-xl bg-stone-100
+          group relative overflow-hidden rounded-xl bg-surface-elevated
           ${aspectRatios[size]}
           hover:shadow-lg transition-shadow duration-300
           h-full

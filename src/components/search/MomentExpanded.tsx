@@ -23,11 +23,11 @@ export default function MomentExpanded({
 }: MomentExpandedProps) {
   return (
     <div className="fixed inset-0 z-50 glass-backdrop flex items-center justify-center p-8">
-      <div className="bg-white max-w-6xl w-full max-h-[90vh] overflow-y-auto rounded-lg relative">
+      <div className="bg-surface-canvas max-w-6xl w-full max-h-[90vh] overflow-y-auto rounded-lg relative">
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 z-10 bg-white/90 backdrop-blur-sm w-10 h-10 rounded-full flex items-center justify-center hover:bg-white transition-colors"
+          className="absolute top-4 right-4 z-10 bg-white/90 backdrop-blur-sm w-10 h-10 rounded-full flex items-center justify-center hover:bg-surface-canvas transition-colors"
         >
           <span className="text-2xl">×</span>
         </button>
@@ -69,7 +69,7 @@ export default function MomentExpanded({
                   <p className="font-medium text-folio-text-primary">
                     {moment.designerName}
                   </p>
-                  <p className="text-sm text-[#666]">Designer</p>
+                  <p className="text-sm text-folio-text-secondary">Designer</p>
                 </div>
               </Link>
             </div>
@@ -88,7 +88,7 @@ export default function MomentExpanded({
                     >
                       <span className="text-folio-text-primary">{product.name}</span>
                       {product.vendorName && (
-                        <span className="text-sm text-[#666]">
+                        <span className="text-sm text-folio-text-secondary">
                           {product.vendorName}
                         </span>
                       )}
@@ -108,7 +108,7 @@ export default function MomentExpanded({
                   {moment.tags.slice(0, 10).map((tag, idx) => (
                     <span
                       key={idx}
-                      className="px-3 py-1 bg-surface-elevated rounded-full text-sm text-[#666]"
+                      className="px-3 py-1 bg-surface-elevated rounded-full text-sm text-folio-text-secondary"
                     >
                       {tag}
                     </span>

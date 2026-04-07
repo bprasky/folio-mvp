@@ -17,7 +17,7 @@ interface InsightFlowProps {
 
 export default function InsightFlow({ nodes, onHover }: InsightFlowProps) {
   return (
-    <div className="bg-white rounded-xl border border-folio-border-strong p-6">
+    <div className="bg-surface-canvas rounded-xl border border-folio-border-strong p-6">
       <div className="mb-4">
         <h3 className="text-lg font-serif text-folio-text-primary mb-1">Insight Flow</h3>
         <p className="text-sm text-folio-text-secondary">From exposure to intent to value.</p>
@@ -56,7 +56,7 @@ export default function InsightFlow({ nodes, onHover }: InsightFlowProps) {
             {/* Connector line */}
             {index < nodes.length - 1 && (
               <div className="flex-1 flex items-center justify-center mx-4">
-                <div className="h-px bg-[#DAD2CA] w-full relative">
+                <div className="h-px bg-folio-border-strong w-full relative">
                   <motion.div
                     className="absolute top-0 right-0 w-2 h-2 bg-[#8C8278] rounded-full transform translate-x-1 -translate-y-1"
                     initial={{ scale: 0 }}

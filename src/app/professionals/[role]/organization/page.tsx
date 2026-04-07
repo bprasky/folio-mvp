@@ -301,7 +301,7 @@ export default function OrganizationPage() {
               </div>
 
               {/* Search Section */}
-              <div className="bg-white rounded-[20px] border border-folio-stone-100 p-6 md:p-8 shadow-sm">
+              <div className="bg-surface-canvas rounded-[20px] border border-folio-stone-100 p-6 md:p-8 shadow-sm">
                 {/* Search Input */}
                 <div className="relative">
                   <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
@@ -361,7 +361,7 @@ export default function OrganizationPage() {
                         <button
                           onClick={() => handleJoinRequest(org.id)}
                           disabled={isSubmitting}
-                          className="flex-shrink-0 px-4 py-2 text-sm font-sans font-medium text-folio-ink bg-white border border-folio-stone-200 rounded-full hover:bg-folio-stone-100 transition-colors disabled:opacity-50"
+                          className="flex-shrink-0 px-4 py-2 text-sm font-sans font-medium text-folio-ink bg-surface-canvas border border-folio-stone-200 rounded-full hover:bg-folio-stone-100 transition-colors disabled:opacity-50"
                         >
                           {isSubmitting ? 'Requesting...' : 'Request to Join'}
                         </button>
@@ -422,7 +422,7 @@ export default function OrganizationPage() {
               </div>
 
               {/* Create Form */}
-              <div className="bg-white rounded-[20px] border border-folio-stone-100 p-6 md:p-8 shadow-sm">
+              <div className="bg-surface-canvas rounded-[20px] border border-folio-stone-100 p-6 md:p-8 shadow-sm">
                 <form onSubmit={handleCreateOrg} className="space-y-6">
                   {/* Organization Name */}
                   <div>
@@ -546,7 +546,7 @@ export default function OrganizationPage() {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.4 }}
             >
-              <div className="bg-white rounded-[20px] border border-folio-stone-100 p-8 md:p-12 shadow-sm text-center">
+              <div className="bg-surface-canvas rounded-[20px] border border-folio-stone-100 p-8 md:p-12 shadow-sm text-center">
                 {/* Success Icon */}
                 <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-6">
                   <FaCheck className="w-7 h-7 text-emerald-600" />
@@ -595,7 +595,7 @@ export default function OrganizationPage() {
                     </button>
                   </Link>
                   <Link href="/" className="flex-1">
-                    <button className="w-full py-3.5 px-6 rounded-full bg-white text-folio-ink font-sans font-medium border border-folio-stone-200 hover:bg-folio-stone-100 transition-colors">
+                    <button className="w-full py-3.5 px-6 rounded-full bg-surface-canvas text-folio-ink font-sans font-medium border border-folio-stone-200 hover:bg-folio-stone-100 transition-colors">
                       Browse Folio
                     </button>
                   </Link>

@@ -205,7 +205,7 @@ function OrgProductModal({
     >
       <motion.div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
       <motion.div
-        className="relative z-10 w-full max-w-3xl max-h-[90vh] overflow-hidden rounded-2xl bg-white shadow-2xl"
+        className="relative z-10 w-full max-w-3xl max-h-[90vh] overflow-hidden rounded-2xl bg-surface-canvas shadow-2xl"
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.95, opacity: 0 }}
@@ -213,7 +213,7 @@ function OrgProductModal({
       >
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 z-20 w-8 h-8 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center hover:bg-white transition-colors"
+          className="absolute top-4 right-4 z-20 w-8 h-8 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center hover:bg-surface-canvas transition-colors"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2C2825" strokeWidth="2" strokeLinecap="round">
             <line x1="18" y1="6" x2="6" y2="18" />
@@ -223,19 +223,19 @@ function OrgProductModal({
 
         <div className="flex flex-col md:flex-row max-h-[90vh]">
           <div className="md:w-3/5 flex flex-col">
-            <div className="relative aspect-square md:aspect-[4/3] bg-stone-100">
+            <div className="relative aspect-square md:aspect-[4/3] bg-surface-elevated">
               {displayImage ? (
                 <SafeImage src={displayImage} alt={product.name} fill className="object-cover" />
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-2xl font-medium text-stone-300">
+                  <span className="text-2xl font-medium text-folio-text-tertiary">
                     {product.name.slice(0, 2).toUpperCase()}
                   </span>
                 </div>
               )}
             </div>
             {product.sourceImageUrl && (
-              <div className="p-1 bg-stone-100">
+              <div className="p-1 bg-surface-elevated">
                 <div className="relative aspect-[3/1] rounded-lg overflow-hidden">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img

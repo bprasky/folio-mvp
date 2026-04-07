@@ -9,7 +9,7 @@ type Props = {
 
 export default function RecipientEmailCard({ value, onChange, className }: Props) {
   return (
-    <div className={`border rounded-2xl p-6 bg-white ${className ?? ''}`}>
+    <div className={`border rounded-2xl p-6 bg-surface-canvas ${className ?? ''}`}>
       <h3 className="text-lg font-semibold mb-2">Designer recipient</h3>
       <p className="text-sm text-folio-text-secondary mb-4">
         Enter the designer's email. We'll send a private link; the designer chooses the destination.

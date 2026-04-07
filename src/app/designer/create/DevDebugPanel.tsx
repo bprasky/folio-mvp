@@ -57,13 +57,13 @@ export default function DevDebugPanel() {
       <div className="break-all">Cookie (client, HttpOnly so often blank): {cookie || '—'}</div>
       <button
         onClick={testCreate}
-        className="mt-2 rounded border px-2 py-2 bg-white hover:bg-surface-ground"
+        className="mt-2 rounded border px-2 py-2 bg-surface-canvas hover:bg-surface-ground"
       >
         Test POST /api/projects
       </button>
       <button
         onClick={readServerSession}
-        className="mt-2 ml-2 rounded border px-2 py-2 bg-white hover:bg-surface-ground"
+        className="mt-2 ml-2 rounded border px-2 py-2 bg-surface-canvas hover:bg-surface-ground"
       >
         Read /api/debug/session
       </button>

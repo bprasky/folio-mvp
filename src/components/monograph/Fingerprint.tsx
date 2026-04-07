@@ -21,19 +21,19 @@ export default function Fingerprint({ tags, projectCount, lastUpdated, projectVi
 
   return (
     <section className="max-w-4xl mx-auto">
-      <div className="border-t border-b border-stone-200 py-12">
+      <div className="border-t border-b border-folio-border-subtle py-12">
         <div className="flex flex-wrap items-center justify-center gap-3 md:gap-4 mb-6">
           {tags.map((tag, index) => (
             <span
               key={index}
-              className="px-4 py-2 text-sm md:text-base text-stone-700 font-light border border-stone-300 rounded-full bg-white/50"
+              className="px-4 py-2 text-sm md:text-base text-folio-text-secondary font-light border border-folio-border-strong rounded-full bg-white/50"
             >
               {tag}
             </span>
           ))}
         </div>
         
-        <div className="text-center text-sm text-stone-500 font-light mb-4">
+        <div className="text-center text-sm text-folio-text-tertiary font-light mb-4">
           <span>Distilled from {projectCount} {projectCount === 1 ? 'project' : 'projects'}</span>
           {lastUpdated && (
             <>

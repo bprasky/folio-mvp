@@ -41,7 +41,7 @@ export default function ArrivalTimeline({ eventId }: { eventId: string }) {
 
   if (data.length === 0) {
     return (
-      <p className="text-sm text-stone-400 text-center py-6">
+      <p className="text-sm text-folio-text-tertiary text-center py-6">
         No check-ins yet — timeline will appear as guests arrive.
       </p>
     );

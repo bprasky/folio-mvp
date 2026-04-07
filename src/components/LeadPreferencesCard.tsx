@@ -97,10 +97,10 @@ export default function LeadPreferencesCard({ preferences, onSave }: LeadPrefere
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white rounded-2xl shadow-lg overflow-hidden"
+      className="bg-surface-canvas rounded-2xl shadow-lg overflow-hidden"
     >
       <div 
-        className="p-6 border-b border-gray-100 cursor-pointer"
+        className="p-6 border-b border-folio-border-subtle cursor-pointer"
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <div className="flex items-center justify-between">

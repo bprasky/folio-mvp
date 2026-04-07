@@ -29,7 +29,7 @@ export function DeleteProjectButton({ projectId, projectName }: DeleteProjectBut
     <>
       <button
         onClick={() => setOpen(true)}
-        className="flex items-center gap-2 px-3 py-2 text-[rgb(74,44,59)] hover:text-[rgb(74,44,59)]/80 hover:bg-stone-100 rounded-lg transition-colors"
+        className="flex items-center gap-2 px-3 py-2 text-[rgb(74,44,59)] hover:text-[rgb(74,44,59)]/80 hover:bg-surface-elevated rounded-lg transition-colors"
         disabled={pending}
       >
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

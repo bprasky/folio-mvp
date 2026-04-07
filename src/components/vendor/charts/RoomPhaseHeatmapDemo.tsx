@@ -35,7 +35,7 @@ export function RoomPhaseHeatmapDemo({ matrix, rooms, phases }: Props) {
             {phases.map(p => {
               const c = m.find(x => x.room === r && x.phase === p) || { saves: 0, tags: 0, ratePct: 0 };
               return (
-                <div key={`${r}-${p}`} className="relative flex h-16 items-center justify-center rounded-xl border bg-white">
+                <div key={`${r}-${p}`} className="relative flex h-16 items-center justify-center rounded-xl border bg-surface-canvas">
                   <div className="text-base font-semibold">{(c.ratePct ?? 0)}%</div>
                   <div className="absolute bottom-1 text-[11px] h-key">{c.saves} saves → {c.tags} tags</div>
                 </div>

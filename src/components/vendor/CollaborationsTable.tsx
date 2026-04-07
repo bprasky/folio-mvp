@@ -135,7 +135,7 @@ export default function CollaborationsTable({ vendorOrgId }: CollaborationsTable
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-folio-border-subtle overflow-hidden">
+    <div className="bg-surface-canvas rounded-lg shadow-sm border border-folio-border-subtle overflow-hidden">
       <div className="px-6 py-4 border-b border-folio-border-subtle">
         <h2 className="text-lg font-semibold text-folio-text-primary">Discovery Budget Collaborations</h2>
         <p className="text-sm text-folio-text-secondary mt-1">Manage spend settings for designer collaborations</p>
@@ -143,7 +143,7 @@ export default function CollaborationsTable({ vendorOrgId }: CollaborationsTable
 
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-[var(--ridge-outer)]">
-          <thead className="bg-gray-50">
+          <thead className="bg-surface-ground">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-folio-text-secondary uppercase tracking-wider">
                 Project
@@ -177,7 +177,7 @@ export default function CollaborationsTable({ vendorOrgId }: CollaborationsTable
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-[var(--ridge-outer)]">
+          <tbody className="bg-surface-canvas divide-y divide-[var(--ridge-outer)]">
             {collaborations.map((collab) => (
               <tr key={collab.id} className="hover:bg-surface-ground">
                 <td className="px-6 py-4 whitespace-nowrap">
@@ -254,7 +254,7 @@ export default function CollaborationsTable({ vendorOrgId }: CollaborationsTable
       {/* Edit Modal */}
       {editingId && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+          <div className="bg-surface-canvas rounded-lg p-6 max-w-md w-full mx-4">
             <h3 className="text-lg font-semibold mb-4">Edit Discovery Budget Settings</h3>
             <div className="space-y-4">
               <div>

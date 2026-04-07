@@ -67,7 +67,7 @@ export default function ProjectsOnlyProfileState({
 
   // Owner view - show projects + brand suggestion
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-surface-canvas">
       {/* Suggestion banner */}
       <div className="bg-[var(--accent)]/5 border-b border-[var(--accent)]/20 px-6 py-3">
         <div className="max-w-4xl mx-auto flex items-center justify-between">

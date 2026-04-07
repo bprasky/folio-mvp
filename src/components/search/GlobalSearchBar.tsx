@@ -49,7 +49,7 @@ export default function GlobalSearchBar({
         {!isExpanded ? (
           <button
             onClick={() => setIsExpanded(true)}
-            className="p-2 text-[#4A4A4A] hover:text-folio-text-primary transition-colors"
+            className="p-2 text-folio-text-primary hover:text-folio-text-primary transition-colors"
             aria-label="Open search"
           >
             <Search size={20} />
@@ -66,13 +66,13 @@ export default function GlobalSearchBar({
                 onBlur={() => { if (!query) setIsExpanded(false); }}
                 placeholder={placeholder}
                 className="w-48 md:w-64 pl-3 pr-8 py-1.5 text-sm border border-folio-border-subtle rounded-sm 
-                           focus:outline-none focus:border-[#1A1A1A] bg-white
-                           font-sans text-folio-text-primary placeholder:text-[#9A9A9A]"
+                           focus:outline-none focus:border-[#1A1A1A] bg-surface-canvas
+                           font-sans text-folio-text-primary placeholder:text-folio-text-tertiary"
               />
               <button
                 type="button"
                 onClick={() => { setQuery(''); setIsExpanded(false); }}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-[#9A9A9A] hover:text-[#4A4A4A]"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-folio-text-tertiary hover:text-folio-text-primary"
               >
                 <X size={14} />
               </button>
@@ -86,7 +86,7 @@ export default function GlobalSearchBar({
   return (
     <form onSubmit={handleSubmit} className={`relative ${className}`}>
       <div className="relative">
-        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9A9A9A]" />
+        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-folio-text-tertiary" />
         <input
           ref={inputRef}
           type="text"
@@ -95,14 +95,14 @@ export default function GlobalSearchBar({
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
           className="w-full pl-9 pr-4 py-2 text-sm border border-folio-border-subtle rounded-sm 
-                     focus:outline-none focus:border-[#1A1A1A] bg-white
-                     font-sans text-folio-text-primary placeholder:text-[#9A9A9A] transition-colors"
+                     focus:outline-none focus:border-[#1A1A1A] bg-surface-canvas
+                     font-sans text-folio-text-primary placeholder:text-folio-text-tertiary transition-colors"
         />
         {query && (
           <button
             type="button"
             onClick={() => setQuery('')}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9A9A9A] hover:text-[#4A4A4A]"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-folio-text-tertiary hover:text-folio-text-primary"
           >
             <X size={14} />
           </button>

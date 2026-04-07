@@ -20,7 +20,7 @@ export function KeyAccounts({ firms }: KeyAccountsProps) {
   return (
     <div className="space-y-6">
       {/* Top Firms by Influence */}
-      <Card className="bg-white border-folio-border-strong">
+      <Card className="bg-surface-canvas border-folio-border-strong">
         <CardHeader>
           <CardTitle className="text-lg font-serif text-folio-text-primary flex items-center space-x-2">
             <Building2 className="w-5 h-5 text-folio-text-secondary" />
@@ -83,7 +83,7 @@ export function KeyAccounts({ firms }: KeyAccountsProps) {
       {/* Account Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* New Accounts */}
-        <Card className="bg-white border-folio-border-strong">
+        <Card className="bg-surface-canvas border-folio-border-strong">
           <CardContent className="p-4">
             <div className="flex items-center space-x-3 mb-3">
               <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
@@ -114,7 +114,7 @@ export function KeyAccounts({ firms }: KeyAccountsProps) {
         </Card>
 
         {/* Reactivated Accounts */}
-        <Card className="bg-white border-folio-border-strong">
+        <Card className="bg-surface-canvas border-folio-border-strong">
           <CardContent className="p-4">
             <div className="flex items-center space-x-3 mb-3">
               <div className="w-8 h-8 bg-[var(--accent)]/10 rounded-full flex items-center justify-center">

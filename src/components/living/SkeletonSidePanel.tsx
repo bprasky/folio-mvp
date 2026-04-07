@@ -205,7 +205,7 @@ export default function SkeletonSidePanel({
   if (!open || !skeleton) return null;
 
   return (
-    <div className="fixed inset-y-0 right-0 w-96 bg-white shadow-xl z-50 flex flex-col">
+    <div className="fixed inset-y-0 right-0 w-96 bg-surface-canvas shadow-xl z-50 flex flex-col">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b">
         <h2 className="text-lg font-semibold">We noticed something here</h2>

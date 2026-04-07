@@ -20,9 +20,9 @@ export default function GraphFilters({ filters, onFiltersChange }: GraphFiltersP
   ];
 
   return (
-    <div className="bg-white rounded-xl border border-stone-200 shadow-sm p-4">
+    <div className="bg-surface-canvas rounded-xl border border-folio-border-subtle shadow-sm p-4">
       <div className="flex items-center space-x-2 mb-4">
-        <Filter className="w-4 h-4 text-stone-500" />
+        <Filter className="w-4 h-4 text-folio-text-tertiary" />
         <h3 className="font-medium text-ink">Filters</h3>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -35,7 +35,7 @@ export default function GraphFilters({ filters, onFiltersChange }: GraphFiltersP
             onChange={(e) =>
               onFiltersChange({ ...filters, nodeType: e.target.value as any })
             }
-            className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-accent-400 focus:border-accent-400"
+            className="w-full px-3 py-2 border border-folio-border-strong rounded-lg focus:ring-2 focus:ring-accent-400 focus:border-accent-400"
           >
             {nodeTypes.map((type) => (
               <option key={type.value} value={type.value}>

@@ -155,7 +155,7 @@ const roleFeatures: Record<UserRole, { title: string; subtitle: string; features
         icon: FaCog,
         label: 'Settings',
         description: 'Configure platform settings',
-        color: 'bg-gray-500 hover:bg-gray-600',
+        color: 'bg-surface-ground0 hover:bg-gray-600',
         onClick: () => console.log('Settings clicked')
       }
     ]
@@ -217,7 +217,7 @@ export default function RolePanel() {
             <motion.button
               key={feature.label}
               onClick={feature.onClick}
-              className="group p-6 rounded-xl border border-folio-border-subtle hover:shadow-lg transition-all duration-300 text-left bg-white hover:bg-surface-ground"
+              className="group p-6 rounded-xl border border-folio-border-subtle hover:shadow-lg transition-all duration-300 text-left bg-surface-canvas hover:bg-surface-ground"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: 0.2 + (index * 0.1) }}

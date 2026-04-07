@@ -187,7 +187,7 @@ export function PlaybookSheet({ isOpen, onClose, onSubmit, playItem, type, desig
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent className="w-full sm:max-w-md bg-white p-6 flex flex-col">
+      <SheetContent className="w-full sm:max-w-md bg-surface-canvas p-6 flex flex-col">
         <SheetHeader>
           <div className="flex items-center justify-between">
             <div>
@@ -243,7 +243,7 @@ export function PlaybookSheet({ isOpen, onClose, onSubmit, playItem, type, desig
           <div className="mt-auto pt-4 border-t border-folio-border-strong">
             <Button 
               type="submit" 
-              className="w-full bg-[#2B2B2B] hover:bg-[#8C8278] text-white" 
+              className="w-full bg-folio-text-primary hover:bg-[#8C8278] text-white" 
               disabled={isSubmitting}
             >
               {isSubmitting ? 'Processing...' : `Send to ${targetCount} Designer${targetCount !== 1 ? 's' : ''}`}

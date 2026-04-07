@@ -14,7 +14,7 @@ export const MetricsPanel: React.FC<MetricsPanelProps> = ({
   className = '',
 }) => {
   return (
-    <div className={`bg-white rounded-lg shadow-md p-6 ${className}`}>
+    <div className={`bg-surface-canvas rounded-lg shadow-md p-6 ${className}`}>
       <h3 className="text-lg font-semibold text-folio-text-primary mb-4">Metrics</h3>
       <div className="grid grid-cols-3 gap-4">
         <div className="text-center">

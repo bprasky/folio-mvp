@@ -104,10 +104,10 @@ export function StepMedia({ initialData, onNext, onBack }: StepMediaProps) {
             <ImageIcon className="w-6 h-6 text-green-600 dark:text-green-400" />
           </div>
           <div>
-            <h2 className="text-2xl font-medium text-stone-900 dark:text-stone-100">
+            <h2 className="text-2xl font-medium text-folio-text-primary dark:text-folio-text-tertiary">
               Add Media
             </h2>
-            <p className="text-sm text-stone-600 dark:text-stone-400">
+            <p className="text-sm text-folio-text-secondary dark:text-folio-text-tertiary">
               Upload hero image/video and gallery images
             </p>
           </div>
@@ -122,7 +122,7 @@ export function StepMedia({ initialData, onNext, onBack }: StepMediaProps) {
         <div className="space-y-8">
           {/* Hero Media */}
           <div className="space-y-4">
-            <h3 className="text-lg font-medium text-stone-900 dark:text-stone-100">
+            <h3 className="text-lg font-medium text-folio-text-primary dark:text-folio-text-tertiary">
               Hero Media * (required)
             </h3>
 
@@ -132,7 +132,7 @@ export function StepMedia({ initialData, onNext, onBack }: StepMediaProps) {
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg border ${
                   heroType === 'image'
                     ? 'border-[var(--accent)] bg-[var(--accent)]/5 dark:bg-blue-950 text-blue-900 dark:text-blue-100'
-                    : 'border-stone-300 dark:border-stone-700'
+                    : 'border-folio-border-strong dark:border-folio-border-subtle'
                 } transition-colors`}
               >
                 <ImageIcon className="w-4 h-4" />
@@ -143,7 +143,7 @@ export function StepMedia({ initialData, onNext, onBack }: StepMediaProps) {
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg border ${
                   heroType === 'video'
                     ? 'border-[var(--accent)] bg-[var(--accent)]/5 dark:bg-blue-950 text-blue-900 dark:text-blue-100'
-                    : 'border-stone-300 dark:border-stone-700'
+                    : 'border-folio-border-strong dark:border-folio-border-subtle'
                 } transition-colors`}
               >
                 <Video className="w-4 h-4" />
@@ -152,7 +152,7 @@ export function StepMedia({ initialData, onNext, onBack }: StepMediaProps) {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2">
+              <label className="block text-sm font-medium text-folio-text-secondary dark:text-folio-text-tertiary mb-2">
                 {heroType === 'image' ? 'Image' : 'Video'} URL
               </label>
               <input
@@ -160,9 +160,9 @@ export function StepMedia({ initialData, onNext, onBack }: StepMediaProps) {
                 value={heroUrl}
                 onChange={(e) => handleHeroChange(e.target.value)}
                 placeholder="https://example.com/images/hero.jpg"
-                className="w-full px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+                className="w-full px-4 py-2 rounded-lg border border-folio-border-strong dark:border-folio-border-subtle bg-surface-canvas dark:bg-surface-canvas focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
               />
-              <p className="text-xs text-stone-500 dark:text-stone-400 mt-1">
+              <p className="text-xs text-folio-text-tertiary dark:text-folio-text-tertiary mt-1">
                 {heroType === 'image' 
                   ? 'Recommended: 3200px width minimum for full-bleed display'
                   : 'MP4 or WebM format recommended, keep under 10MB'}
@@ -171,7 +171,7 @@ export function StepMedia({ initialData, onNext, onBack }: StepMediaProps) {
 
             {heroType === 'image' && (
               <div>
-                <label className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2">
+                <label className="block text-sm font-medium text-folio-text-secondary dark:text-folio-text-tertiary mb-2">
                   Alt Text * (for accessibility)
                 </label>
                 <input
@@ -179,14 +179,14 @@ export function StepMedia({ initialData, onNext, onBack }: StepMediaProps) {
                   value={heroAlt}
                   onChange={(e) => setHeroAlt(e.target.value)}
                   placeholder="Terra Travertine Side Table in natural honed finish"
-                  className="w-full px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+                  className="w-full px-4 py-2 rounded-lg border border-folio-border-strong dark:border-folio-border-subtle bg-surface-canvas dark:bg-surface-canvas focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                 />
               </div>
             )}
 
             {/* Hero Preview */}
             {heroUrl && (
-              <div className="rounded-xl border border-stone-200 dark:border-stone-700 overflow-hidden bg-stone-50 dark:bg-stone-800">
+              <div className="rounded-xl border border-folio-border-subtle dark:border-folio-border-subtle overflow-hidden bg-surface-ground dark:bg-surface-elevated">
                 {heroType === 'image' ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={heroUrl} alt={heroAlt} className="w-full h-48 object-cover" />
@@ -211,7 +211,7 @@ export function StepMedia({ initialData, onNext, onBack }: StepMediaProps) {
                 {[palette.primary, palette.secondary, palette.accent].map((color, i) => (
                   <div key={i} className="flex items-center gap-2">
                     <div
-                      className="w-12 h-12 rounded-lg border-2 border-white dark:border-stone-900 shadow-sm"
+                      className="w-12 h-12 rounded-lg border-2 border-white dark:border-folio-border-subtle shadow-sm"
                       style={{ backgroundColor: color }}
                     />
                     <div className="text-xs">
@@ -232,14 +232,14 @@ export function StepMedia({ initialData, onNext, onBack }: StepMediaProps) {
           )}
 
           {/* Gallery */}
-          <div className="space-y-4 pt-6 border-t border-stone-200 dark:border-stone-700">
+          <div className="space-y-4 pt-6 border-t border-folio-border-subtle dark:border-folio-border-subtle">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-medium text-stone-900 dark:text-stone-100">
+              <h3 className="text-lg font-medium text-folio-text-primary dark:text-folio-text-tertiary">
                 Gallery (optional)
               </h3>
               <button
                 onClick={addGalleryItem}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors text-sm"
+                className="flex items-center gap-2 px-4 py-2 rounded-lg border border-folio-border-strong dark:border-folio-border-subtle hover:bg-surface-ground dark:hover:bg-stone-800 transition-colors text-sm"
               >
                 <Upload className="w-4 h-4" />
                 Add Image
@@ -247,18 +247,18 @@ export function StepMedia({ initialData, onNext, onBack }: StepMediaProps) {
             </div>
 
             {galleryItems.length === 0 ? (
-              <div className="text-center py-8 border-2 border-dashed border-stone-300 dark:border-stone-700 rounded-xl">
-                <Upload className="w-12 h-12 mx-auto mb-3 text-stone-400" />
-                <p className="text-sm text-stone-600 dark:text-stone-400">
+              <div className="text-center py-8 border-2 border-dashed border-folio-border-strong dark:border-folio-border-subtle rounded-xl">
+                <Upload className="w-12 h-12 mx-auto mb-3 text-folio-text-tertiary" />
+                <p className="text-sm text-folio-text-secondary dark:text-folio-text-tertiary">
                   No gallery images yet. Click "Add Image" to start.
                 </p>
               </div>
             ) : (
               <div className="space-y-4">
                 {galleryItems.map((item, index) => (
-                  <div key={index} className="p-4 border border-stone-200 dark:border-stone-700 rounded-xl space-y-3">
+                  <div key={index} className="p-4 border border-folio-border-subtle dark:border-folio-border-subtle rounded-xl space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-stone-900 dark:text-stone-100">
+                      <span className="text-sm font-medium text-folio-text-primary dark:text-folio-text-tertiary">
                         Gallery Image {index + 1}
                       </span>
                       <button
@@ -274,7 +274,7 @@ export function StepMedia({ initialData, onNext, onBack }: StepMediaProps) {
                       value={item.url}
                       onChange={(e) => updateGalleryItem(index, 'url', e.target.value)}
                       placeholder="https://example.com/images/gallery-1.jpg"
-                      className="w-full px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent text-sm"
+                      className="w-full px-4 py-2 rounded-lg border border-folio-border-strong dark:border-folio-border-subtle bg-surface-canvas dark:bg-surface-canvas focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent text-sm"
                     />
 
                     <input
@@ -282,11 +282,11 @@ export function StepMedia({ initialData, onNext, onBack }: StepMediaProps) {
                       value={item.alt || ''}
                       onChange={(e) => updateGalleryItem(index, 'alt', e.target.value)}
                       placeholder="Alt text (required for images)"
-                      className="w-full px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent text-sm"
+                      className="w-full px-4 py-2 rounded-lg border border-folio-border-strong dark:border-folio-border-subtle bg-surface-canvas dark:bg-surface-canvas focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent text-sm"
                     />
 
                     {item.url && (
-                      <div className="rounded-lg border border-stone-200 dark:border-stone-700 overflow-hidden">
+                      <div className="rounded-lg border border-folio-border-subtle dark:border-folio-border-subtle overflow-hidden">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={item.url} alt={item.alt} className="w-full h-32 object-cover" />
                       </div>
@@ -298,10 +298,10 @@ export function StepMedia({ initialData, onNext, onBack }: StepMediaProps) {
           </div>
         </div>
 
-        <div className="flex items-center justify-between mt-8 pt-6 border-t border-stone-200 dark:border-stone-700">
+        <div className="flex items-center justify-between mt-8 pt-6 border-t border-folio-border-subtle dark:border-folio-border-subtle">
           <button
             onClick={onBack}
-            className="text-sm text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 transition-colors"
+            className="text-sm text-folio-text-secondary dark:text-folio-text-tertiary hover:text-folio-text-primary dark:hover:text-folio-text-tertiary transition-colors"
           >
             ← Back
           </button>

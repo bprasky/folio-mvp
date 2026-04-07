@@ -96,7 +96,7 @@ export default function SourcebookCard({
               </button>
 
               {menuOpen && (
-                <div className="absolute right-0 top-8 z-20 w-52 bg-white rounded-lg shadow-lg border border-[var(--border-subtle)] py-1">
+                <div className="absolute right-0 top-8 z-20 w-52 bg-surface-canvas rounded-lg shadow-lg border border-[var(--border-subtle)] py-1">
                   <button
                     onClick={() => { onRequestSample(entry); setMenuOpen(false); }}
                     className="w-full text-left px-4 py-2 text-sm text-folio-text-primary hover:bg-surface-ground transition-colors"

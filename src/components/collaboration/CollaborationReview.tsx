@@ -195,7 +195,7 @@ export function CollaborationReview({
       </div>
 
       {/* Story Preview */}
-      <div className="bg-white rounded-2xl border border-neutral-200 overflow-hidden mb-6">
+      <div className="bg-surface-canvas rounded-2xl border border-neutral-200 overflow-hidden mb-6">
         <div className="p-8">
           {/* Title and excerpt */}
           <div className="mb-8">

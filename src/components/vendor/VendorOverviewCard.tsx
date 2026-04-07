@@ -22,7 +22,7 @@ export default function VendorOverviewCard({
   topProducts
 }: VendorOverviewCardProps) {
   return (
-    <div className="bg-white rounded-lg shadow-lg p-6">
+    <div className="bg-surface-canvas rounded-lg shadow-lg p-6">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         {/* Total Views */}
         <div className="bg-[var(--accent)]/5 rounded-lg p-5">

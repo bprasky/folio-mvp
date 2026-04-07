@@ -14,7 +14,7 @@ export default function MagazineFrame({
   showLoadingAnimation = false 
 }: MagazineFrameProps) {
   return (
-    <div className="min-h-screen bg-stone-100 relative">
+    <div className="min-h-screen bg-surface-elevated relative">
       {/* Magazine Frame */}
       <div className="absolute inset-0 pointer-events-none z-50">
         {/* Top border */}
@@ -30,10 +30,10 @@ export default function MagazineFrame({
         <div className="absolute top-0 bottom-0 right-0 w-1 bg-gradient-to-b from-stone-300 via-stone-400 to-stone-300" />
         
         {/* Corner decorations */}
-        <div className="absolute top-2 left-2 w-3 h-3 border-t-2 border-l-2 border-stone-400" />
-        <div className="absolute top-2 right-2 w-3 h-3 border-t-2 border-r-2 border-stone-400" />
-        <div className="absolute bottom-2 left-2 w-3 h-3 border-b-2 border-l-2 border-stone-400" />
-        <div className="absolute bottom-2 right-2 w-3 h-3 border-b-2 border-r-2 border-stone-400" />
+        <div className="absolute top-2 left-2 w-3 h-3 border-t-2 border-l-2 border-folio-border-strong" />
+        <div className="absolute top-2 right-2 w-3 h-3 border-t-2 border-r-2 border-folio-border-strong" />
+        <div className="absolute bottom-2 left-2 w-3 h-3 border-b-2 border-l-2 border-folio-border-strong" />
+        <div className="absolute bottom-2 right-2 w-3 h-3 border-b-2 border-r-2 border-folio-border-strong" />
       </div>
 
       {/* Loading Animation for existing sessions */}
@@ -42,7 +42,7 @@ export default function MagazineFrame({
           initial={{ opacity: 1 }}
           animate={{ opacity: 0 }}
           transition={{ duration: 2, delay: 0.5 }}
-          className="fixed inset-0 z-40 bg-stone-100 flex items-center justify-center"
+          className="fixed inset-0 z-40 bg-surface-elevated flex items-center justify-center"
         >
           <div className="text-center">
             <motion.div
@@ -51,7 +51,7 @@ export default function MagazineFrame({
               transition={{ duration: 0.8 }}
               className="mb-8"
             >
-              <h1 className="text-6xl font-serif text-stone-800 mb-2">FOLIO</h1>
+              <h1 className="text-6xl font-serif text-folio-text-primary mb-2">FOLIO</h1>
               <div className="w-24 h-0.5 bg-stone-600 mx-auto"></div>
             </motion.div>
             
@@ -59,7 +59,7 @@ export default function MagazineFrame({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.6, delay: 0.3 }}
-              className="text-stone-600 text-lg"
+              className="text-folio-text-secondary text-lg"
             >
               Opening your design magazine...
             </motion.div>

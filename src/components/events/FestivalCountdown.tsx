@@ -27,7 +27,7 @@ export function FestivalCountdown({
   if (state === 'live') {
     return (
       <div
-        className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium text-stone-800 bg-[rgba(0,0,0,0.04)] dark:bg-[rgba(255,255,255,0.06)]"
+        className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium text-folio-text-primary bg-[rgba(0,0,0,0.04)] dark:bg-[rgba(255,255,255,0.06)]"
         role="status"
         aria-label="Happening now"
       >
@@ -43,7 +43,7 @@ export function FestivalCountdown({
       return (
         <a
           href={highlightsUrl}
-          className="text-xs font-medium text-stone-700 underline underline-offset-2 hover:opacity-80 transition-opacity"
+          className="text-xs font-medium text-folio-text-secondary underline underline-offset-2 hover:opacity-80 transition-opacity"
           aria-label="View event highlights"
         >
           Ended · See highlights
@@ -51,7 +51,7 @@ export function FestivalCountdown({
       );
     }
     return (
-      <span className="text-xs text-stone-600" aria-label="Event has ended">
+      <span className="text-xs text-folio-text-secondary" aria-label="Event has ended">
         Ended
       </span>
     );
@@ -60,11 +60,11 @@ export function FestivalCountdown({
   // Pre-event state: Show countdown
   return (
     <div className="inline-flex items-baseline gap-1.5">
-      <span className="text-[11px] uppercase tracking-wide text-stone-600 font-sans">
+      <span className="text-[11px] uppercase tracking-wide text-folio-text-secondary font-sans">
         Starts in
       </span>
       <span
-        className="text-sm md:text-base tracking-wide font-serif text-stone-800"
+        className="text-sm md:text-base tracking-wide font-serif text-folio-text-primary"
         aria-live="polite"
         aria-label={a11yLabel}
         suppressHydrationWarning

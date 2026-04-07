@@ -157,7 +157,7 @@ export default function PhotographerSettingsPage() {
               placeholder="Tell designers about your work, style, and experience..."
               rows={4}
               maxLength={2000}
-              className="w-full rounded-lg border border-folio-border-subtle bg-white px-3 py-2 text-sm text-folio-text-primary placeholder:text-folio-text-tertiary focus:outline-none focus:ring-1 focus:ring-[var(--accent)] resize-none"
+              className="w-full rounded-lg border border-folio-border-subtle bg-surface-canvas px-3 py-2 text-sm text-folio-text-primary placeholder:text-folio-text-tertiary focus:outline-none focus:ring-1 focus:ring-[var(--accent)] resize-none"
             />
           </div>
 
@@ -175,7 +175,7 @@ export default function PhotographerSettingsPage() {
                   className={`px-3 py-1.5 text-sm rounded-full border transition-colors ${
                     form.photographyStyles.includes(style.toLowerCase())
                       ? 'bg-[var(--accent)] text-white border-[var(--accent)]'
-                      : 'bg-white text-folio-text-secondary border-folio-border-subtle hover:border-[var(--accent)]'
+                      : 'bg-surface-canvas text-folio-text-secondary border-folio-border-subtle hover:border-[var(--accent)]'
                   }`}
                 >
                   {style}

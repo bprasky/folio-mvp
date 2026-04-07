@@ -79,7 +79,7 @@ export default function RepDashboardPage() {
   if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-surface-ground px-4">
-        <div className="max-w-md w-full bg-white rounded-lg shadow-md p-8 text-center">
+        <div className="max-w-md w-full bg-surface-canvas rounded-lg shadow-md p-8 text-center">
           <h1 className="text-2xl font-bold mb-4 text-red-600">Error</h1>
           <p className="text-folio-text-secondary mb-6">{error}</p>
           <Link
@@ -99,7 +99,7 @@ export default function RepDashboardPage() {
         <div className="flex gap-8">
           {/* Left Sidebar */}
           <aside className="w-64 flex-shrink-0">
-            <div className="bg-white rounded-lg shadow p-6">
+            <div className="bg-surface-canvas rounded-lg shadow p-6">
               <h2 className="text-lg font-semibold mb-4">Following</h2>
               {following.length === 0 ? (
                 <p className="text-sm text-folio-text-secondary">No designers yet</p>
@@ -137,7 +137,7 @@ export default function RepDashboardPage() {
 
           {/* Main Feed */}
           <main className="flex-1">
-            <div className="bg-white rounded-lg shadow p-6 mb-6">
+            <div className="bg-surface-canvas rounded-lg shadow p-6 mb-6">
               <h1 className="text-2xl font-bold mb-2">Rep Mode Dashboard</h1>
               <p className="text-folio-text-secondary text-sm">
                 This feed is automatically populated with designers and projects that have tagged your organization on Folio.
@@ -145,7 +145,7 @@ export default function RepDashboardPage() {
             </div>
 
             {feedItems.length === 0 ? (
-              <div className="bg-white rounded-lg shadow p-12 text-center">
+              <div className="bg-surface-canvas rounded-lg shadow p-12 text-center">
                 <p className="text-folio-text-secondary">No activity yet. Projects where your organization is tagged will appear here.</p>
               </div>
             ) : (
@@ -153,7 +153,7 @@ export default function RepDashboardPage() {
                 {feedItems.map((item) => (
                   <div
                     key={item.id}
-                    className="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow"
+                    className="bg-surface-canvas rounded-lg shadow p-6 hover:shadow-md transition-shadow"
                   >
                     <div className="flex gap-4">
                       {item.project.imageUrl && (

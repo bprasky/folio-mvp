@@ -212,7 +212,7 @@ export default function VendorProjectDetailPage() {
             <div className="h-4 bg-surface-ground rounded w-1/2 mb-8"></div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="bg-white rounded-2xl p-6 shadow-lg">
+                <div key={i} className="bg-surface-canvas rounded-2xl p-6 shadow-lg">
                   <div className="h-6 bg-surface-ground rounded w-1/2 mb-4"></div>
                   <div className="h-4 bg-surface-ground rounded w-1/3"></div>
                 </div>
@@ -328,7 +328,7 @@ export default function VendorProjectDetailPage() {
               key={room.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100"
+              className="bg-surface-canvas rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-folio-border-subtle"
             >
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-xl font-bold text-folio-text-primary">{room.name}</h3>
@@ -380,7 +380,7 @@ export default function VendorProjectDetailPage() {
         {/* Add Room Modal */}
         {showAddRoom && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-2xl p-6 w-full max-w-md mx-4">
+            <div className="bg-surface-canvas rounded-2xl p-6 w-full max-w-md mx-4">
               <h3 className="text-xl font-bold text-folio-text-primary mb-4">Add New Room</h3>
               <input
                 type="text"

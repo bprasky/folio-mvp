@@ -109,14 +109,14 @@ export default function OrgTerritoryManager({ orgId, isAdmin }: OrgTerritoryMana
   return (
     <div className="space-y-6">
       {/* Territory Settings */}
-      <div className="bg-white rounded-lg border border-stone-200 p-5">
-        <h3 className="text-sm font-medium text-stone-900 mb-4">Territory Protection</h3>
+      <div className="bg-surface-canvas rounded-lg border border-folio-border-subtle p-5">
+        <h3 className="text-sm font-medium text-folio-text-primary mb-4">Territory Protection</h3>
 
         {/* Soft lock toggle */}
         <div className="flex items-center justify-between mb-4">
           <div>
-            <p className="text-sm text-stone-700">Enable soft lock</p>
-            <p className="text-xs text-stone-400 mt-0.5">
+            <p className="text-sm text-folio-text-secondary">Enable soft lock</p>
+            <p className="text-xs text-folio-text-tertiary mt-0.5">
               When a rep connects with a designer firm that another rep already services, both reps are notified.
             </p>
           </div>
@@ -124,11 +124,11 @@ export default function OrgTerritoryManager({ orgId, isAdmin }: OrgTerritoryMana
             onClick={toggleSoftLock}
             disabled={saving}
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-              settings?.territoryLockEnabled ? 'bg-green-500' : 'bg-stone-300'
+              settings?.territoryLockEnabled ? 'bg-green-500' : 'bg-surface-elevated'
             } ${saving ? 'opacity-50' : ''}`}
           >
             <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+              className={`inline-block h-4 w-4 transform rounded-full bg-surface-canvas transition-transform ${
                 settings?.territoryLockEnabled ? 'translate-x-6' : 'translate-x-1'
               }`}
             />
@@ -136,10 +136,10 @@ export default function OrgTerritoryManager({ orgId, isAdmin }: OrgTerritoryMana
         </div>
 
         {/* Dormancy threshold */}
-        <div className="flex items-center justify-between pt-4 border-t border-stone-100">
+        <div className="flex items-center justify-between pt-4 border-t border-folio-border-subtle">
           <div>
-            <p className="text-sm text-stone-700">Dormancy threshold</p>
-            <p className="text-xs text-stone-400 mt-0.5">
+            <p className="text-sm text-folio-text-secondary">Dormancy threshold</p>
+            <p className="text-xs text-folio-text-tertiary mt-0.5">
               Days of inactivity before a relationship is flagged as dormant.
             </p>
           </div>
@@ -147,7 +147,7 @@ export default function OrgTerritoryManager({ orgId, isAdmin }: OrgTerritoryMana
             value={settings?.dormancyThresholdDays || 30}
             onChange={(e) => updateThreshold(parseInt(e.target.value))}
             disabled={saving}
-            className="text-sm border border-stone-200 rounded-lg px-3 py-1.5 bg-white text-stone-700 focus:outline-none focus:ring-1 focus:ring-stone-400"
+            className="text-sm border border-folio-border-subtle rounded-lg px-3 py-1.5 bg-surface-canvas text-folio-text-secondary focus:outline-none focus:ring-1 focus:ring-stone-400"
           >
             <option value={14}>14 days</option>
             <option value={30}>30 days</option>
@@ -158,41 +158,41 @@ export default function OrgTerritoryManager({ orgId, isAdmin }: OrgTerritoryMana
       </div>
 
       {/* Territory Assignments */}
-      <div className="bg-white rounded-lg border border-stone-200 p-5">
-        <h3 className="text-sm font-medium text-stone-900 mb-1">Territory Assignments</h3>
-        <p className="text-xs text-stone-400 mb-4">
+      <div className="bg-surface-canvas rounded-lg border border-folio-border-subtle p-5">
+        <h3 className="text-sm font-medium text-folio-text-primary mb-1">Territory Assignments</h3>
+        <p className="text-xs text-folio-text-tertiary mb-4">
           Assign reps to specific designer firm accounts. One primary rep per firm.
         </p>
 
         {assignments.length === 0 ? (
-          <p className="text-sm text-stone-400 text-center py-6">
+          <p className="text-sm text-folio-text-tertiary text-center py-6">
             No territory assignments yet. Assign reps from the Relationships tab by clicking on a relationship.
           </p>
         ) : (
           <div className="space-y-2">
             {assignments.map((a) => (
-              <div key={a.id} className="flex items-center justify-between py-2 border-b border-stone-50 last:border-0">
+              <div key={a.id} className="flex items-center justify-between py-2 border-b border-folio-border-subtle last:border-0">
                 <div className="flex items-center gap-3">
                   <div className="flex-shrink-0">
                     {a.designerOrg.logo ? (
                       <img src={a.designerOrg.logo} alt="" className="w-8 h-8 rounded object-cover" />
                     ) : (
-                      <div className="w-8 h-8 rounded bg-stone-200 flex items-center justify-center text-xs font-medium text-stone-500">
+                      <div className="w-8 h-8 rounded bg-surface-elevated flex items-center justify-center text-xs font-medium text-folio-text-tertiary">
                         {a.designerOrg.name.charAt(0)}
                       </div>
                     )}
                   </div>
                   <div>
-                    <p className="text-sm text-stone-900">{a.designerOrg.name}</p>
-                    <p className="text-xs text-stone-400">
-                      Assigned to <span className="text-stone-600">{a.repUser.name}</span>
+                    <p className="text-sm text-folio-text-primary">{a.designerOrg.name}</p>
+                    <p className="text-xs text-folio-text-tertiary">
+                      Assigned to <span className="text-folio-text-secondary">{a.repUser.name}</span>
                       {a.repUser.title && ` (${a.repUser.title})`}
                     </p>
                   </div>
                 </div>
                 <button
                   onClick={() => removeAssignment(a.id)}
-                  className="text-xs text-stone-400 hover:text-red-500 transition-colors px-2 py-1"
+                  className="text-xs text-folio-text-tertiary hover:text-red-500 transition-colors px-2 py-1"
                 >
                   Remove
                 </button>

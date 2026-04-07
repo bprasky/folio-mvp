@@ -53,10 +53,10 @@ export function StepReview({ productData, onPublish, onBack }: StepReviewProps) 
             <Eye className="w-6 h-6 text-[var(--accent)] dark:text-blue-400" />
           </div>
           <div>
-            <h2 className="text-2xl font-medium text-stone-900 dark:text-stone-100">
+            <h2 className="text-2xl font-medium text-folio-text-primary dark:text-folio-text-tertiary">
               Review & Publish
             </h2>
-            <p className="text-sm text-stone-600 dark:text-stone-400">
+            <p className="text-sm text-folio-text-secondary dark:text-folio-text-tertiary">
               Review your product before publishing
             </p>
           </div>
@@ -145,10 +145,10 @@ export function StepReview({ productData, onPublish, onBack }: StepReviewProps) 
           {/* Media */}
           <ReviewSection title="Media">
             <div>
-              <p className="text-sm font-medium text-stone-700 dark:text-stone-300 mb-2">
+              <p className="text-sm font-medium text-folio-text-secondary dark:text-folio-text-tertiary mb-2">
                 Hero {productData.heroMedia?.type === 'video' ? 'Video' : 'Image'}
               </p>
-              <div className="rounded-lg border border-stone-200 dark:border-stone-700 overflow-hidden bg-stone-50 dark:bg-stone-800">
+              <div className="rounded-lg border border-folio-border-subtle dark:border-folio-border-subtle overflow-hidden bg-surface-ground dark:bg-surface-elevated">
                 {productData.heroMedia?.type === 'image' ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img 
@@ -168,14 +168,14 @@ export function StepReview({ productData, onPublish, onBack }: StepReviewProps) 
 
             {productData.gallery && productData.gallery.length > 0 && (
               <div>
-                <p className="text-sm font-medium text-stone-700 dark:text-stone-300 mb-2">
+                <p className="text-sm font-medium text-folio-text-secondary dark:text-folio-text-tertiary mb-2">
                   Gallery ({productData.gallery.length} {productData.gallery.length === 1 ? 'image' : 'images'})
                 </p>
                 <div className="grid grid-cols-3 gap-2">
                   {productData.gallery.slice(0, 6).map((item, index) => (
                     <div 
                       key={index} 
-                      className="rounded-lg border border-stone-200 dark:border-stone-700 overflow-hidden aspect-square"
+                      className="rounded-lg border border-folio-border-subtle dark:border-folio-border-subtle overflow-hidden aspect-square"
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img 
@@ -191,17 +191,17 @@ export function StepReview({ productData, onPublish, onBack }: StepReviewProps) 
 
             {productData.palette && (
               <div>
-                <p className="text-sm font-medium text-stone-700 dark:text-stone-300 mb-2">
+                <p className="text-sm font-medium text-folio-text-secondary dark:text-folio-text-tertiary mb-2">
                   Color Palette
                 </p>
                 <div className="flex gap-2">
                   {[productData.palette.primary, productData.palette.secondary, productData.palette.accent].map((color, i) => (
                     <div key={i} className="flex items-center gap-2">
                       <div
-                        className="w-8 h-8 rounded-lg border border-stone-300 dark:border-stone-600"
+                        className="w-8 h-8 rounded-lg border border-folio-border-strong dark:border-folio-border-subtle"
                         style={{ backgroundColor: color }}
                       />
-                      <span className="text-xs text-stone-600 dark:text-stone-400 font-mono">
+                      <span className="text-xs text-folio-text-secondary dark:text-folio-text-tertiary font-mono">
                         {color}
                       </span>
                     </div>
@@ -242,12 +242,12 @@ export function StepReview({ productData, onPublish, onBack }: StepReviewProps) 
             )}
             {productData.tags && productData.tags.length > 0 && (
               <div>
-                <p className="text-sm font-medium text-stone-700 dark:text-stone-300 mb-2">Tags</p>
+                <p className="text-sm font-medium text-folio-text-secondary dark:text-folio-text-tertiary mb-2">Tags</p>
                 <div className="flex flex-wrap gap-2">
                   {productData.tags.map((tag, index) => (
                     <span 
                       key={index} 
-                      className="px-2 py-1 text-xs rounded-md bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300"
+                      className="px-2 py-1 text-xs rounded-md bg-surface-elevated dark:bg-surface-elevated text-folio-text-secondary dark:text-folio-text-tertiary"
                     >
                       {tag}
                     </span>
@@ -258,11 +258,11 @@ export function StepReview({ productData, onPublish, onBack }: StepReviewProps) 
           </ReviewSection>
         </div>
 
-        <div className="flex items-center justify-between mt-8 pt-6 border-t border-stone-200 dark:border-stone-700">
+        <div className="flex items-center justify-between mt-8 pt-6 border-t border-folio-border-subtle dark:border-folio-border-subtle">
           <button
             onClick={onBack}
             disabled={isPublishing}
-            className="text-sm text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 transition-colors disabled:opacity-50"
+            className="text-sm text-folio-text-secondary dark:text-folio-text-tertiary hover:text-folio-text-primary dark:hover:text-folio-text-tertiary transition-colors disabled:opacity-50"
           >
             ← Back
           </button>
@@ -289,8 +289,8 @@ export function StepReview({ productData, onPublish, onBack }: StepReviewProps) 
 
 function ReviewSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="p-4 border border-stone-200 dark:border-stone-700 rounded-xl space-y-3">
-      <h3 className="font-medium text-stone-900 dark:text-stone-100">{title}</h3>
+    <div className="p-4 border border-folio-border-subtle dark:border-folio-border-subtle rounded-xl space-y-3">
+      <h3 className="font-medium text-folio-text-primary dark:text-folio-text-tertiary">{title}</h3>
       <div className="space-y-3">
         {children}
       </div>
@@ -301,8 +301,8 @@ function ReviewSection({ title, children }: { title: string; children: React.Rea
 function ReviewItem({ label, value, truncate }: { label: string; value: string; truncate?: boolean }) {
   return (
     <div>
-      <p className="text-sm font-medium text-stone-700 dark:text-stone-300">{label}</p>
-      <p className={`text-sm text-stone-600 dark:text-stone-400 mt-1 ${truncate ? 'line-clamp-2' : ''}`}>
+      <p className="text-sm font-medium text-folio-text-secondary dark:text-folio-text-tertiary">{label}</p>
+      <p className={`text-sm text-folio-text-secondary dark:text-folio-text-tertiary mt-1 ${truncate ? 'line-clamp-2' : ''}`}>
         {value}
       </p>
     </div>

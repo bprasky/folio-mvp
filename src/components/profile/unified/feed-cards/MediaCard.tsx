@@ -97,7 +97,7 @@ export default function MediaCard({ media }: MediaCardProps) {
       </div>
 
       {/* Content */}
-      <div className="p-4 bg-white" style={{ borderTop: '1px solid #E8E4DF' }}>
+      <div className="p-4 bg-surface-canvas" style={{ borderTop: '1px solid #E8E4DF' }}>
         <h3
           className="font-medium leading-tight line-clamp-2"
           style={{ color: '#2C2825', fontFamily: 'Georgia, serif' }}

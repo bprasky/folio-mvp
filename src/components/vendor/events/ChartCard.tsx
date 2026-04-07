@@ -9,7 +9,7 @@ interface ChartCardProps {
 
 export function ChartCard({ title, subtitle, children, ...props }: ChartCardProps) {
   return (
-    <Card className="bg-white border-folio-border-strong" {...props}>
+    <Card className="bg-surface-canvas border-folio-border-strong" {...props}>
       <CardHeader className="pb-4">
         <CardTitle className="text-lg font-serif text-folio-text-primary">
           {title}

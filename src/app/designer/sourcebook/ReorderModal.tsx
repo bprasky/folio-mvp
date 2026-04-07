@@ -142,7 +142,7 @@ export default function ReorderModal({
                   min={1}
                   value={quantity}
                   onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                  className="w-full px-3 py-2 bg-white border border-folio-border-subtle rounded-lg text-folio-text-primary"
+                  className="w-full px-3 py-2 bg-surface-canvas border border-folio-border-subtle rounded-lg text-folio-text-primary"
                 />
               </div>
 
@@ -153,7 +153,7 @@ export default function ReorderModal({
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="Any changes from the previous order..."
                   rows={2}
-                  className="w-full px-3 py-2 bg-white border border-folio-border-subtle rounded-lg text-folio-text-primary placeholder-[#A39E97] resize-none"
+                  className="w-full px-3 py-2 bg-surface-canvas border border-folio-border-subtle rounded-lg text-folio-text-primary placeholder-[#A39E97] resize-none"
                 />
               </div>
             </div>

@@ -200,10 +200,10 @@ export function ImportWizard({ open, onOpenChange, projectId, onComplete }: Impo
     <GlassModal open={open} onOpenChange={handleClose} size="xl">
       <GlassModalHeader>
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-serif text-stone-900">Import Project</h2>
+          <h2 className="text-xl font-serif text-folio-text-primary">Import Project</h2>
           <button
             onClick={handleClose}
-            className="text-stone-400 hover:text-stone-600"
+            className="text-folio-text-tertiary hover:text-folio-text-secondary"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -222,7 +222,7 @@ export function ImportWizard({ open, onOpenChange, projectId, onComplete }: Impo
 
         {step === 'source' && (
           <div className="space-y-4">
-            <p className="text-stone-600 mb-6">
+            <p className="text-folio-text-secondary mb-6">
               Choose how you&apos;d like to import your project. Our AI will analyze your content
               and detect products for tagging.
             </p>
@@ -270,12 +270,12 @@ export function ImportWizard({ open, onOpenChange, projectId, onComplete }: Impo
 
         {step === 'upload' && sourceType === 'PRESENTATION' && (
           <div className="space-y-6">
-            <p className="text-stone-600">
+            <p className="text-folio-text-secondary">
               Upload your presentation file. We support PDF and PPTX formats.
             </p>
 
             <div
-              className="border-2 border-dashed border-stone-300 rounded-xl p-12 text-center cursor-pointer hover:border-blue-400 transition-colors"
+              className="border-2 border-dashed border-folio-border-strong rounded-xl p-12 text-center cursor-pointer hover:border-blue-400 transition-colors"
               onClick={() => fileInputRef.current?.click()}
             >
               <input
@@ -286,7 +286,7 @@ export function ImportWizard({ open, onOpenChange, projectId, onComplete }: Impo
                 className="hidden"
               />
               <svg
-                className="w-12 h-12 mx-auto text-stone-400 mb-4"
+                className="w-12 h-12 mx-auto text-folio-text-tertiary mb-4"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -298,10 +298,10 @@ export function ImportWizard({ open, onOpenChange, projectId, onComplete }: Impo
                   d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
                 />
               </svg>
-              <p className="text-stone-600 mb-2">
+              <p className="text-folio-text-secondary mb-2">
                 <span className="text-[var(--accent)] font-medium">Click to upload</span> or drag and drop
               </p>
-              <p className="text-sm text-stone-400">PDF or PPTX up to 50MB</p>
+              <p className="text-sm text-folio-text-tertiary">PDF or PPTX up to 50MB</p>
             </div>
 
             <Button variant="outline" onClick={() => setStep('source')}>
@@ -313,7 +313,7 @@ export function ImportWizard({ open, onOpenChange, projectId, onComplete }: Impo
         {step === 'processing' && (
           <div className="space-y-6 text-center py-8">
             <div className="w-20 h-20 mx-auto relative">
-              <div className="absolute inset-0 rounded-full border-4 border-stone-200" />
+              <div className="absolute inset-0 rounded-full border-4 border-folio-border-subtle" />
               <div
                 className="absolute inset-0 rounded-full border-4 border-[var(--accent)] border-t-transparent animate-spin"
                 style={{
@@ -323,22 +323,22 @@ export function ImportWizard({ open, onOpenChange, projectId, onComplete }: Impo
             </div>
 
             <div>
-              <h3 className="text-lg font-medium text-stone-900 mb-2">
+              <h3 className="text-lg font-medium text-folio-text-primary mb-2">
                 Analyzing your presentation...
               </h3>
-              <p className="text-stone-500">
+              <p className="text-folio-text-tertiary">
                 Our AI is detecting products and searching for attributions.
               </p>
             </div>
 
             <div className="max-w-xs mx-auto">
-              <div className="h-2 bg-stone-200 rounded-full overflow-hidden">
+              <div className="h-2 bg-surface-elevated rounded-full overflow-hidden">
                 <div
                   className="h-full bg-[var(--accent)] transition-all duration-300"
                   style={{ width: `${uploadProgress}%` }}
                 />
               </div>
-              <p className="text-sm text-stone-400 mt-2">{uploadProgress}% complete</p>
+              <p className="text-sm text-folio-text-tertiary mt-2">{uploadProgress}% complete</p>
             </div>
           </div>
         )}
@@ -381,19 +381,19 @@ function SourceCard({
       className={`
         relative p-6 rounded-xl border text-left transition-all
         ${disabled
-          ? 'border-stone-200 bg-stone-50 cursor-not-allowed opacity-60'
-          : 'border-stone-200 bg-white hover:border-blue-400 hover:shadow-md cursor-pointer'
+          ? 'border-folio-border-subtle bg-surface-ground cursor-not-allowed opacity-60'
+          : 'border-folio-border-subtle bg-surface-canvas hover:border-blue-400 hover:shadow-md cursor-pointer'
         }
       `}
     >
       {comingSoon && (
-        <span className="absolute top-2 right-2 px-2 py-0.5 text-xs bg-stone-100 text-stone-500 rounded-full">
+        <span className="absolute top-2 right-2 px-2 py-0.5 text-xs bg-surface-elevated text-folio-text-tertiary rounded-full">
           Coming soon
         </span>
       )}
-      <div className="text-stone-400 mb-4">{icon}</div>
-      <h3 className="font-medium text-stone-900 mb-1">{title}</h3>
-      <p className="text-sm text-stone-500">{description}</p>
+      <div className="text-folio-text-tertiary mb-4">{icon}</div>
+      <h3 className="font-medium text-folio-text-primary mb-1">{title}</h3>
+      <p className="text-sm text-folio-text-tertiary">{description}</p>
     </button>
   );
 }

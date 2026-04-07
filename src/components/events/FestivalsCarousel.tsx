@@ -93,14 +93,14 @@ export default function FestivalsCarousel({ festivals }: FestivalsCarouselProps)
         {/* Arrows */}
         <div className="pointer-events-none absolute inset-y-0 left-0 right-0 flex items-center justify-between">
           <button
-            className="pointer-events-auto rounded-full bg-white/70 hover:bg-stone-200 px-4 py-3 ml-4 shadow-sm backdrop-blur-sm transition-colors z-30 text-[rgb(30,30,30)]"
+            className="pointer-events-auto rounded-full bg-white/70 hover:bg-surface-elevated px-4 py-3 ml-4 shadow-sm backdrop-blur-sm transition-colors z-30 text-[rgb(30,30,30)]"
             onClick={() => nudge(-1)}
             aria-label="Previous festival"
           >
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5"><path fillRule="evenodd" d="M11.78 5.22a.75.75 0 0 1 0 1.06L8.56 9.5l3.22 3.22a.75.75 0 1 1-1.06 1.06l-3.75-3.75a.75.75 0 0 1 0-1.06l3.75-3.75a.75.75 0 0 1 1.06 0Z" clipRule="evenodd" /></svg>
           </button>
           <button
-            className="pointer-events-auto rounded-full bg-white/70 hover:bg-stone-200 px-4 py-3 mr-4 shadow-sm backdrop-blur-sm transition-colors z-30 text-[rgb(30,30,30)]"
+            className="pointer-events-auto rounded-full bg-white/70 hover:bg-surface-elevated px-4 py-3 mr-4 shadow-sm backdrop-blur-sm transition-colors z-30 text-[rgb(30,30,30)]"
             onClick={() => nudge(1)}
             aria-label="Next festival"
           >

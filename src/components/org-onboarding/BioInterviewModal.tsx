@@ -383,7 +383,7 @@ export function BioInterviewModal({
                       value={getCurrentAnswer()}
                       onChange={(e) => handleAnswer(e.target.value)}
                       placeholder="Or describe a representative project here..."
-                      className="w-full min-h-[120px] p-4 bg-white border border-folio-border-subtle rounded-xl text-lg placeholder:text-folio-text-tertiary focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-folio-border-subtle resize-y"
+                      className="w-full min-h-[120px] p-4 bg-surface-canvas border border-folio-border-subtle rounded-xl text-lg placeholder:text-folio-text-tertiary focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-folio-border-subtle resize-y"
                     />
                   </div>
                 )}

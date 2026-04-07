@@ -56,12 +56,12 @@ export default function CSVUploader({ eventId, onSuccess }: CSVUploaderProps) {
     <div className="space-y-4">
       <div>
         <h3 className="text-lg font-medium text-ink mb-2">Upload CSV File</h3>
-        <p className="text-sm text-stone-500 mb-4">
+        <p className="text-sm text-folio-text-tertiary mb-4">
           Upload a CSV file with columns: email, name, phone, company, title, role
         </p>
       </div>
 
-      <div className="border-2 border-dashed border-stone-300 rounded-lg p-8 text-center">
+      <div className="border-2 border-dashed border-folio-border-strong rounded-lg p-8 text-center">
         <input
           type="file"
           accept=".csv"
@@ -73,23 +73,23 @@ export default function CSVUploader({ eventId, onSuccess }: CSVUploaderProps) {
           htmlFor="csv-upload"
           className="cursor-pointer flex flex-col items-center space-y-2"
         >
-          <Upload className="w-8 h-8 text-stone-400" />
+          <Upload className="w-8 h-8 text-folio-text-tertiary" />
           <span className="text-sm font-medium text-ink">
             {file ? file.name : 'Choose CSV file'}
           </span>
-          <span className="text-xs text-stone-500">
+          <span className="text-xs text-folio-text-tertiary">
             {file ? 'Click to change' : 'or drag and drop'}
           </span>
         </label>
       </div>
 
       {file && (
-        <div className="flex items-center space-x-2 p-3 bg-stone-50 rounded-lg">
-          <FileText className="w-4 h-4 text-stone-500" />
+        <div className="flex items-center space-x-2 p-3 bg-surface-ground rounded-lg">
+          <FileText className="w-4 h-4 text-folio-text-tertiary" />
           <span className="text-sm text-ink flex-1">{file.name}</span>
           <button
             onClick={() => setFile(null)}
-            className="text-xs text-stone-500 hover:text-ink"
+            className="text-xs text-folio-text-tertiary hover:text-ink"
           >
             Remove
           </button>

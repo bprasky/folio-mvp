@@ -423,7 +423,7 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
             <OrgDesignerRelationships orgId={resolvedParams.orgId} isAdmin={isAdmin} />
             {isAdmin && (
               <div className="mt-8">
-                <h2 className="text-sm font-medium text-stone-900 mb-4">Territory & Governance</h2>
+                <h2 className="text-sm font-medium text-folio-text-primary mb-4">Territory & Governance</h2>
                 <OrgTerritoryManager orgId={resolvedParams.orgId} isAdmin={isAdmin} />
               </div>
             )}

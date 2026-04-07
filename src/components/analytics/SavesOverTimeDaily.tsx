@@ -55,7 +55,7 @@ export function SavesOverTimeDaily({ eventDates, totalSaves, totalTags }: SavesO
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
-        <div className="bg-white border border-[var(--grid)] rounded-lg p-3 shadow-lg">
+        <div className="bg-surface-canvas border border-[var(--grid)] rounded-lg p-3 shadow-lg">
           <div className="font-medium text-[var(--ink)] mb-2">{label}</div>
           <div className="space-y-1 text-xs">
             <div className="flex items-center justify-between gap-4">

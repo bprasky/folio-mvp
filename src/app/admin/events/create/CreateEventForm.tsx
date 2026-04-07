@@ -116,7 +116,7 @@ const CreateEventForm: React.FC<CreateEventFormProps> = ({ userId }) => {
       </div>
 
       {/* Event Type Selector */}
-      <div className="bg-white rounded-lg shadow-sm border border-folio-border p-6">
+      <div className="bg-surface-canvas rounded-lg shadow-sm border border-folio-border p-6">
         <h2 className="text-xl font-semibold text-folio-text mb-4">What would you like to create?</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <button
@@ -125,7 +125,7 @@ const CreateEventForm: React.FC<CreateEventFormProps> = ({ userId }) => {
             className={`p-6 rounded-lg border-2 transition-all ${
               eventType === 'festival' 
                 ? 'border-folio-accent bg-folio-accent bg-opacity-10' 
-                : 'border-gray-200 hover:border-gray-300'
+                : 'border-folio-border-subtle hover:border-folio-border-subtle'
             }`}
           >
             <div className="text-center">
@@ -143,7 +143,7 @@ const CreateEventForm: React.FC<CreateEventFormProps> = ({ userId }) => {
             className={`p-6 rounded-lg border-2 transition-all ${
               eventType === 'event' 
                 ? 'border-folio-accent bg-folio-accent bg-opacity-10' 
-                : 'border-gray-200 hover:border-gray-300'
+                : 'border-folio-border-subtle hover:border-folio-border-subtle'
             }`}
           >
             <div className="text-center">
@@ -158,7 +158,7 @@ const CreateEventForm: React.FC<CreateEventFormProps> = ({ userId }) => {
       </div>
 
       {/* Form */}
-      <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-sm border border-folio-border p-6">
+      <form onSubmit={handleSubmit} className="bg-surface-canvas rounded-lg shadow-sm border border-folio-border p-6">
         <div className="space-y-6">
           {/* Title */}
           <div>
@@ -323,7 +323,7 @@ const CreateEventForm: React.FC<CreateEventFormProps> = ({ userId }) => {
         <div className="mt-8 flex justify-end space-x-4">
           <Link
             href="/admin/events"
-            className="px-6 py-2 border border-folio-border text-folio-text rounded-lg hover:bg-gray-50 transition-colors"
+            className="px-6 py-2 border border-folio-border text-folio-text rounded-lg hover:bg-surface-ground transition-colors"
           >
             Cancel
           </Link>

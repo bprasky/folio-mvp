@@ -46,9 +46,9 @@ export function CompactFunnelDemo({ data }: { data: Flow }) {
           const danger = delta < 0;
           return (
             <div key={r.k} className="contents">
-              <div className="text-sm text-[#111827]">{r.label}</div>
+              <div className="text-sm text-folio-text-primary">{r.label}</div>
               <div className="text-right num font-medium">{pct(actual)}</div>
-              <div className="text-right num text-[#6B7280]">{pct(cohort)}</div>
+              <div className="text-right num text-folio-text-secondary">{pct(cohort)}</div>
               <div className="text-right">
                 <span className={`num px-2 py-0.5 rounded ${danger ? "bg-rose-50 text-rose-700" : "bg-emerald-50 text-emerald-700"}`}>{pts(delta)}</span>
               </div>
@@ -56,7 +56,7 @@ export function CompactFunnelDemo({ data }: { data: Flow }) {
           );
         })}
       </div>
-      <div className="mt-3 num text-sm text-[#111827]">
+      <div className="mt-3 num text-sm text-folio-text-primary">
         Saves {data.steps.Saves} • Boards {data.steps.Boards} • Tags {data.steps.Tags} • Value {data.steps.Value}
       </div>
     </motion.div>

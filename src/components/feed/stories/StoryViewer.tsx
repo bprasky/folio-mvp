@@ -96,7 +96,7 @@ export function StoryViewer({ groups, index: startIndex, onClose }: Props) {
                 <div 
                   className={`h-full ${
                     k < iidx ? "w-full" : k === iidx ? "animate-[story_5s_linear_forwards]" : "w-0"
-                  } bg-white`} 
+                  } bg-surface-canvas`} 
                 />
               </div>
             ))}

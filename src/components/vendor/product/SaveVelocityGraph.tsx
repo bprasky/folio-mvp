@@ -17,7 +17,7 @@ export default function SaveVelocityGraph({ data }: SaveVelocityGraphProps) {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
+    <div className="bg-surface-canvas rounded-lg shadow-lg p-6 mb-8">
       <h2 className="text-xl font-semibold text-folio-text-primary mb-6 flex items-center">
         <FaChartLine className="text-[var(--accent)] mr-3" /> Save Velocity (Last 7 Days)
       </h2>

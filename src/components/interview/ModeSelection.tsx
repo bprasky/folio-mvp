@@ -19,7 +19,7 @@ interface ModeSelectionProps {
  *
  * Layout: Two cards side by side on desktop, stacked on mobile
  * Styling:
- * - Cards: bg-white, rounded-xl, p-8, hover:shadow-lg transition
+ * - Cards: bg-surface-canvas, rounded-xl, p-8, hover:shadow-lg transition
  * - Icons: 48px, muted gray, centered
  * - Headline: text-lg font-medium
  * - Description: text-sm text-folio-text-secondary, 2 lines max
@@ -55,10 +55,10 @@ export function ModeSelection({
         {/* Voice Card */}
         <div
           className={cn(
-            "bg-white rounded-xl p-8 flex flex-col items-center text-center transition-all duration-200",
+            "bg-surface-canvas rounded-xl p-8 flex flex-col items-center text-center transition-all duration-200",
             voiceAvailable
-              ? "hover:shadow-lg cursor-pointer border border-gray-100"
-              : "opacity-50 border border-gray-100"
+              ? "hover:shadow-lg cursor-pointer border border-folio-border-subtle"
+              : "opacity-50 border border-folio-border-subtle"
           )}
           onClick={voiceAvailable ? onSelectVoice : undefined}
         >
@@ -101,10 +101,10 @@ export function ModeSelection({
         {/* Text Card */}
         <div
           className={cn(
-            "bg-white rounded-xl p-8 flex flex-col items-center text-center transition-all duration-200 hover:shadow-lg cursor-pointer",
+            "bg-surface-canvas rounded-xl p-8 flex flex-col items-center text-center transition-all duration-200 hover:shadow-lg cursor-pointer",
             !voiceAvailable
               ? "border-2 border-folio-border-subtle"
-              : "border border-gray-100"
+              : "border border-folio-border-subtle"
           )}
           onClick={onSelectText}
         >

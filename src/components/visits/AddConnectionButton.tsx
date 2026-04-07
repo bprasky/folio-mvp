@@ -10,7 +10,7 @@ export default function AddConnectionButton() {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="px-4 py-2 rounded-full text-sm font-medium border transition-colors hover:bg-stone-50"
+        className="px-4 py-2 rounded-full text-sm font-medium border transition-colors hover:bg-surface-ground"
         style={{ borderColor: '#E8E4DF', color: '#5C554D' }}
       >
         + Add Connection

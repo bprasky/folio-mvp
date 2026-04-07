@@ -82,7 +82,7 @@ export default function SavedListsSelector({ eventId, onSuccess }: SavedListsSel
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-8">
-        <Loader2 className="w-6 h-6 animate-spin text-stone-400" />
+        <Loader2 className="w-6 h-6 animate-spin text-folio-text-tertiary" />
       </div>
     );
   }
@@ -91,13 +91,13 @@ export default function SavedListsSelector({ eventId, onSuccess }: SavedListsSel
     <div className="space-y-4">
       <div>
         <h3 className="text-lg font-medium text-ink mb-2">Select Saved List</h3>
-        <p className="text-sm text-stone-500 mb-4">
+        <p className="text-sm text-folio-text-tertiary mb-4">
           Choose from your previously saved invite lists
         </p>
       </div>
 
       {lists.length === 0 ? (
-        <div className="text-center py-8 text-stone-500">
+        <div className="text-center py-8 text-folio-text-tertiary">
           <List className="w-12 h-12 mx-auto mb-2 opacity-50" />
           <p>No saved lists yet</p>
         </div>
@@ -109,7 +109,7 @@ export default function SavedListsSelector({ eventId, onSuccess }: SavedListsSel
               className={`block p-4 border rounded-lg cursor-pointer transition-colors ${
                 selectedListId === list.id
                   ? 'border-accent-700 bg-accent-50'
-                  : 'border-stone-200 hover:border-stone-300'
+                  : 'border-folio-border-subtle hover:border-folio-border-strong'
               }`}
             >
               <input
@@ -131,9 +131,9 @@ export default function SavedListsSelector({ eventId, onSuccess }: SavedListsSel
                     )}
                   </div>
                   {list.description && (
-                    <p className="text-sm text-stone-500 mt-1">{list.description}</p>
+                    <p className="text-sm text-folio-text-tertiary mt-1">{list.description}</p>
                   )}
-                  <div className="flex items-center space-x-4 mt-2 text-xs text-stone-400">
+                  <div className="flex items-center space-x-4 mt-2 text-xs text-folio-text-tertiary">
                     <span>{list.contactIds.length} contacts</span>
                     <span>Used {list.timesUsed} time{list.timesUsed !== 1 ? 's' : ''}</span>
                     {list.priceUsd && <span>${list.priceUsd.toFixed(2)}</span>}

@@ -467,9 +467,9 @@ export default function MediaSection({ project, isOwner, images, projectPost, is
                   } transition-all`}
                 >
                   {/* Designed empty state fallback — visible when image fails to load */}
-                  <div className="absolute inset-0 bg-stone-100 border border-stone-200 rounded-[20px] flex flex-col items-center justify-center">
-                    <FaImage className="w-8 h-8 text-stone-300 mb-2" />
-                    <span className="folio-meta text-stone-400">Image unavailable</span>
+                  <div className="absolute inset-0 bg-surface-elevated border border-folio-border-subtle rounded-[20px] flex flex-col items-center justify-center">
+                    <FaImage className="w-8 h-8 text-folio-text-tertiary mb-2" />
+                    <span className="folio-meta text-folio-text-tertiary">Image unavailable</span>
                   </div>
                   <Image
                     src={image.url}

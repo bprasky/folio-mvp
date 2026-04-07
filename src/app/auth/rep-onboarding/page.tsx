@@ -48,7 +48,7 @@ export default function RepOnboardingPage() {
   if (status === 'unauthenticated' && !loading && !error && inviteData) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-surface-ground px-4">
-        <div className="max-w-md w-full bg-white rounded-lg shadow-md p-8">
+        <div className="max-w-md w-full bg-surface-canvas rounded-lg shadow-md p-8">
           <h1 className="text-2xl font-bold mb-4">Join Folio as a Vendor Rep</h1>
           <p className="text-folio-text-secondary mb-6">
             You've been invited to join Folio. Please sign in or create an account to continue.
@@ -125,7 +125,7 @@ export default function RepOnboardingPage() {
   if (error && !inviteData) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-surface-ground px-4">
-        <div className="max-w-md w-full bg-white rounded-lg shadow-md p-8">
+        <div className="max-w-md w-full bg-surface-canvas rounded-lg shadow-md p-8">
           <h1 className="text-2xl font-bold mb-4 text-red-600">Invalid Invite</h1>
           <p className="text-folio-text-secondary mb-6">{error}</p>
           <Link
@@ -145,7 +145,7 @@ export default function RepOnboardingPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-surface-ground px-4">
-      <div className="max-w-md w-full bg-white rounded-lg shadow-md p-8">
+      <div className="max-w-md w-full bg-surface-canvas rounded-lg shadow-md p-8">
         <h1 className="text-2xl font-bold mb-4">Set Up Your Rep Profile</h1>
         <p className="text-folio-text-secondary mb-6">
           You were invited using <strong>{inviteData?.email}</strong>. This might be your personal email.

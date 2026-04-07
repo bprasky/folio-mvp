@@ -19,7 +19,7 @@ export default function ExplanationOverlay({ aesthetic, onClose }: ExplanationOv
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 glass-backdrop">
-      <div className="relative bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-8">
+      <div className="relative bg-surface-canvas rounded-2xl shadow-2xl max-w-2xl w-full p-8">
         <button
           onClick={handleClose}
           className="absolute top-4 right-4 p-2 hover:bg-surface-ground rounded-full transition-colors"

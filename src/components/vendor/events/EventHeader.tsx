@@ -13,7 +13,7 @@ interface EventHeaderProps {
 
 export function EventHeader({ event }: EventHeaderProps) {
   return (
-    <Card className="bg-white border-folio-border-strong">
+    <Card className="bg-surface-canvas border-folio-border-strong">
       <CardHeader className="pb-4">
         <div className="flex items-start justify-between">
           <div className="flex-1">

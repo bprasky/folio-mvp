@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function EditorialPillarPage() {
   return (
-    <div className="bg-[#FAF9F6]">
+    <div className="bg-surface-ground">
       {/* Breadcrumb */}
       <div className="max-w-3xl mx-auto px-6 pt-8">
         <Link href="/for-designers" className="text-sm text-folio-text-secondary hover:text-folio-text-primary transition-colors">

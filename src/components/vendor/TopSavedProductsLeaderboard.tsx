@@ -18,7 +18,7 @@ export default function TopSavedProductsLeaderboard({ products }: TopSavedProduc
   const sortedProducts = [...products].sort((a, b) => b.saves_total - a.saves_total).slice(0, 3);
 
   return (
-    <div className="bg-white rounded-lg shadow-lg p-6">
+    <div className="bg-surface-canvas rounded-lg shadow-lg p-6">
       <h2 className="text-xl font-semibold text-folio-text-primary mb-6">Top Saved Products</h2>
       <div className="space-y-4">
         {sortedProducts.map((product, index) => {

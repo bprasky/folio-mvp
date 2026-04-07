@@ -39,7 +39,7 @@ export default function EventFeaturedProducts({ products, canEdit = false, event
           <p className="text-sm text-folio-text-secondary mb-2">No featured products yet</p>
           <Link
             href={`/admin/events/new?edit=${eventId}&tab=products`}
-            className="text-xs px-3 py-1 rounded border border-folio-border-subtle bg-white hover:bg-surface-ground text-folio-text-secondary"
+            className="text-xs px-3 py-1 rounded border border-folio-border-subtle bg-surface-canvas hover:bg-surface-ground text-folio-text-secondary"
           >
             Add featured products
           </Link>
@@ -55,7 +55,7 @@ export default function EventFeaturedProducts({ products, canEdit = false, event
         {canEdit && (
           <Link
             href={`/admin/events/new?edit=${eventId}&tab=products`}
-            className="text-xs px-2 py-1 rounded border border-folio-border-subtle bg-white hover:bg-surface-ground text-folio-text-secondary"
+            className="text-xs px-2 py-1 rounded border border-folio-border-subtle bg-surface-canvas hover:bg-surface-ground text-folio-text-secondary"
           >
             Edit
           </Link>
@@ -66,7 +66,7 @@ export default function EventFeaturedProducts({ products, canEdit = false, event
         {products.map((product) => (
           <div
             key={product.id}
-            className="relative w-56 shrink-0 rounded-xl border border-folio-border bg-white hover:shadow-sm transition-shadow"
+            className="relative w-56 shrink-0 rounded-xl border border-folio-border bg-surface-canvas hover:shadow-sm transition-shadow"
           >
             <div className="aspect-[4/3] w-full overflow-hidden rounded-t-xl">
               {product.imageUrl ? (
@@ -97,7 +97,7 @@ export default function EventFeaturedProducts({ products, canEdit = false, event
                     onSaveProduct?.(product.id);
                   }}
                   disabled={!onSaveProduct}
-                  className="text-xs px-2 py-1 rounded border border-folio-border-subtle bg-white hover:bg-surface-ground disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="text-xs px-2 py-1 rounded border border-folio-border-subtle bg-surface-canvas hover:bg-surface-ground disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Save to project
                 </button>
@@ -105,7 +105,7 @@ export default function EventFeaturedProducts({ products, canEdit = false, event
                 <Link
                   href={`/products/${product.id}`}
                   onClick={() => track('event_featured_product_click', { eventId, productId: product.id })}
-                  className="text-xs px-2 py-1 rounded border border-folio-border-subtle bg-white hover:bg-surface-ground text-center"
+                  className="text-xs px-2 py-1 rounded border border-folio-border-subtle bg-surface-canvas hover:bg-surface-ground text-center"
                 >
                   View
                 </Link>

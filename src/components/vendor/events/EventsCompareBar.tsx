@@ -69,7 +69,7 @@ export function EventsCompareBar({ events, averages, onEventClick, onHover }: Ev
                 const data = payload[0].payload;
                 return (
                   <div 
-                    className="bg-white border border-folio-border-strong rounded-lg px-4 py-3 shadow-lg cursor-pointer"
+                    className="bg-surface-canvas border border-folio-border-strong rounded-lg px-4 py-3 shadow-lg cursor-pointer"
                     onClick={() => handleEventClick(data.eventId)}
                   >
                     <p className="text-folio-text-primary font-medium mb-2">{label}</p>

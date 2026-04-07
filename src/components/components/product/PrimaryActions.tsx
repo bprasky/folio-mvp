@@ -12,7 +12,7 @@ export function PrimaryActions({ product }: { product: Product }) {
 
   return (
     <Card className="p-4 space-y-3">
-      <div className="text-sm text-[#6B7280]">Actions</div>
+      <div className="text-sm text-folio-text-secondary">Actions</div>
       <div className="grid grid-cols-2 gap-2">
         <Button onClick={()=>act("Saved to Moodboard")} variant="secondary">Save to Moodboard</Button>
         <Button onClick={()=>act("Added to Project")} variant="secondary">Add to Project</Button>
@@ -21,7 +21,7 @@ export function PrimaryActions({ product }: { product: Product }) {
         <Button onClick={()=>act("3D File download")} variant="outline">Download 3D</Button>
         <Button onClick={()=>act("Shared product link")} variant="ghost">Share</Button>
       </div>
-      <div className="text-xs text-[#9CA3AF]">
+      <div className="text-xs text-folio-text-tertiary">
         Tip: connect Material Bank + Folio to auto-log sampling events into project timelines.
       </div>
     </Card>

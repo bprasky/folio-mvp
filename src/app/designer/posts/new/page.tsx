@@ -154,7 +154,7 @@ export default function CreatePostPage() {
   return (
     <div className="min-h-screen bg-surface-ground">
       {/* Header */}
-      <div className="bg-white border-b border-folio-border-subtle">
+      <div className="bg-surface-canvas border-b border-folio-border-subtle">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="py-6">
             <div className="flex items-center gap-4">
@@ -180,7 +180,7 @@ export default function CreatePostPage() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* Post Details */}
-          <div className="bg-white rounded-[20px] p-6 shadow-sm">
+          <div className="bg-surface-canvas rounded-[20px] p-6 shadow-sm">
             <h2 className="text-lg font-semibold text-folio-text-primary mb-4">Post Details</h2>
             
             <div className="space-y-4">
@@ -234,7 +234,7 @@ export default function CreatePostPage() {
           </div>
 
           {/* Product Selection */}
-          <div className="bg-white rounded-[20px] p-6 shadow-sm">
+          <div className="bg-surface-canvas rounded-[20px] p-6 shadow-sm">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-folio-text-primary">
                 Select Products ({formData.selectedItems.size} selected)
@@ -259,7 +259,7 @@ export default function CreatePostPage() {
                   className={`relative group rounded-2xl border-2 transition-all duration-200 cursor-pointer ${
                     formData.selectedItems.has(item.id)
                       ? "border-[var(--accent)] bg-[var(--accent)]/5 shadow-blue-100"
-                      : "border-folio-border-subtle hover:border-folio-border-subtle bg-white"
+                      : "border-folio-border-subtle hover:border-folio-border-subtle bg-surface-canvas"
                   }`}
                   onClick={() => handleItemToggle(item.id)}
                 >
@@ -268,10 +268,10 @@ export default function CreatePostPage() {
                     <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
                       formData.selectedItems.has(item.id)
                         ? "bg-[var(--accent)] border-[var(--accent)] text-white"
-                        : "bg-white border-folio-border-subtle"
+                        : "bg-surface-canvas border-folio-border-subtle"
                     }`}>
                       {formData.selectedItems.has(item.id) && (
-                        <div className="w-2 h-2 bg-white rounded-full"></div>
+                        <div className="w-2 h-2 bg-surface-canvas rounded-full"></div>
                       )}
                     </div>
                   </div>

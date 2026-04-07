@@ -33,7 +33,7 @@ export function GeoHeatSimplified({ data, onHover }: GeoHeatSimplifiedProps) {
               <div className="w-20 text-sm font-medium text-folio-text-primary">
                 {city.city}
               </div>
-              <div className="flex-1 bg-[#F0EDE8] rounded-full h-3 overflow-hidden">
+              <div className="flex-1 bg-surface-elevated rounded-full h-3 overflow-hidden">
                 <div 
                   className="h-full bg-[#8C8278] rounded-full transition-all duration-300"
                   style={{ width: barWidth }}

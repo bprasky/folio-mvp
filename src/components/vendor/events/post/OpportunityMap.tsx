@@ -41,8 +41,8 @@ export function OpportunityMap({ opportunities, onHover, onActionClick }: Opport
       case 'Most Underserved': return 'border-red-200 bg-red-50';
       case 'Build': return 'border-green-200 bg-green-50';
       case 'Maintain': return 'border-yellow-200 bg-yellow-50';
-      case 'Watch': return 'border-folio-border-subtle bg-gray-50';
-      default: return 'border-folio-border-subtle bg-gray-50';
+      case 'Watch': return 'border-folio-border-subtle bg-surface-ground';
+      default: return 'border-folio-border-subtle bg-surface-ground';
     }
   };
 
@@ -57,7 +57,7 @@ export function OpportunityMap({ opportunities, onHover, onActionClick }: Opport
   };
 
   return (
-    <Card className="bg-white border-folio-border-strong">
+    <Card className="bg-surface-canvas border-folio-border-strong">
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>

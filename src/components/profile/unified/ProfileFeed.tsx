@@ -74,7 +74,7 @@ export default function ProfileFeed({
   if (error) {
     return (
       <div className="text-center py-12">
-        <p style={{ color: '#8B8178' }}>Unable to load content. Please try again.</p>
+        <p className="text-folio-text-secondary">Unable to load content. Please try again.</p>
       </div>
     );
   }
@@ -125,8 +125,7 @@ function FeedSkeleton() {
         {[1, 2, 3, 4, 5].map(i => (
           <div
             key={i}
-            className="h-8 w-20 rounded-full animate-pulse"
-            style={{ backgroundColor: '#E8E4DF' }}
+            className="h-8 w-20 rounded-full animate-pulse bg-folio-border-subtle"
           />
         ))}
       </div>
@@ -136,13 +135,12 @@ function FeedSkeleton() {
         {[1, 2, 3, 4, 5, 6].map(i => (
           <div
             key={i}
-            className="rounded-xl overflow-hidden animate-pulse"
-            style={{ backgroundColor: '#F5F3F0' }}
+            className="rounded-xl overflow-hidden animate-pulse bg-surface-elevated"
           >
-            <div className="aspect-[4/3]" style={{ backgroundColor: '#E8E4DF' }} />
+            <div className="aspect-[4/3] bg-folio-border-subtle" />
             <div className="p-4 space-y-2">
-              <div className="h-4 w-3/4 rounded" style={{ backgroundColor: '#E8E4DF' }} />
-              <div className="h-3 w-1/2 rounded" style={{ backgroundColor: '#E8E4DF' }} />
+              <div className="h-4 w-3/4 rounded bg-folio-border-subtle" />
+              <div className="h-3 w-1/2 rounded bg-folio-border-subtle" />
             </div>
           </div>
         ))}
@@ -170,12 +168,11 @@ function EmptyFeedState({ filter }: { filter: string }) {
   return (
     <div className="text-center py-16">
       <div
-        className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center"
-        style={{ backgroundColor: '#F0EDE9' }}
+        className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center bg-surface-elevated"
       >
         <EmptyIcon />
       </div>
-      <p style={{ color: '#8B8178' }}>{getMessage()}</p>
+      <p className="text-folio-text-secondary">{getMessage()}</p>
     </div>
   );
 }

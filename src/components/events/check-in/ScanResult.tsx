@@ -20,7 +20,7 @@ function AttendeeCard({ attendee }: { attendee: Attendee }) {
           className="w-12 h-12 rounded-full object-cover"
         />
       ) : (
-        <div className="w-12 h-12 rounded-full bg-stone-200 flex items-center justify-center text-stone-500 font-medium text-lg">
+        <div className="w-12 h-12 rounded-full bg-surface-elevated flex items-center justify-center text-folio-text-tertiary font-medium text-lg">
           {attendee.name?.[0]?.toUpperCase() ?? "?"}
         </div>
       )}
@@ -53,7 +53,7 @@ function ProductCard({ product }: { product: ScannedProduct }) {
           className="w-16 h-16 rounded-lg object-cover"
         />
       ) : (
-        <div className="w-16 h-16 rounded-lg bg-stone-200 flex items-center justify-center text-stone-400">
+        <div className="w-16 h-16 rounded-lg bg-surface-elevated flex items-center justify-center text-folio-text-tertiary">
           <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
           </svg>
@@ -166,7 +166,7 @@ export default function ScanResult({
         <div className="flex gap-3 mt-4">
           <button
             onClick={onScanNext}
-            className="flex-1 py-2.5 rounded-lg bg-stone-200 text-stone-700 font-medium text-sm hover:bg-stone-300 transition-colors"
+            className="flex-1 py-2.5 rounded-lg bg-surface-elevated text-folio-text-secondary font-medium text-sm hover:bg-surface-elevated transition-colors"
           >
             Scan Next
           </button>
@@ -221,7 +221,7 @@ export default function ScanResult({
         </p>
         <button
           onClick={onScanNext}
-          className="mt-4 w-full py-2.5 rounded-lg bg-stone-300 text-stone-700 font-medium text-sm hover:bg-stone-400 transition-colors"
+          className="mt-4 w-full py-2.5 rounded-lg bg-surface-elevated text-folio-text-secondary font-medium text-sm hover:bg-stone-400 transition-colors"
         >
           Scan Next
         </button>
@@ -231,14 +231,14 @@ export default function ScanResult({
 
   // invalid_qr or wrong_event
   return (
-    <div className="rounded-xl bg-stone-100 border border-stone-200 p-5">
-      <p className="text-stone-700 font-bold text-lg">Unrecognized QR Code</p>
-      <p className="text-sm text-stone-500 mt-2">
+    <div className="rounded-xl bg-surface-elevated border border-folio-border-subtle p-5">
+      <p className="text-folio-text-secondary font-bold text-lg">Unrecognized QR Code</p>
+      <p className="text-sm text-folio-text-tertiary mt-2">
         This QR code is not a valid Folio badge or product. Try again.
       </p>
       <button
         onClick={onScanNext}
-        className="mt-4 w-full py-2.5 rounded-lg bg-stone-300 text-stone-700 font-medium text-sm hover:bg-stone-400 transition-colors"
+        className="mt-4 w-full py-2.5 rounded-lg bg-surface-elevated text-folio-text-secondary font-medium text-sm hover:bg-stone-400 transition-colors"
       >
         Scan Next
       </button>

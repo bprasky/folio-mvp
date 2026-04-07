@@ -38,10 +38,10 @@ export function StepUrl({ onNext, onSkip }: StepUrlProps) {
             <LinkIcon className="w-6 h-6 text-[var(--accent)] dark:text-blue-400" />
           </div>
           <div>
-            <h2 className="text-2xl font-medium text-stone-900 dark:text-stone-100">
+            <h2 className="text-2xl font-medium text-folio-text-primary dark:text-folio-text-tertiary">
               Enter Product URL
             </h2>
-            <p className="text-sm text-stone-600 dark:text-stone-400">
+            <p className="text-sm text-folio-text-secondary dark:text-folio-text-tertiary">
               We'll automatically extract product information
             </p>
           </div>
@@ -49,7 +49,7 @@ export function StepUrl({ onNext, onSkip }: StepUrlProps) {
         
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2">
+            <label className="block text-sm font-medium text-folio-text-secondary dark:text-folio-text-tertiary mb-2">
               Product Page URL
             </label>
             <input
@@ -58,7 +58,7 @@ export function StepUrl({ onNext, onSkip }: StepUrlProps) {
               onChange={(e) => setUrl(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="https://example.com/products/terra-travertine-side-table"
-              className="w-full px-4 py-3 rounded-xl border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent transition-all"
+              className="w-full px-4 py-3 rounded-xl border border-folio-border-strong dark:border-folio-border-subtle bg-surface-canvas dark:bg-surface-canvas text-folio-text-primary dark:text-folio-text-tertiary focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent transition-all"
               autoFocus
             />
             {error && (
@@ -82,10 +82,10 @@ export function StepUrl({ onNext, onSkip }: StepUrlProps) {
           </div>
         </div>
 
-        <div className="flex items-center justify-between mt-8 pt-6 border-t border-stone-200 dark:border-stone-700">
+        <div className="flex items-center justify-between mt-8 pt-6 border-t border-folio-border-subtle dark:border-folio-border-subtle">
           <button
             onClick={onSkip}
-            className="text-sm text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 transition-colors"
+            className="text-sm text-folio-text-secondary dark:text-folio-text-tertiary hover:text-folio-text-primary dark:hover:text-folio-text-tertiary transition-colors"
           >
             Skip & enter manually →
           </button>

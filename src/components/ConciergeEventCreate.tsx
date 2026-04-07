@@ -316,7 +316,7 @@ export default function ConciergeEventCreate({ isOpen, onClose, onSubmit, classN
       </div>
       
       {importPreview && (
-        <div className="bg-white border border-folio-border-subtle rounded-lg p-4">
+        <div className="bg-surface-canvas border border-folio-border-subtle rounded-lg p-4">
           <h4 className="font-medium mb-2">Preview</h4>
           <div className="space-y-2 text-sm">
             <div><strong>Title:</strong> {importPreview.title}</div>
@@ -343,7 +343,7 @@ export default function ConciergeEventCreate({ isOpen, onClose, onSubmit, classN
       
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end justify-end z-50">
           <div className={clsx(
-        "bg-white rounded-t-lg shadow-2xl w-full max-w-md h-[80vh] flex flex-col",
+        "bg-surface-canvas rounded-t-lg shadow-2xl w-full max-w-md h-[80vh] flex flex-col",
         className
       )}>
         {/* Header */}

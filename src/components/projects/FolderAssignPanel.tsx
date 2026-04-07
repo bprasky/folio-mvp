@@ -265,7 +265,7 @@ export default function FolderAssignPanel({ folderId, onUpdate }: FolderAssignPa
             className={`relative group rounded-2xl border-2 transition-all duration-200 hover:shadow-lg ${
               selectedItems.has(item.id)
                 ? "border-[var(--accent)] bg-[var(--accent)]/5 shadow-blue-100"
-                : "border-folio-border-subtle hover:border-folio-border-subtle bg-white"
+                : "border-folio-border-subtle hover:border-folio-border-subtle bg-surface-canvas"
             }`}
           >
             {/* Selection Checkbox */}
@@ -275,7 +275,7 @@ export default function FolderAssignPanel({ folderId, onUpdate }: FolderAssignPa
                 className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
                   selectedItems.has(item.id)
                     ? "bg-[var(--accent)] border-[var(--accent)] text-white"
-                    : "bg-white border-folio-border-subtle hover:border-blue-400"
+                    : "bg-surface-canvas border-folio-border-subtle hover:border-blue-400"
                 }`}
               >
                 {selectedItems.has(item.id) && <Check className="w-3 h-3" />}

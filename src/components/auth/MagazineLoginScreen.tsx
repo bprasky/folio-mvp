@@ -24,10 +24,10 @@ export default function MagazineLoginScreen({ onLogin, isLoading = false }: Maga
     <div className="min-h-screen bg-gradient-to-br from-stone-50 via-stone-100 to-stone-200 relative overflow-hidden">
       {/* Magazine Cover Background Pattern */}
       <div className="absolute inset-0 opacity-5">
-        <div className="absolute top-20 left-20 w-32 h-32 border border-stone-400 rotate-12" />
-        <div className="absolute top-40 right-32 w-24 h-24 border border-stone-400 rotate-45" />
-        <div className="absolute bottom-32 left-32 w-40 h-40 border border-stone-400 rotate-12" />
-        <div className="absolute bottom-20 right-20 w-28 h-28 border border-stone-400 rotate-45" />
+        <div className="absolute top-20 left-20 w-32 h-32 border border-folio-border-strong rotate-12" />
+        <div className="absolute top-40 right-32 w-24 h-24 border border-folio-border-strong rotate-45" />
+        <div className="absolute bottom-32 left-32 w-40 h-40 border border-folio-border-strong rotate-12" />
+        <div className="absolute bottom-20 right-20 w-28 h-28 border border-folio-border-strong rotate-45" />
       </div>
 
       {/* Hero Image/Background */}
@@ -44,10 +44,10 @@ export default function MagazineLoginScreen({ onLogin, isLoading = false }: Maga
         transition={{ duration: 1, delay: 0.2 }}
         className="absolute top-8 left-8 z-20"
       >
-        <div className="text-4xl font-serif text-stone-800 tracking-wider">
+        <div className="text-4xl font-serif text-folio-text-primary tracking-wider">
           FOLIO
         </div>
-        <div className="text-sm text-stone-600 tracking-widest uppercase mt-1">
+        <div className="text-sm text-folio-text-secondary tracking-widest uppercase mt-1">
           Design Magazine
         </div>
       </motion.div>
@@ -59,11 +59,11 @@ export default function MagazineLoginScreen({ onLogin, isLoading = false }: Maga
         transition={{ duration: 1, delay: 0.5 }}
         className="absolute top-1/4 left-8 z-10"
       >
-        <div className="text-6xl font-serif text-stone-700/60 leading-tight">
+        <div className="text-6xl font-serif text-folio-text-secondary/60 leading-tight">
           <div>DESIGN</div>
           <div className="text-4xl mt-2">INTELLIGENCE</div>
         </div>
-        <div className="text-lg text-stone-600 mt-4 max-w-xs">
+        <div className="text-lg text-folio-text-secondary mt-4 max-w-xs">
           Where architecture meets innovation, and design meets data.
         </div>
       </motion.div>
@@ -76,20 +76,20 @@ export default function MagazineLoginScreen({ onLogin, isLoading = false }: Maga
           transition={{ duration: 0.8, delay: 0.8 }}
           className="w-full max-w-md"
         >
-          <Card className="glass-surface border-stone-300 shadow-2xl">
+          <Card className="glass-surface border-folio-border-strong shadow-2xl">
             <CardContent className="p-8">
               <div className="text-center mb-8">
-                <h2 className="text-2xl font-serif text-stone-800 mb-2">
+                <h2 className="text-2xl font-serif text-folio-text-primary mb-2">
                   Welcome Back
                 </h2>
-                <p className="text-stone-600">
+                <p className="text-folio-text-secondary">
                   Sign in to continue your design journey
                 </p>
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="text-stone-700">
+                  <Label htmlFor="email" className="text-folio-text-secondary">
                     Email
                   </Label>
                   <Input
@@ -97,14 +97,14 @@ export default function MagazineLoginScreen({ onLogin, isLoading = false }: Maga
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="border-stone-300 focus:border-stone-500"
+                    className="border-folio-border-strong focus:border-folio-border-subtle0"
                     placeholder="your@email.com"
                     required
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="password" className="text-stone-700">
+                  <Label htmlFor="password" className="text-folio-text-secondary">
                     Password
                   </Label>
                   <Input
@@ -112,7 +112,7 @@ export default function MagazineLoginScreen({ onLogin, isLoading = false }: Maga
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="border-stone-300 focus:border-stone-500"
+                    className="border-folio-border-strong focus:border-folio-border-subtle0"
                     placeholder="••••••••"
                     required
                   />
@@ -128,9 +128,9 @@ export default function MagazineLoginScreen({ onLogin, isLoading = false }: Maga
               </form>
 
               <div className="mt-6 text-center">
-                <p className="text-sm text-stone-500">
+                <p className="text-sm text-folio-text-tertiary">
                   New to Folio?{' '}
-                  <a href="#" className="text-stone-700 hover:text-stone-900 underline">
+                  <a href="#" className="text-folio-text-secondary hover:text-folio-text-primary underline">
                     Request access
                   </a>
                 </p>
@@ -147,7 +147,7 @@ export default function MagazineLoginScreen({ onLogin, isLoading = false }: Maga
         transition={{ duration: 1, delay: 1.2 }}
         className="absolute bottom-8 right-8 text-right z-10"
       >
-        <div className="text-stone-600 text-sm">
+        <div className="text-folio-text-secondary text-sm">
           <div>VOL. 2024</div>
           <div className="text-xs mt-1">DESIGN INTELLIGENCE EDITION</div>
         </div>

@@ -187,7 +187,7 @@ export default function VideoUploader({
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <motion.div
-        className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+        className="bg-surface-canvas rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.9 }}
@@ -238,7 +238,7 @@ export default function VideoUploader({
                   ? 'border-[var(--accent)] bg-[var(--accent)]/5'
                   : videoFile
                   ? 'border-green-500 bg-green-50'
-                  : 'border-folio-border-subtle hover:border-gray-400'
+                  : 'border-folio-border-subtle hover:border-folio-border-strong'
               }`}
               onDragEnter={handleDrag}
               onDragLeave={handleDrag}

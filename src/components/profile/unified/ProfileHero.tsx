@@ -137,7 +137,7 @@ export default function ProfileHero({
                         Follow
                       </button>
                       <button
-                        className="px-5 py-2 text-sm rounded-full border transition-all hover:bg-stone-50 border-folio-text-primary text-folio-text-primary"
+                        className="px-5 py-2 text-sm rounded-full border transition-all hover:bg-surface-ground border-folio-text-primary text-folio-text-primary"
                       >
                         Contact
                       </button>

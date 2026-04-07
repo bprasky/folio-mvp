@@ -57,7 +57,7 @@ export default function OrgAuditLog({ orgId }: OrgAuditLogProps) {
   if (visits.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-stone-500 text-sm">No exchanges recorded yet.</p>
+        <p className="text-folio-text-tertiary text-sm">No exchanges recorded yet.</p>
       </div>
     );
   }
@@ -71,26 +71,26 @@ export default function OrgAuditLog({ orgId }: OrgAuditLogProps) {
           const context = visit.event?.title || visit.location || visitTypeLabel(visit.visitType);
 
           return (
-            <div key={visit.id} className="bg-white rounded-lg border border-stone-200 px-5 py-4">
+            <div key={visit.id} className="bg-surface-canvas rounded-lg border border-folio-border-subtle px-5 py-4">
               <div className="flex items-start justify-between">
                 <div className="flex items-start gap-3">
                   {/* Initiator avatar */}
-                  <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center text-xs text-stone-500 flex-shrink-0">
+                  <div className="w-8 h-8 rounded-full bg-surface-elevated flex items-center justify-center text-xs text-folio-text-tertiary flex-shrink-0">
                     {visit.initiatorUser.name.charAt(0)}
                   </div>
                   <div>
-                    <p className="text-sm text-stone-900">
+                    <p className="text-sm text-folio-text-primary">
                       <span className="font-medium">{visit.initiatorUser.name}</span>
                       {visit.initiatorOrg && (
-                        <span className="text-stone-400"> ({visit.initiatorOrg.name})</span>
+                        <span className="text-folio-text-tertiary"> ({visit.initiatorOrg.name})</span>
                       )}
-                      <span className="text-stone-400 mx-1.5">&rarr;</span>
+                      <span className="text-folio-text-tertiary mx-1.5">&rarr;</span>
                       <span className="font-medium">{visit.recipientUser.name}</span>
                       {visit.recipientOrg && (
-                        <span className="text-stone-400"> ({visit.recipientOrg.name})</span>
+                        <span className="text-folio-text-tertiary"> ({visit.recipientOrg.name})</span>
                       )}
                     </p>
-                    <div className="flex items-center gap-2 mt-1 text-xs text-stone-400">
+                    <div className="flex items-center gap-2 mt-1 text-xs text-folio-text-tertiary">
                       <span>{context}</span>
                       {sharedCount > 0 && (
                         <>
@@ -107,13 +107,13 @@ export default function OrgAuditLog({ orgId }: OrgAuditLogProps) {
                     </div>
                     {/* Notes preview */}
                     {(visit.initiatorNotes || visit.recipientNotes) && (
-                      <p className="text-xs text-stone-400 mt-1.5 italic line-clamp-1">
+                      <p className="text-xs text-folio-text-tertiary mt-1.5 italic line-clamp-1">
                         {visit.initiatorNotes || visit.recipientNotes}
                       </p>
                     )}
                   </div>
                 </div>
-                <span className="text-xs text-stone-400 flex-shrink-0 ml-4">
+                <span className="text-xs text-folio-text-tertiary flex-shrink-0 ml-4">
                   {formatDate(visit.createdAt)}
                 </span>
               </div>
@@ -128,17 +128,17 @@ export default function OrgAuditLog({ orgId }: OrgAuditLogProps) {
           <button
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page <= 1}
-            className="px-3 py-1.5 text-xs text-stone-500 border border-stone-200 rounded hover:bg-stone-50 disabled:opacity-40"
+            className="px-3 py-1.5 text-xs text-folio-text-tertiary border border-folio-border-subtle rounded hover:bg-surface-ground disabled:opacity-40"
           >
             Previous
           </button>
-          <span className="text-xs text-stone-400">
+          <span className="text-xs text-folio-text-tertiary">
             Page {page} of {totalPages}
           </span>
           <button
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={page >= totalPages}
-            className="px-3 py-1.5 text-xs text-stone-500 border border-stone-200 rounded hover:bg-stone-50 disabled:opacity-40"
+            className="px-3 py-1.5 text-xs text-folio-text-tertiary border border-folio-border-subtle rounded hover:bg-surface-ground disabled:opacity-40"
           >
             Next
           </button>

@@ -30,7 +30,7 @@ export function TopClientsAggressive({ firms }: TopClientsAggressiveProps) {
         return (
           <div
             key={firm.firm}
-            className="p-4 border border-[var(--grid)] rounded-lg hover:border-[var(--teal)] hover:shadow-md transition-all bg-white"
+            className="p-4 border border-[var(--grid)] rounded-lg hover:border-[var(--teal)] hover:shadow-md transition-all bg-surface-canvas"
           >
             {/* Firm header */}
             <div className="flex items-start justify-between mb-3">

@@ -332,7 +332,7 @@ export default function SourcebookPage() {
               onChange={(e) => setSearchTerm(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') loadSourcebook(); }}
               placeholder="Search products, vendors, projects..."
-              className="w-full px-4 py-2.5 pl-10 bg-white border border-folio-border-subtle rounded-lg text-folio-text-primary placeholder-[#A39E97] focus:outline-none focus:border-folio-border-strong focus:shadow-[0_0_0_3px_rgba(0,0,0,0.03)] transition-all"
+              className="w-full px-4 py-2.5 pl-10 bg-surface-canvas border border-folio-border-subtle rounded-lg text-folio-text-primary placeholder-[#A39E97] focus:outline-none focus:border-folio-border-strong focus:shadow-[0_0_0_3px_rgba(0,0,0,0.03)] transition-all"
             />
             <svg
               className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-folio-text-tertiary"
@@ -345,7 +345,7 @@ export default function SourcebookPage() {
           <select
             value={sortField}
             onChange={(e) => handleSort(e.target.value as SourcebookSortField)}
-            className="px-3 py-2.5 bg-white border border-folio-border-subtle rounded-lg text-sm text-folio-text-primary focus:outline-none focus:border-folio-border-strong transition-all"
+            className="px-3 py-2.5 bg-surface-canvas border border-folio-border-subtle rounded-lg text-sm text-folio-text-primary focus:outline-none focus:border-folio-border-strong transition-all"
           >
             {SORT_OPTIONS.map(opt => (
               <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -390,7 +390,7 @@ export default function SourcebookPage() {
                 <select
                   value={filters.vendor || ''}
                   onChange={(e) => handleFilterChange('vendor', e.target.value)}
-                  className="w-full px-3 py-2 bg-white border border-folio-border-subtle rounded-lg text-folio-text-primary focus:outline-none focus:border-folio-border-strong transition-all"
+                  className="w-full px-3 py-2 bg-surface-canvas border border-folio-border-subtle rounded-lg text-folio-text-primary focus:outline-none focus:border-folio-border-strong transition-all"
                 >
                   <option value="">All Vendors</option>
                   {uniqueVendors.map(v => (
@@ -404,7 +404,7 @@ export default function SourcebookPage() {
                 <select
                   value={filters.project || ''}
                   onChange={(e) => handleFilterChange('project', e.target.value)}
-                  className="w-full px-3 py-2 bg-white border border-folio-border-subtle rounded-lg text-folio-text-primary focus:outline-none focus:border-folio-border-strong transition-all"
+                  className="w-full px-3 py-2 bg-surface-canvas border border-folio-border-subtle rounded-lg text-folio-text-primary focus:outline-none focus:border-folio-border-strong transition-all"
                 >
                   <option value="">All Projects</option>
                   {uniqueProjects.map(p => (
@@ -418,7 +418,7 @@ export default function SourcebookPage() {
                 <select
                   value={filters.category || ''}
                   onChange={(e) => handleFilterChange('category', e.target.value)}
-                  className="w-full px-3 py-2 bg-white border border-folio-border-subtle rounded-lg text-folio-text-primary focus:outline-none focus:border-folio-border-strong transition-all"
+                  className="w-full px-3 py-2 bg-surface-canvas border border-folio-border-subtle rounded-lg text-folio-text-primary focus:outline-none focus:border-folio-border-strong transition-all"
                 >
                   <option value="">All Categories</option>
                   {uniqueCategories.map(c => (

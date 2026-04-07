@@ -85,7 +85,7 @@ export default function AutoSuggestionsPanel({ eventId, onSuccess }: AutoSuggest
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-8">
-        <Loader2 className="w-6 h-6 animate-spin text-stone-400" />
+        <Loader2 className="w-6 h-6 animate-spin text-folio-text-tertiary" />
       </div>
     );
   }
@@ -94,13 +94,13 @@ export default function AutoSuggestionsPanel({ eventId, onSuccess }: AutoSuggest
     <div className="space-y-4">
       <div>
         <h3 className="text-lg font-medium text-ink mb-2">AI-Powered Suggestions</h3>
-        <p className="text-sm text-stone-500 mb-4">
+        <p className="text-sm text-folio-text-tertiary mb-4">
           Get intelligent recommendations based on engagement patterns and event context
         </p>
       </div>
 
       {suggestions.length === 0 ? (
-        <div className="text-center py-8 text-stone-500">
+        <div className="text-center py-8 text-folio-text-tertiary">
           <Sparkles className="w-12 h-12 mx-auto mb-2 opacity-50" />
           <p>No suggestions available</p>
         </div>
@@ -113,7 +113,7 @@ export default function AutoSuggestionsPanel({ eventId, onSuccess }: AutoSuggest
                 className={`block p-4 border rounded-lg cursor-pointer transition-colors ${
                   selectedSuggestions.has(suggestion.designer.id)
                     ? 'border-accent-700 bg-accent-50'
-                    : 'border-stone-200 hover:border-stone-300'
+                    : 'border-folio-border-subtle hover:border-folio-border-strong'
                 }`}
               >
                 <input
@@ -125,9 +125,9 @@ export default function AutoSuggestionsPanel({ eventId, onSuccess }: AutoSuggest
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <h4 className="font-medium text-ink">{suggestion.designer.name}</h4>
-                    <p className="text-sm text-stone-500 mt-1">{suggestion.reason}</p>
+                    <p className="text-sm text-folio-text-tertiary mt-1">{suggestion.reason}</p>
                     {suggestion.designer.location && (
-                      <p className="text-xs text-stone-400 mt-1">{suggestion.designer.location}</p>
+                      <p className="text-xs text-folio-text-tertiary mt-1">{suggestion.designer.location}</p>
                     )}
                   </div>
                   <span
@@ -147,7 +147,7 @@ export default function AutoSuggestionsPanel({ eventId, onSuccess }: AutoSuggest
           </div>
 
           {selectedSuggestions.size > 0 && (
-            <div className="border-t border-stone-200 pt-4">
+            <div className="border-t border-folio-border-subtle pt-4">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-sm text-ink">
                   {selectedSuggestions.size} contact{selectedSuggestions.size !== 1 ? 's' : ''} selected

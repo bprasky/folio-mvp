@@ -80,7 +80,7 @@ export default async function InterviewPage({
 
         {/* Show recording interface if not uploaded yet */}
         {(interviewSession.status === "DRAFT" || interviewSession.status === "UPLOADED") && (
-          <div className="bg-white rounded-lg shadow-sm border border-folio-border-subtle p-8">
+          <div className="bg-surface-canvas rounded-lg shadow-sm border border-folio-border-subtle p-8">
             <RecordingInterface
               interviewId={interviewSession.id}
               onUploadComplete={() => {

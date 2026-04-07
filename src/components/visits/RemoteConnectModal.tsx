@@ -135,14 +135,14 @@ export default function RemoteConnectModal({ open, onOpenChange }: RemoteConnect
         <div className="mt-4 space-y-2 max-h-[300px] overflow-y-auto">
           {searching && (
             <div className="text-center py-4">
-              <p className="text-xs text-stone-400">Searching...</p>
+              <p className="text-xs text-folio-text-tertiary">Searching...</p>
             </div>
           )}
 
           {!searching && query.length >= 2 && results.length === 0 && (
             <div className="text-center py-6">
-              <p className="text-sm text-stone-500">No users found.</p>
-              <p className="text-xs text-stone-400 mt-1">
+              <p className="text-sm text-folio-text-tertiary">No users found.</p>
+              <p className="text-xs text-folio-text-tertiary mt-1">
                 Try a different name or use their full email address.
               </p>
             </div>
@@ -151,7 +151,7 @@ export default function RemoteConnectModal({ open, onOpenChange }: RemoteConnect
           {results.map((user) => (
             <div
               key={user.id}
-              className="flex items-center gap-3 p-3 rounded-lg border hover:bg-stone-50 transition-colors border-folio-border-subtle"
+              className="flex items-center gap-3 p-3 rounded-lg border hover:bg-surface-ground transition-colors border-folio-border-subtle"
             >
               {user.profileImage ? (
                 <Image
@@ -162,14 +162,14 @@ export default function RemoteConnectModal({ open, onOpenChange }: RemoteConnect
                   className="rounded-full object-cover shrink-0"
                 />
               ) : (
-                <div className="w-9 h-9 rounded-full bg-stone-200 flex items-center justify-center text-stone-500 text-sm font-medium shrink-0">
+                <div className="w-9 h-9 rounded-full bg-surface-elevated flex items-center justify-center text-folio-text-tertiary text-sm font-medium shrink-0">
                   {user.name.charAt(0)}
                 </div>
               )}
 
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-stone-900 truncate">{user.name}</p>
-                <p className="text-xs text-stone-400 truncate">
+                <p className="text-sm font-medium text-folio-text-primary truncate">{user.name}</p>
+                <p className="text-xs text-folio-text-tertiary truncate">
                   {roleLabels[user.role] || user.role}
                   {user.studio && ` at ${user.studio}`}
                 </p>

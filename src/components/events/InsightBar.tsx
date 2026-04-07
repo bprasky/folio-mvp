@@ -36,13 +36,13 @@ export default function InsightBar({ event }: InsightBarProps) {
   const follows = "—";
 
   const Pill = ({ label, value }: { label: string; value: string | number }) => (
-    <div className="px-3 py-1.5 rounded-full border border-folio-border-subtle bg-white text-sm">
+    <div className="px-3 py-1.5 rounded-full border border-folio-border-subtle bg-surface-canvas text-sm">
       <span className="font-medium">{value}</span> <span className="text-folio-text-secondary">{label}</span>
     </div>
   );
 
   return (
-    <div className="w-full border border-folio-border rounded-xl bg-white shadow-sm px-4 py-3 flex flex-wrap gap-2">
+    <div className="w-full border border-folio-border rounded-xl bg-surface-canvas shadow-sm px-4 py-3 flex flex-wrap gap-2">
       <Pill label="views" value={views} />
       <Pill label="RSVPs (attending)" value={attending} />
       <Pill label="RSVPs (interested)" value={interested} />

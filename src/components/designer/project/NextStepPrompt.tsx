@@ -136,14 +136,14 @@ export function NextStepPrompt({
       <div className="max-w-4xl mx-auto flex items-center justify-between gap-4">
         <div className="flex items-center gap-3 flex-1 min-w-0">
           <Lightbulb className="w-5 h-5 text-amber-600 flex-shrink-0" />
-          <p className="text-stone-700 text-sm truncate">{nextStep.message}</p>
+          <p className="text-folio-text-secondary text-sm truncate">{nextStep.message}</p>
         </div>
 
         <div className="flex items-center gap-3 flex-shrink-0">
           {nextStep.secondaryAction && (
             <button
               onClick={nextStep.secondaryAction.onClick}
-              className="px-4 py-2 text-stone-600 hover:text-stone-800 text-sm"
+              className="px-4 py-2 text-folio-text-secondary hover:text-folio-text-primary text-sm"
             >
               {nextStep.secondaryAction.label}
             </button>

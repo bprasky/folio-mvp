@@ -177,7 +177,7 @@ export function ProjectDetailPage({ project, isOwner }: ProjectDetailPageProps) 
   return (
     <div className="min-h-screen bg-surface-ground text-folio-text-primary">
       {/* Back Button & Edit Controls */}
-      <div className="p-4 bg-white shadow-sm">
+      <div className="p-4 bg-surface-canvas shadow-sm">
         <div className="flex items-center justify-between">
           <Link href="/projects" className="flex items-center text-[var(--accent)] hover:underline">
             <FaArrowLeft className="mr-2" /> Back to Projects
@@ -304,7 +304,7 @@ export function ProjectDetailPage({ project, isOwner }: ProjectDetailPageProps) 
           {activeTab === 'overview' ? (
             <>
               {/* Overview Section */}
-          <section className="bg-white p-8 rounded-lg shadow-md">
+          <section className="bg-surface-canvas p-8 rounded-lg shadow-md">
             <h2 className="text-3xl font-bold mb-4">Overview</h2>
             {isEditing ? (
               <textarea
@@ -367,7 +367,7 @@ export function ProjectDetailPage({ project, isOwner }: ProjectDetailPageProps) 
           </section>
 
           {/* Project Stats Section */}
-          <section className="bg-white p-8 rounded-lg shadow-md">
+          <section className="bg-surface-canvas p-8 rounded-lg shadow-md">
             <h2 className="text-3xl font-bold mb-6">Project Insights</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="text-center p-4 bg-[var(--accent)]/5 rounded-lg">
@@ -386,7 +386,7 @@ export function ProjectDetailPage({ project, isOwner }: ProjectDetailPageProps) 
           </section>
 
           {/* Placeholder for Images Section */}
-          <section className="bg-white p-8 rounded-lg shadow-md">
+          <section className="bg-surface-canvas p-8 rounded-lg shadow-md">
             <h2 className="text-3xl font-bold mb-6">Project Images</h2>
             <div className="text-center py-12 text-folio-text-secondary">
               <p>No images uploaded yet.</p>
@@ -397,7 +397,7 @@ export function ProjectDetailPage({ project, isOwner }: ProjectDetailPageProps) 
           </section>
 
           {/* Placeholder for Timeline Section */}
-          <section className="bg-white p-8 rounded-lg shadow-md">
+          <section className="bg-surface-canvas p-8 rounded-lg shadow-md">
             <h2 className="text-3xl font-bold mb-6">Project Timeline</h2>
             <div className="text-center py-12 text-folio-text-secondary">
               <p>No timeline events yet.</p>
@@ -409,7 +409,7 @@ export function ProjectDetailPage({ project, isOwner }: ProjectDetailPageProps) 
             </>
           ) : (
             /* Designer Boards Tab */
-            <div className="bg-white p-8 rounded-lg shadow-md">
+            <div className="bg-surface-canvas p-8 rounded-lg shadow-md">
               <DesignerBoard 
                 projectId={project.id} 
                 project={project} 
@@ -422,7 +422,7 @@ export function ProjectDetailPage({ project, isOwner }: ProjectDetailPageProps) 
         {/* Sidebar Column */}
         <aside className="lg:col-span-1 space-y-8">
           {/* Project Actions */}
-          <div className="bg-white p-6 rounded-lg shadow-md">
+          <div className="bg-surface-canvas p-6 rounded-lg shadow-md">
             <h2 className="text-xl font-semibold mb-4">Project Actions</h2>
             <div className="space-y-3">
               <button className="flex items-center w-full bg-[var(--accent)] text-white px-4 py-2 rounded-lg font-medium hover:bg-[var(--accent-hover)] transition">
@@ -441,7 +441,7 @@ export function ProjectDetailPage({ project, isOwner }: ProjectDetailPageProps) 
           </div>
 
           {/* Project Files & Downloads */}
-          <section className="bg-white p-6 rounded-lg shadow-md">
+          <section className="bg-surface-canvas p-6 rounded-lg shadow-md">
             <h2 className="text-xl font-semibold mb-4">Project Files & Downloads</h2>
             <div className="space-y-3">
               <button className="flex items-center w-full bg-surface-ground text-folio-text-primary px-4 py-2 rounded-lg font-medium hover:bg-[var(--text-tertiary)]/20 transition">
@@ -457,7 +457,7 @@ export function ProjectDetailPage({ project, isOwner }: ProjectDetailPageProps) 
           </section>
 
           {/* Project Status */}
-          <div className="bg-white p-6 rounded-lg shadow-md">
+          <div className="bg-surface-canvas p-6 rounded-lg shadow-md">
             <h2 className="text-xl font-semibold mb-4">Project Status</h2>
             <div className="space-y-3">
               <div className="flex justify-between items-center">

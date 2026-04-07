@@ -32,7 +32,7 @@ export default function QuickAddJSON({ projectId }: { projectId: string }) {
       </button>
       {open && (
         <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-4 w-[520px] space-y-3">
+          <div className="bg-surface-canvas rounded-xl p-4 w-[520px] space-y-3">
             <h3 className="font-medium text-folio-text-primary">Paste items (JSON array)</h3>
             <textarea 
               className="w-full h-48 border border-folio-border-subtle rounded p-2 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"

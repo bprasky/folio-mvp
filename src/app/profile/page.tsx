@@ -492,7 +492,7 @@ export default function ProfilePage() {
                 <div className="flex-shrink-0 w-full sm:w-auto">
                   <Link
                     href="/professionals/join"
-                    className="inline-flex items-center justify-center w-full sm:w-auto px-6 py-3 bg-white text-purple-700 font-semibold rounded-lg hover:bg-purple-50 transition-colors shadow-md"
+                    className="inline-flex items-center justify-center w-full sm:w-auto px-6 py-3 bg-surface-canvas text-purple-700 font-semibold rounded-lg hover:bg-purple-50 transition-colors shadow-md"
                   >
                     Get Started
                     <FaRocket className="ml-2 w-4 h-4" />

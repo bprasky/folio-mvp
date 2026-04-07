@@ -109,7 +109,7 @@ export default function UnifiedCreateProjectUI() {
           <div>
             <label className="block text-sm font-medium mb-2 text-folio-text-primary">Project Title *</label>
             <input
-              className="w-full border border-folio-border-subtle rounded-lg px-4 py-3 focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent transition-all bg-white"
+              className="w-full border border-folio-border-subtle rounded-lg px-4 py-3 focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent transition-all bg-surface-canvas"
               placeholder="e.g., Modern Coastal Living Room"
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -121,7 +121,7 @@ export default function UnifiedCreateProjectUI() {
           <div>
             <label className="block text-sm font-medium mb-2 text-folio-text-primary">Description (optional)</label>
             <textarea
-              className="w-full border border-folio-border-subtle rounded-lg px-4 py-3 focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent transition-all bg-white"
+              className="w-full border border-folio-border-subtle rounded-lg px-4 py-3 focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent transition-all bg-surface-canvas"
               placeholder="Brief description of your project..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -160,7 +160,7 @@ export default function UnifiedCreateProjectUI() {
           </div>
 
           {/* Advanced Details Accordion */}
-          <div className="border border-folio-border-subtle rounded-lg bg-white">
+          <div className="border border-folio-border-subtle rounded-lg bg-surface-canvas">
             <button
               type="button"
               onClick={() => setShowAdvanced(!showAdvanced)}
@@ -211,7 +211,7 @@ export default function UnifiedCreateProjectUI() {
                   <div>
                     <label className="block text-sm font-medium mb-1 text-folio-text-primary">City</label>
                     <input
-                      className="w-full border border-folio-border-subtle rounded-lg p-2 bg-white focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent transition-all"
+                      className="w-full border border-folio-border-subtle rounded-lg p-2 bg-surface-canvas focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent transition-all"
                       value={locationCity}
                       onChange={(e) => setLocationCity(e.target.value)}
                       placeholder="e.g., San Francisco"
@@ -221,7 +221,7 @@ export default function UnifiedCreateProjectUI() {
                   <div>
                     <label className="block text-sm font-medium mb-1 text-folio-text-primary">Region/State</label>
                     <input
-                      className="w-full border border-folio-border-subtle rounded-lg p-2 bg-white focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent transition-all"
+                      className="w-full border border-folio-border-subtle rounded-lg p-2 bg-surface-canvas focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent transition-all"
                       value={locationRegion}
                       onChange={(e) => setLocationRegion(e.target.value)}
                       placeholder="e.g., CA"

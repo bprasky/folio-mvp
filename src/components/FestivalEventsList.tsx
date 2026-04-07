@@ -34,7 +34,7 @@ export default function FestivalEventsList({ events }: FestivalEventsListProps) 
       <h3 className="text-lg font-semibold text-folio-text-primary">Festival Events</h3>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {events.map((event) => (
-          <div key={event.id} className="bg-white rounded-lg shadow-md overflow-hidden">
+          <div key={event.id} className="bg-surface-canvas rounded-lg shadow-md overflow-hidden">
             {event.imageUrl && (
               <div className="aspect-video overflow-hidden">
                 <img

@@ -96,7 +96,7 @@ export default function GraphTargetingPanel({ eventId, onSuccess }: GraphTargeti
     <div className="space-y-6">
       <div>
         <h3 className="text-lg font-medium text-ink mb-2">Graph-Based Targeting</h3>
-        <p className="text-sm text-stone-500 mb-4">
+        <p className="text-sm text-folio-text-tertiary mb-4">
           Use engagement data and proximity scores to find the best audience
         </p>
       </div>
@@ -119,7 +119,7 @@ export default function GraphTargetingPanel({ eventId, onSuccess }: GraphTargeti
                 className={`px-3 py-1 text-sm rounded-lg border transition-colors ${
                   targetRoles.includes(role)
                     ? 'bg-accent-200 border-accent-400 text-accent-700'
-                    : 'bg-white border-stone-300 text-stone-600 hover:border-stone-400'
+                    : 'bg-surface-canvas border-folio-border-strong text-folio-text-secondary hover:border-folio-border-strong'
                 }`}
               >
                 {role}
@@ -144,7 +144,7 @@ export default function GraphTargetingPanel({ eventId, onSuccess }: GraphTargeti
                 className={`px-3 py-1 text-sm rounded-lg border transition-colors ${
                   targetSpecialties.includes(spec)
                     ? 'bg-accent-200 border-accent-400 text-accent-700'
-                    : 'bg-white border-stone-300 text-stone-600 hover:border-stone-400'
+                    : 'bg-surface-canvas border-folio-border-strong text-folio-text-secondary hover:border-folio-border-strong'
                 }`}
               >
                 {spec}
@@ -192,7 +192,7 @@ export default function GraphTargetingPanel({ eventId, onSuccess }: GraphTargeti
             max="500"
             value={limit}
             onChange={(e) => setLimit(parseInt(e.target.value))}
-            className="w-full px-3 py-2 border border-stone-300 rounded-lg"
+            className="w-full px-3 py-2 border border-folio-border-strong rounded-lg"
           />
         </div>
       </div>
@@ -216,7 +216,7 @@ export default function GraphTargetingPanel({ eventId, onSuccess }: GraphTargeti
       </button>
 
       {results.length > 0 && (
-        <div className="border border-stone-200 rounded-lg p-4">
+        <div className="border border-folio-border-subtle rounded-lg p-4">
           <div className="flex items-center justify-between mb-3">
             <h4 className="font-medium text-ink">
               Found {results.length} matching contacts
@@ -231,12 +231,12 @@ export default function GraphTargetingPanel({ eventId, onSuccess }: GraphTargeti
           </div>
           <div className="max-h-48 overflow-y-auto space-y-2">
             {results.slice(0, 10).map((contact, idx) => (
-              <div key={idx} className="text-sm text-stone-600 py-1">
+              <div key={idx} className="text-sm text-folio-text-secondary py-1">
                 {contact.name || contact.email} {contact.engagementScore && `(${(contact.engagementScore * 100).toFixed(0)}% engagement)`}
               </div>
             ))}
             {results.length > 10 && (
-              <div className="text-xs text-stone-400 pt-2">
+              <div className="text-xs text-folio-text-tertiary pt-2">
                 +{results.length - 10} more contacts
               </div>
             )}

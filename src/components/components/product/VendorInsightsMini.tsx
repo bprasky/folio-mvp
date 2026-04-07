@@ -7,7 +7,7 @@ export function VendorInsightsMini({ product }: { product: Product }) {
   const i = product.insights;
   return (
     <Card className="p-4">
-      <div className="text-sm text-[#6B7280]">Product Insights</div>
+      <div className="text-sm text-folio-text-secondary">Product Insights</div>
       <div className="mt-2 grid grid-cols-3 gap-2">
         <Kpi label="Saves" value={i.saves} />
         <Kpi label="Tags" value={i.tags} />
@@ -22,17 +22,17 @@ export function VendorInsightsMini({ product }: { product: Product }) {
 }
 function Kpi({ label, value }: { label: string; value: number|string }) {
   return (
-    <div className="rounded-lg border border-[#E5E7EB] bg-white p-2">
-      <div className="text-xs text-[#6B7280]">{label}</div>
-      <div className="text-[15px] font-semibold text-[#111827]">{value}</div>
+    <div className="rounded-lg border border-folio-border-subtle bg-surface-canvas p-2">
+      <div className="text-xs text-folio-text-secondary">{label}</div>
+      <div className="text-[15px] font-semibold text-folio-text-primary">{value}</div>
     </div>
   );
 }
 function List({ label, items }: { label: string; items: string[] }) {
   return (
     <div>
-      <div className="text-xs text-[#6B7280]">{label}</div>
-      <ul className="mt-1 list-disc pl-4 text-[13px] text-[#111827]">
+      <div className="text-xs text-folio-text-secondary">{label}</div>
+      <ul className="mt-1 list-disc pl-4 text-[13px] text-folio-text-primary">
         {items.map((t,i)=><li key={i}>{t}</li>)}
       </ul>
     </div>

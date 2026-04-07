@@ -115,17 +115,17 @@ export function CinematicHero({ media, title, subtitle, brand, sku, palette }: C
             transition={{ duration: 0.8, ease: "easeOut" }}
           >
             {brand && (
-              <div className="text-sm font-medium uppercase tracking-wider text-stone-600 dark:text-stone-400 mb-2">
+              <div className="text-sm font-medium uppercase tracking-wider text-folio-text-secondary dark:text-folio-text-tertiary mb-2">
                 {brand}
               </div>
             )}
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-light text-stone-900 dark:text-stone-100 tracking-tight leading-[1.05]">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-light text-folio-text-primary dark:text-folio-text-tertiary tracking-tight leading-[1.05]">
               {title}
             </h1>
             {(subtitle || sku) && (
-              <div className="mt-3 flex items-center gap-3 text-sm md:text-base text-stone-600/90 dark:text-stone-400/90 max-w-prose">
+              <div className="mt-3 flex items-center gap-3 text-sm md:text-base text-folio-text-secondary/90 dark:text-folio-text-tertiary/90 max-w-prose">
                 {subtitle && <span className="line-clamp-2">{subtitle}</span>}
-                {subtitle && sku && <span className="text-stone-400">•</span>}
+                {subtitle && sku && <span className="text-folio-text-tertiary">•</span>}
                 {sku && <span className="font-mono text-xs tracking-wide">{sku}</span>}
               </div>
             )}

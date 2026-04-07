@@ -113,7 +113,7 @@ export default function SmartInvitesCard({ vendorId, eventId }: SmartInvitesCard
 
   if (loading) {
     return (
-      <div className="bg-white rounded-lg shadow-sm p-6">
+      <div className="bg-surface-canvas rounded-lg shadow-sm p-6">
         <div className="animate-pulse">
           <div className="h-6 bg-surface-ground rounded w-1/3 mb-4"></div>
           <div className="space-y-3">
@@ -127,7 +127,7 @@ export default function SmartInvitesCard({ vendorId, eventId }: SmartInvitesCard
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm p-6">
+    <div className="bg-surface-canvas rounded-lg shadow-sm p-6">
       <div className="flex items-start justify-between mb-4">
         <div>
           <h3 className="text-lg font-semibold text-folio-text-primary mb-1">Smart Invites</h3>

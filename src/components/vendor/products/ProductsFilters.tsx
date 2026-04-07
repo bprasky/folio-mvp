@@ -57,7 +57,7 @@ export default function ProductsFilters({ vendors }: ProductsFiltersProps) {
           <select
             value={searchParams.get('vendorId') || ''}
             onChange={(e) => updateFilter('vendorId', e.target.value || undefined)}
-            className="rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 px-3 py-2 focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+            className="rounded-lg border border-folio-border-strong dark:border-folio-border-subtle bg-surface-canvas dark:bg-surface-canvas text-folio-text-primary dark:text-folio-text-tertiary px-3 py-2 focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
           >
             <option value="">All Suppliers</option>
             {vendors.map((v) => (
@@ -75,25 +75,25 @@ export default function ProductsFilters({ vendors }: ProductsFiltersProps) {
             defaultValue={searchParams.get('q') || ''}
             onKeyDown={handleSearch}
             placeholder="Search by name or brand..."
-            className="w-full rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 placeholder:text-stone-400 px-3 py-2 pl-10 focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+            className="w-full rounded-lg border border-folio-border-strong dark:border-folio-border-subtle bg-surface-canvas dark:bg-surface-canvas text-folio-text-primary dark:text-folio-text-tertiary placeholder:text-folio-text-tertiary px-3 py-2 pl-10 focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
           />
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-folio-text-tertiary" />
         </div>
       </div>
 
       {/* Draft Filter Toggle */}
       <div className="flex items-center gap-2">
-        <label className="inline-flex items-center gap-2 cursor-pointer text-sm text-stone-700 dark:text-stone-300">
+        <label className="inline-flex items-center gap-2 cursor-pointer text-sm text-folio-text-secondary dark:text-folio-text-tertiary">
           <input
             type="checkbox"
             checked={includeDrafts}
             onChange={toggleDrafts}
-            className="rounded border-stone-300 dark:border-stone-700 text-[var(--accent)] focus:ring-[var(--accent)]"
+            className="rounded border-folio-border-strong dark:border-folio-border-subtle text-[var(--accent)] focus:ring-[var(--accent)]"
           />
           Show draft products
         </label>
         {!includeDrafts && (
-          <span className="text-xs text-stone-500 dark:text-stone-400">
+          <span className="text-xs text-folio-text-tertiary dark:text-folio-text-tertiary">
             (Only showing published products)
           </span>
         )}

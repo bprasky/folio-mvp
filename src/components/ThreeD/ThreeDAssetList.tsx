@@ -131,7 +131,7 @@ export default function ThreeDAssetList({
           return (
             <div
               key={asset.id}
-              className="bg-white rounded-lg border border-folio-border-subtle p-4 hover:shadow-md transition-shadow"
+              className="bg-surface-canvas rounded-lg border border-folio-border-subtle p-4 hover:shadow-md transition-shadow"
             >
               <div className="flex items-start gap-4">
                 {/* Thumbnail */}

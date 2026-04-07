@@ -11,7 +11,7 @@ export default function VendorSpotlight({ vendor }: { vendor?: Vendor | null }) 
   if (!vendor) return null;
   const name = vendor.companyName || vendor.name || "Vendor";
   return (
-    <div className="w-full border border-folio-border rounded-xl bg-white shadow-sm p-4 flex items-center gap-3">
+    <div className="w-full border border-folio-border rounded-xl bg-surface-canvas shadow-sm p-4 flex items-center gap-3">
       <div className="relative h-12 w-12 rounded-full overflow-hidden bg-surface-ground">
         {vendor.logoUrl ? (
           <SafeImage

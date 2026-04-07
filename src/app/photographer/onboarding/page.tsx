@@ -105,7 +105,7 @@ export default function PhotographerOnboardingPage() {
                 <h1 className="folio-quote text-4xl md:text-5xl">
                   Welcome to Folio.
                 </h1>
-                <div className="mx-auto max-w-md folio-body text-stone-600 space-y-4">
+                <div className="mx-auto max-w-md folio-body text-folio-text-secondary space-y-4">
                   <p>
                     Your portfolio builds itself. Every time a designer credits your work
                     on a published project, it appears on your Folio profile automatically.
@@ -157,7 +157,7 @@ export default function PhotographerOnboardingPage() {
                           className={`px-3 py-1.5 text-sm rounded-full border transition-colors ${
                             form.photographyStyles.includes(style.toLowerCase())
                               ? 'bg-[var(--accent)] text-white border-[var(--accent)]'
-                              : 'bg-white text-folio-text-secondary border-folio-border-subtle hover:border-[var(--accent)]'
+                              : 'bg-surface-canvas text-folio-text-secondary border-folio-border-subtle hover:border-[var(--accent)]'
                           }`}
                         >
                           {style}
@@ -184,7 +184,7 @@ export default function PhotographerOnboardingPage() {
                       onChange={(e) => setForm({ ...form, bio: e.target.value })}
                       placeholder="Brief description of your work and style..."
                       rows={3}
-                      className="w-full rounded-lg border border-folio-border-subtle bg-white px-3 py-2 text-sm text-folio-text-primary placeholder:text-folio-text-tertiary focus:outline-none focus:ring-1 focus:ring-[var(--accent)] resize-none"
+                      className="w-full rounded-lg border border-folio-border-subtle bg-surface-canvas px-3 py-2 text-sm text-folio-text-primary placeholder:text-folio-text-tertiary focus:outline-none focus:ring-1 focus:ring-[var(--accent)] resize-none"
                     />
                   </div>
                 </div>

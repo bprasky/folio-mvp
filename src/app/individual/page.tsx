@@ -337,7 +337,7 @@ export default function IndividualProfile() {
                             fill
                             className="object-cover"
                           />
-                          <button className="absolute top-3 right-3 p-2 bg-white/80 rounded-full hover:bg-white transition-colors">
+                          <button className="absolute top-3 right-3 p-2 bg-white/80 rounded-full hover:bg-surface-canvas transition-colors">
                             <FaHeart className="w-4 h-4 text-red-500" />
                           </button>
                         </div>

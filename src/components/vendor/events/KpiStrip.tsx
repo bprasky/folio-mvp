@@ -48,7 +48,7 @@ export function KpiStrip({ kpis }: KpiStripProps) {
         return (
           <Card 
             key={item.label} 
-            className="bg-white border-folio-border-strong hover:shadow-md transition-shadow"
+            className="bg-surface-canvas border-folio-border-strong hover:shadow-md transition-shadow"
             data-testid={`kpi-${index}`}
           >
             <CardContent className="p-6">
