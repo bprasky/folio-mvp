@@ -80,7 +80,7 @@ export default function OrgDesignerRelationships({ orgId, isAdmin }: OrgDesigner
     return (
       <div className="space-y-4">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="h-24 rounded-lg animate-pulse" style={{ backgroundColor: '#E8E4DF' }} />
+          <div key={i} className="h-24 rounded-lg animate-pulse bg-folio-border-subtle" />
         ))}
       </div>
     );

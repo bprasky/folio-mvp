@@ -100,7 +100,7 @@ export default function OrgTerritoryManager({ orgId, isAdmin }: OrgTerritoryMana
     return (
       <div className="space-y-3">
         {[1, 2].map((i) => (
-          <div key={i} className="h-16 rounded-lg animate-pulse" style={{ backgroundColor: '#E8E4DF' }} />
+          <div key={i} className="h-16 rounded-lg animate-pulse bg-folio-border-subtle" />
         ))}
       </div>
     );

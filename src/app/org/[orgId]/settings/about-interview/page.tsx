@@ -342,14 +342,14 @@ export default function OrgAboutInterviewPage() {
           <button
             onClick={() => setStep('choose-path')}
             className="p-1 rounded-full transition-colors hover:opacity-70"
-            style={{ color: '#8B8178' }}
+            className="text-folio-text-secondary"
             aria-label="Back"
           >
             <ChevronLeft className="w-6 h-6" />
           </button>
           <span
             className="text-xs px-3 py-1 rounded-full"
-            style={{ backgroundColor: '#E8E4DF', color: '#6B635B', fontFamily: 'var(--font-body)' }}
+            className="bg-folio-border-subtle text-folio-text-secondary" style={{ fontFamily: 'var(--font-body)' }}
           >
             Import Bio
           </span>
@@ -366,7 +366,7 @@ export default function OrgAboutInterviewPage() {
             </h2>
             <p
               className="text-sm text-center mb-8"
-              style={{ color: '#8B8178', fontFamily: 'var(--font-body)' }}
+              className="text-folio-text-secondary" style={{ fontFamily: 'var(--font-body)' }}
             >
               We&apos;ll analyze what you already have and only ask about what&apos;s missing.
             </p>
@@ -467,7 +467,7 @@ export default function OrgAboutInterviewPage() {
         >
           Analyzing your bio...
         </h3>
-        <p className="text-sm" style={{ color: '#8B8178', fontFamily: 'var(--font-body)' }}>
+        <p className="text-sm text-folio-text-secondary" style={{ fontFamily: 'var(--font-body)' }}>
           We&apos;re checking what&apos;s already covered.
         </p>
       </div>
@@ -528,14 +528,14 @@ export default function OrgAboutInterviewPage() {
           <button
             onClick={() => setStep('import-bio')}
             className="p-1 rounded-full transition-colors hover:opacity-70"
-            style={{ color: '#8B8178' }}
+            className="text-folio-text-secondary"
             aria-label="Back"
           >
             <ChevronLeft className="w-6 h-6" />
           </button>
           <span
             className="text-xs px-3 py-1 rounded-full"
-            style={{ backgroundColor: '#E8E4DF', color: '#6B635B', fontFamily: 'var(--font-body)' }}
+            className="bg-folio-border-subtle text-folio-text-secondary" style={{ fontFamily: 'var(--font-body)' }}
           >
             Bio Analysis
           </span>
@@ -578,7 +578,7 @@ export default function OrgAboutInterviewPage() {
 
             <p
               className="text-sm text-center mt-8 mb-6"
-              style={{ color: '#8B8178', fontFamily: 'var(--font-body)' }}
+              className="text-folio-text-secondary" style={{ fontFamily: 'var(--font-body)' }}
             >
               {allCovered
                 ? "We'll use this to build your profile. You can always refine it after."
@@ -612,10 +612,10 @@ export default function OrgAboutInterviewPage() {
         >
           Crafting your story...
         </h3>
-        <p className="text-base mb-6" style={{ color: '#8B8178', fontFamily: 'var(--font-body)' }}>
+        <p className="text-base mb-6 text-folio-text-secondary" style={{ fontFamily: 'var(--font-body)' }}>
           We&apos;re generating your bio and populating your profile from what you shared.
         </p>
-        <Loader2 className="w-8 h-8 animate-spin" style={{ color: '#8B8178' }} />
+        <Loader2 className="w-8 h-8 animate-spin text-folio-text-secondary" />
       </div>
     );
   }
@@ -636,7 +636,7 @@ export default function OrgAboutInterviewPage() {
         >
           Your profile is ready
         </h3>
-        <p className="text-base mb-8 text-center max-w-md" style={{ color: '#8B8178', fontFamily: 'var(--font-body)' }}>
+        <p className="text-base mb-8 text-center max-w-md text-folio-text-secondary" style={{ fontFamily: 'var(--font-body)' }}>
           We&apos;ve populated your profile from {bioImportType !== 'FRESH' ? 'your bio and follow-up answers' : 'your answers'}. Review and fine-tune anything you&apos;d like.
         </p>
         <button
@@ -664,7 +664,7 @@ export default function OrgAboutInterviewPage() {
             }
           }}
           className="p-1 rounded-full transition-colors hover:opacity-70"
-          style={{ color: '#8B8178' }}
+          className="text-folio-text-secondary"
           aria-label="Close"
         >
           <X className="w-6 h-6" />
@@ -673,11 +673,11 @@ export default function OrgAboutInterviewPage() {
         <div className="flex items-center gap-3">
           <span
             className="text-xs px-3 py-1 rounded-full"
-            style={{ backgroundColor: '#E8E4DF', color: '#6B635B', fontFamily: 'var(--font-body)' }}
+            className="bg-folio-border-subtle text-folio-text-secondary" style={{ fontFamily: 'var(--font-body)' }}
           >
             {bioImportType !== 'FRESH' ? 'Follow-up' : `About ${orgName}`}
           </span>
-          <span className="text-sm" style={{ color: '#8B8178', fontFamily: 'var(--font-body)' }}>
+          <span className="text-sm text-folio-text-secondary" style={{ fontFamily: 'var(--font-body)' }}>
             Question {currentIndex + 1} of {activeQuestions.length}
           </span>
         </div>
@@ -740,14 +740,13 @@ export default function OrgAboutInterviewPage() {
 
       {/* Footer */}
       <div
-        className="flex items-center justify-between px-8 py-4 border-t"
-        className="border-folio-border-subtle"
+        className="flex items-center justify-between px-8 py-4 border-t border-folio-border-subtle"
       >
         <button
           onClick={handleBack}
           disabled={currentIndex === 0}
           className="flex items-center gap-2 px-4 py-2 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-          style={{ color: '#8B8178' }}
+          className="text-folio-text-secondary"
         >
           <ChevronLeft className="w-5 h-5" />
           <span style={{ fontFamily: 'var(--font-body)' }}>Back</span>
