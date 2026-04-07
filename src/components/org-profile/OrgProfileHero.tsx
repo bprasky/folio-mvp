@@ -150,8 +150,7 @@ export default function OrgProfileHero({
                         Follow
                       </button>
                       <button
-                        className="px-5 py-2 text-sm rounded-full border transition-all hover:bg-surface-ground"
-                        style={{ borderColor: '#2C2825', color: '#2C2825' }}
+                        className="px-5 py-2 text-sm rounded-full border transition-all hover:bg-surface-ground border-folio-text-primary text-folio-text-primary"
                       >
                         Contact
                       </button>
@@ -162,8 +161,7 @@ export default function OrgProfileHero({
                     <div className="relative" ref={menuRef}>
                       <button
                         onClick={() => setMenuOpen(!menuOpen)}
-                        className="w-9 h-9 rounded-full border flex items-center justify-center transition-all hover:bg-surface-ground"
-                        style={{ borderColor: '#E8E4DF', color: '#6B635B' }}
+                        className="w-9 h-9 rounded-full border flex items-center justify-center transition-all hover:bg-surface-ground border-folio-border-subtle text-folio-text-secondary"
                         aria-label="More options"
                       >
                         <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
@@ -175,13 +173,11 @@ export default function OrgProfileHero({
 
                       {menuOpen && (
                         <div
-                          className="absolute right-0 mt-2 w-48 rounded-lg shadow-lg border z-50"
-                          style={{ backgroundColor: '#FFFFFF', borderColor: '#E8E4DF' }}
+                          className="absolute right-0 mt-2 w-48 rounded-lg shadow-lg border z-50 bg-surface-canvas border-folio-border-subtle"
                         >
                           <Link
                             href={`/org/${org.id}/vendors`}
-                            className="block px-4 py-3 text-sm transition-colors hover:bg-surface-ground rounded-lg"
-                            style={{ color: '#2C2825' }}
+                            className="block px-4 py-3 text-sm transition-colors hover:bg-surface-ground rounded-lg text-folio-text-primary"
                             onClick={() => setMenuOpen(false)}
                           >
                             Our Vendors
@@ -198,8 +194,7 @@ export default function OrgProfileHero({
                     href={org.website}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-sm hover:underline"
-                    style={{ color: '#8B8178' }}
+                    className="text-sm hover:underline text-folio-text-secondary"
                   >
                     {org.website.replace(/^https?:\/\//, '').replace(/\/$/, '')}
                   </a>
@@ -218,10 +213,10 @@ function Stat({ label, value }: { label: string; value: number }) {
 
   return (
     <div className="text-center">
-      <div className="text-xl md:text-2xl font-light" style={{ color: '#2C2825' }}>
+      <div className="text-xl md:text-2xl font-light text-folio-text-primary">
         {formatted}
       </div>
-      <div className="text-xs" style={{ color: '#8B8178' }}>
+      <div className="text-xs text-folio-text-secondary">
         {label}
       </div>
     </div>

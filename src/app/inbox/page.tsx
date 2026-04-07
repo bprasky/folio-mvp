@@ -138,10 +138,10 @@ export default function InboxPage() {
         </div>
       ) : conversations.length === 0 ? (
         <div className="text-center py-16">
-          <p className="text-sm" style={{ color: '#A69E96' }}>
+          <p className="text-sm text-folio-text-tertiary">
             No messages yet.
           </p>
-          <p className="text-xs mt-1" style={{ color: '#A69E96' }}>
+          <p className="text-xs mt-1 text-folio-text-tertiary">
             When someone reaches out through your profile, it&apos;ll appear here.
           </p>
         </div>
@@ -172,21 +172,19 @@ function ConversationRow({ conversation }: { conversation: ConversationPreview }
   return (
     <Link href={`/inbox/${conversation.id}`}>
       <div
-        className="flex items-start gap-4 p-4 rounded-xl border transition-colors cursor-pointer"
+        className={`flex items-start gap-4 p-4 rounded-xl border transition-colors cursor-pointer ${
+          unread ? 'bg-surface-canvas border-folio-border-subtle' : 'border-transparent'
+        }`}
         style={{
-          backgroundColor: unread ? '#fff' : 'rgba(245,243,240,0.5)',
-          borderColor: unread ? '#E8E4DF' : 'transparent',
+          backgroundColor: unread ? undefined : 'rgba(245,243,240,0.5)',
           boxShadow: unread ? '0 1px 3px rgba(0,0,0,0.04)' : 'none',
         }}
       >
         {/* Avatar */}
         <div
-          className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-sm font-medium"
-          style={{
-            backgroundColor: senderImage ? 'transparent' : '#E8E4DF',
-            color: '#5C554D',
-            overflow: 'hidden',
-          }}
+          className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-sm font-medium text-folio-text-secondary overflow-hidden ${
+            senderImage ? '' : 'bg-folio-border-subtle'
+          }`}
         >
           {senderImage ? (
             <img src={senderImage} alt={senderName} className="w-full h-full object-cover" />
@@ -199,10 +197,9 @@ function ConversationRow({ conversation }: { conversation: ConversationPreview }
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span
-                className="text-sm"
+                className={`text-sm ${unread ? 'text-folio-text-primary' : 'text-folio-text-secondary'}`}
                 style={{
                   fontWeight: unread ? 600 : 400,
-                  color: unread ? '#2C2825' : '#5C554D',
                 }}
               >
                 {senderName}
@@ -213,12 +210,12 @@ function ConversationRow({ conversation }: { conversation: ConversationPreview }
                 </span>
               )}
               {!isEmail && categoryIcon && categoryLabel && categoryLabel !== 'General' && (
-                <span className="text-xs px-1.5 py-0.5 rounded-full" style={{ backgroundColor: '#F0EDE9', color: '#5C554D' }}>
+                <span className="text-xs px-1.5 py-0.5 rounded-full bg-surface-elevated text-folio-text-secondary">
                   {categoryIcon} {categoryLabel}
                 </span>
               )}
             </div>
-            <span className="text-xs" style={{ color: '#A69E96' }}>
+            <span className="text-xs text-folio-text-tertiary">
               {conversation.lastMessageAt
                 ? formatRelativeTime(conversation.lastMessageAt)
                 : ''}
@@ -226,13 +223,13 @@ function ConversationRow({ conversation }: { conversation: ConversationPreview }
           </div>
 
           {conversation.subject && (
-            <p className="text-xs mt-0.5" style={{ color: '#8B8178' }}>
+            <p className="text-xs mt-0.5 text-folio-text-secondary">
               {conversation.subject}
             </p>
           )}
 
           {lastMessage && (
-            <p className="text-xs mt-1 truncate" style={{ color: '#8B8178' }}>
+            <p className="text-xs mt-1 truncate text-folio-text-secondary">
               {lastMessage.body}
             </p>
           )}
@@ -240,8 +237,7 @@ function ConversationRow({ conversation }: { conversation: ConversationPreview }
 
         {unread && (
           <div
-            className="w-2 h-2 rounded-full mt-1.5 shrink-0"
-            style={{ backgroundColor: '#2C2825' }}
+            className="w-2 h-2 rounded-full mt-1.5 shrink-0 bg-folio-text-primary"
           />
         )}
       </div>

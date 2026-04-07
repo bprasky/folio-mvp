@@ -57,7 +57,7 @@ export default function CollaborationCard({ collaboration }: CollaborationCardPr
       )}
 
       {/* Content */}
-      <div className="p-5" style={{ borderTop: collaboration.imageUrl ? '1px solid #E8E4DF' : 'none' }}>
+      <div className={`p-5 ${collaboration.imageUrl ? 'border-t border-folio-border-subtle' : ''}`}>
         {/* Header */}
         <div className="flex items-start justify-between gap-3 mb-3">
           <span
@@ -71,8 +71,8 @@ export default function CollaborationCard({ collaboration }: CollaborationCardPr
 
         {/* Title */}
         <h3
-          className="font-medium leading-tight line-clamp-2 mb-2"
-          style={{ color: '#2C2825', fontFamily: 'Georgia, serif' }}
+          className="font-medium leading-tight line-clamp-2 mb-2 text-folio-text-primary"
+          style={{ fontFamily: 'Georgia, serif' }}
         >
           {collaboration.title}
         </h3>
@@ -81,8 +81,7 @@ export default function CollaborationCard({ collaboration }: CollaborationCardPr
         <div className="flex items-center gap-3 mb-3">
           {!collaboration.imageUrl && collaboration.partnerLogo && (
             <div
-              className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0"
-              style={{ backgroundColor: '#F5F3F0' }}
+              className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 bg-surface-elevated"
             >
               <SafeImage
                 src={collaboration.partnerLogo}
@@ -94,7 +93,7 @@ export default function CollaborationCard({ collaboration }: CollaborationCardPr
             </div>
           )}
           {collaboration.partnerName && (
-            <span className="text-sm" style={{ color: '#6B635B' }}>
+            <span className="text-sm text-folio-text-secondary">
               with <span className="font-medium">{collaboration.partnerName}</span>
             </span>
           )}
@@ -102,14 +101,14 @@ export default function CollaborationCard({ collaboration }: CollaborationCardPr
 
         {/* Description */}
         {collaboration.description && (
-          <p className="text-sm line-clamp-3" style={{ color: '#5C564F' }}>
+          <p className="text-sm line-clamp-3 text-folio-text-secondary">
             {collaboration.description}
           </p>
         )}
 
         {/* View project link */}
         {hasLink && (
-          <div className="mt-4 flex items-center gap-1 text-xs" style={{ color: '#8B8178' }}>
+          <div className="mt-4 flex items-center gap-1 text-xs text-folio-text-secondary">
             <span>View project</span>
             <ArrowRightIcon />
           </div>

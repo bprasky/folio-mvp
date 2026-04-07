@@ -43,8 +43,7 @@ export default function OrgProfileTabs({ activeTab, orgId, defaultTab = 'feed', 
 
   return (
     <div
-      className="sticky top-0 z-10 border-b"
-      style={{ borderColor: '#E8E4DF', backgroundColor: '#FAF9F7' }}
+      className="sticky top-0 z-10 border-b border-folio-border-subtle bg-surface-ground"
     >
       <div className="max-w-6xl mx-auto px-6 flex gap-8">
         {tabs.map(tab => (

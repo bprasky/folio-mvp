@@ -135,8 +135,7 @@ export default function ThreadPage({
           {[1, 2, 3].map((i) => (
             <div
               key={i}
-              className="h-16 rounded-xl animate-pulse"
-              style={{ backgroundColor: '#E8E4DF' }}
+              className="h-16 rounded-xl animate-pulse bg-folio-border-subtle"
             />
           ))}
         </div>
@@ -147,10 +146,10 @@ export default function ThreadPage({
   if (!conversation) {
     return (
       <div className="max-w-2xl mx-auto py-16 text-center">
-        <p className="text-sm" style={{ color: '#A69E96' }}>
+        <p className="text-sm text-folio-text-tertiary">
           Conversation not found.
         </p>
-        <Link href="/inbox" className="text-sm underline mt-2 inline-block" style={{ color: '#5C554D' }}>
+        <Link href="/inbox" className="text-sm underline mt-2 inline-block text-folio-text-secondary">
           Back to inbox
         </Link>
       </div>
@@ -168,16 +167,16 @@ export default function ThreadPage({
   return (
     <div className="max-w-2xl mx-auto py-8 px-4 flex flex-col" style={{ height: 'calc(100vh - 120px)' }}>
       {/* Header */}
-      <div className="flex items-center gap-3 pb-4" style={{ borderBottom: '1px solid #E8E4DF' }}>
-        <Link href="/inbox" style={{ color: '#A69E96' }} className="hover:opacity-70">
+      <div className="flex items-center gap-3 pb-4 border-b border-folio-border-subtle">
+        <Link href="/inbox" className="text-folio-text-tertiary hover:opacity-70">
           &larr;
         </Link>
         <div>
-          <p className="text-sm font-medium" style={{ color: '#2C2825' }}>
+          <p className="text-sm font-medium text-folio-text-primary">
             {otherName}
           </p>
           {conversation.subject && (
-            <p className="text-xs" style={{ color: '#A69E96' }}>
+            <p className="text-xs text-folio-text-tertiary">
               {conversation.subject}
             </p>
           )}
