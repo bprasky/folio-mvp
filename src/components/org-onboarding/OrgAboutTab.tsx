@@ -248,11 +248,11 @@ export function OrgAboutTab({
                     {index + 1}
                   </div>
                   <div>
-                    <p className="font-medium" style={{ color: '#2C2825' }}>
+                    <p className="font-medium text-folio-text-primary">
                       {phase.name}
                     </p>
                     {phase.description && (
-                      <p className="text-sm mt-1" style={{ color: '#6B635B' }}>
+                      <p className="text-sm mt-1 text-folio-text-secondary">
                         {phase.description}
                       </p>
                     )}
@@ -277,8 +277,8 @@ export function OrgAboutTab({
           <div>
             <div className="flex items-center justify-between mb-4">
               <h2
-                className="text-xl"
-                style={{ fontFamily: 'Georgia, serif', color: '#2C2825' }}
+                className="text-xl text-folio-text-primary"
+                style={{ fontFamily: 'Georgia, serif' }}
               >
                 Recognition
               </h2>
@@ -296,15 +296,14 @@ export function OrgAboutTab({
               {recognition.map((item) => (
                 <div
                   key={item.id}
-                  className="flex items-start gap-3 py-3"
-                  style={{ borderBottom: '1px solid #E8E4DF' }}
+                  className="flex items-start gap-3 py-3 border-b border-folio-border-subtle"
                 >
-                  <Award className="w-5 h-5 flex-shrink-0" style={{ color: '#8B8178' }} />
+                  <Award className="w-5 h-5 flex-shrink-0 text-folio-text-secondary" />
                   <div>
-                    <p className="font-medium" style={{ color: '#2C2825' }}>
+                    <p className="font-medium text-folio-text-primary">
                       {item.title}
                     </p>
-                    <p className="text-sm" style={{ color: '#6B635B' }}>
+                    <p className="text-sm text-folio-text-secondary">
                       {item.source}
                       {item.date && (
                         <span>

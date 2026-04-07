@@ -55,13 +55,12 @@ export default async function OrgVendorsPage({ params }: Props) {
   if (!membership) notFound();
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#FAF9F7' }}>
+    <div className="min-h-screen bg-surface-ground">
       <div className="max-w-6xl mx-auto px-6 py-8">
         <div className="flex items-center gap-3 mb-6">
           <Link
             href={`/org/${org.id}`}
-            className="text-sm hover:underline"
-            style={{ color: '#8B8178' }}
+            className="text-sm hover:underline text-folio-text-secondary"
           >
             {org.name}
           </Link>
