@@ -16,6 +16,9 @@ function getSupabase() {
 // Pick ONE bucket name and stick to it. You're currently using "event-images".
 const BUCKET = process.env.SB_BUCKET_NAME || "event-images";
 
+// Separate bucket for 3D meshes and masks — keeps binary assets out of the image bucket
+const MESH_BUCKET = 'product-meshes';
+
 /**
  * Strip EXIF metadata from image buffer for privacy and security
  * Removes GPS coordinates, timestamps, camera info, etc.
@@ -204,7 +207,7 @@ export async function uploadGeneratedMask({
   const sanitizedBuffer = await stripExifMetadata(buffer, mime);
 
   const { supabaseAdmin } = await import('./supabaseAdmin');
-  const { error } = await supabaseAdmin.storage.from(BUCKET).upload(path, sanitizedBuffer, {
+  const { error } = await supabaseAdmin.storage.from(MESH_BUCKET).upload(path, sanitizedBuffer, {
     contentType: mime,
     upsert: false,
   });
@@ -214,8 +217,8 @@ export async function uploadGeneratedMask({
     throw error;
   }
 
-  const { data: pub } = supabaseAdmin.storage.from(BUCKET).getPublicUrl(path);
-  return { bucket: BUCKET, path, publicUrl: pub.publicUrl };
+  const { data: pub } = supabaseAdmin.storage.from(MESH_BUCKET).getPublicUrl(path);
+  return { bucket: MESH_BUCKET, path, publicUrl: pub.publicUrl };
 }
 
 /**
@@ -238,7 +241,7 @@ export async function uploadGeneratedMesh({
   const path = `${projectId}/meshes/${productId}/${id}.${ext}`;
 
   const { supabaseAdmin } = await import('./supabaseAdmin');
-  const { error } = await supabaseAdmin.storage.from(BUCKET).upload(path, buffer, {
+  const { error } = await supabaseAdmin.storage.from(MESH_BUCKET).upload(path, buffer, {
     contentType: mime,
     upsert: false,
   });
@@ -248,6 +251,6 @@ export async function uploadGeneratedMesh({
     throw error;
   }
 
-  const { data: pub } = supabaseAdmin.storage.from(BUCKET).getPublicUrl(path);
-  return { bucket: BUCKET, path, publicUrl: pub.publicUrl };
+  const { data: pub } = supabaseAdmin.storage.from(MESH_BUCKET).getPublicUrl(path);
+  return { bucket: MESH_BUCKET, path, publicUrl: pub.publicUrl };
 }
