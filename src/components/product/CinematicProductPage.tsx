@@ -46,7 +46,7 @@ export function CinematicProductPage({ product }: CinematicProductPageProps) {
     }
   }, [palette]);
 
-  // Dev-only: Visual state audits (diagnostic mode)
+  // Dev-only: Visual state audits (diagnostic mode) — remove before v1 launch
   useEffect(() => {
     if (process.env.NODE_ENV !== 'production') {
       // Run visual state audit to diagnose rendering issues
@@ -140,6 +140,7 @@ export function CinematicProductPage({ product }: CinematicProductPageProps) {
               }}
               transition={{ duration: 0.18, ease: [0.25, 0.8, 0.25, 1] }}
             >
+              {(product.description || product.brand || product.sku || product.materials.length > 0 || product.finish) && (
               <GlassPanel
                 header={
                   <h2 className="text-lg font-medium text-stone-900 dark:text-stone-100">
@@ -148,33 +149,46 @@ export function CinematicProductPage({ product }: CinematicProductPageProps) {
                 }
               >
                 <div className="prose prose-stone dark:prose-invert max-w-none">
-                  <p className="text-base leading-relaxed text-stone-700 dark:text-stone-300">
-                    {product.description}
-                  </p>
-                  
+                  {product.description && (
+                    <p className="text-base leading-relaxed text-stone-700 dark:text-stone-300">
+                      {product.description}
+                    </p>
+                  )}
+
                   {/* Key Details */}
-                  <div className="mt-6 pt-6 border-t border-stone-200 dark:border-stone-700">
+                  {(product.brand || product.sku || product.materials.length > 0 || product.finish) && (
+                  <div className={`${product.description ? "mt-6 pt-6 border-t border-stone-200 dark:border-stone-700" : ""}`}>
                     <dl className="grid grid-cols-2 gap-4 text-sm">
+                      {product.brand && (
                       <div>
                         <dt className="font-medium text-stone-900 dark:text-stone-100">Brand</dt>
                         <dd className="mt-1 text-stone-600 dark:text-stone-400">{product.brand}</dd>
                       </div>
+                      )}
+                      {product.sku && (
                       <div>
                         <dt className="font-medium text-stone-900 dark:text-stone-100">SKU</dt>
                         <dd className="mt-1 font-mono text-xs text-stone-600 dark:text-stone-400">{product.sku}</dd>
                       </div>
+                      )}
+                      {product.materials.length > 0 && (
                       <div>
                         <dt className="font-medium text-stone-900 dark:text-stone-100">Materials</dt>
                         <dd className="mt-1 text-stone-600 dark:text-stone-400">{product.materials.join(", ")}</dd>
                       </div>
+                      )}
+                      {product.finish && (
                       <div>
                         <dt className="font-medium text-stone-900 dark:text-stone-100">Finish</dt>
                         <dd className="mt-1 text-stone-600 dark:text-stone-400">{product.finish}</dd>
                       </div>
+                      )}
                     </dl>
                   </div>
+                  )}
                 </div>
               </GlassPanel>
+              )}
             </motion.div>
 
             {/* Right: Gallery */}

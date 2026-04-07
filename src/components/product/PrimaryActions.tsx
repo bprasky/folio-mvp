@@ -13,7 +13,7 @@ export function PrimaryActions({ product }: { product: Product }) {
     <div className="space-y-3">
       {/* Primary Action - Visually Dominant */}
       <Button 
-        onClick={()=>act("Material Bank sample requested")} 
+        onClick={()=>act(`Sample requested${product.brand ? ` from ${product.brand}` : ""}`)}
         className="w-full bg-stone-900 hover:bg-stone-800 dark:bg-stone-100 dark:hover:bg-stone-200 text-white dark:text-stone-900 py-3"
         size="lg"
       >
@@ -71,7 +71,7 @@ export function PrimaryActions({ product }: { product: Product }) {
       </div>
       
       <div className="text-xs text-stone-500/80 dark:text-stone-400/80 pt-3 border-t border-white/10 dark:border-white/5 leading-relaxed">
-        💡 Connect Material Bank + Folio to auto-log sampling
+        💡 Connect your vendor accounts to auto-log sampling
       </div>
     </div>
   );

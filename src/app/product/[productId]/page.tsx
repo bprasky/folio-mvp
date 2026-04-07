@@ -76,6 +76,12 @@ export default async function ProductPage({ params }: ProductPageProps) {
                   profileImage: true,
                 },
               },
+              post: {
+                select: {
+                  slug: true,
+                  status: true,
+                },
+              },
             },
           },
           projectImage: {
@@ -263,7 +269,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
                   {uniqueProjects.map((project) => (
                     <Link
                       key={project.id}
-                      href={`/project/${project.id}`}
+                      href={project.post?.slug ? `/p/${project.post.slug}` : `/project/${project.id}`}
                       className="block border rounded-lg overflow-hidden hover:shadow-md transition"
                     >
                       {project.images && project.images.length > 0 && (
