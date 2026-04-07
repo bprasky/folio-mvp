@@ -3,6 +3,20 @@ import { prisma } from '@/lib/prisma';
 import { Product } from '@/lib/mock/product';
 
 /**
+ * Decode HTML entities commonly found in scraped product names.
+ */
+function decodeHtmlEntities(str: string): string {
+  return str
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&#x27;/g, "'")
+    .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)));
+}
+
+/**
  * Fetch a product from the database by ID and convert to UI format.
  * Wrapped with React cache() for request deduplication (generateMetadata + page component).
  */
@@ -23,19 +37,23 @@ export const getProductById = cache(async (id: string): Promise<Product | null> 
     return null;
   }
 
+  const name = decodeHtmlEntities(productFromDB.name);
+  const brand = productFromDB.brand || productFromDB.vendor?.name || "";
+  const description = decodeHtmlEntities(productFromDB.description || "");
+
   const product: Product = {
     id: productFromDB.id,
     slug: productFromDB.id,
-    name: productFromDB.name,
-    brand: productFromDB.brand || productFromDB.vendor?.name || "",
-    description: productFromDB.description || "",
+    name,
+    brand,
+    description,
     assets: productFromDB.imageUrl
-      ? [{ type: "image" as const, src: productFromDB.imageUrl, alt: productFromDB.name }]
+      ? [{ type: "image" as const, src: productFromDB.imageUrl, alt: name }]
       : [],
     materials: [],
     finish: "",
     dimensions: { w: 0, d: 0, h: 0, units: "in" },
-    sku: productFromDB.brand || "",
+    sku: "",
     leadTime: undefined,
     weight: undefined,
     files: { specSheets: [], _3d: [] },

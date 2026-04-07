@@ -2,6 +2,8 @@
 import { TaggedImage } from "@/lib/mock/product";
 
 export function InspirationGrid({ items }: { items: TaggedImage[] }) {
+  if (items.length === 0) return null;
+
   return (
     <section>
       <div className="mb-3">

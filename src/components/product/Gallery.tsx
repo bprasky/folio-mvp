@@ -5,6 +5,9 @@ import { GlassPanel } from "@/components/ui/GlassPanel";
 
 export function Gallery({ assets }: { assets: ProductAsset[] }) {
   const [active, setActive] = useState(0);
+
+  if (assets.length === 0) return null;
+
   const a = assets[active];
 
   return (

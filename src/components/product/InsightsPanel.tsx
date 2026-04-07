@@ -11,6 +11,10 @@ interface InsightsPanelProps {
 }
 
 export function InsightsPanel({ product }: InsightsPanelProps) {
+  const i = product.insights;
+  const hasData = i.saves > 0 || i.tags > 0 || i.topRooms.length > 0 || i.topMarkets.length > 0;
+  if (!hasData) return null;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}

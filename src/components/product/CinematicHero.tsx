@@ -77,11 +77,13 @@ export function CinematicHero({ media, title, subtitle, brand, sku, palette }: C
           </video>
         ) : media.imageUrl ? (
           <div className="relative w-full h-full">
+            {/* Use unoptimized to handle external image domains not in next.config */}
             <SafeImage
               src={media.imageUrl}
               alt={title}
               fill
               priority
+              unoptimized
               className="object-cover"
               style={{ objectPosition: 'center 45%' }}
               sizes="(min-width: 1024px) 1200px, 100vw"

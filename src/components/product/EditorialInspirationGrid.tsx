@@ -11,6 +11,8 @@ interface EditorialInspirationGridProps {
 }
 
 export function EditorialInspirationGrid({ items }: EditorialInspirationGridProps) {
+  if (items.length === 0) return null;
+
   return (
     <section className="py-16">
       <motion.div

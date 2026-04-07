@@ -18,6 +18,8 @@ interface RelatedFibonacciGridProps {
 }
 
 export function RelatedFibonacciGrid({ items }: RelatedFibonacciGridProps) {
+  if (items.length === 0) return null;
+
   return (
     <section className="py-16">
       <motion.div

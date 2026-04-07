@@ -12,6 +12,9 @@ interface SpecPanelProps {
 
 export function SpecPanel({ product }: SpecPanelProps) {
   const { dimensions, weight, materials, finish, leadTime } = product;
+  const hasDimensions = dimensions.w > 0 || dimensions.d > 0 || dimensions.h > 0;
+  const hasSpecs = hasDimensions || weight || materials.length > 0 || finish || leadTime;
+  if (!hasSpecs) return null;
 
   return (
     <motion.div

@@ -3,6 +3,9 @@ import { Product } from "@/lib/mock/product";
 
 export function VendorInsightsMini({ product }: { product: Product }) {
   const i = product.insights;
+  const hasData = i.saves > 0 || i.tags > 0 || i.topRooms.length > 0 || i.topMarkets.length > 0;
+  if (!hasData) return null;
+
   return (
     <div className="space-y-6">
       {/* KPI Grid */}
