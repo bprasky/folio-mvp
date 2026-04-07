@@ -1,3 +1,6 @@
+// DEPRECATED — mock data file. MOCK_PRODUCT is no longer used in production.
+// Retained for type definitions and local dev seeding only.
+
 export type ProductAsset = { type: "image"|"video"; src: string; alt?: string };
 export type FileLink = { label: string; href: string };
 export type TaggedImage = { id: string; src: string; likes: number; room: string; by: string };

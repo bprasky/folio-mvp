@@ -1,3 +1,8 @@
+// LEGACY ROUTE — scheduled for deprecation.
+// Canonical product page is /products/[slug].
+// TODO: Add redirect from this route to /products/[slug] once slug migration is complete.
+
+import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import Image from "next/image";
@@ -6,6 +11,40 @@ import { DesignerTestimonials } from "@/components/product/DesignerTestimonials"
 
 interface ProductPageProps {
   params: { productId: string };
+}
+
+export async function generateMetadata({ params }: { params: { productId: string } }): Promise<Metadata> {
+  const product = await prisma.product.findUnique({
+    where: { id: params.productId },
+    select: {
+      name: true,
+      description: true,
+      brand: true,
+      imageUrl: true,
+      vendor: { select: { name: true } },
+      vendorRecord: { select: { name: true } },
+    },
+  });
+
+  if (!product) return { title: "Product Not Found | Folio" };
+
+  const vendorName = product.vendor?.name || product.vendorRecord?.name || product.brand;
+  const title = vendorName
+    ? `${product.name} by ${vendorName} | Folio`
+    : `${product.name} | Folio`;
+  const description = product.description
+    || `Discover ${product.name}${vendorName ? ` by ${vendorName}` : ""} — sourced and tagged by the design community on Folio.`;
+  const ogImage = product.imageUrl || null;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      ...(ogImage && { images: [{ url: ogImage }] }),
+    },
+  };
 }
 
 export default async function ProductPage({ params }: ProductPageProps) {
@@ -35,6 +74,12 @@ export default async function ProductPage({ params }: ProductPageProps) {
                   id: true,
                   name: true,
                   profileImage: true,
+                },
+              },
+              post: {
+                select: {
+                  slug: true,
+                  status: true,
                 },
               },
             },
@@ -224,7 +269,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
                   {uniqueProjects.map((project) => (
                     <Link
                       key={project.id}
-                      href={`/project/${project.id}`}
+                      href={project.post?.slug ? `/p/${project.post.slug}` : `/project/${project.id}`}
                       className="block border rounded-lg overflow-hidden hover:shadow-md transition"
                     >
                       {project.images && project.images.length > 0 && (

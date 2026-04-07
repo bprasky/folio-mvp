@@ -13,6 +13,8 @@ interface DownloadsPanelProps {
 
 export function DownloadsPanel({ product }: DownloadsPanelProps) {
   const { files } = product;
+  const hasFiles = files.specSheets.length > 0 || files._3d.length > 0 || (files.others?.length ?? 0) > 0;
+  if (!hasFiles) return null;
 
   return (
     <motion.div
@@ -97,10 +99,6 @@ function FileList({
               <div className="flex items-center gap-2 mt-1">
                 <span className={`text-xs px-1.5 py-0.5 rounded uppercase font-medium ${getFileTypeColor(fileType)}`}>
                   {fileType}
-                </span>
-                {/* Placeholder for file size - would come from actual file metadata */}
-                <span className="text-xs text-stone-500 dark:text-stone-400">
-                  Updated recently
                 </span>
               </div>
             </div>

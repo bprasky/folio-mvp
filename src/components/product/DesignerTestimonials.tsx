@@ -124,14 +124,14 @@ function TestimonialCard({ testimonial }: { testimonial: Testimonial }) {
         style={{ color: '#2C2825' }}
       >
         <span
-          className="text-3xl font-serif leading-none mr-1"
+          className="text-3xl font-headline leading-none mr-1"
           style={{ color: '#C4BEB5' }}
         >
-          "
+          &ldquo;
         </span>
         {testimonial.quote}
         <span
-          className="text-3xl font-serif leading-none ml-1"
+          className="text-3xl font-headline leading-none ml-1"
           style={{ color: '#C4BEB5' }}
         >
           "
