@@ -151,24 +151,23 @@ export default function VendorShopAnalyticsPage() {
   if (!session?.user?.id) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p style={{ color: '#8B8178' }}>Please sign in to view analytics.</p>
+        <p className="text-folio-text-secondary">Please sign in to view analytics.</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#FAF9F7' }}>
+    <div className="min-h-screen bg-surface-ground">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div>
             <h1
-              className="text-2xl font-semibold"
-              style={{ color: '#2C2825' }}
+              className="text-2xl font-semibold text-folio-text-primary"
             >
               Shop Analytics
             </h1>
-            <p className="text-sm mt-1" style={{ color: '#8B8178' }}>
+            <p className="text-sm mt-1 text-folio-text-secondary">
               Track designer engagement with your products
             </p>
           </div>
@@ -179,12 +178,7 @@ export default function VendorShopAnalyticsPage() {
               <select
                 value={selectedOrg}
                 onChange={(e) => setSelectedOrg(e.target.value)}
-                className="px-4 py-2 rounded-lg border text-sm"
-                style={{
-                  backgroundColor: '#FFFFFF',
-                  borderColor: '#E8E4DF',
-                  color: '#2C2825',
-                }}
+                className="px-4 py-2 rounded-lg border text-sm bg-surface-canvas border-folio-border-subtle text-folio-text-primary"
               >
                 {organizations.map((org) => (
                   <option key={org.id} value={org.id}>
@@ -197,12 +191,7 @@ export default function VendorShopAnalyticsPage() {
             <select
               value={timeRange}
               onChange={(e) => setTimeRange(e.target.value)}
-              className="px-4 py-2 rounded-lg border text-sm"
-              style={{
-                backgroundColor: '#FFFFFF',
-                borderColor: '#E8E4DF',
-                color: '#2C2825',
-              }}
+              className="px-4 py-2 rounded-lg border text-sm bg-surface-canvas border-folio-border-subtle text-folio-text-primary"
             >
               {TIME_RANGE_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
@@ -217,17 +206,15 @@ export default function VendorShopAnalyticsPage() {
           <AnalyticsSkeleton />
         ) : error ? (
           <div
-            className="rounded-xl p-8 text-center"
-            style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E4DF' }}
+            className="rounded-xl p-8 text-center bg-surface-canvas border border-folio-border-subtle"
           >
-            <p style={{ color: '#8B8178' }}>{error}</p>
+            <p className="text-folio-text-secondary">{error}</p>
           </div>
         ) : !analytics ? (
           <div
-            className="rounded-xl p-8 text-center"
-            style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E4DF' }}
+            className="rounded-xl p-8 text-center bg-surface-canvas border border-folio-border-subtle"
           >
-            <p style={{ color: '#8B8178' }}>
+            <p className="text-folio-text-secondary">
               Select a vendor organization to view analytics.
             </p>
           </div>
@@ -268,12 +255,10 @@ export default function VendorShopAnalyticsPage() {
             {/* Boost Status */}
             {analytics.boosts.total > 0 && (
               <div
-                className="rounded-xl p-6 mb-8"
-                style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E4DF' }}
+                className="rounded-xl p-6 mb-8 bg-surface-canvas border border-folio-border-subtle"
               >
                 <h2
-                  className="text-lg font-medium mb-4"
-                  style={{ color: '#2C2825' }}
+                  className="text-lg font-medium mb-4 text-folio-text-primary"
                 >
                   Boost Status
                 </h2>
@@ -288,7 +273,7 @@ export default function VendorShopAnalyticsPage() {
                         {analytics.boosts.pending}
                       </span>
                     </div>
-                    <p className="text-sm" style={{ color: '#8B8178' }}>
+                    <p className="text-sm text-folio-text-secondary">
                       Pending
                     </p>
                   </div>
@@ -305,7 +290,7 @@ export default function VendorShopAnalyticsPage() {
                         {analytics.boosts.approved}
                       </span>
                     </div>
-                    <p className="text-sm" style={{ color: '#8B8178' }}>
+                    <p className="text-sm text-folio-text-secondary">
                       Approved
                     </p>
                   </div>
@@ -319,7 +304,7 @@ export default function VendorShopAnalyticsPage() {
                         {analytics.boosts.declined}
                       </span>
                     </div>
-                    <p className="text-sm" style={{ color: '#8B8178' }}>
+                    <p className="text-sm text-folio-text-secondary">
                       Declined
                     </p>
                   </div>
@@ -331,17 +316,15 @@ export default function VendorShopAnalyticsPage() {
             <div className="grid md:grid-cols-2 gap-6 mb-8">
               {/* Top Products */}
               <div
-                className="rounded-xl p-6"
-                style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E4DF' }}
+                className="rounded-xl p-6 bg-surface-canvas border border-folio-border-subtle"
               >
                 <h2
-                  className="text-lg font-medium mb-4"
-                  style={{ color: '#2C2825' }}
+                  className="text-lg font-medium mb-4 text-folio-text-primary"
                 >
                   Top Products in Designer Shops
                 </h2>
                 {analytics.topProducts.length === 0 ? (
-                  <p className="text-sm" style={{ color: '#8B8178' }}>
+                  <p className="text-sm text-folio-text-secondary">
                     No products have been added to designer shops yet.
                   </p>
                 ) : (
@@ -353,14 +336,12 @@ export default function VendorShopAnalyticsPage() {
                           className="flex items-center gap-3"
                         >
                           <span
-                            className="text-sm font-medium w-5"
-                            style={{ color: '#A9A29A' }}
+                            className="text-sm font-medium w-5 text-folio-text-tertiary"
                           >
                             {index + 1}
                           </span>
                           <div
-                            className="w-10 h-10 rounded-lg flex-shrink-0 overflow-hidden"
-                            style={{ backgroundColor: '#F5F3F0' }}
+                            className="w-10 h-10 rounded-lg flex-shrink-0 overflow-hidden bg-surface-elevated"
                           >
                             {item.product.imageUrl ? (
                               <Image
@@ -373,20 +354,18 @@ export default function VendorShopAnalyticsPage() {
                             ) : (
                               <div className="w-full h-full flex items-center justify-center">
                                 <Package
-                                  className="w-4 h-4"
-                                  style={{ color: '#C4BEB5' }}
+                                  className="w-4 h-4 text-folio-text-tertiary"
                                 />
                               </div>
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
                             <p
-                              className="text-sm font-medium truncate"
-                              style={{ color: '#2C2825' }}
+                              className="text-sm font-medium truncate text-folio-text-primary"
                             >
                               {item.product.name}
                             </p>
-                            <p className="text-xs" style={{ color: '#8B8178' }}>
+                            <p className="text-xs text-folio-text-secondary">
                               {item.product.category || 'Uncategorized'}
                             </p>
                           </div>
@@ -405,17 +384,15 @@ export default function VendorShopAnalyticsPage() {
 
               {/* Top Designers */}
               <div
-                className="rounded-xl p-6"
-                style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E4DF' }}
+                className="rounded-xl p-6 bg-surface-canvas border border-folio-border-subtle"
               >
                 <h2
-                  className="text-lg font-medium mb-4"
-                  style={{ color: '#2C2825' }}
+                  className="text-lg font-medium mb-4 text-folio-text-primary"
                 >
                   Top Designers
                 </h2>
                 {analytics.topDesigners.length === 0 ? (
-                  <p className="text-sm" style={{ color: '#8B8178' }}>
+                  <p className="text-sm text-folio-text-secondary">
                     No designers have featured your products yet.
                   </p>
                 ) : (
@@ -437,17 +414,15 @@ export default function VendorShopAnalyticsPage() {
 
             {/* Recent Activity */}
             <div
-              className="rounded-xl p-6"
-              style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E4DF' }}
+              className="rounded-xl p-6 bg-surface-canvas border border-folio-border-subtle"
             >
               <h2
-                className="text-lg font-medium mb-4"
-                style={{ color: '#2C2825' }}
+                className="text-lg font-medium mb-4 text-folio-text-primary"
               >
                 Recent Activity
               </h2>
               {analytics.recentActivity.length === 0 ? (
-                <p className="text-sm" style={{ color: '#8B8178' }}>
+                <p className="text-sm text-folio-text-secondary">
                   No recent activity to show.
                 </p>
               ) : (
@@ -455,8 +430,7 @@ export default function VendorShopAnalyticsPage() {
                   {analytics.recentActivity.map((activity) => (
                     <div
                       key={activity.id}
-                      className="flex items-center gap-4 py-2 border-b last:border-b-0"
-                      style={{ borderColor: '#F5F3F0' }}
+                      className="flex items-center gap-4 py-2 border-b last:border-b-0 border-surface-elevated"
                     >
                       {/* Designer avatar */}
                       {activity.designer.profileImage ? (
@@ -469,12 +443,10 @@ export default function VendorShopAnalyticsPage() {
                         />
                       ) : (
                         <div
-                          className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
-                          style={{ backgroundColor: '#E8E4DF' }}
+                          className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-folio-border-subtle"
                         >
                           <span
-                            className="text-xs font-medium"
-                            style={{ color: '#8B8178' }}
+                            className="text-xs font-medium text-folio-text-secondary"
                           >
                             {(activity.designer.name || 'D')
                               .charAt(0)
@@ -485,7 +457,7 @@ export default function VendorShopAnalyticsPage() {
 
                       {/* Activity text */}
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm" style={{ color: '#2C2825' }}>
+                        <p className="text-sm text-folio-text-primary">
                           {activity.designer.id ? (
                             <Link
                               href={`/designer/${activity.designer.id}?tab=shop`}
@@ -510,7 +482,7 @@ export default function VendorShopAnalyticsPage() {
                             </span>
                           )}
                         </p>
-                        <p className="text-xs mt-0.5" style={{ color: '#A9A29A' }}>
+                        <p className="text-xs mt-0.5 text-folio-text-tertiary">
                           {new Date(activity.createdAt).toLocaleDateString(
                             undefined,
                             {
@@ -525,8 +497,7 @@ export default function VendorShopAnalyticsPage() {
 
                       {/* Product thumbnail */}
                       <div
-                        className="w-10 h-10 rounded-lg flex-shrink-0 overflow-hidden"
-                        style={{ backgroundColor: '#F5F3F0' }}
+                        className="w-10 h-10 rounded-lg flex-shrink-0 overflow-hidden bg-surface-elevated"
                       >
                         {activity.product.imageUrl ? (
                           <Image
@@ -539,8 +510,7 @@ export default function VendorShopAnalyticsPage() {
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
                             <Package
-                              className="w-4 h-4"
-                              style={{ color: '#C4BEB5' }}
+                              className="w-4 h-4 text-folio-text-tertiary"
                             />
                           </div>
                         )}
@@ -572,19 +542,18 @@ function StatCard({
 }) {
   return (
     <div
-      className="rounded-xl p-4"
-      style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E4DF' }}
+      className="rounded-xl p-4 bg-surface-canvas border border-folio-border-subtle"
     >
       <div className="flex items-center gap-2 mb-2">
         <div style={{ color }}>{icon}</div>
-        <span className="text-sm" style={{ color: '#8B8178' }}>
+        <span className="text-sm text-folio-text-secondary">
           {label}
         </span>
       </div>
-      <p className="text-2xl font-semibold mb-1" style={{ color: '#2C2825' }}>
+      <p className="text-2xl font-semibold mb-1 text-folio-text-primary">
         {value.toLocaleString()}
       </p>
-      <p className="text-xs" style={{ color: '#A9A29A' }}>
+      <p className="text-xs text-folio-text-tertiary">
         {subtext}
       </p>
     </div>
@@ -608,8 +577,7 @@ function DesignerRow({
   const content = (
     <>
       <span
-        className="text-sm font-medium w-5"
-        style={{ color: '#A9A29A' }}
+        className="text-sm font-medium w-5 text-folio-text-tertiary"
       >
         {index + 1}
       </span>
@@ -623,12 +591,10 @@ function DesignerRow({
         />
       ) : (
         <div
-          className="w-10 h-10 rounded-full flex items-center justify-center"
-          style={{ backgroundColor: '#E8E4DF' }}
+          className="w-10 h-10 rounded-full flex items-center justify-center bg-folio-border-subtle"
         >
           <span
-            className="text-sm font-medium"
-            style={{ color: '#8B8178' }}
+            className="text-sm font-medium text-folio-text-secondary"
           >
             {(designer.name || 'D').charAt(0).toUpperCase()}
           </span>
@@ -636,15 +602,13 @@ function DesignerRow({
       )}
       <div className="flex-1 min-w-0">
         <p
-          className="text-sm font-medium truncate"
-          style={{ color: '#2C2825' }}
+          className="text-sm font-medium truncate text-folio-text-primary"
         >
           {designer.name || 'Anonymous'}
         </p>
         {designer.companyName && (
           <p
-            className="text-xs truncate"
-            style={{ color: '#8B8178' }}
+            className="text-xs truncate text-folio-text-secondary"
           >
             {designer.companyName}
           </p>
@@ -659,8 +623,7 @@ function DesignerRow({
         </span>
         {designer.id && (
           <ArrowUpRight
-            className="w-3 h-3"
-            style={{ color: '#A9A29A' }}
+            className="w-3 h-3 text-folio-text-tertiary"
           />
         )}
       </div>
@@ -695,20 +658,16 @@ function AnalyticsSkeleton() {
         {[1, 2, 3, 4].map((i) => (
           <div
             key={i}
-            className="rounded-xl p-4 animate-pulse"
-            style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E4DF' }}
+            className="rounded-xl p-4 animate-pulse bg-surface-canvas border border-folio-border-subtle"
           >
             <div
-              className="h-4 w-20 rounded mb-3"
-              style={{ backgroundColor: '#E8E4DF' }}
+              className="h-4 w-20 rounded mb-3 bg-folio-border-subtle"
             />
             <div
-              className="h-8 w-16 rounded mb-2"
-              style={{ backgroundColor: '#E8E4DF' }}
+              className="h-8 w-16 rounded mb-2 bg-folio-border-subtle"
             />
             <div
-              className="h-3 w-24 rounded"
-              style={{ backgroundColor: '#E8E4DF' }}
+              className="h-3 w-24 rounded bg-folio-border-subtle"
             />
           </div>
         ))}
@@ -719,28 +678,23 @@ function AnalyticsSkeleton() {
         {[1, 2].map((i) => (
           <div
             key={i}
-            className="rounded-xl p-6 animate-pulse"
-            style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E4DF' }}
+            className="rounded-xl p-6 animate-pulse bg-surface-canvas border border-folio-border-subtle"
           >
             <div
-              className="h-5 w-40 rounded mb-4"
-              style={{ backgroundColor: '#E8E4DF' }}
+              className="h-5 w-40 rounded mb-4 bg-folio-border-subtle"
             />
             <div className="space-y-3">
               {[1, 2, 3, 4, 5].map((j) => (
                 <div key={j} className="flex items-center gap-3">
                   <div
-                    className="w-10 h-10 rounded-lg"
-                    style={{ backgroundColor: '#E8E4DF' }}
+                    className="w-10 h-10 rounded-lg bg-folio-border-subtle"
                   />
                   <div className="flex-1">
                     <div
-                      className="h-4 w-32 rounded mb-1"
-                      style={{ backgroundColor: '#E8E4DF' }}
+                      className="h-4 w-32 rounded mb-1 bg-folio-border-subtle"
                     />
                     <div
-                      className="h-3 w-20 rounded"
-                      style={{ backgroundColor: '#E8E4DF' }}
+                      className="h-3 w-20 rounded bg-folio-border-subtle"
                     />
                   </div>
                 </div>

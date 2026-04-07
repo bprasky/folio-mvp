@@ -341,15 +341,14 @@ export default function OrgAboutInterviewPage() {
         <div className="flex items-center justify-between px-8 py-4 border-b border-folio-border-subtle">
           <button
             onClick={() => setStep('choose-path')}
-            className="p-1 rounded-full transition-colors hover:opacity-70"
-            className="text-folio-text-secondary"
+            className="p-1 rounded-full transition-colors hover:opacity-70 text-folio-text-secondary"
             aria-label="Back"
           >
             <ChevronLeft className="w-6 h-6" />
           </button>
           <span
-            className="text-xs px-3 py-1 rounded-full"
-            className="bg-folio-border-subtle text-folio-text-secondary" style={{ fontFamily: 'var(--font-body)' }}
+            className="text-xs px-3 py-1 rounded-full bg-folio-border-subtle text-folio-text-secondary"
+            style={{ fontFamily: 'var(--font-body)' }}
           >
             Import Bio
           </span>
@@ -365,8 +364,8 @@ export default function OrgAboutInterviewPage() {
               Bring in your existing bio
             </h2>
             <p
-              className="text-sm text-center mb-8"
-              className="text-folio-text-secondary" style={{ fontFamily: 'var(--font-body)' }}
+              className="text-sm text-center mb-8 text-folio-text-secondary"
+              style={{ fontFamily: 'var(--font-body)' }}
             >
               We&apos;ll analyze what you already have and only ask about what&apos;s missing.
             </p>
@@ -381,8 +380,8 @@ export default function OrgAboutInterviewPage() {
             {/* URL input */}
             <div className="mb-6">
               <label
-                className="text-xs font-medium mb-1.5 block"
-                style={{ color: '#6B635B', fontFamily: 'var(--font-body)' }}
+                className="text-xs font-medium mb-1.5 block text-folio-text-secondary"
+                style={{ fontFamily: 'var(--font-body)' }}
               >
                 Paste a URL
               </label>
@@ -392,19 +391,15 @@ export default function OrgAboutInterviewPage() {
                   value={bioUrl}
                   onChange={(e) => setBioUrl(e.target.value)}
                   placeholder="Your website, Houzz profile, LinkedIn, etc."
-                  className="flex-1 px-4 py-2.5 text-sm rounded-xl border outline-none transition-colors focus:border-[#B8845C]"
+                  className="flex-1 px-4 py-2.5 text-sm rounded-xl border outline-none transition-colors focus:border-[#B8845C] border-folio-border-subtle bg-surface-ground text-folio-text-primary"
                   style={{
-                    borderColor: '#E8E4DF',
-                    backgroundColor: '#FAF9F7',
-                    color: '#2C2825',
                     fontFamily: 'var(--font-body)',
                   }}
                 />
                 <button
                   onClick={handleFetchUrl}
                   disabled={fetchingUrl || !bioUrl.trim()}
-                  className="px-4 py-2.5 text-sm rounded-xl transition-all hover:opacity-80 disabled:opacity-40"
-                  style={{ border: '1px solid #D4CEC6', color: '#6B635B' }}
+                  className="px-4 py-2.5 text-sm rounded-xl transition-all hover:opacity-80 disabled:opacity-40 border border-folio-border-strong text-folio-text-secondary"
                 >
                   {fetchingUrl ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -417,11 +412,11 @@ export default function OrgAboutInterviewPage() {
 
             {/* Divider */}
             <div className="flex items-center gap-4 mb-6">
-              <div className="flex-1 h-px" style={{ backgroundColor: '#E8E4DF' }} />
-              <span className="text-xs" style={{ color: '#B8B0A6' }}>
+              <div className="flex-1 h-px bg-folio-border-subtle" />
+              <span className="text-xs text-folio-text-tertiary">
                 or paste text directly
               </span>
-              <div className="flex-1 h-px" style={{ backgroundColor: '#E8E4DF' }} />
+              <div className="flex-1 h-px bg-folio-border-subtle" />
             </div>
 
             {/* Text input */}
@@ -429,11 +424,8 @@ export default function OrgAboutInterviewPage() {
               value={bioText}
               onChange={(e) => setBioText(e.target.value)}
               placeholder="Paste your studio's about text here..."
-              className="w-full min-h-[200px] px-4 py-3 text-sm rounded-xl border outline-none transition-colors focus:border-[#B8845C] resize-y leading-relaxed"
+              className="w-full min-h-[200px] px-4 py-3 text-sm rounded-xl border outline-none transition-colors focus:border-[#B8845C] resize-y leading-relaxed border-folio-border-subtle bg-surface-ground text-folio-text-primary"
               style={{
-                borderColor: '#E8E4DF',
-                backgroundColor: '#FAF9F7',
-                color: '#2C2825',
                 fontFamily: 'var(--font-body)',
               }}
             />
@@ -442,8 +434,8 @@ export default function OrgAboutInterviewPage() {
               <button
                 onClick={handleAnalyzeBio}
                 disabled={!bioText.trim()}
-                className="flex items-center gap-2 px-8 py-3 rounded-full text-sm font-medium transition-all hover:opacity-90 disabled:opacity-40"
-                style={{ backgroundColor: '#2C2825', color: '#FAF9F7', fontFamily: 'var(--font-body)' }}
+                className="flex items-center gap-2 px-8 py-3 rounded-full text-sm font-medium transition-all hover:opacity-90 disabled:opacity-40 bg-folio-text-primary text-surface-ground"
+                style={{ fontFamily: 'var(--font-body)' }}
               >
                 <FileText className="w-4 h-4" />
                 Analyze my bio
@@ -560,7 +552,7 @@ export default function OrgAboutInterviewPage() {
                 >
                   <div className="flex items-center gap-3">
                     {depthIcon(c.depth)}
-                    <span className="text-sm" style={{ color: '#2C2825', fontFamily: 'var(--font-body)' }}>
+                    <span className="text-sm text-folio-text-primary" style={{ fontFamily: 'var(--font-body)' }}>
                       {questionLabel(c.questionId)}
                     </span>
                   </div>
@@ -588,8 +580,8 @@ export default function OrgAboutInterviewPage() {
             <div className="flex justify-center">
               <button
                 onClick={handleCoverageContinue}
-                className="flex items-center gap-2 px-8 py-3 rounded-full text-sm font-medium transition-all hover:opacity-90"
-                style={{ backgroundColor: '#2C2825', color: '#FAF9F7', fontFamily: 'var(--font-body)' }}
+                className="flex items-center gap-2 px-8 py-3 rounded-full text-sm font-medium transition-all hover:opacity-90 bg-folio-text-primary text-surface-ground"
+                style={{ fontFamily: 'var(--font-body)' }}
               >
                 {allCovered ? 'Build my profile' : 'Continue'}
                 <ChevronRight className="w-4 h-4" />
@@ -641,8 +633,7 @@ export default function OrgAboutInterviewPage() {
         </p>
         <button
           onClick={handleFinish}
-          className="px-8 py-3 rounded-full text-sm font-medium transition-all hover:opacity-90"
-          style={{ backgroundColor: '#2C2825', color: '#FAF9F7' }}
+          className="px-8 py-3 rounded-full text-sm font-medium transition-all hover:opacity-90 bg-folio-text-primary text-surface-ground"
         >
           Review Profile
         </button>
@@ -687,10 +678,10 @@ export default function OrgAboutInterviewPage() {
 
       {/* Progress bar */}
       <div className="px-8 pt-4">
-        <div className="w-full h-1 rounded-full overflow-hidden" style={{ backgroundColor: '#E8E4DF' }}>
+        <div className="w-full h-1 rounded-full overflow-hidden bg-folio-border-subtle">
           <div
-            className="h-full transition-all duration-500 ease-out rounded-full"
-            style={{ width: `${progress}%`, backgroundColor: '#2C2825' }}
+            className="h-full transition-all duration-500 ease-out rounded-full bg-folio-text-primary"
+            style={{ width: `${progress}%` }}
           />
         </div>
       </div>
@@ -722,16 +713,14 @@ export default function OrgAboutInterviewPage() {
                   setAnswers((prev) => ({ ...prev, [currentQuestion.id]: e.target.value }))
                 }
                 placeholder="Take your time..."
-                className="w-full min-h-[180px] p-4 rounded-xl border text-lg resize-y leading-relaxed outline-none transition-colors"
+                className="w-full min-h-[180px] p-4 rounded-xl border text-lg resize-y leading-relaxed outline-none transition-colors border-folio-border-subtle text-folio-text-primary"
                 style={{
                   backgroundColor: 'rgba(250, 249, 247, 0.5)',
-                  borderColor: '#E8E4DF',
-                  color: '#2C2825',
                   fontFamily: 'var(--font-body)',
                 }}
               />
             </div>
-            <div className="max-w-3xl flex justify-end text-sm" style={{ color: '#B8B0A6' }}>
+            <div className="max-w-3xl flex justify-end text-sm text-folio-text-tertiary">
               <span>Press &#8984; + Enter to continue</span>
             </div>
           </div>
@@ -755,8 +744,8 @@ export default function OrgAboutInterviewPage() {
         <button
           onClick={handleNext}
           disabled={isSubmitting}
-          className="flex items-center gap-2 px-6 py-3 rounded-full text-sm font-medium transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
-          style={{ backgroundColor: '#2C2825', color: '#FAF9F7', fontFamily: 'var(--font-body)' }}
+          className="flex items-center gap-2 px-6 py-3 rounded-full text-sm font-medium transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed bg-folio-text-primary text-surface-ground"
+          style={{ fontFamily: 'var(--font-body)' }}
         >
           <span>
             {currentIndex === activeQuestions.length - 1 ? 'Generate Profile' : 'Continue'}

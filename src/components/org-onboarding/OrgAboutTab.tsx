@@ -113,16 +113,15 @@ export function OrgAboutTab({
         {/* Philosophy Quote */}
         {org.philosophy && (
           <div
-            className="text-center py-8 mb-4"
-            style={{ borderBottom: '1px solid #E8E4DF' }}
+            className="text-center py-8 mb-4 border-b border-folio-border-subtle"
           >
             <blockquote
-              className="text-xl md:text-2xl italic max-w-2xl mx-auto"
-              style={{ fontFamily: 'Georgia, serif', color: '#2C2825' }}
+              className="text-xl md:text-2xl italic max-w-2xl mx-auto text-folio-text-primary"
+              style={{ fontFamily: 'Georgia, serif' }}
             >
               "{org.philosophy}"
             </blockquote>
-            <p className="mt-4 text-sm" style={{ color: '#8B8178' }}>
+            <p className="mt-4 text-sm text-folio-text-secondary">
               — {org.name}
             </p>
           </div>
@@ -131,17 +130,17 @@ export function OrgAboutTab({
         {/* Bio section */}
         <div>
           <h2
-            className="text-xl mb-4"
-            style={{ fontFamily: 'Georgia, serif', color: '#2C2825' }}
+            className="text-xl mb-4 text-folio-text-primary"
+            style={{ fontFamily: 'Georgia, serif' }}
           >
             About
           </h2>
           {org.description ? (
-            <p className="whitespace-pre-wrap" style={{ color: '#5C564F' }}>
+            <p className="whitespace-pre-wrap text-folio-text-secondary">
               {org.description}
             </p>
           ) : (
-            <p style={{ color: '#8B8178' }}>No description yet.</p>
+            <p className="text-folio-text-secondary">No description yet.</p>
           )}
         </div>
 
@@ -149,8 +148,8 @@ export function OrgAboutTab({
         <div>
           <div className="flex items-center justify-between mb-4">
             <h2
-              className="text-xl"
-              style={{ fontFamily: 'Georgia, serif', color: '#2C2825' }}
+              className="text-xl text-folio-text-primary"
+              style={{ fontFamily: 'Georgia, serif' }}
             >
               Team
             </h2>
@@ -179,8 +178,7 @@ export function OrgAboutTab({
               {team.map((member) => (
                 <div key={member.id} className="flex gap-4">
                   <div
-                    className="w-14 h-14 rounded-full flex-shrink-0 overflow-hidden"
-                    style={{ backgroundColor: '#E8E4DF' }}
+                    className="w-14 h-14 rounded-full flex-shrink-0 overflow-hidden bg-folio-border-subtle"
                   >
                     {member.headshotUrl ? (
                       <SafeImage
@@ -192,24 +190,22 @@ export function OrgAboutTab({
                       />
                     ) : (
                       <div
-                        className="w-full h-full flex items-center justify-center text-lg font-light"
-                        style={{ color: '#6B635B' }}
+                        className="w-full h-full flex items-center justify-center text-lg font-light text-folio-text-secondary"
                       >
                         {member.name.charAt(0).toUpperCase()}
                       </div>
                     )}
                   </div>
                   <div>
-                    <p className="text-sm font-medium" style={{ color: '#2C2825' }}>
+                    <p className="text-sm font-medium text-folio-text-primary">
                       {member.name}
                     </p>
-                    <p className="text-xs" style={{ color: '#8B8178' }}>
+                    <p className="text-xs text-folio-text-secondary">
                       {member.role}
                     </p>
                     {member.bio && (
                       <p
-                        className="text-xs mt-1 line-clamp-2"
-                        style={{ color: '#6B635B' }}
+                        className="text-xs mt-1 line-clamp-2 text-folio-text-secondary"
                       >
                         {member.bio}
                       </p>
@@ -219,7 +215,7 @@ export function OrgAboutTab({
               ))}
             </div>
           ) : (
-            <p style={{ color: '#8B8178' }}>No team members listed.</p>
+            <p className="text-folio-text-secondary">No team members listed.</p>
           )}
         </div>
 
