@@ -4,27 +4,7 @@ import { useEffect } from 'react';
 import Image from 'next/image';
 import { EditorialCaption } from './EditorialCaption';
 import { ImageTagDots } from '@/components/project/ImageTagDots';
-
-interface ProjectImage {
-  id: string;
-  url: string;
-  name?: string | null;
-  room?: string | null;
-  orientation?: 'landscape' | 'portrait' | 'square' | 'unknown';
-  tags?: Array<{
-    id: string;
-    x?: number;
-    y?: number;
-    product?: {
-      id: string;
-      name: string;
-      imageUrl?: string | null;
-      primaryImageUrl?: string | null;
-      imageUrls?: string[];
-      thumbnailUrl?: string | null;
-    } | null;
-  }>;
-}
+import type { EditorialProjectImage as ProjectImage } from '@/types/editorial';
 
 interface EditorialSpreadProps {
   image: ProjectImage;

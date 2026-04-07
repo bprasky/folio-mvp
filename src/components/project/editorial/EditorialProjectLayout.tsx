@@ -11,29 +11,11 @@ import { ProductInsertBlock } from './ProductInsertBlock';
 import { TextInterludeBlock } from './TextInterludeBlock';
 import { PullQuoteBlock } from './PullQuoteBlock';
 import { EditorialPullQuote } from './EditorialPullQuote';
+import { ScrollCinematic } from './ScrollCinematic';
 import { generateEditorialLayout, generateEditorialLayoutFromDraft, EditorialBlock } from './layoutEngine';
 import { roomPriority } from './roomPriority';
 import type { Blocks } from '@/lib/posting/schemas';
-
-interface ProjectImage {
-  id: string;
-  url: string;
-  name?: string | null;
-  room?: string | null;
-  tags?: Array<{
-    id: string;
-    x?: number;
-    y?: number;
-    product?: {
-      id: string;
-      name: string;
-      imageUrl?: string | null;
-      primaryImageUrl?: string | null;
-      imageUrls?: string[];
-      thumbnailUrl?: string | null;
-    } | null;
-  }>;
-}
+import type { EditorialProjectImage as ProjectImage } from '@/types/editorial';
 
 interface Project {
   id: string;
@@ -369,6 +351,15 @@ function renderBlock(block: EditorialBlock, project: Project, index: number, mod
         <EditorialPullQuote
           text={block.text}
           attribution={block.attribution}
+        />
+      );
+
+    case 'scrollCinematic':
+      return (
+        <ScrollCinematic
+          image={block.image}
+          meshTags={block.meshTags}
+          roomName={block.roomName}
         />
       );
 

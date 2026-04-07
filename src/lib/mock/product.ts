@@ -28,6 +28,7 @@ export type Product = {
     topRooms: { label: string; pct: number }[];
     topMarkets: { city: string; pct: number }[];
   };
+  mesh3dUrl?: string;
   related: Array<Pick<Product,"id"|"slug"|"name"> & { thumb: string }>;
 };
 

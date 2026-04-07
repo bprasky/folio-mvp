@@ -183,6 +183,42 @@ export async function uploadGeneratedCutout({
 }
 
 /**
+ * Upload a generated product mask PNG (from SAM segmentation) to storage
+ */
+export async function uploadGeneratedMask({
+  projectId,
+  tagId,
+  buffer,
+  mime = 'image/png',
+}: {
+  projectId: string;
+  tagId: string;
+  buffer: Buffer;
+  mime?: string;
+}): Promise<StorageResult> {
+  const { ulid } = await import("ulid");
+  const id = ulid();
+  const ext = mime === "image/png" ? "png" : "jpg";
+  const path = `${projectId}/masks/${tagId}/${id}.${ext}`;
+
+  const sanitizedBuffer = await stripExifMetadata(buffer, mime);
+
+  const { supabaseAdmin } = await import('./supabaseAdmin');
+  const { error } = await supabaseAdmin.storage.from(BUCKET).upload(path, sanitizedBuffer, {
+    contentType: mime,
+    upsert: false,
+  });
+
+  if (error) {
+    console.error('[uploadGeneratedMask] Upload failed:', error);
+    throw error;
+  }
+
+  const { data: pub } = supabaseAdmin.storage.from(BUCKET).getPublicUrl(path);
+  return { bucket: BUCKET, path, publicUrl: pub.publicUrl };
+}
+
+/**
  * Upload a generated 3D mesh file to storage
  */
 export async function uploadGeneratedMesh({

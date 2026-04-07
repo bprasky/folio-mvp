@@ -41,6 +41,7 @@ export const getProductById = cache(async (id: string): Promise<Product | null> 
     files: { specSheets: [], _3d: [] },
     inspiration: [],
     insights: { saves: 0, tags: 0, saveToTagPct: 0, topRooms: [], topMarkets: [] },
+    mesh3dUrl: productFromDB.threeDAssetUrl || undefined,
     related: [],
   };
 
