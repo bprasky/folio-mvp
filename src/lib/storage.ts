@@ -225,7 +225,7 @@ export async function uploadGeneratedMesh({
   projectId,
   productId,
   buffer,
-  mime = 'model/gltf-binary',
+  mime = 'application/octet-stream',
 }: {
   projectId: string;
   productId: string;
@@ -234,7 +234,7 @@ export async function uploadGeneratedMesh({
 }): Promise<StorageResult> {
   const { ulid } = await import("ulid");
   const id = ulid();
-  const ext = mime.includes('gltf') ? 'glb' : 'obj';
+  const ext = (mime.includes('gltf') || mime === 'application/octet-stream') ? 'glb' : 'obj';
   const path = `${projectId}/meshes/${productId}/${id}.${ext}`;
 
   const { supabaseAdmin } = await import('./supabaseAdmin');

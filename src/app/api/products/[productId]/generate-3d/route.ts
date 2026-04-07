@@ -68,7 +68,7 @@ export async function POST(
       projectId: 'standalone',
       productId: product.id,
       buffer: meshResult.glbBuffer,
-      mime: 'model/gltf-binary',
+      mime: 'application/octet-stream',
     });
 
     // Persist URL on product
