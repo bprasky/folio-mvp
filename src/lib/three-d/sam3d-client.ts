@@ -161,7 +161,7 @@ export async function callSam3DTagService(req: Sam3DTagRequest): Promise<Sam3DTa
     const meshResult = await fal.subscribe('fal-ai/sam-3/3d-objects', {
       input: {
         image_url: req.sourceImageUrl,
-        point_prompts: [[pixelX, pixelY, 1]],
+        point_prompts: [{ x: pixelX, y: pixelY, label: 1 }],
         detection_threshold: 0.3,
       } as any,
       logs: true,
@@ -197,7 +197,7 @@ export async function callSam3DTagService(req: Sam3DTagRequest): Promise<Sam3DTa
     const segResult = await fal.subscribe('fal-ai/sam-3/image', {
       input: {
         image_url: req.sourceImageUrl,
-        point_prompts: [[pixelX, pixelY, 1]],
+        point_prompts: [{ x: pixelX, y: pixelY, label: 1 }],
         detection_threshold: 0.3,
       } as any,
       logs: true,
