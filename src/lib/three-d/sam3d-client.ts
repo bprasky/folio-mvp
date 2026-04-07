@@ -3,7 +3,7 @@
  *
  * Converts 2D product images into .glb mesh files using fal.ai hosted models:
  *   - Product-level: TripoSR (fal-ai/triposr) — single image → 3D mesh
- *   - Tag-level: SAM 3 segmentation + SAM 3D Objects — room photo + point prompt → mask + mesh
+ *   - Tag-level: SAM 3D Objects (fal-ai/sam-3/3d-objects) — room photo + prompt → mask + mesh
  *
  * Requires FAL_KEY environment variable.
  */
@@ -25,8 +25,8 @@ export interface Sam3DResponse {
 
 export interface Sam3DTagRequest {
   sourceImageUrl: string; // room photo URL
-  tagX: number;           // 0-1 normalized position in image
-  tagY: number;           // 0-1 normalized position in image
+  tagX: number;           // 0-1 or 0-100 position in image
+  tagY: number;           // 0-1 or 0-100 position in image
   productId: string;
   tagId: string;
   prompt?: string;
@@ -50,28 +50,21 @@ function ensureFalKey(): void {
 }
 
 /**
- * Fetch image dimensions by downloading the image and reading the size.
- * Uses a lightweight approach — fetches the full image but only extracts dimensions.
- * Results should be cached by callers if processing multiple tags for the same image.
+ * Extract detailed error information from fal.ai errors.
  */
-async function getImageDimensions(imageUrl: string): Promise<{ width: number; height: number }> {
-  // Use a dynamic import for sharp to avoid bundling issues
-  // If sharp is not available, fall back to a reasonable default
-  try {
-    const sharp = (await import('sharp')).default;
-    const response = await fetch(imageUrl);
-    if (!response.ok) throw new Error(`Failed to fetch image: ${response.status}`);
-    const buffer = Buffer.from(await response.arrayBuffer());
-    const metadata = await sharp(buffer).metadata();
-    if (!metadata.width || !metadata.height) {
-      throw new Error('Could not determine image dimensions');
+function extractFalError(error: any): string {
+  const parts: string[] = [error.message || 'Unknown fal.ai error'];
+  if (error.body) {
+    try {
+      const body = typeof error.body === 'string' ? JSON.parse(error.body) : error.body;
+      if (body.detail) parts.push(`Detail: ${JSON.stringify(body.detail)}`);
+      if (body.message) parts.push(`Message: ${body.message}`);
+    } catch {
+      parts.push(`Body: ${String(error.body).substring(0, 300)}`);
     }
-    return { width: metadata.width, height: metadata.height };
-  } catch {
-    // Fallback: assume a common resolution if sharp is unavailable
-    console.warn('[sam3d-client] Could not determine image dimensions, using 1920x1080 default');
-    return { width: 1920, height: 1080 };
   }
+  if (error.status) parts.push(`Status: ${error.status}`);
+  return parts.join(' | ');
 }
 
 /**
@@ -95,146 +88,146 @@ export async function callSam3DService(req: Sam3DRequest): Promise<Sam3DResponse
     imageUrl: req.imageUrl.substring(0, 80),
   });
 
-  const result = await fal.subscribe('fal-ai/triposr', {
-    input: {
-      image_url: req.imageUrl,
-      output_format: 'glb',
-      do_remove_background: true,
-      foreground_ratio: 0.9,
-      mc_resolution: 256,
-    },
-    logs: true,
-  });
-
-  // Extract GLB URL from response
-  const data = result.data as any;
-  const glbUrl = data?.model_mesh?.url || data?.model_url || data?.output?.url;
-
-  if (!glbUrl) {
-    console.error('[sam3d] TripoSR returned no GLB URL', {
-      productId: req.productId,
-      responseKeys: data ? Object.keys(data) : 'null',
-      data: JSON.stringify(data).substring(0, 500),
+  try {
+    const result = await fal.subscribe('fal-ai/triposr', {
+      input: {
+        image_url: req.imageUrl,
+        output_format: 'glb',
+        do_remove_background: true,
+        foreground_ratio: 0.9,
+        mc_resolution: 256,
+      },
+      logs: true,
     });
-    throw new Error('TripoSR returned no GLB output');
+
+    const data = result.data as any;
+    const glbUrl = data?.model_mesh?.url || data?.model_url || data?.output?.url;
+
+    if (!glbUrl) {
+      throw new Error(`TripoSR returned no GLB. Keys: ${data ? Object.keys(data).join(',') : 'null'}`);
+    }
+
+    const glbBuffer = await downloadAsBuffer(glbUrl);
+
+    console.log('[sam3d] Product-level complete', { productId: req.productId, glbSize: glbBuffer.length });
+    return { glbBuffer, confidence: 1.0 };
+  } catch (error: any) {
+    throw new Error(`TripoSR failed: ${extractFalError(error)}`);
   }
-
-  const glbBuffer = await downloadAsBuffer(glbUrl);
-
-  console.log('[sam3d] Product-level generation complete', {
-    productId: req.productId,
-    glbSize: glbBuffer.length,
-  });
-
-  return {
-    glbBuffer,
-    confidence: 1.0,
-  };
 }
 
-// --- Tag-level: SAM 3 segmentation + SAM 3D Objects ---
+// --- Tag-level: SAM 3D Objects (segmentation + 3D in one call) ---
 
 export async function callSam3DTagService(req: Sam3DTagRequest): Promise<Sam3DTagResponse> {
   ensureFalKey();
+
+  const prompt = req.prompt || 'furniture product';
 
   console.log('[sam3d] Tag-level generation starting', {
     tagId: req.tagId,
     productId: req.productId,
     tagX: req.tagX,
     tagY: req.tagY,
+    prompt,
+    sourceImageUrl: req.sourceImageUrl.substring(0, 80),
   });
 
-  // Convert coordinates to pixel values
-  // Tags store coords as 0-100 percentages OR 0-1 normalized — handle both
-  const dims = await getImageDimensions(req.sourceImageUrl);
-  const normX = req.tagX > 1 ? req.tagX / 100 : req.tagX;
-  const normY = req.tagY > 1 ? req.tagY / 100 : req.tagY;
-  const pixelX = Math.round(normX * dims.width);
-  const pixelY = Math.round(normY * dims.height);
-
-  console.log('[sam3d] Converted coordinates', {
-    normalized: { x: req.tagX, y: req.tagY },
-    pixels: { x: pixelX, y: pixelY },
-    imageDims: dims,
-  });
-
-  // Step 1: SAM 3 segmentation — get mask and bounding box
-  const segResult = await fal.subscribe('fal-ai/sam-3/image', {
-    input: {
-      image_url: req.sourceImageUrl,
-      point_prompts: [[pixelX, pixelY, 1]],
-      prompt: req.prompt,
-    } as any,
-    logs: true,
-  });
-
-  const segData = segResult.data as any;
-  const masks = segData?.masks || segData?.output?.masks || [];
-  const bboxes = segData?.bboxes || segData?.output?.bboxes || [];
-  const scores = segData?.confidence_scores || segData?.output?.confidence_scores || [];
-
-  if (!masks.length) {
-    console.error('[sam3d] SAM segmentation returned no masks', {
-      tagId: req.tagId,
-      responseKeys: segData ? Object.keys(segData) : 'null',
+  // Step 1: Generate 3D mesh using SAM 3D Objects with text prompt
+  // This model handles segmentation + 3D reconstruction in a single call
+  let meshData: any;
+  try {
+    const meshResult = await fal.subscribe('fal-ai/sam-3/3d-objects', {
+      input: {
+        image_url: req.sourceImageUrl,
+        prompt,
+      } as any,
+      logs: true,
     });
-    throw new Error(`SAM 3 segmentation returned no mask for tag ${req.tagId}`);
+    meshData = meshResult.data as any;
+  } catch (error: any) {
+    const detail = extractFalError(error);
+    console.error('[sam3d] SAM 3D Objects failed', { tagId: req.tagId, error: detail });
+    throw new Error(`SAM 3D Objects failed: ${detail}`);
   }
 
-  // Download the best mask as PNG buffer
-  const maskUrl = typeof masks[0] === 'string' ? masks[0] : masks[0]?.url;
-  if (!maskUrl) {
-    throw new Error(`SAM 3 segmentation returned invalid mask format for tag ${req.tagId}`);
-  }
-  const maskPngBuffer = await downloadAsBuffer(maskUrl);
+  console.log('[sam3d] SAM 3D Objects response keys:', meshData ? Object.keys(meshData) : 'null');
 
-  // Parse bounding box (fal.ai returns normalized [cx, cy, width, height])
-  const rawBbox = bboxes[0] || [0.5, 0.5, 0.5, 0.5];
-  const boundingBox = Array.isArray(rawBbox)
-    ? { x: rawBbox[0], y: rawBbox[1], width: rawBbox[2], height: rawBbox[3] }
-    : rawBbox;
-
-  const confidence = scores[0] ?? 0.8;
-
-  console.log('[sam3d] Segmentation complete', {
-    tagId: req.tagId,
-    maskSize: maskPngBuffer.length,
-    boundingBox,
-    confidence,
-  });
-
-  // Step 2: SAM 3D Objects — generate 3D mesh using same point prompt
-  const meshResult = await fal.subscribe('fal-ai/sam-3/3d-objects', {
-    input: {
-      image_url: req.sourceImageUrl,
-      point_prompts: [[pixelX, pixelY, 1]],
-      prompt: req.prompt,
-    } as any,
-    logs: true,
-  });
-
-  const meshData = meshResult.data as any;
-  const glbUrl = meshData?.model_url || meshData?.glb?.url || meshData?.output?.url;
+  // Extract GLB URL — try multiple possible response shapes
+  const glbUrl = meshData?.model_mesh?.url
+    || meshData?.model_url
+    || meshData?.glb?.url
+    || meshData?.output?.url
+    || meshData?.mesh?.url;
 
   if (!glbUrl) {
-    console.error('[sam3d] SAM 3D Objects returned no GLB URL', {
-      tagId: req.tagId,
-      responseKeys: meshData ? Object.keys(meshData) : 'null',
-      data: JSON.stringify(meshData).substring(0, 500),
-    });
-    throw new Error(`SAM 3D Objects returned no GLB for tag ${req.tagId}`);
+    const preview = JSON.stringify(meshData).substring(0, 500);
+    console.error('[sam3d] No GLB URL in response', { tagId: req.tagId, data: preview });
+    throw new Error(`SAM 3D Objects returned no GLB. Response: ${preview}`);
   }
 
   const glbBuffer = await downloadAsBuffer(glbUrl);
 
-  // Estimate depth from bounding box: larger objects are typically closer
-  // Normalize: area 0→1, invert so larger = closer to 0
+  // Step 2: Get segmentation mask using SAM 3 Image
+  let maskPngBuffer: Buffer;
+  let boundingBox = { x: 0.5, y: 0.5, width: 0.5, height: 0.5 };
+  let confidence = 0.8;
+
+  try {
+    const segResult = await fal.subscribe('fal-ai/sam-3/image', {
+      input: {
+        image_url: req.sourceImageUrl,
+        prompt,
+      } as any,
+      logs: true,
+    });
+
+    const segData = segResult.data as any;
+    console.log('[sam3d] SAM 3 Image response keys:', segData ? Object.keys(segData) : 'null');
+
+    const masks = segData?.masks || segData?.output?.masks || [];
+    const bboxes = segData?.bboxes || segData?.output?.bboxes || [];
+    const scores = segData?.confidence_scores || segData?.output?.confidence_scores || [];
+
+    if (masks.length) {
+      const maskUrl = typeof masks[0] === 'string' ? masks[0] : masks[0]?.url;
+      if (maskUrl) {
+        maskPngBuffer = await downloadAsBuffer(maskUrl);
+      } else {
+        // Create a 1x1 transparent PNG as placeholder
+        maskPngBuffer = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', 'base64');
+      }
+
+      if (bboxes.length) {
+        const rawBbox = bboxes[0];
+        if (Array.isArray(rawBbox)) {
+          boundingBox = { x: rawBbox[0], y: rawBbox[1], width: rawBbox[2], height: rawBbox[3] };
+        } else if (rawBbox && typeof rawBbox === 'object') {
+          boundingBox = rawBbox;
+        }
+      }
+      confidence = scores[0] ?? 0.8;
+    } else {
+      console.warn('[sam3d] No masks returned, using placeholder', { tagId: req.tagId });
+      maskPngBuffer = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', 'base64');
+    }
+  } catch (segError: any) {
+    // Segmentation failure is non-fatal — we still have the 3D mesh
+    console.warn('[sam3d] Segmentation failed, using placeholder mask', {
+      tagId: req.tagId,
+      error: extractFalError(segError),
+    });
+    maskPngBuffer = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', 'base64');
+  }
+
+  // Estimate depth from bounding box area
   const bboxArea = boundingBox.width * boundingBox.height;
   const depthEstimate = Math.max(0, Math.min(1, 1 - bboxArea * 2));
 
   console.log('[sam3d] Tag-level generation complete', {
     tagId: req.tagId,
     glbSize: glbBuffer.length,
+    maskSize: maskPngBuffer.length,
+    confidence,
     depthEstimate,
   });
 
