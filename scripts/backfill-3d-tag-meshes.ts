@@ -24,8 +24,9 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-// Categories where SAM 3D produces poor results
-const LOW_QUALITY_CATEGORIES = ['tile', 'textile', 'fabric', 'paint', 'wallpaper'];
+// Categories where SAM 3D produces poor results — flat/2D products
+// Matches FLAT_CATEGORIES from src/lib/three-d/categories.ts
+const LOW_QUALITY_CATEGORIES = ['TEXTILES', 'MATERIALS', 'ART', 'OTHER', 'tile', 'textile', 'fabric', 'paint', 'wallpaper'];
 
 async function main() {
   const limitArg = process.argv.find((a) => a.startsWith('--limit='));

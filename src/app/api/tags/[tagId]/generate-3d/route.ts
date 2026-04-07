@@ -5,8 +5,8 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
 import { callSam3DTagService } from '@/lib/three-d/sam3d-client';
-import { uploadGeneratedMesh } from '@/lib/storage';
-import { uploadGeneratedMask } from '@/lib/storage';
+import { uploadGeneratedMesh, uploadGeneratedMask } from '@/lib/storage';
+import { isMeshableCategory } from '@/lib/three-d/categories';
 import { promoteCanonicalMesh } from '@/lib/three-d/promoteCanonicalMesh';
 
 export async function POST(
@@ -48,6 +48,19 @@ export async function POST(
         { error: 'Source image not available' },
         { status: 400 }
       );
+    }
+
+    // Skip flat/2D categories — not eligible for 3D mesh
+    if (!isMeshableCategory(tag.product?.category)) {
+      await prisma.productTag.update({
+        where: { id: tag.id },
+        data: { meshStatus: 'skipped' },
+      });
+      return NextResponse.json({
+        status: 'skipped',
+        reason: 'Category not eligible for 3D mesh generation',
+        category: tag.product?.category,
+      });
     }
 
     // Already processed — return existing data

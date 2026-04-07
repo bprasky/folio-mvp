@@ -155,38 +155,51 @@ export async function callSam3DTagService(req: Sam3DTagRequest): Promise<Sam3DTa
     sourceImageUrl: req.sourceImageUrl.substring(0, 80),
   });
 
-  // Step 1: Generate 3D mesh using SAM 3D Objects with point prompt
-  let meshData: any;
+  // Step 1: Generate 3D mesh
+  // Try SAM 3D Objects first (preserves scene context), fall back to TripoSR
+  let glbBuffer: Buffer;
+
   try {
     const meshResult = await fal.subscribe('fal-ai/sam-3/3d-objects', {
       input: {
         image_url: req.sourceImageUrl,
         point_prompts: [{ x: pixelX, y: pixelY, label: 1 }],
-        detection_threshold: 0.3,
+        detection_threshold: 0.1,
       } as any,
       logs: true,
     });
-    meshData = meshResult.data as any;
-  } catch (error: any) {
-    const detail = extractFalError(error);
-    console.error('[sam3d] SAM 3D Objects failed with point_prompts', { tagId: req.tagId, error: detail });
-    throw new Error(`SAM 3D Objects failed: ${detail}`);
+    const meshData = meshResult.data as any;
+    console.log('[sam3d] SAM 3D Objects response keys:', meshData ? Object.keys(meshData) : 'null');
+
+    const glbUrl = meshData?.model_mesh?.url
+      || meshData?.model_url
+      || meshData?.glb?.url
+      || meshData?.output?.url
+      || meshData?.mesh?.url;
+
+    if (!glbUrl) throw new Error('No GLB URL in response');
+    glbBuffer = await downloadAsBuffer(glbUrl);
+  } catch (sam3dError: any) {
+    // SAM 3D Objects failed (e.g. flat surface like wallpaper/tile) — fall back to TripoSR
+    console.warn('[sam3d] SAM 3D Objects failed, falling back to TripoSR', {
+      tagId: req.tagId,
+      error: extractFalError(sam3dError),
+    });
+
+    const tripoResult = await fal.subscribe('fal-ai/triposr', {
+      input: {
+        image_url: req.sourceImageUrl,
+        output_format: 'glb',
+        do_remove_background: true,
+        mc_resolution: 256,
+      },
+      logs: true,
+    });
+    const tripoData = tripoResult.data as any;
+    const glbUrl = tripoData?.model_mesh?.url || tripoData?.model_url;
+    if (!glbUrl) throw new Error(`Both SAM 3D and TripoSR failed for tag ${req.tagId}`);
+    glbBuffer = await downloadAsBuffer(glbUrl);
   }
-
-  console.log('[sam3d] SAM 3D Objects response keys:', meshData ? Object.keys(meshData) : 'null');
-
-  const glbUrl = meshData?.model_mesh?.url
-    || meshData?.model_url
-    || meshData?.glb?.url
-    || meshData?.output?.url
-    || meshData?.mesh?.url;
-
-  if (!glbUrl) {
-    const preview = JSON.stringify(meshData).substring(0, 500);
-    throw new Error(`SAM 3D Objects returned no GLB. Response: ${preview}`);
-  }
-
-  const glbBuffer = await downloadAsBuffer(glbUrl);
 
   // Step 2: Get segmentation mask using SAM 3 Image with same point prompt
   let maskPngBuffer: Buffer = PLACEHOLDER_PNG;
@@ -198,7 +211,7 @@ export async function callSam3DTagService(req: Sam3DTagRequest): Promise<Sam3DTa
       input: {
         image_url: req.sourceImageUrl,
         point_prompts: [{ x: pixelX, y: pixelY, label: 1 }],
-        detection_threshold: 0.3,
+        detection_threshold: 0.1,
       } as any,
       logs: true,
     });

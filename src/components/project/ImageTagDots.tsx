@@ -26,6 +26,7 @@ type NormalizedTag = {
   meshStatus?: string | null;
   meshBoundingBox?: { x: number; y: number; width: number; height: number } | null;
   cutoutImageUrl?: string | null;
+  category?: string | null;
 };
 
 function normalizeTags(image: any, tagsProp?: any[] | null): NormalizedTag[] {
@@ -100,6 +101,7 @@ function normalizeTags(image: any, tagsProp?: any[] | null): NormalizedTag[] {
         meshStatus: tag.meshStatus || null,
         meshBoundingBox: tag.meshBoundingBox || null,
         cutoutImageUrl: product.cutoutImageUrl || null,
+        category: product.category || null,
       } as NormalizedTag;
     })
     .filter(Boolean) as NormalizedTag[];
