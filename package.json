@@ -70,6 +70,7 @@
     "jobs:decay": "tsx src/jobs/edge-decay.ts",
     "jobs:all": "npm run jobs:embed && npm run jobs:edges && npm run jobs:decay",
     "jobs:3d-backfill": "npx tsx scripts/backfill-3d-meshes.ts",
+    "jobs:3d-tag-backfill": "npx tsx scripts/backfill-3d-tag-meshes.ts",
     "backfill:moments:fields": "tsx scripts/backfill-moment-index-fields.ts",
     "fix:null-tags": "tsx scripts/fix-null-combined-tags.ts",
     "check:schema": "tsx scripts/check-and-fix-moment-index-schema.ts",

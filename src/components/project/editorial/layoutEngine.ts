@@ -59,7 +59,8 @@ export type EditorialBlock =
   | { type: 'detail'; image: ClassifiedImage; caption?: string; roomName?: string; imageIds: string[] }
   | { type: 'productInsert'; products: Array<{ id: string; name: string; imageUrl?: string | null; primaryImageUrl?: string | null; imageUrls?: string[]; thumbnailUrl?: string | null }>; roomName?: string; isBoosted?: boolean; featuredQuestions?: Array<{ productId: string; questions: string[] }>; imageIds?: string[] }
   | { type: 'textInterlude'; roomName?: string; text: string; imageIds?: string[] }
-  | { type: 'pullQuote'; text: string; attribution?: string; imageIds?: string[] };
+  | { type: 'pullQuote'; text: string; attribution?: string; imageIds?: string[] }
+  | { type: 'scrollCinematic'; image: ClassifiedImage; meshTags: Array<{ id: string; x?: number; y?: number; mesh3dUrl?: string | null; meshStatus?: string | null; meshConfidence?: number | null; meshDepthEstimate?: number | null }>; roomName?: string; imageIds: string[] };
 
 interface LayoutEngineOptions {
   projectTitle: string;
@@ -540,14 +541,15 @@ export function generateEditorialLayout(
     }
     
     // Ensure all blocks have imageIds
-    if ('image' in block && !('imageIds' in block)) {
-      return { ...block, imageIds: [block.image.id] };
+    const b = block as any;
+    if ('image' in b && !('imageIds' in b)) {
+      return { ...b, imageIds: [b.image.id] } as EditorialBlock;
     }
-    if ('images' in block && !('imageIds' in block)) {
-      return { ...block, imageIds: block.images.map(img => img.id) };
+    if ('images' in b && !('imageIds' in b)) {
+      return { ...b, imageIds: b.images.map((img: any) => img.id) } as EditorialBlock;
     }
-    if (!('imageIds' in block)) {
-      return { ...block, imageIds: [] };
+    if (!('imageIds' in b)) {
+      return { ...b, imageIds: [] } as EditorialBlock;
     }
     
     return block;

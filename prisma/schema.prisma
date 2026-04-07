@@ -551,6 +551,10 @@ model Product {
   imageUrl         String?
   cutoutImageUrl   String?
   threeDAssetUrl   String?
+  mesh3dStatus      String?
+  mesh3dError       String?
+  mesh3dGeneratedAt DateTime?
+  mesh3dSourceTagId String?
   category         String?
   brand            String?
   url              String?
@@ -623,6 +627,16 @@ model ProductTag {
   cropScale  Float?
   cropAspect String?
   cropManual Boolean @default(false)
+
+  // 3D mesh data (per-tag reconstruction from source image)
+  mesh3dUrl         String?
+  meshMaskUrl       String?
+  meshStatus        String?
+  meshConfidence    Float?
+  meshBoundingBox   Json?
+  meshDepthEstimate Float?
+  meshGeneratedAt   DateTime?
+  meshError         String?
 
   // Intelligence System relations
   supplementalQuotes SupplementalQuote[] @relation("ProductTagQuotes")

@@ -29,6 +29,49 @@ export interface Sam3DResponse {
   confidence: number;
 }
 
+// --- Tag-level interface (per-tag mask + mesh from room photo) ---
+
+export interface Sam3DTagRequest {
+  sourceImageUrl: string; // room photo URL
+  tagX: number;           // 0-1 normalized position in image
+  tagY: number;           // 0-1 normalized position in image
+  productId: string;
+  tagId: string;
+  prompt?: string;
+}
+
+export interface Sam3DTagResponse {
+  glbBuffer: Buffer;
+  maskPngBuffer: Buffer;
+  confidence: number;
+  boundingBox: { x: number; y: number; width: number; height: number };
+  depthEstimate: number; // 0 = foreground, 1 = background
+}
+
+export async function callSam3DTagService(_req: Sam3DTagRequest): Promise<Sam3DTagResponse> {
+  const endpoint = process.env.SAM3D_ENDPOINT;
+
+  if (!endpoint) {
+    throw new Error(
+      'SAM 3D tag service not yet configured. Set SAM3D_ENDPOINT in environment.'
+    );
+  }
+
+  // Once configured, the service should:
+  // 1. Download source image from req.sourceImageUrl
+  // 2. Run SAM segmentation at (req.tagX, req.tagY) point prompt
+  // 3. Extract product mask as PNG
+  // 4. Run SAM 3D Objects on the masked region
+  // 5. Export .glb mesh + compute bounding box + depth estimate
+  // 6. Return all outputs
+
+  throw new Error(
+    'SAM 3D tag service not yet configured. Set SAM3D_ENDPOINT in environment.'
+  );
+}
+
+// --- Product-level interface (mesh from product hero image) ---
+
 export async function callSam3DService(_req: Sam3DRequest): Promise<Sam3DResponse> {
   const endpoint = process.env.SAM3D_ENDPOINT;
 
