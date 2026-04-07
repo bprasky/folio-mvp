@@ -100,7 +100,7 @@ export default async function ProfilePage({ params, searchParams }: Props) {
   const team = primaryOrg?.teamMembers || [];
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#FAF9F7' }}>
+    <div className="min-h-screen bg-surface-ground">
       <ProfileHero
         user={user}
         projectCount={projectCount}
@@ -221,8 +221,7 @@ function FeedSkeleton() {
         {[1, 2, 3, 4, 5].map(i => (
           <div
             key={i}
-            className="h-8 w-20 rounded-full animate-pulse"
-            style={{ backgroundColor: '#E8E4DF' }}
+            className="h-8 w-20 rounded-full animate-pulse bg-folio-border-subtle"
           />
         ))}
       </div>
@@ -232,13 +231,12 @@ function FeedSkeleton() {
         {[1, 2, 3, 4, 5, 6].map(i => (
           <div
             key={i}
-            className="rounded-xl overflow-hidden animate-pulse"
-            style={{ backgroundColor: '#F5F3F0' }}
+            className="rounded-xl overflow-hidden animate-pulse bg-surface-elevated"
           >
-            <div className="aspect-[4/3]" style={{ backgroundColor: '#E8E4DF' }} />
+            <div className="aspect-[4/3] bg-folio-border-subtle" />
             <div className="p-4 space-y-2">
-              <div className="h-4 w-3/4 rounded" style={{ backgroundColor: '#E8E4DF' }} />
-              <div className="h-3 w-1/2 rounded" style={{ backgroundColor: '#E8E4DF' }} />
+              <div className="h-4 w-3/4 rounded bg-folio-border-subtle" />
+              <div className="h-3 w-1/2 rounded bg-folio-border-subtle" />
             </div>
           </div>
         ))}
@@ -253,8 +251,7 @@ function ShopSkeleton() {
       {/* Header skeleton */}
       <div className="flex items-center justify-between mb-6">
         <div
-          className="h-6 w-24 rounded animate-pulse"
-          style={{ backgroundColor: '#E8E4DF' }}
+          className="h-6 w-24 rounded animate-pulse bg-folio-border-subtle"
         />
       </div>
 
@@ -263,8 +260,7 @@ function ShopSkeleton() {
         {[1, 2, 3].map(i => (
           <div
             key={i}
-            className="h-10 w-32 rounded-lg animate-pulse"
-            style={{ backgroundColor: '#E8E4DF' }}
+            className="h-10 w-32 rounded-lg animate-pulse bg-folio-border-subtle"
           />
         ))}
       </div>
@@ -274,14 +270,13 @@ function ShopSkeleton() {
         {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
           <div
             key={i}
-            className="rounded-xl overflow-hidden animate-pulse"
-            style={{ backgroundColor: '#F5F3F0' }}
+            className="rounded-xl overflow-hidden animate-pulse bg-surface-elevated"
           >
-            <div className="aspect-square" style={{ backgroundColor: '#E8E4DF' }} />
+            <div className="aspect-square bg-folio-border-subtle" />
             <div className="p-4 space-y-2">
-              <div className="h-4 w-3/4 rounded" style={{ backgroundColor: '#E8E4DF' }} />
-              <div className="h-3 w-1/2 rounded" style={{ backgroundColor: '#E8E4DF' }} />
-              <div className="h-3 w-1/3 rounded" style={{ backgroundColor: '#E8E4DF' }} />
+              <div className="h-4 w-3/4 rounded bg-folio-border-subtle" />
+              <div className="h-3 w-1/2 rounded bg-folio-border-subtle" />
+              <div className="h-3 w-1/3 rounded bg-folio-border-subtle" />
             </div>
           </div>
         ))}

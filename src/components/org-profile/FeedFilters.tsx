@@ -45,20 +45,18 @@ export default function FeedFilters({ activeFilter, activeSort, orgId, isAdmin, 
         <div key={filter.id} className="flex items-center gap-1">
           <button
             onClick={() => updateParams('filter', filter.id)}
-            className="px-4 py-1.5 text-xs rounded-full transition-all"
-            style={{
-              backgroundColor: activeFilter === filter.id ? '#2C2825' : 'transparent',
-              color: activeFilter === filter.id ? '#FAF9F7' : '#6B635B',
-              border: activeFilter === filter.id ? 'none' : '1px solid #D4CEC6',
-            }}
+            className={`px-4 py-1.5 text-xs rounded-full transition-all ${
+              activeFilter === filter.id
+                ? 'bg-folio-text-primary text-surface-ground border-transparent'
+                : 'bg-transparent text-folio-text-secondary border border-folio-border-strong'
+            }`}
           >
             {filter.label}
           </button>
           {filter.id === 'recognition' && isAdmin && onAddRecognition && (
             <button
               onClick={onAddRecognition}
-              className="w-6 h-6 text-xs rounded-full flex items-center justify-center transition-all hover:opacity-80"
-              style={{ border: '1px solid #D4CEC6', color: '#6B635B' }}
+              className="w-6 h-6 text-xs rounded-full flex items-center justify-center transition-all hover:opacity-80 border border-folio-border-strong text-folio-text-secondary"
               title="Add recognition"
             >
               +
@@ -72,12 +70,7 @@ export default function FeedFilters({ activeFilter, activeSort, orgId, isAdmin, 
       <select
         value={activeSort}
         onChange={e => updateParams('sort', e.target.value)}
-        className="text-xs px-3 py-1.5 rounded-full border appearance-none cursor-pointer"
-        style={{
-          borderColor: '#D4CEC6',
-          color: '#6B635B',
-          backgroundColor: 'transparent',
-        }}
+        className="text-xs px-3 py-1.5 rounded-full border appearance-none cursor-pointer border-folio-border-strong text-folio-text-secondary bg-transparent"
       >
         {SORTS.map(sort => (
           <option key={sort.id} value={sort.id}>

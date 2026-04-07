@@ -95,10 +95,9 @@ export default function GuidedSetupCard({
     >
       {/* Headline */}
       <h2
-        className="text-3xl md:text-4xl italic mb-2"
+        className="text-3xl md:text-4xl italic mb-2 text-folio-text-primary"
         style={{
           fontFamily: 'var(--font-headline)',
-          color: '#2C2825',
           fontWeight: 400,
         }}
       >
@@ -107,10 +106,9 @@ export default function GuidedSetupCard({
 
       {/* Subtext */}
       <p
-        className="text-sm md:text-base mb-8"
+        className="text-sm md:text-base mb-8 text-folio-text-secondary"
         style={{
           fontFamily: 'var(--font-body)',
-          color: '#6B635B',
           lineHeight: 1.6,
         }}
       >

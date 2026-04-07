@@ -57,7 +57,7 @@ export default function EmailPreferencesPage() {
     return (
       <div className="min-h-screen bg-surface-canvas p-6">
         <div className="max-w-xl mx-auto">
-          <div className="h-8 w-48 rounded-lg animate-pulse" style={{ backgroundColor: '#E8E4DF' }} />
+          <div className="h-8 w-48 rounded-lg animate-pulse bg-folio-border-subtle" />
         </div>
       </div>
     );

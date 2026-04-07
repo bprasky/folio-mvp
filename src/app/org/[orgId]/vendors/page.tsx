@@ -64,10 +64,10 @@ export default async function OrgVendorsPage({ params }: Props) {
           >
             {org.name}
           </Link>
-          <span style={{ color: '#C4BDB5' }}>/</span>
+          <span className="text-folio-text-tertiary">/</span>
           <h1
-            className="text-xl font-light"
-            style={{ fontFamily: 'Georgia, serif', color: '#2C2825' }}
+            className="text-xl font-light text-folio-text-primary"
+            style={{ fontFamily: 'Georgia, serif' }}
           >
             Our Vendors
           </h1>
@@ -79,8 +79,7 @@ export default async function OrgVendorsPage({ params }: Props) {
               {[1, 2, 3].map(i => (
                 <div
                   key={i}
-                  className="h-24 rounded-lg animate-pulse"
-                  style={{ backgroundColor: '#E8E4DF' }}
+                  className="h-24 rounded-lg animate-pulse bg-folio-border-subtle"
                 />
               ))}
             </div>

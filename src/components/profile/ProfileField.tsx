@@ -31,10 +31,9 @@ export function ProfileField({
   if (displayState === 'empty-no-interview') {
     return (
       <div
-        className="rounded-xl border p-4"
-        style={{ borderColor: '#E8E4DF', backgroundColor: '#FAF9F7' }}
+        className="rounded-xl border p-4 border-folio-border-subtle bg-surface-ground"
       >
-        <p className="text-sm mb-2" style={{ color: '#8B8178' }}>{label}</p>
+        <p className="text-sm mb-2 text-folio-text-secondary">{label}</p>
         <button
           onClick={onInterviewRoute}
           className="text-sm underline underline-offset-2 transition-opacity hover:opacity-70"
@@ -50,15 +49,14 @@ export function ProfileField({
     <div>
       <div className="flex items-center justify-between mb-1.5">
         <label
-          className="text-xs font-medium"
-          style={{ color: '#6B635B', fontFamily: 'var(--font-body)' }}
+          className="text-xs font-medium text-folio-text-secondary"
+          style={{ fontFamily: 'var(--font-body)' }}
         >
           {label}
         </label>
         {displayState === 'interview-extracted' && (
           <span
-            className="text-xs italic flex items-center gap-1"
-            style={{ color: '#B8B0A6' }}
+            className="text-xs italic flex items-center gap-1 text-folio-text-tertiary"
           >
             <Mic size={10} />
             From your interview

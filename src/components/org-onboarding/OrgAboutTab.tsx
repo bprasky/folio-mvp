@@ -465,11 +465,10 @@ export function OrgAboutTab({
 function DetailRow({ label, value }: { label: string; value: string }) {
   return (
     <div
-      className="flex justify-between py-2"
-      style={{ borderBottom: '1px solid #E8E4DF' }}
+      className="flex justify-between py-2 border-b border-folio-border-subtle"
     >
       <span style={{ color: 'var(--text-secondary)' }}>{label}</span>
-      <span className="text-right max-w-[60%]" style={{ color: '#2C2825' }}>
+      <span className="text-right max-w-[60%] text-folio-text-primary">
         {value}
       </span>
     </div>
