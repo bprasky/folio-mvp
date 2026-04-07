@@ -101,6 +101,7 @@ export function CinematicProductPage({ product }: CinematicProductPageProps) {
         {/* Full-Bleed Cinematic Hero */}
       <CinematicHero
         media={heroMedia}
+        mesh3dUrl={product.mesh3dUrl}
         title={product.name}
         brand={product.brand}
         sku={product.sku}

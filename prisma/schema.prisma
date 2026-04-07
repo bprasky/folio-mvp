@@ -550,6 +550,7 @@ model Product {
   price            Float?
   imageUrl         String?
   cutoutImageUrl   String?
+  threeDAssetUrl   String?
   category         String?
   brand            String?
   url              String?

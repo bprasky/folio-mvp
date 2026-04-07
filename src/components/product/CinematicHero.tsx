@@ -1,15 +1,21 @@
 "use client";
 
-import React, { useRef } from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
+import React, { useRef, useState, useEffect } from "react";
+import dynamic from "next/dynamic";
+import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
 import { GlassPanel } from "@/components/ui/GlassPanel";
 import SafeImage from "@/components/common/SafeImage";
+
+const Product3DViewer = dynamic(() => import("./Product3DViewer"), {
+  ssr: false,
+});
 
 interface CinematicHeroProps {
   media: {
     videoUrl?: string;
     imageUrl?: string;
   };
+  mesh3dUrl?: string;
   title: string;
   subtitle?: string;
   brand?: string;
@@ -21,8 +27,12 @@ interface CinematicHeroProps {
   };
 }
 
-export function CinematicHero({ media, title, subtitle, brand, sku, palette }: CinematicHeroProps) {
+export function CinematicHero({ media, mesh3dUrl, title, subtitle, brand, sku, palette }: CinematicHeroProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [show3D, setShow3D] = useState(!!mesh3dUrl);
+  const [hasInteracted, setHasInteracted] = useState(false);
+  const [hintVisible, setHintVisible] = useState(true);
+
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start start", "end start"],
@@ -34,66 +44,123 @@ export function CinematicHero({ media, title, subtitle, brand, sku, palette }: C
 
   // Dynamic gradient from palette (8% opacity)
   const gradientStyle = palette ? {
-    background: `linear-gradient(to bottom, 
-      ${palette.primary}08, 
-      ${palette.secondary}06, 
+    background: `linear-gradient(to bottom,
+      ${palette.primary}08,
+      ${palette.secondary}06,
       ${palette.accent}04
     )`
   } : undefined;
 
   // Respect prefers-reduced-motion
-  const prefersReducedMotion = typeof window !== "undefined" 
-    ? window.matchMedia("(prefers-reduced-motion: reduce)").matches 
+  const prefersReducedMotion = typeof window !== "undefined"
+    ? window.matchMedia("(prefers-reduced-motion: reduce)").matches
     : false;
 
   // Mobile gets minimal parallax (1-2%), desktop gets full range
   const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
   const mobileY = useTransform(scrollYProgress, [0, 1], ["-1%", "2%"]);
 
+  // Auto-hide drag hint after 4 seconds
+  useEffect(() => {
+    if (!show3D || hasInteracted) {
+      setHintVisible(false);
+      return;
+    }
+    const timer = setTimeout(() => setHintVisible(false), 4000);
+    return () => clearTimeout(timer);
+  }, [show3D, hasInteracted]);
+
+  // Reset hint when toggling to 3D
+  useEffect(() => {
+    if (show3D && !hasInteracted) {
+      setHintVisible(true);
+    }
+  }, [show3D, hasInteracted]);
+
   return (
-    <div 
+    <div
       ref={containerRef}
       className="relative min-h-[80vh] lg:min-h-screen w-full overflow-hidden"
       style={gradientStyle || { background: 'linear-gradient(to bottom, #fafaf9, #f5f5f4, #e7e5e4)' }}
     >
-      {/* Media Layer with Parallax */}
-      <motion.div
-        style={{ 
-          y: prefersReducedMotion ? 0 : (isMobile ? mobileY : y),
-          opacity: prefersReducedMotion ? 1 : opacity 
-        }}
-        className="absolute inset-0 w-full h-full"
-      >
-        {media.videoUrl ? (
-          <video
-            autoPlay
-            muted
-            loop
-            playsInline
-            className="w-full h-full object-cover"
-            poster={media.imageUrl}
-          >
-            <source src={media.videoUrl} type="video/mp4" />
-          </video>
-        ) : media.imageUrl ? (
-          <div className="relative w-full h-full">
-            <SafeImage
-              src={media.imageUrl}
-              alt={title}
-              fill
-              priority
-              className="object-cover"
-              style={{ objectPosition: 'center 45%' }}
-              sizes="(min-width: 1024px) 1200px, 100vw"
-            />
-          </div>
-        ) : (
-          <div className="w-full h-full bg-gradient-to-br from-stone-200 to-stone-300" />
+      {/* 3D/Image Toggle Badge */}
+      {mesh3dUrl && (
+        <button
+          onClick={() => setShow3D((prev) => !prev)}
+          className="glass-badge absolute top-6 right-6 z-20 cursor-pointer gap-2 px-3 py-1.5"
+          aria-label={show3D ? "Switch to image view" : "Switch to 3D view"}
+        >
+          {show3D ? "Image" : "3D"}
+        </button>
+      )}
+
+      {/* Media Layer */}
+      {show3D && mesh3dUrl ? (
+        <div className="absolute inset-0 w-full h-full flex items-center justify-center">
+          <Product3DViewer
+            glbUrl={mesh3dUrl}
+            fallbackImageUrl={media.imageUrl}
+            productName={title}
+            onInteraction={() => setHasInteracted(true)}
+            className="w-full h-full"
+          />
+
+          {/* Drag-to-rotate hint */}
+          <AnimatePresence>
+            {hintVisible && (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 4 }}
+                transition={{ duration: 0.5 }}
+                className="absolute bottom-24 left-1/2 -translate-x-1/2 z-10 pointer-events-none"
+              >
+                <span className="text-xs uppercase tracking-wider text-stone-500/80 bg-white/60 backdrop-blur-sm px-3 py-1.5 rounded-full">
+                  Drag to rotate
+                </span>
+              </motion.div>
             )}
-          </motion.div>
+          </AnimatePresence>
+        </div>
+      ) : (
+        <motion.div
+          style={{
+            y: prefersReducedMotion ? 0 : (isMobile ? mobileY : y),
+            opacity: prefersReducedMotion ? 1 : opacity
+          }}
+          className="absolute inset-0 w-full h-full"
+        >
+          {media.videoUrl ? (
+            <video
+              autoPlay
+              muted
+              loop
+              playsInline
+              className="w-full h-full object-cover"
+              poster={media.imageUrl}
+            >
+              <source src={media.videoUrl} type="video/mp4" />
+            </video>
+          ) : media.imageUrl ? (
+            <div className="relative w-full h-full">
+              <SafeImage
+                src={media.imageUrl}
+                alt={title}
+                fill
+                priority
+                className="object-cover"
+                style={{ objectPosition: 'center 45%' }}
+                sizes="(min-width: 1024px) 1200px, 100vw"
+              />
+            </div>
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-stone-200 to-stone-300" />
+          )}
+        </motion.div>
+      )}
 
       {/* Title Card - Bottom Left */}
-      <div 
+      <div
         className="absolute bottom-8 left-8 right-8 lg:bottom-16 lg:left-16 lg:right-auto lg:max-w-xl z-10"
         data-testid="glass-title-card"
       >
@@ -102,12 +169,12 @@ export function CinematicHero({ media, title, subtitle, brand, sku, palette }: C
           aria-hidden="true"
           className="pointer-events-none absolute inset-0 rounded-2xl"
           style={{
-            background: needsTextScrim(media.imageUrl) 
+            background: needsTextScrim(media.imageUrl)
               ? 'linear-gradient(180deg, rgba(0,0,0,0.16) 0%, rgba(0,0,0,0.00) 60%)'
               : 'transparent'
           }}
         />
-        
+
         <GlassPanel>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -162,4 +229,3 @@ function needsTextScrim(imageUrl?: string): boolean {
   // Can be enhanced with actual image analysis if needed
   return !!imageUrl;
 }
-
