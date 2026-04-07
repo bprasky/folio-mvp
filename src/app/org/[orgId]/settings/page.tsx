@@ -378,15 +378,14 @@ export default function OrgSettingsPage() {
               </label>
               {fieldSources['specialties']?.source === 'INTERVIEW_EXTRACTED' && (
                 <span
-                  className="text-xs italic flex items-center gap-1"
-                  style={{ color: '#B8B0A6' }}
+                  className="text-xs italic flex items-center gap-1 text-folio-text-tertiary"
                 >
                   <Mic size={10} />
                   From your interview
                 </span>
               )}
               {fieldSources['specialties']?.source === 'INTERVIEW_THEN_EDITED' && (
-                <span className="text-xs italic" style={{ color: '#B8B0A6' }}>
+                <span className="text-xs italic text-folio-text-tertiary">
                   Edited
                 </span>
               )}
@@ -421,9 +420,7 @@ export default function OrgSettingsPage() {
               />
               <button
                 onClick={addSpecialty}
-                className="px-4 py-2.5 text-sm rounded-xl transition-all hover:opacity-80"
-                style={{ border: '1px solid #D4CEC6' }}
-                className="px-4 py-2.5 text-sm rounded-xl transition-all hover:opacity-80 text-folio-text-secondary"
+                className="px-4 py-2.5 text-sm rounded-xl transition-all hover:opacity-80 border border-folio-border-strong text-folio-text-secondary"
               >
                 Add
               </button>
@@ -435,8 +432,7 @@ export default function OrgSettingsPage() {
         <div className="flex justify-end gap-3 mt-10 pt-6 border-t border-folio-border-subtle">
           <button
             onClick={() => router.push(`/org/${orgId}`)}
-            className="px-6 py-2.5 text-sm rounded-full transition-all hover:opacity-80 text-folio-text-secondary"
-            style={{ border: '1px solid #D4CEC6' }}
+            className="px-6 py-2.5 text-sm rounded-full transition-all hover:opacity-80 text-folio-text-secondary border border-folio-border-strong"
           >
             Cancel
           </button>

@@ -224,8 +224,8 @@ export function OrgAboutTab({
           <div>
             <div className="flex items-center justify-between mb-4">
               <h2
-                className="text-xl"
-                style={{ fontFamily: 'Georgia, serif', color: '#2C2825' }}
+                className="text-xl text-folio-text-primary"
+                style={{ fontFamily: 'Georgia, serif' }}
               >
                 Our Process
               </h2>
@@ -243,8 +243,7 @@ export function OrgAboutTab({
               {processPhases.map((phase, index) => (
                 <div key={phase.id} className="flex gap-4">
                   <div
-                    className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-medium"
-                    style={{ backgroundColor: '#E8E4DF', color: '#6B635B' }}
+                    className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-medium bg-folio-border-subtle text-folio-text-secondary"
                   >
                     {index + 1}
                   </div>
