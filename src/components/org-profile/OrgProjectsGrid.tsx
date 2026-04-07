@@ -22,8 +22,7 @@ export default function OrgProjectsGrid({ projects, isOwner }: OrgProjectsGridPr
     return (
       <div className="text-center py-16">
         <div
-          className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center"
-          style={{ background: '#F0EDE9' }}
+          className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center bg-surface-elevated"
         >
           <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#8B8178" strokeWidth="1.5">
             <rect x="3" y="3" width="18" height="18" rx="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -31,17 +30,16 @@ export default function OrgProjectsGrid({ projects, isOwner }: OrgProjectsGridPr
             <path d="M21 15l-5-5L5 21" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </div>
-        <p style={{ fontFamily: 'var(--font-body, "Instrument Sans", sans-serif)', fontSize: '15px', color: '#8B8178' }}>
+        <p className="text-folio-text-secondary" style={{ fontFamily: 'var(--font-body, "Instrument Sans", sans-serif)', fontSize: '15px' }}>
           No projects yet
         </p>
-        <p style={{ fontFamily: 'var(--font-body, "Instrument Sans", sans-serif)', fontSize: '13px', color: '#A69E96', marginTop: '4px' }}>
+        <p className="text-folio-text-tertiary mt-1" style={{ fontFamily: 'var(--font-body, "Instrument Sans", sans-serif)', fontSize: '13px' }}>
           Projects will appear here once published.
         </p>
         {isOwner && (
           <Link
             href="/projects/new"
-            className="inline-block mt-6 px-6 py-2.5 rounded-full text-[13px] font-medium text-white no-underline"
-            style={{ backgroundColor: '#2C2825' }}
+            className="inline-block mt-6 px-6 py-2.5 rounded-full text-[13px] font-medium text-white no-underline bg-folio-text-primary"
           >
             Create Your First Project
           </Link>
@@ -71,7 +69,7 @@ export default function OrgProjectsGrid({ projects, isOwner }: OrgProjectsGridPr
                   className="object-cover transition-transform duration-500 group-hover:scale-105"
                 />
               ) : (
-                <div className="w-full h-full" style={{ backgroundColor: '#E8E4DF' }} />
+                <div className="w-full h-full bg-folio-border-subtle" />
               )}
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
             </div>

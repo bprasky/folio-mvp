@@ -384,7 +384,7 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
   }));
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#FAF9F7' }}>
+    <div className="min-h-screen bg-surface-ground">
       <OrgProfileHero
         org={orgData}
         projectCount={projectCount}
@@ -502,8 +502,7 @@ function TabSkeleton() {
       {[1, 2, 3].map(i => (
         <div
           key={i}
-          className="h-24 rounded-lg animate-pulse"
-          style={{ backgroundColor: '#E8E4DF' }}
+          className="h-24 rounded-lg animate-pulse bg-folio-border-subtle"
         />
       ))}
     </div>
@@ -518,8 +517,7 @@ function FeedSkeleton() {
         {[1, 2, 3, 4, 5].map(i => (
           <div
             key={i}
-            className="h-8 w-20 rounded-full animate-pulse"
-            style={{ backgroundColor: '#E8E4DF' }}
+            className="h-8 w-20 rounded-full animate-pulse bg-folio-border-subtle"
           />
         ))}
       </div>
@@ -529,9 +527,8 @@ function FeedSkeleton() {
         {[1, 2, 3, 4, 5, 6].map(i => (
           <div
             key={i}
-            className="mb-4 rounded-lg animate-pulse break-inside-avoid"
+            className="mb-4 rounded-lg animate-pulse break-inside-avoid bg-folio-border-subtle"
             style={{
-              backgroundColor: '#E8E4DF',
               aspectRatio: i % 2 === 0 ? '4/3' : '3/4',
             }}
           />

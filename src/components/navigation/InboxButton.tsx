@@ -45,9 +45,8 @@ export function InboxButton() {
       </svg>
       {unreadCount > 0 && (
         <span
-          className="absolute -top-1 -right-1 w-4 h-4 rounded-full text-white flex items-center justify-center"
+          className="absolute -top-1 -right-1 w-4 h-4 rounded-full text-white flex items-center justify-center bg-folio-text-primary"
           style={{
-            backgroundColor: '#2C2825',
             fontSize: '10px',
             lineHeight: 1,
           }}

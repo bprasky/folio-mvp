@@ -26,7 +26,7 @@ export default function ProjectCard({ project }: ProjectCardProps) {
   return (
     <Link href={`/project/${project.id}`} className="group block">
       <article className="overflow-hidden rounded-xl transition-all duration-300 hover:shadow-lg">
-        <div className="relative aspect-[4/3] overflow-hidden" style={{ backgroundColor: '#E8E4DF' }}>
+        <div className="relative aspect-[4/3] overflow-hidden bg-folio-border-subtle">
           <SafeImage
             src={imageUrl}
             alt={title}
@@ -51,8 +51,8 @@ export default function ProjectCard({ project }: ProjectCardProps) {
           {/* Badge */}
           <div className="absolute top-3 left-3">
             <span
-              className="px-2 py-1 text-xs rounded-full backdrop-blur-sm"
-              style={{ backgroundColor: 'rgba(255,255,255,0.9)', color: '#6B635B' }}
+              className="px-2 py-1 text-xs rounded-full backdrop-blur-sm text-folio-text-secondary"
+              style={{ backgroundColor: 'rgba(255,255,255,0.9)' }}
             >
               Project
             </span>
@@ -60,8 +60,8 @@ export default function ProjectCard({ project }: ProjectCardProps) {
         </div>
 
         {/* Footer */}
-        <div className="p-3 bg-surface-canvas" style={{ borderTop: '1px solid #E8E4DF' }}>
-          <div className="flex items-center justify-between text-xs" style={{ color: '#8B8178' }}>
+        <div className="p-3 bg-surface-canvas border-t border-folio-border-subtle">
+          <div className="flex items-center justify-between text-xs text-folio-text-secondary">
             <span>{project.projectType || 'Design Project'}</span>
             {saves > 0 && (
               <span className="flex items-center gap-1">

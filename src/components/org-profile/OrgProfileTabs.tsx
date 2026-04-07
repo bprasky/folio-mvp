@@ -50,17 +50,12 @@ export default function OrgProfileTabs({ activeTab, orgId, defaultTab = 'feed', 
           <Link
             key={tab.id}
             href={createUrl(tab.id)}
-            className="py-4 text-sm relative"
-            style={{
-              color: activeTab === tab.id ? '#2C2825' : '#8B8178',
-              fontWeight: activeTab === tab.id ? 500 : 400,
-            }}
+            className={`py-4 text-sm relative ${activeTab === tab.id ? 'text-folio-text-primary font-medium' : 'text-folio-text-secondary font-normal'}`}
           >
             {tab.label}
             {activeTab === tab.id && (
               <div
-                className="absolute bottom-0 left-0 right-0 h-0.5"
-                style={{ backgroundColor: '#2C2825' }}
+                className="absolute bottom-0 left-0 right-0 h-0.5 bg-folio-text-primary"
               />
             )}
           </Link>

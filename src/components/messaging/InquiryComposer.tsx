@@ -57,8 +57,7 @@ export default function InquiryComposer({
       className="glass-surface glass-surface-sm p-6 space-y-4"
     >
       <h3
-        className="text-sm font-medium"
-        style={{ color: '#5C554D' }}
+        className="text-sm font-medium text-folio-text-secondary"
       >
         Send {recipientOrg.name} a message
       </h3>
@@ -68,12 +67,7 @@ export default function InquiryComposer({
         placeholder="Subject (optional)"
         value={subject}
         onChange={(e) => setSubject(e.target.value)}
-        className="w-full text-sm rounded-xl px-4 py-3 focus:outline-none focus:ring-1"
-        style={{
-          backgroundColor: '#F5F3F0',
-          borderColor: '#E8E4DF',
-          border: '1px solid #E8E4DF',
-        }}
+        className="w-full text-sm rounded-xl px-4 py-3 focus:outline-none focus:ring-1 bg-surface-elevated border border-folio-border-subtle"
       />
 
       <textarea
@@ -81,12 +75,7 @@ export default function InquiryComposer({
         value={body}
         onChange={(e) => setBody(e.target.value)}
         rows={5}
-        className="w-full text-sm rounded-xl px-4 py-3 resize-none focus:outline-none focus:ring-1"
-        style={{
-          backgroundColor: '#F5F3F0',
-          borderColor: '#E8E4DF',
-          border: '1px solid #E8E4DF',
-        }}
+        className="w-full text-sm rounded-xl px-4 py-3 resize-none focus:outline-none focus:ring-1 bg-surface-elevated border border-folio-border-subtle"
       />
 
       {error && (
@@ -98,15 +87,13 @@ export default function InquiryComposer({
       <button
         onClick={handleSend}
         disabled={!body.trim() || sending}
-        className="w-full py-3 rounded-xl text-white text-sm transition-opacity disabled:opacity-40"
-        style={{ backgroundColor: '#2C2825' }}
+        className="w-full py-3 rounded-xl text-white text-sm transition-opacity disabled:opacity-40 bg-folio-text-primary"
       >
         {sending ? 'Sending...' : 'Send message'}
       </button>
 
       <p
-        className="text-xs text-center"
-        style={{ color: '#A69E96' }}
+        className="text-xs text-center text-folio-text-tertiary"
       >
         Messages go to {recipientOrg.name}&apos;s Folio inbox.
         They typically respond within a few days.

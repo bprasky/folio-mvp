@@ -358,8 +358,7 @@ function ShopProductContextModal({
             <div className="mt-auto space-y-3 pt-4">
               <button
                 onClick={onAddToProject}
-                className="w-full py-3 px-6 rounded-xl font-['Instrument_Sans'] text-[14px] font-medium text-white transition-colors"
-                style={{ backgroundColor: '#2C2825' }}
+                className="w-full py-3 px-6 rounded-xl font-['Instrument_Sans'] text-[14px] font-medium text-white transition-colors bg-folio-text-primary"
               >
                 Add to Project
               </button>

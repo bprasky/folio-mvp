@@ -204,13 +204,7 @@ export default function ThreadPage({
       {/* Attribution note for vendor outreach */}
       {conversation.context === 'VENDOR_OUTREACH' && conversation.attributionNote && (
         <div
-          className="rounded-xl px-4 py-3 mt-4 flex items-start gap-2 text-xs"
-          style={{
-            backgroundColor: '#F5F3F0',
-            borderColor: '#E8E4DF',
-            border: '1px solid #E8E4DF',
-            color: '#8B8178',
-          }}
+          className="rounded-xl px-4 py-3 mt-4 flex items-start gap-2 text-xs bg-surface-elevated border border-folio-border-subtle text-folio-text-secondary"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mt-0.5 shrink-0">
             <circle cx="12" cy="12" r="10" />
@@ -231,14 +225,12 @@ export default function ThreadPage({
               className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}
             >
               <div
-                className="max-w-[75%] rounded-2xl px-4 py-3"
-                style={{
-                  backgroundColor: isOwn ? '#2C2825' : '#F5F3F0',
-                  color: isOwn ? '#fff' : '#2C2825',
-                }}
+                className={`max-w-[75%] rounded-2xl px-4 py-3 ${
+                  isOwn ? 'bg-folio-text-primary text-white' : 'bg-surface-elevated text-folio-text-primary'
+                }`}
               >
                 {!isOwn && (
-                  <p className="text-xs font-medium mb-1" style={{ color: '#8B8178' }}>
+                  <p className="text-xs font-medium mb-1 text-folio-text-secondary">
                     {msg.sender.name}
                   </p>
                 )}
@@ -246,8 +238,8 @@ export default function ThreadPage({
                   {msg.body}
                 </p>
                 <p
-                  className="text-[10px] mt-1"
-                  style={{ color: isOwn ? 'rgba(255,255,255,0.5)' : '#A69E96' }}
+                  className={`text-[10px] mt-1 ${isOwn ? '' : 'text-folio-text-tertiary'}`}
+                  style={isOwn ? { color: 'rgba(255,255,255,0.5)' } : undefined}
                 >
                   {new Date(msg.createdAt).toLocaleTimeString('en-US', {
                     hour: 'numeric',
@@ -262,10 +254,9 @@ export default function ThreadPage({
       </div>
 
       {/* Reply composer */}
-      <div className="pt-4" style={{ borderTop: '1px solid #E8E4DF' }}>
+      <div className="pt-4 border-t border-folio-border-subtle">
         <div
-          className="rounded-xl p-3"
-          style={{ backgroundColor: '#F5F3F0', border: '1px solid #E8E4DF' }}
+          className="rounded-xl p-3 bg-surface-elevated border border-folio-border-subtle"
         >
           <textarea
             value={reply}
@@ -273,15 +264,13 @@ export default function ThreadPage({
             onKeyDown={handleKeyDown}
             placeholder="Reply..."
             rows={3}
-            className="w-full text-sm bg-transparent resize-none focus:outline-none"
-            style={{ color: '#2C2825' }}
+            className="w-full text-sm bg-transparent resize-none focus:outline-none text-folio-text-primary"
           />
           <div className="flex justify-end mt-2">
             <button
               onClick={sendReply}
               disabled={!reply.trim() || sending}
-              className="px-4 py-2 rounded-lg text-white text-xs disabled:opacity-40"
-              style={{ backgroundColor: '#2C2825' }}
+              className="px-4 py-2 rounded-lg text-white text-xs disabled:opacity-40 bg-folio-text-primary"
             >
               {sending ? 'Sending...' : 'Send'}
             </button>

@@ -103,8 +103,8 @@ export default function OrgProfileFeed({
           />
         ) : (
           <div className="text-center py-16">
-            <p style={{ color: '#8B8178' }}>No content yet</p>
-            <p className="text-sm mt-2" style={{ color: '#A09890' }}>
+            <p className="text-folio-text-secondary">No content yet</p>
+            <p className="text-sm mt-2 text-folio-text-tertiary">
               Projects and media will appear here once published
             </p>
           </div>
@@ -141,8 +141,7 @@ function LoadingSkeleton({ projectCount }: { projectCount: number }) {
         {[1, 2, 3, 4, 5].map(i => (
           <div
             key={i}
-            className="h-8 w-20 rounded-full animate-pulse"
-            style={{ backgroundColor: '#E8E4DF' }}
+            className="h-8 w-20 rounded-full animate-pulse bg-folio-border-subtle"
           />
         ))}
       </div>
@@ -153,8 +152,8 @@ function LoadingSkeleton({ projectCount }: { projectCount: number }) {
           {Array.from({ length: Math.min(projectCount, 3) }, (_, i) => (
             <div
               key={i}
-              className="rounded-2xl animate-pulse"
-              style={{ backgroundColor: '#E8E4DF', aspectRatio: '16/9' }}
+              className="rounded-2xl animate-pulse bg-folio-border-subtle"
+              style={{ aspectRatio: '16/9' }}
             />
           ))}
         </div>
@@ -163,17 +162,15 @@ function LoadingSkeleton({ projectCount }: { projectCount: number }) {
         <div className="space-y-3">
           <div className="grid grid-cols-[3fr_2fr] gap-3">
             <div
-              className="rounded-xl animate-pulse"
-              style={{ backgroundColor: '#E8E4DF', aspectRatio: '4/5' }}
+              className="rounded-xl animate-pulse bg-folio-border-subtle"
+              style={{ aspectRatio: '4/5' }}
             />
             <div className="grid grid-rows-2 gap-3">
               <div
-                className="rounded-xl animate-pulse"
-                style={{ backgroundColor: '#E8E4DF', aspectRatio: '1/1' }}
+                className="rounded-xl animate-pulse bg-folio-border-subtle aspect-square"
               />
               <div
-                className="rounded-xl animate-pulse"
-                style={{ backgroundColor: '#E8E4DF', aspectRatio: '1/1' }}
+                className="rounded-xl animate-pulse bg-folio-border-subtle aspect-square"
               />
             </div>
           </div>
@@ -184,9 +181,8 @@ function LoadingSkeleton({ projectCount }: { projectCount: number }) {
           {[1, 2, 3, 4, 5, 6].map(i => (
             <div
               key={i}
-              className="mb-4 rounded-lg animate-pulse break-inside-avoid"
+              className="mb-4 rounded-lg animate-pulse break-inside-avoid bg-folio-border-subtle"
               style={{
-                backgroundColor: '#E8E4DF',
                 aspectRatio: i % 2 === 0 ? '4/3' : '3/4',
               }}
             />

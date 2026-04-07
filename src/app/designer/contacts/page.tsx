@@ -90,10 +90,10 @@ export default function ContactsPage() {
     return (
       <div className="min-h-screen bg-surface-canvas p-6">
         <div className="max-w-3xl mx-auto">
-          <div className="h-8 w-48 rounded-lg animate-pulse" style={{ backgroundColor: '#E8E4DF' }} />
+          <div className="h-8 w-48 rounded-lg animate-pulse bg-folio-border-subtle" />
           <div className="mt-8 space-y-4">
             {[1, 2, 3].map(i => (
-              <div key={i} className="h-20 rounded-xl animate-pulse" style={{ backgroundColor: '#E8E4DF' }} />
+              <div key={i} className="h-20 rounded-xl animate-pulse bg-folio-border-subtle" />
             ))}
           </div>
         </div>
@@ -181,7 +181,7 @@ export default function ContactsPage() {
 
                     <div className="space-y-2">
                       {group.contacts.map(contact => (
-                        <div key={contact.id} className="flex items-center justify-between py-2 border-b border-[#F0EDE9] last:border-b-0">
+                        <div key={contact.id} className="flex items-center justify-between py-2 border-b border-surface-elevated last:border-b-0">
                           <div>
                             <p className="text-sm text-folio-text-primary">{contact.name}</p>
                             <p className="text-xs text-folio-text-tertiary">
@@ -192,11 +192,11 @@ export default function ContactsPage() {
                           <div className="flex items-center gap-2">
                             <button
                               onClick={() => handleTogglePreferredRep(contact.id, !contact.isPreferredRep)}
-                              className="text-xs px-2 py-1 rounded-full transition-colors"
-                              style={{
-                                backgroundColor: contact.isPreferredRep ? '#2C2825' : '#F0EDE9',
-                                color: contact.isPreferredRep ? '#fff' : '#5C554D',
-                              }}
+                              className={`text-xs px-2 py-1 rounded-full transition-colors ${
+                                contact.isPreferredRep
+                                  ? 'bg-folio-text-primary text-white'
+                                  : 'bg-surface-elevated text-folio-text-secondary'
+                              }`}
                             >
                               {contact.isPreferredRep ? 'My Rep' : 'Set as Rep'}
                             </button>
@@ -220,7 +220,7 @@ export default function ContactsPage() {
                     </h3>
                     <div className="space-y-2">
                       {unmatchedContacts.slice(0, 10).map(contact => (
-                        <div key={contact.id} className="flex items-center justify-between py-2 border-b border-[#F0EDE9] last:border-b-0">
+                        <div key={contact.id} className="flex items-center justify-between py-2 border-b border-surface-elevated last:border-b-0">
                           <div>
                             <p className="text-sm text-folio-text-secondary">{contact.name}</p>
                             <p className="text-xs text-folio-text-tertiary">{contact.email}{contact.company && ` · ${contact.company}`}</p>

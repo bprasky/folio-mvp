@@ -30,7 +30,7 @@ export default function MediaCard({ media }: MediaCardProps) {
       onClick={handleClick}
       className="group block cursor-pointer overflow-hidden rounded-xl transition-all duration-300 hover:shadow-lg"
     >
-      <div className="relative aspect-video overflow-hidden" style={{ backgroundColor: '#E8E4DF' }}>
+      <div className="relative aspect-video overflow-hidden bg-folio-border-subtle">
         {media.thumbnailUrl ? (
           <SafeImage
             src={media.thumbnailUrl}
@@ -41,8 +41,7 @@ export default function MediaCard({ media }: MediaCardProps) {
           />
         ) : (
           <div
-            className="w-full h-full flex items-center justify-center"
-            style={{ backgroundColor: isPodcast ? '#3D3A36' : '#2C2825' }}
+            className={`w-full h-full flex items-center justify-center ${isPodcast ? 'bg-[#3D3A36]' : 'bg-folio-text-primary'}`}
           >
             {isPodcast ? <PodcastIcon /> : <VideoIcon />}
           </div>
@@ -97,15 +96,15 @@ export default function MediaCard({ media }: MediaCardProps) {
       </div>
 
       {/* Content */}
-      <div className="p-4 bg-surface-canvas" style={{ borderTop: '1px solid #E8E4DF' }}>
+      <div className="p-4 bg-surface-canvas border-t border-folio-border-subtle">
         <h3
-          className="font-medium leading-tight line-clamp-2"
-          style={{ color: '#2C2825', fontFamily: 'Georgia, serif' }}
+          className="font-medium leading-tight line-clamp-2 text-folio-text-primary"
+          style={{ fontFamily: 'Georgia, serif' }}
         >
           {media.title}
         </h3>
         {media.description && (
-          <p className="text-sm mt-2 line-clamp-2" style={{ color: '#8B8178' }}>
+          <p className="text-sm mt-2 line-clamp-2 text-folio-text-secondary">
             {media.description}
           </p>
         )}
