@@ -144,10 +144,13 @@ export async function callSam3DTagService(req: Sam3DTagRequest): Promise<Sam3DTa
     tagY: req.tagY,
   });
 
-  // Convert normalized (0-1) coordinates to pixel coordinates
+  // Convert coordinates to pixel values
+  // Tags store coords as 0-100 percentages OR 0-1 normalized — handle both
   const dims = await getImageDimensions(req.sourceImageUrl);
-  const pixelX = Math.round(req.tagX * dims.width);
-  const pixelY = Math.round(req.tagY * dims.height);
+  const normX = req.tagX > 1 ? req.tagX / 100 : req.tagX;
+  const normY = req.tagY > 1 ? req.tagY / 100 : req.tagY;
+  const pixelX = Math.round(normX * dims.width);
+  const pixelY = Math.round(normY * dims.height);
 
   console.log('[sam3d] Converted coordinates', {
     normalized: { x: req.tagX, y: req.tagY },
