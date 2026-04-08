@@ -32,9 +32,10 @@ export async function POST(request: NextRequest) {
     const batch = Math.min(parseInt(url.searchParams.get('batch') || '1'), 5);
     const dryRun = url.searchParams.get('dryRun') === 'true';
     const force = url.searchParams.get('force') === 'true';
+    const catalogOnly = url.searchParams.get('catalogOnly') === 'true';
 
     // Build where clause — only re-process tags that need it (unless force)
-    const meshWhere = force
+    const meshWhere: any = force
       ? { meshStatus: { not: 'processing' } }
       : {
           OR: [
@@ -43,6 +44,11 @@ export async function POST(request: NextRequest) {
             { meshStatus: '' },
           ],
         };
+
+    // Only process tags whose product has a catalog image
+    if (catalogOnly) {
+      meshWhere.product = { imageUrl: { not: null } };
+    }
 
     // Count total remaining
     const totalRemaining = await prisma.productTag.count({ where: meshWhere });
