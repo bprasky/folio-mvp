@@ -34,6 +34,7 @@ export async function POST(
             id: true,
             name: true,
             category: true,
+            imageUrl: true,
           },
         },
       },
@@ -80,9 +81,10 @@ export async function POST(
 
     const body = await request.json().catch(() => ({}));
 
-    // Call SAM 3D tag service (currently stubbed)
+    // Generate mesh: prefer catalog image, fall back to room photo + SAM isolation
     const result = await callSam3DTagService({
       sourceImageUrl: tag.image.url,
+      catalogImageUrl: tag.product?.imageUrl || undefined,
       tagX: tag.x,
       tagY: tag.y,
       productId: tag.productId,
