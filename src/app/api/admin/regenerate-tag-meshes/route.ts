@@ -9,103 +9,100 @@ import { uploadGeneratedMesh, uploadGeneratedMask } from '@/lib/storage';
 import { isMeshableCategory } from '@/lib/three-d/categories';
 import { promoteCanonicalMesh } from '@/lib/three-d/promoteCanonicalMesh';
 
-const BATCH_SIZE = 2;
-const BATCH_DELAY_MS = 2000;
-
 /**
  * POST /api/admin/regenerate-tag-meshes
  *
  * Admin-only: regenerate 3D meshes at tag level using Trellis (highest quality).
- * Works on ProductTags that have a source image (ProjectImage.url), which is where
- * the homepage/article products get their mesh data from.
+ * Processes a small batch per request to avoid gateway timeouts.
+ * Call in a loop from the browser console to process all tags.
  *
  * Query params:
- *   limit?:  number (default 50, max 200)
+ *   batch?:  number (default 3, max 5) — tags per request
  *   dryRun?: boolean — preview eligible tags without generating
- *   force?:  boolean — re-generate even tags with meshStatus='complete' (upgrade quality)
+ *   force?:  boolean — re-generate even tags with meshStatus='complete'
  */
 export async function POST(request: NextRequest) {
   try {
-  const session = await getServerSession(authOptions);
-  if (!session?.user || (session.user as any).role !== 'ADMIN') {
-    return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
-  }
+    const session = await getServerSession(authOptions);
+    if (!session?.user || (session.user as any).role !== 'ADMIN') {
+      return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
+    }
 
-  const url = new URL(request.url);
-  const limit = Math.min(parseInt(url.searchParams.get('limit') || '50'), 200);
-  const dryRun = url.searchParams.get('dryRun') === 'true';
-  const force = url.searchParams.get('force') === 'true';
+    const url = new URL(request.url);
+    const batch = Math.min(parseInt(url.searchParams.get('batch') || '3'), 5);
+    const dryRun = url.searchParams.get('dryRun') === 'true';
+    const force = url.searchParams.get('force') === 'true';
 
-  // Build where clause — only re-process tags that need it (unless force)
-  const meshWhere = force
-    ? { meshStatus: { not: 'processing' } }
-    : {
-        OR: [
-          { meshStatus: { equals: null } },
-          { meshStatus: 'failed' },
-          { meshStatus: '' },
-        ],
-      };
+    // Build where clause — only re-process tags that need it (unless force)
+    const meshWhere = force
+      ? { meshStatus: { not: 'processing' } }
+      : {
+          OR: [
+            { meshStatus: { equals: null } },
+            { meshStatus: 'failed' },
+            { meshStatus: '' },
+          ],
+        };
 
-  // Find eligible tags (imageId and productId are required fields, so relations always exist)
-  const eligible = await prisma.productTag.findMany({
-    where: meshWhere,
-    select: {
-      id: true,
-      x: true,
-      y: true,
-      productId: true,
-      meshStatus: true,
-      mesh3dUrl: true,
-      image: {
-        select: {
-          id: true,
-          url: true,
-          projectId: true,
+    // Count total remaining
+    const totalRemaining = await prisma.productTag.count({ where: meshWhere });
+
+    // Fetch batch of eligible tags
+    const eligible = await prisma.productTag.findMany({
+      where: meshWhere,
+      select: {
+        id: true,
+        x: true,
+        y: true,
+        productId: true,
+        meshStatus: true,
+        mesh3dUrl: true,
+        image: {
+          select: {
+            id: true,
+            url: true,
+            projectId: true,
+          },
+        },
+        product: {
+          select: {
+            id: true,
+            name: true,
+            category: true,
+          },
         },
       },
-      product: {
-        select: {
-          id: true,
-          name: true,
-          category: true,
-        },
-      },
-    },
-    take: limit,
-    orderBy: { createdAt: 'desc' },
-  });
-
-  // Filter to meshable categories
-  const meshable = eligible.filter((t) => isMeshableCategory(t.product?.category));
-
-  if (dryRun) {
-    return NextResponse.json({
-      dryRun: true,
-      force,
-      totalEligible: eligible.length,
-      meshableCount: meshable.length,
-      skippedFlat: eligible.length - meshable.length,
-      tags: meshable.map((t) => ({
-        id: t.id,
-        productName: t.product?.name,
-        category: t.product?.category,
-        currentStatus: t.meshStatus,
-        hasMesh: !!t.mesh3dUrl,
-        sourceImage: t.image?.url?.substring(0, 80),
-      })),
+      take: dryRun ? 200 : batch,
+      orderBy: { createdAt: 'desc' },
     });
-  }
 
-  // Process tags
-  const results: Array<{ id: string; productName: string; status: string; error?: string }> = [];
-  let processed = 0;
-  let failed = 0;
+    // Filter to meshable categories
+    const meshable = eligible.filter((t) => isMeshableCategory(t.product?.category));
 
-  for (let i = 0; i < meshable.length; i += BATCH_SIZE) {
-    const batch = meshable.slice(i, i + BATCH_SIZE);
+    if (dryRun) {
+      return NextResponse.json({
+        dryRun: true,
+        force,
+        totalRemaining,
+        meshableCount: meshable.length,
+        skippedFlat: eligible.length - meshable.length,
+        tags: meshable.map((t) => ({
+          id: t.id,
+          productName: t.product?.name,
+          category: t.product?.category,
+          currentStatus: t.meshStatus,
+          hasMesh: !!t.mesh3dUrl,
+          sourceImage: t.image?.url?.substring(0, 80),
+        })),
+      });
+    }
 
-    for (const tag of batch) {
+    // Process this batch sequentially
+    const results: Array<{ id: string; productName: string; status: string; error?: string }> = [];
+    let processed = 0;
+    let failed = 0;
+
+    for (const tag of meshable) {
       const productName = tag.product?.name || 'Unknown';
 
       try {
@@ -120,7 +117,7 @@ export async function POST(request: NextRequest) {
           data: { meshStatus: 'processing', meshError: null },
         });
 
-        console.log(`[regenerate-tags] ${processed + 1}/${meshable.length} Starting: ${productName}`);
+        console.log(`[regenerate-tags] Starting: ${productName}`);
 
         // Generate mesh + mask using Trellis pipeline
         const result = await callSam3DTagService({
@@ -170,7 +167,7 @@ export async function POST(request: NextRequest) {
 
         results.push({ id: tag.id, productName, status: 'success' });
         processed++;
-        console.log(`[regenerate-tags] ${processed}/${meshable.length} Complete: ${productName}`);
+        console.log(`[regenerate-tags] Complete: ${productName}`);
       } catch (error: any) {
         await prisma.productTag.update({
           where: { id: tag.id },
@@ -183,20 +180,17 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Delay between batches
-    if (i + BATCH_SIZE < meshable.length) {
-      await new Promise((resolve) => setTimeout(resolve, BATCH_DELAY_MS));
-    }
-  }
+    const remaining = totalRemaining - processed;
 
-  return NextResponse.json({
-    force,
-    totalEligible: eligible.length,
-    meshableCount: meshable.length,
-    processed,
-    failed,
-    results,
-  });
+    return NextResponse.json({
+      force,
+      batchSize: batch,
+      processed,
+      failed,
+      remaining,
+      done: remaining <= 0,
+      results,
+    });
 
   } catch (error: any) {
     console.error('[regenerate-tag-meshes] Unhandled error:', error);
