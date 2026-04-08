@@ -13,11 +13,11 @@ interface PartialProductPromptProps {
 }
 
 /**
- * Lightweight prompt for partial products (incomplete data).
- * Shows what's missing and offers three paths:
- * 1. Save anyway (product still gets saved)
- * 2. Complete it yourself (designer edit form)
- * 3. Ask the vendor (triggers vendor invite/claim flow)
+ * Lightweight prompt for incomplete products on tagged images.
+ *
+ * Single primary action: "Add to project" which also fires a spec request
+ * to the vendor automatically. User sees confirmation: "Saved — requesting
+ * more info for you." No navigation to dead pages.
  */
 export function PartialProductPrompt({
   isOpen,
@@ -25,10 +25,14 @@ export function PartialProductPrompt({
   tag,
   onSaveAnyway,
 }: PartialProductPromptProps) {
-  const [vendorEmailInput, setVendorEmailInput] = useState('');
-  const [showVendorForm, setShowVendorForm] = useState(false);
-  const [inviteSent, setInviteSent] = useState(false);
+  const [done, setDone] = useState(false);
   const missing = getMissingFields(tag);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setDone(false);
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -39,62 +43,24 @@ export function PartialProductPrompt({
     return () => window.removeEventListener('keydown', handleKey);
   }, [isOpen, onClose]);
 
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-      return () => { document.body.style.overflow = ''; };
-    }
-  }, [isOpen]);
+  const handleSaveAndRequest = () => {
+    // Save to project
+    onSaveAnyway();
 
-  const handleAskVendor = async () => {
-    if (!tag.productId) return;
-
-    // If we have vendor info, send invite directly
-    if (tag.vendorName && !showVendorForm) {
-      // Try sending invite via API
-      try {
-        await fetch('/api/vendor/invite-to-complete', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            productId: tag.productId,
-            vendorName: tag.vendorName,
-            vendorEmail: vendorEmailInput || undefined,
-          }),
-        });
-        setInviteSent(true);
-        setTimeout(() => onClose(), 2000);
-      } catch {
-        // Show email form as fallback
-        setShowVendorForm(true);
-      }
-      return;
+    // Fire-and-forget: request vendor to complete specs
+    if (tag.productId) {
+      fetch('/api/vendor/invite-to-complete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productId: tag.productId,
+          vendorName: tag.vendorName || tag.label,
+        }),
+      }).catch(() => {});
     }
 
-    // No vendor info → show email input
-    if (!showVendorForm) {
-      setShowVendorForm(true);
-      return;
-    }
-
-    // Submit vendor email
-    if (vendorEmailInput.includes('@')) {
-      try {
-        await fetch('/api/vendor/invite-to-complete', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            productId: tag.productId,
-            vendorName: tag.vendorName || tag.label,
-            vendorEmail: vendorEmailInput,
-          }),
-        });
-        setInviteSent(true);
-        setTimeout(() => onClose(), 2000);
-      } catch {
-        // Silently fail — not blocking
-      }
-    }
+    setDone(true);
+    setTimeout(() => onClose(), 2000);
   };
 
   return (
@@ -105,45 +71,43 @@ export function PartialProductPrompt({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.25 }}
+          transition={{ duration: 0.2 }}
         >
-          {/* Backdrop */}
           <div
             className="absolute inset-0 bg-black/50 backdrop-blur-sm"
             onClick={onClose}
           />
 
-          {/* Prompt */}
           <motion.div
-            className="relative z-10 w-[90vw] max-w-sm glass-surface rounded-2xl overflow-hidden shadow-[0_24px_80px_rgba(15,14,10,0.4)]"
-            initial={{ scale: 0.92, y: 20 }}
+            className="relative z-10 w-[90vw] max-w-xs glass-surface rounded-2xl overflow-hidden shadow-[0_24px_80px_rgba(15,14,10,0.4)]"
+            initial={{ scale: 0.92, y: 16 }}
             animate={{ scale: 1, y: 0 }}
-            exit={{ scale: 0.95, y: 10 }}
-            transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
+            exit={{ scale: 0.95, y: 8 }}
+            transition={{ duration: 0.2, ease: [0.25, 0.46, 0.45, 0.94] }}
           >
-            {/* Close */}
-            <button
-              onClick={onClose}
-              className="absolute top-3 right-3 z-10 w-7 h-7 flex items-center justify-center rounded-full bg-black/10 text-folio-text-secondary hover:bg-black/20 transition-colors"
-              aria-label="Close"
-            >
-              <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                <path d="M1 1l12 12M13 1L1 13" />
-              </svg>
-            </button>
-
             <div className="px-5 py-5">
-              {inviteSent ? (
-                <div className="text-center py-4">
-                  <div className="text-lg mb-1">Invite sent</div>
-                  <p className="text-sm text-folio-text-secondary">
-                    The vendor will be asked to complete this product's details.
+              {done ? (
+                /* Confirmation state */
+                <div className="text-center py-2">
+                  <div className="w-10 h-10 rounded-full bg-green-50 border border-green-200 flex items-center justify-center mx-auto mb-3">
+                    <svg className="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <p className="text-sm font-medium text-folio-text-primary">
+                    Saved to project
+                  </p>
+                  <p className="text-[12px] text-folio-text-secondary mt-1">
+                    {tag.vendorName
+                      ? `Requesting full specs from ${tag.vendorName} for you.`
+                      : 'Requesting more info for you.'
+                    }
                   </p>
                 </div>
               ) : (
+                /* Prompt state */
                 <>
-                  {/* Product name */}
-                  <h3 className="text-sm font-semibold text-folio-text-primary pr-6">
+                  <h3 className="text-sm font-semibold text-folio-text-primary">
                     {tag.label}
                   </h3>
                   {tag.vendorName && (
@@ -152,90 +116,30 @@ export function PartialProductPrompt({
                     </p>
                   )}
 
-                  {/* Missing fields */}
-                  <div className="mt-3 p-3 rounded-xl bg-amber-50/60 border border-amber-200/40">
-                    <p className="text-[11px] font-medium text-amber-800 mb-1.5">
-                      Missing details
-                    </p>
-                    <ul className="space-y-1">
-                      {missing.map((field) => (
-                        <li
-                          key={field.key}
-                          className="flex items-center gap-1.5 text-[11px] text-amber-700"
-                        >
-                          <span className="w-3.5 h-3.5 rounded-full border border-amber-300 flex-shrink-0" />
-                          {field.label}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
+                  <p className="mt-3 text-[12px] text-folio-text-secondary leading-relaxed">
+                    This product has limited details.
+                    {tag.vendorName
+                      ? ` We'll request complete specs from ${tag.vendorName} when you save.`
+                      : " We'll request more info when you save."
+                    }
+                  </p>
 
-                  {/* Vendor email form (shown when "Ask vendor" is clicked without known email) */}
-                  {showVendorForm && (
-                    <div className="mt-3">
-                      <label className="text-[11px] text-folio-text-secondary block mb-1">
-                        Vendor email
-                      </label>
-                      <input
-                        type="email"
-                        value={vendorEmailInput}
-                        onChange={(e) => setVendorEmailInput(e.target.value)}
-                        placeholder="rep@vendor.com"
-                        className="w-full px-3 py-2 text-sm rounded-lg border border-folio-border bg-white focus:outline-none focus:ring-1 focus:ring-amber-400"
-                        autoFocus
-                      />
-                    </div>
-                  )}
+                  <button
+                    type="button"
+                    className="mt-4 w-full inline-flex items-center justify-center gap-1.5 rounded-full bg-[var(--text-primary)] px-3 py-2.5 text-[12px] font-medium text-white hover:opacity-90 transition-colors"
+                    onClick={handleSaveAndRequest}
+                  >
+                    <span>+</span>
+                    <span>Add to project</span>
+                  </button>
 
-                  {/* Actions — vendor-first: if vendor is known, route request directly to them */}
-                  <div className="mt-4 space-y-2">
-                    {/* Primary: Request from vendor (if known) or Save to Project */}
-                    {tag.vendorName ? (
-                      <button
-                        type="button"
-                        className="w-full inline-flex items-center justify-center gap-1.5 rounded-full bg-[var(--text-primary)] px-3 py-2.5 text-[12px] font-medium text-white hover:opacity-90 transition-colors"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleAskVendor();
-                        }}
-                      >
-                        {showVendorForm ? 'Send request' : `Request specs from ${tag.vendorName}`}
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        className="w-full inline-flex items-center justify-center gap-1.5 rounded-full bg-[var(--text-primary)] px-3 py-2.5 text-[12px] font-medium text-white hover:opacity-90 transition-colors"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleAskVendor();
-                        }}
-                      >
-                        {showVendorForm ? 'Send request' : 'Request product info'}
-                      </button>
-                    )}
-
-                    {/* Secondary row: Save + Complete */}
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        className="flex-1 inline-flex items-center justify-center gap-1 rounded-full border border-folio-border px-3 py-2 text-[11px] font-medium text-folio-text-primary hover:bg-surface-ground transition-colors"
-                        onClick={onSaveAnyway}
-                      >
-                        <span>+</span>
-                        <span>Save anyway</span>
-                      </button>
-
-                      {tag.productId && (
-                        <a
-                          href={`/products/${tag.productId}/edit`}
-                          className="flex-1 inline-flex items-center justify-center rounded-full border border-folio-border px-3 py-2 text-[11px] font-medium text-folio-text-primary hover:bg-surface-ground transition-colors"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          Add details
-                        </a>
-                      )}
-                    </div>
-                  </div>
+                  <button
+                    type="button"
+                    className="mt-2 w-full text-center text-[11px] text-folio-text-tertiary hover:text-folio-text-secondary py-1 transition-colors"
+                    onClick={onClose}
+                  >
+                    Dismiss
+                  </button>
                 </>
               )}
             </div>
