@@ -12,6 +12,7 @@ import { TextInterludeBlock } from './TextInterludeBlock';
 import { PullQuoteBlock } from './PullQuoteBlock';
 import { EditorialPullQuote } from './EditorialPullQuote';
 import { ScrollCinematic } from './ScrollCinematic';
+import { EditorialProductFloat } from './EditorialProductFloat';
 import { generateEditorialLayout, generateEditorialLayoutFromDraft, EditorialBlock } from './layoutEngine';
 import { roomPriority } from './roomPriority';
 import type { Blocks } from '@/lib/posting/schemas';
@@ -359,6 +360,14 @@ function renderBlock(block: EditorialBlock, project: Project, index: number, mod
         <ScrollCinematic
           image={block.image}
           meshTags={block.meshTags}
+          roomName={block.roomName}
+        />
+      );
+
+    case 'productFloat':
+      return (
+        <EditorialProductFloat
+          products={block.products}
           roomName={block.roomName}
         />
       );

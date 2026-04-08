@@ -8,7 +8,7 @@
 import { useRef, useEffect } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { ImageTagDots } from "@/components/project/ImageTagDots";
+import { TaggedImage } from "@/components/project/interaction/TaggedImage";
 import type { RoomTileData } from "@/lib/story/buildRoomTiles";
 
 interface RoomExpandProps {
@@ -65,7 +65,7 @@ export function RoomExpand({
                 sizes="100vw"
                 priority
               />
-              <ImageTagDots image={room.heroImage} />
+              <TaggedImage image={room.heroImage} />
             </div>
 
             {/* Room label + collapse */}
@@ -128,7 +128,7 @@ export function RoomExpand({
                         sizes="(max-width: 768px) 100vw, 50vw"
                       />
                       {/* Tag dots always visible in expanded gallery */}
-                      <ImageTagDots image={img} />
+                      <TaggedImage image={img} />
                     </div>
                   ))}
                 </div>

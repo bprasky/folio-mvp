@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { ArrowLeft, ChevronLeft, ChevronRight, ChevronUp } from "lucide-react";
-import { ImageTagDots } from "@/components/project/ImageTagDots";
+import { TaggedImage } from "@/components/project/interaction/TaggedImage";
 import { logStorySignal } from "@/app/actions/posting";
 import type { RoomCardData } from "@/lib/editorial/buildRoomCards";
 
@@ -75,7 +75,7 @@ export function RoomExpanded({
             alt={card.roomLabel}
             className="w-full h-auto"
           />
-          <ImageTagDots image={card.heroImage} />
+          <TaggedImage image={card.heroImage} />
         </div>
 
         {/* Pull quote */}
@@ -116,7 +116,7 @@ export function RoomExpanded({
                     alt={card.roomLabel}
                     className="w-full h-auto"
                   />
-                  <ImageTagDots image={img} />
+                  <TaggedImage image={img} />
                 </div>
               ))}
             </div>

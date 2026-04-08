@@ -9,6 +9,7 @@ interface MeshLayerProps {
   glbUrl: string;
   isVisible: boolean;
   onLoaded?: () => void;
+  autoRotateSpeed?: number; // default 3
 }
 
 function ProductModel({ url, onLoaded }: { url: string; onLoaded?: () => void }) {
@@ -32,7 +33,7 @@ function ProductModel({ url, onLoaded }: { url: string; onLoaded?: () => void })
   return <primitive object={centeredScene} />;
 }
 
-function SceneContent({ url, onLoaded }: { url: string; onLoaded?: () => void }) {
+function SceneContent({ url, onLoaded, rotateSpeed = 3 }: { url: string; onLoaded?: () => void; rotateSpeed?: number }) {
   const [autoRotate, setAutoRotate] = useState(true);
   const resumeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -73,7 +74,7 @@ function SceneContent({ url, onLoaded }: { url: string; onLoaded?: () => void })
 
       <OrbitControls
         autoRotate={autoRotate}
-        autoRotateSpeed={3}
+        autoRotateSpeed={rotateSpeed}
         enablePan={false}
         maxPolarAngle={Math.PI / 2}
         minDistance={2}
@@ -91,7 +92,7 @@ function SceneContent({ url, onLoaded }: { url: string; onLoaded?: () => void })
  *
  * Must be dynamically imported with ssr: false.
  */
-export default function MeshLayer({ glbUrl, isVisible, onLoaded }: MeshLayerProps) {
+export default function MeshLayer({ glbUrl, isVisible, onLoaded, autoRotateSpeed = 3 }: MeshLayerProps) {
   const [error, setError] = useState(false);
 
   if (error || !isVisible) return null;
@@ -104,7 +105,7 @@ export default function MeshLayer({ glbUrl, isVisible, onLoaded }: MeshLayerProp
         onError={() => setError(true)}
         style={{ background: 'transparent' }}
       >
-        <SceneContent url={glbUrl} onLoaded={onLoaded} />
+        <SceneContent url={glbUrl} onLoaded={onLoaded} rotateSpeed={autoRotateSpeed} />
       </Canvas>
     </div>
   );

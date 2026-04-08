@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import Image from 'next/image';
 import { EditorialCaption } from './EditorialCaption';
-import { ImageTagDots } from '@/components/project/ImageTagDots';
+import { TaggedImage } from '@/components/project/interaction/TaggedImage';
 import type { EditorialProjectImage as ProjectImage } from '@/types/editorial';
 
 interface EditorialSpreadProps {
@@ -90,7 +90,7 @@ export function EditorialSpread({
               />
               {/* Photo Tag Hotspots */}
               {image.tags && image.tags.length > 0 && (
-                <ImageTagDots image={image} />
+                <TaggedImage image={image} />
               )}
             </>
           ) : (
@@ -127,7 +127,7 @@ export function EditorialSpread({
               />
               {/* Photo Tag Hotspots */}
               {image.tags && image.tags.length > 0 && (
-                <ImageTagDots image={image} />
+                <TaggedImage image={image} />
               )}
             </>
           ) : (
