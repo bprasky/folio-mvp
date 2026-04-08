@@ -25,6 +25,7 @@ const BATCH_DELAY_MS = 2000;
  *   force?:  boolean — re-generate even tags with meshStatus='complete' (upgrade quality)
  */
 export async function POST(request: NextRequest) {
+  try {
   const session = await getServerSession(authOptions);
   if (!session?.user || (session.user as any).role !== 'ADMIN') {
     return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
@@ -35,24 +36,20 @@ export async function POST(request: NextRequest) {
   const dryRun = url.searchParams.get('dryRun') === 'true';
   const force = url.searchParams.get('force') === 'true';
 
-  // Build where clause
-  const statusFilter = force
-    ? { meshStatus: { not: 'processing' } } // Re-generate everything except currently processing
+  // Build where clause — only re-process tags that need it (unless force)
+  const meshWhere = force
+    ? { meshStatus: { not: 'processing' } }
     : {
         OR: [
-          { meshStatus: null },
+          { meshStatus: { equals: null } },
           { meshStatus: 'failed' },
-          { meshStatus: { equals: '' } },
+          { meshStatus: '' },
         ],
       };
 
-  // Find eligible tags: has source image, product exists, not currently processing
+  // Find eligible tags (imageId and productId are required fields, so relations always exist)
   const eligible = await prisma.productTag.findMany({
-    where: {
-      ...statusFilter,
-      image: { url: { not: null } },
-      product: { id: { not: undefined } },
-    } as any,
+    where: meshWhere,
     select: {
       id: true,
       x: true,
@@ -200,4 +197,12 @@ export async function POST(request: NextRequest) {
     failed,
     results,
   });
+
+  } catch (error: any) {
+    console.error('[regenerate-tag-meshes] Unhandled error:', error);
+    return NextResponse.json(
+      { error: error.message || 'Internal server error', stack: error.stack?.split('\n').slice(0, 5) },
+      { status: 500 },
+    );
+  }
 }
