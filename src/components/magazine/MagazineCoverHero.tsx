@@ -9,10 +9,13 @@
 // - Gradient overlay for text legibility
 // - Scrolls naturally with the page (not fixed)
 
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 import { type MagazineHero as HeroType } from "@/lib/magazine/getMagazineData";
 import { type MagazineEditionConfig } from "@/lib/magazine/editions";
+import { TaggedImage } from "@/components/project/interaction/TaggedImage";
 
 interface Props {
   hero: HeroType;
@@ -44,6 +47,11 @@ export default function MagazineCoverHero({ hero, edition }: Props) {
             />
           ) : (
             <div className="absolute inset-0 bg-gradient-to-br from-[var(--bg-elevated)] to-[var(--bg-base)]" />
+          )}
+
+          {/* Tagged product interaction overlay */}
+          {hero.heroImage && hero.heroImage.tags?.length > 0 && (
+            <TaggedImage image={hero.heroImage} interactionLevel="explore" />
           )}
 
           {/* Gradient overlay for bottom text legibility */}

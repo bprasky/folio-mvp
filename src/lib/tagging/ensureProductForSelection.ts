@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { triggerMeshGeneration } from '@/lib/three-d/triggerMeshGeneration';
 
 /**
  * Ensures a Product record exists for a selection's product data.
@@ -39,5 +40,11 @@ export async function ensureProductForSelection(opts: {
   });
 
   console.log(`[ensureProduct] Created Product "${productName}" (${product.id})`);
+
+  // Fire-and-forget mesh generation if product has an image
+  if (photo) {
+    triggerMeshGeneration(product.id, photo);
+  }
+
   return product.id;
 }

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Lightbox from "./Lightbox";
 import { ImageLike } from "./utils";
+import { TaggedImage } from "@/components/project/interaction/TaggedImage";
 
 export default function ChapterGallery({ images }: { images: ImageLike[] }) {
   const [open, setOpen] = useState<number | null>(null);
@@ -16,7 +17,7 @@ export default function ChapterGallery({ images }: { images: ImageLike[] }) {
         {unique.map((im, i) => (
           <figure
             key={i}
-            className="rounded-2xl overflow-hidden ring-1 ring-black/5 cursor-zoom-in bg-surface-ground"
+            className="relative rounded-2xl overflow-hidden ring-1 ring-black/5 cursor-zoom-in bg-surface-ground"
             onClick={() => setOpen(i)}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -25,6 +26,9 @@ export default function ChapterGallery({ images }: { images: ImageLike[] }) {
               alt={im.alt || ""}
               className="w-full h-auto"
             />
+            {im.tags && im.tags.length > 0 && (
+              <TaggedImage image={im} interactionLevel="explore" />
+            )}
             {im.caption ? (
               <figcaption className="p-2 folio-meta text-folio-text-secondary">
                 {im.caption}

@@ -5,6 +5,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
 import { logSignal, extractTags } from '@/lib/telemetry/context-signal';
+import { triggerMeshGeneration } from '@/lib/three-d/triggerMeshGeneration';
 
 export async function GET(
   request: NextRequest,
@@ -82,7 +83,7 @@ export async function PUT(
     // Verify product exists and check permissions
     const existingProduct = await prisma.product.findUnique({
       where: { id: params.productId },
-      select: { vendorId: true },
+      select: { vendorId: true, threeDAssetUrl: true },
     });
     if (!existingProduct) {
       return NextResponse.json({ error: 'Not found' }, { status: 404 });
@@ -158,6 +159,11 @@ export async function PUT(
       url: updatedProduct.url,
       vendorName: updatedProduct.vendor?.name || updatedProduct.vendor?.companyName || updatedProduct.brand
     };
+
+    // Fire-and-forget mesh generation if imageUrl was set/changed and no mesh exists
+    if (imageUrl && !existingProduct.threeDAssetUrl) {
+      triggerMeshGeneration(updatedProduct.id, imageUrl);
+    }
 
     return NextResponse.json({
       success: true,

@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, useCallback } from 'react';
+import { useRef, useState, useCallback, useEffect } from 'react';
 import { useSaveToProjectFolder } from '@/components/projects/useSaveToProjectFolder';
 import SaveToFolderModal from '@/components/projects/SaveToFolderModal';
 import { normalizeTags, getInteractionTier } from './types';
@@ -38,8 +38,30 @@ export function TaggedImage({
   const tags = normalizeTags(image, tagsProp);
   const [liftedTag, setLiftedTag] = useState<NormalizedTag | null>(null);
   const [expandTag, setExpandTag] = useState<NormalizedTag | null>(null);
+  const [revealDots, setRevealDots] = useState(false);
+  const hasRevealed = useRef(false);
 
   const { openSaveDialog, modalProps } = useSaveToProjectFolder();
+
+  // Brief reveal dots when image scrolls into viewport
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el || hasRevealed.current || !tags.length) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !hasRevealed.current) {
+          hasRevealed.current = true;
+          setRevealDots(true);
+          setTimeout(() => setRevealDots(false), 2000);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.5 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [tags.length]);
 
   // Mask hit-testing (desktop hover detection)
   const { hitTag, isOverAnyTag, isOverTaggedImage, cursorPosition } = useMaskHitTest(
@@ -116,6 +138,20 @@ export function TaggedImage({
         className="absolute inset-0 z-[2]"
         onClick={handleContainerClick}
       >
+        {/* Brief reveal dots — appear on scroll-into-view, fade after 2s */}
+        {revealDots && tags.map((tag) => (
+          <span
+            key={`reveal-${tag.id}`}
+            className="absolute z-[4] w-1.5 h-1.5 rounded-full bg-white/40 backdrop-blur-sm pointer-events-none"
+            style={{
+              left: `${tag.xPercent}%`,
+              top: `${tag.yPercent}%`,
+              transform: 'translate(-50%, -50%)',
+              animation: 'revealDot 2s ease-out forwards',
+            }}
+          />
+        ))}
+
         {/* Gold border shimmer — first encounter per session */}
         <GoldBorderShimmer isActive={isOverTaggedImage} />
 

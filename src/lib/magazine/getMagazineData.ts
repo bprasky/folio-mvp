@@ -25,7 +25,7 @@ export interface MagazineHero {
   locationLabel?: string;
   projectTitle?: string; // Project title for routing decisions
   postSlug?: string | null; // Post slug for routing to published articles
-  // any other fields you need for the editorial hero
+  heroImage?: { id: string; url: string; tags: any[] } | null; // For TaggedImage interaction
 }
 
 export interface MagazineProduct {
@@ -35,7 +35,7 @@ export interface MagazineProduct {
   cutoutImageUrl?: string | null;
   cropUrl?: string | null;
   vendorName?: string | null;
-  // etc.
+  threeDAssetUrl?: string | null;
 }
 
 export interface MagazineMosaicItem {
@@ -90,16 +90,26 @@ export async function getMagazineData(
             select: {
               id: true,
               url: true,
-              // Also fetch product tags from images for cutout display
+              // Also fetch product tags from images for cutout display + interaction
               tags: {
                 select: {
+                  id: true,
+                  x: true,
+                  y: true,
                   cropUrl: true,
+                  mesh3dUrl: true,
+                  meshMaskUrl: true,
+                  meshStatus: true,
+                  meshBoundingBox: true,
+                  meshDepthEstimate: true,
                   product: {
                     select: {
                       id: true,
                       name: true,
                       imageUrl: true,
                       cutoutImageUrl: true,
+                      threeDAssetUrl: true,
+                      category: true,
                       vendor: {
                         select: {
                           id: true,
@@ -188,6 +198,16 @@ export async function getMagazineData(
     blocks?.lead?.title ?? blocks?.lead?.kicker ?? heroPost.project?.title ?? "Untitled Project";
   const editorialDeck = blocks?.lead?.deck ?? heroPost.excerpt ?? undefined;
 
+  // Resolve the hero image object with its tags for TaggedImage interaction
+  const resolvedHeroImage = heroImageObj
+    ?? heroPost.project?.images?.[0]
+    ?? heroPost.project?.images?.find((img) => img.url && img.url.length > 0)
+    ?? null;
+
+  const heroImageWithTags = resolvedHeroImage
+    ? { id: resolvedHeroImage.id, url: resolvedHeroImage.url, tags: resolvedHeroImage.tags || [] }
+    : null;
+
   // Build hero (use project ID for linking)
   // Ensure we have a real image URL - if no image found, return null so skeleton shows
   const hero: MagazineHero | null = heroPost.project?.id && heroImageUrl
@@ -195,11 +215,12 @@ export async function getMagazineData(
         id: heroPost.project.id,
         title: editorialTitle,
         subtitle: editorialDeck ?? heroPost.project?.city ?? undefined,
-        imageUrl: heroImageUrl, // Guaranteed to have a real image URL
+        imageUrl: heroImageUrl,
         designerName: heroPost.project?.designer?.studio ?? heroPost.project?.designer?.name ?? undefined,
         locationLabel: heroPost.project?.city ?? heroPost.project?.regionState ?? undefined,
         projectTitle: heroPost.project?.title ?? undefined,
         postSlug: heroPost.slug ?? null,
+        heroImage: heroImageWithTags,
       }
     : null;
 
@@ -222,6 +243,7 @@ export async function getMagazineData(
               cutoutImageUrl: tag.product.cutoutImageUrl ?? null,
               cropUrl: tag.cropUrl ?? null,
               vendorName: tag.product.vendor?.name ?? tag.product.vendor?.companyName ?? null,
+              threeDAssetUrl: tag.product.threeDAssetUrl ?? null,
             });
           } else if (tag.product && tag.cropUrl && !productMap.get(tag.product.id)?.cropUrl) {
             // Prefer a tag that has a cropUrl
