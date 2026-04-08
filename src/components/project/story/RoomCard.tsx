@@ -2,7 +2,7 @@
 
 import React, { forwardRef, useCallback, useEffect, useRef, useState } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
-import { ImageTagDots } from "@/components/project/ImageTagDots";
+import { TaggedImage } from "@/components/project/interaction/TaggedImage";
 import type { RoomCardData, RoomLayout } from "@/lib/editorial/buildRoomCards";
 
 interface Props {
@@ -186,7 +186,7 @@ export const RoomCard = forwardRef<HTMLDivElement, Props>(
             {/* Tag dots — only during long-press peek */}
             {overlayState === "peek_hold" && (
               <div className="absolute inset-0">
-                <ImageTagDots image={heroImage} />
+                <TaggedImage image={heroImage} />
               </div>
             )}
           </div>
@@ -265,7 +265,7 @@ function DesktopLayoutSplit({
           style={{ y: photoY }}
         />
         <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          <ImageTagDots image={card.heroImage} />
+          <TaggedImage image={card.heroImage} />
         </div>
       </div>
 
@@ -374,7 +374,7 @@ function DesktopLayoutC({
 
       {/* Tag dots on hover */}
       <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-        <ImageTagDots image={card.heroImage} />
+        <TaggedImage image={card.heroImage} />
       </div>
 
       {/* Glass overlay — bottom left */}

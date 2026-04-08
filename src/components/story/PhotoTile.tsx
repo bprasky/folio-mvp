@@ -11,7 +11,7 @@
 import Image from "next/image";
 import { useRef, useState, useCallback } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
-import { ImageTagDots } from "@/components/project/ImageTagDots";
+import { TaggedImage } from "@/components/project/interaction/TaggedImage";
 
 interface PhotoTileProps {
   imageUrl: string;
@@ -123,7 +123,7 @@ export function PhotoTile({
             className="pointer-events-auto absolute inset-0"
             onClick={(e) => e.stopPropagation()}
           >
-            <ImageTagDots image={image} />
+            <TaggedImage image={image} />
           </div>
         </div>
       )}

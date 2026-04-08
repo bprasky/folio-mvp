@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import { GlassSurface } from './GlassSurface';
-import { ImageTagDots } from '@/components/project/ImageTagDots';
+import { TaggedImage } from '@/components/project/interaction/TaggedImage';
 import type { EditorialProjectImage as ProjectImage } from '@/types/editorial';
 
 interface Project {
@@ -46,7 +46,7 @@ export function HeroSpreadBlock({ image, project, roomName, showTitle = true }: 
         
         {/* Photo Tag Hotspots */}
         {image.tags && image.tags.length > 0 && (
-          <ImageTagDots image={image} />
+          <TaggedImage image={image} />
         )}
         
         {/* Glassmorphic Overlay - Bottom */}

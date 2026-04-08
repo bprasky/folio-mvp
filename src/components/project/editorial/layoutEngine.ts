@@ -60,7 +60,8 @@ export type EditorialBlock =
   | { type: 'productInsert'; products: Array<{ id: string; name: string; imageUrl?: string | null; primaryImageUrl?: string | null; imageUrls?: string[]; thumbnailUrl?: string | null }>; roomName?: string; isBoosted?: boolean; featuredQuestions?: Array<{ productId: string; questions: string[] }>; imageIds?: string[] }
   | { type: 'textInterlude'; roomName?: string; text: string; imageIds?: string[] }
   | { type: 'pullQuote'; text: string; attribution?: string; imageIds?: string[] }
-  | { type: 'scrollCinematic'; image: ClassifiedImage; meshTags: Array<{ id: string; x?: number; y?: number; mesh3dUrl?: string | null; meshStatus?: string | null; meshConfidence?: number | null; meshDepthEstimate?: number | null }>; roomName?: string; imageIds: string[] };
+  | { type: 'scrollCinematic'; image: ClassifiedImage; meshTags: Array<{ id: string; x?: number; y?: number; mesh3dUrl?: string | null; meshStatus?: string | null; meshConfidence?: number | null; meshDepthEstimate?: number | null }>; roomName?: string; imageIds: string[] }
+  | { type: 'productFloat'; products: Array<{ id: string; name: string; imageUrl?: string | null; primaryImageUrl?: string | null; imageUrls?: string[]; thumbnailUrl?: string | null; threeDAssetUrl?: string | null; brand?: string | null }>; roomName?: string; imageIds?: string[] };
 
 interface LayoutEngineOptions {
   projectTitle: string;

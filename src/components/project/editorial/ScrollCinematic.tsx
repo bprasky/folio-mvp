@@ -4,7 +4,7 @@ import { useRef, useMemo, Suspense, useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { useScroll, useTransform, motion } from 'framer-motion';
-import { ImageTagDots } from '@/components/project/ImageTagDots';
+import { TaggedImage } from '@/components/project/interaction/TaggedImage';
 import type { EditorialProjectImage, EditorialTag } from '@/types/editorial';
 
 const ScrollCinematicCanvas = dynamic(() => import('./ScrollCinematicCanvas'), {
@@ -109,7 +109,7 @@ export function ScrollCinematic({ image, meshTags, roomName }: ScrollCinematicPr
         />
         {/* Tag dots on static fallback (visible on mobile, hidden when Canvas active) */}
         <div className={isInView && !isMobile ? 'hidden' : ''}>
-          <ImageTagDots image={image} />
+          <TaggedImage image={image} />
         </div>
       </div>
 

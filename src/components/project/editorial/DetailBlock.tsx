@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { ImageTagDots } from '@/components/project/ImageTagDots';
+import { TaggedImage } from '@/components/project/interaction/TaggedImage';
 import type { EditorialProjectImage as ProjectImage } from '@/types/editorial';
 
 interface DetailBlockProps {
@@ -34,7 +34,7 @@ export function DetailBlock({ image, caption, roomName }: DetailBlockProps) {
         />
         {/* Photo Tag Hotspots */}
         {image.tags && image.tags.length > 0 && (
-          <ImageTagDots image={image} />
+          <TaggedImage image={image} />
         )}
       </div>
       

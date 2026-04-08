@@ -1,7 +1,7 @@
 "use client";
 
 import clsx from "clsx";
-import { ImageTagDots } from "@/components/project/ImageTagDots";
+import { TaggedImage } from "@/components/project/interaction/TaggedImage";
 
 type ProjectImageGalleryProps = {
   project: any;
@@ -45,7 +45,7 @@ export function ProjectImageGallery({ project }: ProjectImageGalleryProps) {
               alt={project?.title ?? ""}
               className="w-full h-auto"
             />
-            <ImageTagDots image={img} />
+            <TaggedImage image={img} />
           </figure>
         ))}
       </div>
