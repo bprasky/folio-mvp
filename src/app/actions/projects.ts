@@ -6,6 +6,7 @@ import { normalizeRole, canCreateProject } from '@/lib/permissions';
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
+import { notifyIncompleteProductVendors } from '@/lib/notifications/notifyIncompleteProductVendors';
 
 // Type definitions for project-related data
 interface ProjectWithImages {
@@ -129,6 +130,9 @@ export async function publishEditorial({ projectId }: { projectId: string }) {
     // Revalidate paths
     revalidatePath(`/project/${projectId}`);
     revalidatePath('/editorial');
+
+    // Fire-and-forget: notify vendors of incomplete product specs
+    notifyIncompleteProductVendors(projectId);
 
     return { ok: true, message: 'Published successfully', projectPostId: updated.id, slug: updated.slug };
   } catch (error) {

@@ -187,42 +187,53 @@ export function PartialProductPrompt({
                     </div>
                   )}
 
-                  {/* Actions */}
+                  {/* Actions — vendor-first: if vendor is known, route request directly to them */}
                   <div className="mt-4 space-y-2">
-                    {/* Primary: Save anyway */}
-                    <button
-                      type="button"
-                      className="w-full inline-flex items-center justify-center gap-1.5 rounded-full bg-[var(--text-primary)] px-3 py-2.5 text-[12px] font-medium text-white hover:opacity-90 transition-colors"
-                      onClick={onSaveAnyway}
-                    >
-                      <span>+</span>
-                      <span>Save to Project</span>
-                    </button>
+                    {/* Primary: Request from vendor (if known) or Save to Project */}
+                    {tag.vendorName ? (
+                      <button
+                        type="button"
+                        className="w-full inline-flex items-center justify-center gap-1.5 rounded-full bg-[var(--text-primary)] px-3 py-2.5 text-[12px] font-medium text-white hover:opacity-90 transition-colors"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleAskVendor();
+                        }}
+                      >
+                        {showVendorForm ? 'Send request' : `Request specs from ${tag.vendorName}`}
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        className="w-full inline-flex items-center justify-center gap-1.5 rounded-full bg-[var(--text-primary)] px-3 py-2.5 text-[12px] font-medium text-white hover:opacity-90 transition-colors"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleAskVendor();
+                        }}
+                      >
+                        {showVendorForm ? 'Send request' : 'Request product info'}
+                      </button>
+                    )}
 
-                    {/* Secondary row */}
+                    {/* Secondary row: Save + Complete */}
                     <div className="flex gap-2">
-                      {/* Complete yourself */}
+                      <button
+                        type="button"
+                        className="flex-1 inline-flex items-center justify-center gap-1 rounded-full border border-folio-border px-3 py-2 text-[11px] font-medium text-folio-text-primary hover:bg-surface-ground transition-colors"
+                        onClick={onSaveAnyway}
+                      >
+                        <span>+</span>
+                        <span>Save anyway</span>
+                      </button>
+
                       {tag.productId && (
                         <a
                           href={`/products/${tag.productId}/edit`}
                           className="flex-1 inline-flex items-center justify-center rounded-full border border-folio-border px-3 py-2 text-[11px] font-medium text-folio-text-primary hover:bg-surface-ground transition-colors"
                           onClick={(e) => e.stopPropagation()}
                         >
-                          Complete it
+                          Add details
                         </a>
                       )}
-
-                      {/* Ask vendor */}
-                      <button
-                        type="button"
-                        className="flex-1 inline-flex items-center justify-center rounded-full border border-folio-border px-3 py-2 text-[11px] font-medium text-folio-text-primary hover:bg-surface-ground transition-colors"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleAskVendor();
-                        }}
-                      >
-                        {showVendorForm ? 'Send invite' : 'Ask vendor'}
-                      </button>
                     </div>
                   </div>
                 </>
