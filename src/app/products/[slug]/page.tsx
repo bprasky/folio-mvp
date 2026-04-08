@@ -28,16 +28,15 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 }
 
 export default async function ProductRoute({ params }: { params: { slug: string } }) {
-  // Fetch real product from database
   const product = await getProductById(params.slug);
-  
+
   if (!product) {
     notFound();
   }
 
   // Feature flag for cinematic layout
   const useCinematicLayout = process.env.NEXT_PUBLIC_FEATURE_CINEMATIC_PRODUCT === "1";
-  
+
   if (useCinematicLayout) {
     return (
       <div className="cinematic-page">
@@ -45,6 +44,6 @@ export default async function ProductRoute({ params }: { params: { slug: string 
       </div>
     );
   }
-  
+
   return <ProductPage product={product} />;
 }

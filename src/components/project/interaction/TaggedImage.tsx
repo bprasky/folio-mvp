@@ -5,6 +5,7 @@ import { useSaveToProjectFolder } from '@/components/projects/useSaveToProjectFo
 import SaveToFolderModal from '@/components/projects/SaveToFolderModal';
 import { normalizeTags, getInteractionTier } from './types';
 import type { NormalizedTag, InteractionLevel } from './types';
+import { getProductCompleteness } from './productCompleteness';
 import { useMaskHitTest } from './useMaskHitTest';
 import { useTaggedImageCursor } from './useTaggedImageCursor';
 import { GoldBorderShimmer } from './GoldBorderShimmer';
@@ -13,6 +14,7 @@ import { MobileTapOverlay } from './MobileTapOverlay';
 import { MaskHighlight } from '../tag-liftoff/MaskHighlight';
 import { ProductExpandModal } from '../tag-liftoff/ProductExpandModal';
 import { AnchoredLiftOff } from './AnchoredLiftOff';
+import { PartialProductPrompt } from './PartialProductPrompt';
 
 interface TaggedImageProps {
   image: any;
@@ -35,9 +37,12 @@ export function TaggedImage({
   onProductClick,
 }: TaggedImageProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const tags = normalizeTags(image, tagsProp);
+  const allTags = normalizeTags(image, tagsProp);
+  // Filter out stubs — products with only a name and nothing else
+  const tags = allTags.filter(t => getProductCompleteness(t) !== 'stub');
   const [liftedTag, setLiftedTag] = useState<NormalizedTag | null>(null);
   const [expandTag, setExpandTag] = useState<NormalizedTag | null>(null);
+  const [partialTag, setPartialTag] = useState<NormalizedTag | null>(null);
   const [revealDots, setRevealDots] = useState(false);
   const hasRevealed = useRef(false);
 
@@ -80,12 +85,16 @@ export function TaggedImage({
         return;
       }
 
-      const tier = getInteractionTier(tag);
+      if (interactionLevel === 'signal') return;
 
-      if (interactionLevel === 'signal') {
-        // Signal mode: no action on click
+      // Partial products → show completion prompt instead of broken expand/3D
+      const completeness = getProductCompleteness(tag);
+      if (completeness === 'partial') {
+        setPartialTag(tag);
         return;
       }
+
+      const tier = getInteractionTier(tag);
 
       if (tier === 'expand-2d') {
         setExpandTag(tag);
@@ -195,6 +204,19 @@ export function TaggedImage({
           href={expandTag.href}
           productId={expandTag.productId}
           onAddToProject={() => handleAddToProject(expandTag)}
+        />
+      )}
+
+      {/* Partial product prompt — completion CTAs for incomplete products */}
+      {partialTag && (
+        <PartialProductPrompt
+          isOpen={true}
+          onClose={() => setPartialTag(null)}
+          tag={partialTag}
+          onSaveAnyway={() => {
+            handleAddToProject(partialTag);
+            setPartialTag(null);
+          }}
         />
       )}
 

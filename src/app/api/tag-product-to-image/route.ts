@@ -8,6 +8,77 @@ import { assertProjectWrite } from '@/lib/authz/access';
 import { recordAtelierSignal } from '@/lib/atelier/signals';
 import { AtelierOwnerType, AtelierSignalSourceType } from '@prisma/client';
 import { syncSingleTestimonial } from '@/lib/syncTestimonials';
+import { getServerProductCompleteness } from '@/lib/products/getProductById';
+
+/**
+ * Fire-and-forget: notify a vendor rep that a designer tagged their product
+ * with incomplete specs and needs help.
+ */
+async function notifyVendorRepOfIncompleteTag(params: {
+  vendorEmail: string;
+  repName?: string | null;
+  vendorName: string;
+  designerName: string;
+  productName: string;
+  productId: string;
+  missingFields: string[];
+}) {
+  const { vendorName, designerName, productName, productId, missingFields } = params;
+
+  const missingLabels = missingFields.map((f) => {
+    if (f === 'image') return 'a product image';
+    if (f === 'vendor') return 'brand/vendor info';
+    if (f === 'url') return 'a product page URL';
+    return f;
+  });
+
+  // Find vendor user to create notification (if they have an account)
+  const vendorUser = await prisma.user.findFirst({
+    where: { email: params.vendorEmail },
+    select: { id: true },
+  });
+
+  if (vendorUser) {
+    // Create in-app notification
+    await prisma.notification.create({
+      data: {
+        userId: vendorUser.id,
+        type: 'REP_HELP_NEEDED',
+        title: `${designerName} needs help with product specs`,
+        body: `"${productName}" is missing ${missingLabels.join(', ')}. Complete the specs so designers can properly feature your product.`,
+        actionUrl: `/vendor/products`,
+        metadata: {
+          productId,
+          productName,
+          designerName,
+          missingFields,
+        },
+      },
+    });
+  }
+
+  // Also log as VendorInviteSignal for tracking
+  await prisma.vendorInviteSignal.create({
+    data: {
+      vendorName,
+      signalType: 'REP_SPEC_HELP_REQUESTED',
+      metadata: {
+        productId,
+        productName,
+        designerName,
+        vendorEmail: params.vendorEmail,
+        repName: params.repName,
+        missingFields,
+      },
+    },
+  });
+
+  console.log('[tag-product] Notified vendor rep of incomplete specs', {
+    vendorName,
+    productName,
+    designerName,
+  });
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -85,7 +156,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get product details for signal recording
+    // Get product details for signal recording + completeness check
     const product = await prisma.product.findUnique({
       where: { id: productId },
       select: {
@@ -95,6 +166,7 @@ export async function POST(request: NextRequest) {
         category: true,
         url: true,
         brand: true,
+        imageUrl: true,
       }
     });
 
@@ -339,12 +411,73 @@ export async function POST(request: NextRequest) {
       console.warn('[Atelier] No designerId found for project, skipping signal recording');
     }
 
+    // Check product completeness and suggest rep action if incomplete
+    let incompleteProduct: any = null;
+    const completeness = getServerProductCompleteness(product);
+    if (completeness !== 'full') {
+      const missingFields: string[] = [];
+      if (!product.imageUrl) missingFields.push('image');
+      if (!product.brand && !product.vendorId) missingFields.push('vendor');
+      if (!product.url) missingFields.push('url');
+
+      // Look up designer's rep contact for this vendor
+      let repContact: any = null;
+      if (product.brand && designerId) {
+        repContact = await prisma.vendorRepContact.findFirst({
+          where: {
+            userId: designerId,
+            vendorName: { equals: product.brand, mode: 'insensitive' },
+            isActive: true,
+          },
+          select: {
+            id: true,
+            repName: true,
+            repEmail: true,
+            vendorName: true,
+          },
+        }).catch(() => null);
+      }
+
+      // If vendor has an email (via rep or vendor account), fire-and-forget notify them
+      const vendorEmail = repContact?.repEmail || (product.vendorId ? (await prisma.user.findUnique({
+        where: { id: product.vendorId },
+        select: { email: true },
+      }).catch(() => null))?.email : null);
+
+      if (vendorEmail && designerId) {
+        // Fire-and-forget: notify vendor that designer needs help completing specs
+        notifyVendorRepOfIncompleteTag({
+          vendorEmail,
+          repName: repContact?.repName,
+          vendorName: product.brand || repContact?.vendorName || 'Vendor',
+          designerName: session.user.name || 'A designer',
+          productName: product.name,
+          productId: product.id,
+          missingFields,
+        }).catch(() => {});
+      }
+
+      incompleteProduct = {
+        completeness,
+        missingFields,
+        repContact: repContact ? {
+          id: repContact.id,
+          repName: repContact.repName,
+          hasEmail: !!repContact.repEmail,
+          vendorName: repContact.vendorName,
+        } : null,
+        suggestTagRep: !repContact && !!product.brand,
+        vendorName: product.brand || null,
+      };
+    }
+
     return NextResponse.json({
       success: true,
       id: tag.id,
       tag,
       shopProduct: shopProduct ? { id: shopProduct.id, hasQuote: !!shopProduct.quote } : null,
       linkedSelectionId,
+      incompleteProduct,
     });
 
   } catch (error) {
