@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Lightbox from "./Lightbox";
 import { ImageLike } from "./utils";
+import { TaggedImage } from "@/components/project/interaction/TaggedImage";
 
 export default function MaterialPair({
   context,
@@ -22,7 +23,7 @@ export default function MaterialPair({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {context ? (
           <figure
-            className="rounded-2xl overflow-hidden ring-1 ring-black/5 cursor-zoom-in"
+            className="relative rounded-2xl overflow-hidden ring-1 ring-black/5 cursor-zoom-in"
             onClick={() => setOpen(0)}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -31,6 +32,9 @@ export default function MaterialPair({
               alt={context.alt || ""}
               className="w-full h-auto"
             />
+            {context.tags && context.tags.length > 0 && (
+              <TaggedImage image={context} interactionLevel="explore" />
+            )}
             {caption ? (
               <figcaption className="p-2 folio-meta text-folio-text-secondary">
                 {caption}
@@ -40,7 +44,7 @@ export default function MaterialPair({
         ) : null}
         {detail ? (
           <figure
-            className="rounded-2xl overflow-hidden ring-1 ring-black/5 cursor-zoom-in"
+            className="relative rounded-2xl overflow-hidden ring-1 ring-black/5 cursor-zoom-in"
             onClick={() => setOpen(context ? 1 : 0)}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -49,6 +53,9 @@ export default function MaterialPair({
               alt={detail.alt || ""}
               className="w-full h-auto"
             />
+            {detail.tags && detail.tags.length > 0 && (
+              <TaggedImage image={detail} interactionLevel="explore" />
+            )}
             {detail.caption ? (
               <figcaption className="p-2 folio-meta text-folio-text-secondary">
                 {detail.caption}

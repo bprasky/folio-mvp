@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
+import { triggerMeshGeneration } from '@/lib/three-d/triggerMeshGeneration';
 
 const prisma = new PrismaClient();
 
@@ -117,6 +118,11 @@ export async function POST(request: NextRequest) {
         vendorId: null, // Can be set later if needed
       },
     });
+
+    // Fire-and-forget mesh generation if product has an image
+    if (imageUrl) {
+      triggerMeshGeneration(product.id, imageUrl);
+    }
 
     return NextResponse.json({
       success: true,

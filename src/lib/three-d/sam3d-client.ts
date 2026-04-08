@@ -2,7 +2,8 @@
  * SAM 3D Inference Client — fal.ai
  *
  * Converts 2D product images into .glb mesh files using fal.ai hosted models:
- *   - Product-level: TripoSR (fal-ai/triposr) — single image → 3D mesh
+ *   - Primary: Trellis (fal-ai/trellis) — highest quality textured PBR meshes
+ *   - Fallback: TripoSR (fal-ai/triposr) at mc_resolution 512
  *   - Tag-level: SAM 3D Objects (fal-ai/sam-3/3d-objects) — room photo + prompt → mask + mesh
  *
  * Requires FAL_KEY environment variable.
@@ -96,42 +97,86 @@ async function getImageDimensions(imageUrl: string): Promise<{ width: number; he
   }
 }
 
-// --- Product-level: TripoSR (single product image → 3D mesh) ---
+// --- Trellis: highest quality textured PBR mesh ---
+
+async function callTrellisMesh(imageUrl: string): Promise<Buffer> {
+  const result = await fal.subscribe('fal-ai/trellis', {
+    input: {
+      image_url: imageUrl,
+      texture_size: '2048',
+      mesh_simplify: 0.95,
+      ss_guidance_strength: 7.5,
+      ss_sampling_steps: 12,
+      slat_guidance_strength: 3,
+      slat_sampling_steps: 12,
+    } as any,
+    logs: true,
+  });
+
+  const data = result.data as any;
+  const glbUrl = data?.model_mesh?.url;
+
+  if (!glbUrl) {
+    throw new Error(`Trellis returned no GLB. Keys: ${data ? Object.keys(data).join(',') : 'null'}`);
+  }
+
+  return downloadAsBuffer(glbUrl);
+}
+
+// --- TripoSR fallback at max resolution ---
+
+async function callTripoSRMesh(imageUrl: string): Promise<Buffer> {
+  const result = await fal.subscribe('fal-ai/triposr', {
+    input: {
+      image_url: imageUrl,
+      output_format: 'glb',
+      do_remove_background: true,
+      foreground_ratio: 0.9,
+      mc_resolution: 512,
+    },
+    logs: true,
+  });
+
+  const data = result.data as any;
+  const glbUrl = data?.model_mesh?.url || data?.model_url || data?.output?.url;
+
+  if (!glbUrl) {
+    throw new Error(`TripoSR returned no GLB. Keys: ${data ? Object.keys(data).join(',') : 'null'}`);
+  }
+
+  return downloadAsBuffer(glbUrl);
+}
+
+// --- Product-level: Trellis primary, TripoSR@512 fallback ---
 
 export async function callSam3DService(req: Sam3DRequest): Promise<Sam3DResponse> {
   ensureFalKey();
 
-  console.log('[sam3d] Product-level generation starting', {
+  console.log('[sam3d] Product-level generation starting (Trellis primary)', {
     productId: req.productId,
     imageUrl: req.imageUrl.substring(0, 80),
   });
 
+  let glbBuffer: Buffer;
+
   try {
-    const result = await fal.subscribe('fal-ai/triposr', {
-      input: {
-        image_url: req.imageUrl,
-        output_format: 'glb',
-        do_remove_background: true,
-        foreground_ratio: 0.9,
-        mc_resolution: 256,
-      },
-      logs: true,
+    glbBuffer = await callTrellisMesh(req.imageUrl);
+    console.log('[sam3d] Trellis complete', { productId: req.productId, glbSize: glbBuffer.length });
+  } catch (trellisError: any) {
+    console.warn('[sam3d] Trellis failed, falling back to TripoSR@512', {
+      productId: req.productId,
+      error: extractFalError(trellisError),
     });
 
-    const data = result.data as any;
-    const glbUrl = data?.model_mesh?.url || data?.model_url || data?.output?.url;
-
-    if (!glbUrl) {
-      throw new Error(`TripoSR returned no GLB. Keys: ${data ? Object.keys(data).join(',') : 'null'}`);
+    try {
+      glbBuffer = await callTripoSRMesh(req.imageUrl);
+      console.log('[sam3d] TripoSR@512 fallback complete', { productId: req.productId, glbSize: glbBuffer.length });
+    } catch (tripoError: any) {
+      throw new Error(`Both Trellis and TripoSR failed: ${extractFalError(trellisError)} | ${extractFalError(tripoError)}`);
     }
-
-    const glbBuffer = await downloadAsBuffer(glbUrl);
-
-    console.log('[sam3d] Product-level complete', { productId: req.productId, glbSize: glbBuffer.length });
-    return { glbBuffer, confidence: 1.0 };
-  } catch (error: any) {
-    throw new Error(`TripoSR failed: ${extractFalError(error)}`);
   }
+
+  return { glbBuffer, confidence: 1.0 };
 }
 
 // --- Tag-level: SAM 3D Objects with point prompts ---
@@ -156,49 +201,50 @@ export async function callSam3DTagService(req: Sam3DTagRequest): Promise<Sam3DTa
   });
 
   // Step 1: Generate 3D mesh
-  // Try SAM 3D Objects first (preserves scene context), fall back to TripoSR
+  // Try Trellis first (highest quality), then SAM 3D Objects, then TripoSR@512
   let glbBuffer: Buffer;
 
   try {
-    const meshResult = await fal.subscribe('fal-ai/sam-3/3d-objects', {
-      input: {
-        image_url: req.sourceImageUrl,
-        point_prompts: [{ x: pixelX, y: pixelY, label: 1 }],
-        detection_threshold: 0.1,
-      } as any,
-      logs: true,
-    });
-    const meshData = meshResult.data as any;
-    console.log('[sam3d] SAM 3D Objects response keys:', meshData ? Object.keys(meshData) : 'null');
-
-    const glbUrl = meshData?.model_mesh?.url
-      || meshData?.model_url
-      || meshData?.glb?.url
-      || meshData?.output?.url
-      || meshData?.mesh?.url;
-
-    if (!glbUrl) throw new Error('No GLB URL in response');
-    glbBuffer = await downloadAsBuffer(glbUrl);
-  } catch (sam3dError: any) {
-    // SAM 3D Objects failed (e.g. flat surface like wallpaper/tile) — fall back to TripoSR
-    console.warn('[sam3d] SAM 3D Objects failed, falling back to TripoSR', {
+    glbBuffer = await callTrellisMesh(req.sourceImageUrl);
+    console.log('[sam3d] Tag mesh via Trellis complete', { tagId: req.tagId, glbSize: glbBuffer.length });
+  } catch (trellisError: any) {
+    console.warn('[sam3d] Trellis failed for tag, trying SAM 3D Objects', {
       tagId: req.tagId,
-      error: extractFalError(sam3dError),
+      error: extractFalError(trellisError),
     });
 
-    const tripoResult = await fal.subscribe('fal-ai/triposr', {
-      input: {
-        image_url: req.sourceImageUrl,
-        output_format: 'glb',
-        do_remove_background: true,
-        mc_resolution: 256,
-      },
-      logs: true,
-    });
-    const tripoData = tripoResult.data as any;
-    const glbUrl = tripoData?.model_mesh?.url || tripoData?.model_url;
-    if (!glbUrl) throw new Error(`Both SAM 3D and TripoSR failed for tag ${req.tagId}`);
-    glbBuffer = await downloadAsBuffer(glbUrl);
+    try {
+      const meshResult = await fal.subscribe('fal-ai/sam-3/3d-objects', {
+        input: {
+          image_url: req.sourceImageUrl,
+          point_prompts: [{ x: pixelX, y: pixelY, label: 1 }],
+          detection_threshold: 0.1,
+        } as any,
+        logs: true,
+      });
+      const meshData = meshResult.data as any;
+      console.log('[sam3d] SAM 3D Objects response keys:', meshData ? Object.keys(meshData) : 'null');
+
+      const glbUrl = meshData?.model_mesh?.url
+        || meshData?.model_url
+        || meshData?.glb?.url
+        || meshData?.output?.url
+        || meshData?.mesh?.url;
+
+      if (!glbUrl) throw new Error('No GLB URL in response');
+      glbBuffer = await downloadAsBuffer(glbUrl);
+    } catch (sam3dError: any) {
+      console.warn('[sam3d] SAM 3D Objects also failed, falling back to TripoSR@512', {
+        tagId: req.tagId,
+        error: extractFalError(sam3dError),
+      });
+
+      try {
+        glbBuffer = await callTripoSRMesh(req.sourceImageUrl);
+      } catch (tripoError: any) {
+        throw new Error(`All mesh methods failed for tag ${req.tagId}: Trellis, SAM 3D, TripoSR`);
+      }
+    }
   }
 
   // Step 2: Get segmentation mask using SAM 3 Image with same point prompt
