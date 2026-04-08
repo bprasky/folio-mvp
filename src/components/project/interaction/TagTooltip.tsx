@@ -2,6 +2,7 @@
 
 import { useRef, useState, useEffect } from 'react';
 import type { NormalizedTag } from './types';
+import { getProductCompleteness } from './productCompleteness';
 
 interface TagTooltipProps {
   tag: NormalizedTag | null;
@@ -76,6 +77,11 @@ export function TagTooltip({ tag, cursorPosition, containerRef }: TagTooltipProp
         {debouncedTag.vendorName && (
           <span className="text-[9px] uppercase tracking-[0.16em] text-folio-text-secondary truncate">
             {debouncedTag.vendorName}
+          </span>
+        )}
+        {getProductCompleteness(debouncedTag) === 'partial' && (
+          <span className="text-[8px] italic text-folio-text-tertiary">
+            Limited info
           </span>
         )}
       </div>

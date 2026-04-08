@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { recordSave, removeSave, hasUserSaved, getProductEngagement, getUserSaves } from '@/lib/intelligence/signals';
+import { notifyProductEngagement } from '@/lib/notifications/productEngagement';
 
 /**
  * POST /api/signals/save
@@ -44,6 +45,11 @@ export async function POST(request: NextRequest) {
     });
 
     const engagement = await getProductEngagement(productId);
+
+    // Fire-and-forget: check if incomplete product needs a nudge to the designer
+    if (result.isNew) {
+      notifyProductEngagement(productId);
+    }
 
     return NextResponse.json({
       success: result.success,
