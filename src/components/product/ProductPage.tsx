@@ -20,7 +20,7 @@ export function ProductPage({ product }: { product: Product }) {
       {/* Top grid */}
       <div className="mt-6 grid grid-cols-12 gap-8">
         <div className="col-span-12 lg:col-span-7">
-          <Gallery assets={product.assets} />
+          {product.assets.length > 0 && <Gallery assets={product.assets} />}
         </div>
         <div className="col-span-12 lg:col-span-5 space-y-5">
           <div className="rounded-2xl border border-[#E5E7EB] bg-white p-4">
