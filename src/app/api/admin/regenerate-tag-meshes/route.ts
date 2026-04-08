@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
     }
 
     const url = new URL(request.url);
-    const batch = Math.min(parseInt(url.searchParams.get('batch') || '3'), 5);
+    const batch = Math.min(parseInt(url.searchParams.get('batch') || '1'), 5);
     const dryRun = url.searchParams.get('dryRun') === 'true';
     const force = url.searchParams.get('force') === 'true';
 
@@ -69,6 +69,7 @@ export async function POST(request: NextRequest) {
             id: true,
             name: true,
             category: true,
+            imageUrl: true,
           },
         },
       },
@@ -92,6 +93,8 @@ export async function POST(request: NextRequest) {
           category: t.product?.category,
           currentStatus: t.meshStatus,
           hasMesh: !!t.mesh3dUrl,
+          hasCatalogImage: !!t.product?.imageUrl,
+          catalogImage: t.product?.imageUrl?.substring(0, 80),
           sourceImage: t.image?.url?.substring(0, 80),
         })),
       });
@@ -117,11 +120,15 @@ export async function POST(request: NextRequest) {
           data: { meshStatus: 'processing', meshError: null },
         });
 
-        console.log(`[regenerate-tags] Starting: ${productName}`);
+        const catalogUrl = tag.product?.imageUrl || undefined;
+        console.log(`[regenerate-tags] Starting: ${productName}`, {
+          useCatalog: !!catalogUrl,
+        });
 
-        // Generate mesh + mask using Trellis pipeline
+        // Generate mesh: prefer catalog image, fall back to room photo + SAM isolation
         const result = await callSam3DTagService({
           sourceImageUrl: tag.image.url,
+          catalogImageUrl: catalogUrl,
           tagX: tag.x,
           tagY: tag.y,
           productId: tag.productId,
