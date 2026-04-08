@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
     }
 
     const url = new URL(request.url);
-    const batch = Math.min(parseInt(url.searchParams.get('batch') || '3'), 5);
+    const batch = Math.min(parseInt(url.searchParams.get('batch') || '1'), 5);
     const dryRun = url.searchParams.get('dryRun') === 'true';
     const force = url.searchParams.get('force') === 'true';
 
