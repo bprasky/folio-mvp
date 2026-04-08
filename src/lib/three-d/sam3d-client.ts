@@ -354,7 +354,9 @@ export async function callSam3DTagService(req: Sam3DTagRequest): Promise<Sam3DTa
       glbBuffer = await callTripoSRMesh(meshInputUrl);
       console.log('[sam3d] TripoSR@512 fallback complete', { tagId: req.tagId, glbSize: glbBuffer.length });
     } catch (tripoError: any) {
-      throw new Error(`All mesh methods failed for tag ${req.tagId}: Trellis, TripoSR`);
+      const trellisMsg = extractFalError(trellisError);
+      const tripoMsg = extractFalError(tripoError);
+      throw new Error(`All mesh methods failed for tag ${req.tagId}: Trellis: ${trellisMsg} | TripoSR: ${tripoMsg}`);
     }
   }
 
