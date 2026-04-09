@@ -1,34 +1,203 @@
 'use client';
 
 import { Suspense, useState, useRef, useCallback, useEffect, useMemo } from 'react';
-import { Canvas } from '@react-three/fiber';
-import { OrbitControls, useGLTF, ContactShadows } from '@react-three/drei';
+import { Canvas, useThree, useFrame } from '@react-three/fiber';
+import { OrbitControls, ContactShadows, useGLTF } from '@react-three/drei';
 import * as THREE from 'three';
 import SafeImage from '@/components/common/SafeImage';
+import {
+  SCENE_PRESETS,
+  DEFAULT_PRESET_ID,
+  getRecommendedPreset,
+  type ScenePreset,
+} from '@/lib/three-d/scene-presets';
 
 interface Product3DViewerProps {
   glbUrl: string;
   fallbackImageUrl?: string;
   productName?: string;
-  color?: string; // hex color to tint the mesh, e.g. '#8B7355'
+  color?: string;
+  scenePresetId?: string | null;
+  productCategory?: string | null;
   onInteraction?: () => void;
   className?: string;
 }
 
-function ProductModel({ url, color, onLoaded }: { url: string; color?: string; onLoaded?: (box: THREE.Box3) => void }) {
+// ---------------------------------------------------------------------------
+// Background gradient — rendered as a full-screen quad behind the scene
+// ---------------------------------------------------------------------------
+
+function GradientBackground({ colors }: { colors: [string, string, string] }) {
+  const { scene } = useThree();
+
+  useMemo(() => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 2;
+    canvas.height = 256;
+    const ctx = canvas.getContext('2d')!;
+    const gradient = ctx.createLinearGradient(0, 0, 0, 256);
+    gradient.addColorStop(0, colors[0]);
+    gradient.addColorStop(0.5, colors[1]);
+    gradient.addColorStop(1, colors[2]);
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, 2, 256);
+
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    scene.background = tex;
+
+    return () => {
+      tex.dispose();
+    };
+  }, [scene, colors]);
+
+  return null;
+}
+
+// ---------------------------------------------------------------------------
+// Ground plane with configurable material
+// ---------------------------------------------------------------------------
+
+function GroundPlane({ ground }: { ground: ScenePreset['ground'] }) {
+  if (!ground.enabled) return null;
+
+  return (
+    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.005, 0]} receiveShadow>
+      <planeGeometry args={[50, 50]} />
+      <meshStandardMaterial
+        color={ground.color}
+        roughness={ground.roughness}
+        metalness={ground.reflectivity}
+      />
+    </mesh>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Water caustics — subtle vertex animation on the ground
+// ---------------------------------------------------------------------------
+
+function WaterGround({ ground }: { ground: ScenePreset['ground'] }) {
+  const meshRef = useRef<THREE.Mesh>(null);
+
+  useFrame(({ clock }) => {
+    const mesh = meshRef.current;
+    if (!mesh) return;
+    const geo = mesh.geometry as THREE.PlaneGeometry;
+    const pos = geo.attributes.position;
+    const t = clock.getElapsedTime() * 0.3;
+
+    for (let i = 0; i < pos.count; i++) {
+      const x = pos.getX(i);
+      const y = pos.getY(i);
+      pos.setZ(i, Math.sin(x * 0.5 + t) * Math.cos(y * 0.4 + t * 0.7) * 0.02);
+    }
+    pos.needsUpdate = true;
+    geo.computeVertexNormals();
+  });
+
+  return (
+    <mesh ref={meshRef} rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.005, 0]} receiveShadow>
+      <planeGeometry args={[50, 50, 64, 64]} />
+      <meshStandardMaterial
+        color={ground.color}
+        roughness={ground.roughness}
+        metalness={ground.reflectivity}
+      />
+    </mesh>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Gobo shadows — SpotLight with a window-mullion texture
+// ---------------------------------------------------------------------------
+
+function GoboLight() {
+  const lightRef = useRef<THREE.SpotLight>(null);
+
+  const goboMap = useMemo(() => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 256;
+    const ctx = canvas.getContext('2d')!;
+
+    // White base
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, 256, 256);
+
+    // Window mullion bars (dark stripes block light)
+    ctx.fillStyle = '#000000';
+    // Vertical bars
+    ctx.fillRect(82, 0, 6, 256);
+    ctx.fillRect(168, 0, 6, 256);
+    // Horizontal bar
+    ctx.fillRect(0, 126, 256, 6);
+
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.wrapS = THREE.RepeatWrapping;
+    tex.wrapT = THREE.RepeatWrapping;
+    return tex;
+  }, []);
+
+  return (
+    <spotLight
+      ref={lightRef}
+      position={[-8, 12, 4]}
+      angle={0.4}
+      penumbra={0.6}
+      intensity={0.8}
+      color="#fff5e0"
+      castShadow
+      shadow-mapSize-width={1024}
+      shadow-mapSize-height={1024}
+      map={goboMap}
+    />
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Scene fog
+// ---------------------------------------------------------------------------
+
+function SceneFog({ fog }: { fog: NonNullable<ScenePreset['fog']> }) {
+  const { scene } = useThree();
+
+  useEffect(() => {
+    scene.fog = new THREE.Fog(fog.color, fog.near, fog.far);
+    return () => {
+      scene.fog = null;
+    };
+  }, [scene, fog.color, fog.near, fog.far]);
+
+  return null;
+}
+
+// ---------------------------------------------------------------------------
+// Product model with tight camera framing
+// ---------------------------------------------------------------------------
+
+function ProductModel({
+  url,
+  color,
+  onLoaded,
+}: {
+  url: string;
+  color?: string;
+  onLoaded?: (box: THREE.Box3) => void;
+}) {
   const gltf = useGLTF(url, true);
 
   const centeredScene = useMemo(() => {
     const clone = gltf.scene.clone();
 
-    // Deep-clone materials; apply tint color only if mesh has no textures
     clone.traverse((child: any) => {
       if (child.isMesh && child.material) {
         child.material = child.material.clone();
-        // Only tint if the material has no base color texture (untextured mesh)
         if (color && !child.material.map) {
           child.material.color = new THREE.Color(color);
         }
+        child.castShadow = true;
+        child.receiveShadow = true;
       }
     });
 
@@ -38,6 +207,7 @@ function ProductModel({ url, color, onLoaded }: { url: string; color?: string; o
     const maxDim = Math.max(size.x, size.y, size.z);
     const scale = maxDim > 0 ? 2 / maxDim : 1;
 
+    // Position so bottom of mesh sits on y=0 (the ground plane)
     clone.position.set(-center.x * scale, -box.min.y * scale, -center.z * scale);
     clone.scale.setScalar(scale);
 
@@ -52,72 +222,154 @@ function ProductModel({ url, color, onLoaded }: { url: string; color?: string; o
   return <primitive object={centeredScene} />;
 }
 
+// ---------------------------------------------------------------------------
+// Camera framing — three-quarter product photography angle
+// ---------------------------------------------------------------------------
+
+function CameraFramer({ box }: { box: THREE.Box3 | null }) {
+  const { camera } = useThree();
+  const controlsRef = useRef<any>(null);
+  const framed = useRef(false);
+
+  useEffect(() => {
+    if (!box || framed.current) return;
+    framed.current = true;
+
+    const size = box.getSize(new THREE.Vector3());
+    const center = box.getCenter(new THREE.Vector3());
+    const maxDim = Math.max(size.x, size.y, size.z);
+    const fov = (camera as THREE.PerspectiveCamera).fov * (Math.PI / 180);
+
+    // Product fills ~75% of frame
+    const distance = (maxDim / 2) / Math.tan(fov / 2) * 1.2;
+
+    // Three-quarter product photography angle
+    camera.position.set(
+      center.x + distance * 0.45,
+      center.y + distance * 0.22,
+      center.z + distance * 0.82,
+    );
+    camera.lookAt(center);
+    camera.updateProjectionMatrix();
+  }, [box, camera]);
+
+  return (
+    <OrbitControls
+      ref={controlsRef}
+      enablePan={false}
+      maxPolarAngle={Math.PI / 2}
+      minDistance={1.5}
+      maxDistance={8}
+      target={box ? box.getCenter(new THREE.Vector3()) : undefined}
+    />
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Scene content — assembled from preset
+// ---------------------------------------------------------------------------
+
 function SceneContent({
   url,
   color,
+  preset,
   onInteraction,
 }: {
   url: string;
   color?: string;
+  preset: ScenePreset;
   onInteraction?: () => void;
 }) {
-  const [autoRotate, setAutoRotate] = useState(true);
-  const resumeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [modelBox, setModelBox] = useState<THREE.Box3 | null>(null);
   const hasInteracted = useRef(false);
 
-  const handleStart = useCallback(() => {
-    setAutoRotate(false);
-    if (resumeTimer.current) clearTimeout(resumeTimer.current);
-    if (!hasInteracted.current) {
-      hasInteracted.current = true;
-      onInteraction?.();
-    }
-  }, [onInteraction]);
-
-  const handleEnd = useCallback(() => {
-    resumeTimer.current = setTimeout(() => setAutoRotate(true), 3000);
+  const handleLoaded = useCallback((box: THREE.Box3) => {
+    setModelBox(box);
   }, []);
 
+  // Track user interaction
   useEffect(() => {
-    return () => {
-      if (resumeTimer.current) clearTimeout(resumeTimer.current);
+    const handler = () => {
+      if (!hasInteracted.current) {
+        hasInteracted.current = true;
+        onInteraction?.();
+      }
     };
-  }, []);
+    // Listen on the canvas for pointer events
+    const canvas = document.querySelector('canvas');
+    canvas?.addEventListener('pointerdown', handler, { once: true });
+    return () => canvas?.removeEventListener('pointerdown', handler);
+  }, [onInteraction]);
 
   return (
     <>
-      {/* Hemisphere light provides IBL-like ambient for PBR materials */}
-      <hemisphereLight args={['#ffffff', '#e8ddd0', 2.0]} />
-      <directionalLight position={[5, 8, 3]} intensity={1.5} color="#ffffff" />
-      <directionalLight position={[-4, 6, -3]} intensity={0.8} color="#f5f0eb" />
-      <directionalLight position={[0, -2, 5]} intensity={0.3} color="#ffffff" />
+      {/* Background gradient */}
+      <GradientBackground colors={preset.bgGradient} />
 
+      {/* Fog */}
+      {preset.fog && <SceneFog fog={preset.fog} />}
+
+      {/* Lighting — key, fill, rim, ambient */}
+      <directionalLight
+        position={preset.lights.key.position}
+        intensity={preset.lights.key.intensity}
+        color={preset.lights.key.color}
+        castShadow
+        shadow-mapSize-width={2048}
+        shadow-mapSize-height={2048}
+        shadow-bias={-0.0001}
+      />
+      <directionalLight
+        position={preset.lights.fill.position}
+        intensity={preset.lights.fill.intensity}
+        color={preset.lights.fill.color}
+      />
+      <directionalLight
+        position={preset.lights.rim.position}
+        intensity={preset.lights.rim.intensity}
+        color={preset.lights.rim.color}
+      />
+      <ambientLight
+        color={preset.lights.ambient.color}
+        intensity={preset.lights.ambient.intensity}
+      />
+
+      {/* Effects */}
+      {preset.effects.goboShadows && <GoboLight />}
+
+      {/* Ground plane */}
+      {preset.effects.waterCaustics ? (
+        <WaterGround ground={preset.ground} />
+      ) : (
+        <GroundPlane ground={preset.ground} />
+      )}
+
+      {/* Contact shadow (on top of ground) */}
+      {preset.shadow.opacity > 0 && (
+        <ContactShadows
+          position={[0, 0.001, 0]}
+          opacity={preset.shadow.opacity}
+          scale={10}
+          blur={2.5}
+          far={4}
+          color={preset.shadow.color}
+        />
+      )}
+
+      {/* Product mesh */}
       <Suspense fallback={null}>
-        <ProductModel url={url} color={color} />
+        <ProductModel url={url} color={color} onLoaded={handleLoaded} />
       </Suspense>
 
-      <ContactShadows
-        position={[0, -0.01, 0]}
-        opacity={0.15}
-        scale={10}
-        blur={2.5}
-        far={4}
-        color="#8B7355"
-      />
-
-      <OrbitControls
-        autoRotate={autoRotate}
-        autoRotateSpeed={3}
-        enablePan={false}
-        maxPolarAngle={Math.PI / 2}
-        minDistance={2}
-        maxDistance={8}
-        onStart={handleStart}
-        onEnd={handleEnd}
-      />
+      {/* Camera + controls */}
+      <CameraFramer box={modelBox} />
     </>
   );
 }
+
+// ---------------------------------------------------------------------------
+// Loading shimmer
+// ---------------------------------------------------------------------------
 
 function LoadingShimmer({ fallbackImageUrl, productName }: { fallbackImageUrl?: string; productName?: string }) {
   return (
@@ -137,15 +389,25 @@ function LoadingShimmer({ fallbackImageUrl, productName }: { fallbackImageUrl?: 
   );
 }
 
+// ---------------------------------------------------------------------------
+// Main export
+// ---------------------------------------------------------------------------
+
 export default function Product3DViewer({
   glbUrl,
   fallbackImageUrl,
   productName,
   color,
+  scenePresetId,
+  productCategory,
   onInteraction,
   className,
 }: Product3DViewerProps) {
   const [error, setError] = useState(false);
+
+  // Resolve preset
+  const presetId = scenePresetId || getRecommendedPreset(productCategory) || DEFAULT_PRESET_ID;
+  const preset = SCENE_PRESETS[presetId] || SCENE_PRESETS[DEFAULT_PRESET_ID];
 
   if (error) {
     return fallbackImageUrl ? (
@@ -169,12 +431,23 @@ export default function Product3DViewer({
     >
       <Suspense fallback={<LoadingShimmer fallbackImageUrl={fallbackImageUrl} productName={productName} />}>
         <Canvas
-          gl={{ alpha: true, antialias: true }}
-          camera={{ position: [0, 1.2, 3.5], fov: 40 }}
+          gl={{
+            alpha: false,
+            antialias: true,
+            toneMapping: THREE.ACESFilmicToneMapping,
+            toneMappingExposure: 1.1,
+          }}
+          shadows={{ type: THREE.PCFSoftShadowMap }}
+          camera={{ fov: 35, near: 0.1, far: 100 }}
+          dpr={[1, 2]}
           onError={() => setError(true)}
-          style={{ background: 'transparent' }}
         >
-          <SceneContent url={glbUrl} color={color} onInteraction={onInteraction} />
+          <SceneContent
+            url={glbUrl}
+            color={color}
+            preset={preset}
+            onInteraction={onInteraction}
+          />
         </Canvas>
       </Suspense>
     </div>

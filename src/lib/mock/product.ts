@@ -29,6 +29,9 @@ export type Product = {
     topMarkets: { city: string; pct: number }[];
   };
   mesh3dUrl?: string;
+  meshColor?: string;
+  scenePresetId?: string;
+  category?: string;
   related: Array<Pick<Product,"id"|"slug"|"name"> & { thumb: string }>;
 };
 

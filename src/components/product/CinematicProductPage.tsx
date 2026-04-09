@@ -103,6 +103,8 @@ export function CinematicProductPage({ product }: CinematicProductPageProps) {
         media={heroMedia}
         mesh3dUrl={product.mesh3dUrl}
         meshColor={(product as any).meshColor}
+        scenePresetId={product.scenePresetId}
+        productCategory={product.category}
         title={product.name}
         brand={product.brand}
         sku={product.sku}
