@@ -100,6 +100,7 @@ function SceneContent({
 
       <OrbitControls
         makeDefault
+        target={[0, 1, 0]}
         enablePan={false}
         enableZoom={false}
         enableRotate={true}
