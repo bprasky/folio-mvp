@@ -2,7 +2,7 @@
 
 import { Suspense, useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { Canvas, useThree, useFrame } from '@react-three/fiber';
-import { OrbitControls, ContactShadows, useGLTF } from '@react-three/drei';
+import { OrbitControls, ContactShadows, useGLTF, Environment } from '@react-three/drei';
 import * as THREE from 'three';
 import SafeImage from '@/components/common/SafeImage';
 import {
@@ -121,16 +121,12 @@ function GoboLight() {
     canvas.height = 256;
     const ctx = canvas.getContext('2d')!;
 
-    // White base
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, 256, 256);
 
-    // Window mullion bars (dark stripes block light)
     ctx.fillStyle = '#000000';
-    // Vertical bars
     ctx.fillRect(82, 0, 6, 256);
     ctx.fillRect(168, 0, 6, 256);
-    // Horizontal bar
     ctx.fillRect(0, 126, 256, 6);
 
     const tex = new THREE.CanvasTexture(canvas);
@@ -207,7 +203,6 @@ function ProductModel({
     const maxDim = Math.max(size.x, size.y, size.z);
     const scale = maxDim > 0 ? 2 / maxDim : 1;
 
-    // Position so bottom of mesh sits on y=0 (the ground plane)
     clone.position.set(-center.x * scale, -box.min.y * scale, -center.z * scale);
     clone.scale.setScalar(scale);
 
@@ -226,10 +221,17 @@ function ProductModel({
 // Camera framing — three-quarter product photography angle
 // ---------------------------------------------------------------------------
 
-function CameraFramer({ box }: { box: THREE.Box3 | null }) {
+function CameraFramer({
+  box,
+  onInteraction,
+}: {
+  box: THREE.Box3 | null;
+  onInteraction?: () => void;
+}) {
   const { camera } = useThree();
   const controlsRef = useRef<any>(null);
   const framed = useRef(false);
+  const hasInteracted = useRef(false);
 
   useEffect(() => {
     if (!box || framed.current) return;
@@ -240,10 +242,8 @@ function CameraFramer({ box }: { box: THREE.Box3 | null }) {
     const maxDim = Math.max(size.x, size.y, size.z);
     const fov = (camera as THREE.PerspectiveCamera).fov * (Math.PI / 180);
 
-    // Product fills ~75% of frame
     const distance = (maxDim / 2) / Math.tan(fov / 2) * 1.2;
 
-    // Three-quarter product photography angle
     camera.position.set(
       center.x + distance * 0.45,
       center.y + distance * 0.22,
@@ -253,14 +253,25 @@ function CameraFramer({ box }: { box: THREE.Box3 | null }) {
     camera.updateProjectionMatrix();
   }, [box, camera]);
 
+  const target = box ? box.getCenter(new THREE.Vector3()) : new THREE.Vector3(0, 1, 0);
+
   return (
     <OrbitControls
       ref={controlsRef}
+      makeDefault
+      target={target}
       enablePan={false}
-      maxPolarAngle={Math.PI / 2}
-      minDistance={1.5}
-      maxDistance={8}
-      target={box ? box.getCenter(new THREE.Vector3()) : undefined}
+      enableZoom={false}
+      enableRotate={true}
+      rotateSpeed={0.5}
+      minPolarAngle={Math.PI / 6}
+      maxPolarAngle={Math.PI / 2.2}
+      onStart={() => {
+        if (!hasInteracted.current) {
+          hasInteracted.current = true;
+          onInteraction?.();
+        }
+      }}
     />
   );
 }
@@ -274,37 +285,28 @@ function SceneContent({
   color,
   preset,
   onInteraction,
+  onModelReady,
 }: {
   url: string;
   color?: string;
   preset: ScenePreset;
   onInteraction?: () => void;
+  onModelReady?: () => void;
 }) {
   const [modelBox, setModelBox] = useState<THREE.Box3 | null>(null);
-  const hasInteracted = useRef(false);
 
   const handleLoaded = useCallback((box: THREE.Box3) => {
     setModelBox(box);
-  }, []);
-
-  // Track user interaction
-  useEffect(() => {
-    const handler = () => {
-      if (!hasInteracted.current) {
-        hasInteracted.current = true;
-        onInteraction?.();
-      }
-    };
-    // Listen on the canvas for pointer events
-    const canvas = document.querySelector('canvas');
-    canvas?.addEventListener('pointerdown', handler, { once: true });
-    return () => canvas?.removeEventListener('pointerdown', handler);
-  }, [onInteraction]);
+    onModelReady?.();
+  }, [onModelReady]);
 
   return (
     <>
       {/* Background gradient */}
       <GradientBackground colors={preset.bgGradient} />
+
+      {/* HDR environment for PBR reflections (not as background) */}
+      <Environment files="/assets/hdri/studio_small_03_1k.hdr" background={false} environmentIntensity={0.5} />
 
       {/* Fog */}
       {preset.fog && <SceneFog fog={preset.fog} />}
@@ -362,36 +364,10 @@ function SceneContent({
       </Suspense>
 
       {/* Camera + controls */}
-      <CameraFramer box={modelBox} />
+      <CameraFramer box={modelBox} onInteraction={onInteraction} />
     </>
   );
 }
-
-// ---------------------------------------------------------------------------
-// Loading shimmer
-// ---------------------------------------------------------------------------
-
-function LoadingShimmer({ fallbackImageUrl, productName }: { fallbackImageUrl?: string; productName?: string }) {
-  return (
-    <div className="relative w-full h-full flex items-center justify-center bg-[#FAF8F5]">
-      {fallbackImageUrl && (
-        <SafeImage
-          src={fallbackImageUrl}
-          alt={productName || 'Product'}
-          fill
-          className="object-contain opacity-30"
-        />
-      )}
-      <div className="absolute inset-0 flex items-center justify-center">
-        <div className="w-10 h-10 border-2 border-stone-300 border-t-stone-600 rounded-full animate-spin" />
-      </div>
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Main export
-// ---------------------------------------------------------------------------
 
 export default function Product3DViewer({
   glbUrl,
@@ -404,6 +380,11 @@ export default function Product3DViewer({
   className,
 }: Product3DViewerProps) {
   const [error, setError] = useState(false);
+  const [modelReady, setModelReady] = useState(false);
+
+  const handleModelReady = useCallback(() => {
+    setModelReady(true);
+  }, []);
 
   // Resolve preset
   const presetId = scenePresetId || getRecommendedPreset(productCategory) || DEFAULT_PRESET_ID;
@@ -429,7 +410,34 @@ export default function Product3DViewer({
       role="img"
       aria-label={`3D view of ${productName || 'product'}`}
     >
-      <Suspense fallback={<LoadingShimmer fallbackImageUrl={fallbackImageUrl} productName={productName} />}>
+      {/* Fallback image — crossfades out when 3D model is ready */}
+      {fallbackImageUrl && (
+        <div
+          className="absolute inset-0 z-10"
+          style={{
+            opacity: modelReady ? 0 : 1,
+            transition: 'opacity 500ms ease-out',
+            pointerEvents: modelReady ? 'none' : 'auto',
+          }}
+        >
+          <SafeImage
+            src={fallbackImageUrl}
+            alt={productName || 'Product'}
+            fill
+            className="object-contain"
+            style={{ background: '#FAF8F5' }}
+          />
+        </div>
+      )}
+
+      {/* 3D Canvas — crossfades in when model is ready */}
+      <div
+        className="absolute inset-0"
+        style={{
+          opacity: modelReady ? 1 : 0,
+          transition: 'opacity 500ms ease-out',
+        }}
+      >
         <Canvas
           gl={{
             alpha: false,
@@ -447,9 +455,10 @@ export default function Product3DViewer({
             color={color}
             preset={preset}
             onInteraction={onInteraction}
+            onModelReady={handleModelReady}
           />
         </Canvas>
-      </Suspense>
+      </div>
     </div>
   );
 }
