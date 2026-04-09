@@ -1,8 +1,8 @@
 'use client';
 
-import { Suspense, useState, useRef, useCallback, useEffect, useMemo } from 'react';
+import { Suspense, useState, useRef, useCallback, useMemo } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls, useGLTF, ContactShadows } from '@react-three/drei';
+import { OrbitControls, useGLTF, ContactShadows, Environment } from '@react-three/drei';
 import * as THREE from 'three';
 import SafeImage from '@/components/common/SafeImage';
 
@@ -56,49 +56,42 @@ function SceneContent({
   url,
   color,
   onInteraction,
+  onModelReady,
 }: {
   url: string;
   color?: string;
   onInteraction?: () => void;
+  onModelReady?: () => void;
 }) {
-  const [autoRotate, setAutoRotate] = useState(true);
-  const resumeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasInteracted = useRef(false);
 
-  const handleStart = useCallback(() => {
-    setAutoRotate(false);
-    if (resumeTimer.current) clearTimeout(resumeTimer.current);
-    if (!hasInteracted.current) {
-      hasInteracted.current = true;
-      onInteraction?.();
-    }
-  }, [onInteraction]);
-
-  const handleEnd = useCallback(() => {
-    resumeTimer.current = setTimeout(() => setAutoRotate(true), 3000);
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      if (resumeTimer.current) clearTimeout(resumeTimer.current);
-    };
-  }, []);
+  const handleModelLoaded = useCallback(
+    (_box: THREE.Box3) => {
+      onModelReady?.();
+    },
+    [onModelReady]
+  );
 
   return (
     <>
-      {/* Hemisphere light provides IBL-like ambient for PBR materials */}
-      <hemisphereLight args={['#ffffff', '#e8ddd0', 2.0]} />
-      <directionalLight position={[5, 8, 3]} intensity={1.5} color="#ffffff" />
-      <directionalLight position={[-4, 6, -3]} intensity={0.8} color="#f5f0eb" />
-      <directionalLight position={[0, -2, 5]} intensity={0.3} color="#ffffff" />
+      {/* Key light — warm, upper left */}
+      <directionalLight position={[-5, 5, 5]} intensity={1.2} color="#fff5e6" castShadow />
+      {/* Fill light — cooler, right side */}
+      <directionalLight position={[5, 3, 2]} intensity={0.4} color="#f0f0ff" />
+      {/* Rim light — behind and above */}
+      <directionalLight position={[0, 4, -5]} intensity={0.6} color="#fff8f0" />
+      {/* Soft ambient base */}
+      <ambientLight intensity={0.3} color="#faf5ef" />
+
+      <Environment preset="studio" background={false} environmentIntensity={0.5} />
 
       <Suspense fallback={null}>
-        <ProductModel url={url} color={color} />
+        <ProductModel url={url} color={color} onLoaded={handleModelLoaded} />
       </Suspense>
 
       <ContactShadows
         position={[0, -0.01, 0]}
-        opacity={0.15}
+        opacity={0.12}
         scale={10}
         blur={2.5}
         far={4}
@@ -106,34 +99,22 @@ function SceneContent({
       />
 
       <OrbitControls
-        autoRotate={autoRotate}
-        autoRotateSpeed={3}
+        makeDefault
+        target={[0, 1, 0]}
         enablePan={false}
-        maxPolarAngle={Math.PI / 2}
-        minDistance={2}
-        maxDistance={8}
-        onStart={handleStart}
-        onEnd={handleEnd}
+        enableZoom={false}
+        enableRotate={true}
+        rotateSpeed={0.5}
+        minPolarAngle={Math.PI / 6}
+        maxPolarAngle={Math.PI / 2.2}
+        onStart={() => {
+          if (!hasInteracted.current) {
+            hasInteracted.current = true;
+            onInteraction?.();
+          }
+        }}
       />
     </>
-  );
-}
-
-function LoadingShimmer({ fallbackImageUrl, productName }: { fallbackImageUrl?: string; productName?: string }) {
-  return (
-    <div className="relative w-full h-full flex items-center justify-center bg-[#FAF8F5]">
-      {fallbackImageUrl && (
-        <SafeImage
-          src={fallbackImageUrl}
-          alt={productName || 'Product'}
-          fill
-          className="object-contain opacity-30"
-        />
-      )}
-      <div className="absolute inset-0 flex items-center justify-center">
-        <div className="w-10 h-10 border-2 border-stone-300 border-t-stone-600 rounded-full animate-spin" />
-      </div>
-    </div>
   );
 }
 
@@ -146,6 +127,11 @@ export default function Product3DViewer({
   className,
 }: Product3DViewerProps) {
   const [error, setError] = useState(false);
+  const [modelReady, setModelReady] = useState(false);
+
+  const handleModelReady = useCallback(() => {
+    setModelReady(true);
+  }, []);
 
   if (error) {
     return fallbackImageUrl ? (
@@ -167,16 +153,48 @@ export default function Product3DViewer({
       role="img"
       aria-label={`3D view of ${productName || 'product'}`}
     >
-      <Suspense fallback={<LoadingShimmer fallbackImageUrl={fallbackImageUrl} productName={productName} />}>
+      {/* Fallback image — crossfades out when 3D model is ready */}
+      {fallbackImageUrl && (
+        <div
+          className="absolute inset-0 z-10"
+          style={{
+            opacity: modelReady ? 0 : 1,
+            transition: 'opacity 500ms ease-out',
+            pointerEvents: modelReady ? 'none' : 'auto',
+          }}
+        >
+          <SafeImage
+            src={fallbackImageUrl}
+            alt={productName || 'Product'}
+            fill
+            className="object-contain"
+            style={{ background: '#FAF8F5' }}
+          />
+        </div>
+      )}
+
+      {/* 3D Canvas — crossfades in when model is ready */}
+      <div
+        className="absolute inset-0"
+        style={{
+          opacity: modelReady ? 1 : 0,
+          transition: 'opacity 500ms ease-out',
+        }}
+      >
         <Canvas
           gl={{ alpha: true, antialias: true }}
-          camera={{ position: [0, 1.2, 3.5], fov: 40 }}
+          camera={{ position: [3, 2, 5], fov: 40 }}
           onError={() => setError(true)}
           style={{ background: 'transparent' }}
         >
-          <SceneContent url={glbUrl} color={color} onInteraction={onInteraction} />
+          <SceneContent
+            url={glbUrl}
+            color={color}
+            onInteraction={onInteraction}
+            onModelReady={handleModelReady}
+          />
         </Canvas>
-      </Suspense>
+      </div>
     </div>
   );
 }
