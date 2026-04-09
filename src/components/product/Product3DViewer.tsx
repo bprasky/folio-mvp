@@ -24,38 +24,6 @@ interface Product3DViewerProps {
 }
 
 // ---------------------------------------------------------------------------
-// Background gradient — rendered as a full-screen quad behind the scene
-// ---------------------------------------------------------------------------
-
-function GradientBackground({ colors }: { colors: [string, string, string] }) {
-  const { scene } = useThree();
-
-  useEffect(() => {
-    const canvas = document.createElement('canvas');
-    canvas.width = 2;
-    canvas.height = 512;
-    const ctx = canvas.getContext('2d')!;
-    const gradient = ctx.createLinearGradient(0, 0, 0, 512);
-    gradient.addColorStop(0, colors[0]);
-    gradient.addColorStop(0.5, colors[1]);
-    gradient.addColorStop(1, colors[2]);
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, 2, 512);
-
-    const tex = new THREE.CanvasTexture(canvas);
-    tex.colorSpace = THREE.SRGBColorSpace;
-    scene.background = tex;
-
-    return () => {
-      tex.dispose();
-      scene.background = null;
-    };
-  }, [scene, colors]);
-
-  return null;
-}
-
-// ---------------------------------------------------------------------------
 // Ground plane with configurable material
 // ---------------------------------------------------------------------------
 
@@ -303,11 +271,8 @@ function SceneContent({
 
   return (
     <>
-      {/* HDR environment for PBR reflections (not as background — gradient provides bg) */}
+      {/* HDR environment for PBR reflections (gradient is CSS behind the canvas) */}
       <Environment files="/assets/hdri/studio_small_03_1k.hdr" background={false} environmentIntensity={0.5} />
-
-      {/* Background gradient — MUST be after Environment to override scene.background */}
-      <GradientBackground colors={preset.bgGradient} />
 
       {/* Fog */}
       {preset.fog && <SceneFog fog={preset.fog} />}
@@ -437,11 +402,12 @@ export default function Product3DViewer({
         style={{
           opacity: modelReady ? 1 : 0,
           transition: 'opacity 500ms ease-out',
+          background: `linear-gradient(180deg, ${preset.bgGradient[0]}, ${preset.bgGradient[1]}, ${preset.bgGradient[2]})`,
         }}
       >
         <Canvas
           gl={{
-            alpha: false,
+            alpha: true,
             antialias: true,
             toneMapping: THREE.ACESFilmicToneMapping,
             toneMappingExposure: 1.1,
