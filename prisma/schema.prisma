@@ -555,6 +555,7 @@ model Product {
   mesh3dError       String?
   mesh3dGeneratedAt DateTime?
   mesh3dSourceTagId String?
+  scenePresetId    String?   // e.g. 'salt-flats', 'dawn-gradient'. Null = auto-select by category
   category         String?
   brand            String?
   url              String?
