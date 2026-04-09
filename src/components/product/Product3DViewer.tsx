@@ -2,7 +2,7 @@
 
 import { Suspense, useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls, useGLTF, ContactShadows } from '@react-three/drei';
+import { OrbitControls, useGLTF, ContactShadows, Environment } from '@react-three/drei';
 import * as THREE from 'three';
 import SafeImage from '@/components/common/SafeImage';
 
@@ -15,10 +15,18 @@ interface Product3DViewerProps {
 }
 
 function ProductModel({ url, onLoaded }: { url: string; onLoaded?: (box: THREE.Box3) => void }) {
-  const { scene } = useGLTF(url, true);
+  const gltf = useGLTF(url, true);
 
   const centeredScene = useMemo(() => {
-    const clone = scene.clone();
+    const clone = gltf.scene.clone();
+
+    // Deep-clone materials so textures are preserved
+    clone.traverse((child: any) => {
+      if (child.isMesh && child.material) {
+        child.material = child.material.clone();
+      }
+    });
+
     const box = new THREE.Box3().setFromObject(clone);
     const center = box.getCenter(new THREE.Vector3());
     const size = box.getSize(new THREE.Vector3());
@@ -34,7 +42,7 @@ function ProductModel({ url, onLoaded }: { url: string; onLoaded?: (box: THREE.B
     }
 
     return clone;
-  }, [scene, onLoaded]);
+  }, [gltf.scene, onLoaded]);
 
   return <primitive object={centeredScene} />;
 }
@@ -71,11 +79,10 @@ function SceneContent({
 
   return (
     <>
-      {/* Warm studio lighting */}
-      <ambientLight intensity={0.4} color="#fff8f0" />
-      <directionalLight position={[5, 8, 3]} intensity={1.2} color="#fff5e6" />
-      <directionalLight position={[-3, 4, -2]} intensity={0.4} color="#f5f0eb" />
-      <pointLight position={[-5, 5, -5]} intensity={0.6} color="#ffe8d0" />
+      {/* Environment map for PBR material rendering */}
+      <Environment preset="studio" />
+      <ambientLight intensity={0.3} />
+      <directionalLight position={[5, 8, 3]} intensity={0.8} />
 
       <Suspense fallback={null}>
         <ProductModel url={url} />
