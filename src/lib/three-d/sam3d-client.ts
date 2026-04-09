@@ -106,8 +106,8 @@ async function callTrellisMesh(imageUrl: string): Promise<Buffer> {
   const result = await fal.subscribe('fal-ai/trellis', {
     input: {
       image_url: imageUrl,
-      texture_size: 1024,
-      mesh_simplify: 0.5,
+      texture_size: 2048,
+      mesh_simplify: 0.9,
       ss_guidance_strength: 7.5,
       ss_sampling_steps: 20,
       slat_guidance_strength: 3,
