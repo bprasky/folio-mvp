@@ -39,9 +39,10 @@ export interface Sam3DTagResponse {
   maskPngBuffer: Buffer;
   confidence: number;
   boundingBox: { x: number; y: number; width: number; height: number };
-  depthEstimate: number; // 0 = foreground, 1 = background
-  meshSource: 'trellis' | 'triposr'; // which service produced the mesh
-  trellisError?: string; // if Trellis failed, why
+  depthEstimate: number;
+  meshSource: 'trellis' | 'triposr';
+  trellisError?: string;
+  dominantColor?: string; // hex color from catalog image, e.g. '#8B7355'
 }
 
 // --- Helpers ---
@@ -98,6 +99,32 @@ async function getImageDimensions(imageUrl: string): Promise<{ width: number; he
     console.warn('[sam3d] Could not determine image dimensions, using 1024x1024 default', e);
     return { width: 1024, height: 1024 };
   }
+}
+
+/**
+ * Extract the dominant color from an image URL using sharp.
+ * Resizes to 1x1 to get the average color, then returns hex.
+ */
+async function extractDominantColor(imageUrl: string): Promise<string | undefined> {
+  try {
+    const sharp = (await import('sharp')).default;
+    const response = await fetch(imageUrl);
+    if (!response.ok) return undefined;
+    const buffer = Buffer.from(await response.arrayBuffer());
+    const { data, info } = await sharp(buffer)
+      .resize(1, 1, { fit: 'cover' })
+      .removeAlpha()
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+    if (info.channels >= 3) {
+      const hex = `#${data[0].toString(16).padStart(2, '0')}${data[1].toString(16).padStart(2, '0')}${data[2].toString(16).padStart(2, '0')}`;
+      console.log('[sam3d] Extracted dominant color:', hex);
+      return hex;
+    }
+  } catch (e) {
+    console.warn('[sam3d] Could not extract dominant color', e);
+  }
+  return undefined;
 }
 
 // --- Trellis 2: textured PBR mesh with baked textures ---
@@ -365,15 +392,20 @@ export async function callSam3DTagService(req: Sam3DTagRequest): Promise<Sam3DTa
   const bboxArea = boundingBox.width * boundingBox.height;
   const depthEstimate = Math.max(0, Math.min(1, 1 - bboxArea * 2));
 
+  // Extract dominant color from catalog image (or source image as fallback)
+  const colorSource = req.catalogImageUrl || req.sourceImageUrl;
+  const dominantColor = await extractDominantColor(colorSource);
+
   console.log('[sam3d] Tag-level complete', {
     tagId: req.tagId,
     meshSource,
     glbSize: glbBuffer.length,
     maskSize: maskPngBuffer.length,
     confidence,
+    dominantColor,
     usedCatalog: hasCatalogImage,
     depthEstimate,
   });
 
-  return { glbBuffer, maskPngBuffer, confidence, boundingBox, depthEstimate, meshSource, trellisError: trellisErrorMsg };
+  return { glbBuffer, maskPngBuffer, confidence, boundingBox, depthEstimate, meshSource, trellisError: trellisErrorMsg, dominantColor };
 }

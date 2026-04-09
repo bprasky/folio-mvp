@@ -52,6 +52,17 @@ export const getProductById = cache(async (id: string): Promise<(Product & {
     return null;
   }
 
+  // Fetch mesh color from source tag's bounding box data
+  let meshColor: string | undefined;
+  if (productFromDB.mesh3dSourceTagId) {
+    const sourceTag = await prisma.productTag.findUnique({
+      where: { id: productFromDB.mesh3dSourceTagId },
+      select: { meshBoundingBox: true },
+    });
+    const bbox = sourceTag?.meshBoundingBox as any;
+    if (bbox?.dominantColor) meshColor = bbox.dominantColor;
+  }
+
   const completeness = getServerProductCompleteness(productFromDB);
 
   const product = {
@@ -73,6 +84,7 @@ export const getProductById = cache(async (id: string): Promise<(Product & {
     inspiration: [] as any[],
     insights: { saves: 0, tags: 0, saveToTagPct: 0, topRooms: [] as any[], topMarkets: [] as any[] },
     mesh3dUrl: productFromDB.threeDAssetUrl || undefined,
+    meshColor,
     related: [] as any[],
     // Internal fields for completeness gating
     _completeness: completeness,

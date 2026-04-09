@@ -10,20 +10,24 @@ interface Product3DViewerProps {
   glbUrl: string;
   fallbackImageUrl?: string;
   productName?: string;
+  color?: string; // hex color to tint the mesh, e.g. '#8B7355'
   onInteraction?: () => void;
   className?: string;
 }
 
-function ProductModel({ url, onLoaded }: { url: string; onLoaded?: (box: THREE.Box3) => void }) {
+function ProductModel({ url, color, onLoaded }: { url: string; color?: string; onLoaded?: (box: THREE.Box3) => void }) {
   const gltf = useGLTF(url, true);
 
   const centeredScene = useMemo(() => {
     const clone = gltf.scene.clone();
 
-    // Deep-clone materials so textures are preserved
+    // Deep-clone materials and apply tint color if provided
     clone.traverse((child: any) => {
       if (child.isMesh && child.material) {
         child.material = child.material.clone();
+        if (color) {
+          child.material.color = new THREE.Color(color);
+        }
       }
     });
 
@@ -42,16 +46,18 @@ function ProductModel({ url, onLoaded }: { url: string; onLoaded?: (box: THREE.B
     }
 
     return clone;
-  }, [gltf.scene, onLoaded]);
+  }, [gltf.scene, color, onLoaded]);
 
   return <primitive object={centeredScene} />;
 }
 
 function SceneContent({
   url,
+  color,
   onInteraction,
 }: {
   url: string;
+  color?: string;
   onInteraction?: () => void;
 }) {
   const [autoRotate, setAutoRotate] = useState(true);
@@ -86,7 +92,7 @@ function SceneContent({
       <directionalLight position={[0, -2, 5]} intensity={0.3} color="#ffffff" />
 
       <Suspense fallback={null}>
-        <ProductModel url={url} />
+        <ProductModel url={url} color={color} />
       </Suspense>
 
       <ContactShadows
@@ -134,6 +140,7 @@ export default function Product3DViewer({
   glbUrl,
   fallbackImageUrl,
   productName,
+  color,
   onInteraction,
   className,
 }: Product3DViewerProps) {
@@ -166,7 +173,7 @@ export default function Product3DViewer({
           onError={() => setError(true)}
           style={{ background: 'transparent' }}
         >
-          <SceneContent url={glbUrl} onInteraction={onInteraction} />
+          <SceneContent url={glbUrl} color={color} onInteraction={onInteraction} />
         </Canvas>
       </Suspense>
     </div>

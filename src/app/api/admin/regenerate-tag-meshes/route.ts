@@ -181,7 +181,7 @@ export async function POST(request: NextRequest) {
           meshMaskUrl: maskUpload.publicUrl,
           meshStatus: 'complete',
           meshConfidence: result.confidence,
-          meshBoundingBox: result.boundingBox,
+          meshBoundingBox: { ...result.boundingBox, dominantColor: result.dominantColor },
           meshDepthEstimate: result.depthEstimate,
           meshGeneratedAt: new Date(),
           meshError: null,
