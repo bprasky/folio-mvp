@@ -2,7 +2,7 @@
 
 import { Suspense, useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls, useGLTF, ContactShadows, Environment } from '@react-three/drei';
+import { OrbitControls, useGLTF, ContactShadows } from '@react-three/drei';
 import * as THREE from 'three';
 import SafeImage from '@/components/common/SafeImage';
 
@@ -79,10 +79,11 @@ function SceneContent({
 
   return (
     <>
-      {/* Environment map for PBR material rendering */}
-      <Environment preset="studio" />
-      <ambientLight intensity={0.3} />
-      <directionalLight position={[5, 8, 3]} intensity={0.8} />
+      {/* Hemisphere light provides IBL-like ambient for PBR materials */}
+      <hemisphereLight args={['#ffffff', '#e8ddd0', 2.0]} />
+      <directionalLight position={[5, 8, 3]} intensity={1.5} color="#ffffff" />
+      <directionalLight position={[-4, 6, -3]} intensity={0.8} color="#f5f0eb" />
+      <directionalLight position={[0, -2, 5]} intensity={0.3} color="#ffffff" />
 
       <Suspense fallback={null}>
         <ProductModel url={url} />
