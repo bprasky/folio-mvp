@@ -27,8 +27,9 @@ export interface Sam3DResponse {
 export interface Sam3DTagRequest {
   sourceImageUrl: string;      // room photo URL (fallback for segmentation)
   catalogImageUrl?: string;    // clean catalog/vendor product image (preferred for mesh)
-  tagX: number;                // 0-1 or 0-100 position in image
-  tagY: number;                // 0-1 or 0-100 position in image
+  cutoutImageUrl?: string;     // background-removed product image (best for color extraction)
+  tagX: number;
+  tagY: number;
   productId: string;
   tagId: string;
   prompt?: string;
@@ -102,8 +103,9 @@ async function getImageDimensions(imageUrl: string): Promise<{ width: number; he
 }
 
 /**
- * Extract the dominant color from an image URL using sharp.
- * Resizes to 1x1 to get the average color, then returns hex.
+ * Extract the dominant product color from an image URL using sharp.
+ * Crops to the center 50% to exclude background, then samples the
+ * most common color from a small grid (avoiding background averaging).
  */
 async function extractDominantColor(imageUrl: string): Promise<string | undefined> {
   try {
@@ -111,16 +113,44 @@ async function extractDominantColor(imageUrl: string): Promise<string | undefine
     const response = await fetch(imageUrl);
     if (!response.ok) return undefined;
     const buffer = Buffer.from(await response.arrayBuffer());
-    const { data, info } = await sharp(buffer)
-      .resize(1, 1, { fit: 'cover' })
+
+    // Get image dimensions
+    const metadata = await sharp(buffer).metadata();
+    const w = metadata.width || 100;
+    const h = metadata.height || 100;
+
+    // Crop to center 50% to exclude background edges
+    const cropW = Math.round(w * 0.5);
+    const cropH = Math.round(h * 0.5);
+    const cropX = Math.round((w - cropW) / 2);
+    const cropY = Math.round((h - cropH) / 2);
+
+    // Sample a small grid from the center crop
+    const { data } = await sharp(buffer)
+      .extract({ left: cropX, top: cropY, width: cropW, height: cropH })
+      .resize(8, 8, { fit: 'fill' })
       .removeAlpha()
       .raw()
       .toBuffer({ resolveWithObject: true });
-    if (info.channels >= 3) {
-      const hex = `#${data[0].toString(16).padStart(2, '0')}${data[1].toString(16).padStart(2, '0')}${data[2].toString(16).padStart(2, '0')}`;
-      console.log('[sam3d] Extracted dominant color:', hex);
-      return hex;
+
+    // Find the brightest/most saturated color (products are usually lighter than shadows)
+    let bestR = 0, bestG = 0, bestB = 0;
+    let bestBrightness = -1;
+    for (let i = 0; i < data.length; i += 3) {
+      const r = data[i], g = data[i + 1], b = data[i + 2];
+      // Prefer brighter, less-gray pixels (actual product color vs shadows)
+      const brightness = (r + g + b) / 3;
+      const saturation = Math.max(r, g, b) - Math.min(r, g, b);
+      const score = brightness + saturation * 0.3;
+      if (score > bestBrightness) {
+        bestBrightness = score;
+        bestR = r; bestG = g; bestB = b;
+      }
     }
+
+    const hex = `#${bestR.toString(16).padStart(2, '0')}${bestG.toString(16).padStart(2, '0')}${bestB.toString(16).padStart(2, '0')}`;
+    console.log('[sam3d] Extracted dominant color:', hex, { bestBrightness });
+    return hex;
   } catch (e) {
     console.warn('[sam3d] Could not extract dominant color', e);
   }
@@ -133,8 +163,11 @@ async function callTrellisMesh(imageUrl: string): Promise<Buffer> {
   const result = await fal.subscribe('fal-ai/trellis-2', {
     input: {
       image_url: imageUrl,
+      // Texture params (Trellis 2 specific — tex_slat_ prefix)
       texture_size: 2048,
-      mesh_simplify: 0.9,
+      tex_slat_guidance_strength: 3,
+      tex_slat_sampling_steps: 20,
+      // Shape params
       ss_guidance_strength: 7.5,
       ss_sampling_steps: 20,
       slat_guidance_strength: 3,
