@@ -83,7 +83,7 @@ function SceneContent({
       {/* Soft ambient base */}
       <ambientLight intensity={0.3} color="#faf5ef" />
 
-      <Environment preset="studio" background={false} environmentIntensity={0.5} />
+      <Environment files="/assets/hdri/studio_small_03_1k.hdr" background={false} environmentIntensity={0.5} />
 
       <Suspense fallback={null}>
         <ProductModel url={url} color={color} onLoaded={handleModelLoaded} />
