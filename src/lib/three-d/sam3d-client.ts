@@ -40,6 +40,8 @@ export interface Sam3DTagResponse {
   confidence: number;
   boundingBox: { x: number; y: number; width: number; height: number };
   depthEstimate: number; // 0 = foreground, 1 = background
+  meshSource: 'trellis' | 'triposr'; // which service produced the mesh
+  trellisError?: string; // if Trellis failed, why
 }
 
 // --- Helpers ---
@@ -104,21 +106,27 @@ async function callTrellisMesh(imageUrl: string): Promise<Buffer> {
   const result = await fal.subscribe('fal-ai/trellis', {
     input: {
       image_url: imageUrl,
-      texture_size: '2048',
-      mesh_simplify: 0.95,
+      texture_size: 1024,
+      mesh_simplify: 0.5,
       ss_guidance_strength: 7.5,
-      ss_sampling_steps: 12,
+      ss_sampling_steps: 20,
       slat_guidance_strength: 3,
-      slat_sampling_steps: 12,
+      slat_sampling_steps: 20,
     } as any,
     logs: true,
   });
 
   const data = result.data as any;
-  const glbUrl = data?.model_mesh?.url;
+  console.log('[sam3d] Trellis raw response keys:', data ? Object.keys(data) : 'null');
+
+  // Trellis may return mesh in different fields
+  const glbUrl = data?.model_mesh?.url
+    || data?.glb_url
+    || data?.mesh?.url
+    || data?.output?.model_mesh?.url;
 
   if (!glbUrl) {
-    throw new Error(`Trellis returned no GLB. Keys: ${data ? Object.keys(data).join(',') : 'null'}`);
+    throw new Error(`Trellis returned no GLB. Keys: ${data ? Object.keys(data).join(',') : 'null'} | Data: ${JSON.stringify(data).substring(0, 500)}`);
   }
 
   return downloadAsBuffer(glbUrl);
@@ -338,26 +346,21 @@ export async function callSam3DTagService(req: Sam3DTagRequest): Promise<Sam3DTa
     }
   }
 
-  // Generate 3D mesh: Trellis primary, TripoSR@512 fallback
+  // Generate 3D mesh via Trellis only — no fallback, fail loudly
   let glbBuffer: Buffer;
+  const meshSource: 'trellis' | 'triposr' = 'trellis';
+  let trellisErrorMsg: string | undefined;
 
   try {
     glbBuffer = await callTrellisMesh(meshInputUrl);
     console.log('[sam3d] Tag mesh via Trellis complete', { tagId: req.tagId, glbSize: glbBuffer.length });
   } catch (trellisError: any) {
-    console.warn('[sam3d] Trellis failed, falling back to TripoSR@512', {
+    trellisErrorMsg = extractFalError(trellisError);
+    console.error('[sam3d] Trellis failed (no fallback)', {
       tagId: req.tagId,
-      error: extractFalError(trellisError),
+      error: trellisErrorMsg,
     });
-
-    try {
-      glbBuffer = await callTripoSRMesh(meshInputUrl);
-      console.log('[sam3d] TripoSR@512 fallback complete', { tagId: req.tagId, glbSize: glbBuffer.length });
-    } catch (tripoError: any) {
-      const trellisMsg = extractFalError(trellisError);
-      const tripoMsg = extractFalError(tripoError);
-      throw new Error(`All mesh methods failed for tag ${req.tagId}: Trellis: ${trellisMsg} | TripoSR: ${tripoMsg}`);
-    }
+    throw new Error(`Trellis failed for tag ${req.tagId}: ${trellisErrorMsg}`);
   }
 
   const bboxArea = boundingBox.width * boundingBox.height;
@@ -365,6 +368,7 @@ export async function callSam3DTagService(req: Sam3DTagRequest): Promise<Sam3DTa
 
   console.log('[sam3d] Tag-level complete', {
     tagId: req.tagId,
+    meshSource,
     glbSize: glbBuffer.length,
     maskSize: maskPngBuffer.length,
     confidence,
@@ -372,5 +376,5 @@ export async function callSam3DTagService(req: Sam3DTagRequest): Promise<Sam3DTa
     depthEstimate,
   });
 
-  return { glbBuffer, maskPngBuffer, confidence, boundingBox, depthEstimate };
+  return { glbBuffer, maskPngBuffer, confidence, boundingBox, depthEstimate, meshSource, trellisError: trellisErrorMsg };
 }

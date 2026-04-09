@@ -199,6 +199,8 @@ export async function POST(request: NextRequest) {
           productName,
           status: 'success',
           usedCatalogImage: !!catalogUrl,
+          meshSource: result.meshSource,
+          trellisError: result.trellisError,
           meshUrl: meshUpload.publicUrl,
         }],
       });
