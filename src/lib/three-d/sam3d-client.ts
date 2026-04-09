@@ -100,10 +100,10 @@ async function getImageDimensions(imageUrl: string): Promise<{ width: number; he
   }
 }
 
-// --- Trellis: highest quality textured PBR mesh ---
+// --- Trellis 2: textured PBR mesh with baked textures ---
 
 async function callTrellisMesh(imageUrl: string): Promise<Buffer> {
-  const result = await fal.subscribe('fal-ai/trellis', {
+  const result = await fal.subscribe('fal-ai/trellis-2', {
     input: {
       image_url: imageUrl,
       texture_size: 2048,
@@ -117,16 +117,15 @@ async function callTrellisMesh(imageUrl: string): Promise<Buffer> {
   });
 
   const data = result.data as any;
-  console.log('[sam3d] Trellis raw response keys:', data ? Object.keys(data) : 'null');
+  console.log('[sam3d] Trellis 2 raw response keys:', data ? Object.keys(data) : 'null');
 
-  // Trellis may return mesh in different fields
-  const glbUrl = data?.model_mesh?.url
-    || data?.glb_url
-    || data?.mesh?.url
-    || data?.output?.model_mesh?.url;
+  // Trellis 2 returns model_glb, Trellis 1 returns model_mesh
+  const glbUrl = data?.model_glb?.url
+    || data?.model_mesh?.url
+    || data?.glb_url;
 
   if (!glbUrl) {
-    throw new Error(`Trellis returned no GLB. Keys: ${data ? Object.keys(data).join(',') : 'null'} | Data: ${JSON.stringify(data).substring(0, 500)}`);
+    throw new Error(`Trellis 2 returned no GLB. Keys: ${data ? Object.keys(data).join(',') : 'null'} | Data: ${JSON.stringify(data).substring(0, 500)}`);
   }
 
   return downloadAsBuffer(glbUrl);
