@@ -60,16 +60,17 @@ export async function POST(request: NextRequest) {
       };
     }
 
-    // Status filter (unless targeting specific tag)
-    if (!targetTagId && !force) {
+    // Status filter — skip when targeting specific tag/product
+    if (!targetTagId && !targetName && !force) {
       meshWhere.OR = [
         { meshStatus: { equals: null } },
         { meshStatus: 'failed' },
         { meshStatus: '' },
       ];
-    } else if (!targetTagId) {
+    } else if (!targetTagId && !targetName) {
       meshWhere.meshStatus = { not: 'processing' };
     }
+    // When targeting by tagId or productName, no status filter — always process
 
     // Fetch eligible tags
     const eligible = await prisma.productTag.findMany({
