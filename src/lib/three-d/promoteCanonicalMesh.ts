@@ -20,6 +20,7 @@ export async function promoteCanonicalMesh(productId: string): Promise<void> {
       id: true,
       mesh3dUrl: true,
       meshConfidence: true,
+      meshBoundingBox: true,
     },
     take: 1,
   });

@@ -16,6 +16,7 @@ interface CinematicHeroProps {
     imageUrl?: string;
   };
   mesh3dUrl?: string;
+  meshColor?: string;
   title: string;
   subtitle?: string;
   brand?: string;
@@ -27,7 +28,7 @@ interface CinematicHeroProps {
   };
 }
 
-export function CinematicHero({ media, mesh3dUrl, title, subtitle, brand, sku, palette }: CinematicHeroProps) {
+export function CinematicHero({ media, mesh3dUrl, meshColor, title, subtitle, brand, sku, palette }: CinematicHeroProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [show3D, setShow3D] = useState(!!mesh3dUrl);
   const [hasInteracted, setHasInteracted] = useState(false);
@@ -101,6 +102,7 @@ export function CinematicHero({ media, mesh3dUrl, title, subtitle, brand, sku, p
             glbUrl={mesh3dUrl}
             fallbackImageUrl={media.imageUrl}
             productName={title}
+            color={meshColor}
             onInteraction={() => setHasInteracted(true)}
             className="w-full h-full"
           />
