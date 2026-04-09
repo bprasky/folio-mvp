@@ -39,10 +39,10 @@ export async function promoteCanonicalMesh(productId: string): Promise<void> {
 
   if (!product) return;
 
-  // If no canonical exists, or this tag is different from current source, promote
+  // If no canonical exists, or mesh is different, promote
   const currentSourceTag = product.mesh3dSourceTagId;
-  if (currentSourceTag === bestTag.id && product.threeDAssetUrl) {
-    // Already the canonical — no update needed
+  if (currentSourceTag === bestTag.id && product.threeDAssetUrl === bestTag.mesh3dUrl) {
+    // Same tag, same URL — no update needed
     return;
   }
 
