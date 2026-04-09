@@ -12,14 +12,15 @@ import { promoteCanonicalMesh } from '@/lib/three-d/promoteCanonicalMesh';
 /**
  * POST /api/admin/regenerate-tag-meshes
  *
- * Admin-only: regenerate 3D meshes at tag level using Trellis (highest quality).
- * Processes a small batch per request to avoid gateway timeouts.
- * Call in a loop from the browser console to process all tags.
+ * Admin-only: regenerate 3D meshes at tag level using Trellis.
+ * Processes 1 tag per request to avoid gateway timeouts.
  *
  * Query params:
- *   batch?:  number (default 3, max 5) — tags per request
- *   dryRun?: boolean — preview eligible tags without generating
- *   force?:  boolean — re-generate even tags with meshStatus='complete'
+ *   dryRun?:      boolean — preview eligible tags
+ *   force?:       boolean — re-generate even completed tags
+ *   catalogOnly?: boolean — only tags with Product.imageUrl
+ *   tagId?:       string — target a specific tag
+ *   productName?: string — target by product name (partial match)
  */
 export async function POST(request: NextRequest) {
   try {
@@ -29,31 +30,48 @@ export async function POST(request: NextRequest) {
     }
 
     const url = new URL(request.url);
-    const batch = Math.min(parseInt(url.searchParams.get('batch') || '1'), 5);
     const dryRun = url.searchParams.get('dryRun') === 'true';
     const force = url.searchParams.get('force') === 'true';
     const catalogOnly = url.searchParams.get('catalogOnly') === 'true';
+    const targetTagId = url.searchParams.get('tagId');
+    const targetName = url.searchParams.get('productName');
 
-    // Build where clause — only re-process tags that need it (unless force)
-    const meshWhere: any = force
-      ? { meshStatus: { not: 'processing' } }
-      : {
-          OR: [
-            { meshStatus: { equals: null } },
-            { meshStatus: 'failed' },
-            { meshStatus: '' },
-          ],
-        };
+    // Build where clause
+    const meshWhere: any = {};
 
-    // Only process tags whose product has a catalog image
-    if (catalogOnly) {
-      meshWhere.product = { imageUrl: { not: null } };
+    // Target specific tag
+    if (targetTagId) {
+      meshWhere.id = targetTagId;
     }
 
-    // Count total remaining
-    const totalRemaining = await prisma.productTag.count({ where: meshWhere });
+    // Target by product name
+    if (targetName) {
+      meshWhere.product = {
+        ...meshWhere.product,
+        name: { contains: targetName, mode: 'insensitive' },
+      };
+    }
 
-    // Fetch batch of eligible tags
+    // Only catalog-image products
+    if (catalogOnly) {
+      meshWhere.product = {
+        ...meshWhere.product,
+        imageUrl: { not: null },
+      };
+    }
+
+    // Status filter (unless targeting specific tag)
+    if (!targetTagId && !force) {
+      meshWhere.OR = [
+        { meshStatus: { equals: null } },
+        { meshStatus: 'failed' },
+        { meshStatus: '' },
+      ];
+    } else if (!targetTagId) {
+      meshWhere.meshStatus = { not: 'processing' };
+    }
+
+    // Fetch eligible tags
     const eligible = await prisma.productTag.findMany({
       where: meshWhere,
       select: {
@@ -64,41 +82,32 @@ export async function POST(request: NextRequest) {
         meshStatus: true,
         mesh3dUrl: true,
         image: {
-          select: {
-            id: true,
-            url: true,
-            projectId: true,
-          },
+          select: { id: true, url: true, projectId: true },
         },
         product: {
-          select: {
-            id: true,
-            name: true,
-            category: true,
-            imageUrl: true,
-          },
+          select: { id: true, name: true, category: true, imageUrl: true },
         },
       },
-      take: dryRun ? 200 : batch,
+      take: dryRun ? 200 : 1,
       orderBy: { createdAt: 'desc' },
     });
 
-    // Filter to meshable categories
-    const meshable = eligible.filter((t) => isMeshableCategory(t.product?.category));
+    // Filter to meshable categories (unless targeting specific tag)
+    const meshable = targetTagId
+      ? eligible
+      : eligible.filter((t) => isMeshableCategory(t.product?.category));
 
     if (dryRun) {
       return NextResponse.json({
         dryRun: true,
         force,
-        totalRemaining,
-        meshableCount: meshable.length,
-        skippedFlat: eligible.length - meshable.length,
+        catalogOnly,
+        totalFound: meshable.length,
         tags: meshable.map((t) => ({
           id: t.id,
           productName: t.product?.name,
           category: t.product?.category,
           currentStatus: t.meshStatus,
-          hasMesh: !!t.mesh3dUrl,
           hasCatalogImage: !!t.product?.imageUrl,
           catalogImage: t.product?.imageUrl?.substring(0, 80),
           sourceImage: t.image?.url?.substring(0, 80),
@@ -106,104 +115,111 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Process this batch sequentially
-    const results: Array<{ id: string; productName: string; status: string; error?: string }> = [];
-    let processed = 0;
-    let failed = 0;
-
-    for (const tag of meshable) {
-      const productName = tag.product?.name || 'Unknown';
-
-      try {
-        if (!tag.image?.url) {
-          results.push({ id: tag.id, productName, status: 'skipped', error: 'No source image' });
-          continue;
-        }
-
-        // Mark as processing
-        await prisma.productTag.update({
-          where: { id: tag.id },
-          data: { meshStatus: 'processing', meshError: null },
-        });
-
-        const catalogUrl = tag.product?.imageUrl || undefined;
-        console.log(`[regenerate-tags] Starting: ${productName}`, {
-          useCatalog: !!catalogUrl,
-        });
-
-        // Generate mesh: prefer catalog image, fall back to room photo + SAM isolation
-        const result = await callSam3DTagService({
-          sourceImageUrl: tag.image.url,
-          catalogImageUrl: catalogUrl,
-          tagX: tag.x,
-          tagY: tag.y,
-          productId: tag.productId,
-          tagId: tag.id,
-          prompt: productName,
-        });
-
-        const projectId = tag.image.projectId || 'regenerate';
-
-        // Upload mesh and mask
-        const [meshUpload, maskUpload] = await Promise.all([
-          uploadGeneratedMesh({
-            projectId,
-            productId: tag.productId,
-            buffer: result.glbBuffer,
-            mime: 'application/octet-stream',
-          }),
-          uploadGeneratedMask({
-            projectId,
-            tagId: tag.id,
-            buffer: result.maskPngBuffer,
-            mime: 'image/png',
-          }),
-        ]);
-
-        // Update tag with new mesh data
-        await prisma.productTag.update({
-          where: { id: tag.id },
-          data: {
-            mesh3dUrl: meshUpload.publicUrl,
-            meshMaskUrl: maskUpload.publicUrl,
-            meshStatus: 'complete',
-            meshConfidence: result.confidence,
-            meshBoundingBox: result.boundingBox,
-            meshDepthEstimate: result.depthEstimate,
-            meshGeneratedAt: new Date(),
-            meshError: null,
-          },
-        });
-
-        // Promote best mesh to canonical Product.threeDAssetUrl
-        await promoteCanonicalMesh(tag.productId);
-
-        results.push({ id: tag.id, productName, status: 'success' });
-        processed++;
-        console.log(`[regenerate-tags] Complete: ${productName}`);
-      } catch (error: any) {
-        await prisma.productTag.update({
-          where: { id: tag.id },
-          data: { meshStatus: 'failed', meshError: error.message },
-        }).catch(() => {});
-
-        results.push({ id: tag.id, productName, status: 'failed', error: error.message });
-        failed++;
-        console.error(`[regenerate-tags] Failed: ${productName}`, error.message);
-      }
+    // Process the single tag
+    const tag = meshable[0];
+    if (!tag) {
+      return NextResponse.json({ processed: 0, failed: 0, message: 'No eligible tags found' });
     }
 
-    const remaining = totalRemaining - processed;
+    const productName = tag.product?.name || 'Unknown';
 
-    return NextResponse.json({
-      force,
-      batchSize: batch,
-      processed,
-      failed,
-      remaining,
-      done: remaining <= 0,
-      results,
-    });
+    try {
+      if (!tag.image?.url) {
+        return NextResponse.json({
+          processed: 0, failed: 1,
+          results: [{ id: tag.id, productName, status: 'skipped', error: 'No source image' }],
+        });
+      }
+
+      // Mark as processing
+      await prisma.productTag.update({
+        where: { id: tag.id },
+        data: { meshStatus: 'processing', meshError: null },
+      });
+
+      const catalogUrl = tag.product?.imageUrl || undefined;
+      console.log(`[regenerate-tags] Starting: ${productName}`, {
+        useCatalog: !!catalogUrl,
+        catalogUrl: catalogUrl?.substring(0, 80),
+      });
+
+      // Generate mesh: prefer catalog image, fall back to room photo + SAM isolation
+      const result = await callSam3DTagService({
+        sourceImageUrl: tag.image.url,
+        catalogImageUrl: catalogUrl,
+        tagX: tag.x,
+        tagY: tag.y,
+        productId: tag.productId,
+        tagId: tag.id,
+        prompt: productName,
+      });
+
+      const projectId = tag.image.projectId || 'regenerate';
+
+      // Upload mesh and mask
+      const [meshUpload, maskUpload] = await Promise.all([
+        uploadGeneratedMesh({
+          projectId,
+          productId: tag.productId,
+          buffer: result.glbBuffer,
+          mime: 'application/octet-stream',
+        }),
+        uploadGeneratedMask({
+          projectId,
+          tagId: tag.id,
+          buffer: result.maskPngBuffer,
+          mime: 'image/png',
+        }),
+      ]);
+
+      // Update tag with new mesh data
+      await prisma.productTag.update({
+        where: { id: tag.id },
+        data: {
+          mesh3dUrl: meshUpload.publicUrl,
+          meshMaskUrl: maskUpload.publicUrl,
+          meshStatus: 'complete',
+          meshConfidence: result.confidence,
+          meshBoundingBox: result.boundingBox,
+          meshDepthEstimate: result.depthEstimate,
+          meshGeneratedAt: new Date(),
+          meshError: null,
+        },
+      });
+
+      // Promote to Product.threeDAssetUrl
+      await promoteCanonicalMesh(tag.productId);
+
+      return NextResponse.json({
+        processed: 1,
+        failed: 0,
+        results: [{
+          id: tag.id,
+          productName,
+          status: 'success',
+          usedCatalogImage: !!catalogUrl,
+          meshUrl: meshUpload.publicUrl,
+        }],
+      });
+
+    } catch (error: any) {
+      await prisma.productTag.update({
+        where: { id: tag.id },
+        data: { meshStatus: 'failed', meshError: error.message },
+      }).catch(() => {});
+
+      return NextResponse.json({
+        processed: 0,
+        failed: 1,
+        results: [{
+          id: tag.id,
+          productName,
+          status: 'failed',
+          usedCatalogImage: !!tag.product?.imageUrl,
+          error: error.message,
+        }],
+      });
+    }
 
   } catch (error: any) {
     console.error('[regenerate-tag-meshes] Unhandled error:', error);
