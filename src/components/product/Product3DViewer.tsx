@@ -30,17 +30,17 @@ interface Product3DViewerProps {
 function GradientBackground({ colors }: { colors: [string, string, string] }) {
   const { scene } = useThree();
 
-  useMemo(() => {
+  useEffect(() => {
     const canvas = document.createElement('canvas');
     canvas.width = 2;
-    canvas.height = 256;
+    canvas.height = 512;
     const ctx = canvas.getContext('2d')!;
-    const gradient = ctx.createLinearGradient(0, 0, 0, 256);
+    const gradient = ctx.createLinearGradient(0, 0, 0, 512);
     gradient.addColorStop(0, colors[0]);
     gradient.addColorStop(0.5, colors[1]);
     gradient.addColorStop(1, colors[2]);
     ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, 2, 256);
+    ctx.fillRect(0, 0, 2, 512);
 
     const tex = new THREE.CanvasTexture(canvas);
     tex.colorSpace = THREE.SRGBColorSpace;
@@ -48,6 +48,7 @@ function GradientBackground({ colors }: { colors: [string, string, string] }) {
 
     return () => {
       tex.dispose();
+      scene.background = null;
     };
   }, [scene, colors]);
 
@@ -302,11 +303,11 @@ function SceneContent({
 
   return (
     <>
-      {/* Background gradient */}
-      <GradientBackground colors={preset.bgGradient} />
-
-      {/* HDR environment for PBR reflections (not as background) */}
+      {/* HDR environment for PBR reflections (not as background — gradient provides bg) */}
       <Environment files="/assets/hdri/studio_small_03_1k.hdr" background={false} environmentIntensity={0.5} />
+
+      {/* Background gradient — MUST be after Environment to override scene.background */}
+      <GradientBackground colors={preset.bgGradient} />
 
       {/* Fog */}
       {preset.fog && <SceneFog fog={preset.fog} />}
