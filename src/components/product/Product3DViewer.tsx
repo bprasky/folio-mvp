@@ -21,11 +21,12 @@ function ProductModel({ url, color, onLoaded }: { url: string; color?: string; o
   const centeredScene = useMemo(() => {
     const clone = gltf.scene.clone();
 
-    // Deep-clone materials and apply tint color if provided
+    // Deep-clone materials; apply tint color only if mesh has no textures
     clone.traverse((child: any) => {
       if (child.isMesh && child.material) {
         child.material = child.material.clone();
-        if (color) {
+        // Only tint if the material has no base color texture (untextured mesh)
+        if (color && !child.material.map) {
           child.material.color = new THREE.Color(color);
         }
       }
