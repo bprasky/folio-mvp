@@ -6,6 +6,7 @@ import { useSession } from 'next-auth/react';
 import EditionView from '@/components/search/EditionView';
 import { MomentResult } from '@/lib/search/searchMoments';
 import type { Facet } from '@/components/search/FilterChips';
+import type { SearchUser, SearchOrg } from '@/components/search/PeopleOrgResults';
 
 interface FilterOptions {
   facets: {
@@ -30,6 +31,8 @@ export default function SearchPage() {
   const [loading, setLoading] = useState(false);
   const [filterOptions, setFilterOptions] = useState<FilterOptions | null>(null);
   const [filtersLoading, setFiltersLoading] = useState(false);
+  const [searchUsers, setSearchUsers] = useState<SearchUser[]>([]);
+  const [searchOrgs, setSearchOrgs] = useState<SearchOrg[]>([]);
   const query = searchParams.get('q') || '';
   const lens = searchParams.get('lens') || undefined;
   const scopeParam = searchParams.get('scope') as 'public' | 'private' | null;
@@ -70,14 +73,14 @@ export default function SearchPage() {
     }
   }, [scopeParam, isDesigner]);
   
-  // Fetch search results
+  // Fetch search results (moments + users/orgs)
   useEffect(() => {
     const fetchResults = async () => {
       setLoading(true);
       setError(null);
-      
+
       try {
-        const params = new URLSearchParams({
+        const momentParams = new URLSearchParams({
           q: query,
           scope,
           ...(lens && { lens }),
@@ -89,27 +92,76 @@ export default function SearchPage() {
           ...(material && { material }),
           ...(style && { style }),
         });
-        
-        const res = await fetch(`/api/search/moments?${params}`);
-        
-        if (!res.ok) {
-          const errorData = await res.json().catch(() => ({ error: 'Search failed' }));
+
+        // Fetch moments and people/orgs in parallel
+        const fetches: Promise<Response>[] = [
+          fetch(`/api/search/moments?${momentParams}`),
+        ];
+        if (query.trim().length >= 2) {
+          fetches.push(fetch(`/api/search/all?q=${encodeURIComponent(query.trim())}`));
+        }
+
+        const responses = await Promise.all(fetches);
+        const momentsRes = responses[0];
+        const peopleRes = responses[1];
+
+        if (!momentsRes.ok) {
+          const errorData = await momentsRes.json().catch(() => ({ error: 'Search failed' }));
           throw new Error(errorData.error || 'Search failed');
         }
-        
-        const data = await res.json();
-        
-        setMoments(data.moments || []);
-        setEditionTitle(data.edition?.title || 'All Moments');
+
+        const momentsData = await momentsRes.json();
+        let baseMoments: MomentResult[] = momentsData.moments || [];
+        setEditionTitle(momentsData.edition?.title || 'All Moments');
+
+        // Process people/org results
+        let users: SearchUser[] = [];
+        let orgs: SearchOrg[] = [];
+        if (peopleRes?.ok) {
+          const peopleData = await peopleRes.json();
+          users = peopleData.users || [];
+          orgs = peopleData.organizations || [];
+        }
+        setSearchUsers(users);
+        setSearchOrgs(orgs);
+
+        // If we found matching users/orgs, fetch their related moments and boost them
+        const designerIds = users.map(u => u.id);
+        const orgIds = orgs.map(o => o.id);
+
+        if (designerIds.length > 0 || orgIds.length > 0) {
+          const relatedParams = new URLSearchParams({ q: '', scope });
+          if (designerIds.length > 0) relatedParams.set('designerIds', designerIds.join(','));
+          if (orgIds.length > 0) relatedParams.set('vendorIds', orgIds.join(','));
+          relatedParams.set('limit', '10');
+
+          try {
+            const relatedRes = await fetch(`/api/search/moments?${relatedParams}`);
+            if (relatedRes.ok) {
+              const relatedData = await relatedRes.json();
+              const relatedMoments: MomentResult[] = relatedData.moments || [];
+              // Merge: related moments first, then remaining base moments (deduped)
+              const relatedIds = new Set(relatedMoments.map((m: MomentResult) => m.id));
+              const dedupedBase = baseMoments.filter(m => !relatedIds.has(m.id));
+              baseMoments = [...relatedMoments, ...dedupedBase];
+            }
+          } catch {
+            // Related fetch failed, just use base moments
+          }
+        }
+
+        setMoments(baseMoments);
       } catch (err) {
         console.error('Search error:', err);
         setError(err instanceof Error ? err.message : 'Failed to search moments');
         setMoments([]);
+        setSearchUsers([]);
+        setSearchOrgs([]);
       } finally {
         setLoading(false);
       }
     };
-    
+
     fetchResults();
   }, [query, scope, lens, room, vendor, vendorId, category, color, material, style]);
   
@@ -339,6 +391,8 @@ export default function SearchPage() {
       filtersLoading={filtersLoading}
       onFilterChange={handleFilterChange}
       searchQuery={query}
+      searchUsers={searchUsers}
+      searchOrgs={searchOrgs}
     />
   );
 }
