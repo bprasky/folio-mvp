@@ -18,6 +18,7 @@ export interface ScenePreset {
     color: string;
     reflectivity: number; // 0-1
     roughness: number;    // 0-1
+    mirror: boolean;      // true = MeshReflectorMaterial (real reflections)
   };
   lights: {
     key:     { position: [number, number, number]; color: string; intensity: number };
@@ -38,18 +39,18 @@ export const SCENE_PRESETS: Record<string, ScenePreset> = {
     id: 'salt-flats',
     name: 'Salt Flats',
     subtitle: 'The Bottega Veneta',
-    description: 'Infinite reflective plane, warm sky gradient.',
+    description: 'Infinite mirror plane reflecting a sunset sky.',
     categories: ['furniture', 'decorative', 'stone', 'lighting'],
-    bgGradient: ['#f7f0e8', '#e8ddd0', '#d4c4b0'],
-    ground: { enabled: true, color: '#ede6db', reflectivity: 0.35, roughness: 0.1 },
+    bgGradient: ['#c8d8e8', '#d4b0c0', '#e8c0a0'],
+    ground: { enabled: true, color: '#d8d0e0', reflectivity: 0.9, roughness: 0.05, mirror: true },
     lights: {
-      key:     { position: [-6, 8, 5],  color: '#fff3e0', intensity: 1.4 },
-      fill:    { position: [5, 4, 3],   color: '#f5efe6', intensity: 0.5 },
-      rim:     { position: [0, 6, -6],  color: '#ffeedd', intensity: 0.7 },
-      ambient: { color: '#f5efe6', intensity: 0.35 },
+      key:     { position: [-6, 8, 5],  color: '#ffe0c0', intensity: 1.2 },
+      fill:    { position: [5, 4, 3],   color: '#e0d0e8', intensity: 0.6 },
+      rim:     { position: [0, 6, -6],  color: '#ffd0b0', intensity: 0.8 },
+      ambient: { color: '#e0d8e8', intensity: 0.4 },
     },
-    fog: null,
-    shadow: { opacity: 0.15, color: '#8b7355' },
+    fog: { color: '#d8c8d8', near: 15, far: 50 },
+    shadow: { opacity: 0.08, color: '#8878a0' },
     effects: { goboShadows: false, waterCaustics: false },
   },
 
@@ -60,7 +61,7 @@ export const SCENE_PRESETS: Record<string, ScenePreset> = {
     description: 'No ground. Warm atmospheric gradient.',
     categories: ['lighting', 'ceramics', 'glass', 'accessories'],
     bgGradient: ['#faf5ef', '#f0e0cc', '#d4a574'],
-    ground: { enabled: false, color: '#f0e0cc', reflectivity: 0, roughness: 1 },
+    ground: { enabled: false, color: '#f0e0cc', reflectivity: 0, roughness: 1, mirror: false },
     lights: {
       key:     { position: [-5, 7, 4],  color: '#ffe8cc', intensity: 1.3 },
       fill:    { position: [6, 3, 2],   color: '#fff5eb', intensity: 0.6 },
@@ -79,7 +80,7 @@ export const SCENE_PRESETS: Record<string, ScenePreset> = {
     description: 'Raw concrete slab, dramatic side light.',
     categories: ['hardware', 'fixtures', 'stone', 'metal'],
     bgGradient: ['#e8e4df', '#d5d0ca', '#b8b2a8'],
-    ground: { enabled: true, color: '#c8c2b8', reflectivity: 0.05, roughness: 0.85 },
+    ground: { enabled: true, color: '#c8c2b8', reflectivity: 0.05, roughness: 0.85, mirror: false },
     lights: {
       key:     { position: [-8, 5, 2],  color: '#fff0dd', intensity: 1.6 },
       fill:    { position: [4, 3, 4],   color: '#e8e4df', intensity: 0.25 },
@@ -98,7 +99,7 @@ export const SCENE_PRESETS: Record<string, ScenePreset> = {
     description: 'Soft fabric surface with gentle folds.',
     categories: ['textiles', 'ceramics', 'decorative', 'accessories'],
     bgGradient: ['#f8f4ef', '#efe8df', '#e5ddd0'],
-    ground: { enabled: true, color: '#ece4d8', reflectivity: 0.02, roughness: 0.95 },
+    ground: { enabled: true, color: '#ece4d8', reflectivity: 0.02, roughness: 0.95, mirror: false },
     lights: {
       key:     { position: [-4, 8, 6],  color: '#fff8f0', intensity: 1.1 },
       fill:    { position: [5, 4, 3],   color: '#f8f4ef', intensity: 0.55 },
@@ -117,7 +118,7 @@ export const SCENE_PRESETS: Record<string, ScenePreset> = {
     description: 'Product emerges from volumetric depth.',
     categories: ['lighting', 'glass', 'furniture', 'premium'],
     bgGradient: ['#e8e0d6', '#c8bfb2', '#a09588'],
-    ground: { enabled: true, color: '#b8b0a4', reflectivity: 0.15, roughness: 0.4 },
+    ground: { enabled: true, color: '#b8b0a4', reflectivity: 0.15, roughness: 0.4, mirror: false },
     lights: {
       key:     { position: [-5, 6, 5],  color: '#ffe0bb', intensity: 1.5 },
       fill:    { position: [4, 3, 2],   color: '#d8d0c5', intensity: 0.3 },
@@ -136,7 +137,7 @@ export const SCENE_PRESETS: Record<string, ScenePreset> = {
     description: 'Calm water plane with subtle caustic light.',
     categories: ['bath', 'fixtures', 'stone', 'glass', 'ceramic'],
     bgGradient: ['#f0ebe4', '#e0d8cc', '#c8bfb0'],
-    ground: { enabled: true, color: '#d0c8bb', reflectivity: 0.5, roughness: 0.05 },
+    ground: { enabled: true, color: '#d0c8bb', reflectivity: 0.5, roughness: 0.05, mirror: true },
     lights: {
       key:     { position: [-5, 8, 5],  color: '#fff5e6', intensity: 1.2 },
       fill:    { position: [6, 2, 3],   color: '#e8e4de', intensity: 0.5 },
@@ -155,7 +156,7 @@ export const SCENE_PRESETS: Record<string, ScenePreset> = {
     description: 'Clean surface with projected architectural shadows.',
     categories: ['furniture', 'accessories', 'textiles', 'decorative'],
     bgGradient: ['#f5f0ea', '#ebe4da', '#ddd4c6'],
-    ground: { enabled: true, color: '#ebe4d8', reflectivity: 0.08, roughness: 0.6 },
+    ground: { enabled: true, color: '#ebe4d8', reflectivity: 0.08, roughness: 0.6, mirror: false },
     lights: {
       key:     { position: [-6, 10, 3], color: '#fff5e0', intensity: 1.5 },
       fill:    { position: [5, 3, 5],   color: '#f0ebe4', intensity: 0.35 },

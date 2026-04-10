@@ -2,7 +2,7 @@
 
 import { Suspense, useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { Canvas, useThree, useFrame } from '@react-three/fiber';
-import { OrbitControls, ContactShadows, useGLTF, Environment } from '@react-three/drei';
+import { OrbitControls, ContactShadows, useGLTF, Environment, MeshReflectorMaterial } from '@react-three/drei';
 import * as THREE from 'three';
 import SafeImage from '@/components/common/SafeImage';
 import {
@@ -29,6 +29,28 @@ interface Product3DViewerProps {
 
 function GroundPlane({ ground }: { ground: ScenePreset['ground'] }) {
   if (!ground.enabled) return null;
+
+  if (ground.mirror) {
+    // Real reflections — infinite mirror surface (salt flats, water)
+    return (
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.005, 0]}>
+        <planeGeometry args={[100, 100]} />
+        <MeshReflectorMaterial
+          blur={[300, 100]}
+          resolution={1024}
+          mixBlur={0.8}
+          mixStrength={0.6}
+          roughness={ground.roughness}
+          depthScale={1.2}
+          minDepthThreshold={0.4}
+          maxDepthThreshold={1.4}
+          color={ground.color}
+          metalness={ground.reflectivity}
+          mirror={0.5}
+        />
+      </mesh>
+    );
+  }
 
   return (
     <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.005, 0]} receiveShadow>
