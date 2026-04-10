@@ -20,6 +20,8 @@ interface Product3DViewerProps {
   scenePresetId?: string | null;
   productCategory?: string | null;
   onInteraction?: () => void;
+  onOrbitStart?: () => void;
+  onOrbitEnd?: () => void;
   className?: string;
 }
 
@@ -215,9 +217,13 @@ function ProductModel({
 function CameraFramer({
   box,
   onInteraction,
+  onOrbitStart,
+  onOrbitEnd,
 }: {
   box: THREE.Box3 | null;
   onInteraction?: () => void;
+  onOrbitStart?: () => void;
+  onOrbitEnd?: () => void;
 }) {
   const { camera } = useThree();
   const controlsRef = useRef<any>(null);
@@ -262,6 +268,10 @@ function CameraFramer({
           hasInteracted.current = true;
           onInteraction?.();
         }
+        onOrbitStart?.();
+      }}
+      onEnd={() => {
+        onOrbitEnd?.();
       }}
     />
   );
@@ -276,12 +286,16 @@ function SceneContent({
   color,
   preset,
   onInteraction,
+  onOrbitStart,
+  onOrbitEnd,
   onModelReady,
 }: {
   url: string;
   color?: string;
   preset: ScenePreset;
   onInteraction?: () => void;
+  onOrbitStart?: () => void;
+  onOrbitEnd?: () => void;
   onModelReady?: () => void;
 }) {
   const [modelBox, setModelBox] = useState<THREE.Box3 | null>(null);
@@ -358,7 +372,7 @@ function SceneContent({
       </Suspense>
 
       {/* Camera + controls */}
-      <CameraFramer box={modelBox} onInteraction={onInteraction} />
+      <CameraFramer box={modelBox} onInteraction={onInteraction} onOrbitStart={onOrbitStart} onOrbitEnd={onOrbitEnd} />
     </>
   );
 }
@@ -371,6 +385,8 @@ export default function Product3DViewer({
   scenePresetId,
   productCategory,
   onInteraction,
+  onOrbitStart,
+  onOrbitEnd,
   className,
 }: Product3DViewerProps) {
   const [error, setError] = useState(false);
@@ -449,6 +465,8 @@ export default function Product3DViewer({
             color={color}
             preset={preset}
             onInteraction={onInteraction}
+            onOrbitStart={onOrbitStart}
+            onOrbitEnd={onOrbitEnd}
             onModelReady={handleModelReady}
           />
         </Canvas>
