@@ -4,7 +4,6 @@ import React from "react";
 import dynamic from "next/dynamic";
 import { Product } from "@/lib/mock/product";
 import { ImmersiveHero } from "./ImmersiveHero";
-import { ProductActionsSection } from "./ProductActionsSection";
 import { GlassPanel } from "@/components/ui/GlassPanel";
 import { Gallery } from "./Gallery";
 import { InsightsPanel } from "./InsightsPanel";
@@ -48,6 +47,7 @@ export function ImmersiveProductPage({ product }: ImmersiveProductPageProps) {
       {/* Full-Bleed Immersive Hero — 100vh 3D viewport */}
       <ImmersiveHero
         media={heroMedia}
+        product={product}
         mesh3dUrl={product.mesh3dUrl}
         meshColor={(product as any).meshColor}
         scenePresetId={product.scenePresetId}
@@ -60,9 +60,6 @@ export function ImmersiveProductPage({ product }: ImmersiveProductPageProps) {
       {/* Editorial Section — Below the viewport */}
       <div className="relative z-10 bg-white/40">
         <div className="max-w-7xl mx-auto px-4 lg:px-8 py-16 space-y-16">
-          {/* Product Actions (temporary — moves to tactical menu in Phase 2) */}
-          <ProductActionsSection product={product} />
-
           {/* Description & Gallery Row */}
           <motion.div
             className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12"

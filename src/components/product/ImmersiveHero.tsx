@@ -4,6 +4,8 @@ import React, { useRef, useState, useEffect, useCallback } from "react";
 import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
 import SafeImage from "@/components/common/SafeImage";
+import { Product } from "@/lib/mock/product";
+import { TacticalMenu } from "./TacticalMenu";
 
 const Product3DViewer = dynamic(() => import("./Product3DViewer"), {
   ssr: false,
@@ -14,6 +16,7 @@ interface ImmersiveHeroProps {
     videoUrl?: string;
     imageUrl?: string;
   };
+  product: Product;
   mesh3dUrl?: string;
   meshColor?: string;
   scenePresetId?: string;
@@ -31,6 +34,7 @@ const IDLE_TIMEOUT = 2500; // ms before returning to idle after orbit ends
 
 export function ImmersiveHero({
   media,
+  product,
   mesh3dUrl,
   meshColor,
   scenePresetId,
@@ -42,6 +46,7 @@ export function ImmersiveHero({
   const [show3D, setShow3D] = useState(!!mesh3dUrl);
   const [isOrbiting, setIsOrbiting] = useState(false);
   const [hasScrolled, setHasScrolled] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Orbit state callbacks
@@ -51,6 +56,7 @@ export function ImmersiveHero({
       idleTimerRef.current = null;
     }
     setIsOrbiting(true);
+    setMenuOpen(false); // Close tactical menu on orbit
   }, []);
 
   const handleOrbitEnd = useCallback(() => {
@@ -130,6 +136,7 @@ export function ImmersiveHero({
             productCategory={productCategory}
             onOrbitStart={handleOrbitStart}
             onOrbitEnd={handleOrbitEnd}
+            onDoubleClick={() => setMenuOpen((prev) => !prev)}
             className="w-full h-full"
           />
         </div>
@@ -183,6 +190,17 @@ export function ImmersiveHero({
         >
           {title}
         </h1>
+      </div>
+
+      {/* Tactical Menu — Bottom Right */}
+      <div className="absolute bottom-8 right-8 lg:bottom-16 lg:right-16 z-20">
+        <TacticalMenu
+          product={product}
+          isOpen={menuOpen}
+          onToggle={() => setMenuOpen((prev) => !prev)}
+          onClose={() => setMenuOpen(false)}
+          hudOpacity={hudOpacity}
+        />
       </div>
 
       {/* Scroll Indicator — Bottom Center, Desktop Only */}

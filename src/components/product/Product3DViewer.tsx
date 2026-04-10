@@ -22,6 +22,7 @@ interface Product3DViewerProps {
   onInteraction?: () => void;
   onOrbitStart?: () => void;
   onOrbitEnd?: () => void;
+  onDoubleClick?: () => void;
   className?: string;
 }
 
@@ -387,6 +388,7 @@ export default function Product3DViewer({
   onInteraction,
   onOrbitStart,
   onOrbitEnd,
+  onDoubleClick,
   className,
 }: Product3DViewerProps) {
   const [error, setError] = useState(false);
@@ -447,6 +449,7 @@ export default function Product3DViewer({
           opacity: modelReady ? 1 : 0,
           transition: 'opacity 500ms ease-out',
         }}
+        onDoubleClick={onDoubleClick}
       >
         <Canvas
           gl={{
