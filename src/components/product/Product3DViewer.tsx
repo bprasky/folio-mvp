@@ -9,6 +9,7 @@ import {
   SCENE_PRESETS,
   DEFAULT_PRESET_ID,
   getRecommendedPreset,
+  resolvePresetId,
   type ScenePreset,
 } from '@/lib/three-d/scene-presets';
 
@@ -34,7 +35,7 @@ function GroundPlane({ ground }: { ground: ScenePreset['ground'] }) {
   if (!ground.enabled) return null;
 
   if (ground.mirror) {
-    // Real reflections — infinite mirror surface (salt flats, water)
+    // Real reflections — infinite mirror surface (water preset)
     return (
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.005, 0]}>
         <planeGeometry args={[100, 100]} />
@@ -399,8 +400,9 @@ export default function Product3DViewer({
     setModelReady(true);
   }, []);
 
-  // Resolve preset
-  const presetId = scenePresetId || getRecommendedPreset(productCategory) || DEFAULT_PRESET_ID;
+  // Resolve preset (handles legacy IDs like 'salt-flats' → 'sunset')
+  const resolvedId = resolvePresetId(scenePresetId);
+  const presetId = SCENE_PRESETS[resolvedId] ? resolvedId : (getRecommendedPreset(productCategory) || DEFAULT_PRESET_ID);
   const preset = SCENE_PRESETS[presetId] || SCENE_PRESETS[DEFAULT_PRESET_ID];
 
   // If caller provides a className with height (e.g. h-full), use it; otherwise default

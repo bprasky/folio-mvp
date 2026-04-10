@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { SCENE_PRESETS, DEFAULT_PRESET_ID } from '@/lib/three-d/scene-presets';
+import { SCENE_PRESETS, DEFAULT_PRESET_ID, resolvePresetId } from '@/lib/three-d/scene-presets';
 import { Check } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -25,7 +25,9 @@ export function ScenePresetPicker({
   productCategory,
   onPresetChange,
 }: ScenePresetPickerProps) {
-  const [selected, setSelected] = useState<string | null>(currentPresetId || null);
+  const [selected, setSelected] = useState<string | null>(
+    currentPresetId ? resolvePresetId(currentPresetId) : null
+  );
   const [saving, setSaving] = useState(false);
 
   const handleSelect = async (presetId: string | null) => {
