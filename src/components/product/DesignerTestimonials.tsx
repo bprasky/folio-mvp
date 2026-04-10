@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Star } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 interface Testimonial {
   id: string;
@@ -35,7 +35,7 @@ export function DesignerTestimonials({ productId }: DesignerTestimonialsProps) {
     async function fetchTestimonials() {
       try {
         const response = await fetch(
-          `/api/products/${productId}/testimonials?limit=10`
+          `/api/products/${productId}/testimonials?limit=6`
         );
         if (!response.ok) {
           throw new Error('Failed to fetch testimonials');
@@ -53,94 +53,61 @@ export function DesignerTestimonials({ productId }: DesignerTestimonialsProps) {
     fetchTestimonials();
   }, [productId]);
 
-  if (loading) {
-    return (
-      <div className="bg-white rounded-lg shadow-sm p-6">
-        <h2 className="text-2xl font-semibold mb-4">What Designers Are Saying</h2>
-        <div className="animate-pulse space-y-4">
-          {[1, 2].map((i) => (
-            <div key={i} className="space-y-2">
-              <div className="h-4 bg-surface-ground rounded w-3/4" />
-              <div className="h-4 bg-surface-ground rounded w-1/2" />
-              <div className="flex items-center gap-2 mt-3">
-                <div className="w-8 h-8 bg-surface-ground rounded-full" />
-                <div className="h-3 bg-surface-ground rounded w-24" />
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  if (error || testimonials.length === 0) {
-    return null; // Don't show section if no testimonials
+  // No loading skeleton — section simply doesn't exist until data arrives
+  if (loading || error || testimonials.length === 0) {
+    return null;
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-semibold" style={{ color: '#2C2825' }}>
-          What Designers Are Saying
-        </h2>
-        <span className="text-sm" style={{ color: '#8B8178' }}>
-          {testimonials.length} testimonial{testimonials.length !== 1 ? 's' : ''}
-        </span>
-      </div>
+    <motion.section
+      initial={{ opacity: 0, y: 16 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-80px" }}
+      transition={{ duration: 0.4, ease: [0.25, 0.8, 0.25, 1] }}
+    >
+      <h2
+        className="font-headline font-light mb-6"
+        style={{ fontSize: "clamp(20px, 2.5vw, 28px)", color: "var(--folio-text-primary, #1a1a1a)" }}
+      >
+        What Designers Are Saying
+      </h2>
 
-      {/* Masonry-style grid: 1 column mobile, 2 columns desktop */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="space-y-3">
         {testimonials.map((testimonial) => (
-          <TestimonialCard key={testimonial.id} testimonial={testimonial} />
+          <QuoteCard key={testimonial.id} testimonial={testimonial} />
         ))}
       </div>
-    </div>
+    </motion.section>
   );
 }
 
-function TestimonialCard({ testimonial }: { testimonial: Testimonial }) {
+function QuoteCard({ testimonial }: { testimonial: Testimonial }) {
   return (
     <div
-      className="relative rounded-xl p-5 border transition-shadow hover:shadow-md"
+      className="rounded-xl px-5 py-4"
       style={{
-        backgroundColor: '#FAF9F7',
-        borderColor: '#E8E4DF',
+        background: "rgba(245, 239, 232, 0.6)",
+        borderLeft: "2px solid #c9a96e",
       }}
     >
-      {/* Featured badge */}
-      {testimonial.isFeatured && (
-        <div
-          className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium"
-          style={{ backgroundColor: '#FEF3C7', color: '#92400E' }}
-        >
-          <Star className="w-3 h-3 fill-current" />
-          <span>Featured</span>
-        </div>
-      )}
-
-      {/* Quote */}
+      {/* Quote text */}
       <blockquote
-        className="text-base leading-relaxed italic mb-4"
-        style={{ color: '#2C2825' }}
+        className="font-headline italic"
+        style={{
+          fontSize: "15px",
+          lineHeight: 1.5,
+          color: "var(--folio-text-primary, #1a1a1a)",
+        }}
       >
-        <span
-          className="text-3xl font-headline leading-none mr-1"
-          style={{ color: '#C4BEB5' }}
-        >
-          &ldquo;
-        </span>
-        {testimonial.quote}
-        <span
-          className="text-3xl font-headline leading-none ml-1"
-          style={{ color: '#C4BEB5' }}
-        >
-          "
-        </span>
+        {testimonial.isFeatured && (
+          <span style={{ color: "#c9a96e", marginRight: "4px" }}>&#9733;</span>
+        )}
+        &ldquo;{testimonial.quote}&rdquo;
       </blockquote>
 
-      {/* Designer info */}
-      <div className="flex items-center gap-3">
-        {/* Avatar */}
+      {/* Attribution row */}
+      <div className="flex items-center gap-2.5 mt-3">
+        {/* Designer avatar */}
         <Link
           href={`/designer/${testimonial.designer.id}?tab=shop`}
           className="flex-shrink-0"
@@ -149,46 +116,56 @@ function TestimonialCard({ testimonial }: { testimonial: Testimonial }) {
             <Image
               src={testimonial.designer.profileImage}
               alt={testimonial.designer.name || 'Designer'}
-              width={40}
-              height={40}
+              width={28}
+              height={28}
               className="rounded-full object-cover"
             />
           ) : (
             <div
-              className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium"
-              style={{ backgroundColor: '#E8E4DF', color: '#8B8178' }}
+              className="w-7 h-7 rounded-full flex items-center justify-center font-body"
+              style={{
+                backgroundColor: "rgba(201, 169, 110, 0.15)",
+                color: "#8a7044",
+                fontSize: "11px",
+                fontWeight: 500,
+              }}
             >
               {(testimonial.designer.name || 'D').charAt(0).toUpperCase()}
             </div>
           )}
         </Link>
 
-        {/* Name and link to shop */}
-        <div className="min-w-0 flex-1">
+        {/* Name + project link + shop link */}
+        <div className="flex items-center gap-1.5 flex-wrap font-body" style={{ fontSize: "11px" }}>
           <Link
             href={`/designer/${testimonial.designer.id}?tab=shop`}
-            className="font-medium text-sm hover:underline block truncate"
-            style={{ color: '#2C2825' }}
+            className="hover:underline"
+            style={{ color: "var(--folio-text-secondary, #6b6b6b)" }}
           >
-            {testimonial.designer.name || 'Anonymous Designer'}
+            {testimonial.designer.name || 'Designer'}
           </Link>
-          {testimonial.designer.companyName && (
-            <p
-              className="text-xs truncate"
-              style={{ color: '#8B8178' }}
-            >
-              {testimonial.designer.companyName}
-            </p>
-          )}
+
           {testimonial.project && (
-            <Link
-              href={`/project/${testimonial.project.id}`}
-              className="text-xs hover:underline block truncate"
-              style={{ color: '#A9A29A' }}
-            >
-              from {testimonial.project.title}
-            </Link>
+            <>
+              <span style={{ color: "var(--folio-text-tertiary, #9b9b9b)" }}>&middot;</span>
+              <Link
+                href={`/project/${testimonial.project.id}`}
+                className="hover:underline"
+                style={{ color: "var(--folio-text-secondary, #6b6b6b)" }}
+              >
+                {testimonial.project.title} →
+              </Link>
+            </>
           )}
+
+          <span style={{ color: "var(--folio-text-tertiary, #9b9b9b)" }}>&middot;</span>
+          <Link
+            href={`/designer/${testimonial.designer.id}?tab=shop`}
+            className="hover:underline"
+            style={{ color: "#8a7044" }}
+          >
+            View shop →
+          </Link>
         </div>
       </div>
     </div>

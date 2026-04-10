@@ -63,6 +63,38 @@ export const getProductById = cache(async (id: string): Promise<(Product & {
     if (bbox?.dominantColor) meshColor = bbox.dominantColor;
   }
 
+  // Enrich with CachedProduct data (dimensions, materials) if available
+  let cachedDimensions = { w: 0, d: 0, h: 0 };
+  let cachedMaterials: string[] = [];
+  let cachedLeadTime: string | undefined;
+
+  if (productFromDB.url) {
+    try {
+      const cached = await prisma.cachedProduct.findUnique({
+        where: { url: productFromDB.url },
+        select: {
+          widthIn: true,
+          depthIn: true,
+          heightIn: true,
+          materialType: true,
+          categories: true,
+        },
+      });
+      if (cached) {
+        cachedDimensions = {
+          w: cached.widthIn ? Number(cached.widthIn) : 0,
+          d: cached.depthIn ? Number(cached.depthIn) : 0,
+          h: cached.heightIn ? Number(cached.heightIn) : 0,
+        };
+        if (cached.materialType) {
+          cachedMaterials = [cached.materialType];
+        }
+      }
+    } catch {
+      // CachedProduct lookup is best-effort
+    }
+  }
+
   const completeness = getServerProductCompleteness(productFromDB);
 
   const product = {
@@ -74,11 +106,11 @@ export const getProductById = cache(async (id: string): Promise<(Product & {
     assets: productFromDB.imageUrl
       ? [{ type: "image" as const, src: productFromDB.imageUrl, alt: productFromDB.name }]
       : [],
-    materials: [] as string[],
+    materials: cachedMaterials,
     finish: "",
-    dimensions: { w: 0, d: 0, h: 0, units: "in" as const },
+    dimensions: { ...cachedDimensions, units: "in" as const },
     sku: productFromDB.brand || "",
-    leadTime: undefined,
+    leadTime: cachedLeadTime,
     weight: undefined,
     files: { specSheets: [] as any[], _3d: [] as any[] },
     inspiration: [] as any[],
