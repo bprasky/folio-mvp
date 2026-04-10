@@ -19,6 +19,8 @@ export const dynamic = 'force-dynamic';
  *   color?: string (color filter)
  *   material?: string (material filter)
  *   style?: string (style filter)
+ *   designerIds?: string (comma-separated designer user IDs)
+ *   vendorIds?: string (comma-separated vendor org IDs)
  *   limit?: number (default 40)
  *   cursor?: string (pagination)
  */
@@ -50,6 +52,11 @@ export async function GET(request: NextRequest) {
     if (color) filters.color = color;
     if (material) filters.material = material;
     if (style) filters.style = style;
+
+    const designerIdsParam = searchParams.get('designerIds');
+    const vendorIdsParam = searchParams.get('vendorIds');
+    if (designerIdsParam) filters.designerIds = designerIdsParam.split(',').filter(Boolean);
+    if (vendorIdsParam) filters.vendorIds = vendorIdsParam.split(',').filter(Boolean);
     
     // Validate scope
     if (scope !== 'public' && scope !== 'private') {

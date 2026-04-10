@@ -5,6 +5,7 @@ import { MomentResult } from '@/lib/search/searchMoments';
 import SearchMosaic from './SearchMosaic';
 import MomentExpanded from './MomentExpanded';
 import FilterChips, { Facet } from './FilterChips';
+import PeopleOrgResults, { SearchUser, SearchOrg } from './PeopleOrgResults';
 
 interface EditionViewProps {
   moments: MomentResult[];
@@ -31,6 +32,8 @@ interface EditionViewProps {
   filtersLoading?: boolean;
   onFilterChange?: (filterType: string, value: string | null) => void;
   searchQuery?: string;
+  searchUsers?: SearchUser[];
+  searchOrgs?: SearchOrg[];
 }
 
 /**
@@ -51,6 +54,8 @@ export default function EditionView({
   filtersLoading = false,
   onFilterChange,
   searchQuery = '',
+  searchUsers = [],
+  searchOrgs = [],
 }: EditionViewProps) {
   const [selectedMoment, setSelectedMoment] = useState<MomentResult | null>(null);
   
@@ -251,6 +256,9 @@ export default function EditionView({
         </div>
       </div>
       
+      {/* People & Organization Results */}
+      <PeopleOrgResults users={searchUsers} organizations={searchOrgs} />
+
       {/* Filter Chips - Editorial curation, subtle and minimal */}
       {filterOptions && onFilterChange && (
         <div className="w-full px-2 sm:px-3 pb-4">

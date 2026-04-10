@@ -109,6 +109,8 @@ export interface SearchFilters {
   color?: string;
   material?: string;
   style?: string;
+  designerIds?: string[];
+  vendorIds?: string[];
 }
 
 /**
@@ -248,6 +250,14 @@ export async function searchMoments(params: {
   
   if (filters?.style) {
     filterConditions.push({ styles: { has: filters.style.toLowerCase() } });
+  }
+
+  if (filters?.designerIds && filters.designerIds.length > 0) {
+    filterConditions.push({ designerId: { in: filters.designerIds } });
+  }
+
+  if (filters?.vendorIds && filters.vendorIds.length > 0) {
+    filterConditions.push({ vendorIds: { hasSome: filters.vendorIds } });
   }
   
   // Apply query filter if provided
