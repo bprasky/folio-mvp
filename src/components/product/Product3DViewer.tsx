@@ -293,8 +293,14 @@ function SceneContent({
 
   return (
     <>
-      {/* HDR environment for PBR reflections (gradient is CSS behind the canvas) */}
-      <Environment files="/assets/hdri/studio_small_03_1k.hdr" background={false} environmentIntensity={0.5} />
+      {/* HDRI environment — provides realistic sky background + image-based lighting */}
+      <Environment
+        preset={preset.environment.preset as any}
+        background={true}
+        backgroundBlurriness={preset.environment.backgroundBlurriness}
+        backgroundIntensity={preset.environment.backgroundIntensity}
+        environmentIntensity={preset.environment.environmentIntensity}
+      />
 
       {/* Fog */}
       {preset.fog && <SceneFog fog={preset.fog} />}
@@ -424,12 +430,11 @@ export default function Product3DViewer({
         style={{
           opacity: modelReady ? 1 : 0,
           transition: 'opacity 500ms ease-out',
-          background: `linear-gradient(180deg, ${preset.bgGradient[0]}, ${preset.bgGradient[1]}, ${preset.bgGradient[2]})`,
         }}
       >
         <Canvas
           gl={{
-            alpha: true,
+            alpha: false,
             antialias: true,
             toneMapping: THREE.ACESFilmicToneMapping,
             toneMappingExposure: 1.1,
