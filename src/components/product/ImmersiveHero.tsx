@@ -102,12 +102,15 @@ export function ImmersiveHero({
 
   return (
     <div
-      className="relative h-screen w-full overflow-hidden"
-      style={
-        gradientStyle || {
+      className="relative w-full overflow-hidden"
+      style={{
+        height: "100vh",
+        marginTop: "-64px",  // Pull up behind the sticky nav
+        paddingTop: "0px",   // No padding — 3D scene fills behind nav
+        ...(gradientStyle || {
           background: "linear-gradient(to bottom, #f5f0eb, #ede8e2, #e8e2db)",
-        }
-      }
+        }),
+      }}
     >
       {/* 3D/Image Toggle Badge */}
       {mesh3dUrl && (
@@ -160,40 +163,39 @@ export function ImmersiveHero({
         </div>
       )}
 
-      {/* HUD: Product Identity — Top Left, below nav */}
+      {/* HUD: Product Identity — Top Left, below nav, etched white text */}
       <div
         className="absolute top-20 left-6 lg:top-24 lg:left-12 z-10 pointer-events-none max-w-md"
         style={{
           opacity: hudOpacity,
           transition: "opacity 300ms ease-out",
+          filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.25))",
         }}
       >
         {brand && (
           <div
-            className="font-body uppercase font-normal mb-1.5"
+            className="font-body uppercase font-normal mb-1.5 text-white/70"
             style={{
               fontSize: "clamp(11px, 1.2vw, 14px)",
               letterSpacing: "0.14em",
-              color: "rgba(120, 113, 108, 0.8)",
             }}
           >
             {brand}
           </div>
         )}
         <h1
-          className="font-headline italic font-normal tracking-tight"
+          className="font-headline italic font-normal tracking-tight text-white"
           style={{
             fontSize: "clamp(24px, 3.5vw, 42px)",
             lineHeight: 1.1,
-            color: "rgba(28, 25, 23, 0.85)",
           }}
         >
           {title}
         </h1>
       </div>
 
-      {/* Tactical Menu — Right of model, vertically centered */}
-      <div className="absolute top-1/2 right-6 lg:right-12 -translate-y-1/2 z-20">
+      {/* Tactical Menu — Just off the right side of the model */}
+      <div className="absolute top-1/2 right-[18%] lg:right-[22%] -translate-y-1/2 z-20">
         <TacticalMenu
           product={product}
           isOpen={menuOpen}
