@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import type { NormalizedTag } from './types';
 
 interface MobileTapOverlayProps {
@@ -10,64 +11,126 @@ interface MobileTapOverlayProps {
 
 /**
  * Mobile touch interaction for tagged images.
- * Single tap: all tag labels appear as glass-badges for 3 seconds.
- * Tap a specific label: fires onTagTap (triggers lift-off/expand/navigate).
+ * Tap image: white dots reveal for 3 seconds, then fade.
+ * Long-press: dots stay until tap-away.
+ * Tap a dot: fires onTagTap immediately.
  */
 export function MobileTapOverlay({ tags, onTagTap }: MobileTapOverlayProps) {
-  const [showLabels, setShowLabels] = useState(false);
-  const [dismissTimer, setDismissTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
+  const [showDots, setShowDots] = useState(false);
+  const [persistent, setPersistent] = useState(false);
+  const dismissTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const longPressTriggered = useRef(false);
 
-  const handleContainerTap = useCallback(() => {
-    if (showLabels) {
-      // Already showing — dismiss
-      setShowLabels(false);
-      if (dismissTimer) clearTimeout(dismissTimer);
+  const clearTimers = useCallback(() => {
+    if (dismissTimer.current) {
+      clearTimeout(dismissTimer.current);
+      dismissTimer.current = null;
+    }
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  }, []);
+
+  // Cleanup
+  useEffect(() => {
+    return clearTimers;
+  }, [clearTimers]);
+
+  const handleTouchStart = useCallback(() => {
+    longPressTriggered.current = false;
+    longPressTimer.current = setTimeout(() => {
+      // Long press: show dots persistently
+      longPressTriggered.current = true;
+      setShowDots(true);
+      setPersistent(true);
+      if (dismissTimer.current) {
+        clearTimeout(dismissTimer.current);
+        dismissTimer.current = null;
+      }
+    }, 300);
+  }, []);
+
+  const handleTouchEnd = useCallback(() => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+
+    if (longPressTriggered.current) return;
+
+    // Short tap
+    if (showDots && !persistent) {
+      // Already showing from previous tap — dismiss
+      setShowDots(false);
+      if (dismissTimer.current) clearTimeout(dismissTimer.current);
       return;
     }
 
-    setShowLabels(true);
-    const timer = setTimeout(() => setShowLabels(false), 3000);
-    setDismissTimer(timer);
-  }, [showLabels, dismissTimer]);
+    if (persistent) {
+      // Persistent mode — tap away dismisses
+      setShowDots(false);
+      setPersistent(false);
+      return;
+    }
 
-  // Cleanup timer
-  useEffect(() => {
-    return () => {
-      if (dismissTimer) clearTimeout(dismissTimer);
-    };
-  }, [dismissTimer]);
+    // First tap: show dots for 3 seconds
+    setShowDots(true);
+    setPersistent(false);
+    dismissTimer.current = setTimeout(() => {
+      setShowDots(false);
+    }, 3000);
+  }, [showDots, persistent]);
 
-  const handleLabelTap = useCallback(
+  const handleDotTap = useCallback(
     (e: React.MouseEvent, tag: NormalizedTag) => {
       e.stopPropagation();
-      setShowLabels(false);
-      if (dismissTimer) clearTimeout(dismissTimer);
+      setShowDots(false);
+      setPersistent(false);
+      clearTimers();
       onTagTap(tag);
     },
-    [onTagTap, dismissTimer]
+    [onTagTap, clearTimers]
   );
 
   return (
     <div
       className="absolute inset-0 z-[2] md:hidden"
-      onClick={handleContainerTap}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
     >
-      {showLabels &&
-        tags.map((tag) => (
-          <button
-            key={tag.id}
-            type="button"
-            className="absolute z-[21] glass-badge px-2.5 py-1 text-[10px] font-medium animate-in fade-in duration-200"
-            style={{
-              left: `${tag.xPercent}%`,
-              top: `${tag.yPercent}%`,
-              transform: 'translate(-50%, -50%)',
-            }}
-            onClick={(e) => handleLabelTap(e, tag)}
+      <AnimatePresence>
+        {showDots && (
+          <motion.div
+            className="absolute inset-0 pointer-events-none"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15, ease: 'easeOut' }}
           >
-            {tag.label}
-          </button>
-        ))}
+            {tags.map((tag) => (
+              <button
+                key={tag.id}
+                type="button"
+                className="absolute z-[21] pointer-events-auto rounded-full"
+                style={{
+                  left: `${tag.xPercent}%`,
+                  top: `${tag.yPercent}%`,
+                  transform: 'translate(-50%, -50%)',
+                  width: 8,
+                  height: 8,
+                  backgroundColor: 'var(--tag-dot-color)',
+                  border: 'var(--tag-dot-border)',
+                  boxShadow: 'var(--tag-dot-shadow)',
+                }}
+                onClick={(e) => handleDotTap(e, tag)}
+                aria-label={`View ${tag.label}`}
+              />
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

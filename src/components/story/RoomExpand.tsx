@@ -65,7 +65,7 @@ export function RoomExpand({
                 sizes="100vw"
                 priority
               />
-              <TaggedImage image={room.heroImage} />
+              <TaggedImage surface="post" image={room.heroImage} />
             </div>
 
             {/* Room label + collapse */}
@@ -128,7 +128,7 @@ export function RoomExpand({
                         sizes="(max-width: 768px) 100vw, 50vw"
                       />
                       {/* Tag dots always visible in expanded gallery */}
-                      <TaggedImage image={img} />
+                      <TaggedImage surface="post" image={img} />
                     </div>
                   ))}
                 </div>

@@ -46,7 +46,7 @@ export function HeroSpreadBlock({ image, project, roomName, showTitle = true }: 
         
         {/* Photo Tag Hotspots */}
         {image.tags && image.tags.length > 0 && (
-          <TaggedImage image={image} />
+          <TaggedImage image={image} surface="post" />
         )}
         
         {/* Glassmorphic Overlay - Bottom */}

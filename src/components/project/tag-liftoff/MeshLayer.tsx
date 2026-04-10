@@ -76,6 +76,7 @@ function SceneContent({ url, onLoaded, rotateSpeed = 3 }: { url: string; onLoade
         autoRotate={autoRotate}
         autoRotateSpeed={rotateSpeed}
         enablePan={false}
+        enableZoom={false}
         maxPolarAngle={Math.PI / 2}
         minDistance={2}
         maxDistance={6}

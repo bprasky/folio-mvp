@@ -51,7 +51,7 @@ export default function MagazineCoverHero({ hero, edition }: Props) {
 
           {/* Tagged product interaction overlay */}
           {hero.heroImage && hero.heroImage.tags?.length > 0 && (
-            <TaggedImage image={hero.heroImage} interactionLevel="explore" />
+            <TaggedImage image={hero.heroImage} interactionLevel="explore" surface="magazine" />
           )}
 
           {/* Gradient overlay for bottom text legibility */}

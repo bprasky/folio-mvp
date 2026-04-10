@@ -58,7 +58,7 @@ export function SplitEditorialBlock({
           />
           {/* Photo Tag Hotspots */}
           {image.tags && image.tags.length > 0 && (
-            <TaggedImage image={image} />
+            <TaggedImage image={image} surface="post" />
           )}
         </div>
         

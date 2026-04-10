@@ -34,7 +34,7 @@ export function DetailBlock({ image, caption, roomName }: DetailBlockProps) {
         />
         {/* Photo Tag Hotspots */}
         {image.tags && image.tags.length > 0 && (
-          <TaggedImage image={image} />
+          <TaggedImage image={image} surface="post" />
         )}
       </div>
       
