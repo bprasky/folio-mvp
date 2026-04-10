@@ -310,10 +310,12 @@ function SceneContent({
 
   return (
     <>
-      {/* HDRI environment — reflections + IBL lighting only, not visible */}
+      {/* HDRI environment — visible as abstract wash at high blur, plus IBL */}
       <Environment
         files={preset.environment.hdriPath}
-        background={false}
+        background={true}
+        backgroundBlurriness={preset.environment.backgroundBlurriness}
+        backgroundIntensity={preset.environment.backgroundIntensity}
         environmentIntensity={preset.environment.environmentIntensity}
       />
 
@@ -458,7 +460,7 @@ export default function Product3DViewer({
       >
         <Canvas
           gl={{
-            alpha: true,
+            alpha: false,
             antialias: true,
             toneMapping: THREE.ACESFilmicToneMapping,
             toneMappingExposure: 1.1,
