@@ -444,6 +444,17 @@ body:has([data-testid="cinematic-bg"]) {
   background: transparent !important;
 }
 
+/* Immersive Product Page — nav fade on orbit state */
+body[data-immersive-state="idle"] .editorial-masthead-header {
+  opacity: 0.8;
+  transition: opacity 200ms ease-in;
+}
+body[data-immersive-state="orbiting"] .editorial-masthead-header {
+  opacity: 0 !important;
+  pointer-events: none;
+  transition: opacity 300ms ease-out;
+}
+
 /* Folio Cinematic Gradient (MUST load last to win cascade) */
 @import '../styles/folio-gradient.css';
 

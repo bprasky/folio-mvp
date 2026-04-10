@@ -90,7 +90,7 @@ export function EditorialMasthead() {
     <>
       {/* Sticky Navigation Bar */}
       <motion.header
-        className={`sticky top-0 z-50 w-full transition-colors duration-300 ${
+        className={`editorial-masthead-header sticky top-0 z-50 w-full transition-colors duration-300 ${
           isMagazinePage && !isScrolled
             ? 'border-b border-transparent'
             : 'border-b border-white/15'
