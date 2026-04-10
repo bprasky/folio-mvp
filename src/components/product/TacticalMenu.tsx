@@ -23,13 +23,14 @@ interface TacticalMenuProps {
   hudOpacity?: number;
 }
 
-// Radial menu item positions (arc layout, bottom-right origin)
-// Items fan out in an arc above-left of the trigger
+// Radial menu item positions — clockwise from 12:00 (fanning right, away from product)
+// Trigger sits to the right of the product; items arc outward to not obscure it
+const RADIAL_RADIUS = 72;
 const RADIAL_POSITIONS = [
-  { x: -70, y: -30 },   // Add to Project (right)
-  { x: -45, y: -65 },   // Download 3D (upper-right)
-  { x: -5, y: -80 },    // Download Spec (top)
-  { x: 35, y: -65 },    // Order Sample (upper-left)
+  { x: 0, y: -RADIAL_RADIUS },                                    // 12:00 — straight up
+  { x: RADIAL_RADIUS * 0.71, y: -RADIAL_RADIUS * 0.71 },         // 1:30 — upper-right
+  { x: RADIAL_RADIUS, y: 0 },                                     // 3:00 — right
+  { x: RADIAL_RADIUS * 0.71, y: RADIAL_RADIUS * 0.71 },          // 4:30 — lower-right
 ];
 
 const MENU_ITEMS = [
@@ -172,17 +173,18 @@ export function TacticalMenu({
   const has3D = !!product.mesh3dUrl;
 
   return (
-    <div ref={menuRef} className="z-30">
-      {/* Trigger Button — ⊕ */}
+    <div ref={menuRef} className="z-30 relative">
+      {/* Trigger Button — ⊕ with glass styling */}
       <button
         onClick={onToggle}
-        className="flex items-center justify-center rounded-full transition-all"
+        className="flex items-center justify-center rounded-full transition-all backdrop-blur-xl"
         style={{
-          width: isMobile ? 56 : 40,
-          height: isMobile ? 56 : 40,
-          backgroundColor: isOpen ? "rgba(255, 252, 247, 0.95)" : "rgba(255, 252, 247, 0.85)",
-          boxShadow: "0 2px 12px rgba(0, 0, 0, 0.08)",
-          opacity: isOpen ? 1 : hudOpacity * 0.6 + 0.4, // min 40% when HUD fades
+          width: isMobile ? 56 : 44,
+          height: isMobile ? 56 : 44,
+          backgroundColor: isOpen ? "rgba(255, 255, 255, 0.55)" : "rgba(255, 255, 255, 0.35)",
+          boxShadow: "0 2px 16px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255,255,255,0.4)",
+          border: "1px solid rgba(255, 255, 255, 0.3)",
+          opacity: isOpen ? 1 : hudOpacity * 0.6 + 0.4,
           transition: "opacity 300ms ease-out, background-color 200ms ease",
         }}
         aria-label={isOpen ? "Close actions menu" : "Open actions menu"}
@@ -193,15 +195,19 @@ export function TacticalMenu({
           animate={{ rotate: isOpen ? 45 : 0 }}
           transition={{ duration: 0.2, ease: "easeOut" }}
         >
-          <Plus className="w-5 h-5 text-stone-700" />
+          <Plus className="w-5 h-5 text-stone-500" />
         </motion.div>
       </button>
 
-      {/* Desktop: Radial Menu */}
+      {/* Desktop: Radial Menu — clockwise from 12:00 */}
       {!isMobile && (
         <AnimatePresence>
           {isOpen && (
-            <div className="absolute" role="menu" style={{ bottom: 0, right: 0 }}>
+            <div
+              className="absolute"
+              role="menu"
+              style={{ top: "50%", left: "50%", transform: "translate(-50%, -50%)" }}
+            >
               {MENU_ITEMS.map((item, index) => {
                 const pos = RADIAL_POSITIONS[index];
                 const isDisabled = item.id === "download-3d" && !has3D;
@@ -211,46 +217,53 @@ export function TacticalMenu({
                   <motion.button
                     key={item.id}
                     role="menuitem"
-                    initial={{ opacity: 0, x: 0, y: 0, scale: 0.5 }}
+                    initial={{ opacity: 0, x: 0, y: 0, scale: 0.3 }}
                     animate={{
                       opacity: isDisabled ? 0.4 : 1,
                       x: pos.x,
                       y: pos.y,
                       scale: 1,
                     }}
-                    exit={{ opacity: 0, x: 0, y: 0, scale: 0.5 }}
+                    exit={{ opacity: 0, x: 0, y: 0, scale: 0.3 }}
                     transition={{
-                      duration: 0.25,
+                      duration: 0.3,
                       delay: index * 0.05,
-                      ease: [0.34, 1.56, 0.64, 1], // spring-like
+                      ease: [0.34, 1.56, 0.64, 1],
                     }}
                     onClick={() => !isDisabled && handleAction(item.id)}
                     disabled={isDisabled}
-                    className={`absolute flex items-center justify-center rounded-full group ${
+                    className={`absolute flex items-center justify-center rounded-full group backdrop-blur-xl ${
                       isDisabled ? "cursor-not-allowed" : "cursor-pointer"
                     }`}
                     style={{
-                      width: 40,
-                      height: 40,
+                      width: 42,
+                      height: 42,
+                      marginLeft: -21,
+                      marginTop: -21,
                       backgroundColor: item.accent
-                        ? "#c9a96e"
-                        : "rgba(255, 252, 247, 0.85)",
-                      boxShadow: "0 2px 12px rgba(0, 0, 0, 0.08)",
+                        ? "rgba(201, 169, 110, 0.9)"
+                        : "rgba(255, 255, 255, 0.45)",
+                      boxShadow: "0 2px 16px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255,255,255,0.4)",
+                      border: item.accent
+                        ? "1px solid rgba(201, 169, 110, 0.6)"
+                        : "1px solid rgba(255, 255, 255, 0.35)",
                       outline: isFocused ? "2px solid #c9a96e" : "none",
                       outlineOffset: 2,
                     }}
                     aria-label={item.label}
                   >
                     <item.Icon
-                      className={`w-4 h-4 ${item.accent ? "text-white" : "text-stone-700"}`}
+                      className={`w-4 h-4 ${item.accent ? "text-white" : "text-stone-600"}`}
                     />
                     {/* Hover label */}
                     <span
-                      className="absolute whitespace-nowrap px-2 py-1 rounded text-xs font-medium bg-stone-900 text-white opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity"
+                      className="absolute whitespace-nowrap px-2.5 py-1 rounded-full text-xs font-medium backdrop-blur-md opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity"
                       style={{
-                        bottom: "calc(100% + 6px)",
+                        bottom: "calc(100% + 8px)",
                         left: "50%",
                         transform: "translateX(-50%)",
+                        backgroundColor: "rgba(28, 25, 23, 0.75)",
+                        color: "white",
                       }}
                     >
                       {item.label}
