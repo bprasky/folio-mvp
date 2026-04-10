@@ -293,9 +293,9 @@ function SceneContent({
 
   return (
     <>
-      {/* HDRI environment — provides realistic sky background + image-based lighting */}
+      {/* HDRI environment — provides realistic lighting + background */}
       <Environment
-        preset={preset.environment.preset as any}
+        files={preset.environment.hdriPath}
         background={true}
         backgroundBlurriness={preset.environment.backgroundBlurriness}
         backgroundIntensity={preset.environment.backgroundIntensity}
