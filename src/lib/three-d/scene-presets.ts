@@ -41,43 +41,43 @@ export interface ScenePreset {
 }
 
 export const SCENE_PRESETS: Record<string, ScenePreset> = {
-  'salt-flats': {
-    id: 'salt-flats',
-    name: 'Salt Flats',
+  'sunset': {
+    id: 'sunset',
+    name: 'Sunset',
     subtitle: 'The Bottega Veneta',
-    description: 'Infinite mirror plane reflecting a sunset sky.',
+    description: 'Product immersed in a golden-hour Venice sunset.',
     categories: ['furniture', 'decorative', 'stone', 'lighting'],
     bgGradient: ['#c8d8e8', '#d4b0c0', '#e8c0a0'],
-    ground: { enabled: true, color: '#d8d0e0', reflectivity: 0.9, roughness: 0.05, mirror: true },
+    ground: { enabled: false, color: '#d8d0e0', reflectivity: 0, roughness: 1, mirror: false },
     lights: {
-      key:     { position: [-6, 8, 5],  color: '#ffe0c0', intensity: 0.8 },
-      fill:    { position: [5, 4, 3],   color: '#e0d0e8', intensity: 0.3 },
-      rim:     { position: [0, 6, -6],  color: '#ffd0b0', intensity: 0.5 },
-      ambient: { color: '#e0d8e8', intensity: 0.2 },
+      key:     { position: [-6, 8, 5],  color: '#ffe0c0', intensity: 0.6 },
+      fill:    { position: [5, 4, 3],   color: '#e0d0e8', intensity: 0.25 },
+      rim:     { position: [0, 6, -6],  color: '#ffd0b0', intensity: 0.4 },
+      ambient: { color: '#e0d8e8', intensity: 0.15 },
     },
-    fog: { color: '#d8c8d8', near: 15, far: 50 },
-    shadow: { opacity: 0.08, color: '#8878a0' },
-    environment: { hdriPath: '/assets/hdri/venice_sunset_1k.hdr', backgroundBlurriness: 0.3, backgroundIntensity: 0.7, environmentIntensity: 0.6 },
+    fog: null,
+    shadow: { opacity: 0.15, color: '#8878a0' },
+    environment: { hdriPath: '/assets/hdri/venice_sunset_1k.hdr', backgroundBlurriness: 0.02, backgroundIntensity: 0.8, environmentIntensity: 0.7 },
     effects: { goboShadows: false, waterCaustics: false },
   },
 
-  'dawn-gradient': {
-    id: 'dawn-gradient',
-    name: 'Dawn Gradient',
+  'dawn': {
+    id: 'dawn',
+    name: 'Dawn',
     subtitle: 'The Céline',
-    description: 'No ground. Warm atmospheric gradient.',
+    description: 'Product in a soft dawn landscape.',
     categories: ['lighting', 'ceramics', 'glass', 'accessories'],
     bgGradient: ['#faf5ef', '#f0e0cc', '#d4a574'],
     ground: { enabled: false, color: '#f0e0cc', reflectivity: 0, roughness: 1, mirror: false },
     lights: {
-      key:     { position: [-5, 7, 4],  color: '#ffe8cc', intensity: 0.8 },
-      fill:    { position: [6, 3, 2],   color: '#fff5eb', intensity: 0.3 },
-      rim:     { position: [1, 5, -5],  color: '#ffd4a3', intensity: 0.5 },
-      ambient: { color: '#f5e6d0', intensity: 0.2 },
+      key:     { position: [-5, 7, 4],  color: '#ffe8cc', intensity: 0.6 },
+      fill:    { position: [6, 3, 2],   color: '#fff5eb', intensity: 0.25 },
+      rim:     { position: [1, 5, -5],  color: '#ffd4a3', intensity: 0.4 },
+      ambient: { color: '#f5e6d0', intensity: 0.15 },
     },
-    fog: { color: '#f0e0cc', near: 8, far: 25 },
-    shadow: { opacity: 0, color: '#8b7355' },
-    environment: { hdriPath: '/assets/hdri/kiara_1_dawn_1k.hdr', backgroundBlurriness: 0.5, backgroundIntensity: 0.7, environmentIntensity: 0.7 },
+    fog: null,
+    shadow: { opacity: 0.15, color: '#8b7355' },
+    environment: { hdriPath: '/assets/hdri/kiara_1_dawn_1k.hdr', backgroundBlurriness: 0.03, backgroundIntensity: 0.8, environmentIntensity: 0.7 },
     effects: { goboShadows: false, waterCaustics: false },
   },
 
@@ -182,7 +182,19 @@ export const SCENE_PRESETS: Record<string, ScenePreset> = {
   },
 };
 
-export const DEFAULT_PRESET_ID = 'salt-flats';
+export const DEFAULT_PRESET_ID = 'sunset';
+
+/** Map legacy preset IDs to current ones (for existing DB rows). */
+const LEGACY_PRESET_MAP: Record<string, string> = {
+  'salt-flats': 'sunset',
+  'dawn-gradient': 'dawn',
+};
+
+/** Resolve a preset ID, handling legacy/renamed presets. */
+export function resolvePresetId(id: string | null | undefined): string {
+  if (!id) return DEFAULT_PRESET_ID;
+  return LEGACY_PRESET_MAP[id] || id;
+}
 
 /**
  * Auto-select the best preset for a product based on category.
