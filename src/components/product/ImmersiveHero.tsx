@@ -6,6 +6,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import SafeImage from "@/components/common/SafeImage";
 import { Product } from "@/lib/mock/product";
 import { TacticalMenu } from "./TacticalMenu";
+import { HeroToolbar } from "./HeroToolbar";
+import { DimensionToggle } from "./DimensionToggle";
+import { DimensionOverlay } from "./DimensionOverlay";
 
 const Product3DViewer = dynamic(() => import("./Product3DViewer"), {
   ssr: false,
@@ -47,6 +50,9 @@ export function ImmersiveHero({
   const [isOrbiting, setIsOrbiting] = useState(false);
   const [hasScrolled, setHasScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [showDimensions, setShowDimensions] = useState(false);
+  const [viewportSize, setViewportSize] = useState({ w: 0, h: 0 });
+  const containerRef = useRef<HTMLDivElement>(null);
   const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Orbit state callbacks
@@ -91,6 +97,21 @@ export function ImmersiveHero({
     };
   }, []);
 
+  // Track viewport size for dimension overlay
+  useEffect(() => {
+    const update = () => {
+      if (containerRef.current) {
+        setViewportSize({
+          w: containerRef.current.clientWidth,
+          h: containerRef.current.clientHeight,
+        });
+      }
+    };
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
+
   // Dynamic gradient from palette
   const gradientStyle = palette
     ? {
@@ -102,6 +123,7 @@ export function ImmersiveHero({
 
   return (
     <div
+      ref={containerRef}
       className="relative w-full overflow-hidden"
       style={{
         height: "100vh",
@@ -204,6 +226,34 @@ export function ImmersiveHero({
           hudOpacity={hudOpacity}
         />
       </div>
+
+      {/* Dimension Overlay — SVG layer above 3D canvas */}
+      {show3D && (
+        <DimensionOverlay
+          dimensions={product.dimensions}
+          visible={showDimensions}
+          viewportWidth={viewportSize.w}
+          viewportHeight={viewportSize.h}
+        />
+      )}
+
+      {/* Dimension Toggle — Bottom Right */}
+      {show3D && (
+        <DimensionToggle
+          dimensions={product.dimensions}
+          isActive={showDimensions}
+          onToggle={() => setShowDimensions((prev) => !prev)}
+          hudOpacity={hudOpacity}
+        />
+      )}
+
+      {/* Hero Toolbar — Bottom Center */}
+      {show3D && (
+        <HeroToolbar
+          has3D={!!mesh3dUrl}
+          hudOpacity={hudOpacity}
+        />
+      )}
 
       {/* Scroll Indicator — Bottom Center, Desktop Only */}
       <AnimatePresence>

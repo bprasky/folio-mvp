@@ -4,12 +4,10 @@ import React from "react";
 import dynamic from "next/dynamic";
 import { Product } from "@/lib/mock/product";
 import { ImmersiveHero } from "./ImmersiveHero";
-import { GlassPanel } from "@/components/ui/GlassPanel";
-import { Gallery } from "./Gallery";
-import { InsightsPanel } from "./InsightsPanel";
-import { SpecPanel } from "./SpecPanel";
-import { DownloadsPanel } from "./DownloadsPanel";
+import { SpecGrid } from "./SpecGrid";
 import { DesignerTestimonials } from "./DesignerTestimonials";
+import { InContextStrip } from "./InContextStrip";
+import { ProcurementBar } from "./ProcurementBar";
 import { motion } from "framer-motion";
 
 const EditorialInspirationGrid = dynamic(
@@ -28,11 +26,25 @@ const RelatedFibonacciGrid = dynamic(
   { ssr: false }
 );
 
+const VendorIntelligence = dynamic(
+  () =>
+    import("./VendorIntelligence").then((mod) => ({
+      default: mod.VendorIntelligence,
+    })),
+  { ssr: false }
+);
+
 interface ImmersiveProductPageProps {
   product: Product;
+  showVendorInsights?: boolean;
+  isVendorOwner?: boolean;
 }
 
-export function ImmersiveProductPage({ product }: ImmersiveProductPageProps) {
+export function ImmersiveProductPage({
+  product,
+  showVendorInsights = false,
+  isVendorOwner = false,
+}: ImmersiveProductPageProps) {
   const heroMedia = {
     videoUrl: product.assets.find((a) => a.type === "video")?.src,
     imageUrl:
@@ -41,6 +53,63 @@ export function ImmersiveProductPage({ product }: ImmersiveProductPageProps) {
   };
 
   const palette = (product as any).palette;
+
+  // Determine which sections have data (for conditional rendering)
+  const hasDescription = !!product.description;
+  const hasInspiration = product.inspiration && product.inspiration.length > 0;
+  const hasRelated = product.related && product.related.length > 0;
+
+  // Build the ordered sections array — only sections with data
+  // Dividers render between adjacent sections
+  const sections: React.ReactNode[] = [];
+
+  // Description (if present, as a simple editorial block)
+  if (hasDescription) {
+    sections.push(
+      <motion.section
+        key="description"
+        initial={{ opacity: 0, y: 16 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-80px" }}
+        transition={{ duration: 0.4, ease: [0.25, 0.8, 0.25, 1] }}
+      >
+        <p
+          className="font-body leading-relaxed max-w-2xl"
+          style={{
+            fontSize: "15px",
+            lineHeight: 1.7,
+            color: "var(--folio-text-secondary, #6b6b6b)",
+          }}
+        >
+          {product.description}
+        </p>
+      </motion.section>
+    );
+  }
+
+  // Spec Grid (always attempted — component handles its own conditional)
+  sections.push(<SpecGrid key="specs" product={product} />);
+
+  // In Context Strip (component handles its own conditional via API)
+  sections.push(<InContextStrip key="context" productId={product.id} />);
+
+  // Designer Testimonials (component handles its own conditional via API)
+  sections.push(<DesignerTestimonials key="testimonials" productId={product.id} />);
+
+  // Vendor Intelligence (only if server-side gate passed)
+  if (showVendorInsights) {
+    sections.push(<VendorIntelligence key="vendor-insights" productId={product.id} />);
+  }
+
+  // Editorial Inspiration Grid
+  if (hasInspiration) {
+    sections.push(<EditorialInspirationGrid key="inspiration" items={product.inspiration} />);
+  }
+
+  // Related Products
+  if (hasRelated) {
+    sections.push(<RelatedFibonacciGrid key="related" items={product.related} />);
+  }
 
   return (
     <>
@@ -59,149 +128,31 @@ export function ImmersiveProductPage({ product }: ImmersiveProductPageProps) {
 
       {/* Editorial Section — Below the viewport */}
       <div className="relative z-10 bg-white/40">
-        <div className="max-w-7xl mx-auto px-4 lg:px-8 py-16 space-y-16">
-          {/* Description & Gallery Row */}
-          <motion.div
-            className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12"
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-100px" }}
-            variants={{
-              hidden: {},
-              visible: {
-                transition: { staggerChildren: 0.06 },
-              },
-            }}
-          >
-            {/* Left: Description */}
-            <motion.div
-              className="space-y-6"
-              variants={{
-                hidden: { opacity: 0, y: 20 },
-                visible: { opacity: 1, y: 0 },
-              }}
-              transition={{ duration: 0.18, ease: [0.25, 0.8, 0.25, 1] }}
-            >
-              {(product.description ||
-                product.brand ||
-                product.sku ||
-                product.materials.length > 0 ||
-                product.finish) && (
-                <GlassPanel
-                  header={
-                    <h2 className="text-lg font-medium text-stone-900 dark:text-stone-100">
-                      About This Product
-                    </h2>
-                  }
-                >
-                  <div className="prose prose-stone dark:prose-invert max-w-none">
-                    {product.description && (
-                      <p className="text-base leading-relaxed text-stone-700 dark:text-stone-300">
-                        {product.description}
-                      </p>
-                    )}
-
-                    {(product.brand ||
-                      product.sku ||
-                      product.materials.length > 0 ||
-                      product.finish) && (
-                      <div
-                        className={`${product.description ? "mt-6 pt-6 border-t border-stone-200 dark:border-stone-700" : ""}`}
-                      >
-                        <dl className="grid grid-cols-2 gap-4 text-sm">
-                          {product.brand && (
-                            <div>
-                              <dt className="font-medium text-stone-900 dark:text-stone-100">
-                                Brand
-                              </dt>
-                              <dd className="mt-1 text-stone-600 dark:text-stone-400">
-                                {product.brand}
-                              </dd>
-                            </div>
-                          )}
-                          {product.sku && (
-                            <div>
-                              <dt className="font-medium text-stone-900 dark:text-stone-100">
-                                SKU
-                              </dt>
-                              <dd className="mt-1 font-mono text-xs text-stone-600 dark:text-stone-400">
-                                {product.sku}
-                              </dd>
-                            </div>
-                          )}
-                          {product.materials.length > 0 && (
-                            <div>
-                              <dt className="font-medium text-stone-900 dark:text-stone-100">
-                                Materials
-                              </dt>
-                              <dd className="mt-1 text-stone-600 dark:text-stone-400">
-                                {product.materials.join(", ")}
-                              </dd>
-                            </div>
-                          )}
-                          {product.finish && (
-                            <div>
-                              <dt className="font-medium text-stone-900 dark:text-stone-100">
-                                Finish
-                              </dt>
-                              <dd className="mt-1 text-stone-600 dark:text-stone-400">
-                                {product.finish}
-                              </dd>
-                            </div>
-                          )}
-                        </dl>
-                      </div>
-                    )}
-                  </div>
-                </GlassPanel>
+        <div className="max-w-3xl mx-auto px-4 lg:px-8 py-12">
+          {/* Render sections with dividers between them */}
+          {sections.map((section, i) => (
+            <React.Fragment key={i}>
+              {section}
+              {i < sections.length - 1 && (
+                <div
+                  className="my-10"
+                  style={{ borderTop: "0.5px solid var(--folio-border-subtle, #e8e4df)" }}
+                />
               )}
-            </motion.div>
-
-            {/* Right: Gallery */}
-            <motion.div
-              variants={{
-                hidden: { opacity: 0, y: 20 },
-                visible: { opacity: 1, y: 0 },
-              }}
-              transition={{ duration: 0.18, ease: [0.25, 0.8, 0.25, 1] }}
-            >
-              <Gallery assets={product.assets} />
-            </motion.div>
-          </motion.div>
-
-          {/* Insights */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{
-              duration: 0.18,
-              delay: 0.06,
-              ease: [0.25, 0.8, 0.25, 1],
-            }}
-          >
-            <InsightsPanel product={product} />
-          </motion.div>
-
-          {/* Specifications & Downloads Row */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
-            <SpecPanel product={product} />
-            <DownloadsPanel product={product} />
-          </div>
-
-          {/* Inspiration Grid */}
-          <EditorialInspirationGrid items={product.inspiration} />
-
-          {/* Testimonials */}
-          <DesignerTestimonials productId={product.id} />
-
-          {/* Related Products */}
-          <RelatedFibonacciGrid items={product.related} />
+            </React.Fragment>
+          ))}
         </div>
 
-        {/* Bottom Spacer for Mobile */}
-        <div className="h-8" />
+        {/* Bottom spacer for procurement bar */}
+        <div className="h-20" />
       </div>
+
+      {/* Sticky Procurement Bar */}
+      <ProcurementBar
+        productId={product.id}
+        productBrand={product.brand}
+        isVendorOwner={isVendorOwner}
+      />
     </>
   );
 }
