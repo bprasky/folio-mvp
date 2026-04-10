@@ -9,10 +9,16 @@ import { TacticalMenu } from "./TacticalMenu";
 import { HeroToolbar } from "./HeroToolbar";
 import { DimensionToggle } from "./DimensionToggle";
 import { DimensionOverlay } from "./DimensionOverlay";
+import { useSaveToProjectFolder } from "@/components/projects/useSaveToProjectFolder";
 
 const Product3DViewer = dynamic(() => import("./Product3DViewer"), {
   ssr: false,
 });
+
+const SaveToFolderModal = dynamic(
+  () => import("@/components/projects/SaveToFolderModal"),
+  { ssr: false }
+);
 
 interface ImmersiveHeroProps {
   media: {
@@ -54,6 +60,12 @@ export function ImmersiveHero({
   const [viewportSize, setViewportSize] = useState({ w: 0, h: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
   const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Save-to-project modal — hoisted here so modal renders outside transformed containers
+  const { openSaveDialog, modalProps } = useSaveToProjectFolder();
+  const handleAddToProject = useCallback(() => {
+    openSaveDialog({ productId: product.id, source: "tactical_menu" });
+  }, [openSaveDialog, product.id]);
 
   // Orbit state callbacks
   const handleOrbitStart = useCallback(() => {
@@ -122,6 +134,7 @@ export function ImmersiveHero({
   const hudOpacity = isOrbiting ? 0.3 : 1;
 
   return (
+    <>
     <div
       ref={containerRef}
       className="relative w-full overflow-hidden"
@@ -223,6 +236,7 @@ export function ImmersiveHero({
           isOpen={menuOpen}
           onToggle={() => setMenuOpen((prev) => !prev)}
           onClose={() => setMenuOpen(false)}
+          onAddToProject={handleAddToProject}
           hudOpacity={hudOpacity}
         />
       </div>
@@ -284,5 +298,18 @@ export function ImmersiveHero({
         )}
       </AnimatePresence>
     </div>
+
+    {/* Save to Project Modal — rendered outside hero to avoid transform/backdrop-filter breaking fixed positioning */}
+    {modalProps.isOpen && modalProps.productId && (
+      <SaveToFolderModal
+        isOpen={modalProps.isOpen}
+        onClose={modalProps.onClose}
+        productId={modalProps.productId}
+        eventId={modalProps.eventId}
+        eventTitle={modalProps.eventTitle}
+        onSuccess={modalProps.onSuccess}
+      />
+    )}
+    </>
   );
 }
