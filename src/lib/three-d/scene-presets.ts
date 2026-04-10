@@ -57,7 +57,7 @@ export const SCENE_PRESETS: Record<string, ScenePreset> = {
     },
     fog: { color: '#d8c8d8', near: 15, far: 50 },
     shadow: { opacity: 0.08, color: '#8878a0' },
-    environment: { hdriPath: '/assets/hdri/studio_small_03_1k.hdr', backgroundBlurriness: 0.02, backgroundIntensity: 0.9, environmentIntensity: 0.6 },
+    environment: { hdriPath: '/assets/hdri/venice_sunset_1k.hdr', backgroundBlurriness: 0.3, backgroundIntensity: 0.7, environmentIntensity: 0.6 },
     effects: { goboShadows: false, waterCaustics: false },
   },
 
@@ -77,7 +77,7 @@ export const SCENE_PRESETS: Record<string, ScenePreset> = {
     },
     fog: { color: '#f0e0cc', near: 8, far: 25 },
     shadow: { opacity: 0, color: '#8b7355' },
-    environment: { hdriPath: '/assets/hdri/studio_small_03_1k.hdr', backgroundBlurriness: 0.4, backgroundIntensity: 0.8, environmentIntensity: 0.7 },
+    environment: { hdriPath: '/assets/hdri/kiara_1_dawn_1k.hdr', backgroundBlurriness: 0.5, backgroundIntensity: 0.7, environmentIntensity: 0.7 },
     effects: { goboShadows: false, waterCaustics: false },
   },
 
@@ -97,7 +97,7 @@ export const SCENE_PRESETS: Record<string, ScenePreset> = {
     },
     fog: null,
     shadow: { opacity: 0.25, color: '#7a7068' },
-    environment: { hdriPath: '/assets/hdri/studio_small_03_1k.hdr', backgroundBlurriness: 0.6, backgroundIntensity: 0.5, environmentIntensity: 0.4 },
+    environment: { hdriPath: '/assets/hdri/studio_small_03_1k.hdr', backgroundBlurriness: 0.9, backgroundIntensity: 0.4, environmentIntensity: 0.4 },
     effects: { goboShadows: false, waterCaustics: false },
   },
 
@@ -117,7 +117,7 @@ export const SCENE_PRESETS: Record<string, ScenePreset> = {
     },
     fog: null,
     shadow: { opacity: 0.08, color: '#a09888' },
-    environment: { hdriPath: '/assets/hdri/studio_small_03_1k.hdr', backgroundBlurriness: 0.8, backgroundIntensity: 0.6, environmentIntensity: 0.5 },
+    environment: { hdriPath: '/assets/hdri/studio_small_03_1k.hdr', backgroundBlurriness: 1.0, backgroundIntensity: 0.5, environmentIntensity: 0.5 },
     effects: { goboShadows: false, waterCaustics: false },
   },
 
@@ -157,7 +157,7 @@ export const SCENE_PRESETS: Record<string, ScenePreset> = {
     },
     fog: null,
     shadow: { opacity: 0.1, color: '#a09888' },
-    environment: { hdriPath: '/assets/hdri/studio_small_03_1k.hdr', backgroundBlurriness: 0.5, backgroundIntensity: 0.7, environmentIntensity: 0.5 },
+    environment: { hdriPath: '/assets/hdri/kiara_1_dawn_1k.hdr', backgroundBlurriness: 0.4, backgroundIntensity: 0.6, environmentIntensity: 0.5 },
     effects: { goboShadows: false, waterCaustics: true },
   },
 
