@@ -75,7 +75,7 @@ export function RoomExpanded({
             alt={card.roomLabel}
             className="w-full h-auto"
           />
-          <TaggedImage image={card.heroImage} />
+          <TaggedImage surface="post" image={card.heroImage} />
         </div>
 
         {/* Pull quote */}
@@ -116,7 +116,7 @@ export function RoomExpanded({
                     alt={card.roomLabel}
                     className="w-full h-auto"
                   />
-                  <TaggedImage image={img} />
+                  <TaggedImage surface="post" image={img} />
                 </div>
               ))}
             </div>

@@ -186,7 +186,7 @@ export const RoomCard = forwardRef<HTMLDivElement, Props>(
             {/* Tag dots — only during long-press peek */}
             {overlayState === "peek_hold" && (
               <div className="absolute inset-0">
-                <TaggedImage image={heroImage} />
+                <TaggedImage surface="post" image={heroImage} />
               </div>
             )}
           </div>
@@ -265,7 +265,7 @@ function DesktopLayoutSplit({
           style={{ y: photoY }}
         />
         <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          <TaggedImage image={card.heroImage} />
+          <TaggedImage surface="post" image={card.heroImage} />
         </div>
       </div>
 
@@ -374,7 +374,7 @@ function DesktopLayoutC({
 
       {/* Tag dots on hover */}
       <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-        <TaggedImage image={card.heroImage} />
+        <TaggedImage surface="post" image={card.heroImage} />
       </div>
 
       {/* Glass overlay — bottom left */}

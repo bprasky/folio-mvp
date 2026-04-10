@@ -33,7 +33,7 @@ export default function MaterialPair({
               className="w-full h-auto"
             />
             {context.tags && context.tags.length > 0 && (
-              <TaggedImage image={context} interactionLevel="explore" />
+              <TaggedImage image={context} interactionLevel="explore" surface="super_article" />
             )}
             {caption ? (
               <figcaption className="p-2 folio-meta text-folio-text-secondary">
@@ -54,7 +54,7 @@ export default function MaterialPair({
               className="w-full h-auto"
             />
             {detail.tags && detail.tags.length > 0 && (
-              <TaggedImage image={detail} interactionLevel="explore" />
+              <TaggedImage image={detail} interactionLevel="explore" surface="super_article" />
             )}
             {detail.caption ? (
               <figcaption className="p-2 folio-meta text-folio-text-secondary">

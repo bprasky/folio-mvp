@@ -27,7 +27,7 @@ export default function ChapterGallery({ images }: { images: ImageLike[] }) {
               className="w-full h-auto"
             />
             {im.tags && im.tags.length > 0 && (
-              <TaggedImage image={im} interactionLevel="explore" />
+              <TaggedImage image={im} interactionLevel="explore" surface="super_article" />
             )}
             {im.caption ? (
               <figcaption className="p-2 folio-meta text-folio-text-secondary">

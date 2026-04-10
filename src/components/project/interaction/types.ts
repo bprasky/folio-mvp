@@ -1,11 +1,13 @@
 /**
  * Shared types for the interaction design system.
- * Extracted from ImageTagDots for reuse across TaggedImage, TagLiftOff, and editorial components.
+ * Shared types for the tag interaction system.
  */
 
 import { isMeshableCategory } from '@/lib/three-d/categories';
 
 export type InteractionLevel = 'signal' | 'explore' | 'full';
+
+export type TagSurface = 'post' | 'magazine' | 'feed' | 'super_article' | 'shop';
 
 export type InteractionTier = 'full-3d' | 'mask-only' | 'expand-2d' | 'tooltip-only' | 'loading';
 

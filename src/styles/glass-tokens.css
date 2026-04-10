@@ -252,10 +252,34 @@
   z-index: 0;
 }
 
-/* Reveal dot animation for TaggedImage discoverability */
-@keyframes revealDot {
-  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
-  15% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-  75% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-  100% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+/* ---- TAG INTERACTION SYSTEM ---- */
+
+:root {
+  --tag-dot-size: 8px;
+  --tag-dot-size-compact: 6px;
+  --tag-dot-color: rgba(255, 255, 255, 0.9);
+  --tag-dot-border: 1px solid rgba(0, 0, 0, 0.15);
+  --tag-dot-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+  --tag-dot-hover-size: 10px;
+  --tag-dot-fade-in: 150ms ease-out;
+  --tag-dot-fade-out: 200ms ease-in;
+  --tag-hover-threshold: 600ms;
+  --tag-mobile-reveal-duration: 3000ms;
+
+  --tag-expand-bg: rgba(255, 252, 247, 0.85);
+  --tag-expand-blur: 12px;
+  --tag-expand-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  --tag-expand-margin: 12px;
+  --tag-expand-dismiss-grace: 400ms;
+
+  --hologram-entry-duration: 400ms;
+  --hologram-entry-easing: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --hologram-lift: -20px;
+  --hologram-glow: 0 0 24px rgba(201, 169, 110, 0.15);
+  --hologram-backdrop-dim: rgba(0, 0, 0, 0.15);
+
+  --tag-hud-bg: rgba(255, 252, 247, 0.85);
+  --tag-hud-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  --tag-hud-accent: #c9a96e;
+  --tag-hud-radial-clearance: 120px;
 }
