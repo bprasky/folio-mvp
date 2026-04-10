@@ -160,9 +160,9 @@ export function ImmersiveHero({
         </div>
       )}
 
-      {/* HUD: Product Identity — Bottom Left */}
+      {/* HUD: Product Identity — Top Left, below nav */}
       <div
-        className="absolute bottom-8 left-8 lg:bottom-16 lg:left-16 z-10 pointer-events-none"
+        className="absolute top-20 left-6 lg:top-24 lg:left-12 z-10 pointer-events-none max-w-md"
         style={{
           opacity: hudOpacity,
           transition: "opacity 300ms ease-out",
@@ -170,11 +170,11 @@ export function ImmersiveHero({
       >
         {brand && (
           <div
-            className="font-body uppercase font-normal mb-2"
+            className="font-body uppercase font-normal mb-1.5"
             style={{
-              fontSize: "clamp(12px, 1.5vw, 16px)",
-              letterSpacing: "0.12em",
-              color: "rgba(68, 64, 60, 0.85)",
+              fontSize: "clamp(11px, 1.2vw, 14px)",
+              letterSpacing: "0.14em",
+              color: "rgba(120, 113, 108, 0.8)",
             }}
           >
             {brand}
@@ -183,17 +183,17 @@ export function ImmersiveHero({
         <h1
           className="font-headline italic font-normal tracking-tight"
           style={{
-            fontSize: "clamp(28px, 4vw, 48px)",
+            fontSize: "clamp(24px, 3.5vw, 42px)",
             lineHeight: 1.1,
-            color: "#1c1917",
+            color: "rgba(28, 25, 23, 0.85)",
           }}
         >
           {title}
         </h1>
       </div>
 
-      {/* Tactical Menu — Near model center-right */}
-      <div className="absolute bottom-[30%] right-[15%] lg:bottom-[25%] lg:right-[20%] z-20">
+      {/* Tactical Menu — Right of model, vertically centered */}
+      <div className="absolute top-1/2 right-6 lg:right-12 -translate-y-1/2 z-20">
         <TacticalMenu
           product={product}
           isOpen={menuOpen}

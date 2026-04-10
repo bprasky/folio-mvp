@@ -24,8 +24,11 @@ export function EditorialMasthead() {
   const isMagazinePage = pathname === "/magazine" || pathname?.startsWith("/magazine?");
   // Hide large masthead on designer/dashboard pages — the nav-bar logo is sufficient context
   const isDesignerPage = pathname === "/designer" || pathname?.startsWith("/designer/");
-  const hidesMasthead = isMagazinePage || isDesignerPage;
-  const effectiveThreshold = isMagazinePage ? MAGAZINE_SCROLL_THRESHOLD : SCROLL_THRESHOLD;
+  // Product pages use immersive 3D viewport — nav should be transparent glass, no large masthead
+  const isProductPage = pathname?.startsWith("/products/");
+  const isImmersivePage = isMagazinePage || isProductPage;
+  const hidesMasthead = isMagazinePage || isDesignerPage || isProductPage;
+  const effectiveThreshold = isImmersivePage ? MAGAZINE_SCROLL_THRESHOLD : SCROLL_THRESHOLD;
 
   // Track scroll position with requestAnimationFrame for smooth performance
   useEffect(() => {
@@ -79,11 +82,11 @@ export function EditorialMasthead() {
     [0, effectiveThreshold],
     [0.8, 1]
   );
-  // Header background opacity for magazine page - transparent initially
+  // Header background opacity for immersive pages - transparent initially
   const headerBgOpacity = useTransform(
     scrollY,
     [0, effectiveThreshold],
-    isMagazinePage ? [0, 0.95] : [0.95, 0.95]
+    isImmersivePage ? [0, 0.95] : [0.95, 0.95]
   );
 
   return (
@@ -91,19 +94,19 @@ export function EditorialMasthead() {
       {/* Sticky Navigation Bar */}
       <motion.header
         className={`editorial-masthead-header sticky top-0 z-50 w-full transition-colors duration-300 ${
-          isMagazinePage && !isScrolled
+          isImmersivePage && !isScrolled
             ? 'border-b border-transparent'
             : 'border-b border-white/15'
         }`}
         style={{
           height: "64px",
-          backgroundColor: isMagazinePage
+          backgroundColor: isImmersivePage
             ? `rgba(245, 242, 237, ${isScrolled ? 0.45 : 0})`
             : 'rgba(245, 242, 237, 0.45)',
-          backdropFilter: isMagazinePage && !isScrolled
+          backdropFilter: isImmersivePage && !isScrolled
             ? 'none'
             : 'blur(40px) saturate(160%) brightness(1.08)',
-          WebkitBackdropFilter: isMagazinePage && !isScrolled
+          WebkitBackdropFilter: isImmersivePage && !isScrolled
             ? 'none'
             : 'blur(40px) saturate(160%) brightness(1.08)',
         }}
@@ -125,17 +128,17 @@ export function EditorialMasthead() {
             <motion.div
               className="hidden md:block"
               style={{
-                // On magazine page: always visible, else: fade in on scroll
-                opacity: isMagazinePage ? 1 : navLogoOpacity,
-                scale: isMagazinePage ? 1 : navLogoScale,
-                pointerEvents: isMagazinePage || isScrolled ? "auto" : "none",
+                // On immersive pages: always visible, else: fade in on scroll
+                opacity: isImmersivePage ? 1 : navLogoOpacity,
+                scale: isImmersivePage ? 1 : navLogoScale,
+                pointerEvents: isImmersivePage || isScrolled ? "auto" : "none",
               }}
             >
               <Link
                 href="/"
                 className={`font-serif text-xl tracking-tight font-semibold transition-colors whitespace-nowrap ${
-                  isMagazinePage && !isScrolled
-                    ? 'text-white hover:text-white/80 drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)]'
+                  isImmersivePage && !isScrolled
+                    ? 'text-stone-500/60 hover:text-stone-500/80'
                     : 'text-folio-text-primary hover:text-folio-text-primary'
                 }`}
               >
