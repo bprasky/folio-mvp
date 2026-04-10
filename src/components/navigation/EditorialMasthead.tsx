@@ -138,7 +138,7 @@ export function EditorialMasthead() {
                 href="/"
                 className={`font-serif text-xl tracking-tight font-semibold transition-colors whitespace-nowrap ${
                   isImmersivePage && !isScrolled
-                    ? 'text-stone-500/60 hover:text-stone-500/80'
+                    ? 'text-white hover:text-white/80 drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)]'
                     : 'text-folio-text-primary hover:text-folio-text-primary'
                 }`}
               >
