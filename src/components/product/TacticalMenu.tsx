@@ -2,23 +2,18 @@
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { FolderPlus, FileDown, Box, ShoppingCart, Plus, X } from "lucide-react";
+import { FolderPlus, FileDown, Box, ShoppingCart, Plus } from "lucide-react";
 import { Product } from "@/lib/mock/product";
-import { useSaveToProjectFolder } from "@/components/projects/useSaveToProjectFolder";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
-import dynamic from "next/dynamic";
 import { toast } from "sonner";
-
-const SaveToFolderModal = dynamic(
-  () => import("@/components/projects/SaveToFolderModal"),
-  { ssr: false }
-);
 
 interface TacticalMenuProps {
   product: Product;
   isOpen: boolean;
   onToggle: () => void;
   onClose: () => void;
+  /** Called when user clicks "Add to Project" — parent handles the modal */
+  onAddToProject?: () => void;
   /** HUD opacity — trigger fades with other HUD elements */
   hudOpacity?: number;
 }
@@ -45,9 +40,9 @@ export function TacticalMenu({
   isOpen,
   onToggle,
   onClose,
+  onAddToProject,
   hudOpacity = 1,
 }: TacticalMenuProps) {
-  const { openSaveDialog, modalProps } = useSaveToProjectFolder();
   const [sampleLoading, setSampleLoading] = useState(false);
   const [focusedIndex, setFocusedIndex] = useState(-1);
   const isMobile = useMediaQuery("(max-width: 1023px)");
@@ -107,7 +102,7 @@ export function TacticalMenu({
     (id: string) => {
       switch (id) {
         case "add-to-project":
-          openSaveDialog({ productId: product.id, source: "tactical_menu" });
+          onAddToProject?.();
           break;
         case "download-3d":
           if (!product.mesh3dUrl) return;
@@ -130,7 +125,7 @@ export function TacticalMenu({
       onClose();
       setFocusedIndex(-1);
     },
-    [product, openSaveDialog, onClose]
+    [product, onAddToProject, onClose]
   );
 
   const handleOrderSample = async () => {
@@ -354,17 +349,6 @@ export function TacticalMenu({
         </AnimatePresence>
       )}
 
-      {/* Save to Project Modal */}
-      {modalProps.isOpen && modalProps.productId && (
-        <SaveToFolderModal
-          isOpen={modalProps.isOpen}
-          onClose={modalProps.onClose}
-          productId={modalProps.productId}
-          eventId={modalProps.eventId}
-          eventTitle={modalProps.eventTitle}
-          onSuccess={modalProps.onSuccess}
-        />
-      )}
     </div>
   );
 }
