@@ -310,12 +310,10 @@ function SceneContent({
 
   return (
     <>
-      {/* HDRI environment — visible as abstract wash at high blur, plus IBL */}
+      {/* HDRI environment — IBL lighting + material reflections only */}
       <Environment
         files={preset.environment.hdriPath}
-        background={true}
-        backgroundBlurriness={preset.environment.backgroundBlurriness}
-        backgroundIntensity={preset.environment.backgroundIntensity}
+        background={false}
         environmentIntensity={preset.environment.environmentIntensity}
       />
 
@@ -449,7 +447,17 @@ export default function Product3DViewer({
         </div>
       )}
 
-      {/* 3D Canvas — crossfades in when model is ready */}
+      {/* Background gradient — visible through transparent canvas */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background: `linear-gradient(180deg, ${preset.bgGradient[0]} 0%, ${preset.bgGradient[1]} 50%, ${preset.bgGradient[2]} 100%)`,
+          opacity: modelReady ? 1 : 0,
+          transition: 'opacity 500ms ease-out',
+        }}
+      />
+
+      {/* 3D Canvas — transparent, gradient shows through */}
       <div
         className="absolute inset-0"
         style={{
@@ -460,7 +468,7 @@ export default function Product3DViewer({
       >
         <Canvas
           gl={{
-            alpha: false,
+            alpha: true,
             antialias: true,
             toneMapping: THREE.ACESFilmicToneMapping,
             toneMappingExposure: 1.1,
