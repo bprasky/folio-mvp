@@ -29,7 +29,7 @@ export interface ScenePreset {
   fog: { color: string; near: number; far: number } | null;
   shadow: { opacity: number; color: string };
   environment: {
-    preset: string;         // drei Environment preset: 'sunset','dawn','warehouse','studio','city','park','lobby','apartment','forest','night'
+    hdriPath: string;           // local path under /assets/hdri/
     backgroundBlurriness: number; // 0 = sharp HDRI, 1 = fully blurred
     backgroundIntensity: number; // brightness of the background
     environmentIntensity: number; // IBL strength on materials
@@ -57,7 +57,7 @@ export const SCENE_PRESETS: Record<string, ScenePreset> = {
     },
     fog: { color: '#d8c8d8', near: 15, far: 50 },
     shadow: { opacity: 0.08, color: '#8878a0' },
-    environment: { preset: 'sunset', backgroundBlurriness: 0.02, backgroundIntensity: 0.9, environmentIntensity: 0.6 },
+    environment: { hdriPath: '/assets/hdri/studio_small_03_1k.hdr', backgroundBlurriness: 0.02, backgroundIntensity: 0.9, environmentIntensity: 0.6 },
     effects: { goboShadows: false, waterCaustics: false },
   },
 
@@ -77,7 +77,7 @@ export const SCENE_PRESETS: Record<string, ScenePreset> = {
     },
     fog: { color: '#f0e0cc', near: 8, far: 25 },
     shadow: { opacity: 0, color: '#8b7355' },
-    environment: { preset: 'dawn', backgroundBlurriness: 0.4, backgroundIntensity: 0.8, environmentIntensity: 0.7 },
+    environment: { hdriPath: '/assets/hdri/studio_small_03_1k.hdr', backgroundBlurriness: 0.4, backgroundIntensity: 0.8, environmentIntensity: 0.7 },
     effects: { goboShadows: false, waterCaustics: false },
   },
 
@@ -97,7 +97,7 @@ export const SCENE_PRESETS: Record<string, ScenePreset> = {
     },
     fog: null,
     shadow: { opacity: 0.25, color: '#7a7068' },
-    environment: { preset: 'warehouse', backgroundBlurriness: 0.6, backgroundIntensity: 0.5, environmentIntensity: 0.4 },
+    environment: { hdriPath: '/assets/hdri/studio_small_03_1k.hdr', backgroundBlurriness: 0.6, backgroundIntensity: 0.5, environmentIntensity: 0.4 },
     effects: { goboShadows: false, waterCaustics: false },
   },
 
@@ -117,7 +117,7 @@ export const SCENE_PRESETS: Record<string, ScenePreset> = {
     },
     fog: null,
     shadow: { opacity: 0.08, color: '#a09888' },
-    environment: { preset: 'studio', backgroundBlurriness: 0.8, backgroundIntensity: 0.6, environmentIntensity: 0.5 },
+    environment: { hdriPath: '/assets/hdri/studio_small_03_1k.hdr', backgroundBlurriness: 0.8, backgroundIntensity: 0.6, environmentIntensity: 0.5 },
     effects: { goboShadows: false, waterCaustics: false },
   },
 
@@ -137,7 +137,7 @@ export const SCENE_PRESETS: Record<string, ScenePreset> = {
     },
     fog: { color: '#c8bfb2', near: 4, far: 15 },
     shadow: { opacity: 0.12, color: '#8a8078' },
-    environment: { preset: 'city', backgroundBlurriness: 0.9, backgroundIntensity: 0.3, environmentIntensity: 0.4 },
+    environment: { hdriPath: '/assets/hdri/studio_small_03_1k.hdr', backgroundBlurriness: 0.9, backgroundIntensity: 0.3, environmentIntensity: 0.4 },
     effects: { goboShadows: false, waterCaustics: false },
   },
 
@@ -157,7 +157,7 @@ export const SCENE_PRESETS: Record<string, ScenePreset> = {
     },
     fog: null,
     shadow: { opacity: 0.1, color: '#a09888' },
-    environment: { preset: 'park', backgroundBlurriness: 0.5, backgroundIntensity: 0.7, environmentIntensity: 0.5 },
+    environment: { hdriPath: '/assets/hdri/studio_small_03_1k.hdr', backgroundBlurriness: 0.5, backgroundIntensity: 0.7, environmentIntensity: 0.5 },
     effects: { goboShadows: false, waterCaustics: true },
   },
 
@@ -177,7 +177,7 @@ export const SCENE_PRESETS: Record<string, ScenePreset> = {
     },
     fog: null,
     shadow: { opacity: 0.2, color: '#8a8278' },
-    environment: { preset: 'apartment', backgroundBlurriness: 0.7, backgroundIntensity: 0.4, environmentIntensity: 0.4 },
+    environment: { hdriPath: '/assets/hdri/studio_small_03_1k.hdr', backgroundBlurriness: 0.7, backgroundIntensity: 0.4, environmentIntensity: 0.4 },
     effects: { goboShadows: true, waterCaustics: false },
   },
 };
