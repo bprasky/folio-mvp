@@ -192,8 +192,8 @@ export function ImmersiveHero({
         </h1>
       </div>
 
-      {/* Tactical Menu — Bottom Right */}
-      <div className="absolute bottom-8 right-8 lg:bottom-16 lg:right-16 z-20">
+      {/* Tactical Menu — Near model center-right */}
+      <div className="absolute bottom-[30%] right-[15%] lg:bottom-[25%] lg:right-[20%] z-20">
         <TacticalMenu
           product={product}
           isOpen={menuOpen}

@@ -444,6 +444,11 @@ body:has([data-testid="cinematic-bg"]) {
   background: transparent !important;
 }
 
+/* Immersive product page — escape layout padding for full-bleed hero */
+.cinematic-page {
+  margin: -1rem -1.5rem -2rem; /* counteract pt-4 px-6 pb-8 from SimpleLayout/MainLayout */
+}
+
 /* Immersive Product Page — nav fade on orbit state */
 body[data-immersive-state="idle"] .editorial-masthead-header {
   opacity: 0.8;

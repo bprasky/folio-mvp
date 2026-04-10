@@ -402,9 +402,13 @@ export default function Product3DViewer({
   const presetId = scenePresetId || getRecommendedPreset(productCategory) || DEFAULT_PRESET_ID;
   const preset = SCENE_PRESETS[presetId] || SCENE_PRESETS[DEFAULT_PRESET_ID];
 
+  // If caller provides a className with height (e.g. h-full), use it; otherwise default
+  const hasCustomHeight = className && /\bh-/.test(className);
+  const heightClass = hasCustomHeight ? '' : 'h-[40vh] md:h-[60vh]';
+
   if (error) {
     return fallbackImageUrl ? (
-      <div className={`relative w-full h-[40vh] md:h-[60vh] ${className || ''}`}>
+      <div className={`relative w-full ${heightClass} ${className || ''}`}>
         <SafeImage
           src={fallbackImageUrl}
           alt={productName || 'Product'}
@@ -418,7 +422,7 @@ export default function Product3DViewer({
 
   return (
     <div
-      className={`relative w-full h-[40vh] md:h-[60vh] ${className || ''}`}
+      className={`relative w-full ${heightClass} ${className || ''}`}
       role="img"
       aria-label={`3D view of ${productName || 'product'}`}
     >
