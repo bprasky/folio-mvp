@@ -54,6 +54,12 @@ export async function GET(
               select: {
                 id: true,
                 title: true,
+                post: {
+                  select: {
+                    slug: true,
+                    status: true,
+                  },
+                },
               },
             },
           },
@@ -82,6 +88,9 @@ export async function GET(
         ? {
             id: t.shopProduct.project.id,
             title: t.shopProduct.project.title,
+            articleSlug: t.shopProduct.project.post?.status === 'PUBLISHED'
+              ? t.shopProduct.project.post.slug
+              : null,
           }
         : null,
     }));

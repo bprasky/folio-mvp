@@ -26,7 +26,7 @@ export async function GET(
       return NextResponse.json({ error: 'Product not found' }, { status: 404 });
     }
 
-    // Fetch tags with project image and project data
+    // Fetch tags with project image, project data, and published post slug
     const tags = await prisma.productTag.findMany({
       where: {
         productId,
@@ -53,6 +53,12 @@ export async function GET(
                     name: true,
                   },
                 },
+                post: {
+                  select: {
+                    slug: true,
+                    status: true,
+                  },
+                },
               },
             },
           },
@@ -64,13 +70,19 @@ export async function GET(
     // Filter out tags with missing image/project data and format
     const photos = tags
       .filter(tag => tag.image?.url && tag.image?.project)
-      .map(tag => ({
-        imageUrl: tag.image!.url!,
-        room: tag.image!.room,
-        projectId: tag.image!.project!.id,
-        projectTitle: tag.image!.project!.title || 'Untitled Project',
-        designerName: tag.image!.project!.designer?.name || 'Designer',
-      }));
+      .map(tag => {
+        const post = tag.image!.project!.post;
+        const hasPublishedPost = post?.status === 'PUBLISHED' && post?.slug;
+        return {
+          imageUrl: tag.image!.url!,
+          room: tag.image!.room,
+          projectId: tag.image!.project!.id,
+          projectTitle: tag.image!.project!.title || 'Untitled Project',
+          designerName: tag.image!.project!.designer?.name || 'Designer',
+          // Public article slug — only if the post is published
+          articleSlug: hasPublishedPost ? post!.slug : null,
+        };
+      });
 
     return NextResponse.json({ photos });
   } catch (error) {
