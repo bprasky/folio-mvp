@@ -56,8 +56,8 @@ export const SCENE_PRESETS: Record<string, ScenePreset> = {
       ambient: { color: '#e0d8e8', intensity: 0.15 },
     },
     fog: null,
-    shadow: { opacity: 0.15, color: '#8878a0' },
-    environment: { hdriPath: '/assets/hdri/venice_sunset_1k.hdr', backgroundBlurriness: 0.02, backgroundIntensity: 0.8, environmentIntensity: 0.7 },
+    shadow: { opacity: 0.3, color: '#8878a0' },
+    environment: { hdriPath: '/assets/hdri/venice_sunset_1k.hdr', backgroundBlurriness: 0.85, backgroundIntensity: 0.6, environmentIntensity: 0.7 },
     effects: { goboShadows: false, waterCaustics: false },
   },
 
@@ -76,8 +76,8 @@ export const SCENE_PRESETS: Record<string, ScenePreset> = {
       ambient: { color: '#f5e6d0', intensity: 0.15 },
     },
     fog: null,
-    shadow: { opacity: 0.15, color: '#8b7355' },
-    environment: { hdriPath: '/assets/hdri/kiara_1_dawn_1k.hdr', backgroundBlurriness: 0.03, backgroundIntensity: 0.8, environmentIntensity: 0.7 },
+    shadow: { opacity: 0.3, color: '#8b7355' },
+    environment: { hdriPath: '/assets/hdri/kiara_1_dawn_1k.hdr', backgroundBlurriness: 0.85, backgroundIntensity: 0.6, environmentIntensity: 0.7 },
     effects: { goboShadows: false, waterCaustics: false },
   },
 
