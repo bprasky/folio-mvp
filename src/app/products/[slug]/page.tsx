@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { ProductPage } from "@/components/product/ProductPage";
-import { CinematicProductPage } from "@/components/product/CinematicProductPage";
+import { ImmersiveProductPage } from "@/components/product/ImmersiveProductPage";
 import { getProductById } from "@/lib/products/getProductById";
 import { notFound } from "next/navigation";
 
@@ -40,7 +40,7 @@ export default async function ProductRoute({ params }: { params: { slug: string 
   if (useCinematicLayout) {
     return (
       <div className="cinematic-page">
-        <CinematicProductPage product={product} />
+        <ImmersiveProductPage product={product} />
       </div>
     );
   }

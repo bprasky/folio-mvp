@@ -109,7 +109,7 @@ export function ScrollCinematic({ image, meshTags, roomName }: ScrollCinematicPr
         />
         {/* Tag dots on static fallback (visible on mobile, hidden when Canvas active) */}
         <div className={isInView && !isMobile ? 'hidden' : ''}>
-          <TaggedImage image={image} />
+          <TaggedImage image={image} surface="post" />
         </div>
       </div>
 

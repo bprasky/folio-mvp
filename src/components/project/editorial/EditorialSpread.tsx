@@ -90,7 +90,7 @@ export function EditorialSpread({
               />
               {/* Photo Tag Hotspots */}
               {image.tags && image.tags.length > 0 && (
-                <TaggedImage image={image} />
+                <TaggedImage image={image} surface="post" />
               )}
             </>
           ) : (
@@ -127,7 +127,7 @@ export function EditorialSpread({
               />
               {/* Photo Tag Hotspots */}
               {image.tags && image.tags.length > 0 && (
-                <TaggedImage image={image} />
+                <TaggedImage image={image} surface="post" />
               )}
             </>
           ) : (

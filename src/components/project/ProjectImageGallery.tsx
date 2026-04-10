@@ -45,7 +45,7 @@ export function ProjectImageGallery({ project }: ProjectImageGalleryProps) {
               alt={project?.title ?? ""}
               className="w-full h-auto"
             />
-            <TaggedImage image={img} />
+            <TaggedImage image={img} surface="post" />
           </figure>
         ))}
       </div>

@@ -1,34 +1,193 @@
 'use client';
 
 import { Suspense, useState, useRef, useCallback, useEffect, useMemo } from 'react';
-import { Canvas, useThree } from '@react-three/fiber';
-import { OrbitControls, useGLTF, ContactShadows, Environment } from '@react-three/drei';
+import { Canvas, useThree, useFrame } from '@react-three/fiber';
+import { OrbitControls, ContactShadows, useGLTF, Environment, MeshReflectorMaterial } from '@react-three/drei';
 import * as THREE from 'three';
 import SafeImage from '@/components/common/SafeImage';
+import {
+  SCENE_PRESETS,
+  DEFAULT_PRESET_ID,
+  getRecommendedPreset,
+  type ScenePreset,
+} from '@/lib/three-d/scene-presets';
 
 interface Product3DViewerProps {
   glbUrl: string;
   fallbackImageUrl?: string;
   productName?: string;
-  color?: string; // hex color to tint the mesh, e.g. '#8B7355'
+  color?: string;
+  scenePresetId?: string | null;
+  productCategory?: string | null;
   onInteraction?: () => void;
+  onOrbitStart?: () => void;
+  onOrbitEnd?: () => void;
+  onDoubleClick?: () => void;
   className?: string;
 }
 
-function ProductModel({ url, color, onLoaded }: { url: string; color?: string; onLoaded?: (box: THREE.Box3) => void }) {
+// ---------------------------------------------------------------------------
+// Ground plane with configurable material
+// ---------------------------------------------------------------------------
+
+function GroundPlane({ ground }: { ground: ScenePreset['ground'] }) {
+  if (!ground.enabled) return null;
+
+  if (ground.mirror) {
+    // Real reflections — infinite mirror surface (salt flats, water)
+    return (
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.005, 0]}>
+        <planeGeometry args={[100, 100]} />
+        <MeshReflectorMaterial
+          blur={[300, 100]}
+          resolution={1024}
+          mixBlur={0.8}
+          mixStrength={0.6}
+          roughness={ground.roughness}
+          depthScale={1.2}
+          minDepthThreshold={0.4}
+          maxDepthThreshold={1.4}
+          color={ground.color}
+          metalness={ground.reflectivity}
+          mirror={0.5}
+        />
+      </mesh>
+    );
+  }
+
+  return (
+    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.005, 0]} receiveShadow>
+      <planeGeometry args={[50, 50]} />
+      <meshStandardMaterial
+        color={ground.color}
+        roughness={ground.roughness}
+        metalness={ground.reflectivity}
+      />
+    </mesh>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Water caustics — subtle vertex animation on the ground
+// ---------------------------------------------------------------------------
+
+function WaterGround({ ground }: { ground: ScenePreset['ground'] }) {
+  const meshRef = useRef<THREE.Mesh>(null);
+
+  useFrame(({ clock }) => {
+    const mesh = meshRef.current;
+    if (!mesh) return;
+    const geo = mesh.geometry as THREE.PlaneGeometry;
+    const pos = geo.attributes.position;
+    const t = clock.getElapsedTime() * 0.3;
+
+    for (let i = 0; i < pos.count; i++) {
+      const x = pos.getX(i);
+      const y = pos.getY(i);
+      pos.setZ(i, Math.sin(x * 0.5 + t) * Math.cos(y * 0.4 + t * 0.7) * 0.02);
+    }
+    pos.needsUpdate = true;
+    geo.computeVertexNormals();
+  });
+
+  return (
+    <mesh ref={meshRef} rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.005, 0]} receiveShadow>
+      <planeGeometry args={[50, 50, 64, 64]} />
+      <meshStandardMaterial
+        color={ground.color}
+        roughness={ground.roughness}
+        metalness={ground.reflectivity}
+      />
+    </mesh>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Gobo shadows — SpotLight with a window-mullion texture
+// ---------------------------------------------------------------------------
+
+function GoboLight() {
+  const lightRef = useRef<THREE.SpotLight>(null);
+
+  const goboMap = useMemo(() => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 256;
+    const ctx = canvas.getContext('2d')!;
+
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, 256, 256);
+
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(82, 0, 6, 256);
+    ctx.fillRect(168, 0, 6, 256);
+    ctx.fillRect(0, 126, 256, 6);
+
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.wrapS = THREE.RepeatWrapping;
+    tex.wrapT = THREE.RepeatWrapping;
+    return tex;
+  }, []);
+
+  return (
+    <spotLight
+      ref={lightRef}
+      position={[-8, 12, 4]}
+      angle={0.4}
+      penumbra={0.6}
+      intensity={0.8}
+      color="#fff5e0"
+      castShadow
+      shadow-mapSize-width={1024}
+      shadow-mapSize-height={1024}
+      map={goboMap}
+    />
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Scene fog
+// ---------------------------------------------------------------------------
+
+function SceneFog({ fog }: { fog: NonNullable<ScenePreset['fog']> }) {
+  const { scene } = useThree();
+
+  useEffect(() => {
+    scene.fog = new THREE.Fog(fog.color, fog.near, fog.far);
+    return () => {
+      scene.fog = null;
+    };
+  }, [scene, fog.color, fog.near, fog.far]);
+
+  return null;
+}
+
+// ---------------------------------------------------------------------------
+// Product model with tight camera framing
+// ---------------------------------------------------------------------------
+
+function ProductModel({
+  url,
+  color,
+  onLoaded,
+}: {
+  url: string;
+  color?: string;
+  onLoaded?: (box: THREE.Box3) => void;
+}) {
   const gltf = useGLTF(url, true);
 
   const centeredScene = useMemo(() => {
     const clone = gltf.scene.clone();
 
-    // Deep-clone materials; apply tint color only if mesh has no textures
     clone.traverse((child: any) => {
       if (child.isMesh && child.material) {
         child.material = child.material.clone();
-        // Only tint if the material has no base color texture (untextured mesh)
         if (color && !child.material.map) {
           child.material.color = new THREE.Color(color);
         }
+        child.castShadow = true;
+        child.receiveShadow = true;
       }
     });
 
@@ -52,78 +211,170 @@ function ProductModel({ url, color, onLoaded }: { url: string; color?: string; o
   return <primitive object={centeredScene} />;
 }
 
-/** Ensure scene.background stays null so the canvas remains transparent */
-function ClearBackground() {
-  const { scene } = useThree();
+// ---------------------------------------------------------------------------
+// Camera framing — three-quarter product photography angle
+// ---------------------------------------------------------------------------
+
+function CameraFramer({
+  box,
+  onInteraction,
+  onOrbitStart,
+  onOrbitEnd,
+}: {
+  box: THREE.Box3 | null;
+  onInteraction?: () => void;
+  onOrbitStart?: () => void;
+  onOrbitEnd?: () => void;
+}) {
+  const { camera } = useThree();
+  const controlsRef = useRef<any>(null);
+  const framed = useRef(false);
+  const hasInteracted = useRef(false);
+
   useEffect(() => {
-    scene.background = null;
-  });
-  return null;
+    if (!box || framed.current) return;
+    framed.current = true;
+
+    const size = box.getSize(new THREE.Vector3());
+    const center = box.getCenter(new THREE.Vector3());
+    const maxDim = Math.max(size.x, size.y, size.z);
+    const fov = (camera as THREE.PerspectiveCamera).fov * (Math.PI / 180);
+
+    const distance = (maxDim / 2) / Math.tan(fov / 2) * 1.2;
+
+    camera.position.set(
+      center.x + distance * 0.45,
+      center.y + distance * 0.22,
+      center.z + distance * 0.82,
+    );
+    camera.lookAt(center);
+    camera.updateProjectionMatrix();
+  }, [box, camera]);
+
+  const target = box ? box.getCenter(new THREE.Vector3()) : new THREE.Vector3(0, 1, 0);
+
+  return (
+    <OrbitControls
+      ref={controlsRef}
+      makeDefault
+      target={target}
+      enablePan={false}
+      enableZoom={false}
+      enableRotate={true}
+      rotateSpeed={0.5}
+      minPolarAngle={Math.PI / 6}
+      maxPolarAngle={Math.PI / 2.2}
+      onStart={() => {
+        if (!hasInteracted.current) {
+          hasInteracted.current = true;
+          onInteraction?.();
+        }
+        onOrbitStart?.();
+      }}
+      onEnd={() => {
+        onOrbitEnd?.();
+      }}
+    />
+  );
 }
+
+// ---------------------------------------------------------------------------
+// Scene content — assembled from preset
+// ---------------------------------------------------------------------------
+
 
 function SceneContent({
   url,
   color,
+  preset,
   onInteraction,
+  onOrbitStart,
+  onOrbitEnd,
   onModelReady,
 }: {
   url: string;
   color?: string;
+  preset: ScenePreset;
   onInteraction?: () => void;
+  onOrbitStart?: () => void;
+  onOrbitEnd?: () => void;
   onModelReady?: () => void;
 }) {
-  const hasInteracted = useRef(false);
+  const [modelBox, setModelBox] = useState<THREE.Box3 | null>(null);
 
-  const handleModelLoaded = useCallback(
-    (_box: THREE.Box3) => {
-      onModelReady?.();
-    },
-    [onModelReady]
-  );
+  const handleLoaded = useCallback((box: THREE.Box3) => {
+    setModelBox(box);
+    onModelReady?.();
+  }, [onModelReady]);
 
   return (
     <>
-      {/* Key light — warm, upper left */}
-      <directionalLight position={[-5, 5, 5]} intensity={1.2} color="#fff5e6" castShadow />
-      {/* Fill light — cooler, right side */}
-      <directionalLight position={[5, 3, 2]} intensity={0.4} color="#f0f0ff" />
-      {/* Rim light — behind and above */}
-      <directionalLight position={[0, 4, -5]} intensity={0.6} color="#fff8f0" />
-      {/* Soft ambient base */}
-      <ambientLight intensity={0.3} color="#faf5ef" />
+      {/* HDRI environment — provides realistic lighting + background */}
+      <Environment
+        files={preset.environment.hdriPath}
+        background={true}
+        backgroundBlurriness={preset.environment.backgroundBlurriness}
+        backgroundIntensity={preset.environment.backgroundIntensity}
+        environmentIntensity={preset.environment.environmentIntensity}
+      />
 
-      <Environment files="/assets/hdri/studio_small_03_1k.hdr" background={false} environmentIntensity={0.5} />
-      <ClearBackground />
+      {/* Fog */}
+      {preset.fog && <SceneFog fog={preset.fog} />}
 
+      {/* Lighting — key, fill, rim, ambient */}
+      <directionalLight
+        position={preset.lights.key.position}
+        intensity={preset.lights.key.intensity}
+        color={preset.lights.key.color}
+        castShadow
+        shadow-mapSize-width={2048}
+        shadow-mapSize-height={2048}
+        shadow-bias={-0.0001}
+      />
+      <directionalLight
+        position={preset.lights.fill.position}
+        intensity={preset.lights.fill.intensity}
+        color={preset.lights.fill.color}
+      />
+      <directionalLight
+        position={preset.lights.rim.position}
+        intensity={preset.lights.rim.intensity}
+        color={preset.lights.rim.color}
+      />
+      <ambientLight
+        color={preset.lights.ambient.color}
+        intensity={preset.lights.ambient.intensity}
+      />
+
+      {/* Effects */}
+      {preset.effects.goboShadows && <GoboLight />}
+
+      {/* Ground plane */}
+      {preset.effects.waterCaustics ? (
+        <WaterGround ground={preset.ground} />
+      ) : (
+        <GroundPlane ground={preset.ground} />
+      )}
+
+      {/* Contact shadow (on top of ground) */}
+      {preset.shadow.opacity > 0 && (
+        <ContactShadows
+          position={[0, 0.001, 0]}
+          opacity={preset.shadow.opacity}
+          scale={10}
+          blur={2.5}
+          far={4}
+          color={preset.shadow.color}
+        />
+      )}
+
+      {/* Product mesh */}
       <Suspense fallback={null}>
-        <ProductModel url={url} color={color} onLoaded={handleModelLoaded} />
+        <ProductModel url={url} color={color} onLoaded={handleLoaded} />
       </Suspense>
 
-      <ContactShadows
-        position={[0, -0.01, 0]}
-        opacity={0.12}
-        scale={10}
-        blur={2.5}
-        far={4}
-        color="#8B7355"
-      />
-
-      <OrbitControls
-        makeDefault
-        target={[0, 1, 0]}
-        enablePan={false}
-        enableZoom={false}
-        enableRotate={true}
-        rotateSpeed={0.5}
-        minPolarAngle={Math.PI / 6}
-        maxPolarAngle={Math.PI / 2.2}
-        onStart={() => {
-          if (!hasInteracted.current) {
-            hasInteracted.current = true;
-            onInteraction?.();
-          }
-        }}
-      />
+      {/* Camera + controls */}
+      <CameraFramer box={modelBox} onInteraction={onInteraction} onOrbitStart={onOrbitStart} onOrbitEnd={onOrbitEnd} />
     </>
   );
 }
@@ -133,7 +384,12 @@ export default function Product3DViewer({
   fallbackImageUrl,
   productName,
   color,
+  scenePresetId,
+  productCategory,
   onInteraction,
+  onOrbitStart,
+  onOrbitEnd,
+  onDoubleClick,
   className,
 }: Product3DViewerProps) {
   const [error, setError] = useState(false);
@@ -143,9 +399,17 @@ export default function Product3DViewer({
     setModelReady(true);
   }, []);
 
+  // Resolve preset
+  const presetId = scenePresetId || getRecommendedPreset(productCategory) || DEFAULT_PRESET_ID;
+  const preset = SCENE_PRESETS[presetId] || SCENE_PRESETS[DEFAULT_PRESET_ID];
+
+  // If caller provides a className with height (e.g. h-full), use it; otherwise default
+  const hasCustomHeight = className && /\bh-/.test(className);
+  const heightClass = hasCustomHeight ? '' : 'h-[40vh] md:h-[60vh]';
+
   if (error) {
     return fallbackImageUrl ? (
-      <div className={`relative w-full h-[40vh] md:h-[60vh] ${className || ''}`}>
+      <div className={`relative w-full ${heightClass} ${className || ''}`}>
         <SafeImage
           src={fallbackImageUrl}
           alt={productName || 'Product'}
@@ -159,7 +423,7 @@ export default function Product3DViewer({
 
   return (
     <div
-      className={`relative w-full h-[40vh] md:h-[60vh] ${className || ''}`}
+      className={`relative w-full ${heightClass} ${className || ''}`}
       role="img"
       aria-label={`3D view of ${productName || 'product'}`}
     >
@@ -190,17 +454,27 @@ export default function Product3DViewer({
           opacity: modelReady ? 1 : 0,
           transition: 'opacity 500ms ease-out',
         }}
+        onDoubleClick={onDoubleClick}
       >
         <Canvas
-          gl={{ alpha: true, antialias: true }}
-          camera={{ position: [3, 2, 5], fov: 40 }}
+          gl={{
+            alpha: false,
+            antialias: true,
+            toneMapping: THREE.ACESFilmicToneMapping,
+            toneMappingExposure: 1.1,
+          }}
+          shadows={{ type: THREE.PCFSoftShadowMap }}
+          camera={{ fov: 35, near: 0.1, far: 100 }}
+          dpr={[1, 2]}
           onError={() => setError(true)}
-          style={{ background: 'transparent' }}
         >
           <SceneContent
             url={glbUrl}
             color={color}
+            preset={preset}
             onInteraction={onInteraction}
+            onOrbitStart={onOrbitStart}
+            onOrbitEnd={onOrbitEnd}
             onModelReady={handleModelReady}
           />
         </Canvas>

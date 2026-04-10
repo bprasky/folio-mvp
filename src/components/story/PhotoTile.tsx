@@ -123,7 +123,7 @@ export function PhotoTile({
             className="pointer-events-auto absolute inset-0"
             onClick={(e) => e.stopPropagation()}
           >
-            <TaggedImage image={image} />
+            <TaggedImage image={image} surface="post" />
           </div>
         </div>
       )}

@@ -4,81 +4,75 @@ import { useRef, useState, useCallback, useEffect } from 'react';
 import { useSaveToProjectFolder } from '@/components/projects/useSaveToProjectFolder';
 import SaveToFolderModal from '@/components/projects/SaveToFolderModal';
 import { normalizeTags, getInteractionTier } from './types';
-import type { NormalizedTag, InteractionLevel } from './types';
+import type { NormalizedTag, InteractionLevel, TagSurface } from './types';
 import { getProductCompleteness } from './productCompleteness';
-import { useMaskHitTest } from './useMaskHitTest';
-import { useTaggedImageCursor } from './useTaggedImageCursor';
-import { GoldBorderShimmer } from './GoldBorderShimmer';
-import { TagTooltip } from './TagTooltip';
+import { TagDotOverlay } from './TagDotOverlay';
+import { TagExpansionCard } from './TagExpansionCard';
 import { MobileTapOverlay } from './MobileTapOverlay';
-import { MaskHighlight } from '../tag-liftoff/MaskHighlight';
-import { ProductExpandModal } from '../tag-liftoff/ProductExpandModal';
-import { AnchoredLiftOff } from './AnchoredLiftOff';
 import { PartialProductPrompt } from './PartialProductPrompt';
+import { HologramExpansion } from './HologramExpansion';
+import { recordTagSignal } from '@/lib/intelligence/tag-signals';
 
 interface TaggedImageProps {
   image: any;
   tags?: any[] | null;
   interactionLevel?: InteractionLevel;
+  surface?: TagSurface;
   onProductClick?: (tag: NormalizedTag) => void;
+  usePortal?: boolean; // for feed cards with overflow:hidden
 }
 
 /**
  * Universal tagged image interaction component.
- * Replaces ImageTagDots with a cursor-driven, mask-based system.
  *
- * No dots, no badges, no overlays at rest.
- * The cursor itself is the interface.
+ * Tags are invisible until intent. No dots, no shimmer, no custom cursor.
+ * Mouse enters image → minimal white dots reveal.
+ * Click/dwell a dot → product expansion with HUD menu.
+ * 3D products → hologram pop-out.
  */
 export function TaggedImage({
   image,
   tags: tagsProp,
   interactionLevel = 'full',
+  surface = 'post',
   onProductClick,
+  usePortal = false,
 }: TaggedImageProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const allTags = normalizeTags(image, tagsProp);
-  // Filter out stubs — products with only a name and nothing else
   const tags = allTags.filter(t => getProductCompleteness(t) !== 'stub');
-  const [liftedTag, setLiftedTag] = useState<NormalizedTag | null>(null);
-  const [expandTag, setExpandTag] = useState<NormalizedTag | null>(null);
+
+  const [dotsVisible, setDotsVisible] = useState(false);
+  const [activeTag, setActiveTag] = useState<NormalizedTag | null>(null);
   const [partialTag, setPartialTag] = useState<NormalizedTag | null>(null);
-  const [revealDots, setRevealDots] = useState(false);
-  const hasRevealed = useRef(false);
 
   const { openSaveDialog, modalProps } = useSaveToProjectFolder();
 
-  // Brief reveal dots when image scrolls into viewport
+  // Desktop: show dots on mouse enter
+  const handleMouseEnter = useCallback(() => {
+    setDotsVisible(true);
+    recordTagSignal({
+      type: 'tagged_image_hover',
+      imageId: image?.id,
+      surface,
+    });
+  }, [image?.id, surface]);
+
+  const handleMouseLeave = useCallback(() => {
+    setDotsVisible(false);
+  }, []);
+
+  // Check container width for compact mode (feed cards)
+  const [isCompact, setIsCompact] = useState(false);
   useEffect(() => {
     const el = containerRef.current;
-    if (!el || hasRevealed.current || !tags.length) return;
+    if (el && el.clientWidth < 200) {
+      setIsCompact(true);
+    }
+  }, []);
 
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting && !hasRevealed.current) {
-          hasRevealed.current = true;
-          setRevealDots(true);
-          setTimeout(() => setRevealDots(false), 2000);
-          observer.disconnect();
-        }
-      },
-      { threshold: 0.5 }
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [tags.length]);
-
-  // Mask hit-testing (desktop hover detection)
-  const { hitTag, isOverAnyTag, isOverTaggedImage, cursorPosition } = useMaskHitTest(
-    containerRef,
-    tags
-  );
-
-  // Cursor management
-  useTaggedImageCursor(containerRef, isOverTaggedImage, isOverAnyTag);
-
-  // Handle click on a product region
-  const handleProductClick = useCallback(
+  // Handle tag activation (from dot click/dwell or mobile tap)
+  const handleTagActivate = useCallback(
     (tag: NormalizedTag) => {
       if (onProductClick) {
         onProductClick(tag);
@@ -87,7 +81,7 @@ export function TaggedImage({
 
       if (interactionLevel === 'signal') return;
 
-      // Partial products → show completion prompt instead of broken expand/3D
+      // Partial products → show completion prompt
       const completeness = getProductCompleteness(tag);
       if (completeness === 'partial') {
         setPartialTag(tag);
@@ -96,118 +90,144 @@ export function TaggedImage({
 
       const tier = getInteractionTier(tag);
 
-      if (tier === 'expand-2d') {
-        setExpandTag(tag);
-        return;
-      }
+      recordTagSignal({
+        type: 'tag_activated',
+        productId: tag.productId,
+        surface,
+        expansionType: tier === 'full-3d' || tier === 'mask-only' ? '3d' : '2d',
+      });
 
-      if (interactionLevel === 'full' && (tier === 'full-3d' || tier === 'mask-only')) {
-        setLiftedTag(tag);
-        return;
-      }
-
-      // Fallback: navigate to product page
-      if (tag.href) {
-        window.location.href = tag.href;
-      }
+      setActiveTag(tag);
     },
-    [interactionLevel, onProductClick]
+    [interactionLevel, onProductClick, surface]
   );
 
-  // Desktop click handler
-  const handleContainerClick = useCallback(() => {
-    if (hitTag && interactionLevel !== 'signal') {
-      handleProductClick(hitTag);
+  const handleDismiss = useCallback(() => {
+    if (activeTag) {
+      recordTagSignal({
+        type: 'tag_dismissed',
+        productId: activeTag.productId,
+        surface,
+      });
     }
-  }, [hitTag, interactionLevel, handleProductClick]);
+    setActiveTag(null);
+  }, [activeTag, surface]);
+
+  const handleViewProduct = useCallback(() => {
+    if (activeTag?.href) {
+      recordTagSignal({
+        type: 'product_view_navigate',
+        productId: activeTag.productId,
+        surface,
+      });
+      window.location.href = activeTag.href;
+    }
+  }, [activeTag, surface]);
 
   const handleAddToProject = useCallback(
     (tag: NormalizedTag) => {
       if (!tag.productId) return;
+      recordTagSignal({
+        type: 'project_add',
+        productId: tag.productId,
+        surface,
+      });
       openSaveDialog({
         productId: tag.productId,
-        source: 'tagged-image-interaction',
+        source: 'tag_hud',
       });
     },
-    [openSaveDialog]
+    [openSaveDialog, surface]
   );
 
-  const handleDismissLiftOff = useCallback(() => {
-    setLiftedTag(null);
-  }, []);
+  const handleSave = useCallback(() => {
+    if (!activeTag?.productId) return;
+    recordTagSignal({
+      type: 'product_save',
+      productId: activeTag.productId,
+      surface,
+    });
+    fetch('/api/signals/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ productId: activeTag.productId }),
+    }).catch(() => {});
+  }, [activeTag, surface]);
+
+  const handleDownload3D = useCallback(() => {
+    if (!activeTag?.mesh3dUrl) return;
+    recordTagSignal({
+      type: 'asset_download',
+      productId: activeTag.productId,
+      surface,
+      format: 'glb',
+    });
+    window.open(activeTag.mesh3dUrl, '_blank');
+  }, [activeTag, surface]);
 
   const imageUrl = image?.url || '';
 
   if (!tags.length) return null;
+
+  // Determine active tag's interaction tier
+  const activeTier = activeTag ? getInteractionTier(activeTag) : null;
+  const is3DExpansion = activeTier === 'full-3d' || activeTier === 'mask-only';
 
   return (
     <>
       <div
         ref={containerRef}
         className="absolute inset-0 z-[2]"
-        onClick={handleContainerClick}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
       >
-        {/* Brief reveal dots — appear on scroll-into-view, fade after 2s */}
-        {revealDots && tags.map((tag) => (
-          <span
-            key={`reveal-${tag.id}`}
-            className="absolute z-[4] w-1.5 h-1.5 rounded-full bg-white/40 backdrop-blur-sm pointer-events-none"
-            style={{
-              left: `${tag.xPercent}%`,
-              top: `${tag.yPercent}%`,
-              transform: 'translate(-50%, -50%)',
-              animation: 'revealDot 2s ease-out forwards',
-            }}
+        {/* Desktop: tag dots visible on hover */}
+        <div className="hidden md:block">
+          <TagDotOverlay
+            tags={tags}
+            visible={dotsVisible && !activeTag}
+            compact={isCompact}
+            onTagActivate={handleTagActivate}
           />
-        ))}
+        </div>
 
-        {/* Gold border shimmer — first encounter per session */}
-        <GoldBorderShimmer isActive={isOverTaggedImage} />
+        {/* Mobile: tap overlay */}
+        <MobileTapOverlay
+          tags={tags}
+          onTagTap={handleTagActivate}
+        />
 
-        {/* Mask highlight on hover — only in explore/full mode */}
-        {hitTag?.meshMaskUrl && interactionLevel !== 'signal' && (
-          <MaskHighlight maskUrl={hitTag.meshMaskUrl} isActive={true} />
-        )}
-
-        {/* Near-cursor tooltip — explore/full mode */}
-        {interactionLevel !== 'signal' && (
-          <TagTooltip
-            tag={hitTag}
-            cursorPosition={cursorPosition}
+        {/* 2D Product Expansion Card */}
+        {activeTag && !is3DExpansion && (
+          <TagExpansionCard
+            tag={activeTag}
             containerRef={containerRef}
+            onDismiss={handleDismiss}
+            onViewProduct={activeTag.href ? handleViewProduct : undefined}
+            onAddToProject={activeTag.productId ? () => handleAddToProject(activeTag) : undefined}
+            onSave={activeTag.productId ? handleSave : undefined}
+            onDownload3D={activeTag.mesh3dUrl ? handleDownload3D : undefined}
+            usePortal={usePortal}
           />
         )}
 
-        {/* Mobile tap overlay */}
-        <MobileTapOverlay tags={tags} onTagTap={handleProductClick} />
-
-        {/* Anchored lift-off — full mode only */}
-        {liftedTag && interactionLevel === 'full' && (
-          <AnchoredLiftOff
-            tag={liftedTag}
+        {/* 3D Hologram Expansion */}
+        {activeTag && is3DExpansion && interactionLevel === 'full' && (
+          <HologramExpansion
+            tag={activeTag}
             imageUrl={imageUrl}
             containerRef={containerRef}
-            onDismiss={handleDismissLiftOff}
-            onAddToProject={() => handleAddToProject(liftedTag)}
+            onDismiss={handleDismiss}
+            onViewProduct={activeTag.href ? handleViewProduct : undefined}
+            onAddToProject={activeTag.productId ? () => handleAddToProject(activeTag) : undefined}
+            onSave={activeTag.productId ? handleSave : undefined}
+            onDownload3D={activeTag.mesh3dUrl ? handleDownload3D : undefined}
+            surface={surface}
           />
         )}
       </div>
 
-      {/* 2D product expand modal */}
-      {expandTag && (
-        <ProductExpandModal
-          isOpen={true}
-          onClose={() => setExpandTag(null)}
-          imageUrl={expandTag.thumbnailUrl || expandTag.cutoutImageUrl}
-          name={expandTag.label}
-          vendorName={expandTag.vendorName}
-          href={expandTag.href}
-          productId={expandTag.productId}
-          onAddToProject={() => handleAddToProject(expandTag)}
-        />
-      )}
-
-      {/* Partial product prompt — completion CTAs for incomplete products */}
+      {/* Partial product prompt */}
       {partialTag && (
         <PartialProductPrompt
           isOpen={true}

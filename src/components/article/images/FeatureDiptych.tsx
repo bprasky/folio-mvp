@@ -41,7 +41,7 @@ export default function FeatureDiptych({ images }: { images: ImageLike[] }) {
             className="w-full h-auto"
           />
           {feature.tags && feature.tags.length > 0 && (
-            <TaggedImage image={feature} interactionLevel="explore" />
+            <TaggedImage image={feature} interactionLevel="explore" surface="super_article" />
           )}
           {feature.caption ? (
             <figcaption className="p-2 folio-meta text-folio-text-secondary">
@@ -67,7 +67,7 @@ export default function FeatureDiptych({ images }: { images: ImageLike[] }) {
                 className="w-full h-auto"
               />
               {img.tags && img.tags.length > 0 && (
-                <TaggedImage image={img} interactionLevel="explore" />
+                <TaggedImage image={img} interactionLevel="explore" surface="super_article" />
               )}
               {img.caption ? (
                 <figcaption className="p-2 folio-meta text-folio-text-secondary">
@@ -95,7 +95,7 @@ export default function FeatureDiptych({ images }: { images: ImageLike[] }) {
                 className="w-full h-auto"
               />
               {img.tags && img.tags.length > 0 && (
-                <TaggedImage image={img} interactionLevel="explore" />
+                <TaggedImage image={img} interactionLevel="explore" surface="super_article" />
               )}
               {img.caption ? (
                 <figcaption className="p-2 folio-meta text-folio-text-secondary">

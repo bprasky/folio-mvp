@@ -85,6 +85,8 @@ export const getProductById = cache(async (id: string): Promise<(Product & {
     insights: { saves: 0, tags: 0, saveToTagPct: 0, topRooms: [] as any[], topMarkets: [] as any[] },
     mesh3dUrl: productFromDB.threeDAssetUrl || undefined,
     meshColor,
+    scenePresetId: (productFromDB as any).scenePresetId || undefined,
+    category: productFromDB.category || undefined,
     related: [] as any[],
     // Internal fields for completeness gating
     _completeness: completeness,

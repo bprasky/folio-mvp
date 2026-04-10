@@ -121,7 +121,7 @@ function CinemaSpread({ chapter }: { chapter: EditorialChapter }) {
             alt={chapter.title ?? ""}
             className="w-full h-auto"
           />
-          <TaggedImage image={chapter.primaryImage} />
+          <TaggedImage surface="post" image={chapter.primaryImage} />
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-black/5 to-transparent" />
           <div className="absolute bottom-6 left-6 right-6 flex flex-wrap items-end justify-between gap-3">
             <div className="rounded-full bg-surface-canvas/90 backdrop-blur-sm px-3 py-1 folio-meta uppercase tracking-[0.18em] text-folio-text-secondary">
@@ -174,7 +174,7 @@ function DetailGridSpread({ chapter }: { chapter: EditorialChapter }) {
               alt={chapter.title ?? ""}
               className="w-full h-auto"
             />
-            <TaggedImage image={img} />
+            <TaggedImage surface="post" image={img} />
           </div>
         ))}
       </div>
@@ -211,7 +211,7 @@ function FigureImage({ image, title }: { image: any; title?: string | null }) {
         alt={title ?? ""}
         className="w-full h-auto"
       />
-      <TaggedImage image={image} />
+      <TaggedImage surface="post" image={image} />
     </figure>
   );
 }
