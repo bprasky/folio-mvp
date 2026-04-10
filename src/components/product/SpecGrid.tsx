@@ -14,7 +14,7 @@ interface SpecGridProps {
  * Conditionally renders: hidden when brand + dimensions + materials are all empty.
  */
 export function SpecGrid({ product }: SpecGridProps) {
-  const { brand, dimensions, materials, finish, leadTime } = product;
+  const { brand, dimensions, materials, finish, leadTime, sku, style, price, priceTier } = product;
 
   const hasDimensions =
     dimensions && (dimensions.w > 0 || dimensions.d > 0 || dimensions.h > 0);
@@ -22,15 +22,29 @@ export function SpecGrid({ product }: SpecGridProps) {
   const hasBrand = !!brand;
   const hasLeadTime = !!leadTime;
   const hasFinish = !!finish;
+  const hasSku = !!sku && sku !== brand; // sku defaults to brand in getProductById fallback
+  const hasStyle = !!style;
+  const hasPrice = !!price;
+  const hasCategory = !!product.category;
 
   // Don't render if nothing to show
-  if (!hasBrand && !hasDimensions && !hasMaterials && !hasLeadTime && !hasFinish) {
+  if (!hasBrand && !hasDimensions && !hasMaterials && !hasLeadTime && !hasFinish && !hasSku && !hasStyle && !hasPrice && !hasCategory) {
     return null;
   }
 
   const dimString = hasDimensions
     ? `${dimensions.w}" × ${dimensions.d}" × ${dimensions.h}"`
     : null;
+
+  // Build spec cards dynamically — show what we have, up to 4 in the grid
+  const cards: { label: string; value: string; link?: boolean }[] = [];
+  if (hasBrand) cards.push({ label: "Brand", value: brand });
+  if (hasCategory) cards.push({ label: "Category", value: product.category!, link: true });
+  if (hasDimensions) cards.push({ label: "Dimensions", value: dimString! });
+  if (hasSku) cards.push({ label: "SKU", value: sku });
+  if (hasStyle) cards.push({ label: "Style", value: style!.charAt(0).toUpperCase() + style!.slice(1) });
+  if (hasPrice) cards.push({ label: "Price", value: `$${price!.toLocaleString()}` });
+  if (priceTier) cards.push({ label: "Price Tier", value: priceTier.charAt(0).toUpperCase() + priceTier.slice(1) });
 
   return (
     <motion.section
@@ -39,29 +53,35 @@ export function SpecGrid({ product }: SpecGridProps) {
       viewport={{ once: true, margin: "-80px" }}
       transition={{ duration: 0.4, ease: [0.25, 0.8, 0.25, 1] }}
     >
-      {/* 2×2 Card Grid */}
+      {/* Card Grid */}
       <div className="grid grid-cols-2 gap-3">
-        {hasBrand && (
-          <SpecCard label="Brand" value={brand} />
-        )}
-
-        {/* Collection — placeholder for future data */}
-        {product.category && (
-          <SpecCard label="Collection" value={product.category} link />
-        )}
-
-        {hasDimensions && (
-          <SpecCard label="Dimensions" value={dimString!} />
-        )}
-
-        {(hasLeadTime || !hasDimensions) && hasLeadTime && (
-          <LeadTimeCard leadTime={leadTime!} />
-        )}
-
-        {!hasLeadTime && hasFinish && (
-          <SpecCard label="Finish" value={finish} />
-        )}
+        {cards.slice(0, 4).map((card) => (
+          <SpecCard key={card.label} label={card.label} value={card.value} link={card.link} />
+        ))}
       </div>
+
+      {/* Overflow cards (if more than 4) */}
+      {cards.length > 4 && (
+        <div className="grid grid-cols-2 gap-3 mt-3">
+          {cards.slice(4).map((card) => (
+            <SpecCard key={card.label} label={card.label} value={card.value} link={card.link} />
+          ))}
+        </div>
+      )}
+
+      {/* Lead Time card */}
+      {hasLeadTime && (
+        <div className="mt-3">
+          <LeadTimeCard leadTime={leadTime!} />
+        </div>
+      )}
+
+      {/* Finish */}
+      {hasFinish && (
+        <div className="mt-3">
+          <SpecCard label="Finish" value={finish} />
+        </div>
+      )}
 
       {/* Full-width Materials Row */}
       {hasMaterials && (

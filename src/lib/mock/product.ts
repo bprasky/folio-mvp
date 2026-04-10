@@ -33,6 +33,15 @@ export type Product = {
   scenePresetId?: string;
   category?: string;
   related: Array<Pick<Product,"id"|"slug"|"name"> & { thumb: string }>;
+  // CachedProduct enrichment fields
+  style?: string;
+  priceTier?: string;
+  tags?: string[];
+  categories?: string[];
+  colorPalette?: string[];
+  roomSuitability?: Record<string, number>;
+  vendorName?: string;
+  extractionConfidence?: string;
 };
 
 export const MOCK_PRODUCT: Product = {
