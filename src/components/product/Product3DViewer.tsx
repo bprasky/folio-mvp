@@ -1,7 +1,7 @@
 'use client';
 
-import { Suspense, useState, useRef, useCallback, useMemo } from 'react';
-import { Canvas } from '@react-three/fiber';
+import { Suspense, useState, useRef, useCallback, useEffect, useMemo } from 'react';
+import { Canvas, useThree } from '@react-three/fiber';
 import { OrbitControls, useGLTF, ContactShadows, Environment } from '@react-three/drei';
 import * as THREE from 'three';
 import SafeImage from '@/components/common/SafeImage';
@@ -52,6 +52,15 @@ function ProductModel({ url, color, onLoaded }: { url: string; color?: string; o
   return <primitive object={centeredScene} />;
 }
 
+/** Ensure scene.background stays null so the canvas remains transparent */
+function ClearBackground() {
+  const { scene } = useThree();
+  useEffect(() => {
+    scene.background = null;
+  });
+  return null;
+}
+
 function SceneContent({
   url,
   color,
@@ -84,6 +93,7 @@ function SceneContent({
       <ambientLight intensity={0.3} color="#faf5ef" />
 
       <Environment files="/assets/hdri/studio_small_03_1k.hdr" background={false} environmentIntensity={0.5} />
+      <ClearBackground />
 
       <Suspense fallback={null}>
         <ProductModel url={url} color={color} onLoaded={handleModelLoaded} />
