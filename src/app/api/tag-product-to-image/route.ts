@@ -9,6 +9,7 @@ import { recordAtelierSignal } from '@/lib/atelier/signals';
 import { AtelierOwnerType, AtelierSignalSourceType } from '@prisma/client';
 import { syncSingleTestimonial } from '@/lib/syncTestimonials';
 import { getServerProductCompleteness } from '@/lib/products/getProductById';
+import { createInContextBoostOpportunity } from '@/lib/boost/inContextBoost';
 
 /**
  * Fire-and-forget: notify a vendor rep that a designer tagged their product
@@ -411,6 +412,24 @@ export async function POST(request: NextRequest) {
       console.warn('[Atelier] No designerId found for project, skipping signal recording');
     }
 
+    // Create In Context Boost opportunity (non-blocking)
+    // This kicks off the vendor boost flywheel:
+    // vendor review → boost approval → designer Q&A → In Context placement
+    let inContextBoost: any = null;
+    if (designerId) {
+      try {
+        inContextBoost = await createInContextBoostOpportunity({
+          productTagId: tag.id,
+          productId,
+          designerId,
+          projectId,
+          // Rep email from existing contacts is looked up inside the function
+        });
+      } catch (boostError) {
+        console.error('[InContextBoost] Failed to create boost opportunity:', boostError);
+      }
+    }
+
     // Check product completeness and suggest rep action if incomplete
     let incompleteProduct: any = null;
     const completeness = getServerProductCompleteness(product);
@@ -478,6 +497,7 @@ export async function POST(request: NextRequest) {
       shopProduct: shopProduct ? { id: shopProduct.id, hasQuote: !!shopProduct.quote } : null,
       linkedSelectionId,
       incompleteProduct,
+      inContextBoost,
     });
 
   } catch (error) {

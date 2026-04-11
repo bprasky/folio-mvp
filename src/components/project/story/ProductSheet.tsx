@@ -31,10 +31,11 @@ export function ProductSheet({
 }: Props) {
   const isOpen = product !== null;
 
-  // Find supplemental quote for this product
-  const quote = product
-    ? supplementalQuotes.find((q: any) => q.productTagId === product.tagId)
-    : null;
+  // Find ALL supplemental quotes for this product (original + boost follow-ups)
+  const productQuotes = product
+    ? supplementalQuotes.filter((q: any) => q.productTagId === product.tagId)
+    : [];
+  const quote = productQuotes[0] ?? null; // Primary quote for backwards compat
 
   const vendorName = product?.vendor?.companyName ?? product?.vendor?.name;
   const vendorUrl = product?.vendor?.website;
@@ -61,7 +62,7 @@ export function ProductSheet({
             <ProductSheetContent
               product={product}
               inSituImages={inSituImages}
-              quote={quote}
+              productQuotes={productQuotes}
               vendorName={vendorName}
               vendorUrl={vendorUrl}
               onClose={onClose}
@@ -112,7 +113,7 @@ export function ProductSheet({
             <ProductSheetContent
               product={product}
               inSituImages={inSituImages}
-              quote={quote}
+              productQuotes={productQuotes}
               vendorName={vendorName}
               vendorUrl={vendorUrl}
               onClose={onClose}
@@ -129,14 +130,14 @@ export function ProductSheet({
 function ProductSheetContent({
   product,
   inSituImages,
-  quote,
+  productQuotes,
   vendorName,
   vendorUrl,
   onClose,
 }: {
   product: StoryProductData;
   inSituImages: { url: string; id: string }[];
-  quote: any;
+  productQuotes: any[];
   vendorName: string | undefined;
   vendorUrl: string | undefined;
   onClose: () => void;
@@ -192,13 +193,24 @@ function ProductSheetContent({
         )}
       </div>
 
-      {/* Designer quote */}
-      {quote?.answer && (
+      {/* Designer quotes + boost follow-up Q&A */}
+      {productQuotes.length > 0 && (
         <>
           <div className="border-t border-[rgba(87,75,67,0.1)]" />
-          <blockquote className="font-[var(--font-headline)] italic text-[17px] leading-relaxed story-text-on-light">
-            &ldquo;{quote.answer}&rdquo;
-          </blockquote>
+          <div className="flex flex-col gap-4">
+            {productQuotes.map((q: any, i: number) => (
+              <div key={q.id || i}>
+                {q.source === 'in_context_boost' && q.question && (
+                  <p className="text-[11px] font-[var(--font-body)] uppercase tracking-wider story-text-secondary mb-1">
+                    {q.question}
+                  </p>
+                )}
+                <blockquote className="font-[var(--font-headline)] italic text-[17px] leading-relaxed story-text-on-light">
+                  &ldquo;{q.answer}&rdquo;
+                </blockquote>
+              </div>
+            ))}
+          </div>
         </>
       )}
 
