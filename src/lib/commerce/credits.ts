@@ -101,7 +101,7 @@ export function calculateFolioPrice(retailCents: number, split: MarginSplit): nu
 export interface CreatePendingCreditParams {
   userId: string;
   amountCents: number;
-  sourceType: 'DESIGNER_COMMISSION' | 'REP_ATTRIBUTION' | 'BONUS' | 'YIELD';
+  sourceType: 'DESIGNER_COMMISSION' | 'REP_ATTRIBUTION' | 'BONUS' | 'YIELD' | 'BOOST_REVENUE' | 'PHOTO_LICENSE';
   sourceOrderId?: string;
   availableAt: Date;
   description?: string;

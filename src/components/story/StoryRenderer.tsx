@@ -45,6 +45,27 @@ export function StoryRenderer({ post }: StoryRendererProps) {
     img.src = story.heroImageUrl;
   }, [story?.heroImageUrl]);
 
+  // Track external share discovery (Flywheel 6: UTM tracking)
+  useEffect(() => {
+    const utmSource = searchParams?.get("utm_source");
+    if (utmSource === "folio_share" && post?.projectId) {
+      fetch("/api/analytics/log", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "article_share_landing",
+          payload: {
+            projectId: post.projectId,
+            postSlug: post.slug,
+            utmSource,
+            utmMedium: searchParams?.get("utm_medium"),
+            utmCampaign: searchParams?.get("utm_campaign"),
+          },
+        }),
+      }).catch(() => {});
+    }
+  }, [searchParams, post?.projectId, post?.slug]);
+
   // Deep link params
   const autoExpandRoom = searchParams?.get("room") ?? null;
   const autoProductId = searchParams?.get("product") ?? null;
