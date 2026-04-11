@@ -28,18 +28,25 @@ export default function OrgProfileTabs({ activeTab, orgId, defaultTab = 'feed', 
 
   const VENDOR_ORG_TYPES = ['VENDOR', 'MANUFACTURER', 'SHOWROOM'];
   const DESIGN_ORG_TYPES = ['DESIGN_FIRM', 'ARCHITECTURE_FIRM'];
+  const isVendorOrg = orgType && VENDOR_ORG_TYPES.includes(orgType);
 
-  const tabs = [
-    { id: 'feed', label: 'Feed' },
-    { id: 'projects', label: 'Projects' },
-    { id: 'shop', label: 'Shop' },
-    // Relationships tab: only for vendor orgs, only for members
-    ...(isMember && orgType && VENDOR_ORG_TYPES.includes(orgType)
-      ? [{ id: 'relationships', label: 'Relationships' }]
-      : []),
-    { id: 'about', label: 'About' },
-    { id: 'contact', label: 'Contact' },
-  ];
+  const tabs = isVendorOrg
+    ? [
+        // Vendor-specific tabs: Feed, Shop, Team & Inquiries, About
+        { id: 'feed', label: 'Feed' },
+        { id: 'shop', label: 'Shop' },
+        { id: 'team', label: 'Team & Inquiries' },
+        ...(isMember ? [{ id: 'relationships', label: 'Relationships' }] : []),
+        { id: 'about', label: 'About' },
+      ]
+    : [
+        // Design org tabs (unchanged)
+        { id: 'feed', label: 'Feed' },
+        { id: 'projects', label: 'Projects' },
+        { id: 'shop', label: 'Shop' },
+        { id: 'about', label: 'About' },
+        { id: 'contact', label: 'Contact' },
+      ];
 
   return (
     <div
