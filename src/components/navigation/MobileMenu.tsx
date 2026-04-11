@@ -146,8 +146,8 @@ export function MobileMenu() {
             <MobileNavLink href="/about" onClick={() => setIsOpen(false)}>
               About
             </MobileNavLink>
-            <MobileNavLink href="/for-designers" onClick={() => setIsOpen(false)}>
-              For Designers
+            <MobileNavLink href="/professionals" onClick={() => setIsOpen(false)}>
+              For Professionals
             </MobileNavLink>
 
             {isDesigner && (
