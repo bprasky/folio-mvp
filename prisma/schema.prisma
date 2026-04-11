@@ -88,9 +88,10 @@ model User {
   consultationBuyer     ConsultationBuyer?
 
   // Boost system relations
-  boostOpportunities BoostOpportunity[] @relation("DesignerBoostOpportunities")
-  approvedBoosts     Boost[]            @relation("UserBoosts")
-  notifications      Notification[]
+  boostOpportunities   BoostOpportunity[]  @relation("DesignerBoostOpportunities")
+  approvedBoosts       Boost[]             @relation("UserBoosts")
+  inContextBoosts      InContextBoost[]    @relation("DesignerInContextBoosts")
+  notifications        Notification[]
 
   // Architect-specific profile fields
   architectLicenseNumber   String? // Professional license number
@@ -606,6 +607,9 @@ model Product {
   projectPricing   ProjectProductPricing[]
   actionItemSignals ActionItemSignal[] @relation("ProductActionSignals")
 
+  // In Context Boost System
+  inContextBoosts InContextBoost[] @relation("ProductInContextBoosts")
+
   @@map("products")
 }
 
@@ -641,6 +645,7 @@ model ProductTag {
 
   // Intelligence System relations
   supplementalQuotes SupplementalQuote[] @relation("ProductTagQuotes")
+  inContextBoost     InContextBoost?
 
   // Vendor Invite System
   vendorInviteTriggers VendorInvite[] @relation("VendorInviteTriggerTag")
@@ -1365,6 +1370,9 @@ model ProjectPost {
 
   // Intelligence System relations
   supplementalQuotes SupplementalQuote[] @relation("PostSupplementalQuotes")
+
+  // In Context Boost System
+  inContextBoosts InContextBoost[] @relation("PostInContextBoosts")
 
   // Contributor/Voice System relations
   publishedContributions Contribution[] @relation("PostContributions")
@@ -3431,6 +3439,84 @@ model Boost {
 
   @@index([vendorId])
   @@map("boosts")
+}
+
+// ─── In Context Boost System ─────────────────────────────────────────────────
+// When a designer tags a product in a project, vendors must boost the tag
+// to earn placement on the product page's "In Context" section.
+// This creates a flywheel: vendor boost → designer credit → follow-up Q&A →
+// richer product content without re-editing articles.
+
+model InContextBoost {
+  id String @id @default(cuid())
+
+  // The tag being boosted (designer tagged this product on this image)
+  productTagId String
+  productTag   ProductTag @relation(fields: [productTagId], references: [id], onDelete: Cascade)
+
+  // Product page where this will appear in the In Context section
+  productId String
+  product   Product @relation("ProductInContextBoosts", fields: [productId], references: [id], onDelete: Cascade)
+
+  // Article/post where the product is featured
+  projectPostId String?
+  projectPost   ProjectPost? @relation("PostInContextBoosts", fields: [projectPostId], references: [id], onDelete: SetNull)
+
+  // Designer who tagged the product
+  designerId String
+  designer   User @relation("DesignerInContextBoosts", fields: [designerId], references: [id])
+
+  // Vendor being asked to boost (organization or user)
+  vendorId    String? // Organization ID (if vendor account exists)
+  vendorUserId String? // Vendor user ID (if vendor account exists)
+
+  // Rep outreach (if no vendor account)
+  repEmail String? // Sales rep email entered by designer
+  repName  String? // Sales rep name
+
+  // Status flow: PENDING_REVIEW → NOTIFIED → VIEWED → APPROVED/DECLINED/EXPIRED
+  status     String   @default("PENDING_REVIEW")
+  notifiedAt DateTime?
+  viewedAt   DateTime?
+  reviewedAt DateTime?
+  expiresAt  DateTime? // Opportunity expires after N days
+
+  // Review outcome
+  accuracyConfirmed Boolean @default(false) // Vendor confirmed tag accuracy
+  declineReason     String?
+
+  // Follow-up Q&A (triggered on approval)
+  followUpQuestion    String?  @db.Text // Question for designer about this product usage
+  followUpAnswer      String?  @db.Text // Designer's response
+  followUpRequestedAt DateTime?
+  followUpAnsweredAt  DateTime?
+
+  // Display settings
+  displayUntil DateTime? // Optional boost expiration
+  boostTier    String    @default("included") // included, premium, featured
+
+  // Photo usage rights — vendor earns right to use tagged image for promotion
+  photoRightsGranted Boolean @default(false) // Designer grants on boost acceptance
+  photoUsageScope    String? // 'product_page', 'magazine', 'social', 'all'
+
+  // Revenue tracking — per-click/per-like, vendor pays, Folio takes 30%
+  impressions        Int     @default(0)
+  clicks             Int     @default(0)
+  likes              Int     @default(0)
+  designerPayoutCents Int    @default(0) // 70% of revenue
+  folioRevenueCents   Int    @default(0) // 30% of revenue
+  vendorSpendCents    Int    @default(0) // Total vendor spend
+  lastBilledAt       DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([productTagId]) // One boost per tag
+  @@index([productId, status])
+  @@index([vendorId, status])
+  @@index([designerId])
+  @@index([status])
+  @@map("in_context_boosts")
 }
 
 // Vendor invite signals for vendors not yet on platform
