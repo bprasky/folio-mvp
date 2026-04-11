@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { sendEmail } from '@/lib/email/sendEmail';
 
 /**
  * Creates an InContextBoost opportunity when a designer tags a product.
@@ -164,10 +165,47 @@ async function notifyVendorOfBoostOpportunity(params: {
           type: 'IN_CONTEXT_BOOST_OPPORTUNITY',
           title: `${designerName} featured your product`,
           body: `"${productName}" was tagged in a published project. Review the tag and boost to feature it on your product page.`,
-          actionUrl: `/vendor/boosts`,
+          actionUrl: `/vendor/boosts/in-context`,
           metadata: { boostId, productName, designerName },
         },
       });
+
+      // Also send email
+      const adminUser = await prisma.user.findUnique({
+        where: { id: admin.userId },
+        select: { email: true },
+      });
+      if (adminUser?.email) {
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || 'https://folioad.com';
+        sendEmail({
+          to: adminUser.email,
+          subject: `${designerName} featured "${productName}" — review & boost`,
+          html: `
+            <div style="font-family: -apple-system, sans-serif; max-width: 520px; margin: 0 auto; padding: 32px 20px;">
+              <div style="font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: #c9a96e; margin-bottom: 16px;">
+                FOLIO — IN CONTEXT BOOST
+              </div>
+              <h1 style="font-size: 22px; font-weight: 400; color: #1a1a1a; margin: 0 0 12px;">
+                ${designerName} featured your product
+              </h1>
+              <p style="font-size: 14px; line-height: 1.6; color: #666;">
+                <strong>"${productName}"</strong> was tagged in a published project. Review the tag for accuracy
+                and boost to feature it on your product page.
+              </p>
+              <p style="font-size: 13px; line-height: 1.6; color: #999;">
+                Boosting gives you photo usage rights, product-specific designer insights,
+                and placement on your product page's In Context section. Designers earn revenue
+                per engagement.
+              </p>
+              <div style="margin: 24px 0;">
+                <a href="${appUrl}/vendor/boosts/in-context" style="display: inline-block; padding: 12px 24px; background: #3a2a1a; color: #f5efe8; text-decoration: none; border-radius: 8px; font-size: 14px; font-weight: 500;">
+                  Review boost opportunity →
+                </a>
+              </div>
+            </div>
+          `,
+        }).catch(() => {});
+      }
     }
 
     // Also notify the specific vendor user if different from org admins
@@ -202,8 +240,38 @@ async function notifyVendorOfBoostOpportunity(params: {
       },
     });
 
-    // TODO: Send email to rep via sendEmail() when email service is configured
-    console.log('[InContextBoost] Would send invite email to rep:', repEmail);
+    // Send invite email to rep
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || 'https://folioad.com';
+    await sendEmail({
+      to: repEmail,
+      subject: `${designerName} featured your product on Folio`,
+      html: `
+        <div style="font-family: -apple-system, sans-serif; max-width: 520px; margin: 0 auto; padding: 32px 20px;">
+          <div style="font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: #c9a96e; margin-bottom: 16px;">
+            FOLIO — IN CONTEXT
+          </div>
+          <h1 style="font-size: 22px; font-weight: 400; color: #1a1a1a; margin: 0 0 12px;">
+            A designer featured your product
+          </h1>
+          <p style="font-size: 14px; line-height: 1.6; color: #666;">
+            <strong>${designerName}</strong> tagged <strong>"${productName}"</strong> in a published project on Folio.
+            Review the tag for accuracy and boost it to feature on your product page — giving the designer proper credit
+            and generating product-specific content.
+          </p>
+          <div style="margin: 24px 0;">
+            <a href="${appUrl}/vendor/welcome" style="display: inline-block; padding: 12px 24px; background: #3a2a1a; color: #f5efe8; text-decoration: none; border-radius: 8px; font-size: 14px; font-weight: 500;">
+              Create your Folio account →
+            </a>
+          </div>
+          <p style="font-size: 12px; color: #999; margin-top: 24px;">
+            Folio connects interior designers with the products they specify.
+            Boost opportunities give you photo usage rights and product-specific designer insights.
+          </p>
+        </div>
+      `,
+    }).catch((err) => {
+      console.error('[InContextBoost] Failed to send rep invite email:', err);
+    });
   }
 
   // Update boost status to NOTIFIED
