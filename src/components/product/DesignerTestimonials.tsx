@@ -19,6 +19,7 @@ interface Testimonial {
   project: {
     id: string;
     title: string;
+    articleSlug: string | null;
   } | null;
 }
 
@@ -145,11 +146,11 @@ function QuoteCard({ testimonial }: { testimonial: Testimonial }) {
             {testimonial.designer.name || 'Designer'}
           </Link>
 
-          {testimonial.project && (
+          {testimonial.project && testimonial.project.articleSlug && (
             <>
               <span style={{ color: "var(--folio-text-tertiary, #9b9b9b)" }}>&middot;</span>
               <Link
-                href={`/project/${testimonial.project.id}`}
+                href={`/p/${testimonial.project.articleSlug}`}
                 className="hover:underline"
                 style={{ color: "var(--folio-text-secondary, #6b6b6b)" }}
               >
