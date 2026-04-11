@@ -305,6 +305,19 @@ export async function approveInContextBoost(params: {
     include: {
       product: { select: { name: true } },
       designer: { select: { id: true, name: true } },
+      productTag: {
+        select: {
+          image: {
+            select: {
+              project: {
+                select: {
+                  post: { select: { credits: true } },
+                },
+              },
+            },
+          },
+        },
+      },
     },
   });
 
@@ -323,6 +336,65 @@ export async function approveInContextBoost(params: {
       },
     },
   });
+
+  // Photographer licensing fee (Flywheel 7)
+  // When a boost is approved and the project has a credited photographer,
+  // allocate a licensing fee to the photographer as Folio credits.
+  const PHOTO_LICENSE_CENTS = 500; // $5.00 flat fee per boost
+  try {
+    const credits = boost.productTag?.image?.project?.post?.credits as any;
+    if (credits && Array.isArray(credits)) {
+      const photographer = credits.find((c: any) =>
+        c.role?.toLowerCase().includes('photo') || c.role?.toLowerCase().includes('photographer')
+      );
+      if (photographer?.name) {
+        // Look up photographer user by name
+        const photogUser = await prisma.user.findFirst({
+          where: {
+            name: { contains: photographer.name, mode: 'insensitive' },
+            role: 'PHOTOGRAPHER',
+          },
+          select: { id: true },
+        });
+        if (photogUser) {
+          const { createPendingCredit } = await import('@/lib/commerce/credits');
+          await prisma.$transaction(async (tx) => {
+            await createPendingCredit(tx as any, {
+              userId: photogUser.id,
+              amountCents: PHOTO_LICENSE_CENTS,
+              sourceType: 'PHOTO_LICENSE',
+              availableAt: new Date(), // Available immediately
+              description: `Photo licensing fee for "${boost.product.name}" boost`,
+              metadata: { boostId, productName: boost.product.name },
+            });
+          });
+
+          // Update boost with photographer info
+          await prisma.inContextBoost.update({
+            where: { id: boostId },
+            data: {
+              photographerId: photogUser.id,
+              photographerLicenseCents: PHOTO_LICENSE_CENTS,
+            },
+          });
+
+          // Notify photographer
+          await prisma.notification.create({
+            data: {
+              userId: photogUser.id,
+              type: 'PHOTO_LICENSE_EARNED',
+              title: 'Photo licensing fee earned!',
+              body: `Your photo was boosted for "${boost.product.name}". You earned a $${(PHOTO_LICENSE_CENTS / 100).toFixed(2)} licensing fee.`,
+              actionUrl: '/dashboard/earnings',
+              metadata: { boostId },
+            },
+          });
+        }
+      }
+    }
+  } catch (photoErr) {
+    console.error('[InContextBoost] Photographer licensing error:', photoErr);
+  }
 
   return boost;
 }

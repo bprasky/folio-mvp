@@ -147,6 +147,8 @@ model User {
   influenceScore            Float? // Calculated influence score 0-100
   influenceScoreUpdatedAt   DateTime? // Last score calculation
   folioCreditBalance        Decimal   @default(0) @db.Decimal(10, 2) // Current Folio Credit balance in USD
+  stripeConnectAccountId    String?   // Stripe Connect account for payouts
+  payoutRequests            PayoutRequest[] @relation("UserPayoutRequests")
 
   // Product search and rep contact relations
   productSearchLogs ProductSearchLog[]
@@ -2368,6 +2370,26 @@ model CreditTransaction {
   @@map("credit_transactions")
 }
 
+// Payout requests — designers cash out their credit balance via Stripe Connect
+model PayoutRequest {
+  id               String    @id @default(cuid())
+  userId           String
+  user             User      @relation("UserPayoutRequests", fields: [userId], references: [id], onDelete: Cascade)
+  amountCents      Int       // Requested amount
+  platformFeeCents Int       @default(0) // Folio fee on cash-out (incentivize platform spending)
+  netPayoutCents   Int       // amountCents - platformFeeCents
+  status           String    @default("PENDING") // PENDING, PROCESSING, COMPLETED, FAILED
+  stripeTransferId String?   // Stripe transfer ID
+  failureReason    String?
+  processedAt      DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@map("payout_requests")
+}
+
 // Commerce order tracking
 model Order {
   id String @id @default(cuid())
@@ -3500,13 +3522,19 @@ model InContextBoost {
   photoUsageScope    String? // 'product_page', 'magazine', 'social', 'all'
 
   // Revenue tracking — per-click/per-like, vendor pays, Folio takes 30%
-  impressions        Int     @default(0)
-  clicks             Int     @default(0)
-  likes              Int     @default(0)
-  designerPayoutCents Int    @default(0) // 70% of revenue
-  folioRevenueCents   Int    @default(0) // 30% of revenue
-  vendorSpendCents    Int    @default(0) // Total vendor spend
-  lastBilledAt       DateTime?
+  impressions           Int     @default(0)
+  clicks                Int     @default(0)
+  likes                 Int     @default(0)
+  lastBilledImpressions Int     @default(0) // Impressions at last billing
+  lastBilledClicks      Int     @default(0) // Clicks at last billing
+  designerPayoutCents   Int     @default(0) // 70% of revenue
+  folioRevenueCents     Int     @default(0) // 30% of revenue
+  vendorSpendCents      Int     @default(0) // Total vendor spend
+  lastBilledAt          DateTime?
+
+  // Photographer licensing
+  photographerId           String?
+  photographerLicenseCents Int     @default(0) // Flat fee per boost
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

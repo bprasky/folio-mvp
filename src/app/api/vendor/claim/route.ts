@@ -88,13 +88,63 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // Snapshot product completeness BEFORE merge (Flywheel 5: Enrichment Tracking)
+    const orgProducts = await prisma.product.findMany({
+      where: { vendor: { organizationUsers: { some: { organizationId } } } },
+      select: { id: true, imageUrl: true, description: true, brand: true, url: true, category: true },
+    });
+    const preClaimCompleteness = orgProducts.map(p => ({
+      id: p.id,
+      hasImage: !!p.imageUrl,
+      hasDescription: !!p.description,
+      hasBrand: !!p.brand,
+      hasUrl: !!p.url,
+      hasCategory: !!p.category,
+    }));
+    const preClaimScore = preClaimCompleteness.reduce((sum, p) =>
+      sum + (p.hasImage ? 1 : 0) + (p.hasDescription ? 1 : 0) + (p.hasBrand ? 1 : 0) + (p.hasUrl ? 1 : 0) + (p.hasCategory ? 1 : 0)
+    , 0);
+
     // Merge shadow profile data into live org
     const org = await prisma.organization.findUnique({
       where: { id: organizationId },
       select: { name: true },
     });
     if (org) {
-      mergeVendorShadow(organizationId, org.name).catch(console.error);
+      mergeVendorShadow(organizationId, org.name).catch(async (err) => {
+        console.error(err);
+      });
+
+      // Track enrichment after merge (fire-and-forget, delayed to let merge complete)
+      setTimeout(async () => {
+        try {
+          const postProducts = await prisma.product.findMany({
+            where: { vendor: { organizationUsers: { some: { organizationId } } } },
+            select: { id: true, imageUrl: true, description: true, brand: true, url: true, category: true },
+          });
+          const postClaimScore = postProducts.reduce((sum, p) =>
+            sum + (p.imageUrl ? 1 : 0) + (p.description ? 1 : 0) + (p.brand ? 1 : 0) + (p.url ? 1 : 0) + (p.category ? 1 : 0)
+          , 0);
+
+          await prisma.vendorInviteSignal.create({
+            data: {
+              vendorName: org.name,
+              signalType: 'ENRICHMENT_TRACKED',
+              metadata: {
+                organizationId,
+                productCount: orgProducts.length,
+                preClaimScore,
+                postClaimScore,
+                enrichmentDelta: postClaimScore - preClaimScore,
+                claimedBy: session.user.id,
+              },
+            },
+          });
+          console.log('[Enrichment] Tracked:', { org: org.name, delta: postClaimScore - preClaimScore });
+        } catch (e) {
+          console.error('[Enrichment] Tracking failed:', e);
+        }
+      }, 5000); // 5s delay to let merge complete
     }
 
     // Merge rep shadow profile for this user

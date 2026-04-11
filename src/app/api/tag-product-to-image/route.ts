@@ -314,6 +314,36 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Track Save→Tag conversion (Flywheel 3)
+    // If this designer previously saved this product, mark the conversion
+    if (designerId) {
+      try {
+        const priorSave = await prisma.save.findUnique({
+          where: { userId_productId: { userId: designerId, productId } },
+          select: { id: true, converted: true },
+        });
+        if (priorSave && !priorSave.converted) {
+          await prisma.save.update({
+            where: { id: priorSave.id },
+            data: { converted: true, convertedAt: new Date() },
+          });
+          // Record high-value conversion signal
+          await recordAtelierSignal({
+            ownerType: AtelierOwnerType.DESIGNER,
+            designerId,
+            sourceType: AtelierSignalSourceType.TAG,
+            sourceId: tag.id,
+            key: 'save_to_tag_conversion',
+            value: productId,
+            weight: 2.0, // High-value signal
+          });
+          console.log('[Conversion] Save→Tag:', { designerId, productId, saveId: priorSave.id });
+        }
+      } catch (conversionError) {
+        console.error('[Conversion] Save→Tag tracking error:', conversionError);
+      }
+    }
+
     // Record Atelier signals (non-blocking)
     if (designerId) {
       try {
