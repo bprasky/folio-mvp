@@ -29,8 +29,18 @@ export async function createStripeConnectOnboarding(userId: string): Promise<{
   error?: string;
 }> {
   try {
-    const Stripe = (await import('stripe')).default;
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2024-04-10' as any });
+    if (!process.env.STRIPE_SECRET_KEY) {
+      return { url: null, error: 'Stripe is not configured. Set STRIPE_SECRET_KEY to enable payouts.' };
+    }
+
+    // Dynamic import — stripe package is optional, only needed when payouts are enabled
+    let stripe: any;
+    try {
+      const Stripe = (await import(/* webpackIgnore: true */ 'stripe')).default;
+      stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-04-10' as any });
+    } catch {
+      return { url: null, error: 'Stripe package not installed. Run: npm install stripe' };
+    }
 
     const user = await prisma.user.findUnique({
       where: { id: userId },
@@ -136,8 +146,11 @@ export async function requestPayout(params: {
 
   // Create Stripe transfer
   try {
-    const Stripe = (await import('stripe')).default;
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2024-04-10' as any });
+    if (!process.env.STRIPE_SECRET_KEY) {
+      throw new Error('Stripe is not configured');
+    }
+    const Stripe = (await import(/* webpackIgnore: true */ 'stripe')).default;
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-04-10' as any });
 
     const transfer = await stripe.transfers.create({
       amount: netPayoutCents,
