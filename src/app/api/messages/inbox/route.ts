@@ -119,7 +119,10 @@ export async function GET(req: Request) {
 
   // Supplement with requestTypes from structuredData for multi-request conversations
   try {
-    const supplementCounts = await prisma.$queryRawUnsafe<{ rt: string; cnt: bigint }[]>(`
+    // NOTE: orgId must be parameterized, never interpolated — it comes from
+    // searchParams and was previously string-concatenated into the SQL,
+    // which was a SQL-injection primitive via `?orgId=...`.
+    const supplementSql = `
       SELECT rt, COUNT(DISTINCT c.id) as cnt
       FROM conversations c,
            jsonb_array_elements_text(c.structured_data->'requestTypes') AS rt
@@ -129,11 +132,21 @@ export async function GET(req: Request) {
         AND (
           c.recipient_user_id = $1
           OR c.initiator_user_id = $1
-          ${orgId ? `OR c.recipient_org_id = '${orgId}'` : ''}
+          ${orgId ? 'OR c.recipient_org_id = $2' : ''}
         )
         AND rt != c.category
       GROUP BY rt
-    `, userId);
+    `;
+    const supplementCounts = orgId
+      ? await prisma.$queryRawUnsafe<{ rt: string; cnt: bigint }[]>(
+          supplementSql,
+          userId,
+          orgId,
+        )
+      : await prisma.$queryRawUnsafe<{ rt: string; cnt: bigint }[]>(
+          supplementSql,
+          userId,
+        );
 
     for (const row of supplementCounts) {
       const key = row.rt;

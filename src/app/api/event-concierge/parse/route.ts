@@ -1,6 +1,8 @@
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 
 // Mock AI parsing function - replace with actual OpenAI integration
 async function parseEventInput(input: string) {
@@ -134,6 +136,10 @@ async function parseEventInput(input: string) {
 
 export async function POST(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     const { input } = await request.json();
     
     if (!input || typeof input !== 'string') {
