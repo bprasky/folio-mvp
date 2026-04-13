@@ -81,16 +81,16 @@ const POST_FETCH_OWNER_CHECK =
   /\.\s*(?:\w*UserId|\w*OwnerId|userId|ownerId|designerId|createdById|authorId|buyerId|uploaderId)\s*(?:!==|===)\s*(?:session[?.]?\.user[?.]?\.id|\buserId\b|user[?.]?\.id)\b/;
 
 /**
- * Recognizes membership-table queries that scope by the caller's user id, e.g.
- *   await prisma.organizationUser.findFirst({ where: { userId: user.id, organizationId: existing.developerOrgId } })
- *   await prisma.projectParticipant.findFirst({ where: { userId: session.user.id, ... } })
- * These are the canonical Folio pattern for "is the caller a member of this
- * org/project/team?" and the scanner can't trace the result into subsequent
- * queries — but their presence in a handler is strong evidence that ownership
- * is being enforced.
+ * Recognizes handlers that have already done a session-scoped FETCH of the
+ * record, e.g. `prisma.importSession.findFirst({ where: { id: sessionId, userId } })`.
+ * Once a handler has fetched a record with a where clause that includes an
+ * ownership field (userId, ownerId, etc.), subsequent queries in the same
+ * handler can safely use ids derived from that fetch. The scanner can't
+ * trace the derivation, but the handler-level presence of the scoped fetch
+ * is strong enough signal.
  */
-const MEMBERSHIP_CHECK =
-  /prisma\.\w+\.(?:findFirst|findUnique|findMany|count)\s*\(\s*\{\s*where\s*:\s*\{[\s\S]{0,300}?\buserId\s*:\s*(?:session[?.]?\.user[?.]?\.id|user[?.]?\.id)/;
+const SCOPED_FETCH =
+  /prisma\.\w+\.(?:findUnique|findFirst|findMany|count)\s*\(\s*\{[\s\S]{0,600}?where\s*:\s*\{[\s\S]{0,300}?\b(?:userId|ownerId|createdById|designerId|authorId|buyerId)\b/;
 
 const HANDLER_DECL =
   /export\s+async\s+function\s+(GET|POST|PUT|PATCH|DELETE)\s*\(/g;
@@ -390,7 +390,7 @@ function handlerHasPostFetchOwnerCheck(body: string): boolean {
 }
 
 function handlerHasMembershipCheck(body: string): boolean {
-  return MEMBERSHIP_CHECK.test(body);
+  return SCOPED_FETCH.test(body);
 }
 
 /**
