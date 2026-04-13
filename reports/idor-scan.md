@@ -1,6 +1,6 @@
 # IDOR / Authorization-Gap Scan Report
 
-_Generated: 2026-04-13T18:18:36.117Z_
+_Generated: 2026-04-13T18:30:21.025Z_
 _Scanned root: `src/app/api`_
 _Files scanned: 523_
 
@@ -9,7 +9,7 @@ _Files scanned: 523_
 | Severity | Count |
 |---|---|
 | Critical | 0 |
-| High | 27 |
+| High | 0 |
 | Medium | 58 |
 | Low | 40 |
 
@@ -17,263 +17,8 @@ _Files scanned: 523_
 
 | Rule | Count |
 |---|---|
-| IDOR003 | 13 |
-| IDOR004 | 12 |
 | IDOR005 | 88 |
 | IDOR006 | 10 |
-| IDOR007 | 2 |
-
-## High (27)
-
-### `src/app/api/buyer/auth/route.ts`:124 — IDOR004 [POST]
-
-Mutation prisma.consultationBuyer.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: buyer.id }
-```
-
-### `src/app/api/buyer/auth/route.ts`:178 — IDOR004 [DELETE]
-
-Mutation prisma.consultationBuyer.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: buyer.id }
-```
-
-### `src/app/api/orgs/[orgId]/bio-interview/coverage/route.ts`:45 — IDOR003 [POST]
-
-prisma.interviewQuestionCoverage.upsert uses where: { id } with no ownership constraint.
-
-```ts
-{
-          orgBioInterviewId_questionId: {
-            orgBioInterviewId: interview.id,
-            questionId: item.questionId,
-          },
-        }
-```
-
-### `src/app/api/orgs/[orgId]/bio-interview/coverage/route.ts`:45 — IDOR004 [POST]
-
-Mutation prisma.interviewQuestionCoverage.upsert uses where: { id } with no ownership constraint.
-
-```ts
-{
-          orgBioInterviewId_questionId: {
-            orgBioInterviewId: interview.id,
-            questionId: item.questionId,
-          },
-        }
-```
-
-### `src/app/api/products/[productId]/qr/route.ts`:12 — IDOR007 [GET]
-
-where clause consumes params.* but session.user.id was not read before the query.
-
-```ts
-{ id: params.productId }
-```
-
-### `src/app/api/products/[productId]/route.ts`:12 — IDOR003 [GET]
-
-prisma.product.findUnique uses where: { id } with no ownership constraint.
-
-```ts
-{ id: params.productId }
-```
-
-### `src/app/api/products/[productId]/route.ts`:12 — IDOR007 [GET]
-
-where clause consumes params.* but session.user.id was not read before the query.
-
-```ts
-{ id: params.productId }
-```
-
-### `src/app/api/projects/[id]/availability-check/route.ts`:34 — IDOR003 [POST]
-
-prisma.project.findUnique uses where: { id } with no ownership constraint.
-
-```ts
-{ id: projectId }
-```
-
-### `src/app/api/projects/[id]/bulk-request/route.ts`:37 — IDOR003 [POST]
-
-prisma.project.findUnique uses where: { id } with no ownership constraint.
-
-```ts
-{ id: projectId }
-```
-
-### `src/app/api/projects/[id]/bulk-request/route.ts`:88 — IDOR003 [POST]
-
-prisma.projectProductPricing.upsert uses where: { id } with no ownership constraint.
-
-```ts
-{
-            projectId_productId_roomId: {
-              projectId,
-              productId: p.productId,
-              roomId: null,
-            },
-          }
-```
-
-### `src/app/api/projects/[id]/bulk-request/route.ts`:145 — IDOR003 [POST]
-
-prisma.bulkPricingRequest.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: bulkRequest.id }
-```
-
-### `src/app/api/projects/[id]/bulk-request/route.ts`:88 — IDOR004 [POST]
-
-Mutation prisma.projectProductPricing.upsert uses where: { id } with no ownership constraint.
-
-```ts
-{
-            projectId_productId_roomId: {
-              projectId,
-              productId: p.productId,
-              roomId: null,
-            },
-          }
-```
-
-### `src/app/api/projects/[id]/bulk-request/route.ts`:145 — IDOR004 [POST]
-
-Mutation prisma.bulkPricingRequest.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: bulkRequest.id }
-```
-
-### `src/app/api/projects/[id]/lead-time-request/route.ts`:35 — IDOR003 [POST]
-
-prisma.project.findUnique uses where: { id } with no ownership constraint.
-
-```ts
-{ id: projectId }
-```
-
-### `src/app/api/projects/[id]/pricing/route.ts`:68 — IDOR003 [POST]
-
-prisma.projectProductPricing.upsert uses where: { id } with no ownership constraint.
-
-```ts
-{
-        projectId_productId_roomId: {
-          projectId: params.id,
-          productId,
-          roomId: roomId || null,
-        },
-      }
-```
-
-### `src/app/api/projects/[id]/pricing/route.ts`:68 — IDOR004 [POST]
-
-Mutation prisma.projectProductPricing.upsert uses where: { id } with no ownership constraint.
-
-```ts
-{
-        projectId_productId_roomId: {
-          projectId: params.id,
-          productId,
-          roomId: roomId || null,
-        },
-      }
-```
-
-### `src/app/api/search/signals/route.ts`:55 — IDOR004 [POST]
-
-Mutation prisma.projectImage.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: momentId }
-```
-
-### `src/app/api/search/signals/route.ts`:81 — IDOR004 [POST]
-
-Mutation prisma.momentIndex.updateMany uses where: { id } with no ownership constraint.
-
-```ts
-{ projectImageId: momentId }
-```
-
-### `src/app/api/tags/[tagId]/generate-3d/route.ts`:19 — IDOR003 [POST]
-
-prisma.productTag.findUnique uses where: { id } with no ownership constraint.
-
-```ts
-{ id: params.tagId }
-```
-
-### `src/app/api/tags/[tagId]/generate-3d/route.ts`:53 — IDOR003 [POST]
-
-prisma.productTag.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: tag.id }
-```
-
-### `src/app/api/tags/[tagId]/generate-3d/route.ts`:74 — IDOR003 [POST]
-
-prisma.productTag.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: tag.id }
-```
-
-### `src/app/api/tags/[tagId]/generate-3d/route.ts`:111 — IDOR003 [POST]
-
-prisma.productTag.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: tag.id }
-```
-
-### `src/app/api/tags/[tagId]/generate-3d/route.ts`:141 — IDOR003 [POST]
-
-prisma.productTag.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: params.tagId }
-```
-
-### `src/app/api/tags/[tagId]/generate-3d/route.ts`:53 — IDOR004 [POST]
-
-Mutation prisma.productTag.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: tag.id }
-```
-
-### `src/app/api/tags/[tagId]/generate-3d/route.ts`:74 — IDOR004 [POST]
-
-Mutation prisma.productTag.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: tag.id }
-```
-
-### `src/app/api/tags/[tagId]/generate-3d/route.ts`:111 — IDOR004 [POST]
-
-Mutation prisma.productTag.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: tag.id }
-```
-
-### `src/app/api/tags/[tagId]/generate-3d/route.ts`:141 — IDOR004 [POST]
-
-Mutation prisma.productTag.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: params.tagId }
-```
 
 ## Medium (58)
 
@@ -347,7 +92,7 @@ Mutating route handler POST has no session check.
 // This is generous to avoid false positives from corporate networks/VPNs
 ```
 
-### `src/app/api/buyer/auth/route.ts`:94 — IDOR005 [POST]
+### `src/app/api/buyer/auth/route.ts`:96 — IDOR005 [POST]
 
 Mutating route handler POST has no session check.
 
@@ -357,7 +102,7 @@ try {
 const body = await req.json();
 ```
 
-### `src/app/api/buyer/auth/route.ts`:157 — IDOR005 [DELETE]
+### `src/app/api/buyer/auth/route.ts`:159 — IDOR005 [DELETE]
 
 Mutating route handler DELETE has no session check.
 
@@ -879,7 +624,7 @@ try {
 const { searchParams } = new URL(request.url);
 ```
 
-### `src/app/api/buyer/auth/route.ts`:11 — IDOR005 [GET]
+### `src/app/api/buyer/auth/route.ts`:13 — IDOR005 [GET]
 
 Read route handler GET has no session check.
 

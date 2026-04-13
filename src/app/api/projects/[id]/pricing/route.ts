@@ -5,6 +5,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
 import { seedRepShadowFromInvite } from '@/lib/intelligence/shadow-profiles';
+import { assertProjectView, assertProjectWrite } from '@/lib/authz/access';
 
 /**
  * GET /api/projects/[id]/pricing
@@ -19,6 +20,8 @@ export async function GET(
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    await assertProjectView(session.user.id, params.id);
 
     const { searchParams } = new URL(request.url);
     const roomId = searchParams.get('roomId');
@@ -60,6 +63,8 @@ export async function POST(
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    await assertProjectWrite(session.user.id, params.id);
 
     const body = await request.json();
     const { productId, roomId, unitPriceTrade, unitPriceRetail, quantity, leadTimeWeeks, availability, availabilityNote, validThrough, quoteSource, quotedByName, quotedByEmail, vendorName } = body;

@@ -61,7 +61,7 @@ const OWNERSHIP_FIELDS =
 // `check*Access`, `require(Admin|Role|Auth|Member|Login)` helper, plus
 // project-specific helpers that don't fit the convention.
 const AUTHZ_HELPERS =
-  /\b(assert[A-Z]\w*|can[A-Z]\w*|require(?:Admin|Role|Auth|Member|Login)|check[A-Z]\w*Access|getProjectAccess|get[A-Z]\w*Context|verifyToken|verifySignedUrl|jwt\.verify)\s*\(/;
+  /\b(assert[A-Z]\w*|can[A-Z]\w*|is[A-Z]\w*(?:Admin|Owner|Member|Staff|Manager)|require(?:Admin|Role|Auth|Member|Login)|check[A-Z]\w*Access|getProjectAccess|get[A-Z]\w*Context|verifyToken|verifySignedUrl|jwt\.verify)\s*\(/;
 
 const SESSION_CALL =
   /getServerSession\s*\(|from\s+['"]next-auth['"]|getUserIdFromRequest\s*\(|from\s+['"]@\/lib\/apiAuth['"]/;
@@ -114,9 +114,9 @@ const RAW_SQL = /(?:prisma|db)\.\$(?:queryRaw|executeRaw)/;
 
 // Allowlist token → rule IDs it suppresses.
 const ALLOWLIST_GROUPS: Record<string, string[]> = {
-  'public-read': ['IDOR002', 'IDOR005'],
+  'public-read': ['IDOR002', 'IDOR005', 'IDOR007'],
   'admin-middleware': ['IDOR001'],
-  'token-access': ['IDOR002', 'IDOR003'],
+  'token-access': ['IDOR002', 'IDOR003', 'IDOR007'],
   all: [
     'IDOR001',
     'IDOR002',

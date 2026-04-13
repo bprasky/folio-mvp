@@ -1,3 +1,5 @@
+// @idor-allow: token-access reason="Buyer sessionToken is the bearer credential; all queries scope to the buyer resolved from the token"
+// @idor-allow: IDOR004 reason="Updates operate on buyer.id derived from a prior sessionToken-scoped findFirst"
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from "next/server";
