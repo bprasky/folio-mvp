@@ -1,3 +1,4 @@
+// @idor-allow: public-read reason="Public live activity feed for an event, viewable anonymously"
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';

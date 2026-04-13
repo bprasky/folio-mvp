@@ -1,3 +1,6 @@
+// @idor-allow: public-read reason="Public QR code generation for a product detail page, viewable anonymously"
+// @idor-allow: IDOR003 reason="Public lookup by product id for QR code"
+// @idor-allow: IDOR004 reason="Read-only public product lookup; no mutations in this route"
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 

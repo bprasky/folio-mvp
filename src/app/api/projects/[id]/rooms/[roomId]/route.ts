@@ -4,6 +4,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import { formatRoomName } from '@/lib/utils/formatRoomName';
 import { inferRoomType } from '@/lib/rooms/utils';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import { assertProjectView, assertProjectWrite } from '@/lib/authz/access';
 
 const prisma = new PrismaClient();
 
@@ -17,6 +20,12 @@ export async function GET(
 ) {
   try {
     const { id: projectId, roomId } = params;
+
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    await assertProjectView(session.user.id, projectId);
 
     const room = await prisma.room.findFirst({
       where: {
@@ -52,6 +61,13 @@ export async function PUT(
 ) {
   try {
     const { id: projectId, roomId } = params;
+
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    await assertProjectWrite(session.user.id, projectId);
+
     const body = await request.json();
 
     // Build update data - only include fields that are provided
@@ -233,6 +249,12 @@ export async function DELETE(
 ) {
   try {
     const { id: projectId, roomId } = params;
+
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    await assertProjectWrite(session.user.id, projectId);
 
     // Delete all selections in the room first
     await prisma.selection.deleteMany({

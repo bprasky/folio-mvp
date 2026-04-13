@@ -59,7 +59,8 @@ const OWNERSHIP_FIELDS =
 const AUTHZ_HELPERS =
   /\b(assertProjectView|assertProjectWrite|assertProjectEdit|assertProjectAccess|assertSelectionView|assertSelectionEdit|getProjectAccess|canPerformAction|checkConsultationAccess|requireAdmin|requireRole|verifyToken|verifySignedUrl|jwt\.verify)\s*\(/;
 
-const SESSION_CALL = /getServerSession\s*\(|from\s+['"]next-auth['"]/;
+const SESSION_CALL =
+  /getServerSession\s*\(|from\s+['"]next-auth['"]|getUserIdFromRequest\s*\(|from\s+['"]@\/lib\/apiAuth['"]/;
 
 const ADMIN_ROLE_CHECK =
   /role\s*(?:!==|===)\s*['"]ADMIN['"]|role\s*:\s*['"]ADMIN['"]|requireAdmin\s*\(|isAdmin\s*\(|canAccessAdmin\s*\(/;

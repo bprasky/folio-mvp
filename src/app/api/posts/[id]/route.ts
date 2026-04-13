@@ -1,3 +1,6 @@
+// @idor-allow: public-read reason="Public post detail viewable anonymously"
+// @idor-allow: IDOR003 reason="Public lookup by post id"
+// @idor-allow: IDOR004 reason="Read-only public post; no mutations in this route"
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';

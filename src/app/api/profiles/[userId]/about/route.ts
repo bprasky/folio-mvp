@@ -1,3 +1,6 @@
+// @idor-allow: public-read reason="Public About tab (bio, Q&As, details) for a designer profile, viewable anonymously"
+// @idor-allow: IDOR003 reason="Public lookup by user id for public About tab"
+// @idor-allow: IDOR004 reason="Read-only public profile about; no mutations in this route"
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';

@@ -1,3 +1,6 @@
+// @idor-allow: public-read reason="Public schedule of sibling festival events, viewable anonymously"
+// @idor-allow: IDOR003 reason="Public lookup by event id to resolve parent festival"
+// @idor-allow: IDOR004 reason="Read-only public schedule; no mutations in this route"
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';

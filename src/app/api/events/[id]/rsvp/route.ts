@@ -1,3 +1,4 @@
+// @idor-allow: public-read reason="Public aggregate RSVP counts for an event; PATCH mutation has session auth"
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/options";

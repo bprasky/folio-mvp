@@ -1,6 +1,6 @@
 # IDOR / Authorization-Gap Scan Report
 
-_Generated: 2026-04-13T14:47:45.890Z_
+_Generated: 2026-04-13T15:07:39.153Z_
 _Scanned root: `src/app/api`_
 _Files scanned: 524_
 
@@ -8,746 +8,24 @@ _Files scanned: 524_
 
 | Severity | Count |
 |---|---|
-| Critical | 71 |
-| High | 452 |
-| Medium | 61 |
-| Low | 43 |
+| Critical | 0 |
+| High | 425 |
+| Medium | 58 |
+| Low | 40 |
 
 ### By rule
 
 | Rule | Count |
 |---|---|
-| IDOR001 | 4 |
-| IDOR002 | 67 |
-| IDOR003 | 250 |
-| IDOR004 | 181 |
-| IDOR005 | 94 |
+| IDOR003 | 254 |
+| IDOR004 | 167 |
+| IDOR005 | 88 |
 | IDOR006 | 10 |
-| IDOR007 | 21 |
+| IDOR007 | 4 |
 
-## Critical (71)
+## High (425)
 
-### `src/app/api/admin/events/approvals/route.ts`:8 — IDOR001 [GET]
-
-Admin route handler GET has no session, role check, or authz helper.
-
-```ts
-{
-try {
-const events = await prisma.event.findMany({
-```
-
-### `src/app/api/admin/events/approve/route.ts`:8 — IDOR001 [POST]
-
-Admin route handler POST has no session, role check, or authz helper.
-
-```ts
-{
-try {
-const body = await req.json();
-```
-
-### `src/app/api/admin/impersonate/exit/route.ts`:9 — IDOR001 [POST]
-
-Admin route handler POST authenticates but never verifies ADMIN role.
-
-```ts
-{
-try {
-const session = await getServerSession(authOptions);
-```
-
-### `src/app/api/admin/impersonate/exit/route.ts`:69 — IDOR001 [GET]
-
-Admin route handler GET authenticates but never verifies ADMIN role.
-
-```ts
-{
-try {
-const session = await getServerSession(authOptions);
-```
-
-### `src/app/api/debug/project/[id]/route.ts`:6 — IDOR002 [GET]
-
-Dynamic-param route handler GET has no session check or authz helper — IDOR.
-
-```ts
-{
-// Debug routes only available in development
-if (process.env.NODE_ENV === 'production') {
-```
-
-### `src/app/api/designer/projects/[id]/export/route.ts`:8 — IDOR002 [GET]
-
-Dynamic-param route handler GET has no session check or authz helper — IDOR.
-
-```ts
-{
-try {
-// Fetch project with all rooms and selections
-```
-
-### `src/app/api/designer/projects/[id]/rooms/[roomId]/route.ts`:8 — IDOR002 [GET]
-
-Dynamic-param route handler GET has no session check or authz helper — IDOR.
-
-```ts
-{
-try {
-const room = await prisma.room.findUnique({
-```
-
-### `src/app/api/designer/projects/[id]/rooms/[roomId]/selections/[selectionId]/route.ts`:8 — IDOR002 [PATCH]
-
-Dynamic-param route handler PATCH has no session check or authz helper — IDOR.
-
-```ts
-{
-try {
-const body = await request.json();
-```
-
-### `src/app/api/designer/projects/[id]/rooms/[roomId]/selections/[selectionId]/route.ts`:54 — IDOR002 [DELETE]
-
-Dynamic-param route handler DELETE has no session check or authz helper — IDOR.
-
-```ts
-{
-try {
-// Verify selection exists and belongs to the room/project
-```
-
-### `src/app/api/designer/projects/[id]/rooms/[roomId]/selections/route.ts`:8 — IDOR002 [POST]
-
-Dynamic-param route handler POST has no session check or authz helper — IDOR.
-
-```ts
-{
-try {
-const body = await request.json();
-```
-
-### `src/app/api/designer/projects/[id]/rooms/route.ts`:48 — IDOR002 [POST]
-
-Dynamic-param route handler POST has no session check or authz helper — IDOR.
-
-```ts
-{
-try {
-const body = await request.json();
-```
-
-### `src/app/api/designer/projects/[id]/route.ts`:8 — IDOR002 [GET]
-
-Dynamic-param route handler GET has no session check or authz helper — IDOR.
-
-```ts
-{
-try {
-const project = await prisma.project.findUnique({
-```
-
-### `src/app/api/designer/projects/[id]/route.ts`:61 — IDOR002 [PATCH]
-
-Dynamic-param route handler PATCH has no session check or authz helper — IDOR.
-
-```ts
-{
-try {
-const body = await request.json();
-```
-
-### `src/app/api/designer/projects/[id]/selections/route.ts`:10 — IDOR002 [POST]
-
-Dynamic-param route handler POST has no session check or authz helper — IDOR.
-
-```ts
-{
-try {
-const body = await request.json();
-```
-
-### `src/app/api/designer/projects/[id]/selections/route.ts`:97 — IDOR002 [GET]
-
-Dynamic-param route handler GET has no session check or authz helper — IDOR.
-
-```ts
-{
-try {
-const { searchParams } = new URL(request.url);
-```
-
-### `src/app/api/developments/[developmentId]/designers/route.ts`:151 — IDOR002 [GET]
-
-Dynamic-param route handler GET has no session check or authz helper — IDOR.
-
-```ts
-{
-try {
-const { developmentId } = params;
-```
-
-### `src/app/api/developments/[developmentId]/unit-types/[unitTypeId]/route.ts`:13 — IDOR002 [GET]
-
-Dynamic-param route handler GET has no session check or authz helper — IDOR.
-
-```ts
-{
-try {
-const { developmentId, unitTypeId } = params;
-```
-
-### `src/app/api/events/[id]/featured-products/route.ts`:8 — IDOR002 [GET]
-
-Dynamic-param route handler GET has no session check or authz helper — IDOR.
-
-```ts
-{
-try {
-const eventId = params.id;
-```
-
-### `src/app/api/events/[id]/live-activity/route.ts`:7 — IDOR002 [GET]
-
-Dynamic-param route handler GET has no session check or authz helper — IDOR.
-
-```ts
-{
-try {
-const eventId = params.id;
-```
-
-### `src/app/api/events/[id]/route.ts`:12 — IDOR002 [GET]
-
-Dynamic-param route handler GET has no session check or authz helper — IDOR.
-
-```ts
-{
-try {
-const data = await fetchEventForModal(params.id);
-```
-
-### `src/app/api/events/[id]/rsvp/route.ts`:78 — IDOR002 [GET]
-
-Dynamic-param route handler GET has no session check or authz helper — IDOR.
-
-```ts
-{
-try {
-const eventId = toId(params?.id);
-```
-
-### `src/app/api/events/[id]/schedule/route.ts`:8 — IDOR002 [GET]
-
-Dynamic-param route handler GET has no session check or authz helper — IDOR.
-
-```ts
-{
-try {
-const eventId = params.id;
-```
-
-### `src/app/api/events/[id]/trending-products/route.ts`:8 — IDOR002 [GET]
-
-Dynamic-param route handler GET has no session check or authz helper — IDOR.
-
-```ts
-{
-try {
-const eventId = params.id;
-```
-
-### `src/app/api/festivals/[festivalId]/events/route.ts`:8 — IDOR002 [GET]
-
-Dynamic-param route handler GET has no session check or authz helper — IDOR.
-
-```ts
-{
-try {
-const { festivalId } = params;
-```
-
-### `src/app/api/festivals/[festivalId]/route.ts`:11 — IDOR002 [GET]
-
-Dynamic-param route handler GET has no session check or authz helper — IDOR.
-
-```ts
-{
-const { festivalId } = params;
-try {
-```
-
-### `src/app/api/messages/conversations/[id]/messages/route.ts`:6 — IDOR002 [POST]
-
-Dynamic-param route handler POST has no session check or authz helper — IDOR.
-
-```ts
-{
-const userId = await getUserIdFromRequest(req);
-if (!userId) {
-```
-
-### `src/app/api/messages/conversations/[id]/route.ts`:5 — IDOR002 [GET]
-
-Dynamic-param route handler GET has no session check or authz helper — IDOR.
-
-```ts
-{
-const userId = await getUserIdFromRequest(req);
-if (!userId) {
-```
-
-### `src/app/api/org/[orgId]/feed/route.ts`:16 — IDOR002 [GET]
-
-Dynamic-param route handler GET has no session check or authz helper — IDOR.
-
-```ts
-{
-try {
-const resolvedParams = params instanceof Promise ? await params : params;
-```
-
-### `src/app/api/organizations/[id]/route.ts`:8 — IDOR002 [GET]
-
-Dynamic-param route handler GET has no session check or authz helper — IDOR.
-
-```ts
-{
-try {
-const orgId = params.id;
-```
-
-### `src/app/api/orgs/[orgId]/bio-interview/route.ts`:114 — IDOR002 [GET]
-
-Dynamic-param route handler GET has no session check or authz helper — IDOR.
-
-```ts
-{
-try {
-const { orgId } = params;
-```
-
-### `src/app/api/orgs/[orgId]/members/route.ts`:11 — IDOR002 [GET]
-
-Dynamic-param route handler GET has no session check or authz helper — IDOR.
-
-```ts
-{
-try {
-const { orgId } = params;
-```
-
-### `src/app/api/orgs/[orgId]/onboarding-progress/route.ts`:9 — IDOR002 [GET]
-
-Dynamic-param route handler GET has no session check or authz helper — IDOR.
-
-```ts
-{
-try {
-const { orgId } = params;
-```
-
-### `src/app/api/orgs/[orgId]/process-phases/route.ts`:12 — IDOR002 [GET]
-
-Dynamic-param route handler GET has no session check or authz helper — IDOR.
-
-```ts
-{
-try {
-const { orgId } = params;
-```
-
-### `src/app/api/orgs/[orgId]/recognition/route.ts`:12 — IDOR002 [GET]
-
-Dynamic-param route handler GET has no session check or authz helper — IDOR.
-
-```ts
-{
-try {
-const { orgId } = params;
-```
-
-### `src/app/api/orgs/[orgId]/route.ts`:12 — IDOR002 [GET]
-
-Dynamic-param route handler GET has no session check or authz helper — IDOR.
-
-```ts
-{
-try {
-const { orgId } = params;
-```
-
-### `src/app/api/orgs/[orgId]/team/[orgUserId]/quiz/route.ts`:90 — IDOR002 [GET]
-
-Dynamic-param route handler GET has no session check or authz helper — IDOR.
-
-```ts
-{
-try {
-const { orgUserId } = params;
-```
-
-### `src/app/api/orgs/[orgId]/team/route.ts`:12 — IDOR002 [GET]
-
-Dynamic-param route handler GET has no session check or authz helper — IDOR.
-
-```ts
-{
-try {
-const { orgId } = params;
-```
-
-### `src/app/api/posting/[slug]/route.ts`:8 — IDOR002 [GET]
-
-Dynamic-param route handler GET has no session check or authz helper — IDOR.
-
-```ts
-{
-try {
-const slug = params.slug;
-```
-
-### `src/app/api/posts/[id]/route.ts`:8 — IDOR002 [GET]
-
-Dynamic-param route handler GET has no session check or authz helper — IDOR.
-
-```ts
-{
-try {
-const postId = params.id;
-```
-
-### `src/app/api/products/[productId]/context-photos/route.ts`:13 — IDOR002 [GET]
-
-Dynamic-param route handler GET has no session check or authz helper — IDOR.
-
-```ts
-{
-try {
-const resolvedParams = params instanceof Promise ? await params : params;
-```
-
-### `src/app/api/products/[productId]/insights/route.ts`:6 — IDOR002 [GET]
-
-Dynamic-param route handler GET has no session check or authz helper — IDOR.
-
-```ts
-{
-try {
-const searchParams = request.nextUrl.searchParams;
-```
-
-### `src/app/api/products/[productId]/qr/route.ts`:7 — IDOR002 [GET]
-
-Dynamic-param route handler GET has no session check or authz helper — IDOR.
-
-```ts
-{
-try {
-const product = await prisma.product.findUnique({
-```
-
-### `src/app/api/products/[productId]/spec-sheet/route.ts`:28 — IDOR002 [GET]
-
-Dynamic-param route handler GET has no session check or authz helper — IDOR.
-
-```ts
-{
-const resolvedParams = params instanceof Promise ? await params : params;
-const productId = resolvedParams.productId;
-```
-
-### `src/app/api/products/[productId]/testimonials/route.ts`:14 — IDOR002 [GET]
-
-Dynamic-param route handler GET has no session check or authz helper — IDOR.
-
-```ts
-{
-try {
-const resolvedParams = params instanceof Promise ? await params : params;
-```
-
-### `src/app/api/profile/[userId]/route.ts`:7 — IDOR002 [GET]
-
-Dynamic-param route handler GET has no session check or authz helper — IDOR.
-
-```ts
-{
-const resolvedParams = params instanceof Promise ? await params : params;
-const user = await prisma.user.findUnique({
-```
-
-### `src/app/api/profile/[userId]/shop/route.ts`:27 — IDOR002 [GET]
-
-Dynamic-param route handler GET has no session check or authz helper — IDOR.
-
-```ts
-{
-try {
-const resolvedParams = params instanceof Promise ? await params : params;
-```
-
-### `src/app/api/profiles/[userId]/about/route.ts`:10 — IDOR002 [GET]
-
-Dynamic-param route handler GET has no session check or authz helper — IDOR.
-
-```ts
-{
-try {
-const { userId } = await params;
-```
-
-### `src/app/api/projects/[id]/export/route.ts`:8 — IDOR002 [GET]
-
-Dynamic-param route handler GET has no session check or authz helper — IDOR.
-
-```ts
-{
-try {
-const projectId = params.id;
-```
-
-### `src/app/api/projects/[id]/interview-quotes/route.ts`:6 — IDOR002 [GET]
-
-Dynamic-param route handler GET has no session check or authz helper — IDOR.
-
-```ts
-{
-try {
-const searchParams = request.nextUrl.searchParams;
-```
-
-### `src/app/api/projects/[id]/rooms/[roomId]/route.ts`:14 — IDOR002 [GET]
-
-Dynamic-param route handler GET has no session check or authz helper — IDOR.
-
-```ts
-{
-try {
-const { id: projectId, roomId } = params;
-```
-
-### `src/app/api/projects/[id]/rooms/[roomId]/route.ts`:49 — IDOR002 [PUT]
-
-Dynamic-param route handler PUT has no session check or authz helper — IDOR.
-
-```ts
-{
-try {
-const { id: projectId, roomId } = params;
-```
-
-### `src/app/api/projects/[id]/rooms/[roomId]/route.ts`:230 — IDOR002 [DELETE]
-
-Dynamic-param route handler DELETE has no session check or authz helper — IDOR.
-
-```ts
-{
-try {
-const { id: projectId, roomId } = params;
-```
-
-### `src/app/api/projects/[id]/supplemental-quotes/route.ts`:22 — IDOR002 [GET]
-
-Dynamic-param route handler GET has no session check or authz helper — IDOR.
-
-```ts
-{
-try {
-const { id: projectId } = await context.params;
-```
-
-### `src/app/api/shop/products/[shopProductId]/route.ts`:10 — IDOR002 [GET]
-
-Dynamic-param route handler GET has no session check or authz helper — IDOR.
-
-```ts
-{
-try {
-const resolvedParams = params instanceof Promise ? await params : params;
-```
-
-### `src/app/api/vendor/projects/[id]/handoff/route.ts`:8 — IDOR002 [POST]
-
-Dynamic-param route handler POST has no session check or authz helper — IDOR.
-
-```ts
-{
-try {
-const body = await req.json().catch(() => ({}));
-```
-
-### `src/app/api/vendor/projects/[id]/quick-actions/extend-discount/route.ts`:6 — IDOR002 [POST]
-
-Dynamic-param route handler POST has no session check or authz helper — IDOR.
-
-```ts
-{
-const userId = await getUserIdFromRequest(req);
-if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-```
-
-### `src/app/api/vendor/projects/[id]/quick-actions/invite-to-event/route.ts`:6 — IDOR002 [POST]
-
-Dynamic-param route handler POST has no session check or authz helper — IDOR.
-
-```ts
-{
-const userId = await getUserIdFromRequest(req);
-if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-```
-
-### `src/app/api/vendor/projects/[id]/quick-actions/offer-boost/route.ts`:6 — IDOR002 [POST]
-
-Dynamic-param route handler POST has no session check or authz helper — IDOR.
-
-```ts
-{
-const userId = await getUserIdFromRequest(req);
-if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-```
-
-### `src/app/api/vendor/projects/[id]/quick-actions/request-missing/route.ts`:6 — IDOR002 [POST]
-
-Dynamic-param route handler POST has no session check or authz helper — IDOR.
-
-```ts
-{
-const userId = await getUserIdFromRequest(req);
-if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-```
-
-### `src/app/api/vendor/projects/[id]/rooms/route.ts`:8 — IDOR002 [GET]
-
-Dynamic-param route handler GET has no session check or authz helper — IDOR.
-
-```ts
-{
-try {
-const rooms = await prisma.room.findMany({
-```
-
-### `src/app/api/vendor/projects/[id]/rooms/route.ts`:22 — IDOR002 [POST]
-
-Dynamic-param route handler POST has no session check or authz helper — IDOR.
-
-```ts
-{
-try {
-const projectId = params.id;
-```
-
-### `src/app/api/vendor/projects/[id]/route.ts`:8 — IDOR002 [GET]
-
-Dynamic-param route handler GET has no session check or authz helper — IDOR.
-
-```ts
-{
-try {
-const projectId = params.id;
-```
-
-### `src/app/api/vendor/projects/[id]/route.ts`:53 — IDOR002 [PATCH]
-
-Dynamic-param route handler PATCH has no session check or authz helper — IDOR.
-
-```ts
-{
-try {
-const projectId = params.id;
-```
-
-### `src/app/api/vendor/projects/[id]/selections/[selectionId]/route.ts`:8 — IDOR002 [PUT]
-
-Dynamic-param route handler PUT has no session check or authz helper — IDOR.
-
-```ts
-{
-try {
-const projectId = params.id;
-```
-
-### `src/app/api/vendor/projects/[id]/selections/[selectionId]/route.ts`:74 — IDOR002 [DELETE]
-
-Dynamic-param route handler DELETE has no session check or authz helper — IDOR.
-
-```ts
-{
-try {
-const projectId = params.id;
-```
-
-### `src/app/api/vendor/projects/[id]/selections/bulk/route.ts`:8 — IDOR002 [POST]
-
-Dynamic-param route handler POST has no session check or authz helper — IDOR.
-
-```ts
-{
-const userId = await getUserIdFromRequest(req);
-if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-```
-
-### `src/app/api/vendor/projects/[id]/selections/route.ts`:8 — IDOR002 [POST]
-
-Dynamic-param route handler POST has no session check or authz helper — IDOR.
-
-```ts
-{
-const body = await req.json().catch(() => ({}));
-// derive userId for vendorRepId attribution
-```
-
-### `src/app/api/vendor/projects/[id]/visits/route.ts`:6 — IDOR002 [GET]
-
-Dynamic-param route handler GET has no session check or authz helper — IDOR.
-
-```ts
-{
-try {
-const visits = await prisma.vendorVisit.findMany({
-```
-
-### `src/app/api/videos/[id]/route.ts`:7 — IDOR002 [GET]
-
-Dynamic-param route handler GET has no session check or authz helper — IDOR.
-
-```ts
-{
-try {
-const videoId = params.id;
-```
-
-### `src/app/api/videos/[id]/route.ts`:50 — IDOR002 [PUT]
-
-Dynamic-param route handler PUT has no session check or authz helper — IDOR.
-
-```ts
-{
-try {
-const videoId = params.id;
-```
-
-### `src/app/api/videos/[id]/route.ts`:97 — IDOR002 [DELETE]
-
-Dynamic-param route handler DELETE has no session check or authz helper — IDOR.
-
-```ts
-{
-try {
-const videoId = params.id;
-```
-
-## High (452)
-
-### `src/app/api/admin/events/approve/route.ts`:17 — IDOR004 [POST]
-
-Mutation prisma.event.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: eventId }
-```
-
-### `src/app/api/admin/impersonate/exit/route.ts`:39 — IDOR004 [POST]
+### `src/app/api/admin/impersonate/exit/route.ts`:48 — IDOR004 [POST]
 
 Mutation prisma.impersonationLog.updateMany uses where: { id } with no ownership constraint.
 
@@ -1207,17 +485,17 @@ Mutation prisma.contactImportJob.update uses where: { id } with no ownership con
 { id: firstContact.importSourceId }
 ```
 
-### `src/app/api/debug/project/[id]/route.ts`:13 — IDOR007 [GET]
+### `src/app/api/debug/project/[id]/route.ts`:24 — IDOR003 [GET]
 
-where clause consumes params.* but session.user.id was not read before the query.
+prisma.project.findUnique uses where: { id } with no ownership constraint.
 
 ```ts
 { id: params.id }
 ```
 
-### `src/app/api/debug/project/[id]/route.ts`:19 — IDOR007 [GET]
+### `src/app/api/debug/project/[id]/route.ts`:30 — IDOR003 [GET]
 
-where clause consumes params.* but session.user.id was not read before the query.
+prisma.project.findUnique uses where: { id } with no ownership constraint.
 
 ```ts
 { id: params.id }
@@ -1248,155 +526,6 @@ Mutation prisma.folder.delete uses where: { id } with no ownership constraint.
 
 ```ts
 { id: folderId }
-```
-
-### `src/app/api/designer/projects/[id]/export/route.ts`:11 — IDOR007 [GET]
-
-where clause consumes params.* but session.user.id was not read before the query.
-
-```ts
-{ id: params.id }
-```
-
-### `src/app/api/designer/projects/[id]/rooms/[roomId]/route.ts`:10 — IDOR007 [GET]
-
-where clause consumes params.* but session.user.id was not read before the query.
-
-```ts
-{ 
-        id: params.roomId,
-        projectId: params.id
-      }
-```
-
-### `src/app/api/designer/projects/[id]/rooms/[roomId]/selections/[selectionId]/route.ts`:32 — IDOR004 [PATCH]
-
-Mutation prisma.selection.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: params.selectionId }
-```
-
-### `src/app/api/designer/projects/[id]/rooms/[roomId]/selections/[selectionId]/route.ts`:75 — IDOR004 [DELETE]
-
-Mutation prisma.selection.delete uses where: { id } with no ownership constraint.
-
-```ts
-{ id: params.selectionId }
-```
-
-### `src/app/api/designer/projects/[id]/rooms/[roomId]/selections/[selectionId]/route.ts`:14 — IDOR007 [PATCH]
-
-where clause consumes params.* but session.user.id was not read before the query.
-
-```ts
-{ 
-        id: params.selectionId,
-        room: {
-          id: params.roomId,
-          projectId: params.id
-        }
-      }
-```
-
-### `src/app/api/designer/projects/[id]/rooms/[roomId]/selections/[selectionId]/route.ts`:32 — IDOR007 [PATCH]
-
-where clause consumes params.* but session.user.id was not read before the query.
-
-```ts
-{ id: params.selectionId }
-```
-
-### `src/app/api/designer/projects/[id]/rooms/[roomId]/selections/[selectionId]/route.ts`:57 — IDOR007 [DELETE]
-
-where clause consumes params.* but session.user.id was not read before the query.
-
-```ts
-{ 
-        id: params.selectionId,
-        room: {
-          id: params.roomId,
-          projectId: params.id
-        }
-      }
-```
-
-### `src/app/api/designer/projects/[id]/rooms/[roomId]/selections/[selectionId]/route.ts`:75 — IDOR007 [DELETE]
-
-where clause consumes params.* but session.user.id was not read before the query.
-
-```ts
-{ id: params.selectionId }
-```
-
-### `src/app/api/designer/projects/[id]/rooms/[roomId]/selections/route.ts`:18 — IDOR007 [POST]
-
-where clause consumes params.* but session.user.id was not read before the query.
-
-```ts
-{ 
-        id: params.roomId,
-        projectId: params.id
-      }
-```
-
-### `src/app/api/designer/projects/[id]/rooms/route.ts`:61 — IDOR007 [POST]
-
-where clause consumes params.* but session.user.id was not read before the query.
-
-```ts
-{ id: params.id }
-```
-
-### `src/app/api/designer/projects/[id]/route.ts`:70 — IDOR004 [PATCH]
-
-Mutation prisma.project.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: params.id }
-```
-
-### `src/app/api/designer/projects/[id]/route.ts`:10 — IDOR007 [GET]
-
-where clause consumes params.* but session.user.id was not read before the query.
-
-```ts
-{ id: params.id }
-```
-
-### `src/app/api/designer/projects/[id]/route.ts`:70 — IDOR007 [PATCH]
-
-where clause consumes params.* but session.user.id was not read before the query.
-
-```ts
-{ id: params.id }
-```
-
-### `src/app/api/designer/projects/[id]/selections/route.ts`:27 — IDOR007 [POST]
-
-where clause consumes params.* but session.user.id was not read before the query.
-
-```ts
-{ id: params.id }
-```
-
-### `src/app/api/designer/projects/[id]/selections/route.ts`:40 — IDOR007 [POST]
-
-where clause consumes params.* but session.user.id was not read before the query.
-
-```ts
-{
-          id: roomId,
-          projectId: params.id
-        }
-```
-
-### `src/app/api/designer/projects/[id]/selections/route.ts`:103 — IDOR007 [GET]
-
-where clause consumes params.* but session.user.id was not read before the query.
-
-```ts
-{ id: params.id }
 ```
 
 ### `src/app/api/designer/qa/answer/route.ts`:48 — IDOR004 [POST]
@@ -1581,6 +710,14 @@ prisma.developmentDesigner.update uses where: { id } with no ownership constrain
 
 ```ts
 { id: existing.id }
+```
+
+### `src/app/api/developments/[developmentId]/designers/route.ts`:163 — IDOR003 [GET]
+
+prisma.development.findUnique uses where: { id } with no ownership constraint.
+
+```ts
+{ id: developmentId }
 ```
 
 ### `src/app/api/developments/[developmentId]/designers/route.ts`:85 — IDOR004 [POST]
@@ -1830,7 +967,26 @@ Mutation prisma.development.update uses where: { id } with no ownership constrai
 { id: developmentId }
 ```
 
-### `src/app/api/developments/[developmentId]/unit-types/[unitTypeId]/route.ts`:73 — IDOR003 [PATCH]
+### `src/app/api/developments/[developmentId]/unit-types/[unitTypeId]/route.ts`:23 — IDOR003 [GET]
+
+prisma.development.findUnique uses where: { id } with no ownership constraint.
+
+```ts
+{ id: developmentId }
+```
+
+### `src/app/api/developments/[developmentId]/unit-types/[unitTypeId]/route.ts`:44 — IDOR003 [GET]
+
+prisma.unitType.findFirst uses where: { id } with no ownership constraint.
+
+```ts
+{
+        id: unitTypeId,
+        developmentId,
+      }
+```
+
+### `src/app/api/developments/[developmentId]/unit-types/[unitTypeId]/route.ts`:100 — IDOR003 [PATCH]
 
 prisma.unitType.findFirst uses where: { id } with no ownership constraint.
 
@@ -1838,7 +994,7 @@ prisma.unitType.findFirst uses where: { id } with no ownership constraint.
 { id: unitTypeId, developmentId }
 ```
 
-### `src/app/api/developments/[developmentId]/unit-types/[unitTypeId]/route.ts`:122 — IDOR003 [PATCH]
+### `src/app/api/developments/[developmentId]/unit-types/[unitTypeId]/route.ts`:149 — IDOR003 [PATCH]
 
 prisma.unitType.update uses where: { id } with no ownership constraint.
 
@@ -1846,7 +1002,7 @@ prisma.unitType.update uses where: { id } with no ownership constraint.
 { id: unitTypeId }
 ```
 
-### `src/app/api/developments/[developmentId]/unit-types/[unitTypeId]/route.ts`:159 — IDOR003 [DELETE]
+### `src/app/api/developments/[developmentId]/unit-types/[unitTypeId]/route.ts`:186 — IDOR003 [DELETE]
 
 prisma.unitType.findFirst uses where: { id } with no ownership constraint.
 
@@ -1854,7 +1010,7 @@ prisma.unitType.findFirst uses where: { id } with no ownership constraint.
 { id: unitTypeId, developmentId }
 ```
 
-### `src/app/api/developments/[developmentId]/unit-types/[unitTypeId]/route.ts`:194 — IDOR003 [DELETE]
+### `src/app/api/developments/[developmentId]/unit-types/[unitTypeId]/route.ts`:221 — IDOR003 [DELETE]
 
 prisma.unitType.delete uses where: { id } with no ownership constraint.
 
@@ -1862,7 +1018,7 @@ prisma.unitType.delete uses where: { id } with no ownership constraint.
 { id: unitTypeId }
 ```
 
-### `src/app/api/developments/[developmentId]/unit-types/[unitTypeId]/route.ts`:122 — IDOR004 [PATCH]
+### `src/app/api/developments/[developmentId]/unit-types/[unitTypeId]/route.ts`:149 — IDOR004 [PATCH]
 
 Mutation prisma.unitType.update uses where: { id } with no ownership constraint.
 
@@ -1870,7 +1026,7 @@ Mutation prisma.unitType.update uses where: { id } with no ownership constraint.
 { id: unitTypeId }
 ```
 
-### `src/app/api/developments/[developmentId]/unit-types/[unitTypeId]/route.ts`:194 — IDOR004 [DELETE]
+### `src/app/api/developments/[developmentId]/unit-types/[unitTypeId]/route.ts`:221 — IDOR004 [DELETE]
 
 Mutation prisma.unitType.delete uses where: { id } with no ownership constraint.
 
@@ -2349,23 +1505,7 @@ prisma.event.findUnique uses where: { id } with no ownership constraint.
 { id: eventId }
 ```
 
-### `src/app/api/events/[id]/route.ts`:113 — IDOR003 [PATCH]
-
-prisma.event.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: params.id }
-```
-
-### `src/app/api/events/[id]/route.ts`:113 — IDOR004 [PATCH]
-
-Mutation prisma.event.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: params.id }
-```
-
-### `src/app/api/events/[id]/route.ts`:113 — IDOR007 [PATCH]
+### `src/app/api/events/[id]/route.ts`:116 — IDOR007 [PATCH]
 
 where clause consumes params.* but session.user.id was not read before the query.
 
@@ -2373,7 +1513,7 @@ where clause consumes params.* but session.user.id was not read before the query
 { id: params.id }
 ```
 
-### `src/app/api/events/[id]/rsvp/route.ts`:41 — IDOR003 [PATCH]
+### `src/app/api/events/[id]/rsvp/route.ts`:42 — IDOR003 [PATCH]
 
 prisma.eventRSVP.update uses where: { id } with no ownership constraint.
 
@@ -2381,7 +1521,7 @@ prisma.eventRSVP.update uses where: { id } with no ownership constraint.
 { id: rsvp.id }
 ```
 
-### `src/app/api/events/[id]/rsvp/route.ts`:41 — IDOR004 [PATCH]
+### `src/app/api/events/[id]/rsvp/route.ts`:42 — IDOR004 [PATCH]
 
 Mutation prisma.eventRSVP.update uses where: { id } with no ownership constraint.
 
@@ -2638,22 +1778,6 @@ Mutation prisma.pdfExtraction.update uses where: { id } with no ownership constr
 
 ```ts
 { id: extractionId }
-```
-
-### `src/app/api/festivals/[festivalId]/route.ts`:80 — IDOR003 [PUT]
-
-prisma.event.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: festivalId }
-```
-
-### `src/app/api/festivals/[festivalId]/route.ts`:80 — IDOR004 [PUT]
-
-Mutation prisma.event.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: festivalId }
 ```
 
 ### `src/app/api/import/[sessionId]/analyze/route.ts`:59 — IDOR003 [POST]
@@ -3302,9 +2426,25 @@ Mutation prisma.noteAttachment.delete uses where: { id } with no ownership const
 { id: attachmentId }
 ```
 
+### `src/app/api/messages/conversations/[id]/messages/route.ts`:52 — IDOR003 [POST]
+
+prisma.conversation.update uses where: { id } with no ownership constraint.
+
+```ts
+{ id: conversationId }
+```
+
 ### `src/app/api/messages/conversations/[id]/messages/route.ts`:52 — IDOR004 [POST]
 
 Mutation prisma.conversation.update uses where: { id } with no ownership constraint.
+
+```ts
+{ id: conversationId }
+```
+
+### `src/app/api/messages/conversations/[id]/route.ts`:28 — IDOR003 [GET]
+
+prisma.conversation.findUnique uses where: { id } with no ownership constraint.
 
 ```ts
 { id: conversationId }
@@ -3440,14 +2580,6 @@ prisma.organizationUser.findUnique uses where: { id } with no ownership constrai
 { id: orgUserId }
 ```
 
-### `src/app/api/products/[productId]/context-photos/route.ts`:129 — IDOR004 [GET]
-
-Mutation prisma.inContextBoost.updateMany uses where: { id } with no ownership constraint.
-
-```ts
-{ id: { in: boostIds } }
-```
-
 ### `src/app/api/products/[productId]/generate-3d/route.ts`:17 — IDOR003 [POST]
 
 prisma.product.findUnique uses where: { id } with no ownership constraint.
@@ -3496,7 +2628,7 @@ Mutation prisma.inContextBoost.update uses where: { id } with no ownership const
 { id: boostId }
 ```
 
-### `src/app/api/products/[productId]/qr/route.ts`:9 — IDOR007 [GET]
+### `src/app/api/products/[productId]/qr/route.ts`:12 — IDOR007 [GET]
 
 where clause consumes params.* but session.user.id was not read before the query.
 
@@ -3752,35 +2884,6 @@ Mutation prisma.quoteAttachment.update uses where: { id } with no ownership cons
 { id: quoteId }
 ```
 
-### `src/app/api/projects/[id]/rooms/[roomId]/route.ts`:211 — IDOR004 [PUT]
-
-Mutation prisma.room.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: roomId, projectId }
-```
-
-### `src/app/api/projects/[id]/rooms/[roomId]/route.ts`:235 — IDOR004 [DELETE]
-
-Mutation prisma.selection.deleteMany uses where: { id } with no ownership constraint.
-
-```ts
-{
-        roomId: roomId,
-      }
-```
-
-### `src/app/api/projects/[id]/rooms/[roomId]/route.ts`:242 — IDOR004 [DELETE]
-
-Mutation prisma.room.delete uses where: { id } with no ownership constraint.
-
-```ts
-{
-        id: roomId,
-        projectId: projectId,
-      }
-```
-
 ### `src/app/api/projects/[id]/settings/route.ts`:20 — IDOR003 [PATCH]
 
 prisma.project.findUnique uses where: { id } with no ownership constraint.
@@ -3803,14 +2906,6 @@ Mutation prisma.project.update uses where: { id } with no ownership constraint.
 
 ```ts
 { id: params.id }
-```
-
-### `src/app/api/projects/[id]/supplemental-quotes/route.ts`:99 — IDOR003 [POST]
-
-prisma.project.findUnique uses where: { id } with no ownership constraint.
-
-```ts
-{ id: projectId }
 ```
 
 ### `src/app/api/projects/handoff/route.ts`:102 — IDOR004 [POST]
@@ -4329,54 +3424,6 @@ Mutation prisma.projectParticipant.update uses where: { id } with no ownership c
 { id: participantId }
 ```
 
-### `src/app/api/vendor/projects/[id]/handoff/route.ts`:40 — IDOR004 [POST]
-
-Mutation prisma.project.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: params.id as any }
-```
-
-### `src/app/api/vendor/projects/[id]/handoff/route.ts`:40 — IDOR007 [POST]
-
-where clause consumes params.* but session.user.id was not read before the query.
-
-```ts
-{ id: params.id as any }
-```
-
-### `src/app/api/vendor/projects/[id]/route.ts`:58 — IDOR004 [PATCH]
-
-Mutation prisma.project.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: projectId }
-```
-
-### `src/app/api/vendor/projects/[id]/selections/[selectionId]/route.ts`:43 — IDOR004 [PUT]
-
-Mutation prisma.selection.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: selectionId }
-```
-
-### `src/app/api/vendor/projects/[id]/selections/[selectionId]/route.ts`:95 — IDOR004 [DELETE]
-
-Mutation prisma.selection.delete uses where: { id } with no ownership constraint.
-
-```ts
-{ id: selectionId }
-```
-
-### `src/app/api/vendor/projects/[id]/visits/route.ts`:15 — IDOR007 [GET]
-
-where clause consumes params.* but session.user.id was not read before the query.
-
-```ts
-{ id: params.id }
-```
-
 ### `src/app/api/vendor/visits/[visitId]/attach-project/route.ts`:19 — IDOR003 [POST]
 
 prisma.vendorVisit.findUnique uses where: { id } with no ownership constraint.
@@ -4486,7 +3533,7 @@ Mutation prisma.visitProductShare.update uses where: { id } with no ownership co
 { id: productShare.id }
 ```
 
-## Medium (61)
+## Medium (58)
 
 ### `src/app/api/admin/festivals/route.ts`:168 — IDOR006 [POST]
 
@@ -4778,16 +3825,6 @@ Mutating route handler POST has no session check.
 if (process.env.NODE_ENV === "production") {
 ```
 
-### `src/app/api/messages/conversations/route.ts`:6 — IDOR005 [POST]
-
-Mutating route handler POST has no session check.
-
-```ts
-{
-const userId = await getUserIdFromRequest(req);
-if (!userId) {
-```
-
 ### `src/app/api/messages/inbox/route.ts`:5 — IDOR006 [GET]
 
 Raw SQL ($queryRaw/$executeRaw) used — scanner cannot reason about ownership.
@@ -4876,16 +3913,6 @@ Raw SQL ($queryRaw/$executeRaw) used — scanner cannot reason about ownership.
 {
 try {
 const session = await getServerSession();
-```
-
-### `src/app/api/projects/handoff/route.ts`:30 — IDOR005 [POST]
-
-Mutating route handler POST has no session check.
-
-```ts
-{
-try {
-const userId = await getUserIdFromRequest(req);
 ```
 
 ### `src/app/api/projects/handoff/route.ts`:121 — IDOR005 [PUT]
@@ -5058,16 +4085,6 @@ try {
 const body = await req.json();
 ```
 
-### `src/app/api/vendor/projects/route.ts`:11 — IDOR005 [POST]
-
-Mutating route handler POST has no session check.
-
-```ts
-{
-try {
-const userId = await getUserIdFromRequest(req);
-```
-
 ### `src/app/api/vendors/events/create/route.ts`:8 — IDOR005 [POST]
 
 Mutating route handler POST has no session check.
@@ -5098,7 +4115,7 @@ try {
 const body = await request.json();
 ```
 
-## Low (43)
+## Low (40)
 
 ### `src/app/api/auth/me/route.ts`:15 — IDOR005 [GET]
 
@@ -5350,26 +4367,6 @@ return NextResponse.json({ error: 'Method not allowed' }, { status: 405 });
 }
 ```
 
-### `src/app/api/messages/inbox/route.ts`:5 — IDOR005 [GET]
-
-Read route handler GET has no session check.
-
-```ts
-{
-const userId = await getUserIdFromRequest(req);
-if (!userId) {
-```
-
-### `src/app/api/messages/unread-count/route.ts`:5 — IDOR005 [GET]
-
-Read route handler GET has no session check.
-
-```ts
-{
-const userId = await getUserIdFromRequest(req);
-if (!userId) {
-```
-
 ### `src/app/api/orb-faqs/route.ts`:6 — IDOR005 [GET]
 
 Read route handler GET has no session check.
@@ -5488,16 +4485,6 @@ Read route handler GET has no session check.
 {
 try {
 const { searchParams } = new URL(request.url);
-```
-
-### `src/app/api/vendor/projects/route.ts`:69 — IDOR005 [GET]
-
-Read route handler GET has no session check.
-
-```ts
-{
-const userId = await getUserIdFromRequest(req);
-if (!userId) return NextResponse.json({ projects: [], count: 0 });
 ```
 
 ### `src/app/api/vendor/qbr/route.ts`:12 — IDOR005 [GET]

@@ -1,3 +1,4 @@
+// @idor-allow: public-read reason="Public list of events under a festival, viewable anonymously"
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';

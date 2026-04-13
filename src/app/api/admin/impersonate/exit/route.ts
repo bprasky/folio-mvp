@@ -1,3 +1,4 @@
+// @idor-allow: IDOR001 reason="Authorizes by session.user.id === impersonationData.originalAdminId; only the admin who started the impersonation may read or end it."
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
@@ -32,6 +33,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: 'Invalid impersonation data' },
         { status: 400 }
+      );
+    }
+
+    // Only the admin who started this impersonation may end it.
+    if (session.user.id !== impersonationData.originalAdminId) {
+      return NextResponse.json(
+        { error: 'Forbidden' },
+        { status: 403 }
       );
     }
 
@@ -84,6 +93,10 @@ export async function GET(request: NextRequest) {
 
     try {
       const impersonationData = JSON.parse(impersonationCookie.value);
+      // Only the admin who started this impersonation may read its status.
+      if (session.user.id !== impersonationData.originalAdminId) {
+        return NextResponse.json({ isImpersonating: false });
+      }
       return NextResponse.json({
         isImpersonating: true,
         ...impersonationData,

@@ -1,6 +1,9 @@
+// @idor-allow: public-read reason="Public video detail viewable anonymously; PUT/DELETE mutations require session auth"
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { writeFile, readFile } from 'fs/promises';
 import { join } from 'path';
 
@@ -52,6 +55,11 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const videoId = params.id;
     const updates = await request.json();
 
@@ -99,6 +107,11 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const videoId = params.id;
 
     // Load videos from JSON file

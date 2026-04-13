@@ -1,3 +1,6 @@
+// @idor-allow: public-read reason="Public festival detail page viewable anonymously"
+// @idor-allow: IDOR003 reason="Public lookup by festival id"
+// @idor-allow: IDOR004 reason="Public festival read; PUT mutation has admin auth"
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';

@@ -12,7 +12,34 @@ type Params = { params: { developmentId: string; unitTypeId: string } };
  */
 export async function GET(req: NextRequest, { params }: Params) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const user = session.user as { id: string; role: string };
+
     const { developmentId, unitTypeId } = params;
+
+    const development = await prisma.development.findUnique({
+      where: { id: developmentId },
+      select: { id: true, developerOrgId: true },
+    });
+    if (!development) {
+      return NextResponse.json({ error: "Development not found" }, { status: 404 });
+    }
+
+    if (user.role !== 'ADMIN') {
+      const hasAccess = await prisma.organizationUser.findFirst({
+        where: {
+          userId: user.id,
+          organizationId: development.developerOrgId,
+          isActive: true,
+        },
+      });
+      if (!hasAccess) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+    }
 
     const unitType = await prisma.unitType.findFirst({
       where: {
