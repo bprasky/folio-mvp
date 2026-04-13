@@ -78,7 +78,7 @@ const ADMIN_ROLE_CHECK =
  * resource as ownership-checked.
  */
 const POST_FETCH_OWNER_CHECK =
-  /\.\s*(?:\w*UserId|\w*OwnerId|userId|ownerId|designerId|createdById|authorId|buyerId|uploaderId)\s*(?:!==|===)\s*(?:session[?.]?\.user[?.]?\.id|\buserId\b|user[?.]?\.id)\b/;
+  /\.\s*(?:\w+Id)\s*(?:!==|===)\s*(?:session[?.]?\.user[?.]?\.id|\buserId\b|user[?.]?\.id)\b/;
 
 /**
  * Recognizes handlers that have already done a session-scoped FETCH of the
