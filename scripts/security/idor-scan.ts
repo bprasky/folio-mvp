@@ -61,7 +61,7 @@ const OWNERSHIP_FIELDS =
 // `check*Access`, `require(Admin|Role|Auth|Member|Login)` helper, plus
 // project-specific helpers that don't fit the convention.
 const AUTHZ_HELPERS =
-  /\b(assert[A-Z]\w*|can[A-Z]\w*|require(?:Admin|Role|Auth|Member|Login)|check[A-Z]\w*Access|getProjectAccess|verifyToken|verifySignedUrl|jwt\.verify)\s*\(/;
+  /\b(assert[A-Z]\w*|can[A-Z]\w*|require(?:Admin|Role|Auth|Member|Login)|check[A-Z]\w*Access|getProjectAccess|get[A-Z]\w*Context|verifyToken|verifySignedUrl|jwt\.verify)\s*\(/;
 
 const SESSION_CALL =
   /getServerSession\s*\(|from\s+['"]next-auth['"]|getUserIdFromRequest\s*\(|from\s+['"]@\/lib\/apiAuth['"]/;
@@ -95,6 +95,14 @@ const POST_FETCH_OWNER_CHECK_RHS =
  */
 const SCOPED_FETCH =
   /prisma\.\w+\.(?:findUnique|findFirst|findMany|count)\s*\(\s*\{[\s\S]{0,600}?where\s*:\s*\{[\s\S]{0,300}?\b(?:userId|ownerId|createdById|designerId|authorId|buyerId)\b/;
+
+// Token-authenticated routes: a handler that looks up a model whose name
+// contains "Token" or "Invite" (e.g. vendorPreviewToken, teamMemberInvite,
+// inviteToken, passwordResetToken) is treating the token as a bearer
+// credential. Possession of the token is proof of authorization; subsequent
+// queries scoped to the fetched token record are safe.
+const TOKEN_AUTH_LOOKUP =
+  /prisma\.\w*(?:[Tt]oken|[Ii]nvite)\w*\.(?:findUnique|findFirst)\s*\(/;
 
 const HANDLER_DECL =
   /export\s+async\s+function\s+(GET|POST|PUT|PATCH|DELETE)\s*\(/g;
@@ -400,6 +408,10 @@ function handlerHasMembershipCheck(body: string): boolean {
   return SCOPED_FETCH.test(body);
 }
 
+function handlerHasTokenAuth(body: string): boolean {
+  return TOKEN_AUTH_LOOKUP.test(body);
+}
+
 /**
  * A `where` clause is considered "self-scoped" if it references `session.user`
  * (lookup of the caller's own record).
@@ -578,11 +590,13 @@ function scanFile(absPath: string, root: string): Finding[] {
     const hasAdminCheck = handlerHasAdminRoleCheck(body);
     const hasPostFetchOwner = handlerHasPostFetchOwnerCheck(body);
     const hasMembership = handlerHasMembershipCheck(body);
+    const hasTokenAuth = handlerHasTokenAuth(body);
     const selfAliases = extractSelfAliases(body);
-    // A post-fetch ownership check (e.g. `event.hostProfile.userId === session.user.id`)
-    // or a membership-table query (`prisma.organizationUser.findFirst({ where: { userId: session.user.id, ... } })`)
-    // is treated as equivalent to calling an authz helper for per-row rules.
-    const hasOwnerScope = hasHelper || hasPostFetchOwner || hasMembership;
+    // A post-fetch ownership check, a session-scoped fetch, or a token-
+    // model lookup (bearer-credential auth) are all treated as equivalent
+    // to calling an authz helper for per-row rules.
+    const hasOwnerScope =
+      hasHelper || hasPostFetchOwner || hasMembership || hasTokenAuth;
     const isMutating = h.name !== 'GET';
     const snippet = firstNonEmptyLines(body, 3);
 

@@ -1,6 +1,6 @@
 # IDOR / Authorization-Gap Scan Report
 
-_Generated: 2026-04-13T18:16:30.152Z_
+_Generated: 2026-04-13T18:18:36.117Z_
 _Scanned root: `src/app/api`_
 _Files scanned: 523_
 
@@ -9,7 +9,7 @@ _Files scanned: 523_
 | Severity | Count |
 |---|---|
 | Critical | 0 |
-| High | 37 |
+| High | 27 |
 | Medium | 58 |
 | Low | 40 |
 
@@ -17,13 +17,13 @@ _Files scanned: 523_
 
 | Rule | Count |
 |---|---|
-| IDOR003 | 16 |
-| IDOR004 | 19 |
+| IDOR003 | 13 |
+| IDOR004 | 12 |
 | IDOR005 | 88 |
 | IDOR006 | 10 |
 | IDOR007 | 2 |
 
-## High (37)
+## High (27)
 
 ### `src/app/api/buyer/auth/route.ts`:124 — IDOR004 [POST]
 
@@ -39,22 +39,6 @@ Mutation prisma.consultationBuyer.update uses where: { id } with no ownership co
 
 ```ts
 { id: buyer.id }
-```
-
-### `src/app/api/invites/[token]/decline/route.ts`:35 — IDOR003 [POST]
-
-prisma.teamMemberInvite.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: invite.id }
-```
-
-### `src/app/api/invites/[token]/decline/route.ts`:35 — IDOR004 [POST]
-
-Mutation prisma.teamMemberInvite.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: invite.id }
 ```
 
 ### `src/app/api/orgs/[orgId]/bio-interview/coverage/route.ts`:45 — IDOR003 [POST]
@@ -203,14 +187,6 @@ Mutation prisma.projectProductPricing.upsert uses where: { id } with no ownershi
       }
 ```
 
-### `src/app/api/projects/handoff/route.ts`:102 — IDOR004 [POST]
-
-Mutation prisma.project.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: project.id as any }
-```
-
 ### `src/app/api/search/signals/route.ts`:55 — IDOR004 [POST]
 
 Mutation prisma.projectImage.update uses where: { id } with no ownership constraint.
@@ -297,62 +273,6 @@ Mutation prisma.productTag.update uses where: { id } with no ownership constrain
 
 ```ts
 { id: params.tagId }
-```
-
-### `src/app/api/vendor/claim-product/route.ts`:55 — IDOR004 [POST]
-
-Mutation prisma.vendorPreviewToken.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: previewTokenId }
-```
-
-### `src/app/api/vendor/claim-product/route.ts`:61 — IDOR004 [POST]
-
-Mutation prisma.vendor.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: vendor.id }
-```
-
-### `src/app/api/vendor/claim-product/route.ts`:72 — IDOR004 [POST]
-
-Mutation prisma.product.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: previewToken.productId }
-```
-
-### `src/app/api/vendor/claim-product/route.ts`:82 — IDOR004 [POST]
-
-Mutation prisma.vendorPreviewToken.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: previewTokenId }
-```
-
-### `src/app/api/vendor/collaborations/[participantId]/spend/route.ts`:29 — IDOR003 [PATCH]
-
-prisma.projectParticipant.findUnique uses where: { id } with no ownership constraint.
-
-```ts
-{ id: participantId }
-```
-
-### `src/app/api/vendor/collaborations/[participantId]/spend/route.ts`:100 — IDOR003 [PATCH]
-
-prisma.projectParticipant.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: participantId }
-```
-
-### `src/app/api/vendor/collaborations/[participantId]/spend/route.ts`:100 — IDOR004 [PATCH]
-
-Mutation prisma.projectParticipant.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: participantId }
 ```
 
 ## Medium (58)
