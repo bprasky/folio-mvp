@@ -22,7 +22,13 @@ export async function getPostBySlug(slug: string) {
             },
             images: {
               include: {
+                // Exclude tags pointing at pending/unclaimed products so they
+                // don't leak onto the public post. Pending products are
+                // designer- or import-created stubs awaiting vendor claim;
+                // they often lack vendor, price, or canonical name and would
+                // render as broken affordances on the public page.
                 tags: {
+                  where: { product: { isPending: false } },
                   include: {
                     product: {
                       include: {
