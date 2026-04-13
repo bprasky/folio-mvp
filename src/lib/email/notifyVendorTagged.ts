@@ -6,6 +6,15 @@
  */
 
 import { prisma } from '@/lib/prisma';
+import { sendEmail } from '@/lib/email/sendEmail';
+
+// Kill-switch for the "you were tagged" vendor email. When unset or false we
+// keep the legacy log-only behavior so a prod deploy with RESEND_API_KEY set
+// does NOT start blasting vendors the moment this file ships. Flip to "true"
+// in the target environment (via VENDOR_TAGGED_EMAILS_ENABLED) once the
+// template, volume, and vendor ecosystem are ready.
+const VENDOR_TAGGED_EMAILS_ENABLED =
+  (process.env.VENDOR_TAGGED_EMAILS_ENABLED ?? '').toLowerCase() === 'true';
 
 interface VendorNotificationData {
   vendorId: string;
@@ -338,13 +347,26 @@ ${isExistingVendor ? `Manage Contributions: ${dashboardUrl}` : `Claim Your Profi
 Why am I receiving this? A designer tagged your product on Folio.
   `.trim();
 
-  // TODO: Integrate with email service (SendGrid, Resend, etc.)
-  // For now, log the email
-  console.log(`[EMAIL] Would send to ${vendorEmail}:`, {
-    subject,
-    viewPostUrl,
-  });
+  if (!VENDOR_TAGGED_EMAILS_ENABLED) {
+    // Kill-switch off: keep the legacy log-only behavior. Set
+    // VENDOR_TAGGED_EMAILS_ENABLED=true in the environment to enable.
+    console.log(`[notifyVendorTagged] disabled — would send to ${vendorEmail}:`, {
+      subject,
+      viewPostUrl,
+    });
+    return;
+  }
 
-  // In production, use your email service:
-  // await emailClient.send({ to: vendorEmail, subject, html, text });
+  const result = await sendEmail({ to: vendorEmail, subject, html });
+  if (!result.success) {
+    // Don't throw — the caller runs fire-and-forget via .catch() and we don't
+    // want a vendor email failure to abort the publish flow or surface errors
+    // to the designer. Log loudly instead so the failure shows up in logs.
+    console.error(
+      `[notifyVendorTagged] Failed to send to ${vendorEmail}:`,
+      result.error
+    );
+  } else {
+    console.log(`[notifyVendorTagged] Sent to ${vendorEmail}: ${subject}`);
+  }
 }
