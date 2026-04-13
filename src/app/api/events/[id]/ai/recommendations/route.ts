@@ -35,6 +35,13 @@ export async function GET(
       return NextResponse.json({ error: 'Event not found' }, { status: 404 });
     }
 
+    if (
+      event.hostProfile?.userId !== session.user.id &&
+      session.user.role !== 'ADMIN'
+    ) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     const recommendations: any = {
       guests: [],
       products: [],

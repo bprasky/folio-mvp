@@ -114,10 +114,21 @@ export async function POST(
     // Verify event exists and user has permission
     const event = await prisma.event.findUnique({
       where: { id: params.id },
+      include: { hostProfile: true },
     });
 
     if (!event) {
       return NextResponse.json({ error: 'Event not found' }, { status: 404 });
+    }
+
+    // Only the current host (or admin) may manage invites on this event.
+    // This intentionally blocks the "claim an unclaimed event" path that
+    // previously existed here; dedicated host-claim should live elsewhere.
+    if (
+      event.hostProfile?.userId !== session.user.id &&
+      session.user.role !== 'ADMIN'
+    ) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     // Update event host profile if not set

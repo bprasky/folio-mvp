@@ -1,3 +1,5 @@
+// @idor-allow: IDOR003 reason="Gated by canAccessCheckIn which intentionally includes event staff and vendors, not just host"
+// @idor-allow: IDOR004 reason="Same as IDOR003"
 export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from "next/server";
