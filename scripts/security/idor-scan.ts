@@ -78,7 +78,7 @@ const ADMIN_ROLE_CHECK =
  * resource as ownership-checked.
  */
 const POST_FETCH_OWNER_CHECK =
-  /\.\s*(?:userId|ownerId|designerId|hostUserId|createdById|authorId|buyerId)\s*(?:!==|===)\s*session[?.]?\.user[?.]?\.id/;
+  /\.\s*(?:\w*UserId|\w*OwnerId|userId|ownerId|designerId|createdById|authorId|buyerId|uploaderId)\s*(?:!==|===)\s*(?:session[?.]?\.user[?.]?\.id|\buserId\b|user[?.]?\.id)\b/;
 
 /**
  * Recognizes membership-table queries that scope by the caller's user id, e.g.
