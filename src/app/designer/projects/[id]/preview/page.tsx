@@ -26,6 +26,10 @@ export default function ProjectPostPreviewPage() {
   const [validationWarning, setValidationWarning] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [generateError, setGenerateError] = useState<string | null>(null);
+  // True when the server reported a background generation already in progress
+  // (HTTP 202) or when we see provenance.interview.status.phase === 'generating'
+  // on initial load. While set, we poll fetchPost() to detect completion.
+  const [generatingInBackground, setGeneratingInBackground] = useState(false);
   const [showRegenerateConfirm, setShowRegenerateConfirm] = useState(false);
   const [showTagDiagnostic, setShowTagDiagnostic] = useState(false);
   const [credits, setCredits] = useState<CreditEntry[]>([]);
@@ -110,6 +114,17 @@ export default function ProjectPostPreviewPage() {
     setValidationWarning(flag === "validation_failed");
   }, [projectId, showInterviewModal]);
 
+  // Poll for background generation completion. fetchPost() already flips
+  // generatingInBackground off once expandedBlocks appears or the provenance
+  // phase goes idle, so the effect naturally stops when either happens.
+  useEffect(() => {
+    if (!generatingInBackground) return;
+    const interval = setInterval(() => {
+      fetchPost();
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [generatingInBackground]);
+
   async function fetchPost() {
     try {
       const res = await fetch(`/api/posting/project/${projectId}`, { cache: 'no-store' });
@@ -134,6 +149,26 @@ export default function ProjectPostPreviewPage() {
           parsedCredits.unshift({ role: "Designer", name: designerName });
         }
         setCredits(parsedCredits);
+
+        // Surface a previously-persisted generation error (if any) so users who
+        // navigated away after a failure see it on return. Cleared on success.
+        const persistedGenError =
+          (postData.provenance as any)?.interview?.lastGenerationError?.message ?? null;
+        if (persistedGenError && !postData.expandedBlocks) {
+          setGenerateError(persistedGenError);
+        }
+
+        // Detect a background generation job in flight (from another tab, a
+        // concurrent user, or a recently-triggered request that hasn't finished).
+        // We clear the flag when expandedBlocks appears or the phase goes idle.
+        const phase = (postData.provenance as any)?.interview?.status?.phase;
+        if (phase === "generating" && !postData.expandedBlocks) {
+          setGeneratingInBackground(true);
+          // A confirmed in-flight job supersedes any stale error banner.
+          setGenerateError(null);
+        } else {
+          setGeneratingInBackground(false);
+        }
 
         setPost({
           post: {
@@ -242,8 +277,10 @@ export default function ProjectPostPreviewPage() {
       );
 
       if (res.status === 202) {
-        // Generation in progress
-        setGenerateError("Generation is already in progress. Please wait...");
+        // Another request is composing the draft — surface an in-progress
+        // banner and let the poll effect below detect completion.
+        setGeneratingInBackground(true);
+        setGenerateError(null);
         return;
       }
 
@@ -445,8 +482,19 @@ export default function ProjectPostPreviewPage() {
         </nav>
       </div>
 
+      {/* Background generation in-progress banner (202 or provenance phase='generating') */}
+      {generatingInBackground && (
+        <div className="mb-6 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800 flex items-center gap-3">
+          <span
+            className="inline-block h-4 w-4 rounded-full border-2 border-blue-400 border-t-transparent animate-spin"
+            aria-hidden="true"
+          />
+          Generating your story in the background. This can take a minute — the page will update automatically when it's ready.
+        </div>
+      )}
+
       {/* Error message (show for both generation and publish errors) */}
-      {generateError && (
+      {generateError && !generatingInBackground && (
         <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 whitespace-pre-line">
           {generateError}
         </div>
@@ -462,17 +510,23 @@ export default function ProjectPostPreviewPage() {
       </div>
 
       {/* Generate button or error message */}
-      {!post.post.expandedBlocks && (
+      {!post.post.expandedBlocks && !generatingInBackground && (
         <div className="mb-6 text-center py-8">
           <p className="text-folio-text-secondary mb-4">
-            No article draft exists yet. Generate an AI draft from your interview answers.
+            {generateError
+              ? "The last generation attempt failed. You can try again — your answers are saved."
+              : "No article draft exists yet. Generate an AI draft from your interview answers."}
           </p>
           <button
             onClick={handleGenerate}
             disabled={generating}
             className="rounded-full px-6 py-3 font-medium shadow-md hover:shadow-lg bg-[var(--accent)] text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all"
           >
-            {generating ? "Generating…" : "Generate AI Draft"}
+            {generating
+              ? "Generating…"
+              : generateError
+              ? "Try again"
+              : "Generate AI Draft"}
           </button>
         </div>
       )}

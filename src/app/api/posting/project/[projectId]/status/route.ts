@@ -36,6 +36,11 @@ function slugify(s: string): string {
     .slice(0, 80);
 }
 
+const POSTING_V1_ENABLED =
+  (process.env.POSTING_V1 ?? "").toLowerCase() === "true" ||
+  (process.env.NEXT_PUBLIC_POSTING_V1 ?? "").toLowerCase() === "true" ||
+  process.env.NODE_ENV !== "production";
+
 export async function PATCH(
   request: NextRequest,
   { params }: { params: { projectId: string } }
@@ -100,6 +105,13 @@ export async function PATCH(
         : parsed.data.action === "unpublish"
         ? "DRAFT"
         : parsed.data.to || parsed.data.status || "DRAFT";
+
+    // Gate Posting V1 publish attempts on the feature flag. Unpublish/archive
+    // remain reachable because usePublishFlow.ts:278 uses this endpoint for
+    // unpublish on the legacy (flag-off) Path B as well.
+    if (targetStatus === "PUBLISHED" && !POSTING_V1_ENABLED) {
+      return NextResponse.json({ error: "Posting V1 not enabled" }, { status: 404 });
+    }
 
     // Get current post with expandedBlocks
     const post = await prisma.projectPost.findUnique({
