@@ -80,6 +80,18 @@ const ADMIN_ROLE_CHECK =
 const POST_FETCH_OWNER_CHECK =
   /\.\s*(?:userId|ownerId|designerId|hostUserId|createdById|authorId|buyerId)\s*(?:!==|===)\s*session[?.]?\.user[?.]?\.id/;
 
+/**
+ * Recognizes membership-table queries that scope by the caller's user id, e.g.
+ *   await prisma.organizationUser.findFirst({ where: { userId: user.id, organizationId: existing.developerOrgId } })
+ *   await prisma.projectParticipant.findFirst({ where: { userId: session.user.id, ... } })
+ * These are the canonical Folio pattern for "is the caller a member of this
+ * org/project/team?" and the scanner can't trace the result into subsequent
+ * queries — but their presence in a handler is strong evidence that ownership
+ * is being enforced.
+ */
+const MEMBERSHIP_CHECK =
+  /prisma\.\w+\.(?:findFirst|findUnique|findMany|count)\s*\(\s*\{\s*where\s*:\s*\{[\s\S]{0,300}?\buserId\s*:\s*(?:session[?.]?\.user[?.]?\.id|user[?.]?\.id)/;
+
 const HANDLER_DECL =
   /export\s+async\s+function\s+(GET|POST|PUT|PATCH|DELETE)\s*\(/g;
 
@@ -377,6 +389,10 @@ function handlerHasPostFetchOwnerCheck(body: string): boolean {
   return POST_FETCH_OWNER_CHECK.test(body);
 }
 
+function handlerHasMembershipCheck(body: string): boolean {
+  return MEMBERSHIP_CHECK.test(body);
+}
+
 /**
  * A `where` clause is considered "self-scoped" if it references `session.user`
  * (lookup of the caller's own record).
@@ -527,9 +543,11 @@ function scanFile(absPath: string, root: string): Finding[] {
     const hasHelper = handlerHasAuthzHelper(body);
     const hasAdminCheck = handlerHasAdminRoleCheck(body);
     const hasPostFetchOwner = handlerHasPostFetchOwnerCheck(body);
+    const hasMembership = handlerHasMembershipCheck(body);
     // A post-fetch ownership check (e.g. `event.hostProfile.userId === session.user.id`)
+    // or a membership-table query (`prisma.organizationUser.findFirst({ where: { userId: session.user.id, ... } })`)
     // is treated as equivalent to calling an authz helper for per-row rules.
-    const hasOwnerScope = hasHelper || hasPostFetchOwner;
+    const hasOwnerScope = hasHelper || hasPostFetchOwner || hasMembership;
     const isMutating = h.name !== 'GET';
     const snippet = firstNonEmptyLines(body, 3);
 

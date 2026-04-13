@@ -1,6 +1,6 @@
 # IDOR / Authorization-Gap Scan Report
 
-_Generated: 2026-04-13T17:55:29.674Z_
+_Generated: 2026-04-13T18:01:01.421Z_
 _Scanned root: `src/app/api`_
 _Files scanned: 523_
 
@@ -9,7 +9,7 @@ _Files scanned: 523_
 | Severity | Count |
 |---|---|
 | Critical | 0 |
-| High | 286 |
+| High | 206 |
 | Medium | 58 |
 | Low | 40 |
 
@@ -17,13 +17,13 @@ _Files scanned: 523_
 
 | Rule | Count |
 |---|---|
-| IDOR003 | 160 |
-| IDOR004 | 124 |
+| IDOR003 | 109 |
+| IDOR004 | 95 |
 | IDOR005 | 88 |
 | IDOR006 | 10 |
 | IDOR007 | 2 |
 
-## High (286)
+## High (206)
 
 ### `src/app/api/admin/impersonate/exit/route.ts`:48 — IDOR004 [POST]
 
@@ -37,46 +37,6 @@ Mutation prisma.impersonationLog.updateMany uses where: { id } with no ownership
       }
 ```
 
-### `src/app/api/atelier/deployments/[deploymentId]/route.ts`:28 — IDOR003 [GET]
-
-prisma.atelierDeployment.findUnique uses where: { id } with no ownership constraint.
-
-```ts
-{ id: deploymentId }
-```
-
-### `src/app/api/atelier/deployments/[deploymentId]/route.ts`:100 — IDOR003 [GET]
-
-prisma.development.findUnique uses where: { id } with no ownership constraint.
-
-```ts
-{ id: deployment.developmentId }
-```
-
-### `src/app/api/atelier/deployments/[deploymentId]/route.ts`:163 — IDOR003 [PATCH]
-
-prisma.atelierDeployment.findUnique uses where: { id } with no ownership constraint.
-
-```ts
-{ id: deploymentId }
-```
-
-### `src/app/api/atelier/deployments/[deploymentId]/route.ts`:184 — IDOR003 [PATCH]
-
-prisma.development.findUnique uses where: { id } with no ownership constraint.
-
-```ts
-{ id: existingDeployment.developmentId }
-```
-
-### `src/app/api/atelier/deployments/[deploymentId]/route.ts`:231 — IDOR003 [PATCH]
-
-prisma.atelierDeployment.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: deploymentId }
-```
-
 ### `src/app/api/atelier/deployments/[deploymentId]/route.ts`:290 — IDOR003 [DELETE]
 
 prisma.atelierDeployment.findUnique uses where: { id } with no ownership constraint.
@@ -88,14 +48,6 @@ prisma.atelierDeployment.findUnique uses where: { id } with no ownership constra
 ### `src/app/api/atelier/deployments/[deploymentId]/route.ts`:321 — IDOR003 [DELETE]
 
 prisma.atelierDeployment.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: deploymentId }
-```
-
-### `src/app/api/atelier/deployments/[deploymentId]/route.ts`:231 — IDOR004 [PATCH]
-
-Mutation prisma.atelierDeployment.update uses where: { id } with no ownership constraint.
 
 ```ts
 { id: deploymentId }
@@ -115,22 +67,6 @@ prisma.atelierFingerprint.findUnique uses where: { id } with no ownership constr
 
 ```ts
 { id: fingerprintId }
-```
-
-### `src/app/api/auth/me/orgs/[membershipId]/route.ts`:46 — IDOR003 [PATCH]
-
-prisma.organizationUser.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: membershipId }
-```
-
-### `src/app/api/auth/me/orgs/[membershipId]/route.ts`:46 — IDOR004 [PATCH]
-
-Mutation prisma.organizationUser.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: membershipId }
 ```
 
 ### `src/app/api/auth/rep-onboarding/complete/route.ts`:84 — IDOR004 [POST]
@@ -245,14 +181,6 @@ Mutation prisma.contactImportJob.update uses where: { id } with no ownership con
 { id: job.id }
 ```
 
-### `src/app/api/contacts/route.ts`:104 — IDOR004 [POST]
-
-Mutation prisma.contactImportJob.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: firstContact.importSourceId }
-```
-
 ### `src/app/api/designer/folders/[id]/assign-sections/route.ts`:46 — IDOR003 [POST]
 
 prisma.folderProduct.findFirst uses where: { id } with no ownership constraint.
@@ -286,424 +214,6 @@ Mutation prisma.profileQA.update uses where: { id } with no ownership constraint
 
 ```ts
 { id: questionId }
-```
-
-### `src/app/api/designer/qa/hide/route.ts`:39 — IDOR004 [POST]
-
-Mutation prisma.profileQA.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: parsed.data.questionId }
-```
-
-### `src/app/api/designer/qa/pin/route.ts`:39 — IDOR004 [POST]
-
-Mutation prisma.profileQA.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: parsed.data.questionId }
-```
-
-### `src/app/api/designer/qa/skip/route.ts`:38 — IDOR004 [POST]
-
-Mutation prisma.profileQA.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: parsed.data.questionId }
-```
-
-### `src/app/api/developments/[developmentId]/designers/[designerId]/route.ts`:69 — IDOR003 [PATCH]
-
-prisma.developmentDesigner.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: existing.id }
-```
-
-### `src/app/api/developments/[developmentId]/designers/[designerId]/route.ts`:152 — IDOR003 [DELETE]
-
-prisma.developmentDesigner.delete uses where: { id } with no ownership constraint.
-
-```ts
-{ id: existing.id }
-```
-
-### `src/app/api/developments/[developmentId]/designers/[designerId]/route.ts`:160 — IDOR003 [DELETE]
-
-prisma.developmentDesigner.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: existing.id }
-```
-
-### `src/app/api/developments/[developmentId]/designers/[designerId]/route.ts`:69 — IDOR004 [PATCH]
-
-Mutation prisma.developmentDesigner.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: existing.id }
-```
-
-### `src/app/api/developments/[developmentId]/designers/[designerId]/route.ts`:152 — IDOR004 [DELETE]
-
-Mutation prisma.developmentDesigner.delete uses where: { id } with no ownership constraint.
-
-```ts
-{ id: existing.id }
-```
-
-### `src/app/api/developments/[developmentId]/designers/[designerId]/route.ts`:160 — IDOR004 [DELETE]
-
-Mutation prisma.developmentDesigner.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: existing.id }
-```
-
-### `src/app/api/developments/[developmentId]/designers/route.ts`:27 — IDOR003 [POST]
-
-prisma.development.findUnique uses where: { id } with no ownership constraint.
-
-```ts
-{ id: developmentId }
-```
-
-### `src/app/api/developments/[developmentId]/designers/route.ts`:85 — IDOR003 [POST]
-
-prisma.developmentDesigner.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: existing.id }
-```
-
-### `src/app/api/developments/[developmentId]/designers/route.ts`:163 — IDOR003 [GET]
-
-prisma.development.findUnique uses where: { id } with no ownership constraint.
-
-```ts
-{ id: developmentId }
-```
-
-### `src/app/api/developments/[developmentId]/designers/route.ts`:85 — IDOR004 [POST]
-
-Mutation prisma.developmentDesigner.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: existing.id }
-```
-
-### `src/app/api/developments/[developmentId]/finish-packages/[packageId]/route.ts`:24 — IDOR003 [PATCH]
-
-prisma.finishPackage.findFirst uses where: { id } with no ownership constraint.
-
-```ts
-{ id: packageId, developmentId }
-```
-
-### `src/app/api/developments/[developmentId]/finish-packages/[packageId]/route.ts`:71 — IDOR003 [PATCH]
-
-prisma.finishPackage.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: packageId }
-```
-
-### `src/app/api/developments/[developmentId]/finish-packages/[packageId]/route.ts`:117 — IDOR003 [DELETE]
-
-prisma.finishPackage.findFirst uses where: { id } with no ownership constraint.
-
-```ts
-{ id: packageId, developmentId }
-```
-
-### `src/app/api/developments/[developmentId]/finish-packages/[packageId]/route.ts`:149 — IDOR003 [DELETE]
-
-prisma.finishPackage.delete uses where: { id } with no ownership constraint.
-
-```ts
-{ id: packageId }
-```
-
-### `src/app/api/developments/[developmentId]/finish-packages/[packageId]/route.ts`:55 — IDOR004 [PATCH]
-
-Mutation prisma.finishPackageDefault.deleteMany uses where: { id } with no ownership constraint.
-
-```ts
-{ finishPackageId: packageId }
-```
-
-### `src/app/api/developments/[developmentId]/finish-packages/[packageId]/route.ts`:71 — IDOR004 [PATCH]
-
-Mutation prisma.finishPackage.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: packageId }
-```
-
-### `src/app/api/developments/[developmentId]/finish-packages/[packageId]/route.ts`:149 — IDOR004 [DELETE]
-
-Mutation prisma.finishPackage.delete uses where: { id } with no ownership constraint.
-
-```ts
-{ id: packageId }
-```
-
-### `src/app/api/developments/[developmentId]/finish-packages/route.ts`:28 — IDOR003 [POST]
-
-prisma.development.findUnique uses where: { id } with no ownership constraint.
-
-```ts
-{ id: developmentId }
-```
-
-### `src/app/api/developments/[developmentId]/finish-packages/route.ts`:147 — IDOR003 [GET]
-
-prisma.development.findUnique uses where: { id } with no ownership constraint.
-
-```ts
-{ id: developmentId }
-```
-
-### `src/app/api/developments/[developmentId]/products/[productId]/route.ts`:28 — IDOR003 [PATCH]
-
-prisma.developmentProduct.findUnique uses where: { id } with no ownership constraint.
-
-```ts
-{
-        developmentId_productId: {
-          developmentId,
-          productId,
-        },
-      }
-```
-
-### `src/app/api/developments/[developmentId]/products/[productId]/route.ts`:87 — IDOR003 [PATCH]
-
-prisma.developmentProduct.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: existing.id }
-```
-
-### `src/app/api/developments/[developmentId]/products/[productId]/route.ts`:131 — IDOR003 [DELETE]
-
-prisma.developmentProduct.findUnique uses where: { id } with no ownership constraint.
-
-```ts
-{
-        developmentId_productId: {
-          developmentId,
-          productId,
-        },
-      }
-```
-
-### `src/app/api/developments/[developmentId]/products/[productId]/route.ts`:181 — IDOR003 [DELETE]
-
-prisma.developmentProduct.delete uses where: { id } with no ownership constraint.
-
-```ts
-{ id: existing.id }
-```
-
-### `src/app/api/developments/[developmentId]/products/[productId]/route.ts`:87 — IDOR004 [PATCH]
-
-Mutation prisma.developmentProduct.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: existing.id }
-```
-
-### `src/app/api/developments/[developmentId]/products/[productId]/route.ts`:181 — IDOR004 [DELETE]
-
-Mutation prisma.developmentProduct.delete uses where: { id } with no ownership constraint.
-
-```ts
-{ id: existing.id }
-```
-
-### `src/app/api/developments/[developmentId]/products/route.ts`:28 — IDOR003 [POST]
-
-prisma.development.findUnique uses where: { id } with no ownership constraint.
-
-```ts
-{ id: developmentId }
-```
-
-### `src/app/api/developments/[developmentId]/products/route.ts`:63 — IDOR003 [POST]
-
-prisma.product.findUnique uses where: { id } with no ownership constraint.
-
-```ts
-{ id: productId }
-```
-
-### `src/app/api/developments/[developmentId]/products/route.ts`:72 — IDOR003 [POST]
-
-prisma.developmentProduct.findUnique uses where: { id } with no ownership constraint.
-
-```ts
-{
-        developmentId_productId: {
-          developmentId,
-          productId,
-        },
-      }
-```
-
-### `src/app/api/developments/[developmentId]/products/route.ts`:153 — IDOR003 [GET]
-
-prisma.development.findUnique uses where: { id } with no ownership constraint.
-
-```ts
-{ id: developmentId }
-```
-
-### `src/app/api/developments/[developmentId]/route.ts`:22 — IDOR003 [GET]
-
-prisma.development.findUnique uses where: { id } with no ownership constraint.
-
-```ts
-{ id: developmentId }
-```
-
-### `src/app/api/developments/[developmentId]/route.ts`:172 — IDOR003 [PATCH]
-
-prisma.development.findUnique uses where: { id } with no ownership constraint.
-
-```ts
-{ id: developmentId }
-```
-
-### `src/app/api/developments/[developmentId]/route.ts`:241 — IDOR003 [PATCH]
-
-prisma.development.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: developmentId }
-```
-
-### `src/app/api/developments/[developmentId]/route.ts`:289 — IDOR003 [DELETE]
-
-prisma.development.findUnique uses where: { id } with no ownership constraint.
-
-```ts
-{ id: developmentId }
-```
-
-### `src/app/api/developments/[developmentId]/route.ts`:331 — IDOR003 [DELETE]
-
-prisma.development.delete uses where: { id } with no ownership constraint.
-
-```ts
-{ id: developmentId }
-```
-
-### `src/app/api/developments/[developmentId]/route.ts`:339 — IDOR003 [DELETE]
-
-prisma.development.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: developmentId }
-```
-
-### `src/app/api/developments/[developmentId]/route.ts`:241 — IDOR004 [PATCH]
-
-Mutation prisma.development.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: developmentId }
-```
-
-### `src/app/api/developments/[developmentId]/route.ts`:331 — IDOR004 [DELETE]
-
-Mutation prisma.development.delete uses where: { id } with no ownership constraint.
-
-```ts
-{ id: developmentId }
-```
-
-### `src/app/api/developments/[developmentId]/route.ts`:339 — IDOR004 [DELETE]
-
-Mutation prisma.development.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: developmentId }
-```
-
-### `src/app/api/developments/[developmentId]/unit-types/[unitTypeId]/route.ts`:23 — IDOR003 [GET]
-
-prisma.development.findUnique uses where: { id } with no ownership constraint.
-
-```ts
-{ id: developmentId }
-```
-
-### `src/app/api/developments/[developmentId]/unit-types/[unitTypeId]/route.ts`:44 — IDOR003 [GET]
-
-prisma.unitType.findFirst uses where: { id } with no ownership constraint.
-
-```ts
-{
-        id: unitTypeId,
-        developmentId,
-      }
-```
-
-### `src/app/api/developments/[developmentId]/unit-types/[unitTypeId]/route.ts`:100 — IDOR003 [PATCH]
-
-prisma.unitType.findFirst uses where: { id } with no ownership constraint.
-
-```ts
-{ id: unitTypeId, developmentId }
-```
-
-### `src/app/api/developments/[developmentId]/unit-types/[unitTypeId]/route.ts`:149 — IDOR003 [PATCH]
-
-prisma.unitType.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: unitTypeId }
-```
-
-### `src/app/api/developments/[developmentId]/unit-types/[unitTypeId]/route.ts`:186 — IDOR003 [DELETE]
-
-prisma.unitType.findFirst uses where: { id } with no ownership constraint.
-
-```ts
-{ id: unitTypeId, developmentId }
-```
-
-### `src/app/api/developments/[developmentId]/unit-types/[unitTypeId]/route.ts`:221 — IDOR003 [DELETE]
-
-prisma.unitType.delete uses where: { id } with no ownership constraint.
-
-```ts
-{ id: unitTypeId }
-```
-
-### `src/app/api/developments/[developmentId]/unit-types/[unitTypeId]/route.ts`:149 — IDOR004 [PATCH]
-
-Mutation prisma.unitType.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: unitTypeId }
-```
-
-### `src/app/api/developments/[developmentId]/unit-types/[unitTypeId]/route.ts`:221 — IDOR004 [DELETE]
-
-Mutation prisma.unitType.delete uses where: { id } with no ownership constraint.
-
-```ts
-{ id: unitTypeId }
-```
-
-### `src/app/api/developments/[developmentId]/unit-types/route.ts`:149 — IDOR003 [GET]
-
-prisma.development.findUnique uses where: { id } with no ownership constraint.
-
-```ts
-{ id: developmentId }
 ```
 
 ### `src/app/api/email/inbound/route.ts`:68 — IDOR004 [POST]
@@ -1355,54 +865,6 @@ Mutation prisma.interviewSession.update uses where: { id } with no ownership con
 { id: interviewId }
 ```
 
-### `src/app/api/invites/[token]/accept/route.ts`:37 — IDOR003 [POST]
-
-prisma.teamMemberInvite.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: invite.id }
-```
-
-### `src/app/api/invites/[token]/accept/route.ts`:64 — IDOR003 [POST]
-
-prisma.teamMemberInvite.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: invite.id }
-```
-
-### `src/app/api/invites/[token]/accept/route.ts`:96 — IDOR003 [POST]
-
-prisma.teamMemberInvite.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: invite.id }
-```
-
-### `src/app/api/invites/[token]/accept/route.ts`:37 — IDOR004 [POST]
-
-Mutation prisma.teamMemberInvite.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: invite.id }
-```
-
-### `src/app/api/invites/[token]/accept/route.ts`:64 — IDOR004 [POST]
-
-Mutation prisma.teamMemberInvite.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: invite.id }
-```
-
-### `src/app/api/invites/[token]/accept/route.ts`:96 — IDOR004 [POST]
-
-Mutation prisma.teamMemberInvite.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: invite.id }
-```
-
 ### `src/app/api/invites/[token]/decline/route.ts`:35 — IDOR003 [POST]
 
 prisma.teamMemberInvite.update uses where: { id } with no ownership constraint.
@@ -1451,22 +913,6 @@ Mutation prisma.conversation.update uses where: { id } with no ownership constra
 { id: existing.id }
 ```
 
-### `src/app/api/org/[orgId]/territory/[assignmentId]/route.ts`:47 — IDOR003 [DELETE]
-
-prisma.orgTerritoryAssignment.delete uses where: { id } with no ownership constraint.
-
-```ts
-{ id: assignmentId }
-```
-
-### `src/app/api/org/[orgId]/territory/[assignmentId]/route.ts`:47 — IDOR004 [DELETE]
-
-Mutation prisma.orgTerritoryAssignment.delete uses where: { id } with no ownership constraint.
-
-```ts
-{ id: assignmentId }
-```
-
 ### `src/app/api/orgs/[orgId]/bio-interview/coverage/route.ts`:45 — IDOR003 [POST]
 
 prisma.interviewQuestionCoverage.upsert uses where: { id } with no ownership constraint.
@@ -1491,62 +937,6 @@ Mutation prisma.interviewQuestionCoverage.upsert uses where: { id } with no owne
             questionId: item.questionId,
           },
         }
-```
-
-### `src/app/api/orgs/[orgId]/join/route.ts`:71 — IDOR003 [POST]
-
-prisma.orgJoinRequest.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: existingRequest.id }
-```
-
-### `src/app/api/orgs/[orgId]/join/route.ts`:226 — IDOR003 [PATCH]
-
-prisma.orgJoinRequest.findUnique uses where: { id } with no ownership constraint.
-
-```ts
-{ id: requestId }
-```
-
-### `src/app/api/orgs/[orgId]/join/route.ts`:257 — IDOR003 [PATCH]
-
-prisma.orgJoinRequest.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: requestId }
-```
-
-### `src/app/api/orgs/[orgId]/join/route.ts`:272 — IDOR003 [PATCH]
-
-prisma.orgJoinRequest.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: requestId }
-```
-
-### `src/app/api/orgs/[orgId]/join/route.ts`:71 — IDOR004 [POST]
-
-Mutation prisma.orgJoinRequest.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: existingRequest.id }
-```
-
-### `src/app/api/orgs/[orgId]/join/route.ts`:257 — IDOR004 [PATCH]
-
-Mutation prisma.orgJoinRequest.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: requestId }
-```
-
-### `src/app/api/orgs/[orgId]/join/route.ts`:272 — IDOR004 [PATCH]
-
-Mutation prisma.orgJoinRequest.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: requestId }
 ```
 
 ### `src/app/api/products/[productId]/generate-3d/route.ts`:17 — IDOR003 [POST]
@@ -2183,54 +1573,6 @@ Mutation prisma.project.update uses where: { id } with no ownership constraint.
 
 ```ts
 { id: projectId }
-```
-
-### `src/app/api/vendor/boosts/[opportunityId]/boost/route.ts`:24 — IDOR003 [POST]
-
-prisma.boostOpportunity.findUnique uses where: { id } with no ownership constraint.
-
-```ts
-{ id: params.opportunityId }
-```
-
-### `src/app/api/vendor/boosts/[opportunityId]/boost/route.ts`:97 — IDOR003 [POST]
-
-prisma.boostOpportunity.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: opportunity.id }
-```
-
-### `src/app/api/vendor/boosts/[opportunityId]/boost/route.ts`:97 — IDOR004 [POST]
-
-Mutation prisma.boostOpportunity.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: opportunity.id }
-```
-
-### `src/app/api/vendor/boosts/[opportunityId]/decline/route.ts`:14 — IDOR003 [POST]
-
-prisma.boostOpportunity.findUnique uses where: { id } with no ownership constraint.
-
-```ts
-{ id: params.opportunityId }
-```
-
-### `src/app/api/vendor/boosts/[opportunityId]/decline/route.ts`:48 — IDOR003 [POST]
-
-prisma.boostOpportunity.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: params.opportunityId }
-```
-
-### `src/app/api/vendor/boosts/[opportunityId]/decline/route.ts`:48 — IDOR004 [POST]
-
-Mutation prisma.boostOpportunity.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: params.opportunityId }
 ```
 
 ### `src/app/api/vendor/claim-product/route.ts`:55 — IDOR004 [POST]
