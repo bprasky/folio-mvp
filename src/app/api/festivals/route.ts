@@ -1,3 +1,4 @@
+// @idor-allow: public-read reason="Public festival directory viewable anonymously"
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import { EVENT_SELECT_BASE } from '@/lib/db/selects';

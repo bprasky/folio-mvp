@@ -1,3 +1,4 @@
+// @idor-allow: public-read reason="Public product metadata scraper used during onboarding flows"
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';

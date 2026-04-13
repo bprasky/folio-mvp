@@ -1,3 +1,4 @@
+// @idor-allow: public-read reason="Public discovery feed"
 export const dynamic = 'force-dynamic';
 
 // src/app/api/feed/route.ts

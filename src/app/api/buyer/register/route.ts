@@ -1,3 +1,4 @@
+// @idor-allow: public-read reason="Buyer registration is the entry point to the consultation flow, anonymous by design"
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from "next/server";

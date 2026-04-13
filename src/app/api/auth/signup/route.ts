@@ -1,3 +1,4 @@
+// @idor-allow: public-read reason="User signup is anonymous by design"
 export const dynamic = 'force-dynamic';
 
 // NOTE (Individual-First Architecture):

@@ -1,3 +1,4 @@
+// @idor-allow: public-read reason="Public bulk product fetch for directory pages"
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 

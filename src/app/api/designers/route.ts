@@ -1,3 +1,4 @@
+// @idor-allow: public-read reason="Public designer directory"
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';

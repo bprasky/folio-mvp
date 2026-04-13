@@ -1,3 +1,4 @@
+// @idor-allow: public-read reason="Waitlist signup is anonymous by design"
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
