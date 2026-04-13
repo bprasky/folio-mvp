@@ -49,10 +49,6 @@ export async function PATCH(
   const correlationId = `publish-${projectId}-${Date.now()}`;
 
   try {
-    if (!POSTING_V1_ENABLED) {
-      return NextResponse.json({ error: "Posting V1 not enabled" }, { status: 404 });
-    }
-
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       console.error(`[${correlationId}] Not authenticated`);
@@ -109,6 +105,13 @@ export async function PATCH(
         : parsed.data.action === "unpublish"
         ? "DRAFT"
         : parsed.data.to || parsed.data.status || "DRAFT";
+
+    // Gate Posting V1 publish attempts on the feature flag. Unpublish/archive
+    // remain reachable because usePublishFlow.ts:278 uses this endpoint for
+    // unpublish on the legacy (flag-off) Path B as well.
+    if (targetStatus === "PUBLISHED" && !POSTING_V1_ENABLED) {
+      return NextResponse.json({ error: "Posting V1 not enabled" }, { status: 404 });
+    }
 
     // Get current post with expandedBlocks
     const post = await prisma.projectPost.findUnique({
