@@ -22,20 +22,16 @@ interface ProjectWithImages {
   description: string | null;
 }
 
-const POSTING_V1_ENABLED =
-  (process.env.POSTING_V1 ?? '').toLowerCase() === 'true' ||
-  (process.env.NEXT_PUBLIC_POSTING_V1 ?? '').toLowerCase() === 'true' ||
-  process.env.NODE_ENV !== 'production';
-
 /**
  * Creates an editorial draft for a project
  * Does NOT publish - just creates the draft for review
+ *
+ * Part of the legacy (non-Posting-V1) editorial flow called via
+ * POST /api/projects/[id]/approvals/draft-editorial. Intentionally
+ * NOT gated on NEXT_PUBLIC_POSTING_V1 so it remains functional with
+ * the flag off.
  */
 export async function createEditorialDraft({ projectId }: { projectId: string }) {
-  if (!POSTING_V1_ENABLED) {
-    return { ok: false, message: 'Posting V1 not enabled' };
-  }
-
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return { ok: false, message: 'Unauthorized' };
