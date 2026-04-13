@@ -1,6 +1,6 @@
 # IDOR / Authorization-Gap Scan Report
 
-_Generated: 2026-04-13T18:14:10.548Z_
+_Generated: 2026-04-13T18:16:30.152Z_
 _Scanned root: `src/app/api`_
 _Files scanned: 523_
 
@@ -9,7 +9,7 @@ _Files scanned: 523_
 | Severity | Count |
 |---|---|
 | Critical | 0 |
-| High | 51 |
+| High | 37 |
 | Medium | 58 |
 | Low | 40 |
 
@@ -17,25 +17,13 @@ _Files scanned: 523_
 
 | Rule | Count |
 |---|---|
-| IDOR003 | 21 |
-| IDOR004 | 28 |
+| IDOR003 | 16 |
+| IDOR004 | 19 |
 | IDOR005 | 88 |
 | IDOR006 | 10 |
 | IDOR007 | 2 |
 
-## High (51)
-
-### `src/app/api/admin/impersonate/exit/route.ts`:48 — IDOR004 [POST]
-
-Mutation prisma.impersonationLog.updateMany uses where: { id } with no ownership constraint.
-
-```ts
-{
-        adminId: impersonationData.originalAdminId,
-        targetUserId: impersonationData.targetUserId,
-        endedAt: null,
-      }
-```
+## High (37)
 
 ### `src/app/api/buyer/auth/route.ts`:124 — IDOR004 [POST]
 
@@ -51,30 +39,6 @@ Mutation prisma.consultationBuyer.update uses where: { id } with no ownership co
 
 ```ts
 { id: buyer.id }
-```
-
-### `src/app/api/consultations/[consultationId]/complete/route.ts`:23 — IDOR003 [POST]
-
-prisma.consultation.findUnique uses where: { id } with no ownership constraint.
-
-```ts
-{ id: consultationId }
-```
-
-### `src/app/api/consultations/[consultationId]/complete/route.ts`:91 — IDOR003 [POST]
-
-prisma.consultation.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: consultationId }
-```
-
-### `src/app/api/consultations/[consultationId]/complete/route.ts`:91 — IDOR004 [POST]
-
-Mutation prisma.consultation.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: consultationId }
 ```
 
 ### `src/app/api/invites/[token]/decline/route.ts`:35 — IDOR003 [POST]
@@ -335,38 +299,6 @@ Mutation prisma.productTag.update uses where: { id } with no ownership constrain
 { id: params.tagId }
 ```
 
-### `src/app/api/vendor/actions/confirm-spec/route.ts`:50 — IDOR004 [POST]
-
-Mutation prisma.selection.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: productId }
-```
-
-### `src/app/api/vendor/actions/confirm-spec/route.ts`:58 — IDOR004 [POST]
-
-Mutation prisma.project.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: projectId }
-```
-
-### `src/app/api/vendor/actions/priority-support/route.ts`:35 — IDOR004 [POST]
-
-Mutation prisma.selection.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: selectionId }
-```
-
-### `src/app/api/vendor/actions/priority-support/route.ts`:44 — IDOR004 [POST]
-
-Mutation prisma.project.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: projectId }
-```
-
 ### `src/app/api/vendor/claim-product/route.ts`:55 — IDOR004 [POST]
 
 Mutation prisma.vendorPreviewToken.update uses where: { id } with no ownership constraint.
@@ -421,54 +353,6 @@ Mutation prisma.projectParticipant.update uses where: { id } with no ownership c
 
 ```ts
 { id: participantId }
-```
-
-### `src/app/api/visit-tokens/[token]/choose-destination/route.ts`:143 — IDOR003 [POST]
-
-prisma.quoteAttachment.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: visit.handoffPackage.quoteAttachmentId }
-```
-
-### `src/app/api/visit-tokens/[token]/choose-destination/route.ts`:153 — IDOR003 [POST]
-
-prisma.vendorVisit.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: visit.id }
-```
-
-### `src/app/api/visit-tokens/[token]/choose-destination/route.ts`:161 — IDOR003 [POST]
-
-prisma.project.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: visit.project.id as any }
-```
-
-### `src/app/api/visit-tokens/[token]/choose-destination/route.ts`:143 — IDOR004 [POST]
-
-Mutation prisma.quoteAttachment.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: visit.handoffPackage.quoteAttachmentId }
-```
-
-### `src/app/api/visit-tokens/[token]/choose-destination/route.ts`:153 — IDOR004 [POST]
-
-Mutation prisma.vendorVisit.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: visit.id }
-```
-
-### `src/app/api/visit-tokens/[token]/choose-destination/route.ts`:161 — IDOR004 [POST]
-
-Mutation prisma.project.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: visit.project.id as any }
 ```
 
 ## Medium (58)

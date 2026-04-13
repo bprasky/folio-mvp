@@ -61,7 +61,7 @@ const OWNERSHIP_FIELDS =
 // `check*Access`, `require(Admin|Role|Auth|Member|Login)` helper, plus
 // project-specific helpers that don't fit the convention.
 const AUTHZ_HELPERS =
-  /\b(assert[A-Z]\w*|canAccess[A-Z]?\w*|canPerform[A-Z]\w*|require(?:Admin|Role|Auth|Member|Login)|check[A-Z]\w*Access|getProjectAccess|verifyToken|verifySignedUrl|jwt\.verify)\s*\(/;
+  /\b(assert[A-Z]\w*|can[A-Z]\w*|require(?:Admin|Role|Auth|Member|Login)|check[A-Z]\w*Access|getProjectAccess|verifyToken|verifySignedUrl|jwt\.verify)\s*\(/;
 
 const SESSION_CALL =
   /getServerSession\s*\(|from\s+['"]next-auth['"]|getUserIdFromRequest\s*\(|from\s+['"]@\/lib\/apiAuth['"]/;
@@ -77,8 +77,12 @@ const ADMIN_ROLE_CHECK =
  * fields against session.user.id, we treat subsequent queries scoped to that
  * resource as ownership-checked.
  */
-const POST_FETCH_OWNER_CHECK =
+// Field-on-left orientation: `record.ownerId === session.user.id`
+const POST_FETCH_OWNER_CHECK_LHS =
   /\.\s*(?:\w+Id)\s*(?:!==|===)\s*(?:session[?.]?\.user[?.]?\.id|\buserId\b|user[?.]?\.id)\b/;
+// Field-on-right orientation: `user.id === record.ownerId`
+const POST_FETCH_OWNER_CHECK_RHS =
+  /(?:session[?.]?\.user[?.]?\.id|\buserId\b|user[?.]?\.id)\s*(?:!==|===)\s*\w+\.\s*\w+Id\b/;
 
 /**
  * Recognizes handlers that have already done a session-scoped FETCH of the
@@ -386,7 +390,10 @@ function handlerHasAdminRoleCheck(body: string): boolean {
 }
 
 function handlerHasPostFetchOwnerCheck(body: string): boolean {
-  return POST_FETCH_OWNER_CHECK.test(body);
+  return (
+    POST_FETCH_OWNER_CHECK_LHS.test(body) ||
+    POST_FETCH_OWNER_CHECK_RHS.test(body)
+  );
 }
 
 function handlerHasMembershipCheck(body: string): boolean {
