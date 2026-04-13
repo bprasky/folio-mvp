@@ -56,14 +56,29 @@ interface CliArgs {
 const OWNERSHIP_FIELDS =
   /\b(userId|ownerId|designerId|designerOrgId|organizationId|orgId|buyerId|vendorOrgId|createdById|authorId|accountId|tenantId)\b/;
 
+// Recognize ownership/authz helpers by naming convention rather than an
+// explicit list. Catches any `assert*`, `canAccess*`, `canPerform*`,
+// `check*Access`, `require(Admin|Role|Auth|Member|Login)` helper, plus
+// project-specific helpers that don't fit the convention.
 const AUTHZ_HELPERS =
-  /\b(assertProjectView|assertProjectWrite|assertProjectEdit|assertProjectAccess|assertSelectionView|assertSelectionEdit|getProjectAccess|canPerformAction|checkConsultationAccess|requireAdmin|requireRole|verifyToken|verifySignedUrl|jwt\.verify)\s*\(/;
+  /\b(assert[A-Z]\w*|canAccess[A-Z]?\w*|canPerform[A-Z]\w*|require(?:Admin|Role|Auth|Member|Login)|check[A-Z]\w*Access|getProjectAccess|verifyToken|verifySignedUrl|jwt\.verify)\s*\(/;
 
 const SESSION_CALL =
   /getServerSession\s*\(|from\s+['"]next-auth['"]|getUserIdFromRequest\s*\(|from\s+['"]@\/lib\/apiAuth['"]/;
 
 const ADMIN_ROLE_CHECK =
   /role\s*(?:!==|===)\s*['"]ADMIN['"]|role\s*:\s*['"]ADMIN['"]|requireAdmin\s*\(|isAdmin\s*\(|canAccessAdmin\s*\(/;
+
+/**
+ * Recognizes the "post-fetch ownership check" pattern, e.g.
+ *   if (event.hostProfile?.userId !== session.user.id) return 403;
+ *   if (project.ownerId === session.user.id) { ... }
+ * When a handler loads a parent resource, then compares one of its ownership
+ * fields against session.user.id, we treat subsequent queries scoped to that
+ * resource as ownership-checked.
+ */
+const POST_FETCH_OWNER_CHECK =
+  /\.\s*(?:userId|ownerId|designerId|hostUserId|createdById|authorId|buyerId)\s*(?:!==|===)\s*session[?.]?\.user[?.]?\.id/;
 
 const HANDLER_DECL =
   /export\s+async\s+function\s+(GET|POST|PUT|PATCH|DELETE)\s*\(/g;
@@ -358,6 +373,10 @@ function handlerHasAdminRoleCheck(body: string): boolean {
   return ADMIN_ROLE_CHECK.test(body);
 }
 
+function handlerHasPostFetchOwnerCheck(body: string): boolean {
+  return POST_FETCH_OWNER_CHECK.test(body);
+}
+
 /**
  * A `where` clause is considered "self-scoped" if it references `session.user`
  * (lookup of the caller's own record).
@@ -507,6 +526,10 @@ function scanFile(absPath: string, root: string): Finding[] {
     const hasSession = handlerHasSession(body);
     const hasHelper = handlerHasAuthzHelper(body);
     const hasAdminCheck = handlerHasAdminRoleCheck(body);
+    const hasPostFetchOwner = handlerHasPostFetchOwnerCheck(body);
+    // A post-fetch ownership check (e.g. `event.hostProfile.userId === session.user.id`)
+    // is treated as equivalent to calling an authz helper for per-row rules.
+    const hasOwnerScope = hasHelper || hasPostFetchOwner;
     const isMutating = h.name !== 'GET';
     const snippet = firstNonEmptyLines(body, 3);
 
@@ -575,7 +598,7 @@ function scanFile(absPath: string, root: string): Finding[] {
         dynamic &&
         !adminGated &&
         (hasSession || hasHelper) &&
-        !hasHelper && // helper is treated as sufficient scoping
+        !hasOwnerScope && // helper or post-fetch owner check is sufficient scoping
         unscopedId &&
         ['findUnique', 'findFirst', 'update', 'delete', 'upsert'].includes(
           call.method
@@ -598,7 +621,7 @@ function scanFile(absPath: string, root: string): Finding[] {
           call.method
         ) &&
         unscopedId &&
-        !hasHelper &&
+        !hasOwnerScope &&
         !adminGated
       ) {
         push({
@@ -612,13 +635,13 @@ function scanFile(absPath: string, root: string): Finding[] {
         });
       }
 
-      // IDOR007: params.x flows into where with no session read beforehand
+      // IDOR007: params.x flows into where with no session read beforehand.
+      // We check for any `session` reference (id, role, etc.) because even a
+      // role-only read indicates the handler is consulting session context.
       if (
         /params\.\w+/.test(call.whereText) &&
-        !/session[?.]?\.user[?.]?\.id/.test(
-          body.slice(0, call.callLine * 80)
-        ) &&
-        !hasHelper &&
+        !/\bsession\b/.test(body.slice(0, call.callLine * 80)) &&
+        !hasOwnerScope &&
         !adminGated
       ) {
         push({
