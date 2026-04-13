@@ -36,6 +36,11 @@ function slugify(s: string): string {
     .slice(0, 80);
 }
 
+const POSTING_V1_ENABLED =
+  (process.env.POSTING_V1 ?? "").toLowerCase() === "true" ||
+  (process.env.NEXT_PUBLIC_POSTING_V1 ?? "").toLowerCase() === "true" ||
+  process.env.NODE_ENV !== "production";
+
 export async function PATCH(
   request: NextRequest,
   { params }: { params: { projectId: string } }
@@ -44,6 +49,10 @@ export async function PATCH(
   const correlationId = `publish-${projectId}-${Date.now()}`;
 
   try {
+    if (!POSTING_V1_ENABLED) {
+      return NextResponse.json({ error: "Posting V1 not enabled" }, { status: 404 });
+    }
+
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       console.error(`[${correlationId}] Not authenticated`);

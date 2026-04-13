@@ -2439,6 +2439,8 @@ export async function POST(
           ...existingProvenance,
           interview: {
             ...existingInterview,
+            // Clear any stale failure surfaced by a previous attempt
+            lastGenerationError: null,
             generatedAt: Date.now(),
             generatedWith: {
               answerCount: normalizedAnswers.length,
@@ -2590,16 +2592,29 @@ export async function POST(
     }, { status: 200 });
   } catch (error: any) {
     // Ensure unlock on all error paths — but only write if we actually need to clear a lock
+    // Also persist lastGenerationError so the preview page can surface it after navigation
     try {
       console.log("[AUDIT] finally: unlock", { projectId, ok: false, _cid });
       const fresh = await prisma.projectPost.findUnique({ where: { projectId }, select: { provenance: true } });
       const prov = { ...((fresh?.provenance as any) ?? {}) };
+      let provDirty = false;
       if (prov.interview?.status?.phase === 'generating') {
-        // Calculate duration from lock timestamp
         const lockStarted = prov.interview.status.startedAt;
         const lockDuration = lockStarted ? Date.now() - lockStarted : undefined;
         prov.interview.status = { phase: 'idle', endedAt: Date.now(), lastDurationMs: lockDuration };
-        // Only write back if we actually changed the lock status
+        provDirty = true;
+      }
+      // Persist a user-facing error on composition/LLM failures so the preview page can show it
+      if (error?.code === 'COMPOSE_INVALID' || error?.code === 'COMPOSE_LLM_ERROR' || error?.status === 502) {
+        prov.interview = prov.interview || {};
+        prov.interview.lastGenerationError = {
+          code: error.code || 'COMPOSE_FAILED',
+          message: String(error?.message || 'Story generation failed'),
+          failedAt: Date.now(),
+        };
+        provDirty = true;
+      }
+      if (provDirty) {
         await prisma.projectPost.update({ where: { projectId }, data: { provenance: prov as any } });
       }
     } catch (unlockErr) {
@@ -2612,8 +2627,8 @@ export async function POST(
         message: error.message,
       });
       return NextResponse.json(
-        { 
-          error: "Validation error", 
+        {
+          error: "Validation error",
           issues: error.errors || error.issues,
           message: error.message,
         },
@@ -2624,9 +2639,11 @@ export async function POST(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
     console.error("[posting/interview/generate] Error:", error);
+    // Respect explicit error.status (e.g. 502 from composeEditorialHard) rather than flattening to 500
+    const status = typeof error?.status === 'number' ? error.status : 500;
     return NextResponse.json(
-      { error: "Internal server error", details: error.message },
-      { status: 500 }
+      { error: status === 502 ? "Story generation failed" : "Internal server error", details: error.message, code: error?.code },
+      { status }
     );
   }
 }

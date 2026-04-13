@@ -22,18 +22,27 @@ interface ProjectWithImages {
   description: string | null;
 }
 
+const POSTING_V1_ENABLED =
+  (process.env.POSTING_V1 ?? '').toLowerCase() === 'true' ||
+  (process.env.NEXT_PUBLIC_POSTING_V1 ?? '').toLowerCase() === 'true' ||
+  process.env.NODE_ENV !== 'production';
+
 /**
  * Creates an editorial draft for a project
  * Does NOT publish - just creates the draft for review
  */
 export async function createEditorialDraft({ projectId }: { projectId: string }) {
+  if (!POSTING_V1_ENABLED) {
+    return { ok: false, message: 'Posting V1 not enabled' };
+  }
+
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return { ok: false, message: 'Unauthorized' };
   }
 
   try {
-    // Check project exists and user has access
+    // Check project exists and user has access; require at least one image
     const project = await prisma.project.findFirst({
       where: {
         id: projectId,
@@ -42,10 +51,20 @@ export async function createEditorialDraft({ projectId }: { projectId: string })
           { designerId: session.user.id },
         ],
       },
+      include: {
+        _count: { select: { images: true } },
+      },
     });
 
     if (!project) {
       return { ok: false, message: 'Project not found or access denied' };
+    }
+
+    if (project._count.images === 0) {
+      return {
+        ok: false,
+        message: 'Add at least one image before creating an editorial draft',
+      };
     }
 
     // Check if draft already exists

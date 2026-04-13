@@ -135,6 +135,14 @@ export default function ProjectPostPreviewPage() {
         }
         setCredits(parsedCredits);
 
+        // Surface a previously-persisted generation error (if any) so users who
+        // navigated away after a failure see it on return. Cleared on success.
+        const persistedGenError =
+          (postData.provenance as any)?.interview?.lastGenerationError?.message ?? null;
+        if (persistedGenError && !postData.expandedBlocks) {
+          setGenerateError(persistedGenError);
+        }
+
         setPost({
           post: {
             id: postData.id,
@@ -465,14 +473,20 @@ export default function ProjectPostPreviewPage() {
       {!post.post.expandedBlocks && (
         <div className="mb-6 text-center py-8">
           <p className="text-folio-text-secondary mb-4">
-            No article draft exists yet. Generate an AI draft from your interview answers.
+            {generateError
+              ? "The last generation attempt failed. You can try again — your answers are saved."
+              : "No article draft exists yet. Generate an AI draft from your interview answers."}
           </p>
           <button
             onClick={handleGenerate}
             disabled={generating}
             className="rounded-full px-6 py-3 font-medium shadow-md hover:shadow-lg bg-[var(--accent)] text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all"
           >
-            {generating ? "Generating…" : "Generate AI Draft"}
+            {generating
+              ? "Generating…"
+              : generateError
+              ? "Try again"
+              : "Generate AI Draft"}
           </button>
         </div>
       )}

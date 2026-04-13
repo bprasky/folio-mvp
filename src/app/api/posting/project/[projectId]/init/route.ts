@@ -7,11 +7,20 @@ import { prisma } from "@/lib/prisma";
 import { assertProjectView } from "@/lib/authz/access";
 import { makeSlug } from "@/lib/posting/slug";
 
+const POSTING_V1_ENABLED =
+  (process.env.POSTING_V1 ?? "").toLowerCase() === "true" ||
+  (process.env.NEXT_PUBLIC_POSTING_V1 ?? "").toLowerCase() === "true" ||
+  process.env.NODE_ENV !== "production";
+
 export async function POST(
   request: NextRequest,
   { params }: { params: { projectId: string } }
 ) {
   try {
+    if (!POSTING_V1_ENABLED) {
+      return NextResponse.json({ error: "Posting V1 not enabled" }, { status: 404 });
+    }
+
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
