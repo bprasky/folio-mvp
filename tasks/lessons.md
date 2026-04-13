@@ -53,3 +53,31 @@ and archive transitions remain reachable regardless of flag state.
 archive), a flag check on the whole endpoint is almost always too coarse.
 Determine the intended action first, then apply the flag gate only to the
 specific action(s) that belong to the flagged feature.
+
+---
+
+## 2026-04-13 — Public vs draft query asymmetry
+
+**Mistake avoided (from the tagging audit):** `getPostBySlug` (public post
+fetch) and `getPostForStaging` (designer draft fetch) started out with
+identical tag queries and no filter on `Product.isPending`. Pending products
+are designer- or import-created stubs awaiting vendor claim; they often lack
+a vendor, price, or canonical name. Filtering them out unconditionally in
+staging would have broken the designer's ability to see and resolve their
+own pending tags. Filtering them out on the public post is correct — a
+public viewer should never see a half-finished tag.
+
+**Rule:** Public-facing data fetchers and draft/preview fetchers often share
+a base query shape but should NOT always share filters. When adding a
+visibility filter, classify the call site:
+
+- **Public / unauthenticated / shared links** → apply the filter.
+- **Author / draft / editor context** → typically skip the filter so the
+  author can still see and resolve incomplete data.
+
+If you find yourself copy-pasting a query between `getPost*` functions,
+ask which audience each one serves before propagating the filter.
+
+**Files that demonstrate the pattern:**
+- Public: `src/lib/post/getPostBySlug.ts` — filters `product.isPending: false`
+- Draft:  `src/lib/post/getPostForStaging.ts` — intentionally unfiltered
