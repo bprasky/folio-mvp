@@ -401,7 +401,10 @@ function whereIsSelfScoped(whereText: string): boolean {
   return /session[?.]?\.user/.test(whereText);
 }
 
-function whereIsIdOnly(whereText: string): boolean {
+function whereIsIdOnly(
+  whereText: string,
+  selfAliases: Set<string> = new Set(),
+): boolean {
   if (!whereText) return false;
   // strip braces + whitespace, keep only key names at the top level
   // heuristic: extract top-level keys of the where object
@@ -411,9 +414,33 @@ function whereIsIdOnly(whereText: string): boolean {
   if (!topKeys.some((k) => k === 'id' || /Id$/.test(k))) return false;
   // self-scoped lookups are safe even if only `id` is mentioned
   if (whereIsSelfScoped(whereText)) return false;
+  // Local aliases of session.user.id (e.g. `const userId = session.user.id`)
+  // count as self-scoping when used as a value in the where clause.
+  for (const alias of selfAliases) {
+    const re = new RegExp(`:\\s*${alias}\\b`);
+    if (re.test(whereText)) return false;
+  }
   // if any ownership field is mentioned anywhere in the where, it's scoped
   if (OWNERSHIP_FIELDS.test(whereText)) return false;
   return true;
+}
+
+/**
+ * Collect local variable names that are assigned from session.user.id, so
+ * that subsequent `where: { id: <alias> }` clauses are recognized as
+ * self-scoped. Catches common Folio patterns like:
+ *   const userId = session.user.id;
+ *   const followerId = session.user.id;
+ *   const { id: currentUserId } = session.user;
+ */
+function extractSelfAliases(body: string): Set<string> {
+  const out = new Set<string>();
+  const re1 = /\bconst\s+(\w+)\s*=\s*session[?.]?\.user[?.]?\.id\b/g;
+  let m: RegExpExecArray | null;
+  while ((m = re1.exec(body))) out.add(m[1]);
+  const re2 = /\bconst\s+\{\s*id\s*:\s*(\w+)\s*\}\s*=\s*session[?.]?\.user\b/g;
+  while ((m = re2.exec(body))) out.add(m[1]);
+  return out;
 }
 
 function topLevelKeys(objInner: string): string[] {
@@ -544,6 +571,7 @@ function scanFile(absPath: string, root: string): Finding[] {
     const hasAdminCheck = handlerHasAdminRoleCheck(body);
     const hasPostFetchOwner = handlerHasPostFetchOwnerCheck(body);
     const hasMembership = handlerHasMembershipCheck(body);
+    const selfAliases = extractSelfAliases(body);
     // A post-fetch ownership check (e.g. `event.hostProfile.userId === session.user.id`)
     // or a membership-table query (`prisma.organizationUser.findFirst({ where: { userId: session.user.id, ... } })`)
     // is treated as equivalent to calling an authz helper for per-row rules.
@@ -609,7 +637,7 @@ function scanFile(absPath: string, root: string): Finding[] {
 
     for (const call of prismaCalls) {
       const callLineAbs = h.startLine + call.callLine - 1;
-      const unscopedId = whereIsIdOnly(call.whereText);
+      const unscopedId = whereIsIdOnly(call.whereText, selfAliases);
 
       // IDOR003: dynamic-param route + auth present + unscoped single-row query
       if (

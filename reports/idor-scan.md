@@ -1,6 +1,6 @@
 # IDOR / Authorization-Gap Scan Report
 
-_Generated: 2026-04-13T18:03:28.577Z_
+_Generated: 2026-04-13T18:05:46.092Z_
 _Scanned root: `src/app/api`_
 _Files scanned: 523_
 
@@ -9,7 +9,7 @@ _Files scanned: 523_
 | Severity | Count |
 |---|---|
 | Critical | 0 |
-| High | 138 |
+| High | 118 |
 | Medium | 58 |
 | Low | 40 |
 
@@ -17,13 +17,13 @@ _Files scanned: 523_
 
 | Rule | Count |
 |---|---|
-| IDOR003 | 66 |
-| IDOR004 | 70 |
+| IDOR003 | 53 |
+| IDOR004 | 63 |
 | IDOR005 | 88 |
 | IDOR006 | 10 |
 | IDOR007 | 2 |
 
-## High (138)
+## High (118)
 
 ### `src/app/api/admin/impersonate/exit/route.ts`:48 — IDOR004 [POST]
 
@@ -787,166 +787,6 @@ Mutation prisma.productTag.update uses where: { id } with no ownership constrain
 
 ```ts
 { id: params.tagId }
-```
-
-### `src/app/api/users/[userId]/follow/route.ts`:27 — IDOR003 [POST]
-
-prisma.userRelationship.findUnique uses where: { id } with no ownership constraint.
-
-```ts
-{ followerId_followingId: { followerId, followingId } }
-```
-
-### `src/app/api/users/[userId]/follow/route.ts`:36 — IDOR003 [POST]
-
-prisma.userRelationship.findUnique uses where: { id } with no ownership constraint.
-
-```ts
-{ followerId_followingId: { followerId: followingId, followingId: followerId } }
-```
-
-### `src/app/api/users/[userId]/follow/route.ts`:56 — IDOR003 [POST]
-
-prisma.userRelationship.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: reverse.id }
-```
-
-### `src/app/api/users/[userId]/follow/route.ts`:68 — IDOR003 [POST]
-
-prisma.user.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: followerId }
-```
-
-### `src/app/api/users/[userId]/follow/route.ts`:72 — IDOR003 [POST]
-
-prisma.user.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: followingId }
-```
-
-### `src/app/api/users/[userId]/follow/route.ts`:108 — IDOR003 [DELETE]
-
-prisma.userRelationship.findUnique uses where: { id } with no ownership constraint.
-
-```ts
-{ followerId_followingId: { followerId, followingId } }
-```
-
-### `src/app/api/users/[userId]/follow/route.ts`:117 — IDOR003 [DELETE]
-
-prisma.userRelationship.delete uses where: { id } with no ownership constraint.
-
-```ts
-{ id: existing.id }
-```
-
-### `src/app/api/users/[userId]/follow/route.ts`:123 — IDOR003 [DELETE]
-
-prisma.userRelationship.findUnique uses where: { id } with no ownership constraint.
-
-```ts
-{ followerId_followingId: { followerId: followingId, followingId: followerId } }
-```
-
-### `src/app/api/users/[userId]/follow/route.ts`:128 — IDOR003 [DELETE]
-
-prisma.userRelationship.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: reverse.id }
-```
-
-### `src/app/api/users/[userId]/follow/route.ts`:141 — IDOR003 [DELETE]
-
-prisma.user.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: followerId }
-```
-
-### `src/app/api/users/[userId]/follow/route.ts`:145 — IDOR003 [DELETE]
-
-prisma.user.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: followingId }
-```
-
-### `src/app/api/users/[userId]/follow/route.ts`:56 — IDOR004 [POST]
-
-Mutation prisma.userRelationship.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: reverse.id }
-```
-
-### `src/app/api/users/[userId]/follow/route.ts`:68 — IDOR004 [POST]
-
-Mutation prisma.user.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: followerId }
-```
-
-### `src/app/api/users/[userId]/follow/route.ts`:72 — IDOR004 [POST]
-
-Mutation prisma.user.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: followingId }
-```
-
-### `src/app/api/users/[userId]/follow/route.ts`:117 — IDOR004 [DELETE]
-
-Mutation prisma.userRelationship.delete uses where: { id } with no ownership constraint.
-
-```ts
-{ id: existing.id }
-```
-
-### `src/app/api/users/[userId]/follow/route.ts`:128 — IDOR004 [DELETE]
-
-Mutation prisma.userRelationship.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: reverse.id }
-```
-
-### `src/app/api/users/[userId]/follow/route.ts`:141 — IDOR004 [DELETE]
-
-Mutation prisma.user.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: followerId }
-```
-
-### `src/app/api/users/[userId]/follow/route.ts`:145 — IDOR004 [DELETE]
-
-Mutation prisma.user.update uses where: { id } with no ownership constraint.
-
-```ts
-{ id: followingId }
-```
-
-### `src/app/api/users/[userId]/relationship/route.ts`:33 — IDOR003 [GET]
-
-prisma.userRelationship.findUnique uses where: { id } with no ownership constraint.
-
-```ts
-{ followerId_followingId: { followerId: currentUserId, followingId: targetId } }
-```
-
-### `src/app/api/users/[userId]/relationship/route.ts`:37 — IDOR003 [GET]
-
-prisma.userRelationship.findUnique uses where: { id } with no ownership constraint.
-
-```ts
-{ followerId_followingId: { followerId: targetId, followingId: currentUserId } }
 ```
 
 ### `src/app/api/vendor-boost/[id]/accept/route.ts`:19 — IDOR003 [POST]
