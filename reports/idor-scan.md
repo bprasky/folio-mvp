@@ -1,8 +1,8 @@
 # IDOR / Authorization-Gap Scan Report
 
-_Generated: 2026-04-13T15:20:16.508Z_
+_Generated: 2026-04-13T15:21:40.950Z_
 _Scanned root: `src/app/api`_
-_Files scanned: 524_
+_Files scanned: 523_
 
 ## Summary
 
