@@ -195,13 +195,27 @@ function scorePullQuote(text: string): number {
   return score;
 }
 
+// Minimum score a quote must clear to qualify as a narrative "hook" for the lead chapter.
+// Matches at least one strong signal from scorePullQuote (first-person voice: +3, or metaphor: +2 with length bonus).
+const LEAD_CHAPTER_HOOK_MIN_SCORE = 3;
+
 // Extract and score pull quotes from a single chapter's body paragraphs
-// Uses attribution-verb patterns for higher-quality extraction
-function extractPullQuotesForChapter(
+// Uses attribution-verb patterns for higher-quality extraction.
+//
+// Selection rule:
+//   - isLeadChapter=true: walk paragraphs in order and return the first paragraph's
+//     top-scored quote that clears LEAD_CHAPTER_HOOK_MIN_SCORE. This keeps the
+//     article's lead pull quote tied to the narrative opening instead of a higher-
+//     scored product detail buried mid-chapter. Falls back to overall highest-
+//     scored quote if nothing qualifies.
+//   - otherwise: overall highest-scored quote across the whole chapter (original behavior).
+export function extractPullQuotesForChapter(
   body: string[],
-  designerName?: string
+  designerName?: string,
+  opts?: { isLeadChapter?: boolean }
 ): PullQuoteSelection | null {
-  const quotes: PullQuoteAlternative[] = [];
+  type ParagraphQuote = PullQuoteAlternative & { paragraphIndex: number };
+  const quotesByParagraph: ParagraphQuote[][] = [];
   const seen = new Set<string>();
 
   // Attribution verbs to look for near quotes
@@ -218,7 +232,10 @@ function extractPullQuotesForChapter(
   // Fallback: any direct quote in quotation marks
   const anyQuote = /["\u201C]([^"\u201D]{20,250})["\u201D]/g;
 
-  for (const paragraph of body) {
+  for (let pIdx = 0; pIdx < body.length; pIdx++) {
+    const paragraph = body[pIdx];
+    const perParagraph: ParagraphQuote[] = [];
+
     // First try: attributed quotes (higher quality)
     for (const pattern of [quoteBeforeAttr, quoteAfterAttr]) {
       pattern.lastIndex = 0;
@@ -231,10 +248,11 @@ function extractPullQuotesForChapter(
         seen.add(key);
         const score = scorePullQuote(cleaned) + 1; // +1 bonus for attribution
         if (score >= 1) {
-          quotes.push({
+          perParagraph.push({
             text: cleaned,
             context: designerName || undefined,
             score,
+            paragraphIndex: pIdx,
           });
         }
       }
@@ -251,23 +269,51 @@ function extractPullQuotesForChapter(
       seen.add(key);
       const score = scorePullQuote(cleaned);
       if (score >= 1) {
-        quotes.push({
+        perParagraph.push({
           text: cleaned,
           context: designerName || undefined,
           score,
+          paragraphIndex: pIdx,
         });
+      }
+    }
+
+    quotesByParagraph.push(perParagraph);
+  }
+
+  const allQuotes: ParagraphQuote[] = quotesByParagraph.flat();
+  if (allQuotes.length === 0) return null;
+
+  // Alternatives: all quotes, sorted by score desc (unchanged contract).
+  const alternatives: PullQuoteAlternative[] = [...allQuotes]
+    .sort((a, b) => b.score - a.score)
+    .map(({ text, context, score }) => ({ text, context, score }));
+
+  // Selection
+  let selected: ParagraphQuote | undefined;
+
+  if (opts?.isLeadChapter) {
+    // Walk paragraphs in narrative order; take the first paragraph whose best quote
+    // clears the hook threshold. This keeps the article's opening pull quote
+    // anchored to the article's opening, not a mid-chapter product detail.
+    for (const pq of quotesByParagraph) {
+      if (pq.length === 0) continue;
+      const top = pq.reduce((a, b) => (b.score > a.score ? b : a));
+      if (top.score >= LEAD_CHAPTER_HOOK_MIN_SCORE) {
+        selected = top;
+        break;
       }
     }
   }
 
-  if (quotes.length === 0) return null;
-
-  // Sort by score descending
-  quotes.sort((a, b) => b.score - a.score);
+  // Default / fallback: overall highest-scored quote
+  if (!selected) {
+    selected = allQuotes.reduce((a, b) => (b.score > a.score ? b : a));
+  }
 
   return {
-    selected: { text: quotes[0].text, context: quotes[0].context },
-    alternatives: quotes,
+    selected: { text: selected.text, context: selected.context },
+    alternatives,
   };
 }
 
@@ -521,9 +567,11 @@ function repairAndBuildBlocks(
 
   // Extract pull quotes PER CHAPTER from each chapter's own body text
   // A dining room pull quote stays in the dining room.
-  const finalChaptersWithQuotes = finalChapters.map(ch => ({
+  // Chapter 0 is the article's lead — use hook-aware selection so the top-of-post
+  // pull quote reflects the narrative opening instead of a mid-chapter detail.
+  const finalChaptersWithQuotes = finalChapters.map((ch, idx) => ({
     ...ch,
-    pullQuote: extractPullQuotesForChapter(ch.body, designerName),
+    pullQuote: extractPullQuotesForChapter(ch.body, designerName, { isLeadChapter: idx === 0 }),
   }));
 
   const ledger = buildMaterialContext(input.tags);
@@ -594,11 +642,12 @@ export function toFallbackBlocks(input: GenInput) {
     imageIds: ch.imageIds,
   }));
 
-  // Extract pull quotes per-chapter from body text
+  // Extract pull quotes per-chapter from body text.
+  // Chapter 0 gets hook-aware selection so the lead pull quote matches the opening.
   const designerName = input.designer?.name;
-  const galleryChaptersWithQuotes = galleryChapters.map(ch => ({
+  const galleryChaptersWithQuotes = galleryChapters.map((ch, idx) => ({
     ...ch,
-    pullQuote: extractPullQuotesForChapter(ch.body, designerName),
+    pullQuote: extractPullQuotesForChapter(ch.body, designerName, { isLeadChapter: idx === 0 }),
   }));
 
   const blocks = {
