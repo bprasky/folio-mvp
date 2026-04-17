@@ -518,7 +518,7 @@ function validateRoomStructure(
 // REPAIR JSON OUTPUT — applies room fixes, image validation, paragraph repair
 // ============================================================================
 
-function repairAndBuildBlocks(
+async function repairAndBuildBlocks(
   composed: any,
   input: GenInput,
   imageIds: string[],
@@ -1253,7 +1253,7 @@ export async function generateEditorialDraft(input: GenInput): Promise<{
   // Repair and build validated blocks
   try {
     console.log('[GENERATE] calling repairAndBuildBlocks', { _cid });
-    let blocks = repairAndBuildBlocks(composed, { ...input, answers: uniqueAnswers }, imageIds, rooms, imagesByRoom, _cid);
+    let blocks = await repairAndBuildBlocks(composed, { ...input, answers: uniqueAnswers }, imageIds, rooms, imagesByRoom, _cid);
     // Post-processing: fix "The [noun]..." sentence openers
     blocks = await fixSentenceOpeners(blocks, _cid);
     return { blocks, usedFallback: false };
