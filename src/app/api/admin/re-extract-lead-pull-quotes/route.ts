@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { extractPullQuotesForChapter } from '@/lib/posting/generateEditorialDraft';
+import { extractPullQuotesForChapter, extractHookQuoteFromIntroduction } from '@/lib/posting/generateEditorialDraft';
 import { syncPullQuotesFromChapters } from '@/lib/posting/schemas';
 
 export const dynamic = 'force-dynamic';
@@ -58,6 +58,22 @@ export async function POST(_request: NextRequest) {
         });
 
         const nextBlocks: Record<string, any> = { ...blocks, galleryChapters: nextChapters };
+
+        // Backfill hookQuote from the introduction paragraphs when the post
+        // doesn't already have one. Existing posts predate the hook-opener
+        // interview flow, so this picks the highest-scored attributed quote
+        // from the dedicated opening narrative — a reasonable lead quote
+        // without rerunning the interview.
+        if (!nextBlocks.hookQuote) {
+          const introHookQuote = extractHookQuoteFromIntroduction(
+            Array.isArray(nextBlocks.introduction) ? nextBlocks.introduction : undefined,
+            designerName
+          );
+          if (introHookQuote) {
+            nextBlocks.hookQuote = introHookQuote;
+          }
+        }
+
         syncPullQuotesFromChapters(nextBlocks);
 
         const prevSerialized = JSON.stringify(blocks);

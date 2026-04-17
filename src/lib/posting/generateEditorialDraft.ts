@@ -325,6 +325,28 @@ export function extractPullQuotesForChapter(
 // ============================================================================
 
 /**
+ * Extract a lead-quote candidate from the article's introduction paragraphs
+ * (the dedicated opening narrative, distinct from galleryChapters[0] which
+ * is the first room). Uses the existing scoring heuristic and picks the
+ * highest-scored attributed quote — if the LLM quoted the designer in the
+ * intro, that line is almost always hook-adjacent.
+ *
+ * Deterministic, no LLM call. Used as:
+ *   - A fallback for new drafts when spliceHookQuote returns null.
+ *   - A retrofit for existing posts via the admin re-extract route.
+ */
+export function extractHookQuoteFromIntroduction(
+  introduction: string[] | undefined,
+  designerName?: string
+): { text: string; context?: string } | null {
+  if (!Array.isArray(introduction) || introduction.length === 0) return null;
+  const selection = extractPullQuotesForChapter(introduction, designerName);
+  const text = selection?.selected?.text;
+  if (!text) return null;
+  return { text, context: designerName || undefined };
+}
+
+/**
  * Produce the article's lead pull quote by splicing the designer's hook-opener
  * answer (and its adaptive follow-up, if any) into a single magazine-ready line.
  *
@@ -697,10 +719,14 @@ async function repairAndBuildBlocks(
     mode: 'recomposition' as const,
   };
 
-  // Splice hook opener + adaptive follow-up into a lead pull quote.
-  // Non-fatal — if this fails or returns null, syncPullQuotesFromChapters
-  // falls back to the chapter-extracted lead quote.
-  const hookQuote = await spliceHookQuote(input.answers, designerName);
+  // Lead pull quote preference:
+  //  1. Spliced hook-opener + follow-up (richest; requires hook flow answers)
+  //  2. Highest-scored quote from the introduction paragraphs (retrofit for
+  //     drafts without hook-flow answers — intro is the narrative opener)
+  //  3. Chapter-0 early-strong extraction via syncPullQuotesFromChapters
+  const hookQuote =
+    (await spliceHookQuote(input.answers, designerName)) ??
+    extractHookQuoteFromIntroduction(blocks.introduction, designerName);
   if (hookQuote) {
     (blocks as Record<string, any>).hookQuote = hookQuote;
   }
