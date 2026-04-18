@@ -1,0 +1,6 @@
+- [Atelier stub overlaps presale_infrastructure](migration_atelier_stub_overlap.md) — version+snapshot columns appear in both by design; don't "clean up"
+- [atelier VARCHAR vs TEXT drift risk](migration_atelier_varchar_drift.md) — designerId/vendorId columns are VARCHAR in prod; may flag on migrate dev against shadow
+- [priceUsd uses DOUBLE PRECISION (tech debt)](migration_priceusd_double_techdebt.md) — should be DECIMAL(10,2); stub preserves prod, fix in separate migration
+- [TEXT+CHECK columns masquerading as Prisma enums](migration_text_check_vs_prisma_enum.md) — initial_schema pattern blocks enum conversion; project_participants.role still outstanding
+- [instagram_campaigns tables missing](migration_instagram_campaigns_missing.md) — InstagramCampaign/InstagramCampaignPost models exist in schema.prisma with no source migration; tables absent in prod
+- [Timestamp convention drift across migrations](migration_timestamp_convention_drift.md) — three conventions (TIMESTAMP, TIMESTAMP(3), TIMESTAMPTZ) sprinkled across migrations; candidate for Phase 5 standardization on TIMESTAMPTZ
