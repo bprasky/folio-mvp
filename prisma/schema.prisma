@@ -92,6 +92,7 @@ model User {
   boostOpportunities   BoostOpportunity[]  @relation("DesignerBoostOpportunities")
   approvedBoosts       Boost[]             @relation("UserBoosts")
   inContextBoosts      InContextBoost[]    @relation("DesignerInContextBoosts")
+  vendorPosts          VendorPost[]        @relation("UserVendorPosts")
   notifications        Notification[]
 
   // Architect-specific profile fields
@@ -843,6 +844,7 @@ model Organization {
 
   // Boost system relations
   boostOpportunities BoostOpportunity[] @relation("VendorBoostOpportunities")
+  vendorPosts        VendorPost[]        @relation("OrgVendorPosts")
   boosts             Boost[]            @relation("VendorBoosts")
 
   // Profile System relations
@@ -3546,6 +3548,75 @@ model InContextBoost {
   @@index([designerId])
   @@index([status])
   @@map("in_context_boosts")
+}
+
+// ─── Vendor Content System ───────────────────────────────────────────────────
+// Vendor-authored articles generated from Folio's curated editorial prompts.
+// Vendors answer questions → AI generates editorial content → published to feed.
+
+model VendorPost {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation("OrgVendorPosts", fields: [organizationId], references: [id], onDelete: Cascade)
+  authorId       String
+  author         User         @relation("UserVendorPosts", fields: [authorId], references: [id])
+
+  title          String
+  slug           String       @unique
+  content        String       @db.Text
+  excerpt        String?
+  heroImageUrl   String?
+  contentType    String       @default("article") // article, product_launch, collection_spotlight
+
+  // Source prompt tracking
+  promptId       String?
+  promptAnswers  Json?
+
+  status         String       @default("DRAFT") // DRAFT, PUBLISHED
+  publishedAt    DateTime?
+
+  // Engagement
+  views          Int          @default(0)
+
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([organizationId, status])
+  @@index([slug])
+  @@map("vendor_posts")
+}
+
+// Curated editorial prompts that Folio serves to vendors for content creation.
+// Prompts can be triggered by events (new boost, product launch, seasonal).
+model VendorPrompt {
+  id             String       @id @default(cuid())
+  organizationId String?      // Null = global prompt template; set = org-specific
+
+  title          String       // Short display title
+  question       String       @db.Text // The actual prompt question
+  category       String       @default("general") // general, product, project, seasonal, boost_followup
+
+  // Context that triggered this prompt
+  triggerType    String?      // boost_approved, product_added, seasonal, manual
+  triggerRef     String?      // Reference ID (boostId, productId, etc.)
+
+  // Designer attribution — whose work inspired this prompt
+  relatedDesignerId  String?
+  relatedProductId   String?
+
+  // State
+  status         String       @default("ACTIVE") // ACTIVE, ANSWERED, DISMISSED, EXPIRED
+  answeredAt     DateTime?
+  answeredPostId String?      // Links to the VendorPost generated from this prompt
+
+  priority       Int          @default(0) // Higher = more prominent
+  expiresAt      DateTime?
+
+  createdAt      DateTime     @default(now())
+
+  @@index([organizationId, status])
+  @@index([category])
+  @@map("vendor_prompts")
 }
 
 // Vendor invite signals for vendors not yet on platform

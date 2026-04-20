@@ -250,7 +250,7 @@ export function UserMenu() {
               </MenuLink>
             ) : (
               <MenuLink
-                href="/professionals/designer/organization"
+                href="/professionals"
                 icon={<Briefcase className="h-4 w-4" />}
                 onClick={() => setIsOpen(false)}
               >

@@ -14,6 +14,11 @@ import { OrgAboutTab } from '@/components/org-onboarding';
 import PinnedCarousel from '@/components/org-profile/PinnedCarousel';
 import OrgDesignerRelationships from '@/components/org-profile/OrgDesignerRelationships';
 import OrgTerritoryManager from '@/components/org-profile/OrgTerritoryManager';
+// Vendor-specific components
+import { VendorFeed } from '@/components/vendor/VendorFeed';
+import { VendorShop } from '@/components/vendor/VendorShop';
+import { VendorTeam } from '@/components/vendor/VendorTeam';
+import { VendorPromptSection } from '@/components/vendor/VendorPromptSection';
 
 export const dynamic = 'force-dynamic';
 
@@ -367,6 +372,32 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
     }
   }
 
+  // Detect vendor org type
+  const VENDOR_ORG_TYPES = ['VENDOR', 'MANUFACTURER', 'SHOWROOM'];
+  const isVendorOrg = VENDOR_ORG_TYPES.includes(org.type);
+
+  // Fetch org members for team tab (used by both vendor and design orgs)
+  let orgMembers: any[] = [];
+  try {
+    const members = await prisma.organizationUser.findMany({
+      where: { organizationId: resolvedParams.orgId, isActive: true },
+      include: {
+        user: { select: { id: true, name: true, profileImage: true, title: true } },
+      },
+      orderBy: { joinedAt: 'asc' },
+    });
+    orgMembers = members.map(m => ({
+      id: m.user.id,
+      name: m.user.name || 'Team Member',
+      profileImage: m.user.profileImage,
+      title: m.user.title,
+      role: m.role,
+      workEmail: m.showOnProfile ? m.workEmail : null,
+    }));
+  } catch {
+    // Graceful fallback
+  }
+
   // Default to About tab when no published projects (empty profile is a dead end on Feed)
   const defaultTab = projectCount === 0 ? 'about' : 'feed';
   const activeTab = resolvedSearchParams.tab || defaultTab;
@@ -399,7 +430,23 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
       <OrgProfileTabs activeTab={activeTab} orgId={resolvedParams.orgId} defaultTab={defaultTab} orgType={org.type} isMember={isMember} isAdmin={isAdmin} />
 
       <div className="max-w-6xl mx-auto px-6 py-8">
-        {activeTab === 'feed' && (
+        {/* Vendor-specific tab content */}
+        {isVendorOrg && activeTab === 'feed' && (
+          <Suspense fallback={<FeedSkeleton />}>
+            <VendorFeed orgId={resolvedParams.orgId} />
+            {/* Curated prompts visible on vendor org page */}
+            <VendorPromptSection orgId={resolvedParams.orgId} isOwner={isOwner} />
+          </Suspense>
+        )}
+        {isVendorOrg && activeTab === 'shop' && (
+          <VendorShop orgId={resolvedParams.orgId} />
+        )}
+        {isVendorOrg && activeTab === 'team' && (
+          <VendorTeam members={orgMembers} orgId={resolvedParams.orgId} orgName={orgData.name} />
+        )}
+
+        {/* Design org tab content (unchanged) */}
+        {!isVendorOrg && activeTab === 'feed' && (
           <Suspense fallback={<FeedSkeleton />}>
             <OrgProfileFeed
               orgId={resolvedParams.orgId}
@@ -412,10 +459,10 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
             />
           </Suspense>
         )}
-        {activeTab === 'projects' && (
+        {!isVendorOrg && activeTab === 'projects' && (
           <OrgProjectsGrid projects={projectsData} isOwner={isOwner} />
         )}
-        {activeTab === 'shop' && (
+        {!isVendorOrg && activeTab === 'shop' && (
           <OrgShopTab products={productsData} />
         )}
         {activeTab === 'relationships' && isMember && (

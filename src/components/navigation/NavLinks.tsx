@@ -10,7 +10,7 @@ const links = [
   { href: "/directory", label: "Directory" },
   { href: "/events", label: "Events" },
   { href: "/about", label: "About" },
-  { href: "/for-designers", label: "For Designers" },
+  { href: "/professionals", label: "For Professionals" },
 ];
 
 export function NavLinks() {
@@ -24,7 +24,7 @@ export function NavLinks() {
           <Link
             key={link.href}
             href={link.href}
-            {...(link.href === "/for-designers" ? { "data-folio-target": "for-designers-nav" } : {})}
+            {...(link.href === "/professionals" ? { "data-folio-target": "for-professionals-nav" } : {})}
             className={cn(
               "px-4 py-2 folio-ui rounded-full transition-colors",
               isActive
