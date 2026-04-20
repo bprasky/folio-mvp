@@ -148,6 +148,13 @@ export const BlocksSchema = z.object({
       }),
     ])
   ).max(5).optional(),
+  // Editorially spliced lead pull quote drawn from the designer's hook-opener
+  // answer (and its adaptive follow-up, if any). When present, this wins over
+  // extracted chapter quotes for the article's lead slot.
+  hookQuote: z.object({
+    text: z.string().max(300),
+    context: z.string().max(80).optional(),
+  }).optional(),
   materialsLedger: z.object({
     items: z.array(z.object({
       productId: z.string().uuid().nullable().optional(),
@@ -211,17 +218,32 @@ export function isPullQuoteSelection(pullQuote: unknown): pullQuote is PullQuote
   return typeof pullQuote === 'object' && pullQuote !== null && 'alternatives' in pullQuote;
 }
 
-/** Sync top-level pullQuotes array from per-chapter selections */
+/** Sync top-level pullQuotes array from per-chapter selections.
+ *
+ * When `blocks.hookQuote` is present it is prepended WITHOUT a `sourceSection`
+ * — downstream readers (`buildRoomTiles.ts`, `buildRoomCards.ts`) prefer the
+ * first entry without a `sourceSection` as the project-level lead quote, so
+ * this guarantees the spliced hook quote wins the top-of-post slot.
+ */
 export function syncPullQuotesFromChapters(blocks: Record<string, any>): void {
   const chapters = blocks.galleryChapters as Array<{ title?: string; pullQuote?: string | PullQuoteSelection | null }> | undefined;
-  if (!chapters) return;
   const pullQuotes: NormalizedPullQuote[] = [];
-  for (const ch of chapters) {
-    const text = getSelectedPullQuoteText(ch.pullQuote);
-    if (text) {
+
+  const hookQuote = blocks.hookQuote as { text?: string; context?: string } | undefined;
+  if (hookQuote?.text) {
+    pullQuotes.push({ text: hookQuote.text, context: hookQuote.context || undefined });
+  }
+
+  if (chapters) {
+    for (const ch of chapters) {
+      const text = getSelectedPullQuoteText(ch.pullQuote);
+      if (!text) continue;
+      // Avoid duplicating the hook quote if a chapter happens to have the same line.
+      if (hookQuote?.text && text.trim() === hookQuote.text.trim()) continue;
       const context = getSelectedPullQuoteContext(ch.pullQuote);
       pullQuotes.push({ text, context, sourceSection: ch.title });
     }
   }
+
   blocks.pullQuotes = pullQuotes.length > 0 ? pullQuotes : undefined;
 }

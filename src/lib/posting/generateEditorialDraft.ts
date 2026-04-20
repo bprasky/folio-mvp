@@ -4,6 +4,7 @@ import type { PullQuoteSelection, PullQuoteAlternative } from "./schemas";
 import { z } from "zod";
 import { callLLM } from "./llmClient";
 import { formatRoomName } from "@/lib/utils/formatRoomName";
+import { HOOK_OPENER_ID_PREFIX, HOOK_FOLLOWUP_ID_PREFIX } from "@/lib/interview/generateQuestions";
 
 const client = new Anthropic();
 
@@ -170,8 +171,10 @@ function buildCredits(input: GenInput): Array<{ role: string; name: string }> {
   return credits;
 }
 
-// Score a pull quote candidate using heuristics
-function scorePullQuote(text: string): number {
+// Score a pull quote candidate using heuristics.
+// Exported so adjacent modules (the interview respond route's hook-opener
+// gate) can reuse the same signals without duplicating the scoring table.
+export function scorePullQuote(text: string): number {
   let score = 0;
   const words = text.split(/\s+/).length;
 
@@ -195,13 +198,27 @@ function scorePullQuote(text: string): number {
   return score;
 }
 
+// Minimum score a quote must clear to qualify as a narrative "hook" for the lead chapter.
+// Matches at least one strong signal from scorePullQuote (first-person voice: +3, or metaphor: +2 with length bonus).
+const LEAD_CHAPTER_HOOK_MIN_SCORE = 3;
+
 // Extract and score pull quotes from a single chapter's body paragraphs
-// Uses attribution-verb patterns for higher-quality extraction
-function extractPullQuotesForChapter(
+// Uses attribution-verb patterns for higher-quality extraction.
+//
+// Selection rule:
+//   - isLeadChapter=true: walk paragraphs in order and return the first paragraph's
+//     top-scored quote that clears LEAD_CHAPTER_HOOK_MIN_SCORE. This keeps the
+//     article's lead pull quote tied to the narrative opening instead of a higher-
+//     scored product detail buried mid-chapter. Falls back to overall highest-
+//     scored quote if nothing qualifies.
+//   - otherwise: overall highest-scored quote across the whole chapter (original behavior).
+export function extractPullQuotesForChapter(
   body: string[],
-  designerName?: string
+  designerName?: string,
+  opts?: { isLeadChapter?: boolean }
 ): PullQuoteSelection | null {
-  const quotes: PullQuoteAlternative[] = [];
+  type ParagraphQuote = PullQuoteAlternative & { paragraphIndex: number };
+  const quotesByParagraph: ParagraphQuote[][] = [];
   const seen = new Set<string>();
 
   // Attribution verbs to look for near quotes
@@ -218,7 +235,10 @@ function extractPullQuotesForChapter(
   // Fallback: any direct quote in quotation marks
   const anyQuote = /["\u201C]([^"\u201D]{20,250})["\u201D]/g;
 
-  for (const paragraph of body) {
+  for (let pIdx = 0; pIdx < body.length; pIdx++) {
+    const paragraph = body[pIdx];
+    const perParagraph: ParagraphQuote[] = [];
+
     // First try: attributed quotes (higher quality)
     for (const pattern of [quoteBeforeAttr, quoteAfterAttr]) {
       pattern.lastIndex = 0;
@@ -231,10 +251,11 @@ function extractPullQuotesForChapter(
         seen.add(key);
         const score = scorePullQuote(cleaned) + 1; // +1 bonus for attribution
         if (score >= 1) {
-          quotes.push({
+          perParagraph.push({
             text: cleaned,
             context: designerName || undefined,
             score,
+            paragraphIndex: pIdx,
           });
         }
       }
@@ -251,24 +272,154 @@ function extractPullQuotesForChapter(
       seen.add(key);
       const score = scorePullQuote(cleaned);
       if (score >= 1) {
-        quotes.push({
+        perParagraph.push({
           text: cleaned,
           context: designerName || undefined,
           score,
+          paragraphIndex: pIdx,
         });
+      }
+    }
+
+    quotesByParagraph.push(perParagraph);
+  }
+
+  const allQuotes: ParagraphQuote[] = quotesByParagraph.flat();
+  if (allQuotes.length === 0) return null;
+
+  // Alternatives: all quotes, sorted by score desc (unchanged contract).
+  const alternatives: PullQuoteAlternative[] = [...allQuotes]
+    .sort((a, b) => b.score - a.score)
+    .map(({ text, context, score }) => ({ text, context, score }));
+
+  // Selection
+  let selected: ParagraphQuote | undefined;
+
+  if (opts?.isLeadChapter) {
+    // Walk paragraphs in narrative order; take the first paragraph whose best quote
+    // clears the hook threshold. This keeps the article's opening pull quote
+    // anchored to the article's opening, not a mid-chapter product detail.
+    for (const pq of quotesByParagraph) {
+      if (pq.length === 0) continue;
+      const top = pq.reduce((a, b) => (b.score > a.score ? b : a));
+      if (top.score >= LEAD_CHAPTER_HOOK_MIN_SCORE) {
+        selected = top;
+        break;
       }
     }
   }
 
-  if (quotes.length === 0) return null;
-
-  // Sort by score descending
-  quotes.sort((a, b) => b.score - a.score);
+  // Default / fallback: overall highest-scored quote
+  if (!selected) {
+    selected = allQuotes.reduce((a, b) => (b.score > a.score ? b : a));
+  }
 
   return {
-    selected: { text: quotes[0].text, context: quotes[0].context },
-    alternatives: quotes,
+    selected: { text: selected.text, context: selected.context },
+    alternatives,
   };
+}
+
+// ============================================================================
+// HOOK QUOTE SPLICE
+// ============================================================================
+
+/**
+ * Extract a lead-quote candidate from the article's introduction paragraphs
+ * (the dedicated opening narrative, distinct from galleryChapters[0] which
+ * is the first room). Uses the existing scoring heuristic and picks the
+ * highest-scored attributed quote — if the LLM quoted the designer in the
+ * intro, that line is almost always hook-adjacent.
+ *
+ * Deterministic, no LLM call. Used as:
+ *   - A fallback for new drafts when spliceHookQuote returns null.
+ *   - A retrofit for existing posts via the admin re-extract route.
+ */
+export function extractHookQuoteFromIntroduction(
+  introduction: string[] | undefined,
+  designerName?: string
+): { text: string; context?: string } | null {
+  if (!Array.isArray(introduction) || introduction.length === 0) return null;
+  const selection = extractPullQuotesForChapter(introduction, designerName);
+  const text = selection?.selected?.text;
+  if (!text) return null;
+  return { text, context: designerName || undefined };
+}
+
+/**
+ * Produce the article's lead pull quote by splicing the designer's hook-opener
+ * answer (and its adaptive follow-up, if any) into a single magazine-ready line.
+ *
+ * Why splice: the hook opener invites a conviction, the follow-up deepens it
+ * into emotion. Neither answer is usually publication-ready on its own — the
+ * splice compresses the two while preserving the designer's actual phrasing.
+ *
+ * Contract:
+ *  - Returns null when Anthropic is unavailable, no hook answer is present,
+ *    or the model refuses to produce a confident hook. Callers must fall
+ *    back to chapter-level lead-quote extraction.
+ *  - The returned quote is ≤ 220 chars (well under the 300 schema cap).
+ *  - The prompt forbids invented phrasing, adding metaphor the designer did
+ *    not use, and referencing rooms/products/vendors/process — everything
+ *    that makes a lead quote drift away from the narrative hook.
+ */
+async function spliceHookQuote(
+  answers: GenInput['answers'],
+  designerName?: string
+): Promise<{ text: string; context?: string } | null> {
+  if (!ANTHROPIC_ENABLED) return null;
+
+  const hookAnswer = answers.find(
+    (a) => typeof a.questionId === 'string' && a.questionId.startsWith(HOOK_OPENER_ID_PREFIX) && a.answer?.trim()
+  );
+  if (!hookAnswer) return null;
+
+  const hookFollowUp = answers.find(
+    (a) => typeof a.questionId === 'string' && a.questionId.startsWith(HOOK_FOLLOWUP_ID_PREFIX) && a.answer?.trim()
+  );
+
+  const sourceLines = [
+    `HOOK ANSWER: ${hookAnswer.answer.trim()}`,
+    hookFollowUp ? `FOLLOW-UP ANSWER: ${hookFollowUp.answer.trim()}` : null,
+  ].filter(Boolean).join('\n\n');
+
+  const system = `You are editing a direct quote for the opening pull quote of a magazine feature on an interior design project.
+
+You are given one or two raw interview answers from the designer. Produce a single short, magazine-ready quote that will headline the article.
+
+Strict rules:
+- Maximum 30 words. Shorter is better.
+- Use the designer's actual phrasing. You may trim, elide ("…"), or splice across the two answers, but do NOT invent words, add metaphor, or introduce imagery the designer did not use.
+- Do NOT mention specific rooms, products, brands, vendors, colors, materials, or process steps. The lead quote is about the project's core idea or feeling, not its details.
+- Prefer first-person voice and emotion over description.
+- If neither answer contains a usable hook-quality thread, return quote: null rather than force one.
+
+Return JSON only: {"quote": "..."} or {"quote": null}. Do not wrap the quote in quotation marks.`;
+
+  try {
+    const message = await client.messages.create({
+      model: 'claude-sonnet-4-20250514',
+      system,
+      messages: [
+        { role: 'user', content: sourceLines },
+      ],
+      max_tokens: 200,
+      temperature: 0.3,
+    });
+
+    const raw = message.content[0]?.type === 'text' ? message.content[0].text : '';
+    const cleaned = raw.replace(/```json\n?|\n?```/g, '').trim();
+    const parsed = JSON.parse(cleaned) as { quote?: string | null };
+
+    if (!parsed.quote || typeof parsed.quote !== 'string') return null;
+    const text = parsed.quote.trim().replace(/^["\u201C]|["\u201D]$/g, '').trim();
+    if (!text || text.length < 10 || text.length > 220) return null;
+
+    return { text, context: designerName || undefined };
+  } catch (error) {
+    console.warn('[spliceHookQuote] non-fatal error, falling back to extraction:', error);
+    return null;
+  }
 }
 
 // ============================================================================
@@ -389,7 +540,7 @@ function validateRoomStructure(
 // REPAIR JSON OUTPUT — applies room fixes, image validation, paragraph repair
 // ============================================================================
 
-function repairAndBuildBlocks(
+async function repairAndBuildBlocks(
   composed: any,
   input: GenInput,
   imageIds: string[],
@@ -521,9 +672,11 @@ function repairAndBuildBlocks(
 
   // Extract pull quotes PER CHAPTER from each chapter's own body text
   // A dining room pull quote stays in the dining room.
-  const finalChaptersWithQuotes = finalChapters.map(ch => ({
+  // Chapter 0 is the article's lead — use hook-aware selection so the top-of-post
+  // pull quote reflects the narrative opening instead of a mid-chapter detail.
+  const finalChaptersWithQuotes = finalChapters.map((ch, idx) => ({
     ...ch,
-    pullQuote: extractPullQuotesForChapter(ch.body, designerName),
+    pullQuote: extractPullQuotesForChapter(ch.body, designerName, { isLeadChapter: idx === 0 }),
   }));
 
   const ledger = buildMaterialContext(input.tags);
@@ -566,6 +719,18 @@ function repairAndBuildBlocks(
     mode: 'recomposition' as const,
   };
 
+  // Lead pull quote preference:
+  //  1. Spliced hook-opener + follow-up (richest; requires hook flow answers)
+  //  2. Highest-scored quote from the introduction paragraphs (retrofit for
+  //     drafts without hook-flow answers — intro is the narrative opener)
+  //  3. Chapter-0 early-strong extraction via syncPullQuotesFromChapters
+  const hookQuote =
+    (await spliceHookQuote(input.answers, designerName)) ??
+    extractHookQuoteFromIntroduction(blocks.introduction, designerName);
+  if (hookQuote) {
+    (blocks as Record<string, any>).hookQuote = hookQuote;
+  }
+
   // Sync top-level pullQuotes from per-chapter selections (for layout engine)
   syncPullQuotesFromChapters(blocks as Record<string, any>);
 
@@ -594,11 +759,12 @@ export function toFallbackBlocks(input: GenInput) {
     imageIds: ch.imageIds,
   }));
 
-  // Extract pull quotes per-chapter from body text
+  // Extract pull quotes per-chapter from body text.
+  // Chapter 0 gets hook-aware selection so the lead pull quote matches the opening.
   const designerName = input.designer?.name;
-  const galleryChaptersWithQuotes = galleryChapters.map(ch => ({
+  const galleryChaptersWithQuotes = galleryChapters.map((ch, idx) => ({
     ...ch,
-    pullQuote: extractPullQuotesForChapter(ch.body, designerName),
+    pullQuote: extractPullQuotesForChapter(ch.body, designerName, { isLeadChapter: idx === 0 }),
   }));
 
   const blocks = {
@@ -1113,7 +1279,7 @@ export async function generateEditorialDraft(input: GenInput): Promise<{
   // Repair and build validated blocks
   try {
     console.log('[GENERATE] calling repairAndBuildBlocks', { _cid });
-    let blocks = repairAndBuildBlocks(composed, { ...input, answers: uniqueAnswers }, imageIds, rooms, imagesByRoom, _cid);
+    let blocks = await repairAndBuildBlocks(composed, { ...input, answers: uniqueAnswers }, imageIds, rooms, imagesByRoom, _cid);
     // Post-processing: fix "The [noun]..." sentence openers
     blocks = await fixSentenceOpeners(blocks, _cid);
     return { blocks, usedFallback: false };

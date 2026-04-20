@@ -7,6 +7,14 @@ import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { randomUUID } from "crypto";
 import Anthropic from "@anthropic-ai/sdk";
+import { HOOK_OPENER_ID_PREFIX, HOOK_FOLLOWUP_ID_PREFIX } from "@/lib/interview/generateQuestions";
+import { scorePullQuote } from "@/lib/posting/generateEditorialDraft";
+
+// Answers scoring at or above this already carry a hook-quality signal
+// (first-person voice + length, or first-person + metaphor). Above the bar,
+// skip the deepening follow-up so we don't fish when the designer already
+// said something publication-ready.
+const HOOK_ANSWER_SUFFICIENT_SCORE = 5;
 
 /**
  * POST /api/interview/respond
@@ -32,21 +40,7 @@ if (process.env.ANTHROPIC_API_KEY) {
   anthropic = new Anthropic();
 }
 
-/**
- * Generate a follow-up question based on the user's answer
- */
-async function generateFollowUp(
-  questionText: string,
-  answer: string
-): Promise<{ text: string; context: string } | null> {
-  if (!anthropic) {
-    return null;
-  }
-
-  try {
-    const message = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
-      system: `You are an interviewer for an interior design publication. Based on a designer's answer, generate one thoughtful follow-up question that will elicit a more detailed, quotable response.
+const GENERIC_FOLLOWUP_SYSTEM = `You are an interviewer for an interior design publication. Based on a designer's answer, generate one thoughtful follow-up question that will elicit a more detailed, quotable response.
 
 Guidelines:
 - Ask about the "why" behind their decisions
@@ -56,7 +50,50 @@ Guidelines:
 - Questions should lead to answers a designer would be proud to publish
 
 Return JSON: { "question": "...", "context": "..." }
-The context is a brief lead-in phrase like "You mentioned the light." (optional, can be empty string)`,
+The context is a brief lead-in phrase like "You mentioned the light." (optional, can be empty string)`;
+
+const HOOK_FOLLOWUP_SYSTEM = `You are an interviewer for an interior design publication. The designer just answered the opening "what were you chasing with this project" question. Your job is to generate ONE deepening follow-up whose answer, spliced with the first answer, will become the article's opening pull quote.
+
+Rules (strict — every word counts):
+- Echo the designer's own theme back to them in their words before asking.
+- Invite the EMOTIONAL stakes: what they hoped someone would feel, what was at risk, what made it personal, what told them they'd gotten it right.
+- Do NOT ask about any specific room, product, brand, vendor, material, color, or process step. The opening quote is about the idea and the feeling, not the details.
+- Do NOT ask "can you tell me more about" or any therapist-style meta question. Sound like a journalist.
+- Under 25 words.
+
+Return JSON: { "question": "...", "context": "..." }
+The context is a brief lead-in phrase that echoes their theme (e.g. "Staying true while refreshing —"). Keep it under 10 words.`;
+
+/**
+ * Generate a follow-up question based on the user's answer.
+ *
+ * When the parent question is the hook opener we (a) use a specialized
+ * system prompt that targets the emotional deepening needed for a spliceable
+ * pull quote, and (b) skip the call entirely if the hook answer already
+ * scores high enough that pushing further would feel like fishing.
+ */
+async function generateFollowUp(
+  questionText: string,
+  answer: string,
+  parentQuestionId: string
+): Promise<{ text: string; context: string; isHookFollowUp: boolean } | null> {
+  if (!anthropic) {
+    return null;
+  }
+
+  const isHookParent = parentQuestionId.startsWith(HOOK_OPENER_ID_PREFIX);
+
+  // If the hook-opener answer already reads like a publication quote, don't
+  // push a deepening follow-up — it'd feel like we're unhappy with what
+  // they said.
+  if (isHookParent && scorePullQuote(answer) >= HOOK_ANSWER_SUFFICIENT_SCORE) {
+    return null;
+  }
+
+  try {
+    const message = await anthropic.messages.create({
+      model: "claude-sonnet-4-20250514",
+      system: isHookParent ? HOOK_FOLLOWUP_SYSTEM : GENERIC_FOLLOWUP_SYSTEM,
       messages: [
         {
           role: "user",
@@ -67,7 +104,7 @@ Designer's answer: "${answer}"
 Generate a follow-up question.`,
         },
       ],
-      max_tokens: 150,
+      max_tokens: 200,
       temperature: 0.7,
     });
 
@@ -76,9 +113,11 @@ Generate a follow-up question.`,
     const content = rawContent.replace(/```json\n?|\n?```/g, "").trim();
 
     const parsed = JSON.parse(content);
+    if (!parsed.question) return null;
     return {
-      text: parsed.question || null,
+      text: parsed.question,
       context: parsed.context || "",
+      isHookFollowUp: isHookParent,
     };
   } catch (error) {
     console.error("[generateFollowUp] Error:", error);
@@ -217,10 +256,13 @@ export async function POST(request: NextRequest) {
 
     try {
       // Generate follow-up question
-      const followUp = await generateFollowUp(questionText, answer);
+      const followUp = await generateFollowUp(questionText, answer, questionId);
       if (followUp?.text) {
+        // Mint a stable id whose prefix lets the draft generator identify
+        // hook-follow-up answers and splice them with the hook opener answer.
+        const idPrefix = followUp.isHookFollowUp ? HOOK_FOLLOWUP_ID_PREFIX : 'followup-';
         followUpQuestion = {
-          id: `followup-${randomUUID()}`,
+          id: `${idPrefix}${randomUUID()}`,
           text: followUp.text,
           source: "ai-followup" as const,
           followUpTo: questionId,

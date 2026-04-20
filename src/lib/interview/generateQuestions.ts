@@ -24,6 +24,7 @@ import { formatRoomName } from '@/lib/utils/formatRoomName';
 // Question types that can be generated
 export type QuestionType =
   | 'generic'
+  | 'hook_opener'
   | 'room_specific'
   | 'aesthetic'
   | 'vendor_loyalty'
@@ -39,6 +40,19 @@ export type QuestionType =
   | 'promoted_win'
   | 'conviction_piece'
   | 'prospective_vision';
+
+/**
+ * Stable question-id prefix for the hook-intent opener. Downstream code
+ * (respond route, draft generator) uses this prefix to identify the answer
+ * that anchors the article's lead pull quote.
+ */
+export const HOOK_OPENER_ID_PREFIX = 'hook-opener-';
+
+/**
+ * Stable question-id prefix for a hook-opener's adaptive follow-up. The
+ * respond route mints these when the parent question is a hook opener.
+ */
+export const HOOK_FOLLOWUP_ID_PREFIX = 'hook-followup-';
 
 export interface GeneratedQuestion {
   id: string;
@@ -165,9 +179,18 @@ const PROSPECTIVE_QUESTIONS = {
 };
 
 /**
- * Generate a contextual opener that acknowledges the project before asking.
- * Uses available project data (rooms, products, materials, vendors) to show
- * the designer that Folio actually looked at their work.
+ * Generate a contextual hook opener that acknowledges the project AND primes
+ * a magazine-worthy lead pull quote in one move.
+ *
+ * The opener does three things in a single question:
+ *  1) Signals "we looked at your work" via a concrete observation (credibility).
+ *  2) Invites the designer's core idea / conviction (the hook).
+ *  3) Anchors in feeling rather than a literal one-liner — asking for emotion
+ *     is less paralyzing than asking for a tagline.
+ *
+ * Downstream (`/api/interview/respond`, `generateEditorialDraft`) identifies
+ * this question by its `HOOK_OPENER_ID_PREFIX` id and uses a specialized
+ * follow-up + LLM splice pass to produce the final lead pull quote.
  */
 function generateContextualOpener(context: ProjectContext): GeneratedQuestion {
   const heroPiece = context.selections.find((s) => s.isHeroPiece);
@@ -196,14 +219,14 @@ function generateContextualOpener(context: ProjectContext): GeneratedQuestion {
     : 'Thanks for sharing this — we can already see the direction taking shape.';
 
   return {
-    id: `opener-${randomUUID()}`,
-    text: `${prefix} Tell us about the vision for this project and what inspired it.`,
-    helper: 'Share what drew you to this direction — the story behind the concept.',
+    id: `${HOOK_OPENER_ID_PREFIX}${randomUUID()}`,
+    text: `${prefix} Before we dig into the rooms — what were you really chasing with this project, and what did you want it to feel like when someone walked in?`,
+    helper: 'No need to land it in one sentence — talk about the core idea and the feeling you were after.',
     topic: TOPICS.PROJECT_VISION,
     contextLevel: 0 as ContextLevel,
-    type: context.isProspective ? 'prospective_vision' : 'generic',
+    type: 'hook_opener',
     boostable: false,
-    pullQuotePotential: 'medium',
+    pullQuotePotential: 'high',
   };
 }
 
