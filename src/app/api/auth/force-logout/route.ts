@@ -1,3 +1,4 @@
+// @idor-allow: public-read reason="Logout flow is anonymous; clears session cookies"
 import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = "nodejs";

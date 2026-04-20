@@ -1,3 +1,4 @@
+// @idor-allow: public-read reason="Dev-only Supabase login helper; 403s in production via NODE_ENV check"
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';

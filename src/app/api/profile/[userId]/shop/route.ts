@@ -1,3 +1,4 @@
+// @idor-allow: public-read reason="Public shop listing for a designer profile, viewable anonymously"
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';

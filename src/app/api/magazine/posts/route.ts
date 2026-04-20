@@ -1,3 +1,4 @@
+// @idor-allow: public-read reason="Public magazine post listings"
 // GET /api/magazine/posts
 //
 // Paginated, filterable feed endpoint.

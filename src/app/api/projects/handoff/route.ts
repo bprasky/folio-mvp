@@ -120,6 +120,10 @@ export async function POST(req: Request) {
 // Designer claims project ownership
 export async function PUT(request: Request) {
   try {
+    const session = await getServerSession();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     const body = await request.json();
     const { projectId, designerUserId, designerOrgId } = body;
 

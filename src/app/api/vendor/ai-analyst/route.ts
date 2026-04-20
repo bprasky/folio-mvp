@@ -1,6 +1,8 @@
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 
 /**
  * AI Analyst API - Returns contextual answers about recommendations
@@ -9,6 +11,10 @@ import { NextResponse } from 'next/server';
  */
 export async function POST(req: Request) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     const body = await req.json();
     const { sectionId, context, question } = body ?? {};
 

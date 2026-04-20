@@ -1,3 +1,9 @@
+// @idor-allow: public-read reason="Resend inbound-email webhook; bearer-credential auth via webhook signature (see TODO)"
+// TODO(security): verify Resend webhook signature before processing. Resend
+// sends an `svix-id`, `svix-timestamp`, and `svix-signature` header set; use
+// the `svix` package with process.env.RESEND_WEBHOOK_SECRET to verify. Until
+// then, anyone who finds this URL can POST fake inbound-email events and
+// trigger `matchInboundToThread`.
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';

@@ -1,3 +1,6 @@
+// @idor-allow: public-read reason="Public designer-approved quote highlights for a product, viewable anonymously"
+// @idor-allow: IDOR003 reason="Public lookup by product id for product detail page"
+// @idor-allow: IDOR004 reason="Read-only public insights; no mutations in this route"
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from "next/server";

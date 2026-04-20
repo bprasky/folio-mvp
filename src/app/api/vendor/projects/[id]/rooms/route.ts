@@ -2,11 +2,20 @@ export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import { assertProjectView, assertProjectWrite } from '@/lib/authz/access';
 
 const prisma = new PrismaClient();
 
 export async function GET(_req: Request, { params }: { params: { id: string }}) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    await assertProjectView(session.user.id, params.id);
+
     const rooms = await prisma.room.findMany({
       where: { projectId: params.id as any },
       orderBy: { createdAt: "asc" },
@@ -24,6 +33,12 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    await assertProjectWrite(session.user.id, params.id);
+
     const projectId = params.id;
     const body = await request.json();
     const { name } = body;

@@ -1,3 +1,5 @@
+// @idor-allow: public-read reason="Public product detail page viewable anonymously"
+// @idor-allow: IDOR003 reason="Public lookup by product id"
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';

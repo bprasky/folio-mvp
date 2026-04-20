@@ -3,6 +3,8 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 
 const PROJECTS_FILE = path.join(process.cwd(), 'src', 'data', 'projects.json');
 const DESIGNERS_FILE = path.join(process.cwd(), 'src', 'data', 'designers.json');
@@ -46,6 +48,10 @@ const saveProjects = (projects: any[]) => {
 
 export async function POST(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     const projects = loadProjects();
     const designers = loadDesigners();
     

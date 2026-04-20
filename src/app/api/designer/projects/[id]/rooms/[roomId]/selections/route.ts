@@ -2,6 +2,9 @@ export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import { assertProjectWrite } from '@/lib/authz/access';
 
 const prisma = new PrismaClient();
 
@@ -10,6 +13,12 @@ export async function POST(
   { params }: { params: { id: string; roomId: string } }
 ) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    await assertProjectWrite(session.user.id, params.id);
+
     const body = await request.json();
     const { 
       photo, 

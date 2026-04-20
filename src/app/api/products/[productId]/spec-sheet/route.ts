@@ -1,3 +1,6 @@
+// @idor-allow: public-read reason="Public PDF spec sheet for a product, generated anonymously"
+// @idor-allow: IDOR003 reason="Public lookup by product id to render spec sheet"
+// @idor-allow: IDOR004 reason="Read-only public spec sheet; no mutations in this route"
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';

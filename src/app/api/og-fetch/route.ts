@@ -1,3 +1,4 @@
+// @idor-allow: public-read reason="Public OG metadata fetcher for link previews"
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';

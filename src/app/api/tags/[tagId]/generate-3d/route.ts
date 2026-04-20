@@ -8,6 +8,7 @@ import { callSam3DTagService } from '@/lib/three-d/sam3d-client';
 import { uploadGeneratedMesh, uploadGeneratedMask } from '@/lib/storage';
 import { isMeshableCategory } from '@/lib/three-d/categories';
 import { promoteCanonicalMesh } from '@/lib/three-d/promoteCanonicalMesh';
+import { assertProjectWrite } from '@/lib/authz/access';
 
 export async function POST(
   request: NextRequest,
@@ -43,6 +44,17 @@ export async function POST(
     if (!tag) {
       return NextResponse.json({ error: 'Tag not found' }, { status: 404 });
     }
+
+    // Walk tag → image → project and require project write access.
+    // Prevents any authenticated user from triggering expensive AI mesh
+    // generation on tags they don't own.
+    if (!tag.image?.projectId) {
+      return NextResponse.json(
+        { error: 'Tag is not attached to a project' },
+        { status: 400 }
+      );
+    }
+    await assertProjectWrite(session.user.id, tag.image.projectId);
 
     if (!tag.image?.url) {
       return NextResponse.json(

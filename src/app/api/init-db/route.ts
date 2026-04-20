@@ -1,3 +1,4 @@
+// @idor-allow: public-read reason="Dev-only DB init helper; 404s in production via NODE_ENV check"
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
@@ -6,6 +7,10 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 export async function POST() {
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  }
+
   try {
     console.log('🔌 Connecting to database...');
     await prisma.$connect();

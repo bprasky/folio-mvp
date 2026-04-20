@@ -1,3 +1,5 @@
+// @idor-allow: IDOR003 reason="Queries are self-scoped via followerId (session.user.id) or derived ids (existing.id, reverse.id) from prior self-scoped compound-key lookups"
+// @idor-allow: IDOR004 reason="Cross-user prisma.user.update calls only increment denormalized follower/following counters; no user data is exposed or modified"
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';

@@ -1,3 +1,6 @@
+// @idor-allow: public-read reason="Public shop product detail modal, viewable anonymously"
+// @idor-allow: IDOR003 reason="Public lookup by shop product id for detail modal"
+// @idor-allow: IDOR004 reason="Read-only public shop product; no mutations in this route"
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';

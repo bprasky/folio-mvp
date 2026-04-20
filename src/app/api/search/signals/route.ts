@@ -1,3 +1,5 @@
+// @idor-allow: IDOR003 reason="Analytics ingestion endpoint; counter-increment updates on projectImage/momentIndex by moment id"
+// @idor-allow: IDOR004 reason="Same as IDOR003; no ownership model — engagement counters are public signal"
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';

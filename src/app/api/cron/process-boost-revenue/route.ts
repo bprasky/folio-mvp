@@ -1,3 +1,4 @@
+// @idor-allow: public-read reason="Vercel cron endpoint protected by CRON_SECRET bearer header, not session auth"
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';

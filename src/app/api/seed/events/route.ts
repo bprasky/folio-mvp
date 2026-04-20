@@ -1,3 +1,4 @@
+// @idor-allow: public-read reason="Dev-only seed helper; 403s in production via NODE_ENV check"
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';

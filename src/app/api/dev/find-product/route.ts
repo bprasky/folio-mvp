@@ -1,3 +1,4 @@
+// @idor-allow: public-read reason="Dev-only debug helper; 404s in production via NODE_ENV check"
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
@@ -8,6 +9,10 @@ import { prisma } from '@/lib/prisma';
  * Usage: /api/dev/find-product?name=Terra&vendor=Rove
  */
 export async function GET(request: Request) {
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  }
+
   try {
     const { searchParams } = new URL(request.url);
     const name = searchParams.get('name') || '';

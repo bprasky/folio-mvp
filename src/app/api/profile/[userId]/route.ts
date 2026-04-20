@@ -1,3 +1,6 @@
+// @idor-allow: public-read reason="Public designer/user profile page viewable anonymously"
+// @idor-allow: IDOR003 reason="Public lookup by user id for public profile page"
+// @idor-allow: IDOR004 reason="Read-only public profile; no mutations in this route"
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';

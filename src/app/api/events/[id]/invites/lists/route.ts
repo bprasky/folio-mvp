@@ -1,3 +1,5 @@
+// @idor-allow: IDOR003 reason="Handlers self-scope by session.user.id to the caller's own hostProfile; event id in URL is unused for auth"
+// @idor-allow: IDOR004 reason="Mutations operate only on invite lists owned by the caller's hostProfile"
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';

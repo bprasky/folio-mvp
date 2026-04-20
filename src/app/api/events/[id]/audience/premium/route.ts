@@ -26,10 +26,18 @@ export async function GET(
     // Verify event exists
     const event = await prisma.event.findUnique({
       where: { id: params.id },
+      include: { hostProfile: true },
     });
 
     if (!event) {
       return NextResponse.json({ error: 'Event not found' }, { status: 404 });
+    }
+
+    if (
+      event.hostProfile?.userId !== session.user.id &&
+      session.user.role !== 'ADMIN'
+    ) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     let designers: any[] = [];

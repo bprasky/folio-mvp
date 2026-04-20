@@ -85,7 +85,9 @@
     "fix:null-arrays": "npx tsx scripts/fix-null-array-fields.ts",
     "test:search": "npx tsx scripts/test-search.ts",
     "debug:prisma": "npx tsx scripts/debug-prisma-types.ts",
-    "fix:null-elements": "npx tsx scripts/fix-null-array-elements.ts"
+    "fix:null-elements": "npx tsx scripts/fix-null-array-elements.ts",
+    "security:idor": "tsx scripts/security/idor-scan.ts",
+    "security:idor:ci": "tsx scripts/security/idor-scan.ts --ci"
   },
   "buildTimestamp": "2025-01-18T20:15:00Z",
   "prisma": {

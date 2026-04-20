@@ -150,17 +150,36 @@ export async function POST(req: NextRequest, { params }: Params) {
  */
 export async function GET(req: NextRequest, { params }: Params) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const user = session.user as { id: string; role: string };
+
     const { developmentId } = params;
     const searchParams = req.nextUrl.searchParams;
     const includeInactive = searchParams.get('includeInactive') === 'true';
 
     const development = await prisma.development.findUnique({
       where: { id: developmentId },
-      select: { id: true, publishedAt: true },
+      select: { id: true, publishedAt: true, developerOrgId: true },
     });
 
     if (!development) {
       return NextResponse.json({ error: "Development not found" }, { status: 404 });
+    }
+
+    if (user.role !== 'ADMIN') {
+      const hasAccess = await prisma.organizationUser.findFirst({
+        where: {
+          userId: user.id,
+          organizationId: development.developerOrgId,
+          isActive: true,
+        },
+      });
+      if (!hasAccess) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
     }
 
     const where: any = { developmentId };

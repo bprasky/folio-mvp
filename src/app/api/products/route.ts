@@ -1,3 +1,4 @@
+// @idor-allow: public-read reason="Public product catalog browsing"
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';

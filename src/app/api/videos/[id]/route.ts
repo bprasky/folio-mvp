@@ -1,6 +1,9 @@
+// @idor-allow: public-read reason="Public video detail viewable anonymously; PUT/DELETE mutations require session auth"
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { writeFile, readFile } from 'fs/promises';
 import { join } from 'path';
 
@@ -52,6 +55,11 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const videoId = params.id;
     const updates = await request.json();
 
@@ -69,10 +77,19 @@ export async function PUT(
       );
     }
 
-    // Update video with provided fields
+    // Only the owner may update the video.
+    if (videos[videoIndex].ownerId !== session.user.id) {
+      return NextResponse.json(
+        { success: false, error: 'Forbidden' },
+        { status: 403 }
+      );
+    }
+
+    // Update video with provided fields; ownerId is immutable.
+    const { ownerId: _ignoredOwnerId, ...safeUpdates } = updates ?? {};
     videos[videoIndex] = {
       ...videos[videoIndex],
-      ...updates,
+      ...safeUpdates,
       updatedAt: new Date().toISOString()
     };
 
@@ -99,6 +116,11 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const videoId = params.id;
 
     // Load videos from JSON file
@@ -112,6 +134,14 @@ export async function DELETE(
       return NextResponse.json(
         { success: false, error: 'Video not found' },
         { status: 404 }
+      );
+    }
+
+    // Only the owner may delete the video.
+    if (videos[videoIndex].ownerId !== session.user.id) {
+      return NextResponse.json(
+        { success: false, error: 'Forbidden' },
+        { status: 403 }
       );
     }
 

@@ -1,3 +1,4 @@
+// @idor-allow: public-read reason="Public magazine filter options"
 // GET /api/magazine/filters
 //
 // Derives smart filter chips from real published content.

@@ -15,6 +15,9 @@ const EventType = {
 import { requireAdmin } from '@/lib/requireAdmin';
 import { rateLimit } from '@/lib/rateLimit';
 import { FestivalInput } from '@/lib/validators';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/app/api/auth/[...nextauth]/options';
+import { normalizeRole, canAccessAdmin } from '@/lib/permissions';
 
 function coerceBool(v: unknown) {
   if (typeof v === 'boolean') return v;
@@ -167,6 +170,13 @@ function estimateBytesFromDataUrl(d: string) {
 
 export async function POST(req: Request) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    if (!canAccessAdmin(normalizeRole((session.user as any).role))) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
     rateLimit({
       userId: req.headers.get('x-forwarded-for') ?? 'local',
       scope: 'admin:festivals',

@@ -7,6 +7,7 @@ import { prisma } from '@/lib/prisma';
 import { resolveVendorRep } from '@/lib/messaging/rep-resolution';
 import { sendMessageNotification } from '@/lib/messaging/notifications';
 import { recordActionSignal, getDesignerOrgId } from '@/lib/intelligence/action-signals';
+import { assertProjectWrite } from '@/lib/authz/access';
 
 /**
  * POST /api/projects/[id]/lead-time-request
@@ -29,6 +30,8 @@ export async function POST(
 
     const userId = session.user.id;
     const projectId = params.id;
+    await assertProjectWrite(userId, projectId);
+
     const { products, targetInstall } = await request.json();
 
     if (!products || !Array.isArray(products) || products.length === 0) {

@@ -92,7 +92,20 @@ export async function GET(
   { params }: { params: { orgId: string; orgUserId: string } }
 ) {
   try {
-    const { orgUserId } = params;
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { orgId, orgUserId } = params;
+
+    const membership = await prisma.organizationUser.findFirst({
+      where: { userId: session.user.id, organizationId: orgId, isActive: true },
+      select: { id: true },
+    });
+    if (!membership) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
 
     const quiz = await prisma.teamMemberQuiz.findUnique({
       where: { orgUserId }

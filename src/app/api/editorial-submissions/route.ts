@@ -1,6 +1,8 @@
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 
 // In-memory storage for editorial submissions (in production, use a database)
 let editorialQueue: Array<{
@@ -50,6 +52,10 @@ async function saveProjects() {
 
 export async function POST(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     const { projectId, designerId } = await request.json();
 
     if (!projectId || !designerId) {
@@ -160,6 +166,10 @@ export async function GET(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     const { submissionId, action, rejectionReason, reviewedBy } = await request.json();
 
     if (!submissionId || !action || !['approve', 'reject'].includes(action)) {

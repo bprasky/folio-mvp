@@ -1,3 +1,4 @@
+// @idor-allow: public-read reason="Public product search"
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 

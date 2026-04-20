@@ -1,3 +1,4 @@
+// @idor-allow: public-read reason="Dev-only maintenance helper; 403s in production + requires MAINTENANCE_TOKEN header"
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import prisma from '@/lib/prisma';

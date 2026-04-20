@@ -1,3 +1,4 @@
+// @idor-allow: public-read reason="Dev-only debug status; ensureDev() throws in production"
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';

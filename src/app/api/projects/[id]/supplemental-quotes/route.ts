@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { assertProjectView, assertProjectWrite } from '@/lib/authz/access';
 import { prisma } from '@/lib/prisma';
 import {
   addSupplementalQuote,
@@ -25,6 +26,12 @@ export async function GET(
 ) {
   try {
     const { id: projectId } = await context.params;
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    await assertProjectView(session.user.id, projectId);
+
     const { searchParams } = new URL(request.url);
     const postId = searchParams.get('postId');
 
@@ -97,6 +104,7 @@ export async function POST(
         { status: 401 }
       );
     }
+    await assertProjectWrite(session.user.id, projectId);
 
     // Verify user owns the project
     const project = await prisma.project.findUnique({

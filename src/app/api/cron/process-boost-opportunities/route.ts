@@ -1,3 +1,4 @@
+// @idor-allow: public-read reason="Vercel cron endpoint protected by CRON_SECRET bearer header, not session auth"
 import { NextRequest, NextResponse } from 'next/server';
 import { processPendingOpportunities } from '@/lib/boost';
 

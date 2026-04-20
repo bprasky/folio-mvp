@@ -1,3 +1,5 @@
+// @idor-allow: IDOR003 reason="Access gated by canAccessCheckIn or active check-in RSVP; scan records are self-scoped"
+// @idor-allow: IDOR004 reason="Same as IDOR003; mutations operate on scans tied to session.user.id"
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/options";

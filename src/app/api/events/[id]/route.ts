@@ -1,3 +1,6 @@
+// @idor-allow: public-read reason="Public event detail page viewable anonymously"
+// @idor-allow: IDOR003 reason="Public lookup by event id for event modal/detail page"
+// @idor-allow: IDOR004 reason="Public event read; PATCH mutation has admin auth"
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from "next/server";

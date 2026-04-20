@@ -2,8 +2,17 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from "next/server";
 import { getUserIdFromRequest } from "@/lib/apiAuth";
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import { assertProjectWrite } from '@/lib/authz/access';
 
 export async function POST(req: Request, { params }: { params: { id: string }}) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  await assertProjectWrite(session.user.id, params.id);
+
   const userId = await getUserIdFromRequest(req);
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   // In a real build, enqueue a notification or update a field on project/selections.
