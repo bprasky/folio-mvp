@@ -1,0 +1,17 @@
+services:
+  prisma-shadow:
+    image: pgvector/pgvector:pg15
+    container_name: folio-prisma-shadow
+    environment:
+      POSTGRES_USER: shadow
+      POSTGRES_PASSWORD: shadow
+      POSTGRES_DB: shadow
+    ports:
+      - "5433:5432"
+    volumes:
+      - ./prisma/shadow-init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U shadow -d shadow"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
