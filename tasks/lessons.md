@@ -81,3 +81,25 @@ ask which audience each one serves before propagating the filter.
 **Files that demonstrate the pattern:**
 - Public: `src/lib/post/getPostBySlug.ts` — filters `product.isPending: false`
 - Draft:  `src/lib/post/getPostForStaging.ts` — intentionally unfiltered
+
+---
+
+## 2026-04-13 — Use the folio-* sub-agents before doing domain work
+
+**Context:** Added seven project-level Claude Code sub-agents under `.claude/agents/`. Each one encodes Folio-specific rules and cites real files so Claude doesn't re-derive context every session.
+
+**Rule:** Before doing domain work, invoke the matching specialist. Claude Code should auto-delegate, but when in doubt, name the agent explicitly.
+
+| Task | Agent |
+|------|-------|
+| Prisma schema / migration / query | `folio-prisma-guardian` |
+| Prompt for Sofia, editorial, classification, bios | `folio-prompt-smith` |
+| Adding or modifying a feature flag gate | `folio-flag-auditor` |
+| Reviewing a diff before commit | `folio-code-reviewer` |
+| Diagnosing a bug or failing script | `folio-debugger` |
+| Bootstrapping or adding tests | `folio-test-scaffolder` |
+| Route handlers, server actions, RSC/client boundary, auth | `folio-next-supabase-specialist` |
+
+**Why this is a lesson, not just a note:** Cold-starting domain work without invoking the specialist has already produced both captured lessons above (Path A/B gating, public/draft asymmetry). The agents exist specifically to prevent those classes of mistake from recurring. If you find yourself writing a flag gate or a Prisma query without the agent on, stop and invoke it.
+
+**See:** `.claude/agents/README.md` for the full set and the rule for adding new agents.
