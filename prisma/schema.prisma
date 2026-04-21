@@ -89,11 +89,11 @@ model User {
   consultationBuyer     ConsultationBuyer?
 
   // Boost system relations
-  boostOpportunities   BoostOpportunity[]  @relation("DesignerBoostOpportunities")
-  approvedBoosts       Boost[]             @relation("UserBoosts")
-  inContextBoosts      InContextBoost[]    @relation("DesignerInContextBoosts")
-  vendorPosts          VendorPost[]        @relation("UserVendorPosts")
-  notifications        Notification[]
+  boostOpportunities BoostOpportunity[] @relation("DesignerBoostOpportunities")
+  approvedBoosts     Boost[]            @relation("UserBoosts")
+  inContextBoosts    InContextBoost[]   @relation("DesignerInContextBoosts")
+  vendorPosts        VendorPost[]       @relation("UserVendorPosts")
+  notifications      Notification[]
 
   // Architect-specific profile fields
   architectLicenseNumber   String? // Professional license number
@@ -267,6 +267,16 @@ model User {
   interviewSessions      InterviewSession[]
   vendorBoostRequests    VendorBoostRequest[]
   vendorInviteCandidates VendorInviteCandidate[]
+
+  // --- Phase 5H2 Bucket B inverse relations ---
+  vendorProductMatchScores     VendorProductMatchScore[]
+  projectLifecycleScores       ProjectLifecycleScore[]
+  designerActivityProfile      DesignerActivityProfile?
+  proximityToPurchaseIndicator ProximityToPurchaseIndicator?
+  outgoingFollows              Follow[]                      @relation("follows_followerIdTousers")
+  incomingFollows              Follow[]                      @relation("follows_followingIdTousers")
+  pendingRepInvitesAsDesigner  PendingRepInvite[]            @relation("pending_rep_invites_designerIdTousers")
+  pendingRepInvitesAsRep       PendingRepInvite[]            @relation("pending_rep_invites_repUserIdTousers")
 
   @@map("users")
 }
@@ -481,6 +491,15 @@ model Project {
   vendorBoostRequests    VendorBoostRequest[]
   vendorInviteCandidates VendorInviteCandidate[]
 
+  // --- Phase 5H2 Bucket B inverse relations ---
+  meetingNotes        MeetingNote[]
+  projectProductTags  ProjectProductTag[]
+  vendorPreviewTokens VendorPreviewToken[]
+  pendingRepInvites   PendingRepInvite[]
+  roomIntents         RoomIntent[]
+  projectIntent       ProjectIntent?
+  editorialDrafts     EditorialDraft[]
+
   @@map("projects")
 }
 
@@ -521,6 +540,9 @@ model ProjectImage {
   // Relation to attribute verifications
   attributeVerifications AttributeVerification[] @relation("ImageAttributeVerifications")
   designerDecisions      DesignerDecision[]
+
+  // --- Phase 5H2 Bucket B inverse relations ---
+  projectProductTags ProjectProductTag[]
 
   @@map("project_images")
 }
@@ -650,6 +672,10 @@ model Product {
   quoteHighlights     QuoteHighlight[]
   vendorBoostRequests VendorBoostRequest[]
 
+  // --- Phase 5H2 Bucket B inverse relations ---
+  projectProductTags  ProjectProductTag[]
+  vendorPreviewTokens VendorPreviewToken[]
+
   @@map("products")
 }
 
@@ -689,6 +715,9 @@ model ProductTag {
 
   // Vendor Invite System
   vendorInviteTriggers VendorInvite[] @relation("VendorInviteTriggerTag")
+
+  // --- Phase 5H2 Bucket B inverse relations ---
+  pendingRepInvites PendingRepInvite[]
 
   @@map("product_tags")
 }
@@ -884,7 +913,7 @@ model Organization {
 
   // Boost system relations
   boostOpportunities BoostOpportunity[] @relation("VendorBoostOpportunities")
-  vendorPosts        VendorPost[]        @relation("OrgVendorPosts")
+  vendorPosts        VendorPost[]       @relation("OrgVendorPosts")
   boosts             Boost[]            @relation("VendorBoosts")
 
   // Profile System relations
@@ -953,6 +982,9 @@ model Organization {
 
   // Phase 5: Contact Import
   designerContacts DesignerContact[] @relation("VendorOrgDesignerContacts")
+
+  // --- Phase 5H2 Bucket B inverse relations ---
+  pendingRepInvites PendingRepInvite[]
 
   @@index([status])
   @@index([type])
@@ -3607,25 +3639,25 @@ model VendorPost {
   authorId       String
   author         User         @relation("UserVendorPosts", fields: [authorId], references: [id])
 
-  title          String
-  slug           String       @unique
-  content        String       @db.Text
-  excerpt        String?
-  heroImageUrl   String?
-  contentType    String       @default("article") // article, product_launch, collection_spotlight
+  title        String
+  slug         String  @unique
+  content      String  @db.Text
+  excerpt      String?
+  heroImageUrl String?
+  contentType  String  @default("article") // article, product_launch, collection_spotlight
 
   // Source prompt tracking
-  promptId       String?
-  promptAnswers  Json?
+  promptId      String?
+  promptAnswers Json?
 
-  status         String       @default("DRAFT") // DRAFT, PUBLISHED
-  publishedAt    DateTime?
+  status      String    @default("DRAFT") // DRAFT, PUBLISHED
+  publishedAt DateTime?
 
   // Engagement
-  views          Int          @default(0)
+  views Int @default(0)
 
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([organizationId, status])
   @@index([slug])
@@ -3635,30 +3667,30 @@ model VendorPost {
 // Curated editorial prompts that Folio serves to vendors for content creation.
 // Prompts can be triggered by events (new boost, product launch, seasonal).
 model VendorPrompt {
-  id             String       @id @default(cuid())
-  organizationId String?      // Null = global prompt template; set = org-specific
+  id             String  @id @default(cuid())
+  organizationId String? // Null = global prompt template; set = org-specific
 
-  title          String       // Short display title
-  question       String       @db.Text // The actual prompt question
-  category       String       @default("general") // general, product, project, seasonal, boost_followup
+  title    String // Short display title
+  question String @db.Text // The actual prompt question
+  category String @default("general") // general, product, project, seasonal, boost_followup
 
   // Context that triggered this prompt
-  triggerType    String?      // boost_approved, product_added, seasonal, manual
-  triggerRef     String?      // Reference ID (boostId, productId, etc.)
+  triggerType String? // boost_approved, product_added, seasonal, manual
+  triggerRef  String? // Reference ID (boostId, productId, etc.)
 
   // Designer attribution — whose work inspired this prompt
-  relatedDesignerId  String?
-  relatedProductId   String?
+  relatedDesignerId String?
+  relatedProductId  String?
 
   // State
-  status         String       @default("ACTIVE") // ACTIVE, ANSWERED, DISMISSED, EXPIRED
+  status         String    @default("ACTIVE") // ACTIVE, ANSWERED, DISMISSED, EXPIRED
   answeredAt     DateTime?
-  answeredPostId String?      // Links to the VendorPost generated from this prompt
+  answeredPostId String? // Links to the VendorPost generated from this prompt
 
-  priority       Int          @default(0) // Higher = more prominent
-  expiresAt      DateTime?
+  priority  Int       @default(0) // Higher = more prominent
+  expiresAt DateTime?
 
-  createdAt      DateTime     @default(now())
+  createdAt DateTime @default(now())
 
   @@index([organizationId, status])
   @@index([category])
@@ -6546,6 +6578,7 @@ model EventVendorEdge {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @default(now())
   events         Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  vendor         Vendor   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
 
   @@unique([eventId, vendorId])
   @@index([edgeType])
@@ -6697,6 +6730,7 @@ model InterviewSession {
   QuoteHighlight       QuoteHighlight[]
   TranscriptSegment    TranscriptSegment[]
   derivedBoostRequest  VendorBoostRequest?    @relation("vendor_boost_requests_interviewSessionIdTointerview_sessions")
+  vendor               Vendor?                @relation(fields: [vendorId], references: [id])
 
   @@index([createdByUserId])
   @@index([productId])
@@ -6786,6 +6820,8 @@ model ActionItem {
   createdBy    User               @relation("action_items_createdByIdTousers", fields: [createdById], references: [id])
   projects     Project?           @relation(fields: [projectId], references: [id], onDelete: Cascade)
   rooms        Room?              @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  productTag   ProjectProductTag? @relation(fields: [productTagId], references: [id], onDelete: Cascade)
+  sourceNote   MeetingNote?       @relation(fields: [sourceNoteId], references: [id])
 
   @@index([assignedToId, status])
   @@index([productTagId, status])
@@ -6797,14 +6833,16 @@ model ActionItem {
 }
 
 model NoteAttachment {
-  id           String   @id
+  id           String             @id
   noteId       String
   projectId    String?
   roomId       String?
   productTagId String?
-  createdAt    DateTime @default(now())
-  projects     Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  rooms        Room?    @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  createdAt    DateTime           @default(now())
+  projects     Project?           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  rooms        Room?              @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  note         MeetingNote        @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  productTag   ProjectProductTag? @relation(fields: [productTagId], references: [id], onDelete: Cascade)
 
   @@index([noteId])
   @@index([productTagId])
@@ -6836,6 +6874,7 @@ model VendorBoostRequest {
   products            Product                  @relation(fields: [productId], references: [id], onDelete: Cascade)
   projects            Project                  @relation(fields: [projectId], references: [id], onDelete: Cascade)
   users               User                     @relation(fields: [requestedDesignerId], references: [id])
+  vendor              Vendor                   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
 
   @@index([expiresAt])
   @@index([productId])
@@ -6867,4 +6906,309 @@ model VendorInviteCandidate {
   @@index([normalizedKey])
   @@index([status])
   @@map("vendor_invite_candidates")
+}
+
+// =============================================================================
+// Phase 5H2 — Bucket B restoration (2026-04-21)
+// 13 new models + 1 enum (PendingRepInviteStatus) restored from prod introspection
+// via `prisma db pull`. Tables recorded via 13 idempotent CREATE TABLE IF NOT
+// EXISTS migrations in Step 9 (commit a046e29c).
+// Vendor model omits products/atelier inverses —
+// see memory/migration_phase5h2_vendor_product_atelier_drift.md
+// Cross-bucket relations to 5H1 Bucket A models re-attached inline on those
+// Bucket A models above (ActionItem/NoteAttachment/InterviewSession/
+// EventVendorEdge/VendorBoostRequest).
+// =============================================================================
+
+// --- Enum ---
+
+enum PendingRepInviteStatus {
+  PENDING
+  CLAIMED
+  CANCELLED
+}
+
+// --- Bucket B models ---
+
+model ProjectProductTag {
+  id             String           @id
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @default(now())
+  projectId      String
+  projectImageId String?
+  productId      String
+  x              Float?
+  y              Float?
+  roomName       String?
+  notes          String?
+  ActionItem     ActionItem[]
+  NoteAttachment NoteAttachment[]
+  products       Product          @relation(fields: [productId], references: [id], onDelete: Cascade)
+  projects       Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project_images ProjectImage?    @relation(fields: [projectImageId], references: [id], onDelete: Cascade)
+
+  @@map("project_product_tags")
+}
+
+model MeetingNote {
+  id             String           @id
+  projectId      String
+  sourceType     String
+  title          String?
+  rawText        String?
+  transcriptUrl  String?
+  metadata       Json?
+  status         String           @default("ready")
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @default(now())
+  ActionItem     ActionItem[]
+  projects       Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  NoteAttachment NoteAttachment[]
+
+  @@index([createdAt])
+  @@index([projectId])
+  @@map("meeting_notes")
+}
+
+model Vendor {
+  id                 String               @id
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @default(now())
+  name               String
+  website            String?
+  logoUrl            String?
+  primaryEmail       String?              @unique
+  country            String?
+  city               String?
+  userId             String?
+  EventVendorEdge    EventVendorEdge[]
+  InterviewSession   InterviewSession[]
+  VendorBoostRequest VendorBoostRequest[]
+  VendorPreviewToken VendorPreviewToken[]
+
+  @@map("vendors")
+}
+
+model VendorPreviewToken {
+  id        String    @id
+  createdAt DateTime  @default(now())
+  expiresAt DateTime
+  token     String    @unique
+  vendorId  String?
+  productId String
+  projectId String
+  usedAt    DateTime?
+  products  Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  projects  Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  Vendor    Vendor?   @relation(fields: [vendorId], references: [id])
+
+  @@index([expiresAt])
+  @@index([token])
+  @@map("vendor_preview_tokens")
+}
+
+model PendingRepInvite {
+  id                   String                 @id
+  email                String
+  vendorOrganizationId String?
+  designerId           String?
+  projectId            String?
+  projectTagId         String?
+  status               PendingRepInviteStatus @default(PENDING)
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime
+  token                String                 @unique
+  repUserId            String?
+  designer             User?                  @relation("pending_rep_invites_designerIdTousers", fields: [designerId], references: [id])
+  projects             Project?               @relation(fields: [projectId], references: [id])
+  product_tags         ProductTag?            @relation(fields: [projectTagId], references: [id])
+  repUser              User?                  @relation("pending_rep_invites_repUserIdTousers", fields: [repUserId], references: [id])
+  organizations        Organization?          @relation(fields: [vendorOrganizationId], references: [id])
+
+  @@index([email])
+  @@index([status])
+  @@index([vendorOrganizationId])
+  @@map("pending_rep_invites")
+}
+
+model VendorProductMatchScore {
+  id                 String   @id
+  vendorId           String
+  productId          String
+  designerId         String
+  styleMatchScore    Float    @default(0.0)
+  projectMatchScore  Float    @default(0.0)
+  budgetMatchScore   Float    @default(0.0)
+  locationMatchScore Float    @default(0.0)
+  overallMatchScore  Float    @default(0.0)
+  projectId          String?
+  eventId            String?
+  hasViewed          Boolean  @default(false)
+  hasSaved           Boolean  @default(false)
+  hasTagged          Boolean  @default(false)
+  updatedAt          DateTime @default(now())
+  createdAt          DateTime @default(now())
+  users              User     @relation(fields: [designerId], references: [id], onDelete: Cascade)
+
+  @@unique([vendorId, productId, designerId])
+  @@index([designerId])
+  @@index([eventId])
+  @@index([overallMatchScore])
+  @@index([vendorId, productId])
+  @@map("vendor_product_match_scores")
+}
+
+model RoomIntent {
+  id                   String   @id
+  projectId            String
+  roomId               String?
+  roomName             String
+  moodKeywords         String[] @default([])
+  palette              Json?
+  functionalGoals      Json?
+  mustHaves            Json?
+  niceToHaves          Json?
+  constraints          Json?
+  optionPolicyOverride Int?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @default(now())
+  projects             Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([roomId])
+  @@map("room_intents")
+}
+
+model ProjectLifecycleScore {
+  id                        String       @id
+  projectId                 String
+  designerId                String
+  currentStage              ProjectStage
+  procurementReadinessScore Float        @default(0.0)
+  budgetClarityScore        Float        @default(0.0)
+  timelineUrgencyScore      Float        @default(0.0)
+  overallLifecycleScore     Float        @default(0.0)
+  hasActiveSelections       Boolean      @default(false)
+  hasPendingQuotes          Boolean      @default(false)
+  hasRecentActivity         Boolean      @default(false)
+  lastActivityAt            DateTime?
+  estimatedProcurementDate  DateTime?
+  updatedAt                 DateTime     @default(now())
+  createdAt                 DateTime     @default(now())
+  users                     User         @relation(fields: [designerId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, designerId])
+  @@index([currentStage])
+  @@index([designerId])
+  @@index([overallLifecycleScore])
+  @@index([projectId])
+  @@map("project_lifecycle_scores")
+}
+
+model ProjectIntent {
+  id                  String   @id
+  projectId           String   @unique
+  summary             String?
+  clientProfile       Json?
+  moodKeywords        String[] @default([])
+  styleTags           String[] @default([])
+  budgetLevel         String?
+  keyObjectives       Json?
+  constraints         Json?
+  optionPolicyDefault Int?
+  rawState            Json?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @default(now())
+  projects            Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@map("project_intents")
+}
+
+model DesignerActivityProfile {
+  id                         String    @id
+  designerId                 String    @unique
+  totalEventsAttended        Int       @default(0)
+  totalProductsSaved         Int       @default(0)
+  totalProjectsActive        Int       @default(0)
+  totalVendorsEngaged        Int       @default(0)
+  eventEngagementScore       Float     @default(0.0)
+  productEngagementScore     Float     @default(0.0)
+  vendorEngagementScore      Float     @default(0.0)
+  preferredEventTypes        String[]  @default([])
+  preferredProductCategories String[]  @default([])
+  preferredVendors           String[]  @default([])
+  activeProjectCount         Int       @default(0)
+  recentSavesCount           Int       @default(0)
+  recentEngagementsCount     Int       @default(0)
+  lastEventAttendedAt        DateTime?
+  lastProductSavedAt         DateTime?
+  lastVendorEngagedAt        DateTime?
+  proximityToPurchaseScore   Float     @default(0.0)
+  lifecycleScore             Float     @default(0.0)
+  updatedAt                  DateTime  @default(now())
+  createdAt                  DateTime  @default(now())
+  users                      User      @relation(fields: [designerId], references: [id], onDelete: Cascade)
+
+  @@index([designerId])
+  @@index([lifecycleScore])
+  @@index([proximityToPurchaseScore])
+  @@map("designer_activity_profiles")
+}
+
+model ProximityToPurchaseIndicator {
+  id                       String    @id
+  designerId               String    @unique
+  proximityScore           Float     @default(0.0)
+  hasActiveProjects        Boolean   @default(false)
+  hasRecentSaves           Boolean   @default(false)
+  hasRecentEngagements     Boolean   @default(false)
+  hasPendingQuotes         Boolean   @default(false)
+  hasRecentEventAttendance Boolean   @default(false)
+  categoryProximityScores  Json?
+  lastPurchaseSignalAt     DateTime?
+  estimatedPurchaseWindow  String?
+  updatedAt                DateTime  @default(now())
+  createdAt                DateTime  @default(now())
+  users                    User      @relation(fields: [designerId], references: [id], onDelete: Cascade)
+
+  @@index([designerId])
+  @@index([proximityScore])
+  @@map("proximity_to_purchase_indicators")
+}
+
+model Follow {
+  id          String   @id
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+  follower    User     @relation("follows_followerIdTousers", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User     @relation("follows_followingIdTousers", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
+  @@map("follows")
+}
+
+model EditorialDraft {
+  id                String   @id
+  projectId         String
+  version           Int      @default(1)
+  status            String   @default("draft")
+  title             String?
+  subtitle          String?
+  outline           Json?
+  bodyMarkdown      String?
+  pullQuotes        Json?
+  suggestedCaptions Json?
+  suggestedAssets   Json?
+  rawState          Json?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @default(now())
+  projects          Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([status])
+  @@map("editorial_drafts")
 }
