@@ -7,3 +7,5 @@
 - [Atelier enum taxonomy deferred](migration_atelier_enum_taxonomy_deferred.md) — AtelierRelationType + AtelierSignalSourceType have divergent schema-vs-prod value sets; 5B.2/5B.3 deferred post-launch pending product decision
 - [Bucket 2 DROP/SET DEFAULT pattern around column type casts](migration_bucket2_drop_set_default_pattern.md) — TEXT→enum conversions with existing column defaults need a 5-statement bracket (DROP DEFAULT → ALTER TYPE → SET DEFAULT); partial apply is not auto-recoverable
 - [Phase 5H restoration triage (41 dangling models)](migration_phase5h_restoration_triage.md) — full A/B/C/D bucket matrix from Phase 5C; 5H1 folder-backed restores, 5H2 hand-managed, 5D deletes phantoms
+- [interview_questions undeclared by design (5H1)](migration_phase5h1_interview_questions_undeclared.md) — table exists in prod, inverse dropped from InterviewSession; no app code references it, add model only if future feature needs Prisma access
+- [Event model drift beyond inverse fields (5H1)](migration_phase5h1_event_drift_beyond_inverse.md) — prod Event has hostProfileId (declared in 5H1) + organization_id/organizations/visibility (deferred) not in schema.prisma
