@@ -56,7 +56,7 @@ model User {
   events                         Event[]                   @relation("EventCreator")
   folders                        Folder[]
   organizationUsers              OrganizationUser[]
-  posts                          posts[]
+  posts                          Post[]
   products                       Product[]                 @relation("VendorProducts")
   designerProjects               Project[]                 @relation("DesignerProjects")
   ownedProjects                  Project[]                 @relation("OwnedProjects")
@@ -108,10 +108,10 @@ model User {
   builderYearsInBusiness    Int?
 
   // Photographer-specific profile fields
-  photographyStyles    String[] // e.g. ["interior", "architectural", "lifestyle", "portrait", "commercial"]
-  travelRadius         String?  // e.g. "Southeast US", "Nationwide", "Orlando Metro"
-  bookingEmail         String?  // separate from account email, for hire inquiries
-  bookingUrl           String?  // external booking link (Calendly, HoneyBook, etc.)
+  photographyStyles String[] // e.g. ["interior", "architectural", "lifestyle", "portrait", "commercial"]
+  travelRadius      String? // e.g. "Southeast US", "Nationwide", "Orlando Metro"
+  bookingEmail      String? // separate from account email, for hire inquiries
+  bookingUrl        String? // external booking link (Calendly, HoneyBook, etc.)
 
   // Commerce & Credit relations
   creditAccount            CreditAccount?
@@ -144,12 +144,12 @@ model User {
   privacyVersion    String? // e.g., "2026-01-19"
 
   // Designer Attribution & Compensation System
-  vendorVisibility          Boolean   @default(false) // Whether vendors can see designer's active specifications
+  vendorVisibility          Boolean         @default(false) // Whether vendors can see designer's active specifications
   vendorVisibilityEnabledAt DateTime? // When visibility was turned on
   influenceScore            Float? // Calculated influence score 0-100
   influenceScoreUpdatedAt   DateTime? // Last score calculation
-  folioCreditBalance        Decimal   @default(0) @db.Decimal(10, 2) // Current Folio Credit balance in USD
-  stripeConnectAccountId    String?   // Stripe Connect account for payouts
+  folioCreditBalance        Decimal         @default(0) @db.Decimal(10, 2) // Current Folio Credit balance in USD
+  stripeConnectAccountId    String? // Stripe Connect account for payouts
   payoutRequests            PayoutRequest[] @relation("UserPayoutRequests")
 
   // Product search and rep contact relations
@@ -202,7 +202,7 @@ model User {
 
   // Prompted Content System
   promptedQuestions PromptedQuestion[] @relation("UserPromptedQuestions")
-  promptedAnswers  PromptedAnswer[]   @relation("UserPromptedAnswers")
+  promptedAnswers   PromptedAnswer[]   @relation("UserPromptedAnswers")
 
   // Event Product Scans
   productScans EventProductScan[]
@@ -216,24 +216,24 @@ model User {
 
   // Interview-first profile system
   interviewProfileExtractedAt DateTime?
-  profileSourcedFromInterview Boolean               @default(false)
-  profileFieldSources        ProfileFieldSource[]
+  profileSourcedFromInterview Boolean              @default(false)
+  profileFieldSources         ProfileFieldSource[]
 
   // Relationship Graph
   followingRelationships UserRelationship[] @relation("Follower")
   followerRelationships  UserRelationship[] @relation("Following")
 
   // Messaging System
-  initiatedConversations  Conversation[]              @relation("InitiatedConversations")
-  receivedConversations   Conversation[]              @relation("ReceivedConversations")
+  initiatedConversations  Conversation[]            @relation("InitiatedConversations")
+  receivedConversations   Conversation[]            @relation("ReceivedConversations")
   sentMessages            Message[]
   conversationMemberships ConversationParticipant[]
   messagingPreferences    MessagingPreferences?
 
   // Sourcebook & Directory Bookmarks
-  sourcebookEntries    SourcebookEntry[]    @relation("UserSourcebookEntries")
-  directoryBookmarks   DirectoryBookmark[]  @relation("UserDirectoryBookmarks")
-  bookmarkedBy         DirectoryBookmark[]  @relation("BookmarkedByUsers")
+  sourcebookEntries  SourcebookEntry[]   @relation("UserSourcebookEntries")
+  directoryBookmarks DirectoryBookmark[] @relation("UserDirectoryBookmarks")
+  bookmarkedBy       DirectoryBookmark[] @relation("BookmarkedByUsers")
 
   // Pending Actions (structured requests awaiting rep signup)
   pendingActions PendingAction[] @relation("UserPendingActions")
@@ -246,15 +246,27 @@ model User {
   repShadowProfile RepShadowProfile? @relation("RepShadowUser")
 
   // Phase 5: Email Integration & Contact Import
-  emailSendPreference    String?  @default("folio") // "folio" | "mailto" | "ask"
-  signatureIncludeFirm   Boolean  @default(true)
-  signatureIncludePhone  Boolean  @default(true)
-  signatureIncludeProfile Boolean @default(true)
-  signatureIncludeEmail  Boolean  @default(false)
-  proxyAddress           ProxyAddress?
-  emailThreads           EmailThread[]        @relation("UserEmailThreads")
-  designerContacts       DesignerContact[]    @relation("UserDesignerContacts")
-  contactImportJobs      ContactImportJob[]   @relation("UserContactImportJobs")
+  emailSendPreference     String?            @default("folio") // "folio" | "mailto" | "ask"
+  signatureIncludeFirm    Boolean            @default(true)
+  signatureIncludePhone   Boolean            @default(true)
+  signatureIncludeProfile Boolean            @default(true)
+  signatureIncludeEmail   Boolean            @default(false)
+  proxyAddress            ProxyAddress?
+  emailThreads            EmailThread[]      @relation("UserEmailThreads")
+  designerContacts        DesignerContact[]  @relation("UserDesignerContacts")
+  contactImportJobs       ContactImportJob[] @relation("UserContactImportJobs")
+
+  // --- Phase 5H1 Bucket A inverse relations ---
+  actionItemsAssigned    ActionItem[]            @relation("action_items_assignedToIdTousers")
+  actionItemsCreated     ActionItem[]            @relation("action_items_createdByIdTousers")
+  eventContacts          EventContact[]
+  eventDesignerEdges     EventDesignerEdge[]
+  eventHostProfile       EventHostProfile?
+  eventInvites           EventInvite[]
+  eventRepEdges          EventRepEdge[]
+  interviewSessions      InterviewSession[]
+  vendorBoostRequests    VendorBoostRequest[]
+  vendorInviteCandidates VendorInviteCandidate[]
 
   @@map("users")
 }
@@ -306,7 +318,7 @@ model Event {
   bookings                 bookings[]
   clicks                   clicks[]
   engagementEvents         EngagementEvent[]
-  event_metrics            event_metrics?
+  eventMetrics             EventMetrics?
   productStats             EventProductStat[]
   event_products           event_products[]
   rsvps                    EventRSVP[]
@@ -320,6 +332,17 @@ model Event {
   workflowJobs             EventWorkflowJob[]
   productScans             EventProductScan[]
   visitRecords             VisitRecord[]
+
+  // --- Phase 5H1 Bucket A inverse relations ---
+  hostProfileId          String?
+  hostProfile            EventHostProfile?       @relation(fields: [hostProfileId], references: [id])
+  eventDesignerEdges     EventDesignerEdge[]
+  eventEngagementMetrics EventEngagementMetrics?
+  eventInvites           EventInvite[]
+  eventProductEdges      EventProductEdge[]
+  eventRelationshipEdges EventRelationshipEdge[]
+  eventRepEdges          EventRepEdge[]
+  eventVendorEdges       EventVendorEdge[]
 
   @@index([parentFestivalId])
   @@index([city])
@@ -447,9 +470,16 @@ model Project {
   designJourney        ProjectDesignJourney?
 
   // Phase 3: Project-Level Actions
-  targetInstallDate    DateTime?
-  productPricing       ProjectProductPricing[]
-  bulkPricingRequests  BulkPricingRequest[]
+  targetInstallDate   DateTime?
+  productPricing      ProjectProductPricing[]
+  bulkPricingRequests BulkPricingRequest[]
+
+  // --- Phase 5H1 Bucket A inverse relations ---
+  actionItems            ActionItem[]
+  interviewSessions      InterviewSession[]
+  noteAttachments        NoteAttachment[]
+  vendorBoostRequests    VendorBoostRequest[]
+  vendorInviteCandidates VendorInviteCandidate[]
 
   @@map("projects")
 }
@@ -549,30 +579,30 @@ model MomentIndex {
 }
 
 model Product {
-  id               String             @id @default(uuid())
-  name             String
-  description      String?
-  price            Float?
-  imageUrl         String?
-  cutoutImageUrl   String?
-  threeDAssetUrl   String?
+  id                String             @id @default(uuid())
+  name              String
+  description       String?
+  price             Float?
+  imageUrl          String?
+  cutoutImageUrl    String?
+  threeDAssetUrl    String?
   mesh3dStatus      String?
   mesh3dError       String?
   mesh3dGeneratedAt DateTime?
   mesh3dSourceTagId String?
-  scenePresetId    String?   // e.g. 'sunset', 'dawn', 'concrete'. Null = auto-select by category
-  category         String?
-  brand            String?
-  url              String?
-  isPending        Boolean            @default(false)
-  createdAt        DateTime           @default(now())
-  updatedAt        DateTime           @updatedAt
-  vendorId         String?
-  engagementEvents EngagementEvent[]
-  productStats     EventProductStat[]
-  folderProducts   FolderProduct[]
-  tags             ProductTag[]
-  vendor           User?              @relation("VendorProducts", fields: [vendorId], references: [id])
+  scenePresetId     String? // e.g. 'sunset', 'dawn', 'concrete'. Null = auto-select by category
+  category          String?
+  brand             String?
+  url               String?
+  isPending         Boolean            @default(false)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  vendorId          String?
+  engagementEvents  EngagementEvent[]
+  productStats      EventProductStat[]
+  folderProducts    FolderProduct[]
+  tags              ProductTag[]
+  vendor            User?              @relation("VendorProducts", fields: [vendorId], references: [id])
 
   // Commerce relations
   orderItems OrderItem[]
@@ -608,11 +638,17 @@ model Product {
   pendingActions PendingAction[] @relation("ProductPendingActions")
 
   // Phase 3: Project-Level Actions
-  projectPricing   ProjectProductPricing[]
-  actionItemSignals ActionItemSignal[] @relation("ProductActionSignals")
+  projectPricing    ProjectProductPricing[]
+  actionItemSignals ActionItemSignal[]      @relation("ProductActionSignals")
 
   // In Context Boost System
   inContextBoosts InContextBoost[] @relation("ProductInContextBoosts")
+
+  // --- Phase 5H1 Bucket A inverse relations ---
+  eventProductEdges   EventProductEdge[]
+  interviewSessions   InterviewSession[]
+  quoteHighlights     QuoteHighlight[]
+  vendorBoostRequests VendorBoostRequest[]
 
   @@map("products")
 }
@@ -665,7 +701,7 @@ model Folder {
   designerId String
   products   FolderProduct[]
   designer   User            @relation(fields: [designerId], references: [id])
-  posts      posts[]
+  posts      Post[]
 
   @@map("folders")
 }
@@ -721,6 +757,10 @@ model Room {
   project       Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
   selections    Selection[]
   skeletonItems SkeletonItem[]
+
+  // --- Phase 5H1 Bucket A inverse relations ---
+  actionItems     ActionItem[]
+  noteAttachments NoteAttachment[]
 
   @@map("rooms")
 }
@@ -886,17 +926,17 @@ model Organization {
 
   // Territory & Governance (Phase 3)
   territoryLockEnabled  Boolean @default(false) // soft lock opt-in for vendor orgs
-  dormancyThresholdDays Int     @default(30)    // days before flagging dormant
+  dormancyThresholdDays Int     @default(30) // days before flagging dormant
 
   // Territory assignments where this vendor org assigned reps
-  territoryAssignments OrgTerritoryAssignment[] @relation("VendorTerritoryAssignments")
+  territoryAssignments       OrgTerritoryAssignment[] @relation("VendorTerritoryAssignments")
   // Territory assignments where this design org is the assigned account
   assignedAsTerritoryAccount OrgTerritoryAssignment[] @relation("DesignerTerritoryAssignments")
 
   // Interview-first profile system
   interviewProfileExtractedAt DateTime?
   profileSourcedFromInterview Boolean              @default(false)
-  profileFieldSources        ProfileFieldSource[]
+  profileFieldSources         ProfileFieldSource[]
 
   // Messaging System
   orgInitiatedConversations Conversation[] @relation("OrgInitiatedConversations")
@@ -904,9 +944,9 @@ model Organization {
   orgSentMessages           Message[]
 
   // Phase 3: Project-Level Actions
-  bulkPricingRequests        BulkPricingRequest[]  @relation("VendorBulkRequests")
-  vendorActionItemSignals    ActionItemSignal[]    @relation("VendorActionSignals")
-  designerActionItemSignals  ActionItemSignal[]    @relation("DesignerActionSignals")
+  bulkPricingRequests       BulkPricingRequest[] @relation("VendorBulkRequests")
+  vendorActionItemSignals   ActionItemSignal[]   @relation("VendorActionSignals")
+  designerActionItemSignals ActionItemSignal[]   @relation("DesignerActionSignals")
 
   // Phase 4: Shadow Profiles
   vendorShadowProfile VendorShadowProfile? @relation("VendorShadowOrg")
@@ -1036,7 +1076,7 @@ model clicks {
   events     Event    @relation(fields: [eventId], references: [id])
 }
 
-model event_metrics {
+model EventMetrics {
   id          String @id
   eventId     String @unique
   views       Int    @default(0)
@@ -1047,7 +1087,9 @@ model event_metrics {
   bookings    Int    @default(0)
   ctr         Float  @default(0)
   quality     Float  @default(0)
-  events      Event  @relation(fields: [eventId], references: [id])
+  event       Event  @relation(fields: [eventId], references: [id])
+
+  @@map("event_metrics")
 }
 
 model event_products {
@@ -1082,7 +1124,7 @@ model placements {
   events    Event    @relation(fields: [eventId], references: [id])
 }
 
-model post_items {
+model PostItem {
   id           String   @id
   postId       String
   productName  String
@@ -1090,20 +1132,24 @@ model post_items {
   affiliateUrl String?
   section      String?
   createdAt    DateTime @default(now())
-  posts        posts    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  post         Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@map("post_items")
 }
 
-model posts {
-  id         String       @id
+model Post {
+  id         String     @id
   title      String
   designerId String
   folderId   String?
   content    String?
-  createdAt  DateTime     @default(now())
+  createdAt  DateTime   @default(now())
   updatedAt  DateTime
-  post_items post_items[]
-  users      User         @relation(fields: [designerId], references: [id], onDelete: Cascade)
-  folders    Folder?      @relation(fields: [folderId], references: [id])
+  postItems  PostItem[]
+  users      User       @relation(fields: [designerId], references: [id], onDelete: Cascade)
+  folders    Folder?    @relation(fields: [folderId], references: [id])
+
+  @@map("posts")
 }
 
 enum Role {
@@ -1384,14 +1430,14 @@ model ProjectPost {
   sourceArticleTopic     ArticleTopic?  @relation("TopicPublishedPost")
 
   // Prompted Content: Story Threads
-  storyThreads           StoryThread[]
+  storyThreads StoryThread[]
 
   // Section editing (Phase C)
-  sectionOverrides   Json?    @map("section_overrides")
-  sectionHistory     Json?    @map("section_history")
-  lastGenerationNote String?  @map("last_generation_note") @db.Text
+  sectionOverrides   Json?   @map("section_overrides")
+  sectionHistory     Json?   @map("section_history")
+  lastGenerationNote String? @map("last_generation_note") @db.Text
 
-  postSaves              PostSave[]
+  postSaves PostSave[]
 
   @@map("project_posts")
 }
@@ -2378,11 +2424,11 @@ model PayoutRequest {
   id               String    @id @default(cuid())
   userId           String
   user             User      @relation("UserPayoutRequests", fields: [userId], references: [id], onDelete: Cascade)
-  amountCents      Int       // Requested amount
+  amountCents      Int // Requested amount
   platformFeeCents Int       @default(0) // Folio fee on cash-out (incentivize platform spending)
-  netPayoutCents   Int       // amountCents - platformFeeCents
+  netPayoutCents   Int // amountCents - platformFeeCents
   status           String    @default("PENDING") // PENDING, PROCESSING, COMPLETED, FAILED
-  stripeTransferId String?   // Stripe transfer ID
+  stripeTransferId String? // Stripe transfer ID
   failureReason    String?
   processedAt      DateTime?
   createdAt        DateTime  @default(now())
@@ -3489,10 +3535,10 @@ model InContextBoost {
 
   // Designer who tagged the product
   designerId String
-  designer   User @relation("DesignerInContextBoosts", fields: [designerId], references: [id])
+  designer   User   @relation("DesignerInContextBoosts", fields: [designerId], references: [id])
 
   // Vendor being asked to boost (organization or user)
-  vendorId    String? // Organization ID (if vendor account exists)
+  vendorId     String? // Organization ID (if vendor account exists)
   vendorUserId String? // Vendor user ID (if vendor account exists)
 
   // Rep outreach (if no vendor account)
@@ -3500,7 +3546,7 @@ model InContextBoost {
   repName  String? // Sales rep name
 
   // Status flow: PENDING_REVIEW → NOTIFIED → VIEWED → APPROVED/DECLINED/EXPIRED
-  status     String   @default("PENDING_REVIEW")
+  status     String    @default("PENDING_REVIEW")
   notifiedAt DateTime?
   viewedAt   DateTime?
   reviewedAt DateTime?
@@ -3511,8 +3557,8 @@ model InContextBoost {
   declineReason     String?
 
   // Follow-up Q&A (triggered on approval)
-  followUpQuestion    String?  @db.Text // Question for designer about this product usage
-  followUpAnswer      String?  @db.Text // Designer's response
+  followUpQuestion    String?   @db.Text // Question for designer about this product usage
+  followUpAnswer      String?   @db.Text // Designer's response
   followUpRequestedAt DateTime?
   followUpAnsweredAt  DateTime?
 
@@ -3525,14 +3571,14 @@ model InContextBoost {
   photoUsageScope    String? // 'product_page', 'magazine', 'social', 'all'
 
   // Revenue tracking — per-click/per-like, vendor pays, Folio takes 30%
-  impressions           Int     @default(0)
-  clicks                Int     @default(0)
-  likes                 Int     @default(0)
-  lastBilledImpressions Int     @default(0) // Impressions at last billing
-  lastBilledClicks      Int     @default(0) // Clicks at last billing
-  designerPayoutCents   Int     @default(0) // 70% of revenue
-  folioRevenueCents     Int     @default(0) // 30% of revenue
-  vendorSpendCents      Int     @default(0) // Total vendor spend
+  impressions           Int       @default(0)
+  clicks                Int       @default(0)
+  likes                 Int       @default(0)
+  lastBilledImpressions Int       @default(0) // Impressions at last billing
+  lastBilledClicks      Int       @default(0) // Clicks at last billing
+  designerPayoutCents   Int       @default(0) // 70% of revenue
+  folioRevenueCents     Int       @default(0) // 30% of revenue
+  vendorSpendCents      Int       @default(0) // Total vendor spend
   lastBilledAt          DateTime?
 
   // Photographer licensing
@@ -3621,14 +3667,16 @@ model VendorPrompt {
 
 // Vendor invite signals for vendors not yet on platform
 model VendorInviteSignal {
-  id          String    @id @default(cuid())
-  vendorName  String
-  signalType  String // 'TESTIMONIAL_AVAILABLE', 'PRODUCT_TAG', etc.
-  projectId   String?
-  designerId  String?
-  metadata    Json?
-  processedAt DateTime?
-  createdAt   DateTime  @default(now())
+  id                      String                 @id @default(cuid())
+  vendorName              String
+  signalType              String // 'TESTIMONIAL_AVAILABLE', 'PRODUCT_TAG', etc.
+  projectId               String?
+  designerId              String?
+  metadata                Json?
+  processedAt             DateTime?
+  createdAt               DateTime               @default(now())
+  vendorInviteCandidate   VendorInviteCandidate? @relation(fields: [vendorInviteCandidateId], references: [id])
+  vendorInviteCandidateId String?
 
   @@index([vendorName])
   @@index([signalType])
@@ -3809,8 +3857,8 @@ model OrgBioInterview {
   updatedAt   DateTime  @updatedAt
 
   // Interview-first profile: conversational interview format
-  conversationalAnswers Json?   // { questionId: answer } for 7-question conversational format
-  interviewFormat       String  @default("layered") // "layered" (legacy) or "conversational" (new)
+  conversationalAnswers Json? // { questionId: answer } for 7-question conversational format
+  interviewFormat       String @default("layered") // "layered" (legacy) or "conversational" (new)
 
   // Bio import
   importedBioText       String?   @db.Text
@@ -3825,13 +3873,13 @@ model OrgBioInterview {
 }
 
 model InterviewQuestionCoverage {
-  id                   String  @id @default(cuid())
-  orgBioInterviewId    String?
-  questionId           String
-  depth                String  // FULL | PARTIAL | NONE
-  extractedAnswer      String? @db.Text
-  gapNote              String?
-  askedInFollowUp      Boolean @default(false)
+  id                String  @id @default(cuid())
+  orgBioInterviewId String?
+  questionId        String
+  depth             String // FULL | PARTIAL | NONE
+  extractedAnswer   String? @db.Text
+  gapNote           String?
+  askedInFollowUp   Boolean @default(false)
 
   orgBioInterview OrgBioInterview? @relation(fields: [orgBioInterviewId], references: [id])
 
@@ -3979,7 +4027,7 @@ model Save {
 
   // Provenance
   source String? // e.g. "EVENT_SCAN", "MANUAL", "BROWSE"
-  meta   Json?   // e.g. { eventId, scannedAt }
+  meta   Json? // e.g. { eventId, scannedAt }
 
   // Conversion tracking
   converted   Boolean   @default(false)
@@ -5408,32 +5456,32 @@ enum PromptedQuestionStatus {
 }
 
 model PromptedQuestion {
-  id              String   @id @default(cuid())
-  targetUserId    String
-  questionText    String   @db.Text
-  questionType    PromptedQuestionType @default(BIO_REFLECTIVE)
+  id           String               @id @default(cuid())
+  targetUserId String
+  questionText String               @db.Text
+  questionType PromptedQuestionType @default(BIO_REFLECTIVE)
 
   // Provenance — where this question came from
-  provenance      Json     // { sourceType, bioExcerptRef?, patternDescription?, storyThreadId?, parentAnswerId? }
-  atelierSignals  Json?    // { cluster, expectedSignals[] }
+  provenance     Json // { sourceType, bioExcerptRef?, patternDescription?, storyThreadId?, parentAnswerId? }
+  atelierSignals Json? // { cluster, expectedSignals[] }
 
   // Delivery
-  priority        Float    @default(0.5)
-  deliveryContext String   @default("feed_card") // feed_card, profile_dashboard, notification, post_bio_prompt
+  priority        Float     @default(0.5)
+  deliveryContext String    @default("feed_card") // feed_card, profile_dashboard, notification, post_bio_prompt
   deliveredAt     DateTime?
   expiresAt       DateTime?
 
   // Status
-  status          PromptedQuestionStatus @default(GENERATED)
+  status PromptedQuestionStatus @default(GENERATED)
 
   // Relations
-  targetUser      User     @relation("UserPromptedQuestions", fields: [targetUserId], references: [id], onDelete: Cascade)
-  answers         PromptedAnswer[]
-  parentAnswer    PromptedAnswer?  @relation("FollowUpQuestions", fields: [parentAnswerId], references: [id])
-  parentAnswerId  String?
+  targetUser     User             @relation("UserPromptedQuestions", fields: [targetUserId], references: [id], onDelete: Cascade)
+  answers        PromptedAnswer[]
+  parentAnswer   PromptedAnswer?  @relation("FollowUpQuestions", fields: [parentAnswerId], references: [id])
+  parentAnswerId String?
 
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([targetUserId, status])
   @@index([status, priority])
@@ -5441,31 +5489,31 @@ model PromptedQuestion {
 }
 
 model PromptedAnswer {
-  id              String   @id @default(cuid())
-  questionId      String
-  userId          String
-  answerText      String   @db.Text
-  videoUrl        String?
-  transcriptRaw   String?  @db.Text
+  id            String  @id @default(cuid())
+  questionId    String
+  userId        String
+  answerText    String  @db.Text
+  videoUrl      String?
+  transcriptRaw String? @db.Text
 
   // Bio enrichment
-  profileQAId     String?
-  bioEnriched     Boolean  @default(false)
+  profileQAId String?
+  bioEnriched Boolean @default(false)
 
   // Article contribution
-  consentToQuote    Boolean  @default(true)
-  storyThreadIds    String[]
-  pullQuoteExcerpt  String?  @db.Text
+  consentToQuote   Boolean  @default(true)
+  storyThreadIds   String[]
+  pullQuoteExcerpt String?  @db.Text
 
   // Follow-ups
   followUpQuestions PromptedQuestion[] @relation("FollowUpQuestions")
 
   // Relations
-  question        PromptedQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
-  user            User             @relation("UserPromptedAnswers", fields: [userId], references: [id], onDelete: Cascade)
+  question PromptedQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  user     User             @relation("UserPromptedAnswers", fields: [userId], references: [id], onDelete: Cascade)
 
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([userId])
   @@index([questionId])
@@ -5473,31 +5521,31 @@ model PromptedAnswer {
 }
 
 model StoryThread {
-  id                   String            @id @default(cuid())
-  status               StoryThreadStatus @default(FORMING)
+  id     String            @id @default(cuid())
+  status StoryThreadStatus @default(FORMING)
 
-  themeDescription     String   @db.Text
-  themeEmbedding       Unsupported("vector(1536)")?
-  proposedAngle        String?  @db.Text
-  proposedTitle        String?
+  themeDescription String                       @db.Text
+  themeEmbedding   Unsupported("vector(1536)")?
+  proposedAngle    String?                      @db.Text
+  proposedTitle    String?
 
-  contributingAnswers  Json     // [{ answerId, userId, relevanceScore, pullQuoteCandidate }]
-  supportingContext    Json     @default("[]")
+  contributingAnswers Json // [{ answerId, userId, relevanceScore, pullQuoteCandidate }]
+  supportingContext   Json @default("[]")
 
-  narrativeTension     Float    @default(0)
-  perspectiveDiversity Float    @default(0)
-  emotionalWeight      Float    @default(0)
-  specificityScore     Float    @default(0)
-  compositeScore       Float    @default(0)
+  narrativeTension     Float @default(0)
+  perspectiveDiversity Float @default(0)
+  emotionalWeight      Float @default(0)
+  specificityScore     Float @default(0)
+  compositeScore       Float @default(0)
 
-  readyThresholds      Json     @default("{\"minContributors\": 3, \"minTensionScore\": 0.4, \"minSpecificityScore\": 0.5}")
+  readyThresholds Json @default("{\"minContributors\": 3, \"minTensionScore\": 0.4, \"minSpecificityScore\": 0.5}")
 
-  articlePostId        String?
-  articlePost          ProjectPost? @relation(fields: [articlePostId], references: [id])
+  articlePostId String?
+  articlePost   ProjectPost? @relation(fields: [articlePostId], references: [id])
 
-  createdAt            DateTime @default(now())
-  lastActivityAt       DateTime @default(now())
-  staleAfter           DateTime
+  createdAt      DateTime @default(now())
+  lastActivityAt DateTime @default(now())
+  staleAfter     DateTime
 
   @@index([status])
   @@index([compositeScore])
@@ -5608,8 +5656,8 @@ model OrgTerritoryAssignment {
   designerOrgId String
   designerOrg   Organization @relation("DesignerTerritoryAssignments", fields: [designerOrgId], references: [id])
 
-  assignedBy String   // org admin who made the assignment
-  assignedAt DateTime @default(now())
+  assignedBy String // org admin who made the assignment
+  assignedAt DateTime  @default(now())
   expiresAt  DateTime? // optional expiry for temporary assignments
 
   @@unique([vendorOrgId, designerOrgId]) // one primary rep per designer org
@@ -5652,32 +5700,32 @@ enum RelationshipTier {
 }
 
 model UserRelationship {
-  id              String           @id @default(cuid())
-  followerId      String
-  followingId     String
-  follower        User             @relation("Follower", fields: [followerId], references: [id])
-  following       User             @relation("Following", fields: [followingId], references: [id])
+  id          String @id @default(cuid())
+  followerId  String
+  followingId String
+  follower    User   @relation("Follower", fields: [followerId], references: [id])
+  following   User   @relation("Following", fields: [followingId], references: [id])
 
   // Tier classification
-  tier            RelationshipTier @default(FOLLOW)
-  tierUpdatedAt   DateTime         @default(now())
-  isMutual        Boolean          @default(false)
+  tier          RelationshipTier @default(FOLLOW)
+  tierUpdatedAt DateTime         @default(now())
+  isMutual      Boolean          @default(false)
 
   // Firm connection qualifying signals
-  qrExchangeCount    Int           @default(0)
-  messageCount       Int           @default(0)
-  specExchangeCount  Int           @default(0)
-  sharedProjectCount Int           @default(0)
-  tagOverlapCount    Int           @default(0)
-  coEventCount       Int           @default(0)
+  qrExchangeCount    Int       @default(0)
+  messageCount       Int       @default(0)
+  specExchangeCount  Int       @default(0)
+  sharedProjectCount Int       @default(0)
+  tagOverlapCount    Int       @default(0)
+  coEventCount       Int       @default(0)
   lastActivityAt     DateTime?
 
   // Scoring
   engagementScore     Float?
   engagementUpdatedAt DateTime?
 
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([followerId, followingId])
   @@index([followingId])
@@ -5699,11 +5747,11 @@ model Conversation {
   // Thread metadata
   subject String?
   context ConversationContext @default(GENERAL)
-  status  ConversationStatus @default(ACTIVE)
+  status  ConversationStatus  @default(ACTIVE)
 
   // Structured request categorization
   category       MessageCategory @default(GENERAL)
-  structuredData Json?           // Action-specific payload (quantity, timeline, finish, etc.)
+  structuredData Json? // Action-specific payload (quantity, timeline, finish, etc.)
 
   // Attribution context (for vendor → designer threads)
   attributionNote String?
@@ -5724,7 +5772,7 @@ model Conversation {
   recipientOrg  Organization? @relation("OrgReceivedConversations", fields: [recipientOrgId], references: [id])
 
   // Email thread linkage
-  emailThread   EmailThread?  @relation("EmailThreadConversation")
+  emailThread EmailThread? @relation("EmailThreadConversation")
 
   @@index([recipientOrgId, status])
   @@index([recipientUserId, status])
@@ -5790,10 +5838,10 @@ model MessagingPreferences {
   pushOnNewMessage Boolean @default(true)
 
   // Per-category notification preferences (Phase 5)
-  emailOnSampleRequest Boolean @default(true)
-  emailOnQuoteRequest  Boolean @default(true)
+  emailOnSampleRequest  Boolean @default(true)
+  emailOnQuoteRequest   Boolean @default(true)
   emailOnReorderRequest Boolean @default(true)
-  emailOnCollaboration Boolean @default(true)
+  emailOnCollaboration  Boolean @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -5843,13 +5891,13 @@ enum PendingActionStatus {
 
 // PostSave: bookmark/save for editorial posts (separate from product Save)
 model PostSave {
-  id            String      @id @default(cuid())
+  id            String   @id @default(cuid())
   userId        String
   projectPostId String
-  createdAt     DateTime    @default(now())
+  createdAt     DateTime @default(now())
 
-  user          User        @relation("UserPostSaves", fields: [userId], references: [id], onDelete: Cascade)
-  projectPost   ProjectPost @relation(fields: [projectPostId], references: [id], onDelete: Cascade)
+  user        User        @relation("UserPostSaves", fields: [userId], references: [id], onDelete: Cascade)
+  projectPost ProjectPost @relation(fields: [projectPostId], references: [id], onDelete: Cascade)
 
   @@unique([userId, projectPostId])
   @@index([userId, createdAt])
@@ -5896,21 +5944,21 @@ model DirectoryBookmark {
 // ─── Pending Actions (queued requests for invited reps) ───────────
 
 model PendingAction {
-  id           String              @id @default(cuid())
-  senderId     String
-  actionType   MessageCategory
-  productId    String
-  targetEmail  String
-  targetName   String
-  targetOrgId  String?
-  payload      Json
-  status       PendingActionStatus @default(PENDING)
+  id             String              @id @default(cuid())
+  senderId       String
+  actionType     MessageCategory
+  productId      String
+  targetEmail    String
+  targetName     String
+  targetOrgId    String?
+  payload        Json
+  status         PendingActionStatus @default(PENDING)
   inviteSentAt   DateTime?
   reminderSentAt DateTime?
   deliveredAt    DateTime?
   expiredAt      DateTime?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
 
   sender  User    @relation("UserPendingActions", fields: [senderId], references: [id], onDelete: Cascade)
   product Product @relation("ProductPendingActions", fields: [productId], references: [id], onDelete: Cascade)
@@ -5924,46 +5972,46 @@ model PendingAction {
 // ─── Phase 3: Project-Level Actions ───────────────────────────────
 
 model ProjectProductPricing {
-  id              String    @id @default(cuid())
-  projectId       String
-  productId       String
-  roomId          String?
+  id        String  @id @default(cuid())
+  projectId String
+  productId String
+  roomId    String?
 
   // Pricing
-  unitPriceTrade  Decimal?  @db.Decimal(10, 2)
-  unitPriceRetail Decimal?  @db.Decimal(10, 2)
-  quantity        Int       @default(1)
+  unitPriceTrade  Decimal? @db.Decimal(10, 2)
+  unitPriceRetail Decimal? @db.Decimal(10, 2)
+  quantity        Int      @default(1)
   unit            String?
 
   // Quote metadata
-  quotedById      String?
-  quotedByName    String?
-  quotedByEmail   String?
-  quotedAt        DateTime?
-  validThrough    DateTime?
-  quoteSource     String    @default("MANUAL")
+  quotedById    String?
+  quotedByName  String?
+  quotedByEmail String?
+  quotedAt      DateTime?
+  validThrough  DateTime?
+  quoteSource   String    @default("MANUAL")
 
   // Lead time
-  leadTimeWeeks   Int?
-  availability    String?
+  leadTimeWeeks    Int?
+  availability     String?
   availabilityNote String?
 
   // COM/COL
   isCustomMaterial Boolean  @default(false)
-  comVendor       String?
+  comVendor        String?
   comMaterial      String?
   comSku           String?
-  comYardage       Decimal?  @db.Decimal(10, 2)
+  comYardage       Decimal? @db.Decimal(10, 2)
 
   // Status
-  status          String    @default("NOT_REQUESTED")
+  status String @default("NOT_REQUESTED")
 
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  project         Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  product         Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
-  quotedBy        User?     @relation("QuotedByUser", fields: [quotedById], references: [id], onDelete: SetNull)
+  project  Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  product  Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  quotedBy User?   @relation("QuotedByUser", fields: [quotedById], references: [id], onDelete: SetNull)
 
   @@unique([projectId, productId, roomId])
   @@index([projectId])
@@ -5973,30 +6021,30 @@ model ProjectProductPricing {
 }
 
 model BulkPricingRequest {
-  id              String    @id @default(cuid())
-  projectId       String
-  vendorOrgId     String?
-  vendorName      String
-  repId           String?
-  repName         String?
-  repEmail        String?
+  id          String  @id @default(cuid())
+  projectId   String
+  vendorOrgId String?
+  vendorName  String
+  repId       String?
+  repName     String?
+  repEmail    String?
 
-  productIds      String[]  @default([])
-  timeline        String?
-  designerNote    String?
-  tradeStatus     String?
+  productIds   String[] @default([])
+  timeline     String?
+  designerNote String?
+  tradeStatus  String?
 
-  status          String    @default("SENT")
-  sentAt          DateTime  @default(now())
-  respondedAt     DateTime?
-  conversationId  String?
+  status         String    @default("SENT")
+  sentAt         DateTime  @default(now())
+  respondedAt    DateTime?
+  conversationId String?
 
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  project         Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  vendorOrg       Organization? @relation("VendorBulkRequests", fields: [vendorOrgId], references: [id], onDelete: SetNull)
-  rep             User?         @relation("BulkRequestRep", fields: [repId], references: [id], onDelete: SetNull)
+  project   Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  vendorOrg Organization? @relation("VendorBulkRequests", fields: [vendorOrgId], references: [id], onDelete: SetNull)
+  rep       User?         @relation("BulkRequestRep", fields: [repId], references: [id], onDelete: SetNull)
 
   @@index([projectId])
   @@index([vendorOrgId])
@@ -6005,31 +6053,31 @@ model BulkPricingRequest {
 }
 
 model ActionItemSignal {
-  id              String    @id @default(cuid())
-  actionType      String
-  productId       String
-  vendorOrgId     String?
-  projectId       String?
-  designerOrgId   String
+  id            String  @id @default(cuid())
+  actionType    String
+  productId     String
+  vendorOrgId   String?
+  projectId     String?
+  designerOrgId String
 
-  quantity        Int?
-  unit            String?
-  timeline        String?
-  projectType     String?
-  location        String?
+  quantity    Int?
+  unit        String?
+  timeline    String?
+  projectType String?
+  location    String?
 
-  resolution      String    @default("PENDING")
-  responseTime    Int?
-  convertedToOrder Boolean  @default(false)
+  resolution       String  @default("PENDING")
+  responseTime     Int?
+  convertedToOrder Boolean @default(false)
 
-  isOffPlatform   Boolean   @default(false)
-  isBulk          Boolean   @default(false)
+  isOffPlatform Boolean @default(false)
+  isBulk        Boolean @default(false)
 
-  createdAt       DateTime  @default(now())
+  createdAt DateTime @default(now())
 
-  product         Product       @relation("ProductActionSignals", fields: [productId], references: [id], onDelete: Cascade)
-  vendorOrg       Organization? @relation("VendorActionSignals", fields: [vendorOrgId], references: [id], onDelete: SetNull)
-  designerOrg     Organization  @relation("DesignerActionSignals", fields: [designerOrgId], references: [id], onDelete: Cascade)
+  product     Product       @relation("ProductActionSignals", fields: [productId], references: [id], onDelete: Cascade)
+  vendorOrg   Organization? @relation("VendorActionSignals", fields: [vendorOrgId], references: [id], onDelete: SetNull)
+  designerOrg Organization  @relation("DesignerActionSignals", fields: [designerOrgId], references: [id], onDelete: Cascade)
 
   @@index([actionType])
   @@index([productId])
@@ -6043,54 +6091,54 @@ model ActionItemSignal {
 // ─── Phase 4: Shadow Profiles ─────────────────────────────────────
 
 model VendorShadowProfile {
-  id               String    @id @default(cuid())
-  vendorName       String    @unique
-  vendorOrgId      String?   @unique
+  id          String  @id @default(cuid())
+  vendorName  String  @unique
+  vendorOrgId String? @unique
 
-  totalProducts    Int       @default(0)
-  totalProjects    Int       @default(0)
-  totalDesigners   Int       @default(0)
-  totalQuotedValue Decimal?  @db.Decimal(10, 2)
-  avgOrderValue    Decimal?  @db.Decimal(10, 2)
+  totalProducts    Int      @default(0)
+  totalProjects    Int      @default(0)
+  totalDesigners   Int      @default(0)
+  totalQuotedValue Decimal? @db.Decimal(10, 2)
+  avgOrderValue    Decimal? @db.Decimal(10, 2)
   reorderRate      Float?
 
-  geoDistribution  Json?
-  projectTypeDist  Json?
-  topProducts      Json?
+  geoDistribution Json?
+  projectTypeDist Json?
+  topProducts     Json?
 
-  claimedAt        DateTime?
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+  claimedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 
-  vendorOrg        Organization? @relation("VendorShadowOrg", fields: [vendorOrgId], references: [id], onDelete: SetNull)
-  reps             RepShadowProfile[]
+  vendorOrg Organization?      @relation("VendorShadowOrg", fields: [vendorOrgId], references: [id], onDelete: SetNull)
+  reps      RepShadowProfile[]
 
   @@index([vendorOrgId])
   @@map("vendor_shadow_profiles")
 }
 
 model RepShadowProfile {
-  id                  String    @id @default(cuid())
-  vendorShadowId      String
-  repName             String
-  repEmail            String?
-  userId              String?   @unique
+  id             String  @id @default(cuid())
+  vendorShadowId String
+  repName        String
+  repEmail       String?
+  userId         String? @unique
 
-  inferredTerritory   String?
+  inferredTerritory String?
 
-  designersServed     Int       @default(0)
-  totalRequests       Int       @default(0)
+  designersServed     Int    @default(0)
+  totalRequests       Int    @default(0)
   avgResponseHours    Float?
   quoteConversionRate Float?
   repeatRequestRate   Float?
 
-  claimedAt           DateTime?
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
+  claimedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 
-  vendorShadow        VendorShadowProfile @relation(fields: [vendorShadowId], references: [id], onDelete: Cascade)
-  user                User?               @relation("RepShadowUser", fields: [userId], references: [id], onDelete: SetNull)
-  designerContacts    DesignerContact[]   @relation("RepShadowContacts")
+  vendorShadow     VendorShadowProfile @relation(fields: [vendorShadowId], references: [id], onDelete: Cascade)
+  user             User?               @relation("RepShadowUser", fields: [userId], references: [id], onDelete: SetNull)
+  designerContacts DesignerContact[]   @relation("RepShadowContacts")
 
   @@unique([vendorShadowId, repEmail])
   @@index([vendorShadowId])
@@ -6101,21 +6149,21 @@ model RepShadowProfile {
 // ─── Phase 5: Email Integration ──────────────────────────────────
 
 model ProxyAddress {
-  id        String   @id @default(cuid())
-  userId    String   @unique
-  address   String   @unique
+  id      String @id @default(cuid())
+  userId  String @unique
+  address String @unique
 
   createdAt DateTime @default(now())
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("proxy_addresses")
 }
 
 model EmailThread {
-  id              String            @id @default(cuid())
-  userId          String
-  conversationId  String?           @unique
+  id             String  @id @default(cuid())
+  userId         String
+  conversationId String? @unique
 
   // Linkage to action
   actionType      String?
@@ -6124,20 +6172,20 @@ model EmailThread {
   pendingActionId String?
 
   // Recipient
-  recipientEmail  String
-  recipientName   String?
-  vendorOrgId     String?
+  recipientEmail String
+  recipientName  String?
+  vendorOrgId    String?
 
   // Thread state
-  status          EmailThreadStatus @default(SENT)
-  subject         String
+  status  EmailThreadStatus @default(SENT)
+  subject String
 
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  user            User              @relation("UserEmailThreads", fields: [userId], references: [id], onDelete: Cascade)
-  conversation    Conversation?     @relation("EmailThreadConversation", fields: [conversationId], references: [id], onDelete: SetNull)
-  messages        EmailMessage[]
+  user         User           @relation("UserEmailThreads", fields: [userId], references: [id], onDelete: Cascade)
+  conversation Conversation?  @relation("EmailThreadConversation", fields: [conversationId], references: [id], onDelete: SetNull)
+  messages     EmailMessage[]
 
   @@index([userId])
   @@index([recipientEmail])
@@ -6146,29 +6194,29 @@ model EmailThread {
 }
 
 model EmailMessage {
-  id              String          @id @default(cuid())
-  threadId        String
-  direction       EmailDirection
+  id        String         @id @default(cuid())
+  threadId  String
+  direction EmailDirection
 
   // Email fields
-  fromAddress     String
-  toAddress       String
-  subject         String
-  textBody        String
-  htmlBody        String?
+  fromAddress String
+  toAddress   String
+  subject     String
+  textBody    String
+  htmlBody    String?
 
   // Resend metadata
   resendMessageId String?
   inboundId       String?
 
   // Parsing (for inbound replies)
-  parsedData      Json?
-  parsingStatus   ParsingStatus?
+  parsedData    Json?
+  parsingStatus ParsingStatus?
 
-  sentAt          DateTime
-  createdAt       DateTime        @default(now())
+  sentAt    DateTime
+  createdAt DateTime @default(now())
 
-  thread          EmailThread     @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  thread EmailThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
 
   @@index([threadId])
   @@index([resendMessageId])
@@ -6198,15 +6246,15 @@ enum ParsingStatus {
 // ─── Phase 5: Contact Import ─────────────────────────────────────
 
 model DesignerContact {
-  id              String                  @id @default(cuid())
-  userId          String
-  importSourceId  String
+  id             String @id @default(cuid())
+  userId         String
+  importSourceId String
 
   // Contact fields
-  name            String
-  email           String
-  company         String?
-  title           String?
+  name    String
+  email   String
+  company String?
+  title   String?
 
   // Matching
   vendorOrgId     String?
@@ -6215,15 +6263,15 @@ model DesignerContact {
   isPreferredRep  Boolean                 @default(false)
 
   // Shadow profile linkage
-  repShadowId     String?
+  repShadowId String?
 
-  createdAt       DateTime                @default(now())
-  updatedAt       DateTime                @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  user            User                    @relation("UserDesignerContacts", fields: [userId], references: [id], onDelete: Cascade)
-  importSource    ContactImportJob        @relation(fields: [importSourceId], references: [id], onDelete: Cascade)
-  vendorOrg       Organization?           @relation("VendorOrgDesignerContacts", fields: [vendorOrgId], references: [id], onDelete: SetNull)
-  repShadow       RepShadowProfile?       @relation("RepShadowContacts", fields: [repShadowId], references: [id], onDelete: SetNull)
+  user         User              @relation("UserDesignerContacts", fields: [userId], references: [id], onDelete: Cascade)
+  importSource ContactImportJob  @relation(fields: [importSourceId], references: [id], onDelete: Cascade)
+  vendorOrg    Organization?     @relation("VendorOrgDesignerContacts", fields: [vendorOrgId], references: [id], onDelete: SetNull)
+  repShadow    RepShadowProfile? @relation("RepShadowContacts", fields: [repShadowId], references: [id], onDelete: SetNull)
 
   @@unique([userId, email])
   @@index([userId])
@@ -6233,26 +6281,26 @@ model DesignerContact {
 }
 
 model ContactImportJob {
-  id              String        @id @default(cuid())
-  userId          String
-  source          ContactSource
+  id     String        @id @default(cuid())
+  userId String
+  source ContactSource
 
   // Processing status
-  status          ImportStatus  @default(PROCESSING)
-  totalContacts   Int           @default(0)
-  filteredCount   Int           @default(0)
-  matchedCount    Int           @default(0)
-  importedCount   Int           @default(0)
+  status        ImportStatus @default(PROCESSING)
+  totalContacts Int          @default(0)
+  filteredCount Int          @default(0)
+  matchedCount  Int          @default(0)
+  importedCount Int          @default(0)
 
   // OAuth metadata (if applicable)
-  oauthProvider   String?
-  syncToken       String?
+  oauthProvider String?
+  syncToken     String?
 
-  processedAt     DateTime?
-  createdAt       DateTime      @default(now())
+  processedAt DateTime?
+  createdAt   DateTime  @default(now())
 
-  user            User          @relation("UserContactImportJobs", fields: [userId], references: [id], onDelete: Cascade)
-  contacts        DesignerContact[]
+  user     User              @relation("UserContactImportJobs", fields: [userId], references: [id], onDelete: Cascade)
+  contacts DesignerContact[]
 
   @@index([userId])
   @@map("contact_import_jobs")
@@ -6277,4 +6325,546 @@ enum ImportStatus {
   AWAITING_REVIEW
   COMPLETED
   FAILED
+}
+
+// =============================================================================
+// Phase 5H1 — Bucket A restoration (2026-04-21)
+// 19 new models + 8 enums restored from prod introspection via `prisma db pull`.
+// 3 additional Bucket A models (Post, PostItem, EventMetrics) renamed in place above
+// from pre-existing snake_case declarations.
+// Cross-bucket relations to vendors / meeting_notes / project_product_tags stripped;
+// scalar FK columns preserved. Phase 5H2 re-attaches when Bucket B lands.
+// interview_questions inverse dropped — see memory/migration_phase5h1_interview_questions_undeclared.md
+// Event drift beyond scope — see memory/migration_phase5h1_event_drift_beyond_inverse.md
+// =============================================================================
+
+// --- Enums ---
+
+enum ActionItemPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum ActionItemStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum InterviewMode {
+  AUDIO
+  VIDEO
+}
+
+enum InterviewSessionStatus {
+  DRAFT
+  UPLOADED
+  TRANSCRIBING
+  TRANSCRIBED
+  EXTRACTING
+  EXTRACTED
+  CLIPPING
+  READY
+  PUBLISHED
+  ARCHIVED
+}
+
+enum InviteRole {
+  HOST
+  CO_HOST
+  FEATURED_GUEST
+  SPONSOR
+  ATTENDEE
+}
+
+enum QuoteUseCase {
+  EDITORIAL_PULLQUOTE
+  PRODUCT_PAGE_INSIGHT
+  SOCIAL_CLIP_HOOK
+}
+
+enum VendorBoostRequestStatus {
+  PENDING
+  ACCEPTED
+  COMPLETED
+  DECLINED
+  EXPIRED
+  CANCELLED
+}
+
+enum VendorInviteCandidateStatus {
+  PENDING
+  READY
+  INVITED
+  ARCHIVED
+}
+
+// --- Events cluster (11 models) ---
+
+model EventHostProfile {
+  id                     String                  @id
+  userId                 String                  @unique
+  hostName               String
+  hostEmail              String
+  hostPhone              String?
+  hostCompany            String?
+  hostTitle              String?
+  hostBio                String?
+  hostImageUrl           String?
+  preferredContactMethod String?
+  autoFollowEnabled      Boolean                 @default(true)
+  recapEmailEnabled      Boolean                 @default(true)
+  totalEventsHosted      Int                     @default(0)
+  totalInvitesSent       Int                     @default(0)
+  totalAttendees         Int                     @default(0)
+  averageAttendanceRate  Float?
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @default(now())
+  EventContact           EventContact[]
+  users                  User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  EventInviteList        EventInviteList[]
+  EventRelationshipEdge  EventRelationshipEdge[]
+  EventTargetingProfile  EventTargetingProfile[]
+  events                 Event[]
+
+  @@index([userId])
+  @@map("event_host_profiles")
+}
+
+model EventContact {
+  id                   String           @id
+  hostProfileId        String
+  email                String
+  name                 String?
+  phone                String?
+  company              String?
+  title                String?
+  role                 String?
+  userId               String?
+  totalInvitesReceived Int              @default(0)
+  totalEventsAttended  Int              @default(0)
+  lastInvitedAt        DateTime?
+  lastAttendedAt       DateTime?
+  lastEngagedAt        DateTime?
+  notes                String?
+  tags                 String[]         @default([])
+  source               String?
+  sourceEventId        String?
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @default(now())
+  EventHostProfile     EventHostProfile @relation(fields: [hostProfileId], references: [id], onDelete: Cascade)
+  users                User?            @relation(fields: [userId], references: [id])
+
+  @@unique([hostProfileId, email])
+  @@index([email])
+  @@index([hostProfileId])
+  @@index([userId])
+  @@map("event_contacts")
+}
+
+model EventInviteList {
+  id                String           @id
+  hostProfileId     String
+  name              String
+  description       String?
+  listType          String           @default("manual")
+  contactIds        String[]         @default([])
+  targetingCriteria Json?
+  timesUsed         Int              @default(0)
+  lastUsedAt        DateTime?
+  isPremium         Boolean          @default(false)
+  priceUsd          Float?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @default(now())
+  EventHostProfile  EventHostProfile @relation(fields: [hostProfileId], references: [id], onDelete: Cascade)
+
+  @@index([hostProfileId])
+  @@index([listType])
+  @@map("event_invite_lists")
+}
+
+model EventTargetingProfile {
+  id                  String           @id
+  hostProfileId       String
+  targetRoles         String[]         @default([])
+  targetSpecialties   String[]         @default([])
+  targetLocations     String[]         @default([])
+  targetBudgetRanges  String[]         @default([])
+  targetProjectStages String[]         @default([])
+  minEngagementScore  Float?
+  minProximityScore   Float?
+  aiPreferences       Json?
+  timesUsed           Int              @default(0)
+  lastUsedAt          DateTime?
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @default(now())
+  EventHostProfile    EventHostProfile @relation(fields: [hostProfileId], references: [id], onDelete: Cascade)
+
+  @@index([hostProfileId])
+  @@map("event_targeting_profiles")
+}
+
+model EventRelationshipEdge {
+  id               String            @id
+  hostProfileId    String?
+  sourceType       String
+  sourceId         String
+  targetType       String
+  targetId         String
+  relationshipType String
+  weight           Float             @default(1.0)
+  decayAt          DateTime?
+  eventId          String?
+  meta             Json?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @default(now())
+  events           Event?            @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  EventHostProfile EventHostProfile? @relation(fields: [hostProfileId], references: [id], onDelete: Cascade)
+
+  @@index([eventId])
+  @@index([hostProfileId])
+  @@index([relationshipType])
+  @@index([sourceType, sourceId])
+  @@index([targetType, targetId])
+  @@map("event_relationship_edges")
+}
+
+model EventVendorEdge {
+  id             String   @id
+  eventId        String
+  vendorId       String
+  edgeType       String
+  weight         Float    @default(1.0)
+  productViews   Int      @default(0)
+  productSaves   Int      @default(0)
+  repEngagements Int      @default(0)
+  estimatedROI   Float?
+  actualROI      Float?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @default(now())
+  events         Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, vendorId])
+  @@index([edgeType])
+  @@index([eventId])
+  @@index([vendorId])
+  @@map("event_vendor_edges")
+}
+
+model EventDesignerEdge {
+  id          String   @id
+  eventId     String
+  designerId  String
+  edgeType    String
+  weight      Float    @default(1.0)
+  views       Int      @default(0)
+  saves       Int      @default(0)
+  clicks      Int      @default(0)
+  firstSeenAt DateTime @default(now())
+  lastSeenAt  DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now())
+  users       User     @relation(fields: [designerId], references: [id], onDelete: Cascade)
+  events      Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, designerId])
+  @@index([designerId])
+  @@index([edgeType])
+  @@index([eventId])
+  @@map("event_designer_edges")
+}
+
+model EventProductEdge {
+  id             String    @id
+  eventId        String
+  productId      String
+  edgeType       String
+  weight         Float     @default(1.0)
+  views          Int       @default(0)
+  saves          Int       @default(0)
+  clicks         Int       @default(0)
+  conversionRate Float?
+  lastSpikeAt    DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @default(now())
+  events         Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  products       Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, productId])
+  @@index([edgeType])
+  @@index([eventId])
+  @@index([productId])
+  @@map("event_product_edges")
+}
+
+model EventRepEdge {
+  id                String   @id
+  eventId           String
+  repId             String
+  edgeType          String
+  weight            Float    @default(1.0)
+  connectionsMade   Int      @default(0)
+  productsPresented Int      @default(0)
+  quotesSent        Int      @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @default(now())
+  events            Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  users             User     @relation(fields: [repId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, repId])
+  @@index([edgeType])
+  @@index([eventId])
+  @@index([repId])
+  @@map("event_rep_edges")
+}
+
+model EventEngagementMetrics {
+  id                String   @id
+  eventId           String   @unique
+  totalInvites      Int      @default(0)
+  totalRSVPs        Int      @default(0)
+  totalAttendees    Int      @default(0)
+  totalEngagements  Int      @default(0)
+  designerInvites   Int      @default(0)
+  designerRSVPs     Int      @default(0)
+  designerAttendees Int      @default(0)
+  vendorInvites     Int      @default(0)
+  vendorRSVPs       Int      @default(0)
+  vendorAttendees   Int      @default(0)
+  productViews      Int      @default(0)
+  productSaves      Int      @default(0)
+  productClicks     Int      @default(0)
+  repConnections    Int      @default(0)
+  repQuotes         Int      @default(0)
+  estimatedRevenue  Float?
+  actualRevenue     Float?
+  lastUpdatedAt     DateTime @default(now())
+  createdAt         DateTime @default(now())
+  events            Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([eventId])
+  @@map("event_engagement_metrics")
+}
+
+model EventInvite {
+  id        String      @id
+  eventId   String
+  userId    String?
+  email     String?
+  role      InviteRole? @default(ATTENDEE)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime
+  events    Event       @relation(fields: [eventId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users     User?       @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([email])
+  @@index([eventId])
+  @@index([userId])
+  @@map("event_invites")
+}
+
+// --- Interviews cluster (4 models) ---
+
+model InterviewSession {
+  id                   String                 @id
+  createdByUserId      String
+  projectId            String?
+  productId            String?
+  vendorBoostRequestId String?                @unique
+  vendorId             String?
+  status               InterviewSessionStatus @default(DRAFT)
+  mode                 InterviewMode          @default(AUDIO)
+  promptLens           String?
+  recordingAssetId     String?                @unique
+  transcriptionJobId   String?
+  extractionJobId      String?
+  errorMessage         String?
+  recordedAt           DateTime?
+  uploadedAt           DateTime?
+  transcribedAt        DateTime?
+  extractedAt          DateTime?
+  publishedAt          DateTime?
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime
+  users                User                   @relation(fields: [createdByUserId], references: [id])
+  products             Product?               @relation(fields: [productId], references: [id], onDelete: Cascade)
+  projects             Project?               @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  MediaAsset           MediaAsset?            @relation(fields: [recordingAssetId], references: [id])
+  vendorBoostRequest   VendorBoostRequest?    @relation("interview_sessions_vendorBoostRequestIdTovendor_boost_requests", fields: [vendorBoostRequestId], references: [id])
+  QuoteHighlight       QuoteHighlight[]
+  TranscriptSegment    TranscriptSegment[]
+  derivedBoostRequest  VendorBoostRequest?    @relation("vendor_boost_requests_interviewSessionIdTointerview_sessions")
+
+  @@index([createdByUserId])
+  @@index([productId])
+  @@index([projectId])
+  @@index([status])
+  @@index([vendorBoostRequestId])
+  @@index([vendorId])
+  @@map("interview_sessions")
+}
+
+model MediaAsset {
+  id               String            @id
+  storageKey       String
+  url              String
+  mimeType         String
+  durationMs       Int?
+  fileSizeBytes    Int?
+  waveformData     Json?
+  metadata         Json?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime
+  InterviewSession InterviewSession?
+
+  @@index([storageKey])
+  @@map("media_assets")
+}
+
+model QuoteHighlight {
+  id                 String           @id
+  interviewSessionId String
+  startMs            Int
+  endMs              Int
+  quoteText          String
+  useCase            QuoteUseCase
+  score              Float            @default(0)
+  approvedByDesigner Boolean          @default(false)
+  approvedAt         DateTime?
+  productId          String?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime
+  InterviewSession   InterviewSession @relation(fields: [interviewSessionId], references: [id], onDelete: Cascade)
+  products           Product?         @relation(fields: [productId], references: [id])
+
+  @@index([approvedByDesigner])
+  @@index([interviewSessionId])
+  @@index([productId])
+  @@index([useCase])
+  @@map("quote_highlights")
+}
+
+model TranscriptSegment {
+  id                 String           @id
+  interviewSessionId String
+  order              Int
+  speaker            String           @default("designer")
+  startMs            Int
+  endMs              Int
+  text               String
+  confidence         Float?
+  createdAt          DateTime         @default(now())
+  InterviewSession   InterviewSession @relation(fields: [interviewSessionId], references: [id], onDelete: Cascade)
+
+  @@index([interviewSessionId, order])
+  @@index([interviewSessionId, startMs, endMs])
+  @@map("transcript_segments")
+}
+
+// --- Project-collab cluster (2 models) ---
+
+model ActionItem {
+  id           String             @id
+  title        String
+  description  String?
+  status       ActionItemStatus   @default(PENDING)
+  priority     ActionItemPriority @default(MEDIUM)
+  sourceNoteId String?
+  projectId    String?
+  roomId       String?
+  productTagId String?
+  assignedToId String?
+  createdById  String
+  dueDate      DateTime?
+  completedAt  DateTime?
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime
+  assignedTo   User?              @relation("action_items_assignedToIdTousers", fields: [assignedToId], references: [id])
+  createdBy    User               @relation("action_items_createdByIdTousers", fields: [createdById], references: [id])
+  projects     Project?           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  rooms        Room?              @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@index([assignedToId, status])
+  @@index([productTagId, status])
+  @@index([projectId, status])
+  @@index([roomId, status])
+  @@index([sourceNoteId])
+  @@index([status, createdAt])
+  @@map("action_items")
+}
+
+model NoteAttachment {
+  id           String   @id
+  noteId       String
+  projectId    String?
+  roomId       String?
+  productTagId String?
+  createdAt    DateTime @default(now())
+  projects     Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  rooms        Room?    @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@index([noteId])
+  @@index([productTagId])
+  @@index([projectId])
+  @@index([roomId])
+  @@map("note_attachments")
+}
+
+// --- Vendor-intake cluster (2 models) ---
+
+model VendorBoostRequest {
+  id                  String                   @id
+  vendorId            String
+  productId           String
+  projectId           String
+  requestedDesignerId String
+  status              VendorBoostRequestStatus @default(PENDING)
+  message             String?
+  expiresAt           DateTime?
+  interviewSessionId  String?                  @unique
+  requestedAt         DateTime                 @default(now())
+  acceptedAt          DateTime?
+  declinedAt          DateTime?
+  completedAt         DateTime?
+  createdAt           DateTime                 @default(now())
+  updatedAt           DateTime
+  sourcedSession      InterviewSession?        @relation("interview_sessions_vendorBoostRequestIdTovendor_boost_requests")
+  interviewSession    InterviewSession?        @relation("vendor_boost_requests_interviewSessionIdTointerview_sessions", fields: [interviewSessionId], references: [id])
+  products            Product                  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  projects            Project                  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  users               User                     @relation(fields: [requestedDesignerId], references: [id])
+
+  @@index([expiresAt])
+  @@index([productId])
+  @@index([projectId])
+  @@index([requestedDesignerId])
+  @@index([status])
+  @@index([vendorId])
+  @@map("vendor_boost_requests")
+}
+
+model VendorInviteCandidate {
+  id                    String                      @id
+  createdAt             DateTime                    @default(now())
+  updatedAt             DateTime
+  vendorName            String
+  vendorWebsite         String?
+  repEmail              String?
+  repName               String?
+  status                VendorInviteCandidateStatus @default(PENDING)
+  normalizedKey         String                      @unique
+  firstSeenByDesignerId String?
+  firstSeenInProjectId  String?
+  users                 User?                       @relation(fields: [firstSeenByDesignerId], references: [id])
+  projects              Project?                    @relation(fields: [firstSeenInProjectId], references: [id])
+  vendor_invite_signals VendorInviteSignal[]
+
+  @@index([createdAt])
+  @@index([firstSeenByDesignerId])
+  @@index([normalizedKey])
+  @@index([status])
+  @@map("vendor_invite_candidates")
 }
