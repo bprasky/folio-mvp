@@ -15,35 +15,8 @@ export async function logPassiveEvent(params: {
 }): Promise<void> {
   const { projectId, type, actorId, payload } = params;
 
-  // Try database first
-  try {
-    // Defensive guard: check if analytics model exists
-    if (!(prisma as any)?.analyticsEvent?.create) {
-      if (process.env.NODE_ENV === 'development') {
-        console.warn('Analytics disabled: prisma.analyticsEvent.create unavailable');
-      }
-      return; // Exit early if model doesn't exist
-    }
-
-    await prisma.analyticsEvent.create({
-      data: {
-        projectId: projectId || '',
-        type,
-        actorId,
-        payload: payload ? JSON.stringify(payload) : null,
-        createdAt: new Date(),
-      },
-    });
-    return; // Success, exit early
-  } catch (error: any) {
-    const errorMsg = String(error?.message || '');
-    // If it's not a schema issue (unknown model/table), rethrow
-    if (!/Unknown argument|does not exist|table.*does not exist/i.test(errorMsg)) {
-      console.warn('Analytics DB error (non-schema):', errorMsg);
-      throw error;
-    }
-    // Schema issue, fall through to Storage fallback
-  }
+  // Phase 5D: prisma.analyticsEvent removed — analytics_events table never existed.
+  // Storage fallback below is now the sole code path.
 
   // Fallback to Supabase Storage
   try {

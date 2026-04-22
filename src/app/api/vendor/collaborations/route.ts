@@ -54,15 +54,9 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    // Get monthly budget
-    const budget = await prisma.vendorDiscoveryBudget.findUnique({
-      where: {
-        orgId_periodStart: {
-          orgId: vendorCtx.vendorOrgId,
-          periodStart,
-        },
-      },
-    });
+    // Phase 5D: vendorDiscoveryBudget model never existed — budget reporting disabled.
+    // Downstream code uses `budget?.budgetCapUsd` and `budget ? {...} : null` — null is safe.
+    const budget: { budgetCapUsd: number; spentUsd: number; status: string } | null = null;
 
     // For each participant, calculate signal counts and spend
     const collaborations = await Promise.all(

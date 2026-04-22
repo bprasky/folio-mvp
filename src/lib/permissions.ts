@@ -17,14 +17,11 @@ export async function assertProjectAccess(params: {
   }
 
   // 2) Access: owner OR explicit membership (if you have a membership table)
-  // Try membership; if it doesn't exist in schema, skip this and rely on owner check.
-  const membership = await prisma.projectMember?.findFirst?.({
-    where: { projectId, userId },
-    select: { id: true },
-  }).catch(() => null);
-
+  // Phase 5D: projectMember model never existed — membership check is a no-op.
+  // Effective behavior: owner-only access. Add ProjectMember model + table if
+  // explicit membership access is needed.
   const isOwner = project.ownerId === userId;
-  const hasMembership = Boolean(membership);
+  const hasMembership = false;
 
   if (!isOwner && !hasMembership) {
     return { ok: false, status: 403 as const, reason: "Forbidden" };

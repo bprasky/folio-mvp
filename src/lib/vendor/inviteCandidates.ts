@@ -83,7 +83,7 @@ export async function captureVendorInviteData({
   tagId?: string | null;
   sourceUrl?: string | null;
   source?: 'TAGGING' | 'SCRAPE' | 'MANUAL_ADMIN' | 'LEGACY';
-}): Promise<{ candidateId: string; created: boolean; contactCreated: boolean }> {
+}): Promise<{ candidateId: string; created: boolean }> {
   // Normalize and compute key (use vendor name only, not email, for candidate dedupe)
   const normalizedKey = normalizeVendorName(vendorName);
   
@@ -138,47 +138,12 @@ export async function captureVendorInviteData({
     data: { lastSeenAt: new Date() },
   });
 
-  // Create contact row if repEmail provided (NO OVERWRITES - upsert by candidateId + email)
-  let contactCreated = false;
-  if (repEmail && repEmail.trim()) {
-    const normalizedEmail = repEmail.trim().toLowerCase();
-    try {
-      await prisma.vendorInviteContact.upsert({
-        where: {
-          candidateId_email: {
-            candidateId: candidate.id,
-            email: normalizedEmail,
-          },
-        },
-        update: {
-          // Don't overwrite name if it exists and differs (prefer first-seen)
-          // Only update if name was null
-          ...(repName && { name: repName.trim() }),
-          updatedAt: new Date(),
-        },
-        create: {
-          candidateId: candidate.id,
-          email: normalizedEmail,
-          name: repName?.trim() || null,
-          domain: emailDomain,
-          designerId,
-          projectId: projectId || null,
-          tagId: tagId || null,
-          source,
-          sourceUrl: sourceUrl || null,
-        },
-      });
-      contactCreated = true;
-    } catch (contactError) {
-      console.warn('[VendorInvite] Failed to create contact:', contactError);
-      // Don't fail the whole operation
-    }
-  }
+  // Phase 5D: vendorInviteContact model never existed — contact-row creation block removed.
+  // If contact persistence is needed later, add VendorInviteContact model + table first.
 
   return {
     candidateId: candidate.id,
     created: !candidate.firstSeenByDesignerId || candidate.firstSeenByDesignerId === designerId,
-    contactCreated,
   };
 }
 

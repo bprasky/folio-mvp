@@ -320,36 +320,6 @@ export async function publishProjectAction(raw: unknown) {
     },
   });
 
-  // TODO: Generate affiliate links for tagged products
-  // When AffiliateLink model is added, uncomment:
-  /*
-  try {
-    for (const image of project.images) {
-      for (const tag of image.tags) {
-        await prisma.affiliateLink.upsert({
-          where: {
-            designerId_projectId_productId: {
-              designerId: project.designerId!,
-              projectId: project.id,
-              productId: tag.productId,
-            }
-          },
-          create: {
-            code: ulid(),
-            designerId: project.designerId!,
-            projectId: project.id,
-            productId: tag.productId,
-          },
-          update: {}, // No-op if exists
-        });
-      }
-    }
-  } catch (error) {
-    // Fail-soft if AffiliateLink doesn't exist yet
-    console.warn('[publishProject] Affiliate link generation skipped:', error);
-  }
-  */
-
   // Revalidate relevant paths
   revalidatePath('/designer/profile'); // Profile page (most important)
   revalidatePath('/designer');          // Dashboard
