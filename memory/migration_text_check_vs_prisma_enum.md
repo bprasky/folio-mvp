@@ -1,6 +1,6 @@
 ---
-name: TEXT+CHECK columns masquerading as Prisma enums
-description: Pre-existing pattern in initial_schema — several columns are TEXT with CHECK constraints while schema.prisma declares them as enums; converting a column to enum requires dropping the CHECK first
+name: RESOLVED — TEXT+CHECK columns masquerading as Prisma enums
+description: [RESOLVED by Phase 5B commit 810f911e for ParticipantRole and 3 peers; ParticipantSide earlier in 20260115999999_fix_participant_side_enum.] Original concern: initial_schema created columns as TEXT with CHECK constraints while schema.prisma declared them as enums — Prisma Client tolerated the mismatch at runtime but shadow replay + future enum conversion would fail. Phase 5B converted all 4 outstanding instances (ParticipantRole, SubscriptionTier, VendorTier, MessageCategory+PendingActionStatus) using the Bucket 2 DROP/SET DEFAULT pattern. Keep for archaeology on the CHECK-blocks-enum-conversion diagnosis + the audit SQL below.
 type: project
 originSessionId: f64d0e6e-708a-4b36-9718-25c639f06dcb
 ---
@@ -24,3 +24,18 @@ WHERE n.nspname = 'public' AND c.contype = 'c';
 ```
 
 Cross-reference results against schema.prisma enum field declarations.
+
+## Resolution
+
+All four outstanding TEXT+CHECK-masquerading-as-enum columns resolved by Phase 5B commit `810f911e` (2026-04-20):
+
+1. **`project_participants.role`** → proper `ParticipantRole` Postgres enum with values `{OWNER, EDITOR, VIEWER}`. Verified as of 2026-04-22 via `information_schema.columns`: `data_type='USER-DEFINED'`, `udt_name='ParticipantRole'`.
+2. **`users.subscriptionTier`** → `SubscriptionTier` enum.
+3. **`organizations.vendorTier`** → `VendorTier` enum.
+4. **`messages.category` + `pendingActions.status`** → `MessageCategory` + `PendingActionStatus` enums.
+
+The conversion pattern (DROP DEFAULT → DROP CHECK constraint → ALTER COLUMN TYPE USING cast → SET DEFAULT back) is documented in `migration_bucket2_drop_set_default_pattern.md` — that playbook is the direct output of solving the problem this file originally surfaced.
+
+`project_participants.side` was resolved earlier by `20260115999999_fix_participant_side_enum` (pre-Phase-5).
+
+Kept as a RESOLVED archive because the audit SQL above (`pg_constraint` join with `pg_attribute`) is reusable — any future claim that a column is an enum but prod has TEXT+CHECK can be verified in one query.

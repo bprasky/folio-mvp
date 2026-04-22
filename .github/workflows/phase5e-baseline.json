@@ -1,0 +1,7 @@
+{
+  "looseSql": 33,
+  "phantomCalls": 0,
+  "missingSql": 0,
+  "nonIdempotent": 0,
+  "generatedAt": "2026-04-22T15:26:33.723Z"
+}

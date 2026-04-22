@@ -1,0 +1,48 @@
+name: Migration Discipline
+
+on:
+  pull_request:
+    paths:
+      - 'prisma/**'
+      - 'src/**'
+      - 'memory/**'
+      - 'CLAUDE.md'
+      - 'scripts/phase5e-*.mjs'
+      - '.github/workflows/phase5e-baseline.json'
+      - '.github/workflows/migration-discipline.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'prisma/**'
+      - 'src/**'
+      - 'memory/**'
+      - 'CLAUDE.md'
+      - 'scripts/phase5e-*.mjs'
+      - '.github/workflows/phase5e-baseline.json'
+      - '.github/workflows/migration-discipline.yml'
+  workflow_dispatch:
+
+jobs:
+  check:
+    name: Migration discipline check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 8
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma Client
+        run: pnpm prisma generate
+
+      - name: Check for Phase 5 regression (loose SQL, phantom prisma.<model>, missing migration.sql, non-idempotent DDL)
+        run: node scripts/phase5e-check-plan.mjs --ci
