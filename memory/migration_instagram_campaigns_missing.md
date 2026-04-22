@@ -1,6 +1,6 @@
 ---
-name: instagram_campaigns / instagram_campaign_posts models declared but no migration creates them
-description: schema.prisma has InstagramCampaign + InstagramCampaignPost models, but no migration folder on disk creates the tables and they do not exist in prod — separate drift from the 43 audited
+name: RESOLVED — instagram_campaigns / instagram_campaign_posts models declared but no migration creates them
+description: [RESOLVED by migration 20260303100000_add_instagram_campaigns, landed pre-Phase-5.] Original concern: schema.prisma declared InstagramCampaign + InstagramCampaignPost but tables were absent from prod and no migration created them. All three tables (instagram_campaigns, instagram_campaign_posts, instagram_exports) now exist in prod; `prisma.instagramCampaign.count()` works. Keep for archaeology on how this drift was originally diagnosed.
 type: project
 originSessionId: f64d0e6e-708a-4b36-9718-25c639f06dcb
 ---
@@ -18,3 +18,15 @@ Same pattern as the ParticipantSide drift resolved in Deploy #2 (silent schema v
 **Why:** Pure silent drift. schema.prisma was extended with the models at some point without the companion migration folder being merged. May have been introduced on a cloud-thread branch that touched schema.prisma but not migrations, or lost in a merge.
 
 **How to apply:** During Phase 5 hardening, author a dedicated fix migration (pattern: `<ts>_add_instagram_campaigns`) that creates both tables based on the current `schema.prisma` declarations. Introspect `model InstagramCampaign` and `model InstagramCampaignPost` in schema.prisma for the exact column/FK/index shape — do not guess. Use the same stub-folder pattern as Phase 2's authored migrations (idempotent guards, `CREATE TABLE IF NOT EXISTS`, etc.). Once the fix migration is applied, the editorial-curator-adjacent feature code that references campaigns will stop 500'ing.
+
+## Resolution
+
+Resolved by migration `20260303100000_add_instagram_campaigns` (plus companion `20260303000000_add_instagram_exports` for the exports table). Both landed before Phase 5 began. Verification as of 2026-04-22:
+
+- `information_schema.tables` confirms all three tables exist in prod: `instagram_campaigns`, `instagram_campaign_posts`, `instagram_exports`.
+- `prisma migrate status` clean with 73 migrations; both migrations recorded in `_prisma_migrations`.
+- Phase 5C smoke tests (commit `8d214308`) included `instagramCampaign.count()` and `instagramCampaignPost.count()` — both returned successfully.
+
+The "try/catch that silently skips if table doesn't exist" pattern in `src/app/api/projects/[id]/rooms/[roomId]/route.ts:164` is now safe to simplify — the fallback path is dead code. Not urgent; leave for a future app-layer cleanup.
+
+Kept as a RESOLVED archive because the diagnosis pattern (schema declares model, no migration creates it, caller wrapped in try/catch) is a recurring shape. Future sessions hitting a similar situation can find this file via search and follow the same fix approach.

@@ -83,6 +83,42 @@ Folio transforms interior designers' project archives into structured, searchabl
 
 **Rationale:** see `memory/migration_phase5e_ci_enforcement.md`. The checks exist because Phase 1-5D spent weeks unwinding exactly these patterns.
 
+### Migration session discipline (for Claude Code)
+
+These are the behaviors that made Phases 1-5E succeed. Apply them to any future migration work on this project.
+
+- **Audit before implement.** Before authoring any migration or schema edit, run recon against prod: `information_schema.columns` for column types, `_prisma_migrations` for bookkeeping state, `grep` for `model X` declarations in `schema.prisma`, and `grep` for `prisma.X` callers in `src/`. Don't guess column types, FK directions, or whether a model is already declared.
+
+- **Per-migration and per-model-block approval gates.** Author the SQL or schema block → print to chat → wait for user approval → apply → resolve → `migrate status` → next item. Two exceptions: (1) when the user has pre-reviewed generator output (e.g., Phase 5H2 Step 9 batch-applied 13 idempotent bookkeeping migrations after the generator output was reviewed), per-migration apply can be sequenced without per-migration approval dialogs; (2) when the user explicitly authorizes batch-review for a specific scope.
+
+- **Backup before `schema.prisma` edits.** Always `cp prisma/schema.prisma /tmp/schema-prisma-backup-<phase>.prisma` before any edit. Make the restore-on-failure path explicit in the session plan: "if format/validate/generate/migrate-status fails, restore from backup and stop."
+
+- **Bulk edits allowed only with scoped pre-review.** If the user pre-approves a plan covering many similar edits (e.g., inline inverse-field additions across 6 models), one approval can cover the batch — but the user must have seen the highest-blast-radius edit in full before batch-approving. The User model block was explicitly reviewed in both Phase 5H1 and 5H2 for exactly this reason.
+
+- **Per-session commit discipline.** Commit + push at the end of each session. Never accumulate work across sessions — reviewers lose the atomic context and the commit history becomes un-bisectable. Rebase-with-force-push is OK on Claude branches; never on main.
+
+- **Sync before starting.** Always `git fetch origin && git log HEAD..origin/main --oneline` at baseline. If main moved since the last session, rebase before any new work begins. See Subsection B's final bullet for the full sync protocol.
+
+- **Multi-session phases have natural split points.** If a phase's work is large (many migrations + schema surgery + validation), split at architectural boundaries rather than pushing through tired. Phase 5H2 split at Step 9 (bookkeeping migrations) vs Step 10-13 (schema surgery) — each committable as an independent unit, each reviewable on its own. Recognize the split point when approval-gate discipline starts slipping or attention drops — that's the signal to commit what exists and resume in a fresh session.
+
+### When drift is reintroduced (runbook)
+
+If CI fails or `migrate status` goes non-clean, don't freelance. Follow the runbook.
+
+- **Run `scripts/phase5e-check-plan.mjs` first** (human-readable mode, no flags). It categorizes the drift into 1 of 4 CI checks and lists specific files/call sites. The output is your starting point — don't begin fixing before you've read it.
+
+- **Cross-reference `_prisma_migrations` and `information_schema.tables`.** For each suspect table/model, verify the three-way state: declared in `schema.prisma`? exists in prod? recorded in `_prisma_migrations`? That triplet determines which bucket the drift falls into.
+
+- **Apply the matching playbook:**
+  - **Bucket A-style** (table exists + migration folder exists + schema declaration missing) → Phase 5H1 pattern. `db pull` swap-and-restore → extract → rename snake_case → PascalCase → add `@@map` → paste → validate. See `memory/migration_phase5h_restoration_triage.md`.
+  - **Bucket B-style** (table exists, no migration, schema missing) → Phase 5H2 pattern. Author record-existing-state migration first (column types from `information_schema.columns`, not inference), apply + resolve, then add the schema declaration. See `memory/migration_phase5h2_hand_managed_recorded.md`.
+  - **Bucket C-style** (app code calls undeclared model, no backing table anywhere) → Phase 5D pattern. Delete the caller. Check caller count first: zero callers is "orphan code, delete the file"; non-zero callers is "silent lie — decide whether to throw, stub, or restore the model." See `memory/migration_phase5d_phantom_deletions.md`.
+  - **Bucket D-style** (orphan artifact — stranded SQL file, leftover migration folder without `migration.sql`) → delete the artifact.
+
+- **For cluster-size drift (5+ items), draft a phase prompt.** Don't freelance a cluster deletion or restoration. Follow the 5H1/5H2/5D structure: scope acknowledgment → baseline → extraction/enumeration → review gate → execution → per-step validation → commit plan. The review gates existed for a reason — they caught complications (missing enums, cross-bucket relation drops, required inverse fields on existing models) that would have broken cluster work done in one pass.
+
+- **If main advances during a phase, stop, rebase, re-baseline before continuing.** At session start: `git fetch origin && git log HEAD..origin/main --oneline`. If commits exist on main: `git pull --ff-only origin main` when the merge represents your own prior work landing (PR auto-merge), or rebase-with-conflict-resolution if unrelated work landed. Re-run `prisma migrate status` after sync to confirm the merge didn't introduce drift. Don't start new migrations or schema edits until the tree is fully sync'd.
+
 ---
 
 ## Tech Stack Context
