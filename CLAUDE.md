@@ -70,6 +70,21 @@ Folio transforms interior designers' project archives into structured, searchabl
 
 ---
 
+## Migration Discipline (CI-enforced since Phase 5E)
+
+`.github/workflows/migration-discipline.yml` runs on every PR touching `prisma/**`, `src/**`, `memory/**`, or `CLAUDE.md`. It runs `node scripts/phase5e-check-plan.mjs --ci`, which compares four counts against `.github/workflows/phase5e-baseline.json`:
+
+1. **Loose SQL at `prisma/migrations/` root** (baseline 33 — grandfathered historical bookkeeping). New loose `.sql` files outside timestamped folders fail CI.
+2. **Phantom `prisma.<model>` calls** (baseline 0). Any call to a Prisma delegate not declared in `schema.prisma` fails CI.
+3. **Migration folders without `migration.sql`** (baseline 0). Empty timestamped folders fail CI.
+4. **Non-idempotent DDL in recent migrations** (baseline 0). `CREATE TABLE` / `CREATE INDEX` / `CREATE TYPE` without `IF NOT EXISTS` / `DO $$` in the last 20 migrations fails CI.
+
+**Paying down debt:** if a PR legitimately reduces a count (e.g., deletes a grandfathered loose SQL file), update `phase5e-baseline.json` in the same PR so future PRs can't re-introduce the old count.
+
+**Rationale:** see `memory/migration_phase5e_ci_enforcement.md`. The checks exist because Phase 1-5D spent weeks unwinding exactly these patterns.
+
+---
+
 ## Tech Stack Context
 
 - Next.js with App Router
