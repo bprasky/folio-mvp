@@ -55,7 +55,8 @@ export function CampaignWizard({ projectId, projectTitle, onClose }: CampaignWiz
         });
 
         if (!response.ok) {
-          throw new Error('Failed to load campaign preview');
+          const errData = await response.json().catch(() => ({}));
+          throw new Error(errData.error || 'Failed to load campaign preview');
         }
 
         const data = await response.json();
@@ -88,7 +89,8 @@ export function CampaignWizard({ projectId, projectTitle, onClose }: CampaignWiz
       });
 
       if (!response.ok) {
-        throw new Error('Failed to generate campaign');
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.error || 'Failed to generate campaign');
       }
 
       // Download ZIP file

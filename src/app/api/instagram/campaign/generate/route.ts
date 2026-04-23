@@ -118,6 +118,23 @@ export async function POST(request: NextRequest) {
       selectedQuotes.length +
       contentSelection.details.length;
 
+    // Persist campaign row before generation so a trace exists even if generation fails mid-flight.
+    // fileUrls stay null for now — asset storage lands in a follow-up.
+    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    const campaign = await prisma.instagramCampaign.create({
+      data: {
+        projectId,
+        preset,
+        totalPosts,
+        expiresAt,
+        formats,
+        includeRooms: selectedRooms.length > 0,
+        includeProducts: selectedProducts.length > 0,
+        includeQuotes: selectedQuotes.length > 0,
+        includeDetails: contentSelection.details.length > 0,
+      },
+    });
+
     // Prepare project metadata for captions
     const projectData = {
       title: project.title,
@@ -137,6 +154,18 @@ export async function POST(request: NextRequest) {
       postType: string;
       caption: string;
       hashtags: string[];
+    }> = [];
+    const postRows: Array<{
+      campaignId: string;
+      postType: string;
+      sequenceNum: number;
+      title: string | null;
+      caption: string;
+      hashtags: string[];
+      format: string[];
+      imageIds: string[];
+      productIds: string[];
+      roomName: string | null;
     }> = [];
 
     let postNumber = 1;
@@ -163,6 +192,18 @@ export async function POST(request: NextRequest) {
       postNumber,
       postType: 'launch',
       ...launchCaption,
+    });
+    postRows.push({
+      campaignId: campaign.id,
+      postType: 'launch',
+      sequenceNum: postNumber,
+      title: null,
+      caption: launchCaption.caption,
+      hashtags: launchCaption.hashtags,
+      format: formats,
+      imageIds: [project.images[0].id],
+      productIds: [],
+      roomName: null,
     });
     postNumber++;
 
@@ -199,6 +240,18 @@ export async function POST(request: NextRequest) {
         postNumber,
         postType: 'room_spotlight',
         ...roomCaption,
+      });
+      postRows.push({
+        campaignId: campaign.id,
+        postType: 'room_spotlight',
+        sequenceNum: postNumber,
+        title: null,
+        caption: roomCaption.caption,
+        hashtags: roomCaption.hashtags,
+        format: formats,
+        imageIds: roomImages.map((img) => img.id),
+        productIds: [],
+        roomName: room.name,
       });
       postNumber++;
     }
@@ -239,6 +292,18 @@ export async function POST(request: NextRequest) {
         postType: 'product_feature',
         ...productCaption,
       });
+      postRows.push({
+        campaignId: campaign.id,
+        postType: 'product_feature',
+        sequenceNum: postNumber,
+        title: product.name,
+        caption: productCaption.caption,
+        hashtags: productCaption.hashtags,
+        format: formats,
+        imageIds: productImage ? [productImage.id] : [],
+        productIds: [product.id],
+        roomName: null,
+      });
       postNumber++;
     }
 
@@ -255,6 +320,18 @@ export async function POST(request: NextRequest) {
         postNumber,
         postType: 'quote',
         ...quoteCaption,
+      });
+      postRows.push({
+        campaignId: campaign.id,
+        postType: 'quote',
+        sequenceNum: postNumber,
+        title: null,
+        caption: quoteCaption.caption,
+        hashtags: quoteCaption.hashtags,
+        format: formats,
+        imageIds: [],
+        productIds: [],
+        roomName: null,
       });
       postNumber++;
     }
@@ -282,6 +359,20 @@ export async function POST(request: NextRequest) {
       postType: 'closer',
       ...closerCaption,
     });
+    postRows.push({
+      campaignId: campaign.id,
+      postType: 'closer',
+      sequenceNum: postNumber,
+      title: null,
+      caption: closerCaption.caption,
+      hashtags: closerCaption.hashtags,
+      format: formats,
+      imageIds: [project.images[Math.min(1, project.images.length - 1)].id],
+      productIds: [],
+      roomName: null,
+    });
+
+    await prisma.instagramCampaignPost.createMany({ data: postRows });
 
     // Add captions.txt file
     const captionsContent = generateCaptionsFile(captionData);
@@ -328,13 +419,14 @@ Generated: ${new Date().toISOString().split('T')[0]}
       headers: {
         'Content-Type': 'application/zip',
         'Content-Disposition': `attachment; filename="${project.title.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-instagram-campaign.zip"`,
+        'X-Campaign-Id': campaign.id,
       },
     });
   } catch (error: any) {
     console.error('Campaign generation error:', error);
-    return NextResponse.json(
-      { error: error.message || 'Failed to generate campaign' },
-      { status: 500 }
-    );
+    const raw = error?.message || 'Failed to generate campaign';
+    const ineligible = raw.startsWith('CAMPAIGN_INELIGIBLE:');
+    const message = ineligible ? raw.replace(/^CAMPAIGN_INELIGIBLE:\s*/, '') : raw;
+    return NextResponse.json({ error: message }, { status: ineligible ? 400 : 500 });
   }
 }
