@@ -442,7 +442,7 @@ export default function InstagramExportModal({
           <div className="flex items-center justify-between p-6 border-b border-folio-border-subtle">
             <div className="flex items-center gap-3">
               <FaInstagram className="w-6 h-6 text-pink-600" />
-              <DialogTitle className="text-2xl font-serif font-bold text-folio-text-primary">
+              <DialogTitle className="text-2xl font-serif font-semibold text-folio-text-primary">
                 Export to Instagram
               </DialogTitle>
             </div>

@@ -14,8 +14,13 @@ type CampaignPreset = 'compact' | 'standard' | 'complete';
 interface ContentSelection {
   preset: CampaignPreset;
   totalPosts: number;
+  projectTitle: string;
+  designerName: string;
+  imagesById: Record<string, { url: string }>;
+  launch: { enabled: true; heroImageId: string };
   rooms: Array<{
     name: string;
+    imageIds: string[];
     imageCount: number;
     suggested: boolean;
   }>;
@@ -23,15 +28,84 @@ interface ContentSelection {
     id: string;
     name: string;
     brand: string;
+    imageId: string;
     suggested: boolean;
   }>;
   quotes: Array<{
     text: string;
+    imageId?: string;
     suggested: boolean;
   }>;
   details: Array<{
+    imageId: string;
     caption: string;
   }>;
+  closer: { enabled: true; imageId: string };
+}
+
+type PostMockup =
+  | { type: 'launch'; imageUrl: string; title: string; subtitle: string }
+  | { type: 'room_spotlight'; imageUrl: string; title: string; subtitle: string; slideCount: number }
+  | { type: 'product_feature'; imageUrl: string; title: string; subtitle: string }
+  | { type: 'quote'; text: string; attribution: string }
+  | { type: 'detail'; imageUrl: string; title: string }
+  | { type: 'closer'; imageUrl: string; title: string; subtitle: string };
+
+function buildPostMockups(c: ContentSelection): PostMockup[] {
+  const posts: PostMockup[] = [];
+  const urlFor = (id: string | undefined) =>
+    (id && c.imagesById[id]?.url) || '';
+
+  posts.push({
+    type: 'launch',
+    imageUrl: urlFor(c.launch.heroImageId),
+    title: c.projectTitle,
+    subtitle: c.designerName,
+  });
+
+  for (const room of c.rooms.filter((r) => r.suggested)) {
+    posts.push({
+      type: 'room_spotlight',
+      imageUrl: urlFor(room.imageIds[0]),
+      title: room.name,
+      subtitle: c.projectTitle,
+      slideCount: room.imageCount,
+    });
+  }
+
+  for (const product of c.products.filter((p) => p.suggested)) {
+    posts.push({
+      type: 'product_feature',
+      imageUrl: urlFor(product.imageId),
+      title: product.name,
+      subtitle: product.brand,
+    });
+  }
+
+  for (const quote of c.quotes.filter((q) => q.suggested)) {
+    posts.push({
+      type: 'quote',
+      text: quote.text,
+      attribution: c.designerName,
+    });
+  }
+
+  for (const detail of c.details) {
+    posts.push({
+      type: 'detail',
+      imageUrl: urlFor(detail.imageId),
+      title: 'The details',
+    });
+  }
+
+  posts.push({
+    type: 'closer',
+    imageUrl: urlFor(c.closer.imageId),
+    title: c.projectTitle,
+    subtitle: 'Explore on Folio',
+  });
+
+  return posts;
 }
 
 export function CampaignWizard({ projectId, projectTitle, onClose }: CampaignWizardProps) {
@@ -200,48 +274,30 @@ export function CampaignWizard({ projectId, projectTitle, onClose }: CampaignWiz
             <div className="space-y-4">
               <div className="rounded-lg border border-folio-border-subtle bg-surface-ground p-4">
                 <div className="mb-4 flex items-center justify-between">
-                  <h3 className="font-medium text-folio-text-primary">What's Included</h3>
-                  <span className="text-2xl font-bold text-[var(--accent)]">{totalPosts} posts</span>
+                  <h3 className="font-medium text-folio-text-primary">Preview</h3>
+                  <span className="text-2xl font-semibold text-[var(--accent)]">{totalPosts} posts</span>
                 </div>
 
-                <div className="space-y-3 text-sm">
-                  <div className="flex items-center justify-between">
-                    <span className="text-folio-text-primary">✓ Launch Card</span>
-                    <span className="text-folio-text-secondary">1</span>
-                  </div>
+                <div className="flex gap-3 overflow-x-auto pb-2">
+                  {buildPostMockups(contentSelection).map((post, idx, arr) => (
+                    <PostMockupCard
+                      key={idx}
+                      post={post}
+                      sequenceNum={idx + 1}
+                      total={arr.length}
+                    />
+                  ))}
+                </div>
 
-                  {selectedRooms > 0 && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-folio-text-primary">✓ Room Spotlights</span>
-                      <span className="text-folio-text-secondary">{selectedRooms}</span>
-                    </div>
-                  )}
-
-                  {selectedProducts > 0 && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-folio-text-primary">✓ Product Features</span>
-                      <span className="text-folio-text-secondary">{selectedProducts}</span>
-                    </div>
-                  )}
-
-                  {selectedQuotes > 0 && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-folio-text-primary">✓ Story Cards</span>
-                      <span className="text-folio-text-secondary">{selectedQuotes}</span>
-                    </div>
-                  )}
-
+                <div className="mt-4 flex flex-wrap gap-x-4 gap-y-1 text-xs text-folio-text-secondary">
+                  <span>1 launch</span>
+                  {selectedRooms > 0 && <span>· {selectedRooms} room{selectedRooms === 1 ? '' : 's'}</span>}
+                  {selectedProducts > 0 && <span>· {selectedProducts} product{selectedProducts === 1 ? '' : 's'}</span>}
+                  {selectedQuotes > 0 && <span>· {selectedQuotes} quote{selectedQuotes === 1 ? '' : 's'}</span>}
                   {contentSelection.details.length > 0 && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-folio-text-primary">✓ Detail Moments</span>
-                      <span className="text-folio-text-secondary">{contentSelection.details.length}</span>
-                    </div>
+                    <span>· {contentSelection.details.length} detail{contentSelection.details.length === 1 ? '' : 's'}</span>
                   )}
-
-                  <div className="flex items-center justify-between">
-                    <span className="text-folio-text-primary">✓ Closer</span>
-                    <span className="text-folio-text-secondary">1</span>
-                  </div>
+                  <span>· 1 closer</span>
                 </div>
               </div>
 
@@ -294,6 +350,84 @@ export function CampaignWizard({ projectId, projectTitle, onClose }: CampaignWiz
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+function PostMockupCard({
+  post,
+  sequenceNum,
+  total,
+}: {
+  post: PostMockup;
+  sequenceNum: number;
+  total: number;
+}) {
+  const sequenceBadge = (
+    <span className="absolute right-2 top-2 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm">
+      {sequenceNum}/{total}
+    </span>
+  );
+
+  const folioMark = (
+    <span className="absolute bottom-2 right-2 text-[9px] font-medium uppercase tracking-[0.15em] text-white/90">
+      Folio
+    </span>
+  );
+
+  if (post.type === 'quote') {
+    return (
+      <div className="relative flex h-[175px] w-[140px] flex-shrink-0 flex-col justify-center rounded-md bg-folio-ink p-3 text-white">
+        {sequenceBadge}
+        <p className="line-clamp-5 font-serif text-[11px] italic leading-snug text-white">
+          &ldquo;{post.text}&rdquo;
+        </p>
+        <p className="mt-2 text-[9px] uppercase tracking-[0.15em] text-white/70">
+          {post.attribution}
+        </p>
+        {folioMark}
+      </div>
+    );
+  }
+
+  const typeLabel: Record<Exclude<PostMockup['type'], 'quote'>, string> = {
+    launch: 'Launch',
+    room_spotlight: 'Room',
+    product_feature: 'Product',
+    detail: 'Detail',
+    closer: 'Closer',
+  };
+
+  return (
+    <div
+      className="relative h-[175px] w-[140px] flex-shrink-0 overflow-hidden rounded-md bg-folio-stone-100"
+      style={
+        post.imageUrl
+          ? {
+              backgroundImage: `url(${post.imageUrl})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+            }
+          : undefined
+      }
+    >
+      <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
+      {sequenceBadge}
+      {post.type === 'room_spotlight' && post.slideCount > 1 && (
+        <span className="absolute left-2 top-2 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm">
+          {post.slideCount} slides
+        </span>
+      )}
+      <div className="absolute inset-x-2 bottom-5 text-white">
+        <p className="text-[9px] uppercase tracking-[0.15em] text-white/80">
+          {typeLabel[post.type]}
+        </p>
+        <p className="line-clamp-2 font-serif text-sm leading-tight">{post.title}</p>
+        {'subtitle' in post && post.subtitle && (
+          <p className="mt-0.5 line-clamp-1 text-[10px] text-white/80">{post.subtitle}</p>
+        )}
+      </div>
+      {folioMark}
     </div>
   );
 }
