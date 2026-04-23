@@ -118,14 +118,14 @@ export default function CarouselPreview({
                   />
                   {/* Title overlay (top-left) - Updated: stronger shadow, top 15% */}
                   <div className="absolute left-0 p-6" style={{ top: '15%' }}>
-                    <h2 className="text-6xl md:text-7xl font-serif font-bold text-white" style={{ 
+                    <h2 className="text-6xl md:text-7xl font-serif font-semibold text-white" style={{ 
                       textShadow: '0 6px 30px rgba(0,0,0,0.5)',
                       fontSize: 'clamp(3rem, 8vw, 8.75rem)' // ~120-140px range
                     }}>
                       {projectTitle.split(' ').slice(0, 3).join(' ')}
                     </h2>
                     {projectTitle.split(' ').length > 3 && (
-                      <h2 className="text-6xl md:text-7xl font-serif font-bold text-white mt-2" style={{ 
+                      <h2 className="text-6xl md:text-7xl font-serif font-semibold text-white mt-2" style={{ 
                         textShadow: '0 6px 30px rgba(0,0,0,0.5)',
                         fontSize: 'clamp(3rem, 8vw, 8.75rem)' // ~120-140px range
                       }}>

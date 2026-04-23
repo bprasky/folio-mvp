@@ -103,3 +103,37 @@ ask which audience each one serves before propagating the filter.
 **Why this is a lesson, not just a note:** Cold-starting domain work without invoking the specialist has already produced both captured lessons above (Path A/B gating, public/draft asymmetry). The agents exist specifically to prevent those classes of mistake from recurring. If you find yourself writing a flag gate or a Prisma query without the agent on, stop and invoke it.
 
 **See:** `.claude/agents/README.md` for the full set and the rule for adding new agents.
+
+---
+
+## 2026-04-23 — Don't use font weights the brand fonts aren't loaded at
+
+**Mistake:** Instagram campaign wizard rendered its "4 posts" badge and several
+other titles with `font-bold` (CSS weight 700). `src/app/layout.tsx` only
+loads `Instrument_Sans` and `Cormorant_Garamond` at weights `['400', '500',
+'600']`, so browsers synthesized a fallback from the next typeface in each
+stack (system sans). The user caught the off-brand rendering visually.
+
+**Rule:** Before using a Tailwind font-weight utility, check `layout.tsx` for
+the weights actually loaded by `next/font`. Don't use `font-bold` (700),
+`font-extrabold` (800), or `font-black` (900) unless you also add those
+weights to the `weight: [...]` array in `layout.tsx`. When in doubt, reach
+for `font-semibold` (600) — it's loaded for both brand faces today.
+
+**Specific check:**
+
+```
+grep -n "weight:" src/app/layout.tsx
+# Current state (2026-04-23): 400, 500, 600 only.
+# Any class in {font-bold, font-extrabold, font-black} renders as fallback.
+```
+
+**Related:** The brand CSS layer in `src/app/globals.css:647` auto-applies
+`var(--font-headline)` (Cormorant) to bare `<h1>–<h4>` and
+`var(--font-body)` (Instrument Sans) to `p, li, small, button, input,
+textarea, label`. Lean on those rather than setting font-family inline; when
+you must, use the `.folio-h*`, `.folio-body`, `.folio-ui`, `.folio-meta`,
+`.folio-stat` helper classes in the same file.
+
+**Full-codebase scope at time of lesson:** `grep -r font-bold src` returned
+~205 hits — sweep them in a dedicated pass, not piecemeal.

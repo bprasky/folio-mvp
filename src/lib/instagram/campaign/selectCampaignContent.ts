@@ -6,6 +6,9 @@ export type CampaignPreset = "compact" | "standard" | "complete" | "custom";
 export interface CampaignContentSelection {
   preset: CampaignPreset;
   totalPosts: number;
+  projectTitle: string;
+  designerName: string;
+  imagesById: Record<string, { url: string }>;
   launch: {
     enabled: true;
     heroImageId: string;
@@ -50,6 +53,9 @@ export async function selectCampaignContent(
   const project = await prisma.project.findUnique({
     where: { id: projectId },
     include: {
+      designer: {
+        select: { name: true, studio: true },
+      },
       images: {
         include: {
           tags: {
@@ -235,9 +241,17 @@ export async function selectCampaignContent(
     allQuotes.filter((q) => q.suggested).length +
     (includeDetails ? detailImages.length : 0);
 
+  const imagesById: Record<string, { url: string }> = {};
+  for (const img of images) {
+    imagesById[img.id] = { url: img.url };
+  }
+
   return {
     preset,
     totalPosts,
+    projectTitle: project.title,
+    designerName: project.designer?.studio || project.designer?.name || 'Designer',
+    imagesById,
     launch: {
       enabled: true,
       heroImageId: heroImage.id,
