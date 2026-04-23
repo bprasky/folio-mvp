@@ -32,9 +32,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(contentSelection);
   } catch (error: any) {
     console.error('Campaign preview error:', error);
-    return NextResponse.json(
-      { error: error.message || 'Failed to generate preview' },
-      { status: 500 }
-    );
+    const raw = error?.message || 'Failed to generate preview';
+    const ineligible = raw.startsWith('CAMPAIGN_INELIGIBLE:');
+    const message = ineligible ? raw.replace(/^CAMPAIGN_INELIGIBLE:\s*/, '') : raw;
+    return NextResponse.json({ error: message }, { status: ineligible ? 400 : 500 });
   }
 }

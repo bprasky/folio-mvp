@@ -79,6 +79,11 @@ export async function selectCampaignContent(
   }
 
   const images = project.images;
+  if (images.length === 0) {
+    throw new Error(
+      'CAMPAIGN_INELIGIBLE: This project has no images yet. Add images before generating an Instagram campaign.'
+    );
+  }
   const heroImage = images[0]; // First image is hero
 
   // Group images by room
@@ -138,9 +143,9 @@ export async function selectCampaignContent(
     ? extractQuotes(project.post.expandedBlocks)
     : [];
 
+  // extractQuotes returns string[] — wrap into the structured shape the rest of the flow expects
   const allQuotes = quotes.map((q) => ({
-    text: q.text,
-    imageId: q.imageId,
+    text: q,
     suggested: false,
   }));
 
