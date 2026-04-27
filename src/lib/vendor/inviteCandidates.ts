@@ -182,40 +182,4 @@ export async function captureVendorInviteData({
   };
 }
 
-/**
- * @deprecated Use captureVendorInviteData() instead
- * Legacy function kept for backward compatibility
- */
-export async function captureVendorInviteCandidate({
-  vendorName,
-  vendorWebsite,
-  repEmail,
-  repName,
-  designerId,
-  projectId,
-  tagId,
-}: {
-  vendorName: string;
-  vendorWebsite?: string | null;
-  repEmail?: string | null;
-  repName?: string | null;
-  designerId: string;
-  projectId: string;
-  tagId?: string | null;
-}): Promise<{ candidateId: string; created: boolean }> {
-  const result = await captureVendorInviteData({
-    vendorName,
-    vendorWebsite,
-    repEmail,
-    repName,
-    designerId,
-    projectId,
-    tagId,
-    source: 'TAGGING',
-  });
-  return {
-    candidateId: result.candidateId,
-    created: result.created,
-  };
-}
 
