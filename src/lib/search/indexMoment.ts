@@ -6,6 +6,26 @@ import { classifyImage, ImageClassification } from '@/lib/aesthetic/imageClassif
 import { hexArrayToColorNames } from './colorMapping';
 
 /**
+ * Canonical material vocabulary for moment indexing and material-quality scoring.
+ * Exported so audit/diag scripts can score the "genuine material" ratio of
+ * AI-extracted aiMaterials values without duplicating the list.
+ */
+export const MATERIAL_KEYWORDS = [
+  'marble', 'granite', 'quartz', 'stone', 'concrete', 'terrazzo',
+  'oak', 'walnut', 'wood', 'timber', 'teak', 'pine',
+  'brass', 'bronze', 'copper', 'steel', 'iron', 'chrome', 'nickel',
+  'velvet', 'linen', 'cotton', 'silk', 'wool', 'leather', 'suede',
+  'glass', 'ceramic', 'porcelain', 'tile', 'brick', 'plaster',
+] as const;
+
+const COLOR_KEYWORDS = [
+  'white', 'black', 'gray', 'grey', 'beige', 'cream', 'ivory', 'charcoal',
+  'brown', 'tan', 'oak', 'walnut', 'brass', 'gold', 'silver', 'chrome', 'copper',
+  'blue', 'green', 'red', 'navy', 'terracotta', 'sage', 'pink', 'blush',
+  'yellow', 'orange', 'purple', 'teal',
+] as const;
+
+/**
  * AI-detected tags from image analysis
  * Uses Claude Vision as primary, Sharp as fallback
  */
@@ -204,32 +224,17 @@ function extractAttributes(
   mood: string[];
   elements: string[];
 } {
-  const colorKeywords = [
-    'white', 'black', 'gray', 'grey', 'beige', 'cream', 'ivory', 'charcoal',
-    'brown', 'tan', 'oak', 'walnut', 'brass', 'gold', 'silver', 'chrome', 'copper',
-    'blue', 'green', 'red', 'navy', 'terracotta', 'sage', 'pink', 'blush', 
-    'yellow', 'orange', 'purple', 'teal'
-  ];
-  
-  const materialKeywords = [
-    'marble', 'granite', 'quartz', 'stone', 'concrete', 'terrazzo',
-    'oak', 'walnut', 'wood', 'timber', 'teak', 'pine',
-    'brass', 'bronze', 'copper', 'steel', 'iron', 'chrome', 'nickel',
-    'velvet', 'linen', 'cotton', 'silk', 'wool', 'leather', 'suede',
-    'glass', 'ceramic', 'porcelain', 'tile', 'brick', 'plaster'
-  ];
-  
   // Product text for supplementary extraction
   const productText = products.map(p => `${p.name || ''} ${p.category || ''}`).join(' ').toLowerCase();
-  
+
   // COLORS: AI-detected colors are PRIMARY
   const aiColors = aiTags.colors || [];
-  const productColors = colorKeywords.filter(kw => productText.includes(kw));
+  const productColors = COLOR_KEYWORDS.filter(kw => productText.includes(kw));
   const colors = [...new Set([...aiColors, ...productColors])];
-  
+
   // MATERIALS: AI-detected materials are PRIMARY
   const aiMaterials = aiTags.materials || [];
-  const productMaterials = materialKeywords.filter(kw => productText.includes(kw));
+  const productMaterials = MATERIAL_KEYWORDS.filter(kw => productText.includes(kw));
   const materials = [...new Set([...aiMaterials, ...productMaterials])];
   
   // STYLES: AI-detected only (products don't contain style info)
