@@ -68,10 +68,10 @@ export function HowItWorks() {
       <div className="max-w-5xl mx-auto">
         <motion.div {...fade}>
           <p className="uppercase tracking-widest text-sm text-folio-text-secondary mb-3">
-            The Process
+            What Folio Does
           </p>
           <h2 className="font-headline italic text-4xl md:text-5xl text-folio-text-primary mb-14">
-            How it works
+            Built for the way studios already operate
           </h2>
         </motion.div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
