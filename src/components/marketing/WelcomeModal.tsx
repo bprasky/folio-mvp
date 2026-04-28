@@ -8,30 +8,23 @@ import { X } from 'lucide-react';
 
 const SESSION_KEY = 'folio_welcome_dismissed';
 
-const steps = [
+const pillars = [
   {
-    title: 'Publish your work',
-    description:
-      'Upload your photography, walk through a brief interview, and Folio generates an editorial-quality project post \u2014 in your voice, under your name.',
+    title: 'Your story, told right every time',
+    body: 'Folio digs deeper than any reporter can. The portfolio section of your website becomes a publication that keeps writing itself.',
   },
   {
-    title: 'Run your projects',
-    description:
-      'Every product you tag builds your Sourcebook. Request quotes, track lead times, and manage procurement from one project board.',
+    title: 'Price, sample, and specify from one place',
+    body: "Every product you've ever speced lives in your Sourcebook. Sourcing stops meaning a morning of old project folders and cold emails.",
   },
   {
-    title: 'Own every conversation',
-    description:
-      'Vendor emails, rep texts, contractor updates \u2014 one searchable inbox linked to your projects and products. Nothing gets lost.',
+    title: 'Turn your inbox into action items',
+    body: 'Connect your accounts and vendor back-and-forth becomes tasks that close with a click. Quotes chased, samples ordered, specs pulled, without leaving Folio.',
   },
-];
-
-const whatYouGet = [
-  'Editorial Publishing',
-  'Sourcebook & Actions',
-  'Project Procurement',
-  'Unified Communications',
-  'Directory & Discovery',
+  {
+    title: 'Every project is months of material',
+    body: 'Upload your work and Folio turns each project into campaigns, articles, and posts that run for weeks. Cross-post, stay consistent, and the reach follows. Folio gives you the content. You run the publication.',
+  },
 ];
 
 export function WelcomeModal() {
@@ -138,12 +131,12 @@ export function WelcomeModal() {
             {/* Hero */}
             <div className="px-7 pt-8 pb-6 text-center">
               <h2 className="font-headline italic text-4xl text-folio-text-primary leading-[1.1]">
-                One place for your projects, your products, and every conversation in between.
+                Your studio, told right and run right.
               </h2>
               <p className="mt-4 text-sm leading-relaxed max-w-md mx-auto" style={{ color: 'rgba(40, 30, 24, 0.75)' }}>
-                Folio is where interior designers publish work, manage
-                procurement, and keep every vendor communication organized
-                &mdash; from first quote to final install.
+                Folio is where interior designers publish their work, source
+                their products, and turn vendor conversations into action.
+                Built for the way studios already operate.
               </p>
             </div>
 
@@ -152,19 +145,10 @@ export function WelcomeModal() {
               <hr style={{ borderColor: 'rgba(201, 169, 110, 0.12)' }} />
             </div>
 
-            {/* How it works */}
+            {/* Pillars */}
             <div className="px-7 py-8">
-              <p
-                className="uppercase tracking-widest text-xs font-medium mb-2"
-                style={{ color: '#a07d3f' }}
-              >
-                The Process
-              </p>
-              <h3 className="font-headline italic text-2xl text-folio-text-primary mb-6">
-                How it works
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                {steps.map((step, i) => (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {pillars.map((pillar, i) => (
                   <div
                     key={i}
                     className="p-4 glass-surface glass-surface-sm"
@@ -175,42 +159,13 @@ export function WelcomeModal() {
                     >
                       {i + 1}
                     </p>
-                    <h4 className="text-xs font-medium text-folio-text-primary mb-1">
-                      {step.title}
+                    <h4 className="text-base font-medium text-folio-text-primary mb-1.5">
+                      {pillar.title}
                     </h4>
-                    <p className="text-xs leading-relaxed" style={{ color: 'rgba(40, 30, 24, 0.65)' }}>
-                      {step.description}
+                    <p className="text-sm leading-relaxed" style={{ color: 'rgba(40, 30, 24, 0.65)' }}>
+                      {pillar.body}
                     </p>
                   </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Divider */}
-            <div className="px-7">
-              <hr style={{ borderColor: 'rgba(201, 169, 110, 0.12)' }} />
-            </div>
-
-            {/* What You Get */}
-            <div className="px-7 py-8">
-              <p
-                className="uppercase tracking-widest text-xs font-medium mb-2"
-                style={{ color: '#a07d3f' }}
-              >
-                What You Get
-              </p>
-              <h3 className="font-headline italic text-2xl text-folio-text-primary mb-5">
-                One platform for the whole studio.
-              </h3>
-              <div className="space-y-2">
-                {whatYouGet.map((item, i) => (
-                  <p
-                    key={i}
-                    className="text-sm text-folio-text-primary leading-relaxed"
-                  >
-                    <span style={{ color: '#c9a96e' }}>&#10022;</span>
-                    {' '}{item}
-                  </p>
                 ))}
               </div>
               <Link

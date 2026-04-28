@@ -26,7 +26,7 @@ export function ForDesignersHero() {
         transition={{ duration: 0.8, ease: "easeOut" }}
       >
         <h1 className="font-headline italic text-5xl md:text-6xl lg:text-7xl text-folio-text-primary leading-[1.1]">
-          One place for your projects, your products, and every conversation in between.
+          Your studio, told right and run right.
         </h1>
         <motion.p
           className="mt-8 text-lg md:text-xl text-folio-text-secondary leading-relaxed max-w-2xl mx-auto"
@@ -43,21 +43,22 @@ export function ForDesignersHero() {
   );
 }
 
-const steps = [
+const pillars = [
   {
-    title: "Publish your work",
-    description:
-      "Upload your photography, walk through a brief interview, and Folio generates an editorial-quality project post \u2014 in your voice, under your name.",
+    title: "Your story, told right every time",
+    body: "Folio digs deeper than any reporter can. The portfolio section of your website becomes a publication that keeps writing itself.",
   },
   {
-    title: "Run your projects",
-    description:
-      "Every product you tag builds your Sourcebook. Request quotes, track lead times, and manage procurement from one project board.",
+    title: "Price, sample, and specify from one place",
+    body: "Every product you've ever speced lives in your Sourcebook. Sourcing stops meaning a morning of old project folders and cold emails.",
   },
   {
-    title: "Own every conversation",
-    description:
-      "Vendor emails, rep texts, contractor updates \u2014 one searchable inbox linked to your projects and products. Nothing gets lost.",
+    title: "Turn your inbox into action items",
+    body: "Connect your accounts and vendor back-and-forth becomes tasks that close with a click. Quotes chased, samples ordered, specs pulled, without leaving Folio.",
+  },
+  {
+    title: "Every project is months of material",
+    body: "Upload your work and Folio turns each project into campaigns, articles, and posts that run for weeks. Cross-post, stay consistent, and the reach follows. Folio gives you the content. You run the publication.",
   },
 ];
 
@@ -67,14 +68,14 @@ export function HowItWorks() {
       <div className="max-w-5xl mx-auto">
         <motion.div {...fade}>
           <p className="uppercase tracking-widest text-sm text-folio-text-secondary mb-3">
-            The Process
+            What Folio Does
           </p>
           <h2 className="font-headline italic text-4xl md:text-5xl text-folio-text-primary mb-14">
-            How it works
+            Built for the way studios already operate
           </h2>
         </motion.div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {steps.map((step, i) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {pillars.map((pillar, i) => (
             <motion.div
               key={i}
               initial={{ opacity: 0, y: 24 }}
@@ -96,10 +97,10 @@ export function HowItWorks() {
                   {i + 1}
                 </p>
                 <h3 className="text-lg font-medium text-folio-text-primary mb-3">
-                  {step.title}
+                  {pillar.title}
                 </h3>
                 <p className="text-folio-text-secondary leading-relaxed">
-                  {step.description}
+                  {pillar.body}
                 </p>
               </GlassCard>
             </motion.div>
