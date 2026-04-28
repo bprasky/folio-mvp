@@ -34,9 +34,9 @@ export function ForDesignersHero() {
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6, delay: 0.4, ease: "easeOut" }}
         >
-          Folio is where interior designers publish work, manage procurement,
-          and keep every vendor communication organized &mdash; from first quote
-          to final install.
+          Folio is where interior designers publish their work, source
+          their products, and turn vendor conversations into action.
+          Built for the way studios already operate.
         </motion.p>
       </motion.div>
     </section>
