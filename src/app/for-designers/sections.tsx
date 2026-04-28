@@ -26,7 +26,7 @@ export function ForDesignersHero() {
         transition={{ duration: 0.8, ease: "easeOut" }}
       >
         <h1 className="font-headline italic text-5xl md:text-6xl lg:text-7xl text-folio-text-primary leading-[1.1]">
-          Your studio, told right and run right.
+          Your story told right. Your studio run right.
         </h1>
         <motion.p
           className="mt-8 text-lg md:text-xl text-folio-text-secondary leading-relaxed max-w-2xl mx-auto"
@@ -34,9 +34,9 @@ export function ForDesignersHero() {
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6, delay: 0.4, ease: "easeOut" }}
         >
-          Folio is where interior designers publish work, manage procurement,
-          and keep every vendor communication organized &mdash; from first quote
-          to final install.
+          Folio is where interior designers publish their work, source
+          their products, and turn vendor conversations into action.
+          Built for the way studios already operate.
         </motion.p>
       </motion.div>
     </section>
@@ -57,8 +57,8 @@ const pillars = [
     body: "Connect your accounts and vendor back-and-forth becomes tasks that close with a click. Quotes chased, samples ordered, specs pulled, without leaving Folio.",
   },
   {
-    title: "Every project is months of material",
-    body: "Upload your work and Folio turns each project into campaigns, articles, and posts that run for weeks. Cross-post, stay consistent, and the reach follows. Folio gives you the content. You run the publication.",
+    title: "Every project is months of social content",
+    body: "Upload your work and Folio writes the campaigns, articles, and posts for you. Cross-post, stay consistent, and the reach follows. Folio gives you the content. You run the publication.",
   },
 ];
 

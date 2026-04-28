@@ -22,8 +22,8 @@ const pillars = [
     body: 'Connect your accounts and vendor back-and-forth becomes tasks that close with a click. Quotes chased, samples ordered, specs pulled, without leaving Folio.',
   },
   {
-    title: 'Every project is months of material',
-    body: 'Upload your work and Folio turns each project into campaigns, articles, and posts that run for weeks. Cross-post, stay consistent, and the reach follows. Folio gives you the content. You run the publication.',
+    title: 'Every project is months of social content',
+    body: 'Upload your work and Folio writes the campaigns, articles, and posts for you. Cross-post, stay consistent, and the reach follows. Folio gives you the content. You run the publication.',
   },
 ];
 
@@ -131,7 +131,7 @@ export function WelcomeModal() {
             {/* Hero */}
             <div className="px-7 pt-8 pb-6 text-center">
               <h2 className="font-headline italic text-4xl text-folio-text-primary leading-[1.1]">
-                Your studio, told right and run right.
+                Your story told right. Your studio run right.
               </h2>
               <p className="mt-4 text-sm leading-relaxed max-w-md mx-auto" style={{ color: 'rgba(40, 30, 24, 0.75)' }}>
                 Folio is where interior designers publish their work, source
