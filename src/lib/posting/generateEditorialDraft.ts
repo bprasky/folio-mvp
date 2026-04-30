@@ -58,6 +58,7 @@ export type GenInput = {
   tags: any[];
   answers: {
     questionId: string;
+    questionText?: string;
     section: string;
     role: "DESIGNER" | "VENDOR" | "ANY";
     answer: string;
@@ -831,7 +832,7 @@ function buildPrompt(input: GenInput, uniqueAnswers: GenInput['answers']): {
       const sourceTag = a.isFollowUp
         ? '[SOURCE: PROJECT FOLLOW-UP — highest-value content for pull quotes and editorial framing]'
         : '[SOURCE: PROJECT — narrative frame material]';
-      return `Q: ${a.questionId || 'Question'}\nA: "${a.answer}" ${sourceTag}`;
+      return `Q: ${a.questionText || a.questionId || 'Question'}\nA: "${a.answer}" ${sourceTag}`;
     }).join('\n\n');
     formattedProjectSection = `=== ABOUT THIS PROJECT ===\n${formatted}`;
   }
@@ -843,7 +844,7 @@ function buildPrompt(input: GenInput, uniqueAnswers: GenInput['answers']): {
       const sourceTag = a.isFollowUp
         ? '[SOURCE: FOLLOW-UP — richer narrative, prioritize for anecdotes and direct quotes]'
         : '[SOURCE: BASE QUESTION]';
-      return `Q: ${a.questionId || 'Question'}\nA: "${a.answer}" ${sourceTag}`;
+      return `Q: ${a.questionText || a.questionId || 'Question'}\nA: "${a.answer}" ${sourceTag}`;
     }).join('\n\n');
     return `${roomHeader}\n${formatted}`;
   }).join('\n\n');
