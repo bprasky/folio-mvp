@@ -53,7 +53,10 @@ export function HomepageFilterChips({ isOut }: Props) {
   return (
     <nav
       aria-label="Filter homepage feed"
-      className="flex items-center gap-2 flex-wrap"
+      // Mobile: horizontal scroll with momentum, no visible scrollbar, no
+      // wrap (chips overflow off the right edge to imply scrollability).
+      // Desktop (sm+): wrap onto multiple rows like the original layout.
+      className="flex items-center gap-2 overflow-x-auto sm:overflow-visible sm:flex-wrap [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden -mx-4 px-4 sm:mx-0 sm:px-0"
       data-pending={isPending ? "true" : undefined}
     >
       <Chip
@@ -96,8 +99,8 @@ function Chip({
       aria-pressed={active}
       className={
         active
-          ? "px-4 py-1.5 rounded-full transition-colors folio-ui bg-folio-ink text-folio-bg"
-          : "px-4 py-1.5 rounded-full transition-colors folio-ui bg-transparent text-folio-text-secondary hover:bg-surface-ground hover:text-folio-text-primary"
+          ? "shrink-0 whitespace-nowrap px-4 py-1.5 rounded-full transition-colors folio-ui bg-folio-ink text-folio-bg"
+          : "shrink-0 whitespace-nowrap px-4 py-1.5 rounded-full transition-colors folio-ui bg-transparent text-folio-text-secondary hover:bg-surface-ground hover:text-folio-text-primary"
       }
     >
       {label}
