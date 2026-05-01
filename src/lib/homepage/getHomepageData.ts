@@ -65,6 +65,20 @@ const REEL_VISIBLE_SLOTS = 7;
 const REEL_PAID_SLOTS = 2;
 const FALLBACK_LOOKBACK_DAYS = 14;
 
+// ────────────────────────────────────────────────────────────────────────────
+// Temporary editorial pin
+//
+// When non-null, this slug overrides both the window-based and algorithmic
+// XL-hero selection. The window check + 14-day fallback below stay in place
+// so the moment this constant goes back to `null`, the system resumes its
+// normal selection — no other code change required.
+//
+// Set to `null` (or delete the constant + the guard block in selectXlHero)
+// to restore window-based + algorithmic selection.
+// ────────────────────────────────────────────────────────────────────────────
+const PINNED_HERO_POST_SLUG: string | null = "meru-XB4XBK";
+const PINNED_HERO_EYEBROW = "Editorial Feature";
+
 export async function getHomepageData(opts: {
   userId?: string | null;
   filter?: FeedFilter | null;
@@ -103,6 +117,21 @@ export async function getHomepageData(opts: {
 
 async function selectXlHero(): Promise<HomepageHero | null> {
   const now = new Date();
+
+  // 0. Manual pin: when PINNED_HERO_POST_SLUG is non-null, that post wins
+  //    regardless of window or recency. If the slug is set but the post
+  //    isn't found / isn't published, fall through to the normal path so
+  //    the homepage degrades gracefully instead of going blank.
+  if (PINNED_HERO_POST_SLUG) {
+    const pinned = await prisma.projectPost.findFirst({
+      where: { slug: PINNED_HERO_POST_SLUG, status: "PUBLISHED" },
+      select: heroSelect,
+    });
+    if (pinned) {
+      return mapHero(pinned, PINNED_HERO_EYEBROW);
+    }
+    // else fall through to window/fallback
+  }
 
   // 1. Calendar-window XL: editorial team scheduled this post for the homepage.
   const scheduled = await prisma.projectPost.findFirst({
