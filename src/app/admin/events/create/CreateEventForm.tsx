@@ -108,7 +108,7 @@ const CreateEventForm: React.FC<CreateEventFormProps> = ({ userId }) => {
       <div className="flex items-center justify-between">
         <Link
           href="/admin/events"
-          className="flex items-center text-folio-text-muted hover:text-folio-accent transition-colors"
+          className="flex items-center text-folio-text-muted hover:text-folio-gold transition-colors"
         >
           <FaArrowLeft className="mr-2" />
           Back to Events Dashboard
@@ -124,7 +124,7 @@ const CreateEventForm: React.FC<CreateEventFormProps> = ({ userId }) => {
             onClick={() => handleEventTypeChange('festival')}
             className={`p-6 rounded-lg border-2 transition-all ${
               eventType === 'festival' 
-                ? 'border-folio-accent bg-folio-accent bg-opacity-10' 
+                ? 'border-folio-gold bg-folio-gold bg-opacity-10' 
                 : 'border-gray-200 hover:border-gray-300'
             }`}
           >
@@ -142,7 +142,7 @@ const CreateEventForm: React.FC<CreateEventFormProps> = ({ userId }) => {
             onClick={() => handleEventTypeChange('event')}
             className={`p-6 rounded-lg border-2 transition-all ${
               eventType === 'event' 
-                ? 'border-folio-accent bg-folio-accent bg-opacity-10' 
+                ? 'border-folio-gold bg-folio-gold bg-opacity-10' 
                 : 'border-gray-200 hover:border-gray-300'
             }`}
           >
@@ -172,7 +172,7 @@ const CreateEventForm: React.FC<CreateEventFormProps> = ({ userId }) => {
               value={formData.title}
               onChange={handleInputChange}
               required
-              className="w-full px-3 py-2 border border-folio-border rounded-lg focus:outline-none focus:ring-2 focus:ring-folio-accent"
+              className="w-full px-3 py-2 border border-folio-border rounded-lg focus:outline-none focus:ring-2 focus:ring-folio-gold"
               placeholder={`Enter ${eventType} title`}
             />
           </div>
@@ -189,7 +189,7 @@ const CreateEventForm: React.FC<CreateEventFormProps> = ({ userId }) => {
               onChange={handleInputChange}
               required
               rows={4}
-              className="w-full px-3 py-2 border border-folio-border rounded-lg focus:outline-none focus:ring-2 focus:ring-folio-accent"
+              className="w-full px-3 py-2 border border-folio-border rounded-lg focus:outline-none focus:ring-2 focus:ring-folio-gold"
               placeholder={`Describe your ${eventType}`}
             />
           </div>
@@ -206,7 +206,7 @@ const CreateEventForm: React.FC<CreateEventFormProps> = ({ userId }) => {
               value={formData.location}
               onChange={handleInputChange}
               required
-              className="w-full px-3 py-2 border border-folio-border rounded-lg focus:outline-none focus:ring-2 focus:ring-folio-accent"
+              className="w-full px-3 py-2 border border-folio-border rounded-lg focus:outline-none focus:ring-2 focus:ring-folio-gold"
               placeholder={`${eventType} location`}
             />
           </div>
@@ -224,7 +224,7 @@ const CreateEventForm: React.FC<CreateEventFormProps> = ({ userId }) => {
                 value={formData.startDate}
                 onChange={handleInputChange}
                 required
-                className="w-full px-3 py-2 border border-folio-border rounded-lg focus:outline-none focus:ring-2 focus:ring-folio-accent"
+                className="w-full px-3 py-2 border border-folio-border rounded-lg focus:outline-none focus:ring-2 focus:ring-folio-gold"
               />
             </div>
 
@@ -240,7 +240,7 @@ const CreateEventForm: React.FC<CreateEventFormProps> = ({ userId }) => {
                 onChange={handleInputChange}
                 required
                 min={formData.startDate}
-                className="w-full px-3 py-2 border border-folio-border rounded-lg focus:outline-none focus:ring-2 focus:ring-folio-accent"
+                className="w-full px-3 py-2 border border-folio-border rounded-lg focus:outline-none focus:ring-2 focus:ring-folio-gold"
               />
             </div>
           </div>
@@ -257,7 +257,7 @@ const CreateEventForm: React.FC<CreateEventFormProps> = ({ userId }) => {
                 value={formData.type}
                 onChange={handleInputChange}
                 required
-                className="w-full px-3 py-2 border border-folio-border rounded-lg focus:outline-none focus:ring-2 focus:ring-folio-accent"
+                className="w-full px-3 py-2 border border-folio-border rounded-lg focus:outline-none focus:ring-2 focus:ring-folio-gold"
               >
                 <option value="booth">Booth</option>
                 <option value="dinner">Dinner</option>
@@ -281,7 +281,7 @@ const CreateEventForm: React.FC<CreateEventFormProps> = ({ userId }) => {
                 name="parentFestivalId"
                 value={formData.parentFestivalId}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-folio-border rounded-lg focus:outline-none focus:ring-2 focus:ring-folio-accent"
+                className="w-full px-3 py-2 border border-folio-border rounded-lg focus:outline-none focus:ring-2 focus:ring-folio-gold"
               >
                 <option value="">Standalone Event</option>
                 {availableFestivals.map((festival) => (
@@ -330,7 +330,7 @@ const CreateEventForm: React.FC<CreateEventFormProps> = ({ userId }) => {
           <button
             type="submit"
             disabled={loading}
-            className="flex items-center px-6 py-3 bg-folio-accent text-white rounded-lg hover:bg-folio-accent-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center px-6 py-3 bg-folio-gold text-white rounded-lg hover:bg-folio-gold-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? (
               <>

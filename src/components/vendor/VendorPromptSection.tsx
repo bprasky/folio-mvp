@@ -70,7 +70,7 @@ export function VendorPromptSection({ orgId, isOwner }: VendorPromptSectionProps
   return (
     <div className="mt-8">
       <div className="flex items-center gap-2 mb-4">
-        <div className="w-2 h-2 rounded-full" style={{ background: "#c9a96e" }} />
+        <div className="w-2 h-2 rounded-full" style={{ background: "var(--folio-gold-ornament)" }} />
         <h3 className="font-body font-medium" style={{ fontSize: "12px", letterSpacing: "1px", textTransform: "uppercase", color: "var(--folio-text-tertiary)" }}>
           Content Prompts
         </h3>
@@ -91,7 +91,7 @@ export function VendorPromptSection({ orgId, isOwner }: VendorPromptSectionProps
                 {prompt.question}
               </div>
               {prompt.relatedDesignerName && (
-                <div className="font-body mt-1" style={{ fontSize: "10px", color: "#c9a96e" }}>
+                <div className="font-body mt-1" style={{ fontSize: "10px", color: "var(--folio-gold-ornament)" }}>
                   Inspired by {prompt.relatedDesignerName}'s project
                 </div>
               )}

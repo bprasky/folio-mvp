@@ -14,7 +14,8 @@
  * - Typography: --font-logo, --font-headline, --font-body
  * - Base: --bg-base (#FFFFFF), --bg-elevated (#FAFAF9)
  * - Text: --text-primary, --text-secondary, --text-tertiary
- * - Accent: --accent (#B8845C), --accent-hover (#A67548)
+ * - Accent (functional): --folio-gold (#B8845C), --folio-gold-hover (#A67548)
+ * - Accent (ornament):   --folio-gold-ornament (#C9A96E) — never use for text or interactive elements
  * - Shadows: --neu-raised, --neu-raised-lg, --neu-inset, --neu-inset-sm
  * - Ridge: --ridge-outer, --ridge-inner, --ridge-dark
  */

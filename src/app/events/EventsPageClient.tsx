@@ -158,7 +158,7 @@ const EventsPageClient: React.FC<EventsPageClientProps> = ({
             return (
               <div
                 key={festival.id}
-                className={`flex-shrink-0 w-72 bg-surface-ground rounded-lg shadow-sm border cursor-pointer transition-all ${isExpanded ? 'border-[var(--accent)] ring-2 ring-folio-accent ring-opacity-50' : 'border-folio-border-subtle hover:shadow-md'} ${isLive ? 'shadow-[0_0_15px_rgba(34,197,94,0.3)]' : ''}`}
+                className={`flex-shrink-0 w-72 bg-surface-ground rounded-lg shadow-sm border cursor-pointer transition-all ${isExpanded ? 'border-[var(--accent)] ring-2 ring-folio-gold ring-opacity-50' : 'border-folio-border-subtle hover:shadow-md'} ${isLive ? 'shadow-[0_0_15px_rgba(34,197,94,0.3)]' : ''}`}
                 onClick={() => setExpandedFestival(isExpanded ? null : festival.id)}
               >
                 {/* Image placeholder */}

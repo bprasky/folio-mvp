@@ -263,7 +263,7 @@ export default function ConciergeEventCreate({ isOpen, onClose, onSubmit, classN
                 </span>
                 <button
                   onClick={() => {/* TODO: Add edit functionality */}}
-                  className="text-folio-accent hover:text-folio-accent-dark"
+                  className="text-folio-gold hover:text-folio-gold-hover"
                 >
                   <FaEdit className="w-3 h-3" />
                 </button>
@@ -277,7 +277,7 @@ export default function ConciergeEventCreate({ isOpen, onClose, onSubmit, classN
         <button
           onClick={handleFinalSubmit}
           disabled={isProcessing}
-          className="flex-1 bg-folio-accent text-white px-4 py-2 rounded-md hover:bg-folio-accent-dark transition-colors disabled:opacity-50"
+          className="flex-1 bg-folio-gold text-white px-4 py-2 rounded-md hover:bg-folio-gold-hover transition-colors disabled:opacity-50"
         >
           {isProcessing ? <FaSpinner className="w-4 h-4 animate-spin" /> : 'Create Event'}
         </button>
@@ -303,12 +303,12 @@ export default function ConciergeEventCreate({ isOpen, onClose, onSubmit, classN
             placeholder="Paste Eventbrite, Instagram, or other event URL..."
             value={importUrl}
             onChange={(e) => setImportUrl(e.target.value)}
-            className="flex-1 px-3 py-2 border border-folio-border-subtle rounded-md focus:outline-none focus:ring-2 focus:ring-folio-accent focus:border-transparent"
+            className="flex-1 px-3 py-2 border border-folio-border-subtle rounded-md focus:outline-none focus:ring-2 focus:ring-folio-gold focus:border-transparent"
           />
           <button
             onClick={handleImport}
             disabled={isImporting || !importUrl.trim()}
-            className="px-4 py-2 bg-folio-accent text-white rounded-md hover:bg-folio-accent-dark transition-colors disabled:opacity-50"
+            className="px-4 py-2 bg-folio-gold text-white rounded-md hover:bg-folio-gold-hover transition-colors disabled:opacity-50"
           >
             {isImporting ? <FaSpinner className="w-4 h-4 animate-spin" /> : <FaLink className="w-4 h-4" />}
           </button>
@@ -349,7 +349,7 @@ export default function ConciergeEventCreate({ isOpen, onClose, onSubmit, classN
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-folio-border-subtle">
           <div className="flex items-center space-x-2">
-            <FaRobot className="text-folio-accent w-5 h-5" />
+            <FaRobot className="text-folio-gold w-5 h-5" />
             <h2 className="text-lg font-semibold">Event Concierge</h2>
           </div>
           <button
@@ -367,7 +367,7 @@ export default function ConciergeEventCreate({ isOpen, onClose, onSubmit, classN
             className={clsx(
               "flex-1 py-3 text-sm font-medium transition-colors",
               mode === 'chat'
-                ? "text-folio-accent border-b-2 border-folio-accent"
+                ? "text-folio-gold border-b-2 border-folio-gold"
                 : "text-folio-text-secondary hover:text-folio-text-primary"
             )}
           >
@@ -378,7 +378,7 @@ export default function ConciergeEventCreate({ isOpen, onClose, onSubmit, classN
             className={clsx(
               "flex-1 py-3 text-sm font-medium transition-colors",
               mode === 'import'
-                ? "text-folio-accent border-b-2 border-folio-accent"
+                ? "text-folio-gold border-b-2 border-folio-gold"
                 : "text-folio-text-secondary hover:text-folio-text-primary"
             )}
           >
@@ -411,7 +411,7 @@ export default function ConciergeEventCreate({ isOpen, onClose, onSubmit, classN
                       className={clsx(
                         "max-w-[80%] rounded-lg px-3 py-2",
                         message.type === 'user'
-                          ? "bg-folio-accent text-white"
+                          ? "bg-folio-gold text-white"
                           : "bg-surface-ground text-folio-text-primary"
                       )}
                     >
@@ -443,7 +443,7 @@ export default function ConciergeEventCreate({ isOpen, onClose, onSubmit, classN
                       value={inputValue}
                       onChange={(e) => setInputValue(e.target.value)}
                       placeholder="Describe your event..."
-                      className="flex-1 px-3 py-2 border border-folio-border-subtle rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-folio-accent focus:border-transparent"
+                      className="flex-1 px-3 py-2 border border-folio-border-subtle rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-folio-gold focus:border-transparent"
                       rows={2}
                       onKeyPress={(e) => {
                         if (e.key === 'Enter' && !e.shiftKey) {
@@ -466,7 +466,7 @@ export default function ConciergeEventCreate({ isOpen, onClose, onSubmit, classN
                     <button
                       onClick={handleSubmit}
                       disabled={!inputValue.trim() || isProcessing}
-                      className="px-3 py-2 bg-folio-accent text-white rounded-md hover:bg-folio-accent-dark transition-colors disabled:opacity-50"
+                      className="px-3 py-2 bg-folio-gold text-white rounded-md hover:bg-folio-gold-hover transition-colors disabled:opacity-50"
                     >
                       <FaCheck className="w-4 h-4" />
                     </button>

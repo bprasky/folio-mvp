@@ -128,7 +128,7 @@ export default function GlobalHeader() {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
-              <div className="w-8 h-8 bg-gradient-to-r from-folio-accent to-folio-system rounded-full flex items-center justify-center">
+              <div className="w-8 h-8 bg-gradient-to-r from-folio-gold to-folio-system rounded-full flex items-center justify-center">
                 <FaUser className="w-4 h-4 text-white" />
               </div>
               <div className="hidden sm:block text-left">
@@ -150,7 +150,7 @@ export default function GlobalHeader() {
                 {/* User Info */}
                 <div className="p-4 border-b border-folio-muted">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-gradient-to-r from-folio-accent to-folio-system rounded-full flex items-center justify-center">
+                    <div className="w-10 h-10 bg-gradient-to-r from-folio-gold to-folio-system rounded-full flex items-center justify-center">
                       <FaUser className="w-5 h-5 text-white" />
                     </div>
                     <div>

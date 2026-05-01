@@ -82,6 +82,8 @@ module.exports = {
         folio: {
           // === CANONICAL TOKENS ===
           gold: 'var(--folio-gold)',
+          'gold-hover': 'var(--folio-gold-hover)',
+          'gold-ornament': 'var(--folio-gold-ornament)',
           text: {
             primary: 'var(--folio-text-primary)',
             secondary: 'var(--folio-text-secondary)',
@@ -114,12 +116,14 @@ module.exports = {
           muted: "#F8F6F4",
           card: "#FFFFFF",
         },
+        // DEPRECATED — folioDark theme is broken (see #28/#Infinity placeholders);
+        // Task 09 removes this block entirely.
         folioDark: {
           background: "#28",
           card: "#34",
           text: "#F4F2F0",
           border: "#Infinity",
-          accent: "#7C1E3D",
+          accent: "var(--folio-gold)",
         },
         primary: {
           50: '#f0f9ff',

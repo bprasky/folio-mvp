@@ -60,7 +60,7 @@ export default function SourcebookPillarPage() {
         <div className="max-w-2xl mx-auto">
           <svg viewBox="0 0 720 240" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full">
             {/* Sourcebook card */}
-            <rect x="220" y="20" width="280" height="80" rx="12" fill="#FAF9F6" stroke="#C9A96E" strokeWidth="1.5" />
+            <rect x="220" y="20" width="280" height="80" rx="12" fill="#FAF9F6" stroke="var(--folio-gold-ornament)" strokeWidth="1.5" />
             <text x="360" y="48" textAnchor="middle" className="fill-folio-text-primary" fontSize="14" fontWeight="500">Sourcebook Product Card</text>
             <rect x="240" y="60" width="60" height="6" rx="2" fill="#D4CFC8" />
             <rect x="308" y="60" width="80" height="6" rx="2" fill="#D4CFC8" />
@@ -70,22 +70,22 @@ export default function SourcebookPillarPage() {
             {/* Request Sample */}
             <rect x="40" y="150" width="130" height="36" rx="8" fill="#FAF9F6" stroke="#D4CFC8" strokeWidth="1.5" />
             <text x="105" y="173" textAnchor="middle" className="fill-[var(--text-secondary)]" fontSize="11">Request Sample</text>
-            <line x1="170" y1="168" x2="280" y2="120" stroke="#C9A96E" strokeWidth="1" strokeDasharray="4 3" />
+            <line x1="170" y1="168" x2="280" y2="120" stroke="var(--folio-gold-ornament)" strokeWidth="1" strokeDasharray="4 3" />
 
             {/* Request Quote */}
             <rect x="200" y="170" width="130" height="36" rx="8" fill="#FAF9F6" stroke="#D4CFC8" strokeWidth="1.5" />
             <text x="265" y="193" textAnchor="middle" className="fill-[var(--text-secondary)]" fontSize="11">Request Quote</text>
-            <line x1="290" y1="170" x2="320" y2="120" stroke="#C9A96E" strokeWidth="1" strokeDasharray="4 3" />
+            <line x1="290" y1="170" x2="320" y2="120" stroke="var(--folio-gold-ornament)" strokeWidth="1" strokeDasharray="4 3" />
 
             {/* Use in Project */}
             <rect x="380" y="170" width="130" height="36" rx="8" fill="#FAF9F6" stroke="#D4CFC8" strokeWidth="1.5" />
             <text x="445" y="193" textAnchor="middle" className="fill-[var(--text-secondary)]" fontSize="11">Use in Project</text>
-            <line x1="420" y1="170" x2="400" y2="120" stroke="#C9A96E" strokeWidth="1" strokeDasharray="4 3" />
+            <line x1="420" y1="170" x2="400" y2="120" stroke="var(--folio-gold-ornament)" strokeWidth="1" strokeDasharray="4 3" />
 
             {/* Check Availability */}
             <rect x="550" y="150" width="140" height="36" rx="8" fill="#FAF9F6" stroke="#D4CFC8" strokeWidth="1.5" />
             <text x="620" y="173" textAnchor="middle" className="fill-[var(--text-secondary)]" fontSize="11">Check Availability</text>
-            <line x1="550" y1="168" x2="440" y2="120" stroke="#C9A96E" strokeWidth="1" strokeDasharray="4 3" />
+            <line x1="550" y1="168" x2="440" y2="120" stroke="var(--folio-gold-ornament)" strokeWidth="1" strokeDasharray="4 3" />
           </svg>
         </div>
       </section>

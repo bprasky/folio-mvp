@@ -119,7 +119,7 @@ export default function FibonacciEventFeed({ events, onEventClick, className, us
             className={clsx(
               "flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors",
               showFilters
-                ? "bg-folio-accent text-white"
+                ? "bg-folio-gold text-white"
                 : "bg-surface-ground text-folio-text-primary hover:bg-surface-ground"
             )}
           >
@@ -135,7 +135,7 @@ export default function FibonacciEventFeed({ events, onEventClick, className, us
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as SortOption)}
-              className="px-3 py-2 border border-folio-border-subtle rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-folio-accent focus:border-transparent"
+              className="px-3 py-2 border border-folio-border-subtle rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-folio-gold focus:border-transparent"
             >
               <option value="date">Sort by Date</option>
               <option value="promotion">Sort by Promotion</option>
@@ -151,7 +151,7 @@ export default function FibonacciEventFeed({ events, onEventClick, className, us
               className={clsx(
                 "p-2 rounded-md transition-colors",
                 viewMode === 'grid'
-                  ? "bg-white text-folio-accent shadow-sm"
+                  ? "bg-white text-folio-gold shadow-sm"
                   : "text-folio-text-secondary hover:text-folio-text-primary"
               )}
             >
@@ -162,7 +162,7 @@ export default function FibonacciEventFeed({ events, onEventClick, className, us
               className={clsx(
                 "p-2 rounded-md transition-colors",
                 viewMode === 'list'
-                  ? "bg-white text-folio-accent shadow-sm"
+                  ? "bg-white text-folio-gold shadow-sm"
                   : "text-folio-text-secondary hover:text-folio-text-primary"
               )}
             >

@@ -98,7 +98,7 @@ export default function SourcebookGridCard({
         </h3>
 
         {/* Vendor line */}
-        <p className="text-[12px] text-[#c9a96e] truncate mt-0.5">
+        <p className="text-[12px] text-[var(--folio-gold-ornament)] truncate mt-0.5">
           {entry.productBrand || '\u00A0'}
         </p>
 
@@ -119,14 +119,14 @@ export default function SourcebookGridCard({
           <button
             type="button"
             onClick={() => onRequestQuote(entry)}
-            className="flex-1 text-[11px] py-1.5 rounded-md bg-transparent border border-[rgba(0,0,0,0.12)] text-folio-text-secondary cursor-pointer transition-all duration-150 hover:border-[rgba(201,169,110,0.4)] hover:text-[#c9a96e]"
+            className="flex-1 text-[11px] py-1.5 rounded-md bg-transparent border border-[rgba(0,0,0,0.12)] text-folio-text-secondary cursor-pointer transition-all duration-150 hover:border-[rgba(201,169,110,0.4)] hover:text-[var(--folio-gold-ornament)]"
           >
             Quote
           </button>
           <button
             type="button"
             onClick={() => onRequestSample(entry)}
-            className="flex-1 text-[11px] py-1.5 rounded-md bg-transparent border border-[rgba(0,0,0,0.12)] text-folio-text-secondary cursor-pointer transition-all duration-150 hover:border-[rgba(201,169,110,0.4)] hover:text-[#c9a96e]"
+            className="flex-1 text-[11px] py-1.5 rounded-md bg-transparent border border-[rgba(0,0,0,0.12)] text-folio-text-secondary cursor-pointer transition-all duration-150 hover:border-[rgba(201,169,110,0.4)] hover:text-[var(--folio-gold-ornament)]"
           >
             Sample
           </button>
@@ -136,7 +136,7 @@ export default function SourcebookGridCard({
             <button
               type="button"
               onClick={() => setMoreOpen(!moreOpen)}
-              className="w-full text-[11px] py-1.5 rounded-md bg-transparent border border-[rgba(0,0,0,0.12)] text-folio-text-secondary cursor-pointer transition-all duration-150 hover:border-[rgba(201,169,110,0.4)] hover:text-[#c9a96e]"
+              className="w-full text-[11px] py-1.5 rounded-md bg-transparent border border-[rgba(0,0,0,0.12)] text-folio-text-secondary cursor-pointer transition-all duration-150 hover:border-[rgba(201,169,110,0.4)] hover:text-[var(--folio-gold-ornament)]"
             >
               More &#9662;
             </button>

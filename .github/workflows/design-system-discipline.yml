@@ -1,0 +1,49 @@
+name: Design System Discipline
+
+on:
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'tailwind.config.js'
+      - '.github/workflows/design-system-discipline.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'tailwind.config.js'
+      - '.github/workflows/design-system-discipline.yml'
+  workflow_dispatch:
+
+jobs:
+  accent-discipline:
+    name: Accent color discipline
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Forbid burgundy accent regression
+        run: |
+          if git grep -nE "#7[Cc]1[Ee]3[Dd]" src/ tailwind.config.js; then
+            echo "::error::Burgundy accent #7C1E3D is forbidden. Use var(--folio-gold)."
+            exit 1
+          fi
+
+      - name: Forbid hardcoded gold accents
+        run: |
+          # Email templates and PDF generators are exempt: CSS vars don't resolve in
+          # mail clients or pdfkit. SVG gradient strings in AttributionFlowChart are
+          # multi-stop literals that can't carry a single var().
+          MATCHES=$(git grep -nEi "#c9a96e|#b8845c" src/ \
+            | grep -v "src/lib/email/" \
+            | grep -v "src/lib/boost/inContextBoost" \
+            | grep -v "src/components/vendor/charts/AttributionFlowChart.tsx" \
+            | grep -v "src/app/api/products/\[productId\]/spec-sheet/route.ts" \
+            | grep -v "src/app/globals.css:.*--folio-gold:" \
+            | grep -v "src/app/globals.css:.*--folio-gold-ornament:" \
+            | grep -v "src/components/ui/folio-design-system.ts:.*\*" \
+            || true)
+          if [ -n "$MATCHES" ]; then
+            echo "::error::Hardcoded gold hex found outside the canonical token. Use var(--folio-gold) or var(--folio-gold-ornament)."
+            echo "$MATCHES"
+            exit 1
+          fi

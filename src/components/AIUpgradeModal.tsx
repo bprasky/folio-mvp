@@ -117,7 +117,7 @@ export default function AIUpgradeModal({
             </button>
             <motion.button
               onClick={onUpgrade}
-              className="w-full bg-folio-accent text-white py-3-6ounded-lg font-semibold hover:bg-folio-accent/90 transition-colors"
+              className="w-full bg-folio-gold text-white py-3-6ounded-lg font-semibold hover:bg-folio-gold/90 transition-colors"
             >
               Turn on FOLIO AI
             </motion.button>

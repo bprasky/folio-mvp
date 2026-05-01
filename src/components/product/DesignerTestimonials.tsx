@@ -88,7 +88,7 @@ function QuoteCard({ testimonial }: { testimonial: Testimonial }) {
       className="rounded-xl px-5 py-4"
       style={{
         background: "rgba(245, 239, 232, 0.6)",
-        borderLeft: "2px solid #c9a96e",
+        borderLeft: "2px solid var(--folio-gold-ornament)",
       }}
     >
       {/* Quote text */}
@@ -101,7 +101,7 @@ function QuoteCard({ testimonial }: { testimonial: Testimonial }) {
         }}
       >
         {testimonial.isFeatured && (
-          <span style={{ color: "#c9a96e", marginRight: "4px" }}>&#9733;</span>
+          <span style={{ color: "var(--folio-gold-ornament)", marginRight: "4px" }}>&#9733;</span>
         )}
         &ldquo;{testimonial.quote}&rdquo;
       </blockquote>

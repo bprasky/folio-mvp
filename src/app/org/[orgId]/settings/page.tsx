@@ -248,7 +248,7 @@ export default function OrgSettingsPage() {
             <button
               onClick={() => router.push(`/org/${orgId}/settings/about-interview?returnTo=profile`)}
               className="mt-3 flex items-center gap-2 text-xs transition-opacity hover:opacity-70"
-              style={{ color: '#B8845C' }}
+              style={{ color: 'var(--folio-gold)' }}
             >
               <RefreshCw size={12} />
               Re-do interview to refresh profile
@@ -418,7 +418,7 @@ export default function OrgSettingsPage() {
                 onChange={(e) => setSpecialtyInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addSpecialty())}
                 placeholder="Add a specialty..."
-                className="flex-1 px-4 py-2.5 text-sm rounded-xl border outline-none transition-colors focus:border-[#B8845C]"
+                className="flex-1 px-4 py-2.5 text-sm rounded-xl border outline-none transition-colors focus:border-[var(--folio-gold)]"
                 style={{
                   borderColor: '#E8E4DF',
                   backgroundColor: '#FAF9F7',

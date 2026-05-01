@@ -258,7 +258,7 @@ function BoostCard({
             <span style={{ color: "var(--folio-text-tertiary)" }}>Q: </span>
             <span style={{ color: "var(--folio-text-secondary)" }}>{boost.followUpQuestion}</span>
             <br />
-            <span style={{ color: "#c9a96e" }}>A: </span>
+            <span style={{ color: "var(--folio-gold-ornament)" }}>A: </span>
             <span className="italic" style={{ color: "var(--folio-text-primary)" }}>{boost.followUpAnswer}</span>
           </div>
         )}
