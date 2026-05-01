@@ -41,6 +41,11 @@ export interface BoostReelItem {
   productSlug?: string | null;
   name: string;
   imageUrl: string;
+  /**
+   * Crop of the project image at the tag location. Used as a render-time
+   * fallback when `imageUrl` 404s or is empty — see BoostReelCell.
+   */
+  fallbackImageUrl: string | null;
   vendorName?: string | null;
   /** True for the first 2 slots (paid); false for organic slots 3–7. */
   isBoosted: boolean;
@@ -261,6 +266,10 @@ async function buildBoostReel(
     select: {
       productId: true,
       createdAt: true,
+      // Tag-level crop of the project image at the tag location — used as
+      // a render-time fallback in BoostReelCell when the catalog imageUrl
+      // 404s. Populated by /api/projects/[id]/generate-crops.
+      cropUrl: true,
       product: {
         // Note: Product has no `slug` field on the deployed schema.
         // BoostReelCell falls back to `/products/${productId}` when
@@ -342,7 +351,10 @@ async function buildBoostReel(
     const tag = uniqueProducts.get(pid);
     if (!tag?.product) return;
     const imageUrl = tag.product.imageUrl ?? "";
-    if (!imageUrl) return;
+    const fallbackImageUrl = tag.cropUrl ?? null;
+    // Need at least one renderable source — primary catalog image OR the
+    // tag-level crop. If both are absent we'd render an empty cell.
+    if (!imageUrl && !fallbackImageUrl) return;
     const boost = winningBoostByProduct.get(pid);
     const isBoosted = i < REEL_PAID_SLOTS && !!boost;
     items.push({
@@ -350,6 +362,7 @@ async function buildBoostReel(
       productSlug: null, // Product has no slug field on the deployed schema; route by productId.
       name: tag.product.name,
       imageUrl,
+      fallbackImageUrl,
       vendorName: tag.product.vendor?.name ?? null,
       isBoosted,
       slotPosition: i + 1,

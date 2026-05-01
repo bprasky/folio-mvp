@@ -3,6 +3,10 @@
 ## Spec change (from session, 2026-05-01)
 
 - **Primary product image, everywhere:** the catalog image pulled from the vendor product URL (`Product.imageUrl`).
+- **Render-time fallback chain** (when primary fails to load or is missing):
+  1. `Product.imageUrl` (catalog).
+  2. `ProductTag.cropUrl` (server-generated crop of the project image at the tag location).
+  3. No image.
 - **Secondary asset, on the product detail page only:**
   - 3D-classified items → 3D mesh viewer (`Product.threeDAssetUrl`).
   - 2D-classified items → 2D cutout (`Product.cutoutImageUrl`).
@@ -26,15 +30,25 @@ Today the homepage reel reads `cutoutImageUrl ?? imageUrl` directly (`src/lib/ho
 
 **Risk:** zero — no DB writes, no service calls, three single-file edits.
 
+## Phase 0.5 — Render-time crop fallback *(visual safety net, no DB writes)*
+
+Triggered by 2026-05-01 screenshot: four reel cells rendered broken-image icons with alt text, meaning `Product.imageUrl` is set but the URL 404s (likely expired Supabase storage or hotlink-blocked vendor CDN). Until backfill lands, the reel must degrade gracefully to the tag-level crop.
+
+- [x] In `src/lib/homepage/getHomepageData.ts`, added `cropUrl: true` to the `productTag` select; added `fallbackImageUrl: string | null` to the `BoostReelItem` interface; populated from `tag.cropUrl ?? null`. Updated the slot-filter so a row qualifies if either `imageUrl` or `fallbackImageUrl` is non-empty.
+- [x] Converted `src/components/homepage/BoostReelCell.tsx` to a client component. `useState`-tracked `src` initialized to `imageUrl || fallbackImageUrl || ""`. `onError` swaps once to `fallbackImageUrl`; if that also errors, hides the image. `key={src}` on `<Image>` forces remount on swap.
+- [ ] User verification on deploy: reel cells now show a crop of the project image when the catalog URL 404s, instead of the browser broken-image icon.
+
 ## Phase 1 — Catalog image health audit *(read-only)*
 
-Goal: surface which currently-tagged products are missing `imageUrl`, separated by recoverability.
+Goal: surface which currently-tagged products are missing or broken on `imageUrl`, separated by recoverability.
 
-- [ ] Add `scripts/audit-tagged-product-images.ts` that prints, for every distinct product referenced by `ProductTag` or `ProjectProductTag`:
-  - `imageUrl` populated → OK count.
-  - `imageUrl` null but `url` populated → re-scrapable count, with sample IDs.
-  - both null → vendor-blocked count, with sample IDs.
-- [ ] Run it. Decide based on counts whether Phase 4 backfill needs to (a) re-scrape, (b) skip, or (c) flag for vendor follow-up.
+- [x] Added `scripts/audit-tagged-product-images.ts`. Default scope: products referenced by any `ProductTag`. Flag `--post=<slug>` to scope to one editorial. Counts:
+  - `imageUrl` null, `url` null → vendor-blocked.
+  - `imageUrl` null, `url` populated → re-scrapable.
+  - `imageUrl` populated → "claims to have image" (passes simple null check; doesn't catch dead URLs).
+  - With `--check-urls` flag: HEAD-checks each non-null `imageUrl` (with GET-Range fallback for 405/403 hosts), reports 200 vs non-200 counts. Concurrency configurable via `--concurrency=N`.
+  - Reports per-bucket presence of `ProductTag.cropUrl` so we know how many dead-imageUrl rows are already covered by the Phase 0.5 fallback.
+- [ ] User runs with `--post=<current-XL-slug> --check-urls` against a DB-connected env (sandbox has no `DATABASE_URL`). Decide based on counts whether Phase 4 backfill needs to (a) re-scrape from `Product.url`, (b) accept the crop fallback as good enough, or (c) flag for vendor follow-up.
 
 ## Phase 2 — Fork helper
 

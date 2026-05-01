@@ -3,7 +3,16 @@
 // Two variants:
 //   1. Product cell — image, name, vendor, optional gold "Boosted" badge.
 //   2. "+N View all" affordance cell — last slot when totalTagged > 7.
+//
+// Render fallback: starts with item.imageUrl (catalog). On image-load error
+// — typically a 404 from an expired Supabase storage URL or a hotlink-blocked
+// vendor CDN — swaps once to item.fallbackImageUrl (a server-generated crop
+// of the project image at the tag location). If that also errors, we hide
+// the image and the product name still appears underneath.
 
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -20,6 +29,18 @@ export function BoostReelCell({ item, onClick }: ProductCellProps) {
     ? `/products/${item.productSlug}`
     : `/products/${item.productId}`;
 
+  const initialSrc = item.imageUrl || item.fallbackImageUrl || "";
+  const [src, setSrc] = useState(initialSrc);
+  const [hidden, setHidden] = useState(false);
+
+  const handleError = () => {
+    if (item.fallbackImageUrl && src !== item.fallbackImageUrl) {
+      setSrc(item.fallbackImageUrl);
+    } else {
+      setHidden(true);
+    }
+  };
+
   return (
     <Link
       href={href}
@@ -31,13 +52,15 @@ export function BoostReelCell({ item, onClick }: ProductCellProps) {
       data-boosted={item.isBoosted ? "true" : "false"}
     >
       <div className="relative aspect-square rounded-xl overflow-hidden bg-surface-ground">
-        {item.imageUrl && (
+        {src && !hidden && (
           <Image
-            src={item.imageUrl}
+            key={src}
+            src={src}
             alt={item.name}
             fill
             sizes="(min-width: 1440px) 160px, 12vw"
             className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+            onError={handleError}
           />
         )}
 
