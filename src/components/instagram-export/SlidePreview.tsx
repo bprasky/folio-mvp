@@ -83,20 +83,20 @@ export function SlidePreview({
           </div>
           {/* Text content */}
           <div style={{ flex: 1, padding: '0 28px 24px', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', position: 'relative', zIndex: 1 }}>
-            <div style={{ fontFamily: "var(--font-headline)", fontSize: '18px', color: '#2C2420', marginBottom: '3px', letterSpacing: '0.5px' }}>
+            <div style={{ fontFamily: "var(--font-headline)", fontSize: 'var(--type-h4)', color: '#2C2420', marginBottom: '3px', letterSpacing: 'var(--ls-wide)' }}>
               {designerName}
             </div>
-            <div style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: '9px', letterSpacing: '2.5px', textTransform: 'uppercase', color: '#A89880', marginBottom: '16px' }}>
+            <div style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: '9px', letterSpacing: '2.5px', textTransform: 'uppercase', color: '#A89880', marginBottom: '16px' }}> /* folio-design-system: off-scale */
               {designerTitle ? `${designerTitle} · ` : ''}{studioName || ''}
             </div>
             <div style={{ width: '32px', height: '1px', background: '#C4B5A0', marginBottom: '16px' }} />
-            <div style={{ fontFamily: "var(--font-headline)", fontSize: '13px', lineHeight: 1.65, color: '#4A3F35', fontStyle: 'italic' }}>
+            <div style={{ fontFamily: "var(--font-headline)", fontSize: 'var(--type-meta)', lineHeight: 1.65, color: '#4A3F35', fontStyle: 'italic' }}> /* folio-design-system: off-scale */
               {bioText || 'Designer bio will appear here...'}
             </div>
           </div>
           {/* Watermark */}
           <div style={{ position: 'absolute', bottom: '16px', right: '20px', zIndex: 2 }}>
-            <div style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: '7px', letterSpacing: '2.5px', color: 'rgba(139,123,104,0.5)', textTransform: 'lowercase' }}>
+            <div style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: '7px', letterSpacing: '2.5px', color: 'rgba(139,123,104,0.5)', textTransform: 'lowercase' }}> /* folio-design-system: off-scale */
               {watermarkText}
             </div>
           </div>
@@ -108,20 +108,20 @@ export function SlidePreview({
     if (slide.type === 'cta') {
       return (
         <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, #F5F0EB 0%, #EDE6DD 100%)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
-          <div style={{ fontFamily: "var(--font-headline)", fontSize: '14px', letterSpacing: '3px', color: '#4A3F35', textTransform: 'uppercase', marginBottom: '20px' }}>
+          <div style={{ fontFamily: "var(--font-headline)", fontSize: 'var(--type-ui)', letterSpacing: '3px', color: '#4A3F35', textTransform: 'uppercase', marginBottom: '20px' }}> /* folio-design-system: off-scale */
             Full Editorial
           </div>
-          <div style={{ fontFamily: "var(--font-headline)", fontSize: '28px', color: '#2C2420', marginBottom: '8px', fontStyle: 'italic' }}>
+          <div style={{ fontFamily: "var(--font-headline)", fontSize: 'var(--type-h3)', color: '#2C2420', marginBottom: '8px', fontStyle: 'italic' }}>
             folio
           </div>
           <div style={{ width: '40px', height: '1px', background: '#4A3F35', margin: '16px 0' }} />
-          <div style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: '11px', letterSpacing: '2px', color: '#8B7B68', textTransform: 'uppercase' }}>
+          <div style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: 'var(--type-eyebrow)', letterSpacing: 'var(--ls-eyebrow)', color: '#8B7B68', textTransform: 'uppercase' }}>
             {projectName}
           </div>
-          <div style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: '10px', letterSpacing: '1.5px', color: '#A89880', textTransform: 'uppercase', marginTop: '6px' }}>
+          <div style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: 'var(--type-fine)', letterSpacing: 'var(--ls-wide)', color: '#A89880', textTransform: 'uppercase', marginTop: '6px' }}>
             by {designerName}
           </div>
-          <div style={{ position: 'absolute', bottom: '24px', fontFamily: "'Helvetica Neue', sans-serif", fontSize: '9px', letterSpacing: '1.5px', color: '#B8A898', textTransform: 'uppercase' }}>
+          <div style={{ position: 'absolute', bottom: '24px', fontFamily: "'Helvetica Neue', sans-serif", fontSize: '9px', letterSpacing: 'var(--ls-wide)', color: '#B8A898', textTransform: 'uppercase' }}> /* folio-design-system: off-scale */
             folioad.com
           </div>
         </div>
@@ -146,12 +146,12 @@ export function SlidePreview({
           <>
             <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(${gradientDir}, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0) 50%)` }} />
             <div style={{ position: 'absolute', ...positionStyles[headlinePosition], zIndex: 2 }}>
-              <div style={{ fontFamily: "var(--font-headline)", fontSize: '20px', lineHeight: 1.3, color: '#FFFFFF', fontStyle: 'italic', textShadow: '0 1px 8px rgba(0,0,0,0.3)', maxWidth: '280px', margin: headlinePosition === 'bottom_center' ? '0 auto' : undefined }}>
+              <div style={{ fontFamily: "var(--font-headline)", fontSize: 'var(--type-h4)', lineHeight: 'var(--lh-h4)', color: '#FFFFFF', fontStyle: 'italic', textShadow: '0 1px 8px rgba(0,0,0,0.3)', maxWidth: '280px', margin: headlinePosition === 'bottom_center' ? '0 auto' : undefined }}>
                 &ldquo;{headline || 'Your headline here'}&rdquo;
               </div>
             </div>
             <div style={{ position: 'absolute', bottom: headlinePosition.startsWith('bottom') ? '28px' : 'auto', top: headlinePosition.startsWith('top') ? '28px' : 'auto', right: '28px', zIndex: 2 }}>
-              <div style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: '8px', letterSpacing: '2.5px', color: 'rgba(255,255,255,0.65)', textTransform: 'lowercase' }}>
+              <div style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: '8px', letterSpacing: '2.5px', color: 'rgba(255,255,255,0.65)', textTransform: 'lowercase' }}> /* folio-design-system: off-scale */
                 {watermarkText}
               </div>
             </div>
@@ -159,7 +159,7 @@ export function SlidePreview({
         )}
         {slide.type === 'detail' && (
           <div style={{ position: 'absolute', bottom: '20px', right: '20px', zIndex: 2 }}>
-            <div style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: '8px', letterSpacing: '2.5px', color: 'rgba(255,255,255,0.45)', textTransform: 'lowercase' }}>
+            <div style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: '8px', letterSpacing: '2.5px', color: 'rgba(255,255,255,0.45)', textTransform: 'lowercase' }}> /* folio-design-system: off-scale */
               {watermarkText}
             </div>
           </div>
@@ -181,8 +181,8 @@ export function SlidePreview({
             )}
           </div>
           <div>
-            <div style={{ fontSize: '13px', fontWeight: 600, color: '#2C2420' }}>{handle}</div>
-            <div style={{ fontSize: '10px', color: '#A89880' }}>{projectName}</div>
+            <div style={{ fontSize: 'var(--type-meta)', fontWeight: 'var(--w-stat)', color: '#2C2420' }}>{handle}</div>
+            <div style={{ fontSize: 'var(--type-fine)', color: '#A89880' }}>{projectName}</div>
           </div>
         </div>
 
@@ -214,8 +214,8 @@ export function SlidePreview({
         {/* Caption preview */}
         {caption && (
           <div style={{ padding: '8px 16px 16px', borderTop: '1px solid #F0EBE4' }}>
-            <div style={{ fontSize: '12px', lineHeight: 1.6, color: '#4A3F35' }}>
-              <span style={{ fontWeight: 600 }}>{handle}</span>{' '}
+            <div style={{ fontSize: 'var(--type-meta)', lineHeight: 'var(--lh-body)', color: '#4A3F35' }}>
+              <span style={{ fontWeight: 'var(--w-stat)' }}>{handle}</span>{' '}
               {caption.substring(0, 120)}...
             </div>
           </div>

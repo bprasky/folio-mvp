@@ -69,7 +69,7 @@ export function QBRExportButton() {
                 ))}
               </ul>
             </div>
-            <p className="text-[11px] text-folio-text-secondary italic">
+            <p className="text-[var(--type-eyebrow)] text-folio-text-secondary italic">
               In the full product this will export as a branded PDF for your internal reporting.
             </p>
           </div>
@@ -82,7 +82,7 @@ export function QBRExportButton() {
 function Stat({ label, value }: { label: string; value: string | number }) {
   return (
     <div className="rounded-xl border border-folio-border-subtle bg-surface-ground px-3 py-2">
-      <div className="text-[11px] uppercase tracking-wide text-folio-text-secondary">{label}</div>
+      <div className="text-[var(--type-eyebrow)] uppercase tracking-wide text-folio-text-secondary">{label}</div>
       <div className="folio-ui font-semibold text-folio-text-primary">
         {typeof value === 'number' ? value.toLocaleString() : value}
       </div>

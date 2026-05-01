@@ -50,7 +50,7 @@ export default function FestivalCarousel({ events }: { events: Festival[] }) {
   if (!sorted.length) {
     return (
       <section aria-label="Design Festivals" className="relative">
-        <h1 className="mb-4 font-serif text-2xl sm:text-[28px] text-folio-text-primary tracking-tight">Design Festivals</h1>
+        <h1 className="mb-4 font-serif text-2xl sm:text-[var(--type-h3)] text-folio-text-primary tracking-tight">Design Festivals</h1>
         <div className="relative h-[240px] sm:h-[300px] lg:h-[340px] rounded-2xl bg-surface-ground flex items-center justify-center">
           <p className="text-folio-text-secondary">No festivals available</p>
         </div>
@@ -60,7 +60,7 @@ export default function FestivalCarousel({ events }: { events: Festival[] }) {
 
   return (
     <section aria-label="Design Festivals" className="relative">
-      <h1 className="mb-4 font-serif text-2xl sm:text-[28px] text-folio-text-primary tracking-tight">Design Festivals</h1>
+      <h1 className="mb-4 font-serif text-2xl sm:text-[var(--type-h3)] text-folio-text-primary tracking-tight">Design Festivals</h1>
 
       <div className="relative h-[240px] sm:h-[300px] lg:h-[340px]">
         <div className="relative h-full w-full overflow-hidden rounded-2xl">
@@ -192,9 +192,9 @@ function PeekCard({ festival, side, muted = false, ctaLabel, href, onClick }: {
         <CardImage src={festival.heroImageUrl} />
         <div className={cn("absolute inset-0", muted ? "backdrop-blur-[1.5px] brightness-[0.8] saturate-[0.6]" : "bg-gradient-to-t from-neutral-900/40 via-transparent to-transparent")} />
         <div className="absolute bottom-3 left-3 right-3 text-neutral-50">
-          <p className="text-[11px] opacity-90 line-clamp-1">{festival.title}</p>
+          <p className="text-[var(--type-eyebrow)] opacity-90 line-clamp-1">{festival.title}</p>
           {ctaLabel && href && (
-            <Link href={href} className="mt-1.5 inline-block rounded-full bg-surface-canvas/85 text-folio-text-primary px-2.5 py-1 text-[11px] shadow hover:bg-surface-canvas transition" onClick={(e)=> e.stopPropagation()}>
+            <Link href={href} className="mt-1.5 inline-block rounded-full bg-surface-canvas/85 text-folio-text-primary px-2.5 py-1 text-[var(--type-eyebrow)] shadow hover:bg-surface-canvas transition" onClick={(e)=> e.stopPropagation()}>
               {ctaLabel}
             </Link>
           )}

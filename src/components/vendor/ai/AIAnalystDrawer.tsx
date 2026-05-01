@@ -61,7 +61,7 @@ export function AIAnalystDrawer({ open, onClose, sectionId, context }: AIAnalyst
         <div className="p-4 border-b border-folio-border-subtle flex items-center justify-between bg-surface-canvas/95 backdrop-blur-xl">
           <div>
             <div className="folio-ui font-semibold text-folio-text-primary">AI Analyst</div>
-            <div className="text-[11px] text-folio-text-secondary">
+            <div className="text-[var(--type-eyebrow)] text-folio-text-secondary">
               Discuss this recommendation based on your actual Folio data.
             </div>
           </div>

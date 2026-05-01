@@ -154,7 +154,7 @@ export const RoomCard = forwardRef<HTMLDivElement, Props>(
             />
 
             {/* Room label — always visible (tiny pill) */}
-            <div className="absolute top-4 left-4 story-glass-badge text-[10px] px-2 py-1">
+            <div className="absolute top-4 left-4 story-glass-badge text-[var(--type-fine)] px-2 py-1">
               {roomLabel}
             </div>
 
@@ -166,17 +166,17 @@ export const RoomCard = forwardRef<HTMLDivElement, Props>(
             >
               {pullQuote && (
                 <div className="story-glass-quote px-4 py-3">
-                  <p className="font-[var(--font-headline)] italic text-[18px] md:text-[20px] leading-relaxed story-text-on-dark">
+                  <p className="font-[var(--font-headline)] italic text-[var(--type-h4)] md:text-[var(--type-h4)] leading-relaxed story-text-on-dark">
                     &ldquo;{pullQuote}&rdquo;
                   </p>
                 </div>
               )}
               <div className="flex items-center justify-between">
-                <span className="text-[13px] font-[var(--font-body)] story-text-on-dark opacity-80">
+                <span className="text-[var(--type-meta)] font-[var(--font-body)] story-text-on-dark opacity-80">
                   Tap to explore
                 </span>
                 {productCount > 0 && (
-                  <div className="story-glass-badge text-[12px]">
+                  <div className="story-glass-badge text-[var(--type-meta)]">
                     {productCount} product{productCount !== 1 ? "s" : ""}
                   </div>
                 )}
@@ -276,18 +276,18 @@ function DesktopLayoutSplit({
         style={reversed ? { borderLeft: "none", borderRight: "1px solid rgba(255,252,248,0.3)", borderRadius: "12px 0 0 12px" } : undefined}
       >
         <div className="flex flex-col gap-4">
-          <h3 className="story-reveal-child font-[var(--font-body)] font-medium text-[14px] uppercase tracking-[0.16em] story-text-secondary">
+          <h3 className="story-reveal-child font-[var(--font-body)] font-medium text-[var(--type-ui)] uppercase tracking-[var(--ls-eyebrow)] story-text-secondary">
             {card.roomLabel}
           </h3>
           {card.pullQuote && (
-            <blockquote className="story-reveal-child story-reveal-delay-1 font-[var(--font-headline)] italic text-[20px] leading-relaxed story-text-on-light">
+            <blockquote className="story-reveal-child story-reveal-delay-1 font-[var(--font-headline)] italic text-[var(--type-h4)] leading-relaxed story-text-on-light">
               &ldquo;{card.pullQuote}&rdquo;
             </blockquote>
           )}
           <div className="story-reveal-child story-reveal-delay-2 border-t border-[rgba(87,75,67,0.1)]" />
           {excerptPreview && (
             <div className="story-reveal-child story-reveal-delay-3 relative">
-              <p className="text-[15px] leading-relaxed font-[var(--font-body)] story-text-on-light">
+              <p className="text-[var(--type-body)] leading-relaxed font-[var(--font-body)] story-text-on-light">
                 {excerptPreview}
               </p>
               {card.editorialExcerpt && card.editorialExcerpt.length > (excerptPreview?.length ?? 0) && (
@@ -298,7 +298,7 @@ function DesktopLayoutSplit({
           <div className="story-reveal-child story-reveal-delay-3 border-t border-[rgba(87,75,67,0.1)]" />
           {sidebarProducts.length > 0 && (
             <div className="story-reveal-child story-reveal-delay-4">
-              <span className="text-[12px] font-[var(--font-body)] uppercase tracking-[0.12em] story-text-secondary mb-2 block">
+              <span className="text-[var(--type-meta)] font-[var(--font-body)] uppercase tracking-[var(--ls-wide)] story-text-secondary mb-2 block">
                 Products
               </span>
               <div className="flex gap-2">
@@ -312,18 +312,18 @@ function DesktopLayoutSplit({
                       {(product.cropUrl || product.thumbnailUrl || product.imageUrl) ? (
                         <img src={product.cropUrl ?? product.thumbnailUrl ?? product.imageUrl} alt={product.name} className="w-full h-full object-cover" />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-[10px] font-medium story-text-secondary">
+                        <div className="w-full h-full flex items-center justify-center text-[var(--type-fine)] font-medium story-text-secondary">
                           {product.name.slice(0, 2).toUpperCase()}
                         </div>
                       )}
                     </div>
-                    <span className="text-[11px] font-[var(--font-body)] story-text-on-light truncate w-full text-center">
+                    <span className="text-[var(--type-eyebrow)] font-[var(--font-body)] story-text-on-light truncate w-full text-center">
                       {product.name}
                     </span>
                   </button>
                 ))}
                 {card.productCount > 3 && (
-                  <div className="flex items-center justify-center w-16 h-16 rounded-lg bg-[rgba(87,75,67,0.05)] text-[12px] story-text-secondary">
+                  <div className="flex items-center justify-center w-16 h-16 rounded-lg bg-[rgba(87,75,67,0.05)] text-[var(--type-meta)] story-text-secondary">
                     +{card.productCount - 3}
                   </div>
                 )}
@@ -333,7 +333,7 @@ function DesktopLayoutSplit({
         </div>
         <button
           onClick={() => onExpand(card.roomSlug)}
-          className="story-reveal-child story-reveal-delay-5 mt-4 text-[14px] font-[var(--font-body)] font-medium story-text-on-light hover:opacity-70 transition-opacity self-start"
+          className="story-reveal-child story-reveal-delay-5 mt-4 text-[var(--type-ui)] font-[var(--font-body)] font-medium story-text-on-light hover:opacity-70 transition-opacity self-start"
         >
           Explore full room →
         </button>
@@ -379,22 +379,22 @@ function DesktopLayoutC({
 
       {/* Glass overlay — bottom left */}
       <div className="absolute bottom-6 left-6 max-w-md story-glass-quote px-5 py-4">
-        <h3 className="story-reveal-child font-[var(--font-body)] font-medium text-[14px] uppercase tracking-[0.16em] story-text-on-dark opacity-80">
+        <h3 className="story-reveal-child font-[var(--font-body)] font-medium text-[var(--type-ui)] uppercase tracking-[var(--ls-eyebrow)] story-text-on-dark opacity-80">
           {card.roomLabel}
         </h3>
         {card.pullQuote && (
-          <p className="story-reveal-child story-reveal-delay-1 mt-2 font-[var(--font-headline)] italic text-[20px] leading-relaxed story-text-on-dark">
+          <p className="story-reveal-child story-reveal-delay-1 mt-2 font-[var(--font-headline)] italic text-[var(--type-h4)] leading-relaxed story-text-on-dark">
             &ldquo;{card.pullQuote}&rdquo;
           </p>
         )}
         {excerptPreview && (
-          <p className="story-reveal-child story-reveal-delay-2 mt-2 text-[14px] leading-relaxed font-[var(--font-body)] story-text-on-dark opacity-80 line-clamp-3">
+          <p className="story-reveal-child story-reveal-delay-2 mt-2 text-[var(--type-ui)] leading-relaxed font-[var(--font-body)] story-text-on-dark opacity-80 line-clamp-3">
             {excerptPreview}
           </p>
         )}
         <button
           onClick={(e) => { e.stopPropagation(); onExpand(card.roomSlug); }}
-          className="story-reveal-child story-reveal-delay-3 mt-3 text-[14px] font-[var(--font-body)] font-medium story-text-on-dark hover:opacity-70 transition-opacity"
+          className="story-reveal-child story-reveal-delay-3 mt-3 text-[var(--type-ui)] font-[var(--font-body)] font-medium story-text-on-dark hover:opacity-70 transition-opacity"
         >
           Explore full room →
         </button>
@@ -416,7 +416,7 @@ function DesktopLayoutC({
                   className="w-6 h-6 rounded object-cover"
                 />
               )}
-              <span className="text-[11px] max-w-[80px] truncate">{product.name}</span>
+              <span className="text-[var(--type-eyebrow)] max-w-[80px] truncate">{product.name}</span>
             </button>
           ))}
         </div>
@@ -459,21 +459,21 @@ function DesktopLayoutE({
       <div className="p-4 story-glass-sidebar rounded-t-none rounded-b-xl border-l-0 border-t border-[rgba(255,252,248,0.3)]"
         style={{ borderLeft: "none", borderRadius: "0 0 12px 12px" }}
       >
-        <h3 className="story-reveal-child font-[var(--font-body)] font-medium text-[14px] uppercase tracking-[0.16em] story-text-secondary">
+        <h3 className="story-reveal-child font-[var(--font-body)] font-medium text-[var(--type-ui)] uppercase tracking-[var(--ls-eyebrow)] story-text-secondary">
           {card.roomLabel}
         </h3>
         {card.pullQuote && (
-          <p className="story-reveal-child story-reveal-delay-1 mt-2 font-[var(--font-headline)] italic text-[16px] leading-relaxed story-text-on-light line-clamp-2">
+          <p className="story-reveal-child story-reveal-delay-1 mt-2 font-[var(--font-headline)] italic text-[var(--type-body)] leading-relaxed story-text-on-light line-clamp-2">
             &ldquo;{card.pullQuote}&rdquo;
           </p>
         )}
         <div className="story-reveal-child story-reveal-delay-2 mt-3 flex items-center justify-between">
           {card.productCount > 0 && (
-            <span className="text-[12px] font-[var(--font-body)] story-text-secondary">
+            <span className="text-[var(--type-meta)] font-[var(--font-body)] story-text-secondary">
               {card.productCount} product{card.productCount !== 1 ? "s" : ""}
             </span>
           )}
-          <span className="text-[13px] font-[var(--font-body)] font-medium story-text-on-light">
+          <span className="text-[var(--type-meta)] font-[var(--font-body)] font-medium story-text-on-light">
             Explore →
           </span>
         </div>

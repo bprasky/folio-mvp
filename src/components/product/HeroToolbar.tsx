@@ -34,7 +34,7 @@ export function HeroToolbar({ onRotate, onZoom, has3D, hudOpacity = 1 }: HeroToo
     alignItems: "center",
     justifyContent: "center",
     cursor: "pointer",
-    fontSize: "11px",
+    fontSize: 'var(--type-eyebrow)',
     color: active ? "#fff" : "#5a4a3a",
     backdropFilter: "blur(4px)",
     WebkitBackdropFilter: "blur(4px)",

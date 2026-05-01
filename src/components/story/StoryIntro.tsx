@@ -25,7 +25,7 @@ export function StoryIntro({ story, compact = false }: StoryIntroProps) {
         <div className="flex flex-col gap-3">
           {story.location && (
             <span
-              className="text-[11px] uppercase tracking-[1.5px]"
+              className="text-[var(--type-eyebrow)] uppercase tracking-[1.5px]" /* folio-design-system: off-scale */
               style={{
                 color: "rgba(87, 75, 67, 0.55)"
               }}
@@ -36,12 +36,12 @@ export function StoryIntro({ story, compact = false }: StoryIntroProps) {
 
           <h1
             className={compact
-              ? "text-[28px] md:text-[36px] leading-[1.1] italic"
-              : "text-[32px] md:text-[44px] leading-[1.1] italic"
+              ? "text-[var(--type-h3)] md:text-[var(--type-h2)] leading-[var(--lh-h1)] italic"
+              : "text-[var(--type-stat)] md:text-[var(--type-h1)] leading-[var(--lh-h1)] italic"
             }
             style={{
               fontFamily: "var(--font-headline)",
-              fontWeight: 400,
+              fontWeight: 'var(--w-body)',
               color: "rgba(87, 75, 67, 0.85)",
             }}
           >
@@ -51,7 +51,7 @@ export function StoryIntro({ story, compact = false }: StoryIntroProps) {
           {/* Designer + room count */}
           <div className="flex flex-col gap-1 mt-2">
             <div
-              className="text-[11px]"
+              className="text-[var(--type-eyebrow)]"
               style={{
                 color: "rgba(87, 75, 67, 0.55)"
               }}
@@ -59,7 +59,7 @@ export function StoryIntro({ story, compact = false }: StoryIntroProps) {
               {story.designerName}
             </div>
             <div
-              className="text-[11px]"
+              className="text-[var(--type-eyebrow)]"
               style={{
                 color: "rgba(87, 75, 67, 0.3)"
               }}
@@ -74,18 +74,18 @@ export function StoryIntro({ story, compact = false }: StoryIntroProps) {
           {story.projectPullQuote && (
             <blockquote
               className={compact
-                ? "text-[16px] md:text-[18px] italic leading-[1.5]"
-                : "text-[18px] md:text-[20px] italic leading-[1.5]"
+                ? "text-[var(--type-body)] md:text-[var(--type-h4)] italic leading-[var(--lh-body)]"
+                : "text-[var(--type-h4)] md:text-[var(--type-h4)] italic leading-[var(--lh-body)]"
               }
               style={{
                 fontFamily: "var(--font-headline)",
-                fontWeight: 400,
+                fontWeight: 'var(--w-body)',
                 color: "rgba(87, 75, 67, 0.85)",
               }}
             >
               &ldquo;{story.projectPullQuote}&rdquo;
               <footer
-                className="mt-2 text-[12px] not-italic"
+                className="mt-2 text-[var(--type-meta)] not-italic"
                 style={{
                   color: "rgba(87, 75, 67, 0.55)"
                 }}
@@ -98,8 +98,8 @@ export function StoryIntro({ story, compact = false }: StoryIntroProps) {
           {story.introText && (
             <p
               className={compact
-                ? "text-[13px] leading-[1.65] whitespace-pre-line line-clamp-6"
-                : "text-[14px] leading-[1.65] whitespace-pre-line"
+                ? "text-[var(--type-meta)] leading-[1.65] whitespace-pre-line line-clamp-6" /* folio-design-system: off-scale */
+                : "text-[var(--type-ui)] leading-[1.65] whitespace-pre-line" /* folio-design-system: off-scale */
               }
               style={{
                 color: "rgba(87, 75, 67, 0.85)"

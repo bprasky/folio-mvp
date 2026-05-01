@@ -69,7 +69,7 @@ export function ProductInsertBlock({ products, roomName, isBoosted, featuredQues
               <div className="text-center p-4">
                 <div className="text-2xl mb-2">📐</div>
                 {isFeatured && (
-                  <p className="text-[10px] font-medium text-folio-text-secondary uppercase tracking-wider">
+                  <p className="text-[var(--type-fine)] font-medium text-folio-text-secondary uppercase tracking-wider">
                     Featured
                   </p>
                 )}
@@ -79,7 +79,7 @@ export function ProductInsertBlock({ products, roomName, isBoosted, featuredQues
           
           {/* Featured Badge - Only show if questions exist */}
           {isFeatured && (
-            <div className="absolute top-2 right-2 ridge-card px-2 py-1 rounded text-[10px] font-medium text-folio-text-primary uppercase tracking-wider">
+            <div className="absolute top-2 right-2 ridge-card px-2 py-1 rounded text-[var(--type-fine)] font-medium text-folio-text-primary uppercase tracking-wider">
               Featured
             </div>
           )}
@@ -114,7 +114,7 @@ export function ProductInsertBlock({ products, roomName, isBoosted, featuredQues
           {/* Questions Section - NEVER show in published mode */}
           {mode === 'edit' && primaryProductQuestions.length > 0 && (
             <div className="pt-3 border-t border-folio-border-subtle">
-              <div className="text-[10px] font-medium uppercase tracking-wider text-folio-text-secondary mb-2">
+              <div className="text-[var(--type-fine)] font-medium uppercase tracking-wider text-folio-text-secondary mb-2">
                 Questions Folio would ask
               </div>
               <ul className="space-y-1.5">

@@ -71,7 +71,7 @@ export function VendorPromptSection({ orgId, isOwner }: VendorPromptSectionProps
     <div className="mt-8">
       <div className="flex items-center gap-2 mb-4">
         <div className="w-2 h-2 rounded-full" style={{ background: "var(--folio-gold-ornament)" }} />
-        <h3 className="font-body font-medium" style={{ fontSize: "12px", letterSpacing: "1px", textTransform: "uppercase", color: "var(--folio-text-tertiary)" }}>
+        <h3 className="font-body font-medium" style={{ fontSize: 'var(--type-meta)', letterSpacing: "1px", textTransform: "uppercase", color: "var(--folio-text-tertiary)" }}> /* folio-design-system: off-scale */
           Content Prompts
         </h3>
       </div>
@@ -84,14 +84,14 @@ export function VendorPromptSection({ orgId, isOwner }: VendorPromptSectionProps
               className={`w-full text-left rounded-xl px-4 py-3 transition-colors ${isOwner ? 'cursor-pointer hover:bg-[rgba(245,239,232,0.8)]' : 'cursor-default'}`}
               style={{ background: "rgba(245, 239, 232, 0.5)", border: "0.5px solid var(--folio-border-subtle)" }}
             >
-              <div className="font-body font-medium" style={{ fontSize: "13px", color: "var(--folio-text-primary)" }}>
+              <div className="font-body font-medium" style={{ fontSize: 'var(--type-meta)', color: "var(--folio-text-primary)" }}>
                 {prompt.title}
               </div>
-              <div className="font-body mt-0.5" style={{ fontSize: "12px", color: "var(--folio-text-secondary)" }}>
+              <div className="font-body mt-0.5" style={{ fontSize: 'var(--type-meta)', color: "var(--folio-text-secondary)" }}>
                 {prompt.question}
               </div>
               {prompt.relatedDesignerName && (
-                <div className="font-body mt-1" style={{ fontSize: "10px", color: "var(--folio-gold-ornament)" }}>
+                <div className="font-body mt-1" style={{ fontSize: 'var(--type-fine)', color: "var(--folio-gold-ornament)" }}>
                   Inspired by {prompt.relatedDesignerName}'s project
                 </div>
               )}
@@ -113,21 +113,21 @@ export function VendorPromptSection({ orgId, isOwner }: VendorPromptSectionProps
                       placeholder="Share your thoughts... Folio will craft an article from your response."
                       rows={4}
                       className="w-full font-body rounded-lg px-3.5 py-2.5 resize-y mb-2"
-                      style={{ fontSize: "13px", background: "rgba(245,239,232,0.5)", border: "0.5px solid var(--folio-border-subtle)", color: "var(--folio-text-primary)", outline: "none" }}
+                      style={{ fontSize: 'var(--type-meta)', background: "rgba(245,239,232,0.5)", border: "0.5px solid var(--folio-border-subtle)", color: "var(--folio-text-primary)", outline: "none" }}
                     />
                     <div className="flex gap-2">
                       <button
                         onClick={() => handleSubmitAnswer(prompt.id)}
                         disabled={generating || !answer.trim()}
                         className="font-body px-4 py-2 rounded-lg cursor-pointer"
-                        style={{ fontSize: "12px", fontWeight: 500, background: "#3a2a1a", color: "#f5efe8", border: "none", opacity: generating ? 0.5 : 1 }}
+                        style={{ fontSize: 'var(--type-meta)', fontWeight: 'var(--w-h1)', background: "#3a2a1a", color: "#f5efe8", border: "none", opacity: generating ? 0.5 : 1 }}
                       >
                         {generating ? "Generating article..." : "Generate Article"}
                       </button>
                       <button
                         onClick={() => { setActivePrompt(null); setAnswer(""); }}
                         className="font-body px-4 py-2 rounded-lg cursor-pointer"
-                        style={{ fontSize: "12px", color: "var(--folio-text-secondary)", background: "transparent", border: "none" }}
+                        style={{ fontSize: 'var(--type-meta)', color: "var(--folio-text-secondary)", background: "transparent", border: "none" }}
                       >
                         Cancel
                       </button>

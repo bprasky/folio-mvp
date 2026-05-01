@@ -26,7 +26,7 @@ export function AboutPageContent() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
         >
-          <h1 className="font-headline italic text-5xl md:text-6xl lg:text-7xl text-folio-text-primary leading-[1.1]">
+          <h1 className="font-headline italic text-5xl md:text-6xl lg:text-7xl text-folio-text-primary leading-[var(--lh-h1)]">
             Design work deserves a better home.
           </h1>
         </motion.div>

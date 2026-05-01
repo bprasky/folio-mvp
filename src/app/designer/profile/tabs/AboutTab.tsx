@@ -87,7 +87,7 @@ export default function AboutTab({
         {hasBio && (
           <section className="about-section">
             <h3 className="about-section-title">About</h3>
-            <p className="folio-body whitespace-pre-line" style={{ lineHeight: 1.7 }}>
+            <p className="folio-body whitespace-pre-line" style={{ lineHeight: 1.7 }}> /* folio-design-system: off-scale */
               {bio}
             </p>
           </section>
@@ -96,7 +96,7 @@ export default function AboutTab({
         {hasPullQuote && (
           <section className="about-quote-card">
             <div className="about-quote-mark">&ldquo;</div>
-            <p className="folio-quote" style={{ fontSize: '19px', color: 'white', margin: 0, lineHeight: 1.6 }}>
+            <p className="folio-quote" style={{ fontSize: '19px', color: 'white', margin: 0, lineHeight: 'var(--lh-body)' }}> /* folio-design-system: off-scale */
               {pullQuotes![0]}
             </p>
           </section>
@@ -128,7 +128,7 @@ export default function AboutTab({
         {hasPhilosophy && (
           <section className="about-section">
             <h3 className="about-section-title">Design Philosophy</h3>
-            <p className="folio-body" style={{ lineHeight: 1.7 }}>
+            <p className="folio-body" style={{ lineHeight: 1.7 }}> /* folio-design-system: off-scale */
               {philosophy}
             </p>
           </section>
@@ -282,10 +282,10 @@ function SocialLink({ label, sub, href }: { label: string; sub: string; href: st
       className="social-link flex justify-between items-center p-2.5 px-3.5 rounded-lg no-underline"
     >
       <div>
-        <div className="text-[13px] font-medium" style={{ color: 'var(--text-primary)' }}>
+        <div className="text-[var(--type-meta)] font-medium" style={{ color: 'var(--text-primary)' }}>
           {label}
         </div>
-        <div className="folio-meta" style={{ fontSize: '11px' }}>{sub}</div>
+        <div className="folio-meta" style={{ fontSize: 'var(--type-eyebrow)' }}>{sub}</div>
       </div>
       <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="var(--text-tertiary)" strokeWidth="1.5">
         <path d="M5 2h7v7M12 2L2 12" />

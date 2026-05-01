@@ -187,7 +187,7 @@ export default function VendorAttributionPage() {
               </div>
               <div className="text-right shrink-0">
                 <div className="text-lg font-semibold text-[#B8A580]">{product.engagementScore}</div>
-                <div className="text-[10px] text-[#8C8278] uppercase">Score</div>
+                <div className="text-[var(--type-fine)] text-[#8C8278] uppercase">Score</div>
               </div>
             </button>
           ))}

@@ -29,7 +29,7 @@ export function RoomThumbnailStrip({ roomCards, onScrollToRoom, activeRoomSlug }
               alt={card.roomLabel}
               className="w-8 h-8 rounded-md object-cover"
             />
-            <span className="text-[13px] font-medium text-[rgba(255,252,248,0.9)] whitespace-nowrap font-[var(--font-body)]">
+            <span className="text-[var(--type-meta)] font-medium text-[rgba(255,252,248,0.9)] whitespace-nowrap font-[var(--font-body)]">
               {card.roomLabel}
             </span>
           </button>

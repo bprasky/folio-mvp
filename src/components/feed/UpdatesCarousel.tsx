@@ -47,7 +47,7 @@ export function UpdatesCarousel({ groups }: { groups: UpdatesCarouselItem[] }) {
                 <span className="h-full w-full bg-surface-ground block" />
               )}
             </span>
-            <span className="text-[11px] text-folio-text-secondary line-clamp-2 text-center w-full max-w-[120px]">
+            <span className="text-[var(--type-eyebrow)] text-folio-text-secondary line-clamp-2 text-center w-full max-w-[120px]">
               {g.designer.studioName || g.designer.name || "Designer"}
             </span>
           </button>

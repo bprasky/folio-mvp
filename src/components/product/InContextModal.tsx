@@ -83,9 +83,9 @@ export function InContextModal({ photo, onClose }: InContextModalProps) {
               <div
                 className="absolute top-3 left-3 font-body"
                 style={{
-                  fontSize: "9px",
-                  fontWeight: 500,
-                  letterSpacing: "0.5px",
+                  fontSize: "9px", /* folio-design-system: off-scale */
+                  fontWeight: 'var(--w-h1)',
+                  letterSpacing: 'var(--ls-wide)',
                   textTransform: "uppercase",
                   padding: "3px 8px",
                   borderRadius: "4px",
@@ -116,8 +116,8 @@ export function InContextModal({ photo, onClose }: InContextModalProps) {
                   style={{
                     background: "rgba(201, 169, 110, 0.15)",
                     color: "#8a7044",
-                    fontSize: "12px",
-                    fontWeight: 500,
+                    fontSize: 'var(--type-meta)',
+                    fontWeight: 'var(--w-h1)',
                   }}
                 >
                   {photo.designerName.charAt(0).toUpperCase()}
@@ -126,13 +126,13 @@ export function InContextModal({ photo, onClose }: InContextModalProps) {
               <div>
                 <div
                   className="font-body font-medium"
-                  style={{ fontSize: "14px", color: "var(--folio-text-primary, #1a1a1a)" }}
+                  style={{ fontSize: 'var(--type-ui)', color: "var(--folio-text-primary, #1a1a1a)" }}
                 >
                   {photo.projectTitle}
                 </div>
                 <div
                   className="font-body"
-                  style={{ fontSize: "12px", color: "var(--folio-text-tertiary, #9b9b9b)" }}
+                  style={{ fontSize: 'var(--type-meta)', color: "var(--folio-text-tertiary, #9b9b9b)" }}
                 >
                   by {photo.designerName}
                 </div>
@@ -144,8 +144,8 @@ export function InContextModal({ photo, onClose }: InContextModalProps) {
               <p
                 className="font-body mb-4"
                 style={{
-                  fontSize: "13px",
-                  lineHeight: 1.6,
+                  fontSize: 'var(--type-meta)',
+                  lineHeight: 'var(--lh-body)',
                   color: "var(--folio-text-secondary, #6b6b6b)",
                 }}
               >
@@ -165,7 +165,7 @@ export function InContextModal({ photo, onClose }: InContextModalProps) {
                 {photo.followUpQuestion && (
                   <div
                     className="font-body font-medium mb-1.5"
-                    style={{ fontSize: "11px", color: "var(--folio-text-tertiary, #9b9b9b)", textTransform: "uppercase", letterSpacing: "0.5px" }}
+                    style={{ fontSize: 'var(--type-eyebrow)', color: "var(--folio-text-tertiary, #9b9b9b)", textTransform: "uppercase", letterSpacing: 'var(--ls-wide)' }}
                   >
                     {photo.followUpQuestion}
                   </div>
@@ -173,8 +173,8 @@ export function InContextModal({ photo, onClose }: InContextModalProps) {
                 <p
                   className="font-headline italic"
                   style={{
-                    fontSize: "14px",
-                    lineHeight: 1.5,
+                    fontSize: 'var(--type-ui)',
+                    lineHeight: 'var(--lh-body)',
                     color: "var(--folio-text-primary, #1a1a1a)",
                   }}
                 >
@@ -182,7 +182,7 @@ export function InContextModal({ photo, onClose }: InContextModalProps) {
                 </p>
                 <div
                   className="font-body mt-2"
-                  style={{ fontSize: "11px", color: "var(--folio-text-tertiary, #9b9b9b)" }}
+                  style={{ fontSize: 'var(--type-eyebrow)', color: "var(--folio-text-tertiary, #9b9b9b)" }}
                 >
                   — {photo.designerName}
                 </div>
@@ -195,8 +195,8 @@ export function InContextModal({ photo, onClose }: InContextModalProps) {
                 href={`/p/${photo.articleSlug}`}
                 className="block text-center font-body rounded-lg py-2.5 transition-colors"
                 style={{
-                  fontSize: "12px",
-                  fontWeight: 500,
+                  fontSize: 'var(--type-meta)',
+                  fontWeight: 'var(--w-h1)',
                   background: "#3a2a1a",
                   color: "#f5efe8",
                   borderRadius: "8px",

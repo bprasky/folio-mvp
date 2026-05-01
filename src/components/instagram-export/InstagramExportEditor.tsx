@@ -275,11 +275,11 @@ export function InstagramExportEditor({ project, post, designer, images, rooms }
               </svg>
             </Link>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <span style={{ fontFamily: "var(--font-headline)", fontSize: '20px', fontStyle: 'italic', color: '#2C2420' }}>
+              <span style={{ fontFamily: "var(--font-headline)", fontSize: 'var(--type-h4)', fontStyle: 'italic', color: '#2C2420' }}>
                 folio
               </span>
-              <span style={{ color: '#D4C9BC', fontSize: '18px', fontWeight: 200 }}>|</span>
-              <span style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: '13px', letterSpacing: '1.5px', textTransform: 'uppercase' as const, color: '#8B7B68' }}>
+              <span style={{ color: '#D4C9BC', fontSize: 'var(--type-h4)', fontWeight: 200 }}>|</span> /* folio-design-system: off-scale */
+              <span style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: 'var(--type-meta)', letterSpacing: 'var(--ls-wide)', textTransform: 'uppercase' as const, color: '#8B7B68' }}>
                 Share to Instagram
               </span>
             </div>
@@ -312,8 +312,8 @@ export function InstagramExportEditor({ project, post, designer, images, rooms }
               style={{
                 borderRadius: '20px',
                 padding: '6px 16px',
-                fontSize: '13px',
-                fontWeight: 500,
+                fontSize: 'var(--type-meta)',
+                fontWeight: 'var(--w-h1)',
                 border: 'none',
                 cursor: 'pointer',
                 transition: 'all 0.2s',
@@ -330,8 +330,8 @@ export function InstagramExportEditor({ project, post, designer, images, rooms }
                 style={{
                   borderRadius: '20px',
                   padding: '6px 16px',
-                  fontSize: '13px',
-                  fontWeight: 500,
+                  fontSize: 'var(--type-meta)',
+                  fontWeight: 'var(--w-h1)',
                   border: 'none',
                   cursor: 'pointer',
                   transition: 'all 0.2s',
@@ -399,8 +399,8 @@ export function InstagramExportEditor({ project, post, designer, images, rooms }
                   flex: 1,
                   borderRadius: '8px',
                   padding: '8px 12px',
-                  fontSize: '13px',
-                  fontWeight: 500,
+                  fontSize: 'var(--type-meta)',
+                  fontWeight: 'var(--w-h1)',
                   border: 'none',
                   cursor: 'pointer',
                   transition: 'all 0.2s',

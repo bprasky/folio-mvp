@@ -235,7 +235,7 @@ export default function OrgSettingsPage() {
         <div className="mb-8">
           <h1
             className="text-3xl italic mb-2"
-            style={{ fontFamily: 'var(--font-headline)', color: '#2C2825', fontWeight: 400 }}
+            style={{ fontFamily: 'var(--font-headline)', color: '#2C2825', fontWeight: 'var(--w-body)' }}
           >
             {profileSourced ? 'Review What We Heard' : 'Studio Profile'}
           </h1>

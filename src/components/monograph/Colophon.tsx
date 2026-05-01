@@ -26,7 +26,7 @@ export default function Colophon({ name, editorialsFeatured }: ColophonProps) {
               {name} on Folio
             </p>
           </div>
-          <div className="text-right text-[13px] leading-tight" style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', color: '#6d6256', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          <div className="text-right text-[var(--type-meta)] leading-tight" style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', color: '#6d6256', textTransform: 'uppercase', letterSpacing: 'var(--ls-wide)' }}>
             <span>Featured in </span>
             <span className="text-[#b89a72] font-normal not-italic" style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>
               {formatNumber(editorialsFeatured)}

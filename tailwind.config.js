@@ -185,17 +185,27 @@ module.exports = {
         metricsMono: ['IBM Plex Mono','ui-monospace','SFMono-Regular','monospace']
       },
       fontSize: {
-        // Folio Design System typography scale
-        'folio-h1': ['48px', { lineHeight: '1.1', fontWeight: '500' }],
-        'folio-h2': ['36px', { lineHeight: '1.15', fontWeight: '500' }],
-        'folio-h3': ['28px', { lineHeight: '1.2', fontWeight: '500' }],
-        'folio-quote': ['24px', { lineHeight: '1.4', fontWeight: '400', fontStyle: 'italic' }],
-        'folio-body': ['15px', { lineHeight: '1.6', fontWeight: '400' }],
-        'folio-ui': ['14px', { lineHeight: '1.4', fontWeight: '500' }],
-        'folio-meta': ['13px', { lineHeight: '1.4', fontWeight: '400' }],
-        'folio-stat': ['28px', { lineHeight: '1.2', fontWeight: '600' }],
-        'folio-stat-lg': ['32px', { lineHeight: '1.2', fontWeight: '600' }],
-        'folio-logo': ['22px', { lineHeight: '1', fontWeight: '500', letterSpacing: '0.18em', textTransform: 'uppercase' }],
+        // Folio Design System typography scale (tokens defined in globals.css :root)
+        'folio-h1':      ['var(--type-h1)',      { lineHeight: 'var(--lh-h1)',    fontWeight: 'var(--w-h1)' }],
+        'folio-h2':      ['var(--type-h2)',      { lineHeight: 'var(--lh-h2)',    fontWeight: 'var(--w-h2)' }],
+        'folio-h3':      ['var(--type-h3)',      { lineHeight: 'var(--lh-h3)',    fontWeight: 'var(--w-h3)' }],
+        'folio-h4':      ['var(--type-h4)',      { lineHeight: 'var(--lh-h4)',    fontWeight: 'var(--w-h4)' }],
+        'folio-quote':   ['var(--type-quote)',   { lineHeight: 'var(--lh-quote)', fontWeight: '400', fontStyle: 'italic' }],
+        'folio-body':    ['var(--type-body)',    { lineHeight: 'var(--lh-body)',  fontWeight: 'var(--w-body)' }],
+        'folio-ui':      ['var(--type-ui)',      { lineHeight: 'var(--lh-ui)',    fontWeight: 'var(--w-ui)' }],
+        'folio-meta':    ['var(--type-meta)',    { lineHeight: 'var(--lh-meta)',  fontWeight: 'var(--w-meta)' }],
+        'folio-eyebrow': ['var(--type-eyebrow)', { letterSpacing: 'var(--ls-eyebrow)' }],
+        'folio-fine':    ['var(--type-fine)',   {}],
+        'folio-stat':    ['var(--type-stat)',    { lineHeight: 'var(--lh-stat)',  fontWeight: 'var(--w-stat)' }],
+        'folio-stat-lg': ['32px',                { lineHeight: 'var(--lh-stat)',  fontWeight: 'var(--w-stat)' }],
+        'folio-logo':    ['var(--type-logo)',    { lineHeight: 'var(--lh-logo)',  fontWeight: 'var(--w-logo)', letterSpacing: 'var(--ls-logo)' }],
+      },
+      letterSpacing: {
+        'folio-tight':   'var(--ls-tight)',
+        'folio-normal':  'var(--ls-normal)',
+        'folio-wide':    'var(--ls-wide)',
+        'folio-eyebrow': 'var(--ls-eyebrow)',
+        'folio-logo':    'var(--ls-logo)',
       },
       maxWidth: {
         metrics: '1440px'

@@ -69,7 +69,7 @@ export function GatheringVoicesSection({ className }: GatheringVoicesSectionProp
       {/* Header */}
       <div className="mb-6">
         <h2
-          className="text-[13px] font-normal uppercase tracking-[0.12em] text-folio-text-secondary"
+          className="text-[var(--type-meta)] font-normal uppercase tracking-[var(--ls-wide)] text-folio-text-secondary"
         >
           Now Gathering Voices
         </h2>

@@ -46,7 +46,7 @@ export default function MagazineProductRail({ products }: Props) {
                 {decodeHtmlEntities(product.name)}
               </p>
               {product.vendorName && (
-                <p className="folio-meta text-[11px] text-folio-text-secondary">
+                <p className="folio-meta text-[var(--type-eyebrow)] text-folio-text-secondary">
                   {product.vendorName}
                 </p>
               )}

@@ -230,10 +230,10 @@ export function ProductBank({ post, supplementalQuotes = [], isOwner = false }: 
     return (
       <section className="mx-auto max-w-6xl px-3 md:px-0">
         <div className="px-6 py-5 md:px-8 md:py-6">
-          <h2 className="font-['Instrument_Sans'] text-[11px] font-medium tracking-[0.16em] uppercase text-stone-400">
+          <h2 className="font-['Instrument_Sans'] text-[var(--type-eyebrow)] font-medium tracking-[var(--ls-eyebrow)] uppercase text-stone-400">
             Product Bank
           </h2>
-          <p className="mt-6 text-center font-['Instrument_Sans'] text-[13px] text-stone-400">
+          <p className="mt-6 text-center font-['Instrument_Sans'] text-[var(--type-meta)] text-stone-400">
             No products tagged yet
           </p>
         </div>
@@ -246,10 +246,10 @@ export function ProductBank({ post, supplementalQuotes = [], isOwner = false }: 
       <div className="px-6 py-5 md:px-8 md:py-6 space-y-5">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <h2 className="font-['Instrument_Sans'] text-[11px] font-medium tracking-[0.16em] uppercase text-stone-400">
+          <h2 className="font-['Instrument_Sans'] text-[var(--type-eyebrow)] font-medium tracking-[var(--ls-eyebrow)] uppercase text-stone-400">
             Product Bank
           </h2>
-          <span className="font-['Instrument_Sans'] text-[12px] text-stone-400">
+          <span className="font-['Instrument_Sans'] text-[var(--type-meta)] text-stone-400">
             {products.length} {products.length === 1 ? "product" : "products"}
           </span>
         </div>
@@ -346,7 +346,7 @@ function FilterPill({
     <button
       type="button"
       onClick={onClick}
-      className={`flex-shrink-0 px-3 py-1 rounded-full font-['Instrument_Sans'] text-[12px] transition-colors duration-150 ${
+      className={`flex-shrink-0 px-3 py-1 rounded-full font-['Instrument_Sans'] text-[var(--type-meta)] transition-colors duration-150 ${
         active
           ? "bg-stone-800 text-white"
           : "bg-stone-100 text-stone-500 hover:bg-stone-200"
@@ -387,13 +387,13 @@ function RoomSection({
         onClick={() => setCollapsed(!collapsed)}
         className="w-full flex items-center justify-between py-2 group"
       >
-        <span className="font-['Instrument_Sans'] text-[11px] font-medium tracking-[0.16em] uppercase text-stone-400 group-hover:text-stone-600 transition-colors duration-150">
+        <span className="font-['Instrument_Sans'] text-[var(--type-eyebrow)] font-medium tracking-[var(--ls-eyebrow)] uppercase text-stone-400 group-hover:text-stone-600 transition-colors duration-150">
           {room}
         </span>
-        <span className="font-['Instrument_Sans'] text-[11px] text-stone-400 flex items-center gap-2">
+        <span className="font-['Instrument_Sans'] text-[var(--type-eyebrow)] text-stone-400 flex items-center gap-2">
           {products.length} {products.length === 1 ? "product" : "products"}
           <span
-            className="text-[10px] transition-transform duration-150"
+            className="text-[var(--type-fine)] transition-transform duration-150"
             style={{ transform: collapsed ? "rotate(-90deg)" : "rotate(0deg)" }}
           >
             ▾
@@ -480,7 +480,7 @@ function ProductCard({
         <div className="relative aspect-square rounded-xl overflow-hidden bg-stone-100 shadow-sm group-hover:shadow-md transition-all duration-150">
           {/* 2-letter fallback always rendered behind images */}
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className="font-['Instrument_Sans'] text-[18px] font-medium text-stone-300">
+            <span className="font-['Instrument_Sans'] text-[var(--type-h4)] font-medium text-stone-300">
               {product.name.slice(0, 2).toUpperCase()}
             </span>
           </div>
@@ -556,7 +556,7 @@ function ProductCard({
                           setMenuOpen(false);
                           onAdjustCrop?.();
                         }}
-                        className="w-full px-3 py-2.5 text-left font-['Instrument_Sans'] text-[13px] text-stone-700 hover:bg-stone-100 transition-colors duration-100 flex items-center gap-2"
+                        className="w-full px-3 py-2.5 text-left font-['Instrument_Sans'] text-[var(--type-meta)] text-stone-700 hover:bg-stone-100 transition-colors duration-100 flex items-center gap-2"
                       >
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <rect x="3" y="3" width="18" height="18" rx="2" />
@@ -571,7 +571,7 @@ function ProductCard({
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={(e) => e.stopPropagation()}
-                        className="w-full px-3 py-2.5 text-left font-['Instrument_Sans'] text-[13px] text-stone-700 hover:bg-stone-100 transition-colors duration-100 flex items-center gap-2"
+                        className="w-full px-3 py-2.5 text-left font-['Instrument_Sans'] text-[var(--type-meta)] text-stone-700 hover:bg-stone-100 transition-colors duration-100 flex items-center gap-2"
                       >
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" />
@@ -590,11 +590,11 @@ function ProductCard({
 
         {/* Product info */}
         <div className="mt-2 px-0.5">
-          <p className="font-['Instrument_Sans'] text-[13px] font-medium text-stone-800 line-clamp-2 leading-tight">
+          <p className="font-['Instrument_Sans'] text-[var(--type-meta)] font-medium text-stone-800 line-clamp-2 leading-tight">
             {product.name}
           </p>
           {product.vendorName && (
-            <p className="font-['Instrument_Sans'] text-[12px] text-stone-400 mt-0.5 truncate">
+            <p className="font-['Instrument_Sans'] text-[var(--type-meta)] text-stone-400 mt-0.5 truncate">
               {product.vendorName}
             </p>
           )}
@@ -662,11 +662,11 @@ function ProductDetail({
 
       {/* Full product name */}
       <div>
-        <h3 className="font-['Instrument_Sans'] text-[15px] font-medium text-stone-800">
+        <h3 className="font-['Instrument_Sans'] text-[var(--type-body)] font-medium text-stone-800">
           {product.name}
         </h3>
         {product.vendorName && (
-          <p className="font-['Instrument_Sans'] text-[13px] text-stone-400 mt-0.5">
+          <p className="font-['Instrument_Sans'] text-[var(--type-meta)] text-stone-400 mt-0.5">
             {product.vendorName}
           </p>
         )}
@@ -674,14 +674,14 @@ function ProductDetail({
 
       {/* Category badge */}
       {product.category && (
-        <span className="inline-block px-2 py-0.5 rounded-full bg-stone-100 font-['Instrument_Sans'] text-[11px] text-stone-500">
+        <span className="inline-block px-2 py-0.5 rounded-full bg-stone-100 font-['Instrument_Sans'] text-[var(--type-eyebrow)] text-stone-500">
           {getCategoryLabel(product.category)}
         </span>
       )}
 
       {/* Material note from editorial */}
       {materialInfo?.note && (
-        <p className="font-['Instrument_Sans'] text-[12px] text-stone-500 italic leading-relaxed">
+        <p className="font-['Instrument_Sans'] text-[var(--type-meta)] text-stone-500 italic leading-relaxed">
           {materialInfo.note}
         </p>
       )}
@@ -698,7 +698,7 @@ function ProductDetail({
       {/* Source room context thumbnail */}
       {product.sourceImageUrl && (
         <div className="pt-1">
-          <p className="font-['Instrument_Sans'] text-[10px] text-stone-400 uppercase tracking-wider mb-1">
+          <p className="font-['Instrument_Sans'] text-[var(--type-fine)] text-stone-400 uppercase tracking-wider mb-1">
             In context
           </p>
           <div className="relative w-20 h-14 rounded-md overflow-hidden ring-1 ring-stone-200">
@@ -730,7 +730,7 @@ function ProductDetail({
             href={product.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="font-['Instrument_Sans'] text-[12px] text-stone-500 hover:text-stone-700 transition-colors duration-150"
+            className="font-['Instrument_Sans'] text-[var(--type-meta)] text-stone-500 hover:text-stone-700 transition-colors duration-150"
           >
             View product details →
           </Link>
@@ -750,17 +750,17 @@ function ContributorQuote({ quote }: { quote: SupplementalQuote }) {
 
   return (
     <div className="space-y-1">
-      <div className="font-['Instrument_Sans'] text-[11px] font-medium text-stone-600 uppercase tracking-wider">
+      <div className="font-['Instrument_Sans'] text-[var(--type-eyebrow)] font-medium text-stone-600 uppercase tracking-wider">
         {quote.contributorRole || "Contributor"}
       </div>
-      <blockquote className="font-['Instrument_Sans'] text-[12px] text-stone-500 leading-relaxed">
+      <blockquote className="font-['Instrument_Sans'] text-[var(--type-meta)] text-stone-500 leading-relaxed">
         &ldquo;{displayText}&rdquo;
       </blockquote>
       {isLong && (
         <button
           type="button"
           onClick={() => setShowFull(!showFull)}
-          className="font-['Instrument_Sans'] text-[11px] text-stone-400 hover:text-stone-600 transition-colors duration-150"
+          className="font-['Instrument_Sans'] text-[var(--type-eyebrow)] text-stone-400 hover:text-stone-600 transition-colors duration-150"
         >
           {showFull ? "Show less" : "Read more"}
         </button>

@@ -192,7 +192,7 @@ export function CinematicHero({ media, mesh3dUrl, meshColor, scenePresetId, prod
                 {brand}
               </div>
             )}
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-headline font-light text-stone-900 dark:text-stone-100 tracking-tight leading-[1.05]">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-headline font-light text-stone-900 dark:text-stone-100 tracking-tight leading-[1.05]"> /* folio-design-system: off-scale */
               {title}
             </h1>
             {(subtitle || sku) && (

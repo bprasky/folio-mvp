@@ -31,7 +31,7 @@ export default function FeaturedProjectCard({ project }: FeaturedProjectCardProp
           {/* Editorial badge */}
           {project.isEditorial && (
             <div className="absolute top-3 left-3">
-              <span className="text-[10px] uppercase tracking-widest
+              <span className="text-[var(--type-fine)] uppercase tracking-widest
                                text-white bg-black/40 backdrop-blur-sm
                                px-2.5 py-1 rounded-full">
                 Editorial

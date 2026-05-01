@@ -183,11 +183,11 @@ function ProductSheetContent({
 
       {/* Product name + vendor */}
       <div>
-        <h3 className="text-[18px] font-[var(--font-body)] font-medium story-text-on-light">
+        <h3 className="text-[var(--type-h4)] font-[var(--font-body)] font-medium story-text-on-light">
           {product.name}
         </h3>
         {vendorName && (
-          <p className="text-[14px] font-[var(--font-body)] story-text-secondary mt-0.5">
+          <p className="text-[var(--type-ui)] font-[var(--font-body)] story-text-secondary mt-0.5">
             {vendorName}
           </p>
         )}
@@ -201,11 +201,11 @@ function ProductSheetContent({
             {productQuotes.map((q: any, i: number) => (
               <div key={q.id || i}>
                 {q.source === 'in_context_boost' && q.question && (
-                  <p className="text-[11px] font-[var(--font-body)] uppercase tracking-wider story-text-secondary mb-1">
+                  <p className="text-[var(--type-eyebrow)] font-[var(--font-body)] uppercase tracking-wider story-text-secondary mb-1">
                     {q.question}
                   </p>
                 )}
-                <blockquote className="font-[var(--font-headline)] italic text-[17px] leading-relaxed story-text-on-light">
+                <blockquote className="font-[var(--font-headline)] italic text-[var(--type-body)] leading-relaxed story-text-on-light">
                   &ldquo;{q.answer}&rdquo;
                 </blockquote>
               </div>
@@ -216,13 +216,13 @@ function ProductSheetContent({
 
       {/* Cross-project signal (placeholder) */}
       <div className="border-t border-[rgba(87,75,67,0.1)]" />
-      <p className="text-[13px] font-[var(--font-body)] story-text-secondary">
+      <p className="text-[var(--type-meta)] font-[var(--font-body)] story-text-secondary">
         Tagged by designers on Folio
       </p>
 
       {/* Actions */}
       <div className="flex gap-3 pt-2">
-        <button className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-[rgba(87,75,67,0.08)] text-[14px] font-[var(--font-body)] font-medium story-text-on-light hover:bg-[rgba(87,75,67,0.12)] transition-colors">
+        <button className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-[rgba(87,75,67,0.08)] text-[var(--type-ui)] font-[var(--font-body)] font-medium story-text-on-light hover:bg-[rgba(87,75,67,0.12)] transition-colors">
           <Bookmark className="w-4 h-4" />
           Save Product
         </button>
@@ -231,7 +231,7 @@ function ProductSheetContent({
             href={vendorUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-[rgba(87,75,67,0.08)] text-[14px] font-[var(--font-body)] font-medium story-text-on-light hover:bg-[rgba(87,75,67,0.12)] transition-colors"
+            className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-[rgba(87,75,67,0.08)] text-[var(--type-ui)] font-[var(--font-body)] font-medium story-text-on-light hover:bg-[rgba(87,75,67,0.12)] transition-colors"
           >
             <ExternalLink className="w-4 h-4" />
             View at Vendor

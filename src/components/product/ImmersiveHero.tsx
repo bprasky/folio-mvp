@@ -212,7 +212,7 @@ export function ImmersiveHero({
             className="font-body uppercase font-normal mb-1.5 text-white/70"
             style={{
               fontSize: "clamp(11px, 1.2vw, 14px)",
-              letterSpacing: "0.14em",
+              letterSpacing: "0.14em", /* folio-design-system: off-scale */
             }}
           >
             {brand}
@@ -222,7 +222,7 @@ export function ImmersiveHero({
           className="font-headline italic font-normal tracking-tight text-white"
           style={{
             fontSize: "clamp(24px, 3.5vw, 42px)",
-            lineHeight: 1.1,
+            lineHeight: 'var(--lh-h1)',
           }}
         >
           {title}
@@ -285,7 +285,7 @@ export function ImmersiveHero({
           >
             <span
               className="font-body uppercase text-stone-400"
-              style={{ fontSize: "11px", letterSpacing: "0.15em" }}
+              style={{ fontSize: 'var(--type-eyebrow)', letterSpacing: 'var(--ls-eyebrow)' }}
             >
               Scroll to explore
             </span>

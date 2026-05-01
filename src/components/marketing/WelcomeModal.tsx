@@ -130,7 +130,7 @@ export function WelcomeModal() {
           <div className="flex-1 overflow-y-auto overscroll-contain">
             {/* Hero */}
             <div className="px-7 pt-8 pb-6 text-center">
-              <h2 className="font-headline italic text-4xl text-folio-text-primary leading-[1.1]">
+              <h2 className="font-headline italic text-4xl text-folio-text-primary leading-[var(--lh-h1)]">
                 Your story told right. Your studio run right.
               </h2>
               <p className="mt-4 text-sm leading-relaxed max-w-md mx-auto" style={{ color: 'rgba(40, 30, 24, 0.75)' }}>

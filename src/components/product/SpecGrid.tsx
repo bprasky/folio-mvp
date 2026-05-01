@@ -89,8 +89,8 @@ export function SpecGrid({ product }: SpecGridProps) {
           <div
             className="font-body mb-2"
             style={{
-              fontSize: "10px",
-              letterSpacing: "1.5px",
+              fontSize: 'var(--type-fine)',
+              letterSpacing: 'var(--ls-wide)',
               textTransform: "uppercase",
               color: "var(--folio-text-tertiary, #9b9b9b)",
             }}
@@ -103,7 +103,7 @@ export function SpecGrid({ product }: SpecGridProps) {
                 key={i}
                 className="font-body"
                 style={{
-                  fontSize: "11px",
+                  fontSize: 'var(--type-eyebrow)',
                   padding: "4px 10px",
                   borderRadius: "12px",
                   background: "rgba(201, 169, 110, 0.12)",
@@ -138,8 +138,8 @@ function SpecCard({
       <div
         className="font-body"
         style={{
-          fontSize: "10px",
-          letterSpacing: "1.5px",
+          fontSize: 'var(--type-fine)',
+          letterSpacing: 'var(--ls-wide)',
           textTransform: "uppercase",
           color: "var(--folio-text-tertiary, #9b9b9b)",
           marginBottom: "4px",
@@ -150,8 +150,8 @@ function SpecCard({
       <div
         className="font-body"
         style={{
-          fontSize: "14px",
-          fontWeight: 500,
+          fontSize: 'var(--type-ui)',
+          fontWeight: 'var(--w-h1)',
           color: "var(--folio-text-primary, #1a1a1a)",
         }}
       >
@@ -178,8 +178,8 @@ function LeadTimeCard({ leadTime }: { leadTime: string }) {
       <div
         className="font-body"
         style={{
-          fontSize: "10px",
-          letterSpacing: "1.5px",
+          fontSize: 'var(--type-fine)',
+          letterSpacing: 'var(--ls-wide)',
           textTransform: "uppercase",
           color: "var(--folio-text-tertiary, #9b9b9b)",
           marginBottom: "4px",
@@ -195,8 +195,8 @@ function LeadTimeCard({ leadTime }: { leadTime: string }) {
         <span
           className="font-body"
           style={{
-            fontSize: "14px",
-            fontWeight: 500,
+            fontSize: 'var(--type-ui)',
+            fontWeight: 'var(--w-h1)',
             color: "var(--folio-text-primary, #1a1a1a)",
           }}
         >

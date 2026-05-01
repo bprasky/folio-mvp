@@ -39,7 +39,7 @@ export const DesignerProductMap: React.FC<DesignerProductMapProps> = ({
         <table className="min-w-full text-xs">
           <thead>
             <tr>
-              <th className="px-2 py-2 text-left text-[11px] uppercase tracking-wide text-folio-text-secondary">
+              <th className="px-2 py-2 text-left text-[var(--type-eyebrow)] uppercase tracking-wide text-folio-text-secondary">
                 Product / Designer
               </th>
               {topDesigners.map((d) => {
@@ -47,7 +47,7 @@ export const DesignerProductMap: React.FC<DesignerProductMapProps> = ({
                 return (
                   <th
                     key={d.designerId}
-                    className="px-2 py-2 text-[11px] uppercase tracking-wide text-folio-text-secondary text-left"
+                    className="px-2 py-2 text-[var(--type-eyebrow)] uppercase tracking-wide text-folio-text-secondary text-left"
                   >
                     {designer?.name || d.designerId}
                   </th>
@@ -60,7 +60,7 @@ export const DesignerProductMap: React.FC<DesignerProductMapProps> = ({
               <tr key={p.productId} className="border-t border-[var(--ridge-inner)]">
                 <td className="px-2 py-2 text-folio-text-primary">
                   <div className="font-medium">{p.name}</div>
-                  <div className="text-[11px] text-folio-text-secondary">
+                  <div className="text-[var(--type-eyebrow)] text-folio-text-secondary">
                     {p.collectionName}
                   </div>
                 </td>

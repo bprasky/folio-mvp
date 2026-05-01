@@ -13,7 +13,7 @@ export function ProductGrid({ items }: { items: Product[] }) {
 
   return (
     <section className="mt-10">
-      <h3 className="text-[15px] font-semibold tracking-tight text-folio-text-primary">
+      <h3 className="text-[var(--type-body)] font-semibold tracking-tight text-folio-text-primary">
         Shop the Space
       </h3>
       <div className="mt-4 grid grid-cols-2 md:grid-cols-3 gap-4">

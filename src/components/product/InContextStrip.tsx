@@ -99,13 +99,13 @@ export function InContextStrip({ productId }: InContextStripProps) {
                 >
                   <div
                     className="font-body font-medium truncate"
-                    style={{ fontSize: "12px", color: "white", lineHeight: 1.3 }}
+                    style={{ fontSize: 'var(--type-meta)', color: "white", lineHeight: 'var(--lh-h4)' }}
                   >
                     {photo.projectTitle}
                   </div>
                   <div
                     className="font-body truncate"
-                    style={{ fontSize: "10px", color: "rgba(255,255,255,0.7)" }}
+                    style={{ fontSize: 'var(--type-fine)', color: "rgba(255,255,255,0.7)" }}
                   >
                     {photo.designerName}
                   </div>
@@ -115,9 +115,9 @@ export function InContextStrip({ productId }: InContextStripProps) {
                   <div
                     className="absolute top-2.5 left-2.5 font-body"
                     style={{
-                      fontSize: "9px",
-                      fontWeight: 500,
-                      letterSpacing: "0.5px",
+                      fontSize: "9px", /* folio-design-system: off-scale */
+                      fontWeight: 'var(--w-h1)',
+                      letterSpacing: 'var(--ls-wide)',
                       textTransform: "uppercase",
                       padding: "2px 7px",
                       borderRadius: "4px",
@@ -134,8 +134,8 @@ export function InContextStrip({ productId }: InContextStripProps) {
                   <div
                     className="absolute top-2.5 right-2.5 font-body"
                     style={{
-                      fontSize: "9px",
-                      fontWeight: 500,
+                      fontSize: "9px", /* folio-design-system: off-scale */
+                      fontWeight: 'var(--w-h1)',
                       padding: "2px 7px",
                       borderRadius: "4px",
                       background: "rgba(201, 169, 110, 0.9)",

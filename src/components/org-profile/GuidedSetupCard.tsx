@@ -99,7 +99,7 @@ export default function GuidedSetupCard({
         style={{
           fontFamily: 'var(--font-headline)',
           color: '#2C2825',
-          fontWeight: 400,
+          fontWeight: 'var(--w-body)',
         }}
       >
         Welcome to Folio
@@ -110,7 +110,7 @@ export default function GuidedSetupCard({
         className="text-sm md:text-base mb-8"
         style={{
           color: '#6B635B',
-          lineHeight: 1.6
+          lineHeight: 'var(--lh-body)'
         }}
       >
         Your profile is your portfolio&apos;s front door.
@@ -195,7 +195,7 @@ function StepRow({
               className="text-xs mt-1"
               style={{
                 color: '#8B8178',
-                lineHeight: 1.5
+                lineHeight: 'var(--lh-body)'
               }}
             >
               {step.description}
@@ -214,7 +214,7 @@ function StepRow({
                   backgroundColor: isNext ? '#2C2825' : 'transparent',
                   color: isNext ? 'var(--surface-ground)' : '#6B635B',
                   border: isNext ? 'none' : '1px solid #D4CEC6',
-                  fontWeight: 500
+                  fontWeight: 'var(--w-h1)'
                 }}
               >
                 {step.cta.label}
@@ -227,7 +227,7 @@ function StepRow({
                   backgroundColor: isNext ? '#2C2825' : 'transparent',
                   color: isNext ? 'var(--surface-ground)' : '#6B635B',
                   border: isNext ? 'none' : '1px solid #D4CEC6',
-                  fontWeight: 500
+                  fontWeight: 'var(--w-h1)'
                 }}
               >
                 {step.cta.label}

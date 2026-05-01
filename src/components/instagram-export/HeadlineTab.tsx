@@ -43,10 +43,10 @@ export function HeadlineTab({
           background: 'linear-gradient(135deg, #F5F0EB, #EDE6DD)',
           border: '1px solid #E8E0D8',
         }}>
-          <div style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase' as const, color: '#8B7B68', marginBottom: '8px', fontWeight: 500 }}>
+          <div style={{ fontSize: 'var(--type-eyebrow)', letterSpacing: 'var(--ls-eyebrow)', textTransform: 'uppercase' as const, color: '#8B7B68', marginBottom: '8px', fontWeight: 'var(--w-h1)' }}>
             Current Headline
           </div>
-          <div style={{ fontFamily: "var(--font-headline)", fontSize: '16px', fontStyle: 'italic', color: '#2C2420', lineHeight: 1.4 }}>
+          <div style={{ fontFamily: "var(--font-headline)", fontSize: 'var(--type-body)', fontStyle: 'italic', color: '#2C2420', lineHeight: 'var(--lh-meta)' }}>
             &ldquo;{selectedHeadline}&rdquo;
           </div>
         </div>
@@ -54,7 +54,7 @@ export function HeadlineTab({
 
       {/* Headline options */}
       <div>
-        <div style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase' as const, color: '#8B7B68', marginBottom: '12px', fontWeight: 500 }}>
+        <div style={{ fontSize: 'var(--type-eyebrow)', letterSpacing: 'var(--ls-eyebrow)', textTransform: 'uppercase' as const, color: '#8B7B68', marginBottom: '12px', fontWeight: 'var(--w-h1)' }}>
           Select a Headline
         </div>
 
@@ -68,7 +68,7 @@ export function HeadlineTab({
               borderTopColor: '#2C2420',
               animation: 'spin 1s linear infinite',
             }} />
-            <p style={{ marginTop: '12px', fontSize: '13px', color: '#8B7B68' }}>Generating headlines...</p>
+            <p style={{ marginTop: '12px', fontSize: 'var(--type-meta)', color: '#8B7B68' }}>Generating headlines...</p>
             <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
           </div>
         ) : (
@@ -87,10 +87,10 @@ export function HeadlineTab({
                   transition: 'all 0.2s',
                   textAlign: 'left' as const,
                   fontFamily: "var(--font-headline)",
-                  fontSize: '15px',
+                  fontSize: 'var(--type-body)',
                   fontStyle: 'italic',
                   color: selectedHeadline === quote ? '#2C2420' : '#8B7B68',
-                  lineHeight: 1.5,
+                  lineHeight: 'var(--lh-body)',
                 }}
               >
                 &ldquo;{quote}&rdquo;
@@ -102,7 +102,7 @@ export function HeadlineTab({
 
       {/* Custom headline */}
       <div>
-        <div style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase' as const, color: '#8B7B68', marginBottom: '8px', fontWeight: 500 }}>
+        <div style={{ fontSize: 'var(--type-eyebrow)', letterSpacing: 'var(--ls-eyebrow)', textTransform: 'uppercase' as const, color: '#8B7B68', marginBottom: '8px', fontWeight: 'var(--w-h1)' }}>
           Or Write Your Own
         </div>
         <div style={{ display: 'flex', gap: '8px' }}>
@@ -117,7 +117,7 @@ export function HeadlineTab({
               border: '1px solid #E8E0D8',
               background: '#FFFFFF',
               padding: '10px 14px',
-              fontSize: '14px',
+              fontSize: 'var(--type-ui)',
               color: '#2C2420',
               outline: 'none',
             }}
@@ -130,8 +130,8 @@ export function HeadlineTab({
               background: '#2C2420',
               color: '#FFFFFF',
               padding: '10px 16px',
-              fontSize: '13px',
-              fontWeight: 500,
+              fontSize: 'var(--type-meta)',
+              fontWeight: 'var(--w-h1)',
               border: 'none',
               cursor: 'pointer',
               opacity: customHeadline.trim() ? 1 : 0.4,
@@ -157,7 +157,7 @@ export function HeadlineTab({
                 border: '1px solid #E8E0D8',
                 background: '#FFFFFF',
                 padding: '10px 14px',
-                fontSize: '14px',
+                fontSize: 'var(--type-ui)',
                 color: '#2C2420',
                 outline: 'none',
                 resize: 'vertical' as const,
@@ -173,8 +173,8 @@ export function HeadlineTab({
                   background: '#2C2420',
                   color: '#FFFFFF',
                   padding: '10px',
-                  fontSize: '13px',
-                  fontWeight: 500,
+                  fontSize: 'var(--type-meta)',
+                  fontWeight: 'var(--w-h1)',
                   border: 'none',
                   cursor: 'pointer',
                 }}
@@ -188,7 +188,7 @@ export function HeadlineTab({
                   border: '1px solid #E8E0D8',
                   background: '#FFFFFF',
                   padding: '10px 16px',
-                  fontSize: '13px',
+                  fontSize: 'var(--type-meta)',
                   color: '#8B7B68',
                   cursor: 'pointer',
                 }}
@@ -211,8 +211,8 @@ export function HeadlineTab({
               border: '1px solid #E8E0D8',
               background: '#FFFFFF',
               padding: '10px',
-              fontSize: '13px',
-              fontWeight: 500,
+              fontSize: 'var(--type-meta)',
+              fontWeight: 'var(--w-h1)',
               color: '#8B7B68',
               cursor: 'pointer',
               transition: 'all 0.2s',

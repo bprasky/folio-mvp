@@ -24,7 +24,7 @@ function Kpi({ label, value }: { label: string; value: number|string }) {
   return (
     <div className="rounded-lg border border-[#E5E7EB] bg-white p-2">
       <div className="text-xs text-[#6B7280]">{label}</div>
-      <div className="text-[15px] font-semibold text-[#111827]">{value}</div>
+      <div className="text-[var(--type-body)] font-semibold text-[#111827]">{value}</div>
     </div>
   );
 }
@@ -32,7 +32,7 @@ function List({ label, items }: { label: string; items: string[] }) {
   return (
     <div>
       <div className="text-xs text-[#6B7280]">{label}</div>
-      <ul className="mt-1 list-disc pl-4 text-[13px] text-[#111827]">
+      <ul className="mt-1 list-disc pl-4 text-[var(--type-meta)] text-[#111827]">
         {items.map((t,i)=><li key={i}>{t}</li>)}
       </ul>
     </div>

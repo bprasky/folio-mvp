@@ -44,7 +44,7 @@ export default function Fingerprint({ tags, projectCount, lastUpdated, projectVi
         </div>
 
         {/* Project Views Metric */}
-        <div className="text-center text-[13px] leading-tight" style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', color: '#6d6256', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+        <div className="text-center text-[var(--type-meta)] leading-tight" style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', color: '#6d6256', textTransform: 'uppercase', letterSpacing: 'var(--ls-wide)' }}>
           <span className="text-[#b89a72] font-normal not-italic" style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>
             {formatNumber(projectViews)}
           </span>

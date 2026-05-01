@@ -329,7 +329,7 @@ export default function DesignerProfile() {
               }`}>
                 {name}
               </div>
-              <div className="mt-1 flex flex-wrap items-center gap-2 text-white/85 text-[11px]">
+              <div className="mt-1 flex flex-wrap items-center gap-2 text-white/85 text-[var(--type-eyebrow)]">
                 {project.status === 'draft' && (
                   <span className="inline-flex items-center bg-[rgba(30,30,30,0.7)] px-1.5 py-0.5 rounded backdrop-blur-sm font-sans font-medium uppercase tracking-wide">
                     Draft
@@ -359,7 +359,7 @@ export default function DesignerProfile() {
             {project.status === 'draft' && !project.id?.startsWith('mock') && (
               <Link
                 href={`/project/${project.id}/setup?onboard=1`}
-                className="rounded bg-black/60 text-white text-[11px] px-2 py-1 hover:bg-black/80"
+                className="rounded bg-black/60 text-white text-[var(--type-eyebrow)] px-2 py-1 hover:bg-black/80"
                 onClick={(e) => e.stopPropagation()}
               >
                 <FaUpload className="inline w-3 h-3 mr-1" />
@@ -369,7 +369,7 @@ export default function DesignerProfile() {
             {project.status === 'published' && !project.id?.startsWith('mock') && (
               <Link
                 href={`/designer/projects/${project.id}/instagram`}
-                className="rounded bg-black/60 text-white text-[11px] px-2 py-1 hover:bg-black/80"
+                className="rounded bg-black/60 text-white text-[var(--type-eyebrow)] px-2 py-1 hover:bg-black/80"
                 onClick={(e) => e.stopPropagation()}
               >
                 <FaInstagram className="inline w-3 h-3 mr-1" />
@@ -379,7 +379,7 @@ export default function DesignerProfile() {
             {!project.id?.startsWith('mock') && (
               <Link
                 href={`/project/${project.id}?view=media`}
-                className="rounded bg-black/60 text-white text-[11px] px-2 py-1 hover:bg-black/80"
+                className="rounded bg-black/60 text-white text-[var(--type-eyebrow)] px-2 py-1 hover:bg-black/80"
                 onClick={(e) => e.stopPropagation()}
               >
                 ✎ Manage

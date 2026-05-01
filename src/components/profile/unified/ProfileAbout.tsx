@@ -79,7 +79,7 @@ export default function ProfileAbout({ user, team = [], organization }: ProfileA
           <SectionTitle>About</SectionTitle>
           <div
             className="prose prose-stone max-w-none text-folio-text-secondary"
-            style={{ lineHeight: 1.8 }}
+            style={{ lineHeight: 1.8 }} /* folio-design-system: off-scale */
           >
             <p className="text-base whitespace-pre-line">{bio}</p>
           </div>
@@ -107,7 +107,7 @@ export default function ProfileAbout({ user, team = [], organization }: ProfileA
       {processDescription && (
         <section>
           <SectionTitle>Design Process</SectionTitle>
-          <div className="text-folio-text-secondary" style={{ lineHeight: 1.8 }}>
+          <div className="text-folio-text-secondary" style={{ lineHeight: 1.8 }}> /* folio-design-system: off-scale */
             <p className="text-base whitespace-pre-line">{processDescription}</p>
           </div>
         </section>

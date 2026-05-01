@@ -137,7 +137,7 @@ export default function CarouselPreview({
                   <div className="absolute bottom-0 right-0 p-6">
                     <p className="text-xs font-serif tracking-wider" style={{ 
                       color: 'rgba(128,128,128,0.4)',
-                      fontSize: '12px'
+                      fontSize: 'var(--type-meta)'
                     }}>
                       FOLIO
                     </p>
@@ -186,10 +186,10 @@ export default function CarouselPreview({
                         className="font-serif italic text-center max-w-[90%]"
                         style={{ 
                           fontSize: 'clamp(3.5rem, 4.5vw, 4rem)', // 56-64px range
-                          lineHeight: '1.2',
+                          lineHeight: 'var(--lh-h3)',
                           color: '#FFFAF5', // Off-white for better visibility
                           textShadow: '0 8px 30px rgba(0,0,0,0.35)',
-                          letterSpacing: '0.75px'
+                          letterSpacing: '0.75px' /* folio-design-system: off-scale */
                         }}
                       >
                         {quoteLines.map((line, i) => (
@@ -224,7 +224,7 @@ export default function CarouselPreview({
                     {/* Folio wordmark bottom-left (same style as cover) */}
                     <p className="text-xs font-serif tracking-wider absolute bottom-6 left-6" style={{ 
                       color: 'rgba(128,128,128,0.4)',
-                      fontSize: '12px'
+                      fontSize: 'var(--type-meta)'
                     }}>
                       FOLIO
                     </p>

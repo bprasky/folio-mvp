@@ -14,7 +14,7 @@ export default function MetricsCard({
   return (
     <section className="card pad">
       <header className="mb-3 flex items-center justify-between">
-        <h3 className="text-[15px] font-medium">{title}</h3>
+        <h3 className="text-[var(--type-body)] font-medium">{title}</h3>
         <div className="flex items-center gap-2">{right}</div>
       </header>
       <div className="min-h-[220px]">{children}</div>

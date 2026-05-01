@@ -98,11 +98,11 @@ export function PromptedAnswerModal({
             {/* Question */}
             <div className="p-6 pb-0">
               <p
-                className="text-[17px] leading-relaxed text-folio-text-secondary"
+                className="text-[var(--type-body)] leading-relaxed text-folio-text-secondary"
                 style={{
                   fontFamily: 'var(--font-headline)',
                   fontStyle: 'italic',
-                  fontWeight: 400,
+                  fontWeight: 'var(--w-body)',
                 }}
               >
                 &ldquo;{question.questionText}&rdquo;
@@ -117,7 +117,7 @@ export function PromptedAnswerModal({
                 onChange={(e) => setAnswerText(e.target.value)}
                 placeholder="A few sentences is perfect..."
                 rows={5}
-                className="w-full resize-none rounded-lg border border-[rgba(139,129,120,0.2)] bg-surface-ground p-4 text-[15px] text-folio-text-primary placeholder:text-folio-text-tertiary focus:border-[rgba(139,129,120,0.4)] focus:outline-none focus:ring-0 transition-colors"
+                className="w-full resize-none rounded-lg border border-[rgba(139,129,120,0.2)] bg-surface-ground p-4 text-[var(--type-body)] text-folio-text-primary placeholder:text-folio-text-tertiary focus:border-[rgba(139,129,120,0.4)] focus:outline-none focus:ring-0 transition-colors"
               />
 
               {error && (

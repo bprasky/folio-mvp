@@ -275,7 +275,7 @@ function KPI({
         {value}
       </div>
       {sublabel && (
-        <div className="text-[11px] text-folio-text-secondary">{sublabel}</div>
+        <div className="text-[var(--type-eyebrow)] text-folio-text-secondary">{sublabel}</div>
       )}
     </div>
   );

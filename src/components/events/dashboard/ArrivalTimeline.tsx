@@ -52,13 +52,13 @@ export default function ArrivalTimeline({ eventId }: { eventId: string }) {
       <BarChart data={data}>
         <XAxis
           dataKey="label"
-          tick={{ fontSize: 11, fill: "#78716c" }}
+          tick={{ fontSize: 'var(--type-eyebrow)', fill: "#78716c" }}
           axisLine={false}
           tickLine={false}
         />
         <YAxis
           allowDecimals={false}
-          tick={{ fontSize: 11, fill: "#78716c" }}
+          tick={{ fontSize: 'var(--type-eyebrow)', fill: "#78716c" }}
           axisLine={false}
           tickLine={false}
           width={30}
@@ -68,7 +68,7 @@ export default function ArrivalTimeline({ eventId }: { eventId: string }) {
             background: "#fff",
             border: "1px solid #e7e5e4",
             borderRadius: 8,
-            fontSize: 12,
+            fontSize: 'var(--type-meta)',
           }}
           formatter={(value: number) => [`${value} guests`, "Check-ins"]}
         />

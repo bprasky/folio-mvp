@@ -220,7 +220,7 @@ export function PostExpanded({ payload }: PostExpandedProps) {
           {blocks.introduction.map((para: string, idx: number) => (
             <p
               key={idx}
-              className="text-[15px] leading-7 text-folio-text-primary mb-4"
+              className="text-[var(--type-body)] leading-7 text-folio-text-primary mb-4"
             >
               {para}
             </p>
@@ -245,7 +245,7 @@ export function PostExpanded({ payload }: PostExpandedProps) {
                       <p
                         key={pIdx}
                         data-paragraph-idx={pIdx}
-                        className="text-[15px] leading-7 text-folio-text-primary mb-4"
+                        className="text-[var(--type-body)] leading-7 text-folio-text-primary mb-4"
                       >
                         {para}
                       </p>
@@ -297,7 +297,7 @@ export function PostExpanded({ payload }: PostExpandedProps) {
                     )}
                     <p
                       data-paragraph-idx={idx}
-                      className="text-[15px] leading-7 text-folio-text-primary"
+                      className="text-[var(--type-body)] leading-7 text-folio-text-primary"
                     >
                       {section.body}
                     </p>

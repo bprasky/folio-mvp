@@ -44,6 +44,31 @@
   --folio-gold-hover: #A67548;
   --folio-gold-ornament: #C9A96E;   /* Decorative only — never text or interactive */
 
+  /* === TYPE SCALE (canonical, Task 04) ===
+     Every size, weight, line-height, and letter-spacing in Folio
+     resolves to one of these tokens or an explicit off-scale comment. */
+  --type-h1:        48px;   --lh-h1:    1.10;  --w-h1:    500;
+  --type-h2:        36px;   --lh-h2:    1.15;  --w-h2:    500;
+  --type-h3:        28px;   --lh-h3:    1.20;  --w-h3:    500;
+  --type-h4:        22px;   --lh-h4:    1.25;  --w-h4:    500;
+  --type-quote:     24px;   --lh-quote: 1.40;
+  --type-body:      15px;   --lh-body:  1.60;  --w-body:  400;
+  --type-ui:        14px;   --lh-ui:    1.40;  --w-ui:    500;
+  --type-meta:      13px;   --lh-meta:  1.40;  --w-meta:  400;
+  --type-stat:      28px;   --lh-stat:  1.20;  --w-stat:  600;
+  --type-logo:      22px;   --lh-logo:  1.00;  --w-logo:  500;
+
+  /* Smaller-than-meta scale — uppercase eyebrows and footer fine print only */
+  --type-eyebrow:   11px;
+  --type-fine:      10px;
+
+  /* Letter-spacing scale */
+  --ls-tight:       -0.02em;   /* hero display */
+  --ls-normal:      0;
+  --ls-wide:        0.08em;    /* small uppercase UI */
+  --ls-eyebrow:     0.16em;    /* eyebrow labels */
+  --ls-logo:        0.18em;    /* logo wordmark */
+
   /* ===========================================
      DEPRECATED ALIASES — migrate to canonical
      =========================================== */
@@ -142,7 +167,7 @@
     position: relative;
     font-family: var(--font-body);
     font-weight: 500;
-    font-size: 14px;
+    font-size: var(--type-ui);
     transition: all 150ms ease;
   }
 
@@ -181,7 +206,7 @@
       inset 0 -1px 0 rgba(0, 0, 0, 0.1);
     font-family: var(--font-body);
     font-weight: 500;
-    font-size: 14px;
+    font-size: var(--type-ui);
     transition: all 150ms ease;
   }
 
@@ -217,7 +242,7 @@
     border-radius: 10px;
     box-shadow: var(--neu-inset);
     font-family: var(--font-body);
-    font-size: 15px;
+    font-size: var(--type-body);
     color: var(--text-primary);
     transition: all 150ms ease;
   }
@@ -253,7 +278,7 @@
     padding: 8px 16px;
     font-family: var(--font-body);
     font-weight: 500;
-    font-size: 14px;
+    font-size: var(--type-ui);
     color: var(--text-secondary);
     transition: all 150ms ease;
     cursor: pointer;
@@ -279,7 +304,7 @@
 
   .stats-card .stats-value {
     font-family: var(--font-body);
-    font-size: 28px;
+    font-size: var(--type-h3);
     font-weight: 600;
     color: var(--text-primary);
     line-height: 1.2;
@@ -287,7 +312,7 @@
 
   .stats-card .stats-label {
     font-family: var(--font-body);
-    font-size: 10px;
+    font-size: var(--type-fine);
     font-weight: 500;
     text-transform: uppercase;
     letter-spacing: 0.08em;
@@ -326,7 +351,7 @@
   .folio-logo-text {
     font-family: var(--font-headline);
     font-weight: 500;
-    font-size: 22px;
+    font-size: var(--type-h4);
     text-transform: uppercase;
     letter-spacing: 0.18em;
     color: var(--text-primary);
@@ -335,73 +360,103 @@
   /* Headline Typography */
   .folio-h1 {
     font-family: var(--font-headline);
-    font-weight: 500;
-    font-size: 48px;
-    color: var(--text-primary); /* Can be overridden locally with !text-white for image overlays */
-    line-height: 1.1;
+    font-weight: var(--w-h1);
+    font-size: var(--type-h1);
+    color: var(--text-primary);
+    line-height: var(--lh-h1);
   }
 
   .folio-h2 {
     font-family: var(--font-headline);
-    font-weight: 500;
-    font-size: 36px;
-    color: var(--text-primary); /* Can be overridden locally with !text-white for image overlays */
-    line-height: 1.15;
+    font-weight: var(--w-h2);
+    font-size: var(--type-h2);
+    color: var(--text-primary);
+    line-height: var(--lh-h2);
   }
 
   .folio-h3 {
     font-family: var(--font-headline);
-    font-weight: 500;
-    font-size: 28px;
-    color: var(--text-primary); /* Can be overridden locally with !text-white for image overlays */
-    line-height: 1.2;
+    font-weight: var(--w-h3);
+    font-size: var(--type-h3);
+    color: var(--text-primary);
+    line-height: var(--lh-h3);
+  }
+
+  .folio-h4 {
+    font-family: var(--font-headline);
+    font-weight: var(--w-h4);
+    font-size: var(--type-h4);
+    color: var(--text-primary);
+    line-height: var(--lh-h4);
   }
 
   /* Quote Typography */
   .folio-quote {
     font-family: var(--font-headline);
     font-weight: 400;
-    font-size: 24px;
+    font-size: var(--type-quote);
     font-style: italic;
     color: var(--text-primary);
-    line-height: 1.4;
+    line-height: var(--lh-quote);
   }
 
   /* Body Typography */
   .folio-body {
     font-family: var(--font-body);
-    font-weight: 400;
-    font-size: 15px;
+    font-weight: var(--w-body);
+    font-size: var(--type-body);
     color: var(--text-secondary);
-    line-height: 1.6;
+    line-height: var(--lh-body);
   }
 
   /* UI/Button Typography */
   .folio-ui {
     font-family: var(--font-body);
-    font-weight: 500;
-    font-size: 14px;
+    font-weight: var(--w-ui);
+    font-size: var(--type-ui);
+    line-height: var(--lh-ui);
   }
 
   /* Small/Meta Typography */
   .folio-meta {
     font-family: var(--font-body);
-    font-weight: 400;
-    font-size: 13px;
+    font-weight: var(--w-meta);
+    font-size: var(--type-meta);
+    color: var(--text-tertiary);
+    line-height: var(--lh-meta);
+  }
+
+  /* Eyebrow / fine-print Typography (smaller than meta) */
+  .folio-eyebrow {
+    font-family: var(--font-body);
+    font-weight: var(--w-ui);
+    font-size: var(--type-eyebrow);
+    letter-spacing: var(--ls-eyebrow);
+    text-transform: uppercase;
+  }
+
+  .folio-fine {
+    font-family: var(--font-body);
+    font-weight: var(--w-meta);
+    font-size: var(--type-fine);
     color: var(--text-tertiary);
   }
 
   /* Stats/Data Typography */
   .folio-stat {
     font-family: var(--font-body);
-    font-weight: 600;
-    font-size: 28px;
+    font-weight: var(--w-stat);
+    font-size: var(--type-stat);
+    line-height: var(--lh-stat);
+    font-variant-numeric: tabular-nums;
   }
 
   .folio-stat-lg {
     font-family: var(--font-body);
-    font-weight: 600;
-    font-size: 32px;
+    font-weight: var(--w-stat);
+    font-size: 32px;  /* off-scale: display KPI variant */
+    line-height: var(--lh-stat);
+    font-variant-numeric: tabular-nums;
   }
 }
 
@@ -656,17 +711,17 @@ html[data-compact="true"] main { padding-top: 0 !important; }
     color: var(--text-primary);
   }
 
-  h1 { font-size: 48px; font-weight: 500; line-height: 1.1; }
-  h2 { font-size: 36px; font-weight: 500; line-height: 1.15; }
-  h3 { font-size: 28px; font-weight: 500; line-height: 1.2; }
-  h4 { font-size: 22px; font-weight: 500; line-height: 1.25; }
+  h1 { font-size: var(--type-h1); font-weight: 500; line-height: 1.1; }
+  h2 { font-size: var(--type-h2); font-weight: 500; line-height: 1.15; }
+  h3 { font-size: var(--type-h3); font-weight: 500; line-height: 1.2; }
+  h4 { font-size: var(--type-h4); font-weight: 500; line-height: 1.25; }
 
   p, li, small, button, input, textarea, label {
     font-family: var(--font-body);
   }
 
   p {
-    font-size: 15px;
+    font-size: var(--type-body);
     color: var(--text-secondary);
     line-height: 1.6;
   }
@@ -770,7 +825,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: var(--type-meta);
   font-weight: 600;
   border: 1px solid var(--folio-border);
 }
@@ -798,7 +853,7 @@ body {
   color: white;
   border-radius: 4px;
   padding: 4px 8px;
-  font-size: 10px;
+  font-size: var(--type-fine);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -834,7 +889,7 @@ body {
   color: white;
   border-radius: 4px;
   padding: 4px 8px;
-  font-size: 10px;
+  font-size: var(--type-fine);
   font-weight: 600;
 }
 
@@ -866,7 +921,7 @@ body {
   left: 50%;
   transform: translate(-40%, -50%);
   color: var(--folio-text);
-  font-size: 16px;
+  font-size: var(--type-body);
   z-index: 2;
   opacity: 0;
   transition: opacity 0.3s ease;
@@ -884,7 +939,7 @@ body {
   color: white;
   border-radius: 4px;
   padding: 4px 8px;
-  font-size: 10px;
+  font-size: var(--type-fine);
   font-weight: 600;
   text-transform: uppercase;
 }
@@ -898,7 +953,7 @@ body {
   backdrop-filter: blur(5px);
   border-radius: 50px;
   padding: 8px 16px;
-  font-size: 12px;
+  font-size: var(--type-meta);
   font-weight: 600;
   display: flex;
   align-items: center;
@@ -955,7 +1010,7 @@ body {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  font-size: 18px;
+  font-size: var(--type-h4);
   color: var(--folio-text);
   transition: all 0.2s ease;
 }
@@ -978,7 +1033,7 @@ body {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  font-size: 16px;
+  font-size: var(--type-body);
   color: var(--folio-text);
   transition: all 0.2s ease;
 }
@@ -1006,7 +1061,7 @@ body {
   align-items: center;
   justify-content: center;
   color: var(--folio-text);
-  font-size: 24px;
+  font-size: var(--type-quote);
   opacity: 0.6;
 }
 
@@ -1036,7 +1091,7 @@ body {
 }
 
 .card-label {
-  font-size: 12px;
+  font-size: var(--type-meta);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -1045,14 +1100,14 @@ body {
 }
 
 .card-title {
-  font-size: 18px;
+  font-size: var(--type-h4);
   font-weight: 700;
   margin-bottom: 8px;
   line-height: 1.2;
 }
 
 .card-author, .card-price, .card-specialty {
-  font-size: 14px;
+  font-size: var(--type-ui);
   opacity: 0.9;
   margin-bottom: 4px;
 }
@@ -1089,7 +1144,7 @@ body {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  font-size: 18px;
+  font-size: var(--type-h4);
   color: var(--folio-text);
   transition: all 0.2s ease;
   z-index: 20;
@@ -1666,17 +1721,17 @@ html {
 }
 
 .h-key { 
-  font-size: 11px; 
+  font-size: var(--type-eyebrow); 
   color: #6B7280; 
 }
 
 .h-legend { 
-  font-size: 12px; 
+  font-size: var(--type-meta); 
   color: #6B7280; 
 }
 
 .axis { 
-  font-size: 11px; 
+  font-size: var(--type-eyebrow); 
   fill: #6B7280; 
 }
 

@@ -43,7 +43,7 @@
   border-radius: 20px;
   padding: 6px 14px;
   font-family: var(--font-body);
-  font-size: 13px;
+  font-size: var(--type-meta);
   color: rgba(87, 75, 67, 0.85);
 }
 

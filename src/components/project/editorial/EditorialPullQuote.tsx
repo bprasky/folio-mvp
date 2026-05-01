@@ -20,7 +20,7 @@ export function EditorialPullQuote({ text, attribution }: EditorialPullQuoteProp
         <hr className="border-t border-folio-border-subtle mb-10 max-w-[120px] mx-auto" />
 
         {/* Quote text — Cormorant Garamond italic */}
-        <blockquote className="font-[var(--font-headline)] text-[22px] md:text-[26px] lg:text-[28px] font-normal italic leading-relaxed text-folio-text-primary">
+        <blockquote className="font-[var(--font-headline)] text-[var(--type-h4)] md:text-[var(--type-h3)] lg:text-[var(--type-h3)] font-normal italic leading-relaxed text-folio-text-primary">
           {text}
         </blockquote>
 

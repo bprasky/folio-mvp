@@ -178,7 +178,7 @@ export function StoryRenderer({ post }: Props) {
   if (storyData.roomCards.length === 0 && !storyData.heroImage) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-[16px] font-[var(--font-body)] story-text-secondary">
+        <p className="text-[var(--type-body)] font-[var(--font-body)] story-text-secondary">
           No content available for this project.
         </p>
       </div>

@@ -48,8 +48,8 @@ export default function ProductCard({ product, onClick }: ProductCardProps) {
         </div>
       )}
       <div className="absolute bottom-0 left-0 right-0 p-3.5">
-        <h4 className="text-[13px] font-semibold text-white mb-0.5">{product.name}</h4>
-        <div className="text-[11px] text-white/70">
+        <h4 className="text-[var(--type-meta)] font-semibold text-white mb-0.5">{product.name}</h4>
+        <div className="text-[var(--type-eyebrow)] text-white/70">
           {[product.vendor, formattedPrice].filter(Boolean).join(' \u00B7 ')}
         </div>
       </div>

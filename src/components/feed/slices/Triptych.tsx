@@ -67,7 +67,7 @@ export default function Triptych({ items, onClick, canEdit = false }: TriptychPr
             aria-label={String(item?.title ?? '')}
           >
             {dev && (
-              <div className="mb-1 text-[10px] bg-emerald-200 text-emerald-900 inline-block px-1.5 rounded">
+              <div className="mb-1 text-[var(--type-fine)] bg-emerald-200 text-emerald-900 inline-block px-1.5 rounded">
                 TILE ok · {String(item?.title ?? '')}
               </div>
             )}

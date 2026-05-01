@@ -15,7 +15,7 @@ export function MaterialsSection({ post }: MaterialsSectionProps) {
   return (
     <section className="mx-auto max-w-4xl px-3 md:px-0">
       <div className="px-6 py-5 md:px-8 md:py-6 space-y-4">
-        <h2 className="folio-ui tracking-[0.16em] uppercase text-folio-text-secondary">
+        <h2 className="folio-ui tracking-[var(--ls-eyebrow)] uppercase text-folio-text-secondary">
           Materials
         </h2>
         <ul className="space-y-2">

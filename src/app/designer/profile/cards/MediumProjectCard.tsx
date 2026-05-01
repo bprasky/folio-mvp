@@ -30,13 +30,13 @@ export default function MediumProjectCard({ project }: MediumProjectCardProps) {
             className="text-white leading-tight mb-1"
             style={{
               fontFamily: 'var(--font-headline)',
-              fontSize: '17px',
-              fontWeight: 500,
+              fontSize: 'var(--type-body)',
+              fontWeight: 'var(--w-h1)',
             }}
           >
             {project.title}
           </h4>
-          <span className="text-[11px] text-white/70">
+          <span className="text-[var(--type-eyebrow)] text-white/70">
             {[project.location, project.year].filter(Boolean).join(' \u00B7 ')}
           </span>
         </div>

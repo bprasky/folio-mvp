@@ -35,11 +35,11 @@ export function PromptedQuestionCard({
     >
       {/* Question text — Cormorant Garamond Italic */}
       <p
-        className="text-[17px] leading-relaxed text-folio-text-secondary mb-6"
+        className="text-[var(--type-body)] leading-relaxed text-folio-text-secondary mb-6"
         style={{
           fontFamily: 'var(--font-headline)',
           fontStyle: 'italic',
-          fontWeight: 400,
+          fontWeight: 'var(--w-body)',
         }}
       >
         &ldquo;{question.questionText}&rdquo;
@@ -56,7 +56,7 @@ export function PromptedQuestionCard({
 
         {/* Provenance line */}
         <span
-          className="text-[11px] text-folio-text-tertiary tracking-wide"
+          className="text-[var(--type-eyebrow)] text-folio-text-tertiary tracking-wide"
         >
           Folio &middot; Asked based on your interview
         </span>

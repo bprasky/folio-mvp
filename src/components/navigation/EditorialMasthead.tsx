@@ -200,8 +200,8 @@ export function EditorialMasthead() {
                   href="/"
                   className="block font-serif text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-light uppercase text-folio-text-primary hover:text-folio-text-primary transition-colors cursor-pointer"
                   style={{
-                    letterSpacing: "0.05em",
-                    fontWeight: 300,
+                    letterSpacing: 'var(--ls-wide)',
+                    fontWeight: 300, /* folio-design-system: off-scale */
                   }}
                 >
                   <motion.span

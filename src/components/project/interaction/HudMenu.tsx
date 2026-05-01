@@ -136,7 +136,7 @@ function DesktopStack({
                 <span className="w-5 text-center text-sm" style={{ color: 'var(--tag-hud-accent)' }}>
                   {action.icon}
                 </span>
-                <span className="text-[11px] font-medium">{action.label}</span>
+                <span className="text-[var(--type-eyebrow)] font-medium">{action.label}</span>
               </motion.button>
             ))}
           </div>
@@ -208,7 +208,7 @@ function MobileBottomSheet({
                   <span className="w-6 text-center text-base" style={{ color: 'var(--tag-hud-accent)' }}>
                     {action.icon}
                   </span>
-                  <span className="text-[14px] font-medium">{action.label}</span>
+                  <span className="text-[var(--type-ui)] font-medium">{action.label}</span>
                 </button>
               ))}
             </div>

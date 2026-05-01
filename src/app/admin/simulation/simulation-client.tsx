@@ -134,7 +134,7 @@ export default function SimulationClient() {
           <span className="text-sm font-medium tracking-tight">
             Folio System Orb
           </span>
-          <span className="text-[11px] text-slate-400">
+          <span className="text-[var(--type-eyebrow)] text-slate-400">
             Start with a few actions. Watch the ecosystem grow.
           </span>
         </div>
@@ -142,7 +142,7 @@ export default function SimulationClient() {
           <div className="flex items-center gap-2">
             <span className="text-slate-400">View</span>
             <button
-              className={`px-2 py-1 rounded-full border text-[11px] ${
+              className={`px-2 py-1 rounded-full border text-[var(--type-eyebrow)] ${
                 viewMode === "orb"
                   ? "bg-slate-100 text-slate-900 border-slate-100"
                   : "bg-slate-900 text-slate-300 border-slate-700"
@@ -152,7 +152,7 @@ export default function SimulationClient() {
               Orb
             </button>
             <button
-              className={`px-2 py-1 rounded-full border text-[11px] ${
+              className={`px-2 py-1 rounded-full border text-[var(--type-eyebrow)] ${
                 viewMode === "constellation"
                   ? "bg-slate-100 text-slate-900 border-slate-100"
                   : "bg-slate-900 text-slate-300 border-slate-700"
@@ -165,7 +165,7 @@ export default function SimulationClient() {
           <div className="flex items-center gap-2">
             <span className="text-slate-400">Mode</span>
             <button
-              className={`px-2 py-1 rounded-full border text-[11px] ${
+              className={`px-2 py-1 rounded-full border text-[var(--type-eyebrow)] ${
                 mode === "simulation"
                   ? "bg-slate-100 text-slate-900 border-slate-100"
                   : "bg-slate-900 text-slate-300 border-slate-700"
@@ -178,7 +178,7 @@ export default function SimulationClient() {
               Simulation
             </button>
             <button
-              className={`px-2 py-1 rounded-full border text-[11px] ${
+              className={`px-2 py-1 rounded-full border text-[var(--type-eyebrow)] ${
                 mode === "explore"
                   ? "bg-slate-100 text-slate-900 border-slate-100"
                   : "bg-slate-900 text-slate-300 border-slate-700"
@@ -191,7 +191,7 @@ export default function SimulationClient() {
               Explore
             </button>
             <button
-              className={`px-2 py-1 rounded-full border text-[11px] ${
+              className={`px-2 py-1 rounded-full border text-[var(--type-eyebrow)] ${
                 mode === "present"
                   ? "bg-sky-500 text-slate-950 border-sky-500"
                   : "bg-slate-900 text-slate-300 border-slate-700"
@@ -205,7 +205,7 @@ export default function SimulationClient() {
               Present
             </button>
           </div>
-          <div className="hidden md:flex items-center text-[11px] text-slate-500">
+          <div className="hidden md:flex items-center text-[var(--type-eyebrow)] text-slate-500">
             <span className="mr-1">Time:</span>
             <span className="font-mono">
               {String(time.toFixed(1)).padStart(5, " ")}s
@@ -221,10 +221,10 @@ export default function SimulationClient() {
           {mode === "present" && currentPresentStep && (
             <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 max-w-xl bg-slate-950/90 border border-slate-800 rounded-2xl px-4 py-3 shadow-lg">
               <div className="flex items-center justify-between gap-4 mb-1">
-                <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400">
+                <div className="text-[var(--type-eyebrow)] uppercase tracking-[var(--ls-eyebrow)] text-slate-400">
                   Step {currentPresentStep.index + 1} of {PRESENT_STEPS.length}
                 </div>
-                <div className="flex items-center gap-2 text-[11px]">
+                <div className="flex items-center gap-2 text-[var(--type-eyebrow)]">
                   <button
                     className="px-2 py-1 rounded-full border border-slate-700 text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-800"
                     disabled={presentIndex === 0}
@@ -244,7 +244,7 @@ export default function SimulationClient() {
               <div className="text-sm font-semibold text-slate-50">
                 {currentPresentStep.label}
               </div>
-              <p className="text-[11px] text-slate-300 mt-1 leading-relaxed">
+              <p className="text-[var(--type-eyebrow)] text-slate-300 mt-1 leading-relaxed">
                 {currentPresentStep.caption}
               </p>
             </div>
@@ -284,7 +284,7 @@ export default function SimulationClient() {
               faqs={faqsForNode}
             />
           ) : (
-            <div className="flex-1 flex items-center justify-center px-6 text-center text-[11px] text-slate-500">
+            <div className="flex-1 flex items-center justify-center px-6 text-center text-[var(--type-eyebrow)] text-slate-500">
               Click any node to see its role in the system, or click a connection to focus on just that relationship.
             </div>
           )}

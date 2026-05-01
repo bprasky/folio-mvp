@@ -177,7 +177,7 @@ export function DemoControls() {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="space-y-2">
-      <div className="font-semibold text-[11px] uppercase tracking-wide text-folio-text-secondary">{title}</div>
+      <div className="font-semibold text-[var(--type-eyebrow)] uppercase tracking-wide text-folio-text-secondary">{title}</div>
       {children}
     </div>
   );

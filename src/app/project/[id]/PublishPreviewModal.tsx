@@ -147,7 +147,7 @@ export default function PublishPreviewModal({
               )}
               <h3
                 className="text-2xl text-folio-text-primary leading-tight"
-                style={{ fontFamily: "var(--font-headline)", fontWeight: 500 }}
+                style={{ fontFamily: "var(--font-headline)", fontWeight: 'var(--w-h1)' }}
               >
                 {flow.currentLead?.title}
               </h3>
@@ -198,7 +198,7 @@ export default function PublishPreviewModal({
               <CheckCircle2 className="w-12 h-12 text-[var(--accent)]" />
               <h3
                 className="text-2xl text-folio-text-primary"
-                style={{ fontFamily: "var(--font-headline)", fontWeight: 500 }}
+                style={{ fontFamily: "var(--font-headline)", fontWeight: 'var(--w-h1)' }}
               >
                 Your project is live
               </h3>

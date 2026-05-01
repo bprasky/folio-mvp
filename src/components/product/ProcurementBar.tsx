@@ -114,8 +114,8 @@ export function ProcurementBar({ productId, productBrand, isVendorOwner = false 
           borderRadius: "8px",
           background: "#3a2a1a",
           color: "#f5efe8",
-          fontSize: "12px",
-          fontWeight: 500,
+          fontSize: 'var(--type-meta)',
+          fontWeight: 'var(--w-h1)',
           textAlign: "center",
           border: "none",
         }}
@@ -130,8 +130,8 @@ export function ProcurementBar({ productId, productBrand, isVendorOwner = false 
           borderRadius: "8px",
           background: "transparent",
           color: "#3a2a1a",
-          fontSize: "12px",
-          fontWeight: 500,
+          fontSize: 'var(--type-meta)',
+          fontWeight: 'var(--w-h1)',
           textAlign: "center",
           border: "0.5px solid var(--folio-border-strong, #d4cfc8)",
         }}

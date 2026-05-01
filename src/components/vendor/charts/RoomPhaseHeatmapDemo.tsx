@@ -37,7 +37,7 @@ export function RoomPhaseHeatmapDemo({ matrix, rooms, phases }: Props) {
               return (
                 <div key={`${r}-${p}`} className="relative flex h-16 items-center justify-center rounded-xl border bg-white">
                   <div className="text-base font-semibold">{(c.ratePct ?? 0)}%</div>
-                  <div className="absolute bottom-1 text-[11px] h-key">{c.saves} saves → {c.tags} tags</div>
+                  <div className="absolute bottom-1 text-[var(--type-eyebrow)] h-key">{c.saves} saves → {c.tags} tags</div>
                 </div>
               );
             })}

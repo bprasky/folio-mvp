@@ -219,3 +219,42 @@ won't catch the multiline JSX form
 because the prop is its own line. Audit the post-codemod grep count and
 clean up the long-tail manually. (For Task 03 this was 4 callsites in
 MagazineFeedClient and project/interaction.)
+
+
+---
+
+## 2026-05-01 — type scale: off-scale near-duplicates accumulate silently
+
+The audit before Task 04 found 224 inline `fontSize` literals, 109
+`fontWeight`, 43 `lineHeight`, 61 `letterSpacing`, plus 394 `text-[Npx]`,
+21 `leading-[N]`, 57 `tracking-[N]`, and 109 `font-[N]` Tailwind arbitrary
+class hits. Many were near-duplicates of canonical sizes — `30px`, `34px`,
+`38px`, `42px`, `44px`, `17px`, `12px` — that designers eyeballed in dev
+tools without checking the token list.
+
+**A snap-to-nearest map with explicit FLAG buckets is the right migration
+shape.** The codemod converts confident matches (15→body, 28→h3 etc.) and
+leaves outliers in place for human triage. For Task 04 about 90% of inline
+literals (~397/441) snapped cleanly; 49 outliers (9px badges, 8px IG-export
+labels, 72px OG image, 1.7-line-height taglines) got
+`/* folio-design-system: off-scale */` markers and the CI guard skips
+those lines.
+
+**`FLAG` is a feature, not a hedge.** A migration script that "tries its
+best" and silently maps everything is worse than one that explicitly
+refuses on uncertainty. The flag count (49) was small enough to triage
+individually; the alternative — a bigger snap radius — would have
+silently shifted real design intent (a deliberate 9px vendor badge becoming
+an 11px eyebrow ruins layout density).
+
+**CSS utility classes ARE the API for type.** The existing `.folio-h1`
+through `.folio-stat` classes already existed in `globals.css` but were
+hard-coded with literal hex values. Refactoring them to use the new
+`--type-*` / `--lh-*` / `--w-*` tokens means every `<element class="folio-h2">`
+in the codebase now traces back to one canonical declaration. Designers
+can rename what `h2` means in one place and the whole product follows.
+
+**POSIX-extended regex is what `git grep -E` accepts.** `(?!...)` negative
+lookahead and `\d`/`\w` shortcuts don't work in `git grep -E`. Use
+character classes (`[^a-z0-9]`) and explicit alternations. Tested locally
+before pushing CI rules so the workflow doesn't fail on the first PR.
