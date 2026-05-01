@@ -1,46 +1,14 @@
-// src/app/magazine/page.tsx
+// `/magazine` redirects to `/` per Task 05 routing decision.
 //
-// AUDIT SUMMARY (from feed implementation):
-// - Old feed lived at: src/app/feed/page.tsx
-// - Data models used:
-//   * ProjectPost (PUBLISHED status, with project relation)
-//   * Project (with designer, images, ProductTag relations)
-//   * Product (via ProductTag on ProjectImage)
-//   * Designer/User (via project.designer relation)
-// - Components reused:
-//   * FeedHeroCard, FeedGridCard (from src/app/feed/ui/cards.tsx) - NOT reusing, building new editorial hero
-//   * FlowMosaic, EventMosaic (from src/components/feed/FlowMosaic.tsx, src/components/events/EventMosaic.tsx)
-//     - Can reference for mosaic grid patterns, but building magazine-specific version
-//   * UpdatesCarousel (from src/components/feed/UpdatesCarousel.tsx) - may reuse for product rail
-// - Data fetching helpers:
-//   * getPublishedProjectPosts (src/lib/feed/getPublishedProjectPosts.ts) - fetches ProjectPost with PUBLISHED status
-//   * Uses Prisma: projectPost.findMany with status: "PUBLISHED", includes project.designer, project.images
-//   * Hero image comes from heroAssetId or first project image
-// - Navigation: Currently /feed in Navigation.tsx line 48, label "Home"
+// The new homepage at `/` is the editorial elevation feed (XL hero + boost
+// reel + L/M/S mosaic). The legacy MagazinePage layout is preserved at
+// `/magazine/community` so deep-links from emails, newsletters, and
+// MagazineCoverHero deeper-content sections still resolve.
 
-import MagazinePage from "@/components/magazine/MagazinePage";
-import { WelcomeModal } from "@/components/marketing/WelcomeModal";
-import { FoundingCTABar } from "@/components/marketing/FoundingCTABar";
+import { redirect } from "next/navigation";
 
-// Force dynamic rendering to prevent caching of product data
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+export const dynamic = "force-dynamic";
 
-interface MagazinePageProps {
-  searchParams?: {
-    edition?: string;
-  };
+export default function MagazineRedirect() {
+  redirect("/");
 }
-
-export default async function Page({ searchParams }: MagazinePageProps) {
-  const edition = searchParams?.edition || "for-you";
-
-  return (
-    <>
-      <MagazinePage editionSlug={edition} />
-      <WelcomeModal />
-      <FoundingCTABar />
-    </>
-  );
-}
-

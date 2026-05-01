@@ -219,3 +219,60 @@ won't catch the multiline JSX form
 because the prop is its own line. Audit the post-codemod grep count and
 clean up the long-tail manually. (For Task 03 this was 4 callsites in
 MagazineFeedClient and project/interaction.)
+
+
+---
+
+## 2026-05-01 — homepage editorial elevation feed (Task 05)
+
+**Don't put commerce inside the photograph.** Spec's first prototype put the
+boost reel as an opaque strip across the bottom of the editorial XL — made the
+photo unreadable, and on a portfolio platform the photo *is* the product.
+Pulling the reel out into a tethered row 16px below the hero solved the
+optical problem and made the boost mechanic *more* visible, not less.
+Proximity tethers; chrome doesn't.
+
+**The seam matters more than the sections.** The boost reel is the seam where
+editorial-curation meets algorithmic-feed AND it's Folio's monetization. Three
+jobs, one component. Don't introduce a "Sponsored products" section header —
+the per-product Boosted badge is enough disclosure. A header announces the
+seam and breaks reading flow.
+
+**Don't extend a uniqueness-constrained model for a different business
+object.** `InContextBoost.productTagId @unique` encodes "one boost per tag" —
+a contract worth preserving. Adding a homepage-reel placement to that model
+would have forced dropping the constraint and entangling two billing flows.
+Sibling model (`HomepageReelBoost`) keyed on `(projectPostId, productId,
+vendorId)` keeps lifecycles orthogonal — auction semantics on one side,
+tag-negotiation on the other.
+
+**Editorial-window data beats algorithmic-feature data for hero slots.** "Top
+engagement post" is mathematically right and editorially wrong — it surfaces
+what was already popular last week, not what should be popular this week. The
+scheduled `homepage_xl_starts_at` / `homepage_xl_ends_at` window gives
+editorial leverage; algorithmic fallback (highest-engagement in last 14 days)
+is real but should rarely fire.
+
+**Auth-state branching belongs server-side.** `useSession()` ternaries flicker
+visibly above the editorial hero on slow connections. Read session in the
+server component (`HomepagePage` calls `await auth()`), pass `isOut` as a
+prop, branch in the markup. One render, no flicker. The InviteRibbon's
+localStorage 24h-dismissal can't be checked server-side, so it renders with
+`visibility: hidden` and reveals on mount — same effect, different mechanism.
+
+**Audit-driven plans correct silent assumptions.** The spec assumed a
+`MagazinePost` model existed and that `product_boosts` was the table. Neither
+was true — posts are `ProjectPost` (variant `PROJECT_FEATURE`), and the boost
+landscape is two unrelated models (`Boost` for vendor testimonials, `InContextBoost`
+for designer tag negotiations). The exploration phase caught both before any
+schema migration was authored. Always grep for the model name before trusting
+a spec's "this already exists" framing.
+
+**Routing consolidation has a cost.** User chose `/magazine → /` redirect.
+That deletes the surface where `GatheringVoicesSection` and
+`PromptedQuestionsSection` lived. Mitigation: preserved the legacy MagazinePage
+shell at `/magazine/community` so the sections stay reachable for direct
+linking. The redirect handles email/newsletter deeplinks. Existing `/magazine`
+intra-site links flow through the redirect — accept the one extra hop in
+exchange for a cleaner mental model.
+
