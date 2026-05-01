@@ -20,14 +20,18 @@ export function EditorialMasthead() {
   const { scrollY } = useScroll();
   const pathname = usePathname();
 
-  // Check if we're on the magazine page - hide large masthead and adjust header
-  const isMagazinePage = pathname === "/magazine" || pathname?.startsWith("/magazine?");
+  // Homepage `/` is the editorial elevation feed (Task 05) — same immersive
+  // treatment as the legacy /magazine experience. /magazine itself now
+  // redirects to / so the path check on `/magazine` is for in-flight
+  // navigations only.
+  const isHomepage = pathname === "/";
+  const isMagazinePage = pathname === "/magazine" || pathname?.startsWith("/magazine/community");
   // Hide large masthead on designer/dashboard pages — the nav-bar logo is sufficient context
   const isDesignerPage = pathname === "/designer" || pathname?.startsWith("/designer/");
   // Product pages use immersive 3D viewport — nav should be transparent glass, no large masthead
   const isProductPage = pathname?.startsWith("/products/");
-  const isImmersivePage = isMagazinePage || isProductPage;
-  const hidesMasthead = isMagazinePage || isDesignerPage || isProductPage;
+  const isImmersivePage = isHomepage || isMagazinePage || isProductPage;
+  const hidesMasthead = isHomepage || isMagazinePage || isDesignerPage || isProductPage;
   const effectiveThreshold = isImmersivePage ? MAGAZINE_SCROLL_THRESHOLD : SCROLL_THRESHOLD;
 
   // Track scroll position with requestAnimationFrame for smooth performance

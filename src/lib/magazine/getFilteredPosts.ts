@@ -20,9 +20,14 @@ export async function getFilteredPosts(params: {
   filter?: FeedFilter | null;
   cursor?: string | null;
   take?: number;
+  /**
+   * When provided, restricts the feed to posts whose project's designer
+   * is in this set. Used by the homepage Following filter (Task 05).
+   */
+  followedDesignerIds?: string[] | null;
 }): Promise<FeedPage> {
   const take = Math.min(params.take ?? 12, 24);
-  const { filter, cursor } = params;
+  const { filter, cursor, followedDesignerIds } = params;
 
   // Build the where clause
   const where: any = { status: "PUBLISHED" };
@@ -50,6 +55,15 @@ export async function getFilteredPosts(params: {
         };
         break;
     }
+  }
+
+  // Following filter (Task 05): scope to followed designers' projects.
+  // Combines with location/category/keyword filter via AND.
+  if (followedDesignerIds && followedDesignerIds.length > 0) {
+    where.project = {
+      ...(where.project ?? {}),
+      designerId: { in: followedDesignerIds },
+    };
   }
 
   // If cursor provided, paginate after the cursor post
