@@ -95,7 +95,11 @@ export function BoostReel({ items, totalTagged, postSlug }: Props) {
   return (
     <div
       ref={containerRef}
-      className="grid grid-cols-8 gap-4"
+      // Desktop: 8 cells in one row (7 product + optional +N).
+      // Mobile (<sm): 4 cells per row, wrapping into 2 rows. The
+      // IntersectionObserver targets each cell individually, so the layout
+      // change doesn't affect viewability tracking.
+      className="grid grid-cols-4 sm:grid-cols-8 gap-3 sm:gap-4"
       role="list"
       aria-label="Products tagged in this editorial"
     >
@@ -105,7 +109,11 @@ export function BoostReel({ items, totalTagged, postSlug }: Props) {
         </div>
       ))}
       {remaining > 0 && (
-        <div role="listitem">
+        // The "+N View all" cell loses meaning when the reel itself is
+        // already wrapping into multiple rows (the user can simply scroll
+        // through to see them). Hide it below 480px; show at 480px+ where
+        // the row spacing leaves it visually distinct.
+        <div role="listitem" className="hidden min-[480px]:block">
           <BoostReelViewAllCell count={remaining} postSlug={postSlug} />
         </div>
       )}

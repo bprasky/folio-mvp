@@ -4,16 +4,12 @@
 // editorial directly below, then the L/M/S mosaic refresh feed. Same content
 // shell for logged-out and logged-in users — chrome and post-hover affordances
 // differ. `/magazine` redirects here.
-
-import type { Metadata } from "next";
+//
+// Title and description live on the root layout (src/app/layout.tsx) so they
+// carry every route, not just `/`. Don't add a per-page metadata override
+// here unless this page genuinely needs to differ from the rest of the site.
 
 import { HomepagePage } from "@/components/homepage/HomepagePage";
-
-export const metadata: Metadata = {
-  title: "Folio — Interior design, in detail",
-  description:
-    "A working magazine for interior designers. Editorial features, materials, and the studios shaping them.",
-};
 
 // Hero selection involves a window check against `now()`; rendering must not
 // be cached at the route level. Inner fetches use their own cache strategy.

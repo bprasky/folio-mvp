@@ -25,8 +25,9 @@ const instrumentSans = Instrument_Sans({
 });
 
 export const metadata: Metadata = {
-  title: 'FOLIO | Next-Gen Interior Design Platform',
-  description: 'A curated design platform for interior designers and vendors',
+  title: 'Folio — Interior design, in detail',
+  description:
+    'A working magazine for interior designers. Editorial features, materials, and the studios shaping them.',
 };
 
 export default function RootLayout({
