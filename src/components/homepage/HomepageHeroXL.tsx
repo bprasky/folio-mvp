@@ -74,14 +74,16 @@ export function HomepageHeroXL({ hero }: Props) {
           <h1
             className={[
               "text-white max-w-[800px]",
-              // Type-scale switch via arbitrary-value Tailwind classes that
-              // dereference the design-system CSS variables. Compiled to
-              // static CSS — no runtime JS, no styled-jsx.
+              // Mobile uses h3 (28px) + line-clamp-3 because the 5:4 card is
+              // ~274px tall on a 343px-wide viewport — h2 (36px) wraps to
+              // 5 lines and clips above the card edge. Desktop's 21:10 card
+              // (600px+ tall) easily holds h1.
+              "line-clamp-3 sm:line-clamp-none",
               "[font-family:var(--font-headline)]",
               "[letter-spacing:var(--ls-tight)]",
-              "[font-size:var(--type-h2)] sm:[font-size:var(--type-h1)]",
-              "[line-height:var(--lh-h2)] sm:[line-height:var(--lh-h1)]",
-              "[font-weight:var(--w-h2)] sm:[font-weight:var(--w-h1)]",
+              "[font-size:var(--type-h3)] sm:[font-size:var(--type-h1)]",
+              "[line-height:var(--lh-h3)] sm:[line-height:var(--lh-h1)]",
+              "[font-weight:var(--w-h3)] sm:[font-weight:var(--w-h1)]",
             ].join(" ")}
           >
             {hero.title}

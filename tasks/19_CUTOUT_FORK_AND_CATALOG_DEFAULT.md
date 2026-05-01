@@ -17,13 +17,14 @@ Today the homepage reel reads `cutoutImageUrl ?? imageUrl` directly (`src/lib/ho
 
 ---
 
-## Phase 0 — Homepage reel uses catalog image directly *(fastest visible fix)*
+## Phase 0 — Homepage visible fixes *(fastest visible wins, no DB writes)*
 
-- [ ] In `src/lib/homepage/getHomepageData.ts:345`, drop the `cutoutImageUrl ?? imageUrl` fallback. Use `tag.product.imageUrl ?? ""` only.
-- [ ] In `src/lib/products/getProductDisplayImage.ts`, flip the meaning: `imageUrl` first, cutout/mesh never primary. Remove the `use2DCutout` opt-in (or repurpose to mean "show cutout in detail-page secondary slot").
-- [ ] Verify in browser at `/` that the four featured product cells now render catalog images (no more colored backdrops from legacy cutouts).
+- [x] **Reel uses catalog image directly.** `src/lib/homepage/getHomepageData.ts` — dropped the `cutoutImageUrl ?? imageUrl` fallback; also removed `cutoutImageUrl` from the prisma select since nothing else reads it on this code path.
+- [x] **Display helper default stays catalog-first.** Audit confirmed zero callers pass `use2DCutout: true`; default `false` already matches the new spec. Full opt-in removal lands in Phase 5.
+- [x] **Mobile editorial hero title no longer clips.** `src/components/homepage/HomepageHeroXL.tsx` — title dropped to `--type-h3` (28px) on mobile with `line-clamp-3`; desktop unchanged at `--type-h1` (48px) with no clamp.
+- [ ] **User verification in browser at `/`:** (a) the four featured product cells render catalog images (no more colored backdrops from legacy cutouts), and (b) the editorial hero title fits within the card on mobile (no top clipping).
 
-**Risk:** zero — no DB writes, no service calls, single-file logic flip.
+**Risk:** zero — no DB writes, no service calls, three single-file edits.
 
 ## Phase 1 — Catalog image health audit *(read-only)*
 
