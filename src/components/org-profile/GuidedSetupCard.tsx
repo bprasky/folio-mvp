@@ -158,7 +158,7 @@ function StepRow({
           ? '1px solid rgba(184, 132, 92, 0.2)'
           : '1px solid rgba(232, 228, 223, 0.5)',
         borderLeft: isNext
-          ? '3px solid #B8845C'
+          ? '3px solid var(--folio-gold)'
           : '1px solid rgba(232, 228, 223, 0.5)',
       }}
     >
@@ -168,14 +168,14 @@ function StepRow({
           {isComplete ? (
             <div
               className="w-5 h-5 rounded-full flex items-center justify-center text-xs"
-              style={{ backgroundColor: 'rgba(184, 132, 92, 0.15)', color: '#B8845C' }}
+              style={{ backgroundColor: 'rgba(184, 132, 92, 0.15)', color: 'var(--folio-gold)' }}
             >
               &#10003;
             </div>
           ) : (
             <div
               className="w-5 h-5 rounded-full border-2"
-              style={{ borderColor: isNext ? '#B8845C' : '#D4CEC6' }}
+              style={{ borderColor: isNext ? 'var(--folio-gold)' : '#D4CEC6' }}
             />
           )}
         </div>

@@ -242,7 +242,7 @@ export function TacticalMenu({
                       border: item.accent
                         ? "1px solid rgba(201, 169, 110, 0.6)"
                         : "1px solid rgba(255, 255, 255, 0.35)",
-                      outline: isFocused ? "2px solid #c9a96e" : "none",
+                      outline: isFocused ? "2px solid var(--folio-gold-ornament)" : "none",
                       outlineOffset: 2,
                     }}
                     aria-label={item.label}
@@ -322,7 +322,7 @@ export function TacticalMenu({
                             width: 36,
                             height: 36,
                             backgroundColor: item.accent
-                              ? "#c9a96e"
+                              ? "var(--folio-gold-ornament)"
                               : "rgba(0, 0, 0, 0.05)",
                           }}
                         >
@@ -334,7 +334,7 @@ export function TacticalMenu({
                         {item.accent && (
                           <span
                             className="ml-auto text-xs font-medium px-2 py-0.5 rounded-full"
-                            style={{ backgroundColor: "#c9a96e20", color: "#c9a96e" }}
+                            style={{ backgroundColor: "var(--folio-gold-ornament)20", color: "var(--folio-gold-ornament)" }}
                           >
                             Primary
                           </span>

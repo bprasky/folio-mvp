@@ -214,11 +214,11 @@ export function getHoverAnimationClasses(size: TileSize): string {
   
   switch (size) {
     case 'XL':
-      return `${baseClasses} hover:scale-[1.02] hover:shadow-2xl hover:shadow-folio-accent/20`;
+      return `${baseClasses} hover:scale-[1.02] hover:shadow-2xl hover:shadow-folio-gold/20`;
     case 'L':
-      return `${baseClasses} hover:scale-[1.015] hover:shadow-xl hover:shadow-folio-accent/15`;
+      return `${baseClasses} hover:scale-[1.015] hover:shadow-xl hover:shadow-folio-gold/15`;
     case 'M':
-      return `${baseClasses} hover:scale-[1.01] hover:shadow-lg hover:shadow-folio-accent/10`;
+      return `${baseClasses} hover:scale-[1.01] hover:shadow-lg hover:shadow-folio-gold/10`;
     case 'S':
       return `${baseClasses} hover:scale-[1.005] hover:shadow-md`;
   }

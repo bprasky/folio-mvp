@@ -393,7 +393,7 @@ export default function OrgAboutInterviewPage() {
                   value={bioUrl}
                   onChange={(e) => setBioUrl(e.target.value)}
                   placeholder="Your website, Houzz profile, LinkedIn, etc."
-                  className="flex-1 px-4 py-2.5 text-sm rounded-xl border outline-none transition-colors focus:border-[#B8845C]"
+                  className="flex-1 px-4 py-2.5 text-sm rounded-xl border outline-none transition-colors focus:border-[var(--folio-gold)]"
                   style={{
                     borderColor: '#E8E4DF',
                     backgroundColor: '#FAF9F7',
@@ -430,7 +430,7 @@ export default function OrgAboutInterviewPage() {
               value={bioText}
               onChange={(e) => setBioText(e.target.value)}
               placeholder="Paste your studio's about text here..."
-              className="w-full min-h-[200px] px-4 py-3 text-sm rounded-xl border outline-none transition-colors focus:border-[#B8845C] resize-y leading-relaxed"
+              className="w-full min-h-[200px] px-4 py-3 text-sm rounded-xl border outline-none transition-colors focus:border-[var(--folio-gold)] resize-y leading-relaxed"
               style={{
                 borderColor: '#E8E4DF',
                 backgroundColor: '#FAF9F7',
@@ -461,7 +461,7 @@ export default function OrgAboutInterviewPage() {
   if (step === 'analyzing') {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center" style={{ backgroundColor: '#FAF9F7' }}>
-        <Sparkles className="w-12 h-12 animate-pulse mb-6" style={{ color: '#B8845C' }} />
+        <Sparkles className="w-12 h-12 animate-pulse mb-6" style={{ color: 'var(--folio-gold)' }} />
         <h3
           className="text-2xl italic mb-3"
           style={{ fontFamily: 'var(--font-headline)', color: '#2C2825', fontWeight: 400 }}
@@ -488,9 +488,9 @@ export default function OrgAboutInterviewPage() {
           return (
             <div
               className="w-4 h-4 rounded-full border-2 flex items-center justify-center"
-              style={{ borderColor: '#B8845C' }}
+              style={{ borderColor: 'var(--folio-gold)' }}
             >
-              <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#B8845C' }} />
+              <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: 'var(--folio-gold)' }} />
             </div>
           );
         default:
@@ -568,7 +568,7 @@ export default function OrgAboutInterviewPage() {
                   <span
                     className="text-xs"
                     style={{
-                      color: c.depth === 'full' ? 'rgb(34, 197, 94)' : c.depth === 'partial' ? '#B8845C' : '#D4736C',
+                      color: c.depth === 'full' ? 'rgb(34, 197, 94)' : c.depth === 'partial' ? 'var(--folio-gold)' : '#D4736C',
                     }}
                   >
                     {depthLabel(c.depth)}
@@ -606,7 +606,7 @@ export default function OrgAboutInterviewPage() {
   if (step === 'generating') {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center" style={{ backgroundColor: '#FAF9F7' }}>
-        <Sparkles className="w-16 h-16 animate-pulse mb-6" style={{ color: '#B8845C' }} />
+        <Sparkles className="w-16 h-16 animate-pulse mb-6" style={{ color: 'var(--folio-gold)' }} />
         <h3
           className="text-3xl italic mb-3"
           style={{ fontFamily: 'var(--font-headline)', color: '#2C2825', fontWeight: 400 }}

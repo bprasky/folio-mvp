@@ -25,14 +25,14 @@ export default function FestivalContext({ festival, eventTitle }: FestivalContex
         <nav className="flex items-center space-x-2 text-sm text-folio-text-secondary mb-3">
           <Link 
             href="/events" 
-            className="hover:text-folio-accent transition-colors"
+            className="hover:text-folio-gold transition-colors"
           >
             Events
           </Link>
           <span className="text-folio-text-tertiary">›</span>
           <Link 
             href={`/events/${festival.id}`}
-            className="hover:text-folio-accent transition-colors"
+            className="hover:text-folio-gold transition-colors"
           >
             {festival.title}
           </Link>
@@ -44,7 +44,7 @@ export default function FestivalContext({ festival, eventTitle }: FestivalContex
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             {/* Festival Chip */}
-            <div className="inline-flex items-center px-3 py-1 rounded-full bg-folio-accent/10 text-folio-accent text-sm font-medium">
+            <div className="inline-flex items-center px-3 py-1 rounded-full bg-folio-gold/10 text-folio-gold text-sm font-medium">
               <svg 
                 className="w-4 h-4 mr-1.5" 
                 fill="none" 
@@ -78,7 +78,7 @@ export default function FestivalContext({ festival, eventTitle }: FestivalContex
           {/* View Full Program Button */}
           <Link
             href={`/events/${festival.id}`}
-            className="inline-flex items-center px-4 py-2 border border-folio-accent text-folio-accent rounded-lg hover:bg-folio-accent hover:text-white transition-colors text-sm font-medium"
+            className="inline-flex items-center px-4 py-2 border border-folio-gold text-folio-gold rounded-lg hover:bg-folio-gold hover:text-white transition-colors text-sm font-medium"
           >
             <svg 
               className="w-4 h-4 mr-2" 

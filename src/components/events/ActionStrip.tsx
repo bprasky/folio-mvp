@@ -88,7 +88,7 @@ export default function ActionStrip({ event }: ActionStripProps) {
           onClick={() => onRSVP("ATTENDING")}
           className={`px-3 py-1 rounded-full border text-sm ${
             rsvp === "ATTENDING"
-              ? "bg-folio-accent text-white border-folio-accent"
+              ? "bg-folio-gold text-white border-folio-gold"
               : "bg-white hover:bg-surface-ground border-folio-border-subtle"
           }`}
         >
@@ -98,7 +98,7 @@ export default function ActionStrip({ event }: ActionStripProps) {
           onClick={() => onRSVP("INTERESTED")}
           className={`px-3 py-1 rounded-full border text-sm ${
             rsvp === "INTERESTED"
-              ? "bg-folio-accent/90 text-white border-folio-accent"
+              ? "bg-folio-gold/90 text-white border-folio-gold"
               : "bg-white hover:bg-surface-ground border-folio-border-subtle"
           }`}
         >
@@ -108,7 +108,7 @@ export default function ActionStrip({ event }: ActionStripProps) {
           onClick={() => onRSVP("SEND_TO_TEAM")}
           className={`px-3 py-1 rounded-full border text-sm ${
             rsvp === "SEND_TO_TEAM"
-              ? "bg-folio-accent/80 text-white border-folio-accent"
+              ? "bg-folio-gold/80 text-white border-folio-gold"
               : "bg-white hover:bg-surface-ground border-folio-border-subtle"
           }`}
         >

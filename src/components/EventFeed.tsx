@@ -340,7 +340,7 @@ export default function EventFeed({
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as SortOption)}
-                className="px-3 py-2 text-sm border border-folio-border-subtle rounded-lg focus:outline-none focus:ring-2 focus:ring-folio-accent/20"
+                className="px-3 py-2 text-sm border border-folio-border-subtle rounded-lg focus:outline-none focus:ring-2 focus:ring-folio-gold/20"
               >
                 <option value="default">Most Buzz</option>
                 <option value="trending">Trending</option>
@@ -430,7 +430,7 @@ export default function EventFeed({
                 {userRole === 'admin' && (
                   <a
                     href="/events/create"
-                    className="inline-flex items-center px-6 py-3 bg-folio-accent text-white rounded-lg hover:bg-folio-accent-dark transition-colors"
+                    className="inline-flex items-center px-6 py-3 bg-folio-gold text-white rounded-lg hover:bg-folio-gold-hover transition-colors"
                   >
                     Create an Event
                   </a>
@@ -438,7 +438,7 @@ export default function EventFeed({
                 {userRole === 'guest' && (
                   <a
                     href="/auth/signin"
-                    className="inline-flex items-center px-6 py-3 bg-folio-accent text-white rounded-lg hover:bg-folio-accent-dark transition-colors"
+                    className="inline-flex items-center px-6 py-3 bg-folio-gold text-white rounded-lg hover:bg-folio-gold-hover transition-colors"
                   >
                     Sign In to Get Notified
                   </a>

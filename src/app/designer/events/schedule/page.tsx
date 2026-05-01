@@ -60,7 +60,7 @@ export default function DesignerEventsSchedule() {
   if (loading) {
     return (
       <div className="min-h-screen bg-surface-ground flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-folio-accent"></div>
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-folio-gold"></div>
       </div>
     );
   }
@@ -74,7 +74,7 @@ export default function DesignerEventsSchedule() {
           <div className="mb-8">
             <Link 
               href="/events"
-              className="flex items-center text-folio-text-muted hover:text-folio-accent transition-colors mb-4"
+              className="flex items-center text-folio-text-muted hover:text-folio-gold transition-colors mb-4"
             >
               <FaArrowLeft className="mr-2" />
               Back to Events
@@ -89,7 +89,7 @@ export default function DesignerEventsSchedule() {
           <div className="bg-white rounded-lg shadow-sm border border-folio-border p-8">
             <div className="text-center">
               <div className="w-16 h-16 bg-folio-muted rounded-full flex items-center justify-center mx-auto mb-4">
-                <FaCalendarAlt className="w-8 h-8 text-folio-accent" />
+                <FaCalendarAlt className="w-8 h-8 text-folio-gold" />
               </div>
               <h2 className="text-2xl font-bold text-folio-text mb-4">RSVP Feature Coming Soon</h2>
               <p className="text-folio-text-muted mb-6 max-w-md mx-auto">
@@ -99,7 +99,7 @@ export default function DesignerEventsSchedule() {
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link
                   href="/events"
-                  className="px-6 py-3 bg-folio-accent text-white rounded-lg hover:bg-folio-accent-dark transition-colors"
+                  className="px-6 py-3 bg-folio-gold text-white rounded-lg hover:bg-folio-gold-hover transition-colors"
                 >
                   Browse All Events
                 </Link>

@@ -59,7 +59,7 @@ const EVENT_COLORS: Record<string, string> = {
   liked: '#C9B99A',
   specified: '#B8A580',
   quoted: '#A89060',
-  ordered: '#c9a96e',
+  ordered: 'var(--folio-gold-ornament)',
 };
 
 export function ProductAttributionDetail({ productId, onBack }: ProductAttributionDetailProps) {
@@ -158,7 +158,7 @@ export function ProductAttributionDetail({ productId, onBack }: ProductAttributi
                   </div>
                 </div>
                 <div className="text-right shrink-0">
-                  <div className="text-sm font-semibold text-[#c9a96e]">{inf.influenceScore}</div>
+                  <div className="text-sm font-semibold text-[var(--folio-gold-ornament)]">{inf.influenceScore}</div>
                   <div className="text-[10px] text-[#8C8278] uppercase">Score</div>
                 </div>
               </div>

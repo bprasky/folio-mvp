@@ -137,3 +137,28 @@ you must, use the `.folio-h*`, `.folio-body`, `.folio-ui`, `.folio-meta`,
 
 **Full-codebase scope at time of lesson:** `grep -r font-bold src` returned
 ~205 hits — sweep them in a dedicated pass, not piecemeal.
+
+
+---
+
+## 2026-05-01 — accent consolidation: rename, do not redefine
+
+When introducing a token that supersedes another with the same name, give it a
+new name. `--folio-gold` was previously `#C9A96E` (ornamental); reusing the
+same variable name for the new functional value (`#B8845C`) would silently
+shift the rendered color of every existing `var(--folio-gold)` reference.
+Resolved by renaming the ornamental value to `--folio-gold-ornament` so the
+rename is explicit and grep-able.
+
+**Codemod gotcha:** A bulk `s/#C9A96E/var(--folio-gold-ornament)/g` will
+rewrite the *definition itself* (`--folio-gold-ornament: #C9A96E;` →
+`--folio-gold-ornament: var(--folio-gold-ornament);`), creating an infinite
+self-reference. Always grep for the new var name after a hex codemod and
+restore the literal in the canonical definition.
+
+**Why CI guards matter:** the burgundy `#7C1E3D` had been "removed" multiple
+times during pre-launch design iterations and kept reappearing through
+copy-paste. The `design-system-discipline.yml` workflow now scans `src/` and
+`tailwind.config.js` on every PR. Email templates and the pdfkit spec-sheet
+renderer are explicit exemptions because CSS variables don't resolve in
+mail clients or PDF generators.

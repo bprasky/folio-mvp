@@ -64,7 +64,7 @@ export function VendorIntelligence({ productId }: VendorIntelligenceProps) {
           top: "-8px",
           right: "16px",
           background: "#3a2a1a",
-          color: "#c9a96e",
+          color: "var(--folio-gold-ornament)",
           fontSize: "9px",
           fontWeight: 500,
           letterSpacing: "1.5px",
@@ -175,7 +175,7 @@ function MiniBarChart({ label, items }: { label: string; items: { label: string;
                   height: "100%",
                   width: `${(item.pct / maxPct) * 100}%`,
                   borderRadius: "2px",
-                  background: "#c9a96e",
+                  background: "var(--folio-gold-ornament)",
                   transition: "width 0.6s ease-out",
                 }}
               />

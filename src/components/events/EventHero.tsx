@@ -155,7 +155,7 @@ export default function EventHero({ event, userRSVP }: EventHeroProps) {
                     value={rsvpStatus}
                     onChange={(e) => handleRSVP(e.target.value)}
                     disabled={isSubmitting}
-                    className="appearance-none bg-white/90 backdrop-blur-sm text-folio-text-primary px-6 py-3 rounded-lg font-medium border-0 focus:ring-2 focus:ring-folio-accent focus:outline-none disabled:opacity-50"
+                    className="appearance-none bg-white/90 backdrop-blur-sm text-folio-text-primary px-6 py-3 rounded-lg font-medium border-0 focus:ring-2 focus:ring-folio-gold focus:outline-none disabled:opacity-50"
                   >
                     <option value="none">RSVP</option>
                     <option value="attending">Attending</option>

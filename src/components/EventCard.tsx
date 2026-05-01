@@ -236,7 +236,7 @@ export default function EventCard({ event, onClick, className, userRole }: Event
           <div className="text-xs text-folio-text-secondary mb-1">Tags:</div>
           <div className="flex flex-wrap gap-1">
             {event.eventTags.slice(0, 3).map((tag) => (
-              <span key={tag} className="px-2 py-1 rounded-full text-xs font-medium bg-folio-accent text-white">
+              <span key={tag} className="px-2 py-1 rounded-full text-xs font-medium bg-folio-gold text-white">
                 {tag}
               </span>
             ))}

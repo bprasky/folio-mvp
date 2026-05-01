@@ -159,7 +159,7 @@ export function InContextModal({ photo, onClose }: InContextModalProps) {
                 className="rounded-lg px-4 py-3 mb-4"
                 style={{
                   background: "rgba(245, 239, 232, 0.6)",
-                  borderLeft: "2px solid #c9a96e",
+                  borderLeft: "2px solid var(--folio-gold-ornament)",
                 }}
               >
                 {photo.followUpQuestion && (

@@ -82,11 +82,11 @@ export default function FestivalHero({ festival, onFestivalUpdate }: FestivalHer
               </h1>
               <div className="flex flex-wrap items-center gap-6 text-lg md:text-xl">
                 <div className="flex items-center gap-2">
-                  <FaCalendarAlt className="text-folio-accent" />
+                  <FaCalendarAlt className="text-folio-gold" />
                   <span>{formatDates(festival.startDate, festival.endDate)}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <FaMapMarkerAlt className="text-folio-accent" />
+                  <FaMapMarkerAlt className="text-folio-gold" />
                   <span>{festival.location}</span>
                 </div>
               </div>
@@ -103,11 +103,11 @@ export default function FestivalHero({ festival, onFestivalUpdate }: FestivalHer
                 onClick={handleRSVP}
                 className={`flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition-all ${
                   isRSVPed
-                    ? 'bg-folio-accent text-white'
+                    ? 'bg-folio-gold text-white'
                     : 'bg-white/20 text-white hover:bg-white/30 backdrop-blur-sm'
                 }`}
               >
-                <FaHeart className={isRSVPed ? 'text-white' : 'text-folio-accent'} />
+                <FaHeart className={isRSVPed ? 'text-white' : 'text-folio-gold'} />
                 {isRSVPed ? 'RSVP\'d' : 'RSVP'}
               </button>
 
@@ -116,7 +116,7 @@ export default function FestivalHero({ festival, onFestivalUpdate }: FestivalHer
                 <>
                   <button
                     onClick={handleAddEvent}
-                    className="flex items-center gap-2 px-6 py-3 bg-folio-accent text-white rounded-lg font-semibold hover:bg-folio-accent/90 transition-colors"
+                    className="flex items-center gap-2 px-6 py-3 bg-folio-gold text-white rounded-lg font-semibold hover:bg-folio-gold/90 transition-colors"
                   >
                     <FaPlus />
                     Add Event

@@ -38,7 +38,7 @@ export function ProfileField({
         <button
           onClick={onInterviewRoute}
           className="text-sm underline underline-offset-2 transition-opacity hover:opacity-70"
-          style={{ color: '#B8845C' }}
+          style={{ color: 'var(--folio-gold)' }}
         >
           Answer a few questions to complete this &rarr;
         </button>
@@ -80,7 +80,7 @@ export function ProfileField({
         <textarea
           value={value}
           onChange={(e) => onChange(fieldName, e.target.value)}
-          className="w-full px-4 py-2.5 text-sm rounded-xl border outline-none transition-colors focus:border-[#B8845C] resize-none"
+          className="w-full px-4 py-2.5 text-sm rounded-xl border outline-none transition-colors focus:border-[var(--folio-gold)] resize-none"
           style={{
             borderColor: '#E8E4DF',
             backgroundColor: '#FAF9F7',
@@ -94,7 +94,7 @@ export function ProfileField({
           type="text"
           value={value}
           onChange={(e) => onChange(fieldName, e.target.value)}
-          className="w-full px-4 py-2.5 text-sm rounded-xl border outline-none transition-colors focus:border-[#B8845C]"
+          className="w-full px-4 py-2.5 text-sm rounded-xl border outline-none transition-colors focus:border-[var(--folio-gold)]"
           style={{
             borderColor: '#E8E4DF',
             backgroundColor: '#FAF9F7',

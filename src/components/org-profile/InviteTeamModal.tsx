@@ -197,7 +197,7 @@ export default function InviteTeamModal({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by name or email"
-              className="w-full px-4 py-2.5 text-sm rounded-xl border outline-none transition-colors focus:border-[#B8845C] border-folio-border-subtle bg-surface-ground text-folio-text-primary"
+              className="w-full px-4 py-2.5 text-sm rounded-xl border outline-none transition-colors focus:border-[var(--folio-gold)] border-folio-border-subtle bg-surface-ground text-folio-text-primary"
               style={{
                 fontFamily: 'var(--font-body)',
               }}
@@ -266,7 +266,7 @@ export default function InviteTeamModal({
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter email address"
-              className="w-full px-4 py-2.5 text-sm rounded-xl border outline-none transition-colors focus:border-[#B8845C] border-folio-border-subtle bg-surface-ground text-folio-text-primary"
+              className="w-full px-4 py-2.5 text-sm rounded-xl border outline-none transition-colors focus:border-[var(--folio-gold)] border-folio-border-subtle bg-surface-ground text-folio-text-primary"
               style={{
                 fontFamily: 'var(--font-body)',
               }}
@@ -335,7 +335,7 @@ export default function InviteTeamModal({
                     <button
                       onClick={() => handleRevoke(invite.id)}
                       className="hover:opacity-70 transition-opacity"
-                      style={{ color: '#B8845C' }}
+                      style={{ color: 'var(--folio-gold)' }}
                     >
                       Revoke
                     </button>

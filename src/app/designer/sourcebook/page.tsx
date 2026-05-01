@@ -306,7 +306,7 @@ export default function SourcebookPage() {
             {hasActiveFilters ? (
               <button
                 onClick={clearFilters}
-                className="text-[13px] text-[#c9a96e] hover:underline"
+                className="text-[13px] text-[var(--folio-gold-ornament)] hover:underline"
               >
                 Clear Filters
               </button>

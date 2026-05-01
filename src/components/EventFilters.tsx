@@ -74,7 +74,7 @@ export default function EventFilters({
               <input
                 type="text"
                 placeholder="Search events..."
-                className="w-full pl-4 pr-10 py-2 border border-folio-border-subtle rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-folio-accent/20 focus:border-folio-accent/30 bg-gray-50"
+                className="w-full pl-4 pr-10 py-2 border border-folio-border-subtle rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-folio-gold/20 focus:border-folio-gold/30 bg-gray-50"
               />
               <div className="absolute inset-y-0 right-0 flex items-center pr-3">
                 <svg className="h-4 w-4 text-folio-text-tertiary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -88,7 +88,7 @@ export default function EventFilters({
           <div className="relative">
             <button
               onClick={() => setIsExpanded(!isExpanded)}
-              className="flex items-center px-4 py-2 text-sm font-medium text-folio-text-primary bg-white border border-folio-border-subtle rounded-lg hover:bg-surface-ground hover:border-folio-border-subtle transition-colors focus:outline-none focus:ring-2 focus:ring-folio-accent/20"
+              className="flex items-center px-4 py-2 text-sm font-medium text-folio-text-primary bg-white border border-folio-border-subtle rounded-lg hover:bg-surface-ground hover:border-folio-border-subtle transition-colors focus:outline-none focus:ring-2 focus:ring-folio-gold/20"
             >
               <FaFilter className="mr-2 h-4 w-4" />
               Sort & Filter
@@ -111,7 +111,7 @@ export default function EventFilters({
                     <select
                       value={festivalFilter || ''}
                       onChange={(e) => onFestivalChange(e.target.value || null)}
-                      className="w-full px-3 py-2 text-sm border border-folio-border-subtle rounded-md focus:outline-none focus:ring-2 focus:ring-folio-accent/20 focus:border-folio-accent/30"
+                      className="w-full px-3 py-2 text-sm border border-folio-border-subtle rounded-md focus:outline-none focus:ring-2 focus:ring-folio-gold/20 focus:border-folio-gold/30"
                     >
                       <option value="">All Festivals</option>
                       {festivals.map((festival) => (
@@ -130,7 +130,7 @@ export default function EventFilters({
                     <select
                       value={eventTypeFilter}
                       onChange={(e) => onEventTypeChange(e.target.value as EventTypeFilter)}
-                      className="w-full px-3 py-2 text-sm border border-folio-border-subtle rounded-md focus:outline-none focus:ring-2 focus:ring-folio-accent/20 focus:border-folio-accent/30"
+                      className="w-full px-3 py-2 text-sm border border-folio-border-subtle rounded-md focus:outline-none focus:ring-2 focus:ring-folio-gold/20 focus:border-folio-gold/30"
                     >
                       {eventTypes.map((type) => (
                         <option key={type.value} value={type.value}>
@@ -148,7 +148,7 @@ export default function EventFilters({
                     <select
                       value={sortBy}
                       onChange={(e) => onSortChange(e.target.value as SortOption)}
-                      className="w-full px-3 py-2 text-sm border border-folio-border-subtle rounded-md focus:outline-none focus:ring-2 focus:ring-folio-accent/20 focus:border-folio-accent/30"
+                      className="w-full px-3 py-2 text-sm border border-folio-border-subtle rounded-md focus:outline-none focus:ring-2 focus:ring-folio-gold/20 focus:border-folio-gold/30"
                     >
                       {sortOptions.map((option) => (
                         <option key={option.value} value={option.value}>

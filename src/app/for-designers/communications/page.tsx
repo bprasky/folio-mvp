@@ -76,23 +76,23 @@ export default function CommunicationsPillarPage() {
             <text x="90" y="169" textAnchor="middle" className="fill-[var(--text-secondary)]" fontSize="11">Phone</text>
 
             {/* Folio */}
-            <rect x="40" y="192" width="100" height="32" rx="8" fill="#FAF9F6" stroke="#C9A96E" strokeWidth="1.5" />
-            <text x="90" y="213" textAnchor="middle" style={{ fill: "#C9A96E" }} fontSize="11" fontWeight="500">Folio</text>
+            <rect x="40" y="192" width="100" height="32" rx="8" fill="#FAF9F6" stroke="var(--folio-gold-ornament)" strokeWidth="1.5" />
+            <text x="90" y="213" textAnchor="middle" style={{ fill: "var(--folio-gold-ornament)" }} fontSize="11" fontWeight="500">Folio</text>
 
             {/* Converging arrows */}
-            <line x1="150" y1="32" x2="280" y2="110" stroke="#C9A96E" strokeWidth="1" strokeDasharray="4 3" />
-            <line x1="150" y1="76" x2="280" y2="110" stroke="#C9A96E" strokeWidth="1" strokeDasharray="4 3" />
-            <line x1="150" y1="120" x2="280" y2="110" stroke="#C9A96E" strokeWidth="1" strokeDasharray="4 3" />
-            <line x1="150" y1="164" x2="280" y2="110" stroke="#C9A96E" strokeWidth="1" strokeDasharray="4 3" />
-            <line x1="150" y1="208" x2="280" y2="110" stroke="#C9A96E" strokeWidth="1" strokeDasharray="4 3" />
+            <line x1="150" y1="32" x2="280" y2="110" stroke="var(--folio-gold-ornament)" strokeWidth="1" strokeDasharray="4 3" />
+            <line x1="150" y1="76" x2="280" y2="110" stroke="var(--folio-gold-ornament)" strokeWidth="1" strokeDasharray="4 3" />
+            <line x1="150" y1="120" x2="280" y2="110" stroke="var(--folio-gold-ornament)" strokeWidth="1" strokeDasharray="4 3" />
+            <line x1="150" y1="164" x2="280" y2="110" stroke="var(--folio-gold-ornament)" strokeWidth="1" strokeDasharray="4 3" />
+            <line x1="150" y1="208" x2="280" y2="110" stroke="var(--folio-gold-ornament)" strokeWidth="1" strokeDasharray="4 3" />
 
             {/* Unified inbox */}
-            <rect x="290" y="40" width="390" height="140" rx="14" fill="#FAF9F6" stroke="#C9A96E" strokeWidth="1.5" />
+            <rect x="290" y="40" width="390" height="140" rx="14" fill="#FAF9F6" stroke="var(--folio-gold-ornament)" strokeWidth="1.5" />
             <text x="485" y="68" textAnchor="middle" className="fill-folio-text-primary" fontSize="13" fontWeight="500">Unified Inbox</text>
 
             {/* Filter tabs */}
-            <rect x="320" y="80" width="70" height="22" rx="6" fill="#C9A96E" fillOpacity="0.15" />
-            <text x="355" y="95" textAnchor="middle" style={{ fill: "#C9A96E" }} fontSize="10">Project</text>
+            <rect x="320" y="80" width="70" height="22" rx="6" fill="var(--folio-gold-ornament)" fillOpacity="0.15" />
+            <text x="355" y="95" textAnchor="middle" style={{ fill: "var(--folio-gold-ornament)" }} fontSize="10">Project</text>
             <rect x="398" y="80" width="70" height="22" rx="6" fill="#EFEBE6" />
             <text x="433" y="95" textAnchor="middle" className="fill-[var(--text-secondary)]" fontSize="10">Vendor</text>
             <rect x="476" y="80" width="56" height="22" rx="6" fill="#EFEBE6" />

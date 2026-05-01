@@ -48,7 +48,7 @@ export default function FilterPill({ label, options, value, onChange, searchable
           inline-flex items-center gap-1 px-2.5 h-8 text-[13px] whitespace-nowrap
           bg-white border rounded-lg cursor-pointer transition-all duration-150
           ${isActive
-            ? 'border-[rgba(201,169,110,0.5)] text-[#c9a96e] bg-[rgba(201,169,110,0.05)]'
+            ? 'border-[rgba(201,169,110,0.5)] text-[var(--folio-gold-ornament)] bg-[rgba(201,169,110,0.05)]'
             : 'border-[rgba(0,0,0,0.1)] text-folio-text-secondary hover:border-[rgba(201,169,110,0.3)] hover:text-folio-text-primary'
           }
         `}
@@ -68,7 +68,7 @@ export default function FilterPill({ label, options, value, onChange, searchable
                   placeholder="Search..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="w-full pl-7 pr-2 py-1.5 text-[12px] rounded border border-neutral-200 focus:border-[#c9a96e] focus:outline-none"
+                  className="w-full pl-7 pr-2 py-1.5 text-[12px] rounded border border-neutral-200 focus:border-[var(--folio-gold-ornament)] focus:outline-none"
                   autoFocus
                 />
               </div>
@@ -78,7 +78,7 @@ export default function FilterPill({ label, options, value, onChange, searchable
             type="button"
             onClick={() => { onChange(''); setOpen(false); setSearch(''); }}
             className={`w-full text-left px-3 py-1.5 text-[12px] transition-colors ${
-              value === '' ? 'text-[#c9a96e] font-medium' : 'text-folio-text-secondary hover:bg-[rgba(0,0,0,0.03)]'
+              value === '' ? 'text-[var(--folio-gold-ornament)] font-medium' : 'text-folio-text-secondary hover:bg-[rgba(0,0,0,0.03)]'
             }`}
           >
             All {label}s
@@ -89,7 +89,7 @@ export default function FilterPill({ label, options, value, onChange, searchable
               type="button"
               onClick={() => { onChange(option.value); setOpen(false); setSearch(''); }}
               className={`w-full text-left px-3 py-1.5 text-[12px] transition-colors ${
-                value === option.value ? 'text-[#c9a96e] font-medium' : 'text-folio-text-primary hover:bg-[rgba(0,0,0,0.03)]'
+                value === option.value ? 'text-[var(--folio-gold-ornament)] font-medium' : 'text-folio-text-primary hover:bg-[rgba(0,0,0,0.03)]'
               }`}
             >
               {option.label}
