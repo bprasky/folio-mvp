@@ -1,13 +1,18 @@
 // HomepageHeroXL — full-bleed editorial hero (Task 05)
 //
 // Visual contract:
-//   - 21:10 aspect at desktop; 600px min-height
-//   - 24px radius
-//   - 40px side margins (max-w-[1440px] container)
-//   - White overlay text bottom-left (`bottom: 36px`)
+//   - Desktop: 21:10 aspect, 600px min-height, 40px side margins
+//   - Mobile (<sm): 5:4 aspect (taller, more legible at 375px), 16px side
+//     margins, smaller eyebrow inset, h2-scale title
+//   - 24px radius across breakpoints
+//   - White overlay text bottom-left
 //   - White eyebrow badge top-left
 //   - NO reel inside the photo. The boost reel is a sibling component
 //     tethered 16px below.
+//
+// Server component: no styled-jsx, no `useSession`. Breakpoint switches use
+// Tailwind responsive utilities + arbitrary-value classes that compile to
+// static CSS at build time.
 
 import Link from "next/link";
 import Image from "next/image";
@@ -20,11 +25,16 @@ interface Props {
 
 export function HomepageHeroXL({ hero }: Props) {
   return (
-    <div className="px-10 max-w-[1440px] mx-auto">
+    <div className="px-4 sm:px-10 max-w-[1440px] mx-auto">
       <Link
         href={`/p/${hero.postSlug}`}
-        className="relative block overflow-hidden rounded-3xl group"
-        style={{ aspectRatio: "21 / 10", minHeight: "600px" }}
+        className={[
+          "relative block overflow-hidden rounded-3xl group",
+          // Aspect: 5:4 on mobile (taller, more legible at 375px),
+          // 21:10 on sm+ desktop. min-h-0 on mobile so aspect drives layout.
+          "aspect-[5/4] sm:aspect-[21/10]",
+          "min-h-0 sm:min-h-[600px]",
+        ].join(" ")}
       >
         <Image
           src={hero.heroImageUrl}
@@ -45,9 +55,9 @@ export function HomepageHeroXL({ hero }: Props) {
         />
 
         {/* Eyebrow badge — top-left */}
-        <div className="absolute top-9 left-9">
+        <div className="absolute top-6 left-6 sm:top-9 sm:left-9">
           <span
-            className="inline-block px-4 py-1.5 rounded-full backdrop-blur-md folio-eyebrow"
+            className="inline-block px-3 sm:px-4 py-1 sm:py-1.5 rounded-full backdrop-blur-md folio-eyebrow"
             style={{
               background: "rgba(255,255,255,0.92)",
               color: "var(--folio-ink)",
@@ -57,17 +67,22 @@ export function HomepageHeroXL({ hero }: Props) {
           </span>
         </div>
 
-        {/* Title + meta — bottom-left, 36px from bottom */}
-        <div className="absolute left-9 right-9" style={{ bottom: "36px" }}>
+        {/* Title + meta — bottom-left.
+            Mobile: 24px from bottom, h2-scale title, tighter side margins.
+            Desktop: 36px from bottom, h1-scale title. */}
+        <div className="absolute left-6 right-6 sm:left-9 sm:right-9 bottom-6 sm:bottom-9">
           <h1
-            className="text-white max-w-[800px]"
-            style={{
-              fontFamily: "var(--font-headline)",
-              fontSize: "var(--type-h1)",
-              lineHeight: "var(--lh-h1)",
-              fontWeight: "var(--w-h1)",
-              letterSpacing: "var(--ls-tight)",
-            }}
+            className={[
+              "text-white max-w-[800px]",
+              // Type-scale switch via arbitrary-value Tailwind classes that
+              // dereference the design-system CSS variables. Compiled to
+              // static CSS — no runtime JS, no styled-jsx.
+              "[font-family:var(--font-headline)]",
+              "[letter-spacing:var(--ls-tight)]",
+              "[font-size:var(--type-h2)] sm:[font-size:var(--type-h1)]",
+              "[line-height:var(--lh-h2)] sm:[line-height:var(--lh-h1)]",
+              "[font-weight:var(--w-h2)] sm:[font-weight:var(--w-h1)]",
+            ].join(" ")}
           >
             {hero.title}
           </h1>

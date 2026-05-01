@@ -39,10 +39,14 @@ const nextConfig = {
       },
     ];
   },
-  // Redirects for route consolidation
+  // Redirects for route consolidation.
+  //
+  // Note: `/` is NOT redirected — it renders the editorial elevation feed
+  // (see src/app/page.tsx). `/magazine` redirects to `/` via app-router
+  // logic in src/app/magazine/page.tsx, not here, so deeplinks resolve at
+  // the same caching layer as the homepage itself.
   async redirects() {
     return [
-      { source: '/', destination: '/magazine', permanent: false },
       { source: '/designer', destination: '/projects', permanent: true },
       { source: '/designer/projects', destination: '/projects', permanent: true },
       { source: '/for-designers/directory', destination: '/for-designers/sourcebook', permanent: true },

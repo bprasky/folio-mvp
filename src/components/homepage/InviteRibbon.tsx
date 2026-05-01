@@ -67,10 +67,23 @@ export function InviteRibbon() {
         visibility: visible === true ? "visible" : "hidden",
         background: "var(--folio-ink)",
         color: "var(--folio-bg)",
+        // iOS Safari home-indicator + bottom URL-bar safe area: extends the
+        // ink background past the screen edge so the ribbon doesn't get
+        // clipped under the system UI.
+        paddingBottom: "env(safe-area-inset-bottom, 0px)",
       }}
     >
-      <div className="max-w-[1440px] mx-auto px-10 py-5 flex items-center justify-between gap-6">
-        <div>
+      <div
+        className={
+          // Mobile: stack copy and CTAs vertically; CTAs row spans full
+          // width, dismiss X is absolute-positioned so it doesn't push the
+          // primary CTA off-screen.
+          // Desktop (sm+): single row with copy left, CTAs right.
+          "max-w-[1440px] mx-auto px-4 sm:px-10 py-3 sm:py-5 " +
+          "flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-6"
+        }
+      >
+        <div className="pr-10 sm:pr-0">
           <p
             style={{
               fontFamily: "var(--font-headline)",
@@ -90,17 +103,17 @@ export function InviteRibbon() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex items-center gap-2 sm:gap-3 sm:shrink-0">
           <Link
             href="/auth/signin"
-            className="px-4 py-2 rounded-full folio-ui border border-white/20 hover:bg-white/10 transition-colors"
+            className="flex-1 sm:flex-initial text-center px-3 sm:px-4 py-2 rounded-full folio-ui border border-white/20 hover:bg-white/10 transition-colors whitespace-nowrap"
             style={{ color: "var(--folio-bg)" }}
           >
             I have an invite
           </Link>
           <Link
             href="/auth/signup"
-            className="px-4 py-2 rounded-full folio-ui transition-colors"
+            className="flex-1 sm:flex-initial text-center px-3 sm:px-4 py-2 rounded-full folio-ui transition-colors whitespace-nowrap"
             style={{
               background: "var(--folio-bg)",
               color: "var(--folio-ink)",
@@ -108,16 +121,19 @@ export function InviteRibbon() {
           >
             Request invite
           </Link>
-          <button
-            type="button"
-            onClick={handleDismiss}
-            aria-label="Dismiss for 24 hours"
-            className="ml-1 w-8 h-8 rounded-full hover:bg-white/10 transition-colors flex items-center justify-center"
-            style={{ color: "var(--folio-bg)" }}
-          >
-            ✕
-          </button>
         </div>
+
+        {/* Dismiss X: top-right on mobile (absolute, out of the flex flow),
+            inline on desktop. */}
+        <button
+          type="button"
+          onClick={handleDismiss}
+          aria-label="Dismiss for 24 hours"
+          className="absolute top-3 right-3 sm:static sm:ml-1 w-8 h-8 rounded-full hover:bg-white/10 transition-colors flex items-center justify-center"
+          style={{ color: "var(--folio-bg)" }}
+        >
+          ✕
+        </button>
       </div>
     </div>
   );
