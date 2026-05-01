@@ -666,6 +666,9 @@ model Product {
   // In Context Boost System
   inContextBoosts InContextBoost[] @relation("ProductInContextBoosts")
 
+  // Homepage Reel Boost System (Task 05)
+  homepageReelBoosts HomepageReelBoost[] @relation("ProductHomepageReelBoosts")
+
   // --- Phase 5H1 Bucket A inverse relations ---
   eventProductEdges   EventProductEdge[]
   interviewSessions   InterviewSession[]
@@ -939,6 +942,9 @@ model Organization {
 
   // Designer Shop System relations
   shopBoosts ShopBoost[] @relation("VendorShopBoosts")
+
+  // Homepage Reel Boost System (Task 05) — vendor-funded auction for first 2 reel slots
+  homepageReelBoosts HomepageReelBoost[] @relation("VendorHomepageReelBoosts")
 
   // Vendor Invite & Presentation System
   vendorInvite            VendorInvite?
@@ -1451,11 +1457,21 @@ model ProjectPost {
   updatedAt            DateTime              @updatedAt
   editorialAssignments EditorialAssignment[]
 
+  // Homepage XL editorial slot (Task 05)
+  // When `now()` is in [homepage_xl_starts_at, homepage_xl_ends_at] and status=PUBLISHED,
+  // this post is the curated XL hero on `/`. App-level uniqueness — at most one row
+  // is in-window at any time. Editorial team enforces in admin form.
+  homepageXlStartsAt DateTime? @map("homepage_xl_starts_at")
+  homepageXlEndsAt   DateTime? @map("homepage_xl_ends_at")
+
   // Intelligence System relations
   supplementalQuotes SupplementalQuote[] @relation("PostSupplementalQuotes")
 
   // In Context Boost System
   inContextBoosts InContextBoost[] @relation("PostInContextBoosts")
+
+  // Homepage Reel Boost System (Task 05)
+  homepageReelBoosts HomepageReelBoost[] @relation("PostHomepageReelBoosts")
 
   // Contributor/Voice System relations
   publishedContributions Contribution[] @relation("PostContributions")
@@ -1471,6 +1487,8 @@ model ProjectPost {
 
   postSaves PostSave[]
 
+  // Partial index for fast XL window scans on the homepage feed (Task 05).
+  @@index([homepageXlStartsAt, homepageXlEndsAt], name: "project_posts_homepage_xl_window_idx")
   @@map("project_posts")
 }
 
@@ -3626,6 +3644,61 @@ model InContextBoost {
   @@index([designerId])
   @@index([status])
   @@map("in_context_boosts")
+}
+
+// ─── Homepage Reel Boost System (Task 05) ────────────────────────────────────
+// Vendors bid for the first two slots of the homepage editorial reel — the
+// products tagged in the current XL editorial post. Highest two bids win
+// slots 1-2; remaining tagged products fill slots 3-7 by tag-creation order.
+//
+// Distinct from InContextBoost (which is keyed by productTagId @unique and
+// negotiates one tag per relationship). HomepageReelBoost is keyed by
+// (projectPostId, productId, vendorId) and is a true auction — multiple
+// vendors may bid for the same product slot, only the highest wins.
+
+enum HomepageReelBoostStatus {
+  PENDING // bid placed, not yet active
+  ACTIVE // currently eligible for slot resolution
+  EXPIRED // window ended or post lost XL slot
+}
+
+model HomepageReelBoost {
+  id String @id @default(cuid())
+
+  projectPostId String
+  projectPost   ProjectPost @relation("PostHomepageReelBoosts", fields: [projectPostId], references: [id], onDelete: Cascade)
+
+  productId String
+  product   Product @relation("ProductHomepageReelBoosts", fields: [productId], references: [id], onDelete: Cascade)
+
+  vendorId String
+  vendor   Organization @relation("VendorHomepageReelBoosts", fields: [vendorId], references: [id], onDelete: Cascade)
+
+  // Auction
+  bidCents Int
+
+  status   HomepageReelBoostStatus @default(PENDING)
+  startsAt DateTime
+  endsAt   DateTime
+
+  // Resolved at serve-time (1 or 2 if won a slot, null otherwise). Persisted
+  // for billing and analytics review.
+  slotPosition Int?
+
+  // Analytics counters
+  impressions Int @default(0)
+  clicks      Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // One bid per (post, product, vendor) — vendors can't double-bid the same slot.
+  @@unique([projectPostId, productId, vendorId])
+  // Hot read path: "active boosts on this post, ordered by bid desc"
+  @@index([projectPostId, status, bidCents(sort: Desc)])
+  @@index([vendorId, status])
+  @@index([status])
+  @@map("homepage_reel_boosts")
 }
 
 // ─── Vendor Content System ───────────────────────────────────────────────────
