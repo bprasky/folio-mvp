@@ -275,7 +275,7 @@ export function InstagramExportEditor({ project, post, designer, images, rooms }
               </svg>
             </Link>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <span style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: '20px', fontStyle: 'italic', color: '#2C2420' }}>
+              <span style={{ fontFamily: "var(--font-headline)", fontSize: '20px', fontStyle: 'italic', color: '#2C2420' }}>
                 folio
               </span>
               <span style={{ color: '#D4C9BC', fontSize: '18px', fontWeight: 200 }}>|</span>

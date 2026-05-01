@@ -27,8 +27,7 @@ export function StoryIntro({ story, compact = false }: StoryIntroProps) {
             <span
               className="text-[11px] uppercase tracking-[1.5px]"
               style={{
-                fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
-                color: "rgba(87, 75, 67, 0.55)",
+                color: "rgba(87, 75, 67, 0.55)"
               }}
             >
               {story.location}
@@ -41,7 +40,7 @@ export function StoryIntro({ story, compact = false }: StoryIntroProps) {
               : "text-[32px] md:text-[44px] leading-[1.1] italic"
             }
             style={{
-              fontFamily: "var(--font-headline, 'Cormorant Garamond', serif)",
+              fontFamily: "var(--font-headline)",
               fontWeight: 400,
               color: "rgba(87, 75, 67, 0.85)",
             }}
@@ -54,8 +53,7 @@ export function StoryIntro({ story, compact = false }: StoryIntroProps) {
             <div
               className="text-[11px]"
               style={{
-                fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
-                color: "rgba(87, 75, 67, 0.55)",
+                color: "rgba(87, 75, 67, 0.55)"
               }}
             >
               {story.designerName}
@@ -63,8 +61,7 @@ export function StoryIntro({ story, compact = false }: StoryIntroProps) {
             <div
               className="text-[11px]"
               style={{
-                fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
-                color: "rgba(87, 75, 67, 0.3)",
+                color: "rgba(87, 75, 67, 0.3)"
               }}
             >
               {story.roomCount} {story.roomCount === 1 ? "room" : "rooms"}
@@ -81,7 +78,7 @@ export function StoryIntro({ story, compact = false }: StoryIntroProps) {
                 : "text-[18px] md:text-[20px] italic leading-[1.5]"
               }
               style={{
-                fontFamily: "var(--font-headline, 'Cormorant Garamond', serif)",
+                fontFamily: "var(--font-headline)",
                 fontWeight: 400,
                 color: "rgba(87, 75, 67, 0.85)",
               }}
@@ -90,8 +87,7 @@ export function StoryIntro({ story, compact = false }: StoryIntroProps) {
               <footer
                 className="mt-2 text-[12px] not-italic"
                 style={{
-                  fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
-                  color: "rgba(87, 75, 67, 0.55)",
+                  color: "rgba(87, 75, 67, 0.55)"
                 }}
               >
                 &mdash; {story.designerName}
@@ -106,8 +102,7 @@ export function StoryIntro({ story, compact = false }: StoryIntroProps) {
                 : "text-[14px] leading-[1.65] whitespace-pre-line"
               }
               style={{
-                fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
-                color: "rgba(87, 75, 67, 0.85)",
+                color: "rgba(87, 75, 67, 0.85)"
               }}
             >
               {story.introText}

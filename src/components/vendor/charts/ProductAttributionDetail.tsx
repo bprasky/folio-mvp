@@ -127,7 +127,7 @@ export function ProductAttributionDetail({ productId, onBack }: ProductAttributi
           { label: 'Specs', value: stages.specified.count },
           { label: 'Orders', value: stages.ordered.count },
         ].map((stat) => (
-          <div key={stat.label} className="text-center p-3 rounded-xl bg-[#FAF8F5]">
+          <div key={stat.label} className="text-center p-3 rounded-xl bg-[var(--surface-ground)]">
             <div className="text-lg font-semibold text-[#2C2825]">{stat.value}</div>
             <div className="text-xs text-[#8C8278] uppercase tracking-wider">{stat.label}</div>
           </div>
@@ -146,7 +146,7 @@ export function ProductAttributionDetail({ productId, onBack }: ProductAttributi
           <h3 className="text-sm font-semibold text-[#2C2825] uppercase tracking-wider mb-4">Top Influencers</h3>
           <div className="space-y-2">
             {topInfluencers.slice(0, 8).map((inf, i) => (
-              <div key={inf.id} className="flex items-center gap-3 p-3 rounded-xl bg-[#FAF8F5]">
+              <div key={inf.id} className="flex items-center gap-3 p-3 rounded-xl bg-[var(--surface-ground)]">
                 <div className="w-8 h-8 rounded-full bg-[#E5E0D7] flex items-center justify-center text-xs font-semibold text-[#8C8278]">
                   {i + 1}
                 </div>

@@ -113,7 +113,7 @@ export function UploadContractCard({
             <button
               onClick={() => !disabled && inputRef.current?.click()}
               disabled={disabled}
-              className="flex items-center gap-2 px-4 py-2 bg-[var(--text-primary)] text-[var(--bg-base)] text-sm rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 px-4 py-2 bg-[var(--text-primary)] text-[var(--surface-canvas)] text-sm rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Upload className="w-4 h-4" />
               Upload

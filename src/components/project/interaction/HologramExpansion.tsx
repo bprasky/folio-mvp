@@ -273,7 +273,7 @@ export function HologramExpansion({
               <div
                 className="text-folio-text-primary truncate"
                 style={{
-                  fontFamily: "'Cormorant Garamond', serif",
+                  fontFamily: "var(--font-headline)",
                   fontSize: '16px',
                   fontStyle: 'italic',
                 }}
@@ -284,7 +284,6 @@ export function HologramExpansion({
                 <div
                   className="truncate text-folio-text-secondary mt-0.5"
                   style={{
-                    fontFamily: "'Instrument Sans', sans-serif",
                     fontSize: '11px',
                     letterSpacing: '0.12em',
                     textTransform: 'uppercase',

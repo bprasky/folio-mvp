@@ -82,14 +82,12 @@ export function PromptedAnswerModal({
             </h3>
             <p
               className="text-sm text-folio-text-secondary mb-6"
-              style={{ fontFamily: 'var(--font-body)' }}
             >
               Your response has been added to your profile.
             </p>
             <button
               onClick={onClose}
               className="px-6 py-2.5 rounded-lg bg-folio-text-primary text-surface-ground text-sm font-medium hover:bg-[#3D3632] transition-colors"
-              style={{ fontFamily: 'var(--font-body)' }}
             >
               Done
             </button>
@@ -120,7 +118,6 @@ export function PromptedAnswerModal({
                 placeholder="A few sentences is perfect..."
                 rows={5}
                 className="w-full resize-none rounded-lg border border-[rgba(139,129,120,0.2)] bg-surface-ground p-4 text-[15px] text-folio-text-primary placeholder:text-folio-text-tertiary focus:border-[rgba(139,129,120,0.4)] focus:outline-none focus:ring-0 transition-colors"
-                style={{ fontFamily: 'var(--font-body)' }}
               />
 
               {error && (
@@ -133,7 +130,6 @@ export function PromptedAnswerModal({
               <button
                 onClick={onClose}
                 className="text-sm text-folio-text-secondary hover:text-folio-text-secondary transition-colors"
-                style={{ fontFamily: 'var(--font-body)' }}
               >
                 Cancel
               </button>
@@ -141,7 +137,6 @@ export function PromptedAnswerModal({
                 onClick={handleSubmit}
                 disabled={!answerText.trim() || submitting}
                 className="px-6 py-2.5 rounded-lg bg-folio-text-primary text-surface-ground text-sm font-medium hover:bg-[#3D3632] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                style={{ fontFamily: 'var(--font-body)' }}
               >
                 {submitting ? 'Saving...' : 'Submit'}
               </button>

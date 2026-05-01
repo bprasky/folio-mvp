@@ -32,7 +32,7 @@ export function ProfileField({
     return (
       <div
         className="rounded-xl border p-4"
-        style={{ borderColor: '#E8E4DF', backgroundColor: '#FAF9F7' }}
+        style={{ borderColor: '#E8E4DF', backgroundColor: 'var(--surface-ground)' }}
       >
         <p className="text-sm mb-2" style={{ color: '#8B8178' }}>{label}</p>
         <button
@@ -51,7 +51,7 @@ export function ProfileField({
       <div className="flex items-center justify-between mb-1.5">
         <label
           className="text-xs font-medium"
-          style={{ color: '#6B635B', fontFamily: 'var(--font-body)' }}
+          style={{ color: '#6B635B' }}
         >
           {label}
         </label>
@@ -83,10 +83,9 @@ export function ProfileField({
           className="w-full px-4 py-2.5 text-sm rounded-xl border outline-none transition-colors focus:border-[var(--folio-gold)] resize-none"
           style={{
             borderColor: '#E8E4DF',
-            backgroundColor: '#FAF9F7',
-            color: '#2C2825',
-            fontFamily: 'var(--font-body)',
-          }}
+            backgroundColor: 'var(--surface-ground)',
+            color: '#2C2825'
+            }}
           rows={fieldName === 'bio' || fieldName === 'description' ? 5 : 3}
         />
       ) : (
@@ -97,10 +96,9 @@ export function ProfileField({
           className="w-full px-4 py-2.5 text-sm rounded-xl border outline-none transition-colors focus:border-[var(--folio-gold)]"
           style={{
             borderColor: '#E8E4DF',
-            backgroundColor: '#FAF9F7',
-            color: '#2C2825',
-            fontFamily: 'var(--font-body)',
-          }}
+            backgroundColor: 'var(--surface-ground)',
+            color: '#2C2825'
+            }}
         />
       )}
     </div>

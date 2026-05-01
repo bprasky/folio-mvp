@@ -29,7 +29,7 @@ export function ProfileCompletenessIndicator({ progress }: ProfileCompletenessPr
   return (
     <div
       className="space-y-4 p-4 rounded-lg"
-      style={{ backgroundColor: 'var(--bg-elevated)' }}
+      style={{ backgroundColor: 'var(--surface-ground)' }}
     >
       <div className="flex items-center justify-between">
         <span className="text-sm font-medium">Profile Completeness</span>
@@ -40,7 +40,7 @@ export function ProfileCompletenessIndicator({ progress }: ProfileCompletenessPr
 
       <div
         className="h-2 rounded-full overflow-hidden"
-        style={{ backgroundColor: 'var(--bg-base)' }}
+        style={{ backgroundColor: 'var(--surface-canvas)' }}
       >
         <div
           className="h-full transition-all duration-500 rounded-full"

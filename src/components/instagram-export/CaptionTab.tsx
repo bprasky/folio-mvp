@@ -103,7 +103,7 @@ export function CaptionTab({
           <div style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase' as const, color: '#8B7B68', marginBottom: '6px', fontWeight: 500 }}>
             Auto-appended CTA
           </div>
-          <div style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: '13px', fontStyle: 'italic', color: '#2C2420' }}>
+          <div style={{ fontFamily: "var(--font-headline)", fontSize: '13px', fontStyle: 'italic', color: '#2C2420' }}>
             {ctaText}
           </div>
         </div>

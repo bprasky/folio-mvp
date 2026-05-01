@@ -318,7 +318,7 @@ export default function AddToProjectModal({
                     className={cn(
                       "w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-left",
                       createNew
-                        ? "bg-[var(--text-primary)] text-[var(--bg-base)]"
+                        ? "bg-[var(--text-primary)] text-[var(--surface-canvas)]"
                         : "hover:bg-surface-ground text-folio-text-primary"
                     )}
                   >
@@ -374,7 +374,7 @@ export default function AddToProjectModal({
               <button
                 type="submit"
                 disabled={saving || (selectedProjectIds.size === 0 && !createNew)}
-                className="flex-1 px-4 py-2 bg-[var(--text-primary)] text-[var(--bg-base)] rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium"
+                className="flex-1 px-4 py-2 bg-[var(--text-primary)] text-[var(--surface-canvas)] rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium"
               >
                 {saving ? (
                   <span className="flex items-center justify-center gap-2">
@@ -452,7 +452,7 @@ function ProjectSection({
                   : "border-[var(--text-tertiary)]"
               )}>
                 {selectedIds.has(project.id) && (
-                  <Check className="h-3 w-3 text-[var(--bg-base)]" />
+                  <Check className="h-3 w-3 text-[var(--surface-canvas)]" />
                 )}
               </div>
               <span className="text-sm text-folio-text-primary truncate flex-1">

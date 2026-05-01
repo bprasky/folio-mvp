@@ -229,7 +229,7 @@ export function VendorDashboardNew() {
                   Unlock to generate AI-powered quarterly business review reports.
                 </span>
                 <button
-                  className="rounded-xl px-4 py-2 bg-[var(--text-primary)] text-[var(--bg-base)] hover:opacity-90 transition text-sm"
+                  className="rounded-xl px-4 py-2 bg-[var(--text-primary)] text-[var(--surface-canvas)] hover:opacity-90 transition text-sm"
                   data-testid="unlock-ai-button"
                   onClick={() => {
                     // TODO: Wire to upgrade/payment flow

@@ -46,7 +46,7 @@ export default function MagazineCoverHero({ hero, edition }: Props) {
               sizes="100vw"
             />
           ) : (
-            <div className="absolute inset-0 bg-gradient-to-br from-[var(--bg-elevated)] to-[var(--bg-base)]" />
+            <div className="absolute inset-0 bg-gradient-to-br from-[var(--surface-ground)] to-[var(--surface-canvas)]" />
           )}
 
           {/* Tagged product interaction overlay */}

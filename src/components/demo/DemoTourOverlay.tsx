@@ -99,7 +99,7 @@ export default function DemoTourOverlay() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[9999] bg-folio-background flex items-center justify-center p-8"
+          className="fixed inset-0 z-[9999] bg-surface-canvas flex items-center justify-center p-8"
         >
           <div className="max-w-3xl mx-auto text-center space-y-8">
             <motion.h1

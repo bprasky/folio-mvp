@@ -253,7 +253,7 @@ export default function BioInterviewChat({ onComplete }: BioInterviewChatProps) 
         .bio-chat {
           border: 1px solid var(--border);
           border-radius: 12px;
-          background: var(--bg-base);
+          background: var(--surface-canvas);
           overflow: hidden;
           display: flex;
           flex-direction: column;
@@ -308,7 +308,7 @@ export default function BioInterviewChat({ onComplete }: BioInterviewChatProps) 
           height: 28px;
           border-radius: 50%;
           background: var(--text-primary);
-          color: var(--bg-base);
+          color: var(--surface-canvas);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -326,13 +326,13 @@ export default function BioInterviewChat({ onComplete }: BioInterviewChatProps) 
           line-height: 1.5;
         }
         .bio-chat-bubble--question {
-          background: var(--bg-elevated);
+          background: var(--surface-ground);
           color: var(--text-primary);
           border-bottom-left-radius: 4px;
         }
         .bio-chat-bubble--answer {
           background: var(--text-primary);
-          color: var(--bg-base);
+          color: var(--surface-canvas);
           border-bottom-right-radius: 4px;
         }
         .bio-chat-typing {
@@ -385,7 +385,7 @@ export default function BioInterviewChat({ onComplete }: BioInterviewChatProps) 
           padding: 10px 14px;
           border-radius: 12px;
           border: 1px solid var(--border);
-          background: var(--bg-elevated);
+          background: var(--surface-ground);
           color: var(--text-primary);
           font-family: var(--font-body);
           font-size: 14px;

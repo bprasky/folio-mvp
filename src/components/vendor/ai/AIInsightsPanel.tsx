@@ -88,7 +88,7 @@ function LockedTeaser() {
         <button className="rounded-xl px-4 py-2 border border-folio-border-subtle hover:bg-surface-ground text-folio-text-primary transition">
           Preview
         </button>
-        <button className="rounded-xl px-4 py-2 bg-[var(--text-primary)] text-[var(--bg-base)] hover:opacity-90 transition">
+        <button className="rounded-xl px-4 py-2 bg-[var(--text-primary)] text-[var(--surface-canvas)] hover:opacity-90 transition">
           Unlock AI
         </button>
       </div>

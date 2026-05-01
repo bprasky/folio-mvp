@@ -194,7 +194,7 @@ export default function AboutTab({
         .about-section {
           padding: 24px;
           border-radius: 12px;
-          background: var(--bg-base);
+          background: var(--surface-canvas);
           border: 1px solid var(--border);
         }
         .about-section-title {
@@ -219,7 +219,7 @@ export default function AboutTab({
         .about-process-step {
           padding: 7px 16px;
           border-radius: 20px;
-          background: var(--bg-elevated);
+          background: var(--surface-ground);
           color: var(--text-secondary);
           font-family: var(--font-body);
           font-size: 12px;
@@ -227,7 +227,7 @@ export default function AboutTab({
         }
         .about-process-step[data-first='true'] {
           background: var(--text-primary);
-          color: var(--bg-base);
+          color: var(--surface-canvas);
         }
       `}</style>
     </div>
@@ -257,7 +257,7 @@ function TeamRow({ member }: { member: ProfileTeamMember }) {
         ) : (
           <div
             className="w-full h-full flex items-center justify-center text-sm font-light"
-            style={{ background: 'var(--bg-elevated)', color: 'var(--text-tertiary)' }}
+            style={{ background: 'var(--surface-ground)', color: 'var(--text-tertiary)' }}
           >
             {initials}
           </div>
@@ -293,11 +293,11 @@ function SocialLink({ label, sub, href }: { label: string; sub: string; href: st
       <style jsx>{`
         .social-link {
           border: 1px solid var(--border);
-          background: var(--bg-base);
+          background: var(--surface-canvas);
           transition: background 0.15s ease;
         }
         .social-link:hover {
-          background: var(--bg-elevated);
+          background: var(--surface-ground);
         }
       `}</style>
     </a>

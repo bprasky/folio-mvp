@@ -31,7 +31,7 @@ export default function QuoteCard({ quote, attribution }: QuoteCardProps) {
       )}
       <style jsx>{`
         .quote-card {
-          background: var(--bg-elevated);
+          background: var(--surface-ground);
           border: 1px solid var(--border);
           min-height: 140px;
         }

@@ -80,7 +80,7 @@ export default function ActionItemsAnalytics() {
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
           <div>
-            <div className="text-2xl font-semibold text-folio-text-primary" style={{ fontFamily: 'var(--font-serif)' }}>
+            <div className="text-2xl font-semibold text-folio-text-primary" style={{ fontFamily: 'var(--font-headline)' }}>
               {data.volume.total}
             </div>
             <div className="text-xs text-folio-text-tertiary">
@@ -93,13 +93,13 @@ export default function ActionItemsAnalytics() {
             </div>
           </div>
           <div>
-            <div className="text-2xl font-semibold text-folio-text-primary" style={{ fontFamily: 'var(--font-serif)' }}>
+            <div className="text-2xl font-semibold text-folio-text-primary" style={{ fontFamily: 'var(--font-headline)' }}>
               {data.designers.activeCount}
             </div>
             <div className="text-xs text-folio-text-tertiary">Active designers</div>
           </div>
           <div>
-            <div className="text-2xl font-semibold text-folio-text-primary" style={{ fontFamily: 'var(--font-serif)' }}>
+            <div className="text-2xl font-semibold text-folio-text-primary" style={{ fontFamily: 'var(--font-headline)' }}>
               {data.response.avgResponseHours !== null
                 ? data.response.avgResponseHours < 24
                   ? `${data.response.avgResponseHours}h`
@@ -109,7 +109,7 @@ export default function ActionItemsAnalytics() {
             <div className="text-xs text-folio-text-tertiary">Avg response time</div>
           </div>
           <div>
-            <div className="text-2xl font-semibold text-folio-text-primary" style={{ fontFamily: 'var(--font-serif)' }}>
+            <div className="text-2xl font-semibold text-folio-text-primary" style={{ fontFamily: 'var(--font-headline)' }}>
               {100 - data.response.offPlatformRate}%
             </div>
             <div className="text-xs text-folio-text-tertiary">On-platform rate</div>

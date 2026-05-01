@@ -264,7 +264,7 @@ export function TeamMemberQuizModal({
           <div className="flex items-center gap-2 mt-2">
             <div
               className="flex-1 h-1 rounded-full overflow-hidden"
-              style={{ backgroundColor: 'var(--bg-elevated)' }}
+              style={{ backgroundColor: 'var(--surface-ground)' }}
             >
               <div
                 className="h-full transition-all duration-300"

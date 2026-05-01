@@ -18,7 +18,7 @@ export default function CollabCard({ vendor, note }: CollabCardProps) {
       </p>
       <style jsx>{`
         .collab-card {
-          background: var(--bg-elevated);
+          background: var(--surface-ground);
           border: 1px solid var(--border);
           min-height: 100px;
           cursor: pointer;

@@ -93,10 +93,10 @@ export default function OrgShopTab({ products }: OrgShopTabProps) {
             <path d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </div>
-        <p style={{ fontFamily: 'var(--font-body, "Instrument Sans", sans-serif)', fontSize: '15px', color: '#8B8178' }}>
+        <p style={{ fontSize: '15px', color: '#8B8178' }}>
           No products yet
         </p>
-        <p style={{ fontFamily: 'var(--font-body, "Instrument Sans", sans-serif)', fontSize: '13px', color: '#A69E96', marginTop: '4px' }}>
+        <p style={{ fontSize: '13px', color: '#A69E96', marginTop: '4px' }}>
           Products tagged in projects will appear here.
         </p>
       </div>
@@ -115,9 +115,8 @@ export default function OrgShopTab({ products }: OrgShopTabProps) {
               style={{
                 borderColor: category === c ? '#2C2825' : '#E8E4DF',
                 backgroundColor: category === c ? '#2C2825' : 'transparent',
-                color: category === c ? '#FAF9F7' : '#8B8178',
-                fontFamily: 'var(--font-body, "Instrument Sans", sans-serif)',
-                cursor: 'pointer',
+                color: category === c ? 'var(--surface-ground)' : '#8B8178',
+                cursor: 'pointer'
               }}
             >
               {c === 'All' ? 'All' : getCategoryLabel(c)}
@@ -274,7 +273,7 @@ function OrgProductModal({
               </div>
             )}
             {product.projectCount > 0 && (
-              <div className="mb-6 p-4 rounded-xl" style={{ backgroundColor: '#FAF9F7' }}>
+              <div className="mb-6 p-4 rounded-xl" style={{ backgroundColor: 'var(--surface-ground)' }}>
                 <p className="text-[13px]" style={{ color: '#8B8178' }}>
                   Featured in <span className="font-medium" style={{ color: '#5C554D' }}>{product.projectCount} project{product.projectCount !== 1 ? 's' : ''}</span>
                 </p>

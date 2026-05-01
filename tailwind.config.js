@@ -84,6 +84,9 @@ module.exports = {
           gold: 'var(--folio-gold)',
           'gold-hover': 'var(--folio-gold-hover)',
           'gold-ornament': 'var(--folio-gold-ornament)',
+          'surface-canvas': 'var(--surface-canvas)',
+          'surface-ground': 'var(--surface-ground)',
+          'surface-elevated': 'var(--surface-elevated)',
           text: {
             primary: 'var(--folio-text-primary)',
             secondary: 'var(--folio-text-secondary)',
@@ -109,7 +112,6 @@ module.exports = {
             400: "var(--folio-accent-400)",
             700: "var(--folio-accent-700)",
           },
-          background: "#F4F2F0",
           textLegacy: "#1E1E1E",
           system: "#4A2C3B",
           success: "#A47B62",
@@ -174,8 +176,7 @@ module.exports = {
         // Folio Design System typography
         headline: 'var(--font-headline)',
         body: 'var(--font-body)',
-        logo: 'var(--font-logo)',
-        // Legacy fonts
+        // Legacy fonts (alias to canonical headline/body via globals.css)
         serif: "var(--font-serif)",
         sans: "var(--font-sans)",
         canela: ["ui-serif", "Georgia", "Cambria", "Times New Roman", "Times", "serif"],

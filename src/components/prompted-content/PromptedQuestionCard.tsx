@@ -50,7 +50,6 @@ export function PromptedQuestionCard({
         <button
           onClick={() => onAnswer(question)}
           className="px-5 py-2 rounded-lg bg-folio-text-primary text-surface-ground text-sm font-medium hover:bg-[#3D3632] transition-colors"
-          style={{ fontFamily: 'var(--font-body)' }}
         >
           Answer
         </button>
@@ -58,7 +57,6 @@ export function PromptedQuestionCard({
         {/* Provenance line */}
         <span
           className="text-[11px] text-folio-text-tertiary tracking-wide"
-          style={{ fontFamily: 'var(--font-body)' }}
         >
           Folio &middot; Asked based on your interview
         </span>

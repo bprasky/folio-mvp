@@ -17,10 +17,9 @@ export function StoryCredits({ credits }: StoryCreditProps) {
       <h4
         className="mb-4 uppercase tracking-[1.5px]"
         style={{
-          fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
           fontSize: "10px",
           fontWeight: 500,
-          color: "rgba(87, 75, 67, 0.3)",
+          color: "rgba(87, 75, 67, 0.3)"
         }}
       >
         Credits
@@ -30,9 +29,8 @@ export function StoryCredits({ credits }: StoryCreditProps) {
           <div
             key={i}
             style={{
-              fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
               fontSize: "11px",
-              color: "rgba(87, 75, 67, 0.55)",
+              color: "rgba(87, 75, 67, 0.55)"
             }}
           >
             <span className="uppercase tracking-[1px]">{credit.role}</span>

@@ -67,7 +67,7 @@ export function AIPane({ sectionId, title }: AIPaneProps) {
                 onClick={() => onTabClick(tab)}
                 className={`px-2.5 py-1 rounded-full capitalize text-[11px] transition ${
                   activeTab === tab && aiUnlocked
-                    ? 'bg-[var(--text-primary)] text-[var(--bg-base)]'
+                    ? 'bg-[var(--text-primary)] text-[var(--surface-canvas)]'
                     : 'bg-surface-ground text-folio-text-primary hover:bg-[var(--ridge-inner)]'
                 }`}
               >
@@ -85,7 +85,7 @@ export function AIPane({ sectionId, title }: AIPaneProps) {
             </span>
             <button
               type="button"
-              className="ml-3 rounded-xl px-3 py-1.5 bg-[var(--text-primary)] text-[var(--bg-base)] text-[11px] hover:opacity-90 transition whitespace-nowrap"
+              className="ml-3 rounded-xl px-3 py-1.5 bg-[var(--text-primary)] text-[var(--surface-canvas)] text-[11px] hover:opacity-90 transition whitespace-nowrap"
               onClick={() => setUpsellOpen(true)}
             >
               Unlock AI

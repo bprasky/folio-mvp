@@ -95,7 +95,7 @@ export default function ShopFeed({ products }: ShopFeedProps) {
       <div className="text-center py-16">
         <div
           className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center"
-          style={{ background: 'var(--bg-elevated)' }}
+          style={{ background: 'var(--surface-ground)' }}
         >
           <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" strokeWidth="1.5">
             <path d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" strokeLinecap="round" strokeLinejoin="round" />
@@ -210,7 +210,7 @@ export default function ShopFeed({ products }: ShopFeedProps) {
         .shop-filter-pill[data-active='true'] {
           border-color: var(--text-primary);
           background: var(--text-primary);
-          color: var(--bg-base);
+          color: var(--surface-canvas);
         }
         .shop-filter-pill:hover:not([data-active='true']) {
           border-color: var(--text-tertiary);
