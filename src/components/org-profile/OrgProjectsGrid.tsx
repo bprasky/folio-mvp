@@ -31,10 +31,10 @@ export default function OrgProjectsGrid({ projects, isOwner }: OrgProjectsGridPr
             <path d="M21 15l-5-5L5 21" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </div>
-        <p style={{ fontFamily: 'var(--font-body, "Instrument Sans", sans-serif)', fontSize: '15px', color: '#8B8178' }}>
+        <p style={{ fontSize: '15px', color: '#8B8178' }}>
           No projects yet
         </p>
-        <p style={{ fontFamily: 'var(--font-body, "Instrument Sans", sans-serif)', fontSize: '13px', color: '#A69E96', marginTop: '4px' }}>
+        <p style={{ fontSize: '13px', color: '#A69E96', marginTop: '4px' }}>
           Projects will appear here once published.
         </p>
         {isOwner && (

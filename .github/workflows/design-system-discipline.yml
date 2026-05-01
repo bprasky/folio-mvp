@@ -75,3 +75,40 @@ jobs:
             echo "::error::--bg-base and --bg-elevated were removed in Task 02. Use --surface-canvas / --surface-ground."
             exit 1
           fi
+
+      - name: Forbid hardcoded font families outside carve-outs
+        run: |
+          # Email templates, in-context boost, the pdfkit spec-sheet, the qrcode
+          # FolioBadgeModal, and the print-tearsheet HTML all run outside DOM context
+          # where CSS vars don't resolve. The tearsheet HTML uses Helvetica/Arial
+          # for print-driver compatibility.
+          BAD=$(git grep -nE "'Playfair Display'|\"Playfair Display\"|'Cormorant Garamond'|\"Cormorant Garamond\"|'Instrument Sans'|\"Instrument Sans\"" src/ \
+            | grep -v "src/lib/email/" \
+            | grep -v "src/lib/boost/inContextBoost" \
+            | grep -v "src/lib/messaging/notifications.ts" \
+            | grep -v "src/components/badge/FolioBadgeModal" \
+            | grep -v "src/app/api/products/\[productId\]/spec-sheet/" \
+            | grep -v "src/app/api/export-tearsheet/" \
+            | grep -v "src/app/globals.css:.*--font-" \
+            || true)
+          if [ -n "$BAD" ]; then
+            echo "::error::Hardcoded font family found. Use var(--font-headline) or var(--font-body)."
+            echo "$BAD"
+            exit 1
+          fi
+
+      - name: Forbid phantom and deprecated font aliases
+        run: |
+          if git grep -nE "var\(--font-cormorant\)|var\(--font-instrument\)|var\(--font-logo\)" src/; then
+            echo "::error::Phantom or deprecated font alias used. Canonical: --font-headline, --font-body."
+            exit 1
+          fi
+          # Inline-style use of --font-serif / --font-sans is forbidden; the CSS
+          # vars themselves remain only for the Tailwind .font-serif / .font-sans
+          # classes.
+          INLINE=$(git grep -nE "fontFamily:\s*['\"]var\(--font-(serif|sans)\)['\"]" src/ || true)
+          if [ -n "$INLINE" ]; then
+            echo "::error::Inline style with --font-serif / --font-sans is forbidden. Use --font-headline / --font-body."
+            echo "$INLINE"
+            exit 1
+          fi

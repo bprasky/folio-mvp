@@ -48,8 +48,11 @@
      DEPRECATED ALIASES — migrate to canonical
      =========================================== */
 
-  /* Typography */
-  --font-logo: 'Cormorant Garamond', Georgia, serif;
+  /* === TYPE (canonical) ===
+     Folio uses two families. Add a third only after design-system review.
+     --font-headline = Cormorant Garamond (editorial display, italic eyebrows, large numerics)
+     --font-body     = Instrument Sans (all UI, body, captions, labels)
+     The <body> already sets font-[var(--font-body)] — only declare --font-headline explicitly. */
   --font-headline: 'Cormorant Garamond', Georgia, serif;
   --font-body: 'Instrument Sans', -apple-system, sans-serif;
 
@@ -528,9 +531,11 @@ html[data-compact="true"] main { padding-top: 0 !important; }
   --folio-border: color-mix(in srgb, var(--folio-stone-100) 60%, #000 0%);
   --folio-overlay: rgba(22,22,20,0.5);
   
-  /* Typography */
-  --font-serif: "Ethic Serif", "Cormorant Garamond", "Times New Roman", serif;
-  --font-sans: "Montserrat", "Helvetica Neue", Arial, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  /* Typography — DEPRECATED. Tailwind .font-serif and .font-sans classes
+     resolve via these aliases. Inline-style use is forbidden by CI; use
+     --font-headline / --font-body directly. */
+  --font-serif: var(--font-headline);
+  --font-sans: var(--font-body);
   
   /* Radius / elevation / motion */
   --radius-sm: 10px;

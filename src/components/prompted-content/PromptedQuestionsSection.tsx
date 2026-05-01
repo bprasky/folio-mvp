@@ -65,7 +65,6 @@ export function PromptedQuestionsSection({ className }: PromptedQuestionsSection
       <div className="mb-6">
         <h2
           className="text-[13px] font-normal uppercase tracking-[0.12em] text-folio-text-secondary"
-          style={{ fontFamily: 'var(--font-body)' }}
         >
           Questions for You
         </h2>

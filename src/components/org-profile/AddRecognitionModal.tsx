@@ -134,9 +134,6 @@ export default function AddRecognitionModal({
               onBlur={handleUrlBlur}
               placeholder="https://luxeinteriors.com/feature/..."
               className="w-full px-4 py-2.5 text-sm rounded-xl border border-folio-border-subtle bg-surface-ground text-folio-text-primary outline-none transition-colors focus:border-[var(--folio-gold)]"
-              style={{
-                fontFamily: 'var(--font-body)',
-              }}
             />
             {fetching && (
               <p className="text-xs mt-1" style={{ color: 'var(--folio-gold)' }}>
@@ -156,9 +153,6 @@ export default function AddRecognitionModal({
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Featured in Luxe Interiors + Design"
               className="w-full px-4 py-2.5 text-sm rounded-xl border border-folio-border-subtle bg-surface-ground text-folio-text-primary outline-none transition-colors focus:border-[var(--folio-gold)]"
-              style={{
-                fontFamily: 'var(--font-body)',
-              }}
             />
           </div>
 
@@ -173,9 +167,6 @@ export default function AddRecognitionModal({
               onChange={(e) => setSource(e.target.value)}
               placeholder="Luxe Interiors + Design"
               className="w-full px-4 py-2.5 text-sm rounded-xl border border-folio-border-subtle bg-surface-ground text-folio-text-primary outline-none transition-colors focus:border-[var(--folio-gold)]"
-              style={{
-                fontFamily: 'var(--font-body)',
-              }}
             />
           </div>
 
@@ -212,9 +203,6 @@ export default function AddRecognitionModal({
               value={date}
               onChange={(e) => setDate(e.target.value)}
               className="w-full px-4 py-2.5 text-sm rounded-xl border border-folio-border-subtle bg-surface-ground text-folio-text-primary outline-none transition-colors focus:border-[var(--folio-gold)]"
-              style={{
-                fontFamily: 'var(--font-body)',
-              }}
             />
           </div>
 
@@ -229,9 +217,6 @@ export default function AddRecognitionModal({
               placeholder="Our Coral Gables residence was the cover story for the Spring 2024 issue."
               rows={3}
               className="w-full px-4 py-2.5 text-sm rounded-xl border border-folio-border-subtle bg-surface-ground text-folio-text-primary outline-none transition-colors focus:border-[var(--folio-gold)] resize-none"
-              style={{
-                fontFamily: 'var(--font-body)',
-              }}
             />
           </div>
 

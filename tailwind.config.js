@@ -176,8 +176,7 @@ module.exports = {
         // Folio Design System typography
         headline: 'var(--font-headline)',
         body: 'var(--font-body)',
-        logo: 'var(--font-logo)',
-        // Legacy fonts
+        // Legacy fonts (alias to canonical headline/body via globals.css)
         serif: "var(--font-serif)",
         sans: "var(--font-sans)",
         canela: ["ui-serif", "Georgia", "Cambria", "Times New Roman", "Times", "serif"],

@@ -51,7 +51,7 @@ export function ProfileField({
       <div className="flex items-center justify-between mb-1.5">
         <label
           className="text-xs font-medium"
-          style={{ color: '#6B635B', fontFamily: 'var(--font-body)' }}
+          style={{ color: '#6B635B' }}
         >
           {label}
         </label>
@@ -84,9 +84,8 @@ export function ProfileField({
           style={{
             borderColor: '#E8E4DF',
             backgroundColor: 'var(--surface-ground)',
-            color: '#2C2825',
-            fontFamily: 'var(--font-body)',
-          }}
+            color: '#2C2825'
+            }}
           rows={fieldName === 'bio' || fieldName === 'description' ? 5 : 3}
         />
       ) : (
@@ -98,9 +97,8 @@ export function ProfileField({
           style={{
             borderColor: '#E8E4DF',
             backgroundColor: 'var(--surface-ground)',
-            color: '#2C2825',
-            fontFamily: 'var(--font-body)',
-          }}
+            color: '#2C2825'
+            }}
         />
       )}
     </div>

@@ -93,10 +93,10 @@ export default function OrgShopTab({ products }: OrgShopTabProps) {
             <path d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </div>
-        <p style={{ fontFamily: 'var(--font-body, "Instrument Sans", sans-serif)', fontSize: '15px', color: '#8B8178' }}>
+        <p style={{ fontSize: '15px', color: '#8B8178' }}>
           No products yet
         </p>
-        <p style={{ fontFamily: 'var(--font-body, "Instrument Sans", sans-serif)', fontSize: '13px', color: '#A69E96', marginTop: '4px' }}>
+        <p style={{ fontSize: '13px', color: '#A69E96', marginTop: '4px' }}>
           Products tagged in projects will appear here.
         </p>
       </div>
@@ -116,8 +116,7 @@ export default function OrgShopTab({ products }: OrgShopTabProps) {
                 borderColor: category === c ? '#2C2825' : '#E8E4DF',
                 backgroundColor: category === c ? '#2C2825' : 'transparent',
                 color: category === c ? 'var(--surface-ground)' : '#8B8178',
-                fontFamily: 'var(--font-body, "Instrument Sans", sans-serif)',
-                cursor: 'pointer',
+                cursor: 'pointer'
               }}
             >
               {c === 'All' ? 'All' : getCategoryLabel(c)}

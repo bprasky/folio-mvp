@@ -73,10 +73,9 @@ export function RoomExpand({
               <span
                 className="uppercase tracking-[1.5px]"
                 style={{
-                  fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
                   fontSize: "10px",
                   fontWeight: 500,
-                  color: "rgba(87, 75, 67, 0.55)",
+                  color: "rgba(87, 75, 67, 0.55)"
                 }}
               >
                 {room.roomLabel}
@@ -85,8 +84,7 @@ export function RoomExpand({
                 onClick={onCollapse}
                 className="text-[11px] transition-colors hover:opacity-70"
                 style={{
-                  fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
-                  color: "rgba(87, 75, 67, 0.3)",
+                  color: "rgba(87, 75, 67, 0.3)"
                 }}
               >
                 Collapse ↑
@@ -99,10 +97,9 @@ export function RoomExpand({
                 <p
                   className="whitespace-pre-line"
                   style={{
-                    fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
                     fontSize: "15px",
                     lineHeight: 1.75,
-                    color: "rgba(87, 75, 67, 0.85)",
+                    color: "rgba(87, 75, 67, 0.85)"
                   }}
                 >
                   {room.editorialNarrative}
@@ -141,10 +138,9 @@ export function RoomExpand({
                 <h4
                   className="mb-3 uppercase tracking-[1.5px]"
                   style={{
-                    fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
                     fontSize: "10px",
                     fontWeight: 500,
-                    color: "rgba(87, 75, 67, 0.3)",
+                    color: "rgba(87, 75, 67, 0.3)"
                   }}
                 >
                   Tagged Products
@@ -170,10 +166,9 @@ export function RoomExpand({
                         <div
                           className="truncate"
                           style={{
-                            fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
                             fontSize: "12px",
                             fontWeight: 500,
-                            color: "rgba(87, 75, 67, 0.85)",
+                            color: "rgba(87, 75, 67, 0.85)"
                           }}
                         >
                           {product.name}
@@ -182,9 +177,8 @@ export function RoomExpand({
                           <div
                             className="truncate"
                             style={{
-                              fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
                               fontSize: "11px",
-                              color: "rgba(87, 75, 67, 0.45)",
+                              color: "rgba(87, 75, 67, 0.45)"
                             }}
                           >
                             {product.vendor.name || product.vendor.companyName}
@@ -206,8 +200,7 @@ export function RoomExpand({
                 onClick={onCollapse}
                 className="text-[11px] transition-colors hover:opacity-70"
                 style={{
-                  fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
-                  color: "rgba(87, 75, 67, 0.3)",
+                  color: "rgba(87, 75, 67, 0.3)"
                 }}
               >
                 Collapse ↑

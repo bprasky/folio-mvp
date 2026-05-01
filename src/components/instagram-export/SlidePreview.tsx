@@ -83,14 +83,14 @@ export function SlidePreview({
           </div>
           {/* Text content */}
           <div style={{ flex: 1, padding: '0 28px 24px', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', position: 'relative', zIndex: 1 }}>
-            <div style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: '18px', color: '#2C2420', marginBottom: '3px', letterSpacing: '0.5px' }}>
+            <div style={{ fontFamily: "var(--font-headline)", fontSize: '18px', color: '#2C2420', marginBottom: '3px', letterSpacing: '0.5px' }}>
               {designerName}
             </div>
             <div style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: '9px', letterSpacing: '2.5px', textTransform: 'uppercase', color: '#A89880', marginBottom: '16px' }}>
               {designerTitle ? `${designerTitle} · ` : ''}{studioName || ''}
             </div>
             <div style={{ width: '32px', height: '1px', background: '#C4B5A0', marginBottom: '16px' }} />
-            <div style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: '13px', lineHeight: 1.65, color: '#4A3F35', fontStyle: 'italic' }}>
+            <div style={{ fontFamily: "var(--font-headline)", fontSize: '13px', lineHeight: 1.65, color: '#4A3F35', fontStyle: 'italic' }}>
               {bioText || 'Designer bio will appear here...'}
             </div>
           </div>
@@ -108,10 +108,10 @@ export function SlidePreview({
     if (slide.type === 'cta') {
       return (
         <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, #F5F0EB 0%, #EDE6DD 100%)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
-          <div style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: '14px', letterSpacing: '3px', color: '#4A3F35', textTransform: 'uppercase', marginBottom: '20px' }}>
+          <div style={{ fontFamily: "var(--font-headline)", fontSize: '14px', letterSpacing: '3px', color: '#4A3F35', textTransform: 'uppercase', marginBottom: '20px' }}>
             Full Editorial
           </div>
-          <div style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: '28px', color: '#2C2420', marginBottom: '8px', fontStyle: 'italic' }}>
+          <div style={{ fontFamily: "var(--font-headline)", fontSize: '28px', color: '#2C2420', marginBottom: '8px', fontStyle: 'italic' }}>
             folio
           </div>
           <div style={{ width: '40px', height: '1px', background: '#4A3F35', margin: '16px 0' }} />
@@ -146,7 +146,7 @@ export function SlidePreview({
           <>
             <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(${gradientDir}, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0) 50%)` }} />
             <div style={{ position: 'absolute', ...positionStyles[headlinePosition], zIndex: 2 }}>
-              <div style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: '20px', lineHeight: 1.3, color: '#FFFFFF', fontStyle: 'italic', textShadow: '0 1px 8px rgba(0,0,0,0.3)', maxWidth: '280px', margin: headlinePosition === 'bottom_center' ? '0 auto' : undefined }}>
+              <div style={{ fontFamily: "var(--font-headline)", fontSize: '20px', lineHeight: 1.3, color: '#FFFFFF', fontStyle: 'italic', textShadow: '0 1px 8px rgba(0,0,0,0.3)', maxWidth: '280px', margin: headlinePosition === 'bottom_center' ? '0 auto' : undefined }}>
                 &ldquo;{headline || 'Your headline here'}&rdquo;
               </div>
             </div>

@@ -89,13 +89,12 @@ export function QuoteTile({
         {/* Room label */}
         <span
           style={{
-            fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
             fontSize: "10px",
             fontWeight: 500,
             textTransform: "uppercase",
             letterSpacing: "1.5px",
             color: "rgba(87, 75, 67, 0.55)",
-            ...stagger(0),
+            ...stagger(0)
           }}
         >
           {roomLabel}
@@ -105,7 +104,7 @@ export function QuoteTile({
         {pullQuote && (
           <blockquote
             style={{
-              fontFamily: "var(--font-headline, 'Cormorant Garamond', serif)",
+              fontFamily: "var(--font-headline)",
               fontSize: wide ? "17px" : "22px",
               fontWeight: 400,
               fontStyle: "italic",
@@ -121,10 +120,9 @@ export function QuoteTile({
         {/* Attribution */}
         <span
           style={{
-            fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
             fontSize: "12px",
             color: "rgba(87, 75, 67, 0.55)",
-            ...stagger(160),
+            ...stagger(160)
           }}
         >
           &mdash; {attribution}
@@ -134,11 +132,10 @@ export function QuoteTile({
         {editorialTeaser && !wide && (
           <p
             style={{
-              fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
               fontSize: "13px",
               lineHeight: 1.6,
               color: "rgba(87, 75, 67, 0.45)",
-              ...stagger(240),
+              ...stagger(240)
             }}
           >
             {editorialTeaser}
@@ -150,10 +147,9 @@ export function QuoteTile({
       <span
         className={clsx(wide ? "whitespace-nowrap" : "mt-auto pt-3")}
         style={{
-          fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
           fontSize: "11px",
           color: "rgba(87, 75, 67, 0.3)",
-          ...stagger(320),
+          ...stagger(320)
         }}
       >
         {productCount > 0 && `${productCount} product${productCount !== 1 ? "s" : ""} · `}

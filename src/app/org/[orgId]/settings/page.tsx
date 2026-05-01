@@ -239,7 +239,7 @@ export default function OrgSettingsPage() {
           >
             {profileSourced ? 'Review What We Heard' : 'Studio Profile'}
           </h1>
-          <p className="text-sm" style={{ color: '#8B8178', fontFamily: 'var(--font-body)' }}>
+          <p className="text-sm" style={{ color: '#8B8178' }}>
             {profileSourced
               ? 'These fields were populated from your interview. Edit anything that needs adjusting.'
               : 'This is what designers, vendors, and clients see when they visit your profile.'}
@@ -374,7 +374,7 @@ export default function OrgSettingsPage() {
             <div className="flex items-center justify-between mb-1.5">
               <label
                 className="text-xs font-medium"
-                style={{ color: '#6B635B', fontFamily: 'var(--font-body)' }}
+                style={{ color: '#6B635B' }}
               >
                 Specialties
               </label>
@@ -422,9 +422,8 @@ export default function OrgSettingsPage() {
                 style={{
                   borderColor: '#E8E4DF',
                   backgroundColor: 'var(--surface-ground)',
-                  color: '#2C2825',
-                  fontFamily: 'var(--font-body)',
-                }}
+                  color: '#2C2825'
+                  }}
               />
               <button
                 onClick={addSpecialty}

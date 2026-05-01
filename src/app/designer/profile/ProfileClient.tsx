@@ -31,7 +31,7 @@ export default function ProfileClient({ data }: { data: ProfilePageData }) {
   const tagline = profileInterview?.shortBio || user.bio;
 
   return (
-    <div style={{ background: 'var(--surface-canvas)', minHeight: '100vh', fontFamily: 'var(--font-body)' }}>
+    <div style={{ background: 'var(--surface-canvas)', minHeight: '100vh' }}>
       <ProfileHero
         user={user}
         organization={organization}
@@ -90,11 +90,10 @@ function SavesEmptyState() {
     >
       <p
         style={{
-          fontFamily: 'var(--font-body)',
           fontSize: '16px',
           color: 'var(--text-secondary)',
           lineHeight: 1.6,
-          marginBottom: '28px',
+          marginBottom: '28px'
         }}
       >
         Start saving projects and products you love.

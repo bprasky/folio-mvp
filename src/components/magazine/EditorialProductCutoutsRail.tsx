@@ -34,7 +34,6 @@ export default function EditorialProductCutoutsRail({ products }: Props) {
     <section className="space-y-6">
       <h3
         className="text-[13px] font-normal uppercase tracking-[0.12em]"
-        style={{ fontFamily: 'var(--font-body)' }}
       >
         Featured Products
       </h3>

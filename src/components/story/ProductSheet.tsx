@@ -201,10 +201,9 @@ function SheetContent({
       <div>
         <h3
           style={{
-            fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
             fontSize: "16px",
             fontWeight: 500,
-            color: "rgba(87, 75, 67, 0.85)",
+            color: "rgba(87, 75, 67, 0.85)"
           }}
         >
           {product.name}
@@ -212,9 +211,8 @@ function SheetContent({
         {vendorName && (
           <p
             style={{
-              fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
               fontSize: "14px",
-              color: "rgba(87, 75, 67, 0.55)",
+              color: "rgba(87, 75, 67, 0.55)"
             }}
           >
             {vendorName}
@@ -228,7 +226,7 @@ function SheetContent({
           className="border-l-2 pl-4 py-1"
           style={{
             borderColor: "rgba(87, 75, 67, 0.1)",
-            fontFamily: "var(--font-headline, 'Cormorant Garamond', serif)",
+            fontFamily: "var(--font-headline)",
             fontSize: "16px",
             fontStyle: "italic",
             color: "rgba(87, 75, 67, 0.7)",
@@ -238,9 +236,8 @@ function SheetContent({
           <footer
             className="mt-1 not-italic"
             style={{
-              fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
               fontSize: "11px",
-              color: "rgba(87, 75, 67, 0.4)",
+              color: "rgba(87, 75, 67, 0.4)"
             }}
           >
             &mdash; {designerName}, {quote.role}
@@ -256,11 +253,10 @@ function SheetContent({
           rel="noopener noreferrer"
           className="mt-2 inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 transition-colors"
           style={{
-            fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
             fontSize: "13px",
             fontWeight: 500,
             color: "rgba(87, 75, 67, 0.7)",
-            border: "1px solid rgba(87, 75, 67, 0.12)",
+            border: "1px solid rgba(87, 75, 67, 0.12)"
           }}
         >
           View at {vendorName || "vendor"}

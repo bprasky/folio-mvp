@@ -198,9 +198,6 @@ export default function InviteTeamModal({
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by name or email"
               className="w-full px-4 py-2.5 text-sm rounded-xl border outline-none transition-colors focus:border-[var(--folio-gold)] border-folio-border-subtle bg-surface-ground text-folio-text-primary"
-              style={{
-                fontFamily: 'var(--font-body)',
-              }}
             />
 
             {/* Search results */}
@@ -267,9 +264,6 @@ export default function InviteTeamModal({
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter email address"
               className="w-full px-4 py-2.5 text-sm rounded-xl border outline-none transition-colors focus:border-[var(--folio-gold)] border-folio-border-subtle bg-surface-ground text-folio-text-primary"
-              style={{
-                fontFamily: 'var(--font-body)',
-              }}
             />
 
             <div className="flex items-center gap-3">

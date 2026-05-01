@@ -109,9 +109,8 @@ export default function GuidedSetupCard({
       <p
         className="text-sm md:text-base mb-8"
         style={{
-          fontFamily: 'var(--font-body)',
           color: '#6B635B',
-          lineHeight: 1.6,
+          lineHeight: 1.6
         }}
       >
         Your profile is your portfolio&apos;s front door.
@@ -185,8 +184,7 @@ function StepRow({
           <p
             className="text-sm font-medium"
             style={{
-              fontFamily: 'var(--font-body)',
-              color: isComplete ? '#8B8178' : '#2C2825',
+              color: isComplete ? '#8B8178' : '#2C2825'
             }}
           >
             {isComplete ? step.completeSummary : step.title}
@@ -196,9 +194,8 @@ function StepRow({
             <p
               className="text-xs mt-1"
               style={{
-                fontFamily: 'var(--font-body)',
                 color: '#8B8178',
-                lineHeight: 1.5,
+                lineHeight: 1.5
               }}
             >
               {step.description}
@@ -217,8 +214,7 @@ function StepRow({
                   backgroundColor: isNext ? '#2C2825' : 'transparent',
                   color: isNext ? 'var(--surface-ground)' : '#6B635B',
                   border: isNext ? 'none' : '1px solid #D4CEC6',
-                  fontFamily: 'var(--font-body)',
-                  fontWeight: 500,
+                  fontWeight: 500
                 }}
               >
                 {step.cta.label}
@@ -231,8 +227,7 @@ function StepRow({
                   backgroundColor: isNext ? '#2C2825' : 'transparent',
                   color: isNext ? 'var(--surface-ground)' : '#6B635B',
                   border: isNext ? 'none' : '1px solid #D4CEC6',
-                  fontFamily: 'var(--font-body)',
-                  fontWeight: 500,
+                  fontWeight: 500
                 }}
               >
                 {step.cta.label}

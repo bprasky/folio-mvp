@@ -182,3 +182,40 @@ non-DOM rendering paths — pdfkit (PDF generation), `qrcode` (QR codes), and
 HTML email templates can't resolve `var()`. Add them to the CI guard's
 exemption list explicitly with a comment explaining why; otherwise a future
 contributor will "fix" them and break PDF / QR / email rendering.
+
+
+---
+
+## 2026-05-01 — typography: phantom aliases hide behind fallback chains
+
+`var(--font-cormorant, 'Cormorant Garamond', serif)` rendered correctly in
+the browser and read fine in code review, but `--font-cormorant` was never
+defined anywhere — the literal fallback was doing all the work. CSS variable
+typos fail silently when fallbacks exist.
+
+**Rule:** every `var(--token-*)` reference's token name must match a
+declaration in `globals.css`. The CI guard for Task 03 forbids
+`var(--font-cormorant)`, `var(--font-instrument)`, and `var(--font-logo)` by
+name. When introducing a new CSS variable, remember to grep the codebase for
+any existing typo of the name; rename your declaration to match callers, not
+the other way round, if the typo is widespread.
+
+**Inline declarations that restate inherited defaults are pure noise.**
+`<body>` already sets `font-[var(--font-body)]`. The 80+ inline
+`style={{ fontFamily: 'var(--font-body)' }}` declarations existed because
+authors defensively re-asserted the body font — they didn't change anything,
+they just obscured which elements actually wanted a font *switch* (the
+`var(--font-headline)` ones). 87 callsites collapsed to 4 (FolioBadgeModal
+QR-export carve-out) by deleting redundant declarations.
+
+**Codemod nuance:** a regex that matches `style={{ ... }}` on a single line
+won't catch the multiline JSX form
+```jsx
+<p
+  className="..."
+  style={{ fontFamily: "var(--font-body)" }}
+>
+```
+because the prop is its own line. Audit the post-codemod grep count and
+clean up the long-tail manually. (For Task 03 this was 4 callsites in
+MagazineFeedClient and project/interaction.)

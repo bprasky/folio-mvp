@@ -46,7 +46,7 @@ export function HeadlineTab({
           <div style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase' as const, color: '#8B7B68', marginBottom: '8px', fontWeight: 500 }}>
             Current Headline
           </div>
-          <div style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: '16px', fontStyle: 'italic', color: '#2C2420', lineHeight: 1.4 }}>
+          <div style={{ fontFamily: "var(--font-headline)", fontSize: '16px', fontStyle: 'italic', color: '#2C2420', lineHeight: 1.4 }}>
             &ldquo;{selectedHeadline}&rdquo;
           </div>
         </div>
@@ -86,7 +86,7 @@ export function HeadlineTab({
                   cursor: 'pointer',
                   transition: 'all 0.2s',
                   textAlign: 'left' as const,
-                  fontFamily: "'Playfair Display', Georgia, serif",
+                  fontFamily: "var(--font-headline)",
                   fontSize: '15px',
                   fontStyle: 'italic',
                   color: selectedHeadline === quote ? '#2C2420' : '#8B7B68',

@@ -54,7 +54,7 @@ export function BreatherQuote({
       <blockquote
         className="mx-auto max-w-[600px] px-6"
         style={{
-          fontFamily: "var(--font-headline, 'Cormorant Garamond', serif)",
+          fontFamily: "var(--font-headline)",
           fontSize: "clamp(22px, 3vw, 26px)",
           fontStyle: "italic",
           fontWeight: 400,
@@ -76,13 +76,12 @@ export function BreatherQuote({
       <footer
         className="mt-4"
         style={{
-          fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
           fontSize: "12px",
           color: "rgba(87, 75, 67, 0.35)",
           opacity: revealed ? 1 : 0,
           transition: reducedMotion
             ? undefined
-            : "opacity 500ms ease 300ms",
+            : "opacity 500ms ease 300ms"
         }}
       >
         &mdash; {attribution}
