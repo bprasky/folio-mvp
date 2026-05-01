@@ -118,14 +118,22 @@ async function selectXlHero(): Promise<HomepageHero | null> {
     return mapHero(scheduled, daysRemainingEyebrow(scheduled.homepageXlEndsAt));
   }
 
-  // 2. Algorithmic fallback: highest-engagement post in last 14 days.
+  // 2. Algorithmic fallback: most recent published post in the last 14 days.
+  //
+  // Originally this ordered by `postSaves: { _count: "desc" }` to surface
+  // highest-engagement work, but `post_saves` is part of pre-existing schema
+  // drift (declared in schema.prisma, never migrated to prod) and joining to
+  // it 500'd the homepage on first load. Most-recent-published is also more
+  // aligned with the editorial brand: "Editor's Pick" + recency reads
+  // editorial; save-count reads algorithmic. Engagement-weighted ordering
+  // can come back when post_saves is reconciled by a Phase 5 fix.
   const since = new Date(now.getTime() - FALLBACK_LOOKBACK_DAYS * 24 * 60 * 60 * 1000);
   const fallback = await prisma.projectPost.findFirst({
     where: {
       status: "PUBLISHED",
       publishedAt: { gte: since },
     },
-    orderBy: [{ postSaves: { _count: "desc" } }, { publishedAt: "desc" }],
+    orderBy: { publishedAt: "desc" },
     select: heroSelect,
   });
   if (fallback) {
