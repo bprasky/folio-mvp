@@ -270,7 +270,6 @@ async function buildBoostReel(
           id: true,
           name: true,
           imageUrl: true,
-          cutoutImageUrl: true,
           vendor: { select: { name: true } },
         },
       },
@@ -342,7 +341,7 @@ async function buildBoostReel(
   orderedIds.forEach((pid, i) => {
     const tag = uniqueProducts.get(pid);
     if (!tag?.product) return;
-    const imageUrl = tag.product.cutoutImageUrl ?? tag.product.imageUrl ?? "";
+    const imageUrl = tag.product.imageUrl ?? "";
     if (!imageUrl) return;
     const boost = winningBoostByProduct.get(pid);
     const isBoosted = i < REEL_PAID_SLOTS && !!boost;
