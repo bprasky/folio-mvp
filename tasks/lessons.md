@@ -162,3 +162,23 @@ copy-paste. The `design-system-discipline.yml` workflow now scans `src/` and
 `tailwind.config.js` on every PR. Email templates and the pdfkit spec-sheet
 renderer are explicit exemptions because CSS variables don't resolve in
 mail clients or PDF generators.
+
+
+---
+
+## 2026-05-01 — canvas consolidation: deprecated aliases die with their introducer
+
+`--bg-base` was kept as an alias for `--surface-canvas` "for migration safety,"
+but six months later 50 callsites still leaned on the alias instead of the
+canonical token. The alias gives no signal that migration is incomplete —
+new code copy-pastes the alias because it works.
+
+**Better pattern:** when introducing a successor token, scan the codebase and
+migrate every callsite in the same PR, then delete the alias. The alias buys
+nothing if it survives the PR that introduced it.
+
+**Codemod nuance:** when migrating hex literals to CSS vars, audit the
+non-DOM rendering paths — pdfkit (PDF generation), `qrcode` (QR codes), and
+HTML email templates can't resolve `var()`. Add them to the CI guard's
+exemption list explicitly with a comment explaining why; otherwise a future
+contributor will "fix" them and break PDF / QR / email rendering.

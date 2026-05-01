@@ -64,7 +64,7 @@ export function ForYouFeed() {
             <div
               key={i}
               className="rounded-xl animate-pulse"
-              style={{ aspectRatio: "3/4", background: "var(--surface-ground, #faf8f5)" }}
+              style={{ aspectRatio: "3/4", background: "var(--surface-ground)" }}
             />
           ))}
         </div>
@@ -103,7 +103,7 @@ export function ForYouFeed() {
                 {/* Image */}
                 <div
                   className="relative rounded-xl overflow-hidden mb-2.5"
-                  style={{ aspectRatio: "3/4", background: "var(--surface-ground, #faf8f5)" }}
+                  style={{ aspectRatio: "3/4", background: "var(--surface-ground)" }}
                 >
                   {product.imageUrl ? (
                     <Image

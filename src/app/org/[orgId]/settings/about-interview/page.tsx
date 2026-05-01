@@ -273,7 +273,7 @@ export default function OrgAboutInterviewPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#FAF9F7' }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--surface-ground)' }}>
         <Loader2 className="w-6 h-6 animate-spin" style={{ color: '#8B8178' }} />
       </div>
     );
@@ -282,7 +282,7 @@ export default function OrgAboutInterviewPage() {
   // Step: Choose Path
   if (step === 'choose-path') {
     return (
-      <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#FAF9F7' }}>
+      <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--surface-ground)' }}>
         <div className="flex items-center justify-between px-8 py-4 border-b" style={{ borderColor: '#E8E4DF' }}>
           <button
             onClick={() => router.back()}
@@ -314,7 +314,7 @@ export default function OrgAboutInterviewPage() {
               <button
                 onClick={() => setStep('import-bio')}
                 className="flex items-center gap-3 px-8 py-4 rounded-full text-sm font-medium transition-all hover:opacity-90"
-                style={{ backgroundColor: '#2C2825', color: '#FAF9F7', fontFamily: 'var(--font-body)' }}
+                style={{ backgroundColor: '#2C2825', color: 'var(--surface-ground)', fontFamily: 'var(--font-body)' }}
               >
                 <LinkIcon className="w-4 h-4" />
                 Link or paste a bio
@@ -338,7 +338,7 @@ export default function OrgAboutInterviewPage() {
   // Step: Import Bio
   if (step === 'import-bio') {
     return (
-      <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#FAF9F7' }}>
+      <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--surface-ground)' }}>
         <div className="flex items-center justify-between px-8 py-4 border-b" style={{ borderColor: '#E8E4DF' }}>
           <button
             onClick={() => setStep('choose-path')}
@@ -396,7 +396,7 @@ export default function OrgAboutInterviewPage() {
                   className="flex-1 px-4 py-2.5 text-sm rounded-xl border outline-none transition-colors focus:border-[var(--folio-gold)]"
                   style={{
                     borderColor: '#E8E4DF',
-                    backgroundColor: '#FAF9F7',
+                    backgroundColor: 'var(--surface-ground)',
                     color: '#2C2825',
                     fontFamily: 'var(--font-body)',
                   }}
@@ -433,7 +433,7 @@ export default function OrgAboutInterviewPage() {
               className="w-full min-h-[200px] px-4 py-3 text-sm rounded-xl border outline-none transition-colors focus:border-[var(--folio-gold)] resize-y leading-relaxed"
               style={{
                 borderColor: '#E8E4DF',
-                backgroundColor: '#FAF9F7',
+                backgroundColor: 'var(--surface-ground)',
                 color: '#2C2825',
                 fontFamily: 'var(--font-body)',
               }}
@@ -444,7 +444,7 @@ export default function OrgAboutInterviewPage() {
                 onClick={handleAnalyzeBio}
                 disabled={!bioText.trim()}
                 className="flex items-center gap-2 px-8 py-3 rounded-full text-sm font-medium transition-all hover:opacity-90 disabled:opacity-40"
-                style={{ backgroundColor: '#2C2825', color: '#FAF9F7', fontFamily: 'var(--font-body)' }}
+                style={{ backgroundColor: '#2C2825', color: 'var(--surface-ground)', fontFamily: 'var(--font-body)' }}
               >
                 <FileText className="w-4 h-4" />
                 Analyze my bio
@@ -460,7 +460,7 @@ export default function OrgAboutInterviewPage() {
   // Step: Analyzing
   if (step === 'analyzing') {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center" style={{ backgroundColor: '#FAF9F7' }}>
+      <div className="min-h-screen flex flex-col items-center justify-center" style={{ backgroundColor: 'var(--surface-ground)' }}>
         <Sparkles className="w-12 h-12 animate-pulse mb-6" style={{ color: 'var(--folio-gold)' }} />
         <h3
           className="text-2xl italic mb-3"
@@ -524,7 +524,7 @@ export default function OrgAboutInterviewPage() {
     };
 
     return (
-      <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#FAF9F7' }}>
+      <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--surface-ground)' }}>
         <div className="flex items-center justify-between px-8 py-4 border-b" style={{ borderColor: '#E8E4DF' }}>
           <button
             onClick={() => setStep('import-bio')}
@@ -590,7 +590,7 @@ export default function OrgAboutInterviewPage() {
               <button
                 onClick={handleCoverageContinue}
                 className="flex items-center gap-2 px-8 py-3 rounded-full text-sm font-medium transition-all hover:opacity-90"
-                style={{ backgroundColor: '#2C2825', color: '#FAF9F7', fontFamily: 'var(--font-body)' }}
+                style={{ backgroundColor: '#2C2825', color: 'var(--surface-ground)', fontFamily: 'var(--font-body)' }}
               >
                 {allCovered ? 'Build my profile' : 'Continue'}
                 <ChevronRight className="w-4 h-4" />
@@ -605,7 +605,7 @@ export default function OrgAboutInterviewPage() {
   // Step: Generating
   if (step === 'generating') {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center" style={{ backgroundColor: '#FAF9F7' }}>
+      <div className="min-h-screen flex flex-col items-center justify-center" style={{ backgroundColor: 'var(--surface-ground)' }}>
         <Sparkles className="w-16 h-16 animate-pulse mb-6" style={{ color: 'var(--folio-gold)' }} />
         <h3
           className="text-3xl italic mb-3"
@@ -624,7 +624,7 @@ export default function OrgAboutInterviewPage() {
   // Step: Complete
   if (step === 'complete') {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center" style={{ backgroundColor: '#FAF9F7' }}>
+      <div className="min-h-screen flex flex-col items-center justify-center" style={{ backgroundColor: 'var(--surface-ground)' }}>
         <div
           className="w-20 h-20 rounded-full flex items-center justify-center mb-6"
           style={{ backgroundColor: 'rgba(34, 197, 94, 0.1)' }}
@@ -643,7 +643,7 @@ export default function OrgAboutInterviewPage() {
         <button
           onClick={handleFinish}
           className="px-8 py-3 rounded-full text-sm font-medium transition-all hover:opacity-90"
-          style={{ backgroundColor: '#2C2825', color: '#FAF9F7' }}
+          style={{ backgroundColor: '#2C2825', color: 'var(--surface-ground)' }}
         >
           Review Profile
         </button>
@@ -653,7 +653,7 @@ export default function OrgAboutInterviewPage() {
 
   // Step: Interview (gap questions or full)
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#FAF9F7' }}>
+    <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--surface-ground)' }}>
       {/* Header */}
       <div className="flex items-center justify-between px-8 py-4 border-b" style={{ borderColor: '#E8E4DF' }}>
         <button
@@ -758,7 +758,7 @@ export default function OrgAboutInterviewPage() {
           onClick={handleNext}
           disabled={isSubmitting}
           className="flex items-center gap-2 px-6 py-3 rounded-full text-sm font-medium transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
-          style={{ backgroundColor: '#2C2825', color: '#FAF9F7', fontFamily: 'var(--font-body)' }}
+          style={{ backgroundColor: '#2C2825', color: 'var(--surface-ground)', fontFamily: 'var(--font-body)' }}
         >
           <span>
             {currentIndex === activeQuestions.length - 1 ? 'Generate Profile' : 'Continue'}

@@ -297,7 +297,7 @@ export default function ProjectsPageClient({ projectsRaw, operatingAsOrgId }: Pr
                   className={cn(
                     "px-4 py-2 folio-ui font-medium rounded-full transition-colors",
                     activeContextTab === 'all'
-                      ? "bg-[var(--text-primary)] text-[var(--bg-elevated)]"
+                      ? "bg-[var(--text-primary)] text-[var(--surface-ground)]"
                       : "bg-surface-canvas text-folio-text-secondary hover:bg-surface-ground"
                   )}
                 >
@@ -308,7 +308,7 @@ export default function ProjectsPageClient({ projectsRaw, operatingAsOrgId }: Pr
                   className={cn(
                     "px-4 py-2 folio-ui font-medium rounded-full transition-colors flex items-center gap-2",
                     activeContextTab === 'personal'
-                      ? "bg-[var(--text-primary)] text-[var(--bg-elevated)]"
+                      ? "bg-[var(--text-primary)] text-[var(--surface-ground)]"
                       : "bg-surface-canvas text-folio-text-secondary hover:bg-surface-ground"
                   )}
                 >
@@ -320,7 +320,7 @@ export default function ProjectsPageClient({ projectsRaw, operatingAsOrgId }: Pr
                   className={cn(
                     "px-4 py-2 folio-ui font-medium rounded-full transition-colors flex items-center gap-2",
                     activeContextTab === 'organization'
-                      ? "bg-[var(--text-primary)] text-[var(--bg-elevated)]"
+                      ? "bg-[var(--text-primary)] text-[var(--surface-ground)]"
                       : "bg-surface-canvas text-folio-text-secondary hover:bg-surface-ground"
                   )}
                 >
@@ -1244,7 +1244,7 @@ function ProjectCard({ p, onRename, onDelete, onForceDelete }: {
                             e.stopPropagation();
                             handleRename();
                           }}
-                          className="flex-1 px-2 py-1 folio-meta bg-[var(--text-primary)] text-[var(--bg-elevated)] rounded hover:opacity-90"
+                          className="flex-1 px-2 py-1 folio-meta bg-[var(--text-primary)] text-[var(--surface-ground)] rounded hover:opacity-90"
                         >
                           Save
                         </button>

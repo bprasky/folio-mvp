@@ -42,7 +42,7 @@ export function DesignerFunnelSection() {
               Unlock AI to see which designers are most likely to spec your products next.
             </span>
             <button 
-              className="rounded-xl px-3 py-1 bg-[var(--text-primary)] text-[var(--bg-base)] hover:opacity-90 transition text-xs"
+              className="rounded-xl px-3 py-1 bg-[var(--text-primary)] text-[var(--surface-canvas)] hover:opacity-90 transition text-xs"
               onClick={() => {
                 // TODO: Wire to upgrade/payment flow
                 console.log('[AI HOT DESIGNERS] Unlock AI clicked');

@@ -85,7 +85,7 @@ export function VendorFeed({ orgId }: VendorFeedProps) {
       {loading && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="rounded-xl animate-pulse h-64" style={{ background: "var(--surface-ground, #faf8f5)" }} />
+            <div key={i} className="rounded-xl animate-pulse h-64" style={{ background: "var(--surface-ground)" }} />
           ))}
         </div>
       )}
@@ -124,7 +124,7 @@ function MosaicCard({ item }: { item: FeedItem }) {
   const Wrapper = href ? Link : "div";
 
   return (
-    <Wrapper {...(href ? { href } : {})} className="block rounded-xl overflow-hidden group" style={{ background: "var(--surface-ground, #faf8f5)" }}>
+    <Wrapper {...(href ? { href } : {})} className="block rounded-xl overflow-hidden group" style={{ background: "var(--surface-ground)" }}>
       {/* Mosaic: product + project side by side */}
       <div className="flex" style={{ height: 200 }}>
         {/* Product image */}
@@ -170,7 +170,7 @@ function ArticleCard({ item }: { item: FeedItem }) {
   const isVendor = item.type === "vendor_article";
 
   return (
-    <div className="rounded-xl overflow-hidden" style={{ background: "var(--surface-ground, #faf8f5)" }}>
+    <div className="rounded-xl overflow-hidden" style={{ background: "var(--surface-ground)" }}>
       {item.heroImage && (
         <div className="relative" style={{ height: 180 }}>
           <Image src={item.heroImage} alt={item.title || ""} fill className="object-cover" sizes="400px" />
@@ -200,7 +200,7 @@ function ArticleCard({ item }: { item: FeedItem }) {
 /** Product launch card */
 function ProductLaunchCard({ item }: { item: FeedItem }) {
   return (
-    <Link href={`/products/${item.id}`} className="block rounded-xl overflow-hidden group" style={{ background: "var(--surface-ground, #faf8f5)" }}>
+    <Link href={`/products/${item.id}`} className="block rounded-xl overflow-hidden group" style={{ background: "var(--surface-ground)" }}>
       <div className="relative" style={{ height: 200 }}>
         {item.productImage && (
           <Image src={item.productImage} alt={item.productName || ""} fill className="object-cover transition-transform duration-300 group-hover:scale-105" sizes="400px" />

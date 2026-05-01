@@ -32,7 +32,7 @@ export function ProfileField({
     return (
       <div
         className="rounded-xl border p-4"
-        style={{ borderColor: '#E8E4DF', backgroundColor: '#FAF9F7' }}
+        style={{ borderColor: '#E8E4DF', backgroundColor: 'var(--surface-ground)' }}
       >
         <p className="text-sm mb-2" style={{ color: '#8B8178' }}>{label}</p>
         <button
@@ -83,7 +83,7 @@ export function ProfileField({
           className="w-full px-4 py-2.5 text-sm rounded-xl border outline-none transition-colors focus:border-[var(--folio-gold)] resize-none"
           style={{
             borderColor: '#E8E4DF',
-            backgroundColor: '#FAF9F7',
+            backgroundColor: 'var(--surface-ground)',
             color: '#2C2825',
             fontFamily: 'var(--font-body)',
           }}
@@ -97,7 +97,7 @@ export function ProfileField({
           className="w-full px-4 py-2.5 text-sm rounded-xl border outline-none transition-colors focus:border-[var(--folio-gold)]"
           style={{
             borderColor: '#E8E4DF',
-            backgroundColor: '#FAF9F7',
+            backgroundColor: 'var(--surface-ground)',
             color: '#2C2825',
             fontFamily: 'var(--font-body)',
           }}

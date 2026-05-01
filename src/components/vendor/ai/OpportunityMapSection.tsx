@@ -29,7 +29,7 @@ export function OpportunityMapSection() {
             Unlock AI to see a ranked map of events, designers, and SKUs by impact score.
           </span>
           <button
-            className="rounded-xl px-4 py-2 bg-[var(--text-primary)] text-[var(--bg-base)] hover:opacity-90 transition text-sm"
+            className="rounded-xl px-4 py-2 bg-[var(--text-primary)] text-[var(--surface-canvas)] hover:opacity-90 transition text-sm"
             onClick={() => {
               // TODO: Wire to upgrade/payment flow
               console.log('[AI OPPORTUNITY] Unlock AI clicked');

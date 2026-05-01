@@ -100,7 +100,7 @@ export default async function ProfilePage({ params, searchParams }: Props) {
   const team = primaryOrg?.teamMembers || [];
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#FAF9F7' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--surface-ground)' }}>
       <ProfileHero
         user={user}
         projectCount={projectCount}

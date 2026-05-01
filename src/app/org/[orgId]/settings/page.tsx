@@ -202,7 +202,7 @@ export default function OrgSettingsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#FAF9F7' }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--surface-ground)' }}>
         <p className="text-sm" style={{ color: '#8B8178' }}>Loading...</p>
       </div>
     );
@@ -210,7 +210,7 @@ export default function OrgSettingsPage() {
 
   if (!isAuthorized) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#FAF9F7' }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--surface-ground)' }}>
         <div className="text-center">
           <h3 className="text-lg font-medium mb-2" style={{ color: '#2C2825' }}>Access Denied</h3>
           <p className="text-sm mb-4" style={{ color: '#8B8178' }}>
@@ -219,7 +219,7 @@ export default function OrgSettingsPage() {
           <button
             onClick={() => router.push(`/org/${orgId}`)}
             className="px-5 py-2 text-sm rounded-full transition-all hover:opacity-80"
-            style={{ backgroundColor: '#2C2825', color: '#FAF9F7' }}
+            style={{ backgroundColor: '#2C2825', color: 'var(--surface-ground)' }}
           >
             Go Back
           </button>
@@ -229,7 +229,7 @@ export default function OrgSettingsPage() {
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#FAF9F7' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--surface-ground)' }}>
       <div className="max-w-2xl mx-auto px-6 py-12">
         {/* Header */}
         <div className="mb-8">
@@ -421,7 +421,7 @@ export default function OrgSettingsPage() {
                 className="flex-1 px-4 py-2.5 text-sm rounded-xl border outline-none transition-colors focus:border-[var(--folio-gold)]"
                 style={{
                   borderColor: '#E8E4DF',
-                  backgroundColor: '#FAF9F7',
+                  backgroundColor: 'var(--surface-ground)',
                   color: '#2C2825',
                   fontFamily: 'var(--font-body)',
                 }}
@@ -450,7 +450,7 @@ export default function OrgSettingsPage() {
             onClick={handleSave}
             disabled={saving}
             className="px-6 py-2.5 text-sm rounded-full transition-all hover:opacity-80 disabled:opacity-50"
-            style={{ backgroundColor: '#2C2825', color: '#FAF9F7' }}
+            style={{ backgroundColor: '#2C2825', color: 'var(--surface-ground)' }}
           >
             {saving ? 'Saving...' : 'Save Profile'}
           </button>

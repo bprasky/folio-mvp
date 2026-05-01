@@ -93,7 +93,7 @@ export default function BioPreview({ initialBio, onPublished }: BioPreviewProps)
         .bio-preview {
           border: 1px solid var(--border);
           border-radius: 12px;
-          background: var(--bg-base);
+          background: var(--surface-canvas);
           padding: 32px;
         }
         .bio-preview-header {
@@ -117,7 +117,7 @@ export default function BioPreview({ initialBio, onPublished }: BioPreviewProps)
           padding: 16px;
           border-radius: 8px;
           border: 1px solid var(--border);
-          background: var(--bg-elevated);
+          background: var(--surface-ground);
           color: var(--text-primary);
           font-family: var(--font-body);
           font-size: 15px;

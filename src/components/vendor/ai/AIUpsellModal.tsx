@@ -34,7 +34,7 @@ export function AIUpsellModal({ onClose }: Props) {
             Maybe later
           </button>
           <button
-            className="rounded-xl px-4 py-2 bg-[var(--text-primary)] text-[var(--bg-base)] hover:opacity-90 folio-meta transition"
+            className="rounded-xl px-4 py-2 bg-[var(--text-primary)] text-[var(--surface-canvas)] hover:opacity-90 folio-meta transition"
             onClick={() => {
               // TODO: Wire to sales/upgrade flow
               console.log('[AI UPSELL] Talk to sales clicked');

@@ -22,7 +22,7 @@ export default function ProfessionalsPage() {
   return (
     <div
       className="min-h-screen"
-      style={{ backgroundColor: '#FAF8F5' }}
+      style={{ backgroundColor: 'var(--surface-ground)' }}
     >
       {/* Hero Section */}
       <section className="relative py-24 md:py-32 px-4">

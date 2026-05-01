@@ -190,7 +190,7 @@ export function AddTeamMemberModal({
                       className="flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors border"
                       style={{
                         backgroundColor:
-                          selectedUser?.id === user.id ? 'var(--bg-elevated)' : 'transparent',
+                          selectedUser?.id === user.id ? 'var(--surface-ground)' : 'transparent',
                         borderColor:
                           selectedUser?.id === user.id ? 'var(--accent)' : 'transparent'
                       }}
@@ -198,7 +198,7 @@ export function AddTeamMemberModal({
                     >
                       <div
                         className="w-10 h-10 rounded-full flex items-center justify-center"
-                        style={{ backgroundColor: 'var(--bg-elevated)' }}
+                        style={{ backgroundColor: 'var(--surface-ground)' }}
                       >
                         {user.profileImage ? (
                           <img
@@ -294,7 +294,7 @@ function MethodOption({ selected, onClick, icon, title, description }: MethodOpt
       className="flex items-start space-x-3 border rounded-lg p-4 cursor-pointer transition-colors"
       style={{
         borderColor: selected ? 'var(--accent)' : 'var(--ridge-outer)',
-        backgroundColor: selected ? 'var(--bg-elevated)' : 'transparent'
+        backgroundColor: selected ? 'var(--surface-ground)' : 'transparent'
       }}
       onClick={onClick}
     >

@@ -115,7 +115,7 @@ export default function OrgShopTab({ products }: OrgShopTabProps) {
               style={{
                 borderColor: category === c ? '#2C2825' : '#E8E4DF',
                 backgroundColor: category === c ? '#2C2825' : 'transparent',
-                color: category === c ? '#FAF9F7' : '#8B8178',
+                color: category === c ? 'var(--surface-ground)' : '#8B8178',
                 fontFamily: 'var(--font-body, "Instrument Sans", sans-serif)',
                 cursor: 'pointer',
               }}
@@ -274,7 +274,7 @@ function OrgProductModal({
               </div>
             )}
             {product.projectCount > 0 && (
-              <div className="mb-6 p-4 rounded-xl" style={{ backgroundColor: '#FAF9F7' }}>
+              <div className="mb-6 p-4 rounded-xl" style={{ backgroundColor: 'var(--surface-ground)' }}>
                 <p className="text-[13px]" style={{ color: '#8B8178' }}>
                   Featured in <span className="font-medium" style={{ color: '#5C554D' }}>{product.projectCount} project{product.projectCount !== 1 ? 's' : ''}</span>
                 </p>

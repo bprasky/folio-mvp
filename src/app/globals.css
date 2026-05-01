@@ -53,10 +53,7 @@
   --font-headline: 'Cormorant Garamond', Georgia, serif;
   --font-body: 'Instrument Sans', -apple-system, sans-serif;
 
-  /* DEPRECATED — migrate to --surface-canvas */
-  --bg-base: var(--surface-canvas);
-  /* DEPRECATED — migrate to --surface-ground */
-  --bg-elevated: var(--surface-ground);
+  /* Surface levels are above. --bg-base and --bg-elevated were aliases removed in Task 02. */
 
   /* Neumorphic shadows - more visible warm gray */
   --shadow-dark: #D4CFC8;
@@ -131,7 +128,7 @@
 
   /* Ridge Button - Secondary style */
   .ridge-btn {
-    background: var(--bg-base);
+    background: var(--surface-canvas);
     color: var(--text-primary);
     border: 1px solid var(--ridge-outer);
     border-radius: 10px;
@@ -212,7 +209,7 @@
 
   /* Ridge Input - Inset style */
   .ridge-input {
-    background: var(--bg-base);
+    background: var(--surface-canvas);
     border: 1px solid var(--ridge-outer);
     border-radius: 10px;
     box-shadow: var(--neu-inset);
@@ -236,7 +233,7 @@
 
   /* Toggle Group Container */
   .ridge-toggle-group {
-    background: var(--bg-base);
+    background: var(--surface-canvas);
     border: 1px solid var(--ridge-outer);
     border-radius: 14px;
     box-shadow: var(--neu-inset);
@@ -262,7 +259,7 @@
   /* Toggle Item - Active */
   .ridge-toggle-item.active,
   .ridge-toggle-item[data-state="active"] {
-    background: var(--bg-base);
+    background: var(--surface-canvas);
     border: 1px solid var(--ridge-outer);
     border-radius: 10px;
     box-shadow:
@@ -408,14 +405,14 @@
 /* Override Tailwind base - make html/body use Folio base background */
 html,
 body {
-  background: var(--bg-base) !important;
+  background: var(--surface-canvas) !important;
   color: var(--text-primary);
 }
 
 /* Ensure root wrapper uses base background */
 #__next,
 [data-reactroot] {
-  background: var(--bg-base) !important;
+  background: var(--surface-canvas) !important;
 }
 
 /* Force transparency on layout wrappers for cinematic pages ONLY */
@@ -640,7 +637,7 @@ html[data-compact="true"] main { padding-top: 0 !important; }
 
 @layer base {
   html, body {
-    background: var(--bg-base);
+    background: var(--surface-canvas);
     color: var(--text-primary);
   }
 
@@ -683,7 +680,7 @@ html[data-compact="true"] main { padding-top: 0 !important; }
 
 body {
   font-family: var(--font-body), 'Inter', sans-serif;
-  background-color: var(--bg-base);
+  background-color: var(--surface-canvas);
   color: var(--text-primary);
   overflow-x: hidden;
 }
@@ -1993,7 +1990,7 @@ body.frame-dark::before {
 }
 
 .legal-content th {
-  background-color: var(--bg-elevated);
+  background-color: var(--surface-ground);
   font-weight: 600;
   color: var(--text-primary);
 }
@@ -2003,7 +2000,7 @@ body.frame-dark::before {
 }
 
 .legal-content tr:nth-child(even) td {
-  background-color: var(--bg-elevated);
+  background-color: var(--surface-ground);
 }
 
 .legal-content blockquote {
@@ -2023,7 +2020,7 @@ body.frame-dark::before {
 .legal-content code {
   font-family: 'IBM Plex Mono', monospace;
   font-size: 0.875em;
-  background-color: var(--bg-elevated);
+  background-color: var(--surface-ground);
   padding: 0.125rem 0.375rem;
   border-radius: 4px;
   color: var(--text-primary);
@@ -2031,7 +2028,7 @@ body.frame-dark::before {
 
 .legal-content pre {
   font-family: 'IBM Plex Mono', monospace;
-  background-color: var(--bg-elevated);
+  background-color: var(--surface-ground);
   padding: 1rem;
   border-radius: 8px;
   overflow-x: auto;

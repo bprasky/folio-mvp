@@ -30,7 +30,7 @@ export function RevenueProjectionSection() {
             Unlock AI to see projected quarterly influence and the drivers behind it.
           </span>
           <button
-            className="rounded-xl px-4 py-2 bg-[var(--text-primary)] text-[var(--bg-base)] hover:opacity-90 transition text-sm"
+            className="rounded-xl px-4 py-2 bg-[var(--text-primary)] text-[var(--surface-canvas)] hover:opacity-90 transition text-sm"
             onClick={() => {
               // TODO: Wire to upgrade/payment flow
               console.log('[AI REVENUE] Unlock AI clicked');

@@ -22,7 +22,7 @@ export default function ReplayDemoButton() {
   return (
     <button
       onClick={startDemo}
-      className="px-3 py-1.5 text-xs font-medium text-folio-ink/60 hover:text-folio-ink hover:bg-folio-background/50 rounded transition-colors"
+      className="px-3 py-1.5 text-xs font-medium text-folio-ink/60 hover:text-folio-ink hover:bg-surface-canvas/50 rounded transition-colors"
       title="Replay the Designer Demo tour"
     >
       Replay Demo

@@ -80,7 +80,7 @@ export function AIInlinePane({ sectionId, className }: Props) {
                     className={
                       'px-2.5 py-1 rounded-full capitalize text-[10px] transition ' +
                       (activeTab === tab && aiUnlocked
-                        ? 'bg-[var(--text-primary)] text-[var(--bg-base)]'
+                        ? 'bg-[var(--text-primary)] text-[var(--surface-canvas)]'
                         : 'bg-surface-ground text-folio-text-primary hover:bg-[var(--ridge-inner)]')
                     }
                   >

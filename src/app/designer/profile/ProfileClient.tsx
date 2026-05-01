@@ -31,7 +31,7 @@ export default function ProfileClient({ data }: { data: ProfilePageData }) {
   const tagline = profileInterview?.shortBio || user.bio;
 
   return (
-    <div style={{ background: 'var(--bg-base)', minHeight: '100vh', fontFamily: 'var(--font-body)' }}>
+    <div style={{ background: 'var(--surface-canvas)', minHeight: '100vh', fontFamily: 'var(--font-body)' }}>
       <ProfileHero
         user={user}
         organization={organization}

@@ -132,7 +132,7 @@ export default function VendorAttributionPage() {
           { icon: Users, label: 'Specifications', value: totals.specs, color: '#B8A580' },
           { icon: DollarSign, label: 'Revenue', value: `$${(totals.revenueCents / 100).toLocaleString()}`, color: 'var(--folio-gold-ornament)' },
         ].map((card) => (
-          <div key={card.label} className="p-4 rounded-2xl bg-[#FAF8F5] border border-[#E5E0D7]/50">
+          <div key={card.label} className="p-4 rounded-2xl bg-[var(--surface-ground)] border border-[#E5E0D7]/50">
             <card.icon className="w-5 h-5 mb-2" style={{ color: card.color }} />
             <div className="text-xl font-semibold text-[#2C2825]">
               {typeof card.value === 'number' ? card.value.toLocaleString() : card.value}
@@ -143,7 +143,7 @@ export default function VendorAttributionPage() {
       </div>
 
       {/* Org-wide funnel */}
-      <div className="p-6 rounded-2xl bg-[#FAF8F5] border border-[#E5E0D7]/50">
+      <div className="p-6 rounded-2xl bg-[var(--surface-ground)] border border-[#E5E0D7]/50">
         <h2 className="text-sm font-semibold text-[#2C2825] uppercase tracking-wider mb-4">
           Overall Attribution Funnel
         </h2>
@@ -160,7 +160,7 @@ export default function VendorAttributionPage() {
             <button
               key={product.id}
               onClick={() => setSelectedProductId(product.id)}
-              className="flex items-center gap-4 p-4 rounded-2xl bg-[#FAF8F5] border border-[#E5E0D7]/50 hover:border-[var(--folio-gold-ornament)]/30 transition-colors text-left group"
+              className="flex items-center gap-4 p-4 rounded-2xl bg-[var(--surface-ground)] border border-[#E5E0D7]/50 hover:border-[var(--folio-gold-ornament)]/30 transition-colors text-left group"
             >
               {product.imageUrl ? (
                 <div className="relative w-14 h-14 rounded-xl overflow-hidden shrink-0">
@@ -204,7 +204,7 @@ export default function VendorAttributionPage() {
             {topDesigners.map((designer, i) => (
               <div
                 key={designer.id}
-                className="flex items-center gap-3 p-4 rounded-2xl bg-[#FAF8F5] border border-[#E5E0D7]/50"
+                className="flex items-center gap-3 p-4 rounded-2xl bg-[var(--surface-ground)] border border-[#E5E0D7]/50"
               >
                 <div className="w-10 h-10 rounded-full bg-[#E5E0D7] flex items-center justify-center text-sm font-semibold text-[#8C8278] shrink-0">
                   {designer.profileImage ? (

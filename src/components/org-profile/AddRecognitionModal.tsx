@@ -192,7 +192,7 @@ export default function AddRecognitionModal({
                   className="px-4 py-1.5 text-xs rounded-full transition-all"
                   style={{
                     backgroundColor: type === t.id ? '#2C2825' : 'transparent',
-                    color: type === t.id ? '#FAF9F7' : '#6B635B',
+                    color: type === t.id ? 'var(--surface-ground)' : '#6B635B',
                     border: type === t.id ? 'none' : '1px solid #D4CEC6',
                   }}
                 >

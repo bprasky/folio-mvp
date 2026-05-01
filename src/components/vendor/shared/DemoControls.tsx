@@ -35,7 +35,7 @@ export function DemoControls() {
     <div className="fixed bottom-4 right-4 z-50">
       <button
         onClick={() => setOpen(o => !o)}
-        className="rounded-full px-4 py-2 bg-[var(--text-primary)] text-[var(--bg-base)] shadow-lg hover:opacity-90 transition text-sm font-medium"
+        className="rounded-full px-4 py-2 bg-[var(--text-primary)] text-[var(--surface-canvas)] shadow-lg hover:opacity-90 transition text-sm font-medium"
       >
         {open ? 'Close Demo' : 'Demo Controls'}
       </button>

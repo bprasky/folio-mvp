@@ -32,7 +32,7 @@ export default function CinematicHero({ imageUrl, title, deck }: Props) {
         />
       </motion.div>
       {/* light-bleed divider */}
-      <div className="pointer-events-none h-8 w-full -mt-4 rounded-2xl bg-gradient-to-b from-[var(--bg-base)]/70 to-transparent" />
+      <div className="pointer-events-none h-8 w-full -mt-4 rounded-2xl bg-gradient-to-b from-[var(--surface-canvas)]/70 to-transparent" />
       {/* optional subhead slip-in on first scroll */}
       {deck ? (
         <motion.p

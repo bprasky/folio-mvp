@@ -44,7 +44,7 @@ export default function LocalContextHeader({
               key={r}
               className={cn(
                 "px-3 py-1.5 rounded-full text-sm border border-folio-border-subtle hover:border-[var(--text-secondary)] transition",
-                r === localRadius ? "bg-[var(--text-primary)] text-[var(--bg-base)]" : "bg-surface-canvas text-folio-text-primary"
+                r === localRadius ? "bg-[var(--text-primary)] text-[var(--surface-canvas)]" : "bg-surface-canvas text-folio-text-primary"
               )}
               onClick={() => {
                 setLocalRadius(r);

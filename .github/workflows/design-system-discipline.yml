@@ -47,3 +47,31 @@ jobs:
             echo "$MATCHES"
             exit 1
           fi
+
+      - name: Forbid hardcoded canvas colors
+        run: |
+          # Email templates, in-context-boost emails, the pdfkit spec-sheet, and the
+          # qrcode generator (FolioBadgeModal) are exempt: CSS vars don't resolve in
+          # mail clients, PDF rendering contexts, or qrcode color options.
+          # /product/* warm wash is deliberate (see Task 06 — product page rework).
+          BAD=$(git grep -nEi "#[Ff][Aa][Ff]9[Ff]7|#[Ff]4[Ff]2[Ff]0|#[Ff][Aa][Ff]8[Ff]5" src/ \
+            | grep -v "src/lib/email/" \
+            | grep -v "src/lib/boost/inContextBoost" \
+            | grep -v "src/lib/messaging/notifications.ts" \
+            | grep -v "src/components/badge/FolioBadgeModal.tsx" \
+            | grep -v "src/app/api/products/\[productId\]/spec-sheet/" \
+            | grep -v "src/components/product/" \
+            | grep -v "src/app/globals.css:.*--surface-" \
+            || true)
+          if [ -n "$BAD" ]; then
+            echo "::error::Hardcoded canvas hex found. Use var(--surface-canvas), var(--surface-ground), or var(--surface-elevated)."
+            echo "$BAD"
+            exit 1
+          fi
+
+      - name: Forbid deprecated bg aliases
+        run: |
+          if git grep -nE "var\(--bg-base\)|var\(--bg-elevated\)" src/; then
+            echo "::error::--bg-base and --bg-elevated were removed in Task 02. Use --surface-canvas / --surface-ground."
+            exit 1
+          fi

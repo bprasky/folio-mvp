@@ -173,7 +173,7 @@ export default function ProfileHero({
           align-items: center;
           justify-content: center;
           background: linear-gradient(135deg, var(--shadow-dark) 0%, var(--text-tertiary) 100%);
-          color: var(--bg-base);
+          color: var(--surface-canvas);
           font-size: 34px;
           font-weight: 600;
           letter-spacing: 0.05em;

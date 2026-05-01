@@ -89,7 +89,7 @@ export function ActionModal({ action, onClose }: { action: AnyAction; onClose: (
           <button
             onClick={submit}
             disabled={submitting}
-            className="rounded-xl px-4 py-2 bg-[var(--text-primary)] text-[var(--bg-base)] hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            className="rounded-xl px-4 py-2 bg-[var(--text-primary)] text-[var(--surface-canvas)] hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {submitting ? 'Submitting…' : 'Create Task'}
           </button>

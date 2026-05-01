@@ -235,7 +235,7 @@ export default function OrganizationPage() {
     return (
       <div
         className="min-h-screen flex items-center justify-center"
-        style={{ backgroundColor: '#FAF8F5' }}
+        style={{ backgroundColor: 'var(--surface-ground)' }}
       >
         <FaSpinner className="w-8 h-8 animate-spin text-folio-stone-400" />
       </div>
@@ -255,7 +255,7 @@ export default function OrganizationPage() {
   const roleLabel = getRoleLabel();
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#FAF8F5' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--surface-ground)' }}>
       <div className="max-w-2xl mx-auto px-4 py-12 md:py-20">
         {/* Back Button */}
         {view !== 'success' && (

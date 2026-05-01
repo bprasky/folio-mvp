@@ -56,7 +56,7 @@ export default function SourcebookGridCard({
   return (
     <div
       className={`
-        rounded-xl overflow-hidden bg-[#FAF8F5] transition-all duration-200
+        rounded-xl overflow-hidden bg-[var(--surface-ground)] transition-all duration-200
         border border-[rgba(0,0,0,0.06)]
         hover:bg-[rgba(250,249,246,0.82)] hover:border-[rgba(201,169,110,0.25)]
         hover:shadow-[0_4px_24px_rgba(0,0,0,0.08)]

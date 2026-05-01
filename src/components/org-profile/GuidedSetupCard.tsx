@@ -215,7 +215,7 @@ function StepRow({
                 className="px-4 py-1.5 text-xs rounded-full transition-all hover:opacity-80"
                 style={{
                   backgroundColor: isNext ? '#2C2825' : 'transparent',
-                  color: isNext ? '#FAF9F7' : '#6B635B',
+                  color: isNext ? 'var(--surface-ground)' : '#6B635B',
                   border: isNext ? 'none' : '1px solid #D4CEC6',
                   fontFamily: 'var(--font-body)',
                   fontWeight: 500,
@@ -229,7 +229,7 @@ function StepRow({
                 className="px-4 py-1.5 text-xs rounded-full transition-all hover:opacity-80"
                 style={{
                   backgroundColor: isNext ? '#2C2825' : 'transparent',
-                  color: isNext ? '#FAF9F7' : '#6B635B',
+                  color: isNext ? 'var(--surface-ground)' : '#6B635B',
                   border: isNext ? 'none' : '1px solid #D4CEC6',
                   fontFamily: 'var(--font-body)',
                   fontWeight: 500,
