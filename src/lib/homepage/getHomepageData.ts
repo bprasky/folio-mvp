@@ -262,10 +262,13 @@ async function buildBoostReel(
       productId: true,
       createdAt: true,
       product: {
+        // Note: Product has no `slug` field on the deployed schema.
+        // BoostReelCell falls back to `/products/${productId}` when
+        // productSlug is null, which the [slug] route handler accepts
+        // (it resolves by id-or-slug; other callers pass id too).
         select: {
           id: true,
           name: true,
-          slug: true,
           imageUrl: true,
           cutoutImageUrl: true,
           vendor: { select: { name: true } },
@@ -345,7 +348,7 @@ async function buildBoostReel(
     const isBoosted = i < REEL_PAID_SLOTS && !!boost;
     items.push({
       productId: tag.product.id,
-      productSlug: tag.product.slug ?? null,
+      productSlug: null, // Product has no slug field on the deployed schema; route by productId.
       name: tag.product.name,
       imageUrl,
       vendorName: tag.product.vendor?.name ?? null,
