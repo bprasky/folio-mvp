@@ -20,7 +20,7 @@ export function RelatedProjects({
 
   return (
     <section className="mt-16">
-      <h3 className="text-[15px] font-semibold tracking-tight text-folio-text-primary">
+      <h3 className="text-[var(--type-body)] font-semibold tracking-tight text-folio-text-primary">
         In Collaboration With
       </h3>
       <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">

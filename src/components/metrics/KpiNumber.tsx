@@ -10,7 +10,7 @@ export default function KpiNumber({ value, label, delta, tone='perf' }:{
   return (
     <div className="flex items-center gap-4">
       <div>
-        <div className="kpi text-[28px] font-semibold leading-none">{value}</div>
+        <div className="kpi text-[var(--type-h3)] font-semibold leading-none">{value}</div>
         <div className="text-xs subtle">{label}</div>
       </div>
       {typeof delta === 'number' && (

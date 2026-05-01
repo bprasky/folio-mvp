@@ -364,13 +364,13 @@ function PostMockupCard({
   total: number;
 }) {
   const sequenceBadge = (
-    <span className="absolute right-2 top-2 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm">
+    <span className="absolute right-2 top-2 rounded-full bg-black/60 px-2 py-0.5 text-[var(--type-fine)] font-medium text-white backdrop-blur-sm">
       {sequenceNum}/{total}
     </span>
   );
 
   const folioMark = (
-    <span className="absolute bottom-2 right-2 text-[9px] font-medium uppercase tracking-[0.15em] text-white/90">
+    <span className="absolute bottom-2 right-2 text-[9px] font-medium uppercase tracking-[var(--ls-eyebrow)] text-white/90"> /* folio-design-system: off-scale */
       Folio
     </span>
   );
@@ -379,10 +379,10 @@ function PostMockupCard({
     return (
       <div className="relative flex h-[175px] w-[140px] flex-shrink-0 flex-col justify-center rounded-md bg-folio-ink p-3 text-white">
         {sequenceBadge}
-        <p className="line-clamp-5 font-serif text-[11px] italic leading-snug text-white">
+        <p className="line-clamp-5 font-serif text-[var(--type-eyebrow)] italic leading-snug text-white">
           &ldquo;{post.text}&rdquo;
         </p>
-        <p className="mt-2 text-[9px] uppercase tracking-[0.15em] text-white/70">
+        <p className="mt-2 text-[9px] uppercase tracking-[var(--ls-eyebrow)] text-white/70"> /* folio-design-system: off-scale */
           {post.attribution}
         </p>
         {folioMark}
@@ -414,17 +414,17 @@ function PostMockupCard({
       <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
       {sequenceBadge}
       {post.type === 'room_spotlight' && post.slideCount > 1 && (
-        <span className="absolute left-2 top-2 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm">
+        <span className="absolute left-2 top-2 rounded-full bg-black/60 px-2 py-0.5 text-[var(--type-fine)] font-medium text-white backdrop-blur-sm">
           {post.slideCount} slides
         </span>
       )}
       <div className="absolute inset-x-2 bottom-5 text-white">
-        <p className="text-[9px] uppercase tracking-[0.15em] text-white/80">
+        <p className="text-[9px] uppercase tracking-[var(--ls-eyebrow)] text-white/80"> /* folio-design-system: off-scale */
           {typeLabel[post.type]}
         </p>
         <p className="line-clamp-2 font-serif text-sm leading-tight">{post.title}</p>
         {'subtitle' in post && post.subtitle && (
-          <p className="mt-0.5 line-clamp-1 text-[10px] text-white/80">{post.subtitle}</p>
+          <p className="mt-0.5 line-clamp-1 text-[var(--type-fine)] text-white/80">{post.subtitle}</p>
         )}
       </div>
       {folioMark}

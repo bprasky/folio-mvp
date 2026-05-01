@@ -219,3 +219,98 @@ won't catch the multiline JSX form
 because the prop is its own line. Audit the post-codemod grep count and
 clean up the long-tail manually. (For Task 03 this was 4 callsites in
 MagazineFeedClient and project/interaction.)
+
+
+---
+
+## 2026-05-01 — type scale: off-scale near-duplicates accumulate silently
+
+The audit before Task 04 found 224 inline `fontSize` literals, 109
+`fontWeight`, 43 `lineHeight`, 61 `letterSpacing`, plus 394 `text-[Npx]`,
+21 `leading-[N]`, 57 `tracking-[N]`, and 109 `font-[N]` Tailwind arbitrary
+class hits. Many were near-duplicates of canonical sizes — `30px`, `34px`,
+`38px`, `42px`, `44px`, `17px`, `12px` — that designers eyeballed in dev
+tools without checking the token list.
+
+**A snap-to-nearest map with explicit FLAG buckets is the right migration
+shape.** The codemod converts confident matches (15→body, 28→h3 etc.) and
+leaves outliers in place for human triage. For Task 04 about 90% of inline
+literals (~397/441) snapped cleanly; 49 outliers (9px badges, 8px IG-export
+labels, 72px OG image, 1.7-line-height taglines) got
+`/* folio-design-system: off-scale */` markers and the CI guard skips
+those lines.
+
+**`FLAG` is a feature, not a hedge.** A migration script that "tries its
+best" and silently maps everything is worse than one that explicitly
+refuses on uncertainty. The flag count (49) was small enough to triage
+individually; the alternative — a bigger snap radius — would have
+silently shifted real design intent (a deliberate 9px vendor badge becoming
+an 11px eyebrow ruins layout density).
+
+**CSS utility classes ARE the API for type.** The existing `.folio-h1`
+through `.folio-stat` classes already existed in `globals.css` but were
+hard-coded with literal hex values. Refactoring them to use the new
+`--type-*` / `--lh-*` / `--w-*` tokens means every `<element class="folio-h2">`
+in the codebase now traces back to one canonical declaration. Designers
+can rename what `h2` means in one place and the whole product follows.
+
+**POSIX-extended regex is what `git grep -E` accepts.** `(?!...)` negative
+lookahead and `\d`/`\w` shortcuts don't work in `git grep -E`. Use
+character classes (`[^a-z0-9]`) and explicit alternations. Tested locally
+before pushing CI rules so the workflow doesn't fail on the first PR.
+
+
+---
+
+## 2026-05-01 — homepage editorial elevation feed (Task 05)
+
+**Don't put commerce inside the photograph.** Spec's first prototype put the
+boost reel as an opaque strip across the bottom of the editorial XL — made the
+photo unreadable, and on a portfolio platform the photo *is* the product.
+Pulling the reel out into a tethered row 16px below the hero solved the
+optical problem and made the boost mechanic *more* visible, not less.
+Proximity tethers; chrome doesn't.
+
+**The seam matters more than the sections.** The boost reel is the seam where
+editorial-curation meets algorithmic-feed AND it's Folio's monetization. Three
+jobs, one component. Don't introduce a "Sponsored products" section header —
+the per-product Boosted badge is enough disclosure. A header announces the
+seam and breaks reading flow.
+
+**Don't extend a uniqueness-constrained model for a different business
+object.** `InContextBoost.productTagId @unique` encodes "one boost per tag" —
+a contract worth preserving. Adding a homepage-reel placement to that model
+would have forced dropping the constraint and entangling two billing flows.
+Sibling model (`HomepageReelBoost`) keyed on `(projectPostId, productId,
+vendorId)` keeps lifecycles orthogonal — auction semantics on one side,
+tag-negotiation on the other.
+
+**Editorial-window data beats algorithmic-feature data for hero slots.** "Top
+engagement post" is mathematically right and editorially wrong — it surfaces
+what was already popular last week, not what should be popular this week. The
+scheduled `homepage_xl_starts_at` / `homepage_xl_ends_at` window gives
+editorial leverage; algorithmic fallback (highest-engagement in last 14 days)
+is real but should rarely fire.
+
+**Auth-state branching belongs server-side.** `useSession()` ternaries flicker
+visibly above the editorial hero on slow connections. Read session in the
+server component (`HomepagePage` calls `await auth()`), pass `isOut` as a
+prop, branch in the markup. One render, no flicker. The InviteRibbon's
+localStorage 24h-dismissal can't be checked server-side, so it renders with
+`visibility: hidden` and reveals on mount — same effect, different mechanism.
+
+**Audit-driven plans correct silent assumptions.** The spec assumed a
+`MagazinePost` model existed and that `product_boosts` was the table. Neither
+was true — posts are `ProjectPost` (variant `PROJECT_FEATURE`), and the boost
+landscape is two unrelated models (`Boost` for vendor testimonials, `InContextBoost`
+for designer tag negotiations). The exploration phase caught both before any
+schema migration was authored. Always grep for the model name before trusting
+a spec's "this already exists" framing.
+
+**Routing consolidation has a cost.** User chose `/magazine → /` redirect.
+That deletes the surface where `GatheringVoicesSection` and
+`PromptedQuestionsSection` lived. Mitigation: preserved the legacy MagazinePage
+shell at `/magazine/community` so the sections stay reachable for direct
+linking. The redirect handles email/newsletter deeplinks. Existing `/magazine`
+intra-site links flow through the redirect — accept the one extra hop in
+exchange for a cleaner mental model.

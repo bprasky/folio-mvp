@@ -90,9 +90,9 @@ function SavesEmptyState() {
     >
       <p
         style={{
-          fontSize: '16px',
+          fontSize: 'var(--type-body)',
           color: 'var(--text-secondary)',
-          lineHeight: 1.6,
+          lineHeight: 'var(--lh-body)',
           marginBottom: '28px'
         }}
       >
@@ -103,13 +103,13 @@ function SavesEmptyState() {
       <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
         <Link
           href="/feed"
-          className="accent-btn pill-btn px-6 py-2.5 text-[13px] no-underline inline-block"
+          className="accent-btn pill-btn px-6 py-2.5 text-[var(--type-meta)] no-underline inline-block"
         >
           Browse the Feed
         </Link>
         <Link
           href="/directory"
-          className="ridge-btn pill-btn px-6 py-2.5 text-[13px] no-underline inline-block"
+          className="ridge-btn pill-btn px-6 py-2.5 text-[var(--type-meta)] no-underline inline-block"
         >
           Explore the Directory
         </Link>

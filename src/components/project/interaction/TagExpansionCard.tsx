@@ -170,7 +170,7 @@ export function TagExpansionCard({
               className="text-folio-text-primary truncate"
               style={{
                 fontFamily: "var(--font-headline)",
-                fontSize: '16px',
+                fontSize: 'var(--type-body)',
                 fontStyle: 'italic',
               }}
             >
@@ -180,8 +180,8 @@ export function TagExpansionCard({
               <div
                 className="truncate text-folio-text-secondary mt-0.5"
                 style={{
-                  fontSize: '11px',
-                  letterSpacing: '0.12em',
+                  fontSize: 'var(--type-eyebrow)',
+                  letterSpacing: 'var(--ls-wide)',
                   textTransform: 'uppercase',
                 }}
               >
@@ -195,7 +195,7 @@ export function TagExpansionCard({
               className="absolute bottom-2.5 right-3 w-9 h-9 flex items-center justify-center rounded-full transition-colors hover:bg-black/5"
               style={{
                 color: 'var(--tag-hud-accent)',
-                fontSize: '18px',
+                fontSize: 'var(--type-h4)',
               }}
               onClick={(e) => {
                 e.stopPropagation();

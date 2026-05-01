@@ -65,18 +65,18 @@ function CellBox({ c }: { c: Cell }) {
       ].filter(Boolean).join('\n')}
     >
       {/* % value — NEVER hide 0 */}
-      <div className="num text-[18px] font-bold text-[#111827]">
+      <div className="num text-[var(--type-h4)] font-bold text-[#111827]">
         {rate}%
       </div>
 
       {/* Subline: saves → tags (always visible; no opacity toggles) */}
-      <div className="mt-1 text-[11px] text-[#6B7280] whitespace-nowrap">
+      <div className="mt-1 text-[var(--type-eyebrow)] text-[#6B7280] whitespace-nowrap">
         {saves} → {tags}
       </div>
 
       {/* Asset gap chip (optional) */}
       {c.assetGap && (
-        <div className="absolute top-1 right-1 rounded-md bg-amber-100 px-1.5 py-0.5 text-[10px] text-[#92400E] font-medium">
+        <div className="absolute top-1 right-1 rounded-md bg-amber-100 px-1.5 py-0.5 text-[var(--type-fine)] text-[#92400E] font-medium">
           {c.assetGap}
         </div>
       )}

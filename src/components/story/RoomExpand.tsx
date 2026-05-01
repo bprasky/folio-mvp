@@ -71,10 +71,10 @@ export function RoomExpand({
             {/* Room label + collapse */}
             <div className="flex items-center justify-between mb-6">
               <span
-                className="uppercase tracking-[1.5px]"
+                className="uppercase tracking-[1.5px]" /* folio-design-system: off-scale */
                 style={{
-                  fontSize: "10px",
-                  fontWeight: 500,
+                  fontSize: 'var(--type-fine)',
+                  fontWeight: 'var(--w-h1)',
                   color: "rgba(87, 75, 67, 0.55)"
                 }}
               >
@@ -82,7 +82,7 @@ export function RoomExpand({
               </span>
               <button
                 onClick={onCollapse}
-                className="text-[11px] transition-colors hover:opacity-70"
+                className="text-[var(--type-eyebrow)] transition-colors hover:opacity-70"
                 style={{
                   color: "rgba(87, 75, 67, 0.3)"
                 }}
@@ -97,8 +97,8 @@ export function RoomExpand({
                 <p
                   className="whitespace-pre-line"
                   style={{
-                    fontSize: "15px",
-                    lineHeight: 1.75,
+                    fontSize: 'var(--type-body)',
+                    lineHeight: 1.75, /* folio-design-system: off-scale */
                     color: "rgba(87, 75, 67, 0.85)"
                   }}
                 >
@@ -136,10 +136,10 @@ export function RoomExpand({
             {room.products.length > 0 && (
               <div className="mb-6">
                 <h4
-                  className="mb-3 uppercase tracking-[1.5px]"
+                  className="mb-3 uppercase tracking-[1.5px]" /* folio-design-system: off-scale */
                   style={{
-                    fontSize: "10px",
-                    fontWeight: 500,
+                    fontSize: 'var(--type-fine)',
+                    fontWeight: 'var(--w-h1)',
                     color: "rgba(87, 75, 67, 0.3)"
                   }}
                 >
@@ -166,8 +166,8 @@ export function RoomExpand({
                         <div
                           className="truncate"
                           style={{
-                            fontSize: "12px",
-                            fontWeight: 500,
+                            fontSize: 'var(--type-meta)',
+                            fontWeight: 'var(--w-h1)',
                             color: "rgba(87, 75, 67, 0.85)"
                           }}
                         >
@@ -177,7 +177,7 @@ export function RoomExpand({
                           <div
                             className="truncate"
                             style={{
-                              fontSize: "11px",
+                              fontSize: 'var(--type-eyebrow)',
                               color: "rgba(87, 75, 67, 0.45)"
                             }}
                           >
@@ -198,7 +198,7 @@ export function RoomExpand({
             >
               <button
                 onClick={onCollapse}
-                className="text-[11px] transition-colors hover:opacity-70"
+                className="text-[var(--type-eyebrow)] transition-colors hover:opacity-70"
                 style={{
                   color: "rgba(87, 75, 67, 0.3)"
                 }}

@@ -30,16 +30,16 @@ export function CohortMini({ data }: {
     return (
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <div className="text-[13px] font-medium text-folio-text-primary">{label}</div>
+          <div className="text-[var(--type-meta)] font-medium text-folio-text-primary">{label}</div>
           <div className="flex items-center gap-1">
             {getTrendIcon(v.you, Math.max(v.prev3, v.cohort))}
-            <Badge className={`text-[10px] px-2 py-0.5 ${getStatus(v.you, v.prev3, v.cohort)}`}>
+            <Badge className={`text-[var(--type-fine)] px-2 py-0.5 ${getStatus(v.you, v.prev3, v.cohort)}`}>
               {v.you > Math.max(v.prev3, v.cohort) ? "Leading" : v.you < Math.min(v.prev3, v.cohort) ? "Behind" : "Average"}
             </Badge>
           </div>
         </div>
-        <div className="text-[11px] text-folio-text-secondary mb-2">{description}</div>
-        <div className="grid grid-cols-3 gap-2 text-[12px]">
+        <div className="text-[var(--type-eyebrow)] text-folio-text-secondary mb-2">{description}</div>
+        <div className="grid grid-cols-3 gap-2 text-[var(--type-meta)]">
           <div className="text-center p-2 bg-surface-elevated rounded">
             <div className="font-semibold text-folio-text-primary">{v.you}%</div>
             <div className="text-folio-text-secondary">You</div>

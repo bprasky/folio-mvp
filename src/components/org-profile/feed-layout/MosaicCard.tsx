@@ -56,7 +56,7 @@ export default function MosaicCard({ project, size }: MosaicCardProps) {
         {/* Editorial badge */}
         {project.isEditorial && (
           <div className="absolute top-2.5 left-2.5">
-            <span className="text-[9px] uppercase tracking-widest
+            <span className="text-[9px] uppercase tracking-widest /* folio-design-system: off-scale */
                              text-white bg-black/40 backdrop-blur-sm
                              px-2 py-0.5 rounded-full">
               Editorial

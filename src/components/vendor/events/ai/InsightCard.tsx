@@ -51,7 +51,7 @@ export function InsightCard({ insight }: { insight: AiInsight }) {
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1">
           <div className="flex items-start justify-between mb-2">
-            <div className="text-[16px] font-semibold text-folio-text-primary leading-tight">{insight.title}</div>
+            <div className="text-[var(--type-body)] font-semibold text-folio-text-primary leading-tight">{insight.title}</div>
             <Button
               variant="ghost"
               size="sm"
@@ -92,10 +92,10 @@ export function InsightCard({ insight }: { insight: AiInsight }) {
           <div className="text-xl font-bold text-folio-text-primary mb-2">${(impact.expectedLiftUsd/1000).toFixed(0)}k</div>
           
           <div className="space-y-2 mb-3">
-            <Badge className={cn("text-[11px] px-2 py-1 border", confidenceTone)}>
+            <Badge className={cn("text-[var(--type-eyebrow)] px-2 py-1 border", confidenceTone)}>
               {impact.confidence} confidence
             </Badge>
-            <div className="flex items-center justify-end gap-1 text-[11px] text-folio-text-secondary">
+            <div className="flex items-center justify-end gap-1 text-[var(--type-eyebrow)] text-folio-text-secondary">
               {getUrgencyIcon()}
               <span>Urgency: -{impact.decayPctByDay}%/day</span>
             </div>

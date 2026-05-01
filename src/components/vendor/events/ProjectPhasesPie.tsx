@@ -53,7 +53,7 @@ export function ProjectPhasesPie({ data, onHover }: ProjectPhasesPieProps) {
               boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
             }}
             formatter={(value: number) => [`${value}%`, 'Percentage']}
-            labelStyle={{ color: '#2B2B2B', fontWeight: '500' }}
+            labelStyle={{ color: '#2B2B2B', fontWeight: 'var(--w-h1)' }}
           />
         </PieChart>
       </ResponsiveContainer>

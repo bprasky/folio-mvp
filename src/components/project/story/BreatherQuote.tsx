@@ -40,14 +40,14 @@ export function BreatherQuote({ breather }: Props) {
 
       {/* Quote */}
       <blockquote className="story-breather-quote">
-        <p className="font-[var(--font-headline)] italic text-[22px] md:text-[28px] leading-relaxed story-text-on-light">
+        <p className="font-[var(--font-headline)] italic text-[var(--type-h4)] md:text-[var(--type-h3)] leading-relaxed story-text-on-light">
           &ldquo;{breather.quote}&rdquo;
         </p>
       </blockquote>
 
       {/* Attribution */}
       {breather.attribution && (
-        <p className="story-breather-attr mt-4 text-[13px] font-[var(--font-body)] story-text-secondary">
+        <p className="story-breather-attr mt-4 text-[var(--type-meta)] font-[var(--font-body)] story-text-secondary">
           — {breather.attribution}
         </p>
       )}

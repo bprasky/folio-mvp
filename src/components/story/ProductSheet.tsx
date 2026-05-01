@@ -201,8 +201,8 @@ function SheetContent({
       <div>
         <h3
           style={{
-            fontSize: "16px",
-            fontWeight: 500,
+            fontSize: 'var(--type-body)',
+            fontWeight: 'var(--w-h1)',
             color: "rgba(87, 75, 67, 0.85)"
           }}
         >
@@ -211,7 +211,7 @@ function SheetContent({
         {vendorName && (
           <p
             style={{
-              fontSize: "14px",
+              fontSize: 'var(--type-ui)',
               color: "rgba(87, 75, 67, 0.55)"
             }}
           >
@@ -227,7 +227,7 @@ function SheetContent({
           style={{
             borderColor: "rgba(87, 75, 67, 0.1)",
             fontFamily: "var(--font-headline)",
-            fontSize: "16px",
+            fontSize: 'var(--type-body)',
             fontStyle: "italic",
             color: "rgba(87, 75, 67, 0.7)",
           }}
@@ -236,7 +236,7 @@ function SheetContent({
           <footer
             className="mt-1 not-italic"
             style={{
-              fontSize: "11px",
+              fontSize: 'var(--type-eyebrow)',
               color: "rgba(87, 75, 67, 0.4)"
             }}
           >
@@ -253,8 +253,8 @@ function SheetContent({
           rel="noopener noreferrer"
           className="mt-2 inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 transition-colors"
           style={{
-            fontSize: "13px",
-            fontWeight: 500,
+            fontSize: 'var(--type-meta)',
+            fontWeight: 'var(--w-h1)',
             color: "rgba(87, 75, 67, 0.7)",
             border: "1px solid rgba(87, 75, 67, 0.12)"
           }}

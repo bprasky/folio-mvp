@@ -250,7 +250,7 @@ export const DynamicInsightPanel: React.FC<DynamicInsightPanelProps> = ({
             {mode === "strategy" ? "AI Strategy Session" : "Analytics Conversation"}
           </h2>
           {mode === "analytics" && (
-            <p className="text-[11px] uppercase tracking-wide text-folio-text-tertiary">
+            <p className="text-[var(--type-eyebrow)] uppercase tracking-wide text-folio-text-tertiary">
               Ask anything about your events, products, designers, or projects.
             </p>
           )}
@@ -323,7 +323,7 @@ export const DynamicInsightPanel: React.FC<DynamicInsightPanelProps> = ({
                     return (
                       <li
                         key={a.actionId + "_reason"}
-                        className="text-[11px] text-folio-text-secondary"
+                        className="text-[var(--type-eyebrow)] text-folio-text-secondary"
                       >
                         <span className="font-medium">{label}</span>
                         {": "}

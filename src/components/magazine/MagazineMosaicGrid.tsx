@@ -161,7 +161,7 @@ export default function MagazineMosaicGrid({ items }: Props) {
               {/* Collaboration Badge */}
               {item.isCollaboration && (
                 <div className="absolute top-3 left-3 z-20 pointer-events-none">
-                  <span className="inline-flex items-center gap-1 bg-[rgb(74,44,59)] text-white text-[10px] font-semibold px-2 py-1 rounded-full">
+                  <span className="inline-flex items-center gap-1 bg-[rgb(74,44,59)] text-white text-[var(--type-fine)] font-semibold px-2 py-1 rounded-full">
                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
@@ -180,7 +180,7 @@ export default function MagazineMosaicGrid({ items }: Props) {
                     {item.title}
                   </div>
                   {/* Meta row */}
-                  <div className="mt-1.5 flex items-center gap-2 text-white/85 text-[11px]">
+                  <div className="mt-1.5 flex items-center gap-2 text-white/85 text-[var(--type-eyebrow)]">
                     {item.isCollaboration && item.vendorName && item.designerName && (
                       <span className="folio-meta inline-flex items-center gap-1 rounded bg-black/45 px-1.5 py-0.5 backdrop-blur-sm capitalize">
                         {item.vendorName} × {item.designerName}

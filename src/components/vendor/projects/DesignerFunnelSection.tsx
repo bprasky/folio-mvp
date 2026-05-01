@@ -64,7 +64,7 @@ export function DesignerFunnelSection() {
                 </li>
               ))}
             </ul>
-            <div className="mt-2 text-[11px] text-folio-text-secondary">
+            <div className="mt-2 text-[var(--type-eyebrow)] text-folio-text-secondary">
               Based on saves, tags, and event activity for your products.
             </div>
           </div>
@@ -88,7 +88,7 @@ function Stage({ label, value, total }: { label: string; value: number; total: n
           style={{ width: `${pct}%` }} 
         />
       </div>
-      <div className="text-[11px] text-folio-text-secondary">{pct}% of designers</div>
+      <div className="text-[var(--type-eyebrow)] text-folio-text-secondary">{pct}% of designers</div>
     </div>
   );
 }

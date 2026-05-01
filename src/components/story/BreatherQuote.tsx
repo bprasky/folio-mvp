@@ -57,8 +57,8 @@ export function BreatherQuote({
           fontFamily: "var(--font-headline)",
           fontSize: "clamp(22px, 3vw, 26px)",
           fontStyle: "italic",
-          fontWeight: 400,
-          lineHeight: 1.45,
+          fontWeight: 'var(--w-body)',
+          lineHeight: 1.45, /* folio-design-system: off-scale */
           color: "rgba(87, 75, 67, 0.55)",
           transform: reducedMotion
             ? undefined
@@ -76,7 +76,7 @@ export function BreatherQuote({
       <footer
         className="mt-4"
         style={{
-          fontSize: "12px",
+          fontSize: 'var(--type-meta)',
           color: "rgba(87, 75, 67, 0.35)",
           opacity: revealed ? 1 : 0,
           transition: reducedMotion

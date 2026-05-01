@@ -51,7 +51,7 @@ export function ForYouFeed() {
         </h1>
         <p
           className="font-body mt-2 max-w-lg"
-          style={{ fontSize: "14px", lineHeight: 1.6, color: "var(--folio-text-secondary, #6b6b6b)" }}
+          style={{ fontSize: 'var(--type-ui)', lineHeight: 'var(--lh-body)', color: "var(--folio-text-secondary, #6b6b6b)" }}
         >
           Products matched to your design taste — powered by your saves, tags, and project history.
         </p>
@@ -76,11 +76,11 @@ export function ForYouFeed() {
           className="text-center py-20 font-body"
           style={{ color: "var(--folio-text-tertiary, #9b9b9b)" }}
         >
-          <div style={{ fontSize: "48px", marginBottom: "12px" }}>&#9825;</div>
-          <p style={{ fontSize: "15px" }}>
+          <div style={{ fontSize: 'var(--type-h1)', marginBottom: "12px" }}>&#9825;</div>
+          <p style={{ fontSize: 'var(--type-body)' }}>
             Save and tag more products to unlock personalized recommendations.
           </p>
-          <p style={{ fontSize: "13px", marginTop: "4px" }}>
+          <p style={{ fontSize: 'var(--type-meta)', marginTop: "4px" }}>
             Your taste profile builds as you interact with products across Folio.
           </p>
         </div>
@@ -115,7 +115,7 @@ export function ForYouFeed() {
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center font-body"
-                      style={{ color: "var(--folio-text-tertiary)", fontSize: "32px" }}>
+                      style={{ color: "var(--folio-text-tertiary)", fontSize: 'var(--type-stat)' }}>
                       &#9671;
                     </div>
                   )}
@@ -124,14 +124,14 @@ export function ForYouFeed() {
                 {/* Name + brand */}
                 <div
                   className="font-body font-medium truncate"
-                  style={{ fontSize: "13px", color: "var(--folio-text-primary, #1a1a1a)" }}
+                  style={{ fontSize: 'var(--type-meta)', color: "var(--folio-text-primary, #1a1a1a)" }}
                 >
                   {product.name}
                 </div>
                 {product.brand && (
                   <div
                     className="font-body truncate"
-                    style={{ fontSize: "11px", color: "var(--folio-text-tertiary, #9b9b9b)" }}
+                    style={{ fontSize: 'var(--type-eyebrow)', color: "var(--folio-text-tertiary, #9b9b9b)" }}
                   >
                     {product.brand}
                   </div>
@@ -145,7 +145,7 @@ export function ForYouFeed() {
                         key={j}
                         className="font-body"
                         style={{
-                          fontSize: "9px",
+                          fontSize: "9px", /* folio-design-system: off-scale */
                           padding: "2px 6px",
                           borderRadius: "8px",
                           background: "rgba(201, 169, 110, 0.12)",

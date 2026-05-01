@@ -52,7 +52,7 @@ export const AnalyticsVisualization: React.FC<AnalyticsVisualizationProps> = ({
                   style={{ height: `${h}px` }}
                 />
                 {s.labels && s.labels[idx] && (
-                  <span className="mt-1 text-[10px] text-folio-text-secondary text-center">
+                  <span className="mt-1 text-[var(--type-fine)] text-folio-text-secondary text-center">
                     {s.labels[idx]}
                   </span>
                 )}
@@ -71,7 +71,7 @@ export const AnalyticsVisualization: React.FC<AnalyticsVisualizationProps> = ({
           {spec.title}
         </h3>
         <table className="min-w-full text-xs text-left">
-          <thead className="border-b border-folio-border-subtle text-[11px] uppercase tracking-wide text-folio-text-secondary">
+          <thead className="border-b border-folio-border-subtle text-[var(--type-eyebrow)] uppercase tracking-wide text-folio-text-secondary">
             <tr>
               {spec.columns.map((col) => (
                 <th key={col} className="px-2 py-1">

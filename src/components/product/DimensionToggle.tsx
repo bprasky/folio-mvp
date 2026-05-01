@@ -25,9 +25,9 @@ export function DimensionToggle({ dimensions, isActive, onToggle, hudOpacity = 1
       style={{
         padding: "6px 12px",
         borderRadius: "20px",
-        fontSize: "11px",
-        fontWeight: 500,
-        letterSpacing: "0.3px",
+        fontSize: 'var(--type-eyebrow)',
+        fontWeight: 'var(--w-h1)',
+        letterSpacing: "0.3px", /* folio-design-system: off-scale */
         border: "none",
         backdropFilter: "blur(8px)",
         WebkitBackdropFilter: "blur(8px)",

@@ -94,8 +94,8 @@ export default function RemoteConnectModal({ open, onOpenChange }: RemoteConnect
           className="text-folio-text-primary"
           style={{
             fontFamily: 'Georgia, serif',
-            fontSize: '20px',
-            fontWeight: 400,
+            fontSize: 'var(--type-h4)',
+            fontWeight: 'var(--w-body)',
             margin: '0 0 16px',
           }}
         >
@@ -105,7 +105,7 @@ export default function RemoteConnectModal({ open, onOpenChange }: RemoteConnect
         <p
           className="text-folio-text-secondary"
           style={{
-            fontSize: '13px',
+            fontSize: 'var(--type-meta)',
             margin: '0 0 16px'
           }}
         >

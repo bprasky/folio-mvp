@@ -105,12 +105,12 @@ export function ForecastPreviewModal({ onClose }: { onClose: () => void }) {
                   key={insight.id}
                   className="rounded-2xl border border-folio-border-subtle bg-surface-ground/50 p-3 space-y-1"
                 >
-                  <div className={`text-[11px] uppercase tracking-wide px-2 py-0.5 rounded-full border inline-block ${impactColors[insight.impact]}`}>
+                  <div className={`text-[var(--type-eyebrow)] uppercase tracking-wide px-2 py-0.5 rounded-full border inline-block ${impactColors[insight.impact]}`}>
                     Impact: {insight.impact}
                   </div>
                   <div className="folio-ui font-semibold text-folio-text-primary">{insight.title}</div>
                   <p className="folio-meta text-folio-text-secondary line-clamp-3">{insight.summary}</p>
-                  <div className="text-[10px] font-mono text-folio-text-secondary mt-1">
+                  <div className="text-[var(--type-fine)] font-mono text-folio-text-secondary mt-1">
                     {Object.entries(insight.metrics)
                       .slice(0, 2)
                       .map(([k, v]) => `${k}: ${v}`)
@@ -120,7 +120,7 @@ export function ForecastPreviewModal({ onClose }: { onClose: () => void }) {
               );
             })}
           </div>
-          <p className="text-[11px] text-folio-text-secondary italic">
+          <p className="text-[var(--type-eyebrow)] text-folio-text-secondary italic">
             Numbers shown are examples based on your demo data. Live forecasts will update continuously as
             designers interact with your products.
           </p>

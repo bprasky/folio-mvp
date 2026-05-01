@@ -361,7 +361,7 @@ export default function FestivalFibonacciFeed({ events, canEdit = false, viewMod
 
                 {/* Admin-only "needs type" badge */}
                 {canEdit && isUntyped(event) && (
-                  <div className="absolute left-2 top-2 z-10 pointer-events-none text-[10px] font-medium rounded bg-yellow-400/90 text-black px-2 py-0.5">
+                  <div className="absolute left-2 top-2 z-10 pointer-events-none text-[var(--type-fine)] font-medium rounded bg-yellow-400/90 text-black px-2 py-0.5">
                     needs type
                   </div>
                 )}
@@ -448,7 +448,7 @@ export default function FestivalFibonacciFeed({ events, canEdit = false, viewMod
 
                   {/* Admin-only "needs type" badge */}
                   {canEdit && isUntyped(event) && (
-                    <div className="absolute left-2 top-2 z-10 pointer-events-none text-[10px] font-medium rounded bg-yellow-400/90 text-black px-2 py-0.5">
+                    <div className="absolute left-2 top-2 z-10 pointer-events-none text-[var(--type-fine)] font-medium rounded bg-yellow-400/90 text-black px-2 py-0.5">
                       needs type
                     </div>
                   )}

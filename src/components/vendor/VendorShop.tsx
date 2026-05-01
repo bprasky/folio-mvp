@@ -58,8 +58,8 @@ export function VendorShop({ orgId }: VendorShopProps) {
             onClick={() => setActiveFilter(pill.key)}
             className="font-body px-3.5 py-1.5 rounded-full cursor-pointer transition-colors flex-shrink-0"
             style={{
-              fontSize: "12px",
-              fontWeight: 500,
+              fontSize: 'var(--type-meta)',
+              fontWeight: 'var(--w-h1)',
               background: activeFilter === pill.key ? "#3a2a1a" : "rgba(245, 239, 232, 0.6)",
               color: activeFilter === pill.key ? "#f5efe8" : "var(--folio-text-secondary)",
               border: "none",
@@ -94,24 +94,24 @@ export function VendorShop({ orgId }: VendorShopProps) {
                   {product.imageUrl ? (
                     <Image src={product.imageUrl} alt={product.name} fill className="object-cover transition-transform duration-300 group-hover:scale-105" sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw" />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center font-body" style={{ color: "var(--folio-text-tertiary)", fontSize: "28px" }}>&#9671;</div>
+                    <div className="w-full h-full flex items-center justify-center font-body" style={{ color: "var(--folio-text-tertiary)", fontSize: 'var(--type-h3)' }}>&#9671;</div>
                   )}
                 </div>
-                <div className="font-body font-medium truncate" style={{ fontSize: "13px", color: "var(--folio-text-primary)" }}>{product.name}</div>
+                <div className="font-body font-medium truncate" style={{ fontSize: 'var(--type-meta)', color: "var(--folio-text-primary)" }}>{product.name}</div>
                 {product.style && (
-                  <div className="font-body truncate" style={{ fontSize: "11px", color: "var(--folio-text-tertiary)" }}>{product.style}</div>
+                  <div className="font-body truncate" style={{ fontSize: 'var(--type-eyebrow)', color: "var(--folio-text-tertiary)" }}>{product.style}</div>
                 )}
                 {product.materials.length > 0 && (
                   <div className="flex flex-wrap gap-1 mt-1">
                     {product.materials.slice(0, 2).map((m, j) => (
-                      <span key={j} className="font-body" style={{ fontSize: "9px", padding: "2px 6px", borderRadius: "8px", background: "rgba(201,169,110,0.12)", color: "#8a7044" }}>{m}</span>
+                      <span key={j} className="font-body" style={{ fontSize: "9px", padding: "2px 6px", borderRadius: "8px", background: "rgba(201,169,110,0.12)", color: "#8a7044" }}>{m}</span> /* folio-design-system: off-scale */
                     ))}
                   </div>
                 )}
                 {product.matchReasons && product.matchReasons.length > 0 && (
                   <div className="flex flex-wrap gap-1 mt-1">
                     {product.matchReasons.map((r, j) => (
-                      <span key={j} className="font-body" style={{ fontSize: "9px", padding: "2px 6px", borderRadius: "8px", background: "rgba(99,153,34,0.1)", color: "#4a7c59" }}>{r.attribute}</span>
+                      <span key={j} className="font-body" style={{ fontSize: "9px", padding: "2px 6px", borderRadius: "8px", background: "rgba(99,153,34,0.1)", color: "#4a7c59" }}>{r.attribute}</span> /* folio-design-system: off-scale */
                     ))}
                   </div>
                 )}
@@ -122,7 +122,7 @@ export function VendorShop({ orgId }: VendorShopProps) {
       )}
 
       {!loading && products.length === 0 && (
-        <div className="text-center py-16 font-body" style={{ color: "var(--folio-text-tertiary)", fontSize: "14px" }}>
+        <div className="text-center py-16 font-body" style={{ color: "var(--folio-text-tertiary)", fontSize: 'var(--type-ui)' }}>
           No products in this collection yet.
         </div>
       )}

@@ -35,18 +35,18 @@ export function StoryHero({ storyData, onScrollToRoom, activeRoomSlug }: Props) 
       {/* Content overlay */}
       <div className="relative z-10 p-6 pb-8 md:p-10 md:pb-12 flex flex-col gap-5 max-w-4xl">
         {/* Title */}
-        <h1 className="font-[var(--font-headline)] italic text-[28px] md:text-[40px] lg:text-[52px] leading-tight story-text-on-dark">
+        <h1 className="font-[var(--font-headline)] italic text-[var(--type-h3)] md:text-[var(--type-h1)] lg:text-[52px] leading-tight story-text-on-dark"> /* folio-design-system: off-scale */
           {title}
         </h1>
 
         {/* Pull quote */}
         {projectPullQuote && (
           <div className="story-glass-quote px-5 py-4 max-w-xl">
-            <p className="font-[var(--font-headline)] italic text-[18px] md:text-[22px] leading-relaxed story-text-on-dark">
+            <p className="font-[var(--font-headline)] italic text-[var(--type-h4)] md:text-[var(--type-h4)] leading-relaxed story-text-on-dark">
               &ldquo;{projectPullQuote}&rdquo;
             </p>
             {designer?.name && (
-              <p className="mt-2 text-[13px] font-[var(--font-body)] story-text-on-dark opacity-80">
+              <p className="mt-2 text-[var(--type-meta)] font-[var(--font-body)] story-text-on-dark opacity-80">
                 — {designer.name}
               </p>
             )}
@@ -76,7 +76,7 @@ export function StoryHero({ storyData, onScrollToRoom, activeRoomSlug }: Props) 
 
       {/* Scroll indicator */}
       <div className="relative z-10 flex flex-col items-center pb-6 story-text-on-dark opacity-70">
-        <span className="text-[13px] font-[var(--font-body)] tracking-wide uppercase mb-1">
+        <span className="text-[var(--type-meta)] font-[var(--font-body)] tracking-wide uppercase mb-1">
           Explore Rooms
         </span>
         <ChevronDown className="w-5 h-5 story-bounce" />

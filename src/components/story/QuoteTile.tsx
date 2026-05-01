@@ -89,10 +89,10 @@ export function QuoteTile({
         {/* Room label */}
         <span
           style={{
-            fontSize: "10px",
-            fontWeight: 500,
+            fontSize: 'var(--type-fine)',
+            fontWeight: 'var(--w-h1)',
             textTransform: "uppercase",
-            letterSpacing: "1.5px",
+            letterSpacing: 'var(--ls-wide)',
             color: "rgba(87, 75, 67, 0.55)",
             ...stagger(0)
           }}
@@ -106,9 +106,9 @@ export function QuoteTile({
             style={{
               fontFamily: "var(--font-headline)",
               fontSize: wide ? "17px" : "22px",
-              fontWeight: 400,
+              fontWeight: 'var(--w-body)',
               fontStyle: "italic",
-              lineHeight: 1.45,
+              lineHeight: 1.45, /* folio-design-system: off-scale */
               color: "rgba(87, 75, 67, 0.85)",
               ...stagger(80),
             }}
@@ -120,7 +120,7 @@ export function QuoteTile({
         {/* Attribution */}
         <span
           style={{
-            fontSize: "12px",
+            fontSize: 'var(--type-meta)',
             color: "rgba(87, 75, 67, 0.55)",
             ...stagger(160)
           }}
@@ -132,8 +132,8 @@ export function QuoteTile({
         {editorialTeaser && !wide && (
           <p
             style={{
-              fontSize: "13px",
-              lineHeight: 1.6,
+              fontSize: 'var(--type-meta)',
+              lineHeight: 'var(--lh-body)',
               color: "rgba(87, 75, 67, 0.45)",
               ...stagger(240)
             }}
@@ -147,7 +147,7 @@ export function QuoteTile({
       <span
         className={clsx(wide ? "whitespace-nowrap" : "mt-auto pt-3")}
         style={{
-          fontSize: "11px",
+          fontSize: 'var(--type-eyebrow)',
           color: "rgba(87, 75, 67, 0.3)",
           ...stagger(320)
         }}

@@ -64,7 +64,7 @@ export default function Duotile({ items, onClick, canEdit = false }: DuotileProp
           aria-label={String(items[0]?.title ?? '')}
         >
           {dev && (
-            <div className="mb-1 text-[10px] bg-emerald-200 text-emerald-900 inline-block px-1.5 rounded">
+            <div className="mb-1 text-[var(--type-fine)] bg-emerald-200 text-emerald-900 inline-block px-1.5 rounded">
               TILE ok · {String(items[0]?.title ?? '')}
             </div>
           )}
@@ -140,7 +140,7 @@ export default function Duotile({ items, onClick, canEdit = false }: DuotileProp
             aria-label={String(items[1]?.title ?? '')}
           >
             {dev && (
-              <div className="mb-1 text-[10px] bg-emerald-200 text-emerald-900 inline-block px-1.5 rounded">
+              <div className="mb-1 text-[var(--type-fine)] bg-emerald-200 text-emerald-900 inline-block px-1.5 rounded">
                 TILE ok · {String(items[1]?.title ?? '')}
               </div>
             )}

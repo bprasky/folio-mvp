@@ -37,24 +37,24 @@ export function UpdatesCard({ module }: { module: any }) {
           />
         ) : null}
         <div className="absolute inset-x-0 bottom-0 flex justify-between items-end p-3">
-          <span className="rounded-full bg-black/70 text-[11px] text-white px-2 py-0.5">
+          <span className="rounded-full bg-black/70 text-[var(--type-eyebrow)] text-white px-2 py-0.5">
             {typeLabel}
           </span>
-          <span className="rounded-full bg-white/80 text-[11px] text-folio-text-primary px-2 py-0.5">
+          <span className="rounded-full bg-white/80 text-[var(--type-eyebrow)] text-folio-text-primary px-2 py-0.5">
             {module.project.title}
           </span>
         </div>
       </div>
       <div className="p-3 flex-1 flex flex-col gap-1">
-        <div className="text-[14px] font-semibold text-folio-text-primary line-clamp-2">
+        <div className="text-[var(--type-ui)] font-semibold text-folio-text-primary line-clamp-2">
           {module.title || `Update on ${module.project.title}`}
         </div>
         {module.description && (
-          <p className="text-[12px] text-folio-text-secondary line-clamp-3">
+          <p className="text-[var(--type-meta)] text-folio-text-secondary line-clamp-3">
             {module.description}
           </p>
         )}
-        <p className="mt-auto pt-2 text-[11px] text-folio-text-secondary">
+        <p className="mt-auto pt-2 text-[var(--type-eyebrow)] text-folio-text-secondary">
           by {name}
         </p>
       </div>

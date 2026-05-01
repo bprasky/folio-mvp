@@ -55,11 +55,11 @@ export default function DirectoryTable({
         <table className="w-full">
           <thead className="bg-surface-ground border-b border-folio-border-subtle">
             <tr>
-              <th className="px-4 py-3 text-left text-[11px] font-medium text-folio-text-secondary uppercase tracking-[0.05em]">
+              <th className="px-4 py-3 text-left text-[var(--type-eyebrow)] font-medium text-folio-text-secondary uppercase tracking-[var(--ls-wide)]">
                 Product
               </th>
               <th 
-                className="px-4 py-3 text-left text-[11px] font-medium text-folio-text-secondary uppercase tracking-[0.05em] cursor-pointer hover:bg-surface-ground transition-colors"
+                className="px-4 py-3 text-left text-[var(--type-eyebrow)] font-medium text-folio-text-secondary uppercase tracking-[var(--ls-wide)] cursor-pointer hover:bg-surface-ground transition-colors"
                 onClick={() => onSort('productBrand')}
               >
                 <div className="flex items-center gap-2">
@@ -68,7 +68,7 @@ export default function DirectoryTable({
                 </div>
               </th>
               <th 
-                className="px-4 py-3 text-left text-[11px] font-medium text-folio-text-secondary uppercase tracking-[0.05em] cursor-pointer hover:bg-surface-ground transition-colors"
+                className="px-4 py-3 text-left text-[var(--type-eyebrow)] font-medium text-folio-text-secondary uppercase tracking-[var(--ls-wide)] cursor-pointer hover:bg-surface-ground transition-colors"
                 onClick={() => onSort('category')}
               >
                 <div className="flex items-center gap-2">
@@ -77,7 +77,7 @@ export default function DirectoryTable({
                 </div>
               </th>
               <th 
-                className="px-4 py-3 text-left text-[11px] font-medium text-folio-text-secondary uppercase tracking-[0.05em] cursor-pointer hover:bg-surface-ground transition-colors"
+                className="px-4 py-3 text-left text-[var(--type-eyebrow)] font-medium text-folio-text-secondary uppercase tracking-[var(--ls-wide)] cursor-pointer hover:bg-surface-ground transition-colors"
                 onClick={() => onSort('projectCount')}
               >
                 <div className="flex items-center gap-2">
@@ -85,14 +85,14 @@ export default function DirectoryTable({
                   {getSortIcon('projectCount')}
                 </div>
               </th>
-              <th className="px-4 py-3 text-left text-[11px] font-medium text-folio-text-secondary uppercase tracking-[0.05em]">
+              <th className="px-4 py-3 text-left text-[var(--type-eyebrow)] font-medium text-folio-text-secondary uppercase tracking-[var(--ls-wide)]">
                 Rooms
               </th>
-              <th className="px-4 py-3 text-left text-[11px] font-medium text-folio-text-secondary uppercase tracking-[0.05em]">
+              <th className="px-4 py-3 text-left text-[var(--type-eyebrow)] font-medium text-folio-text-secondary uppercase tracking-[var(--ls-wide)]">
                 Rep Email
               </th>
               <th 
-                className="px-4 py-3 text-left text-[11px] font-medium text-folio-text-secondary uppercase tracking-[0.05em] cursor-pointer hover:bg-surface-ground transition-colors"
+                className="px-4 py-3 text-left text-[var(--type-eyebrow)] font-medium text-folio-text-secondary uppercase tracking-[var(--ls-wide)] cursor-pointer hover:bg-surface-ground transition-colors"
                 onClick={() => onSort('lastUsedAt')}
               >
                 <div className="flex items-center gap-2">
@@ -101,7 +101,7 @@ export default function DirectoryTable({
                 </div>
               </th>
               <th 
-                className="px-4 py-3 text-left text-[11px] font-medium text-folio-text-secondary uppercase tracking-[0.05em] cursor-pointer hover:bg-surface-ground transition-colors"
+                className="px-4 py-3 text-left text-[var(--type-eyebrow)] font-medium text-folio-text-secondary uppercase tracking-[var(--ls-wide)] cursor-pointer hover:bg-surface-ground transition-colors"
                 onClick={() => onSort('tagCount')}
               >
                 <div className="flex items-center gap-2">

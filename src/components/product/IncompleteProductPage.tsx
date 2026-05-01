@@ -104,14 +104,14 @@ export function IncompleteProductPage({
             {productName}
           </h1>
           {displayVendor && (
-            <p className="mt-0.5 text-[11px] uppercase tracking-[0.16em] text-folio-text-secondary">
+            <p className="mt-0.5 text-[var(--type-eyebrow)] uppercase tracking-[var(--ls-eyebrow)] text-folio-text-secondary">
               {displayVendor}
             </p>
           )}
 
           {/* Status message */}
           <div className="mt-4 p-3 rounded-xl bg-amber-50/60 border border-amber-200/40">
-            <p className="text-[13px] text-amber-800 leading-relaxed">
+            <p className="text-[var(--type-meta)] text-amber-800 leading-relaxed">
               This product hasn't been fully catalogued yet.
               {hasVendorContact
                 ? ` Request complete specifications directly from ${displayVendor}.`
@@ -125,7 +125,7 @@ export function IncompleteProductPage({
               <div className="text-sm font-medium text-green-700 mb-1">
                 Request sent
               </div>
-              <p className="text-[12px] text-folio-text-secondary">
+              <p className="text-[var(--type-meta)] text-folio-text-secondary">
                 {hasVendorContact
                   ? `${displayVendor} will be notified to complete this product's specifications.`
                   : 'Our team will follow up to get the complete details.'
@@ -137,7 +137,7 @@ export function IncompleteProductPage({
               {/* Vendor email form (when no vendor contact available) */}
               {showEmailForm && (
                 <div className="mt-4">
-                  <label className="text-[11px] text-folio-text-secondary block mb-1">
+                  <label className="text-[var(--type-eyebrow)] text-folio-text-secondary block mb-1">
                     Know the vendor's email?
                   </label>
                   <input
@@ -187,7 +187,7 @@ export function IncompleteProductPage({
           <div className="mt-5 text-center">
             <Link
               href="/"
-              className="text-[12px] text-folio-text-tertiary hover:text-folio-text-secondary transition-colors"
+              className="text-[var(--type-meta)] text-folio-text-tertiary hover:text-folio-text-secondary transition-colors"
             >
               Back to Folio
             </Link>

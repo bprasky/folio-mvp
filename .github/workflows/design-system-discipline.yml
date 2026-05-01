@@ -112,3 +112,37 @@ jobs:
             echo "$INLINE"
             exit 1
           fi
+
+      - name: Forbid raw type literals outside carve-outs
+        run: |
+          # Email templates, in-context boost, the pdfkit spec-sheet, the QR
+          # FolioBadgeModal, the print-tearsheet HTML, OG image render, the
+          # canonical token block in globals.css, Markdown docs, and lines
+          # explicitly marked with `folio-design-system: off-scale` are exempt.
+          CARVEOUT='lib/email/|lib/boost/inContextBoost|api/products/.*/spec-sheet|components/badge/FolioBadgeModal|export-tearsheet|api/og/|globals\.css|\.md:|folio-design-system: off-scale'
+
+          # Scope to TS/TSX/JS/JSX/CSS files only
+          GLOB="src/*.{ts,tsx,js,jsx,css} src/**/*.{ts,tsx,js,jsx,css}"
+
+          # POSIX-extended regex (no lookarounds available); use character classes.
+          BAD_SIZE=$(git grep -nE "fontSize:\s*['\"][0-9]+(px|rem|em)['\"]" -- "src/**/*.tsx" "src/**/*.ts" "src/**/*.jsx" "src/**/*.js" "src/**/*.css" | grep -vE "$CARVEOUT" || true)
+          BAD_WEIGHT=$(git grep -nE "fontWeight:\s*['\"]?[0-9]{3}['\"]?[,}: ]" -- "src/**/*.tsx" "src/**/*.ts" "src/**/*.jsx" "src/**/*.js" | grep -vE "$CARVEOUT" || true)
+          BAD_LH=$(git grep -nE "lineHeight:\s*['\"][0-9]+(\.[0-9]+)?['\"]" -- "src/**/*.tsx" "src/**/*.ts" "src/**/*.jsx" "src/**/*.js" | grep -vE "$CARVEOUT" || true)
+          BAD_LS=$(git grep -nE "letterSpacing:\s*['\"][\-]?[0-9]+(\.[0-9]+)?(em|px|rem)['\"]" -- "src/**/*.tsx" "src/**/*.ts" "src/**/*.jsx" "src/**/*.js" | grep -vE "$CARVEOUT" || true)
+          BAD_TW_TEXT=$(git grep -nE "text-\[[0-9]+(px|rem)\]" -- "src/**/*.tsx" "src/**/*.ts" "src/**/*.jsx" "src/**/*.js" | grep -vE "$CARVEOUT" || true)
+          BAD_TW_LEADING=$(git grep -nE "leading-\[[0-9.]+\]" -- "src/**/*.tsx" "src/**/*.ts" "src/**/*.jsx" "src/**/*.js" | grep -vE "$CARVEOUT" || true)
+          BAD_TW_TRACKING=$(git grep -nE "tracking-\[[\-]?[0-9.]+(em|px|rem)\]" -- "src/**/*.tsx" "src/**/*.ts" "src/**/*.jsx" "src/**/*.js" | grep -vE "$CARVEOUT" || true)
+          BAD_TW_FONT=$(git grep -nE "font-\[[0-9]+\]" -- "src/**/*.tsx" "src/**/*.ts" "src/**/*.jsx" "src/**/*.js" | grep -vE "$CARVEOUT" || true)
+
+          if [ -n "$BAD_SIZE$BAD_WEIGHT$BAD_LH$BAD_LS$BAD_TW_TEXT$BAD_TW_LEADING$BAD_TW_TRACKING$BAD_TW_FONT" ]; then
+            echo "::error::Raw type literal found. Use --type-*, --w-*, --lh-*, --ls-* tokens or .folio-* utility classes. Mark intentional outliers with /* folio-design-system: off-scale */."
+            [ -n "$BAD_SIZE" ] && echo "=== fontSize ===" && echo "$BAD_SIZE"
+            [ -n "$BAD_WEIGHT" ] && echo "=== fontWeight ===" && echo "$BAD_WEIGHT"
+            [ -n "$BAD_LH" ] && echo "=== lineHeight ===" && echo "$BAD_LH"
+            [ -n "$BAD_LS" ] && echo "=== letterSpacing ===" && echo "$BAD_LS"
+            [ -n "$BAD_TW_TEXT" ] && echo "=== text-[Npx] ===" && echo "$BAD_TW_TEXT"
+            [ -n "$BAD_TW_LEADING" ] && echo "=== leading-[N] ===" && echo "$BAD_TW_LEADING"
+            [ -n "$BAD_TW_TRACKING" ] && echo "=== tracking-[N] ===" && echo "$BAD_TW_TRACKING"
+            [ -n "$BAD_TW_FONT" ] && echo "=== font-[N] ===" && echo "$BAD_TW_FONT"
+            exit 1
+          fi

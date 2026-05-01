@@ -42,11 +42,11 @@ export function ProductsSavedByRoom({ data, onHover }: ProductsSavedByRoomProps)
           <CartesianGrid strokeDasharray="3 3" stroke="#E5E0D7" />
           <XAxis 
             dataKey="room" 
-            tick={{ fontSize: 12, fill: '#8C8278' }}
+            tick={{ fontSize: 'var(--type-meta)', fill: '#8C8278' }}
             axisLine={{ stroke: '#DAD2CA' }}
           />
           <YAxis 
-            tick={{ fontSize: 12, fill: '#8C8278' }}
+            tick={{ fontSize: 'var(--type-meta)', fill: '#8C8278' }}
             axisLine={{ stroke: '#DAD2CA' }}
           />
           <Tooltip
@@ -56,7 +56,7 @@ export function ProductsSavedByRoom({ data, onHover }: ProductsSavedByRoomProps)
               borderRadius: '8px',
               boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
             }}
-            labelStyle={{ color: '#2B2B2B', fontWeight: '500' }}
+            labelStyle={{ color: '#2B2B2B', fontWeight: 'var(--w-h1)' }}
           />
           <Bar 
             dataKey="saves" 

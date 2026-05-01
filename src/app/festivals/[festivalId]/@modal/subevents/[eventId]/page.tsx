@@ -108,7 +108,7 @@ export default async function SubeventInvitationPage({
           {/* Hero copy - Folio Design System typography */}
           <div className="pt-12 md:pt-16">
             <p className="folio-meta text-white/90 tracking-wide">{inviteCopy}</p>
-            <h1 className="mt-2 folio-h1 text-white leading-[1.1]">
+            <h1 className="mt-2 folio-h1 text-white leading-[var(--lh-h1)]">
               {event.title}
             </h1>
 

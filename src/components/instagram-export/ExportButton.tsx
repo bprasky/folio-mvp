@@ -104,7 +104,7 @@ export function ExportButton({ projectId, config, caption }: Props) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
       {progress && (
-        <span style={{ fontSize: '13px', color: '#8B7B68' }}>{progress}</span>
+        <span style={{ fontSize: 'var(--type-meta)', color: '#8B7B68' }}>{progress}</span>
       )}
       <button
         onClick={handleExport}
@@ -115,8 +115,8 @@ export function ExportButton({ projectId, config, caption }: Props) {
           gap: '8px',
           borderRadius: '10px',
           padding: '10px 20px',
-          fontSize: '13px',
-          fontWeight: 500,
+          fontSize: 'var(--type-meta)',
+          fontWeight: 'var(--w-h1)',
           border: 'none',
           cursor: exporting || !config.headline ? 'default' : 'pointer',
           transition: 'all 0.2s',

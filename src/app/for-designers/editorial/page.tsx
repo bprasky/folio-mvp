@@ -20,7 +20,7 @@ export default function EditorialPillarPage() {
       {/* Hero */}
       <section className="pt-12 pb-8 px-6">
         <div className="max-w-3xl mx-auto">
-          <h1 className="font-headline italic text-5xl md:text-6xl text-folio-text-primary leading-[1.1] mb-6">
+          <h1 className="font-headline italic text-5xl md:text-6xl text-folio-text-primary leading-[var(--lh-h1)] mb-6">
             Projects that speak for themselves.
           </h1>
           <p className="text-lg text-folio-text-secondary leading-relaxed">

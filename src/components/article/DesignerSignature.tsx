@@ -29,7 +29,7 @@ export function DesignerSignature({
       ) : null}
       <div className="text-sm text-folio-text-primary">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-[13px]">✍️</span>
+          <span className="text-[var(--type-meta)]">✍️</span>
           <em className="not-italic">
             {signature || "Every corner of this home tells a story."}
           </em>

@@ -111,7 +111,7 @@ export default function FilterChips({
             title={`${facet.label} (${facet.count})`}
           >
             <span>{facet.label}</span>
-            <span className="opacity-0 group-hover:opacity-100 transition-opacity text-folio-text-tertiary text-[10px]">
+            <span className="opacity-0 group-hover:opacity-100 transition-opacity text-folio-text-tertiary text-[var(--type-fine)]">
               {facet.count}
             </span>
           </button>

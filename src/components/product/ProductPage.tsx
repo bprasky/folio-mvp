@@ -25,7 +25,7 @@ export function ProductPage({ product }: { product: Product }) {
         <div className="col-span-12 lg:col-span-5 space-y-5">
           <div className="rounded-2xl border border-[#E5E7EB] bg-white p-4">
             <div className="text-sm text-[#6B7280]">Description</div>
-            <p className="mt-1 text-[15px] text-[#111827]">{product.description}</p>
+            <p className="mt-1 text-[var(--type-body)] text-[#111827]">{product.description}</p>
           </div>
 
           <PrimaryActions product={product} />

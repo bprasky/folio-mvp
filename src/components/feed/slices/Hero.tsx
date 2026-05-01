@@ -55,7 +55,7 @@ export default function Hero({ item, onClick, canEdit = false }: HeroProps) {
         {/* Image Container with Aspect Ratio */}
         <div className="relative rounded-2xl overflow-hidden bg-surface-ground">
           {dev && (
-            <div className="absolute left-2 top-2 z-10 text-[10px] bg-emerald-200 text-emerald-900 px-1.5 rounded">
+            <div className="absolute left-2 top-2 z-10 text-[var(--type-fine)] bg-emerald-200 text-emerald-900 px-1.5 rounded">
               HERO ok · {String(item?.title ?? '')}
             </div>
           )}

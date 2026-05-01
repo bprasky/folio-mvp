@@ -88,29 +88,29 @@ export function ConstellationScene({
   return (
     <div className="relative w-full h-full">
       {/* Metrics HUD */}
-      <div className="absolute top-4 left-4 z-10 text-[11px] text-slate-400 space-y-1">
-        <div className="font-semibold text-slate-200 text-xs tracking-[0.16em] uppercase">
+      <div className="absolute top-4 left-4 z-10 text-[var(--type-eyebrow)] text-slate-400 space-y-1">
+        <div className="font-semibold text-slate-200 text-xs tracking-[var(--ls-eyebrow)] uppercase">
           System Snapshot
         </div>
-        <div className="font-mono text-[11px]">
+        <div className="font-mono text-[var(--type-eyebrow)]">
           Designers:{" "}
           <span className="text-slate-100">
             {state.metrics.designers.toLocaleString()}
           </span>
         </div>
-        <div className="font-mono text-[11px]">
+        <div className="font-mono text-[var(--type-eyebrow)]">
           Editorials:{" "}
           <span className="text-slate-100">
             {state.metrics.editorials.toLocaleString()}
           </span>
         </div>
-        <div className="font-mono text-[11px]">
+        <div className="font-mono text-[var(--type-eyebrow)]">
           Vendors:{" "}
           <span className="text-slate-100">
             {state.metrics.vendors.toLocaleString()}
           </span>
         </div>
-        <div className="font-mono text-[11px]">
+        <div className="font-mono text-[var(--type-eyebrow)]">
           Earnings:{" "}
           <span className="text-slate-100">
             ${state.metrics.earningsUsd.toLocaleString()}
@@ -326,15 +326,15 @@ function ConstellationNode({
         distanceFactor={4.2}
         style={{
           pointerEvents: "none",
-          fontSize: "24px",
-          fontWeight: 600,
+          fontSize: 'var(--type-quote)',
+          fontWeight: 'var(--w-stat)',
           fontFamily:
             "system-ui, -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif",
           color: "#020617",
           whiteSpace: "nowrap",
           textShadow:
             "0 0 4px rgba(248,250,252,0.9), 0 0 8px rgba(15,23,42,0.4)",
-          letterSpacing: "0.02em",
+          letterSpacing: "0.02em", /* folio-design-system: off-scale */
         }}
       >
         {label}

@@ -24,11 +24,11 @@ export function VendorTeam({ members, orgId, orgName }: VendorTeamProps) {
     <div className="space-y-10">
       {/* Team directory */}
       <div>
-        <h3 className="font-headline font-light mb-4" style={{ fontSize: "20px", color: "var(--folio-text-primary)" }}>
+        <h3 className="font-headline font-light mb-4" style={{ fontSize: 'var(--type-h4)', color: "var(--folio-text-primary)" }}>
           Team
         </h3>
         {members.length === 0 ? (
-          <p className="font-body" style={{ fontSize: "13px", color: "var(--folio-text-tertiary)" }}>
+          <p className="font-body" style={{ fontSize: 'var(--type-meta)', color: "var(--folio-text-tertiary)" }}>
             No team members listed yet.
           </p>
         ) : (
@@ -42,16 +42,16 @@ export function VendorTeam({ members, orgId, orgName }: VendorTeamProps) {
                 {member.profileImage ? (
                   <Image src={member.profileImage} alt={member.name} width={48} height={48} className="rounded-full object-cover flex-shrink-0" />
                 ) : (
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 font-body" style={{ background: "rgba(201,169,110,0.15)", color: "#8a7044", fontSize: "16px", fontWeight: 500 }}>
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 font-body" style={{ background: "rgba(201,169,110,0.15)", color: "#8a7044", fontSize: 'var(--type-body)', fontWeight: 'var(--w-h1)' }}>
                     {member.name.charAt(0).toUpperCase()}
                   </div>
                 )}
                 <div className="min-w-0">
-                  <div className="font-body font-medium" style={{ fontSize: "14px", color: "var(--folio-text-primary)" }}>{member.name}</div>
+                  <div className="font-body font-medium" style={{ fontSize: 'var(--type-ui)', color: "var(--folio-text-primary)" }}>{member.name}</div>
                   {member.title && (
-                    <div className="font-body" style={{ fontSize: "12px", color: "var(--folio-text-secondary)" }}>{member.title}</div>
+                    <div className="font-body" style={{ fontSize: 'var(--type-meta)', color: "var(--folio-text-secondary)" }}>{member.title}</div>
                   )}
-                  <div className="font-body" style={{ fontSize: "11px", color: "var(--folio-text-tertiary)", textTransform: "capitalize" }}>{member.role.toLowerCase()}</div>
+                  <div className="font-body" style={{ fontSize: 'var(--type-eyebrow)', color: "var(--folio-text-tertiary)", textTransform: "capitalize" }}>{member.role.toLowerCase()}</div>
                 </div>
               </div>
             ))}
@@ -61,7 +61,7 @@ export function VendorTeam({ members, orgId, orgName }: VendorTeamProps) {
 
       {/* Inquiry form */}
       <div>
-        <h3 className="font-headline font-light mb-4" style={{ fontSize: "20px", color: "var(--folio-text-primary)" }}>
+        <h3 className="font-headline font-light mb-4" style={{ fontSize: 'var(--type-h4)', color: "var(--folio-text-primary)" }}>
           Get in Touch
         </h3>
         <InquiryForm orgId={orgId} orgName={orgName} />
@@ -108,7 +108,7 @@ function InquiryForm({ orgId, orgName }: { orgId: string; orgName: string }) {
         onChange={e => setName(e.target.value)}
         required
         className="w-full font-body rounded-lg px-3.5 py-2.5"
-        style={{ fontSize: "13px", background: "rgba(245,239,232,0.5)", border: "0.5px solid var(--folio-border-subtle)", color: "var(--folio-text-primary)", outline: "none" }}
+        style={{ fontSize: 'var(--type-meta)', background: "rgba(245,239,232,0.5)", border: "0.5px solid var(--folio-border-subtle)", color: "var(--folio-text-primary)", outline: "none" }}
       />
       <input
         type="email"
@@ -117,7 +117,7 @@ function InquiryForm({ orgId, orgName }: { orgId: string; orgName: string }) {
         onChange={e => setEmail(e.target.value)}
         required
         className="w-full font-body rounded-lg px-3.5 py-2.5"
-        style={{ fontSize: "13px", background: "rgba(245,239,232,0.5)", border: "0.5px solid var(--folio-border-subtle)", color: "var(--folio-text-primary)", outline: "none" }}
+        style={{ fontSize: 'var(--type-meta)', background: "rgba(245,239,232,0.5)", border: "0.5px solid var(--folio-border-subtle)", color: "var(--folio-text-primary)", outline: "none" }}
       />
       <textarea
         placeholder={`Message for ${orgName}...`}
@@ -126,13 +126,13 @@ function InquiryForm({ orgId, orgName }: { orgId: string; orgName: string }) {
         required
         rows={4}
         className="w-full font-body rounded-lg px-3.5 py-2.5 resize-y"
-        style={{ fontSize: "13px", background: "rgba(245,239,232,0.5)", border: "0.5px solid var(--folio-border-subtle)", color: "var(--folio-text-primary)", outline: "none" }}
+        style={{ fontSize: 'var(--type-meta)', background: "rgba(245,239,232,0.5)", border: "0.5px solid var(--folio-border-subtle)", color: "var(--folio-text-primary)", outline: "none" }}
       />
       <button
         type="submit"
         disabled={sending}
         className="font-body px-6 py-2.5 rounded-lg cursor-pointer"
-        style={{ fontSize: "13px", fontWeight: 500, background: "#3a2a1a", color: "#f5efe8", border: "none", opacity: sending ? 0.5 : 1 }}
+        style={{ fontSize: 'var(--type-meta)', fontWeight: 'var(--w-h1)', background: "#3a2a1a", color: "#f5efe8", border: "none", opacity: sending ? 0.5 : 1 }}
       >
         {sending ? "Sending..." : "Send Inquiry"}
       </button>

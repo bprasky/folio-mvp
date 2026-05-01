@@ -33,7 +33,7 @@ export default function Hero({ imageUrl, title, locations, establishedYear, foll
       {/* Top Right Actions */}
       <div className="absolute top-8 right-8 z-10 flex flex-col items-end gap-2">
         <div className="bg-white/95 backdrop-blur-sm px-4 py-2 rounded border border-stone-200/50 shadow-sm">
-          <div className="text-[13px] leading-tight" style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', color: '#6d6256', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          <div className="text-[var(--type-meta)] leading-tight" style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', color: '#6d6256', textTransform: 'uppercase', letterSpacing: 'var(--ls-wide)' }}>
             <span className="text-[#b89a72] font-normal not-italic" style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>
               {formatNumber(followers)}
             </span>

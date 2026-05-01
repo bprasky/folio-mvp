@@ -157,7 +157,7 @@ export function CreateAppreciationDinnerModal({
 
         <div className="p-8">
           <div className="mb-8">
-            <h2 className="text-[32px] font-serif text-folio-text-primary leading-tight">
+            <h2 className="text-[var(--type-stat)] font-serif text-folio-text-primary leading-tight">
               {plan?.eventName || "Champions Dinner – December 2025"}
             </h2>
           </div>

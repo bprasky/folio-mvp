@@ -7,8 +7,8 @@ export default function BrandMark({ variant='default' }: { variant?: 'default' |
     <motion.span
       layoutId="folio-logo"
       className={variant === 'metrics'
-        ? 'text-[18px] tracking-tight font-semibold'
-        : 'text-[20px] tracking-tight font-semibold'}
+        ? 'text-[var(--type-h4)] tracking-tight font-semibold'
+        : 'text-[var(--type-h4)] tracking-tight font-semibold'}
     >
       FOLIO
     </motion.span>

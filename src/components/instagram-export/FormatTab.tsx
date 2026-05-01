@@ -62,7 +62,7 @@ export function FormatTab({
     <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
       {/* Watermark Style */}
       <div>
-        <div style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase' as const, color: '#8B7B68', marginBottom: '12px', fontWeight: 500 }}>
+        <div style={{ fontSize: 'var(--type-eyebrow)', letterSpacing: 'var(--ls-eyebrow)', textTransform: 'uppercase' as const, color: '#8B7B68', marginBottom: '12px', fontWeight: 'var(--w-h1)' }}>
           Watermark Style
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -99,10 +99,10 @@ export function FormatTab({
                 )}
               </div>
               <div>
-                <div style={{ fontSize: '14px', color: '#2C2420', fontWeight: 500 }}>
+                <div style={{ fontSize: 'var(--type-ui)', color: '#2C2420', fontWeight: 'var(--w-h1)' }}>
                   {opt.label}
                 </div>
-                <div style={{ fontSize: '12px', color: '#A89880', marginTop: '2px' }}>
+                <div style={{ fontSize: 'var(--type-meta)', color: '#A89880', marginTop: '2px' }}>
                   {opt.description}
                 </div>
               </div>
@@ -113,7 +113,7 @@ export function FormatTab({
 
       {/* Aspect Ratio */}
       <div>
-        <div style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase' as const, color: '#8B7B68', marginBottom: '12px', fontWeight: 500 }}>
+        <div style={{ fontSize: 'var(--type-eyebrow)', letterSpacing: 'var(--ls-eyebrow)', textTransform: 'uppercase' as const, color: '#8B7B68', marginBottom: '12px', fontWeight: 'var(--w-h1)' }}>
           Aspect Ratio
         </div>
         <div style={{ display: 'flex', gap: '8px' }}>
@@ -132,10 +132,10 @@ export function FormatTab({
                 textAlign: 'center' as const,
               }}
             >
-              <div style={{ fontSize: '13px', color: '#2C2420', fontWeight: 500 }}>
+              <div style={{ fontSize: 'var(--type-meta)', color: '#2C2420', fontWeight: 'var(--w-h1)' }}>
                 {opt.label}
               </div>
-              <div style={{ fontSize: '11px', color: '#A89880', marginTop: '2px' }}>
+              <div style={{ fontSize: 'var(--type-eyebrow)', color: '#A89880', marginTop: '2px' }}>
                 {opt.description}
               </div>
             </button>
@@ -145,7 +145,7 @@ export function FormatTab({
 
       {/* Headline Position */}
       <div>
-        <div style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase' as const, color: '#8B7B68', marginBottom: '12px', fontWeight: 500 }}>
+        <div style={{ fontSize: 'var(--type-eyebrow)', letterSpacing: 'var(--ls-eyebrow)', textTransform: 'uppercase' as const, color: '#8B7B68', marginBottom: '12px', fontWeight: 'var(--w-h1)' }}>
           Headline Position
         </div>
         <div style={{ display: 'flex', gap: '8px' }}>
@@ -161,9 +161,9 @@ export function FormatTab({
                 background: headlinePosition === opt.value ? '#FAF7F4' : '#FFFFFF',
                 cursor: 'pointer',
                 transition: 'all 0.2s',
-                fontSize: '13px',
+                fontSize: 'var(--type-meta)',
                 color: headlinePosition === opt.value ? '#2C2420' : '#8B7B68',
-                fontWeight: 500,
+                fontWeight: 'var(--w-h1)',
               }}
             >
               {opt.label}
@@ -174,7 +174,7 @@ export function FormatTab({
 
       {/* Carousel Length */}
       <div>
-        <div style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase' as const, color: '#8B7B68', marginBottom: '12px', fontWeight: 500 }}>
+        <div style={{ fontSize: 'var(--type-eyebrow)', letterSpacing: 'var(--ls-eyebrow)', textTransform: 'uppercase' as const, color: '#8B7B68', marginBottom: '12px', fontWeight: 'var(--w-h1)' }}>
           Carousel Length
         </div>
         <div style={{ display: 'flex', gap: '8px' }}>
@@ -190,9 +190,9 @@ export function FormatTab({
                 background: slideCount === count ? '#FAF7F4' : '#FFFFFF',
                 cursor: 'pointer',
                 transition: 'all 0.2s',
-                fontSize: '13px',
+                fontSize: 'var(--type-meta)',
                 color: slideCount === count ? '#2C2420' : '#8B7B68',
-                fontWeight: 500,
+                fontWeight: 'var(--w-h1)',
               }}
             >
               {count} slides
@@ -203,7 +203,7 @@ export function FormatTab({
 
       {/* Image Selection */}
       <div>
-        <div style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase' as const, color: '#8B7B68', marginBottom: '12px', fontWeight: 500 }}>
+        <div style={{ fontSize: 'var(--type-eyebrow)', letterSpacing: 'var(--ls-eyebrow)', textTransform: 'uppercase' as const, color: '#8B7B68', marginBottom: '12px', fontWeight: 'var(--w-h1)' }}>
           Images ({selectedImageUrls.length} selected)
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
@@ -243,8 +243,8 @@ export function FormatTab({
                     borderRadius: '50%',
                     background: '#2C2420',
                     color: '#FFFFFF',
-                    fontSize: '10px',
-                    fontWeight: 700,
+                    fontSize: 'var(--type-fine)',
+                    fontWeight: 700, /* folio-design-system: off-scale */
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',

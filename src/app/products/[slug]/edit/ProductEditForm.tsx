@@ -82,7 +82,7 @@ export function ProductEditForm({ product }: { product: ProductData }) {
           className="field-input"
         />
         {isMissing(imageUrl) && (
-          <p className="text-[11px] text-amber-600 mt-1">
+          <p className="text-[var(--type-eyebrow)] text-amber-600 mt-1">
             Adding an image makes this product visible in hover interactions and feeds.
           </p>
         )}
@@ -98,7 +98,7 @@ export function ProductEditForm({ product }: { product: ProductData }) {
           className="field-input"
         />
         {isMissing(brand) && (
-          <p className="text-[11px] text-amber-600 mt-1">
+          <p className="text-[var(--type-eyebrow)] text-amber-600 mt-1">
             Vendor info helps designers source this product and connects it to the vendor's catalog.
           </p>
         )}
@@ -114,7 +114,7 @@ export function ProductEditForm({ product }: { product: ProductData }) {
           className="field-input"
         />
         {isMissing(url) && (
-          <p className="text-[11px] text-amber-600 mt-1">
+          <p className="text-[var(--type-eyebrow)] text-amber-600 mt-1">
             A link lets designers go directly to the product page for specs and pricing.
           </p>
         )}
@@ -187,7 +187,7 @@ function Field({
         missing ? 'bg-amber-50/60 border border-amber-200/50' : 'bg-white border border-folio-border-subtle'
       }`}
     >
-      <label className="block text-[11px] font-medium text-folio-text-secondary uppercase tracking-wide mb-1.5">
+      <label className="block text-[var(--type-eyebrow)] font-medium text-folio-text-secondary uppercase tracking-wide mb-1.5">
         {label}
         {missing && <span className="text-amber-600 ml-1">missing</span>}
         {optional && <span className="text-folio-text-tertiary ml-1">optional</span>}

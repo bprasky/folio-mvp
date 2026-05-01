@@ -94,7 +94,7 @@ const PinnedInsightCard: React.FC<PinnedInsightCardProps> = ({
         )}
       </div>
 
-      <p className="text-[11px] uppercase tracking-wide text-folio-text-tertiary mb-3">
+      <p className="text-[var(--type-eyebrow)] uppercase tracking-wide text-folio-text-tertiary mb-3">
         Pinned {new Date(insight.pinnedAt).toLocaleString()}
       </p>
 

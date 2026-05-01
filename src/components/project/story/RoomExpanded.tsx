@@ -55,12 +55,12 @@ export function RoomExpanded({
         <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 bg-white/90 backdrop-blur-sm border-b border-[rgba(87,75,67,0.08)]">
           <button
             onClick={onClose}
-            className="flex items-center gap-1 text-[14px] font-[var(--font-body)] font-medium story-text-on-light"
+            className="flex items-center gap-1 text-[var(--type-ui)] font-[var(--font-body)] font-medium story-text-on-light"
           >
             <ArrowLeft className="w-4 h-4" />
             Back to rooms
           </button>
-          <span className="text-[14px] font-[var(--font-body)] font-medium story-text-secondary">
+          <span className="text-[var(--type-ui)] font-[var(--font-body)] font-medium story-text-secondary">
             {card.roomLabel}
           </span>
         </div>
@@ -81,7 +81,7 @@ export function RoomExpanded({
         {/* Pull quote */}
         {card.pullQuote && (
           <blockquote className="px-2">
-            <p className="font-[var(--font-headline)] italic text-[22px] md:text-[26px] leading-relaxed story-text-on-light">
+            <p className="font-[var(--font-headline)] italic text-[var(--type-h4)] md:text-[var(--type-h3)] leading-relaxed story-text-on-light">
               &ldquo;{card.pullQuote}&rdquo;
             </p>
           </blockquote>
@@ -93,7 +93,7 @@ export function RoomExpanded({
         {/* Editorial narrative */}
         {card.editorialExcerpt && (
           <div className="px-2">
-            <p className="text-[16px] leading-[1.7] font-[var(--font-body)] story-text-on-light whitespace-pre-line">
+            <p className="text-[var(--type-body)] leading-[1.7] font-[var(--font-body)] story-text-on-light whitespace-pre-line"> /* folio-design-system: off-scale */
               {card.editorialExcerpt}
             </p>
           </div>
@@ -128,7 +128,7 @@ export function RoomExpanded({
           <>
             <div className="border-t border-[rgba(87,75,67,0.1)]" />
             <div>
-              <h3 className="text-[13px] font-[var(--font-body)] font-medium uppercase tracking-[0.14em] story-text-secondary mb-4">
+              <h3 className="text-[var(--type-meta)] font-[var(--font-body)] font-medium uppercase tracking-[0.14em] story-text-secondary mb-4"> /* folio-design-system: off-scale */
                 Products in this room
               </h3>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
@@ -147,16 +147,16 @@ export function RoomExpanded({
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-[14px] font-medium story-text-secondary">
+                        <div className="w-full h-full flex items-center justify-center text-[var(--type-ui)] font-medium story-text-secondary">
                           {product.name.slice(0, 2).toUpperCase()}
                         </div>
                       )}
                     </div>
-                    <span className="text-[14px] font-[var(--font-body)] font-medium story-text-on-light truncate">
+                    <span className="text-[var(--type-ui)] font-[var(--font-body)] font-medium story-text-on-light truncate">
                       {product.name}
                     </span>
                     {(product.vendor?.companyName ?? product.vendor?.name) && (
-                      <span className="text-[13px] font-[var(--font-body)] story-text-secondary truncate">
+                      <span className="text-[var(--type-meta)] font-[var(--font-body)] story-text-secondary truncate">
                         {product.vendor?.companyName ?? product.vendor?.name}
                       </span>
                     )}
@@ -173,7 +173,7 @@ export function RoomExpanded({
           {prevRoom ? (
             <button
               onClick={() => onNavigateRoom(prevRoom.roomSlug)}
-              className="flex items-center gap-1 text-[14px] font-[var(--font-body)] story-text-on-light hover:opacity-70 transition-opacity"
+              className="flex items-center gap-1 text-[var(--type-ui)] font-[var(--font-body)] story-text-on-light hover:opacity-70 transition-opacity"
             >
               <ChevronLeft className="w-4 h-4" />
               {prevRoom.roomLabel}
@@ -185,7 +185,7 @@ export function RoomExpanded({
           {isDesktop && (
             <button
               onClick={onClose}
-              className="flex items-center gap-1 text-[13px] font-[var(--font-body)] story-text-secondary hover:opacity-70 transition-opacity"
+              className="flex items-center gap-1 text-[var(--type-meta)] font-[var(--font-body)] story-text-secondary hover:opacity-70 transition-opacity"
             >
               Collapse <ChevronUp className="w-4 h-4" />
             </button>
@@ -194,7 +194,7 @@ export function RoomExpanded({
           {nextRoom ? (
             <button
               onClick={() => onNavigateRoom(nextRoom.roomSlug)}
-              className="flex items-center gap-1 text-[14px] font-[var(--font-body)] story-text-on-light hover:opacity-70 transition-opacity"
+              className="flex items-center gap-1 text-[var(--type-ui)] font-[var(--font-body)] story-text-on-light hover:opacity-70 transition-opacity"
             >
               {nextRoom.roomLabel}
               <ChevronRight className="w-4 h-4" />

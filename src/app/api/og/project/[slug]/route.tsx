@@ -105,11 +105,11 @@ export async function GET(
             {/* Project Title */}
             <div
               style={{
-                fontSize: 72,
-                fontWeight: 400,
+                fontSize: 72, /* folio-design-system: off-scale */
+                fontWeight: 'var(--w-body)',
                 color: '#FFFFFF',
-                letterSpacing: '-0.02em',
-                lineHeight: 1.1,
+                letterSpacing: 'var(--ls-tight)',
+                lineHeight: 'var(--lh-h1)',
                 fontFamily: 'Georgia, serif',
                 textShadow: '0 4px 24px rgba(0,0,0,0.3)',
               }}
@@ -120,10 +120,10 @@ export async function GET(
             {/* Designer Attribution */}
             <div
               style={{
-                fontSize: 32,
-                fontWeight: 400,
+                fontSize: 'var(--type-stat)',
+                fontWeight: 'var(--w-body)',
                 color: 'rgba(255,255,255,0.9)',
-                letterSpacing: '0.01em',
+                letterSpacing: '0.01em', /* folio-design-system: off-scale */
                 fontFamily: 'system-ui, -apple-system, sans-serif',
               }}
             >
@@ -136,10 +136,10 @@ export async function GET(
                 position: 'absolute',
                 bottom: 60,
                 right: 80,
-                fontSize: 24,
-                fontWeight: 300,
+                fontSize: 'var(--type-quote)',
+                fontWeight: 300, /* folio-design-system: off-scale */
                 color: 'rgba(255,255,255,0.6)',
-                letterSpacing: '0.1em',
+                letterSpacing: 'var(--ls-wide)',
                 fontFamily: 'system-ui, -apple-system, sans-serif',
               }}
             >

@@ -38,7 +38,7 @@ function Spec({ label, value }: { label: string; value: string }) {
   return (
     <div>
       <div className="text-xs text-[#6B7280]">{label}</div>
-      <div className="text-[13px] text-[#111827]">{value}</div>
+      <div className="text-[var(--type-meta)] text-[#111827]">{value}</div>
     </div>
   );
 }

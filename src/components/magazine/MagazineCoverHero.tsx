@@ -66,10 +66,10 @@ export default function MagazineCoverHero({ hero, edition }: Props) {
           {/* Extra top padding accounts for the transparent header (64px) + spacing */}
           <div className="absolute top-24 md:top-28 lg:top-32 left-1/2 -translate-x-1/2 z-10">
             <h1
-              className="masthead-glass-foil font-serif text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-light uppercase tracking-[0.15em] md:tracking-[0.18em] select-none"
+              className="masthead-glass-foil font-serif text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-light uppercase tracking-[var(--ls-eyebrow)] md:tracking-[var(--ls-logo)] select-none"
               style={{
                 fontFamily: 'var(--font-headline), ui-serif, Georgia, "Times New Roman", serif',
-                fontWeight: 300,
+                fontWeight: 300, /* folio-design-system: off-scale */
               }}
             >
               FOLIO
@@ -79,7 +79,7 @@ export default function MagazineCoverHero({ hero, edition }: Props) {
           {/* Editorial Tag - Upper left, below the masthead */}
           <div className="absolute left-6 md:left-10 lg:left-12 top-44 md:top-52 lg:top-56 z-10">
             <span
-              className="text-[10px] md:text-[11px] font-medium uppercase tracking-[0.2em] select-none"
+              className="text-[var(--type-fine)] md:text-[var(--type-eyebrow)] font-medium uppercase tracking-[var(--ls-logo)] select-none"
               style={{
                 color: 'rgba(255, 255, 255, 0.7)',
                 mixBlendMode: 'overlay',
@@ -94,12 +94,12 @@ export default function MagazineCoverHero({ hero, edition }: Props) {
           <div className="absolute bottom-8 md:bottom-10 lg:bottom-12 left-6 md:left-10 lg:left-12 max-w-[90%] md:max-w-[600px] z-10">
             {/* Serif italic headline - editorial magazine style */}
             <h2
-              className="text-3xl sm:text-4xl md:text-5xl lg:text-[52px] text-white leading-[1.15] mb-2 md:mb-3"
+              className="text-3xl sm:text-4xl md:text-5xl lg:text-[52px] text-white leading-[var(--lh-h2)] mb-2 md:mb-3" /* folio-design-system: off-scale */
               style={{
                 fontFamily: 'var(--font-headline), ui-serif, Georgia, "Times New Roman", serif',
                 fontStyle: 'italic',
-                fontWeight: 400,
-                letterSpacing: '-0.01em',
+                fontWeight: 'var(--w-body)',
+                letterSpacing: 'var(--ls-tight)',
                 textShadow: '0 2px 20px rgba(0,0,0,0.3)'
               }}
             >

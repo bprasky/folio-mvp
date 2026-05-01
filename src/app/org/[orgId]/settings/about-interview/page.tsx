@@ -299,7 +299,7 @@ export default function OrgAboutInterviewPage() {
           <div className="max-w-lg text-center">
             <h1
               className="text-4xl md:text-5xl italic mb-4"
-              style={{ fontFamily: 'var(--font-headline)', color: '#2C2825', fontWeight: 400 }}
+              style={{ fontFamily: 'var(--font-headline)', color: '#2C2825', fontWeight: 'var(--w-body)' }}
             >
               Let&apos;s build your studio profile.
             </h1>
@@ -361,7 +361,7 @@ export default function OrgAboutInterviewPage() {
           <div className="max-w-lg w-full">
             <h2
               className="text-3xl italic mb-2 text-center"
-              style={{ fontFamily: 'var(--font-headline)', color: '#2C2825', fontWeight: 400 }}
+              style={{ fontFamily: 'var(--font-headline)', color: '#2C2825', fontWeight: 'var(--w-body)' }}
             >
               Bring in your existing bio
             </h2>
@@ -462,7 +462,7 @@ export default function OrgAboutInterviewPage() {
         <Sparkles className="w-12 h-12 animate-pulse mb-6" style={{ color: 'var(--folio-gold)' }} />
         <h3
           className="text-2xl italic mb-3"
-          style={{ fontFamily: 'var(--font-headline)', color: '#2C2825', fontWeight: 400 }}
+          style={{ fontFamily: 'var(--font-headline)', color: '#2C2825', fontWeight: 'var(--w-body)' }}
         >
           Analyzing your bio...
         </h3>
@@ -545,7 +545,7 @@ export default function OrgAboutInterviewPage() {
           <div className="max-w-lg w-full">
             <h2
               className="text-3xl italic mb-2 text-center"
-              style={{ fontFamily: 'var(--font-headline)', color: '#2C2825', fontWeight: 400 }}
+              style={{ fontFamily: 'var(--font-headline)', color: '#2C2825', fontWeight: 'var(--w-body)' }}
             >
               {allCovered ? 'Your bio is already pretty complete.' : "Here's what we found in your bio"}
             </h2>
@@ -607,7 +607,7 @@ export default function OrgAboutInterviewPage() {
         <Sparkles className="w-16 h-16 animate-pulse mb-6" style={{ color: 'var(--folio-gold)' }} />
         <h3
           className="text-3xl italic mb-3"
-          style={{ fontFamily: 'var(--font-headline)', color: '#2C2825', fontWeight: 400 }}
+          style={{ fontFamily: 'var(--font-headline)', color: '#2C2825', fontWeight: 'var(--w-body)' }}
         >
           Crafting your story...
         </h3>
@@ -631,7 +631,7 @@ export default function OrgAboutInterviewPage() {
         </div>
         <h3
           className="text-3xl italic mb-3"
-          style={{ fontFamily: 'var(--font-headline)', color: '#2C2825', fontWeight: 400 }}
+          style={{ fontFamily: 'var(--font-headline)', color: '#2C2825', fontWeight: 'var(--w-body)' }}
         >
           Your profile is ready
         </h3>
@@ -706,7 +706,7 @@ export default function OrgAboutInterviewPage() {
           <div className="flex-1 flex flex-col justify-center px-8 md:px-16 py-12 space-y-4">
             <h2
               className="text-3xl md:text-4xl lg:text-5xl italic leading-tight max-w-3xl"
-              style={{ fontFamily: 'var(--font-headline)', color: '#2C2825', fontWeight: 400 }}
+              style={{ fontFamily: 'var(--font-headline)', color: '#2C2825', fontWeight: 'var(--w-body)' }}
             >
               {getQuestionText(currentQuestion)}
             </h2>

@@ -37,7 +37,7 @@ export default function TeamCard({ member }: TeamCardProps) {
         )}
       </div>
       <div>
-        <div className="text-[13px] font-semibold" style={{ color: 'var(--text-primary)' }}>
+        <div className="text-[var(--type-meta)] font-semibold" style={{ color: 'var(--text-primary)' }}>
           {member.name}
         </div>
         <div className="folio-meta">{member.role}</div>

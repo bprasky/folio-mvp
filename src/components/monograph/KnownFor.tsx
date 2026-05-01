@@ -31,7 +31,7 @@ export default function KnownFor({ items, productSaves }: KnownForProps) {
           <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl text-stone-900 font-light">
             Known For
           </h2>
-          <div className="text-[13px] leading-tight" style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', color: '#6d6256', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          <div className="text-[var(--type-meta)] leading-tight" style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', color: '#6d6256', textTransform: 'uppercase', letterSpacing: 'var(--ls-wide)' }}>
             <span className="text-[#b89a72] font-normal not-italic" style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>
               {formatNumber(productSaves)}
             </span>

@@ -159,7 +159,7 @@ export function ProductAttributionDetail({ productId, onBack }: ProductAttributi
                 </div>
                 <div className="text-right shrink-0">
                   <div className="text-sm font-semibold text-[var(--folio-gold-ornament)]">{inf.influenceScore}</div>
-                  <div className="text-[10px] text-[#8C8278] uppercase">Score</div>
+                  <div className="text-[var(--type-fine)] text-[#8C8278] uppercase">Score</div>
                 </div>
               </div>
             ))}

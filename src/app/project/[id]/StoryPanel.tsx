@@ -402,7 +402,7 @@ export default function StoryPanel({ projectId, project, images, isOwner }: Stor
                 className={`w-full min-h-[80px] p-2 border border-folio-border-subtle rounded-[20px] resize-y bg-surface-canvas focus:ring-1 focus:ring-[var(--accent)] focus:border-[var(--accent)] ${
                   qa.isFeatured ? "min-h-[60px]" : ""
                 }`}
-                style={{ fontFamily: "var(--font-headline)", fontStyle: "italic", fontSize: "16px", lineHeight: "1.5" }}
+                style={{ fontFamily: "var(--font-headline)", fontStyle: "italic", fontSize: 'var(--type-body)', lineHeight: 'var(--lh-body)' }}
                 placeholder="Share your thoughts..."
               />
               <div className="flex items-center justify-between mt-2">
@@ -463,7 +463,7 @@ export default function StoryPanel({ projectId, project, images, isOwner }: Stor
               />
               <textarea
                 className="col-span-6 px-3 py-2 border border-folio-border-subtle rounded-lg focus:ring-1 focus:ring-[var(--accent)] focus:border-[var(--accent)] resize-none bg-surface-canvas"
-                style={{ fontFamily: "var(--font-headline)", fontStyle: "italic", fontSize: "15px", lineHeight: "1.5" }}
+                style={{ fontFamily: "var(--font-headline)", fontStyle: "italic", fontSize: 'var(--type-body)', lineHeight: 'var(--lh-body)' }}
                 value={qa.a || qa.answer || ""}
                 placeholder="Answer"
                 rows={2}
