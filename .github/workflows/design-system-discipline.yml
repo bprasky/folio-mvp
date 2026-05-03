@@ -54,6 +54,8 @@ jobs:
           # qrcode generator (FolioBadgeModal) are exempt: CSS vars don't resolve in
           # mail clients, PDF rendering contexts, or qrcode color options.
           # /product/* warm wash is deliberate (see Task 06 — product page rework).
+          # Canonical token declarations (--surface-*, --folio-background) in
+          # globals.css are exempt — that's where the hex literals belong.
           BAD=$(git grep -nEi "#[Ff][Aa][Ff]9[Ff]7|#[Ff]4[Ff]2[Ff]0|#[Ff][Aa][Ff]8[Ff]5" src/ \
             | grep -v "src/lib/email/" \
             | grep -v "src/lib/boost/inContextBoost" \
@@ -62,6 +64,7 @@ jobs:
             | grep -v "src/app/api/products/\[productId\]/spec-sheet/" \
             | grep -v "src/components/product/" \
             | grep -v "src/app/globals.css:.*--surface-" \
+            | grep -v "src/app/globals.css:.*--folio-background:" \
             || true)
           if [ -n "$BAD" ]; then
             echo "::error::Hardcoded canvas hex found. Use var(--surface-canvas), var(--surface-ground), or var(--surface-elevated)."
