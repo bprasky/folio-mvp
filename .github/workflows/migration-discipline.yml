@@ -29,20 +29,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v3
-        with:
-          version: 8
-
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: pnpm
+          cache: npm
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: npm ci
 
       - name: Generate Prisma Client
-        run: pnpm prisma generate
+        run: npx prisma generate
 
       - name: Check for Phase 5 regression (loose SQL, phantom prisma.<model>, missing migration.sql, non-idempotent DDL)
         run: node scripts/phase5e-check-plan.mjs --ci
