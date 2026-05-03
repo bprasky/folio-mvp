@@ -4,15 +4,22 @@
 //   1. Product cell — image, name, vendor, optional gold "Boosted" badge.
 //   2. "+N View all" affordance cell — last slot when totalTagged > 7.
 //
-// Render fallback: starts with item.imageUrl (catalog). On image-load error
-// — typically a 404 from an expired Supabase storage URL or a hotlink-blocked
-// vendor CDN — swaps once to item.fallbackImageUrl (a server-generated crop
-// of the project image at the tag location). If that also errors, we hide
-// the image and the product name still appears underneath.
+// Render fallback chain:
+//   1. item.imageUrl                — catalog photo from the vendor URL.
+//   2. item.fallbackImageUrl        — pre-generated tag crop OR (when no
+//                                     crop has been generated yet) the full
+//                                     source ProjectImage. The latter is
+//                                     always present, so this tier rarely
+//                                     dead-ends.
+//   3. hidden                       — last resort when both URLs error.
+//
+// When the fallback is the source ProjectImage, item.fallbackImagePosition
+// carries an `object-position` value derived from the tag's x/y so the
+// cell focuses near the tag instead of the photo's center.
 
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -41,6 +48,16 @@ export function BoostReelCell({ item, onClick }: ProductCellProps) {
     }
   };
 
+  // Apply object-position only when the active src is the source-image
+  // fallback (fallbackImagePosition is null when fallbackImageUrl is a
+  // pre-cropped asset, which is already product-centered).
+  const imageStyle = useMemo<React.CSSProperties | undefined>(() => {
+    if (src === item.fallbackImageUrl && item.fallbackImagePosition) {
+      return { objectPosition: item.fallbackImagePosition };
+    }
+    return undefined;
+  }, [src, item.fallbackImageUrl, item.fallbackImagePosition]);
+
   return (
     <Link
       href={href}
@@ -60,6 +77,7 @@ export function BoostReelCell({ item, onClick }: ProductCellProps) {
             fill
             sizes="(min-width: 1440px) 160px, 12vw"
             className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+            style={imageStyle}
             onError={handleError}
           />
         )}

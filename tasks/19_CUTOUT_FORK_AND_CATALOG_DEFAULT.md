@@ -5,8 +5,9 @@
 - **Primary product image, everywhere:** the catalog image pulled from the vendor product URL (`Product.imageUrl`).
 - **Render-time fallback chain** (when primary fails to load or is missing):
   1. `Product.imageUrl` (catalog).
-  2. `ProductTag.cropUrl` (server-generated crop of the project image at the tag location).
-  3. No image.
+  2. `ProductTag.cropUrl` (pre-generated crop of the project image at the tag location), if present.
+  3. `ProjectImage.imageUrl` (the source room photo) with `object-position` set to `ProductTag.x/y` so the cell focuses near the tag. **Always available** — every tag has an image relation, and project images live in our own Supabase so they don't expire.
+  4. Image hidden, product name still shown underneath.
 - **Secondary asset, on the product detail page only:**
   - 3D-classified items → 3D mesh viewer (`Product.threeDAssetUrl`).
   - 2D-classified items → 2D cutout (`Product.cutoutImageUrl`).
@@ -34,9 +35,9 @@ Today the homepage reel reads `cutoutImageUrl ?? imageUrl` directly (`src/lib/ho
 
 Triggered by 2026-05-01 screenshot: four reel cells rendered broken-image icons with alt text, meaning `Product.imageUrl` is set but the URL 404s (likely expired Supabase storage or hotlink-blocked vendor CDN). Until backfill lands, the reel must degrade gracefully to the tag-level crop.
 
-- [x] In `src/lib/homepage/getHomepageData.ts`, added `cropUrl: true` to the `productTag` select; added `fallbackImageUrl: string | null` to the `BoostReelItem` interface; populated from `tag.cropUrl ?? null`. Updated the slot-filter so a row qualifies if either `imageUrl` or `fallbackImageUrl` is non-empty.
-- [x] Converted `src/components/homepage/BoostReelCell.tsx` to a client component. `useState`-tracked `src` initialized to `imageUrl || fallbackImageUrl || ""`. `onError` swaps once to `fallbackImageUrl`; if that also errors, hides the image. `key={src}` on `<Image>` forces remount on swap.
-- [ ] User verification on deploy: reel cells now show a crop of the project image when the catalog URL 404s, instead of the browser broken-image icon.
+- [x] In `src/lib/homepage/getHomepageData.ts`, the `productTag` select now pulls `cropUrl`, `x`, `y`, and `image: { imageUrl }`. `fallbackImageUrl` resolves to `cropUrl` when set, else the source `ProjectImage.imageUrl`. When the fallback is the source image, `fallbackImagePosition` is computed as `"<x>% <y>%"` (with x/y normalized for both legacy 0..1 and current 0..100 storage) so the cell focuses near the tag. Slot qualifies if either `imageUrl` or `fallbackImageUrl` is non-empty — in practice the latter is always set because every tag has an image relation.
+- [x] Converted `src/components/homepage/BoostReelCell.tsx` to a client component. `useState`-tracked `src` initialized to `imageUrl || fallbackImageUrl || ""`. `onError` swaps once to `fallbackImageUrl`; if that also errors, hides the image. `key={src}` forces Next/Image remount on swap. When the active src is the source-image fallback, applies `style={{ objectPosition }}`.
+- [ ] User verification on deploy: reel cells now show a region of the project room photo when the catalog URL 404s, focused near the product tag — never the browser broken-image icon.
 
 ## Phase 1 — Catalog image health audit *(read-only)*
 
