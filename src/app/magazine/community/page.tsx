@@ -5,8 +5,6 @@
 // PromptedQuestionsSection + editions UI) reachable for direct linking.
 
 import MagazinePage from "@/components/magazine/MagazinePage";
-import { WelcomeModal } from "@/components/marketing/WelcomeModal";
-import { FoundingCTABar } from "@/components/marketing/FoundingCTABar";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -17,11 +15,5 @@ interface PageProps {
 
 export default async function Page({ searchParams }: PageProps) {
   const edition = searchParams?.edition || "for-you";
-  return (
-    <>
-      <MagazinePage editionSlug={edition} />
-      <WelcomeModal />
-      <FoundingCTABar />
-    </>
-  );
+  return <MagazinePage editionSlug={edition} />;
 }

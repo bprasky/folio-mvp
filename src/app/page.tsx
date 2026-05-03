@@ -10,11 +10,19 @@
 // here unless this page genuinely needs to differ from the rest of the site.
 
 import { HomepagePage } from "@/components/homepage/HomepagePage";
+import { WelcomeModal } from "@/components/marketing/WelcomeModal";
+import { FoundingCTABar } from "@/components/marketing/FoundingCTABar";
 
 // Hero selection involves a window check against `now()`; rendering must not
 // be cached at the route level. Inner fetches use their own cache strategy.
 export const dynamic = "force-dynamic";
 
 export default function Home() {
-  return <HomepagePage />;
+  return (
+    <>
+      <HomepagePage />
+      <WelcomeModal />
+      <FoundingCTABar />
+    </>
+  );
 }
