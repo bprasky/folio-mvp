@@ -71,14 +71,20 @@ export function HomepageFilterChips({ isOut }: Props) {
           onClick={() => setQuery({ filter: null, following: followingActive ? null : "true" })}
         />
       )}
-      {STATIC_CHIPS.filter((c) => c.id !== "all").map((chip) => (
-        <Chip
-          key={chip.id}
-          label={chip.label}
-          active={isActive(chip.id)}
-          onClick={() => setQuery(chip.query)}
-        />
-      ))}
+      {STATIC_CHIPS.filter((c) => c.id !== "all").map((chip) => {
+        const active = isActive(chip.id);
+        // Single-select: clicking the active chip clears back to "All work".
+        return (
+          <Chip
+            key={chip.id}
+            label={chip.label}
+            active={active}
+            onClick={() =>
+              setQuery(active ? { filter: null, following: null } : chip.query)
+            }
+          />
+        );
+      })}
     </nav>
   );
 }

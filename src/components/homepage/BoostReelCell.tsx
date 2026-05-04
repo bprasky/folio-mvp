@@ -4,6 +4,9 @@
 //   1. Product cell — image, name, vendor, optional gold "Boosted" badge.
 //   2. "+N View all" affordance cell — last slot when totalTagged > 7.
 
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -20,6 +23,9 @@ export function BoostReelCell({ item, onClick }: ProductCellProps) {
     ? `/products/${item.productSlug}`
     : `/products/${item.productId}`;
 
+  const [imageBroken, setImageBroken] = useState(false);
+  const showImage = !!item.imageUrl && !imageBroken;
+
   return (
     <Link
       href={href}
@@ -31,14 +37,17 @@ export function BoostReelCell({ item, onClick }: ProductCellProps) {
       data-boosted={item.isBoosted ? "true" : "false"}
     >
       <div className="relative aspect-square rounded-xl overflow-hidden bg-surface-ground">
-        {item.imageUrl && (
+        {showImage ? (
           <Image
             src={item.imageUrl}
             alt={item.name}
             fill
             sizes="(min-width: 1440px) 160px, 12vw"
             className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+            onError={() => setImageBroken(true)}
           />
+        ) : (
+          <BoostReelCellFallback name={item.name} vendorName={item.vendorName} />
         )}
 
         {item.isBoosted && (
@@ -70,6 +79,34 @@ export function BoostReelCell({ item, onClick }: ProductCellProps) {
         )}
       </div>
     </Link>
+  );
+}
+
+// Fallback that shows when Product.imageUrl is missing or fails to load
+// (broken host, 404, blocked by next.config remotePatterns). The cell still
+// reads as a product entry — name + vendor — so the reel never collapses
+// into empty grey squares while Phase 4 backfill is pending.
+function BoostReelCellFallback({
+  name,
+  vendorName,
+}: {
+  name: string;
+  vendorName: string | null | undefined;
+}) {
+  return (
+    <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 px-2 text-center bg-surface-ground">
+      <p
+        className="folio-ui line-clamp-3 text-folio-text-primary"
+        title={name}
+      >
+        {name}
+      </p>
+      {vendorName && (
+        <p className="folio-meta line-clamp-1 text-folio-text-secondary">
+          {vendorName}
+        </p>
+      )}
+    </div>
   );
 }
 
