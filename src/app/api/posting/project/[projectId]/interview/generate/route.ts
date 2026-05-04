@@ -2201,11 +2201,9 @@ export async function POST(
     };
 
     let composed: any;
-    let usedFallback = false;
     try {
       const result = await generateEditorialDraft(genInput);
       composed = result.blocks;
-      usedFallback = result.usedFallback;
     } catch (e: any) {
       console.error("[generate] generation failed:", { code: e?.code, message: e?.message, _cid });
 
@@ -2247,7 +2245,6 @@ export async function POST(
       })),
       pullQuotesCount: composed.pullQuotes?.length || 0,
       materialsCount: composed.materialsLedger?.items?.length || 0,
-      usedFallback,
       durationMs: duration,
       _cid,
     });
@@ -2259,7 +2256,6 @@ export async function POST(
           note: "Dry-run only. Nothing saved.",
           projectId,
           callSource,
-          usedFallback,
         },
         composedPreview: {
           lead: composed.lead,
