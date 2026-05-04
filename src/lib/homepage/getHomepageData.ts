@@ -42,6 +42,21 @@ export interface BoostReelItem {
   name: string;
   imageUrl: string;
   vendorName?: string | null;
+  /**
+   * Pre-rendered crop of the project image around the tag, stored at
+   * tag-create time. Used as the second-tier fallback when the product
+   * has no catalog imageUrl yet.
+   */
+  cropUrl?: string | null;
+  /**
+   * Source project image the tag was placed on. Third-tier fallback —
+   * rendered with the focal point centered + scaled up so the tagged
+   * region acts as a contextual crop on the fly.
+   */
+  sourceImageUrl?: string | null;
+  /** Focal point on sourceImageUrl, 0-100 (cropX/cropY if set, else x/y). */
+  focalX?: number | null;
+  focalY?: number | null;
   /** True for the first 2 slots (paid); false for organic slots 3–7. */
   isBoosted: boolean;
   /** 1..7 — display position in the reel. */
@@ -255,12 +270,20 @@ async function buildBoostReel(
   projectId: string,
 ): Promise<{ items: BoostReelItem[]; totalTagged: number }> {
   // 1. All product tags on this XL post's project images, in tag-creation order.
+  //    cropUrl + cropX/cropY + image.url power the contextual-crop fallback
+  //    chain when Product.imageUrl is null (Phase 4 backfill catches up).
   const tags = await prisma.productTag.findMany({
     where: { image: { projectId } },
     orderBy: { createdAt: "asc" },
     select: {
       productId: true,
       createdAt: true,
+      x: true,
+      y: true,
+      cropUrl: true,
+      cropX: true,
+      cropY: true,
+      image: { select: { url: true } },
       product: {
         // Note: Product has no `slug` field on the deployed schema.
         // BoostReelCell falls back to `/products/${productId}` when
@@ -341,10 +364,9 @@ async function buildBoostReel(
   orderedIds.forEach((pid, i) => {
     const tag = uniqueProducts.get(pid);
     if (!tag?.product) return;
-    // Allow products with no catalog image through; BoostReelCell renders
-    // a name+vendor placeholder so the slot stays useful while the Phase 4
-    // backfill catches up. Filtering them out at the data layer hid the
-    // problem and produced empty reels in prod.
+    // Allow products with no catalog image through; the cell falls back
+    // through cropUrl → focal-cropped project image → name+vendor text
+    // so every slot is filled even while Phase 4 backfill catches up.
     const imageUrl = tag.product.imageUrl ?? "";
     const boost = winningBoostByProduct.get(pid);
     const isBoosted = i < REEL_PAID_SLOTS && !!boost;
@@ -354,6 +376,10 @@ async function buildBoostReel(
       name: tag.product.name,
       imageUrl,
       vendorName: tag.product.vendor?.name ?? null,
+      cropUrl: tag.cropUrl ?? null,
+      sourceImageUrl: tag.image?.url ?? null,
+      focalX: tag.cropX ?? tag.x ?? null,
+      focalY: tag.cropY ?? tag.y ?? null,
       isBoosted,
       slotPosition: i + 1,
       boostId: isBoosted ? boost?.id : undefined,
