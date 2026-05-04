@@ -172,6 +172,17 @@ const nextConfig = {
       { protocol: 'https', hostname: 'pinlighting.com', pathname: '/**' }, // Pin Lighting CDN
       { protocol: 'http', hostname: 'pinlighting.com', pathname: '/**' }, // Pin Lighting CDN (http)
 
+      // Vendor product CDNs (homepage boost reel — see scripts/audit-tagged-product-images.ts).
+      // Adding a new hostname here is the unblock for "Product.imageUrl is set
+      // but next/image renders nothing" cases. When extending: run the audit,
+      // copy the unwhitelisted hostnames from the OK bucket.
+      { protocol: 'https', hostname: 'cdn.roveconcepts.com', pathname: '/**' },
+      { protocol: 'https', hostname: 'assets.wfcdn.com', pathname: '/**' }, // Wayfair CDN
+      { protocol: 'https', hostname: 'cdn.shopify.com', pathname: '/**' },
+      { protocol: 'https', hostname: 'source.unsplash.com', pathname: '/**' }, // distinct from images.unsplash.com
+      { protocol: 'https', hostname: 'basstonenyc.com', pathname: '/**' },
+      { protocol: 'https', hostname: 'cdn.designshop.com', pathname: '/**' },
+
       // Additional editorial/press domains can be added here as needed
     ],
     formats: ['image/avif', 'image/webp'],
