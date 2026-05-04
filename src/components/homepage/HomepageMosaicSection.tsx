@@ -33,12 +33,24 @@ export function HomepageMosaicSection({
   // Refetch when filter chips change
   useEffect(() => {
     const filter = params.get("filter");
+    const filterValue = params.get("filterValue");
     const following = params.get("following") === "true";
 
-    // Skip refetch when no filters are set (initial server-rendered state).
-    if (!filter && !following) {
+    // 'recent' is the default sort and 'region'/'category' chips are
+    // value-less placeholders until Task 11 wires selection. For all of
+    // these the API returns the same shape as initial render — skip the
+    // network round-trip + loading flicker entirely.
+    const hasActionableFilter =
+      following ||
+      (filter !== null &&
+        filter !== "recent" &&
+        (filter === "keyword" || filter === "location" || filter === "category") &&
+        filterValue !== null);
+
+    if (!hasActionableFilter) {
       setPosts(initialPosts);
       setNextCursor(initialNextCursor);
+      setLoading(false);
       return;
     }
 
@@ -47,11 +59,8 @@ export function HomepageMosaicSection({
 
     const url = new URL("/api/homepage-feed", window.location.origin);
     if (filter && filter !== "recent") {
-      // 'recent' is the default sort; no server-side filter needed.
       url.searchParams.set("filterType", filter);
-      // 'region' / 'category' chips currently surface the filter type only —
-      // value selection happens in a follow-up (Task 11). For now the chip
-      // acts as a no-op placeholder; refetch returns the unfiltered shape.
+      if (filterValue) url.searchParams.set("filterValue", filterValue);
     }
     if (following) {
       url.searchParams.set("following", "true");
@@ -85,7 +94,11 @@ export function HomepageMosaicSection({
       const url = new URL("/api/homepage-feed", window.location.origin);
       url.searchParams.set("cursor", nextCursor);
       const filter = params.get("filter");
-      if (filter && filter !== "recent") url.searchParams.set("filterType", filter);
+      const filterValue = params.get("filterValue");
+      if (filter && filter !== "recent") {
+        url.searchParams.set("filterType", filter);
+        if (filterValue) url.searchParams.set("filterValue", filterValue);
+      }
       if (params.get("following") === "true") url.searchParams.set("following", "true");
 
       const res = await fetch(url.toString());

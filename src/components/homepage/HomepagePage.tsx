@@ -23,20 +23,13 @@ export async function HomepagePage() {
 
   // Mobile vs desktop edge padding:
   //   - Mobile (<sm): 16px side padding, tighter vertical rhythm so the
-  //     hero sits closer to the chip row and the InviteRibbon doesn't push
-  //     content off-screen.
+  //     hero sits closer to the section above and the InviteRibbon doesn't
+  //     push content off-screen.
   //   - Desktop (sm+): 40px side padding (matches existing magazine spacing
   //     tokens), generous vertical rhythm.
   // pb-32 on mobile gives the InviteRibbon clearance + iOS safe-area room.
   return (
     <div className="bg-surface-canvas min-h-screen pb-32 sm:pb-24">
-      {/* Filter chip row — directly under the global nav */}
-      <div className="border-b border-folio-border-subtle">
-        <div className="max-w-[1440px] mx-auto px-4 sm:px-10 py-3 sm:py-4">
-          <HomepageFilterChips isOut={isOut} />
-        </div>
-      </div>
-
       {/* Editorial XL hero */}
       {data.hero && (
         <section className="pt-4 sm:pt-8">
@@ -55,10 +48,17 @@ export async function HomepagePage() {
         </section>
       )}
 
-      {/* L/M/S mosaic feed */}
-      <section
-        className={`px-4 sm:px-10 max-w-[1440px] mx-auto ${data.hero ? "mt-8 sm:mt-12" : "mt-6 sm:mt-8"}`}
+      {/* Filter chip row — sits directly above the mosaic feed it controls. */}
+      <div
+        className={`border-y border-folio-border-subtle ${data.hero ? "mt-8 sm:mt-12" : "mt-6 sm:mt-8"}`}
       >
+        <div className="max-w-[1440px] mx-auto px-4 sm:px-10 py-3 sm:py-4">
+          <HomepageFilterChips isOut={isOut} />
+        </div>
+      </div>
+
+      {/* L/M/S mosaic feed */}
+      <section className="px-4 sm:px-10 max-w-[1440px] mx-auto mt-6 sm:mt-8">
         <HomepageMosaicSection
           initialPosts={data.feedPosts}
           initialNextCursor={data.nextCursor}

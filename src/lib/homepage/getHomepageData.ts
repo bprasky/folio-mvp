@@ -341,8 +341,11 @@ async function buildBoostReel(
   orderedIds.forEach((pid, i) => {
     const tag = uniqueProducts.get(pid);
     if (!tag?.product) return;
+    // Allow products with no catalog image through; BoostReelCell renders
+    // a name+vendor placeholder so the slot stays useful while the Phase 4
+    // backfill catches up. Filtering them out at the data layer hid the
+    // problem and produced empty reels in prod.
     const imageUrl = tag.product.imageUrl ?? "";
-    if (!imageUrl) return;
     const boost = winningBoostByProduct.get(pid);
     const isBoosted = i < REEL_PAID_SLOTS && !!boost;
     items.push({
