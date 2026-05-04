@@ -373,9 +373,13 @@ export default function StoryPanel({ projectId, project, images, isOwner }: Stor
               }`}
             >
               <div className="flex items-start justify-between gap-2 mb-2">
-                <label className="block folio-ui font-medium text-folio-text-primary">
-                  {qa.q || qa.question || "Your reflection"}
-                </label>
+                <input
+                  type="text"
+                  value={qa.q || qa.question || ""}
+                  onChange={(e) => setAnswer(i, "q", e.target.value)}
+                  placeholder="What question is this reflecting on?"
+                  className="flex-1 min-w-0 folio-ui font-medium text-folio-text-primary bg-transparent border-0 border-b border-transparent focus:border-[var(--accent)] focus:ring-0 focus:outline-none px-0 py-1 placeholder:text-folio-text-tertiary placeholder:italic placeholder:font-normal"
+                />
                 <button
                   onClick={() => toggleFeatured(i)}
                   className={`shrink-0 p-1.5 rounded transition-colors ${
