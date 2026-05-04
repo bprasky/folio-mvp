@@ -82,9 +82,13 @@ function useEstimatedCols() {
   return 1;
 }
 
-function formatTimeAgo(date: Date): string {
+function formatTimeAgo(date: Date | string): string {
+  // Coerce string → Date so this is safe for both server-component initial
+  // render (RSC preserves Date) and JSON fetch responses where Date already
+  // got serialized to ISO string.
+  const d = date instanceof Date ? date : new Date(date);
   const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
+  const diffMs = now.getTime() - d.getTime();
   const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
@@ -95,7 +99,7 @@ function formatTimeAgo(date: Date): string {
   } else if (diffDays < 7) {
     return `${diffDays} ${diffDays === 1 ? 'day' : 'days'} ago`;
   } else {
-    return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
   }
 }
 
