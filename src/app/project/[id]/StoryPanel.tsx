@@ -254,19 +254,14 @@ export default function StoryPanel({ projectId, project, images, isOwner }: Stor
     }
   }
 
-  function setAnswer(i: number, key: "q" | "a", value: string) {
+  function setAnswer(i: number, key: "a", value: string) {
     const next = [...answers];
     next[i] = {
       ...next[i],
       [key]: value,
-      ...(key === "a" ? { answer: value } : {}),
-      ...(key === "q" ? { question: value } : {}),
+      answer: value,
     };
     setAnswers(next);
-  }
-
-  function addAnswer() {
-    setAnswers([...answers, { q: "", a: "" }]);
   }
 
   function removeAnswer(i: number) {
@@ -350,17 +345,11 @@ export default function StoryPanel({ projectId, project, images, isOwner }: Stor
       <div className="rounded-[20px] border border-folio-border-subtle bg-surface-ground p-6 shadow-sm">
         <div className="flex items-center justify-between mb-4">
           <h2 className="folio-h3 text-folio-text-primary">Your Reflections</h2>
-          <button
-            className="px-3 py-1.5 folio-ui font-medium text-white bg-[var(--accent)] rounded-lg hover:bg-[var(--accent-hover)] transition-colors"
-            onClick={addAnswer}
-          >
-            + Add
-          </button>
         </div>
         <div className="space-y-3 max-h-[420px] overflow-y-auto pr-2">
           {filteredAnswers.length === 0 && (
             <p className="folio-ui text-folio-text-tertiary italic">
-              No reflections yet. Add your first reflection above.
+              No reflections yet. Continue the interview to add your first reflection.
             </p>
           )}
           {filteredAnswers.map((qa, i) => (
@@ -373,13 +362,9 @@ export default function StoryPanel({ projectId, project, images, isOwner }: Stor
               }`}
             >
               <div className="flex items-start justify-between gap-2 mb-2">
-                <input
-                  type="text"
-                  value={qa.q || qa.question || ""}
-                  onChange={(e) => setAnswer(i, "q", e.target.value)}
-                  placeholder="What question is this reflecting on?"
-                  className="flex-1 min-w-0 folio-ui font-medium text-folio-text-primary bg-transparent border-0 border-b border-transparent focus:border-[var(--accent)] focus:ring-0 focus:outline-none px-0 py-1 placeholder:text-folio-text-tertiary placeholder:italic placeholder:font-normal"
-                />
+                <p className="flex-1 min-w-0 folio-ui font-medium text-folio-text-primary">
+                  {qa.q || qa.question}
+                </p>
                 <button
                   onClick={() => toggleFeatured(i)}
                   className={`shrink-0 p-1.5 rounded transition-colors ${
