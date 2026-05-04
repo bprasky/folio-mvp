@@ -1,6 +1,9 @@
 # Dependencies
 node_modules/
 
+# Claude Code (personal overrides — not committed)
+.claude/settings.local.json
+
 # Next.js
 .next/
 out/
