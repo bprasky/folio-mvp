@@ -60,6 +60,33 @@ function printSamples(label: string, rows: ProductRow[]) {
   }
 }
 
+function hostnameOf(url: string | null): string | null {
+  if (!url) return null;
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return null;
+  }
+}
+
+function printHostnames(label: string, rows: ProductRow[]) {
+  if (rows.length === 0) return;
+  const counts = new Map<string, number>();
+  const samplesByHost = new Map<string, string>();
+  for (const r of rows) {
+    const host = hostnameOf(r.imageUrl) ?? "(unparseable)";
+    counts.set(host, (counts.get(host) ?? 0) + 1);
+    if (!samplesByHost.has(host) && r.imageUrl) samplesByHost.set(host, r.imageUrl);
+  }
+  console.log(`\n  ${label} — imageUrl hostnames (next.config.js remotePatterns must whitelist these):`);
+  const sorted = Array.from(counts.entries()).sort((a, b) => b[1] - a[1]);
+  for (const [host, count] of sorted) {
+    const sample = samplesByHost.get(host) ?? "";
+    const samplePreview = sample ? `  e.g. ${sample.slice(0, 80)}${sample.length > 80 ? "…" : ""}` : "";
+    console.log(`    - ${host} (${count})${samplePreview}`);
+  }
+}
+
 async function loadProducts(productIds: string[]): Promise<ProductRow[]> {
   if (productIds.length === 0) return [];
   const products = await prisma.product.findMany({
@@ -93,6 +120,7 @@ async function reportScope(scopeLabel: string, productIds: string[]) {
   printBucket("imageUrl OK             ", buckets.ok, rows.length);
   printBucket("imageUrl null, url set  ", buckets.rescrapable, rows.length);
   printBucket("imageUrl null, url null ", buckets.blocked, rows.length);
+  printHostnames("OK bucket", buckets.ok);
   printSamples("Re-scrapable (Phase 4 will hit these)", buckets.rescrapable);
   printSamples("Vendor-blocked (need vendor follow-up)", buckets.blocked);
 }
