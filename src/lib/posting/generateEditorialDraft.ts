@@ -373,7 +373,10 @@ async function spliceHookQuote(
   const hookAnswer = answers.find(
     (a) => typeof a.questionId === 'string' && a.questionId.startsWith(HOOK_OPENER_ID_PREFIX) && a.answer?.trim()
   );
-  if (!hookAnswer) return null;
+  if (!hookAnswer) {
+    console.log('[VERIFY] spliceHookQuote: REGEX FALLBACK path');
+    return null;
+  }
 
   const hookFollowUp = answers.find(
     (a) => typeof a.questionId === 'string' && a.questionId.startsWith(HOOK_FOLLOWUP_ID_PREFIX) && a.answer?.trim()
@@ -398,6 +401,7 @@ Strict rules:
 Return JSON only: {"quote": "..."} or {"quote": null}. Do not wrap the quote in quotation marks.`;
 
   try {
+    console.log('[VERIFY] spliceHookQuote: AI SPLICE path');
     const message = await client.messages.create({
       model: 'claude-sonnet-4-20250514',
       system,
