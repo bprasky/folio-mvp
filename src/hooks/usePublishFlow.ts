@@ -167,7 +167,7 @@ export function usePublishFlow(projectId: string): UsePublishFlowReturn {
             answersToSend = interviewData.answers.map((a: any) => ({
               questionId: a.questionId || a.id,
               answer: a.answer || "",
-              question: a.question || a.prompt || "",
+              prompt: a.prompt || a.question || "",
               section: a.section,
               role: "DESIGNER",
               isFollowUp: false,
@@ -176,8 +176,9 @@ export function usePublishFlow(projectId: string): UsePublishFlowReturn {
           if (interviewData.followUps?.length > 0) {
             followupsToSend = interviewData.followUps.map((f: any) => ({
               questionId: f.questionId || f.id,
-              question: f.question || f.prompt || "",
+              prompt: f.prompt || f.question || "",
               answer: f.answer || "",
+              section: f.section,
               role: "DESIGNER",
               isFollowUp: true,
             }));
