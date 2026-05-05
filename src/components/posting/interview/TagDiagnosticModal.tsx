@@ -272,7 +272,7 @@ export function TagDiagnosticModal({
         <DialogHeader>
           <DialogTitle
             className="font-[var(--font-headline)] text-xl"
-            style={{ fontFamily: 'var(--font-headline, Cormorant Garamond, serif)' }}
+            style={{ fontFamily: 'var(--font-headline)' }}
           >
             Preparing Your Interview
           </DialogTitle>
