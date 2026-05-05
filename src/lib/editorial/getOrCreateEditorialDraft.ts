@@ -224,12 +224,10 @@ export async function getOrCreateEditorialDraft(projectId: string): Promise<{
 
   // Generate draft
   let blocks: Blocks;
-  let usedFallback: boolean;
-  
+
   try {
     const result = await generateEditorialDraft(input);
     blocks = result.blocks;
-    usedFallback = result.usedFallback;
   } catch (error) {
     console.error('[getOrCreateEditorialDraft] Generation failed', {
       projectId,
@@ -255,7 +253,6 @@ export async function getOrCreateEditorialDraft(projectId: string): Promise<{
       credits,
       mode: 'recomposition' as const,
     };
-    usedFallback = true;
   }
 
   // Persist draft to database

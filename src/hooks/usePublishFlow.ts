@@ -212,15 +212,26 @@ export function usePublishFlow(projectId: string): UsePublishFlowReturn {
       });
 
       if (res.status === 202) {
-        // Draft already exists — that's fine, we'll fetch it
+        const json = await res.json().catch(() => ({}));
+        console.warn("[usePublishFlow] Generate returned 202 (no-op)", json);
+        setError(
+          `Regenerate did not run: ${json?.status || "in_progress"}. Wait a moment and try again. [HTTP 202]`,
+        );
         return;
       }
 
       if (!res.ok) {
         const json = await res.json().catch(() => ({}));
-        const errorMessage =
-          json?.error || json?.message || `Generation failed (${res.status})`;
-        setError(errorMessage);
+        console.error("[usePublishFlow] Generation failed", {
+          status: res.status,
+          code: json?.code,
+          error: json?.error,
+          message: json?.message,
+        });
+        const baseMessage =
+          json?.message || json?.error || `Generation failed (${res.status})`;
+        const codeSuffix = json?.code ? ` [${json.code}]` : ` [HTTP ${res.status}]`;
+        setError(`${baseMessage}${codeSuffix}`);
         return;
       }
 

@@ -739,57 +739,6 @@ async function repairAndBuildBlocks(
 }
 
 // ============================================================================
-// FALLBACK BLOCKS — produces canonical format when LLM is unavailable
-// ============================================================================
-
-export function toFallbackBlocks(input: GenInput) {
-  const uniqueAnswers = deduplicateAnswers(input.answers);
-  const ledger = buildMaterialContext(input.tags);
-
-  const kicker = input.project?.title || 'A Considered Composition';
-  const deck = (uniqueAnswers[0]?.answer || input.project?.description || "A thoughtfully designed space.").slice(0, 400);
-
-  const chapters = groupImagesIntoChapters(input.images, input.imageOrder);
-
-  const answerTexts = uniqueAnswers.map(a => a.answer).filter(Boolean);
-  const galleryChapters = chapters.map((ch, idx) => ({
-    title: ch.title,
-    body: answerTexts.length > 0
-      ? answerTexts.slice(idx * 2, idx * 2 + 2).map(t => t.slice(0, 5000))
-      : ['A thoughtfully designed space that balances intention and function.'],
-    imageIds: ch.imageIds,
-  }));
-
-  // Extract pull quotes per-chapter from body text.
-  // Chapter 0 gets hook-aware selection so the lead pull quote matches the opening.
-  const designerName = input.designer?.name;
-  const galleryChaptersWithQuotes = galleryChapters.map((ch, idx) => ({
-    ...ch,
-    pullQuote: extractPullQuotesForChapter(ch.body, designerName, { isLeadChapter: idx === 0 }),
-  }));
-
-  const blocks = {
-    lead: { kicker, deck },
-    introduction: [] as string[],
-    galleryChapters: galleryChaptersWithQuotes.length > 0 ? galleryChaptersWithQuotes : undefined,
-    materialsLedger: ledger.length ? {
-      items: ledger.map(l => ({
-        name: l.name,
-        finish: (l.finish && typeof l.finish === 'string' && l.finish.trim()) ? l.finish : undefined,
-        note: l.vendor ? `Vendor: ${l.vendor}` : undefined,
-      }))
-    } : undefined,
-    credits: buildCredits(input),
-    mode: 'recomposition' as const,
-  };
-
-  // Sync top-level pullQuotes from per-chapter selections (for layout engine)
-  syncPullQuotesFromChapters(blocks as Record<string, any>);
-
-  return BlocksSchema.parse(blocks);
-}
-
-// ============================================================================
 // PROMPT ASSEMBLY
 // ============================================================================
 
@@ -1204,9 +1153,23 @@ async function fixSentenceOpeners(
 // MAIN GENERATION FUNCTION — unified canonical path
 // ============================================================================
 
+// Hard-fail error class for editorial generation failures.
+// The route's outer try/catch reads `code`, `status`, and `message` and
+// surfaces them to the UI. Throwing keeps the designer from shipping a
+// fallback dump (raw interview answers as deck + chapter bodies) without
+// realizing it.
+class EditorialGenerationError extends Error {
+  code: string;
+  status: number;
+  constructor(code: string, message: string, status = 502) {
+    super(message);
+    this.code = code;
+    this.status = status;
+  }
+}
+
 export async function generateEditorialDraft(input: GenInput): Promise<{
   blocks: z.infer<typeof BlocksSchema>;
-  usedFallback: boolean;
 }> {
   const _cid = input.correlationId || 'generate';
 
@@ -1214,10 +1177,11 @@ export async function generateEditorialDraft(input: GenInput): Promise<{
   const uniqueAnswers = deduplicateAnswers(input.answers);
 
   if (!ANTHROPIC_ENABLED) {
-    console.warn('[posting/generate] LLM disabled, using fallback blocks', {
-      projectId: input.project?.id, _cid,
-    });
-    return { blocks: toFallbackBlocks({ ...input, answers: uniqueAnswers }), usedFallback: true };
+    throw new EditorialGenerationError(
+      'LLM_DISABLED',
+      'Editorial generation is unavailable — the AI service is not configured. Contact support.',
+      503,
+    );
   }
 
   // Build prompt
@@ -1242,10 +1206,15 @@ export async function generateEditorialDraft(input: GenInput): Promise<{
   );
 
   if (!llmResult.ok) {
-    console.warn('[generate] llm_fail_using_fallback', {
-      _cid, code: llmResult.code, status: llmResult.status, projectId: input.project?.id,
+    const failure = llmResult as { ok: false; code: string; status?: number; message?: string };
+    console.warn('[generate] llm_call_failed', {
+      _cid, code: failure.code, status: failure.status, message: failure.message, projectId: input.project?.id,
     });
-    return { blocks: toFallbackBlocks({ ...input, answers: uniqueAnswers }), usedFallback: true };
+    throw new EditorialGenerationError(
+      'LLM_CALL_FAILED',
+      `AI model call failed (${failure.code}${failure.status ? `, HTTP ${failure.status}` : ''}). Try regenerating in a moment.`,
+      failure.status || 502,
+    );
   }
 
   console.log('[GENERATE] LLM call complete, proceeding to repair', { _cid });
@@ -1253,8 +1222,10 @@ export async function generateEditorialDraft(input: GenInput): Promise<{
   const rawText = llmResult.data.content[0]?.type === 'text' ? llmResult.data.content[0].text : "";
 
   if (!rawText || rawText.trim().length === 0) {
-    console.warn('[generate] empty_response; using fallback', { _cid });
-    return { blocks: toFallbackBlocks({ ...input, answers: uniqueAnswers }), usedFallback: true };
+    throw new EditorialGenerationError(
+      'LLM_EMPTY_RESPONSE',
+      'The AI model returned an empty response. Try regenerating.',
+    );
   }
 
   // Parse JSON output
@@ -1262,9 +1233,12 @@ export async function generateEditorialDraft(input: GenInput): Promise<{
   try {
     const cleaned = rawText.replace(/```json\n?|\n?```/g, '').trim();
     composed = JSON.parse(cleaned);
-  } catch (parseError) {
-    console.warn('[generate] JSON parse error; using fallback', { _cid, error: parseError });
-    return { blocks: toFallbackBlocks({ ...input, answers: uniqueAnswers }), usedFallback: true };
+  } catch (parseError: any) {
+    console.warn('[generate] JSON parse error', { _cid, error: parseError?.message });
+    throw new EditorialGenerationError(
+      'LLM_JSON_PARSE',
+      'The AI model returned malformed output. Try regenerating.',
+    );
   }
 
   // Validate room structure (monitoring only)
@@ -1283,10 +1257,12 @@ export async function generateEditorialDraft(input: GenInput): Promise<{
     let blocks = await repairAndBuildBlocks(composed, { ...input, answers: uniqueAnswers }, imageIds, rooms, imagesByRoom, _cid);
     // Post-processing: fix "The [noun]..." sentence openers
     blocks = await fixSentenceOpeners(blocks, _cid);
-    return { blocks, usedFallback: false };
+    return { blocks };
   } catch (repairError: any) {
     console.log('[GENERATE] repairAndBuildBlocks THREW:', repairError?.message ?? repairError, { _cid });
-    console.warn('[generate] repair/validation error; using fallback', { _cid, error: repairError });
-    return { blocks: toFallbackBlocks({ ...input, answers: uniqueAnswers }), usedFallback: true };
+    throw new EditorialGenerationError(
+      'LLM_REPAIR_FAILED',
+      'The generated draft did not pass validation. Try regenerating.',
+    );
   }
 }
