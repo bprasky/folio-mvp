@@ -7,8 +7,6 @@ import { cn } from "@/lib/utils";
 // Main Nav = Discovery (everyone else's content)
 const links = [
   { href: "/magazine", label: "Magazine" },
-  { href: "/directory", label: "Directory" },
-  { href: "/events", label: "Events" },
   { href: "/about", label: "About" },
   { href: "/professionals", label: "For Professionals" },
 ];
