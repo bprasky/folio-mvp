@@ -285,7 +285,7 @@ function ShopProductContextModal({
                 />
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="font-['Instrument_Sans'] text-2xl font-medium text-stone-300">
+                  <span className="font-body text-2xl font-medium text-stone-300">
                     {product.name.slice(0, 2).toUpperCase()}
                   </span>
                 </div>
@@ -321,16 +321,16 @@ function ShopProductContextModal({
           <div className="md:w-2/5 flex flex-col overflow-y-auto p-6 md:p-8">
             {/* Product info */}
             <div className="mb-6">
-              <h2 className="font-['Instrument_Sans'] text-xl font-semibold text-stone-800">
+              <h2 className="font-body text-xl font-semibold text-stone-800">
                 {product.name}
               </h2>
               {product.vendor && (
-                <p className="font-['Instrument_Sans'] text-[var(--type-ui)] text-stone-400 mt-1">
+                <p className="font-body text-[var(--type-ui)] text-stone-400 mt-1">
                   {product.vendor}
                 </p>
               )}
               {formattedPrice && (
-                <p className="font-['Instrument_Sans'] text-[var(--type-ui)] text-stone-600 mt-1 font-medium">
+                <p className="font-body text-[var(--type-ui)] text-stone-600 mt-1 font-medium">
                   {formattedPrice}
                 </p>
               )}
@@ -339,7 +339,7 @@ function ShopProductContextModal({
             {/* Category badge */}
             {product.category && (
               <div className="mb-6">
-                <span className="inline-block px-3 py-1 rounded-full bg-stone-100 font-['Instrument_Sans'] text-[var(--type-meta)] text-stone-500">
+                <span className="inline-block px-3 py-1 rounded-full bg-stone-100 font-body text-[var(--type-meta)] text-stone-500">
                   {getCategoryLabel(product.category)}
                 </span>
               </div>
@@ -348,7 +348,7 @@ function ShopProductContextModal({
             {/* Project count */}
             {product.projectCount > 0 && (
               <div className="mb-6 p-4 rounded-xl bg-stone-50">
-                <p className="font-['Instrument_Sans'] text-[var(--type-meta)] text-stone-500">
+                <p className="font-body text-[var(--type-meta)] text-stone-500">
                   Featured in <span className="font-medium text-stone-700">{product.projectCount} project{product.projectCount !== 1 ? 's' : ''}</span> by this designer
                 </p>
               </div>
@@ -358,7 +358,7 @@ function ShopProductContextModal({
             <div className="mt-auto space-y-3 pt-4">
               <button
                 onClick={onAddToProject}
-                className="w-full py-3 px-6 rounded-xl font-['Instrument_Sans'] text-[var(--type-ui)] font-medium text-white transition-colors"
+                className="w-full py-3 px-6 rounded-xl font-body text-[var(--type-ui)] font-medium text-white transition-colors"
                 style={{ backgroundColor: '#2C2825' }}
               >
                 Add to Project
@@ -367,7 +367,7 @@ function ShopProductContextModal({
               {product.projectId && (
                 <a
                   href={`/project/${product.projectId}`}
-                  className="w-full py-3 px-6 rounded-xl font-['Instrument_Sans'] text-[var(--type-ui)] font-medium border border-stone-200 text-stone-600 hover:bg-stone-50 transition-colors text-center block"
+                  className="w-full py-3 px-6 rounded-xl font-body text-[var(--type-ui)] font-medium border border-stone-200 text-stone-600 hover:bg-stone-50 transition-colors text-center block"
                 >
                   View in Project
                 </a>
