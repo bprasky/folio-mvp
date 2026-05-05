@@ -77,9 +77,10 @@
      Folio uses two families. Add a third only after design-system review.
      --font-headline = Cormorant Garamond (editorial display, italic eyebrows, large numerics)
      --font-body     = Instrument Sans (all UI, body, captions, labels)
-     The <body> already sets font-[var(--font-body)] — only declare --font-headline explicitly. */
-  --font-headline: 'Cormorant Garamond', Georgia, serif;
-  --font-body: 'Instrument Sans', -apple-system, sans-serif;
+     Both variables are set on <html> by next/font (src/app/layout.tsx) and point to
+     self-hosted, hash-named font families with metric-matched system fallbacks.
+     Do NOT redeclare them here with literal font names — that overrides next/font
+     and forces devices without the font installed locally to fall back to system serif. */
 
   /* Surface levels are above. --bg-base and --bg-elevated were aliases removed in Task 02. */
 
