@@ -153,17 +153,17 @@ export function CropAdjusterModal({
       >
         {/* Header */}
         <div className="px-5 py-4 border-b border-stone-100">
-          <h3 className="font-['Instrument_Sans'] text-[var(--type-body)] font-medium text-stone-800">
+          <h3 className="font-body text-[var(--type-body)] font-medium text-stone-800">
             Adjust crop
           </h3>
-          <p className="font-['Instrument_Sans'] text-[var(--type-meta)] text-stone-400 mt-0.5">
+          <p className="font-body text-[var(--type-meta)] text-stone-400 mt-0.5">
             {productName}
           </p>
         </div>
 
         {/* Image + Crop Region */}
         <div className="px-5 py-4 space-y-4">
-          <p className="font-['Instrument_Sans'] text-[var(--type-eyebrow)] text-stone-400">
+          <p className="font-body text-[var(--type-eyebrow)] text-stone-400">
             Click or drag to move center. Scroll to zoom. Slider below for fine control.
           </p>
 
@@ -217,7 +217,7 @@ export function CropAdjusterModal({
 
           {/* Scale slider */}
           <div className="flex items-center gap-3">
-            <span className="font-['Instrument_Sans'] text-[var(--type-eyebrow)] text-stone-400 w-8">Tight</span>
+            <span className="font-body text-[var(--type-eyebrow)] text-stone-400 w-8">Tight</span>
             <input
               type="range"
               min={MIN_SCALE}
@@ -227,13 +227,13 @@ export function CropAdjusterModal({
               onChange={(e) => setCropScale(parseFloat(e.target.value))}
               className="flex-1 h-1.5 accent-stone-700 cursor-pointer"
             />
-            <span className="font-['Instrument_Sans'] text-[var(--type-eyebrow)] text-stone-400 w-8">Wide</span>
+            <span className="font-body text-[var(--type-eyebrow)] text-stone-400 w-8">Wide</span>
           </div>
 
           {/* Preview */}
           <div className="flex items-start gap-4">
             <div>
-              <p className="font-['Instrument_Sans'] text-[var(--type-fine)] text-stone-400 uppercase tracking-wider mb-1.5">
+              <p className="font-body text-[var(--type-fine)] text-stone-400 uppercase tracking-wider mb-1.5">
                 Preview
               </p>
               <div className="w-24 h-24 rounded-lg overflow-hidden bg-stone-100 ring-1 ring-stone-200">
@@ -251,17 +251,17 @@ export function CropAdjusterModal({
               </div>
             </div>
             <div className="flex-1 pt-5">
-              <p className="font-['Instrument_Sans'] text-[var(--type-eyebrow)] text-stone-500">
+              <p className="font-body text-[var(--type-eyebrow)] text-stone-500">
                 Position: {Math.round(clampedX)}%, {Math.round(clampedY)}%
               </p>
-              <p className="font-['Instrument_Sans'] text-[var(--type-eyebrow)] text-stone-500">
+              <p className="font-body text-[var(--type-eyebrow)] text-stone-500">
                 Zoom: {Math.round(cropScale * 100)}%
               </p>
             </div>
           </div>
 
           {error && (
-            <p className="font-['Instrument_Sans'] text-[var(--type-meta)] text-red-500">
+            <p className="font-body text-[var(--type-meta)] text-red-500">
               {error}
             </p>
           )}
@@ -272,7 +272,7 @@ export function CropAdjusterModal({
           <button
             type="button"
             onClick={handleReset}
-            className="font-['Instrument_Sans'] text-[var(--type-meta)] text-stone-400 hover:text-stone-600 transition-colors duration-150"
+            className="font-body text-[var(--type-meta)] text-stone-400 hover:text-stone-600 transition-colors duration-150"
           >
             Reset to default
           </button>
@@ -280,7 +280,7 @@ export function CropAdjusterModal({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-lg font-['Instrument_Sans'] text-[var(--type-meta)] text-stone-600 hover:bg-stone-100 transition-colors duration-150"
+              className="px-4 py-2 rounded-lg font-body text-[var(--type-meta)] text-stone-600 hover:bg-stone-100 transition-colors duration-150"
             >
               Cancel
             </button>
@@ -288,7 +288,7 @@ export function CropAdjusterModal({
               type="button"
               onClick={handleSave}
               disabled={saving}
-              className="px-4 py-2 rounded-lg bg-stone-800 text-white font-['Instrument_Sans'] text-[var(--type-meta)] hover:bg-stone-700 disabled:opacity-50 transition-colors duration-150"
+              className="px-4 py-2 rounded-lg bg-stone-800 text-white font-body text-[var(--type-meta)] hover:bg-stone-700 disabled:opacity-50 transition-colors duration-150"
             >
               {saving ? "Saving..." : "Save crop"}
             </button>
