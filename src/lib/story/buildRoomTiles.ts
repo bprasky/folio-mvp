@@ -233,9 +233,10 @@ export function buildStoryData(post: any): StoryData | null {
   // Room quotes lack context when shown in the intro (reader hasn't seen the room yet).
   let projectPullQuote: string | null = null;
 
-  // 1. Try top-level pullQuotes first (these are project-wide, not room-specific)
+  // 1. Try top-level pullQuotes first — only an unsectioned (project-level) quote
+  //    qualifies. Sectioned (chapter) quotes are piece-specific by construction
+  //    and must never appear in the lead slot.
   if (Array.isArray(blocks?.pullQuotes) && blocks.pullQuotes.length > 0) {
-    // Look for a quote without a sourceSection (truly project-level)
     for (const pq of blocks.pullQuotes) {
       const text = typeof pq === "string" ? pq : pq?.text;
       const section = typeof pq === "string" ? null : pq?.sourceSection;
@@ -243,11 +244,6 @@ export function buildStoryData(post: any): StoryData | null {
         projectPullQuote = text;
         break;
       }
-    }
-    // If all quotes have sourceSection, take the first one as fallback
-    if (!projectPullQuote) {
-      const first = blocks.pullQuotes[0];
-      projectPullQuote = typeof first === "string" ? first : first?.text ?? null;
     }
   }
 

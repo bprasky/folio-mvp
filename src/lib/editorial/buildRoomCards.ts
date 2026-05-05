@@ -365,21 +365,18 @@ function extractProducts(images: any[]): StoryProductData[] {
 
 function resolveProjectPullQuote(
   expandedBlocks: any,
-  roomCards: RoomCardData[]
+  _roomCards: RoomCardData[]
 ): string | null {
-  // Try top-level pullQuotes array first
+  // Only an unsectioned (project-level) quote qualifies for the lead slot.
+  // Chapter/room pull quotes are piece-specific by construction and must never
+  // surface here — better to render no lead quote than a piece-specific one.
   const topLevel = expandedBlocks?.pullQuotes;
   if (Array.isArray(topLevel) && topLevel.length > 0) {
-    const first = topLevel[0];
-    if (typeof first === "string") return first;
-    if (first?.text) return first.text;
+    for (const pq of topLevel) {
+      if (typeof pq === "string") return pq;
+      if (pq?.text && !pq?.sourceSection) return pq.text;
+    }
   }
-
-  // Fallback: first room card's pull quote
-  for (const card of roomCards) {
-    if (card.pullQuote) return card.pullQuote;
-  }
-
   return null;
 }
 
