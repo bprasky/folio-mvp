@@ -269,7 +269,7 @@ function DesktopLayoutSplit({
           style={{ y: photoY }}
         />
         <div className={`transition-opacity duration-300 ${isExpanded ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}>
-          <TaggedImage surface="post" image={card.heroImage} />
+          <TaggedImage surface="post" image={card.heroImage} forceDotsVisible={isExpanded} />
         </div>
       </div>
 
@@ -379,7 +379,7 @@ function DesktopLayoutC({
 
       {/* Tag dots on hover; persistent once the room is expanded */}
       <div className={`transition-opacity duration-300 ${isExpanded ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}>
-        <TaggedImage surface="post" image={card.heroImage} />
+        <TaggedImage surface="post" image={card.heroImage} forceDotsVisible={isExpanded} />
       </div>
 
       {/* Glass overlay — bottom left */}
