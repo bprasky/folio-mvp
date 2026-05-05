@@ -40,6 +40,7 @@ export interface StoryData {
   heroImageUrl: string;
   heroImage: { id: string; url: string; tags?: any[] } | null;
   projectPullQuote: string | null;
+  projectPullQuoteIsAttributed: boolean;
   introText: string | null;
   credits: Array<{ role: string; name: string; url?: string }>;
   designerName: string;
@@ -229,25 +230,31 @@ export function buildStoryData(post: any): StoryData | null {
       ? blocks.introduction.join("\n\n")
       : subtitle;
 
-  // Main pull quote — prefer project-level quotes over room-specific ones.
-  // Room quotes lack context when shown in the intro (reader hasn't seen the room yet).
+  // Main pull quote — prefer project-level designer quotes; fall back to
+  // editorial deck (summary copy) only when no quote exists. The fallback is
+  // not an actual quote, so the renderer must not wrap it in quote marks or
+  // attribute it to the designer.
   let projectPullQuote: string | null = null;
+  let projectPullQuoteIsAttributed = false;
 
-  // 1. Try top-level pullQuotes first — only an unsectioned (project-level) quote
-  //    qualifies. Sectioned (chapter) quotes are piece-specific by construction
-  //    and must never appear in the lead slot.
+  // 1. Top-level pullQuotes — only an unsectioned (project-level) quote qualifies.
+  //    Sectioned (chapter) quotes are piece-specific by construction and must
+  //    never appear in the lead slot.
   if (Array.isArray(blocks?.pullQuotes) && blocks.pullQuotes.length > 0) {
     for (const pq of blocks.pullQuotes) {
       const text = typeof pq === "string" ? pq : pq?.text;
       const section = typeof pq === "string" ? null : pq?.sourceSection;
       if (text && !section) {
         projectPullQuote = text;
+        projectPullQuoteIsAttributed = true;
         break;
       }
     }
   }
 
-  // 2. Fall back to lead deck/subtitle if no standalone quote exists
+  // 2. Editorial deck fallback — summary copy, render plain (no quote marks,
+  //    no attribution). Stays until the interview reliably produces a signature
+  //    intro pull quote.
   if (!projectPullQuote) {
     projectPullQuote = blocks?.lead?.deck ?? null;
   }
@@ -331,6 +338,7 @@ export function buildStoryData(post: any): StoryData | null {
     heroImageUrl: heroImage?.url ?? "",
     heroImage,
     projectPullQuote,
+    projectPullQuoteIsAttributed,
     introText,
     credits,
     designerName,
