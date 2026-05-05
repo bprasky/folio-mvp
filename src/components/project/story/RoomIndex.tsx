@@ -98,6 +98,7 @@ export function RoomIndex({
             ref={(el) => roomRefCallback(card.roomSlug, el)}
             card={card}
             isHighlighted={highlightedRoomSlug === card.roomSlug}
+            isExpanded={isExpanded}
             onExpand={onExpandRoom}
             onProductTap={onProductTap}
           />
