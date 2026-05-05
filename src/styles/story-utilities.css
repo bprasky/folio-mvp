@@ -4,6 +4,13 @@
    Warm ivory palette, never cold white. Photography is the real surface.
    ----------------------------------------------------------------------- */
 
+/* Editorial column widths — referenced by RoomExpand prose blocks and the
+   aspect-aware photo frame variants in PhotoTile. */
+:root {
+  --story-prose-width: 720px;
+  --story-wide-width: 920px;
+}
+
 /* Room Card sidebar (desktop split layout) */
 .story-glass-sidebar {
   background: rgba(245, 242, 237, 0.45);

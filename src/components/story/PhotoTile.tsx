@@ -12,6 +12,7 @@ import Image from "next/image";
 import { useRef, useState, useCallback } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { TaggedImage } from "@/components/project/interaction/TaggedImage";
+import { useImageAspect } from "./useImageAspect";
 
 interface PhotoTileProps {
   imageUrl: string;
@@ -23,6 +24,15 @@ interface PhotoTileProps {
   reducedMotion?: boolean;
   isExpanded?: boolean;
 }
+
+// Desktop max-width per aspect variant. On mobile (≤768px) all photos stay
+// full-width; the rule only applies where the prose column is narrower than
+// the viewport.
+const FRAME_MAX_WIDTH: Record<"landscape" | "portrait" | "square", string | undefined> = {
+  landscape: undefined,
+  portrait: "var(--story-prose-width)",
+  square: "var(--story-wide-width)",
+};
 
 export function PhotoTile({
   imageUrl,
@@ -37,6 +47,17 @@ export function PhotoTile({
   const ref = useRef<HTMLDivElement>(null);
   const [showDots, setShowDots] = useState(false);
   const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Aspect-aware framing only applies to full-bleed photos. Half-width
+  // mosaic tiles already live inside the 2-col grid and are not at risk of
+  // top/bottom crop. Unknown dimensions → fall back to full-bleed.
+  const aspect = useImageAspect(imageUrl, image?.width, image?.height);
+  const frame = fullWidth ? aspect.frame ?? "landscape" : "landscape";
+  const frameMaxWidth = FRAME_MAX_WIDTH[frame];
+  // Pass natural dimensions to next/image only on the full-bleed path; the
+  // half-width mosaic tiles are out of scope and keep their 1200×800 hint.
+  const naturalWidth = fullWidth ? aspect.width ?? 1200 : 1200;
+  const naturalHeight = fullWidth ? aspect.height ?? 800 : 800;
 
   const { scrollYProgress } = useScroll({
     target: ref,
@@ -78,7 +99,7 @@ export function PhotoTile({
     }
   }, [showDots]);
 
-  return (
+  const tile = (
     <div
       ref={ref}
       className="relative overflow-hidden rounded-[12px] cursor-pointer group"
@@ -103,10 +124,18 @@ export function PhotoTile({
         <Image
           src={imageUrl}
           alt={alt}
-          width={1200}
-          height={800}
+          width={naturalWidth}
+          height={naturalHeight}
           className="w-full h-auto transition-transform duration-300 group-hover:scale-[1.01]"
-          sizes={fullWidth ? "100vw" : "(max-width: 768px) 100vw, 50vw"}
+          sizes={
+            fullWidth
+              ? frame === "portrait"
+                ? "(max-width: 768px) 100vw, 720px"
+                : frame === "square"
+                  ? "(max-width: 768px) 100vw, 920px"
+                  : "100vw"
+              : "(max-width: 768px) 100vw, 50vw"
+          }
         />
       </motion.div>
 
@@ -127,6 +156,16 @@ export function PhotoTile({
           </div>
         </div>
       )}
+    </div>
+  );
+
+  if (!frameMaxWidth) return tile;
+
+  // Portrait/square: contain inside the editorial column on desktop. Mobile
+  // (the implicit viewport ≤ max-width) falls through to full container width.
+  return (
+    <div className="mx-auto w-full" style={{ maxWidth: frameMaxWidth }}>
+      {tile}
     </div>
   );
 }
