@@ -54,20 +54,6 @@ export function RoomExpand({
           }
         >
           <div className="py-6">
-            {/* Expanded hero — room photo fills the full width, never cropped */}
-            <div className="relative w-full overflow-hidden rounded-[14px] mb-6">
-              <Image
-                src={room.heroImage.url}
-                alt={room.roomLabel}
-                width={1920}
-                height={1080}
-                className="w-full h-auto"
-                sizes="100vw"
-                priority
-              />
-              <TaggedImage surface="post" image={room.heroImage} />
-            </div>
-
             {/* Room label + collapse */}
             <div className="flex items-center justify-between mb-6">
               <span

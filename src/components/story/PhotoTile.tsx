@@ -110,12 +110,12 @@ export function PhotoTile({
         />
       </motion.div>
 
-      {/* Product tag dots — fade in on hover (desktop) or tap-hold (mobile) */}
+      {/* Product tag dots — fade in on hover (desktop) or tap-hold (mobile); persistent while expanded */}
       {hasTags && (
         <div
           className="absolute inset-0 z-10 pointer-events-none"
           style={{
-            opacity: showDots ? 1 : 0,
+            opacity: showDots || isExpanded ? 1 : 0,
             transition: "opacity 300ms ease",
           }}
         >
@@ -123,7 +123,7 @@ export function PhotoTile({
             className="pointer-events-auto absolute inset-0"
             onClick={(e) => e.stopPropagation()}
           >
-            <TaggedImage image={image} surface="post" />
+            <TaggedImage image={image} surface="post" forceDotsVisible={isExpanded} />
           </div>
         </div>
       )}
