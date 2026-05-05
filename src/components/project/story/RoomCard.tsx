@@ -8,6 +8,7 @@ import type { RoomCardData, RoomLayout } from "@/lib/editorial/buildRoomCards";
 interface Props {
   card: RoomCardData;
   isHighlighted?: boolean;
+  isExpanded?: boolean;
   onExpand: (roomSlug: string) => void;
   onProductTap?: (tagId: string) => void;
 }
@@ -19,7 +20,7 @@ const PARALLAX: Record<RoomLayout, number> = { A: 20, B: 20, C: 40, E: 12 };
 const PARALLAX_MOBILE: Record<RoomLayout, number> = { A: 10, B: 10, C: 20, E: 6 };
 
 export const RoomCard = forwardRef<HTMLDivElement, Props>(
-  function RoomCard({ card, isHighlighted, onExpand, onProductTap }, ref) {
+  function RoomCard({ card, isHighlighted, isExpanded, onExpand, onProductTap }, ref) {
     const {
       roomLabel, roomSlug, heroImage, pullQuote, editorialExcerpt,
       products, productCount, layout,
@@ -204,6 +205,7 @@ export const RoomCard = forwardRef<HTMLDivElement, Props>(
             sidebarProducts={sidebarProducts}
             photoY={photoY}
             revealed={revealed}
+            isExpanded={isExpanded}
             onExpand={onExpand}
             onProductTap={onProductTap}
           />
@@ -224,6 +226,7 @@ export const RoomCard = forwardRef<HTMLDivElement, Props>(
             photoY={photoY}
             revealed={revealed}
             reversed={layout === "B"}
+            isExpanded={isExpanded}
             onExpand={onExpand}
             onProductTap={onProductTap}
           />
@@ -238,7 +241,7 @@ export const RoomCard = forwardRef<HTMLDivElement, Props>(
 // ---------------------------------------------------------------------------
 
 function DesktopLayoutSplit({
-  card, excerptPreview, sidebarProducts, photoY, revealed, reversed, onExpand, onProductTap,
+  card, excerptPreview, sidebarProducts, photoY, revealed, reversed, isExpanded, onExpand, onProductTap,
 }: {
   card: RoomCardData;
   excerptPreview: string | null;
@@ -246,6 +249,7 @@ function DesktopLayoutSplit({
   photoY: any;
   revealed: boolean;
   reversed: boolean;
+  isExpanded?: boolean;
   onExpand: (slug: string) => void;
   onProductTap?: (tagId: string) => void;
 }) {
@@ -264,7 +268,7 @@ function DesktopLayoutSplit({
           className="absolute inset-0 w-full h-full object-cover story-parallax-photo"
           style={{ y: photoY }}
         />
-        <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+        <div className={`transition-opacity duration-300 ${isExpanded ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}>
           <TaggedImage surface="post" image={card.heroImage} />
         </div>
       </div>
@@ -347,13 +351,14 @@ function DesktopLayoutSplit({
 // ---------------------------------------------------------------------------
 
 function DesktopLayoutC({
-  card, excerptPreview, sidebarProducts, photoY, revealed, onExpand, onProductTap,
+  card, excerptPreview, sidebarProducts, photoY, revealed, isExpanded, onExpand, onProductTap,
 }: {
   card: RoomCardData;
   excerptPreview: string | null;
   sidebarProducts: RoomCardData["products"];
   photoY: any;
   revealed: boolean;
+  isExpanded?: boolean;
   onExpand: (slug: string) => void;
   onProductTap?: (tagId: string) => void;
 }) {
@@ -372,8 +377,8 @@ function DesktopLayoutC({
       />
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
 
-      {/* Tag dots on hover */}
-      <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+      {/* Tag dots on hover; persistent once the room is expanded */}
+      <div className={`transition-opacity duration-300 ${isExpanded ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}>
         <TaggedImage surface="post" image={card.heroImage} />
       </div>
 

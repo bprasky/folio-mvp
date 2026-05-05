@@ -67,16 +67,18 @@ export function RoomExpanded({
       )}
 
       <div className={`max-w-5xl mx-auto px-4 lg:px-0 flex flex-col gap-8 ${isDesktop ? "pt-6" : "pt-4"}`}>
-        {/* Hero photo with tag dots */}
-        <div className="relative rounded-xl overflow-hidden">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={card.heroImage.url}
-            alt={card.roomLabel}
-            className="w-full h-auto"
-          />
-          <TaggedImage surface="post" image={card.heroImage} />
-        </div>
+        {/* Hero photo with tag dots — mobile only; on desktop the card above remains visible and surfaces its own tag dots */}
+        {!isDesktop && (
+          <div className="relative rounded-xl overflow-hidden">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={card.heroImage.url}
+              alt={card.roomLabel}
+              className="w-full h-auto"
+            />
+            <TaggedImage surface="post" image={card.heroImage} />
+          </div>
+        )}
 
         {/* Pull quote */}
         {card.pullQuote && (
