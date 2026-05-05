@@ -25,11 +25,15 @@ interface PhotoTileProps {
   isExpanded?: boolean;
 }
 
-// Desktop max-width per aspect variant. On mobile (≤768px) all photos stay
-// full-width; the rule only applies where the prose column is narrower than
-// the viewport.
-const FRAME_MAX_WIDTH: Record<"landscape" | "portrait" | "square", string | undefined> = {
-  landscape: undefined,
+// Desktop column caps per aspect variant. Combined with --story-photo-vmax
+// they ensure no photo ever overflows the viewport vertically.
+//   - landscape stays edge-to-edge horizontally up to the height cap
+//   - portrait contained inside the prose reading column
+//   - square contained inside a slightly wider column
+// On mobile (≤768px) the viewport is narrower than every cap, so the rule
+// has no effect and photos stay full-width.
+const FRAME_COLUMN_CAP: Record<"landscape" | "portrait" | "square", string> = {
+  landscape: "100%",
   portrait: "var(--story-prose-width)",
   square: "var(--story-wide-width)",
 };
@@ -50,14 +54,22 @@ export function PhotoTile({
 
   // Aspect-aware framing only applies to full-bleed photos. Half-width
   // mosaic tiles already live inside the 2-col grid and are not at risk of
-  // top/bottom crop. Unknown dimensions → fall back to full-bleed.
+  // overflowing the viewport. Unknown dimensions → fall back to full-bleed.
   const aspect = useImageAspect(imageUrl, image?.width, image?.height);
-  const frame = fullWidth ? aspect.frame ?? "landscape" : "landscape";
-  const frameMaxWidth = FRAME_MAX_WIDTH[frame];
+  const aspectKnown = aspect.frame !== null;
+  const frame = aspectKnown ? aspect.frame! : "landscape";
   // Pass natural dimensions to next/image only on the full-bleed path; the
   // half-width mosaic tiles are out of scope and keep their 1200×800 hint.
   const naturalWidth = fullWidth ? aspect.width ?? 1200 : 1200;
   const naturalHeight = fullWidth ? aspect.height ?? 800 : 800;
+  const aspectRatio = (aspect.width ?? 0) / (aspect.height ?? 1);
+  // Cap the photo so it always fits within the viewport: take the smaller of
+  // the column cap and the height-derived width (vmax × aspect). Landscape
+  // photos that would otherwise overflow vertically scale down here too.
+  const wrapperMaxWidth =
+    fullWidth && aspectKnown && aspectRatio > 0
+      ? `min(${FRAME_COLUMN_CAP[frame]}, calc(var(--story-photo-vmax) * ${aspectRatio.toFixed(4)}))`
+      : null;
 
   const { scrollYProgress } = useScroll({
     target: ref,
@@ -159,12 +171,13 @@ export function PhotoTile({
     </div>
   );
 
-  if (!frameMaxWidth) return tile;
+  if (!wrapperMaxWidth) return tile;
 
-  // Portrait/square: contain inside the editorial column on desktop. Mobile
-  // (the implicit viewport ≤ max-width) falls through to full container width.
+  // Constrain the photo so it fits the viewport on desktop (height-capped by
+  // --story-photo-vmax, width-capped by the column variant). Mobile viewports
+  // are narrower than every cap so the wrapper resolves to full width.
   return (
-    <div className="mx-auto w-full" style={{ maxWidth: frameMaxWidth }}>
+    <div className="mx-auto w-full" style={{ maxWidth: wrapperMaxWidth }}>
       {tile}
     </div>
   );

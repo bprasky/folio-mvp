@@ -5,10 +5,14 @@
    ----------------------------------------------------------------------- */
 
 /* Editorial column widths — referenced by RoomExpand prose blocks and the
-   aspect-aware photo frame variants in PhotoTile. */
+   aspect-aware photo frame variants in PhotoTile.
+   --story-photo-vmax caps photo height so the whole image fits in the
+   viewport regardless of aspect; the photo wrapper takes the smaller of
+   the column width and (vmax × aspect-ratio). */
 :root {
   --story-prose-width: 720px;
   --story-wide-width: 920px;
+  --story-photo-vmax: 85vh;
 }
 
 /* Room Card sidebar (desktop split layout) */
