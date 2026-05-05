@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense } from "react";
-import { StoryRenderer } from "@/components/project/story/StoryRenderer";
+import { StoryRenderer } from "@/components/story/StoryRenderer";
 import { ShareToInstagramButton } from "@/components/instagram-export/ShareToInstagramButton";
 
 type MediaModule = {
