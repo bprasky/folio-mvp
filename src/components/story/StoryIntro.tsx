@@ -72,27 +72,43 @@ export function StoryIntro({ story, compact = false }: StoryIntroProps) {
         {/* Quote + intro text */}
         <div className="flex flex-col gap-4">
           {story.projectPullQuote && (
-            <blockquote
-              className={compact
-                ? "text-[var(--type-body)] md:text-[var(--type-h4)] italic leading-[var(--lh-body)]"
-                : "text-[var(--type-h4)] md:text-[var(--type-h4)] italic leading-[var(--lh-body)]"
-              }
-              style={{
-                fontFamily: "var(--font-headline)",
-                fontWeight: 'var(--w-body)',
-                color: "rgba(87, 75, 67, 0.85)",
-              }}
-            >
-              &ldquo;{story.projectPullQuote}&rdquo;
-              <footer
-                className="mt-2 text-[var(--type-meta)] not-italic"
+            story.projectPullQuoteIsAttributed ? (
+              <blockquote
+                className={compact
+                  ? "text-[var(--type-body)] md:text-[var(--type-h4)] italic leading-[var(--lh-body)]"
+                  : "text-[var(--type-h4)] md:text-[var(--type-h4)] italic leading-[var(--lh-body)]"
+                }
                 style={{
-                  color: "rgba(87, 75, 67, 0.55)"
+                  fontFamily: "var(--font-headline)",
+                  fontWeight: 'var(--w-body)',
+                  color: "rgba(87, 75, 67, 0.85)",
                 }}
               >
-                &mdash; {story.designerName}
-              </footer>
-            </blockquote>
+                &ldquo;{story.projectPullQuote}&rdquo;
+                <footer
+                  className="mt-2 text-[var(--type-meta)] not-italic"
+                  style={{
+                    color: "rgba(87, 75, 67, 0.55)"
+                  }}
+                >
+                  &mdash; {story.designerName}
+                </footer>
+              </blockquote>
+            ) : (
+              <p
+                className={compact
+                  ? "text-[var(--type-body)] md:text-[var(--type-h4)] italic leading-[var(--lh-body)]"
+                  : "text-[var(--type-h4)] md:text-[var(--type-h4)] italic leading-[var(--lh-body)]"
+                }
+                style={{
+                  fontFamily: "var(--font-headline)",
+                  fontWeight: 'var(--w-body)',
+                  color: "rgba(87, 75, 67, 0.85)",
+                }}
+              >
+                {story.projectPullQuote}
+              </p>
+            )
           )}
 
           {story.introText && (

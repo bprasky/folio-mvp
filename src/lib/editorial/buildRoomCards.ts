@@ -54,6 +54,7 @@ export interface StoryData {
   slug: string;
   heroImage: { id: string; url: string; tags?: any[] } | null;
   projectPullQuote: string | null;
+  projectPullQuoteIsAttributed: boolean;
   designer: {
     name: string;
     studio: string | null;
@@ -178,8 +179,12 @@ export function buildRoomCards(post: any): StoryData {
   // Build breathers from cross-room pull quotes
   const breathers = buildBreathers(expandedBlocks, roomCards);
 
-  // Best pull quote for hero (Layer 0)
-  const projectPullQuote = resolveProjectPullQuote(expandedBlocks, roomCards);
+  // Best pull quote for hero (Layer 0). Prefer an attributed designer quote;
+  // fall back to the editorial deck (summary copy) so the slot isn't empty.
+  // The flag tells the renderer whether to show quote marks + attribution.
+  const attributedQuote = resolveProjectPullQuote(expandedBlocks, roomCards);
+  const projectPullQuote = attributedQuote ?? expandedBlocks?.lead?.deck ?? null;
+  const projectPullQuoteIsAttributed = !!attributedQuote;
 
   // Hero image: heroAssetId match, or first project image
   const heroAssetId = post?.heroAssetId;
@@ -198,6 +203,7 @@ export function buildRoomCards(post: any): StoryData {
       ? { id: heroImage.id, url: heroImage.url, tags: heroImage.tags }
       : null,
     projectPullQuote,
+    projectPullQuoteIsAttributed,
     designer: designer
       ? {
           name: designer.name ?? "",

@@ -12,7 +12,7 @@ interface Props {
 }
 
 export function StoryHero({ storyData, onScrollToRoom, activeRoomSlug }: Props) {
-  const { heroImage, title, projectPullQuote, designer, roomCount, topVendors, roomCards } =
+  const { heroImage, title, projectPullQuote, projectPullQuoteIsAttributed, designer, roomCount, topVendors, roomCards } =
     storyData;
 
   if (!heroImage) return null;
@@ -39,13 +39,13 @@ export function StoryHero({ storyData, onScrollToRoom, activeRoomSlug }: Props) 
           {title}
         </h1>
 
-        {/* Pull quote */}
+        {/* Pull quote (attributed) or editorial deck (plain italic) */}
         {projectPullQuote && (
           <div className="story-glass-quote px-5 py-4 max-w-xl">
             <p className="font-[var(--font-headline)] italic text-[var(--type-h4)] md:text-[var(--type-h4)] leading-relaxed story-text-on-dark">
-              &ldquo;{projectPullQuote}&rdquo;
+              {projectPullQuoteIsAttributed ? <>&ldquo;{projectPullQuote}&rdquo;</> : projectPullQuote}
             </p>
-            {designer?.name && (
+            {projectPullQuoteIsAttributed && designer?.name && (
               <p className="mt-2 text-[var(--type-meta)] font-[var(--font-body)] story-text-on-dark opacity-80">
                 — {designer.name}
               </p>
