@@ -3,11 +3,10 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { FaArrowLeft } from 'react-icons/fa';
 import ProjectTabs from './ProjectTabs';
 import MediaSection from './MediaSection';
 import DesignerBoard from './DesignerBoard';
-import ProjectHero from './ProjectHero';
+import ProjectHeader from './ProjectHeader';
 import ProjectMediaManager from './ProjectMediaManager';
 import DraftsPanel from './DraftsPanel';
 import StoryPanel from './StoryPanel';
@@ -20,20 +19,30 @@ import { getEditorialState, type EditorialState } from '@/lib/editorial/getEdito
 
 type TabView = 'overview' | 'media' | 'boards' | 'drafts' | 'files' | 'publish' | 'story' | 'actions';
 
-export default async function ProjectPage({ 
-  params, 
-  searchParams 
-}: { 
+function statusSlug(state: EditorialState): string {
+  if (state === 'PUBLISHED') return 'published';
+  if (state === 'EMPTY') return 'drafts';
+  return 'in-progress';
+}
+
+function statusCrumbLabel(state: EditorialState): string {
+  if (state === 'PUBLISHED') return 'Published';
+  if (state === 'EMPTY') return 'Drafts';
+  return 'In progress';
+}
+
+export default async function ProjectPage({
+  params,
+  searchParams,
+}: {
   params: { id: string };
   searchParams: { view?: string };
 }) {
   const session = await getServerSession(authOptions);
   const viewerId = session?.user?.id ?? null;
   const viewerRole = (session as any)?.user?.role ?? 'GUEST';
-  // Context detection: null = individual/personal, string = operating as organization
   const operatingAsOrgId = (session as any)?.user?.operatingAsOrgId ?? null;
 
-  // Fetch by ID only — never add owner constraints here
   const base = await prisma.project.findUnique({
     where: { id: params.id },
     select: {
@@ -57,7 +66,6 @@ export default async function ProjectPage({
       views: true,
       saves: true,
       shares: true,
-      // Include images with tags for Media tab
       images: {
         include: {
           tags: {
@@ -66,11 +74,8 @@ export default async function ProjectPage({
             },
           },
         },
-        // Order by displayOrder if available, otherwise by createdAt
-        // Note: We'll sort in memory to handle nulls properly
         orderBy: { createdAt: 'desc' },
       },
-      // Include ProjectPost for Instagram export + publish state detection
       post: {
         select: {
           expandedBlocks: true,
@@ -78,13 +83,12 @@ export default async function ProjectPage({
           publishedAt: true,
         },
       },
-      // Include rooms and selections for Designer Board
       rooms: {
         include: {
           selections: {
-            orderBy: { createdAt: 'desc' }
-          }
-        }
+            orderBy: { createdAt: 'desc' },
+          },
+        },
       },
     },
   });
@@ -94,12 +98,11 @@ export default async function ProjectPage({
     notFound();
   }
 
-  // Some data sets still have designerId; try to read it but don't fail if column doesn't exist
   let designerId: string | null = null;
   try {
     const extra = (await prisma.project.findUnique({
       where: { id: params.id },
-      // @ts-ignore — ignore if the column doesn't exist in this schema
+      // @ts-ignore
       select: { designerId: true },
     } as any)) as any;
     designerId = extra?.designerId ?? null;
@@ -107,59 +110,61 @@ export default async function ProjectPage({
 
   const isOwner =
     viewerRole === 'ADMIN' ||
-    (!!viewerId && (viewerId === base.ownerId || (!!designerId && viewerId === designerId)));
+    (!!viewerId &&
+      (viewerId === base.ownerId || (!!designerId && viewerId === designerId)));
 
   if (!isOwner) {
-    console.warn('[project-detail] forbidden', { projectId: base.id, viewerId, viewerRole, ownerId: base.ownerId, designerId });
-    // Use 404 for now to avoid leaking; later swap to a 403 page
+    console.warn('[project-detail] forbidden', {
+      projectId: base.id,
+      viewerId,
+      viewerRole,
+      ownerId: base.ownerId,
+      designerId,
+    });
     notFound();
   }
 
-  // Count interview answers for state detection
   const interviewAnswerCount = await prisma.editorialInterviewAnswer.count({
     where: { interview: { projectId: params.id } },
   });
 
-  // Formalized editorial state machine (spec: 17_EDITORIAL_FLOW_SPEC.md §2)
   const editorialState = getEditorialState({
-    post: base.post ? {
-      status: base.post.status,
-      publishedAt: base.post.publishedAt ?? null,
-      expandedBlocks: base.post.expandedBlocks,
-    } : null,
+    post: base.post
+      ? {
+          status: base.post.status,
+          publishedAt: base.post.publishedAt ?? null,
+          expandedBlocks: base.post.expandedBlocks,
+        }
+      : null,
     interviewAnswerCount,
   });
 
   const isPublished = editorialState === 'PUBLISHED';
-  const hasDraftOrPublished = (['GENERATED', 'PUBLISHED', 'UNPUBLISHED'] as EditorialState[]).includes(editorialState);
+  const hasDraftOrPublished = (
+    ['GENERATED', 'PUBLISHED', 'UNPUBLISHED'] as EditorialState[]
+  ).includes(editorialState);
 
-  // Determine current view from search params
-  // Default: 'media' for unpublished (primary workspace), 'boards' for published
   const defaultView: TabView = isPublished ? 'boards' : 'media';
   let currentView: TabView = (searchParams.view as TabView) || defaultView;
 
-  // Handle redirects from old tab names
-  // files → media, drafts → publish
-  if (currentView === 'files') {
-    currentView = 'media';
-  } else if (currentView === 'drafts') {
-    currentView = 'publish';
-  }
+  if (currentView === 'files') currentView = 'media';
+  else if (currentView === 'drafts') currentView = 'publish';
 
-  // Redirect story tab to media when project is not yet published
-  if (!isPublished && currentView === 'story') {
-    currentView = 'media';
-  }
-  // Redirect publish tab to media only when no draft or published content exists
-  if (!hasDraftOrPublished && currentView === 'publish') {
-    currentView = 'media';
-  }
+  if (!isPublished && currentView === 'story') currentView = 'media';
+  if (!hasDraftOrPublished && currentView === 'publish') currentView = 'media';
 
-  // Validate view parameter
-  const validViews: TabView[] = ['overview', 'media', 'boards', 'drafts', 'files', 'publish', 'story', 'actions'];
+  const validViews: TabView[] = [
+    'overview',
+    'media',
+    'boards',
+    'drafts',
+    'files',
+    'publish',
+    'story',
+    'actions',
+  ];
   const view = validViews.includes(currentView) ? currentView : defaultView;
 
-  // Convert Prisma Decimal objects to numbers for client components
   const sanitizedProject = {
     ...base,
     rooms: base.rooms.map(room => ({
@@ -167,64 +172,16 @@ export default async function ProjectPage({
       selections: room.selections.map(selection => ({
         ...selection,
         unitPrice: selection.unitPrice ? Number(selection.unitPrice) : null,
-      }))
-    }))
+      })),
+    })),
   };
 
-  const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
-
-  const getStageLabel = (stage: string) => {
-    const stageLabels: Record<string, string> = {
-      concept: 'Concept',
-      schematic: 'Schematic',
-      design_development: 'Design Development',
-      cd_pre_spec: 'CD Pre-Spec',
-      spec_locked: 'Spec Locked',
-      in_procurement: 'In Procurement',
-      install: 'Install'
-    };
-    return stageLabels[stage] || stage;
-  };
-
-  const getProjectTypeLabel = (type: string) => {
-    const typeLabels: Record<string, string> = {
-      UNSPECIFIED: 'Unspecified',
-      RESIDENTIAL: 'Residential',
-      COMMERCIAL: 'Commercial',
-      HOSPITALITY: 'Hospitality',
-      RETAIL: 'Retail',
-      OFFICE: 'Office',
-      HEALTHCARE: 'Healthcare',
-      EDUCATIONAL: 'Educational',
-      INDUSTRIAL: 'Industrial',
-      LANDSCAPE: 'Landscape',
-      INTERIOR: 'Interior',
-      ARCHITECTURAL: 'Architectural'
-    };
-    return typeLabels[type] || type;
-  };
-
-  // Determine if project has meaningful content
-  // A project is considered "empty" if:
-  // - No images uploaded, AND
-  // - No rooms created
   const hasMedia = base.images && base.images.length > 0;
   const hasRooms = base.rooms && base.rooms.length > 0;
   const isProjectEmpty = !hasMedia && !hasRooms;
 
-  // Show empty state for empty projects
-  // Context-aware: organization context → designer flow, personal context → discovery flow
   if (isProjectEmpty) {
-    // If operating as organization → show designer import/publish flow
-    // If operating as individual/personal (no org context) → show discovery flow
     const isOrganizationContext = !!operatingAsOrgId;
-
     if (isOrganizationContext) {
       return <ProjectEmptyState project={sanitizedProject} />;
     } else {
@@ -232,43 +189,83 @@ export default async function ProjectPage({
     }
   }
 
+  const crumbStatus = statusCrumbLabel(editorialState);
+  const crumbStatusSlug = statusSlug(editorialState);
+
   return (
     <div className="min-h-screen bg-surface-canvas">
-      {/* Back Button */}
-      <div className="p-4 bg-surface-ground border-b border-folio-border-subtle">
-        <div className="flex items-center justify-between max-w-7xl mx-auto">
-          <Link href="/projects" className="flex items-center text-[var(--accent)] hover:text-[var(--accent-hover)] transition-colors">
-            <FaArrowLeft className="mr-2" /> Back to Projects
+      {/* Header area — breadcrumbs + editorial header + tabs */}
+      <div className="max-w-[1280px] mx-auto px-10 pt-6">
+        {/* Breadcrumbs */}
+        <nav
+          aria-label="Breadcrumb"
+          className="flex items-center gap-2 mb-7 text-[13px] text-folio-text-secondary"
+        >
+          <Link
+            href="/projects"
+            className="hover:text-[var(--accent)] transition-colors duration-150"
+          >
+            Projects
           </Link>
-        </div>
+          <span className="text-folio-text-tertiary" aria-hidden>
+            /
+          </span>
+          <Link
+            href={`/projects?status=${crumbStatusSlug}`}
+            className="hover:text-[var(--accent)] transition-colors duration-150"
+          >
+            {crumbStatus}
+          </Link>
+          <span className="text-folio-text-tertiary" aria-hidden>
+            /
+          </span>
+          <span className="text-folio-text-primary" aria-current="page">
+            {sanitizedProject.title}
+          </span>
+        </nav>
+
+        {/* Editorial header — H1 + badges + meta + actions */}
+        <ProjectHeader
+          project={sanitizedProject}
+          editorialState={editorialState}
+          images={base.images.map(img => ({ id: img.id, url: img.url, name: img.name }))}
+          expandedBlocks={base.post?.expandedBlocks}
+        />
+
+        {/* Flat tab strip */}
+        <ProjectTabs
+          project={sanitizedProject}
+          currentView={view}
+          isPublished={isPublished}
+          hasDraftOrPublished={hasDraftOrPublished}
+          editorialState={editorialState}
+        />
       </div>
 
-      {/* Project Hero Section - Fixed height with Overview menu */}
-      <ProjectHero 
-        project={sanitizedProject} 
-        images={base.images.map(img => ({
-          id: img.id,
-          url: img.url,
-          name: img.name,
-        }))}
-        expandedBlocks={base.post?.expandedBlocks}
-      />
+      {/* PUBLISH tab — full-bleed immersive preview */}
+      {view === 'publish' && (
+        <PublishTabContent
+          projectId={sanitizedProject.id}
+          project={sanitizedProject}
+          images={base.images}
+          isOwner={isOwner}
+          editorialState={editorialState}
+        />
+      )}
 
-      {/* Tab Navigation */}
-      <ProjectTabs project={sanitizedProject} currentView={view} isPublished={isPublished} hasDraftOrPublished={hasDraftOrPublished} editorialState={editorialState} />
-
-      {/* PUBLISH tab — renders outside <main> for full-width immersive preview */}
-      {view === 'publish' && <PublishTabContent projectId={sanitizedProject.id} project={sanitizedProject} images={base.images} isOwner={isOwner} editorialState={editorialState} />}
-
-      {/* Main Content - Full Width (non-publish tabs) */}
+      {/* All other tabs */}
       {view !== 'publish' && (
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* MEDIA tab */}
+        <main className="max-w-[1280px] mx-auto px-10 py-8 pb-24">
           {view === 'media' && (
-            <MediaSection project={sanitizedProject} isOwner={isOwner} images={base.images} isPublished={isPublished} editorialState={editorialState} />
+            <MediaSection
+              project={sanitizedProject}
+              isOwner={isOwner}
+              images={base.images}
+              isPublished={isPublished}
+              editorialState={editorialState}
+            />
           )}
 
-          {/* STORY tab */}
           {view === 'story' && (
             <StoryPanel
               projectId={sanitizedProject.id}
@@ -278,7 +275,6 @@ export default async function ProjectPage({
             />
           )}
 
-          {/* ACTION ITEMS tab */}
           {view === 'actions' && (
             <ActionItemsPanel
               projectId={sanitizedProject.id}
@@ -293,12 +289,11 @@ export default async function ProjectPage({
                   roomId: s.roomId,
                   room: { id: r.id, name: r.name },
                   productTagId: s.productTagId,
-                }))
+                })),
               )}
             />
           )}
 
-          {/* BOARDS tab - default view */}
           {(view === 'boards' || view === 'overview') && (
             <DesignerBoard
               projectId={sanitizedProject.id}
@@ -313,11 +308,13 @@ export default async function ProjectPage({
                   x: tag.x,
                   y: tag.y,
                   productId: tag.productId,
-                  product: tag.product ? {
-                    id: tag.product.id,
-                    name: tag.product.name,
-                    imageUrl: tag.product.imageUrl ?? null,
-                  } : null,
+                  product: tag.product
+                    ? {
+                        id: tag.product.id,
+                        name: tag.product.name,
+                        imageUrl: tag.product.imageUrl ?? null,
+                      }
+                    : null,
                 })),
               }))}
             />
@@ -328,7 +325,6 @@ export default async function ProjectPage({
   );
 }
 
-/** Server component that fetches staging data and renders the appropriate publish view */
 async function PublishTabContent({
   projectId,
   project,
@@ -346,7 +342,7 @@ async function PublishTabContent({
 
   if (!stagingData || !stagingData.expandedBlocks) {
     return (
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-[1280px] mx-auto px-10 py-8 pb-24">
         <NoDraftState projectId={projectId} />
       </main>
     );
