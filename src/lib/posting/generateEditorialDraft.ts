@@ -326,14 +326,32 @@ export function extractPullQuotesForChapter(
 // ============================================================================
 
 /**
+ * Reject lead-quote candidates that read as piece/material description rather
+ * than a project-level conviction. The lead pull quote sits above the article
+ * and must capture the project as a whole — never a single sofa, faucet, or
+ * fabric. Deterministic regex check, no LLM call.
+ */
+const PIECE_NOUNS = /\b(sofa|chair|table|pendant|lamp|sconce|cushion|ottoman|daybed|console|dresser|desk|bed|vanity|armchair|bench|stool|mirror|rug|tile|countertop|cabinetry|millwork|hardware|faucet|fixture)\b/i;
+const PIECE_DESCRIPTORS = /\b(profile|upholstery|finish|fabric|wrapped|tufted|grain|veneer|patina|hardware)\b/i;
+const PROJECT_CONVICTION = /\b(wanted|needed|hoped|believed|kept coming back|the brief|the project|the house|the home|the clients?|the idea|we started|what we were chasing|feel like|felt like|live with|lives with|against it)\b/i;
+
+export function isArticleHookQuote(text: string): boolean {
+  if (!text || typeof text !== 'string') return false;
+  const hasConviction = PROJECT_CONVICTION.test(text);
+  if (PIECE_NOUNS.test(text) && !hasConviction) return false;
+  if (PIECE_DESCRIPTORS.test(text) && !hasConviction) return false;
+  return true;
+}
+
+/**
  * Extract a lead-quote candidate from the article's introduction paragraphs
  * (the dedicated opening narrative, distinct from galleryChapters[0] which
- * is the first room). Uses the existing scoring heuristic and picks the
- * highest-scored attributed quote — if the LLM quoted the designer in the
- * intro, that line is almost always hook-adjacent.
+ * is the first room). Walks scored candidates from highest to lowest and
+ * returns the first that passes `isArticleHookQuote` — we never accept a
+ * piece-specific line as the lead, even if it scored highest.
  *
  * Deterministic, no LLM call. Used as:
- *   - A fallback for new drafts when spliceHookQuote returns null.
+ *   - A fallback for new drafts when spliceHookQuote returns null/rejected.
  *   - A retrofit for existing posts via the admin re-extract route.
  */
 export function extractHookQuoteFromIntroduction(
@@ -342,9 +360,16 @@ export function extractHookQuoteFromIntroduction(
 ): { text: string; context?: string } | null {
   if (!Array.isArray(introduction) || introduction.length === 0) return null;
   const selection = extractPullQuotesForChapter(introduction, designerName);
-  const text = selection?.selected?.text;
-  if (!text) return null;
-  return { text, context: designerName || undefined };
+  const ranked = [
+    selection?.selected,
+    ...(selection?.alternatives ?? []),
+  ].filter((q): q is { text: string; context?: string } => !!q?.text);
+  for (const cand of ranked) {
+    if (isArticleHookQuote(cand.text)) {
+      return { text: cand.text, context: designerName || undefined };
+    }
+  }
+  return null;
 }
 
 /**
@@ -392,6 +417,7 @@ Strict rules:
 - Maximum 30 words. Shorter is better.
 - Use the designer's actual phrasing. You may trim, elide ("…"), or splice across the two answers, but do NOT invent words, add metaphor, or introduce imagery the designer did not use.
 - Do NOT mention specific rooms, products, brands, vendors, colors, materials, or process steps. The lead quote is about the project's core idea or feeling, not its details.
+- If the answers describe a single piece of furniture, fixture, or material (e.g. a sofa's profile, a faucet's finish, a fabric's texture) rather than the project's overall idea or feeling, return quote: null. The hook MUST be about the project as a whole, not about a specific piece.
 - Prefer first-person voice and emotion over description.
 - If neither answer contains a usable hook-quality thread, return quote: null rather than force one.
 
@@ -720,13 +746,15 @@ async function repairAndBuildBlocks(
     mode: 'recomposition' as const,
   };
 
-  // Lead pull quote preference:
+  // Lead pull quote preference (must always be project-level, never piece-specific):
   //  1. Spliced hook-opener + follow-up (richest; requires hook flow answers)
-  //  2. Highest-scored quote from the introduction paragraphs (retrofit for
-  //     drafts without hook-flow answers — intro is the narrative opener)
-  //  3. Chapter-0 early-strong extraction via syncPullQuotesFromChapters
+  //     — rejected if it reads as piece/material description.
+  //  2. Highest-scored article-level quote from the introduction paragraphs.
+  //  No chapter-quote fallback: an empty hookQuote is preferable to a piece-specific lead.
+  const splicedQuote = await spliceHookQuote(input.answers, designerName);
+  const validatedSplice = splicedQuote && isArticleHookQuote(splicedQuote.text) ? splicedQuote : null;
   const hookQuote =
-    (await spliceHookQuote(input.answers, designerName)) ??
+    validatedSplice ??
     extractHookQuoteFromIntroduction(blocks.introduction, designerName);
   if (hookQuote) {
     (blocks as Record<string, any>).hookQuote = hookQuote;
