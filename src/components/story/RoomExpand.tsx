@@ -5,7 +5,6 @@
 // images are large and immersive. Collapsing returns to the mosaic.
 // Rule 4: Expand Is the Only Way to Get Depth.
 
-import { useRef, useEffect } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { TaggedImage } from "@/components/project/interaction/TaggedImage";
@@ -26,23 +25,10 @@ export function RoomExpand({
   onProductClick,
   reducedMotion,
 }: RoomExpandProps) {
-  const contentRef = useRef<HTMLDivElement>(null);
-
-  // Scroll expanded section into view
-  useEffect(() => {
-    if (isOpen && contentRef.current) {
-      const timer = setTimeout(() => {
-        contentRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-      }, 300);
-      return () => clearTimeout(timer);
-    }
-  }, [isOpen]);
-
   return (
     <AnimatePresence initial={false}>
       {isOpen && (
         <motion.div
-          ref={contentRef}
           className="col-span-2 overflow-hidden"
           initial={{ height: 0, opacity: 0 }}
           animate={{ height: "auto", opacity: 1 }}
@@ -120,17 +106,29 @@ export function RoomExpand({
                   Tagged Products
                 </h4>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-                  {room.products.map((product: any) => (
+                  {room.products.map((product: any) => {
+                    // Same thumbnail fallback rule as elsewhere in the
+                    // interaction system: prefer any URL-based product image,
+                    // otherwise fall back to the cropped section of the
+                    // source photo (cutoutImageUrl).
+                    const thumbSrc =
+                      product.thumbnailUrl ||
+                      product.imageThumb ||
+                      product.imageUrl ||
+                      product.primaryImageUrl ||
+                      product.cutoutImageUrl ||
+                      null;
+                    return (
                     <button
                       key={product.id}
                       onClick={() => onProductClick(product)}
                       className="flex items-center gap-2.5 p-2 rounded-[10px] text-left transition-colors hover:bg-[rgba(87,75,67,0.04)]"
                     >
-                      {(product.imageUrl || product.primaryImageUrl || product.thumbnailUrl) && (
+                      {thumbSrc && (
                         <div className="h-9 w-9 flex-shrink-0 rounded-lg overflow-hidden bg-[rgba(87,75,67,0.04)]">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
-                            src={product.imageUrl || product.primaryImageUrl || product.thumbnailUrl}
+                            src={thumbSrc}
                             alt={product.name}
                             className="h-full w-full object-cover"
                           />
@@ -160,7 +158,8 @@ export function RoomExpand({
                         )}
                       </div>
                     </button>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}
