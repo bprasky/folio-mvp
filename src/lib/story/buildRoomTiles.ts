@@ -38,7 +38,7 @@ export interface StoryData {
   subtitle: string | null;
   slug: string;
   heroImageUrl: string;
-  heroImage: { id: string; url: string; tags?: any[] } | null;
+  heroImage: { id: string; url: string; name?: string | null; room?: string | null; tags?: any[] } | null;
   projectPullQuote: string | null;
   projectPullQuoteIsAttributed: boolean;
   introText: string | null;
@@ -262,7 +262,7 @@ export function buildStoryData(post: any): StoryData | null {
   // Hero image: first chapter's primary image, or heroAssetId, or first project image
   const heroAssetId = post.heroAssetId;
   const projectImages = project.images ?? [];
-  let heroImage: { id: string; url: string; tags?: any[] } | null = null;
+  let heroImage: { id: string; url: string; name?: string | null; room?: string | null; tags?: any[] } | null = null;
 
   if (heroAssetId) {
     const found = projectImages.find((img: any) => img.id === heroAssetId);

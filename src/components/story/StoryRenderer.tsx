@@ -5,8 +5,9 @@
 // Manages ProductSheet state and deep link routing.
 
 import { useState, useCallback, useEffect, useMemo } from "react";
+import Image from "next/image";
 import { useSearchParams } from "next/navigation";
-import { buildStoryData } from "@/lib/story/buildRoomTiles";
+import { buildStoryData, type StoryData } from "@/lib/story/buildRoomTiles";
 import { StoryHero } from "./StoryHero";
 import { StoryIntro } from "./StoryIntro";
 import { Mosaic } from "./Mosaic";
@@ -141,11 +142,9 @@ export function StoryRenderer({ post }: StoryRendererProps) {
             <div className="border-b mt-6" style={{ borderColor: "rgba(87, 75, 67, 0.06)" }} />
           </>
         ) : (
-          /* Landscape: full-width hero, intro below */
-          <>
-            <StoryHero imageUrl={story.heroImageUrl} alt={story.title} orientation="landscape" />
-            <StoryIntro story={story} />
-          </>
+          /* Landscape: editorial hero per E4 spec — eyebrow + title row,
+             16:9 photo flush below, caption + counter row underneath. */
+          <LandscapeHero story={story} publishedAt={post?.publishedAt ?? null} />
         )}
 
         {/* Mosaic: Room grid with expand-to-detail */}
@@ -171,6 +170,204 @@ export function StoryRenderer({ post }: StoryRendererProps) {
         designerName={story.designerName}
         supplementalQuotes={story.supplementalQuotes}
       />
+    </div>
+  );
+}
+
+// --- Landscape hero (E4 spec) ---
+// Centered 1168px container, 56px gutter. Eyebrow row, then 8fr/4fr title +
+// byline grid, then a flush-bottom 16:9 cover photo, then a caption + counter
+// row. Strict pixel values per spec — off the design-system type scale.
+
+const HERO_DOT = (
+  <span
+    aria-hidden
+    style={{
+      display: "inline-block",
+      width: 3, /* folio-design-system: off-scale */
+      height: 3, /* folio-design-system: off-scale */
+      borderRadius: "50%",
+      background: "rgba(87, 75, 67, 0.45)",
+      margin: "0 8px",
+      verticalAlign: "middle",
+    }}
+  />
+);
+
+function LandscapeHero({ story, publishedAt }: { story: StoryData; publishedAt: string | Date | null }) {
+  const photographerCredit = story.credits.find((c) => /photo/i.test(c.role));
+  const dateLabel = publishedAt
+    ? new Date(publishedAt).toLocaleString("en-US", { month: "long" })
+    : null;
+  const heroRoom = story.heroImage?.room || story.roomTiles[0]?.roomLabel || null;
+  const captionText = story.heroImage?.name || story.subtitle || null;
+  const totalRooms = story.roomCount || story.roomTiles.length || 0;
+
+  return (
+    <section
+      className="mx-auto"
+      style={{
+        maxWidth: 1168, /* folio-design-system: off-scale */
+        paddingLeft: 56, /* folio-design-system: off-scale */
+        paddingRight: 56, /* folio-design-system: off-scale */
+      }}
+    >
+      {/* Eyebrow */}
+      <div
+        style={{
+          fontSize: 11, /* folio-design-system: off-scale */
+          textTransform: "uppercase",
+          letterSpacing: "0.18em",
+          color: "rgba(87, 75, 67, 0.55)",
+          marginBottom: 18, /* folio-design-system: off-scale */
+        }}
+      >
+        {[story.location, totalRooms ? `${totalRooms} ${totalRooms === 1 ? "room" : "rooms"}` : null]
+          .filter(Boolean)
+          .map((part, i, arr) => (
+            <span key={i}>
+              {part}
+              {i < arr.length - 1 && HERO_DOT}
+            </span>
+          ))}
+      </div>
+
+      {/* Title row: 8fr title + 4fr byline, baselined to bottom */}
+      <div
+        className="grid"
+        style={{
+          gridTemplateColumns: "8fr 4fr",
+          gap: 56, /* folio-design-system: off-scale */
+          alignItems: "end",
+        }}
+      >
+        <h1
+          style={{
+            fontFamily: "var(--font-headline)",
+            fontStyle: "italic",
+            fontWeight: "var(--w-body)",
+            fontSize: 60, /* folio-design-system: off-scale */
+            lineHeight: 1.02, /* folio-design-system: off-scale */
+            letterSpacing: "-0.012em",
+            textWrap: "balance" as any,
+            color: "rgba(87, 75, 67, 0.92)",
+            margin: 0,
+          }}
+        >
+          {story.title}
+        </h1>
+
+        <div
+          style={{
+            fontFamily: "var(--font-body)",
+            fontSize: 13, /* folio-design-system: off-scale */
+            lineHeight: 1.7, /* folio-design-system: off-scale */
+            color: "rgba(87, 75, 67, 0.45)",
+            display: "flex",
+            flexDirection: "column",
+            gap: 12, /* folio-design-system: off-scale */
+          }}
+        >
+          <BylineRow label="Designer" value={story.designerName} />
+          {photographerCredit && (
+            <BylineRow
+              label="Photography"
+              value={[photographerCredit.name, dateLabel].filter(Boolean).join(" · ")}
+            />
+          )}
+        </div>
+      </div>
+
+      {/* Hero photo — 16:9 cover, flush below the title block */}
+      <div
+        style={{
+          marginTop: 36, /* folio-design-system: off-scale */
+          aspectRatio: "16 / 9",
+          position: "relative",
+          overflow: "hidden",
+          background: "rgba(87, 75, 67, 0.04)",
+        }}
+      >
+        <Image
+          src={story.heroImageUrl}
+          alt={story.title}
+          fill
+          priority
+          sizes="(max-width: 768px) 100vw, 1168px"
+          style={{ objectFit: "cover", objectPosition: "center" }}
+        />
+      </div>
+
+      {/* Caption row */}
+      <div
+        style={{
+          marginTop: 14, /* folio-design-system: off-scale */
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "baseline",
+          gap: 24, /* folio-design-system: off-scale */
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "baseline", gap: 8, minWidth: 0 }}>
+          {heroRoom && (
+            <span
+              style={{
+                fontSize: 10, /* folio-design-system: off-scale */
+                textTransform: "uppercase",
+                letterSpacing: "0.14em",
+                color: "rgba(87, 75, 67, 0.55)",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {heroRoom}
+            </span>
+          )}
+          {heroRoom && captionText && HERO_DOT}
+          {captionText && (
+            <span
+              className="truncate"
+              style={{
+                fontSize: 12, /* folio-design-system: off-scale */
+                color: "rgba(87, 75, 67, 0.45)",
+              }}
+            >
+              {captionText}
+            </span>
+          )}
+        </div>
+        {totalRooms > 0 && (
+          <span
+            style={{
+              fontFamily: "var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace)",
+              fontSize: 10, /* folio-design-system: off-scale */
+              textTransform: "uppercase",
+              letterSpacing: "0.14em",
+              color: "rgba(87, 75, 67, 0.45)",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {String(1).padStart(2, "0")} / {String(totalRooms).padStart(2, "0")}
+          </span>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function BylineRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+      <span
+        style={{
+          fontSize: 10, /* folio-design-system: off-scale */
+          textTransform: "uppercase",
+          letterSpacing: "0.16em",
+          color: "rgba(87, 75, 67, 0.55)",
+        }}
+      >
+        {label}
+      </span>
+      <span style={{ color: "rgba(87, 75, 67, 0.85)" }}>{value}</span>
     </div>
   );
 }
