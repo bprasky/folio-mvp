@@ -132,14 +132,15 @@ function Pattern3({
     (room.heroImage as any).height,
   );
   // Landscape or unresolved → keep the dramatic full-bleed stack. Otherwise
-  // photo and quote sit beside each other so the quote uses the space the
-  // height-capped photo leaves.
-  const sideBySide = aspect.frame === "portrait" || aspect.frame === "square";
+  // fall through to the half-and-half alternating layout (Pattern 1) so the
+  // photo sits at its natural width next to the quote, matching the rhythm
+  // of the rooms above and below.
+  const fallThrough = aspect.frame === "portrait" || aspect.frame === "square";
 
-  if (sideBySide) {
+  if (fallThrough) {
     return (
       <div
-        className="col-span-2 grid grid-cols-1 md:grid-cols-[auto_1fr] gap-[10px] md:gap-6 items-center"
+        className="col-span-2 grid grid-cols-1 md:grid-cols-2 gap-[10px] items-center"
         id={`room-${room.roomSlug}`}
       >
         <PhotoTile
@@ -148,23 +149,19 @@ function Pattern3({
           image={room.heroImage}
           onClick={onToggle}
           onProductClick={onProductClick}
-          fullWidth
           isExpanded={isExpanded}
           reducedMotion={reducedMotion}
         />
-        <div className="w-full md:min-w-0">
-          <QuoteTile
-            roomLabel={room.roomLabel}
-            pullQuote={room.pullQuote}
-            attribution={room.attribution}
-            productCount={room.productCount}
-            editorialTeaser={room.editorialTeaser}
-            onClick={onToggle}
-            isExpanded={isExpanded}
-            wide
-            reducedMotion={reducedMotion}
-          />
-        </div>
+        <QuoteTile
+          roomLabel={room.roomLabel}
+          pullQuote={room.pullQuote}
+          attribution={room.attribution}
+          productCount={room.productCount}
+          editorialTeaser={room.editorialTeaser}
+          onClick={onToggle}
+          isExpanded={isExpanded}
+          reducedMotion={reducedMotion}
+        />
       </div>
     );
   }
@@ -208,7 +205,7 @@ function Pattern4({
     (room.heroImage as any).width,
     (room.heroImage as any).height,
   );
-  const sideBySide = aspect.frame === "portrait" || aspect.frame === "square";
+  const fallThrough = aspect.frame === "portrait" || aspect.frame === "square";
 
   const secondaryQuote = room.editorialTeaser ? (
     <QuoteTile
@@ -233,12 +230,14 @@ function Pattern4({
     />
   );
 
-  if (sideBySide) {
-    // Photo on one side, the two quote tiles stacked on the other so the
-    // editorial teaser still gets its own surface alongside the photo.
+  if (fallThrough) {
+    // Same fallback as Pattern 3 — photo + primary quote in the alternating
+    // half-width layout. The split-quote / editorial teaser is dropped here
+    // because there is no full-width strip below it to host the second tile;
+    // keeping both would re-introduce the awkward stacking we were avoiding.
     return (
       <div
-        className="col-span-2 grid grid-cols-1 md:grid-cols-[auto_1fr] gap-[10px] md:gap-6 items-center"
+        className="col-span-2 grid grid-cols-1 md:grid-cols-2 gap-[10px] items-center"
         id={`room-${room.roomSlug}`}
       >
         <PhotoTile
@@ -247,22 +246,19 @@ function Pattern4({
           image={room.heroImage}
           onClick={onToggle}
           onProductClick={onProductClick}
-          fullWidth
           isExpanded={isExpanded}
           reducedMotion={reducedMotion}
         />
-        <div className="w-full md:min-w-0 flex flex-col gap-[10px]">
-          <QuoteTile
-            roomLabel={room.roomLabel}
-            pullQuote={room.pullQuote}
-            attribution={room.attribution}
-            productCount={room.productCount}
-            onClick={onToggle}
-            isExpanded={isExpanded}
-            reducedMotion={reducedMotion}
-          />
-          {secondaryQuote}
-        </div>
+        <QuoteTile
+          roomLabel={room.roomLabel}
+          pullQuote={room.pullQuote}
+          attribution={room.attribution}
+          productCount={room.productCount}
+          editorialTeaser={room.editorialTeaser}
+          onClick={onToggle}
+          isExpanded={isExpanded}
+          reducedMotion={reducedMotion}
+        />
       </div>
     );
   }
