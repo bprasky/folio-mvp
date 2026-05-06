@@ -79,7 +79,7 @@ export function RoomExpand({
 
             {/* Editorial narrative */}
             {room.editorialNarrative && (
-              <div className="max-w-[720px] mb-8">
+              <div className="mb-8" style={{ maxWidth: "var(--story-prose-width)" }}>
                 <p
                   className="whitespace-pre-line"
                   style={{
