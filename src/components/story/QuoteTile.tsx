@@ -1,11 +1,16 @@
 "use client";
 
-// QuoteTile — Frosted glass surface with room label, pull quote, attribution,
-// product count + expand hint. Staggered reveal animation on scroll.
-// Rule 2: Glass Lives Beside, Never Over.
+// QuoteTile — Room pull quote that doubles as the expand affordance.
+// Collapsed: big italic pull quote in the headline font, no glass card,
+// chevron-down underneath signals "click for the full narrative."
+// Expanded: pull quote is replaced in place by the room's editorial
+// narrative (the quote came from the narrative anyway, so nothing is lost).
+// Layout-wise the tile stays in its own grid column so the photo column
+// doesn't reflow.
 
 import { useRef, useEffect, useState } from "react";
 import clsx from "clsx";
+import { ChevronDown } from "lucide-react";
 
 interface QuoteTileProps {
   roomLabel: string;
@@ -13,6 +18,7 @@ interface QuoteTileProps {
   attribution: string;
   productCount: number;
   editorialTeaser?: string | null;
+  editorialNarrative?: string | null;
   onClick: () => void;
   isExpanded: boolean;
   wide?: boolean;
@@ -25,6 +31,7 @@ export function QuoteTile({
   attribution,
   productCount,
   editorialTeaser,
+  editorialNarrative,
   onClick,
   isExpanded,
   wide = false,
@@ -62,6 +69,8 @@ export function QuoteTile({
           transform: revealed ? "translateY(0)" : `translateY(12px)`,
         };
 
+  const showNarrative = isExpanded && !!editorialNarrative;
+
   return (
     <div
       ref={ref}
@@ -70,22 +79,12 @@ export function QuoteTile({
       tabIndex={0}
       onKeyDown={(e) => e.key === "Enter" && onClick()}
       className={clsx(
-        "cursor-pointer rounded-[12px] transition-all duration-200",
-        wide ? "flex flex-row items-center gap-8 px-8 py-5" : "flex flex-col justify-center px-7 py-6",
-        isExpanded
-          ? "ring-1 ring-[rgba(87,75,67,0.12)]"
-          : "hover:ring-1 hover:ring-[rgba(87,75,67,0.09)]"
+        "cursor-pointer rounded-[12px] transition-colors duration-200 group",
+        wide ? "flex flex-row items-center gap-8 px-8 py-5" : "flex flex-col justify-center px-2 py-6",
+        "hover:bg-[rgba(87,75,67,0.03)]"
       )}
-      style={{
-        background: isExpanded
-          ? "rgba(255, 252, 248, 0.78)"
-          : "rgba(255, 252, 248, 0.6)",
-        backdropFilter: "blur(20px)",
-        WebkitBackdropFilter: "blur(20px)",
-        border: "1px solid rgba(87, 75, 67, 0.04)",
-      }}
     >
-      <div className={clsx(wide ? "flex-1 flex flex-col gap-2" : "flex flex-col gap-3")}>
+      <div className={clsx(wide ? "flex-1 flex flex-col gap-2" : "flex flex-col gap-4")}>
         {/* Room label */}
         <span
           style={{
@@ -100,21 +99,37 @@ export function QuoteTile({
           {roomLabel}
         </span>
 
-        {/* Pull quote */}
-        {pullQuote && (
-          <blockquote
+        {/* Body — narrative when expanded, big pull quote when collapsed */}
+        {showNarrative ? (
+          <div
+            className="whitespace-pre-line"
             style={{
-              fontFamily: "var(--font-headline)",
-              fontSize: wide ? "17px" : "22px",
+              fontFamily: "var(--font-body)",
+              fontSize: 'var(--type-body)',
               fontWeight: 'var(--w-body)',
-              fontStyle: "italic",
-              lineHeight: 1.45, /* folio-design-system: off-scale */
+              lineHeight: 1.7, /* folio-design-system: off-scale */
               color: "rgba(87, 75, 67, 0.85)",
               ...stagger(80),
             }}
           >
-            &ldquo;{pullQuote}&rdquo;
-          </blockquote>
+            {editorialNarrative}
+          </div>
+        ) : (
+          pullQuote && (
+            <blockquote
+              style={{
+                fontFamily: "var(--font-headline)",
+                fontSize: wide ? 'var(--type-h4)' : 'var(--type-h3)',
+                fontWeight: 'var(--w-body)',
+                fontStyle: "italic",
+                lineHeight: 1.25, /* folio-design-system: off-scale */
+                color: "rgba(87, 75, 67, 0.92)",
+                ...stagger(80),
+              }}
+            >
+              &ldquo;{pullQuote}&rdquo;
+            </blockquote>
+          )
         )}
 
         {/* Attribution */}
@@ -128,8 +143,8 @@ export function QuoteTile({
           &mdash; {attribution}
         </span>
 
-        {/* Editorial teaser (optional) */}
-        {editorialTeaser && !wide && (
+        {/* Editorial teaser (optional, only on collapsed regular tiles) */}
+        {editorialTeaser && !wide && !showNarrative && (
           <p
             style={{
               fontSize: 'var(--type-meta)',
@@ -143,18 +158,32 @@ export function QuoteTile({
         )}
       </div>
 
-      {/* Product count + expand hint */}
-      <span
-        className={clsx(wide ? "whitespace-nowrap" : "mt-auto pt-3")}
+      {/* Affordance — chevron rotates 180° on expand, product count beside it */}
+      <div
+        className={clsx(
+          wide ? "whitespace-nowrap flex items-center gap-3" : "mt-5 flex items-center gap-3"
+        )}
         style={{
-          fontSize: 'var(--type-eyebrow)',
-          color: "rgba(87, 75, 67, 0.3)",
+          fontSize: 'var(--type-meta)',
+          color: "rgba(87, 75, 67, 0.55)",
           ...stagger(320)
         }}
       >
-        {productCount > 0 && `${productCount} product${productCount !== 1 ? "s" : ""} · `}
-        {isExpanded ? "Collapse ↑" : "Expand →"}
-      </span>
+        {productCount > 0 && (
+          <span style={{ fontSize: 'var(--type-eyebrow)', color: "rgba(87, 75, 67, 0.4)" }}>
+            {productCount} product{productCount !== 1 ? "s" : ""}
+          </span>
+        )}
+        <span className="flex items-center gap-1.5 group-hover:text-[rgba(87,75,67,0.85)] transition-colors">
+          {isExpanded ? "Collapse" : "Read more"}
+          <ChevronDown
+            size={16}
+            strokeWidth={1.75}
+            className="transition-transform duration-300"
+            style={{ transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)" }}
+          />
+        </span>
+      </div>
     </div>
   );
 }

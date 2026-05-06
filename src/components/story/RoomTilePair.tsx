@@ -94,6 +94,7 @@ export function RoomTilePair({
               attribution={room.attribution}
               productCount={room.productCount}
               editorialTeaser={room.editorialTeaser}
+              editorialNarrative={room.editorialNarrative}
               onClick={onToggle}
               isExpanded={isExpanded}
               reducedMotion={reducedMotion}
@@ -107,6 +108,7 @@ export function RoomTilePair({
               attribution={room.attribution}
               productCount={room.productCount}
               editorialTeaser={room.editorialTeaser}
+              editorialNarrative={room.editorialNarrative}
               onClick={onToggle}
               isExpanded={isExpanded}
               reducedMotion={reducedMotion}
@@ -165,6 +167,7 @@ function Pattern3({
         attribution={room.attribution}
         productCount={room.productCount}
         editorialTeaser={room.editorialTeaser}
+        editorialNarrative={room.editorialNarrative}
         onClick={onToggle}
         isExpanded={isExpanded}
         reducedMotion={reducedMotion}
@@ -197,6 +200,7 @@ function Pattern3({
         pullQuote={room.pullQuote}
         attribution={room.attribution}
         productCount={room.productCount}
+        editorialNarrative={room.editorialNarrative}
         onClick={onToggle}
         isExpanded={isExpanded}
         wide
@@ -268,6 +272,7 @@ function Pattern4({
         attribution={room.attribution}
         productCount={room.productCount}
         editorialTeaser={room.editorialTeaser}
+        editorialNarrative={room.editorialNarrative}
         onClick={onToggle}
         isExpanded={isExpanded}
         reducedMotion={reducedMotion}
@@ -301,6 +306,7 @@ function Pattern4({
           pullQuote={room.pullQuote}
           attribution={room.attribution}
           productCount={room.productCount}
+          editorialNarrative={room.editorialNarrative}
           onClick={onToggle}
           isExpanded={isExpanded}
           reducedMotion={reducedMotion}

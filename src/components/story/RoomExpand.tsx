@@ -77,21 +77,9 @@ export function RoomExpand({
               </button>
             </div>
 
-            {/* Editorial narrative */}
-            {room.editorialNarrative && (
-              <div className="mb-8" style={{ maxWidth: "var(--story-prose-width)" }}>
-                <p
-                  className="whitespace-pre-line"
-                  style={{
-                    fontSize: 'var(--type-body)',
-                    lineHeight: 1.75, /* folio-design-system: off-scale */
-                    color: "rgba(87, 75, 67, 0.85)"
-                  }}
-                >
-                  {room.editorialNarrative}
-                </p>
-              </div>
-            )}
+            {/* Editorial narrative now lives inside QuoteTile (in-place
+                expansion); RoomExpand only carries the gallery and tagged
+                products as a full-width strip below the row. */}
 
             {/* Gallery — large immersive images, not thumbnails */}
             {room.additionalImages.length > 0 && (
