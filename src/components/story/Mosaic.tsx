@@ -4,7 +4,9 @@
 //
 // 2-column grid with 10px gaps. Iterates over roomTiles, renders
 // RoomTilePair + RoomExpand for each, inserts BreatherQuote at positions
-// defined by breathers data. Manages expand state (only one room open).
+// defined by breathers data. Multiple rooms can be expanded simultaneously
+// — expansion happens in-place inside QuoteTile, so per-room state has no
+// global cost.
 
 import { useState, useCallback, useEffect } from "react";
 import { RoomTilePair } from "./RoomTilePair";
@@ -30,12 +32,16 @@ export function Mosaic({
   autoExpandRoom,
   reducedMotion,
 }: MosaicProps) {
-  const [expandedSlug, setExpandedSlug] = useState<string | null>(null);
+  const [expandedSlugs, setExpandedSlugs] = useState<Set<string>>(() => new Set());
 
   // Auto-expand from deep link
   useEffect(() => {
     if (autoExpandRoom) {
-      setExpandedSlug(autoExpandRoom);
+      setExpandedSlugs((prev) => {
+        const next = new Set(prev);
+        next.add(autoExpandRoom);
+        return next;
+      });
       // Scroll to room after a brief delay for rendering
       const timer = setTimeout(() => {
         const el = document.getElementById(`room-${autoExpandRoom}`);
@@ -45,12 +51,23 @@ export function Mosaic({
     }
   }, [autoExpandRoom]);
 
-  const handleToggle = useCallback(
-    (roomSlug: string) => {
-      setExpandedSlug((prev) => (prev === roomSlug ? null : roomSlug));
-    },
-    []
-  );
+  const handleToggle = useCallback((roomSlug: string) => {
+    setExpandedSlugs((prev) => {
+      const next = new Set(prev);
+      if (next.has(roomSlug)) next.delete(roomSlug);
+      else next.add(roomSlug);
+      return next;
+    });
+  }, []);
+
+  const handleCollapse = useCallback((roomSlug: string) => {
+    setExpandedSlugs((prev) => {
+      if (!prev.has(roomSlug)) return prev;
+      const next = new Set(prev);
+      next.delete(roomSlug);
+      return next;
+    });
+  }, []);
 
   // Build a breather lookup: afterRoomSlug → BreatherData
   const breatherMap = new Map<string, BreatherData>();
@@ -60,14 +77,15 @@ export function Mosaic({
 
   return (
     <div className="grid grid-cols-2 gap-[10px]">
-      {roomTiles.map((room) => {
-        const isExpanded = expandedSlug === room.roomSlug;
+      {roomTiles.map((room, index) => {
+        const isExpanded = expandedSlugs.has(room.roomSlug);
         const breather = breatherMap.get(room.roomSlug);
 
         return (
           <div key={room.roomId} className="contents">
             <RoomTilePair
               room={room}
+              index={index}
               isExpanded={isExpanded}
               onToggle={() => handleToggle(room.roomSlug)}
               onProductClick={onProductClick}
@@ -77,7 +95,7 @@ export function Mosaic({
             <RoomExpand
               room={room}
               isOpen={isExpanded}
-              onCollapse={() => setExpandedSlug(null)}
+              onCollapse={() => handleCollapse(room.roomSlug)}
               onProductClick={onProductClick}
               reducedMotion={reducedMotion}
             />

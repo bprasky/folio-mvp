@@ -20,6 +20,8 @@ import type { RoomTileData } from "@/lib/story/buildRoomTiles";
 
 interface RoomTilePairProps {
   room: RoomTileData;
+  /** 0-based index in the mosaic — drives strict L/R photo alternation. */
+  index: number;
   isExpanded: boolean;
   onToggle: () => void;
   onProductClick?: (product: any) => void;
@@ -28,17 +30,23 @@ interface RoomTilePairProps {
 
 export function RoomTilePair({
   room,
+  index,
   isExpanded,
   onToggle,
   onProductClick,
   reducedMotion,
 }: RoomTilePairProps) {
   const { pattern } = room;
+  // Strict L/R alternation by mosaic index — overrides the pattern's own
+  // photo-side decision so Pattern 1, Pattern 2, and the Pattern 3/4
+  // portrait fall-through all share the same rhythm.
+  const photoLeft = index % 2 === 0;
 
   if (pattern === 3) {
     return (
       <Pattern3
         room={room}
+        photoLeft={photoLeft}
         isExpanded={isExpanded}
         onToggle={onToggle}
         onProductClick={onProductClick}
@@ -51,6 +59,7 @@ export function RoomTilePair({
     return (
       <Pattern4
         room={room}
+        photoLeft={photoLeft}
         isExpanded={isExpanded}
         onToggle={onToggle}
         onProductClick={onProductClick}
@@ -59,8 +68,8 @@ export function RoomTilePair({
     );
   }
 
-  // Pattern 1 or 2
-  const photoFirst = pattern === 1;
+  // Pattern 1 or 2: photo side now driven by index parity, not pattern id.
+  const photoFirst = photoLeft;
 
   return (
     <>
@@ -85,6 +94,7 @@ export function RoomTilePair({
               attribution={room.attribution}
               productCount={room.productCount}
               editorialTeaser={room.editorialTeaser}
+              editorialNarrative={room.editorialNarrative}
               onClick={onToggle}
               isExpanded={isExpanded}
               reducedMotion={reducedMotion}
@@ -98,6 +108,7 @@ export function RoomTilePair({
               attribution={room.attribution}
               productCount={room.productCount}
               editorialTeaser={room.editorialTeaser}
+              editorialNarrative={room.editorialNarrative}
               onClick={onToggle}
               isExpanded={isExpanded}
               reducedMotion={reducedMotion}
@@ -121,47 +132,53 @@ export function RoomTilePair({
 // Pattern 3: Full-width photo + wide quote bar below
 function Pattern3({
   room,
+  photoLeft,
   isExpanded,
   onToggle,
   onProductClick,
   reducedMotion,
-}: RoomTilePairProps) {
+}: Omit<RoomTilePairProps, "index"> & { photoLeft: boolean }) {
   const aspect = useImageAspect(
     room.heroImage.url,
     (room.heroImage as any).width,
     (room.heroImage as any).height,
   );
   // Landscape or unresolved → keep the dramatic full-bleed stack. Otherwise
-  // fall through to the half-and-half alternating layout (Pattern 1) so the
-  // photo sits at its natural width next to the quote, matching the rhythm
-  // of the rooms above and below.
+  // fall through to the half-and-half alternating layout so the photo sits
+  // next to the quote, with photo side driven by mosaic index parity.
   const fallThrough = aspect.frame === "portrait" || aspect.frame === "square";
 
   if (fallThrough) {
+    const photo = (
+      <PhotoTile
+        imageUrl={room.heroImage.url}
+        alt={room.roomLabel}
+        image={room.heroImage}
+        onClick={onToggle}
+        onProductClick={onProductClick}
+        isExpanded={isExpanded}
+        reducedMotion={reducedMotion}
+      />
+    );
+    const quote = (
+      <QuoteTile
+        roomLabel={room.roomLabel}
+        pullQuote={room.pullQuote}
+        attribution={room.attribution}
+        productCount={room.productCount}
+        editorialTeaser={room.editorialTeaser}
+        editorialNarrative={room.editorialNarrative}
+        onClick={onToggle}
+        isExpanded={isExpanded}
+        reducedMotion={reducedMotion}
+      />
+    );
     return (
       <div
         className="col-span-2 grid grid-cols-1 md:grid-cols-2 gap-[10px] items-center"
         id={`room-${room.roomSlug}`}
       >
-        <PhotoTile
-          imageUrl={room.heroImage.url}
-          alt={room.roomLabel}
-          image={room.heroImage}
-          onClick={onToggle}
-          onProductClick={onProductClick}
-          isExpanded={isExpanded}
-          reducedMotion={reducedMotion}
-        />
-        <QuoteTile
-          roomLabel={room.roomLabel}
-          pullQuote={room.pullQuote}
-          attribution={room.attribution}
-          productCount={room.productCount}
-          editorialTeaser={room.editorialTeaser}
-          onClick={onToggle}
-          isExpanded={isExpanded}
-          reducedMotion={reducedMotion}
-        />
+        {photoLeft ? <>{photo}{quote}</> : <>{quote}{photo}</>}
       </div>
     );
   }
@@ -183,6 +200,7 @@ function Pattern3({
         pullQuote={room.pullQuote}
         attribution={room.attribution}
         productCount={room.productCount}
+        editorialNarrative={room.editorialNarrative}
         onClick={onToggle}
         isExpanded={isExpanded}
         wide
@@ -195,11 +213,12 @@ function Pattern3({
 // Pattern 4: Full-width photo + split quote tiles below
 function Pattern4({
   room,
+  photoLeft,
   isExpanded,
   onToggle,
   onProductClick,
   reducedMotion,
-}: RoomTilePairProps) {
+}: Omit<RoomTilePairProps, "index"> & { photoLeft: boolean }) {
   const aspect = useImageAspect(
     room.heroImage.url,
     (room.heroImage as any).width,
@@ -235,30 +254,36 @@ function Pattern4({
     // half-width layout. The split-quote / editorial teaser is dropped here
     // because there is no full-width strip below it to host the second tile;
     // keeping both would re-introduce the awkward stacking we were avoiding.
+    const photo = (
+      <PhotoTile
+        imageUrl={room.heroImage.url}
+        alt={room.roomLabel}
+        image={room.heroImage}
+        onClick={onToggle}
+        onProductClick={onProductClick}
+        isExpanded={isExpanded}
+        reducedMotion={reducedMotion}
+      />
+    );
+    const quote = (
+      <QuoteTile
+        roomLabel={room.roomLabel}
+        pullQuote={room.pullQuote}
+        attribution={room.attribution}
+        productCount={room.productCount}
+        editorialTeaser={room.editorialTeaser}
+        editorialNarrative={room.editorialNarrative}
+        onClick={onToggle}
+        isExpanded={isExpanded}
+        reducedMotion={reducedMotion}
+      />
+    );
     return (
       <div
         className="col-span-2 grid grid-cols-1 md:grid-cols-2 gap-[10px] items-center"
         id={`room-${room.roomSlug}`}
       >
-        <PhotoTile
-          imageUrl={room.heroImage.url}
-          alt={room.roomLabel}
-          image={room.heroImage}
-          onClick={onToggle}
-          onProductClick={onProductClick}
-          isExpanded={isExpanded}
-          reducedMotion={reducedMotion}
-        />
-        <QuoteTile
-          roomLabel={room.roomLabel}
-          pullQuote={room.pullQuote}
-          attribution={room.attribution}
-          productCount={room.productCount}
-          editorialTeaser={room.editorialTeaser}
-          onClick={onToggle}
-          isExpanded={isExpanded}
-          reducedMotion={reducedMotion}
-        />
+        {photoLeft ? <>{photo}{quote}</> : <>{quote}{photo}</>}
       </div>
     );
   }
@@ -281,6 +306,7 @@ function Pattern4({
           pullQuote={room.pullQuote}
           attribution={room.attribution}
           productCount={room.productCount}
+          editorialNarrative={room.editorialNarrative}
           onClick={onToggle}
           isExpanded={isExpanded}
           reducedMotion={reducedMotion}
