@@ -125,14 +125,14 @@ export function StoryRenderer({ post }: StoryRendererProps) {
             style={{ background: "rgba(87, 75, 67, 0.06)" }}
           />
         ) : heroOrientation === "portrait" ? (
-          /* Portrait: photo left, intro right (stacks on mobile) */
+          /* Portrait: intro left, photo right (stacks on mobile, text first) */
           <>
             <div className="flex flex-col md:flex-row gap-6 md:gap-10">
-              <div className="w-full md:w-[48%]">
-                <StoryHero imageUrl={story.heroImageUrl} alt={story.title} orientation="portrait" />
-              </div>
               <div className="w-full md:w-[52%] flex items-center">
                 <StoryIntro story={story} compact />
+              </div>
+              <div className="w-full md:w-[48%]">
+                <StoryHero imageUrl={story.heroImageUrl} alt={story.title} orientation="portrait" />
               </div>
             </div>
             <div className="border-b mt-6" style={{ borderColor: "rgba(87, 75, 67, 0.06)" }} />
