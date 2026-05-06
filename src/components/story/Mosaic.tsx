@@ -60,7 +60,7 @@ export function Mosaic({
 
   return (
     <div className="grid grid-cols-2 gap-[10px]">
-      {roomTiles.map((room) => {
+      {roomTiles.map((room, index) => {
         const isExpanded = expandedSlug === room.roomSlug;
         const breather = breatherMap.get(room.roomSlug);
 
@@ -68,6 +68,7 @@ export function Mosaic({
           <div key={room.roomId} className="contents">
             <RoomTilePair
               room={room}
+              index={index}
               isExpanded={isExpanded}
               onToggle={() => handleToggle(room.roomSlug)}
               onProductClick={onProductClick}
