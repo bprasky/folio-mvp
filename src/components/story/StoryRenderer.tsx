@@ -34,13 +34,19 @@ export function StoryRenderer({ post }: StoryRendererProps) {
   // Build story data from post
   const story = useMemo(() => buildStoryData(post), [post]);
 
-  // Detect hero image orientation (portrait vs landscape)
+  // Detect hero image orientation (portrait vs landscape).
+  // "Landscape" here means cinematic-wide (>= 2:1) — those photos earn the
+  // full-bleed stacked treatment. Anything narrower (4:3, 3:2, 16:9, square,
+  // true portrait) uses the split layout (text left, photo right) so the
+  // intro doesn't sit beneath a centered fragment of bleed.
+  const HERO_LANDSCAPE_MIN_ASPECT = 2.0;
   const [heroOrientation, setHeroOrientation] = useState<"landscape" | "portrait" | null>(null);
   useEffect(() => {
     if (!story?.heroImageUrl) return;
     const img = new window.Image();
     img.onload = () => {
-      setHeroOrientation(img.naturalWidth >= img.naturalHeight ? "landscape" : "portrait");
+      const aspect = img.naturalHeight > 0 ? img.naturalWidth / img.naturalHeight : 1;
+      setHeroOrientation(aspect >= HERO_LANDSCAPE_MIN_ASPECT ? "landscape" : "portrait");
     };
     img.src = story.heroImageUrl;
   }, [story?.heroImageUrl]);
