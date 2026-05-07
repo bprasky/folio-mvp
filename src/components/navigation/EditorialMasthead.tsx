@@ -169,7 +169,7 @@ export function EditorialMasthead() {
           {/* Right: Create Button + User Menu */}
           <div className="flex items-center gap-3">
             <div className="md:hidden">
-              <GlobalSearch placeholder="Search..." />
+              <GlobalSearch placeholder="Search..." iconOnly />
             </div>
             <InboxButton />
             <BadgeButton />
@@ -180,10 +180,12 @@ export function EditorialMasthead() {
       </motion.header>
 
       {/* Large Editorial Masthead - initial state, animates into nav */}
-      {/* Hidden on magazine & designer pages — nav-bar logo is sufficient context */}
+      {/* Hidden on magazine & designer pages — nav-bar logo is sufficient context.
+          Hidden on mobile globally — the nav already carries the FOLIO mark, so
+          a second giant wordmark below it is wasted vertical space on phones. */}
       {!hidesMasthead && (
         <div
-          className="relative w-full bg-surface-canvas"
+          className="relative w-full bg-surface-canvas hidden md:block"
           style={{
             paddingTop: "20px",
             paddingBottom: "20px",

@@ -31,8 +31,12 @@ export function StoryHero({ imageUrl, alt, orientation = "landscape" }: StoryHer
 
   return (
     <figure
-      className="relative w-full overflow-hidden rounded-[14px] mx-auto"
-      style={wrapperMaxWidth ? { maxWidth: wrapperMaxWidth } : undefined}
+      className={
+        wrapperMaxWidth
+          ? "relative w-full overflow-hidden rounded-[14px] mx-auto md:max-w-[var(--story-photo-cap)]"
+          : "relative w-full overflow-hidden rounded-[14px] mx-auto"
+      }
+      style={wrapperMaxWidth ? ({ ["--story-photo-cap" as any]: wrapperMaxWidth }) : undefined}
     >
       <Image
         src={imageUrl}

@@ -205,21 +205,19 @@ function LandscapeHero({ story, publishedAt }: { story: StoryData; publishedAt: 
 
   return (
     <section
-      className="mx-auto"
+      className="mx-auto px-5 md:px-14" /* folio-design-system: off-scale (px-14 = 56px) */
       style={{
         maxWidth: 1168, /* folio-design-system: off-scale */
-        paddingLeft: 56, /* folio-design-system: off-scale */
-        paddingRight: 56, /* folio-design-system: off-scale */
       }}
     >
       {/* Eyebrow */}
       <div
+        className="mb-3 md:mb-[18px]" /* folio-design-system: off-scale */
         style={{
           fontSize: 11, /* folio-design-system: off-scale */
           textTransform: "uppercase",
           letterSpacing: "0.18em",
           color: "rgba(87, 75, 67, 0.55)",
-          marginBottom: 18, /* folio-design-system: off-scale */
         }}
       >
         {[story.location, totalRooms ? `${totalRooms} ${totalRooms === 1 ? "room" : "rooms"}` : null]
@@ -232,22 +230,17 @@ function LandscapeHero({ story, publishedAt }: { story: StoryData; publishedAt: 
           ))}
       </div>
 
-      {/* Title row: 8fr title + 4fr byline, baselined to bottom */}
+      {/* Title row: stacked on mobile, 8fr title + 4fr byline (baseline-aligned) on desktop */}
       <div
-        className="grid"
-        style={{
-          gridTemplateColumns: "8fr 4fr",
-          gap: 56, /* folio-design-system: off-scale */
-          alignItems: "end",
-        }}
+        className="grid grid-cols-1 md:grid-cols-[8fr_4fr] gap-4 md:gap-14 md:items-end" /* folio-design-system: off-scale (gap-14 = 56px) */
       >
         <h1
           style={{
             fontFamily: "var(--font-headline)",
             fontStyle: "italic",
             fontWeight: "var(--w-body)",
-            fontSize: 60, /* folio-design-system: off-scale */
-            lineHeight: 1.02, /* folio-design-system: off-scale */
+            fontSize: "clamp(40px, 9vw, 60px)", /* folio-design-system: off-scale — mobile 40-48px, desktop caps at 60px */
+            lineHeight: 1.06, /* folio-design-system: off-scale */
             letterSpacing: "-0.012em",
             textWrap: "balance" as any,
             color: "rgba(87, 75, 67, 0.92)",
@@ -280,8 +273,8 @@ function LandscapeHero({ story, publishedAt }: { story: StoryData; publishedAt: 
 
       {/* Hero photo — 16:9 cover, flush below the title block */}
       <div
+        className="mt-6 md:mt-9" /* folio-design-system: off-scale (mt-9 = 36px) */
         style={{
-          marginTop: 36, /* folio-design-system: off-scale */
           aspectRatio: "16 / 9",
           position: "relative",
           overflow: "hidden",
@@ -300,12 +293,11 @@ function LandscapeHero({ story, publishedAt }: { story: StoryData; publishedAt: 
 
       {/* Caption row */}
       <div
+        className="mt-3 md:mt-[14px] gap-4 md:gap-6" /* folio-design-system: off-scale */
         style={{
-          marginTop: 14, /* folio-design-system: off-scale */
           display: "flex",
           justifyContent: "space-between",
           alignItems: "baseline",
-          gap: 24, /* folio-design-system: off-scale */
         }}
       >
         <div style={{ display: "flex", alignItems: "baseline", gap: 8, minWidth: 0 }}>
@@ -322,10 +314,15 @@ function LandscapeHero({ story, publishedAt }: { story: StoryData; publishedAt: 
               {heroRoom}
             </span>
           )}
-          {heroRoom && captionText && HERO_DOT}
+          {/* Secondary caption (image name / subtitle) — desktop only; on mobile we keep room + counter */}
+          {heroRoom && captionText && (
+            <span className="hidden md:inline-block" aria-hidden>
+              {HERO_DOT}
+            </span>
+          )}
           {captionText && (
             <span
-              className="truncate"
+              className="hidden md:inline truncate"
               style={{
                 fontSize: 12, /* folio-design-system: off-scale */
                 color: "rgba(87, 75, 67, 0.45)",

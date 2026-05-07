@@ -80,7 +80,9 @@ export function QuoteTile({
       onKeyDown={(e) => e.key === "Enter" && onClick()}
       className={clsx(
         "cursor-pointer rounded-[12px] transition-colors duration-200 group",
-        wide ? "flex flex-row items-center gap-8 px-8 py-5" : "flex flex-col justify-center px-2 py-6",
+        wide
+          ? "flex flex-col md:flex-row md:items-center gap-3 md:gap-8 px-4 md:px-8 py-5"
+          : "flex flex-col justify-center px-2 py-6",
         "hover:bg-[rgba(87,75,67,0.03)]"
       )}
     >
@@ -161,7 +163,10 @@ export function QuoteTile({
       {/* Affordance — chevron rotates 180° on expand, product count beside it */}
       <div
         className={clsx(
-          wide ? "whitespace-nowrap flex items-center gap-3" : "mt-5 flex items-center gap-3"
+          "flex items-center gap-3",
+          wide
+            ? "mt-3 md:mt-0 whitespace-nowrap"
+            : "mt-5"
         )}
         style={{
           fontSize: 'var(--type-meta)',

@@ -174,10 +174,14 @@ export function PhotoTile({
   if (!wrapperMaxWidth) return tile;
 
   // Constrain the photo so it fits the viewport on desktop (height-capped by
-  // --story-photo-vmax, width-capped by the column variant). Mobile viewports
-  // are narrower than every cap so the wrapper resolves to full width.
+  // --story-photo-vmax, width-capped by the column variant). On mobile the
+  // height-derived width can be narrower than the viewport (e.g. tall
+  // portraits), which would shrink the photo to a thumbnail; cap only at md+.
   return (
-    <div className="mx-auto w-full" style={{ maxWidth: wrapperMaxWidth }}>
+    <div
+      className="mx-auto w-full md:max-w-[var(--story-photo-cap)]"
+      style={{ ["--story-photo-cap" as any]: wrapperMaxWidth }}
+    >
       {tile}
     </div>
   );
