@@ -285,6 +285,7 @@ function LandscapeHero({ story, publishedAt }: { story: StoryData; publishedAt: 
           aspectRatio: "16 / 9",
           position: "relative",
           overflow: "hidden",
+          borderRadius: 12, /* matches PhotoTile / RoomExpand gallery */
           background: "rgba(87, 75, 67, 0.04)",
         }}
       >
