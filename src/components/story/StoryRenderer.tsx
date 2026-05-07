@@ -350,6 +350,76 @@ function LandscapeHero({ story, publishedAt }: { story: StoryData; publishedAt: 
           </span>
         )}
       </div>
+
+      {/* Introduction — pull quote + lede paragraph below the caption row,
+          same container width, sized for comfortable reading. */}
+      {(story.projectPullQuote || story.introText) && (
+        <div
+          style={{
+            marginTop: 48, /* folio-design-system: off-scale */
+            display: "flex",
+            flexDirection: "column",
+            gap: 24, /* folio-design-system: off-scale */
+            maxWidth: 720, /* matches --story-prose-width */
+          }}
+        >
+          {story.projectPullQuote && (
+            story.projectPullQuoteIsAttributed ? (
+              <blockquote
+                style={{
+                  fontFamily: "var(--font-headline)",
+                  fontStyle: "italic",
+                  fontWeight: "var(--w-body)",
+                  fontSize: "var(--type-h4)",
+                  lineHeight: "var(--lh-body)",
+                  color: "rgba(87, 75, 67, 0.85)",
+                  margin: 0,
+                }}
+              >
+                &ldquo;{story.projectPullQuote}&rdquo;
+                <footer
+                  style={{
+                    marginTop: 8, /* folio-design-system: off-scale */
+                    fontStyle: "normal",
+                    fontSize: "var(--type-meta)",
+                    color: "rgba(87, 75, 67, 0.55)",
+                  }}
+                >
+                  &mdash; {story.designerName}
+                </footer>
+              </blockquote>
+            ) : (
+              <p
+                style={{
+                  fontFamily: "var(--font-headline)",
+                  fontStyle: "italic",
+                  fontWeight: "var(--w-body)",
+                  fontSize: "var(--type-h4)",
+                  lineHeight: "var(--lh-body)",
+                  color: "rgba(87, 75, 67, 0.85)",
+                  margin: 0,
+                }}
+              >
+                {story.projectPullQuote}
+              </p>
+            )
+          )}
+          {story.introText && (
+            <p
+              className="whitespace-pre-line"
+              style={{
+                fontFamily: "var(--font-body)",
+                fontSize: "var(--type-ui)",
+                lineHeight: 1.65, /* folio-design-system: off-scale */
+                color: "rgba(87, 75, 67, 0.85)",
+                margin: 0,
+              }}
+            >
+              {story.introText}
+            </p>
+          )}
+        </div>
+      )}
     </section>
   );
 }
