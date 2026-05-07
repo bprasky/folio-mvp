@@ -15,7 +15,6 @@
 
 import { PhotoTile } from "./PhotoTile";
 import { QuoteTile } from "./QuoteTile";
-import { useImageAspect } from "./useImageAspect";
 import type { RoomTileData } from "@/lib/story/buildRoomTiles";
 
 interface RoomTilePairProps {
@@ -138,15 +137,12 @@ function Pattern3({
   onProductClick,
   reducedMotion,
 }: Omit<RoomTilePairProps, "index"> & { photoLeft: boolean }) {
-  const aspect = useImageAspect(
-    room.heroImage.url,
-    (room.heroImage as any).width,
-    (room.heroImage as any).height,
-  );
-  // Landscape or unresolved → keep the dramatic full-bleed stack. Otherwise
-  // fall through to the half-and-half alternating layout so the photo sits
-  // next to the quote, with photo side driven by mosaic index parity.
-  const fallThrough = aspect.frame === "portrait" || aspect.frame === "square";
+  // Pattern 3/4 are always rendered as the half-and-half alternating layout
+  // now — every mosaic row reads L/R/L/R regardless of photo aspect, so a
+  // landscape post mirrors the rhythm of a portrait post. The dramatic
+  // full-bleed centered variant is no longer used (the only "centered hero"
+  // moment is the landing hero, handled separately by StoryRenderer).
+  const fallThrough = true;
 
   if (fallThrough) {
     const photo = (
@@ -219,12 +215,8 @@ function Pattern4({
   onProductClick,
   reducedMotion,
 }: Omit<RoomTilePairProps, "index"> & { photoLeft: boolean }) {
-  const aspect = useImageAspect(
-    room.heroImage.url,
-    (room.heroImage as any).width,
-    (room.heroImage as any).height,
-  );
-  const fallThrough = aspect.frame === "portrait" || aspect.frame === "square";
+  // Always alternating — see Pattern3 comment.
+  const fallThrough = true;
 
   const secondaryQuote = room.editorialTeaser ? (
     <QuoteTile
