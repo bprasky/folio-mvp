@@ -25,6 +25,12 @@
   --surface-canvas: #FFFFFF;        /* Level 0 — page bg, nav, breadcrumbs */
   --surface-ground: #FAF8F5;        /* Level 1 — filter bars, tab trays, footer */
   --surface-elevated: #F5F0EB;      /* Level 2 — card base before glass */
+  --surface-cream: oklch(0.97 0.008 85); /* Warm cream — long-form editorial pages */
+
+  /* Page-aware surface token. The sticky header's scrolled-state tint reads
+     `--surface` so each route can paint its own backdrop without forking
+     the nav. Layouts that need a different field override this variable. */
+  --surface: var(--surface-canvas);
 
   /* === TEXT === */
   --folio-text-primary: #1a1a1a;    /* Near-black for headings */
@@ -504,6 +510,13 @@ body:has([data-testid="cinematic-bg"]) aside {
 .cinematic-page > div,
 body:has([data-testid="cinematic-bg"]) {
   background: transparent !important;
+}
+
+/* Routes that paint a warm cream field instead of pure white. The class is
+   applied to a wrapper that contains both the sticky header and the page
+   content so the header's scrolled-state tint inherits the cream value. */
+.editorial-surface {
+  --surface: var(--surface-cream);
 }
 
 /* Immersive product page — escape layout padding for full-bleed hero */
