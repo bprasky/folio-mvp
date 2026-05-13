@@ -134,13 +134,13 @@ export function EditorialMasthead() {
         <div
           ref={wordmarkRef}
           className="relative w-full"
-          style={{ paddingTop: "20px", paddingBottom: "20px" }}
+          style={{ paddingTop: "8px", paddingBottom: "0" }}
         >
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-full">
             <div className="flex flex-col items-center justify-center text-center h-full">
               <h1
                 className="block font-serif text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-light uppercase text-folio-text-primary"
-                style={{ letterSpacing: "var(--ls-wide)", fontWeight: 300 }}
+                style={{ letterSpacing: "var(--ls-wide)", fontWeight: 300, lineHeight: 1 }}
               >
                 <span className="sr-only">Folio</span>
                 <span aria-hidden="true">FOLIO</span>
