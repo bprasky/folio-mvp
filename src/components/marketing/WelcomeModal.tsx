@@ -168,7 +168,7 @@ export function WelcomeModal() {
                     key={`video-${currentFrame}`}
                     videoBase={activeFrame.videoBase}
                   />
-                  <h2 className="font-headline italic text-3xl text-folio-text-primary leading-[1.15] mt-6">
+                  <h2 className="font-headline italic text-3xl text-folio-text-primary leading-[var(--lh-h2)] mt-6">
                     {activeFrame.headline}
                   </h2>
                   <p

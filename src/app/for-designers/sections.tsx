@@ -114,7 +114,7 @@ export function HowItWorks() {
                 <FrameVideo videoBase={frame.videoBase} />
               </div>
               <div className="w-full md:w-1/2">
-                <h3 className="font-headline italic text-3xl md:text-4xl text-folio-text-primary leading-[1.15] mb-4">
+                <h3 className="font-headline italic text-3xl md:text-4xl text-folio-text-primary leading-[var(--lh-h2)] mb-4">
                   {frame.headline}
                 </h3>
                 <p className="text-folio-text-secondary leading-relaxed">
