@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { GlassCard } from "@/components/ui/glass-card";
@@ -43,24 +44,47 @@ export function ForDesignersHero() {
   );
 }
 
-const pillars = [
+const frames = [
   {
-    title: "Your story, told right every time",
-    body: "Folio digs deeper than any reporter can. The portfolio section of your website becomes a publication that keeps writing itself.",
+    videoBase: "/onboarding/01-published-project",
+    headline: "Your portfolio, working for you",
+    body: "Folio turns your projects into editorial articles that publish to your profile, your directory page, and your magazine feed. The portfolio section of your website becomes a publication that keeps writing itself.",
   },
   {
-    title: "Price, sample, and specify from one place",
-    body: "Every product you've ever speced lives in your Sourcebook. Sourcing stops meaning a morning of old project folders and cold emails.",
+    videoBase: "/onboarding/02-interview-moment",
+    headline: "Folio asks questions a reporter can't",
+    body: "Every project starts with an interview that goes deeper than any journalist would. Your answers become editorial in your voice, under your name. You talk, Folio writes.",
   },
   {
-    title: "Turn your inbox into action items",
-    body: "Connect your accounts and vendor back-and-forth becomes tasks that close with a click. Quotes chased, samples ordered, specs pulled, without leaving Folio.",
-  },
-  {
-    title: "Every project is months of social content",
-    body: "Upload your work and Folio writes the campaigns, articles, and posts for you. Cross-post, stay consistent, and the reach follows. Folio gives you the content. You run the publication.",
+    videoBase: "/onboarding/03-sourcebook-fills",
+    headline: "Your Sourcebook fills itself",
+    body: "Every product you tag while publishing becomes part of your Sourcebook. Search, filter, and reference everything you've ever speced. Your past work becomes the reference library for your next project.",
   },
 ];
+
+function FrameVideo({ videoBase }: { videoBase: string }) {
+  const [videoError, setVideoError] = useState(false);
+
+  if (videoError) {
+    return <div className="w-full aspect-[16/10] rounded-xl warm-mesh" />;
+  }
+
+  return (
+    <video
+      autoPlay
+      loop
+      muted
+      playsInline
+      preload="auto"
+      aria-hidden="true"
+      onError={() => setVideoError(true)}
+      className="w-full aspect-[16/10] object-cover rounded-xl"
+    >
+      <source src={`${videoBase}.webm`} type="video/webm" />
+      <source src={`${videoBase}.mp4`} type="video/mp4" />
+    </video>
+  );
+}
 
 export function HowItWorks() {
   return (
@@ -74,35 +98,29 @@ export function HowItWorks() {
             Built for the way studios already operate
           </h2>
         </motion.div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {pillars.map((pillar, i) => (
+        <div className="flex flex-col gap-20 md:gap-28">
+          {frames.map((frame, i) => (
             <motion.div
               key={i}
               initial={{ opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-40px" }}
-              transition={{
-                duration: 0.6,
-                delay: i * 0.15,
-                ease: "easeOut",
-              }}
+              transition={{ duration: 0.6, ease: "easeOut" }}
+              className={`flex flex-col md:flex-row md:items-center gap-8 md:gap-12 ${
+                i % 2 === 1 ? "md:flex-row-reverse" : ""
+              }`}
             >
-              <GlassCard
-                variant="default"
-                padding="lg"
-                rounded="xl"
-                className="border border-stone-200/60 h-full"
-              >
-                <p className="font-headline italic text-3xl text-[var(--accent)] mb-3">
-                  {i + 1}
-                </p>
-                <h3 className="text-lg font-medium text-folio-text-primary mb-3">
-                  {pillar.title}
+              <div className="w-full md:w-1/2">
+                <FrameVideo videoBase={frame.videoBase} />
+              </div>
+              <div className="w-full md:w-1/2">
+                <h3 className="font-headline italic text-3xl md:text-4xl text-folio-text-primary leading-[var(--lh-h2)] mb-4">
+                  {frame.headline}
                 </h3>
                 <p className="text-folio-text-secondary leading-relaxed">
-                  {pillar.body}
+                  {frame.body}
                 </p>
-              </GlassCard>
+              </div>
             </motion.div>
           ))}
         </div>
