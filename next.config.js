@@ -167,6 +167,7 @@ const nextConfig = {
       { protocol: 'http', hostname: 'www.artexplore.net' }, // Art Explore CDN (http)
       { protocol: 'https', hostname: 'pinlighting.com', pathname: '/**' }, // Pin Lighting CDN
       { protocol: 'http', hostname: 'pinlighting.com', pathname: '/**' }, // Pin Lighting CDN (http)
+      { protocol: 'https', hostname: 'cdn.shopify.com', pathname: '/**' }, // Shopify CDN (vendor product images)
 
       // Additional editorial/press domains can be added here as needed
     ],
