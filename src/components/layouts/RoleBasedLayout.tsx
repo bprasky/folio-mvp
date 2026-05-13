@@ -62,9 +62,13 @@ export default function RoleBasedLayout({ children }: RoleBasedLayoutProps) {
   // Determine which layout to use based on user role
   const userRole = session?.user?.role?.toLowerCase() || 'guest';
 
+  // Long-form editorial routes paint a warm cream field. The class overrides
+  // --surface so the sticky header's scrolled-state tint matches the page.
+  const isEditorialRoute = pathname?.startsWith('/editorials/');
+
   // Use new top navigation instead of NavFrame/GlassNavRail
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className={`flex flex-col min-h-screen${isEditorialRoute ? ' editorial-surface' : ''}`}>
       <Navigation />
       {/* Use MainLayout for admin and vendor users (more features) */}
       {['admin', 'vendor'].includes(userRole) ? (
